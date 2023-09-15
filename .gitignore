@@ -1,0 +1,9 @@
+!.gitignore
+.vscode-server
+__pycache__
+*.pyc
+*.pyo
+.viminfo
+.cache
+.local
+.bash*

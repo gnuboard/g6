@@ -1,0 +1,12 @@
+{% for board in boards %}
+
+<div>
+    <a href="/board/{{ board.bo_table }}">
+        ({{ board.bo_table }})
+        {{ board.bo_subject }}
+    </a>
+</div>
+
+
+
+{% endfor %}
