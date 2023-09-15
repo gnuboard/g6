@@ -133,5 +133,4 @@ def index(request: Request, response: Response, db: Session = Depends(get_db)):
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     
-    # items = db.query(models.Item).all()
     return templates.TemplateResponse("index.html", {"request": request, "outlogin": request.state.context["outlogin"]})
