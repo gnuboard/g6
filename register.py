@@ -12,7 +12,7 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 @router.get("/register")
-def register(request: Request, db: Session = Depends(get_db)):
+def get_register(request: Request, db: Session = Depends(get_db)):
     # config = db.query(models.Config).first()
     request.session["ss_agree"] = ""
     request.session["ss_agree2"] = ""
@@ -24,7 +24,7 @@ def register(request: Request, db: Session = Depends(get_db)):
     # return {"username": username, "id": user.id}
     
 @router.post("/register")
-def register(request: Request, db: Session = Depends(get_db),
+def post_register(request: Request, db: Session = Depends(get_db),
              agree: str = Form(...),
              agree2: str = Form(...),
              ):
@@ -40,7 +40,7 @@ def register(request: Request, db: Session = Depends(get_db),
     return RedirectResponse(url="/bbs/register_form", status_code=302)
 
 @router.get("/register_form")
-def register_form(request: Request, db: Session = Depends(get_db)):
+def get_register_form(request: Request, db: Session = Depends(get_db)):
     # 약관에 동의를 하지 않았다면
     agree = request.session.get("ss_agree", "")
     agree2 = request.session.get("ss_agree", "")
@@ -51,7 +51,7 @@ def register_form(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse("bbs/register_form.html", {"request": request})
     
 @router.post("/register_form")
-def register_form(request: Request, db: Session = Depends(get_db),
+def post_register_form(request: Request, db: Session = Depends(get_db),
                 mb_id: str = Form(None),
                 mb_password: str = Form(None),
                 mb_password_re: str = Form(None),
