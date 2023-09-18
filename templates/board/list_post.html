@@ -1,74 +1,121 @@
-        	
-    <div class="tbl_head01 tbl_wrap">
-        <table>
-        <caption>자유게시판 목록</caption>
-        <thead>
-        <tr>
-                        <th scope="col">번호</th>
-            <th scope="col">제목</th>
-            <th scope="col">글쓴이</th>
-            <th scope="col"><a href="http://49.247.41.166/gnuboard5/bbs/board.php?bo_table=free&amp;sop=and&amp;sst=wr_hit&amp;sod=desc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">조회 </a></th>
-                                    <th scope="col"><a href="http://49.247.41.166/gnuboard5/bbs/board.php?bo_table=free&amp;sop=and&amp;sst=wr_datetime&amp;sod=desc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">날짜  </a></th>
-        </tr>
-        </thead>
-        <tbody>
-        {% if writes %}
-            {% for write in writes %}
-            <tr>
-                <td>{{ write.wr_id }}</td>        
-                <td>{{ write.wr_subject }}</td>        
-                <td>{{ write.wr_name }}</td>        
-                <td>{{ write.wr_cnt }}</td>        
-                <td>{{ write.wr_datetime[5:16] }}</td>        
-            </tr>
-            {% endfor %}
-        {% else %}
-            <tr><td colspan="5" class="empty_table">게시물이 없습니다.</td></tr>        </tbody>
-        {% endif %}
-        </tbody>
-        </table>
-    </div>
-	<!-- 페이지 -->
-		<!-- 페이지 -->
-	
-    <div class="bo_fx">
-    <ul class="btn_bo_user">
-        <li><a href="/board/write/{{ board.bo_table }}" class="btn_b01 btn" title="글쓰기"><i class="fa fa-pencil" aria-hidden="true"></i><span class="sound_only">글쓰기</span></a></li>        </ul>	
-    </div>
-       
-    </form>
+{% extends "base.html" %}
 
-    <!-- 게시판 검색 시작 { -->
-    <div class="bo_sch_wrap">
-        <fieldset class="bo_sch">
-            <h3>검색</h3>
-            <form name="fsearch" method="get">
-            <input type="hidden" name="bo_table" value="free">
-            <input type="hidden" name="sca" value="">
-            <input type="hidden" name="sop" value="and">
-            <label for="sfl" class="sound_only">검색대상</label>
-            <select name="sfl" id="sfl">
-                <option value="wr_subject" >제목</option><option value="wr_content" >내용</option><option value="wr_subject||wr_content" >제목+내용</option><option value="wr_name,1" >글쓴이</option><option value="wr_name,0" >글쓴이(코)</option>            </select>
-            <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
-            <div class="sch_bar">
-                <input type="text" name="stx" value="" required id="stx" class="sch_input" size="25" maxlength="20" placeholder=" 검색어를 입력해주세요">
-                <button type="submit" value="검색" class="sch_btn"><i class="fa fa-search" aria-hidden="true"></i><span class="sound_only">검색</span></button>
+{% block title %}
+    게시물 목록
+{% endblock %}
+
+{% block content %}
+
+<!-- 게시판 목록 시작 { -->
+    <div id="bo_list" style="width:100%">
+
+        <!-- 게시판 카테고리 시작 { -->
+            <!-- } 게시판 카테고리 끝 -->
+        
+        <form name="fboardlist" id="fboardlist" action="/board_list_update" onsubmit="return fboardlist_submit(this);" method="post">
+        
+        <input type="hidden" name="bo_table" value="free">
+        <input type="hidden" name="sfl" value="">
+        <input type="hidden" name="stx" value="">
+        <input type="hidden" name="spt" value="">
+        <input type="hidden" name="sca" value="">
+        <input type="hidden" name="sst" value="wr_num, wr_reply">
+        <input type="hidden" name="sod" value="">
+        <input type="hidden" name="page" value="1">
+        <input type="hidden" name="sw" value="">
+    
+        <!-- 게시판 페이지 정보 및 버튼 시작 { -->
+        <div id="bo_btn_top">
+            <div id="bo_list_total">
+                <span>Total 1건</span>
+                1 페이지
             </div>
-            <button type="button" class="bo_sch_cls" title="닫기"><i class="fa fa-times" aria-hidden="true"></i><span class="sound_only">닫기</span></button>
-            </form>
-        </fieldset>
-        <div class="bo_sch_bg"></div>
-    </div>
-    <script>
-    jQuery(function($){
-        // 게시판 검색
-        $(".btn_bo_sch").on("click", function() {
-            $(".bo_sch_wrap").toggle();
-        })
-        $('.bo_sch_bg, .bo_sch_cls').click(function(){
-            $('.bo_sch_wrap').hide();
+    
+            <ul class="btn_bo_user">
+                                        <li>
+                    <button type="button" class="btn_bo_sch btn_b01 btn" title="게시판 검색"><i class="fa fa-search" aria-hidden="true"></i><span class="sound_only">게시판 검색</span></button>
+                </li>
+                <li><a href="/board/write/free" class="btn_b01 btn" title="글쓰기"><i class="fa fa-pencil" aria-hidden="true"></i><span class="sound_only">글쓰기</span></a></li>        	        </ul>
+        </div>
+        <!-- } 게시판 페이지 정보 및 버튼 끝 -->
+                
+        <div class="tbl_head01 tbl_wrap">
+            <table>
+            <caption>자유게시판 목록</caption>
+            <thead>
+            <tr>
+                            <th scope="col">번호</th>
+                <th scope="col">제목</th>
+                <th scope="col">글쓴이</th>
+                <th scope="col"><a href="/board/free?sop=and&amp;sst=wr_hit&amp;sod=desc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">조회 </a></th>
+                                        <th scope="col"><a href="/board/free?sop=and&amp;sst=wr_datetime&amp;sod=desc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">날짜  </a></th>
+            </tr>
+            </thead>
+            <tbody>
+                {% for write in writes %}
+                    <tr class=" even">
+                            <td class="td_num2">{{ write.wr_num }}</td>
+    
+                <td class="td_subject" style="padding-left:0px">
+                                    <div class="bo_tit">
+                        <a href="/board/free/{{ write.wr_id }}">{{ write.wr_subject }}</a></div>
+                </td>
+                <td class="td_name sv_use"><span class="sv_member">{{ write.wr_nick }}</span></td>
+                <td class="td_num">1</td>
+                                        <td class="td_datetime">{{ write.wr_datetime[2:10] }}</td>
+    
+                </tr>
+                {% endfor %}   
+                            </tbody>
+            </table>
+        </div>
+        <!-- 페이지 -->
+            <!-- 페이지 -->
+        
+            <div class="bo_fx">
+                    <ul class="btn_bo_user">
+                                        <li><a href="/board/write/free" class="btn_b01 btn" title="글쓰기"><i class="fa fa-pencil" aria-hidden="true"></i><span class="sound_only">글쓰기</span></a></li>        </ul>	
+                </div>
+           
+        </form>
+    
+        <!-- 게시판 검색 시작 { -->
+        <div class="bo_sch_wrap">
+            <fieldset class="bo_sch">
+                <h3>검색</h3>
+                <form name="fsearch" method="get">
+                <input type="hidden" name="bo_table" value="free">
+                <input type="hidden" name="sca" value="">
+                <input type="hidden" name="sop" value="and">
+                <label for="sfl" class="sound_only">검색대상</label>
+                <select name="sfl" id="sfl">
+                    <option value="wr_subject" >제목</option><option value="wr_content" >내용</option><option value="wr_subject||wr_content" >제목+내용</option><option value="wr_name,1" >글쓴이</option><option value="wr_name,0" >글쓴이(코)</option>            </select>
+                <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
+                <div class="sch_bar">
+                    <input type="text" name="stx" value="" required id="stx" class="sch_input" size="25" maxlength="20" placeholder=" 검색어를 입력해주세요">
+                    <button type="submit" value="검색" class="sch_btn"><i class="fa fa-search" aria-hidden="true"></i><span class="sound_only">검색</span></button>
+                </div>
+                <button type="button" class="bo_sch_cls" title="닫기"><i class="fa fa-times" aria-hidden="true"></i><span class="sound_only">닫기</span></button>
+                </form>
+            </fieldset>
+            <div class="bo_sch_bg"></div>
+        </div>
+        <script>
+        jQuery(function($){
+            // 게시판 검색
+            $(".btn_bo_sch").on("click", function() {
+                $(".bo_sch_wrap").toggle();
+            })
+            $('.bo_sch_bg, .bo_sch_cls').click(function(){
+                $('.bo_sch_wrap').hide();
+            });
         });
-    });
-    </script>
-    <!-- } 게시판 검색 끝 --> 
-</div>
+        </script>
+        <!-- } 게시판 검색 끝 --> 
+    </div>
+    
+    
+    <!-- } 게시판 목록 끝 -->
+    
+
+{% endblock %}

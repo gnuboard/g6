@@ -1,11 +1,11 @@
-{% extends "base.html" %}
+{% extends "admin/base.html" %}
 
 {% block title %}
     게시판관리
 {% endblock %}
 
 {% block content %}
-<form name="fboardlist" id="fboardlist" action="/admin/board_list_update/" onsubmit="return fboardlist_submit(this);" method="post">
+<form name="fboardlist" id="fboardlist" action="/admin/board_list_update" onsubmit="return fboardlist_submit(this);" method="post">
     <input type="hidden" name="sst" value="a.gr_id, a.bo_table">
     <input type="hidden" name="sod" value="asc">
     <input type="hidden" name="sfl" value="">
@@ -22,18 +22,18 @@
                         <label for="chkall" class="sound_only">게시판 전체</label>
                         <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                     </th>
-                    <th scope="col"><a href="http://49.247.41.166/gnuboard5/adm/board_list.php?sst=a.gr_id&amp;sod=asc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">그룹</a></th>
-                    <th scope="col"><a href="http://49.247.41.166/gnuboard5/adm/board_list.php?sst=bo_table&amp;sod=asc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">TABLE</a></th>
-                    <th scope="col"><a href="http://49.247.41.166/gnuboard5/adm/board_list.php?sst=bo_skin&amp;sod=desc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">스킨</a></th>
-                    <th scope="col"><a href="http://49.247.41.166/gnuboard5/adm/board_list.php?sst=bo_mobile_skin&amp;sod=desc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">모바일<br>스킨</a></th>
-                    <th scope="col"><a href="http://49.247.41.166/gnuboard5/adm/board_list.php?sst=bo_subject&amp;sod=asc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">제목</a></th>
+                    <th scope="col"><a href="/admin/board_list?sst=a.gr_id&amp;sod=asc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">그룹</a></th>
+                    <th scope="col"><a href="/admin/board_list?sst=bo_table&amp;sod=asc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">TABLE</a></th>
+                    <th scope="col"><a href="/admin/board_list?sst=bo_skin&amp;sod=desc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">스킨</a></th>
+                    <th scope="col"><a href="/admin/board_list?sst=bo_mobile_skin&amp;sod=desc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">모바일<br>스킨</a></th>
+                    <th scope="col"><a href="/admin/board_list?sst=bo_subject&amp;sod=asc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">제목</a></th>
                     <th scope="col">읽기P<span class="sound_only">포인트</span></th>
                     <th scope="col">쓰기P<span class="sound_only">포인트</span></th>
                     <th scope="col">댓글P<span class="sound_only">포인트</span></th>
                     <th scope="col">다운P<span class="sound_only">포인트</span></th>
-                    <th scope="col"><a href="http://49.247.41.166/gnuboard5/adm/board_list.php?sst=bo_use_sns&amp;sod=asc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">SNS<br>사용</a></th>
-                    <th scope="col"><a href="http://49.247.41.166/gnuboard5/adm/board_list.php?sst=bo_use_search&amp;sod=asc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">검색<br>사용</a></th>
-                    <th scope="col"><a href="http://49.247.41.166/gnuboard5/adm/board_list.php?sst=bo_order&amp;sod=asc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">출력<br>순서</a></th>
+                    <th scope="col"><a href="/admin/board_list?sst=bo_use_sns&amp;sod=asc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">SNS<br>사용</a></th>
+                    <th scope="col"><a href="/admin/board_list?sst=bo_use_search&amp;sod=asc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">검색<br>사용</a></th>
+                    <th scope="col"><a href="/admin/board_list?sst=bo_order&amp;sod=asc&amp;sfl=&amp;stx=&amp;sca=&amp;page=1">출력<br>순서</a></th>
                     <th scope="col">접속기기</th>
                     <th scope="col">관리</th>
                 </tr>
@@ -122,7 +122,7 @@
     <div class="btn_fixed_top">
         <input type="submit" name="act_button" value="선택수정" onclick="document.pressed=this.value" class="btn_02 btn">
                     <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn_02 btn">
-            <a href="/admin/board_form/" id="bo_add" class="btn_01 btn">게시판 추가</a>
+            <a href="/admin/board_form" id="bo_add" class="btn_01 btn">게시판 추가</a>
             </div>
 
 </form>

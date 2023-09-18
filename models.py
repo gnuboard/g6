@@ -1,7 +1,8 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text
+from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import ArgumentError, InvalidRequestError
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -369,7 +370,7 @@ class WriteBaseModel(Base):
     wr_name = Column(String(255), nullable=False, default='')
     wr_email = Column(String(255), nullable=False, default='')
     wr_homepage = Column(String(255), nullable=False, default='')
-    wr_datetime = Column(String(30), nullable=False, default='')
+    wr_datetime = Column(DateTime, nullable=False,default='')
     wr_file = Column(Integer, nullable=False, default=0, server_default=text('0'))
     wr_last = Column(String(30), nullable=False, default='')
     wr_ip = Column(String(255), nullable=False, default='')
@@ -390,17 +391,17 @@ class WriteBaseModel(Base):
     
     # __table_args__['extend_existing'] = False
 
-    try:
-        __table_args__ = (
-            Index('idx_wr_num_reply', 'wr_num', 'wr_reply'),
-            Index('idex_wr_is_comment', 'wr_is_comment'),
-             {"extend_existing": True}
-        )
-    except ArgumentError:
-        # Index already exists
-        pass
-    # except InvalidRequestError:
-    #     print("InvalidRequestError")
+    # try:
+    #     __table_args__ = (
+    #         Index('idx_wr_num_reply', 'wr_num', 'wr_reply'),
+    #         Index('idex_wr_is_comment', 'wr_is_comment'),
+    #          {"extend_existing": True}
+    #     )
+    # except ArgumentError:
+    #     # Index already exists
+    #     pass
+    # # except InvalidRequestError:
+    # #     print("InvalidRequestError")
     
     
 # Create a composite index for wr_id and bo_table

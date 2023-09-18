@@ -1,11 +1,11 @@
-{% extends "base.html" %}
+{% extends "admin/base.html" %}
 
 {% block title %}
     게시판관리
 {% endblock %}
 
 {% block content %}
-<form name="fboardform" id="fboardform" action="/admin/board_form_update/" method="post" enctype="multipart/form-data">
+<form name="fboardform" id="fboardform" action="/admin/board_form_update" method="post" enctype="multipart/form-data">
 <input type="hidden" name="w" value="">
 <input type="hidden" name="sfl" value="">
 <input type="hidden" name="stx" value="">

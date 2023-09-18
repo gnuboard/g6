@@ -1,4 +1,5 @@
-import datetime
+import datetime 
+from datetime import timedelta
 import re
 from fastapi import FastAPI, Depends, Request, Form
 from fastapi.templating import Jinja2Templates
@@ -59,16 +60,12 @@ async def common(request: Request, call_next):
     
     if ss_mb_id:
         member = db.query(models.Member).filter(models.Member.mb_id == ss_mb_id).first()
-        # member = get_member(ss_mb_id)
         if member:
-            # 차단 되었거나, 탈퇴한 회원이면 세션 초기화
-            if member.mb_intercept_date or member.mb_leave_date:
-                # 세션에 저장한다
+            if member.mb_intercept_date or member.mb_leave_date: # 차단 되었거나, 탈퇴한 회원이면 세션 초기화
                 request.session["ss_mb_id"] = ""
                 member = None
         
-            # 오늘 처음 로그인 이라면
-            if member.mb_today_login[:10] != datetime.datetime.now().strftime("%Y%m%d"):
+            if member.mb_today_login[:10] != datetime.datetime.now().strftime("%Y%m%d"): # 오늘 처음 로그인 이라면
                 # 첫 로그인 포인트 지급
                 # insert_point(member.mb_id, config["cf_login_point"], current_date + " 첫로그인", "@login", member.mb_id, current_date)
                 # 오늘의 로그인이 될 수도 있으며 마지막 로그인일 수도 있음
@@ -80,15 +77,12 @@ async def common(request: Request, call_next):
             outlogin = templates.TemplateResponse("bbs/outlogin_after.html", {"request": request, "member": member})            
             
     else:
-        # 쿠키에 저장된 아이디에서 영문자,숫자,_ 20글자 얻는다.
         cookie_mb_id = request.cookies.get("ck_mb_id")
         if cookie_mb_id:
-            cookie_mb_id = re.sub("[^a-zA-Z0-9_]", "", cookie_mb_id)[:20]
-        # 최고관리자 아이디라면 자동로그인 금지
-        if cookie_mb_id and cookie_mb_id.lower() != config.cf_admin.lower():
+            cookie_mb_id = re.sub("[^a-zA-Z0-9_]", "", cookie_mb_id)[:20] # 쿠키에 저장된 아이디에서 영문자,숫자,_ 20글자 얻는다.
+        if cookie_mb_id and cookie_mb_id.lower() != config.cf_admin.lower(): # 최고관리자 아이디라면 자동로그인 금지
             member = db.query(models.Member).filter(models.Member.mb_id == cookie_mb_id).first()
-            # 차단 했거나 탈퇴한 회원이 아니면
-            if member and not (member.mb_intercept_date or member.mb_leave_date):
+            if member and not (member.mb_intercept_date or member.mb_leave_date): # 차단 했거나 탈퇴한 회원이 아니면
                 # 메일인증을 사용하고 메일인증한 시간이 있다면, 년도만 체크하여 시간이 있음을 확인
                 if config.cf_use_email_certify and member.mb_email_certify[:2] != "00":
                     ss_mb_key  = session_member_key(request, member)
@@ -128,9 +122,76 @@ def read_root():
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request, response: Response, db: Session = Depends(get_db)):
-    # 캐시 제어 헤더 설정 (캐시된 페이지를 보여주지 않고 새로운 페이지를 보여줌)
-    response.headers["Cache-Control"] = "no-store"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
     
-    return templates.TemplateResponse("index.html", {"request": request, "outlogin": request.state.context["outlogin"]})
+    # latests = {}
+    # boards = db.query(models.Board).all()
+    # for board in boards:
+    #     models.Write = dynamic_create_write_table(board.bo_table)
+    #     writes = db.query(models.Write).order_by(models.Write.wr_num).limit(5).all()
+    #     # for write in writes:
+    #     #     print(write.__dict__)
+    #     writes.bo_table = board.bo_table
+    #     writes.bo_subject = board.bo_subject
+    #     latests[board.bo_table] = writes
+        
+    #     latests = templates.TemplateResponse("latest/basic.html", {"request": request, "latests": latests})
+        
+    # request.state.context["latests"] = latests
+    
+    # # return templates.TemplateResponse("index.html", {"request": request, "outlogin": request.state.context["outlogin"]})
+    # return templates.TemplateResponse("index.html", request.state.context)
+    
+    return templates.TemplateResponse("index.html", 
+        {
+            "request": request,
+            "outlogin": request.state.context["outlogin"],
+            "latest": latest,        
+        })
+
+def latest(skin_dir='', bo_table='', rows=10, subject_len=40, request: Request = None):
+
+    if not skin_dir:
+        skin_dir = 'basic'
+    
+    db = SessionLocal()
+    board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
+    
+    models.Write = dynamic_create_write_table(bo_table)
+    writes = db.query(models.Write).filter(models.Write.wr_is_comment == False).order_by(models.Write.wr_num).limit(rows).all()
+    for write in writes:
+        write.is_notice = write.wr_id in board.bo_notice.split(",")
+        write.subject = write.wr_subject[:subject_len]
+        write.icon_hot = write.wr_hit >= 100
+        write.icon_new = write.wr_datetime > (datetime.datetime.now() - timedelta(days=1))
+        write.icon_file = write.wr_file
+        write.icon_link = write.wr_link1 or write.wr_link2
+        write.icon_reply = write.wr_reply
+    
+    context = {
+        "request": request,
+        "writes": writes,
+        "bo_table": bo_table,
+        "bo_subject": board.bo_subject,
+    }
+        
+    template = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
+    return template.body.decode("utf-8")
+
+
+# def latest(skin_dir='', bo_table='', rows=10, subject_len=40):
+#     '''
+#     최근 게시물을 반환하는 함수
+#     '''
+#     if not skin_dir:
+#         skin_dir = 'basic'
+        
+#     db = SessionLocal()
+#     board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
+    
+#     models.Write = dynamic_create_write_table(bo_table)
+#     writes = db.query(models.Write).order_by(models.Write.wr_num).limit(rows).all()
+    
+#     writes.bo_table = board.bo_table
+#     writes.bo_subject = board.bo_subject
+    
+#     return writes    

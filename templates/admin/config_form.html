@@ -1,13 +1,12 @@
-{% extends "base.html" %}
+{% extends "admin/base.html" %}
 
 {% block title %}
     기본환경설정
 {% endblock %}
 
 {% block content %}
-<!-- <form name="fconfigform" id="fconfigform" method="post" onsubmit="return fconfigform_submit(this);"> -->
-<form name="fconfigform" id="fconfigform" method="post" action="/admin/config_form_update/">
-    <!-- <input type="hidden" name="token" value="" id="token"> -->
+<form name="fconfigform" id="fconfigform" method="post" action="/admin/config_form_update/" onsubmit="return fconfigform_submit(this);">
+    <input type="hidden" name="token" value="" id="token">
 
     <section id="anc_cf_basic">
         <h2 class="h2_frm">홈페이지 기본환경 설정</h2>
@@ -38,11 +37,11 @@
                 <tbody>
                     <tr>
                         <th scope="row"><label for="cf_title">홈페이지 제목<strong class="sound_only">필수</strong></label></th>
-                        <td colspan="3"><input type="text" name="cf_title" value="{{ config.cf_title }}" id="cf_title" class="required frm_input" size="40"></td>
+                        <td colspan="3"><input type="text" name="cf_title" value="{{ config.cf_title|safe }}" id="cf_title" class="required frm_input" size="40"></td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="cf_admin">최고관리자<strong class="sound_only">필수</strong></label></th>
-                        <td colspan="3"><select id="cf_admin" name="cf_admin"><option value="">선택안함</option><option value="admin" selected>admin</option></select></td>
+                        <td colspan="3">{{ get_member_id_select('cf_admin', 10, config.cf_admin, 'required')|safe }}</td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="cf_admin_email">관리자 메일 주소<strong class="sound_only">필수</strong></label></th>
@@ -139,7 +138,7 @@
                     <tr>
                         <th scope="row"><label for="cf_new_skin">최근게시물 스킨<strong class="sound_only">필수</strong></label></th>
                         <td>
-                            {{ get_skin_select('new', 'cf_new_skin', 'cf_new_skin', config.cf_new_skin, 'required')|safe }}
+                            {{ get_skin_select('new', 'cf_new_skin', config.cf_new_skin, 'required')|safe }}
                             <!-- <select id="cf_new_skin" name="cf_new_skin">
                             <option value="">선택</option>
                             <option value="theme/basic">(테마) basic</option>
@@ -198,10 +197,8 @@
                     <tr>
                         <th scope="row"><label for="cf_editor">에디터 선택</label></th>
                         <td colspan="3">
-                            <span class="frm_info">http://49.247.41.166/gnuboard5/plugin/editor 밑의 DHTML 에디터 폴더를 선택합니다.</span>                            <select name="cf_editor" id="cf_editor">
-                                <option value="">사용안함</option><option value="cheditor5">cheditor5</option>
-<option value="smarteditor2" selected="selected">smarteditor2</option>
-                            </select>
+                            <span class="frm_info">/plugin/editor 밑의 DHTML 에디터 폴더를 선택합니다.</span>                            
+                                {{ get_editor_select('cf_editor', config.cf_editor)|safe }}
                         </td>
                     </tr>
                     <tr>

@@ -3,41 +3,57 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import MetaData, Table
 from sqlalchemy.orm import Session
-from database import get_db, engine
-# from models import create_dynamic_write_table
+from database import SessionLocal, get_db, engine
+# from models import create_dynamic_create_write_table
 import models 
-from common import dynamic_write_table
+from common import dynamic_create_write_table
 from jinja2 import Environment, FileSystemLoader
 import random
 import os
 
-env = Environment(loader=FileSystemLoader("templates/admin"))
-env.globals['randint'] = random.randint
-
 router = APIRouter()
-
-templates = Jinja2Templates(directory="templates/admin")
-
+templates = Jinja2Templates(directory="templates")
 
 @router.get("/")
 def base(request: Request, db: Session = Depends(get_db)):
-    template = env.get_template("index.html")
-    render = template.render(request=request)
-    return templates.TemplateResponse(template, {"request": request})
+    # template = env.get_template("index.html")
+    # render = template.render(request=request)
+    # return templates.TemplateResponse(template, {"request": request})
+    return templates.TemplateResponse("admin/index.html", {"request": request})
 
 
-def get_skin_select(skin_gubun, id, name, selected='', event=''):
+def get_skin_select(skin_gubun, id, selected='', event=''):
     skin_dir = f"{skin_gubun}"
     skin_path = f"templates/{skin_dir}"
-    skin_list = []
-    skin_list.append(f'<select id="{id}" name="{name}" {event}>')
-    skin_list.append(f'<option value="">선택</option>')
+    select_options = []
+    select_options.append(f'<select id="{id}" name="{id}" {event}>')
+    select_options.append(f'<option value="">선택</option>')
     for skin in os.listdir(skin_path):
         if os.path.isdir(f"{skin_path}/{skin}"):
-            skin_list.append(f'<option value="{skin}" {"selected" if skin == selected else ""}>{skin}</option>')
-    skin_list.append('</select>')
-    return ''.join(skin_list)
+            select_options.append(f'<option value="{skin}" {"selected" if skin == selected else ""}>{skin}</option>')
+    select_options.append('</select>')
+    return ''.join(select_options)
 
+def get_editor_select(id, selected=''):
+    select_options = []
+    select_options.append(f'<select id="{id}" name="{id}">')
+    select_options.append(f'<option value="">사용안함</option>')
+    for editor in os.listdir("static/js"):
+        if os.path.isdir(f"static/editor/{editor}"):
+            select_options.append(f'<option value="{editor} {"selected" if editor == selected else ""}">{editor}</option>')
+    select_options.append('</select>')
+    return ''.join(select_options)
+
+# 회원아이디를 SELECT 형식으로 얻음
+def get_member_id_select(id, level, selected = "", event = ""):
+    db = SessionLocal()
+    members = db.query(models.Member).filter(models.Member.mb_level >= level).all()
+    select_options = []
+    select_options.append(f'<select id="{id}" name="{id}" {event}><option value="">선택안함</option>')
+    for member in members:
+        select_options.append(f'<option value="{member.mb_id}" {"selected" if member.mb_id == selected else ""}>{member.mb_id}</option>')
+    select_options.append('</select>')
+    return ''.join(select_options)
 
 from starlette.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -59,13 +75,13 @@ def verify_jwt_token(token: str):
     
 security = HTTPBearer()
 
-@router.get("/ajax_token/")
+@router.get("/ajax_token")
 def generate_token():
     token_data = random.randint(1, 1000)
     token = create_jwt_token(token_data)
     return {"admin_csrf_token_key": token}
 
-@router.post("/submit_form/")
+@router.post("/submit_form")
 def submit_form(token: HTTPAuthorizationCredentials = Depends(security), form_data: str = Form(...)):
     decoded_token = verify_jwt_token(token.credentials)
     if decoded_token.get("form_data") != form_data:
@@ -73,51 +89,64 @@ def submit_form(token: HTTPAuthorizationCredentials = Depends(security), form_da
     return {"message": "Form submitted successfully!"}
     
 
-@router.get("/config_form/")
+@router.get("/config_form")
 def config_form(request: Request, db: Session = Depends(get_db)):
     '''
     기본환경설정
     '''
     config = db.query(models.Config).first()
-    return templates.TemplateResponse("config_form.html", {"request": request, "config": config, "get_skin_select": get_skin_select})
+    return templates.TemplateResponse("admin/config_form.html", 
+        {
+            "request": request, 
+            "config": config, 
+            "get_member_id_select": get_member_id_select,
+            "get_skin_select": get_skin_select, 
+            "get_editor_select": get_editor_select,
+        })
     
-@router.post("/config_form_update/")  
+@router.post("/config_form_update")  
 def config_form_update(request: Request, db: Session = Depends(get_db),
                        cf_title: str = Form(...),
+                       cf_admin: str = Form(None),
                        cf_admin_email: str = Form(None),
                        cf_admin_email_name: str = Form(None),
                        cf_login_point: int = Form(None),
                        cf_memo_send_point: int = Form(None),
+                       cf_new_skin: str = Form(None),
+                       cf_editor: str = Form(None),
                        ):
     config = db.query(models.Config).first()
     config.cf_title = cf_title
+    config.cf_admin = cf_admin if cf_admin is not None else ""
     config.cf_admin_email = cf_admin_email if cf_admin_email is not None else ""
     config.cf_admin_email_name = cf_admin_email_name if cf_admin_email_name is not None else ""
     config.cf_login_point = cf_login_point if cf_login_point is not None else 0
     config.cf_memo_send_point = cf_memo_send_point if cf_memo_send_point is not None else 0
+    config.cf_new_skin = cf_new_skin if cf_new_skin is not None else ""
+    config.cf_editor = cf_editor if cf_editor is not None else ""
     # config = models.Config(cf_title=cf_title)
     # db.query(models.Config).update(request)
     db.commit()
     # return templates.TemplateResponse("config_form.html", {"request": request, "config": config})
-    return RedirectResponse("/admin/config_form/", status_code=303)
+    return RedirectResponse("/admin/config_form", status_code=303)
 
-@router.get("/board_list/")
+@router.get("/board_list")
 def board_list(request: Request, db: Session = Depends(get_db)):
     boards = db.query(models.Board).all()
-    return templates.TemplateResponse("board_list.html", {"request": request, "boards": boards})
+    return templates.TemplateResponse("admin/board_list.html", {"request": request, "boards": boards})
 
-@router.get("/board_form/")
+@router.get("/board_form")
 def board_form(request: Request, db: Session = Depends(get_db)):
-    return templates.TemplateResponse("board_form.html", {"request": request})
+    return templates.TemplateResponse("admin/board_form.html", {"request": request})
 
 @router.get("/board_form/{bo_table}")
 def board_form(bo_table: str, request: Request, db: Session = Depends(get_db)):
     board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
-    return templates.TemplateResponse("board_form.html", {"request": request, "board": board})
+    return templates.TemplateResponse("admin/board_form.html", {"request": request, "board": board})
 
-@router.post("/board_form_update/")  
+@router.post("/board_form_update")  
 def board_form_update(request: Request, db: Session = Depends(get_db),
                         bo_table: str = Form(...),
                         gr_id: str = Form(...),
@@ -221,17 +250,17 @@ def board_form_update(request: Request, db: Session = Depends(get_db),
     if (board):
         board.gr_id = gr_id
         board.bo_subject = bo_subject
-        board.bo_mobile_subject = bo_mobile_subject
+        board.bo_mobile_subject = bo_mobile_subject if bo_mobile_subject is not None else ""
         board.bo_device = bo_device
-        board.bo_admin = bo_admin
-        board.bo_category_list = bo_category_list
+        board.bo_admin = bo_admin if bo_admin is not None else ""
+        board.bo_category_list = bo_category_list if bo_category_list is not None else ""
         db.commit()
     else:
         board = models.Board(
             bo_table=bo_table,
             gr_id=gr_id,
             bo_subject=bo_subject if bo_subject is not None else "",
-            bo_mobile_subject=bo_mobile_subject,
+            bo_mobile_subject=bo_mobile_subject if bo_mobile_subject is not None else "",
             bo_device=bo_device,
             bo_admin=bo_admin if bo_admin is not None else "",
             bo_category_list=bo_category_list if bo_category_list is not None else "",
@@ -331,12 +360,12 @@ def board_form_update(request: Request, db: Session = Depends(get_db),
         
         # 새로운 게시판 테이블 생성
         # 지금 생성하지 않아도 자동으로 만들어짐
-        # DynamicModel = dynamic_write_table(bo_table)
+        # DynamicModel = dynamic_create_write_table(bo_table)
         
         # 처음 한번만 테이블을 생성한다.
-        dynamic_write_table(bo_table, True)
+        dynamic_create_write_table(bo_table, True)
         
-        # DynamicModel = create_dynamic_write_table(f"g5_write_{bo_table}")
+        # DynamicModel = create_dynamic_create_write_table(f"g5_write_{bo_table}")
 
         # # 게시판 글, 댓글 테이블 생성
         # metadata = MetaData()
@@ -355,4 +384,4 @@ def board_form_update(request: Request, db: Session = Depends(get_db),
         #     if data:
         #         conn.execute(new_table.insert(), data)
                 
-    return RedirectResponse("/admin/board_list/", status_code=303)
+    return RedirectResponse("admin/board_list", status_code=303)

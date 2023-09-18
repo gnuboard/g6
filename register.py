@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -12,7 +12,12 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 @router.get("/register")
-def get_register(request: Request, db: Session = Depends(get_db)):
+def get_register(request: Request, response: Response, db: Session = Depends(get_db)):
+    # 캐시 제어 헤더 설정 (캐시된 페이지를 보여주지 않고 새로운 페이지를 보여줌)
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    
     # config = db.query(models.Config).first()
     request.session["ss_agree"] = ""
     request.session["ss_agree2"] = ""

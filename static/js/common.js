@@ -729,26 +729,26 @@ function get_write_token(bo_table)
 
 $(function() {
     $(document).on("click", "form[name=fwrite] input:submit, form[name=fwrite] button:submit, form[name=fwrite] input:image", function() {
-        var f = this.form;
+        // var f = this.form;
 
-        if (typeof(f.bo_table) == "undefined") {
-            return;
-        }
+        // if (typeof(f.bo_table) == "undefined") {
+        //     return;
+        // }
 
-        var bo_table = f.bo_table.value;
-        var token = get_write_token(bo_table);
+        // var bo_table = f.bo_table.value;
+        // var token = get_write_token(bo_table);
 
-        if(!token) {
-            alert("토큰 정보가 올바르지 않습니다.");
-            return false;
-        }
+        // if(!token) {
+        //     alert("토큰 정보가 올바르지 않습니다.");
+        //     return false;
+        // }
 
-        var $f = $(f);
+        // var $f = $(f);
 
-        if(typeof f.token === "undefined")
-            $f.prepend('<input type="hidden" name="token" value="">');
+        // if(typeof f.token === "undefined")
+        //     $f.prepend('<input type="hidden" name="token" value="">');
 
-        $f.find("input[name=token]").val(token);
+        // $f.find("input[name=token]").val(token);
 
         return true;
     });
