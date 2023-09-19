@@ -10,9 +10,13 @@ from common import *
 from jinja2 import Environment, FileSystemLoader
 import random
 import os
+from typing import List, Optional
+import socket
 
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
+# 파이썬 함수를 jinja2 에서 사용할 수 있도록 등록
+templates.env.globals['getattr'] = getattr
 
 @router.get("/")
 def base(request: Request, db: Session = Depends(get_db)):
@@ -23,7 +27,7 @@ def base(request: Request, db: Session = Depends(get_db)):
 
 
 # skin_gubun(new, search, connect, faq 등) 에 따른 스킨을 SELECT 형식으로 얻음
-def get_skin_select(skin_gubun, id, selected='', event=''):
+def get_skin_select(skin_gubun, id, selected, event=''):
     skin_path = TEMPLATES_DIR + f"/{skin_gubun}"
     html_code = []
     html_code.append(f'<select id="{id}" name="{id}" {event}>')
@@ -36,7 +40,7 @@ def get_skin_select(skin_gubun, id, selected='', event=''):
 
 
 # DHTML 에디터를 SELECT 형식으로 얻음
-def get_editor_select(id, selected=''):
+def get_editor_select(id, selected):
     html_code = []
     html_code.append(f'<select id="{id}" name="{id}">')
     html_code.append(f'<option value="">사용안함</option>')
@@ -48,13 +52,22 @@ def get_editor_select(id, selected=''):
 
 
 # 회원아이디를 SELECT 형식으로 얻음
-def get_member_id_select(id, level, selected='', event=''):
+def get_member_id_select(id, level, selected, event=''):
     db = SessionLocal()
     members = db.query(models.Member).filter(models.Member.mb_level >= level).all()
     html_code = []
     html_code.append(f'<select id="{id}" name="{id}" {event}><option value="">선택안함</option>')
     for member in members:
         html_code.append(f'<option value="{member.mb_id}" {"selected" if member.mb_id == selected else ""}>{member.mb_id}</option>')
+    html_code.append('</select>')
+    return ''.join(html_code)
+
+# 회원레벨을 SELECT 형식으로 얻음
+def get_member_level_select(id: str, start: int, end: int, selected: int, event=''):
+    html_code = []
+    html_code.append(f'<select id="{id}" name="{id}" {event}>')
+    for i in range(start, end+1):
+        html_code.append(f'<option value="{i}" {"selected" if i == selected else ""}>{i}</option>')
     html_code.append('</select>')
     return ''.join(html_code)
 
@@ -77,6 +90,26 @@ def get_selected(field_value, value):
     if isinstance(value, int):
         return ' selected="selected"' if (int(field_value) == int(value)) else ''
     return ' selected="selected"' if (field_value == value) else ''
+
+
+# function option_array_checked($option, $arr=array()){
+#     $checked = '';
+#     if( !is_array($arr) ){
+#         $arr = explode(',', $arr);
+#     }
+#     if ( !empty($arr) && in_array($option, (array) $arr) ){
+#         $checked = 'checked="checked"';
+#     }
+#     return $checked;
+# }
+# 위 코드를 파이썬으로 변환해줘
+def option_array_checked(option, arr=[]):
+    checked = ''
+    if not isinstance(arr, list):
+        arr = arr.split(',')
+    if arr and option in arr:
+        checked = 'checked="checked"'
+    return checked
 
 
 from starlette.responses import JSONResponse
@@ -118,15 +151,22 @@ def config_form(request: Request, db: Session = Depends(get_db)):
     '''
     기본환경설정
     '''
+    host_name = socket.gethostname()
+    host_ip = socket.gethostbyname(host_name)
+    
     config = db.query(models.Config).first()
     return templates.TemplateResponse("admin/config_form.html", 
         {
             "request": request, 
             "config": config, 
+            "host_name": host_name,
+            "host_ip": host_ip,
             "get_member_id_select": get_member_id_select,
             "get_skin_select": get_skin_select, 
             "get_editor_select": get_editor_select,
             "get_selected": get_selected,
+            "get_member_level_select": get_member_level_select,
+            "option_array_checked": option_array_checked,
         })
     
 @router.post("/config_form_update")  
@@ -195,9 +235,11 @@ def config_form_update(request: Request, db: Session = Depends(get_db),
                        cf_req_signature: int = Form(None),
                        cf_use_profile: int = Form(None),
                        cf_req_profile: int = Form(None),
+                       cf_register_level: int = Form(None),
                        cf_register_point: int = Form(None),
                        cf_leave_day: int = Form(None),
                        cf_use_member_icon: int = Form(None),
+                       cf_icon_level: int = Form(None),
                        cf_member_icon_size: int = Form(None),
                        cf_member_icon_width: int = Form(None),
                        cf_member_icon_height: int = Form(None),
@@ -234,7 +276,7 @@ def config_form_update(request: Request, db: Session = Depends(get_db),
                        cf_email_mb_member: int = Form(None),
                        cf_email_po_super_admin: int = Form(None),
                        cf_social_login_use: int = Form(None),
-                       cf_social_servicelist: str = Form(None),
+                       cf_social_servicelist: Optional[List[str]] = Form(None, alias="cf_social_servicelist[]"),
                        cf_naver_client_id: str = Form(None),
                        cf_naver_secret: str = Form(None),
                        cf_facebook_appid: str = Form(None),
@@ -273,6 +315,10 @@ def config_form_update(request: Request, db: Session = Depends(get_db),
                        cf_10_subj: str = Form(None),
                        cf_10: str = Form(None),
                        ):
+
+    # 배열로 넘어오는 자료를 문자열로 변환. 예) "naver,kakao,facebook,google,twitter,payco"
+    cf_social_servicelist = ','.join(cf_social_servicelist) if cf_social_servicelist else ''
+    
     config = db.query(models.Config).first()
     config.cf_title                 = cf_title
     config.cf_admin                 = cf_admin if cf_admin is not None else ""
@@ -338,9 +384,11 @@ def config_form_update(request: Request, db: Session = Depends(get_db),
     config.cf_req_signature         = cf_req_signature if cf_req_signature is not None else 0
     config.cf_use_profile           = cf_use_profile if cf_use_profile is not None else 0
     config.cf_req_profile           = cf_req_profile if cf_req_profile is not None else 0
+    config.cf_register_level        = cf_register_level if cf_register_level is not None else 0
     config.cf_register_point        = cf_register_point if cf_register_point is not None else 0
     config.cf_leave_day             = cf_leave_day if cf_leave_day is not None else 0
     config.cf_use_member_icon       = cf_use_member_icon if cf_use_member_icon is not None else 0
+    config.cf_icon_level            = cf_icon_level if cf_icon_level is not None else 0
     config.cf_member_icon_size      = cf_member_icon_size if cf_member_icon_size is not None else 0
     config.cf_member_icon_width     = cf_member_icon_width if cf_member_icon_width is not None else 0
     config.cf_member_icon_height    = cf_member_icon_height if cf_member_icon_height is not None else 0
