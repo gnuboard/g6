@@ -6,13 +6,13 @@ from sqlalchemy.orm import Session
 from database import SessionLocal, get_db, engine
 # from models import create_dynamic_create_write_table
 import models 
-from common import dynamic_create_write_table
+from common import *
 from jinja2 import Environment, FileSystemLoader
 import random
 import os
 
 router = APIRouter()
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 @router.get("/")
 def base(request: Request, db: Session = Depends(get_db)):
@@ -23,8 +23,7 @@ def base(request: Request, db: Session = Depends(get_db)):
 
 
 def get_skin_select(skin_gubun, id, selected='', event=''):
-    skin_dir = f"{skin_gubun}"
-    skin_path = f"templates/{skin_dir}"
+    skin_path = TEMPLATES_DIR + f"/{skin_gubun}"
     select_options = []
     select_options.append(f'<select id="{id}" name="{id}" {event}>')
     select_options.append(f'<option value="">선택</option>')
