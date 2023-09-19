@@ -8,14 +8,14 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 import datetime
-from common import hash_password, verify_password, dynamic_create_write_table
+from common import *
 
 from database import get_db
 import models
 
 router = APIRouter()
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 
 # all board list
