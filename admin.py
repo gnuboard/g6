@@ -22,37 +22,62 @@ def base(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse("admin/index.html", {"request": request})
 
 
+# skin_gubun(new, search, connect, faq 등) 에 따른 스킨을 SELECT 형식으로 얻음
 def get_skin_select(skin_gubun, id, selected='', event=''):
     skin_path = TEMPLATES_DIR + f"/{skin_gubun}"
-    select_options = []
-    select_options.append(f'<select id="{id}" name="{id}" {event}>')
-    select_options.append(f'<option value="">선택</option>')
+    html_code = []
+    html_code.append(f'<select id="{id}" name="{id}" {event}>')
+    html_code.append(f'<option value="">선택</option>')
     for skin in os.listdir(skin_path):
         if os.path.isdir(f"{skin_path}/{skin}"):
-            select_options.append(f'<option value="{skin}" {"selected" if skin == selected else ""}>{skin}</option>')
-    select_options.append('</select>')
-    return ''.join(select_options)
+            html_code.append(f'<option value="{skin}" {"selected" if skin == selected else ""}>{skin}</option>')
+    html_code.append('</select>')
+    return ''.join(html_code)
 
+
+# DHTML 에디터를 SELECT 형식으로 얻음
 def get_editor_select(id, selected=''):
-    select_options = []
-    select_options.append(f'<select id="{id}" name="{id}">')
-    select_options.append(f'<option value="">사용안함</option>')
-    for editor in os.listdir("static/js"):
-        if os.path.isdir(f"static/editor/{editor}"):
-            select_options.append(f'<option value="{editor} {"selected" if editor == selected else ""}">{editor}</option>')
-    select_options.append('</select>')
-    return ''.join(select_options)
+    html_code = []
+    html_code.append(f'<select id="{id}" name="{id}">')
+    html_code.append(f'<option value="">사용안함</option>')
+    for editor in os.listdir("static/plugin/editor"):
+        if os.path.isdir(f"static/plugin/editor/{editor}"):
+            html_code.append(f'<option value="{editor}" {"selected" if editor == selected else ""}>{editor}</option>')
+    html_code.append('</select>')
+    return ''.join(html_code)
+
 
 # 회원아이디를 SELECT 형식으로 얻음
-def get_member_id_select(id, level, selected = "", event = ""):
+def get_member_id_select(id, level, selected='', event=''):
     db = SessionLocal()
     members = db.query(models.Member).filter(models.Member.mb_level >= level).all()
-    select_options = []
-    select_options.append(f'<select id="{id}" name="{id}" {event}><option value="">선택안함</option>')
+    html_code = []
+    html_code.append(f'<select id="{id}" name="{id}" {event}><option value="">선택안함</option>')
     for member in members:
-        select_options.append(f'<option value="{member.mb_id}" {"selected" if member.mb_id == selected else ""}>{member.mb_id}</option>')
-    select_options.append('</select>')
-    return ''.join(select_options)
+        html_code.append(f'<option value="{member.mb_id}" {"selected" if member.mb_id == selected else ""}>{member.mb_id}</option>')
+    html_code.append('</select>')
+    return ''.join(html_code)
+
+# # 캡챠를 SELECT 형식으로 얻음
+# def get_captcha_select(id, selected=''):
+#     captcha_list = ["kcaptcha", "recaptcha", "recaptcha_inv"]
+#     select_options = []
+#     select_options.append(f'<select id="{id}" name="{id}" required class="required">')
+#     for captcha in captcha_list:
+#         if captcha == selected:
+#             select_options.append(f'<option value="{captcha}" selected>{captcha}</option>')
+#         else:
+#             select_options.append(f'<option value="{captcha}">{captcha}</option>')
+#     select_options.append('</select>')
+#     return ''.join(select_options)
+
+
+# 필드에 저장된 값과 기본 값을 비교하여 selected 를 반환
+def get_selected(field_value, value):
+    if isinstance(value, int):
+        return ' selected="selected"' if (int(field_value) == int(value)) else ''
+    return ' selected="selected"' if (field_value == value) else ''
+
 
 from starlette.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -101,6 +126,7 @@ def config_form(request: Request, db: Session = Depends(get_db)):
             "get_member_id_select": get_member_id_select,
             "get_skin_select": get_skin_select, 
             "get_editor_select": get_editor_select,
+            "get_selected": get_selected,
         })
     
 @router.post("/config_form_update")  

@@ -64,11 +64,13 @@
                     <tr>
                         <th scope="row"><label for="cf_login_point">로그인시 포인트<strong class="sound_only">필수</strong></label></th>
                         <td>
-                            <span class="frm_info">회원이 로그인시 하루에 한번만 적립</span>                            <input type="text" name="cf_login_point" value="{{ config.cf_login_point }}" id="cf_login_point" class="required frm_input" size="5"> 점
+                            <span class="frm_info">회원이 로그인시 하루에 한번만 적립</span>                            
+                            <input type="text" name="cf_login_point" value="{{ config.cf_login_point }}" id="cf_login_point" class="required frm_input" size="5"> 점
                         </td>
                         <th scope="row"><label for="cf_memo_send_point">쪽지보낼시 차감 포인트<strong class="sound_only">필수</strong></label></th>
                         <td>
-                            <span class="frm_info">양수로 입력하십시오. 0점은 쪽지 보낼시 포인트를 차감하지 않습니다.</span>                            <input type="text" name="cf_memo_send_point" value="{{ config.cf_memo_send_point }}" id="cf_memo_send_point" class="required frm_input" size="5"> 점
+                            <span class="frm_info">양수로 입력하십시오. 0점은 쪽지 보낼시 포인트를 차감하지 않습니다.</span>                            
+                            <input type="text" name="cf_memo_send_point" value="{{ config.cf_memo_send_point }}" id="cf_memo_send_point" class="required frm_input" size="5"> 점
                         </td>
                     </tr>
                     <tr>
@@ -215,61 +217,75 @@
                     <tr>
                         <th scope="row"><label for="cf_editor">에디터 선택</label></th>
                         <td colspan="3">
-                            <span class="frm_info">/plugin/editor 밑의 DHTML 에디터 폴더를 선택합니다.</span>                            
-                                {{ get_editor_select('cf_editor', config.cf_editor)|safe }}
+                            <span class="frm_info">/static/plugin/editor 밑의 DHTML 에디터 디렉토리를 선택합니다.</span>                            
+                            {{ get_editor_select('cf_editor', config.cf_editor)|safe }}
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="cf_captcha">캡챠 선택<strong class="sound_only">필수</strong></label></th>
                         <td colspan="3">
-                            <span class="frm_info">사용할 캡챠를 선택합니다.<br>1) Kcaptcha 는 그누보드5의 기본캡챠입니다. ( 문자입력 )<br>2) reCAPTCHA V2 는 구글에서 서비스하는 원클릭 형식의 간편한 캡챠입니다. ( 모바일 친화적 UI )<br>3) Invisible reCAPTCHA 는 구글에서 서비스하는 안보이는 형식의 캡챠입니다. ( 간혹 퀴즈를 풀어야 합니다. )<br></span>                            <select name="cf_captcha" id="cf_captcha" class="required">
-                                <option value="kcaptcha" >Kcaptcha</option>
-                                <option value="recaptcha" >reCAPTCHA V2</option>
-                                <option value="recaptcha_inv" >Invisible reCAPTCHA</option>
+                            <span class="frm_info">사용할 캡챠를 선택합니다.
+                                <br>1) Kcaptcha 는 그누보드5의 기본캡챠입니다. ( 문자입력 )
+                                <br>2) reCAPTCHA V2 는 구글에서 서비스하는 원클릭 형식의 간편한 캡챠입니다. ( 모바일 친화적 UI )
+                                <br>3) Invisible reCAPTCHA 는 구글에서 서비스하는 안보이는 형식의 캡챠입니다. ( 간혹 퀴즈를 풀어야 합니다. )<br>
+                            </span>                            
+                            <select name="cf_captcha" id="cf_captcha" required class="required">
+                                <option value="">선택하세요</option>
+                                <option value="kcaptcha" {{ get_selected(config.cf_captcha, 'kcaptcha')|safe }}>Kcaptcha</option>
+                                <option value="recaptcha" {{ get_selected(config.cf_captcha, 'recaptcha')|safe }}>reCAPTCHA V2</option>
+                                <option value="recaptcha_inv"  {{ get_selected(config.cf_captcha, 'recaptcha_inv')|safe }}>Invisible reCAPTCHA</option>
                             </select>
                         </td>
                     </tr>
                     <tr class="kcaptcha_mp3">
                         <th scope="row"><label for="cf_captcha_mp3">음성캡챠 선택<strong class="sound_only">필수</strong></label></th>
                         <td colspan="3">
-                            <span class="frm_info">kcaptcha 사용시 http://49.247.41.166/gnuboard5/plugin/kcaptcha/mp3 밑의 음성 폴더를 선택합니다.</span>                            <select name="cf_captcha_mp3" id="cf_captcha_mp3" class="required">
-                                <option value="">선택</option><option value="basic" selected="selected">basic</option>
-<option value="jmoon">jmoon</option>
+                            <span class="frm_info">kcaptcha 사용시 /static/plugin/kcaptcha/mp3 밑의 음성 디렉토리를 선택합니다.</span>                            
+                            <select name="cf_captcha_mp3" id="cf_captcha_mp3" class="required">
+                                <option value="">선택하세요</option>
+                                <option value="basic" {{ get_selected(config.cf_captcha_mp3, 'basic')|safe }}>basic</option>
+                                <option value="jmoon" {{ get_selected(config.cf_captcha_mp3, 'jmoon')|safe }}>jmoon</option>
                             </select>
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="cf_recaptcha_site_key">구글 reCAPTCHA Site key</label></th>
                         <td colspan="3">
-                            <span class="frm_info">reCAPTCHA V2와 Invisible reCAPTCHA 캡챠의 sitekey 와 secret 키는 동일하지 않고, 서로 발급받는 키가 다릅니다.</span>                            <input type="text" name="cf_recaptcha_site_key" value="" id="cf_recaptcha_site_key" class="frm_input" size="52"> <a href="https://www.google.com/recaptcha/admin" target="_blank" class="btn_frmline">reCAPTCHA 등록하기</a>
+                            <span class="frm_info">reCAPTCHA V2와 Invisible reCAPTCHA 캡챠의 sitekey 와 secret 키는 동일하지 않고, 서로 발급받는 키가 다릅니다.</span>                            
+                            <input type="text" name="cf_recaptcha_site_key" value="{{ config.cf_recaptcha_site_key }}" id="cf_recaptcha_site_key" class="frm_input" size="52"> 
+                            <a href="https://www.google.com/recaptcha/admin" target="_blank" class="btn_frmline">reCAPTCHA 등록하기</a>
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="cf_recaptcha_secret_key">구글 reCAPTCHA Secret key</label></th>
                         <td colspan="3">
-                            <input type="text" name="cf_recaptcha_secret_key" value="" id="cf_recaptcha_secret_key" class="frm_input" size="52">
+                            <input type="text" name="cf_recaptcha_secret_key" value="{{ config.cf_recaptcha_secret_key }}" id="cf_recaptcha_secret_key" class="frm_input" size="52">
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="cf_use_copy_log">복사, 이동시 로그</label></th>
                         <td colspan="3">
-                            <span class="frm_info">게시물 아래에 누구로 부터 복사, 이동됨 표시</span>                            <input type="checkbox" name="cf_use_copy_log" value="1" id="cf_use_copy_log" checked> 남김
+                            <span class="frm_info">게시물 아래에 누구로 부터 복사, 이동됨 표시</span>                            
+                            <input type="checkbox" name="cf_use_copy_log" value="1" id="cf_use_copy_log" {{ 'checked' if config.cf_use_copy_log else '' }}> 남김
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="cf_point_term">포인트 유효기간</label></th>
                         <td colspan="3">
-                            <span class="frm_info">기간을 0으로 설정시 포인트 유효기간이 적용되지 않습니다.</span>                            <input type="text" name="cf_point_term" value="0" id="cf_point_term" class="required frm_input" size="5"> 일
+                            <span class="frm_info">기간을 0으로 설정시 포인트 유효기간이 적용되지 않습니다.</span>                            
+                            <input type="text" name="cf_point_term" value="{{ config.cf_point_term }}" id="cf_point_term" class="required frm_input" size="5"> 일
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="cf_possible_ip">접근가능 IP</label></th>
                         <td>
-                            <span class="frm_info">입력된 IP의 컴퓨터만 접근할 수 있습니다.<br>123.123.+ 도 입력 가능. (엔터로 구분)</span>                            <textarea name="cf_possible_ip" id="cf_possible_ip"></textarea>
+                            <span class="frm_info">입력된 IP의 컴퓨터만 접근할 수 있습니다.<br>123.123.+ 도 입력 가능. (엔터로 구분)</span>                            
+                            <textarea name="cf_possible_ip" id="cf_possible_ip">{{ config.cf_possible_ip }}</textarea>
                         </td>
                         <th scope="row"><label for="cf_intercept_ip">접근차단 IP</label></th>
                         <td>
-                            <span class="frm_info">입력된 IP의 컴퓨터는 접근할 수 없음.<br>123.123.+ 도 입력 가능. (엔터로 구분)</span>                            <textarea name="cf_intercept_ip" id="cf_intercept_ip"></textarea>
+                            <span class="frm_info">입력된 IP의 컴퓨터는 접근할 수 없음.<br>123.123.+ 도 입력 가능. (엔터로 구분)</span>                            
+                            <textarea name="cf_intercept_ip" id="cf_intercept_ip">{{ config.cf_intercept_ip }}</textarea>
                         </td>
                     </tr>
                     <tr>
@@ -281,19 +297,27 @@
                     <tr>
                         <th scope="row"><label for="cf_add_meta">추가 메타태그</label></th>
                         <td colspan="3">
-                            <span class="frm_info">추가로 사용하실 meta 태그를 입력합니다.<br>관리자 페이지에서는 이 코드를 사용하지 않습니다.</span>                            <textarea name="cf_add_meta" id="cf_add_meta"></textarea>
+                            <span class="frm_info">추가로 사용하실 meta 태그를 입력합니다.<br>관리자 페이지에서는 이 코드를 사용하지 않습니다.</span>                            
+                            <textarea name="cf_add_meta" id="cf_add_meta">{{ config.cf_add_meta }}</textarea>
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="cf_syndi_token">네이버 신디케이션 연동키</label></th>
                         <td colspan="3">
-                            <span class="frm_info"><b>경고) curl이 지원되지 않아 네이버 신디케이션을 사용할수 없습니다.</b></span>                            <span class="frm_info">네이버 신디케이션 연동키(token)을 입력하면 네이버 신디케이션을 사용할 수 있습니다.<br>연동키는 <a href="http://webmastertool.naver.com/" target="_blank"><u>네이버 웹마스터도구</u></a> -> 네이버 신디케이션에서 발급할 수 있습니다.</span>                            <input type="text" name="cf_syndi_token" value="" id="cf_syndi_token" class="frm_input" size="70">
+                            <span class="frm_info"><b>경고) curl이 지원되지 않아 네이버 신디케이션을 사용할수 없습니다.</b></span>                            
+                            <span class="frm_info">네이버 신디케이션 연동키(token)을 입력하면 네이버 신디케이션을 사용할 수 있습니다.<br>
+                                연동키는 <a href="http://webmastertool.naver.com/" target="_blank"><u>네이버 웹마스터도구</u></a> -> 네이버 신디케이션에서 발급할 수 있습니다.
+                            </span>
+                            <input type="text" name="cf_syndi_token" value="{{ config.cf_syndi_token }}" id="cf_syndi_token" class="frm_input" size="70">
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="cf_syndi_except">네이버 신디케이션 제외게시판</label></th>
                         <td colspan="3">
-                            <span class="frm_info">네이버 신디케이션 수집에서 제외할 게시판 아이디를 | 로 구분하여 입력하십시오. 예) notice|adult<br>참고로 그룹접근사용 게시판, 글읽기 권한 2 이상 게시판, 비밀글은 신디케이션 수집에서 제외됩니다.</span>                            <input type="text" name="cf_syndi_except" value="" id="cf_syndi_except" class="frm_input" size="70">
+                            <span class="frm_info">네이버 신디케이션 수집에서 제외할 게시판 아이디를 | 로 구분하여 입력하십시오. 예) notice|adult<br>
+                                참고로 그룹접근사용 게시판, 글읽기 권한 2 이상 게시판, 비밀글은 신디케이션 수집에서 제외됩니다.
+                            </span>
+                            <input type="text" name="cf_syndi_except" value="{{ config.cf_syndi_except }}" id="cf_syndi_except" class="frm_input" size="70">
                         </td>
                     </tr>
                 </tbody>
@@ -334,55 +358,60 @@
                 <tbody>
                     <tr>
                         <th scope="row"><label for="cf_delay_sec">글쓰기 간격<strong class="sound_only">필수</strong></label></th>
-                        <td><input type="text" name="cf_delay_sec" value="30" id="cf_delay_sec" class="required numeric frm_input" size="3"> 초 지난후 가능</td>
+                        <td><input type="text" name="cf_delay_sec" value="{{ config.cf_delay_sec }}" id="cf_delay_sec" class="required numeric frm_input" size="3"> 초 지난후 가능</td>
                         <th scope="row"><label for="cf_link_target">새창 링크</label></th>
                         <td>
-                            <span class="frm_info">글내용중 자동 링크되는 타켓을 지정합니다.</span>                            <select name="cf_link_target" id="cf_link_target">
-                                <option value="_blank"  selected="selected">_blank</option>
-                                <option value="_self" >_self</option>
-                                <option value="_top" >_top</option>
-                                <option value="_new" >_new</option>
+                            <span class="frm_info">글내용중 자동 링크되는 타켓을 지정합니다.</span>                            
+                            <select name="cf_link_target" id="cf_link_target">
+                                <option value="_blank" {{ get_selected(config.cf_link_target, '_blank') }}>_blank</option>
+                                <option value="_self" {{ get_selected(config.cf_link_target, '_self') }}>_self</option>
+                                <option value="_top" {{ get_selected(config.cf_link_target, '_top') }}>_top</option>
+                                <option value="_new" {{ get_selected(config.cf_link_target, '_new') }}>_new</option>
                             </select>
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="cf_read_point">글읽기 포인트<strong class="sound_only">필수</strong></label></th>
-                        <td><input type="text" name="cf_read_point" value="0" id="cf_read_point" class="required frm_input" size="3"> 점</td>
+                        <td><input type="text" name="cf_read_point" value="{{ config.cf_read_point }}" id="cf_read_point" class="required frm_input" size="3"> 점</td>
                         <th scope="row"><label for="cf_write_point">글쓰기 포인트</label></th>
-                        <td><input type="text" name="cf_write_point" value="0" id="cf_write_point" class="required frm_input" size="3"> 점</td>
+                        <td><input type="text" name="cf_write_point" value="{{ config.cf_write_point }}" id="cf_write_point" class="required frm_input" size="3"> 점</td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="cf_comment_point">댓글쓰기 포인트</label></th>
-                        <td><input type="text" name="cf_comment_point" value="0" id="cf_comment_point" class="required frm_input" size="3"> 점</td>
+                        <td><input type="text" name="cf_comment_point" value="{{ config.cf_comment_point }}" id="cf_comment_point" class="required frm_input" size="3"> 점</td>
                         <th scope="row"><label for="cf_download_point">다운로드 포인트</label></th>
-                        <td><input type="text" name="cf_download_point" value="0" id="cf_download_point" class="required frm_input" size="3"> 점</td>
+                        <td><input type="text" name="cf_download_point" value="{{ config.cf_download_point }}" id="cf_download_point" class="required frm_input" size="3"> 점</td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="cf_search_part">검색 단위</label></th>
-                        <td colspan="3"><input type="text" name="cf_search_part" value="10000" id="cf_search_part" class="frm_input" size="4"> 건 단위로 검색</td>
+                        <td colspan="3"><input type="text" name="cf_search_part" value="{{ config.cf_search_part }}" id="cf_search_part" class="frm_input" size="4"> 건 단위로 검색</td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="cf_image_extension">이미지 업로드 확장자</label></th>
                         <td colspan="3">
-                            <span class="frm_info">게시판 글작성시 이미지 파일 업로드 가능 확장자. | 로 구분</span>                            <input type="text" name="cf_image_extension" value="gif|jpg|jpeg|png|webp" id="cf_image_extension" class="frm_input" size="70">
+                            <span class="frm_info">게시판 글작성시 이미지 파일 업로드 가능 확장자. | 로 구분</span>                            
+                            <input type="text" name="cf_image_extension" value="{{ config.cf_image_extension }}" id="cf_image_extension" class="frm_input" size="70">
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="cf_flash_extension">플래쉬 업로드 확장자</label></th>
                         <td colspan="3">
-                            <span class="frm_info">게시판 글작성시 플래쉬 파일 업로드 가능 확장자. | 로 구분</span>                            <input type="text" name="cf_flash_extension" value="swf" id="cf_flash_extension" class="frm_input" size="70">
+                            <span class="frm_info">게시판 글작성시 플래쉬 파일 업로드 가능 확장자. | 로 구분</span>                            
+                            <input type="text" name="cf_flash_extension" value="{{ config.cf_flash_extension }}" id="cf_flash_extension" class="frm_input" size="70">
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="cf_movie_extension">동영상 업로드 확장자</label></th>
                         <td colspan="3">
-                            <span class="frm_info">게시판 글작성시 동영상 파일 업로드 가능 확장자. | 로 구분</span>                            <input type="text" name="cf_movie_extension" value="asx|asf|wmv|wma|mpg|mpeg|mov|avi|mp3" id="cf_movie_extension" class="frm_input" size="70">
+                            <span class="frm_info">게시판 글작성시 동영상 파일 업로드 가능 확장자. | 로 구분</span>                            
+                            <input type="text" name="cf_movie_extension" value="{{ config.cf_movie_extension }}" id="cf_movie_extension" class="frm_input" size="70">
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="cf_filter">단어 필터링</label></th>
                         <td colspan="3">
-                            <span class="frm_info">입력된 단어가 포함된 내용은 게시할 수 없습니다. 단어와 단어 사이는 ,로 구분합니다.</span>                            <textarea name="cf_filter" id="cf_filter" rows="7">18아,18놈,18새끼,18뇬,18노,18것,18넘,개년,개놈,개뇬,개새,개색끼,개세끼,개세이,개쉐이,개쉑,개쉽,개시키,개자식,개좆,게색기,게색끼,광뇬,뇬,눈깔,뉘미럴,니귀미,니기미,니미,도촬,되질래,뒈져라,뒈진다,디져라,디진다,디질래,병쉰,병신,뻐큐,뻑큐,뽁큐,삐리넷,새꺄,쉬발,쉬밸,쉬팔,쉽알,스패킹,스팽,시벌,시부랄,시부럴,시부리,시불,시브랄,시팍,시팔,시펄,실밸,십8,십쌔,십창,싶알,쌉년,썅놈,쌔끼,쌩쑈,썅,써벌,썩을년,쎄꺄,쎄엑,쓰바,쓰발,쓰벌,쓰팔,씨8,씨댕,씨바,씨발,씨뱅,씨봉알,씨부랄,씨부럴,씨부렁,씨부리,씨불,씨브랄,씨빠,씨빨,씨뽀랄,씨팍,씨팔,씨펄,씹,아가리,아갈이,엄창,접년,잡놈,재랄,저주글,조까,조빠,조쟁이,조지냐,조진다,조질래,존나,존니,좀물,좁년,좃,좆,좇,쥐랄,쥐롤,쥬디,지랄,지럴,지롤,지미랄,쫍빱,凸,퍽큐,뻑큐,빠큐,ㅅㅂㄹㅁ</textarea>
+                            <span class="frm_info">입력된 단어가 포함된 내용은 게시할 수 없습니다. 단어와 단어 사이는 ,로 구분합니다.</span>                            
+                            <textarea name="cf_filter" id="cf_filter" rows="7">{{ config.cf_filter }}</textarea>
                         </td>
                     </tr>
                 </tbody>
