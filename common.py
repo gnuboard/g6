@@ -6,6 +6,8 @@ import models
 from models import WriteBaseModel
 from database import engine
 
+TEMPLATES_DIR = "templates/basic"
+
 def hash_password(password: str):
     '''
     비밀번호를 해시화하여 반환하는 함수
