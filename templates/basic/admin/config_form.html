@@ -137,6 +137,7 @@
                         <th scope="row"><label for="cf_mobile_pages">모바일 페이지 표시 수<strong class="sound_only">필수</strong></label></th>
                         <td><input type="text" name="cf_mobile_pages" value="{{ config.cf_mobile_pages }}" id="cf_mobile_pages" class="required numeric frm_input" size="3"> 페이지씩 표시</td>
                     </tr>
+                    {#
                     <tr>
                         <th scope="row"><label for="cf_new_skin">최근게시물 스킨<strong class="sound_only">필수</strong></label></th>
                         <td>
@@ -195,17 +196,22 @@
                     <tr>
                         <th scope="row"><label for="cf_faq_skin">FAQ 스킨<strong class="sound_only">필수</strong></label></th>
                         <td>
+                            {{ get_skin_select('faq', 'cf_faq_skin', config.cf_faq_skin, 'required')|safe }}
                             <select id="cf_faq_skin" name="cf_faq_skin">
-<option value="">선택</option><option value="theme/basic">(테마) basic</option>
-<option value="basic" selected="selected">basic</option>
-</select>                        </td>
+                            <option value="">선택</option><option value="theme/basic">(테마) basic</option>
+                            <option value="basic" selected="selected">basic</option>
+                            </select>
+                        </td>
                         <th scope="row"><label for="cf_mobile_faq_skin">모바일 FAQ 스킨<strong class="sound_only">필수</strong></label></th>
                         <td>
+                            {{ get_skin_select('faq', 'cf_mobile_faq_skin', config.cf_mobile_faq_skin, 'required')|safe }}
                             <select id="cf_mobile_faq_skin" name="cf_mobile_faq_skin">
-<option value="">선택</option><option value="theme/basic">(테마) basic</option>
-<option value="basic" selected="selected">basic</option>
-</select>                        </td>
+                            <option value="">선택</option><option value="theme/basic">(테마) basic</option>
+                            <option value="basic" selected="selected">basic</option>
+                            </select>
+                        </td>
                     </tr>
+                    #}
                     <tr>
                         <th scope="row"><label for="cf_editor">에디터 선택</label></th>
                         <td colspan="3">
