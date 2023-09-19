@@ -176,22 +176,3 @@ def latest(skin_dir='', bo_table='', rows=10, subject_len=40, request: Request =
         
     template = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
     return template.body.decode("utf-8")
-
-
-# def latest(skin_dir='', bo_table='', rows=10, subject_len=40):
-#     '''
-#     최근 게시물을 반환하는 함수
-#     '''
-#     if not skin_dir:
-#         skin_dir = 'basic'
-        
-#     db = SessionLocal()
-#     board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
-    
-#     models.Write = dynamic_create_write_table(bo_table)
-#     writes = db.query(models.Write).order_by(models.Write.wr_num).limit(rows).all()
-    
-#     writes.bo_table = board.bo_table
-#     writes.bo_subject = board.bo_subject
-    
-#     return writes    
