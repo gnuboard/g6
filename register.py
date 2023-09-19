@@ -9,7 +9,7 @@ import datetime
 import models
 
 router = APIRouter()
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 @router.get("/register")
 def get_register(request: Request, response: Response, db: Session = Depends(get_db)):

@@ -10,7 +10,7 @@ import models
 import hashlib
 
 router = APIRouter()
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 @router.get("/login")
 def login_form(request: Request):

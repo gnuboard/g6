@@ -14,7 +14,6 @@ from database import get_db
 import models
 
 router = APIRouter()
-
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 
