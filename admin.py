@@ -18,6 +18,10 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 # 파이썬 함수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.globals['getattr'] = getattr
 
+from admin import router as admin_config_router
+router.include_router(admin_config_router, prefix="/admin", tags=["admin"])
+
+
 @router.get("/")
 def base(request: Request, db: Session = Depends(get_db)):
     # template = env.get_template("index.html")
@@ -56,7 +60,7 @@ def get_member_id_select(id, level, selected, event=''):
     db = SessionLocal()
     members = db.query(models.Member).filter(models.Member.mb_level >= level).all()
     html_code = []
-    html_code.append(f'<select id="{id}" name="{id}" {event}><option value="">선택안함</option>')
+    html_code.append(f'<select id="{id}" name="{id}" {event}><option value="">선택하세요</option>')
     for member in members:
         html_code.append(f'<option value="{member.mb_id}" {"selected" if member.mb_id == selected else ""}>{member.mb_id}</option>')
     html_code.append('</select>')
@@ -288,7 +292,7 @@ def config_form_update(request: Request, db: Session = Depends(get_db),
                        cf_payco_client_id: str = Form(None),
                        cf_payco_secret: str = Form(None),
                        cf_add_script: str = Form(None),
-                       cf_sms_use: int = Form(None),
+                       cf_sms_use: str = Form(None),
                        cf_sms_type: str = Form(None),
                        cf_icode_id: str = Form(None),
                        cf_icode_pw: str = Form(None),
@@ -437,7 +441,7 @@ def config_form_update(request: Request, db: Session = Depends(get_db),
     config.cf_payco_client_id       = cf_payco_client_id if cf_payco_client_id is not None else ""
     config.cf_payco_secret          = cf_payco_secret if cf_payco_secret is not None else ""
     config.cf_add_script            = cf_add_script if cf_add_script is not None else ""
-    config.cf_sms_use               = cf_sms_use if cf_sms_use is not None else 0
+    config.cf_sms_use               = cf_sms_use if cf_sms_use is not None else ""
     config.cf_sms_type              = cf_sms_type if cf_sms_type is not None else ""
     config.cf_icode_id              = cf_icode_id if cf_icode_id is not None else ""
     config.cf_icode_pw              = cf_icode_pw if cf_icode_pw is not None else ""
