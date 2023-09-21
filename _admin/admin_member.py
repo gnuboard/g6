@@ -155,11 +155,11 @@ def member_form_update(request: Request, db: Session = Depends(get_db),
         
         chk_member = db.query(models.Member).filter(and_(models.Member.mb_id != mb_id, models.Member.mb_nick == mb_nick)).first()
         if chk_member is not None:
-            raise HTTPException(status_code=404, detail=f"{mb_nick} : 닉네임이 이미 존재합니다.")
+            raise HTTPException(status_code=404, detail=f"{mb_nick} : 닉네임이 이미 존재합니다. ({chk_member.mb_id})")
         
         chk_member = db.query(models.Member).filter(and_(models.Member.mb_id != mb_id, models.Member.mb_email == mb_email)).first()
         if chk_member:
-            raise HTTPException(status_code=404, detail=f"{mb_email} : 이메일이 이미 존재합니다.")
+            raise HTTPException(status_code=404, detail=f"{mb_email} : 이메일이 이미 존재합니다. ({chk_member.mb_id})")
         
         config = request.state.context['config']
         
