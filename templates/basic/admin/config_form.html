@@ -5,6 +5,10 @@
 {% endblock %}
 
 {% block content %}
+
+    {% block subtitle %}기본환경설정{% endblock %}
+
+
 <form name="fconfigform" id="fconfigform" method="post" action="/admin/config_form_update/" onsubmit="return fconfigform_submit(this);" enctype="application/x-www-form-urlencoded">
     <input type="hidden" name="token" value="" id="token">
 

@@ -18,8 +18,13 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 # # 파이썬 함수를 jinja2 에서 사용할 수 있도록 등록
 # # templates.env.globals['getattr'] = getattr
 
-from gnu6._admin.admin_config import router as admin_config_router
+from _admin.admin_config import router as admin_config_router
+from _admin.admin_member import router as admin_member_router
+from _admin.admin_board  import router as admin_board_router
+
 router.include_router(admin_config_router, prefix="", tags=["admin_config"])
+router.include_router(admin_member_router, prefix="", tags=["admin_member"])
+router.include_router(admin_board_router,  prefix="", tags=["admin_board"])
 
 
 @router.get("/")

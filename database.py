@@ -11,8 +11,9 @@ DATABASE_URL = f"mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mys
 engine = create_engine(
     DATABASE_URL, 
     convert_unicode=True, 
-    pool_size=10,   # adjust as needed
-    max_overflow=20 # adjust as needed)
+    pool_size=20,   # adjust as needed
+    max_overflow=40, # adjust as needed
+    pool_timeout=60
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, expire_on_commit=True)
 

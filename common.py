@@ -1,12 +1,18 @@
 import hashlib
+import os
 from fastapi import Request
 from passlib.context import CryptContext
 from sqlalchemy import Index
 import models
 from models import WriteBaseModel
-from database import engine
+from database import SessionLocal, engine
+import datetime
 
 TEMPLATES_DIR = "templates/basic"
+SERVER_TIME = datetime.datetime.now()
+TIME_YMDHIS = SERVER_TIME.strftime("%Y-%m-%d %H:%M:%S")
+TIME_YMD = TIME_YMDHIS[:10]
+    
 
 def hash_password(password: str):
     '''
@@ -71,4 +77,90 @@ def session_member_key(request: Request, member: models.Member):
     '''
     ss_mb_key = hashlib.md5((member.mb_datetime + get_real_client_ip(request) + request.headers.get('User-Agent')).encode()).hexdigest()
     return ss_mb_key
+
+# 회원레벨을 SELECT 형식으로 얻음
+def get_member_level_select(id: str, start: int, end: int, selected: int, event=''):
+    html_code = []
+    html_code.append(f'<select id="{id}" name="{id}" {event}>')
+    for i in range(start, end+1):
+        html_code.append(f'<option value="{i}" {"selected" if i == selected else ""}>{i}</option>')
+    html_code.append('</select>')
+    return ''.join(html_code)
+    
+# skin_gubun(new, search, connect, faq 등) 에 따른 스킨을 SELECT 형식으로 얻음
+def get_skin_select(skin_gubun, id, selected, event=''):
+    skin_path = TEMPLATES_DIR + f"/{skin_gubun}"
+    html_code = []
+    html_code.append(f'<select id="{id}" name="{id}" {event}>')
+    html_code.append(f'<option value="">선택</option>')
+    for skin in os.listdir(skin_path):
+        if os.path.isdir(f"{skin_path}/{skin}"):
+            html_code.append(f'<option value="{skin}" {"selected" if skin == selected else ""}>{skin}</option>')
+    html_code.append('</select>')
+    return ''.join(html_code)
+
+
+# DHTML 에디터를 SELECT 형식으로 얻음
+def get_editor_select(id, selected):
+    html_code = []
+    html_code.append(f'<select id="{id}" name="{id}">')
+    html_code.append(f'<option value="">사용안함</option>')
+    for editor in os.listdir("static/plugin/editor"):
+        if os.path.isdir(f"static/plugin/editor/{editor}"):
+            html_code.append(f'<option value="{editor}" {"selected" if editor == selected else ""}>{editor}</option>')
+    html_code.append('</select>')
+    return ''.join(html_code)
+
+
+# 회원아이디를 SELECT 형식으로 얻음
+def get_member_id_select(id, level, selected, event=''):
+    db = SessionLocal()
+    members = db.query(models.Member).filter(models.Member.mb_level >= level).all()
+    html_code = []
+    html_code.append(f'<select id="{id}" name="{id}" {event}><option value="">선택하세요</option>')
+    for member in members:
+        html_code.append(f'<option value="{member.mb_id}" {"selected" if member.mb_id == selected else ""}>{member.mb_id}</option>')
+    html_code.append('</select>')
+    return ''.join(html_code)
+
+
+# # 캡챠를 SELECT 형식으로 얻음
+# def get_captcha_select(id, selected=''):
+#     captcha_list = ["kcaptcha", "recaptcha", "recaptcha_inv"]
+#     select_options = []
+#     select_options.append(f'<select id="{id}" name="{id}" required class="required">')
+#     for captcha in captcha_list:
+#         if captcha == selected:
+#             select_options.append(f'<option value="{captcha}" selected>{captcha}</option>')
+#         else:
+#             select_options.append(f'<option value="{captcha}">{captcha}</option>')
+#     select_options.append('</select>')
+#     return ''.join(select_options)
+
+
+# 필드에 저장된 값과 기본 값을 비교하여 selected 를 반환
+def get_selected(field_value, value):
+    if isinstance(value, int):
+        return ' selected="selected"' if (int(field_value) == int(value)) else ''
+    return ' selected="selected"' if (field_value == value) else ''
+
+
+# function option_array_checked($option, $arr=array()){
+#     $checked = '';
+#     if( !is_array($arr) ){
+#         $arr = explode(',', $arr);
+#     }
+#     if ( !empty($arr) && in_array($option, (array) $arr) ){
+#         $checked = 'checked="checked"';
+#     }
+#     return $checked;
+# }
+# 위 코드를 파이썬으로 변환해줘
+def option_array_checked(option, arr=[]):
+    checked = ''
+    if not isinstance(arr, list):
+        arr = arr.split(',')
+    if arr and option in arr:
+        checked = 'checked="checked"'
+    return checked
     

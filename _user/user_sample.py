@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
-
-templates = Jinja2Templates(directory="templates/user_sample")
+from common import *
 
 router = APIRouter()
+
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 @router.get("/")
 def read_users():
@@ -11,4 +12,4 @@ def read_users():
 
 @router.get("/html")
 def read_users_html(request: Request):
-    return templates.TemplateResponse("sample.html", {"request": request, "username1": "gnu", "username2": "board"})
+    return templates.TemplateResponse("user_sample/sample.html", {"request": request, "username1": "gnu", "username2": "board"})

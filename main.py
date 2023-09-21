@@ -36,11 +36,11 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 # app.add_middleware(CustomMiddleware)    
 
 
-from gnu6._admin import router as admin_router
-from board import router as board_router
-from login import router as login_router
-from register import router as register_router
-import user_router 
+from _admin.admin import router as admin_router
+from _board.board import router as board_router
+from _login.login import router as login_router
+from _register.register import router as register_router
+import _user.user_router 
 
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
@@ -64,17 +64,19 @@ async def common(request: Request, call_next):
             if member.mb_intercept_date or member.mb_leave_date: # 차단 되었거나, 탈퇴한 회원이면 세션 초기화
                 request.session["ss_mb_id"] = ""
                 member = None
-        
-            if member.mb_today_login[:10] != datetime.datetime.now().strftime("%Y%m%d"): # 오늘 처음 로그인 이라면
-                # 첫 로그인 포인트 지급
-                # insert_point(member.mb_id, config["cf_login_point"], current_date + " 첫로그인", "@login", member.mb_id, current_date)
-                # 오늘의 로그인이 될 수도 있으며 마지막 로그인일 수도 있음
-                # 해당 회원의 접근일시와 IP 를 저장
-                member.mb_today_login = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-                member.mb_login_ip = request.client.host
-                db.commit()
+            else:
+                # if member.mb_today_login[:10] != datetime.datetime.now().strftime("%Y%m%d"): # 오늘 처음 로그인 이라면
+                formatted_date = member.mb_today_login.strftime("%Y-%m-%d")
+                if formatted_date != TIME_YMD: # 오늘 처음 로그인 이라면
+                    # 첫 로그인 포인트 지급
+                    # insert_point(member.mb_id, config["cf_login_point"], current_date + " 첫로그인", "@login", member.mb_id, current_date)
+                    # 오늘의 로그인이 될 수도 있으며 마지막 로그인일 수도 있음
+                    # 해당 회원의 접근일시와 IP 를 저장
+                    member.mb_today_login = TIME_YMDHIS
+                    member.mb_login_ip = request.client.host
+                    db.commit()
             
-            outlogin = templates.TemplateResponse("bbs/outlogin_after.html", {"request": request, "member": member})            
+                outlogin = templates.TemplateResponse("bbs/outlogin_after.html", {"request": request, "member": member})            
             
     else:
         cookie_mb_id = request.cookies.get("ck_mb_id")
@@ -94,8 +96,20 @@ async def common(request: Request, call_next):
     if not outlogin:
         outlogin = templates.TemplateResponse("bbs/outlogin_before.html", {"request": request})
         
+    request.state.sst = request.query_params.get("sst")
+    request.state.sod = request.query_params.get("sod")
+    request.state.sfl = request.query_params.get("sfl")
+    request.state.stx = request.query_params.get("stx")
+    request.state.page = request.query_params.get("page")
+    # request.state.w = request.query_params.get("w")
+        
     request.state.context = {
         "request": request,
+        # "sst": request.state.sst,
+        # "sod": request.state.sod,
+        # "sfl": request.state.sfl,
+        # "stx": request.state.stx,
+        # "page": request.state.page,
         "config": config,
         "member": member,
         "outlogin": outlogin.body.decode("utf-8"),
