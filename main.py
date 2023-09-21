@@ -36,7 +36,7 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 # app.add_middleware(CustomMiddleware)    
 
 
-from admin import router as admin_router
+from gnu6._admin import router as admin_router
 from board import router as board_router
 from login import router as login_router
 from register import router as register_router

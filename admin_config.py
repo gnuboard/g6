@@ -18,18 +18,6 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 # 파이썬 함수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.globals['getattr'] = getattr
 
-from admin import router as admin_config_router
-router.include_router(admin_config_router, prefix="", tags=["admin"])
-
-
-@router.get("/")
-def base(request: Request, db: Session = Depends(get_db)):
-    # template = env.get_template("index.html")
-    # render = template.render(request=request)
-    # return templates.TemplateResponse(template, {"request": request})
-    return templates.TemplateResponse("admin/index.html", {"request": request})
-
-
 # skin_gubun(new, search, connect, faq 등) 에 따른 스킨을 SELECT 형식으로 얻음
 def get_skin_select(skin_gubun, id, selected, event=''):
     skin_path = TEMPLATES_DIR + f"/{skin_gubun}"
