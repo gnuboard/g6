@@ -95,25 +95,31 @@ def member_form_update(request: Request, db: Session = Depends(get_db),
         
         chk_member = db.query(models.Member).filter(models.Member.mb_nick == mb_nick).first()
         if chk_member:
-            raise HTTPException(status_code=404, detail=f"{mb_nick} : 닉네임이 이미 존재합니다.")
+            raise HTTPException(status_code=404, detail=f"{mb_nick} : 닉네임이 이미 존재합니다. ({chk_member.mb_id})")
         
         chk_member = db.query(models.Member).filter(models.Member.mb_email == mb_email).first()
         if chk_member:
-            raise HTTPException(status_code=404, detail=f"{mb_email} : 이메일이 이미 존재합니다.")
+            raise HTTPException(status_code=404, detail=f"{mb_email} : 이메일이 이미 존재합니다. ({chk_member.mb_id})")
         
         if mb_certify_case and mb_certify:
             tmp_certify = mb_certify_case
             tmp_adult = mb_adult
         else:
             tmp_certify = ''
-            tmp_adult = 0                
+            tmp_adult = 0 
+            
+        if mb_password:
+            hashed_password = hash_password(mb_password)               
+        else:
+            hashed_password = hash_password(TIME_YMDHIS) # 비밀번호가 없다면 현재시간으로 해시값을 만듬 (알수없게 만드는게 목적)
+            
         member = models.Member(
             mb_id=mb_id, 
-            mb_password=hash_password(mb_password), 
+            mb_password=hashed_password, 
             mb_name=mb_name, 
             mb_nick=mb_nick,
             mb_level=mb_level,            
-            mb_nick_date=datetime.datetime.now(),
+            mb_nick_date=TIME_YMDHIS,
             mb_email=mb_email,
             mb_homepage=mb_homepage,
             mb_hp=mb_hp,
