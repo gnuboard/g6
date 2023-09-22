@@ -426,6 +426,7 @@ def board_list_update(request: Request, db: Session = Depends(get_db),
             board.bo_use_search = get_from_list(bo_use_search, i, 0)
             
             # checkbox 에 값을 집어 넣는것 까지 하다가 어느 정도 결과가 나와서 퇴근함 kagla 230922 17:50
+            # checkbox 에 value = 0, 1, 2, 3... n 으로 증가시켜야 함 (주의)
             
     #         board.bo_device = bo_device[i]
             db.commit()
