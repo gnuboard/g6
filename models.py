@@ -202,7 +202,7 @@ class Member(Base):
     mb_signature = Column(Text, nullable=False, default='')
     mb_recommend = Column(String(255), nullable=False, default='')
     mb_point = Column(Integer, nullable=False, default=0, server_default=text('0'))
-    mb_today_login = Column(DateTime, nullable=False, default='')
+    mb_today_login = Column(String(19), nullable=False, default='') # 오늘 접속일시 YYYY-MM-DD HH:MM:SS
     mb_login_ip = Column(String(255), nullable=False, default='')
     mb_datetime = Column(String(30), nullable=False, default='')
     mb_ip = Column(String(255), nullable=False, default='')
