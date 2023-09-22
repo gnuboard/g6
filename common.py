@@ -104,7 +104,10 @@ def get_skin_select(skin_gubun, id, selected, event=''):
 def get_editor_select(id, selected):
     html_code = []
     html_code.append(f'<select id="{id}" name="{id}">')
-    html_code.append(f'<option value="">사용안함</option>')
+    if id == 'bo_select_editor':
+        html_code.append(f'<option value="" {"selected" if selected == "" else ""}>기본환경설정의 에디터 사용</option>')
+    else:
+        html_code.append(f'<option value="">사용안함</option>')
     for editor in os.listdir("static/plugin/editor"):
         if os.path.isdir(f"static/plugin/editor/{editor}"):
             html_code.append(f'<option value="{editor}" {"selected" if editor == selected else ""}>{editor}</option>')
@@ -163,4 +166,53 @@ def option_array_checked(option, arr=[]):
     if arr and option in arr:
         checked = 'checked="checked"'
     return checked
-    
+
+
+# // 게시판 그룹을 SELECT 형식으로 얻음
+# function get_group_select($name, $selected='', $event='')
+# {
+#     global $g5, $is_admin, $member;
+
+#     $sql = " select gr_id, gr_subject from {$g5['group_table']} a ";
+#     if ($is_admin == "group") {
+#         $sql .= " left join {$g5['member_table']} b on (b.mb_id = a.gr_admin)
+#                   where b.mb_id = '{$member['mb_id']}' ";
+#     }
+#     $sql .= " order by a.gr_id ";
+
+#     $result = sql_query($sql);
+#     $str = "<select id=\"$name\" name=\"$name\" $event>\n";
+#     for ($i=0; $row=sql_fetch_array($result); $i++) {
+#         if ($i == 0) $str .= "<option value=\"\">선택</option>";
+#         $str .= option_selected($row['gr_id'], $selected, $row['gr_subject']);
+#     }
+#     $str .= "</select>";
+#     return $str;
+# }
+# function option_selected($value, $selected, $text='')
+# {
+#     if (!$text) $text = $value;
+#     if ($value == $selected)
+#         return "<option value=\"$value\" selected=\"selected\">$text</option>\n";
+#     else
+#         return "<option value=\"$value\">$text</option>\n";
+# }
+# php to python above code
+def get_group_select(id, selected='', event=''):
+    db = SessionLocal()
+    groups = db.query(models.Group).order_by(models.Group.gr_id).all()
+    str = f'<select id="{id}" name="{id}" {event}>\n'
+    for i, group in enumerate(groups):
+        if i == 0:
+            str += '<option value="">선택</option>'
+        str += option_selected(group.gr_id, selected, group.gr_subject)
+    str += '</select>'
+    return str
+
+def option_selected(value, selected, text=''):
+    if not text:
+        text = value
+    if value == selected:
+        return f'<option value="{value}" selected="selected">{text}</option>\n'
+    else:
+        return f'<option value="{value}">{text}</option>\n'

@@ -26,7 +26,7 @@ def member_form_add(request: Request, db: Session = Depends(get_db)):
     token = hash_password(hash_password("")) # 토큰값을 아무도 알수 없게 만듬
     request.session["token"] = token   
     
-    return templates.TemplateResponse("admin/member_form.html", {"request": request, "token": token })
+    return templates.TemplateResponse("admin/member_form.html", {"request": request, "member": None, "token": token })
 
 # 회원수정 폼
 @router.get("/member_form/{mb_id}")
@@ -51,8 +51,8 @@ def member_form_edit(mb_id: str, request: Request, db: Session = Depends(get_db)
 # DB등록 및 수정
 @router.post("/member_form_update")
 def member_form_update(request: Request, db: Session = Depends(get_db),
-                       mb_id: str = Form(...),
                        token: str = Form(...),
+                       mb_id: str = Form(...),
                        mb_password: str = Form(None),
                        mb_name: str = Form(None),
                        mb_nick: str = Form(None),
@@ -94,8 +94,10 @@ def member_form_update(request: Request, db: Session = Depends(get_db),
     if not token or token != ss_token:
         raise HTTPException(status_code=403, detail="Invalid token.")
     
-    # 수정의 경우 토큰값이 회원아이디로 만들어지므로 토큰값이 회원아이디와 다르다면 등록으로 처리 (회원아이디 변조시 등록으로 처리)
+    # 수정의 경우 토큰값이 회원아이디로 만들어지므로 토큰값이 회원아이디와 다르다면 등록으로 처리
+    # 회원아이디 변조시에도 등록으로 처리
     if not verify_password(mb_id, token): # 등록
+        
         chk_member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
         if chk_member:
             raise HTTPException(status_code=404, detail=f"{mb_id} : 회원아이디가 이미 존재합니다.")
@@ -180,6 +182,7 @@ def member_form_update(request: Request, db: Session = Depends(get_db),
         
         if mb_password:
             member.mb_password = hash_password(mb_password)
+            
         member.mb_name = mb_name if mb_name else ''
         member.mb_nick = mb_nick if mb_nick else ''
         member.mb_nick_date = TIME_YMD if mb_nick else ''

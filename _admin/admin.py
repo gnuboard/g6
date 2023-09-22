@@ -21,10 +21,12 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 from _admin.admin_config import router as admin_config_router
 from _admin.admin_member import router as admin_member_router
 from _admin.admin_board  import router as admin_board_router
+from _admin.admin_boardgroup import router as admin_boardgroup_router
 
 router.include_router(admin_config_router, prefix="", tags=["admin_config"])
 router.include_router(admin_member_router, prefix="", tags=["admin_member"])
 router.include_router(admin_board_router,  prefix="", tags=["admin_board"])
+router.include_router(admin_boardgroup_router,  prefix="", tags=["admin_boardgroup"])
 
 
 @router.get("/")

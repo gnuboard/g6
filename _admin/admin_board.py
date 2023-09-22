@@ -15,6 +15,13 @@ import socket
 
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates.env.globals['getattr'] = getattr
+templates.env.globals['get_selected'] = get_selected
+templates.env.globals['option_selected'] = option_selected
+templates.env.globals['get_skin_select'] = get_skin_select
+templates.env.globals['get_group_select'] = get_group_select
+templates.env.globals['get_editor_select'] = get_editor_select
+templates.env.globals['get_member_level_select'] = get_member_level_select
 
 @router.get("/board_list")
 def board_list(request: Request, db: Session = Depends(get_db)):
@@ -24,21 +31,40 @@ def board_list(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/board_form")
 def board_form(request: Request, db: Session = Depends(get_db)):
-    request.session["ss_board_form_bo_table"] = ""
-    return templates.TemplateResponse("admin/board_form.html", {"request": request})
+    token = hash_password(hash_password("")) # 토큰값을 아무도 알수 없게 만듬
+    request.session["token"] = token   
+    
+    context = {
+        "request": request,
+        "board": None,
+        "token": token,
+        "config": request.state.context['config']
+    }
+    return templates.TemplateResponse("admin/board_form.html", context)
 
 
 @router.get("/board_form/{bo_table}")
 def board_form(bo_table: str, request: Request, db: Session = Depends(get_db)):
     board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
     if not board:
-        raise HTTPException(status_code=404, detail="Board not found")
-    request.session["ss_board_form_bo_table"] = bo_table
-    return templates.TemplateResponse("admin/board_form.html", {"request": request, "board": board})
+        raise HTTPException(status_code=404, detail=f"{bo_table} Board is not found.")
+
+    # 토큰값을 게시판아이디로 만들어 세션에 저장하고 수정시 넘어오는 토큰값을 비교하여 수정 상태임을 확인
+    token = hash_password(bo_table)
+    request.session["token"] = token
+    
+    context = {
+        "request": request,
+        "board": board,
+        "token": token,
+        "config": request.state.context['config']
+    }
+    return templates.TemplateResponse("admin/board_form.html", context)
 
 
 @router.post("/board_form_update")  
 def board_form_update(request: Request, db: Session = Depends(get_db),
+                        token: str = Form(...),
                         bo_table: str = Form(...),
                         gr_id: str = Form(...),
                         bo_subject: str = Form(...),

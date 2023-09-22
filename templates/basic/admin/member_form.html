@@ -10,7 +10,7 @@
 
 {% block content %}
 
-<h1 id="container_title">회원 {{ '수정' if member is defined else '추가' }}</h1>
+<h1 id="container_title">회원 {{ '수정' if member else '추가' }}</h1>
 <div class="container_wr">
 <form name="fmember" id="fmember" action="/admin/member_form_update" onsubmit="return fmember_submit(this);" method="post" enctype="multipart/form-data">
 <input type="hidden" name="w" value="">
@@ -23,7 +23,7 @@
 
 <div class="tbl_frm01 tbl_wrap">
     <table>
-        <caption>회원 {{ '수정' if member is defined else '추가' }}</caption>
+        <caption>회원 {{ '수정' if member else '추가' }}</caption>
         <colgroup>
             <col class="grid_4">
             <col>
@@ -34,7 +34,7 @@
             <tr>
                 <th scope="row"><label for="mb_id">아이디<strong class="sound_only">필수</strong></label></th>
                 <td>
-                    {% if member is defined %}
+                    {% if member.mb_id %}
                         <input type="hidden" name="mb_id" value="{{ member.mb_id }}" id="mb_id">
                         <b>{{ member.mb_id }}</b>
                     {% else %}
@@ -44,7 +44,7 @@
                 <th scope="row"><label for="mb_password">비밀번호<strong class="sound_only">필수</strong></label></th>
                 <td>
                     <div>
-                    {% set mb_password_required = 'required' if member is not defined else '' %}
+                    {% set mb_password_required = 'required' if not member else '' %}
                     <input type="password" name="mb_password" id="mb_password" class="frm_input {{ mb_password_required}}" size="15" maxlength="20" {{ mb_password_required}}>
                     </div>
                     <div id="mb_password_captcha_wrap" style="display:none">
@@ -62,54 +62,54 @@
             </tr>
             <tr>
                 <th scope="row"><label for="mb_name">이름(실명)<strong class="sound_only">필수</strong></label></th>
-                <td><input type="text" name="mb_name" value="{{ member.mb_name if member is defined else '' }}" id="mb_name" required class="required frm_input" size="15" maxlength="20"></td>
+                <td><input type="text" name="mb_name" value="{{ member.mb_name }}" id="mb_name" required class="required frm_input" size="15" maxlength="20"></td>
                 <th scope="row"><label for="mb_nick">닉네임<strong class="sound_only">필수</strong></label></th>
-                <td><input type="text" name="mb_nick" value="{{ member.mb_nick if member is defined else '' }}" id="mb_nick" required class="required frm_input" size="15" maxlength="20"></td>
+                <td><input type="text" name="mb_nick" value="{{ member.mb_nick }}" id="mb_nick" required class="required frm_input" size="15" maxlength="20"></td>
             </tr>
             <tr>
                 <th scope="row"><label for="mb_level">회원 권한</label></th>
                 <td>
-                    {{ get_member_level_select('mb_level', 2, 10, member.mb_level if member is defined else '')|safe }}
+                    {{ get_member_level_select('mb_level', 2, 10, member.mb_level)|safe }}
                 </td>
                 <th scope="row">포인트</th>
                 <td><a href="/admin/point_list?sfl=mb_id&amp;stx=" target="_blank">0</a> 점</td>
             </tr>
             <tr>
                 <th scope="row"><label for="mb_email">E-mail<strong class="sound_only">필수</strong></label></th>
-                <td><input type="text" name="mb_email" value="{{ member.mb_email if member is defined else '' }}" id="mb_email" maxlength="100" required class="required frm_input email" size="30"></td>
+                <td><input type="text" name="mb_email" value="{{ member.mb_email }}" id="mb_email" maxlength="100" required class="required frm_input email" size="30"></td>
                 <th scope="row"><label for="mb_homepage">홈페이지</label></th>
-                <td><input type="text" name="mb_homepage" value="{{ member.mb_homepage if member is defined else '' }}" id="mb_homepage" class="frm_input" maxlength="255" size="15"></td>
+                <td><input type="text" name="mb_homepage" value="{{ member.mb_homepage }}" id="mb_homepage" class="frm_input" maxlength="255" size="15"></td>
             </tr>
             <tr>
                 <th scope="row"><label for="mb_hp">휴대폰번호</label></th>
-                <td><input type="text" name="mb_hp" value="{{ member.mb_hp if member is defined else '' }}" id="mb_hp" class="frm_input" size="15" maxlength="20"></td>
+                <td><input type="text" name="mb_hp" value="{{ member.mb_hp }}" id="mb_hp" class="frm_input" size="15" maxlength="20"></td>
                 <th scope="row"><label for="mb_tel">전화번호</label></th>
-                <td><input type="text" name="mb_tel" value="{{ member.mb_tel if member is defined else '' }}" id="mb_tel" class="frm_input" size="15" maxlength="20"></td>
+                <td><input type="text" name="mb_tel" value="{{ member.mb_tel }}" id="mb_tel" class="frm_input" size="15" maxlength="20"></td>
             </tr>
             <tr>
                 <th scope="row">본인확인방법</th>
                 <td colspan="3">
-                    <input type="radio" name="mb_certify_case" value="simple" id="mb_certify_sa" {{ 'checked' if member is defined and member.mb_certify == 'simple' else '' }}>
+                    <input type="radio" name="mb_certify_case" value="simple" id="mb_certify_sa" {{ 'checked' if member.mb_certify == 'simple' }}>
                     <label for="mb_certify_sa">간편인증</label>
-                    <input type="radio" name="mb_certify_case" value="hp" id="mb_certify_hp" {{ 'checked' if member is defined and member.mb_certify == 'hp' else '' }}>
+                    <input type="radio" name="mb_certify_case" value="hp" id="mb_certify_hp" {{ 'checked' if member.mb_certify == 'hp' }}>
                     <label for="mb_certify_hp">휴대폰</label>
-                    <input type="radio" name="mb_certify_case" value="ipin" id="mb_certify_ipin" {{ 'checked' if member is defined and member.mb_certify == 'ipin' else '' }}>
+                    <input type="radio" name="mb_certify_case" value="ipin" id="mb_certify_ipin" {{ 'checked' if member.mb_certify == 'ipin' }}>
                     <label for="mb_certify_ipin">아이핀</label>
                 </td>
             </tr>
             <tr>
                 <th scope="row">본인확인</th>
                 <td>
-                    <input type="radio" name="mb_certify" value="1" id="mb_certify_yes" {{ 'checked' if member is defined and member.mb_certify != '' else '' }}>
+                    <input type="radio" name="mb_certify" value="1" id="mb_certify_yes" {{ 'checked' if member.mb_certify }}>
                     <label for="mb_certify_yes">예</label>
-                    <input type="radio" name="mb_certify" value="0" id="mb_certify_no" {{ 'checked' if member is defined and member.mb_certify == '' else '' }}>
+                    <input type="radio" name="mb_certify" value="0" id="mb_certify_no" {{ 'checked' if not member.mb_certify }}>
                     <label for="mb_certify_no">아니오</label>
                 </td>
                 <th scope="row">성인인증</th>
                 <td>
-                    <input type="radio" name="mb_adult" value="1" id="mb_adult_yes" {{ 'checked' if member is defined and member.mb_adult == 1 else ''  }}>
+                    <input type="radio" name="mb_adult" value="1" id="mb_adult_yes" {{ 'checked' if member.mb_adult }}>
                     <label for="mb_adult_yes">예</label>
-                    <input type="radio" name="mb_adult" value="0" id="mb_adult_no" {{ 'checked' if member is defined and member.mb_adult == 0 else ''  }}>
+                    <input type="radio" name="mb_adult" value="0" id="mb_adult_no" {{ 'checked' if not member.mb_adult }}>
                     <label for="mb_adult_no">아니오</label>
                 </td>
             </tr>
@@ -117,14 +117,14 @@
                 <th scope="row">주소</th>
                 <td colspan="3" class="td_addr_line">
                     <label for="mb_zip" class="sound_only">우편번호</label>
-                    <input type="text" name="mb_zip" value="{{ member.mb_zip1 ~ member.mb_zip2 if member is defined else '' }}" id="mb_zip" class="frm_input readonly" size="5" maxlength="6">
+                    <input type="text" name="mb_zip" value="{{ member.mb_zip1 ~ member.mb_zip2 }}" id="mb_zip" class="frm_input readonly" size="5" maxlength="6">
                     <button type="button" class="btn_frmline" onclick="win_zip('fmember', 'mb_zip', 'mb_addr1', 'mb_addr2', 'mb_addr3', 'mb_addr_jibeon');">주소 검색</button><br>
-                    <input type="text" name="mb_addr1" value="{{ member.mb_addr1 if member is defined else '' }}" id="mb_addr1" class="frm_input readonly" size="60">
+                    <input type="text" name="mb_addr1" value="{{ member.mb_addr1 }}" id="mb_addr1" class="frm_input readonly" size="60">
                     <label for="mb_addr1">기본주소</label><br>
-                    <input type="text" name="mb_addr2" value="{{ member.mb_addr2 if member is defined else '' }}" id="mb_addr2" class="frm_input" size="60">
+                    <input type="text" name="mb_addr2" value="{{ member.mb_addr2 }}" id="mb_addr2" class="frm_input" size="60">
                     <label for="mb_addr2">상세주소</label>
                     <br>
-                    <input type="text" name="mb_addr3" value="{{ member.mb_addr3 if member is defined else '' }}" id="mb_addr3" class="frm_input" size="60">
+                    <input type="text" name="mb_addr3" value="{{ member.mb_addr3 }}" id="mb_addr3" class="frm_input" size="60">
                     <label for="mb_addr3">참고항목</label>
                     <input type="hidden" name="mb_addr_jibeon" value=""><br>
                 </td>
@@ -146,39 +146,39 @@
             <tr>
                 <th scope="row">메일 수신</th>
                 <td>
-                    <input type="radio" name="mb_mailling" value="1" id="mb_mailling_yes" {{ 'checked' if member is defined and member.mb_mailling == 1 else ''  }}>
+                    <input type="radio" name="mb_mailling" value="1" id="mb_mailling_yes" {{ 'checked' if member.mb_mailling }}>
                     <label for="mb_mailling_yes">예</label>
-                    <input type="radio" name="mb_mailling" value="0" id="mb_mailling_no" {{ 'checked' if member is defined and member.mb_mailling == 0 else ''  }}>
+                    <input type="radio" name="mb_mailling" value="0" id="mb_mailling_no" {{ 'checked' if not member.mb_mailling }}>
                     <label for="mb_mailling_no">아니오</label>
                 </td>
                 <th scope="row"><label for="mb_sms_yes">SMS 수신</label></th>
                 <td>
-                    <input type="radio" name="mb_sms" value="1" id="mb_sms_yes" {{ 'checked' if member is defined and member.mb_sms == 1 else ''  }}>
+                    <input type="radio" name="mb_sms" value="1" id="mb_sms_yes" {{ 'checked' if member.mb_sms }}>
                     <label for="mb_sms_yes">예</label>
-                    <input type="radio" name="mb_sms" value="0" id="mb_sms_no" {{ 'checked' if member is defined and member.mb_sms == 0 else ''  }}>
+                    <input type="radio" name="mb_sms" value="0" id="mb_sms_no" {{ 'checked' if not member.mb_sms }}>
                     <label for="mb_sms_no">아니오</label>
                 </td>
             </tr>
             <tr>
                 <th scope="row">정보 공개</th>
                 <td colspan="3">
-                    <input type="radio" name="mb_open" value="1" id="mb_open_yes" {{ 'checked' if member is defined and member.mb_open == 1 else ''  }}>
+                    <input type="radio" name="mb_open" value="1" id="mb_open_yes" {{ 'checked' if member.mb_open }}>
                     <label for="mb_open_yes">예</label>
-                    <input type="radio" name="mb_open" value="0" id="mb_open_no" {{ 'checked' if member is defined and member.mb_open == 0 else ''  }}>
+                    <input type="radio" name="mb_open" value="0" id="mb_open_no" {{ 'checked' if not member.mb_open }}>
                     <label for="mb_open_no">아니오</label>
                 </td>
             </tr>
             <tr>
                 <th scope="row"><label for="mb_signature">서명</label></th>
-                <td colspan="3"><textarea name="mb_signature" id="mb_signature">{{ member.mb_signature if member is defined else '' }}</textarea></td>
+                <td colspan="3"><textarea name="mb_signature" id="mb_signature">{{ member.mb_signature }}</textarea></td>
             </tr>
             <tr>
                 <th scope="row"><label for="mb_profile">자기 소개</label></th>
-                <td colspan="3"><textarea name="mb_profile" id="mb_profile">{{ member.mb_profile if member is defined else '' }}</textarea></td>
+                <td colspan="3"><textarea name="mb_profile" id="mb_profile">{{ member.mb_profile }}</textarea></td>
             </tr>
             <tr>
                 <th scope="row"><label for="mb_memo">메모</label></th>
-                <td colspan="3"><textarea name="mb_memo" id="mb_memo">{{ member.mb_memo if member is defined else '' }}</textarea></td>
+                <td colspan="3"><textarea name="mb_memo" id="mb_memo">{{ member.mb_memo }}</textarea></td>
             </tr>
             <tr>
                 <th scope="row"><label for="mb_cert_history">본인인증 내역</label></th>
@@ -187,13 +187,13 @@
             <tr>
                 <th scope="row"><label for="mb_leave_date">탈퇴일자</label></th>
                 <td>
-                    <input type="text" name="mb_leave_date" value="{{ member.mb_leave_date if member is defined else '' }}" id="mb_leave_date" class="frm_input" maxlength="8">
+                    <input type="text" name="mb_leave_date" value="{{ member.mb_leave_date }}" id="mb_leave_date" class="frm_input" maxlength="8">
                     <input type="checkbox" value="{{ today }}" id="mb_leave_date_set_today" onclick="if (this.form.mb_leave_date.value==this.form.mb_leave_date.defaultValue) { this.form.mb_leave_date.value=this.value; } else { this.form.mb_leave_date.value=this.form.mb_leave_date.defaultValue; }">
                     <label for="mb_leave_date_set_today">탈퇴일을 오늘로 지정</label>
                 </td>
                 <th scope="row">접근차단일자</th>
                 <td>
-                    <input type="text" name="mb_intercept_date" value="{{ member.mb_intercept_date if member is defined else '' }}" id="mb_intercept_date" class="frm_input" maxlength="8">
+                    <input type="text" name="mb_intercept_date" value="{{ member.mb_intercept_date }}" id="mb_intercept_date" class="frm_input" maxlength="8">
                     <input type="checkbox" value="{{ today }}" id="mb_intercept_date_set_today" onclick="if (this.form.mb_intercept_date.value==this.form.mb_intercept_date.defaultValue) { this.form.mb_intercept_date.value=this.value; } else { this.form.mb_intercept_date.value=this.form.mb_intercept_date.defaultValue; }">
                     <label for="mb_intercept_date_set_today">접근차단일을 오늘로 지정</label>
                 </td>
@@ -201,7 +201,7 @@
             {% for i in range(1, 11) %}
             <tr>
                 <th scope="row"><label for="mb_{{ i }}">여분 필드 {{ i }}</label></th>
-                <td colspan="3"><input type="text" name="mb_{{ i }}" value="{{ getattr(member, 'mb_' ~ i) if member is defined else '' }}" id="mb_{{ i }}" class="frm_input" size="30" maxlength="255"></td>
+                <td colspan="3"><input type="text" name="mb_{{ i }}" value="{{ getattr(member, 'mb_' ~ i) }}" id="mb_{{ i }}" class="frm_input" size="30" maxlength="255"></td>
             </tr>
             {% endfor %}
             </tbody>

@@ -406,3 +406,68 @@ class WriteBaseModel(Base):
     
 # Create a composite index for wr_id and bo_table
 # Index('idx_write_bo_table_wr_id', WriteBaseModel.bo_table, WriteBaseModel.wr_id)    
+
+
+# CREATE TABLE `g5_group` (
+#   `gr_id` varchar(10) NOT NULL DEFAULT '',
+#   `gr_subject` varchar(255) NOT NULL DEFAULT '',
+#   `gr_device` enum('both','pc','mobile') NOT NULL DEFAULT 'both',
+#   `gr_admin` varchar(255) NOT NULL DEFAULT '',
+#   `gr_use_access` tinyint NOT NULL DEFAULT '0',
+#   `gr_order` int NOT NULL DEFAULT '0',
+#   `gr_1_subj` varchar(255) NOT NULL DEFAULT '',
+#   `gr_2_subj` varchar(255) NOT NULL DEFAULT '',
+#   `gr_3_subj` varchar(255) NOT NULL DEFAULT '',
+#   `gr_4_subj` varchar(255) NOT NULL DEFAULT '',
+#   `gr_5_subj` varchar(255) NOT NULL DEFAULT '',
+#   `gr_6_subj` varchar(255) NOT NULL DEFAULT '',
+#   `gr_7_subj` varchar(255) NOT NULL DEFAULT '',
+#   `gr_8_subj` varchar(255) NOT NULL DEFAULT '',
+#   `gr_9_subj` varchar(255) NOT NULL DEFAULT '',
+#   `gr_10_subj` varchar(255) NOT NULL DEFAULT '',
+#   `gr_1` varchar(255) NOT NULL DEFAULT '',
+#   `gr_2` varchar(255) NOT NULL DEFAULT '',
+#   `gr_3` varchar(255) NOT NULL DEFAULT '',
+#   `gr_4` varchar(255) NOT NULL DEFAULT '',
+#   `gr_5` varchar(255) NOT NULL DEFAULT '',
+#   `gr_6` varchar(255) NOT NULL DEFAULT '',
+#   `gr_7` varchar(255) NOT NULL DEFAULT '',
+#   `gr_8` varchar(255) NOT NULL DEFAULT '',
+#   `gr_9` varchar(255) NOT NULL DEFAULT '',
+#   `gr_10` varchar(255) NOT NULL DEFAULT ''
+# ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+# 위 sql 문을 model 로 만들어줘
+class Group(Base):
+    '''
+    게시판 그룹 테이블
+    '''
+    __tablename__ = 'g6_group'
+    
+    gr_id = Column(String(10), primary_key=True, nullable=False)
+    gr_subject = Column(String(255), nullable=False, default='')
+    gr_device = Column(Enum('both', 'pc', 'mobile'), nullable=False, default='both')
+    gr_admin = Column(String(255), nullable=False, default='')
+    gr_use_access = Column(Integer, nullable=False, default=0, server_default=text('0'))
+    gr_order = Column(Integer, nullable=False, default=0, server_default=text('0'))
+    gr_1_subj = Column(String(255), nullable=False, default='')
+    gr_2_subj = Column(String(255), nullable=False, default='')
+    gr_3_subj = Column(String(255), nullable=False, default='')
+    gr_4_subj = Column(String(255), nullable=False, default='')
+    gr_5_subj = Column(String(255), nullable=False, default='')
+    gr_6_subj = Column(String(255), nullable=False, default='')
+    gr_7_subj = Column(String(255), nullable=False, default='')
+    gr_8_subj = Column(String(255), nullable=False, default='')
+    gr_9_subj = Column(String(255), nullable=False, default='')
+    gr_10_subj = Column(String(255), nullable=False, default='')
+    gr_1 = Column(String(255), nullable=False, default='')
+    gr_2 = Column(String(255), nullable=False, default='')
+    gr_3 = Column(String(255), nullable=False, default='')
+    gr_4 = Column(String(255), nullable=False, default='')
+    gr_5 = Column(String(255), nullable=False, default='')
+    gr_6 = Column(String(255), nullable=False, default='')
+    gr_7 = Column(String(255), nullable=False, default='')
+    gr_8 = Column(String(255), nullable=False, default='')
+    gr_9 = Column(String(255), nullable=False, default='')
+    gr_10 = Column(String(255), nullable=False, default='')
+    # 종속관계
+    # boards = relationship("Board", backref="group")
