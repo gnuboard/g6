@@ -62,7 +62,7 @@
                         <label for="chk_{{ loop.index0 }}" class="sound_only">{{ group.gr_subject }} 그룹</label>
                         <input type="checkbox" name="chk[]" value="0" id="chk_{{ loop.index0 }}">
                     </td>
-                    <td class="td_left"><a href="/bbs/group/{{ group.gr_id if group is defined else '' }}">community</a></td>
+                    <td class="td_left"><a href="/bbs/group/{{ group.gr_id }}">{{ group.gr_subject }}</a></td>
                     <td class="td_input">
                         <label for="gr_subject_{{ loop.index0 }}" class="sound_only">그룹제목</label>
                         <input type="text" name="gr_subject[{{ loop.index0 }}]" value="{{ group.gr_subject }}" id="gr_subject_{{ loop.index0 }}" class="tbl_input">

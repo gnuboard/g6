@@ -88,8 +88,8 @@ def get_member_level_select(id: str, start: int, end: int, selected: int, event=
     return ''.join(html_code)
     
 # skin_gubun(new, search, connect, faq 등) 에 따른 스킨을 SELECT 형식으로 얻음
-def get_skin_select(skin_gubun, id, selected, event=''):
-    skin_path = TEMPLATES_DIR + f"/{skin_gubun}"
+def get_skin_select(skin_gubun, id, selected, event='', device='pc'):
+    skin_path = TEMPLATES_DIR + f"/{skin_gubun}/{device}"
     html_code = []
     html_code.append(f'<select id="{id}" name="{id}" {event}>')
     html_code.append(f'<option value="">선택</option>')
@@ -126,39 +126,12 @@ def get_member_id_select(id, level, selected, event=''):
     html_code.append('</select>')
     return ''.join(html_code)
 
-
-# # 캡챠를 SELECT 형식으로 얻음
-# def get_captcha_select(id, selected=''):
-#     captcha_list = ["kcaptcha", "recaptcha", "recaptcha_inv"]
-#     select_options = []
-#     select_options.append(f'<select id="{id}" name="{id}" required class="required">')
-#     for captcha in captcha_list:
-#         if captcha == selected:
-#             select_options.append(f'<option value="{captcha}" selected>{captcha}</option>')
-#         else:
-#             select_options.append(f'<option value="{captcha}">{captcha}</option>')
-#     select_options.append('</select>')
-#     return ''.join(select_options)
-
-
 # 필드에 저장된 값과 기본 값을 비교하여 selected 를 반환
 def get_selected(field_value, value):
     if isinstance(value, int):
         return ' selected="selected"' if (int(field_value) == int(value)) else ''
     return ' selected="selected"' if (field_value == value) else ''
 
-
-# function option_array_checked($option, $arr=array()){
-#     $checked = '';
-#     if( !is_array($arr) ){
-#         $arr = explode(',', $arr);
-#     }
-#     if ( !empty($arr) && in_array($option, (array) $arr) ){
-#         $checked = 'checked="checked"';
-#     }
-#     return $checked;
-# }
-# 위 코드를 파이썬으로 변환해줘
 def option_array_checked(option, arr=[]):
     checked = ''
     if not isinstance(arr, list):
@@ -167,37 +140,6 @@ def option_array_checked(option, arr=[]):
         checked = 'checked="checked"'
     return checked
 
-
-# // 게시판 그룹을 SELECT 형식으로 얻음
-# function get_group_select($name, $selected='', $event='')
-# {
-#     global $g5, $is_admin, $member;
-
-#     $sql = " select gr_id, gr_subject from {$g5['group_table']} a ";
-#     if ($is_admin == "group") {
-#         $sql .= " left join {$g5['member_table']} b on (b.mb_id = a.gr_admin)
-#                   where b.mb_id = '{$member['mb_id']}' ";
-#     }
-#     $sql .= " order by a.gr_id ";
-
-#     $result = sql_query($sql);
-#     $str = "<select id=\"$name\" name=\"$name\" $event>\n";
-#     for ($i=0; $row=sql_fetch_array($result); $i++) {
-#         if ($i == 0) $str .= "<option value=\"\">선택</option>";
-#         $str .= option_selected($row['gr_id'], $selected, $row['gr_subject']);
-#     }
-#     $str .= "</select>";
-#     return $str;
-# }
-# function option_selected($value, $selected, $text='')
-# {
-#     if (!$text) $text = $value;
-#     if ($value == $selected)
-#         return "<option value=\"$value\" selected=\"selected\">$text</option>\n";
-#     else
-#         return "<option value=\"$value\">$text</option>\n";
-# }
-# php to python above code
 def get_group_select(id, selected='', event=''):
     db = SessionLocal()
     groups = db.query(models.Group).order_by(models.Group.gr_id).all()
