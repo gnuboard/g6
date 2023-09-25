@@ -161,6 +161,182 @@ def board_form_update(request: Request, db: Session = Depends(get_db),
                         bo_8: str = Form(None),
                         bo_9: str = Form(None),
                         bo_10: str = Form(None),
+                        
+                        chk_grp_device: str = Form(None),
+                        chk_grp_category_list: str = Form(None),
+                        chk_grp_admin: str = Form(None),
+                        chk_grp_list_level: str = Form(None),
+                        chk_grp_read_level: str = Form(None),
+                        chk_grp_reply_level: str = Form(None),
+                        chk_grp_comment_level: str = Form(None),
+                        chk_grp_link_level: str = Form(None),
+                        chk_grp_upload_level: str = Form(None),
+                        chk_grp_download_level: str = Form(None),
+                        chk_grp_html_level: str = Form(None),
+                        chk_grp_count_modify: str = Form(None),
+                        chk_grp_count_delete: str = Form(None),
+                        chk_grp_use_sideview: str = Form(None),
+                        chk_grp_use_secret: str = Form(None),
+                        chk_grp_use_dhtml_editor: str = Form(None),
+                        chk_grp_select_editor: str = Form(None),
+                        chk_grp_use_rss_view: str = Form(None),
+                        chk_grp_use_good: str = Form(None),
+                        chk_grp_use_nogood: str = Form(None),
+                        chk_grp_use_name: str = Form(None),
+                        chk_grp_use_signature: str = Form(None),
+                        chk_grp_use_ip_view: str = Form(None),
+                        chk_grp_use_list_content: str = Form(None),
+                        chk_grp_use_list_file: str = Form(None),
+                        chk_grp_use_list_view: str = Form(None),
+                        chk_grp_use_email: str = Form(None),
+                        chk_grp_use_cert: str = Form(None),
+                        chk_grp_upload_count: str = Form(None),
+                        chk_grp_upload_size: str = Form(None),
+                        chk_grp_use_file_content: str = Form(None),
+                        chk_grp_write_min: str = Form(None),
+                        chk_grp_write_max: str = Form(None),
+                        chk_grp_comment_min: str = Form(None),
+                        chk_grp_comment_max: str = Form(None),
+                        chk_grp_use_sns: str = Form(None),
+                        chk_grp_use_search: str = Form(None),
+                        chk_grp_order: str = Form(None),
+                        chk_grp_use_captcha: str = Form(None),
+                        chk_grp_skin: str = Form(None),
+                        chk_grp_mobile_skin: str = Form(None),
+                        chk_grp_include_head: str = Form(None),
+                        chk_grp_include_tail: str = Form(None),
+                        chk_grp_content_head: str = Form(None),
+                        chk_grp_content_tail: str = Form(None),
+                        chk_grp_mobile_content_head: str = Form(None),
+                        chk_grp_mobile_content_tail: str = Form(None),
+                        chk_grp_insert_content: str = Form(None),
+                        chk_grp_subject_len: str = Form(None),
+                        chk_grp_mobile_subject_len: str = Form(None),
+                        chk_grp_page_rows: str = Form(None),
+                        chk_grp_mobile_page_rows: str = Form(None),
+                        chk_grp_gallery_cols: str = Form(None),
+                        chk_grp_gallery_width: str = Form(None),
+                        chk_grp_gallery_height: str = Form(None),
+                        chk_grp_mobile_gallery_width: str = Form(None),
+                        chk_grp_mobile_gallery_height: str = Form(None),
+                        chk_grp_table_width: str = Form(None),
+                        chk_grp_image_width: str = Form(None),
+                        chk_grp_new: str = Form(None),
+                        chk_grp_hot: str = Form(None),
+                        chk_grp_reply_order: str = Form(None),
+                        chk_grp_sort_field: str = Form(None),
+                        chk_grp_read_point: str = Form(None),
+                        chk_grp_write_point: str = Form(None),
+                        chk_grp_comment_point: str = Form(None),
+                        chk_grp_download_point: str = Form(None),
+                        chk_grp_1_subj: str = Form(None),
+                        chk_grp_2_subj: str = Form(None),
+                        chk_grp_3_subj: str = Form(None),
+                        chk_grp_4_subj: str = Form(None),
+                        chk_grp_5_subj: str = Form(None),
+                        chk_grp_6_subj: str = Form(None),
+                        chk_grp_7_subj: str = Form(None),
+                        chk_grp_8_subj: str = Form(None),
+                        chk_grp_9_subj: str = Form(None),
+                        chk_grp_10_subj: str = Form(None),
+                        chk_grp_1: str = Form(None),
+                        chk_grp_2: str = Form(None),
+                        chk_grp_3: str = Form(None),
+                        chk_grp_4: str = Form(None),
+                        chk_grp_5: str = Form(None),
+                        chk_grp_6: str = Form(None),
+                        chk_grp_7: str = Form(None),
+                        chk_grp_8: str = Form(None),
+                        chk_grp_9: str = Form(None),
+                        chk_grp_10: str = Form(None),
+                        
+                        chk_all_device: str = Form(None),
+                        chk_all_category_list: str = Form(None),
+                        chk_all_admin: str = Form(None),
+                        chk_all_list_level: str = Form(None),
+                        chk_all_read_level: str = Form(None),
+                        chk_all_reply_level: str = Form(None),
+                        chk_all_comment_level: str = Form(None),
+                        chk_all_link_level: str = Form(None),
+                        chk_all_upload_level: str = Form(None),
+                        chk_all_download_level: str = Form(None),
+                        chk_all_html_level: str = Form(None),
+                        chk_all_count_modify: str = Form(None),
+                        chk_all_count_delete: str = Form(None),
+                        chk_all_use_sideview: str = Form(None),
+                        chk_all_use_secret: str = Form(None),
+                        chk_all_use_dhtml_editor: str = Form(None),
+                        chk_all_select_editor: str = Form(None),
+                        chk_all_use_rss_view: str = Form(None),
+                        chk_all_use_good: str = Form(None),
+                        chk_all_use_nogood: str = Form(None),
+                        chk_all_use_name: str = Form(None),
+                        chk_all_use_signature: str = Form(None),
+                        chk_all_use_ip_view: str = Form(None),
+                        chk_all_use_list_content: str = Form(None),
+                        chk_all_use_list_file: str = Form(None),
+                        chk_all_use_list_view: str = Form(None),
+                        chk_all_use_email: str = Form(None),
+                        chk_all_use_cert: str = Form(None),
+                        chk_all_upload_count: str = Form(None),
+                        chk_all_upload_size: str = Form(None),
+                        chk_all_use_file_content: str = Form(None),
+                        chk_all_write_min: str = Form(None),
+                        chk_all_write_max: str = Form(None),
+                        chk_all_comment_min: str = Form(None),
+                        chk_all_comment_max: str = Form(None),
+                        chk_all_use_sns: str = Form(None),
+                        chk_all_use_search: str = Form(None),
+                        chk_all_order: str = Form(None),
+                        chk_all_use_captcha: str = Form(None),
+                        chk_all_skin: str = Form(None),
+                        chk_all_mobile_skin: str = Form(None),
+                        chk_all_include_head: str = Form(None),
+                        chk_all_include_tail: str = Form(None),
+                        chk_all_content_head: str = Form(None),
+                        chk_all_content_tail: str = Form(None),
+                        chk_all_mobile_content_head: str = Form(None),
+                        chk_all_mobile_content_tail: str = Form(None),
+                        chk_all_insert_content: str = Form(None),
+                        chk_all_subject_len: str = Form(None),
+                        chk_all_mobile_subject_len: str = Form(None),
+                        chk_all_page_rows: str = Form(None),
+                        chk_all_mobile_page_rows: str = Form(None),
+                        chk_all_gallery_cols: str = Form(None),
+                        chk_all_gallery_width: str = Form(None),
+                        chk_all_gallery_height: str = Form(None),
+                        chk_all_mobile_gallery_width: str = Form(None),
+                        chk_all_mobile_gallery_height: str = Form(None),
+                        chk_all_table_width: str = Form(None),
+                        chk_all_image_width: str = Form(None),
+                        chk_all_new: str = Form(None),
+                        chk_all_hot: str = Form(None),
+                        chk_all_reply_order: str = Form(None),
+                        chk_all_sort_field: str = Form(None),
+                        chk_all_read_point: str = Form(None),
+                        chk_all_write_point: str = Form(None),
+                        chk_all_comment_point: str = Form(None),
+                        chk_all_download_point: str = Form(None),
+                        chk_all_1_subj: str = Form(None),
+                        chk_all_2_subj: str = Form(None),
+                        chk_all_3_subj: str = Form(None),
+                        chk_all_4_subj: str = Form(None),
+                        chk_all_5_subj: str = Form(None),
+                        chk_all_6_subj: str = Form(None),
+                        chk_all_7_subj: str = Form(None),
+                        chk_all_8_subj: str = Form(None),
+                        chk_all_9_subj: str = Form(None),
+                        chk_all_10_subj: str = Form(None),
+                        chk_all_1: str = Form(None),
+                        chk_all_2: str = Form(None),
+                        chk_all_3: str = Form(None),
+                        chk_all_4: str = Form(None),
+                        chk_all_5: str = Form(None),
+                        chk_all_6: str = Form(None),
+                        chk_all_7: str = Form(None),
+                        chk_all_8: str = Form(None),
+                        chk_all_9: str = Form(None),
+                        chk_all_10: str = Form(None),
                         ):
 
     # 세션에 저장된 토큰값과 입력된 토큰값이 다르다면 에러 (토큰 변조시 에러)
@@ -380,64 +556,89 @@ def board_form_update(request: Request, db: Session = Depends(get_db),
         board.bo_9 = bo_9 if bo_9 is not None else ""
         board.bo_10 = bo_10 if bo_10 is not None else ""
         db.commit()
+
+    chk_grp = {}
+    if chk_grp_device: chk_grp['bo_device'] = bo_device
+    if chk_grp_category_list: chk_grp['bo_category_list'] = bo_category_list
+    if chk_grp_admin: chk_grp['bo_admin'] = bo_admin
+    
+    chk_all = {}
+    if chk_all_device: chk_all['bo_device'] = bo_device
+    if chk_all_category_list: chk_all['bo_category_list'] = bo_category_list
+    if chk_all_admin: chk_all['bo_admin'] = bo_admin
+    
+    if (chk_grp):
+        boards = db.query(models.Board).filter(models.Board.gr_id == gr_id).all()
+        for board in boards:
+            for key, value in chk_grp.items():
+                setattr(board, key, value) 
+        db.commit()
+
+    if (chk_all):
+        boards = db.query(models.Board).all()
+        for board in boards:
+            for key, value in chk_all.items():
+                setattr(board, key, value) 
+        db.commit()
                 
     return RedirectResponse(f"/admin/board_form/{bo_table}", status_code=303)
 
-# def test(ttt: Optional[List[str]] = Form(None, alias="ttt[]")):
 @router.post("/board_list_update")
 def board_list_update(request: Request, db: Session = Depends(get_db),
-                      checks: Optional[List[str]] = Form(None, alias="chk[]"),
+                      checks: Optional[List[int]] = Form(None, alias="chk[]"),
                       gr_id: Optional[List[str]] = Form(None, alias="gr_id[]"),
                       bo_table: Optional[List[str]] = Form(None, alias="bo_table[]"),
                       bo_skin: Optional[List[str]] = Form(None, alias="bo_skin[]"),
                       bo_mobile_skin: Optional[List[str]] = Form(None, alias="bo_mobile_skin[]"),
                       bo_subject: Optional[List[str]] = Form(None, alias="bo_subject[]"),
-                      bo_read_point: Optional[List[int]] = Form(None, alias="bo_read_point[]"),
-                      bo_write_point: Optional[List[int]] = Form(None, alias="bo_write_point[]"),
-                      bo_comment_point: Optional[List[int]] = Form(None, alias="bo_comment_point[]"),
-                      bo_download_point: Optional[List[int]] = Form(None, alias="bo_download_point[]"),
+                      bo_read_point: Optional[List[str]] = Form(None, alias="bo_read_point[]"),
+                      bo_write_point: Optional[List[str]] = Form(None, alias="bo_write_point[]"),
+                      bo_comment_point: Optional[List[str]] = Form(None, alias="bo_comment_point[]"),
+                      bo_download_point: Optional[List[str]] = Form(None, alias="bo_download_point[]"),
                       bo_use_sns: Optional[List[int]] = Form(None, alias="bo_use_sns[]"),
                       bo_use_search: Optional[List[int]] = Form(None, alias="bo_use_search[]"),
+                      bo_order: Optional[List[str]] = Form(None, alias="bo_order[]"),
                       bo_device: Optional[List[str]] = Form(None, alias="bo_device[]"),
                       ):
     
     print(checks)
     print(bo_use_sns)
+    print(bo_use_search)
     
     for i in checks:
-        i = int(i)
         board = db.query(models.Board).filter(models.Board.bo_table == bo_table[i]).first()
         if board:
-    # #         board.gr_id = gr_id[i]
-    # #         board.bo_skin = bo_skin[i]
-    # #         board.bo_mobile_skin = bo_mobile_skin[i]
-    # #         board.bo_subject = bo_subject[i]
-    # #         board.bo_read_point = bo_read_point[i]
-    # #         board.bo_write_point = bo_write_point[i]
-    # #         board.bo_comment_point = bo_comment_point[i]
-    # #         board.bo_download_point = bo_download_point[i]
-    # #         # board.bo_use_sns = get_from_list(bo_use_sns, i, 0)
-            # board.bo_use_sns = 1 if i in bo_use_sns is not None else 0
+            board.gr_id = gr_id[i]
+            board.bo_skin = bo_skin[i]
+            board.bo_mobile_skin = bo_mobile_skin[i]
+            board.bo_subject = bo_subject[i]
+            board.bo_read_point = int(bo_read_point[i]) if bo_read_point[i] is not None and bo_read_point[i].isdigit() else 0
+            board.bo_write_point = int(bo_write_point[i]) if bo_write_point[i] is not None and bo_write_point[i].isdigit() else 0
+            board.bo_comment_point = int(bo_comment_point[i]) if bo_comment_point[i] is not None and bo_comment_point[i].isdigit() else 0
+            board.bo_download_point = int(bo_download_point[i]) if bo_download_point[i] is not None and bo_download_point[i].isdigit() else 0
             
-            try:
-                board.bo_use_sns = 1 if i in bo_use_sns is not None else 0
-            except (TypeError, IndexError):
-                board.bo_use_sns = 0
+            # try:
+            #     board.bo_use_sns = 1 if i in bo_use_sns is not None else 0
+            # except (TypeError, IndexError):
+            #     board.bo_use_sns = 0
+            board.bo_use_sns = get_from_list(bo_use_sns, i, 0)
             board.bo_use_search = get_from_list(bo_use_search, i, 0)
             
             # checkbox 에 값을 집어 넣는것 까지 하다가 어느 정도 결과가 나와서 퇴근함 kagla 230922 17:50
             # checkbox 에 value = 0, 1, 2, 3... n 으로 증가시켜야 함 (주의)
-            
-    #         board.bo_device = bo_device[i]
+    
+            board.bo_order = int(bo_order[i]) if bo_order[i] is not None and bo_order[i].isdigit() else 0
+            board.bo_device = bo_device[i] if bo_device[i] is not None else ""
             db.commit()
     
     return RedirectResponse("/admin/board_list", status_code=303)
 
 # 논리적인 오류가 있음
-def get_from_list(lst, index, default=0):
+def get_from_list(list, index, default=0):
     try:
-        return 1 if index in lst is not None else default
-    except (TypeError, IndexError):
+        return 1 if index in list is not None else default
+    # except (TypeError, IndexError):
+    except (IndexError):
         return default
     
 # def get_from_list(lst, index, default=None):

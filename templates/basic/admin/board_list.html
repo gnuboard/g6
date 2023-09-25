@@ -48,7 +48,7 @@
                         <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
                     </td>
                     <td>
-                        {{ get_group_select('gr_id[]', board.gr_id)|safe }}
+                        {{ get_group_select('gr_id[]', board.gr_id, 'required')|safe }}
 
                         <!-- <select id="gr_id[0]" name="gr_id[0]" >
                         <option value="">선택</option>
@@ -61,7 +61,7 @@
                     </td>
                     <td>
                         <label for="bo_skin[{{ loop.index0 }}]" class="sound_only">스킨</label>
-                        {{ get_skin_select('board', 'bo_skin[]', board.bo_skin, event='', device='pc')|safe}}
+                        {{ get_skin_select('board', 'bo_skin[]', board.bo_skin, event='required', device='pc')|safe}}
                         <!-- <select id="bo_skin_{{ loop.index0 }}" name="bo_skin[0]" >
                         <option value="">선택</option><option value="theme/basic">(테마) basic</option>
                         <option value="theme/gallery">(테마) gallery</option>
@@ -71,7 +71,7 @@
                     </td>
                     <td>
                         <label for="bo_mobile_skin[]" class="sound_only">모바일 스킨</label>
-                        {{ get_skin_select('board', 'bo_mobile_skin[]', board.bo_mobile_skin, event='', device='mobile')|safe}}
+                        {{ get_skin_select('board', 'bo_mobile_skin[]', board.bo_mobile_skin, event='required', device='mobile')|safe}}
                         <!-- <select id="bo_mobile_skin_{{ loop.index0 }}" name="bo_mobile_skin[0]" >
                         <option value="">선택</option><option value="theme/basic">(테마) basic</option>
                         <option value="theme/gallery">(테마) gallery</option>
@@ -85,19 +85,19 @@
                     </td>
                     <td class="td_numsmall">
                         <label for="bo_read_point_{{ loop.index0 }}" class="sound_only">읽기 포인트</label>
-                        <input type="text" name="bo_read_point[]" value="0" id="bo_read_point_{{ loop.index0 }}" class="tbl_input" size="2">
+                        <input type="text" name="bo_read_point[]" value="{{ board.bo_read_point }}" id="bo_read_point_{{ loop.index0 }}" class="tbl_input" size="2">
                     </td>
                     <td class="td_numsmall">
                         <label for="bo_write_point_{{ loop.index0 }}" class="sound_only">쓰기 포인트</label>
-                        <input type="text" name="bo_write_point[]" value="0" id="bo_write_point_{{ loop.index0 }}" class="tbl_input" size="2">
+                        <input type="text" name="bo_write_point[]" value="{{ board.bo_write_point }}" id="bo_write_point_{{ loop.index0 }}" class="tbl_input" size="2">
                     </td>
                     <td class="td_numsmall">
                         <label for="bo_comment_point_{{ loop.index0 }}" class="sound_only">댓글 포인트</label>
-                        <input type="text" name="bo_comment_point[]" value="0" id="bo_comment_point_{{ loop.index0 }}" class="tbl_input" size="2">
+                        <input type="text" name="bo_comment_point[]" value="{{ board.bo_comment_point }}" id="bo_comment_point_{{ loop.index0 }}" class="tbl_input" size="2">
                     </td>
                     <td class="td_numsmall">
                         <label for="bo_download_point_{{ loop.index0 }}" class="sound_only">다운<br>포인트</label>
-                        <input type="text" name="bo_download_point[]" value="0" id="bo_download_point_{{ loop.index0 }}" class="tbl_input" size="2">
+                        <input type="text" name="bo_download_point[]" value="{{ board.bo_download_point }}" id="bo_download_point_{{ loop.index0 }}" class="tbl_input" size="2">
                     </td>
                     <td class="td_numsmall">
                         <label for="bo_use_sns_{{ loop.index0 }}" class="sound_only">SNS<br>사용</label>
