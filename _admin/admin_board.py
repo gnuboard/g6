@@ -63,15 +63,16 @@ def board_list(request: Request, db: Session = Depends(get_db),
     sod = "desc" if sod == "asc" else "asc"
     # boards = db.query(models.Board).all()
         
-    _get = {
-        "sst": sst,
-        "sod": sod,
-        "sfl": sfl,
-        "stx": stx,
-        "page": page,
-    }
+    # _get = {
+    #     "sst": sst,
+    #     "sod": sod,
+    #     "sfl": sfl,
+    #     "stx": stx,
+    #     "page": page,
+    # }
         
-    return templates.TemplateResponse("admin/board_list.html", {"request": request, "boards": boards, "_get": _get})
+    # return templates.TemplateResponse("admin/board_list.html", {"request": request, "boards": boards, "_get": _get})
+    return templates.TemplateResponse("admin/board_list.html", {"request": request, "boards": boards})
 
 
 @router.get("/board_form")
