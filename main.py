@@ -101,6 +101,7 @@ async def common(request: Request, call_next):
     request.state.sod = request.query_params.get("sod")
     request.state.sfl = request.query_params.get("sfl")
     request.state.stx = request.query_params.get("stx")
+    request.state.sca = request.query_params.get("sca")
     request.state.page = request.query_params.get("page")
     # request.state.w = request.query_params.get("w")
         

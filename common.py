@@ -158,3 +158,89 @@ def option_selected(value, selected, text=''):
         return f'<option value="{value}" selected="selected">{text}</option>\n'
     else:
         return f'<option value="{value}">{text}</option>\n'
+    
+    
+from urllib.parse import urlencode
+
+def subject_sort_link(request: Request, col, query_string='', flag='asc'):
+    sst = request.state.sst if request.state.sst is not None else ''
+    sod = request.state.sod if request.state.sod is not None else ''
+    sfl = request.state.sfl if request.state.sfl is not None else ''
+    stx = request.state.stx if request.state.stx is not None else ''
+    sca = request.state.sca if request.state.sca is not None else ''
+    page = request.state.page if request.state.page is not None else '' 
+    
+    q1 = f"sst={col}"
+
+    if flag == 'asc':
+        q2 = 'sod=asc'
+        if sst == col:
+            if sod == 'asc':
+                q2 = 'sod=desc'
+    else:
+        q2 = 'sod=desc'
+        if sst == col:
+            if sod == 'desc':
+                q2 = 'sod=asc'
+
+    arr_query = []
+    arr_query.append(query_string)
+    arr_query.append(q1)
+    arr_query.append(q2)
+
+    if sfl is not None:
+        arr_query.append(f'sfl={sfl}')
+    if stx is not None:
+        arr_query.append(f'stx={stx}')
+    if sca is not None:
+        arr_query.append(f'sca={sca}')
+    if page is not None:
+        arr_query.append(f'page={page}')
+
+    qstr = '&'.join(arr_query[1:]) if arr_query else ''
+    # 여기에서 URL 인코딩을 수행합니다.
+    
+# |이 코드는 주어진 문자열을 파싱하여 URL 쿼리 문자열을 인코딩하는 기능을 수행합니다.
+# |
+# |좋은 점:
+# |- 딕셔너리 컴프리헨션을 사용하여 간결하고 효율적인 코드를 작성했습니다.
+# |- 문자열을 '&'로 분리하고, '='로 분리한 후, '='이 포함된 항목들만 딕셔너리에 추가하여 필터링합니다.
+# |- urlencode 함수를 사용하여 딕셔너리를 URL 쿼리 문자열로 인코딩합니다.
+# |
+# |나쁜 점:
+# |- 코드의 가독성이 좋지 않습니다. 한 줄에 모든 작업을 포함하고 있어 이해하기 어려울 수 있습니다.
+# |- 변수 이름이 약어로 되어 있어 의미를 파악하기 어렵습니다. 변수 이름을 더 명확하게 작성하는 것이 좋습니다.
+# |- 코드에 주석이 없어서 코드의 목적과 동작을 이해하기 어렵습니다. 주석을 추가하여 코드를 설명하는 것이 좋습니다.
+# |
+# |이 코드를 개선하기 위해서는 가독성을 높이고 코드의 목적을 명확히 전달할 수 있도록 변수 이름을 개선하고, 주석을 추가하는 것이 좋습니다. 또한, 코드를 여러 줄로 나누어 가독성을 향상시킬 수 있습니다.
+    # qstr = urlencode({k: v for k, v in [x.split('=') for x in qstr.split('&')] if '=' in x})
+    # '&' 문자로 분리
+    pairs = qstr.split('&')
+
+    # 빈 딕셔너리 생성
+    params = {}
+
+    # 각 쌍을 순회
+    for pair in pairs:
+        # '=' 문자가 있는지 확인
+        if '=' in pair:
+            # '=' 문자로 분리하여 key와 value 추출
+            key, value = pair.split('=')
+            
+            # value가 'None'이거나 빈 문자열인 경우 제외
+            if value != '':
+                # 딕셔너리에 추가
+                params[key] = value
+
+    # 딕셔너리를 URL 인코딩
+    # qstr_encoded = urlencode(params)
+
+    # short_url_clean, get_params_merge_url 함수는 구현에 따라 다릅니다.
+    # url = short_url_clean(get_params_merge_url(qstr_array))
+
+    # URL을 반환합니다.
+    return f'<a href="?{qstr}">'
+
+# 함수 테스트
+# print(subject_sort_link('title', query_string='type=list', flag='asc', sst='title', sod='asc', sfl='category', stx='example', page=2))
+    
