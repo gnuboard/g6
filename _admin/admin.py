@@ -1,3 +1,4 @@
+import json
 from fastapi import FastAPI, APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -16,7 +17,7 @@ import socket
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 # # 파이썬 함수를 jinja2 에서 사용할 수 있도록 등록
-# # templates.env.globals['getattr'] = getattr
+templates.env.globals['get_admin_menus'] = get_admin_menus
 
 from _admin.admin_config import router as admin_config_router
 from _admin.admin_member import router as admin_member_router
@@ -28,11 +29,10 @@ router.include_router(admin_member_router, prefix="", tags=["admin_member"])
 router.include_router(admin_board_router,  prefix="", tags=["admin_board"])
 router.include_router(admin_boardgroup_router,  prefix="", tags=["admin_boardgroup"])
 
-
 @router.get("/")
 def base(request: Request, db: Session = Depends(get_db)):
-    # template = env.get_template("index.html")
-    # render = template.render(request=request)
-    # return templates.TemplateResponse(template, {"request": request})
+    '''
+    관리자 메인
+    '''
+    request.session["menu_key"] = "100100"
     return templates.TemplateResponse("admin/index.html", {"request": request})
-

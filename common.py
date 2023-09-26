@@ -7,6 +7,7 @@ import models
 from models import WriteBaseModel
 from database import SessionLocal, engine
 import datetime
+import json
 
 TEMPLATES_DIR = "templates/basic"
 SERVER_TIME = datetime.datetime.now()
@@ -243,4 +244,9 @@ def subject_sort_link(request: Request, col, query_string='', flag='asc'):
 
 # 함수 테스트
 # print(subject_sort_link('title', query_string='type=list', flag='asc', sst='title', sod='asc', sfl='category', stx='example', page=2))
-    
+
+
+def get_admin_menus():
+    with open("_admin/admin_menu.json", "r", encoding="utf-8") as file:
+        menus = json.load(file)
+    return menus

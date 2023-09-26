@@ -17,9 +17,15 @@ router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 templates.env.globals['getattr'] = getattr
 templates.env.globals['get_selected'] = get_selected
+templates.env.globals['get_admin_menus'] = get_admin_menus
 
 @router.get("/boardgroup_list")
 def boardgroup_list(request: Request, db: Session = Depends(get_db)):
+    '''
+    게시판그룹관리 목록
+    '''
+    request.session["menu_key"] = "300200"
+    
     groups = db.query(models.Group).all()
     return templates.TemplateResponse("admin/boardgroup_list.html", {"request": request, "groups": groups})
 

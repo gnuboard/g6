@@ -14,9 +14,15 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 templates.env.globals['getattr'] = getattr
 templates.env.globals['today'] = SERVER_TIME.strftime("%Y%m%d")
 templates.env.globals['get_member_level_select'] = get_member_level_select
+templates.env.globals['get_admin_menus'] = get_admin_menus
 
 @router.get("/member_list")
 def member_list(request: Request, db: Session = Depends(get_db)):
+    '''
+    회원관리 목록
+    '''
+    request.session["menu_key"] = "200100"
+    
     members = db.query(models.Member).all()
     return templates.TemplateResponse("admin/member_list.html", {"request": request, "members": members})
 

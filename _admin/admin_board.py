@@ -23,6 +23,7 @@ templates.env.globals['get_group_select'] = get_group_select
 templates.env.globals['get_editor_select'] = get_editor_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
+templates.env.globals['get_admin_menus'] = get_admin_menus
 
 @router.get("/board_list")
 def board_list(request: Request, db: Session = Depends(get_db),
@@ -32,11 +33,15 @@ def board_list(request: Request, db: Session = Depends(get_db),
                stx: Optional[str] = None, # search text (검색어)
                page: Optional[str] = None, # 페이지
                ):
+    '''
+    게시판관리 목록
+    '''
     # sst = request.state.sst
     # sod = request.state.sod
     # sfl = request.state.sfl
     # stx = request.state.stx
     # page = request.state.page
+    request.session["menu_key"] = "300100"
 
     # 초기 쿼리 설정
     query = db.query(models.Board)

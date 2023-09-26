@@ -23,6 +23,8 @@ templates.env.globals['get_editor_select'] = get_editor_select
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['option_array_checked'] = option_array_checked
+templates.env.globals['get_admin_menus'] = get_admin_menus
+
 
 from starlette.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -63,6 +65,8 @@ def config_form(request: Request, db: Session = Depends(get_db)):
     '''
     기본환경설정
     '''
+    request.session["menu_key"] = "100100"
+    
     host_name = socket.gethostname()
     host_ip = socket.gethostbyname(host_name)
     

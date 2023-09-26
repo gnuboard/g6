@@ -83,7 +83,25 @@ var g5_admin_url = "/admin";
     <nav id="gnb" class="gnb_large ">
         <h2>관리자 주메뉴</h2>
         <ul class="gnb_ul">
-                            <li class="gnb_li on">
+            {% for menu_key, submenus in get_admin_menus().items() %}
+                <li class="gnb_li {{ 'on' if (request.session.get('menu_key')[:3] == menu_key[4:]) else '' }}">
+                    <button type="button" class="btn_op menu-{{ menu_key[4:] }} menu-order-{{ loop.index }}" title="{{ submenus[0]['name'] }}">{{ submenus[0]['name'] }}</button>
+                    <div class="gnb_oparea_wr">
+                        <div class="gnb_oparea">
+                            <h3>{{ submenus[0]['name'] }}</h3>
+                            <ul>
+                            {% for submenu in submenus[1:] %}
+                                <li data-menu="{{ submenu['id'] }}">
+                                    <a href="/admin/{{ submenu['url'] }}" class="gnb_2da {{ 'on' if (request.session.get('menu_key') == submenu['id']) else '' }}">{{ submenu['name'] }}</a></li>
+                            {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+
+            <!-- <li class="gnb_li on">
                     <button type="button" class="btn_op menu-100 menu-order-1" title="환경설정">환경설정</button>
                     <div class="gnb_oparea_wr">
                         <div class="gnb_oparea">
@@ -130,8 +148,7 @@ var g5_admin_url = "/admin";
                             <h3>SMS 관리</h3>
                             <ul><li data-menu="900100"><a href="/admin/sms_admin/config" class="gnb_2da  ">SMS 기본설정</a></li><li data-menu="900200"><a href="/admin/sms_admin/member_update" class="gnb_2da  ">회원정보업데이트</a></li><li data-menu="900300"><a href="/admin/sms_admin/sms_write" class="gnb_2da  ">문자 보내기</a></li><li data-menu="900400"><a href="/admin/sms_admin/history_list" class="gnb_2da gnb_grp_style gnb_grp_div">전송내역-건별</a></li><li data-menu="900410"><a href="/admin/sms_admin/history_num" class="gnb_2da gnb_grp_style gnb_grp_div">전송내역-번호별</a></li><li data-menu="900500"><a href="/admin/sms_admin/form_group" class="gnb_2da  ">이모티콘 그룹</a></li><li data-menu="900600"><a href="/admin/sms_admin/form_list" class="gnb_2da  ">이모티콘 관리</a></li><li data-menu="900700"><a href="/admin/sms_admin/num_group" class="gnb_2da gnb_grp_style gnb_grp_div">휴대폰번호 그룹</a></li><li data-menu="900800"><a href="/admin/sms_admin/num_book" class="gnb_2da gnb_grp_style gnb_grp_div">휴대폰번호 관리</a></li><li data-menu="900900"><a href="/admin/sms_admin/num_book_file" class="gnb_2da gnb_grp_style gnb_grp_div">휴대폰번호 파일</a></li></ul>                        </div>
                     </div>
-                </li>
-                    </ul>
+                </li> -->
     </nav>
 
 </header>
