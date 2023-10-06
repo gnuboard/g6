@@ -81,6 +81,7 @@ def session_member_key(request: Request, member: models.Member):
     ss_mb_key = hashlib.md5((member.mb_datetime + get_real_client_ip(request) + request.headers.get('User-Agent')).encode()).hexdigest()
     return ss_mb_key
 
+
 # 회원레벨을 SELECT 형식으로 얻음
 def get_member_level_select(id: str, start: int, end: int, selected: int, event=''):
     html_code = []
@@ -89,6 +90,7 @@ def get_member_level_select(id: str, start: int, end: int, selected: int, event=
         html_code.append(f'<option value="{i}" {"selected" if i == selected else ""}>{i}</option>')
     html_code.append('</select>')
     return ''.join(html_code)
+
     
 # skin_gubun(new, search, connect, faq 등) 에 따른 스킨을 SELECT 형식으로 얻음
 def get_skin_select(skin_gubun, id, selected, event='', device='pc'):
@@ -130,11 +132,13 @@ def get_member_id_select(id, level, selected, event=''):
     html_code.append('</select>')
     return ''.join(html_code)
 
+
 # 필드에 저장된 값과 기본 값을 비교하여 selected 를 반환
 def get_selected(field_value, value):
     if isinstance(value, int):
         return ' selected="selected"' if (int(field_value) == int(value)) else ''
     return ' selected="selected"' if (field_value == value) else ''
+
 
 def option_array_checked(option, arr=[]):
     checked = ''
@@ -143,6 +147,7 @@ def option_array_checked(option, arr=[]):
     if arr and option in arr:
         checked = 'checked="checked"'
     return checked
+
 
 def get_group_select(id, selected='', event=''):
     db = SessionLocal()
@@ -154,6 +159,7 @@ def get_group_select(id, selected='', event=''):
         str += option_selected(group.gr_id, selected, group.gr_subject)
     str += '</select>'
     return str
+
 
 def option_selected(value, selected, text=''):
     if not text:
@@ -250,9 +256,13 @@ def subject_sort_link(request: Request, col, query_string='', flag='asc'):
 
 
 def get_admin_menus():
+    '''
+    관리자 메뉴를 1, 2단계로 분류하여 반환하는 함수
+    '''
     with open("_admin/admin_menu.json", "r", encoding="utf-8") as file:
         menus = json.load(file)
     return menus
+
 
 def get_head_tail_img(dir: str, filename: str):
     '''
@@ -288,14 +298,21 @@ def now():
 import cachetools
 
 # 캐시 크기와 만료 시간 설정
-cache = cachetools.TTLCache(maxsize=1000, ttl=3600)
+cache = cachetools.TTLCache(maxsize=100, ttl=3600)
 
 def generate_one_time_token():
+    '''
+    원타임 토큰을 생성하여 반환하는 함수
+    '''
     token = os.urandom(24).hex()
     cache[token] = 'valid'
     return token
 
+
 def validate_one_time_token(token):
+    '''
+    원타임 토큰을 검증하는 함수
+    '''
     if token in cache:
         del cache[token]
         return True

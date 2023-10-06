@@ -5,6 +5,7 @@ from fastapi import FastAPI, Depends, Request, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
+from jinja2 import Environment, FileSystemLoader
 from database import engine, get_db, SessionLocal
 import models
 from sqlalchemy.orm import Session
@@ -18,35 +19,23 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
-# from starlette.middleware.base import BaseHTTPMiddleware
-# class CustomMiddleware(BaseHTTPMiddleware):
-#     async def dispatch(self, request, call_next):
-#         db: Session = SessionLocal()
-#         # 여기서는 모든 요청을 가로챕니다.
-#         # 실제 사용시에는 특정 조건에 따라 응답을 반환하거나 call_next를 호출하면 됩니다.
-#         # print("====================================Before request")
-#         # return Response("Intercepted by Middleware", media_type="text/plain")
-#         ss_mb_id = request.session.get("ss_mb_id", "")
-#         if ss_mb_id:
-#             member = db.query(models.Member).filter(models.Member.mb_id == ss_mb_id).first()
-#             if member:
-#                 outlogin = templates.TemplateResponse("login/outlogin_after_login.html", {"request": request, "member": member})
-#         else:
-#             outlogin = templates.TemplateResponse("login/outlogin_before_login.html", {"request": request})
-        
-# app.add_middleware(CustomMiddleware)    
-
+# # 1. main.py의 위치를 얻습니다.
+# current_path = os.path.dirname(os.path.abspath(__file__))
+# # 2. 해당 위치를 기준으로 Jinja2의 FileSystemLoader를 설정합니다.
+# env = Environment(loader=FileSystemLoader(current_path))
 
 from _admin.admin import router as admin_router
-from _board.board import router as board_router
-from _login.login import router as login_router
-from _register.register import router as register_router
+from _bbs.board import router as board_router
+from _bbs.login import router as login_router
+from _bbs.register import router as register_router
+from _bbs.content import router as content_router
 import _user.user_router 
 
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
 app.include_router(login_router, prefix="/bbs", tags=["login"])
 app.include_router(register_router, prefix="/bbs", tags=["register"])
+app.include_router(content_router, prefix="/content", tags=["content"])
 
 # 항상 실행해야 하는 미들웨어
 @app.middleware("http")
@@ -66,9 +55,6 @@ async def common(request: Request, call_next):
                 request.session["ss_mb_id"] = ""
                 member = None
             else:
-                # if member.mb_today_login[:10] != datetime.datetime.now().strftime("%Y%m%d"): # 오늘 처음 로그인 이라면
-                # formatted_date = member.mb_today_login.strftime("%Y-%m-%d")
-                # if formatted_date != TIME_YMD: # 오늘 처음 로그인 이라면
                 if member.mb_today_login[:10] != TIME_YMD: # 오늘 처음 로그인 이라면
                     # 첫 로그인 포인트 지급
                     # insert_point(member.mb_id, config["cf_login_point"], current_date + " 첫로그인", "@login", member.mb_id, current_date)
@@ -139,24 +125,6 @@ def read_root():
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request, response: Response, db: Session = Depends(get_db)):
-    
-    # latests = {}
-    # boards = db.query(models.Board).all()
-    # for board in boards:
-    #     models.Write = dynamic_create_write_table(board.bo_table)
-    #     writes = db.query(models.Write).order_by(models.Write.wr_num).limit(5).all()
-    #     # for write in writes:
-    #     #     print(write.__dict__)
-    #     writes.bo_table = board.bo_table
-    #     writes.bo_subject = board.bo_subject
-    #     latests[board.bo_table] = writes
-        
-    #     latests = templates.TemplateResponse("latest/basic.html", {"request": request, "latests": latests})
-        
-    # request.state.context["latests"] = latests
-    
-    # # return templates.TemplateResponse("index.html", {"request": request, "outlogin": request.state.context["outlogin"]})
-    # return templates.TemplateResponse("index.html", request.state.context)
     
     return templates.TemplateResponse("index.html", 
         {
