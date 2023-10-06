@@ -193,7 +193,7 @@
         {
             "id": "300700",
             "name": "FAQ관리",
-            "url": "faqmasterlist",
+            "url": "faq_master_list",
             "permission": "scf_faq"
         },
         {
