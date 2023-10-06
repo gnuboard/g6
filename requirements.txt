@@ -8,6 +8,7 @@ sqlalchemy>=2.0.21, <2.1
 passlib==1.7.4
 python-multipart==0.0.6
 pymysql==1.1.0
+python-dotenv==1.0.0
 
 # ASGI server
 uvicorn>=0.23.2, <0.30

@@ -1,16 +1,23 @@
+import os
+
+from sqlalchemy import create_engine, URL
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
 
-mysql_host = "localhost"
-mysql_port = 3306
-mysql_user = "root"
-mysql_password = "ahffk"
-mysql_db = "gnu6"
+from config import load_gnuboard_env
 
-DATABASE_URL = f"mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_db}"  # pymysql을 사용합니다.
+load_gnuboard_env()
+DB = {
+    'drivername': os.getenv("G6_DB_DRIVER", ""), 
+    'host': os.getenv("G6_DB_HOST", ""),
+    'port': int(os.getenv("G6_DB_PORT")),
+    'username': os.getenv("G6_DB_USER", ""),
+    'password': os.getenv("G6_DB_PASSWORD", ""),
+    'database': os.getenv("G6_DB_NAME", ""),
+    'query': {'charset': os.getenv("G6_DB_CHARSET", "utf8")}
+}
+
 engine = create_engine(
-    DATABASE_URL, 
-    convert_unicode=True, 
+    URL(**DB),
     pool_size=20,   # adjust as needed
     max_overflow=40, # adjust as needed
     pool_timeout=60

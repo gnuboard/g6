@@ -9,3 +9,5 @@ __pycache__
 .bash*
 .idea
 .env
+prod.env
+dev.env
