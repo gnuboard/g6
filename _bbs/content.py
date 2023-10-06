@@ -22,11 +22,11 @@ def content_view(request: Request, co_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="{co_id} is not found.")
     
     # 상단 이미지가 있으면 상단 이미지를 출력하고 없으면 내용의 첫번째 이미지를 출력한다.
-    co_himg = ""
+    co_himg_url = ""
     img_data = get_head_tail_img('content', content.co_id + '_h')
     if (img_data['img_exists']):
         co_himg_url = img_data['img_url']
-    co_timg = ""
+    co_timg_url = ""
     img_data = get_head_tail_img('content', content.co_id + '_t')
     if (img_data['img_exists']):
         co_timg_url = img_data['img_url']
