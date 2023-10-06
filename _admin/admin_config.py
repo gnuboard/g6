@@ -46,11 +46,57 @@ def verify_jwt_token(token: str):
     
 security = HTTPBearer()
 
-@router.get("/ajax_token")
-def generate_token():
-    token_data = random.randint(1, 1000)
-    token = create_jwt_token(token_data)
-    return {"admin_csrf_token_key": token}
+def admin_csrf_token_key(is_must=0, member=None, server=None):
+    """
+    인자:
+    - is_must (int): 키를 반드시 생성해야 하는지 여부를 결정합니다.
+    - member (dict): 회원을 나타내는 딕셔너리로, 'mb_id' 키를 포함해야 합니다.
+    - server (dict): 서버 변수를 나타내는 딕셔너리로, PHP의 $_SERVER와 유사합니다.
+
+    반환값:
+    - str: 생성된 키 또는 빈 문자열.
+    """
+
+    key = ''
+
+    # AJAX 호출 여부를 확인합니다.
+    is_ajax = server.get('HTTP_X_REQUESTED_WITH', '').lower() == 'xmlhttprequest'
+
+    if is_must or not is_ajax:
+        server_software = server.get('SERVER_SOFTWARE', '')
+        encryption_key = "G5_TOKEN_ENCRYPTION_KEY"  # 실제 값 또는 설정에서 값을 가져와야 합니다.
+        member_id = member.get('mb_id', '')
+        document_root = server.get('DOCUMENT_ROOT', '')
+
+        raw_key = server_software + encryption_key + member_id + document_root
+        key = hashlib.md5(raw_key.encode()).hexdigest()
+
+    return key
+
+# def generate_token():
+#     token_data = random.randint(1, 1000)
+#     token = create_jwt_token(token_data)
+#     print(token)
+#     # return {"admin_csrf_token_key": token}
+#     return {"token": token}
+# @router.get("/ajax_token")
+# def ajax_token(request: Request):
+#     # 세션 설정 (FastAPI에서는 별도의 세션 관리 라이브러리를 사용해야 합니다.)
+#     request.session['ss_admin_token'] = ''
+
+#     admin_csrf_token_key_from_post = request.form.get('admin_csrf_token_key', '')
+
+#     # admin_csrf_token_key 함수의 존재 및 값 확인
+#     if 'admin_csrf_token_key' in globals() and admin_csrf_token_key_from_post != admin_csrf_token_key(1):
+#         raise HTTPException(status_code=400, detail={"error": "토큰키 에러!", "url": "YOUR_G5_URL"})
+
+#     error = admin_referer_check(True)
+#     if error:
+#         raise HTTPException(status_code=400, detail={"error": error, "url": "YOUR_G5_URL"})
+
+#     token = get_admin_token()
+
+#     return {"error": "", "token": token, "url": ""}
 
 @router.post("/submit_form")
 def submit_form(token: HTTPAuthorizationCredentials = Depends(security), form_data: str = Form(...)):

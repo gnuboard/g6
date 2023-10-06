@@ -13,15 +13,13 @@ import random
 import os
 from typing import List, Optional
 import socket
+import hashlib
 
-def bar():
-    return "bar"
 
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 # # 파이썬 함수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.globals['get_admin_menus'] = get_admin_menus
-templates.env.globals['bar'] = bar
 
 from _admin.admin_config import router as admin_config_router
 from _admin.admin_member import router as admin_member_router
