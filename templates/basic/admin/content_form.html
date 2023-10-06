@@ -1,0 +1,214 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+    내용관리
+{% endblock %}
+
+{% block content %}
+
+<h1 id="container_title">내용 관리</h1>
+<div class="container_wr">
+<form name="frmcontentform" action="/admin/content_form_update" onsubmit="return frmcontentform_check(this);" method="post" enctype="MULTIPART/FORM-DATA">
+    <input type="hidden" name="w" value="">
+    <input type="hidden" name="co_html" value="1">
+    <input type="hidden" name="token" value="{{ token }}">
+
+    <div class="tbl_frm01 tbl_wrap">
+        <table>
+            <caption>내용 관리 목록</caption>
+            <colgroup>
+                <col class="grid_4">
+                <col>
+            </colgroup>
+            <tbody>
+                <tr>
+                    <th scope="row"><label for="co_id">ID</label></th>
+                    <td>
+                        <span class="frm_info">20자 이내의 영문자, 숫자, _ 만 가능합니다.</span>                        
+                        <input type="text" value="{{ content.co_id }}" name="co_id" id="co_id" required  class="required  frm_input" size="20" maxlength="20">
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="co_subject">제목</label></th>
+                    <td><input type="text" name="co_subject" value="{{ content.co_subject }}" id="co_subject" required class="frm_input required" size="90"></td>
+                </tr>
+                <tr>
+                    <th scope="row">내용</th>
+                    <td><span class="sound_only">웹에디터 시작</span><script>document.write("<div class='cke_sc'><button type='button' class='btn_cke_sc'>단축키 일람</button></div>");</script>
+<script src="http://g5.gnupy.com/plugin/editor/smarteditor2/js/service/HuskyEZCreator.js"></script>
+<script>var g5_editor_url = "http://g5.gnupy.com/plugin/editor/smarteditor2", oEditors = [], ed_nonce = "Veh27DTOVG|1696477250|dcc25abd51f7777ecd6bdd2d1c3ba121045d694b";</script>
+<script src="http://g5.gnupy.com/plugin/editor/smarteditor2/config.js"></script>
+<script>
+        $(function(){
+            $(".btn_cke_sc").click(function(){
+                if ($(this).next("div.cke_sc_def").length) {
+                    $(this).next("div.cke_sc_def").remove();
+                    $(this).text("단축키 일람");
+                } else {
+                    $(this).after("<div class='cke_sc_def' />").next("div.cke_sc_def").load("http://g5.gnupy.com/plugin/editor/smarteditor2/shortcut.html");
+                    $(this).text("단축키 일람 닫기");
+                }
+            });
+            $(document).on("click", ".btn_cke_sc_close", function(){
+                $(this).parent("div.cke_sc_def").remove();
+            });
+        });
+</script>
+<textarea id="co_content" name="co_content" class="smarteditor2" maxlength="65536" style="width:100%;height:300px">{{ content.co_content }}</textarea>
+<span class="sound_only">웹 에디터 끝</span></td>
+                </tr>
+                <tr>
+                    <th scope="row">모바일 내용</th>
+                    <td><span class="sound_only">웹에디터 시작</span><script>document.write("<div class='cke_sc'><button type='button' class='btn_cke_sc'>단축키 일람</button></div>");</script>
+<textarea id="co_mobile_content" name="co_mobile_content" class="smarteditor2" maxlength="65536" style="width:100%;height:300px">{{ content.co_mobile_content }}</textarea>
+<span class="sound_only">웹 에디터 끝</span></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="co_skin">스킨 디렉토리<strong class="sound_only">필수</strong></label></th>
+                    <td>
+                        {{ get_skin_select('content', 'co_skin', content.co_skin, event='', device='pc')|safe }}
+                        {# <select id="co_skin" name="co_skin" required>
+                        <option value="">선택</option><option value="basic" selected="selected">basic</option>
+                        </select> #}
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="co_mobile_skin">모바일스킨 디렉토리<strong class="sound_only">필수</strong></label></th>
+                    <td>
+                        {{ get_skin_select('content', 'co_mobile_skin', content.co_mobile_skin, event='', device='pc')|safe }}
+                        {# <select id="co_mobile_skin" name="co_mobile_skin" required>
+                        <option value="">선택</option><option value="basic" selected="selected">basic</option>
+                        </select> #}
+                    </td>
+                </tr>
+                <!--
+    <tr>
+        <th scope="row"><label for="co_tag_filter_use">태그 필터링 사용</label></th>
+        <td>
+            <span class="frm_info">내용에서 iframe 등의 태그를 사용하려면 사용안함으로 선택해 주십시오.</span>            <select name="co_tag_filter_use" id="co_tag_filter_use">
+                <option value="1" selected="selected">사용함</option>
+                <option value="0">사용안함</option>
+            </select>
+        </td>
+    </tr>
+    -->
+
+                <tr id="admin_captcha_box" style="display:none;">
+                    <th scope="row">자동등록방지</th>
+                    <td>
+                        <span class="frm_info">파일 경로를 입력 또는 수정시 캡챠를 반드시 입력해야 합니다.</span>
+<script>var g5_captcha_url  = "http://g5.gnupy.com/plugin/kcaptcha";</script>
+<script src="http://g5.gnupy.com/plugin/kcaptcha/kcaptcha.js"></script>
+<fieldset id="captcha" class="captcha">
+<legend><label for="captcha_key">자동등록방지</label></legend>
+<img src="http://g5.gnupy.com/plugin/kcaptcha/img/dot.gif" alt="" id="captcha_img"><input type="text" name="captcha_key" id="captcha_key" required class="captcha_box required" size="6" maxlength="6">
+<button type="button" id="captcha_mp3"><span></span>숫자음성듣기</button>
+<button type="button" id="captcha_reload"><span></span>새로고침</button>
+<span id="captcha_info">자동등록방지 숫자를 순서대로 입력하세요.</span>
+</fieldset>                        <script>
+                            jQuery("#captcha_key").removeAttr("required").removeClass("required");
+                        </script>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="co_himg">상단이미지</label></th>
+                    <td>
+                        <input type="file" name="co_himg" id="co_himg">
+                                            </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="co_timg">하단이미지</label></th>
+                    <td>
+                        <input type="file" name="co_timg" id="co_timg">
+                                            </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="btn_fixed_top">
+        <a href="/admin/content_list" class="btn btn_02">목록</a>
+        <input type="submit" value="확인" class="btn btn_submit" accesskey="s">
+    </div>
+
+</form>
+
+<script>
+    var captcha_chk = false;
+
+    function use_captcha_check() {
+        $.ajax({
+            type: "POST",
+            url: g5_admin_url + "/ajax.use_captcha.php",
+            data: {
+                admin_use_captcha: "1"
+            },
+            cache: false,
+            async: false,
+            dataType: "json",
+            success: function(data) {}
+        });
+    }
+
+    function frm_check_file() {
+        var co_include_head = "";
+        var co_include_tail = "";
+        var head = jQuery.trim(jQuery("#co_include_head").val());
+        var tail = jQuery.trim(jQuery("#co_include_tail").val());
+
+        if (co_include_head !== head || co_include_tail !== tail) {
+            // 캡챠를 사용합니다.
+            jQuery("#admin_captcha_box").show();
+            captcha_chk = true;
+
+            use_captcha_check();
+
+            return false;
+        } else {
+            jQuery("#admin_captcha_box").hide();
+        }
+
+        return true;
+    }
+
+    jQuery(function($) {
+        if (window.self !== window.top) { // frame 또는 iframe을 사용할 경우 체크
+            $("#co_include_head, #co_include_tail").on("change paste keyup", function(e) {
+                frm_check_file();
+            });
+
+            use_captcha_check();
+        }
+    });
+
+    function frmcontentform_check(f) {
+        errmsg = "";
+        errfld = "";
+
+        var co_content_editor_data = oEditors.getById['co_content'].getIR();
+oEditors.getById['co_content'].exec('UPDATE_CONTENTS_FIELD', []);
+if(jQuery.inArray(document.getElementById('co_content').value.toLowerCase().replace(/^\s*|\s*$/g, ''), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<div><br></div>','<p></p>','<br>','']) != -1){document.getElementById('co_content').value='';}
+        if (!co_content_editor_data || jQuery.inArray(co_content_editor_data.toLowerCase(), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<p></p>','<br>']) != -1) { alert("내용을 입력해 주십시오."); oEditors.getById['co_content'].exec('FOCUS'); return false; }
+        var co_mobile_content_editor_data = oEditors.getById['co_mobile_content'].getIR();
+oEditors.getById['co_mobile_content'].exec('UPDATE_CONTENTS_FIELD', []);
+if(jQuery.inArray(document.getElementById('co_mobile_content').value.toLowerCase().replace(/^\s*|\s*$/g, ''), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<div><br></div>','<p></p>','<br>','']) != -1){document.getElementById('co_mobile_content').value='';}
+
+        check_field(f.co_id, "ID를 입력하세요.");
+        check_field(f.co_subject, "제목을 입력하세요.");
+        check_field(f.co_content, "내용을 입력하세요.");
+
+        if (errmsg != "") {
+            alert(errmsg);
+            errfld.focus();
+            return false;
+        }
+
+        if (captcha_chk) {
+            if (!chk_captcha()) return false;
+        }
+
+        return true;
+    }
+</script>
+
+{% endblock %}

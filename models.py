@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime
+from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import ArgumentError, InvalidRequestError
@@ -471,3 +472,22 @@ class Group(Base):
     gr_10 = Column(String(255), nullable=False, default='')
     # 종속관계
     # boards = relationship("Board", backref="group")
+    
+class Content(Base):
+    '''
+    g5_content 테이블
+    '''
+    __tablename__ = 'g6_content'
+
+    co_id = Column(String(20), primary_key=True, nullable=False, default='')
+    co_html = Column(TINYINT, nullable=False, default=0)
+    co_subject = Column(String(255), nullable=False, default='')
+    co_content = Column(Text, nullable=False)
+    co_seo_title = Column(String(255), nullable=False, default='')
+    co_mobile_content = Column(Text, nullable=False)
+    co_skin = Column(String(255), nullable=False, default='')
+    co_mobile_skin = Column(String(255), nullable=False, default='')
+    co_tag_filter_use = Column(TINYINT, nullable=False, default=0)
+    co_hit = Column(Integer, nullable=False, default=0)
+    co_include_head = Column(String(255), nullable=False)
+    co_include_tail = Column(String(255), nullable=False)
