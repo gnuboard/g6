@@ -1,19 +1,27 @@
 import datetime 
 from datetime import timedelta
 import re
+
+from debug_toolbar.middleware import DebugToolbarMiddleware
 from fastapi import FastAPI, Depends, Request, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
-from database import engine, get_db, SessionLocal
-import models
+from database import get_db
+
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 from common import *
+from typing import Optional
+
+from settings import G6_IS_DEBUG
 
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+app = FastAPI(debug=G6_IS_DEBUG)
+if G6_IS_DEBUG:
+    app.add_middleware(DebugToolbarMiddleware)
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 

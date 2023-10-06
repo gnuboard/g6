@@ -12,3 +12,5 @@ python-dotenv==1.0.0
 
 # ASGI server
 uvicorn>=0.23.2, <0.30
+
+fastapi-debug-toolbar
