@@ -2,9 +2,9 @@
 {% block title %}
     FAQ 상세관리 : {{ faq_master.fm_subject }}
 {% endblock title %}
-{% block container_title %}
+{% block subtitle %}
     FAQ 상세관리 : {{ faq_master.fm_subject }} > 목록
-{% endblock container_title %}
+{% endblock subtitle %}
 {% block content %}
     <div class="local_ov01 local_ov">
         <span class="btn_ov01"><span class="ov_txt"> 등록된 FAQ 상세내용</span><span class="ov_num"> {{ faqs|count }}건</span></span>
@@ -23,6 +23,7 @@
     </div>
 
     <div class="tbl_head01 tbl_wrap">
+        <input type="hidden" id="generate_one_time_token" name="token" value="{{ generate_one_time_token() }}">
         <table>
             <caption>{{ faq_master.fm_subject }} 목록</caption>
             <thead>
@@ -34,7 +35,6 @@
                 </tr>
             </thead>
             <tbody>
-
                 {% for faq in faqs %}
                     <tr class="bg{{ loop.cycle('0', '1') }}">
                         <td class="td_num">{{ loop.index }}</td>
@@ -44,7 +44,7 @@
                             <a href="{{ url_for('faq_update_form', fm_id=faq_master.fm_id, fa_id=faq.fa_id) }}" class="btn btn_03">
                                 <span class="sound_only">{{ faq.fa_subject }} </span>수정
                             </a>
-                            <a href="{{ url_for('faq_delete', fm_id=faq_master.fm_id, fa_id=faq.fa_id) }}" onclick="return delete_confirm(this);" class="btn btn_02">
+                            <a href="{{ url_for('faq_delete', fm_id=faq_master.fm_id, fa_id=faq.fa_id) }}" onclick="return delete_confirm3(this);" class="btn btn_02">
                                 <span class="sound_only">{{ faq.fa_subject }} </span>삭제
                             </a>
                         </td>

@@ -2,9 +2,9 @@
 {% block title %}
     FAQ 관리
 {% endblock title %}
-{% block container_title %}
+{% block subtitle %}
     FAQ 관리 목록
-{% endblock container_title %}
+{% endblock subtitle %}
 {% block content %}
     <div class="container_wr">
         <div class="local_ov01 local_ov">
@@ -25,6 +25,7 @@
             <a href="{{ url_for("faq_master_add_form") }}" class="btn_01 btn">FAQ추가</a>
         </div>
         <div class="tbl_head01 tbl_wrap">
+            <input type="hidden" id="generate_one_time_token" name="token" value="{{ generate_one_time_token() }}">
             <table>
                 <caption>FAQ관리 목록</caption>
                 <thead>
@@ -52,7 +53,7 @@
                                 <a href="{{ url_for('faq_list', fm_id=faq_master.fm_id) }}" class="btn btn_02">
                                     <span class="sound_only">{{ faq_master.fm_subject }}</span>보기
                                 </a>
-                                <a href="{{ url_for('faq_master_delete', fm_id=faq_master.fm_id) }}" onclick="return delete_confirm(this);" class="btn btn_02">
+                                <a href="{{ url_for('faq_master_delete', fm_id=faq_master.fm_id) }}" onclick="return delete_confirm3(this);" class="btn btn_02">
                                     <span class="sound_only">{{ faq_master.fm_subject }}</span>삭제
                                 </a>
                             </td>
