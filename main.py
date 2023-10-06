@@ -15,6 +15,7 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/data", StaticFiles(directory="data"), name="data")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 # from starlette.middleware.base import BaseHTTPMiddleware
@@ -178,7 +179,7 @@ def latest(skin_dir='', bo_table='', rows=10, subject_len=40, request: Request =
         write.is_notice = write.wr_id in board.bo_notice.split(",")
         write.subject = write.wr_subject[:subject_len]
         write.icon_hot = write.wr_hit >= 100
-        write.icon_new = write.wr_datetime > (datetime.datetime.now() - timedelta(days=1))
+        write.icon_new = write.wr_datetime > (datetime.now() - timedelta(days=1))
         write.icon_file = write.wr_file
         write.icon_link = write.wr_link1 or write.wr_link2
         write.icon_reply = write.wr_reply

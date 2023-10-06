@@ -1,16 +1,18 @@
 import hashlib
 import os
+import PIL
 from fastapi import Request
 from passlib.context import CryptContext
 from sqlalchemy import Index
 import models
 from models import WriteBaseModel
 from database import SessionLocal, engine
-import datetime
+from datetime import datetime
 import json
+from PIL import Image
 
 TEMPLATES_DIR = "templates/basic"
-SERVER_TIME = datetime.datetime.now()
+SERVER_TIME = datetime.now()
 TIME_YMDHIS = SERVER_TIME.strftime("%Y-%m-%d %H:%M:%S")
 TIME_YMD = TIME_YMDHIS[:10]
     
@@ -95,6 +97,7 @@ def get_skin_select(skin_gubun, id, selected, event='', device='pc'):
     html_code.append(f'<select id="{id}" name="{id}" {event}>')
     html_code.append(f'<option value="">선택</option>')
     for skin in os.listdir(skin_path):
+        # print(f"{skin_path}/{skin}")
         if os.path.isdir(f"{skin_path}/{skin}"):
             html_code.append(f'<option value="{skin}" {"selected" if skin == selected else ""}>{skin}</option>')
     html_code.append('</select>')
@@ -250,3 +253,50 @@ def get_admin_menus():
     with open("_admin/admin_menu.json", "r", encoding="utf-8") as file:
         menus = json.load(file)
     return menus
+
+def get_head_tail_img(dir: str, filename: str):
+    '''
+    게시판의 head, tail 이미지를 반환하는 함수
+    '''
+    img_path = os.path.join('data', dir, filename)  # 변수명 변경
+    img_exists = os.path.exists(img_path)
+    width = None
+    
+    if img_exists:
+        try:
+            with Image.open(img_path) as img_file:
+                width = img_file.width
+                if width > 750:
+                    width = 750
+        except PIL.UnidentifiedImageError:
+            # 이미지를 열 수 없을 때의 처리
+            img_exists = False
+            print(f"Error: Cannot identify image file '{img_path}'")
+    
+    return {
+        "img_exists": img_exists,
+        "img_url": os.path.join('/data', dir, filename) if img_exists else None,
+        "width": width
+    }
+    
+def now():
+    '''
+    현재 시간을 반환하는 함수
+    '''
+    return datetime.now().timestamp()
+
+import cachetools
+
+# 캐시 크기와 만료 시간 설정
+cache = cachetools.TTLCache(maxsize=1000, ttl=3600)
+
+def generate_one_time_token():
+    token = os.urandom(24).hex()
+    cache[token] = 'valid'
+    return token
+
+def validate_one_time_token(token):
+    if token in cache:
+        del cache[token]
+        return True
+    return False

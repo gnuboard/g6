@@ -63,7 +63,7 @@
 <textarea id="co_mobile_content" name="co_mobile_content" class="smarteditor2" maxlength="65536" style="width:100%;height:300px">{{ content.co_mobile_content }}</textarea>
 <span class="sound_only">웹 에디터 끝</span></td>
                 </tr>
-                <tr>
+                <!-- <tr>
                     <th scope="row"><label for="co_skin">스킨 디렉토리<strong class="sound_only">필수</strong></label></th>
                     <td>
                         {{ get_skin_select('content', 'co_skin', content.co_skin, event='', device='pc')|safe }}
@@ -80,7 +80,7 @@
                         <option value="">선택</option><option value="basic" selected="selected">basic</option>
                         </select> #}
                     </td>
-                </tr>
+                </tr> -->
                 <!--
     <tr>
         <th scope="row"><label for="co_tag_filter_use">태그 필터링 사용</label></th>
@@ -114,13 +114,29 @@
                     <th scope="row"><label for="co_himg">상단이미지</label></th>
                     <td>
                         <input type="file" name="co_himg" id="co_himg">
-                                            </td>
+                        {% set img_data = get_head_tail_img('content', content.co_id ~ '_h') %}
+                        {% if img_data.img_exists %}
+                            <input type="checkbox" name="co_himg_del" value="1" id="co_himg_del"> 
+                            <label for="co_himg_del">삭제</label>
+                            <div class="head_tail_img">
+                                <img src="{{ img_data.img_url }}?{{ now() }}" width="{{ img_data.width }}" alt="">
+                            </div>
+                        {% endif %}
+                    </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="co_timg">하단이미지</label></th>
                     <td>
                         <input type="file" name="co_timg" id="co_timg">
-                                            </td>
+                        {% set img_data = get_head_tail_img('content', content.co_id ~ '_t') %}
+                        {% if img_data.img_exists %}
+                            <input type="checkbox" name="co_timg_del" value="1" id="co_timg_del"> 
+                            <label for="co_timg_del">삭제</label>
+                            <div class="head_tail_img">
+                                <img src="{{ img_data.img_url }}?{{ now() }}" width="{{ img_data.width }}" alt="">
+                            </div>
+                        {% endif %}
+                    </td>
                 </tr>
             </tbody>
         </table>
