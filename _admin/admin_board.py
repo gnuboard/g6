@@ -99,7 +99,9 @@ def board_form(bo_table: str, request: Request, db: Session = Depends(get_db),
     
     board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
     if not board:
-        raise HTTPException(status_code=404, detail=f"{bo_table} Board is not found.")
+        # raise HTTPException(status_code=404, detail=f"{bo_table} Board is not found.")
+        errors = [f"{bo_table} 게시판이 존재하지 않습니다."]
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
 
     # 토큰값을 게시판아이디로 만들어 세션에 저장하고 수정시 넘어오는 토큰값을 비교하여 수정 상태임을 확인
     token = hash_password(bo_table)
@@ -379,7 +381,9 @@ def board_form_update(request: Request, db: Session = Depends(get_db),
     # 토큰은 외부에서 접근하는 것을 막고 등록, 수정을 구분하는 용도로 사용
     ss_token = request.session.get("token", "")
     if not token or token != ss_token:
-        raise HTTPException(status_code=403, detail="Invalid token.")
+        errors = ["토큰값이 일치하지 않습니다."]
+        # raise HTTPException(status_code=403, detail="Invalid token.")
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
 
     # 수정의 경우 토큰값이 게시판아이디로 만들어지므로 토큰값이 게시판아이디와 다르다면 등록으로 처리
     # 게시판아이디 변조시에도 등록으로 처리
@@ -387,7 +391,10 @@ def board_form_update(request: Request, db: Session = Depends(get_db),
 
         chk_board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
         if chk_board:
-            raise HTTPException(status_code=404, detail=f"{bo_table} : 게시판아이디가 이미 존재합니다.")
+            # raise HTTPException(status_code=404, detail=f"{bo_table} : 게시판아이디가 이미 존재합니다.")
+            errors = [f"{bo_table} 게시판아이디가 이미 존재합니다."]
+            return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
+            # raise HTTPException(status_code=404, detail=f"{bo_table} : 게시판아이디가 이미 존재합니다.")
 
         board = models.Board(
             bo_table=bo_table,
@@ -462,7 +469,7 @@ def board_form_update(request: Request, db: Session = Depends(get_db),
             bo_notice=bo_notice if bo_notice is not None else 0,
             bo_upload_count=bo_upload_count if bo_upload_count is not None else 0,
             bo_use_email=bo_use_email if bo_use_email is not None else 0,
-            bo_use_cert=bo_use_cert if bo_use_cert is not None else 0,
+            bo_use_cert=bo_use_cert if bo_use_cert is not None else "",
             bo_use_sns=bo_use_sns if bo_use_sns is not None else 0,
             bo_use_captcha=bo_use_captcha if bo_use_captcha is not None else 0,
             bo_sort_field=bo_sort_field if bo_sort_field is not None else "",
@@ -494,7 +501,9 @@ def board_form_update(request: Request, db: Session = Depends(get_db),
         
         board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
         if not board:
-            raise HTTPException(status_code=404, detail=f"{bo_table} : 게시판아이디가 존재하지 않습니다.")
+            # raise HTTPException(status_code=404, detail=f"{bo_table} : 게시판아이디가 존재하지 않습니다.")
+            errors = [f"{bo_table} 게시판아이디가 존재하지 않습니다."]
+            return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
     
         board.gr_id = gr_id
         board.bo_subject = bo_subject
@@ -815,7 +824,9 @@ def board_form_update(request: Request, db: Session = Depends(get_db),
                 setattr(board, key, value) 
             db.commit()
             
-    return RedirectResponse(f"/admin/board_form/{bo_table}?sfl={sfl}&stx={stx}", status_code=303)
+    query_string = generate_query_string(request)
+            
+    return RedirectResponse(f"/admin/board_form/{bo_table}?{query_string}", status_code=303)
 
 @router.post("/board_list_update")
 async def board_list_update(request: Request, db: Session = Depends(get_db),
