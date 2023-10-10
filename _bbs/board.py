@@ -50,7 +50,7 @@ def list_post(bo_table: str, request: Request, db: Session = Depends(get_db)):
     request.state.context["writes"] = writes
 
     # return templates.TemplateResponse("board/list_post.html", {"request": request, "board": board, "writes": writes})
-    return templates.TemplateResponse(f"board/pc/{board.bo_skin}/list_post.html", request.state.context)
+    return templates.TemplateResponse(f"board/{request.state.device}/{board.bo_skin}/list_post.html", request.state.context)
 
 
 @router.get("/write/{bo_table}")
@@ -65,7 +65,7 @@ def write_form(bo_table: str, request: Request, db: Session = Depends(get_db)):
     models.Write = dynamic_create_write_table(bo_table)
     write = db.query(models.Write).order_by(models.Write.wr_num).all()
         
-    return templates.TemplateResponse(f"board/pc/{board.bo_skin}/write_form.html", {"request": request, "board": board, "write": write})
+    return templates.TemplateResponse(f"board/{request.state.device}/{board.bo_skin}/write_form.html", {"request": request, "board": board, "write": write})
 
 
 @router.post("/write_update/")
@@ -131,11 +131,18 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
     
     # return templates.TemplateResponse("view.html", {"request": request, "board": board, "write": write, "comments": comments})
     
-    request.state.context["board"] = board
-    request.state.context["write"] = write
-    request.state.context["comments"] = comments
+    # request.state.context["board"] = board
+    # request.state.context["write"] = write
+    # request.state.context["comments"] = comments
     
-    return templates.TemplateResponse(f"board/pc/{board.bo_skin}/read_post.html", request.state.context)
+    context = {
+        "request": request,
+        "board": board,
+        "write": write,
+        "comments": comments,
+    }
+    # return templates.TemplateResponse(f"board/{request.state.device}/{board.bo_skin}/read_post.html", request.state.context)
+    return templates.TemplateResponse(f"board/{request.state.device}/{board.bo_skin}/read_post.html", context)
 
 
 @router.post("/write_comment_update/")

@@ -36,7 +36,7 @@ def board_list(request: Request, db: Session = Depends(get_db),
     '''
     게시판관리 목록
     '''
-    sst = request.state.sst    
+    sst = request.state.sst if request.state.sst else ""
     sod = request.state.sod
     sfl = request.state.sfl
     stx = request.state.stx
@@ -818,7 +818,7 @@ def board_form_update(request: Request, db: Session = Depends(get_db),
     return RedirectResponse(f"/admin/board_form/{bo_table}?sfl={sfl}&stx={stx}", status_code=303)
 
 @router.post("/board_list_update")
-def board_list_update(request: Request, db: Session = Depends(get_db),
+async def board_list_update(request: Request, db: Session = Depends(get_db),
                       checks: Optional[List[int]] = Form(None, alias="chk[]"),
                       gr_id: Optional[List[str]] = Form(None, alias="gr_id[]"),
                       bo_table: Optional[List[str]] = Form(None, alias="bo_table[]"),
@@ -833,7 +833,8 @@ def board_list_update(request: Request, db: Session = Depends(get_db),
                       bo_use_search: Optional[List[int]] = Form(None, alias="bo_use_search[]"),
                       bo_order: Optional[List[str]] = Form(None, alias="bo_order[]"),
                       bo_device: Optional[List[str]] = Form(None, alias="bo_device[]"),
-                      token: Optional[str] = Form(None, alias="token"),
+                      token: Optional[str] = Form(...),
+                      act_button: Optional[str] = Form(...),
                       ):
     
     # 세션에 저장된 토큰값과 입력된 토큰값이 다르다면 에러 (토큰 변조시 에러)
@@ -841,6 +842,20 @@ def board_list_update(request: Request, db: Session = Depends(get_db),
     if not token or token != ss_token:
         raise HTTPException(status_code=403, detail="Invalid token.")
     
+    if act_button == "선택삭제":
+        for i in checks:
+            board = db.query(models.Board).filter(models.Board.bo_table == bo_table[i]).first()
+            if board:
+                # 게시판 관리 레코드 삭제
+                db.delete(board)
+                db.commit()
+                # 게시판 테이블 삭제
+                models.Write = dynamic_create_write_table(table_name=board.bo_table, create_table=False)
+                models.Write.__table__.drop(engine)
+        query_string = generate_query_string(request)
+        return RedirectResponse(f"/admin/board_list?{query_string}", status_code=303)
+        
+    # 선택수정
     for i in checks:
         board = db.query(models.Board).filter(models.Board.bo_table == bo_table[i]).first()
         if board:
@@ -884,12 +899,12 @@ def generate_query_string(request: Request, query_string: str = ""):
         }
     else:
         search_fields = {
-            'sst': request._form.get("sst") if request._form else None,
-            'sod': request._form.get("sod") if request._form else None,
-            'sfl': request._form.get("sfl") if request._form else None,
-            'stx': request._form.get("stx") if request._form else None,
-            'sca': request._form.get("sca") if request._form else None,
-            'page': request._form.get("page") if request._form else None
+            'sst': request._form.get("sst") if request._form else "",
+            'sod': request._form.get("sod") if request._form else "",
+            'sfl': request._form.get("sfl") if request._form else "",
+            'stx': request._form.get("stx") if request._form else "",
+            'sca': request._form.get("sca") if request._form else "",
+            'page': request._form.get("page") if request._form else ""
         }    
         
     # None 값을 제거
@@ -923,7 +938,7 @@ def get_from_list(lst, index, default=0):
         return 1 if index in lst else default
     except (TypeError, IndexError):
         return default
-    
+
 
 @router.get("/board_copy/{bo_table}")
 async def board_copy(request: Request, bo_table: str, db: Session = Depends(get_db)):
