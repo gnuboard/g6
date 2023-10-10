@@ -903,6 +903,7 @@ def board_copy_update(request: Request, db: Session = Depends(get_db),
     if target_row:
         raise HTTPException(status_code=404, detail=f"{target_table} is already exists")
     
+    # 복사될 레코드의 모든 필드를 딕셔너리로 변환
     target_dict = {key: value for key, value in source_row.__dict__.items() if not key.startswith('_')}
     
     target_dict['bo_table'] = target_table
@@ -914,7 +915,22 @@ def board_copy_update(request: Request, db: Session = Depends(get_db),
     
     # 새로운 게시판 테이블 생성
     # source_table 에서 target_table 로 스키마 또는 데이터를 복사하는 코드를 작성해야 함
-    models.Write = dynamic_create_write_table(target_table)
-    writes = db.query(models.Write).filter(models.Write.wr_is_comment == False).order_by(models.Write.wr_num).limit(rows).all()
+    models.Write = dynamic_create_write_table(table_name=target_table, create_table=True)
+    # 복사 유형을 '구조와 데이터' 선택시 테이블의 레코드 모두 복사
+    if copy_case == 'schema_data_both':
+        writes = db.query(models.Write).all()
+        if writes:
+            for write in writes:
+                write.bo_table = target_table
+                db.add(write)
+                db.commit()
+                
+    content = """
+    <script>
+        window.opener.location.href = "/admin/board_list";
+        window.close();
+    </script>
+    """
     
-    return RedirectResponse("/admin/board_list", status_code=303)
+    # return RedirectResponse("/admin/board_list", status_code=303)
+    return HTMLResponse(content=content)
