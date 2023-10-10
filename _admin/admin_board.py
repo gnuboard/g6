@@ -877,10 +877,44 @@ def get_from_list(list, index, default=0):
     except (IndexError):
         return default
     
-# def get_from_list(lst, index, default=None):
-#     if lst is None:
-#         return default
-#     try:
-#         return lst[index]
-#     except IndexError:
-#         return default    
+
+@router.get("/board_copy/{bo_table}")
+async def board_copy(request: Request, bo_table: str, db: Session = Depends(get_db)):
+    board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
+    if not board:
+        raise HTTPException(status_code=404, detail="Board not found")
+    
+    return templates.TemplateResponse("admin/board_copy.html", {"request": request, "board": board})
+
+
+@router.post("/board_copy_update")
+def board_copy_update(request: Request, db: Session = Depends(get_db),
+                      bo_table: Optional[str] = Form(...),
+                      target_table: Optional[str] = Form(...),
+                      target_subject: Optional[str] = Form(...),
+                      copy_case: Optional[str] = Form(...),
+                      ):
+    
+    source_row = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
+    if not source_row:
+        raise HTTPException(status_code=404, detail=f"{bo_table} is not exists")
+    
+    target_row = db.query(models.Board).filter(models.Board.bo_table == target_table).first()
+    if target_row:
+        raise HTTPException(status_code=404, detail=f"{target_table} is already exists")
+    
+    target_dict = {key: value for key, value in source_row.__dict__.items() if not key.startswith('_')}
+    
+    target_dict['bo_table'] = target_table
+    target_dict['bo_subject'] = target_subject
+    
+    target_row = models.Board(**target_dict)
+    db.add(target_row)
+    db.commit()
+    
+    # 새로운 게시판 테이블 생성
+    # source_table 에서 target_table 로 스키마 또는 데이터를 복사하는 코드를 작성해야 함
+    models.Write = dynamic_create_write_table(target_table)
+    writes = db.query(models.Write).filter(models.Write.wr_is_comment == False).order_by(models.Write.wr_num).limit(rows).all()
+    
+    return RedirectResponse("/admin/board_list", status_code=303)

@@ -36,6 +36,7 @@ def verify_password(plain_password, hashed_passwd):
 # 이를 위해 간단한 전역 딕셔너리를 사용하여 이미 생성된 모델을 추적할 수 있습니다.
 _created_models = {}
 
+# 동적 게시판 모델 생성
 def dynamic_create_write_table(table_name: str, create_table: bool = False):
     '''
     WriteBaseModel 로 부터 게시판 테이블 구조를 복사하여 동적 모델로 생성하는 함수
