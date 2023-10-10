@@ -837,10 +837,6 @@ def board_list_update(request: Request, db: Session = Depends(get_db),
                       bo_device: Optional[List[str]] = Form(None, alias="bo_device[]"),
                       ):
     
-    print(checks)
-    print(bo_use_sns)
-    print(bo_use_search)
-    
     for i in checks:
         board = db.query(models.Board).filter(models.Board.bo_table == bo_table[i]).first()
         if board:
@@ -869,12 +865,21 @@ def board_list_update(request: Request, db: Session = Depends(get_db),
     
     return RedirectResponse("/admin/board_list", status_code=303)
 
-# 논리적인 오류가 있음
-def get_from_list(list, index, default=0):
+# # 논리적인 오류가 있음
+# def get_from_list(list, index, default=0):
+#     try:
+#         return 1 if index in list is not None else default
+#     # except (TypeError, IndexError):
+#     except (IndexError):
+#         return default
+
+# 파이썬의 내장함수인 list 와 이름이 충돌하지 않도록 변수명을 lst 로 변경함
+def get_from_list(lst, index, default=0):
+    if lst is None:
+        return default
     try:
-        return 1 if index in list is not None else default
-    # except (TypeError, IndexError):
-    except (IndexError):
+        return 1 if index in lst else default
+    except (TypeError, IndexError):
         return default
     
 
