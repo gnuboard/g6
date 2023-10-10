@@ -69,14 +69,14 @@ async def common(request: Request, call_next):
     if ss_mb_id:
         member = db.query(models.Member).filter(models.Member.mb_id == ss_mb_id).first()
         if member:
-            if member.mb_intercept_date or member.mb_leave_date: # 차단 되었거나, 탈퇴한 회원이면 세션 초기화
+            if member.mb_intercept_date or member.mb_leave_date:  # 차단 되었거나, 탈퇴한 회원이면 세션 초기화
                 request.session["ss_mb_id"] = ""
                 member = None
             else:
                 # if member.mb_today_login[:10] != datetime.datetime.now().strftime("%Y%m%d"): # 오늘 처음 로그인 이라면
                 # formatted_date = member.mb_today_login.strftime("%Y-%m-%d")
                 # if formatted_date != TIME_YMD: # 오늘 처음 로그인 이라면
-                if member.mb_today_login[:10] != TIME_YMD: # 오늘 처음 로그인 이라면
+                if member.mb_today_login.strftime(format="%Y-%m-%d") != TIME_YMD:  # 오늘 처음 로그인 이라면
                     # 첫 로그인 포인트 지급
                     # insert_point(member.mb_id, config["cf_login_point"], current_date + " 첫로그인", "@login", member.mb_id, current_date)
                     # 오늘의 로그인이 될 수도 있으며 마지막 로그인일 수도 있음

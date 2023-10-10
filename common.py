@@ -69,14 +69,14 @@ def get_real_client_ip(request: Request):
     '''
     if 'X-Forwarded-For' in request.headers:
         return request.headers.getlist("X-Forwarded-For")[0].split(',')[0]
-    return request.remote_addr    
+    return request.client.host
 
 
 def session_member_key(request: Request, member: models.Member):
     '''
     세션에 저장할 회원의 고유키를 생성하여 반환하는 함수
     '''
-    ss_mb_key = hashlib.md5((member.mb_datetime + get_real_client_ip(request) + request.headers.get('User-Agent')).encode()).hexdigest()
+    ss_mb_key = hashlib.md5((member.mb_datetime.strftime(format="%Y-%m-%d %H:%M:%S") + get_real_client_ip(request) + request.headers.get('User-Agent')).encode()).hexdigest()
     return ss_mb_key
 
 # 회원레벨을 SELECT 형식으로 얻음
@@ -160,8 +160,7 @@ def option_selected(value, selected, text=''):
     else:
         return f'<option value="{value}">{text}</option>\n'
     
-    
-from urllib.parse import urlencode
+
 
 def subject_sort_link(request: Request, col, query_string='', flag='asc'):
     sst = request.state.sst if request.state.sst is not None else ''

@@ -1,9 +1,9 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime
 from sqlalchemy.dialects.mysql import TINYINT
+from sqlalchemy import (create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime,
+                        Boolean, Date)
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import ArgumentError, InvalidRequestError
-from datetime import datetime
 
 Base = declarative_base()
 
@@ -203,20 +203,20 @@ class Member(Base):
     mb_signature = Column(Text, nullable=False, default='')
     mb_recommend = Column(String(255), nullable=False, default='')
     mb_point = Column(Integer, nullable=False, default=0, server_default=text('0'))
-    mb_today_login = Column(String(19), nullable=False, default='') # 오늘 접속일시 YYYY-MM-DD HH:MM:SS
+    mb_today_login = Column(DateTime, nullable=False, default='')  # 오늘 접속일시 YYYY-MM-DD HH:MM:SS
     mb_login_ip = Column(String(255), nullable=False, default='')
-    mb_datetime = Column(String(30), nullable=False, default='')
+    mb_datetime = Column(DateTime, nullable=False, default='', comment="회원가입일")
     mb_ip = Column(String(255), nullable=False, default='')
     mb_leave_date = Column(String(8), nullable=False, default='')
     mb_intercept_date = Column(String(8), nullable=False, default='')
-    mb_email_certify = Column(String(30), nullable=False, default='')
+    mb_email_certify = Column(DateTime, nullable=False, default='')
     mb_email_certify2 = Column(String(255), nullable=False, default='')
     mb_memo = Column(Text, nullable=False, default='')
     mb_lost_certify = Column(String(255), nullable=False, default='')
     mb_mailling = Column(Integer, nullable=False, default=0, server_default=text('0'))
     mb_sms = Column(Integer, nullable=False, default=0, server_default=text('0'))
     mb_open = Column(Integer, nullable=False, default=0, server_default=text('0'))
-    mb_open_date = Column(String(30), nullable=False, default='')
+    mb_open_date = Column(Date, nullable=False, default='')
     mb_profile = Column(Text, nullable=False, default='')
     mb_memo_call = Column(String(255), nullable=False, default='')
     mb_memo_cnt = Column(Integer, nullable=False, default=0, server_default=text('0'))
@@ -371,7 +371,7 @@ class WriteBaseModel(Base):
     wr_name = Column(String(255), nullable=False, default='')
     wr_email = Column(String(255), nullable=False, default='')
     wr_homepage = Column(String(255), nullable=False, default='')
-    wr_datetime = Column(DateTime, nullable=False,default='')
+    wr_datetime = Column(DateTime, nullable=False, default='')
     wr_file = Column(Integer, nullable=False, default=0, server_default=text('0'))
     wr_last = Column(String(30), nullable=False, default='')
     wr_ip = Column(String(255), nullable=False, default='')
