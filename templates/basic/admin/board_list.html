@@ -26,12 +26,13 @@
     </form>
 
     <form name="fboardlist" id="fboardlist" action="/admin/board_list_update" onsubmit="return fboardlist_submit(this);" method="post">
-    <input type="hidden" name="sst" value="">
-    <input type="hidden" name="sod" value="">
-    <input type="hidden" name="sfl" value="">
-    <input type="hidden" name="stx" value="">
-    <input type="hidden" name="page" value="1">
-    <input type="hidden" name="token" value="">
+    <input type="hidden" name="sst" value="{{ request.state.sst }}">
+    <input type="hidden" name="sod" value="{{ request.state.sod }}">
+    <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
+    <input type="hidden" name="stx" value="{{ request.state.stx }}">
+    <input type="hidden" name="sca" value="{{ request.state.sca }}">
+    <input type="hidden" name="page" value="{{ request.state.page }}">
+    <input type="hidden" name="token" value="{{ token }}">
 
     <div class="tbl_head01 tbl_wrap">
         <table>

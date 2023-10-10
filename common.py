@@ -174,12 +174,12 @@ def option_selected(value, selected, text=''):
 from urllib.parse import urlencode
 
 def subject_sort_link(request: Request, col, query_string='', flag='asc'):
-    sst = request.state.sst if request.state.sst is not None else ''
-    sod = request.state.sod if request.state.sod is not None else ''
-    sfl = request.state.sfl if request.state.sfl is not None else ''
-    stx = request.state.stx if request.state.stx is not None else ''
-    sca = request.state.sca if request.state.sca is not None else ''
-    page = request.state.page if request.state.page is not None else '' 
+    sst = request.state.sst if request.state.sst is not None else ""
+    sod = request.state.sod if request.state.sod is not None else ""
+    sfl = request.state.sfl if request.state.sfl is not None else ""
+    stx = request.state.stx if request.state.stx is not None else ""
+    sca = request.state.sca if request.state.sca is not None else ""
+    page = request.state.page if request.state.page is not None else "" 
     
     q1 = f"sst={col}"
 

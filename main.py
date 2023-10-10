@@ -83,22 +83,24 @@ async def common(request: Request, call_next):
 
     if not outlogin:
         outlogin = templates.TemplateResponse("bbs/outlogin_before.html", {"request": request})
-        
-    request.state.sst = request.query_params.get("sst")
-    request.state.sod = request.query_params.get("sod")
-    request.state.sfl = request.query_params.get("sfl")
-    request.state.stx = request.query_params.get("stx")
-    request.state.sca = request.query_params.get("sca")
-    request.state.page = request.query_params.get("page")
-    # request.state.w = request.query_params.get("w")
+    
+    if request.method == "GET":
+        request.state.sst = request.query_params.get("sst")
+        request.state.sod = request.query_params.get("sod")
+        request.state.sfl = request.query_params.get("sfl")
+        request.state.stx = request.query_params.get("stx")
+        request.state.sca = request.query_params.get("sca")
+        request.state.page = request.query_params.get("page")
+    else:
+        request.state.sst = request._form.get("sst") if request._form else ""
+        request.state.sod = request._form.get("sod") if request._form else ""
+        request.state.sfl = request._form.get("sfl") if request._form else ""
+        request.state.stx = request._form.get("stx") if request._form else ""
+        request.state.sca = request._form.get("sca") if request._form else ""
+        request.state.page = request._form.get("page") if request._form else ""
         
     request.state.context = {
         "request": request,
-        # "sst": request.state.sst,
-        # "sod": request.state.sod,
-        # "sfl": request.state.sfl,
-        # "stx": request.state.stx,
-        # "page": request.state.page,
         "config": config,
         "member": member,
         "outlogin": outlogin.body.decode("utf-8"),

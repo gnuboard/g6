@@ -27,20 +27,21 @@ templates.env.globals['get_admin_menus'] = get_admin_menus
 
 @router.get("/board_list")
 def board_list(request: Request, db: Session = Depends(get_db),
-               sst: Optional[str] = None, # search sort (검색 정렬 필드)
-               sod: Optional[str] = None, # search order (검색 오름, 내림차순)
-               sfl: Optional[str] = None, # search field (검색 필드) 
-               stx: Optional[str] = None, # search text (검색어)
-               page: Optional[str] = None, # 페이지
+            #    sst: Optional[str] = None, # search sort (검색 정렬 필드)
+            #    sod: Optional[str] = None, # search order (검색 오름, 내림차순)
+            #    sfl: Optional[str] = None, # search field (검색 필드) 
+            #    stx: Optional[str] = None, # search text (검색어)
+            #    page: Optional[str] = None, # 페이지
                ):
     '''
     게시판관리 목록
     '''
-    # sst = request.state.sst
-    # sod = request.state.sod
-    # sfl = request.state.sfl
-    # stx = request.state.stx
-    # page = request.state.page
+    sst = request.state.sst    
+    sod = request.state.sod
+    sfl = request.state.sfl
+    stx = request.state.stx
+    sca = request.state.sca
+    page = request.state.page
     request.session["menu_key"] = "300100"
 
     # 초기 쿼리 설정
@@ -51,33 +52,30 @@ def board_list(request: Request, db: Session = Depends(get_db),
     #     query = query.filter(getattr(models.Board, sst))
 
     # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
-    if sod == "asc":
-        query = query.order_by(asc(getattr(models.Board, sst)))
-    elif sod == "desc":
-        query = query.order_by(desc(getattr(models.Board, sst)))
+    if sst is not None and sst != "":
+        if sod == "desc":
+            query = query.order_by(desc(getattr(models.Board, sst)))
+        else:
+            query = query.order_by(asc(getattr(models.Board, sst)))
 
     # sfl과 stx가 제공되면, 해당 열과 값으로 추가 필터링을 합니다.
     if sfl is not None and stx is not None:
         if hasattr(models.Board, sfl):  # sfl이 models.Board에 존재하는지 확인
-            # query = query.filter(getattr(models.Board, sfl) == stx)
-            # 위의 코드를 like 로 수정해
             query = query.filter(getattr(models.Board, sfl).like(f"%{stx}%"))
 
     # 최종 쿼리 결과를 가져옵니다.
     boards = query.all()
-    sod = "desc" if sod == "asc" else "asc"
-    # boards = db.query(models.Board).all()
-        
-    # _get = {
-    #     "sst": sst,
-    #     "sod": sod,
-    #     "sfl": sfl,
-    #     "stx": stx,
-    #     "page": page,
-    # }
-        
-    # return templates.TemplateResponse("admin/board_list.html", {"request": request, "boards": boards, "_get": _get})
-    return templates.TemplateResponse("admin/board_list.html", {"request": request, "boards": boards})
+    # sod = "asc" if sod == "desc" else ""
+    
+    token = hash_password(hash_password("")) # 토큰값을 아무도 알수 없게 만듬
+    request.session["token"] = token
+    
+    context = {
+        "request": request,
+        "boards": boards,
+        "token": token,
+    }
+    return templates.TemplateResponse("admin/board_list.html", context)
 
 
 @router.get("/board_form")
@@ -835,7 +833,13 @@ def board_list_update(request: Request, db: Session = Depends(get_db),
                       bo_use_search: Optional[List[int]] = Form(None, alias="bo_use_search[]"),
                       bo_order: Optional[List[str]] = Form(None, alias="bo_order[]"),
                       bo_device: Optional[List[str]] = Form(None, alias="bo_device[]"),
+                      token: Optional[str] = Form(None, alias="token"),
                       ):
+    
+    # 세션에 저장된 토큰값과 입력된 토큰값이 다르다면 에러 (토큰 변조시 에러)
+    ss_token = request.session.get("token", "")
+    if not token or token != ss_token:
+        raise HTTPException(status_code=403, detail="Invalid token.")
     
     for i in checks:
         board = db.query(models.Board).filter(models.Board.bo_table == bo_table[i]).first()
@@ -862,8 +866,46 @@ def board_list_update(request: Request, db: Session = Depends(get_db),
             board.bo_order = int(bo_order[i]) if bo_order[i] is not None and bo_order[i].isdigit() else 0
             board.bo_device = bo_device[i] if bo_device[i] is not None else ""
             db.commit()
+            
+    query_string = generate_query_string(request)            
     
-    return RedirectResponse("/admin/board_list", status_code=303)
+    return RedirectResponse(f"/admin/board_list?{query_string}", status_code=303)
+
+def generate_query_string(request: Request, query_string: str = ""):
+    search_fields = {}
+    if request.method == "GET":
+        search_fields = {
+            'sst': request.query_params.get("sst"),
+            'sod': request.query_params.get("sod"),
+            'sfl': request.query_params.get("sfl"),
+            'stx': request.query_params.get("stx"),
+            'sca': request.query_params.get("sca"),
+            'page': request.query_params.get("page")
+        }
+    else:
+        search_fields = {
+            'sst': request._form.get("sst") if request._form else None,
+            'sod': request._form.get("sod") if request._form else None,
+            'sfl': request._form.get("sfl") if request._form else None,
+            'stx': request._form.get("stx") if request._form else None,
+            'sca': request._form.get("sca") if request._form else None,
+            'page': request._form.get("page") if request._form else None
+        }    
+        
+    # None 값을 제거
+    search_fields = {k: v for k, v in search_fields.items() if v is not None}
+
+    return urlencode(search_fields)    
+        
+    # for key, value in search_fields.items():
+    #     print(key, value)
+    #     if value is not None:
+    #         # 처음이라면 & 를 붙이지 않고, 그렇지 않다면 & 를 붙임
+    #         if query_string == "":
+    #             query_string += f"{key}={value}"
+    #         else:
+    #             query_string += f"&{key}={value}"
+    # return query_string
 
 # # 논리적인 오류가 있음
 # def get_from_list(list, index, default=0):
