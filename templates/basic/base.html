@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="/static/css/default.css">
 <link rel="stylesheet" href="/static/js/font-awesome/css/font-awesome.min.css">
 <link rel="stylesheet" href="/static/css/basic/connect.css">
+<link rel="stylesheet" href="/static/css/basic/faq.css">
 <link rel="stylesheet" href="/static/css/basic/popular.css">
 <link rel="stylesheet" href="/static/css/basic/member.css">
 <link rel="stylesheet" href="/static/css/basic/latest_list.css">
@@ -76,16 +77,15 @@ $(function() {
 </script>
 <!-- } 팝업레이어 끝 -->    <div id="tnb">
         <div class="inner">
-                		<ul id="hd_define">
+            <ul id="hd_define">
     			<li class="active"><a href="/">커뮤니티</a></li>
-                    			<li><a href="/shop">쇼핑몰</a></li>
-                    		</ul>
-            			<ul id="hd_qnb">
-	            <li><a href="/bbs/faq">FAQ</a></li>
+                <li><a href="/shop">쇼핑몰</a></li>
+            </ul>
+            <ul id="hd_qnb">
+	            <li><a href="{{ url_for('faq_view') }}">FAQ</a></li>
 	            <li><a href="/bbs/qalist">Q&A</a></li>
 	            <li><a href="/bbs/new">새글</a></li>
-	            <li><a href="/bbs/current_connect" class="visit">접속자<strong class="visit-num">
-0</strong></a></li>
+	            <li><a href="/bbs/current_connect" class="visit">접속자<strong class="visit-num">0</strong></a></li>
 	        </ul>
 		</div>
     </div>

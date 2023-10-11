@@ -75,25 +75,25 @@
                         <tr>
                             <th scope="row">상단 내용</th>
                             <td>
-                                <textarea id="fm_head_html" name="fm_head_html" class="smarteditor2" maxlength="65536" style="width:100%; height:300px">{{ faq_master.fm_head_html }}</textarea>
+                                <textarea id="fm_head_html" name="fm_head_html" class="smarteditor2" maxlength="65536" style="width:100%; height:300px">{{ faq_master.fm_head_html|default('', true) }}</textarea>
                             </td>
                         </tr>
                         <tr>
                             <th scope="row">하단 내용</th>
                             <td>
-                                <textarea id="fm_tail_html" name="fm_tail_html" class="smarteditor2" maxlength="65536" style="width:100%; height:300px">{{ faq_master.fm_tail_html }}</textarea>
+                                <textarea id="fm_tail_html" name="fm_tail_html" class="smarteditor2" maxlength="65536" style="width:100%; height:300px">{{ faq_master.fm_tail_html|default('', true) }}</textarea>
                             </td>
                         </tr>
                         <tr>
                             <th scope="row">모바일상단 내용</th>
                             <td>
-                                <textarea id="fm_mobile_head_html" name="fm_mobile_head_html" class="smarteditor2" maxlength="65536" style="width:100%; height:300px">{{ faq_master.fm_mobile_head_html }}</textarea>
+                                <textarea id="fm_mobile_head_html" name="fm_mobile_head_html" class="smarteditor2" maxlength="65536" style="width:100%; height:300px">{{ faq_master.fm_mobile_head_html|default('', true) }}</textarea>
                             </td>
                         </tr>
                         <tr>
                             <th scope="row">모바일하단 내용</th>
                             <td>
-                                <textarea id="fm_mobile_tail_html" name="fm_mobile_tail_html" class="smarteditor2" maxlength="65536" style="width:100%; height:300px">{{ faq_master.fm_mobile_tail_html }}</textarea>
+                                <textarea id="fm_mobile_tail_html" name="fm_mobile_tail_html" class="smarteditor2" maxlength="65536" style="width:100%; height:300px">{{ faq_master.fm_mobile_tail_html|default('', true) }}</textarea>
                             </td>
                         </tr>
                     </tbody>
