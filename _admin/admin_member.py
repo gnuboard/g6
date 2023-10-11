@@ -7,9 +7,9 @@ from database import get_db
 import models 
 import datetime
 from common import *
+from main import templates
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.globals['getattr'] = getattr
 templates.env.globals['today'] = SERVER_TIME.strftime("%Y%m%d")
@@ -93,7 +93,9 @@ def member_form_update(request: Request, db: Session = Depends(get_db),
                        mb_9: str = Form(None),
                        mb_10: str = Form(None),
                        ):
-    
+
+    request_time_ymdhis = datetime.datetime.now()
+
     # 세션에 저장된 토큰값과 입력된 토큰값이 다르다면 에러 (토큰 변조시 에러)
     # 토큰은 외부에서 접근하는 것을 막고 등록, 수정을 구분하는 용도로 사용
     ss_token = request.session.get("token", "")
@@ -126,15 +128,15 @@ def member_form_update(request: Request, db: Session = Depends(get_db),
         if mb_password:
             hashed_password = hash_password(mb_password)               
         else:
-            hashed_password = hash_password(TIME_YMDHIS) # 비밀번호가 없다면 현재시간으로 해시값을 만듬 (알수없게 만드는게 목적)
-            
+            hashed_password = hash_password(request_time_ymdhis.strftime("%Y-%m-%d %H:%M:%S")) # 비밀번호가 없다면 현재시간으로 해시값을 만듬 (알수없게 만드는게 목적)
+
         member = models.Member(
             mb_id=mb_id, 
             mb_password=hashed_password, 
             mb_name=mb_name, 
             mb_nick=mb_nick,
-            mb_level=mb_level,            
-            mb_nick_date=TIME_YMDHIS,
+            mb_level=mb_level,
+            mb_nick_date=request_time_ymdhis,
             mb_email=mb_email,
             mb_homepage=mb_homepage,
             mb_hp=mb_hp,
@@ -164,13 +166,13 @@ def member_form_update(request: Request, db: Session = Depends(get_db),
             mb_8=mb_8,
             mb_9=mb_9,
             mb_10=mb_10,
-            mb_today_login=TIME_YMDHIS,
-            mb_datetime=TIME_YMDHIS,
+            mb_today_login=request_time_ymdhis,
+            mb_datetime=request_time_ymdhis,
         )
         db.add(member)
         db.commit()
         
-    else: # 수정
+    else: # 회원 수정
         
         chk_member = db.query(models.Member).filter(and_(models.Member.mb_id != mb_id, models.Member.mb_nick == mb_nick)).first()
         if chk_member is not None:
