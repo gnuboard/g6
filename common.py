@@ -1,18 +1,28 @@
 import hashlib
 import os
+import PIL
 from fastapi import Request
 from passlib.context import CryptContext
 from sqlalchemy import Index
 import models
 from models import WriteBaseModel
 from database import SessionLocal, engine
-import datetime
+from datetime import datetime
 import json
+from PIL import Image
 
 TEMPLATES_DIR = "templates/basic"
-SERVER_TIME = datetime.datetime.now()
+SERVER_TIME = datetime.now()
 TIME_YMDHIS = SERVER_TIME.strftime("%Y-%m-%d %H:%M:%S")
 TIME_YMD = TIME_YMDHIS[:10]
+
+# pc 설정 시 모바일 기기에서도 PC화면 보여짐
+# mobile 설정 시 PC에서도 모바일화면 보여짐
+# both 설정 시 접속 기기에 따른 화면 보여짐 (pc에서 접속하면 pc화면을, mobile과 tablet에서 접속하면 mobile 화면)
+SET_DEVICE = 'both'
+
+# mobile 을 사용하지 않을 경우 False 로 설정
+USE_MOBILE = True
     
 
 def hash_password(password: str):
@@ -34,6 +44,7 @@ def verify_password(plain_password, hashed_passwd):
 # 이를 위해 간단한 전역 딕셔너리를 사용하여 이미 생성된 모델을 추적할 수 있습니다.
 _created_models = {}
 
+# 동적 게시판 모델 생성
 def dynamic_create_write_table(table_name: str, create_table: bool = False):
     '''
     WriteBaseModel 로 부터 게시판 테이블 구조를 복사하여 동적 모델로 생성하는 함수
@@ -79,6 +90,7 @@ def session_member_key(request: Request, member: models.Member):
     ss_mb_key = hashlib.md5((member.mb_datetime.strftime(format="%Y-%m-%d %H:%M:%S") + get_real_client_ip(request) + request.headers.get('User-Agent')).encode()).hexdigest()
     return ss_mb_key
 
+
 # 회원레벨을 SELECT 형식으로 얻음
 def get_member_level_select(id: str, start: int, end: int, selected: int, event=''):
     html_code = []
@@ -87,6 +99,7 @@ def get_member_level_select(id: str, start: int, end: int, selected: int, event=
         html_code.append(f'<option value="{i}" {"selected" if i == selected else ""}>{i}</option>')
     html_code.append('</select>')
     return ''.join(html_code)
+
     
 # skin_gubun(new, search, connect, faq 등) 에 따른 스킨을 SELECT 형식으로 얻음
 def get_skin_select(skin_gubun, id, selected, event='', device='pc'):
@@ -95,6 +108,7 @@ def get_skin_select(skin_gubun, id, selected, event='', device='pc'):
     html_code.append(f'<select id="{id}" name="{id}" {event}>')
     html_code.append(f'<option value="">선택</option>')
     for skin in os.listdir(skin_path):
+        # print(f"{skin_path}/{skin}")
         if os.path.isdir(f"{skin_path}/{skin}"):
             html_code.append(f'<option value="{skin}" {"selected" if skin == selected else ""}>{skin}</option>')
     html_code.append('</select>')
@@ -127,11 +141,13 @@ def get_member_id_select(id, level, selected, event=''):
     html_code.append('</select>')
     return ''.join(html_code)
 
+
 # 필드에 저장된 값과 기본 값을 비교하여 selected 를 반환
 def get_selected(field_value, value):
     if isinstance(value, int):
         return ' selected="selected"' if (int(field_value) == int(value)) else ''
     return ' selected="selected"' if (field_value == value) else ''
+
 
 def option_array_checked(option, arr=[]):
     checked = ''
@@ -140,6 +156,7 @@ def option_array_checked(option, arr=[]):
     if arr and option in arr:
         checked = 'checked="checked"'
     return checked
+
 
 def get_group_select(id, selected='', event=''):
     db = SessionLocal()
@@ -152,6 +169,7 @@ def get_group_select(id, selected='', event=''):
     str += '</select>'
     return str
 
+
 def option_selected(value, selected, text=''):
     if not text:
         text = value
@@ -163,12 +181,12 @@ def option_selected(value, selected, text=''):
 
 
 def subject_sort_link(request: Request, col, query_string='', flag='asc'):
-    sst = request.state.sst if request.state.sst is not None else ''
-    sod = request.state.sod if request.state.sod is not None else ''
-    sfl = request.state.sfl if request.state.sfl is not None else ''
-    stx = request.state.stx if request.state.stx is not None else ''
-    sca = request.state.sca if request.state.sca is not None else ''
-    page = request.state.page if request.state.page is not None else '' 
+    sst = request.state.sst if request.state.sst is not None else ""
+    sod = request.state.sod if request.state.sod is not None else ""
+    sfl = request.state.sfl if request.state.sfl is not None else ""
+    stx = request.state.stx if request.state.stx is not None else ""
+    sca = request.state.sca if request.state.sca is not None else ""
+    page = request.state.page if request.state.page is not None else "" 
     
     q1 = f"sst={col}"
 
@@ -246,6 +264,64 @@ def subject_sort_link(request: Request, col, query_string='', flag='asc'):
 
 
 def get_admin_menus():
+    '''
+    관리자 메뉴를 1, 2단계로 분류하여 반환하는 함수
+    '''
     with open("_admin/admin_menu.json", "r", encoding="utf-8") as file:
         menus = json.load(file)
     return menus
+
+
+def get_head_tail_img(dir: str, filename: str):
+    '''
+    게시판의 head, tail 이미지를 반환하는 함수
+    '''
+    img_path = os.path.join('data', dir, filename)  # 변수명 변경
+    img_exists = os.path.exists(img_path)
+    width = None
+    
+    if img_exists:
+        try:
+            with Image.open(img_path) as img_file:
+                width = img_file.width
+                if width > 750:
+                    width = 750
+        except PIL.UnidentifiedImageError:
+            # 이미지를 열 수 없을 때의 처리
+            img_exists = False
+            print(f"Error: Cannot identify image file '{img_path}'")
+    
+    return {
+        "img_exists": img_exists,
+        "img_url": os.path.join('/data', dir, filename) if img_exists else None,
+        "width": width
+    }
+    
+def now():
+    '''
+    현재 시간을 반환하는 함수
+    '''
+    return datetime.now().timestamp()
+
+import cachetools
+
+# 캐시 크기와 만료 시간 설정
+cache = cachetools.TTLCache(maxsize=100, ttl=3600)
+
+def generate_one_time_token():
+    '''
+    원타임 토큰을 생성하여 반환하는 함수
+    '''
+    token = os.urandom(24).hex()
+    cache[token] = 'valid'
+    return token
+
+
+def validate_one_time_token(token):
+    '''
+    원타임 토큰을 검증하는 함수
+    '''
+    if token in cache:
+        del cache[token]
+        return True
+    return False

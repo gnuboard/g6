@@ -67,31 +67,39 @@
                     <th scope="row"><label for="co_skin">스킨 디렉토리<strong class="sound_only">필수</strong></label></th>
                     <td>
                         {{ get_skin_select('content', 'co_skin', content.co_skin, event='', device='pc')|safe }}
-                        {# <select id="co_skin" name="co_skin" required>
-                        <option value="">선택</option><option value="basic" selected="selected">basic</option>
-                        </select> #}
                     </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="co_mobile_skin">모바일스킨 디렉토리<strong class="sound_only">필수</strong></label></th>
                     <td>
-                        {{ get_skin_select('content', 'co_mobile_skin', content.co_mobile_skin, event='', device='pc')|safe }}
-                        {# <select id="co_mobile_skin" name="co_mobile_skin" required>
-                        <option value="">선택</option><option value="basic" selected="selected">basic</option>
-                        </select> #}
+                        {{ get_skin_select('content', 'co_mobile_skin', content.co_mobile_skin, event='', device='mobile')|safe }}
                     </td>
                 </tr>
                 <!--
-    <tr>
-        <th scope="row"><label for="co_tag_filter_use">태그 필터링 사용</label></th>
-        <td>
-            <span class="frm_info">내용에서 iframe 등의 태그를 사용하려면 사용안함으로 선택해 주십시오.</span>            <select name="co_tag_filter_use" id="co_tag_filter_use">
-                <option value="1" selected="selected">사용함</option>
-                <option value="0">사용안함</option>
-            </select>
-        </td>
-    </tr>
-    -->
+                <tr>
+                    <th scope="row"><label for="co_tag_filter_use">태그 필터링 사용</label></th>
+                    <td>
+                        <span class="frm_info">내용에서 iframe 등의 태그를 사용하려면 사용안함으로 선택해 주십시오.</span>            <select name="co_tag_filter_use" id="co_tag_filter_use">
+                            <option value="1" selected="selected">사용함</option>
+                            <option value="0">사용안함</option>
+                        </select>
+                    </td>
+                </tr>
+                -->
+                <tr>
+                    <th scope="row"><label for="co_include_head">상단 파일 경로</label></th>
+                    <td>
+                        <span class="frm_info">설정값이 없으면 기본 상단 파일을 사용합니다.</span>
+                        <input type="text" name="co_include_head" value="{{ content.co_include_head }}" id="co_include_head" class="frm_input" size="60">
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="co_include_tail">하단 파일 경로</label></th>
+                    <td>
+                        <span class="frm_info">설정값이 없으면 기본 하단 파일을 사용합니다.</span>
+                        <input type="text" name="co_include_tail" value="{{ content.co_include_tail }}" id="co_include_tail" class="frm_input" size="60">
+                    </td>
+                </tr>
 
                 <tr id="admin_captcha_box" style="display:none;">
                     <th scope="row">자동등록방지</th>
@@ -114,13 +122,29 @@
                     <th scope="row"><label for="co_himg">상단이미지</label></th>
                     <td>
                         <input type="file" name="co_himg" id="co_himg">
-                                            </td>
+                        {% set img_data = get_head_tail_img('content', content.co_id ~ '_h') %}
+                        {% if img_data.img_exists %}
+                            <input type="checkbox" name="co_himg_del" value="1" id="co_himg_del"> 
+                            <label for="co_himg_del">삭제</label>
+                            <div class="head_tail_img">
+                                <img src="{{ img_data.img_url }}?{{ now() }}" width="{{ img_data.width }}" alt="">
+                            </div>
+                        {% endif %}
+                    </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="co_timg">하단이미지</label></th>
                     <td>
                         <input type="file" name="co_timg" id="co_timg">
-                                            </td>
+                        {% set img_data = get_head_tail_img('content', content.co_id ~ '_t') %}
+                        {% if img_data.img_exists %}
+                            <input type="checkbox" name="co_timg_del" value="1" id="co_timg_del"> 
+                            <label for="co_timg_del">삭제</label>
+                            <div class="head_tail_img">
+                                <img src="{{ img_data.img_url }}?{{ now() }}" width="{{ img_data.width }}" alt="">
+                            </div>
+                        {% endif %}
+                    </td>
                 </tr>
             </tbody>
         </table>

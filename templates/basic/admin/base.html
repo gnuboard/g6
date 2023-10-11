@@ -36,7 +36,7 @@ var g5_admin_url = "/admin";
 <body>
 <div id="hd_login_msg">최고관리자 최고관리자님 로그인 중 <a href="/bbs/logout">로그아웃</a></div>
 <script>
-    var g5_admin_csrf_token_key = "bcb4ac510141f67ecc528ee2478c0a7d";
+    var admin_csrf_token_key = "";
     var tempX = 0;
     var tempY = 0;
 
@@ -89,11 +89,8 @@ var g5_admin_url = "/admin";
                     <div class="gnb_oparea_wr">
                         <div class="gnb_oparea">
                             <h3>{{ submenus[0]['name'] }}</h3>
-                            <ul>
-                            {% for submenu in submenus[1:] %}
-                                <li data-menu="{{ submenu['id'] }}">
-                                    <a href="/admin/{{ submenu['url'] }}" class="gnb_2da {{ 'on' if (request.session.get('menu_key') == submenu['id']) else '' }}">{{ submenu['name'] }}</a></li>
-                            {% endfor %}
+                            <ul>{% for submenu in submenus[1:] %}
+                                <li data-menu="{{ submenu['id'] }}"><a href="/admin/{{ submenu['url'] }}" class="gnb_2da {{ 'on' if (request.session.get('menu_key') == submenu['id']) else '' }}">{{ submenu['name'] }}</a></li>{% endfor %}
                             </ul>
                         </div>
                     </div>

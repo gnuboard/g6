@@ -27,20 +27,21 @@ templates.env.globals['get_admin_menus'] = get_admin_menus
 
 @router.get("/board_list")
 def board_list(request: Request, db: Session = Depends(get_db),
-               sst: Optional[str] = None, # search sort (검색 정렬 필드)
-               sod: Optional[str] = None, # search order (검색 오름, 내림차순)
-               sfl: Optional[str] = None, # search field (검색 필드) 
-               stx: Optional[str] = None, # search text (검색어)
-               page: Optional[str] = None, # 페이지
+            #    sst: Optional[str] = None, # search sort (검색 정렬 필드)
+            #    sod: Optional[str] = None, # search order (검색 오름, 내림차순)
+            #    sfl: Optional[str] = None, # search field (검색 필드) 
+            #    stx: Optional[str] = None, # search text (검색어)
+            #    page: Optional[str] = None, # 페이지
                ):
     '''
     게시판관리 목록
     '''
-    # sst = request.state.sst
-    # sod = request.state.sod
-    # sfl = request.state.sfl
-    # stx = request.state.stx
-    # page = request.state.page
+    sst = request.state.sst if request.state.sst else ""
+    sod = request.state.sod
+    sfl = request.state.sfl
+    stx = request.state.stx
+    sca = request.state.sca
+    page = request.state.page
     request.session["menu_key"] = "300100"
 
     # 초기 쿼리 설정
@@ -51,33 +52,30 @@ def board_list(request: Request, db: Session = Depends(get_db),
     #     query = query.filter(getattr(models.Board, sst))
 
     # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
-    if sod == "asc":
-        query = query.order_by(asc(getattr(models.Board, sst)))
-    elif sod == "desc":
-        query = query.order_by(desc(getattr(models.Board, sst)))
+    if sst is not None and sst != "":
+        if sod == "desc":
+            query = query.order_by(desc(getattr(models.Board, sst)))
+        else:
+            query = query.order_by(asc(getattr(models.Board, sst)))
 
     # sfl과 stx가 제공되면, 해당 열과 값으로 추가 필터링을 합니다.
     if sfl is not None and stx is not None:
         if hasattr(models.Board, sfl):  # sfl이 models.Board에 존재하는지 확인
-            # query = query.filter(getattr(models.Board, sfl) == stx)
-            # 위의 코드를 like 로 수정해
             query = query.filter(getattr(models.Board, sfl).like(f"%{stx}%"))
 
     # 최종 쿼리 결과를 가져옵니다.
     boards = query.all()
-    sod = "desc" if sod == "asc" else "asc"
-    # boards = db.query(models.Board).all()
-        
-    # _get = {
-    #     "sst": sst,
-    #     "sod": sod,
-    #     "sfl": sfl,
-    #     "stx": stx,
-    #     "page": page,
-    # }
-        
-    # return templates.TemplateResponse("admin/board_list.html", {"request": request, "boards": boards, "_get": _get})
-    return templates.TemplateResponse("admin/board_list.html", {"request": request, "boards": boards})
+    # sod = "asc" if sod == "desc" else ""
+    
+    token = hash_password(hash_password("")) # 토큰값을 아무도 알수 없게 만듬
+    request.session["token"] = token
+    
+    context = {
+        "request": request,
+        "boards": boards,
+        "token": token,
+    }
+    return templates.TemplateResponse("admin/board_list.html", context)
 
 
 @router.get("/board_form")
@@ -820,7 +818,7 @@ def board_form_update(request: Request, db: Session = Depends(get_db),
     return RedirectResponse(f"/admin/board_form/{bo_table}?sfl={sfl}&stx={stx}", status_code=303)
 
 @router.post("/board_list_update")
-def board_list_update(request: Request, db: Session = Depends(get_db),
+async def board_list_update(request: Request, db: Session = Depends(get_db),
                       checks: Optional[List[int]] = Form(None, alias="chk[]"),
                       gr_id: Optional[List[str]] = Form(None, alias="gr_id[]"),
                       bo_table: Optional[List[str]] = Form(None, alias="bo_table[]"),
@@ -835,12 +833,29 @@ def board_list_update(request: Request, db: Session = Depends(get_db),
                       bo_use_search: Optional[List[int]] = Form(None, alias="bo_use_search[]"),
                       bo_order: Optional[List[str]] = Form(None, alias="bo_order[]"),
                       bo_device: Optional[List[str]] = Form(None, alias="bo_device[]"),
+                      token: Optional[str] = Form(...),
+                      act_button: Optional[str] = Form(...),
                       ):
     
-    print(checks)
-    print(bo_use_sns)
-    print(bo_use_search)
+    # 세션에 저장된 토큰값과 입력된 토큰값이 다르다면 에러 (토큰 변조시 에러)
+    ss_token = request.session.get("token", "")
+    if not token or token != ss_token:
+        raise HTTPException(status_code=403, detail="Invalid token.")
     
+    if act_button == "선택삭제":
+        for i in checks:
+            board = db.query(models.Board).filter(models.Board.bo_table == bo_table[i]).first()
+            if board:
+                # 게시판 관리 레코드 삭제
+                db.delete(board)
+                db.commit()
+                # 게시판 테이블 삭제
+                models.Write = dynamic_create_write_table(table_name=board.bo_table, create_table=False)
+                models.Write.__table__.drop(engine)
+        query_string = generate_query_string(request)
+        return RedirectResponse(f"/admin/board_list?{query_string}", status_code=303)
+        
+    # 선택수정
     for i in checks:
         board = db.query(models.Board).filter(models.Board.bo_table == bo_table[i]).first()
         if board:
@@ -866,21 +881,118 @@ def board_list_update(request: Request, db: Session = Depends(get_db),
             board.bo_order = int(bo_order[i]) if bo_order[i] is not None and bo_order[i].isdigit() else 0
             board.bo_device = bo_device[i] if bo_device[i] is not None else ""
             db.commit()
+            
+    query_string = generate_query_string(request)            
     
-    return RedirectResponse("/admin/board_list", status_code=303)
+    return RedirectResponse(f"/admin/board_list?{query_string}", status_code=303)
 
-# 논리적인 오류가 있음
-def get_from_list(list, index, default=0):
-    try:
-        return 1 if index in list is not None else default
-    # except (TypeError, IndexError):
-    except (IndexError):
-        return default
-    
-# def get_from_list(lst, index, default=None):
-#     if lst is None:
-#         return default
+def generate_query_string(request: Request, query_string: str = ""):
+    search_fields = {}
+    if request.method == "GET":
+        search_fields = {
+            'sst': request.query_params.get("sst"),
+            'sod': request.query_params.get("sod"),
+            'sfl': request.query_params.get("sfl"),
+            'stx': request.query_params.get("stx"),
+            'sca': request.query_params.get("sca"),
+            'page': request.query_params.get("page")
+        }
+    else:
+        search_fields = {
+            'sst': request._form.get("sst") if request._form else "",
+            'sod': request._form.get("sod") if request._form else "",
+            'sfl': request._form.get("sfl") if request._form else "",
+            'stx': request._form.get("stx") if request._form else "",
+            'sca': request._form.get("sca") if request._form else "",
+            'page': request._form.get("page") if request._form else ""
+        }    
+        
+    # None 값을 제거
+    search_fields = {k: v for k, v in search_fields.items() if v is not None}
+
+    return urlencode(search_fields)    
+        
+    # for key, value in search_fields.items():
+    #     print(key, value)
+    #     if value is not None:
+    #         # 처음이라면 & 를 붙이지 않고, 그렇지 않다면 & 를 붙임
+    #         if query_string == "":
+    #             query_string += f"{key}={value}"
+    #         else:
+    #             query_string += f"&{key}={value}"
+    # return query_string
+
+# # 논리적인 오류가 있음
+# def get_from_list(list, index, default=0):
 #     try:
-#         return lst[index]
-#     except IndexError:
-#         return default    
+#         return 1 if index in list is not None else default
+#     # except (TypeError, IndexError):
+#     except (IndexError):
+#         return default
+
+# 파이썬의 내장함수인 list 와 이름이 충돌하지 않도록 변수명을 lst 로 변경함
+def get_from_list(lst, index, default=0):
+    if lst is None:
+        return default
+    try:
+        return 1 if index in lst else default
+    except (TypeError, IndexError):
+        return default
+
+
+@router.get("/board_copy/{bo_table}")
+async def board_copy(request: Request, bo_table: str, db: Session = Depends(get_db)):
+    board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
+    if not board:
+        raise HTTPException(status_code=404, detail="Board not found")
+    
+    return templates.TemplateResponse("admin/board_copy.html", {"request": request, "board": board})
+
+
+@router.post("/board_copy_update")
+def board_copy_update(request: Request, db: Session = Depends(get_db),
+                      bo_table: Optional[str] = Form(...),
+                      target_table: Optional[str] = Form(...),
+                      target_subject: Optional[str] = Form(...),
+                      copy_case: Optional[str] = Form(...),
+                      ):
+    
+    source_row = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
+    if not source_row:
+        raise HTTPException(status_code=404, detail=f"{bo_table} is not exists")
+    
+    target_row = db.query(models.Board).filter(models.Board.bo_table == target_table).first()
+    if target_row:
+        raise HTTPException(status_code=404, detail=f"{target_table} is already exists")
+    
+    # 복사될 레코드의 모든 필드를 딕셔너리로 변환
+    target_dict = {key: value for key, value in source_row.__dict__.items() if not key.startswith('_')}
+    
+    target_dict['bo_table'] = target_table
+    target_dict['bo_subject'] = target_subject
+    
+    target_row = models.Board(**target_dict)
+    db.add(target_row)
+    db.commit()
+    
+    # 새로운 게시판 테이블 생성
+    # source_table 에서 target_table 로 스키마 또는 데이터를 복사하는 코드를 작성해야 함
+    models.Write = dynamic_create_write_table(table_name=target_table, create_table=True)
+    # 복사 유형을 '구조와 데이터' 선택시 테이블의 레코드 모두 복사
+    if copy_case == 'schema_data_both':
+        writes = db.query(models.Write).all()
+        if writes:
+            for write in writes:
+                write.bo_table = target_table
+                db.add(write)
+                db.commit()
+                
+    content = """
+    <script>
+        window.opener.location.href = "/admin/board_list";
+        window.close();
+    </script>
+    """
+    
+    # return RedirectResponse("/admin/board_list", status_code=303)
+    return HTMLResponse(content=content)

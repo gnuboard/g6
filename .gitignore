@@ -7,6 +7,7 @@ __pycache__
 .cache
 .local
 .bash*
+data/
 .idea
 .env
 prod.env

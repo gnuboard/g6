@@ -1,0 +1,73 @@
+{% extends "admin/base_window.html" %}
+
+{% block title %}
+    게시판복사
+{% endblock %}
+
+{% block content %}
+
+<div class="new_win">
+    <h1>게시판 복사</h1>
+
+    <form name="fboardcopy" id="fboardcopy" action="/admin/board_copy_update" onsubmit="return fboardcopy_check(this);" method="post" autocomplete="off">
+        <input type="hidden" name="bo_table" value="{{ board.bo_table }}" id="bo_table">
+        <input type="hidden" name="token" value="{{ token }}">
+        <div class=" new_win_con">
+            <div class="tbl_frm01 tbl_wrap">
+                <table>
+                    <caption>게시판 복사</caption>
+                    <tbody>
+                        <tr>
+                            <th scope="col">원본 테이블명</th>
+                            <td>{{ board.bo_table }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="col"><label for="target_table">복사 테이블명<strong class="sound_only">필수</strong></label></th>
+                            <td><input type="text" name="target_table" id="target_table" required class="required alnum_ frm_input" maxlength="20">영문자, 숫자, _ 만 가능 (공백없이)</td>
+                        </tr>
+                        <tr>
+                            <th scope="col"><label for="target_subject">게시판 제목<strong class="sound_only">필수</strong></label></th>
+                            <td><input type="text" name="target_subject" value="[복사본] {{ board.bo_subject }}" id="target_subject" required class="required frm_input" maxlength="120"></td>
+                        </tr>
+                        <tr>
+                            <th scope="col">복사 유형</th>
+                            <td>
+                                <input type="radio" name="copy_case" value="schema_only" id="copy_case" checked>
+                                <label for="copy_case">구조만</label>
+                                <input type="radio" name="copy_case" value="schema_data_both" id="copy_case2">
+                                <label for="copy_case2">구조와 데이터</label>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="win_btn ">
+            <input type="submit" class="btn_submit btn" value="복사">
+            <input type="button" class="btn_close btn" value="창닫기" onclick="window.close();">
+        </div>
+
+    </form>
+
+</div>
+
+<script>
+    function fboardcopy_check(f) {
+        var banned_array = ["adm","bbs","css","data","extend","img","install","js","lib","mobile","plugin","pma","shop","skin","theme"];
+
+        // 게시판명이 금지된 단어로 되어 있으면
+        if ((typeof banned_array != 'undefined') && jQuery.inArray(f.target_table.value, banned_array) !== -1) {
+            alert("입력한 게시판 TABLE명을 사용할수 없습니다. 다른 이름으로 입력해 주세요.");
+            return false;
+        }
+
+        if (f.bo_table.value == f.target_table.value) {
+            alert("원본 테이블명과 복사할 테이블명이 달라야 합니다.");
+            return false;
+        }
+
+        return true;
+    }
+</script>
+
+{% endblock %}

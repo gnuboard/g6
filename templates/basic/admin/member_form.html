@@ -201,7 +201,7 @@
             {% for i in range(1, 11) %}
             <tr>
                 <th scope="row"><label for="mb_{{ i }}">여분 필드 {{ i }}</label></th>
-                <td colspan="3"><input type="text" name="mb_{{ i }}" value="{{ getattr(member, 'mb_' ~ i) }}" id="mb_{{ i }}" class="frm_input" size="30" maxlength="255"></td>
+                <td colspan="3"><input type="text" name="mb_{{ i }}" value="{{ getattr(member, 'mb_' ~ i) if member else "" }}" id="mb_{{ i }}" class="frm_input" size="30" maxlength="255"></td>
             </tr>
             {% endfor %}
             </tbody>
