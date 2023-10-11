@@ -306,22 +306,43 @@ def now():
 import cachetools
 
 # 캐시 크기와 만료 시간 설정
-cache = cachetools.TTLCache(maxsize=100, ttl=3600)
+cache = cachetools.TTLCache(maxsize=10000, ttl=3600)
 
-def generate_one_time_token():
+# def generate_one_time_token():
+#     '''
+#     1회용 토큰을 생성하여 반환하는 함수
+#     '''
+#     token = os.urandom(24).hex()
+#     cache[token] = 'valid'
+#     return token
+
+
+# def validate_one_time_token(token):
+#     '''
+#     1회용 토큰을 검증하는 함수
+#     '''
+#     if token in cache:
+#         del cache[token]
+#         return True
+#     return False
+
+
+def generate_one_time_token(action: str = 'create'):
     '''
-    원타임 토큰을 생성하여 반환하는 함수
+    1회용 토큰을 생성하여 반환하는 함수
+    action : 'create', 'update', 'delete' ...
     '''
     token = os.urandom(24).hex()
-    cache[token] = 'valid'
+    cache[token] = {'status': 'valid', 'action': action}
     return token
 
 
-def validate_one_time_token(token):
+def validate_one_time_token(token, action: str = 'create'):
     '''
-    원타임 토큰을 검증하는 함수
+    1회용 토큰을 검증하는 함수
     '''
-    if token in cache:
+    token_data = cache.get(token)
+    if token_data and token_data.get("action") == action:
         del cache[token]
         return True
     return False

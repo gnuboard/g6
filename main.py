@@ -143,7 +143,7 @@ async def common(request: Request, call_next):
             if ua.is_mobile or ua.is_tablet: # 모바일과 태블릿에서 접속하면 모바일로 간주
                 request.state.is_mobile = True
                 request.state.device = 'mobile'
-        
+                
     request.state.context = {
         "request": request,
         "config": config,

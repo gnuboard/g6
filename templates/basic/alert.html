@@ -7,6 +7,10 @@
 {% block content %}
     <script>
         alert("{% for error in errors %}{{ error }}{% endfor %}");
-        history.back();
+        {% if url %}
+            document.location.href = "{{ url }}";
+        {% else %}
+            history.back();
+        {% endif %}
     </script>
 {% endblock %}

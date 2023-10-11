@@ -5,14 +5,14 @@
 {% endblock %}
 
 {% block content %}
-<form name="fboardform" id="fboardform" action="/admin/board_form_update" method="post" enctype="multipart/form-data">
+<form name="fboardform" id="fboardform" action="/admin/board_form_update" method="post" enctype="multipart/form-data" autocomplete="off">
 <input type="hidden" name="w" value="">
 <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
 <input type="hidden" name="stx" value="{{ request.state.stx }}">
 <input type="hidden" name="sst" value="{{ request.state.sst }}">
 <input type="hidden" name="sod" value="{{ request.state.sod }}">
 <input type="hidden" name="page" value="{{ request.state.page }}">
-<input type="hidden" name="token" value="{{ token }}">
+<input type="hidden" name="token" value="{{ generate_one_time_token('update' if board.bo_table else 'create') }}">
 
 <section id="anc_bo_basic">
     <h2 class="h2_frm">게시판 기본 설정</h2>
@@ -36,7 +36,7 @@
         <tr>
             <th scope="row"><label for="bo_table">TABLE<strong class="sound_only">필수</strong></label></th>
             <td colspan="2">
-                {% if board %}
+                {% if board.bo_table %}
                     <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
                     <b>{{ board.bo_table }}</b>
                 {% else %}
@@ -315,9 +315,15 @@
             <td>
                 <span class="frm_info">"체크박스"는 글작성시 비밀글 체크가 가능합니다. "무조건"은 작성되는 모든글을 비밀글로 작성합니다. (관리자는 체크박스로 출력합니다.) 스킨에 따라 적용되지 않을 수 있습니다.</span>                
                 <select id="bo_use_secret" name="bo_use_secret">
-                    <option value="0" {{ get_selected(board.bo_use_secret, 0) }}>사용하지 않음</option>
-                    <option value="1" {{ get_selected(board.bo_use_secret, 1) }}>체크박스</option>
-                    <option value="2" {{ get_selected(board.bo_use_secret, 2) }}>무조건</option>
+                    {% if board and board.bo_use_secret is not none %}
+                        <option value="0" {{ get_selected(board.bo_use_secret, 0) }}>사용하지 않음</option>
+                        <option value="1" {{ get_selected(board.bo_use_secret, 1) }}>체크박스</option>
+                        <option value="2" {{ get_selected(board.bo_use_secret, 2) }}>무조건</option>
+                    {% else %}
+                        <option value="0">사용하지 않음</option>
+                        <option value="1">체크박스</option>
+                        <option value="2">무조건</option>
+                    {% endif %}    
                 </select>
             </td>
             <td class="td_grpset">
@@ -1113,9 +1119,9 @@
                 <th scope="row">여분필드{{ i }}</th>
                 <td class="td_extra">
                     <label for="bo_{{ i }}_subj">여분필드 {{ i }} 제목</label>
-                    <input type="text" name="bo_{{ i }}_subj" id="bo_{{ i }}_subj" value="{{ getattr(board, 'bo_' ~ i ~ '_subj') }}" class="frm_input">
+                    <input type="text" name="bo_{{ i }}_subj" id="bo_{{ i }}_subj" value="{{ getattr(board, 'bo_' ~ i ~ '_subj', '') }}" class="frm_input">
                     <label for="bo_{{ i }}">여분필드 {{ i }} 값</label>
-                    <input type="text" name="bo_{{ i }}" id="bo_{{ i }}" value="{{ getattr(board, 'bo_' ~ i) }}" class="frm_input extra-value-input">
+                    <input type="text" name="bo_{{ i }}" id="bo_{{ i }}" value="{{ getattr(board, 'bo_' ~ i, '') }}" class="frm_input extra-value-input">
                 </td>
                 <td class="td_grpset">
                     <input type="checkbox" name="chk_grp_{{ i }}" id="chk_grp_{{ i }}">
