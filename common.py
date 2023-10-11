@@ -1,7 +1,7 @@
 import hashlib
 import os
 import PIL
-from fastapi import Request
+from fastapi import Request, HTTPException
 from passlib.context import CryptContext
 from sqlalchemy import Index
 import models
@@ -317,3 +317,9 @@ def validate_one_time_token(token):
         del cache[token]
         return True
     return False
+
+
+def validate_token_or_raise(token: str = None):
+    """토큰을 검증하고 예외를 발생시키는 함수"""
+    if not validate_one_time_token(token):
+        raise HTTPException(status_code=403, detail="Invalid token.")

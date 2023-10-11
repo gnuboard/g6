@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from database import get_db
 import models
+import shutil
+
 from common import *
 
 
@@ -15,12 +17,18 @@ templates.env.globals["get_admin_menus"] = get_admin_menus
 # TODO: form에서 공용으로 사용하는 함수이므로 이동이 필요함
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
 
+templates.env.globals["now"] = now
+templates.env.globals["get_head_tail_img"] = get_head_tail_img
+
+
+FAQ_MENU_KEY = "300700"
+
 
 @router.get("/faq_master_list")
 def faq_master_list(request: Request, db: Session = Depends(get_db)):
     """FAQ관리 목록"""
     model = models.FaqMaster
-    request.session["menu_key"] = "300700"
+    request.session["menu_key"] = FAQ_MENU_KEY
 
     faq_masters = db.query(model).order_by(model.fm_order).all()
 
@@ -32,6 +40,7 @@ def faq_master_list(request: Request, db: Session = Depends(get_db)):
 @router.get("/faq_master_form")
 def faq_master_add_form(request: Request):
     """FAQ관리 등록 폼"""
+    request.session["menu_key"] = FAQ_MENU_KEY
 
     return templates.TemplateResponse(
         "admin/faq_master_form.html", {"request": request, "faq_master": None}
@@ -48,12 +57,13 @@ def faq_master_add(
         fm_tail_html: str = Form(None),
         fm_mobile_head_html: str = Form(None),
         fm_mobile_tail_html: str = Form(None),
-        fm_order: int = Form(0)
+        fm_order: int = Form(0),
+        fm_himg: UploadFile = File(...),
+        fm_timg: UploadFile = File(...),
     ):
     """FAQ관리 등록 처리"""
     # 토큰 검사
-    if not validate_one_time_token(token):
-        raise HTTPException(status_code=403, detail="Invalid token.")
+    validate_token_or_raise(token)
 
     faq_master = models.FaqMaster(
         fm_subject=fm_subject
@@ -65,6 +75,20 @@ def faq_master_add(
     )
     db.add(faq_master)
     db.commit()
+    
+    # 이미지 경로 검사 및 생성
+    directory_path = "data/faq/"
+    if not os.path.exists(directory_path):
+        os.makedirs(directory_path)
+
+    # 이미지 저장
+    if fm_himg and fm_himg.filename:    
+        with open(f"{directory_path}{faq_master.fm_id}_h", "wb") as buffer:
+            shutil.copyfileobj(fm_himg.file, buffer)
+    
+    if fm_timg and fm_timg.filename:
+        with open(f"{directory_path}{faq_master.fm_id}_t", "wb") as buffer:
+            shutil.copyfileobj(fm_timg.file, buffer)
 
     return RedirectResponse(f"/admin/faq_master_form/{faq_master.fm_id}", status_code=303)
 
@@ -72,6 +96,8 @@ def faq_master_add(
 @router.get("/faq_master_form/{fm_id}")
 def faq_master_update_form(fm_id: int, request: Request, db: Session = Depends(get_db)):
     """FAQ관리 수정 폼"""
+    request.session["menu_key"] = FAQ_MENU_KEY
+
     faq_master = db.query(models.FaqMaster).filter(models.FaqMaster.fm_id == fm_id).first()
 
     return templates.TemplateResponse(
@@ -90,12 +116,15 @@ def faq_master_update(
         fm_tail_html: str = Form(None),
         fm_mobile_head_html: str = Form(None),
         fm_mobile_tail_html: str = Form(None),
-        fm_order: int = Form(0)
+        fm_order: int = Form(0),
+        fm_himg: UploadFile = File(...),
+        fm_timg: UploadFile = File(...),
+        fm_himg_del: int = Form(None),
+        fm_timg_del: int = Form(None),
     ):
     """FAQ관리 수정 처리"""
     # 토큰 검사
-    if not validate_one_time_token(token):
-        raise HTTPException(status_code=403, detail="Invalid token.")
+    validate_token_or_raise(token)
 
     faq_master = db.query(models.FaqMaster).filter(models.FaqMaster.fm_id == fm_id).first()
 
@@ -106,6 +135,27 @@ def faq_master_update(
     faq_master.fm_mobile_tail_html = fm_mobile_tail_html
     faq_master.fm_order = fm_order
     db.commit()
+
+    # 이미지 경로 검사 및 생성
+    directory_path = "data/faq/"
+    if not os.path.exists(directory_path):
+        os.makedirs(directory_path)
+
+    # 이미지 삭제
+    if fm_himg_del:
+        if os.path.exists(f"{directory_path}{fm_id}_h"):
+            os.remove(f"{directory_path}{fm_id}_h")
+    if fm_timg_del:
+        if os.path.exists(f"{directory_path}{fm_id}_t"):
+            os.remove(f"{directory_path}{fm_id}_t")
+    
+    # 이미지 저장
+    if fm_himg and fm_himg.filename:    
+        with open(f"{directory_path}{fm_id}_h", "wb") as buffer:
+            shutil.copyfileobj(fm_himg.file, buffer)
+    if fm_timg and fm_timg.filename:    
+        with open(f"{directory_path}{fm_id}_t", "wb") as buffer:
+            shutil.copyfileobj(fm_timg.file, buffer)
 
     return RedirectResponse(f"/admin/faq_master_form/{faq_master.fm_id}", status_code=303)
 
@@ -120,8 +170,7 @@ def faq_master_delete(
     # 토큰 검사
     # DELETE 요청일 경우, Body에 토큰이 없으므로 쿼리스트링에서 토큰을 얻는다.
     token = request.query_params.get("token")
-    if not validate_one_time_token(token):
-        raise HTTPException(status_code=403, detail="Invalid token.")
+    validate_token_or_raise(token)
     
     faq_master = db.query(models.FaqMaster).filter(models.FaqMaster.fm_id == fm_id).first()
     db.delete(faq_master)
@@ -135,7 +184,7 @@ def faq_list(fm_id: int, request: Request, db: Session = Depends(get_db)):
     """
     FAQ목록
     """
-    request.session["menu_key"] = "300700"
+    request.session["menu_key"] = FAQ_MENU_KEY
 
     faq_master = db.query(models.FaqMaster).filter(models.FaqMaster.fm_id == fm_id).first()
     faqs = sorted(faq_master.faqs, key=lambda x: x.fa_order)
@@ -148,6 +197,8 @@ def faq_list(fm_id: int, request: Request, db: Session = Depends(get_db)):
 @router.get("/faq_master_form/{fm_id}/add")
 def faq_add_form(fm_id: int, request: Request, db: Session = Depends(get_db)):
     """FAQ관리 등록 폼"""
+    request.session["menu_key"] = FAQ_MENU_KEY
+
     faq_master = db.query(models.FaqMaster).filter(models.FaqMaster.fm_id == fm_id).first()
 
     return templates.TemplateResponse(
@@ -167,8 +218,7 @@ def faq_add(
     ):
     """FAQ관리 등록 처리"""
     # 토큰 검사
-    if not validate_one_time_token(token):
-        raise HTTPException(status_code=403, detail="Invalid token.")
+    validate_token_or_raise(token)
 
     faq = models.Faq(
         fm_id=fm_id,
@@ -185,6 +235,8 @@ def faq_add(
 @router.get("/faq_master_form/{fm_id}/faq/{fa_id}")
 def faq_update_form(fa_id: int, request: Request, db: Session = Depends(get_db)):
     """FAQ관리 등록 폼"""
+    request.session["menu_key"] = FAQ_MENU_KEY
+
     faq = db.query(models.Faq).filter(models.Faq.fa_id == fa_id).first()
     faq_master = faq.faq_master
 
@@ -206,8 +258,7 @@ def faq_update(
     ):
     """FAQ관리 등록 처리"""
     # 토큰 검사
-    if not validate_one_time_token(token):
-        raise HTTPException(status_code=403, detail="Invalid token.")
+    validate_token_or_raise(token)
 
     faq = db.query(models.Faq).filter(models.Faq.fa_id == fa_id).first()
 
@@ -229,8 +280,7 @@ async def faq_delete(
     # 토큰 검사
     # DELETE 요청일 경우, Body에 토큰이 없으므로 쿼리스트링에서 토큰을 얻는다.
     token = request.query_params.get("token")
-    if not validate_one_time_token(token):
-        raise HTTPException(status_code=403, detail="Invalid token.")
+    validate_token_or_raise(token)
 
     faq = db.query(models.Faq).filter(models.Faq.fa_id == fa_id).first()
     db.delete(faq)
