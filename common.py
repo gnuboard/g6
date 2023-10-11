@@ -347,3 +347,17 @@ def validate_one_time_token(token, action: str = 'create'):
         del cache[token]
         return True
     return False
+
+
+def get_client_ip(request: Request):
+    '''
+    클라이언트의 IP 주소를 반환하는 함수 (PHP의 $_SERVER['REMOTE_ADDR'])
+    '''
+    x_forwarded_for = request.headers.get("X-Forwarded-For")
+    if x_forwarded_for:
+        # X-Forwarded-For can be a comma-separated list of IPs.
+        # The client's requested IP will be the first one.
+        client_ip = x_forwarded_for.split(",")[0]
+    else:
+        client_ip = request.client.host
+    return {"client_ip": client_ip}
