@@ -51,6 +51,7 @@ async def common(request: Request, call_next):
 
     db: Session = SessionLocal()
     config = db.query(models.Config).first()
+    request.state.config = config
     
     ss_mb_id = request.session.get("ss_mb_id", "")
     

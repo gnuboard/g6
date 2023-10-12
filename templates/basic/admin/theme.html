@@ -1,0 +1,32 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+    관리자메인
+{% endblock %}
+
+{% block content %}
+    {% if themes %}
+    <ul id="theme_list">
+        {% for theme in themes %}
+        {% set info = get_theme_info(theme) %}
+        <li>
+            <div class="tmli_if">
+                {% if info.screenshot %}
+                <img src="/admin/screenshot/{{ info.theme_dir }}" alt="{{ theme.name }}">
+                {% else %}
+                <img src="{{ G5_ADMIN_URL }}/img/theme_img.jpg" alt="">
+                {% endif %}
+                <div class="tmli_tit">
+                    <p>{{ theme.name }}</p>
+                </div>
+            </div>
+            {{ theme.btn_active|safe }}
+            <a href="./theme_preview.php?theme={{ theme.theme_name }}" class="theme_pr" target="theme_preview">미리보기</a>
+            <button type="button" class="tmli_dt theme_preview" data-theme="{{ theme.theme_name }}">상세보기</button>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="no_theme">설치된 테마가 없습니다.</p>
+    {% endif %}
+{% endblock %}
