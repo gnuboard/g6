@@ -1,7 +1,8 @@
 import hashlib
 import os
 import PIL
-from fastapi import Request, HTTPException
+import shutil
+from fastapi import Request, HTTPException, UploadFile
 from passlib.context import CryptContext
 from requests import Session
 from sqlalchemy import Index
@@ -376,3 +377,40 @@ def get_client_ip(request: Request):
     else:
         client_ip = request.client.host
     return {"client_ip": client_ip}
+
+
+def make_directory(directory: str):
+    """이미지 경로 체크 및 생성
+
+    Args:
+        directory (str): 이미지 경로
+    """
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+
+def delete_image(directory: str, filename: str, delete: bool = True):
+    """이미지 삭제 처리 함수
+
+    Args:
+        directory (str): 경로
+        filename (str): 파일이름
+        delete (bool): 삭제여부. Defaults to True.
+    """
+    if delete:
+        file_path = f"{directory}{filename}"
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+
+def save_image(directory: str, filename: str, file: UploadFile):
+    """이미지 저장 처리 함수
+
+    Args:
+        directory (str): 경로
+        filename (str): 파일이름
+        file (UploadFile): 파일 ojbect
+    """
+    if file and file.filename:
+        with open(f"{directory}{filename}", "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)

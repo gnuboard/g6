@@ -8,10 +8,10 @@
 
 <h1 id="container_title">내용 관리</h1>
 <div class="container_wr">
-<form name="frmcontentform" action="/admin/content_form_update" onsubmit="return frmcontentform_check(this);" method="post" enctype="MULTIPART/FORM-DATA">
-    <input type="hidden" name="w" value="">
+<form name="frmcontentform" action="{{ url_for('content_form_update') }}" onsubmit="return frmcontentform_check(this);" method="post" enctype="MULTIPART/FORM-DATA">
+    <input type="hidden" name="token" value="{{ generate_one_time_token('update' if content.co_id else 'create') }}">
+    <input type="hidden" name="co_id" value="{{ content.co_id }}">
     <input type="hidden" name="co_html" value="1">
-    <input type="hidden" name="token" value="{{ token }}">
 
     <div class="tbl_frm01 tbl_wrap">
         <table>
@@ -86,6 +86,7 @@
                     </td>
                 </tr>
                 -->
+                <!--
                 <tr>
                     <th scope="row"><label for="co_include_head">상단 파일 경로</label></th>
                     <td>
@@ -100,7 +101,7 @@
                         <input type="text" name="co_include_tail" value="{{ content.co_include_tail }}" id="co_include_tail" class="frm_input" size="60">
                     </td>
                 </tr>
-
+                -->
                 <tr id="admin_captcha_box" style="display:none;">
                     <th scope="row">자동등록방지</th>
                     <td>

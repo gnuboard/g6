@@ -489,8 +489,8 @@ class Content(Base):
     co_mobile_skin = Column(String(255), nullable=False, default='')
     co_tag_filter_use = Column(TINYINT, nullable=False, default=0)
     co_hit = Column(Integer, nullable=False, default=0)
-    co_include_head = Column(String(255), nullable=False)
-    co_include_tail = Column(String(255), nullable=False)
+    co_include_head = Column(String(255), nullable=True)
+    co_include_tail = Column(String(255), nullable=True)
 
 
 class FaqMaster(Base):
