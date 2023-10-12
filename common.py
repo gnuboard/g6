@@ -346,3 +346,12 @@ def validate_one_time_token(token, action: str = 'create'):
         del cache[token]
         return True
     return False
+
+def get_config():
+    """config 를 반환.
+    todo: config 캐시하기
+    """
+    db = SessionLocal()
+    config = db.query(models.Config).first()
+    db.close()
+    return config
