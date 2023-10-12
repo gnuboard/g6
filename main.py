@@ -11,6 +11,7 @@ import models
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 from common import *
+from user_agents import parse
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -39,9 +40,14 @@ app.include_router(register_router, prefix="/bbs", tags=["register"])
 app.include_router(content_router, prefix="/content", tags=["content"])
 app.include_router(faq_router, prefix="/faq", tags=["faq"])
 
+# is_mobile = False
+# user_device = 'pc'
+
 # 항상 실행해야 하는 미들웨어
 @app.middleware("http")
 async def common(request: Request, call_next):
+    # global is_mobile, user_device
+    
     member = None
     outlogin = None
 
@@ -85,22 +91,53 @@ async def common(request: Request, call_next):
 
     if not outlogin:
         outlogin = templates.TemplateResponse("bbs/outlogin_before.html", {"request": request})
+    
+    if request.method == "GET":
+        request.state.sst = request.query_params.get("sst") if request.query_params.get("sst") else ""
+        request.state.sod = request.query_params.get("sod") if request.query_params.get("sod") else ""
+        request.state.sfl = request.query_params.get("sfl") if request.query_params.get("sfl") else ""
+        request.state.stx = request.query_params.get("stx") if request.query_params.get("stx") else ""
+        request.state.sca = request.query_params.get("sca") if request.query_params.get("sca") else ""
+        request.state.page = request.query_params.get("page") if request.query_params.get("page") else ""
+    else:
+        request.state.sst = request._form.get("sst") if request._form and request._form.get("sst") else ""
+        request.state.sod = request._form.get("sod") if request._form and request._form.get("sod") else ""
+        request.state.sfl = request._form.get("sfl") if request._form and request._form.get("sfl") else ""
+        request.state.stx = request._form.get("stx") if request._form and request._form.get("stx") else ""
+        request.state.sca = request._form.get("sca") if request._form and request._form.get("sca") else ""
+        request.state.page = request._form.get("page") if request._form and request._form.get("page") else ""
         
-    request.state.sst = request.query_params.get("sst")
-    request.state.sod = request.query_params.get("sod")
-    request.state.sfl = request.query_params.get("sfl")
-    request.state.stx = request.query_params.get("stx")
-    request.state.sca = request.query_params.get("sca")
-    request.state.page = request.query_params.get("page")
-    # request.state.w = request.query_params.get("w")
-        
+    # pc, mobile 구분
+    # if 'SET_DEVICE' in globals():
+    #     if SET_DEVICE == 'mobile':
+    #         is_mobile = True
+    #         user_device = 'mobile'
+    # else:
+    #     user_agent = request.headers.get("User-Agent", "")
+    #     ua = parse(user_agent)
+    #     if 'USE_MOBILE' in globals() and USE_MOBILE:
+    #         if ua.is_mobile or ua.is_tablet:
+    #             is_mobile = True
+    #             user_device = 'mobile'
+    
+    # pc, mobile 구분
+    request.state.is_mobile = False
+    request.state.device = 'pc'
+    
+    if 'SET_DEVICE' in globals():
+        if SET_DEVICE == 'mobile':
+            request.state.is_mobile = True
+            request.state.device = 'mobile'
+    else:
+        user_agent = request.headers.get("User-Agent", "")
+        ua = parse(user_agent)
+        if 'USE_MOBILE' in globals() and USE_MOBILE:
+            if ua.is_mobile or ua.is_tablet: # 모바일과 태블릿에서 접속하면 모바일로 간주
+                request.state.is_mobile = True
+                request.state.device = 'mobile'
+                
     request.state.context = {
         "request": request,
-        # "sst": request.state.sst,
-        # "sod": request.state.sod,
-        # "sfl": request.state.sfl,
-        # "stx": request.state.stx,
-        # "page": request.state.page,
         "config": config,
         "member": member,
         "outlogin": outlogin.body.decode("utf-8"),
@@ -128,12 +165,13 @@ def read_root():
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request, response: Response, db: Session = Depends(get_db)):
     
-    return templates.TemplateResponse("index.html", 
-        {
-            "request": request,
-            "outlogin": request.state.context["outlogin"],
-            "latest": latest,        
-        })
+    context = {
+        "request": request,
+        "outlogin": request.state.context["outlogin"],
+        "latest": latest,
+    }
+    # return templates.TemplateResponse(f"index.{user_device}.html", 
+    return templates.TemplateResponse(f"index.{request.state.device}.html", context)
 
 def latest(skin_dir='', bo_table='', rows=10, subject_len=40, request: Request = None):
 

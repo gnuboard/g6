@@ -26,12 +26,12 @@
     </form>
 
     <form name="fboardlist" id="fboardlist" action="/admin/board_list_update" onsubmit="return fboardlist_submit(this);" method="post">
-    <input type="hidden" name="sst" value="">
-    <input type="hidden" name="sod" value="">
-    <input type="hidden" name="sfl" value="">
-    <input type="hidden" name="stx" value="">
-    <input type="hidden" name="page" value="1">
-    <input type="hidden" name="token" value="">
+    <input type="hidden" name="sst" value="{{ request.state.sst }}">
+    <input type="hidden" name="sod" value="{{ request.state.sod }}">
+    <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
+    <input type="hidden" name="stx" value="{{ request.state.stx }}">
+    <input type="hidden" name="page" value="{{ request.state.page }}">
+    <input type="hidden" name="token" value="{{ generate_one_time_token('update') }}">
 
     <div class="tbl_head01 tbl_wrap">
         <table>
@@ -140,7 +140,8 @@
                         </td>
                         <td class="td_mng td_mng_m">
                             <a href="/admin/board_form/{{ board.bo_table }}?sfl={{ request.state.sfl }}&stx={{ request.state.stx }}" class="btn btn_03">수정</a>                            
-                            <a href="/admin/board_copy/{{ board.bo_table }}" class="board_copy btn btn_02" target="win_board_copy">복사</a>                        </td>
+                            <a href="/admin/board_copy/{{ board.bo_table }}" class="board_copy btn btn_02" target="win_board_copy">복사</a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
