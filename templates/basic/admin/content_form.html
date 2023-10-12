@@ -8,11 +8,10 @@
 
 <h1 id="container_title">내용 관리</h1>
 <div class="container_wr">
-    {% set form_action=url_for("content_add") if not content else url_for("content_edit", co_id=content.co_id) %}
-<form name="frmcontentform" action="{{ form_action }}" onsubmit="return frmcontentform_check(this);" method="post" enctype="MULTIPART/FORM-DATA">
-    <input type="hidden" name="w" value="">
+<form name="frmcontentform" action="{{ url_for('content_form_update') }}" onsubmit="return frmcontentform_check(this);" method="post" enctype="MULTIPART/FORM-DATA">
+    <input type="hidden" name="token" value="{{ generate_one_time_token('update' if content.co_id else 'create') }}">
+    <input type="hidden" name="co_id" value="{{ content.co_id }}">
     <input type="hidden" name="co_html" value="1">
-    <input type="hidden" name="token" value="{{ generate_one_time_token() }}">
 
     <div class="tbl_frm01 tbl_wrap">
         <table>

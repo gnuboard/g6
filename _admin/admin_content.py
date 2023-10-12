@@ -20,31 +20,16 @@ templates.env.globals["get_head_tail_img"] = get_head_tail_img
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
 
 
-@router.get("/content_list")
-def content_list(request: Request, db: Session = Depends(get_db)):
-    """
-    내용관리 목록
-    """
-    request.session["menu_key"] = "300600"
-
-    contents = db.query(models.Content).all()
-    return templates.TemplateResponse(
-        "admin/content_list.html", {"request": request, "contents": contents}
-    )
-
-
-# 내용추가 폼
-@router.get("/content_form")
-def content_form_add(request: Request, db: Session = Depends(get_db)):
-
-    return templates.TemplateResponse(
-        "admin/content_form.html", {"request": request, "content": None}
-    )
+MENU_KEY = "300600"
+IMAGE_DIRECTORY = "data/content/"
 
 
 @dataclass
 class ContentDataclass:
     """내용 등록/수정 폼 데이터
+        - 그누보드5에서 사라지는 기능(변수)
+            1. 상단 파일 경로 (co_include_head)
+            2. 하단 파일 경로 (co_include_tail)
     """
     co_subject: str = Form(...)
     co_content: str = Form(None)
@@ -54,44 +39,35 @@ class ContentDataclass:
     co_mobile_skin: str = Form(None)
 
 
-# 내용 등록 처리
-@router.post("/content_form")
-def content_add(
-        request: Request,
-        token: str = Form(...),
-        co_id: str = Form(...),
-        co_himg: UploadFile = File(None),
-        co_timg: UploadFile = File(None),
-        data: ContentDataclass = Depends(),
-        db: Session = Depends(get_db)
-    ):
-    # 토큰 검사
-    if not validate_one_time_token(token):
-        raise HTTPException(status_code=403, detail="Invalid token.")
-    # ID 중복 검사
-    chk_content = db.query(models.Content).filter(models.Content.co_id == co_id).first()
-    if chk_content:
-        raise HTTPException(status_code=404, detail=f"{co_id} : 내용아이디가 이미 존재합니다.")
-    
-    # 내용 등록
-    content = models.Content(co_id=co_id, **data.__dict__)
-    db.add(content)
-    db.commit()
+@router.get("/content_list")
+def content_list(request: Request, db: Session = Depends(get_db)):
+    """
+    내용관리 목록
+    """
+    request.session["menu_key"] = MENU_KEY
 
-    # 이미지 경로 검사 및 생성
-    image_directory = "data/content/"
-    make_directory(image_directory)
-
-    # 이미지 저장
-    save_image(image_directory, f"{co_id}_h", co_himg)
-    save_image(image_directory, f"{co_id}_t", co_timg)
-
-    return RedirectResponse(url=f"/admin/content_form/{content.co_id}", status_code=302)
+    contents = db.query(models.Content).all()
+    return templates.TemplateResponse(
+        "admin/content_list.html", {"request": request, "contents": contents}
+    )
 
 
-# 내용수정 폼
+# 
+@router.get("/content_form")
+def content_form_add(request: Request, db: Session = Depends(get_db)):
+    """
+    내용추가 폼
+    """
+    return templates.TemplateResponse(
+        "admin/content_form.html", {"request": request, "content": None}
+    )
+
+
 @router.get("/content_form/{co_id}")
 def content_form_edit(co_id: str, request: Request, db: Session = Depends(get_db)):
+    """
+    내용 수정 폼
+    """
     content = db.query(models.Content).filter(models.Content.co_id == co_id).first()
     if not content:
         raise HTTPException(status_code=404, detail=f"{co_id} is not found.")
@@ -102,131 +78,73 @@ def content_form_edit(co_id: str, request: Request, db: Session = Depends(get_db
     )
 
 
-# 내용 수정 처리
-@router.post("/content_form/{co_id}")
-def content_edit(
-    request: Request,
-    co_id: str,
-    token: str = Form(...),
-    data: ContentDataclass = Depends(),
-    co_himg: UploadFile = File(...),
-    co_timg: UploadFile = File(...),
-    co_himg_del: bool = Form(None),
-    co_timg_del: bool = Form(None),
-    db: Session = Depends(get_db),
-):
-    # 토큰 검사
-    if not validate_one_time_token(token):
-        raise HTTPException(status_code=403, detail="Invalid token.")
-    # 내용 검사
-    content = db.query(models.Content).filter(models.Content.co_id == co_id).first()
-    if not content:
-        raise HTTPException(status_code=404, detail=f"{co_id} : 내용 아이디가 존재하지 않습니다.")
-
-    # 데이터 수정 후 commit
-    for field, value in data.__dict__.items():
-        setattr(content, field, value)
-    db.commit()
-
-    # 이미지 경로체크 및 생성
-    image_directory = "data/content/"
-    make_directory(image_directory)
-
-    # 이미지 삭제
-    delete_image(image_directory, f"{co_id}_h", co_himg_del)
-    delete_image(image_directory, f"{co_id}_t", co_timg_del)
-
-    # 이미지 저장
-    save_image(image_directory, f"{co_id}_h", co_himg)
-    save_image(image_directory, f"{co_id}_t", co_timg)
-
-    return RedirectResponse(url=f"/admin/content_form/{co_id}", status_code=302)
-
-
-# DB등록 및 수정
-# 사라지는 기능
-# 1. 상단 파일 경로 (co_include_head)
-# 2. 하단 파일 경로 (co_include_tail)
-# TODO: Pydantic 모델 프로세스가 적용된다면 삭제예정
 @router.post("/content_form_update")
 def content_form_update(request: Request,
                         db: Session = Depends(get_db),
                         token: str = Form(...),
                         co_id: str = Form(...),
-                        co_subject: str = Form(...),
-                        co_content: str = Form(None),
-                        co_mobile_content: str = Form(None),
-                        co_html: str = Form(None),
-                        co_skin: str = Form(None),
-                        co_mobile_skin: str = Form(None),
-                        # co_include_head: str = Form(None),
-                        # co_include_tail: str = Form(None),
-                        co_himg: UploadFile = File(...),
-                        co_timg: UploadFile = File(...),
+                        form_data: ContentDataclass = Depends(),
+                        co_himg: UploadFile = File(None),
+                        co_timg: UploadFile = File(None),
                         co_himg_del: int = Form(None),
                         co_timg_del: int = Form(None),
                         ):
-    # 세션에 저장된 토큰값과 입력된 토큰값이 다르다면 에러 (토큰 변조시 에러)
-    # 토큰은 외부에서 접근하는 것을 막고 등록, 수정을 구분하는 용도로 사용
-    ss_token = request.session.get("token", "")
-    if not token or token != ss_token:
-        raise HTTPException(status_code=403, detail="Invalid token.")
+    """내용등록 및 수정 처리
 
-    # 수정의 경우 토큰값이 회원아이디로 만들어지므로 토큰값이 회원아이디와 다르다면 등록으로 처리
-    # 회원아이디 변조시에도 등록으로 처리
-    if not verify_password(co_id, token):  # 등록
-        chk_content = (
-            db.query(models.Content).filter(models.Content.co_id == co_id).first()
-        )
+    - 내용 등록 및 수정 데이터 저장
+    - 이미지파일 저장
+
+    Args:
+        request (Request): 
+        db (Session, optional): 
+        token (str): 입력/수정/삭제 변조 방지 토큰.
+        co_id (str): 내용 ID.
+        form_data (ContentDataclass): 입력/수정 Form Data.
+        co_himg (UploadFile, optional): 상단 이미지 첨부파일. Defaults to File(...).
+        co_timg (UploadFile, optional): 하단 이미지 첨부파일. Defaults to File(...).
+        co_himg_del (int, optional): 상단 이미지 삭제체크. Defaults to None.
+        co_timg_del (int, optional): 하단 이미지 삭제체크. Defaults to None.
+
+    Raises:
+        HTTPException: 유효한 토큰인지 체크
+        HTTPException: 아이디 중복체크.
+        HTTPException: 아이디 존재여부 체크.
+
+    Returns:
+        RedirectResponse: 내용 등록/수정 후 상세 폼으로 이동
+    """
+    if validate_one_time_token(token, 'create'): # 토큰에 등록돤 action이 create라면 신규 등록
+        # ID 중복 검사
+        chk_content = db.query(models.Content).filter(models.Content.co_id == co_id).first()
         if chk_content:
-            raise HTTPException(status_code=404, detail=f"{co_id} : 내용아이디가 이미 존재합니다.")
-
-        content = models.Content(
-            co_id=co_id,
-            co_subject=co_subject,
-            co_content=co_content,
-            co_mobile_content=co_mobile_content,
-            co_html=co_html,
-            co_skin=co_skin if co_skin else "",
-            co_mobile_skin=co_mobile_skin if co_mobile_skin else "",
-            # co_include_head=co_include_head if co_include_head else "",
-            # co_include_tail=co_include_tail if co_include_tail else "",
-        )
+            raise HTTPException(status_code=404, detail=f"{co_id} : 내용 아이디가 이미 존재합니다.")
+        
+        # 내용 등록
+        content = models.Content(co_id=co_id, **form_data.__dict__)
         db.add(content)
         db.commit()
-        
-    else:  # 수정
+
+    elif validate_one_time_token(token, 'update'):  # 토큰에 등록된 action이 create가 아니라면 수정
         content = db.query(models.Content).filter(models.Content.co_id == co_id).first()
         if not content:
-            raise HTTPException(status_code=404, detail=f"{co_id} : 내용아이디가 존재하지 않습니다.")
+            raise HTTPException(status_code=404, detail=f"{co_id} : 내용 아이디가 존재하지 않습니다.")
 
-        content.co_subject = co_subject
-        content.co_content = co_content
-        content.co_mobile_content = co_mobile_content
-        content.co_html = co_html
-        content.co_skin = co_skin if co_skin else ""
-        content.co_mobile_skin = co_mobile_skin if co_mobile_skin else ""
-        # content.co_include_head = co_include_head if co_include_head else ""
-        # content.co_include_tail = co_include_tail if co_include_tail else ""
+        # 데이터 수정 후 commit
+        for field, value in form_data.__dict__.items():
+            setattr(content, field, value)
         db.commit()
-        
+    
+    else: # 토큰 검사 실패
+        raise HTTPException(status_code=404, detail=f"{token} : 토큰이 존재하지 않습니다.")
+
+    # 이미지 경로체크 및 생성
+    make_directory(IMAGE_DIRECTORY)
     # 이미지 삭제
-    if co_himg_del:
-        if os.path.exists(f"data/content/{co_id}_h"):
-            os.remove(f"data/content/{co_id}_h")
-        
-    if co_timg_del:
-        if os.path.exists(f"data/content/{co_id}_t"):
-            os.remove(f"data/content/{co_id}_t")
-    
+    delete_image(IMAGE_DIRECTORY, f"{co_id}_h", co_himg_del)
+    delete_image(IMAGE_DIRECTORY, f"{co_id}_t", co_timg_del)
     # 이미지 저장
-    if co_himg and co_himg.filename:    
-        with open(f"data/content/{co_id}_h", "wb") as buffer:
-            shutil.copyfileobj(co_himg.file, buffer)
-    
-    if co_timg and co_timg.filename:    
-        with open(f"data/content/{co_id}_t", "wb") as buffer:
-            shutil.copyfileobj(co_timg.file, buffer)
+    save_image(IMAGE_DIRECTORY, f"{co_id}_h", co_himg)
+    save_image(IMAGE_DIRECTORY, f"{co_id}_t", co_timg)
 
     return RedirectResponse(url=f"/admin/content_form/{co_id}", status_code=302)
 
@@ -235,21 +153,22 @@ def content_form_update(request: Request,
 def content_delete(co_id: str, 
                    request: Request, 
                    db: Session = Depends(get_db),
-                   token: str = Query(...),):
-    if not validate_one_time_token(token):
-        raise HTTPException(status_code=403, detail="Invalid token.")
+                   token: str = Query(...)):
+    """
+    내용 삭제
+    """
+    if not validate_one_time_token(token, 'delete'):
+        raise HTTPException(status_code=404, detail=f"{token} : 토큰이 존재하지 않습니다.")
     
     content = db.query(models.Content).filter(models.Content.co_id == co_id).first()
     if not content:
         raise HTTPException(status_code=404, detail=f"{co_id} is not found.")
 
     # 이미지 삭제
-    if os.path.exists(f"data/content/{co_id}_h"):
-        os.remove(f"data/content/{co_id}_h")
-
-    if os.path.exists(f"data/content/{co_id}_t"):
-        os.remove(f"data/content/{co_id}_t")
-        
+    delete_image(IMAGE_DIRECTORY, f"{co_id}_h")
+    delete_image(IMAGE_DIRECTORY, f"{co_id}_t")
+    # 내용 삭제
     db.delete(content)
     db.commit()
+
     return RedirectResponse(url=f"/admin/content_list", status_code=302)
