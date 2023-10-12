@@ -24,11 +24,22 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(debug=G6_IS_DEBUG)
 if G6_IS_DEBUG:
-    app.add_middleware(DebugToolbarMiddleware)
+    app.add_middleware(
+        DebugToolbarMiddleware,
+        panels=["debug_toolbar.panels.sqlalchemy.SQLAlchemyPanel"],
+    )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+templates = Jinja2Templates(directory=TEMPLATES_DIR, extensions=["jinja2.ext.i18n"])
+
+# templates.env.finalize = filter_suppress_none
 app.mount("/data", StaticFiles(directory="data"), name="data")
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates.env.globals["is_admin"] = is_admin
+templates.env.globals["generate_one_time_token"] = generate_one_time_token
+templates.env.filters["default_if_none"] = default_if_none
+
+
 
 # # 1. main.py의 위치를 얻습니다.
 # current_path = os.path.dirname(os.path.abspath(__file__))
