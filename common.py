@@ -2,7 +2,7 @@ import hashlib
 import os
 import PIL
 import shutil
-from fastapi import Request, UploadFile
+from fastapi import Request, HTTPException, UploadFile
 from passlib.context import CryptContext
 from sqlalchemy import Index
 import models
@@ -182,7 +182,9 @@ def option_selected(value, selected, text=''):
     
 from urllib.parse import urlencode
 
-def subject_sort_link(request: Request, col, query_string='', flag='asc'):
+
+def subject_sort_link(request: Request, column: str, query_string: str ='', flag: str ='asc'):
+    # 현재 상태에서 sst, sod, sfl, stx, sca, page 값을 가져온다.
     sst = request.state.sst if request.state.sst is not None else ""
     sod = request.state.sod if request.state.sod is not None else ""
     sfl = request.state.sfl if request.state.sfl is not None else ""
@@ -190,24 +192,31 @@ def subject_sort_link(request: Request, col, query_string='', flag='asc'):
     sca = request.state.sca if request.state.sca is not None else ""
     page = request.state.page if request.state.page is not None else "" 
     
-    q1 = f"sst={col}"
+    # q1에는 column 값을 추가한다.
+    q1 = f"sst={column}"
 
     if flag == 'asc':
+        # flag가 'asc'인 경우, q2에 'sod=asc'를 할당한다.
         q2 = 'sod=asc'
-        if sst == col:
+        if sst == column:
             if sod == 'asc':
+                # 현재 상태에서 sst와 col이 같고 sod가 'asc'인 경우, q2를 'sod=desc'로 변경한다.
                 q2 = 'sod=desc'
     else:
+        # flag가 'asc'가 아닌 경우, q2에 'sod=desc'를 할당한다.
         q2 = 'sod=desc'
-        if sst == col:
+        if sst == column:
             if sod == 'desc':
+                # 현재 상태에서 sst와 col이 같고 sod가 'desc'인 경우, q2를 'sod=asc'로 변경한다.
                 q2 = 'sod=asc'
 
+    # query_string, q1, q2를 arr_query 리스트에 추가한다.
     arr_query = []
     arr_query.append(query_string)
     arr_query.append(q1)
     arr_query.append(q2)
 
+    # sfl, stx, sca, page 값이 None이 아닌 경우, 각각의 값을 arr_query에 추가한다.
     if sfl is not None:
         arr_query.append(f'sfl={sfl}')
     if stx is not None:
@@ -217,48 +226,22 @@ def subject_sort_link(request: Request, col, query_string='', flag='asc'):
     if page is not None:
         arr_query.append(f'page={page}')
 
+    # arr_query의 첫 번째 요소를 제외한 나머지 요소를 '&'로 연결하여 qstr에 할당한다.
     qstr = '&'.join(arr_query[1:]) if arr_query else ''
-    # 여기에서 URL 인코딩을 수행합니다.
-    
-# |이 코드는 주어진 문자열을 파싱하여 URL 쿼리 문자열을 인코딩하는 기능을 수행합니다.
-# |
-# |좋은 점:
-# |- 딕셔너리 컴프리헨션을 사용하여 간결하고 효율적인 코드를 작성했습니다.
-# |- 문자열을 '&'로 분리하고, '='로 분리한 후, '='이 포함된 항목들만 딕셔너리에 추가하여 필터링합니다.
-# |- urlencode 함수를 사용하여 딕셔너리를 URL 쿼리 문자열로 인코딩합니다.
-# |
-# |나쁜 점:
-# |- 코드의 가독성이 좋지 않습니다. 한 줄에 모든 작업을 포함하고 있어 이해하기 어려울 수 있습니다.
-# |- 변수 이름이 약어로 되어 있어 의미를 파악하기 어렵습니다. 변수 이름을 더 명확하게 작성하는 것이 좋습니다.
-# |- 코드에 주석이 없어서 코드의 목적과 동작을 이해하기 어렵습니다. 주석을 추가하여 코드를 설명하는 것이 좋습니다.
-# |
-# |이 코드를 개선하기 위해서는 가독성을 높이고 코드의 목적을 명확히 전달할 수 있도록 변수 이름을 개선하고, 주석을 추가하는 것이 좋습니다. 또한, 코드를 여러 줄로 나누어 가독성을 향상시킬 수 있습니다.
-    # qstr = urlencode({k: v for k, v in [x.split('=') for x in qstr.split('&')] if '=' in x})
-    # '&' 문자로 분리
+    # qstr을 '&'로 분리하여 pairs 리스트에 저장한다.
     pairs = qstr.split('&')
 
-    # 빈 딕셔너리 생성
+    # params 딕셔너리를 생성한다.
     params = {}
 
-    # 각 쌍을 순회
+    # pairs 리스트의 각 요소를 '='로 분리하여 key와 value로 나누고, value가 빈 문자열이 아닌 경우 params에 추가한다.
     for pair in pairs:
-        # '=' 문자가 있는지 확인
         if '=' in pair:
-            # '=' 문자로 분리하여 key와 value 추출
             key, value = pair.split('=')
-            
-            # value가 'None'이거나 빈 문자열인 경우 제외
             if value != '':
-                # 딕셔너리에 추가
                 params[key] = value
 
-    # 딕셔너리를 URL 인코딩
-    # qstr_encoded = urlencode(params)
-
-    # short_url_clean, get_params_merge_url 함수는 구현에 따라 다릅니다.
-    # url = short_url_clean(get_params_merge_url(qstr_array))
-
-    # URL을 반환합니다.
+    # qstr을 쿼리 문자열로 사용하여 링크를 생성하고 반환한다.
     return f'<a href="?{qstr}">'
 
 # 함수 테스트
@@ -267,10 +250,18 @@ def subject_sort_link(request: Request, col, query_string='', flag='asc'):
 
 def get_admin_menus():
     '''
-    관리자 메뉴를 1, 2단계로 분류하여 반환하는 함수
+    1, 2단계로 구분된 관리자 메뉴 json 파일이 있으면 load 하여 반환하는 함수
     '''
-    with open("_admin/admin_menu.json", "r", encoding="utf-8") as file:
-        menus = json.load(file)
+    files = [
+        "_admin/admin_menu_bbs.json",
+        "_admin/admin_menu_shop.json",
+        "_admin/admin_menu_sms.json"
+    ]
+    menus = {}
+    for file_path in files:
+        if os.path.exists(file_path):
+            with open(file_path, "r", encoding="utf-8") as file:
+                menus.update(json.load(file))
     return menus
 
 
@@ -348,6 +339,26 @@ def validate_one_time_token(token, action: str = 'create'):
         del cache[token]
         return True
     return False
+
+
+def validate_token_or_raise(token: str = None):
+    """토큰을 검증하고 예외를 발생시키는 함수"""
+    if not validate_one_time_token(token):
+        raise HTTPException(status_code=403, detail="Invalid token.")
+
+
+def get_client_ip(request: Request):
+    '''
+    클라이언트의 IP 주소를 반환하는 함수 (PHP의 $_SERVER['REMOTE_ADDR'])
+    '''
+    x_forwarded_for = request.headers.get("X-Forwarded-For")
+    if x_forwarded_for:
+        # X-Forwarded-For can be a comma-separated list of IPs.
+        # The client's requested IP will be the first one.
+        client_ip = x_forwarded_for.split(",")[0]
+    else:
+        client_ip = request.client.host
+    return {"client_ip": client_ip}
 
 
 def make_directory(directory: str):
