@@ -3,6 +3,7 @@ import os
 import PIL
 from fastapi import Request, HTTPException
 from passlib.context import CryptContext
+from requests import Session
 from sqlalchemy import Index
 import models
 from models import WriteBaseModel
@@ -11,7 +12,24 @@ from datetime import datetime
 import json
 from PIL import Image
 
-TEMPLATES_DIR = "templates/basic"
+TEMPLATES = "templates"
+def get_theme_from_db(config=None):
+    # main.py 에서 config 를 인수로 받아서 사용
+    if not config:
+        db: Session = SessionLocal()
+        config = db.query(models.Config).first()
+    theme = config.cf_theme if config.cf_theme else "basic"
+    theme_path = f"{TEMPLATES}/{theme}"
+    
+    # Check if the directory exists
+    if not os.path.exists(theme_path):
+        theme_path = f"{TEMPLATES}/basic"
+    
+    return theme_path
+
+TEMPLATES_DIR = get_theme_from_db()
+# print(TEMPLATES_DIR)
+
 SERVER_TIME = datetime.now()
 TIME_YMDHIS = SERVER_TIME.strftime("%Y-%m-%d %H:%M:%S")
 TIME_YMD = TIME_YMDHIS[:10]
