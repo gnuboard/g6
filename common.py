@@ -252,7 +252,7 @@ def get_admin_menus():
     1, 2단계로 구분된 관리자 메뉴 json 파일이 있으면 load 하여 반환하는 함수
     '''
     files = [
-        "_admin/admin_menu_basic.json",
+        "_admin/admin_menu_bbs.json",
         "_admin/admin_menu_shop.json",
         "_admin/admin_menu_sms.json"
     ]
