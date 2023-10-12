@@ -1,7 +1,8 @@
 import hashlib
 import os
 import PIL
-from fastapi import Request
+import shutil
+from fastapi import Request, UploadFile
 from passlib.context import CryptContext
 from sqlalchemy import Index
 import models
@@ -347,3 +348,40 @@ def validate_one_time_token(token, action: str = 'create'):
         del cache[token]
         return True
     return False
+
+
+def make_directory(directory: str):
+    """이미지 경로 체크 및 생성
+
+    Args:
+        directory (str): 이미지 경로
+    """
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+
+def delete_image(directory: str, filename: str, delete: bool = True):
+    """이미지 삭제 처리 함수
+
+    Args:
+        directory (str): 경로
+        filename (str): 파일이름
+        delete (bool): 삭제여부. Defaults to True.
+    """
+    if delete:
+        file_path = f"{directory}{filename}"
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+
+def save_image(directory: str, filename: str, file: UploadFile):
+    """이미지 저장 처리 함수
+
+    Args:
+        directory (str): 경로
+        filename (str): 파일이름
+        file (UploadFile): 파일 ojbect
+    """
+    if file and file.filename:
+        with open(f"{directory}{filename}", "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
