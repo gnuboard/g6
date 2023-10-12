@@ -370,3 +370,4 @@ def get_client_ip(request: Request):
     else:
         client_ip = request.client.host
     return {"client_ip": client_ip}
+

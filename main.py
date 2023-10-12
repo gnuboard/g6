@@ -172,6 +172,8 @@ def index(request: Request, response: Response, db: Session = Depends(get_db)):
     # return templates.TemplateResponse(f"index.{user_device}.html", 
     return templates.TemplateResponse(f"index.{request.state.device}.html", context)
 
+
+# 최신글
 def latest(skin_dir='', bo_table='', rows=10, subject_len=40, request: Request = None):
 
     if not skin_dir:
