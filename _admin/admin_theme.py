@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, Depends, FastAPI, HTTPException
+from fastapi import APIRouter, Depends, FastAPI, Form, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -147,3 +147,23 @@ async def theme(request: Request, db: Session = Depends(get_db)):
         "total_count": total_count
     }    
     return templates.TemplateResponse("admin/theme.html", context)
+
+
+@router.post("/theme_detail")
+async def theme_detail(request: Request, theme: str = Form(...)):
+    # Check if the user is an admin
+    # if not is_admin():  # Define your own is_admin() function
+    #     raise HTTPException(status_code=403, detail="Only the super admin can access this page.")
+    
+    print(theme)
+
+    theme = theme.strip()
+    theme_dir = get_theme_dir()
+
+    if theme not in theme_dir:
+        raise HTTPException(status_code=400, detail="The selected theme is not installed.")
+
+    info = get_theme_info(theme)
+    name = info['theme_name']
+
+    return templates.TemplateResponse("admin/theme_detail.html", {"request": request, "name": name, "info": info})
