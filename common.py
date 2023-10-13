@@ -28,7 +28,7 @@ def get_theme_from_db(config=None):
     return theme_path
 
 TEMPLATES_DIR = get_theme_from_db()
-# print(TEMPLATES_DIR)
+ADMIN_TEMPLATES_DIR = "_admin/admin_templates"
 
 SERVER_TIME = datetime.now()
 TIME_YMDHIS = SERVER_TIME.strftime("%Y-%m-%d %H:%M:%S")

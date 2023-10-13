@@ -12,7 +12,7 @@ from common import *
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
-# TODO: admin/base.html에서만 사용하는 함수이므로 이동이 필요함
+# TODO: base.html에서만 사용하는 함수이므로 이동이 필요함
 templates.env.globals["get_admin_menus"] = get_admin_menus
 # TODO: form에서 공용으로 사용하는 함수이므로 이동이 필요함
 templates.env.globals["generate_one_time_token"] = generate_one_time_token

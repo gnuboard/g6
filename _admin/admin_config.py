@@ -15,7 +15,7 @@ from typing import List, Optional
 import socket
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.globals['getattr'] = getattr
 templates.env.globals['get_member_id_select'] = get_member_id_select
@@ -120,7 +120,7 @@ def config_form(request: Request, db: Session = Depends(get_db)):
     host_ip = socket.gethostbyname(host_name)
     
     config = db.query(models.Config).first()
-    return templates.TemplateResponse("admin/config_form.html", 
+    return templates.TemplateResponse("config_form.html", 
         {
             "request": request, 
             "config": config, 
@@ -280,6 +280,8 @@ def config_form_update(request: Request, db: Session = Depends(get_db),
                        cf_10_subj: str = Form(None),
                        cf_10: str = Form(None),
                        ):
+    
+    # print(request.state.context['member'])
     
     # 에러 체크
     member = request.state.context['member']
@@ -459,4 +461,4 @@ def config_form_update(request: Request, db: Session = Depends(get_db),
     config.cf_10                    = cf_10 if cf_10 is not None else ""                      
     
     db.commit()
-    return RedirectResponse("/admin/config_form", status_code=303)
+    return RedirectResponse("config_form", status_code=303)

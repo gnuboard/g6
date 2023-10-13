@@ -14,7 +14,7 @@ from typing import List, Optional
 import socket
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 templates.env.globals['getattr'] = getattr
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['option_selected'] = option_selected
@@ -76,7 +76,7 @@ def board_list(request: Request, db: Session = Depends(get_db),
         "boards": boards,
         # "token": token,
     }
-    return templates.TemplateResponse("admin/board_list.html", context)
+    return templates.TemplateResponse("board_list.html", context)
 
 # 등록 폼
 @router.get("/board_form")
@@ -122,7 +122,7 @@ def board_form(request: Request, db: Session = Depends(get_db)):
         "board": board,
         "config": config,
     }
-    return templates.TemplateResponse("admin/board_form.html", context)
+    return templates.TemplateResponse("board_form.html", context)
 
 
 # 수정 폼
@@ -147,7 +147,7 @@ async def board_form(bo_table: str, request: Request, db: Session = Depends(get_
         "token": token,
         "config": request.state.context['config']
     }
-    return templates.TemplateResponse("admin/board_form.html", context)
+    return templates.TemplateResponse("board_form.html", context)
 
 
 # 등록, 수정 처리
@@ -1012,7 +1012,7 @@ async def board_copy(request: Request, bo_table: str, db: Session = Depends(get_
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     
-    return templates.TemplateResponse("admin/board_copy.html", {"request": request, "board": board})
+    return templates.TemplateResponse("board_copy.html", {"request": request, "board": board})
 
 
 @router.post("/board_copy_update")

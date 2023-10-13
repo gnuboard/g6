@@ -17,7 +17,7 @@ import hashlib
 
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 # # 파이썬 함수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.globals['get_admin_menus'] = get_admin_menus
 
@@ -43,4 +43,4 @@ def base(request: Request, db: Session = Depends(get_db)):
     관리자 메인
     '''
     request.session["menu_key"] = "100100"
-    return templates.TemplateResponse("admin/index.html", {"request": request})
+    return templates.TemplateResponse("index.html", {"request": request})
