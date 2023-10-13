@@ -232,6 +232,9 @@ class Member(Base):
     mb_9 = Column(String(255), nullable=False, default='')
     mb_10 = Column(String(255), nullable=False, default='')
 
+    # 연관관계
+    qas = relationship("QaContent", back_populates="member", cascade="all, delete-orphan")
+
 
 class Board(Base):
     '''
@@ -574,7 +577,7 @@ class QaContent(Base):
     qa_num = Column(Integer, nullable=False, default=0)
     qa_parent = Column(Integer, nullable=False, default=0)
     qa_related = Column(Integer, nullable=False, default=0)
-    mb_id = Column(String(20), nullable=False, default='')
+    mb_id = Column(String(20), ForeignKey('g6_member.mb_id'), nullable=False, default='')
     qa_name = Column(String(255), nullable=False, default='')
     qa_email = Column(String(255), nullable=False, default='')
     qa_hp = Column(String(255), nullable=False, default='')
@@ -600,3 +603,6 @@ class QaContent(Base):
 
     # Index 추가
     qa_num_parent_index = Index('qa_num_parent', qa_num, qa_parent)
+
+    # 연관관계
+    member = relationship("Member", back_populates="qas", foreign_keys=[mb_id])

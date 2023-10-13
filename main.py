@@ -31,6 +31,7 @@ from _bbs.login import router as login_router
 from _bbs.register import router as register_router
 from _bbs.content import router as content_router
 from _bbs.faq import router as faq_router
+from _bbs.qa import router as qa_router
 import _user.user_router 
 
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
@@ -39,6 +40,7 @@ app.include_router(login_router, prefix="/bbs", tags=["login"])
 app.include_router(register_router, prefix="/bbs", tags=["register"])
 app.include_router(content_router, prefix="/content", tags=["content"])
 app.include_router(faq_router, prefix="/faq", tags=["faq"])
+app.include_router(qa_router, prefix="/qa", tags=["qa"])
 
 # is_mobile = False
 # user_device = 'pc'
