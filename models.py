@@ -520,4 +520,83 @@ class Faq(Base):
     # 연관관계
     faq_master = relationship("FaqMaster", back_populates="faqs", foreign_keys=[fm_id])
 
-    
+
+class QaConfig(Base):
+    """ Q&A 설정 테이블
+    """
+    __tablename__ = 'g6_qa_config'
+
+    id = Column(Integer, primary_key=True)
+    qa_title = Column(String(255), nullable=False, default='')
+    qa_category = Column(String(255), nullable=False, default='')
+    qa_skin = Column(String(255), nullable=False, default='')
+    qa_mobile_skin = Column(String(255), nullable=False, default='')
+    qa_use_email = Column(TINYINT, nullable=False, default=0)
+    qa_req_email = Column(TINYINT, nullable=False, default=0)
+    qa_use_hp = Column(TINYINT, nullable=False, default=0)
+    qa_req_hp = Column(TINYINT, nullable=False, default=0)
+    qa_use_sms = Column(TINYINT, nullable=False, default=0)
+    qa_send_number = Column(String(255), nullable=False, default='0')
+    qa_admin_hp = Column(String(255), nullable=False, default='')
+    qa_admin_email = Column(String(255), nullable=False, default='')
+    qa_use_editor = Column(TINYINT, nullable=False, default=0)
+    qa_subject_len = Column(Integer, nullable=False, default=0)
+    qa_mobile_subject_len = Column(Integer, nullable=False, default=0)
+    qa_page_rows = Column(Integer, nullable=False, default=0)
+    qa_mobile_page_rows = Column(Integer, nullable=False, default=0)
+    qa_image_width = Column(Integer, nullable=False, default=0)
+    qa_upload_size = Column(Integer, nullable=False, default=0)
+    qa_insert_content = Column(Text, nullable=True)
+    qa_include_head = Column(String(255), nullable=True)
+    qa_include_tail = Column(String(255), nullable=True)
+    qa_content_head = Column(Text, nullable=True)
+    qa_content_tail = Column(Text, nullable=True)
+    qa_mobile_content_head = Column(Text, nullable=True)
+    qa_mobile_content_tail = Column(Text, nullable=True)
+    qa_1_subj = Column(String(255), nullable=True)
+    qa_2_subj = Column(String(255), nullable=True)
+    qa_3_subj = Column(String(255), nullable=True)
+    qa_4_subj = Column(String(255), nullable=True)
+    qa_5_subj = Column(String(255), nullable=True)
+    qa_1 = Column(String(255), nullable=True)
+    qa_2 = Column(String(255), nullable=True)
+    qa_3 = Column(String(255), nullable=True)
+    qa_4 = Column(String(255), nullable=True)
+    qa_5 = Column(String(255), nullable=True)
+
+
+class QaContent(Base):
+    """ Q&A 데이터 테이블
+    """
+    __tablename__ = 'g6_qa_content'
+
+    qa_id = Column(Integer, primary_key=True, autoincrement=True)
+    qa_num = Column(Integer, nullable=False, default=0)
+    qa_parent = Column(Integer, nullable=False, default=0)
+    qa_related = Column(Integer, nullable=False, default=0)
+    mb_id = Column(String(20), nullable=False, default='')
+    qa_name = Column(String(255), nullable=False, default='')
+    qa_email = Column(String(255), nullable=False, default='')
+    qa_hp = Column(String(255), nullable=False, default='')
+    qa_type = Column(Integer, nullable=False, default=0)
+    qa_category = Column(String(255), nullable=False, default='')
+    qa_email_recv = Column(TINYINT, nullable=False, default=0)
+    qa_sms_recv = Column(TINYINT, nullable=False, default=0)
+    qa_html = Column(TINYINT, nullable=False, default=0)
+    qa_subject = Column(String(255), nullable=False, default='')
+    qa_content = Column(Text, nullable=False)
+    qa_status = Column(Integer, nullable=False, default=0)
+    qa_file1 = Column(String(255), nullable=False, default='')
+    qa_source1 = Column(String(255), nullable=False, default='')
+    qa_file2 = Column(String(255), nullable=False, default='')
+    qa_source2 = Column(String(255), nullable=False, default='')
+    qa_ip = Column(String(255), nullable=False, default='')
+    qa_datetime = Column(DateTime, nullable=False, default=datetime(1900, 1, 1, 0, 0))
+    qa_1 = Column(String(255), nullable=False, default='')
+    qa_2 = Column(String(255), nullable=False, default='')
+    qa_3 = Column(String(255), nullable=False, default='')
+    qa_4 = Column(String(255), nullable=False, default='')
+    qa_5 = Column(String(255), nullable=False, default='')
+
+    # Index 추가
+    qa_num_parent_index = Index('qa_num_parent', qa_num, qa_parent)

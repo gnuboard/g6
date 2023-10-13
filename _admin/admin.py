@@ -28,6 +28,7 @@ from _admin.admin_boardgroup import router as admin_boardgroup_router
 from _admin.admin_content import router as admin_content_router
 from _admin.admin_faq import router as admin_faq_router
 from _admin.admin_theme import router as admin_theme_router
+from _admin.admin_qa import router as admin_qa_router
 
 router.include_router(admin_config_router, prefix="", tags=["admin_config"])
 router.include_router(admin_member_router, prefix="", tags=["admin_member"])
@@ -36,6 +37,7 @@ router.include_router(admin_boardgroup_router, prefix="", tags=["admin_boardgrou
 router.include_router(admin_content_router, prefix="", tags=["admin_content"])
 router.include_router(admin_faq_router, prefix="", tags=["admin_faq"])
 router.include_router(admin_theme_router, prefix="", tags=["admin_theme"])
+router.include_router(admin_qa_router,  prefix="", tags=["admin_qa"])
 
 @router.get("/")
 def base(request: Request, db: Session = Depends(get_db)):

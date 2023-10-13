@@ -1,0 +1,227 @@
+{% extends "admin/base.html" %}
+{% block title %}
+    1:1문의 설정
+{% endblock title %}
+{% block subtitle %}
+    1:1문의 설정
+{% endblock subtitle %}
+{% block content %}
+    {# container_title 삭제예정 #}
+    <h1 id="container_title">1:1문의 설정</h1>
+
+    <form name="fqaconfigform" id="fqaconfigform" action="{{ url_for('qa_config_update') }}" method="post" onsubmit="return fqaconfigform_submit(this);" autocomplete="off">
+        <input type="hidden" id="token" name="token" value="{{ generate_one_time_token('update' if qa_config else 'create') }}" >
+    
+        <section id="anc_cf_qa_config">
+            <h2 class="h2_frm">1:1문의 설정</h2>
+    
+            <div class="tbl_frm01 tbl_wrap">
+                <table>
+                    <caption>1:1문의 설정</caption>
+                    <colgroup>
+                        <col class="grid_4">
+                        <col>
+                    </colgroup>
+                    <tbody>
+                        <tr>
+                            <th scope="row"><label for="qa_title">타이틀<strong class="sound_only">필수</strong></label></th>
+                            <td>
+                                <input type="text" name="qa_title" value="{{ qa_config.qa_title|default('1:1문의') }}" id="qa_title" required="" class="required frm_input" size="40">
+                                <a href="" class="btn_frmline">1:1문의 바로가기</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="qa_category">분류<strong class="sound_only">필수</strong></label></th>
+                            <td>
+                                <span class="frm_info">분류와 분류 사이는 | 로 구분하세요. (예: 질문|답변) 첫자로 #은 입력하지 마세요. (예: #질문|#답변 [X])</span>
+                                <input type="text" name="qa_category" value="{{ qa_config.qa_category }}" id="qa_category" required="" class="required frm_input" size="70">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="qa_skin">스킨 디렉토리<strong class="sound_only">필수</strong></label></th>
+                            <td>
+                                <select id="qa_skin" name="qa_skin" required="">
+                                    <option value="">선택</option>
+                                    <option value="theme/basic" {{ get_selected(qa_config.qa_skin, 'theme/basic') }}>(테마) basic</option>
+                                    <option value="basic" {{ get_selected(qa_config.qa_skin, 'basic') }}>basic</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="qa_mobile_skin">모바일 스킨 디렉토리<strong class="sound_only">필수</strong></label></th>
+                            <td>
+                                <select id="qa_mobile_skin" name="qa_mobile_skin" required="">
+                                    <option value="">선택</option>
+                                    <option value="theme/basic" {{ get_selected(qa_config.qa_mobile_skin, 'theme/basic') }}>(테마) basic</option>
+                                    <option value="basic" {{ get_selected(qa_config.qa_mobile_skin, 'basic') }}>basic</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">이메일 입력</th>
+                            <td>
+                                <input type="checkbox" name="qa_use_email" value="1" id="qa_use_email" {{ "checked" if qa_config.qa_use_email else "" }}> <label for="qa_use_email">보이기</label>
+                                <input type="checkbox" name="qa_req_email" value="1" id="qa_req_email" {{ "checked" if qa_config.qa_req_email else "" }}> <label for="qa_req_email">필수입력</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">휴대폰 입력</th>
+                            <td>
+                                <input type="checkbox" name="qa_use_hp" value="1" id="qa_use_hp" {{ "checked" if qa_config.qa_use_hp else "" }}> <label for="qa_use_hp">보이기</label>
+                                <input type="checkbox" name="qa_req_hp" value="1" id="qa_req_hp" {{ "checked" if qa_config.qa_req_hp else "" }}> <label for="qa_req_hp">필수입력</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="qa_use_sms">SMS 알림</label></th>
+                            <td>
+                                <span class="frm_info">휴대폰 입력을 사용하실 경우 문의글 등록시 등록자가 답변등록시 SMS 알림 수신을 선택할 수 있도록 합니다.<br>SMS 알림을 사용하기 위해서는 기본환경설정 &gt; <a href="http://127.0.0.1/g5-update/adm/config_form.php#anc_cf_sms">SMS 설정</a>을 하셔야 합니다.</span>
+                                <select name="qa_use_sms" id="qa_use_sms">
+                                    <option value="0" {{ get_selected(qa_config.qa_use_sms, 0) }}>사용안함</option>
+                                    <option value="1" {{ get_selected(qa_config.qa_use_sms, 1) }}>사용함</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="qa_send_number">SMS 발신번호</label></th>
+                            <td>
+                                <span class="frm_info">SMS 알림 전송시 발신번호로 사용됩니다.</span>
+                                <input type="text" name="qa_send_number" value="{{ qa_config.qa_send_number }}" id="qa_send_number" class="frm_input" size="30">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="qa_admin_hp">관리자 휴대폰번호</label></th>
+                            <td>
+                                <span class="frm_info">관리자 휴대폰번호를 입력하시면 문의글 등록시 등록하신 번호로 SMS 알림이 전송됩니다.<br>SMS 알림을 사용하지 않으시면 알림이 전송되지 않습니다.</span>
+                                <input type="text" name="qa_admin_hp" value="{{ qa_config.qa_admin_hp }}" id="qa_admin_hp" class="frm_input" size="30">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="qa_admin_email">관리자 이메일</label></th>
+                            <td>
+                                <span class="frm_info">관리자 이메일을 입력하시면 문의글 등록시 등록하신 이메일로 알림이 전송됩니다.</span>
+                                <input type="text" name="qa_admin_email" value="{{ qa_config.qa_admin_email }}" id="qa_admin_email" class="frm_input" size="50">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="qa_use_editor">DHTML 에디터 사용</label></th>
+                            <td>
+                                <span class="frm_info">글작성시 내용을 DHTML 에디터 기능으로 사용할 것인지 설정합니다. 스킨에 따라 적용되지 않을 수 있습니다.</span>
+                                <select name="qa_use_editor" id="qa_use_editor">
+                                    <option value="0" {{ get_selected(qa_config.qa_use_editor, 0) }}>사용안함</option>
+                                    <option value="1" {{ get_selected(qa_config.qa_use_editor, 1) }}>사용함</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="qa_subject_len">제목 길이<strong class="sound_only"> 필수</strong></label></th>
+                            <td>
+                                <span class="frm_info">목록에서의 제목 글자수</span>
+                                <input type="text" name="qa_subject_len" value="{{ qa_config.qa_subject_len|default(60) }}" id="qa_subject_len" required="" class="required numeric frm_input" size="4">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="qa_mobile_subject_len">모바일 제목 길이<strong class="sound_only"> 필수</strong></label></th>
+                            <td>
+                                <span class="frm_info">목록에서의 제목 글자수</span>
+                                <input type="text" name="qa_mobile_subject_len" value="{{ qa_config.qa_mobile_subject_len|default(40) }}" id="qa_mobile_subject_len" required="" class="required numeric frm_input" size="4">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="qa_page_rows">페이지당 목록 수<strong class="sound_only"> 필수</strong></label></th>
+                            <td>
+                                <input type="text" name="qa_page_rows" value="{{ qa_config.qa_page_rows|default(15) }}" id="qa_page_rows" required="" class="required numeric frm_input" size="4">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="qa_mobile_page_rows">모바일 페이지당 목록 수<strong class="sound_only"> 필수</strong></label></th>
+                            <td>
+                                <input type="text" name="qa_mobile_page_rows" value="{{ qa_config.qa_mobile_page_rows|default(10) }}" id="qa_mobile_page_rows" required="" class="required numeric frm_input" size="4">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="qa_image_width">이미지 폭 크기<strong class="sound_only"> 필수</strong></label></th>
+                            <td>
+                                <span class="frm_info">게시판에서 출력되는 이미지의 폭 크기</span>
+                                <input type="text" name="qa_image_width" value="{{ qa_config.qa_image_width|default(150) }}" id="qa_image_width" required="" class="required numeric frm_input" size="4"> 픽셀
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="qa_upload_size">파일 업로드 용량<strong class="sound_only"> 필수</strong></label></th>
+                            <td>
+                                <span class="frm_info">최대 40M 이하 업로드 가능, 1 MB = 1,048,576 bytes</span>
+                                업로드 파일 한개당
+                                <input type="text" name="qa_upload_size" value="{{ qa_config.qa_upload_size|default(1048576) }}" id="qa_upload_size" required="" class="required numeric frm_input" size="10"> bytes 이하
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="qa_content_head">상단 내용</label></th>
+                            <td>
+                                <textarea id="qa_content_head" name="qa_content_head" class="smarteditor2" maxlength="65536" style="width: 100%; height: 300px;">{{ qa_config.qa_content_head|default('', true) }}</textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="qa_content_tail">하단 내용</label></th>
+                            <td>
+                                <textarea id="qa_content_tail" name="qa_content_tail" class="smarteditor2" maxlength="65536" style="width: 100%; height: 300px;">{{ qa_config.qa_content_tail|default('', true) }}</textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="qa_mobile_content_head">모바일 상단 내용</label></th>
+                            <td>
+                                <textarea id="qa_mobile_content_head" name="qa_mobile_content_head" class="smarteditor2" maxlength="65536" style="width: 100%; height: 300px;">{{ qa_config.qa_mobile_content_head|default('', true) }}</textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="qa_mobile_content_tail">모바일 하단 내용</label></th>
+                            <td>
+                                <textarea id="qa_mobile_content_tail" name="qa_mobile_content_tail" class="smarteditor2" maxlength="65536" style="width: 100%; height: 300px;">{{ qa_config.qa_mobile_content_tail|default('', true) }}</textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="qa_insert_content">글쓰기 기본 내용</label></th>
+                            <td>
+                                <textarea id="qa_insert_content" name="qa_insert_content" rows="5">{{ qa_config.qa_insert_content|default('', true) }}</textarea>
+                            </td>
+                        </tr>
+                        {% for i in range(1, 6) %}
+                        <tr>
+                            <th scope="row">여분필드{{ i }}</th>
+                            <td class="td_extra">
+                                <label for="qa_{{ i }}_subj">여분필드 {{ i }} 제목</label>
+                                <input type="text" name="qa_{{ i }}_subj" id="qa_{{ i }}_subj" value="{{ getattr(qa_config, "qa_" ~ i ~ "_subj", "")|default('', true) }}" class="frm_input">
+                                <label for="qa_{{ i }}">여분필드 {{ i }} 값</label>
+                                <input type="text" name="qa_{{ i }}" value="{{ getattr(qa_config, "qa_" ~ i, "")|default('', true) }}" id="qa_{{ i }}" class="frm_input">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    
+        <div class="btn_fixed_top">
+            <input type="submit" value="확인" class="btn_submit btn" accesskey="s">
+        </div>
+    
+    </form>
+    
+    <script>
+        function fqaconfigform_submit(f) {
+            var qa_content_head_editor_data = oEditors.getById['qa_content_head'].getIR();
+            oEditors.getById['qa_content_head'].exec('UPDATE_CONTENTS_FIELD', []);
+            if(jQuery.inArray(document.getElementById('qa_content_head').value.toLowerCase().replace(/^\s*|\s*$/g, ''), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<div><br></div>','<p></p>','<br>','']) != -1){document.getElementById('qa_content_head').value='';}
+            var qa_content_tail_editor_data = oEditors.getById['qa_content_tail'].getIR();
+            oEditors.getById['qa_content_tail'].exec('UPDATE_CONTENTS_FIELD', []);
+            if(jQuery.inArray(document.getElementById('qa_content_tail').value.toLowerCase().replace(/^\s*|\s*$/g, ''), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<div><br></div>','<p></p>','<br>','']) != -1){document.getElementById('qa_content_tail').value='';}
+            var qa_mobile_content_head_editor_data = oEditors.getById['qa_mobile_content_head'].getIR();
+            oEditors.getById['qa_mobile_content_head'].exec('UPDATE_CONTENTS_FIELD', []);
+            if(jQuery.inArray(document.getElementById('qa_mobile_content_head').value.toLowerCase().replace(/^\s*|\s*$/g, ''), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<div><br></div>','<p></p>','<br>','']) != -1){document.getElementById('qa_mobile_content_head').value='';}
+            var qa_mobile_content_tail_editor_data = oEditors.getById['qa_mobile_content_tail'].getIR();
+            oEditors.getById['qa_mobile_content_tail'].exec('UPDATE_CONTENTS_FIELD', []);
+            if(jQuery.inArray(document.getElementById('qa_mobile_content_tail').value.toLowerCase().replace(/^\s*|\s*$/g, ''), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<div><br></div>','<p></p>','<br>','']) != -1){document.getElementById('qa_mobile_content_tail').value='';}
+    
+            f.action = "./qa_config_update.php";
+            return true;
+        }
+    </script>
+{% endblock content %}
