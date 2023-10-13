@@ -307,6 +307,7 @@ import cachetools
 
 # 캐시 크기와 만료 시간 설정
 cache = cachetools.TTLCache(maxsize=10000, ttl=3600)
+kv_cache = cachetools.Cache(maxsize=1)
 
 # def generate_one_time_token():
 #     '''
@@ -348,10 +349,14 @@ def validate_one_time_token(token, action: str = 'create'):
     return False
 
 def get_config():
-    """config 를 반환.
-    todo: config 캐시하기
+    """그누보드 config 를 반환.
     """
+    if config_cache := kv_cache.get('gnu_config'):
+        return config_cache
+
     db = SessionLocal()
     config = db.query(models.Config).first()
     db.close()
+    kv_cache.__setitem__('gnu_config', config)
+
     return config

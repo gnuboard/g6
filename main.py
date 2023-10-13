@@ -71,8 +71,8 @@ async def common(request: Request, call_next):
     outlogin = None
 
     db: Session = SessionLocal()
-    config = db.query(models.Config).first()
-    
+    config = get_config()
+
     ss_mb_id = request.session.get("ss_mb_id", "")
     
     if ss_mb_id:
@@ -87,7 +87,7 @@ async def common(request: Request, call_next):
                     # insert_point(member.mb_id, config["cf_login_point"], current_date + " 첫로그인", "@login", member.mb_id, current_date)
                     # 오늘의 로그인이 될 수도 있으며 마지막 로그인일 수도 있음
                     # 해당 회원의 접근일시와 IP 를 저장
-                    member.mb_today_login = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    member.mb_today_login = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     member.mb_login_ip = request.client.host
                     db.commit()
             
@@ -160,8 +160,10 @@ async def common(request: Request, call_next):
         "config": config,
         "member": member,
         "outlogin": outlogin.body.decode("utf-8"),
-    }        
-                        
+    }
+
+    db.close()
+
     response = await call_next(request)
     # print("After request")
     return response

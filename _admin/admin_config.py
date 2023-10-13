@@ -427,6 +427,9 @@ def config_form_update(request: Request, db: Session = Depends(get_db),
     config.cf_10                    = cf_10 if cf_10 is not None else ""                      
     
     db.commit()
+    
+    kv_cache.__delitem__("gnu_config")
+    
     return RedirectResponse("/admin/config_form", status_code=303)
 
 
