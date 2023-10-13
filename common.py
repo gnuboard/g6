@@ -3,6 +3,7 @@ import os
 import PIL
 import shutil
 from fastapi import Request, HTTPException, UploadFile
+from fastapi.templating import Jinja2Templates
 from passlib.context import CryptContext
 from requests import Session
 from sqlalchemy import Index
@@ -414,3 +415,15 @@ def save_image(directory: str, filename: str, file: UploadFile):
     if file and file.filename:
         with open(f"{directory}{filename}", "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
+            
+
+def outlogin(request: Request):
+    templates = Jinja2Templates(directory=TEMPLATES_DIR)
+    member = request.state.context["member"]
+    if member:
+        temp = templates.TemplateResponse("bbs/outlogin_after.html", {"request": request, "member": member})
+    else:
+        temp = templates.TemplateResponse("bbs/outlogin_before.html", {"request": request, "member": None})
+    return temp.body.decode("utf-8")
+    
+            

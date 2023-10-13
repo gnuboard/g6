@@ -11,6 +11,7 @@ import hashlib
 
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates.env.globals["outlogin"] = outlogin
 
 @router.get("/{co_id}")
 def content_view(request: Request, co_id: str, db: Session = Depends(get_db)):
@@ -33,7 +34,7 @@ def content_view(request: Request, co_id: str, db: Session = Depends(get_db)):
     
     context = {
         "request": request,
-        "outlogin": request.state.context["outlogin"],
+        # "outlogin": request.state.context["outlogin"],
         "title": f"{content.co_subject}",
         "content": content,
         "co_himg_url": co_himg_url,
