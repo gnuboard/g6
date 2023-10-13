@@ -6,7 +6,7 @@ from database import get_db
 from main import templates
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+
 
 @router.get("/login")
 def login_form(request: Request):
