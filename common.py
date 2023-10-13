@@ -19,7 +19,7 @@ def get_theme_from_db(config=None):
     if not config:
         db: Session = SessionLocal()
         config = db.query(models.Config).first()
-    theme = config.cf_theme if config.cf_theme else "basic"
+    theme = config.cf_theme if config and config.cf_theme else "basic"
     theme_path = f"{TEMPLATES}/{theme}"
     
     # Check if the directory exists
@@ -163,6 +163,9 @@ def get_member_id_select(id, level, selected, event=''):
 
 # 필드에 저장된 값과 기본 값을 비교하여 selected 를 반환
 def get_selected(field_value, value):
+    if not field_value:
+        return ''
+
     if isinstance(value, int):
         return ' selected="selected"' if (int(field_value) == int(value)) else ''
     return ' selected="selected"' if (field_value == value) else ''
