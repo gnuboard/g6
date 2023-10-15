@@ -157,6 +157,8 @@
     </div>
     </form>
 
+    {{ pagination|safe }}
+
     <script>
     function fboardlist_submit(f) {
         if (!is_checked("chk[]")) {
