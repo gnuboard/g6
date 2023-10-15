@@ -53,8 +53,8 @@ def config_form(request: Request, db: Session = Depends(get_db)):
 @router.post("/config_form_update")  
 def config_form_update(
     request: Request, 
-    form_data: ConfigForm = Depends(), 
     token: str = Form(None),
+    form_data: ConfigForm = Depends(), 
     db: Session = Depends(get_db)
     ):
     

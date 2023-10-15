@@ -342,7 +342,7 @@ cache = cachetools.TTLCache(maxsize=10000, ttl=3600)
 def generate_one_time_token(action: str = 'create'):
     '''
     1회용 토큰을 생성하여 반환하는 함수
-    action : 'create', 'update', 'delete' ...
+    action : 'insert', 'update', 'delete' ...
     '''
     token = os.urandom(24).hex()
     cache[token] = {'status': 'valid', 'action': action}
