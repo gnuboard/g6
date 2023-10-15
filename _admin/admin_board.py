@@ -571,6 +571,7 @@ def board_form_update(request: Request,
 
 @router.post("/board_list_update")
 async def board_list_update(request: Request, db: Session = Depends(get_db),
+                      token: Optional[str] = Form(...),
                       checks: Optional[List[int]] = Form(None, alias="chk[]"),
                       gr_id: Optional[List[str]] = Form(None, alias="gr_id[]"),
                       bo_table: Optional[List[str]] = Form(None, alias="bo_table[]"),
@@ -585,14 +586,8 @@ async def board_list_update(request: Request, db: Session = Depends(get_db),
                       bo_use_search: Optional[List[int]] = Form(None, alias="bo_use_search[]"),
                       bo_order: Optional[List[str]] = Form(None, alias="bo_order[]"),
                       bo_device: Optional[List[str]] = Form(None, alias="bo_device[]"),
-                      token: Optional[str] = Form(...),
                       act_button: Optional[str] = Form(...),
                       ):
-    
-    # 세션에 저장된 토큰값과 입력된 토큰값이 다르다면 에러 (토큰 변조시 에러)
-    # ss_token = request.session.get("token", "")
-    # if not token or token != ss_token:
-    #     raise HTTPException(status_code=403, detail="Invalid token.")
     
     if not token or not validate_one_time_token(token, 'update'):
         return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰값이 일치하지 않습니다."]})    
@@ -640,59 +635,6 @@ async def board_list_update(request: Request, db: Session = Depends(get_db),
     query_string = generate_query_string(request)            
     
     return RedirectResponse(f"/admin/board_list?{query_string}", status_code=303)
-
-def generate_query_string(request: Request, query_string: str = ""):
-    search_fields = {}
-    if request.method == "GET":
-        search_fields = {
-            'sst': request.query_params.get("sst"),
-            'sod': request.query_params.get("sod"),
-            'sfl': request.query_params.get("sfl"),
-            'stx': request.query_params.get("stx"),
-            'sca': request.query_params.get("sca"),
-            'page': request.query_params.get("page")
-        }
-    else:
-        search_fields = {
-            'sst': request._form.get("sst") if request._form else "",
-            'sod': request._form.get("sod") if request._form else "",
-            'sfl': request._form.get("sfl") if request._form else "",
-            'stx': request._form.get("stx") if request._form else "",
-            'sca': request._form.get("sca") if request._form else "",
-            'page': request._form.get("page") if request._form else ""
-        }    
-        
-    # None 값을 제거
-    search_fields = {k: v for k, v in search_fields.items() if v is not None}
-
-    return urlencode(search_fields)    
-        
-    # for key, value in search_fields.items():
-    #     print(key, value)
-    #     if value is not None:
-    #         # 처음이라면 & 를 붙이지 않고, 그렇지 않다면 & 를 붙임
-    #         if query_string == "":
-    #             query_string += f"{key}={value}"
-    #         else:
-    #             query_string += f"&{key}={value}"
-    # return query_string
-
-# # 논리적인 오류가 있음
-# def get_from_list(list, index, default=0):
-#     try:
-#         return 1 if index in list is not None else default
-#     # except (TypeError, IndexError):
-#     except (IndexError):
-#         return default
-
-# 파이썬의 내장함수인 list 와 이름이 충돌하지 않도록 변수명을 lst 로 변경함
-def get_from_list(lst, index, default=0):
-    if lst is None:
-        return default
-    try:
-        return 1 if index in lst else default
-    except (TypeError, IndexError):
-        return default
 
 
 @router.get("/board_copy/{bo_table}")

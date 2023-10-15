@@ -16,9 +16,9 @@
 <form name="fsearch" id="fsearch" class="local_sch01 local_sch" method="get">
     <label for="sfl" class="sound_only">검색대상</label>
     <select name="sfl" id="sfl">
-        <option value="gr_subject" >제목</option>
-        <option value="gr_id" >ID</option>
-        <option value="gr_admin" >그룹관리자</option>
+        <option value="gr_subject" {{ get_selected('gr_subject', request.state.sfl if request.state.sfl else '' )}}>제목</option>
+        <option value="gr_id" {{ get_selected('gr_id', request.state.sfl if request.state.sfl else '' )}}>ID</option>
+        <option value="gr_admin" {{ get_selected('gr_admin', request.state.sfl if request.state.sfl else '' )}}>그룹관리자</option>
     </select>
     <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
     <input type="text" name="stx" id="stx" value="" required class="required frm_input">
@@ -26,13 +26,13 @@
 </form>
 
 
-<form name="fboardgrouplist" id="fboardgrouplist" action="/admin/boardgroup_list_update" onsubmit="return fboardgrouplist_submit(this);" method="post">
+<form method="post" name="fboardgrouplist" id="fboardgrouplist" action="/admin/boardgroup_list_update" onsubmit="return fboardgrouplist_submit(this);" autocomplete="off">
     <input type="hidden" name="sst" value="">
     <input type="hidden" name="sod" value="">
     <input type="hidden" name="sfl" value="">
     <input type="hidden" name="stx" value="">
     <input type="hidden" name="page" value="1">
-    <input type="hidden" name="token" value="{{ token }}">
+    <input type="hidden" name="token" value="{{ generate_one_time_token('update') }}">
 
     <div class="tbl_head01 tbl_wrap">
         <table>
@@ -58,32 +58,32 @@
                 {% for group in groups %}                
                 <tr class="bg0">
                     <td class="td_chk">
-                        <input type="hidden" name="group_id[{{ loop.index0 }}]" value="{{ group.gr_id }}">
+                        <input type="hidden" name="group_id[]" value="{{ group.gr_id }}">
                         <label for="chk_{{ loop.index0 }}" class="sound_only">{{ group.gr_subject }} 그룹</label>
-                        <input type="checkbox" name="chk[]" value="0" id="chk_{{ loop.index0 }}">
+                        <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
                     </td>
                     <td class="td_left"><a href="/bbs/group/{{ group.gr_id }}">{{ group.gr_subject }}</a></td>
                     <td class="td_input">
                         <label for="gr_subject_{{ loop.index0 }}" class="sound_only">그룹제목</label>
-                        <input type="text" name="gr_subject[{{ loop.index0 }}]" value="{{ group.gr_subject }}" id="gr_subject_{{ loop.index0 }}" class="tbl_input">
+                        <input type="text" name="gr_subject[]" value="{{ group.gr_subject }}" id="gr_subject_{{ loop.index0 }}" class="tbl_input">
                     </td>
                     <td class="td_mng td_input">
                         <label for="gr_admin_{{ loop.index0 }}" class="sound_only">그룹관리자</label>
-                        <input type="text" name="gr_admin[{{ loop.index0 }}]" value="{{ group.gr_admin }}" id="gr_admin_{{ loop.index0 }}" class="tbl_input" size="10" maxlength="20">
+                        <input type="text" name="gr_admin[]" value="{{ group.gr_admin }}" id="gr_admin_{{ loop.index0 }}" class="tbl_input" size="10" maxlength="20">
                     </td>
                     <td class="td_num"><a href="/admin/board_list?sfl=a.gr_id&amp;stx={{ group.gr_id}}">5</a></td>
                     <td class="td_numsmall">
                         <label for="gr_use_access_{{ loop.index0 }}" class="sound_only">접근회원 사용</label>
-                        <input type="checkbox" name="gr_use_access[{{ loop.index0 }}]"  value="1" id="gr_use_access_{{ loop.index0 }}" {{ 'checked' if group.gr_use_access }}>
+                        <input type="checkbox" name="gr_use_access[]"  value="1" id="gr_use_access_{{ loop.index0 }}" {{ 'checked' if group.gr_use_access }}>
                     </td>
                     <td class="td_num"><a href="/admin/boardgroupmember_list?gr_id={{ group.gr_id }}">0</a></td>
                     <td class="td_numsmall">
                         <label for="gr_order_{{ loop.index0 }}" class="sound_only">메인메뉴 출력순서</label>
-                        <input type="text" name="gr_order[{{ loop.index0 }}]" value="{{ group.gr_order }}" id="gr_order_{{ loop.index0 }}" class="tbl_input" size="2">
+                        <input type="text" name="gr_order[]" value="{{ group.gr_order }}" id="gr_order_{{ loop.index0 }}" class="tbl_input" size="2">
                     </td>
                     <td class="td_mng">
                         <label for="gr_device_{{ loop.index0 }}" class="sound_only">접속기기</label>
-                        <select name="gr_device[{{ loop.index0 }}]" id="gr_device_{{ loop.index0 }}">
+                        <select name="gr_device[]" id="gr_device_{{ loop.index0 }}">
                             <option value="both"  selected="selected">모두</option>
                             <option value="pc" >PC</option>
                             <option value="mobile" >모바일</option>
@@ -130,14 +130,6 @@
         return true;
     }
 </script>
-
-
-<noscript>
-    <p>
-        귀하께서 사용하시는 브라우저는 현재 <strong>자바스크립트를 사용하지 않음</strong>으로 설정되어 있습니다.<br>
-        <strong>자바스크립트를 사용하지 않음</strong>으로 설정하신 경우는 수정이나 삭제시 별도의 경고창이 나오지 않으므로 이점 주의하시기 바랍니다.
-    </p>
-</noscript>
 
 </div>
 {% endblock %}
