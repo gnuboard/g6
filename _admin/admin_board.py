@@ -74,6 +74,75 @@ def board_list(request: Request, db: Session = Depends(get_db),
     }
     return templates.TemplateResponse("admin/board_list.html", context)
 
+
+@router.post("/board_list_update")
+async def board_list_update(request: Request, db: Session = Depends(get_db),
+                      token: Optional[str] = Form(...),
+                      checks: Optional[List[int]] = Form(None, alias="chk[]"),
+                      gr_id: Optional[List[str]] = Form(None, alias="gr_id[]"),
+                      bo_table: Optional[List[str]] = Form(None, alias="bo_table[]"),
+                      bo_skin: Optional[List[str]] = Form(None, alias="bo_skin[]"),
+                      bo_mobile_skin: Optional[List[str]] = Form(None, alias="bo_mobile_skin[]"),
+                      bo_subject: Optional[List[str]] = Form(None, alias="bo_subject[]"),
+                      bo_read_point: Optional[List[str]] = Form(None, alias="bo_read_point[]"),
+                      bo_write_point: Optional[List[str]] = Form(None, alias="bo_write_point[]"),
+                      bo_comment_point: Optional[List[str]] = Form(None, alias="bo_comment_point[]"),
+                      bo_download_point: Optional[List[str]] = Form(None, alias="bo_download_point[]"),
+                      bo_use_sns: Optional[List[int]] = Form(None, alias="bo_use_sns[]"),
+                      bo_use_search: Optional[List[int]] = Form(None, alias="bo_use_search[]"),
+                      bo_order: Optional[List[str]] = Form(None, alias="bo_order[]"),
+                      bo_device: Optional[List[str]] = Form(None, alias="bo_device[]"),
+                      act_button: Optional[str] = Form(...),
+                      ):
+    
+    if not token or not validate_one_time_token(token, 'update'):
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰값이 일치하지 않습니다."]})    
+    
+    if act_button == "선택삭제":
+        for i in checks:
+            board = db.query(models.Board).filter(models.Board.bo_table == bo_table[i]).first()
+            if board:
+                # 게시판 관리 레코드 삭제
+                db.delete(board)
+                db.commit()
+                # 게시판 테이블 삭제
+                models.Write = dynamic_create_write_table(table_name=board.bo_table, create_table=False)
+                models.Write.__table__.drop(engine)
+        query_string = generate_query_string(request)
+        return RedirectResponse(f"/admin/board_list?{query_string}", status_code=303)
+        
+    # 선택수정
+    for i in checks:
+        board = db.query(models.Board).filter(models.Board.bo_table == bo_table[i]).first()
+        if board:
+            board.gr_id = gr_id[i]
+            board.bo_skin = bo_skin[i]
+            board.bo_mobile_skin = bo_mobile_skin[i]
+            board.bo_subject = bo_subject[i]
+            board.bo_read_point = int(bo_read_point[i]) if bo_read_point[i] is not None and bo_read_point[i].isdigit() else 0
+            board.bo_write_point = int(bo_write_point[i]) if bo_write_point[i] is not None and bo_write_point[i].isdigit() else 0
+            board.bo_comment_point = int(bo_comment_point[i]) if bo_comment_point[i] is not None and bo_comment_point[i].isdigit() else 0
+            board.bo_download_point = int(bo_download_point[i]) if bo_download_point[i] is not None and bo_download_point[i].isdigit() else 0
+            
+            # try:
+            #     board.bo_use_sns = 1 if i in bo_use_sns is not None else 0
+            # except (TypeError, IndexError):
+            #     board.bo_use_sns = 0
+            board.bo_use_sns = get_from_list(bo_use_sns, i, 0)
+            board.bo_use_search = get_from_list(bo_use_search, i, 0)
+            
+            # checkbox 에 값을 집어 넣는것 까지 하다가 어느 정도 결과가 나와서 퇴근함 kagla 230922 17:50
+            # checkbox 에 value = 0, 1, 2, 3... n 으로 증가시켜야 함 (주의)
+    
+            board.bo_order = int(bo_order[i]) if bo_order[i] is not None and bo_order[i].isdigit() else 0
+            board.bo_device = bo_device[i] if bo_device[i] is not None else ""
+            db.commit()
+            
+    query_string = generate_query_string(request)            
+    
+    return RedirectResponse(f"/admin/board_list?{query_string}", status_code=303)
+
+
 # 등록 폼
 @router.get("/board_form")
 def board_form(request: Request, db: Session = Depends(get_db)):
@@ -567,74 +636,6 @@ def board_form_update(request: Request,
     query_string = generate_query_string(request)
             
     return RedirectResponse(f"/admin/board_form/{bo_table}?{query_string}", status_code=303)
-
-
-@router.post("/board_list_update")
-async def board_list_update(request: Request, db: Session = Depends(get_db),
-                      token: Optional[str] = Form(...),
-                      checks: Optional[List[int]] = Form(None, alias="chk[]"),
-                      gr_id: Optional[List[str]] = Form(None, alias="gr_id[]"),
-                      bo_table: Optional[List[str]] = Form(None, alias="bo_table[]"),
-                      bo_skin: Optional[List[str]] = Form(None, alias="bo_skin[]"),
-                      bo_mobile_skin: Optional[List[str]] = Form(None, alias="bo_mobile_skin[]"),
-                      bo_subject: Optional[List[str]] = Form(None, alias="bo_subject[]"),
-                      bo_read_point: Optional[List[str]] = Form(None, alias="bo_read_point[]"),
-                      bo_write_point: Optional[List[str]] = Form(None, alias="bo_write_point[]"),
-                      bo_comment_point: Optional[List[str]] = Form(None, alias="bo_comment_point[]"),
-                      bo_download_point: Optional[List[str]] = Form(None, alias="bo_download_point[]"),
-                      bo_use_sns: Optional[List[int]] = Form(None, alias="bo_use_sns[]"),
-                      bo_use_search: Optional[List[int]] = Form(None, alias="bo_use_search[]"),
-                      bo_order: Optional[List[str]] = Form(None, alias="bo_order[]"),
-                      bo_device: Optional[List[str]] = Form(None, alias="bo_device[]"),
-                      act_button: Optional[str] = Form(...),
-                      ):
-    
-    if not token or not validate_one_time_token(token, 'update'):
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰값이 일치하지 않습니다."]})    
-    
-    if act_button == "선택삭제":
-        for i in checks:
-            board = db.query(models.Board).filter(models.Board.bo_table == bo_table[i]).first()
-            if board:
-                # 게시판 관리 레코드 삭제
-                db.delete(board)
-                db.commit()
-                # 게시판 테이블 삭제
-                models.Write = dynamic_create_write_table(table_name=board.bo_table, create_table=False)
-                models.Write.__table__.drop(engine)
-        query_string = generate_query_string(request)
-        return RedirectResponse(f"/admin/board_list?{query_string}", status_code=303)
-        
-    # 선택수정
-    for i in checks:
-        board = db.query(models.Board).filter(models.Board.bo_table == bo_table[i]).first()
-        if board:
-            board.gr_id = gr_id[i]
-            board.bo_skin = bo_skin[i]
-            board.bo_mobile_skin = bo_mobile_skin[i]
-            board.bo_subject = bo_subject[i]
-            board.bo_read_point = int(bo_read_point[i]) if bo_read_point[i] is not None and bo_read_point[i].isdigit() else 0
-            board.bo_write_point = int(bo_write_point[i]) if bo_write_point[i] is not None and bo_write_point[i].isdigit() else 0
-            board.bo_comment_point = int(bo_comment_point[i]) if bo_comment_point[i] is not None and bo_comment_point[i].isdigit() else 0
-            board.bo_download_point = int(bo_download_point[i]) if bo_download_point[i] is not None and bo_download_point[i].isdigit() else 0
-            
-            # try:
-            #     board.bo_use_sns = 1 if i in bo_use_sns is not None else 0
-            # except (TypeError, IndexError):
-            #     board.bo_use_sns = 0
-            board.bo_use_sns = get_from_list(bo_use_sns, i, 0)
-            board.bo_use_search = get_from_list(bo_use_search, i, 0)
-            
-            # checkbox 에 값을 집어 넣는것 까지 하다가 어느 정도 결과가 나와서 퇴근함 kagla 230922 17:50
-            # checkbox 에 value = 0, 1, 2, 3... n 으로 증가시켜야 함 (주의)
-    
-            board.bo_order = int(bo_order[i]) if bo_order[i] is not None and bo_order[i].isdigit() else 0
-            board.bo_device = bo_device[i] if bo_device[i] is not None else ""
-            db.commit()
-            
-    query_string = generate_query_string(request)            
-    
-    return RedirectResponse(f"/admin/board_list?{query_string}", status_code=303)
 
 
 @router.get("/board_copy/{bo_table}")

@@ -27,11 +27,11 @@
 
 
 <form method="post" name="fboardgrouplist" id="fboardgrouplist" action="/admin/boardgroup_list_update" onsubmit="return fboardgrouplist_submit(this);" autocomplete="off">
-    <input type="hidden" name="sst" value="">
-    <input type="hidden" name="sod" value="">
-    <input type="hidden" name="sfl" value="">
-    <input type="hidden" name="stx" value="">
-    <input type="hidden" name="page" value="1">
+    <input type="hidden" name="sst" value="{{ request.state.sst }}">
+    <input type="hidden" name="sod" value="{{ request.state.sod }}">
+    <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
+    <input type="hidden" name="stx" value="{{ request.state.stx }}">
+    <input type="hidden" name="page" value="{{ request.state.page }}">
     <input type="hidden" name="token" value="{{ generate_one_time_token('update') }}">
 
     <div class="tbl_head01 tbl_wrap">
@@ -43,13 +43,13 @@
                         <label for="chkall" class="sound_only">그룹 전체</label>
                         <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                     </th>
-                    <th scope="col"><a href="/admin/boardgroup_list?sst=gr_id&sod=asc&sfl=&stx=&sca=&page=1">그룹아이디</a></th>
-                    <th scope="col"><a href="/admin/boardgroup_list?sst=gr_subject&sod=asc&sfl=&stx=&sca=&page=1">제목</a></th>
-                    <th scope="col"><a href="/admin/boardgroup_list?sst=gr_admin&sod=asc&sfl=&stx=&sca=&page=1">그룹관리자</a></th>
+                    <th scope="col">{{ subject_sort_link(request, 'gr_id')|safe }}그룹아이디</a></th>
+                    <th scope="col">{{ subject_sort_link(request, 'gr_subject')|safe }}제목</a></th>
+                    <th scope="col">{{ subject_sort_link(request, 'gr_admin')|safe }}그룹관리자</a></th>
                     <th scope="col">게시판</th>
                     <th scope="col">접근<br>사용</th>
                     <th scope="col">접근<br>회원수</th>
-                    <th scope="col"><a href="/admin/boardgroup_list?sst=gr_order&sod=asc&sfl=&stx=&sca=&page=1">출력<br>순서</a></th>
+                    <th scope="col">{{ subject_sort_link(request, 'gr_order')|safe }}출력<br>순서</a></th>
                     <th scope="col">접속기기</th>
                     <th scope="col">관리</th>
                 </tr>

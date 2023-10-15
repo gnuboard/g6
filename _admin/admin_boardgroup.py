@@ -14,6 +14,7 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 templates.env.globals['getattr'] = getattr
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['get_admin_menus'] = get_admin_menus
+templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['generate_one_time_token'] = generate_one_time_token
 
 @router.get("/boardgroup_list")
