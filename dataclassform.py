@@ -250,7 +250,7 @@ class BoardForm:
 
 
 @dataclass
-class BoardGroupForm:
+class GroupForm:
     gr_subject: str = Form(...)
     gr_device: Optional[str] = Form(default="")
     gr_admin: Optional[str] = Form(default="")
