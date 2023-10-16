@@ -399,6 +399,13 @@ def get_next_profile_openable_date(open_date: datetime, config):
     return calculated_date
 
 
+def default_if_none(value, arg):
+    """If value is None"""
+    if value is None:
+        return arg
+    return value
+
+
 def get_config():
     """그누보드 config 를 반환.
     """
