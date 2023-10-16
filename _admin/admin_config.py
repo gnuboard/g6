@@ -63,11 +63,15 @@ def config_form_update(
     
     # 에러 체크
     member = request.state.context['member']
-    if member.mb_level < 10:
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["최고관리자만 접근 가능합니다."]})
+    # print(member.__dict__)
+    if member: 
+        if member.mb_level < 10:
+            return templates.TemplateResponse("alert.html", {"request": request, "errors": ["최고관리자만 접근 가능합니다."]})
 
-    if not member.mb_id:
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["최고관리자 회원아이디가 존재하지 않습니다."]})    
+        if not member.mb_id:
+            return templates.TemplateResponse("alert.html", {"request": request, "errors": ["회원아이디가 존재하지 않습니다."]})    
+    else:
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["로그인 후 이용해 주세요."]})
 
     # 차단 IP 리스트에 현재 접속 IP 가 있으면 접속이 불가하게 되므로 저장하지 않는다.
     if form_data.cf_intercept_ip:
