@@ -9,6 +9,7 @@
             <input type="hidden" name="sca" value="">
             <input type="hidden" name="stx" value="">
             <input type="hidden" name="page" value="">
+            <input type="hidden" name="qa_id" value="{{ qa.qa_id }}">
             <input type="hidden" name="token" value="{{ generate_one_time_token('update' if qa else 'create') }}">
             <input type="hidden" name="qa_html" value="1">
             <div class="form_01">

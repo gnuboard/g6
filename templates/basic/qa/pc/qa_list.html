@@ -125,7 +125,7 @@
                                 <span class="bo_cate_link">{{ qa.qa_category }}</span>
                                 <a href="{{ url_for('qa_view', qa_id=qa.qa_id) }}" class="bo_tit">{{ qa.qa_subject }}</a>
                             </td>
-                            <td class="td_name">{{ qa.member.mb_name }}</td>
+                            <td class="td_name">{{ qa.qa_name }}</td>
                             <td class="td_date">{{ qa.qa_datetime }}</td>
                             <td class="td_stat"><span class="txt_done">답변완료</span></td>
                         </tr>

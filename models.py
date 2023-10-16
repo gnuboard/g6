@@ -232,9 +232,6 @@ class Member(Base):
     mb_9 = Column(String(255), nullable=False, default='')
     mb_10 = Column(String(255), nullable=False, default='')
 
-    # 연관관계
-    qas = relationship("QaContent", back_populates="member", cascade="all, delete-orphan")
-
 
 class Board(Base):
     '''
@@ -603,6 +600,3 @@ class QaContent(Base):
 
     # Index 추가
     qa_num_parent_index = Index('qa_num_parent', qa_num, qa_parent)
-
-    # 연관관계
-    member = relationship("Member", back_populates="qas", foreign_keys=[mb_id])
