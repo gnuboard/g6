@@ -41,7 +41,7 @@ app.include_router(faq_router, prefix="/faq", tags=["faq"])
 
 # 항상 실행해야 하는 미들웨어
 @app.middleware("http")
-async def common(request: Request, call_next):
+async def main_common(request: Request, call_next):
     # global is_mobile, user_device
     
     member = None
@@ -141,7 +141,18 @@ async def common(request: Request, call_next):
     }        
                         
     response = await call_next(request)
+
+    # 방문객
+    vi_ip = request.client.host
+    ck_visit_ip = request.cookies.get('ck_visit_ip', None)
+    if ck_visit_ip != vi_ip:
+        # 방문을 추적하는 쿠키 설정 및 방문 레코드 기록
+        response.set_cookie('ck_visit_ip', vi_ip, max_age=86400)  # 쿠키를 하루 동안 유지
+        # 방문 레코드 기록
+        record_visit(request)
+        
     # print("After request")
+
     return response
 
 # 아래 app.add_middleware(...) 코드는 반드시 common 함수의 아래에 위치해야 함. 

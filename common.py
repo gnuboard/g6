@@ -1,18 +1,21 @@
 import hashlib
 import os
+import re
 import PIL
 import shutil
 from fastapi import Request, HTTPException, UploadFile
 from fastapi.templating import Jinja2Templates
 from passlib.context import CryptContext
 from requests import Session
-from sqlalchemy import Index
+from sqlalchemy import Index, func
 import models
 from models import WriteBaseModel
 from database import SessionLocal, engine
-from datetime import datetime
+from datetime import datetime, timedelta, date, time
 import json
 from PIL import Image
+from user_agents import parse
+
 
 TEMPLATES = "templates"
 def get_theme_from_db(config=None):
@@ -535,4 +538,66 @@ def get_paging(request, current_page, total_records, url_prefix, add_url=""):
 
     # 페이지 링크 목록을 문자열로 변환하여 반환
     return '<nav class="pg_wrap"><span class="pg">' + ''.join(page_links) + '</span></nav>'
+
+
+def extract_browser(user_agent):
+    # 사용자 에이전트 문자열에서 브라우저 정보 추출
+    # 여기에 필요한 정규 표현식 또는 분석 로직을 추가
+    # 예를 들어, 단순히 "Mozilla/5.0" 문자열을 추출하는 예제
+    browser_match = re.search(r"Mozilla/5.0", user_agent)
+    if browser_match:
+        return "Mozilla/5.0"
+    else:
+        return "Unknown"
+    
+from ua_parser import user_agent_parser    
+    
+
+# 방문 레코드 기록 로직을 처리하는 함수
+def record_visit(request: Request):
+    vi_ip = request.client.host
+    
+    Visit = models.Visit
+    VisitSum = models.VisitSum
+
+    # 세션 생성
+    db = SessionLocal()
+
+    # 오늘의 방문이 이미 기록되어 있는지 확인
+    existing_visit = db.query(Visit).filter(Visit.vi_date == date.today(), Visit.vi_ip == vi_ip).first()
+
+    if not existing_visit:
+        # 새로운 방문 레코드 생성
+        referer = request.headers.get("referer", "")
+        user_agent = request.headers.get("User-Agent", "")
+        ua = parse(user_agent)
+        browser = ua.browser.family
+        os = ua.os.family
+        device = 'pc' if ua.is_pc else 'mobile' if ua.is_mobile else 'tablet' if ua.is_tablet else 'unknown'
             
+        visit = Visit(
+            vi_ip=vi_ip,
+            vi_date=date.today(),
+            vi_time=datetime.now().time(),
+            vi_referer=referer,
+            vi_agent=user_agent,
+            vi_browser=browser,
+            vi_os=os,
+            vi_device=device,   
+        )
+        db.add(visit)
+        db.commit()
+
+        # VisitSum 테이블 업데이트
+        visit_count_today = db.query(func.count(Visit.vi_id)).filter(Visit.vi_date == date.today()).scalar()
+
+        visit_sum = db.query(VisitSum).filter(VisitSum.vs_date == date.today()).first()
+        if visit_sum:
+            visit_sum.vs_count = visit_count_today
+        else:
+            visit_sum = VisitSum(vs_date=date.today(), vs_count=visit_count_today)
+
+        db.add(visit_sum)
+        db.commit()
+
+    db.close()            
