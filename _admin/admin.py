@@ -17,7 +17,7 @@ import hashlib
 
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 # # 파이썬 함수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.globals['get_admin_menus'] = get_admin_menus
 
@@ -28,6 +28,7 @@ from _admin.admin_boardgroup import router as admin_boardgroup_router
 from _admin.admin_content import router as admin_content_router
 from _admin.admin_faq import router as admin_faq_router
 from _admin.admin_theme import router as admin_theme_router
+from _admin.admin_visit import router as admin_visit_router
 from _admin.admin_qa import router as admin_qa_router
 
 router.include_router(admin_config_router, prefix="", tags=["admin_config"])
@@ -37,6 +38,7 @@ router.include_router(admin_boardgroup_router, prefix="", tags=["admin_boardgrou
 router.include_router(admin_content_router, prefix="", tags=["admin_content"])
 router.include_router(admin_faq_router, prefix="", tags=["admin_faq"])
 router.include_router(admin_theme_router, prefix="", tags=["admin_theme"])
+router.include_router(admin_visit_router, prefix="", tags=["admin_visit"])
 router.include_router(admin_qa_router,  prefix="", tags=["admin_qa"])
 
 @router.get("/")
@@ -45,4 +47,4 @@ def base(request: Request, db: Session = Depends(get_db)):
     관리자 메인
     '''
     request.session["menu_key"] = "100100"
-    return templates.TemplateResponse("admin/index.html", {"request": request})
+    return templates.TemplateResponse("index.html", {"request": request})

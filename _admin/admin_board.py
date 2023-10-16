@@ -12,7 +12,7 @@ from dataclassform import BoardForm
 
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 templates.env.globals['getattr'] = getattr
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['option_selected'] = option_selected
@@ -24,6 +24,7 @@ templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.globals["get_paging"] = get_paging
+
 
 @router.get("/board_list")
 def board_list(request: Request, db: Session = Depends(get_db),
@@ -89,7 +90,7 @@ def board_list(request: Request, db: Session = Depends(get_db),
         "total_records": total_records,
         "paging": get_paging(request, current_page, total_records, f"/admin/board_list?{query_string}&page="),
     }
-    return templates.TemplateResponse("admin/board_list.html", context)
+    return templates.TemplateResponse("board_list.html", context)
 
 
 @router.post("/board_list_update")
@@ -204,7 +205,7 @@ def board_form(request: Request, db: Session = Depends(get_db)):
         "board": board,
         "config": config,
     }
-    return templates.TemplateResponse("admin/board_form.html", context)
+    return templates.TemplateResponse("board_form.html", context)
 
 
 # 수정 폼
@@ -229,7 +230,7 @@ async def board_form(bo_table: str, request: Request, db: Session = Depends(get_
         "token": token,
         "config": request.state.context['config']
     }
-    return templates.TemplateResponse("admin/board_form.html", context)
+    return templates.TemplateResponse("board_form.html", context)
 
 
 # 등록, 수정 처리
@@ -661,7 +662,7 @@ async def board_copy(request: Request, bo_table: str, db: Session = Depends(get_
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     
-    return templates.TemplateResponse("admin/board_copy.html", {"request": request, "board": board})
+    return templates.TemplateResponse("board_copy.html", {"request": request, "board": board})
 
 
 @router.post("/board_copy_update")

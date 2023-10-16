@@ -1,9 +1,9 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime, Date, Time
 from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import ArgumentError, InvalidRequestError
-from datetime import datetime
+from datetime import datetime, date
 
 Base = declarative_base()
 
@@ -520,6 +520,26 @@ class Faq(Base):
     # 연관관계
     faq_master = relationship("FaqMaster", back_populates="faqs", foreign_keys=[fm_id])
 
+
+class Visit(Base):
+    __tablename__ = 'g6_visit'
+    
+    vi_id = Column(Integer, primary_key=True, autoincrement=True)
+    vi_ip = Column(String(100), nullable=False, default='')
+    vi_date = Column(Date, nullable=False, default='')
+    vi_time = Column(Time, nullable=False, default='')
+    vi_referer = Column(Text, nullable=False, default='')
+    vi_agent = Column(String(200), nullable=False, default='')
+    vi_browser = Column(String(255), nullable=False, default='')
+    vi_os = Column(String(255), nullable=False, default='')
+    vi_device = Column(String(255), nullable=False, default='')
+    
+    
+class VisitSum(Base):
+    __tablename__ = 'g6_visit_sum'
+    
+    vs_date = Column(Date, primary_key=True, nullable=False, default='')
+    vs_count = Column(Integer, nullable=False, default=0)
 
 class QaConfig(Base):
     """ Q&A 설정 테이블
