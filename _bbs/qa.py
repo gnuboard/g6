@@ -1,4 +1,4 @@
-from pickletools import string1
+from multiprocessing.util import is_exiting
 from common import *
 from database import get_db
 from dataclasses import dataclass
@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Reques
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+from typing import List, Optional
 
 import models
 
@@ -13,6 +14,11 @@ router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
+templates.env.globals["generate_query_string"] = generate_query_string
+templates.env.globals["outlogin"] = outlogin
+
+
+FILE_DIRECTORY = "data/qa/"
 
 
 @dataclass
@@ -22,7 +28,6 @@ class QaContentDataclass:
     """
     qa_email: str = Form(None)
     qa_hp: str = Form(None)
-    qa_type: int = 0
     qa_category: str = Form(...)
     qa_email_recv: bool = Form(None)
     qa_sms_recv: bool = Form(None)
@@ -35,12 +40,15 @@ class QaContentDataclass:
 
 @router.get("/list")
 def qa_list(request: Request,
-            db: Session = Depends(get_db)):
+            db: Session = Depends(get_db)
+            , current_page: int = Query(default=1, alias="page"), # 페이지
+            ):
     '''
     Q&A 목록 보기
     '''
     sca = request.state.sca if request.state.sca is not None else ""
     stx = request.state.stx if request.state.stx is not None else ""
+    sfl = request.state.sfl if request.state.sfl is not None else ""
 
     # Q&A 설정 조회
     qa_config = db.query(models.QaConfig).order_by(models.QaConfig.id.asc()).first()
@@ -48,19 +56,37 @@ def qa_list(request: Request,
         raise HTTPException(status_code=404, detail=f"Q&A Config is not found.")
     
     # Q&A 목록 조회
-    queryset = db.query(models.QaContent).filter(models.QaContent.qa_type == 0).order_by(models.QaContent.qa_id.desc())
-    # 제목과 내용 중 검색어가 있으면 검색한다.
+    query = db.query(models.QaContent).filter(models.QaContent.qa_type == 0).order_by(models.QaContent.qa_id.desc())
+    # 카테고리
     if sca:
-        queryset = queryset.filter(models.QaContent.qa_category == sca)
+        query = query.filter(models.QaContent.qa_category == sca)
+    # 검색어
     if stx:
-        queryset = queryset.filter(models.QaContent.qa_subject.like(f"%{stx}%") | models.QaContent.qa_content.like(f"%{stx}%"))
-    qa_list = queryset.all()
+        if sfl == "qa_subject":
+            query = query.filter(models.QaContent.qa_subject.like(f"%{stx}%"))
+        elif sfl == "qa_content":
+            query = query.filter(models.QaContent.qa_content.like(f"%{stx}%"))
+        elif sfl == "qa_name":
+            query = query.filter(models.QaContent.qa_name.like(f"%{stx}%"))
+        elif sfl == "mb_id":
+            query = query.filter(models.QaContent.mb_id.like(f"%{stx}%"))
+
+    # 페이징 변수
+    records_per_page = request.state.config.cf_page_rows
+    total_records = query.count()
+    offset = (current_page - 1) * records_per_page
+
+    # Q&A 목록 조회 & 페이징
+    qa_list = query.offset(offset).limit(records_per_page).all()
 
     context = {
         "request": request,
-        "outlogin": request.state.context["outlogin"],
+        "qa_config": qa_config,
         "qa_list": qa_list,
         "categories": qa_config.qa_category.split("|"),
+        "total_records": total_records,
+        "current_page": current_page,
+        "paging": get_paging(request, current_page, total_records, f"/qa/list?{generate_query_string(request)}&page="),
     }
 
     return templates.TemplateResponse(f"qa/pc/qa_list.html", context)
@@ -79,7 +105,7 @@ def qa_write(request: Request,
 
     context = {
         "request": request,
-        "outlogin": request.state.context["outlogin"],
+        "qa_config": qa_config,
         "categories": qa_config.qa_category.split("|"),
         "qa": None,
     }
@@ -107,7 +133,7 @@ def qa_edit(qa_id: int,
 
     context = {
         "request": request,
-        "outlogin": request.state.context["outlogin"],
+        "qa_config": qa_config,
         "categories": qa_config.qa_category.split("|"),
         "qa": qa,
     }
@@ -120,7 +146,10 @@ def qa_update(request: Request,
                 token: str = Form(...),
                 qa_id: str = Form(None),
                 db: Session = Depends(get_db),
-                form_data: QaContentDataclass = Depends()
+                form_data: QaContentDataclass = Depends(),
+                qa_related: int = Form(None),
+                qa_file_del1: int = Form(None),
+                qa_file_del2: int = Form(None),
                 ):
     """1:1문의 설정 등록/수정 처리
 
@@ -137,6 +166,8 @@ def qa_update(request: Request,
     # 회원정보
 
     if validate_one_time_token(token, 'create'): # 토큰에 등록돤 action이 create라면 신규 등록
+        form_data.qa_related = qa_related
+        form_data.qa_type =  1 if qa_id else 0
         form_data.mb_id = ''
         form_data.qa_name = ''
         form_data.qa_datetime = datetime.now()
@@ -155,6 +186,29 @@ def qa_update(request: Request,
     
     else: # 토큰 검사 실패
         raise HTTPException(status_code=404, detail=f"{token} : 토큰이 존재하지 않습니다.")
+    
+
+    # 파일 경로체크 및 생성
+    make_directory(FILE_DIRECTORY)
+    # 파일 삭제
+    delete_image(FILE_DIRECTORY, f"{qa.qa_source1}", qa_file_del1)
+    delete_image(FILE_DIRECTORY, f"{qa.qa_source2}", qa_file_del2)
+    # 파일 및 데이터 저장
+    if form_data.qa_file1.size > 0:
+        filename1 = os.urandom(16).hex() + "." + form_data.qa_file1.filename.split(".")[-1]
+        qa.qa_file1 = FILE_DIRECTORY + filename1
+        qa.qa_source1 = form_data.qa_file1.filename
+        save_image(FILE_DIRECTORY, f"{filename1}", form_data.qa_file1)
+    else: 
+        qa.qa_file1 = None
+    if form_data.qa_file2.size > 0:
+        filename2 = os.urandom(16).hex() + "." + form_data.qa_file2.filename.split(".")[-1]
+        qa.qa_file2 = FILE_DIRECTORY + filename2
+        qa.qa_source2 = form_data.qa_file2.filename
+        save_image(FILE_DIRECTORY, f"{filename2}", form_data.qa_file2)
+    else: 
+        qa.qa_file2 = None
+    db.commit()
 
     return RedirectResponse(url=f"/qa/{qa.qa_id}", status_code=302)
 
@@ -177,6 +231,31 @@ def qa_delete(qa_id: int,
     return RedirectResponse(url=f"/qa/list", status_code=302)
 
 
+@router.post("/list/delete")
+async def qa_list_delete(request: Request, db: Session = Depends(get_db),
+                      token: Optional[str] = Form(...),
+                      checks: List[int] = Form(..., alias="chk_qa_id[]")
+                      ):
+    """Q&A 목록 삭제
+
+    Args:
+        token (str): 입력/수정/삭제 변조 방지 토큰.
+        checks (List[int]): Q&A ID list. Defaults to Form(None, alias="chk_qa_id[]").
+    """
+    
+    if not token or not validate_one_time_token(token, 'delete'):
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰값이 일치하지 않습니다."]})    
+    
+    for i in checks:
+        qa = db.query(models.QaContent).filter(models.QaContent.qa_id == i).first()
+        if qa:
+            # Q&A 삭제
+            db.delete(qa)
+            db.commit()
+
+    return RedirectResponse(f"/qa/list?{generate_query_string(request)}", status_code=303)
+
+
 @router.get("/{qa_id}")
 def qa_view(qa_id: int,
             request: Request,
@@ -197,11 +276,35 @@ def qa_view(qa_id: int,
     # Q&A 답변글 조회
     answer = db.query(model).filter(model.qa_type == 1, model.qa_parent == qa_id).first()
 
+    # 이전글, 다음글
+    sca = request.state.sca if request.state.sca is not None else ""
+    stx = request.state.stx if request.state.stx is not None else ""
+    sfl = request.state.sfl if request.state.sfl is not None else ""
+    query = db.query(model)
+    # 카테고리
+    if sca:
+        query = query.filter(models.QaContent.qa_category == sca)
+    # 검색어
+    if stx:
+        if sfl == "qa_subject":
+            query = query.filter(models.QaContent.qa_subject.like(f"%{stx}%"))
+        elif sfl == "qa_content":
+            query = query.filter(models.QaContent.qa_content.like(f"%{stx}%"))
+        elif sfl == "qa_name":
+            query = query.filter(models.QaContent.qa_name.like(f"%{stx}%"))
+        elif sfl == "mb_id":
+            query = query.filter(models.QaContent.mb_id.like(f"%{stx}%"))
+
+    prev = query.filter(model.qa_id < qa_id).order_by(model.qa_id.desc()).first()
+    next = query.filter(model.qa_id > qa_id).order_by(model.qa_id.asc()).first()
+
     context = {
         "request": request,
-        "outlogin": request.state.context["outlogin"],
+        "qa_config": qa_config,
         "qa": qa,
         "answer": answer,
+        "prev": prev,
+        "next": next
     }
 
     return templates.TemplateResponse(f"qa/pc/qa_view.html", context)

@@ -1,11 +1,18 @@
 {% extends "base.html" %}
 
+{% block subtitle %}
+    {{ qa_config.qa_title }}
+{% endblock subtitle %}
+
 {% block content %}
-    <h2 id="container_title"><span title="1:1문의">1:1문의</span></h2>
+    {% if qa_config.qa_content_head %}
+        {{ qa_config.qa_content_head|safe }}
+    {% endif %}
+
     <div id="bo_list">
         <!-- 카테고리 시작 { -->
         <nav id="bo_cate">
-            <h2>1:1문의 카테고리</h2>
+            <h2>{{ qa_config.qa_title }} 카테고리</h2>
             <ul id="bo_cate_ul">
                 <li><a href="{{ url_for('qa_list') }}" {% if not request.state.sca %}id="bo_cate_on"{% endif %}>전체</a></li>
                 {% for category in categories %}
@@ -18,10 +25,11 @@
         <!-- 게시판 페이지 정보 및 버튼 시작 { -->
         <div id="bo_btn_top">
             <div id="bo_list_total">
-                <span>Total {{ qa_list|count }}건</span>
-                1 페이지
+                <span>Total {{ total_records }}건</span>
+                {{ current_page }} 페이지
             </div>
             <ul class="btn_bo_user">
+                {# TODO: 관리자만 표시하도록 수정 #}
                 <li>
                     <a href="{{ url_for('qa_config_form') }}" class="btn_admin btn" title="관리자">
                         <i class="fa fa-cog fa-spin fa-fw"></i>
@@ -43,14 +51,14 @@
                                 <input type="hidden" name="sop" value="or">
                                 <label for="sfl" class="sound_only">검색대상</label>
                                 <select name="sfl" id="sfl">
-                                    <option value="qa_subject" {{ get_selected(request.state.sfl, qa_subject) }}>제목</option>
-                                    <option value="qa_content" {{ get_selected(request.state.sfl, qa_content) }}>내용</option>
-                                    <option value="qa_name" {{ get_selected(request.state.sfl, qa_name) }}>글쓴이</option>
-                                    <option value="mb_id" {{ get_selected(request.state.sfl, mb_id) }}>회원아이디</option>
+                                    <option value="qa_subject" {{ get_selected(request.state.sfl, 'qa_subject') }}>제목</option>
+                                    <option value="qa_content" {{ get_selected(request.state.sfl, 'qa_content') }}>내용</option>
+                                    <option value="qa_name" {{ get_selected(request.state.sfl, 'qa_name') }}>글쓴이</option>
+                                    <option value="mb_id" {{ get_selected(request.state.sfl, 'mb_id') }}>회원아이디</option>
                                 </select>
                                 <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
                                 <div class="sch_bar">
-                                    <input type="text" name="stx" value="" id="stx" required="{{ request.state.stx }}" class="sch_input" size="25" maxlength="15" placeholder=" 검색어를 입력해주세요">
+                                    <input type="text" name="stx" value="{{ request.state.stx }}" id="stx" required="" class="sch_input" size="25" maxlength="15" placeholder=" 검색어를 입력해주세요">
                                     <button type="submit" value="검색" class="sch_btn" title="검색">
                                         <i class="fa fa-search" aria-hidden="true"></i>
                                         <span class="sound_only">검색</span>
@@ -84,11 +92,10 @@
             </ul>
         </div>
         <!-- } 게시판 페이지 정보 및 버튼 끝 -->
-
-        <form name="fqalist" id="fqalist" action="./qadelete.php" onsubmit="return fqalist_submit(this);" method="post">
-            <input type="hidden" name="stx" value="">
-            <input type="hidden" name="sca" value="">
-            <input type="hidden" name="page" value="1">
+        <form name="fqalist" id="fqalist" action="{{ url_for('qa_list_delete') }}" onsubmit="return fqalist_submit(this);" method="post">
+            <input type="hidden" name="stx" value="{{ request.state.stx }}">
+            <input type="hidden" name="sca" value="{{ request.state.sca }}">
+            <input type="hidden" name="page" value="{{ current_page }}">
             <input type="hidden" name="token" value="{{ generate_one_time_token('delete') }}">
                     
             <div class="tbl_head01 tbl_wrap">
@@ -100,7 +107,7 @@
                         <input type="checkbox" id="chkall" onclick="if (this.checked) all_checked(true); else all_checked(false);" class="selec_chk">
                         <label for="chkall">
                             <span>&nbsp;</span>
-                            <b class="sound_only">현재 페이지 게시물  전체선택</b>
+                            <b class="sound_only">현재 페이지 게시물 전체선택</b>
                         </label>
                     </th>
                     <th scope="col">번호</th>
@@ -112,34 +119,46 @@
                 </thead>
                     <tbody>
                         {% for qa in qa_list %}
-                        <tr class="{{ loop.cycle('', 'even') }}">
-                            <td class="td_chk chk_box">
-                                <input type="checkbox" name="chk_qa_id[]" value="{{ qa.qa_id }}" id="chk_qa_id_{{ loop.index }}" class="selec_chk">
-                                <label for="chk_qa_id_{{ loop.index }}">
-                                    <span>&nbsp;</span>
-                                    <b class="sound_only">{{ qa.qa_subject }}</b>
-                                </label>
-                            </td>
-                            <td class="td_num">{{ qa.qa_id }}</td>
-                            <td class="td_subject">
-                                <span class="bo_cate_link">{{ qa.qa_category }}</span>
-                                <a href="{{ url_for('qa_view', qa_id=qa.qa_id) }}" class="bo_tit">{{ qa.qa_subject }}</a>
-                            </td>
-                            <td class="td_name">{{ qa.qa_name }}</td>
-                            <td class="td_date">{{ qa.qa_datetime }}</td>
-                            <td class="td_stat"><span class="txt_done">답변완료</span></td>
-                        </tr>
+                            <tr class="{{ loop.cycle('', 'even') }}">
+                                <td class="td_chk chk_box">
+                                    <input type="checkbox" name="chk_qa_id[]" value="{{ qa.qa_id }}" id="chk_qa_id_{{ loop.index }}" class="selec_chk">
+                                    <label for="chk_qa_id_{{ loop.index }}">
+                                        <span>&nbsp;</span>
+                                        <b class="sound_only">{{ qa.qa_subject }}</b>
+                                    </label>
+                                </td>
+                                <td class="td_num">{{ qa.qa_id }}</td>
+                                <td class="td_subject">
+                                    <span class="bo_cate_link">{{ qa.qa_category }}</span>
+                                    <a href="{{ url_for('qa_view', qa_id=qa.qa_id) }}?{{ generate_query_string(request) }}" class="bo_tit">{{ qa.qa_subject }}</a>
+                                </td>
+                                <td class="td_name">{{ qa.qa_name }}</td>
+                                <td class="td_date">{{ qa.qa_datetime }}</td>
+                                <td class="td_stat">
+                                    {% if qa.qa_status %}
+                                        <span class="txt_done">답변완료</span>
+                                    {% else %}
+                                        <span class="txt_rdy">답변대기</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
                         {% else %}
-                        <tr><td colspan="6" class="empty_table">게시물이 없습니다.</td></tr>
+                            <tr><td colspan="6" class="empty_table">Q&A목록이 없습니다.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
             <!-- 페이지 -->
+            {{ paging|safe }}
             <!-- 페이지 -->
             <div class="bo_fx">
                 <ul class="btn_bo_user">
-                    <li><button type="submit" name="btn_submit" value="선택삭제" title="선택삭제" onclick="document.pressed=this.value" class="btn btn_b01 btn_admin"><i class="fa fa-trash-o" aria-hidden="true"></i><span class="sound_only">선택삭제</span></button></li>
+                    <li>
+                        <button type="submit" name="btn_submit" value="선택삭제" title="선택삭제" onclick="document.pressed=this.value" class="btn btn_b01 btn_admin">
+                            <i class="fa fa-trash-o" aria-hidden="true"></i>
+                            <span class="sound_only">선택삭제</span>
+                        </button>
+                    </li>
                     <li>
                         <a href="{{ url_for('qa_list') }}" class="btn_b01 btn" title="목록">
                             <i class="fa fa-list" aria-hidden="true"></i>
@@ -156,5 +175,39 @@
             </div>
         </form>
     </div>
+    <script>
+        function all_checked(sw) {
+            var f = document.fqalist;
+        
+            for (var i=0; i<f.length; i++) {
+                if (f.elements[i].name == "chk_qa_id[]")
+                    f.elements[i].checked = sw;
+            }
+        }
 
+        function fqalist_submit(f) {
+            var chk_count = 0;
+        
+            for (var i=0; i<f.length; i++) {
+                if (f.elements[i].name == "chk_qa_id[]" && f.elements[i].checked)
+                    chk_count++;
+            }
+        
+            if (!chk_count) {
+                alert(document.pressed + "할 게시물을 하나 이상 선택하세요.");
+                return false;
+            }
+        
+            if(document.pressed == "선택삭제") {
+                if (!confirm("선택한 게시물을 정말 삭제하시겠습니까?\n\n한번 삭제한 자료는 복구할 수 없습니다"))
+                    return false;
+            }
+        
+            return true;
+        }
+    </script>
+
+    {% if qa_config.qa_content_tail %}
+        {{ qa_config.qa_content_tail|safe }}
+    {% endif %}
 {% endblock content %}
