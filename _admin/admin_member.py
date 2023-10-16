@@ -9,7 +9,7 @@ import datetime
 from common import *
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.globals['getattr'] = getattr
 templates.env.globals['today'] = SERVER_TIME.strftime("%Y%m%d")
@@ -24,7 +24,7 @@ def member_list(request: Request, db: Session = Depends(get_db)):
     request.session["menu_key"] = "200100"
     
     members = db.query(models.Member).all()
-    return templates.TemplateResponse("admin/member_list.html", {"request": request, "members": members})
+    return templates.TemplateResponse("member_list.html", {"request": request, "members": members})
 
 # 회원추가 폼
 @router.get("/member_form")
@@ -32,7 +32,7 @@ def member_form_add(request: Request, db: Session = Depends(get_db)):
     token = hash_password(hash_password("")) # 토큰값을 아무도 알수 없게 만듬
     request.session["token"] = token   
     
-    return templates.TemplateResponse("admin/member_form.html", {"request": request, "member": None, "token": token })
+    return templates.TemplateResponse("member_form.html", {"request": request, "member": None, "token": token })
 
 # 회원수정 폼
 @router.get("/member_form/{mb_id}")
@@ -52,7 +52,7 @@ def member_form_edit(mb_id: str, request: Request, db: Session = Depends(get_db)
     token = hash_password(mb_id)
     request.session["token"] = token
     
-    return templates.TemplateResponse("admin/member_form.html", {"request": request, "member": member, "token": token })
+    return templates.TemplateResponse("member_form.html", {"request": request, "member": member, "token": token })
 
 # DB등록 및 수정
 @router.post("/member_form_update")

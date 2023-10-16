@@ -10,9 +10,9 @@ from common import *
 
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
-# TODO: admin/base.html에서만 사용하는 함수이므로 이동이 필요함
+# TODO: base.html에서만 사용하는 함수이므로 이동이 필요함
 templates.env.globals["get_admin_menus"] = get_admin_menus
 # TODO: form에서 공용으로 사용하는 함수이므로 이동이 필요함
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
@@ -33,7 +33,7 @@ def faq_master_list(request: Request, db: Session = Depends(get_db)):
     faq_masters = db.query(model).order_by(model.fm_order).all()
 
     return templates.TemplateResponse(
-        "admin/faq_master_list.html", {"request": request, "faq_masters": faq_masters}
+        "faq_master_list.html", {"request": request, "faq_masters": faq_masters}
     )
 
 
@@ -43,7 +43,7 @@ def faq_master_add_form(request: Request):
     request.session["menu_key"] = FAQ_MENU_KEY
 
     return templates.TemplateResponse(
-        "admin/faq_master_form.html", {"request": request, "faq_master": None}
+        "faq_master_form.html", {"request": request, "faq_master": None}
     )
 
 
@@ -101,7 +101,7 @@ def faq_master_update_form(fm_id: int, request: Request, db: Session = Depends(g
     faq_master = db.query(models.FaqMaster).filter(models.FaqMaster.fm_id == fm_id).first()
 
     return templates.TemplateResponse(
-        "admin/faq_master_form.html", {"request": request, "faq_master": faq_master}
+        "faq_master_form.html", {"request": request, "faq_master": faq_master}
     )
 
 
@@ -190,7 +190,7 @@ def faq_list(fm_id: int, request: Request, db: Session = Depends(get_db)):
     faqs = sorted(faq_master.faqs, key=lambda x: x.fa_order)
 
     return templates.TemplateResponse(
-        "admin/faq_list.html", {"request": request, "faq_master": faq_master, "faqs": faqs}
+        "faq_list.html", {"request": request, "faq_master": faq_master, "faqs": faqs}
     )
 
 
@@ -202,7 +202,7 @@ def faq_add_form(fm_id: int, request: Request, db: Session = Depends(get_db)):
     faq_master = db.query(models.FaqMaster).filter(models.FaqMaster.fm_id == fm_id).first()
 
     return templates.TemplateResponse(
-        "admin/faq_form.html", {"request": request, "faq_master": faq_master, "faq": None}
+        "faq_form.html", {"request": request, "faq_master": faq_master, "faq": None}
     )
 
 
@@ -241,7 +241,7 @@ def faq_update_form(fa_id: int, request: Request, db: Session = Depends(get_db))
     faq_master = faq.faq_master
 
     return templates.TemplateResponse(
-        "admin/faq_form.html", {"request": request, "faq_master": faq_master, "faq": faq}
+        "faq_form.html", {"request": request, "faq_master": faq_master, "faq": faq}
     )
 
 

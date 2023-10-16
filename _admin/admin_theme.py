@@ -15,7 +15,7 @@ from pathlib import Path
 THEME_DIR = TEMPLATES  # Replace with actual theme directory
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 
 def get_theme_dir():
     result_array = []
@@ -136,8 +136,8 @@ async def theme(request: Request, db: Session = Depends(get_db)):
     total_count = len(themes)    
     
     # 설정된 테마가 존재하지 않는다면 cf_theme 초기화
-    if config and config.cf_theme and config.cf_theme not in theme:
-        config.cf_theme = ""
+    if config and config.cf_theme and config.cf_theme not in themes:
+        config.cf_theme = "basic"
         db.commit()
     
     context = {
@@ -146,4 +146,4 @@ async def theme(request: Request, db: Session = Depends(get_db)):
         "themes": themes,
         "total_count": total_count
     }    
-    return templates.TemplateResponse("admin/theme.html", context)
+    return templates.TemplateResponse("theme.html", context)

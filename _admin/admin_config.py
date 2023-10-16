@@ -17,7 +17,7 @@ from dataclassform import ConfigForm
 # from pydanticmodel import ConfigForm
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.globals['getattr'] = getattr
 templates.env.globals['get_member_id_select'] = get_member_id_select
@@ -42,7 +42,7 @@ def config_form(request: Request, db: Session = Depends(get_db)):
     host_ip = socket.gethostbyname(host_name)
     
     config = db.query(models.Config).first()
-    return templates.TemplateResponse("admin/config_form.html", 
+    return templates.TemplateResponse("config_form.html", 
         {
             "request": request, 
             "config": config, 
