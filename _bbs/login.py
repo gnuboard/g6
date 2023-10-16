@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Form
+from fastapi import APIRouter, Form, Depends
 from fastapi.responses import RedirectResponse
+from sqlalchemy.orm import Session
 
 from common import *
 from database import get_db
@@ -10,18 +11,19 @@ router = APIRouter()
 
 @router.get("/login")
 def login_form(request: Request):
-    '''
+    """
     로그인 폼을 보여준다.
-    '''
-    return templates.TemplateResponse("bbs/login_form.html", {"request": request})    
+    """
+    return templates.TemplateResponse("bbs/login_form.html", {"request": request})
 
 
 @router.post("/login")
-def check_login(request: Request, db: Session = Depends(get_db), mb_id: str = Form(...), mb_password: str = Form(...)):
-    '''
+def login(request: Request, db: Session = Depends(get_db), mb_id: str = Form(...), mb_password: str = Form(...)):
+    """
     로그인 정보를 확인한다.
-    '''
+    """
     errors = []
+
     member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
     if not member:
         errors.append("아이디 또는 패스워드가 일치하지 않습니다.")
@@ -69,10 +71,10 @@ def check_login(request: Request, db: Session = Depends(get_db), mb_id: str = Fo
 
 @router.get("/logout")
 def logout(request: Request):
-    '''
+    """
     로그아웃 처리
-    '''
+    """
     # 세션을 초기화한다.
-    request.session.clear()    
+    request.session.pop('ss_mb_id')
+    request.session.pop('ss_mb_key')
     return RedirectResponse(url="/", status_code=302)
-    
