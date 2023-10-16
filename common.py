@@ -1,5 +1,7 @@
 import hashlib
 import os
+import re
+
 import PIL
 from fastapi import Request
 from passlib.context import CryptContext
@@ -7,7 +9,7 @@ from sqlalchemy import Index
 import models
 from models import WriteBaseModel
 from database import SessionLocal, engine
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 from PIL import Image
 
@@ -259,6 +261,7 @@ def subject_sort_link(request: Request, col, query_string='', flag='asc'):
     # URL을 반환합니다.
     return f'<a href="?{qstr}">'
 
+
 # 함수 테스트
 # print(subject_sort_link('title', query_string='type=list', flag='asc', sst='title', sod='asc', sfl='category', stx='example', page=2))
 
@@ -348,6 +351,54 @@ def validate_one_time_token(token, action: str = 'create'):
         return True
     return False
 
+
+def is_admin(request: Request):
+    """관리자 여부 확인
+    """
+    config = get_config()
+    if config.cf_admin.strip() == "":
+        return False
+
+    if mb_id := request.session.get("ss_mb_id", ""):
+        if mb_id.strip() == config.cf_admin.strip():
+            return True
+
+    return False
+
+
+def check_profile_open(open_date, config) -> bool:
+    """변경일이 지나서 프로필 공개가능 여부를 반환
+    Args:
+        open_date (datetime): 프로필 공개일
+        config (models.Config): config 모델
+    Returns:
+        bool: 프로필 공개 가능 여부
+    """
+    if not open_date:
+        return True
+
+    else:
+        return open_date < (datetime.now() - timedelta(days=config.cf_open_modify))
+
+
+def get_next_profile_openable_date(open_date: datetime, config):
+    """다음 프로필 공개 가능일을 반환
+    Args:
+        open_date (datetime): 프로필 공개일
+        config (models.Config): config 모델
+    Returns:
+        datetime: 다음 프로필 공개 가능일
+    """
+    cf_open_modify = config.cf_open_modify
+
+    if open_date:
+        calculated_date = datetime.strptime(open_date, "%Y-%m-%d") + timedelta(days=cf_open_modify)
+    else:
+        calculated_date = datetime.now() + timedelta(days=cf_open_modify)
+
+    return calculated_date
+
+
 def get_config():
     """그누보드 config 를 반환.
     """
@@ -360,3 +411,14 @@ def get_config():
     kv_cache.__setitem__('gnu_config', config)
 
     return config
+
+
+def valid_email(email: str):
+    # Define a basic email address regex pattern
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+
+    # Use the regex pattern to match the email address
+    if re.match(pattern, email):
+        return True
+
+    return False

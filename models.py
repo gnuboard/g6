@@ -211,7 +211,7 @@ class Member(Base):
     mb_intercept_date = Column(String(8), nullable=False, default='')
     mb_email_certify = Column(DateTime, nullable=False, default='')
     mb_email_certify2 = Column(String(255), nullable=False, default='')
-    mb_memo = Column(Text, nullable=False, default='')
+    mb_memo = Column(Text, nullable=False, default='',server_default=text(""))
     mb_lost_certify = Column(String(255), nullable=False, default='')
     mb_mailling = Column(Integer, nullable=False, default=0, server_default=text('0'))
     mb_sms = Column(Integer, nullable=False, default=0, server_default=text('0'))

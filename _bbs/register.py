@@ -1,50 +1,19 @@
-from dataclasses import dataclass
+import shutil
+from io import BytesIO
+from typing import Optional
 
-from fastapi import APIRouter, Form
+from fastapi import APIRouter, Form, File, UploadFile
 from fastapi.responses import RedirectResponse, Response
 
+from _member.member_profile import validate_nickname, validate_userid
 from common import *
 from database import get_db
-from main import templates
+from dataclassform import MemberForm
+from main import templates, app
+from models import Member
 
 router = APIRouter(prefix="/bbs")
 
-
-@dataclass
-class MemberForm(models.Member):
-    mb_id: str = Form(None)
-    mb_name: str = Form(...)
-    mb_nick: str = Form(None)
-    mb_email: str = Form(None)
-    mb_birth: datetime = Form(None)
-    mb_addr1: str = Form(None)
-    mb_addr2: str = Form(None)
-    mb_addr3: str = Form(None)
-    mb_addr_jibeon: str = Form(None)
-    mb_zip1: str = Form(None)
-    mb_zip2: str = Form(None)
-    mb_signature: str = Form(None)
-    mb_profile: str = Form(None)
-    mb_open: bool = Form(None)
-    mb_sms: bool = Form(None)
-    mb_mailling: bool = Form(None)
-    mb_memo = Form(None)
-    mb_hp: str = Form(None)
-    mb_tel: str = Form(None)
-    mb_homepage: str = Form(None)
-    mb_sex: str = Form(None)
-    mb_dupinfo: str = Form(None)
-    mb_recommend: str = Form(None)
-    mb_1: str = Form(None)
-    mb_2: str = Form(None)
-    mb_3: str = Form(None)
-    mb_4: str = Form(None)
-    mb_5: str = Form(None)
-    mb_6: str = Form(None)
-    mb_7: str = Form(None)
-    mb_8: str = Form(None)
-    mb_9: str = Form(None)
-    mb_10: str = Form(None)
 
 @router.get("/register")
 def get_register(request: Request, response: Response, db: Session = Depends(get_db)):
@@ -85,21 +54,37 @@ def get_register_form(request: Request):
     if not agree2:
         return RedirectResponse(url="/bbs/register", status_code=302)
 
+    member = models.Member()
+    member.mb_level = 1
+
     form_context = {
-        "action_url": router.url_path_for("register_form_save")
+        "action_url": app.url_path_for("register_form_save"),
+        "agree": agree,
+        "agree2": agree2,
     }
+
     return templates.TemplateResponse(
         "member/register_form.html",
-        {"request": request, "member": None, "form": form_context}
+        context={
+            "is_register": True,
+            "request": request,
+            "member": member,
+            "form": form_context,
+            "errors": '',
+            "config": get_config(),
+        }
     )
 
 
 @router.post("/register_form", name='register_form_save')
-def post_register_form(request: Request, db: Session = Depends(get_db),
-                       member_form: MemberForm = Depends(MemberForm),
-                       mb_password: str = Form(None),
-                       mb_password_re: str = Form(None),
-                       ):
+async def post_register_form(request: Request, db: Session = Depends(get_db),
+                             mb_id: str = Form(None),
+                             mb_password: str = Form(None),
+                             mb_password_re: str = Form(None),
+                             mb_image: Optional[UploadFile] = File(None),
+                             mb_icon: Optional[UploadFile] = File(None),
+                             member_form: MemberForm = Depends(),
+                             ):
     # 약관 동의 체크
     agree = request.session.get("ss_agree", "")
     agree2 = request.session.get("ss_agree", "")
@@ -110,23 +95,65 @@ def post_register_form(request: Request, db: Session = Depends(get_db),
 
     # 유효성 검사
     errors = []
-    member = db.query(models.Member.mb_id).filter(models.Member.mb_id == member_form.mb_id).first()
+    member = db.query(Member.mb_id, Member.mb_email).filter(Member.mb_id == mb_id).first()
     config = get_config()
 
     if member:
         errors.append("이미 존재하는 회원아이디 입니다.")
-    if member_form.mb_password != mb_password_re:
+
+    if not (mb_password and mb_password_re):
+        errors.append("비밀번호를 입력해 주세요.")
+
+    elif mb_password != mb_password_re:
         errors.append("비밀번호와 비밀번호 확인이 일치하지 않습니다.")
+
     if not member_form.mb_name:
         errors.append("이름을 입력해 주세요.")
     if not member_form.mb_nick:
         errors.append("닉네임을 입력해 주세요.")
-    if not member_form.mb_email:
-        errors.append("이메일을 입력해 주세요.")
-    else:
-        exists_email = db.query(models.Member).filter(models.Member.mb_email == member_form.mb_email).first()
-        if exists_email:
-            errors.append("이미 존재하는 이메일 입니다.")
+
+    if config.cf_use_email_certify:
+        if not member_form.mb_email:
+            errors.append("이메일을 입력해 주세요.")
+
+        elif not valid_email(member_form.mb_email):
+            errors.append("이메일 양식이 올바르지 않습니다.")
+
+        else:
+            exists_email = db.query(Member.mb_email).filter(Member.mb_email == member_form.mb_email).first()
+            if exists_email:
+                errors.append("이미 존재하는 이메일 입니다.")
+
+    result = validate_nickname(member_form.mb_nick)
+    if result is not True:
+        errors.append(result)
+
+    result = validate_userid(mb_id)
+    if result is not True:
+        errors.append(result)
+
+    if mb_image and mb_image.filename:
+        if not re.match(r".*\.(jpg|jpeg|png|gif)$", mb_image.filename, re.IGNORECASE):
+            errors.append("이미지 파일만 업로드 가능합니다.")
+
+    if mb_icon and mb_icon.filename:
+        mb_icon_byte = await mb_icon.read()
+        mb_icon_info = Image.open(BytesIO(mb_icon_byte))
+        width, height = mb_icon_info.size
+
+        if 0 < config.cf_member_icon_size < mb_icon.size:
+            errors.append(f"아이콘 용량은 {config.cf_member_icon_size} 이하로 업로드 해주세요.")
+
+        if config.cf_member_icon_width and config.cf_member_icon_height:
+            if width > config.cf_member_icon_width or height > config.cf_member_icon_height:
+                errors.append(f"아이콘 크기는 {config.cf_member_icon_width}x{config.cf_member_icon_height} 이하로 업로드 해주세요.")
+
+        if not re.match(r".*\.(gif)$", mb_icon.filename, re.IGNORECASE):
+            errors.append("git 파일만 업로드 가능합니다.")
+
+    valid_sex_values = {"m", "f"}
+    if not member_form.mb_sex in valid_sex_values:
+        member_form.mb_sex = ""
 
     form_context = {
         "agree": agree,
@@ -136,23 +163,41 @@ def post_register_form(request: Request, db: Session = Depends(get_db),
 
     if errors:
         return templates.TemplateResponse("member/register_form.html",
-                                          {"request": request, "form": form_context, "errors": errors})
+                                          context={
+                                              "request": request,
+                                              "member": models.Member(mb_id=mb_id, mb_level=1, **member_form.__dict__),
+                                              "is_register": True,
+                                              "config": get_config(),
+                                              "form": form_context, "errors": errors
+                                          })
+    # 유효성 검증 통과
 
-    # if member: 
-    #     raise HTTPException(status_code=404, detail="{mb_id} is already exists.")
+    if mb_image and mb_image.filename:
+        path = f"data/member_image/{mb_id[:2]}"
+        if not os.path.exists(path):
+            os.mkdir(path)
+        with open(f"{path}.gif", "wb") as buffer:
+            shutil.copyfileobj(mb_image.file, buffer)
+
+    if mb_icon and mb_icon.filename:
+        path = f"data/member/{mb_id[:2]}"
+        if not os.path.exists(path):
+            os.mkdir(path)
+        with open(f"{path}.gif", "wb") as buffer:
+            shutil.copyfileobj(mb_icon.file, buffer)
 
     member = models.Member(
+        mb_id=mb_id,
+        mb_datetime=datetime.now(),
+        mb_email_certify=datetime.now(),
         mb_password=hash_password(mb_password),
-        mb_nick_date=datetime.now(),
         mb_level=config.cf_register_level,
         mb_login_ip=request.client.host,
-        mb_datetime=datetime.now(),
-        mb_today_login=datetime.now(),
-        mb_email_certify=datetime.now(),
-        mb_memo="",
         mb_lost_certify="",
+        mb_nick_date=datetime.now(),
         mb_open_date=datetime.now(),
         mb_point=config.cf_register_point,
+        mb_today_login=datetime.now(),
         **member_form.__dict__
     )
     db.add(member)
@@ -167,14 +212,15 @@ def post_register_form(request: Request, db: Session = Depends(get_db),
 
 @router.get("/register_result")
 def register_result(request: Request, db: Session = Depends(get_db)):
-    mb_id = request.session.get("ss_mb_reg", "")
+    register_mb_id = request.session.get("ss_mb_reg", "")
     if "ss_mb_reg" in request.session:
         request.session.pop("ss_mb_reg")
 
-    if not mb_id:
+    # 회원가입이 아닐때.
+    if not register_mb_id:
         return RedirectResponse(url="/bbs/register", status_code=302)
 
-    member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
+    member = db.query(models.Member).filter(models.Member.mb_id == register_mb_id).first()
     if not member:
         # 가입실패
         return RedirectResponse(url="/bbs/register", status_code=302)
