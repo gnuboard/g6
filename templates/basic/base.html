@@ -228,9 +228,9 @@ $(function() {
 
     <div id="ft_wr">
         <div id="ft_link" class="ft_cnt">
-            <a href="/bbs/content?co_id=company">회사소개</a>
-            <a href="/bbs/content?co_id=privacy">개인정보처리방침</a>
-            <a href="/bbs/content?co_id=provision">서비스이용약관</a>
+            <a href="{{ url_for('content_view', co_id='company') }}">회사소개</a>
+            <a href="{{ url_for('content_view', co_id='privacy') }}">개인정보처리방침</a>
+            <a href="{{ url_for('content_view', co_id='provision') }}">서비스이용약관</a>
             <a href="/?device=mobile">모바일버전</a>
         </div>
         <div id="ft_company" class="ft_cnt">
