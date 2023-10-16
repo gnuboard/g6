@@ -76,27 +76,29 @@
 
         <section id="bo_v_atc">
             <h2 id="bo_v_atc_title">본문</h2>
-            {# TODO: 이미지 처리 필요 #}
             <div id="bo_v_img">
-                <a href="" target="_blank" class="view_image">
-                    <img src="http://127.0.0.1/g5-update/data/qa/7b018c827432d9b37a214761cfb43782_voINFiPa_9db51211e2ed207fa569cdbbf2ced47a53686708.gif" width="58">
-                </a>
+                {% for image in qa.image %}
+                    <a href="javascrip:;" target="_blank" class="view_image">
+                        <img src="/{{ image }}">
+                    </a>
+                {% endfor %}
             </div>
             <!-- 본문 내용 시작 { -->
             <div id="bo_v_con">{{ qa.qa_content|safe }}</div>
             <!-- } 본문 내용 끝 -->
             
             <!-- 첨부파일 시작 { -->
-            {# TODO: 첨부파일 처리 필요 #}
             <section id="bo_v_file">
                 <h2>첨부파일</h2>
                 <ul>
-                    <li>
-                        <i class="fa fa-download" aria-hidden="true"></i>
-                        <a href="http://127.0.0.1/g5-update/bbs/qadownload.php?qa_id=11&amp;no=2" class="view_file_download" download="">
-                            <strong>test_mp3.mp3</strong>
-                        </a>
-                    </li>
+                    {% for file in qa.file %}
+                        <li>
+                            <i class="fa fa-download" aria-hidden="true"></i>
+                            <a href="/{{ file.path }}" class="view_file_download" download="{{ file.name }}">
+                                <strong>{{ file.name }}</strong>
+                            </a>
+                        </li>
+                    {% endfor %}
                 </ul>
             </section>
             <!-- } 첨부파일 끝 -->
@@ -143,23 +145,25 @@
                 </header>
 
                 <div id="ans_con">
-                    {# TODO: 이미지 처리 필요 #}
                     <div id="bo_v_img">
-                        <a href="http://127.0.0.1/g5-update/bbs/view_image.php?fn=%2Fdata%2Fqa%2F7b018c827432d9b37a214761cfb43782_VEDfhxSv_284eac5e5b56bc442a6a60551480fc65a8a3f048.gif" target="_blank" class="view_image"><img src="http://127.0.0.1/g5-update/data/qa/7b018c827432d9b37a214761cfb43782_VEDfhxSv_284eac5e5b56bc442a6a60551480fc65a8a3f048.gif" title=""></a>
+                        {% for image in answer.image %}
+                            <a href="javascrip:;" target="_blank" class="view_image">
+                                <img src="/{{ image }}">
+                            </a>
+                        {% endfor %}
                     </div>
                     {{ answer.qa_content|safe }}
                     <!-- 첨부파일 시작 { -->
-                    {# TODO: 첨부파일 처리 필요 #}
                     <section id="bo_v_file">
                         <h2>첨부파일</h2>
-                        <ul>
+                        {% for file in answer.file %}
                             <li>
                                 <i class="fa fa-download" aria-hidden="true"></i>
-                                <a href="http://127.0.0.1/g5-update/bbs/qadownload.php?qa_id=12&amp;no=2" class="view_file_download" download="">
-                                    <strong>test_mp3.mp3</strong>
+                                <a href="/{{ file.path }}" class="view_file_download" download="{{ file.name }}">
+                                    <strong>{{ file.name }}</strong>
                                 </a>
                             </li>
-                        </ul>
+                        {% endfor %}
                     </section>
                     <!-- } 첨부파일 끝 -->
                 </div>
@@ -169,7 +173,163 @@
                 <a href="{{ url_for('qa_write') }}?qa_related={{ qa.qa_id }}" class="add_qa" title="추가질문">추가질문</a>  
             </div>
         {% else %}
+            <section id="bo_v_ans_form">
+                <h2>답변등록</h2>
+        
+                <form name="fanswer" method="post" action="{{ url_for('qa_update') }}" onsubmit="return fwrite_submit(this);" enctype="multipart/form-data" autocomplete="off">
+                    <input type="hidden" name="qa_parent" value="{{ qa.qa_id }}">
+                    <input type="hidden" name="sca" value="">
+                    <input type="hidden" name="stx" value="">
+                    <input type="hidden" name="page" value="">
+                    <input type="hidden" name="token" value="{{ generate_one_time_token('create') }}">
+                    <input type="hidden" name="qa_html" value="1">
+                    <input type="hidden" name="qa_category" value="{{ qa.qa_category }}">
 
+                    <div class="form_01">
+                        <ul>
+                            <li>
+                                <label for="qa_subject" class="sound_only">제목</label>
+                                <input type="text" name="qa_subject" value="" id="qa_subject" required="" class="frm_input required full_input" size="50" maxlength="255" placeholder="제목">
+                            </li>
+                            <li class="qa_content_wrap smarteditor2">
+                                <label for="qa_content" class="sound_only">내용<strong>필수</strong></label>
+                                <textarea id="qa_content" name="qa_content" class="smarteditor2" maxlength="65536" style="width: 100%; height: 300px;"></textarea>
+                            </li>
+                            <li class="bo_w_flie">
+                                <div class="file_wr">
+                                    <label for="qa_file_1" class="lb_icon"><i class="fa fa-download" aria-hidden="true"></i><span class="sound_only"> 파일 #1</span></label>
+                                    <input type="file" name="file1" id="qa_file_1" title="파일첨부 1 :  용량 {{ qa_config.qa_upload_size }} 바이트 이하만 업로드 가능" class="frm_file">
+                                </div>
+                            </li>
+                            <li class="bo_w_flie">
+                                <div class="file_wr">
+                                    <label for="qa_file_2" class="lb_icon"><i class="fa fa-download" aria-hidden="true"></i><span class="sound_only"> 파일 #2</span></label>
+                                    <input type="file" name="file2" id="qa_file_2" title="파일첨부 2 :  용량 {{ qa_config.qa_upload_size }} 바이트 이하만 업로드 가능" class="frm_file">
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+        
+                    <div class="btn_confirm">
+                        <button type="submit" id="btn_submit" accesskey="s" class="btn_submit">답변등록</button>
+                    </div>
+                </form>
+        
+                <script>
+                    function html_auto_br(obj)
+                    {
+                        if (obj.checked) {
+                            result = confirm("자동 줄바꿈을 하시겠습니까?\n\n자동 줄바꿈은 게시물 내용중 줄바뀐 곳을<br>태그로 변환하는 기능입니다.");
+                            if (result)
+                                obj.value = "2";
+                            else
+                                obj.value = "1";
+                        }
+                        else
+                            obj.value = "";
+                    }
+            
+                    function fwrite_submit(f)
+                    {
+                        /*
+                        var qa_content_editor_data = oEditors.getById['qa_content'].getIR();
+                        oEditors.getById['qa_content'].exec('UPDATE_CONTENTS_FIELD', []);
+                        if(jQuery.inArray(document.getElementById('qa_content').value.toLowerCase().replace(/^\s*|\s*$/g, ''), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<div><br></div>','<p></p>','<br>','']) != -1){document.getElementById('qa_content').value='';}
+                        if (!qa_content_editor_data || jQuery.inArray(qa_content_editor_data.toLowerCase(), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<p></p>','<br>']) != -1) { alert("내용을 입력해 주십시오."); oEditors.getById['qa_content'].exec('FOCUS'); return false; }
+                
+                        var subject = "";
+                        var content = "";
+                        $.ajax({
+                            url: g5_bbs_url+"/ajax.filter.php",
+                            type: "POST",
+                            data: {
+                                "subject": f.qa_subject.value,
+                                "content": f.qa_content.value
+                            },
+                            dataType: "json",
+                            async: false,
+                            cache: false,
+                            success: function(data, textStatus) {
+                                subject = data.subject;
+                                content = data.content;
+                            }
+                        });
+                
+                        if (subject) {
+                            alert("제목에 금지단어('"+subject+"')가 포함되어있습니다");
+                            f.qa_subject.focus();
+                            return false;
+                        }
+                
+                        if (content) {
+                            alert("내용에 금지단어('"+content+"')가 포함되어있습니다");
+                            if (typeof(ed_qa_content) != "undefined")
+                                ed_qa_content.returnFalse();
+                            else
+                                f.qa_content.focus();
+                            return false;
+                        }
+                
+                        $.ajax({
+                            type: "POST",
+                            url: g5_bbs_url+"/ajax.write.token.php",
+                            data: { 'token_case' : 'qa_write' },
+                            cache: false,
+                            async: false,
+                            dataType: "json",
+                            success: function(data) {
+                                if (typeof data.token !== "undefined") {
+                                    token = data.token;
+                                    if(typeof f.token === "undefined")
+                                        $(f).prepend('<input type="hidden" name="token" value="">');
+                                    $(f).find("input[name=token]").val(token);
+                                }
+                            }
+                        });*/
+                
+                        document.getElementById("btn_submit").disabled = "disabled";
+                
+                        return true;
+                    }
+                </script>
+            </section>
+        {% endif %}
+        
+        {% if related_list %}
+            <section id="bo_v_rel">
+                <h2>연관질문</h2>
+                <div class="tbl_head01 tbl_wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th scope="col">제목</th>
+                            <th scope="col">등록일</th>
+                            <th scope="col">상태</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            {% for related in related_list %}
+                                <tr>
+                                    <td>
+                                        <span class="bo_cate_link">{{ related.qa_category }}</span>
+                                        <a href="{{ url_for('qa_view', qa_id=related.qa_id) }}?{{ generate_query_string(request) }}" class="bo_tit">
+                                            {{ related.qa_subject }}
+                                        </a>
+                                    </td>
+                                    <td class="td_date">{{ related.qa_datetime }}</td>
+                                    <td class="td_stat">
+                                        {% if related.qa_status %}
+                                            <span class="txt_done">답변완료</span>
+                                        {% else %}
+                                            <span class="txt_rdy">답변대기</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         {% endif %}
     </article>
     <!-- } 게시판 읽기 끝 -->

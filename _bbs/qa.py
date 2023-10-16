@@ -34,8 +34,6 @@ class QaContentDataclass:
     qa_html: int = Form(None)
     qa_subject: str = Form(...)
     qa_content: str = Form(...)
-    qa_file1: UploadFile = File(None),
-    qa_file2: UploadFile = File(None),
 
 
 @router.get("/list")
@@ -94,7 +92,8 @@ def qa_list(request: Request,
 
 @router.get("/write")
 def qa_write(request: Request,
-             db: Session = Depends(get_db)):
+             db: Session = Depends(get_db),
+             qa_related: int = None):
     '''
     Q&A 작성하기
     '''
@@ -102,12 +101,20 @@ def qa_write(request: Request,
     qa_config = db.query(models.QaConfig).order_by(models.QaConfig.id.asc()).first()
     if not qa_config:
         raise HTTPException(status_code=404, detail=f"Q&A Config is not found.")
+    
+    # 추가질문 작성 시, 원본질문 조회
+    related = None
+    if qa_related:
+        related = db.query(models.QaContent).filter(models.QaContent.qa_id == qa_related).first()
+        if not related:
+            raise HTTPException(status_code=404, detail=f"{qa_related} is not found.")
 
     context = {
         "request": request,
         "qa_config": qa_config,
         "categories": qa_config.qa_category.split("|"),
         "qa": None,
+        "related": related,
     }
 
     return templates.TemplateResponse(f"qa/pc/qa_form.html", context)
@@ -144,10 +151,13 @@ def qa_edit(qa_id: int,
 @router.post("/update")
 def qa_update(request: Request,
                 token: str = Form(...),
-                qa_id: str = Form(None),
                 db: Session = Depends(get_db),
                 form_data: QaContentDataclass = Depends(),
+                qa_id: int = Form(None),
+                qa_parent: str = Form(None),
                 qa_related: int = Form(None),
+                file1: UploadFile = File(None),
+                file2: UploadFile = File(None),
                 qa_file_del1: int = Form(None),
                 qa_file_del2: int = Form(None),
                 ):
@@ -167,7 +177,8 @@ def qa_update(request: Request,
 
     if validate_one_time_token(token, 'create'): # 토큰에 등록돤 action이 create라면 신규 등록
         form_data.qa_related = qa_related
-        form_data.qa_type =  1 if qa_id else 0
+        form_data.qa_type = 1 if qa_parent else 0
+        form_data.qa_parent = qa_parent if qa_parent else 0
         form_data.mb_id = ''
         form_data.qa_name = ''
         form_data.qa_datetime = datetime.now()
@@ -175,6 +186,12 @@ def qa_update(request: Request,
 
         qa = models.QaContent(**form_data.__dict__)
         db.add(qa)
+
+        # 답변글이면 원본글의 답변여부를 1로 변경
+        if qa_parent:
+            parent = db.query(models.QaContent).filter(models.QaContent.qa_id == qa_parent).first()
+            parent.qa_status = 1
+
         db.commit()
 
     elif validate_one_time_token(token, 'update'):  # 토큰에 등록된 action이 create가 아니라면 수정
@@ -194,23 +211,26 @@ def qa_update(request: Request,
     delete_image(FILE_DIRECTORY, f"{qa.qa_source1}", qa_file_del1)
     delete_image(FILE_DIRECTORY, f"{qa.qa_source2}", qa_file_del2)
     # 파일 및 데이터 저장
-    if form_data.qa_file1.size > 0:
-        filename1 = os.urandom(16).hex() + "." + form_data.qa_file1.filename.split(".")[-1]
+    if file1.size > 0:
+        filename1 = os.urandom(16).hex() + "." + file1.filename.split(".")[-1]
         qa.qa_file1 = FILE_DIRECTORY + filename1
-        qa.qa_source1 = form_data.qa_file1.filename
-        save_image(FILE_DIRECTORY, f"{filename1}", form_data.qa_file1)
-    else: 
+        qa.qa_source1 = file1.filename
+        save_image(FILE_DIRECTORY, f"{filename1}", file1)
+    elif not qa.qa_source1:
         qa.qa_file1 = None
-    if form_data.qa_file2.size > 0:
-        filename2 = os.urandom(16).hex() + "." + form_data.qa_file2.filename.split(".")[-1]
+    if file2.size > 0:
+        filename2 = os.urandom(16).hex() + "." + file2.filename.split(".")[-1]
         qa.qa_file2 = FILE_DIRECTORY + filename2
-        qa.qa_source2 = form_data.qa_file2.filename
-        save_image(FILE_DIRECTORY, f"{filename2}", form_data.qa_file2)
-    else: 
+        qa.qa_source2 = file2.filename
+        save_image(FILE_DIRECTORY, f"{filename2}", file2)
+    elif not qa.qa_source2: 
         qa.qa_file2 = None
     db.commit()
 
-    return RedirectResponse(url=f"/qa/{qa.qa_id}", status_code=302)
+    if qa.qa_type == 1:
+        return RedirectResponse(url=f"/qa/{qa.qa_parent}", status_code=302)
+    else:
+        return RedirectResponse(url=f"/qa/{qa.qa_id}", status_code=302)
 
 
 @router.get("/delete/{qa_id}")
@@ -272,9 +292,16 @@ def qa_view(qa_id: int,
     
     # Q&A 조회
     qa = db.query(model).filter(model.qa_id == qa_id).first()
+    # Q&A 파일목록 설정
+    qa = set_file_list(request, qa)
 
     # Q&A 답변글 조회
     answer = db.query(model).filter(model.qa_type == 1, model.qa_parent == qa_id).first()
+    # Q&A 답변글 파일목록 설정
+    answer = set_file_list(request, answer)
+
+    # 연관질문 목록 조회
+    related_list = db.query(model).filter(model.qa_type == 0, model.qa_related == qa_id).all()
 
     # 이전글, 다음글
     sca = request.state.sca if request.state.sca is not None else ""
@@ -303,8 +330,40 @@ def qa_view(qa_id: int,
         "qa_config": qa_config,
         "qa": qa,
         "answer": answer,
+        "related_list": related_list,
         "prev": prev,
         "next": next
     }
 
     return templates.TemplateResponse(f"qa/pc/qa_view.html", context)
+
+
+def set_file_list(request: Request, qa: models.QaContent = None):
+    """이미지 파일과 첨부파일 목록을 설정
+
+    Args:
+        request (Request): Request 객체
+        qa (models.QaContent, optional): Q&A 객체. Defaults to None.
+
+    Returns:
+        models.QaContent: 이미지/첨부파일 목록이 설정된 Q&A 객체
+    """
+    config = request.state.config
+    if qa:
+        qa.image = []
+        qa.file = []
+
+        if qa.qa_source1:
+            ext1 = qa.qa_source1.split('.')[-1]
+            if ext1 in config.cf_image_extension:
+                qa.image.append(qa.qa_file1)
+            else:
+                qa.file.append({"name": qa.qa_source1, "path": qa.qa_file1})
+        if qa.qa_source2:
+            ext2 = qa.qa_source2.split('.')[-1]
+            if ext2 in config.cf_image_extension:
+                qa.image.append(qa.qa_file2)
+            else:
+                qa.file.append({"name": qa.qa_source2, "path": qa.qa_file2})
+
+    return qa

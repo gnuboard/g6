@@ -18,7 +18,7 @@
             <input type="hidden" name="stx" value="">
             <input type="hidden" name="page" value="">
             <input type="hidden" name="qa_id" value="{{ qa.qa_id }}">
-            <input type="hidden" name="qa_related" value="{{ request.query_params.get('qa_related') }}">
+            <input type="hidden" name="qa_related" value={{ request.query_params.get('qa_related', '') }}>
             <input type="hidden" name="qa_html" value="1">
             <div class="form_01">
                 <ul>
@@ -49,7 +49,12 @@
                     </li>
                     <li class="qa_content_wrap smarteditor2">
                         <label for="qa_content" class="sound_only">내용<strong class="sound_only">필수</strong></label>
-                        <textarea id="qa_content" name="qa_content" class="smarteditor2" maxlength="65536" style="width: 100%; height: 300px;">{{ qa.qa_content }}</textarea>
+                        <textarea id="qa_content" name="qa_content" class="smarteditor2" maxlength="65536" style="width: 100%; height: 300px;">{{ qa.qa_content }}
+                            {% if related %}
+                                ====== 이전 답변내용 =======
+                                {{ related.qa_content|safe }}
+                            {% endif %}
+                        </textarea>
                     </li>
                     <li class="bo_w_flie">
                         <div class="file_wr">
@@ -57,7 +62,7 @@
                                 <i class="fa fa-download" aria-hidden="true"></i>
                                 <span class="sound_only"> 파일 #1</span>
                             </label>
-                            <input type="file" name="qa_file1" id="qa_file_1" title="파일첨부 1 :  용량 {{ qa_config.qa_upload_size }} 바이트 이하만 업로드 가능" class="frm_file">
+                            <input type="file" name="file1" id="qa_file_1" title="파일첨부 1 :  용량 {{ qa_config.qa_upload_size }} 바이트 이하만 업로드 가능" class="frm_file">
                             {% if qa.qa_file1 %}
                                 <input type="checkbox" id="qa_file_del1" name="qa_file_del1" value="1">
                                 <label for="qa_file_del1">{{ qa.qa_source1 }} 파일 삭제</label>
@@ -70,7 +75,7 @@
                                 <i class="fa fa-download" aria-hidden="true"></i>
                                 <span class="sound_only"> 파일 #2</span>
                             </label>
-                            <input type="file" name="qa_file2" id="qa_file_2" title="파일첨부 2 :  용량 {{ qa_config.qa_upload_size }} 바이트 이하만 업로드 가능" class="frm_file">
+                            <input type="file" name="file2" id="qa_file_2" title="파일첨부 2 :  용량 {{ qa_config.qa_upload_size }} 바이트 이하만 업로드 가능" class="frm_file">
                             {% if qa.qa_file2 %}
                                 <input type="checkbox" id="qa_file_del2" name="qa_file_del2" value="1">
                                 <label for="qa_file_del2">{{ qa.qa_source2 }} 파일 삭제</label>
