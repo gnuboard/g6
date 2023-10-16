@@ -10,14 +10,14 @@
 <div class="container_wr">
     <div class="local_ov01 local_ov">
         <a href="/admin/board_list" class="ov_listall">전체목록</a>    
-        <span class="btn_ov01"><span class="ov_txt">생성된 게시판수</span><span class="ov_num"> {{ boards|length }}개</span></span>
+        <span class="btn_ov01"><span class="ov_txt">생성된 게시판수</span><span class="ov_num"> {{ total_records }}개</span></span>
     </div>
 
     <form name="fsearch" id="fsearch" class="local_sch01 local_sch" method="get">
     <label for="sfl" class="sound_only">검색대상</label>
     <select name="sfl" id="sfl">
-    <option value="bo_table" {{ get_selected('bo_table', request.state.sfl if request.state.sfl else '' )}}>TABLE</option>
     <option value="bo_subject" {{ get_selected('bo_subject', request.state.sfl if request.state.sfl else '' )}}>제목</option>
+    <option value="bo_table" {{ get_selected('bo_table', request.state.sfl if request.state.sfl else '' )}}>TABLE</option>
     <option value="gr_id" {{ get_selected('gr_id', request.state.sfl if request.state.sfl else '' )}}>그룹ID</option>
     </select>
     <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
@@ -157,7 +157,7 @@
     </div>
     </form>
 
-    {{ pagination|safe }}
+    {{ paging|safe }}
 
     <script>
     function fboardlist_submit(f) {
@@ -183,6 +183,5 @@
     });
     </script>
 </div>
-
 
 {% endblock %}

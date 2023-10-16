@@ -436,7 +436,7 @@ def generate_query_string(request: Request):
             'sfl': request.query_params.get("sfl"),
             'stx': request.query_params.get("stx"),
             'sca': request.query_params.get("sca"),
-            'page': request.query_params.get("page")
+            # 'page': request.query_params.get("page")
         }
     else:
         search_fields = {
@@ -445,7 +445,7 @@ def generate_query_string(request: Request):
             'sfl': request._form.get("sfl") if request._form else "",
             'stx': request._form.get("stx") if request._form else "",
             'sca': request._form.get("sca") if request._form else "",
-            'page': request._form.get("page") if request._form else ""
+            # 'page': request._form.get("page") if request._form else ""
         }    
         
     # None 값을 제거
@@ -463,4 +463,76 @@ def get_from_list(lst, index, default=0):
     except (TypeError, IndexError):
         return default
 
+
+# 그누보드5 get_paging() 함수와 다른점
+# 1. 인수에서 write_pages 삭제
+# 2. 인수에서 total_page 대신 total_records 를 사용함
+
+# current_page : 현재 페이지
+# total_records : 전체 레코드 수
+# url_prefix : 페이지 링크의 URL 접두사
+# add_url : 페이지 링크의 추가 URL
+def get_paging(request, current_page, total_records, url_prefix, add_url=""):
+    
+    config = request.state.config
+    try:
+        current_page = int(current_page)
+    except ValueError:
+        # current_page가 정수로 변환할 수 없는 경우 기본값으로 1을 사용하도록 설정
+        current_page = 1
+    total_records = int(total_records)
+
+    # 한 페이지당 라인수
+    page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
+    # 페이지 표시수
+    page_count = config.cf_mobile_pages if request.state.is_mobile and config.cf_mobile_pages else config.cf_write_pages
+    
+    # 올바른 total_pages 계산 (올림처리)
+    total_pages = (total_records + page_rows - 1) // page_rows
+    
+    # print(page_rows, page_count, total_pages)
+    
+    # 페이지 링크 목록 초기화
+    page_links = []
+    
+    start_page = ((current_page - 1) // page_count) * page_count + 1
+    end_page = start_page + page_count - 1
+
+    # # 중앙 페이지 계산
+    middle = page_count // 2
+    start_page = max(1, current_page - middle)
+    end_page = min(total_pages, start_page + page_count - 1)
+    
+    # 처음 페이지 링크 생성
+    if current_page > 1:
+        start_url = f"{url_prefix}1{add_url}"
+        page_links.append(f'<a href="{start_url}" class="pg_page pg_start" title="처음 페이지">처음</a>')
+
+    # 이전 페이지 구간 링크 생성
+    if start_page > 1:
+        prev_page = max(current_page - page_count, 1) 
+        prev_url = f"{url_prefix}{prev_page}{add_url}"
+        page_links.append(f'<a href="{prev_url}" class="pg_page pg_prev" title="이전 구간">이전</a>')
+
+    # 페이지 링크 생성
+    for page in range(start_page, end_page + 1):
+        page_url = f"{url_prefix}{page}{add_url}"
+        if page == current_page:
+            page_links.append(f'<a href="{page_url}"><strong class="pg_current" title="현재 {page} 페이지">{page}</strong></a>')
+        else:
+            page_links.append(f'<a href="{page_url}" class="pg_page" title="{page} 페이지">{page}</a>')
+
+    # 다음 페이지 구간 링크 생성
+    if total_pages > end_page:
+        next_page = min(current_page + page_count, total_pages)
+        next_url = f"{url_prefix}{next_page}{add_url}"
+        page_links.append(f'<a href="{next_url}" class="pg_page pg_next" title="다음 구간">다음</a>')
+    
+    # 마지막 페이지 링크 생성        
+    if current_page < total_pages:
+        end_url = f"{url_prefix}{total_pages}{add_url}"
+        page_links.append(f'<a href="{end_url}" class="pg_page pg_end" title="마지막 페이지">마지막</a>')
+
+    # 페이지 링크 목록을 문자열로 변환하여 반환
+    return '<nav class="pg_wrap"><span class="pg">' + ''.join(page_links) + '</span></nav>'
             

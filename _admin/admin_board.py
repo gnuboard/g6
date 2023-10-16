@@ -10,6 +10,7 @@ from common import *
 from typing import List, Optional
 from dataclassform import BoardForm
 
+
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 templates.env.globals['getattr'] = getattr
@@ -22,19 +23,21 @@ templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
+templates.env.globals["get_paging"] = get_paging
 
 @router.get("/board_list")
 def board_list(request: Request, db: Session = Depends(get_db),
-            sst: str = Query(None, alias="sst"), # sort field (정렬 필드)
-            sod: str = Query(None, alias="sod"), # search order (검색 오름, 내림차순)
-            sfl: str = Query(None, alias="sfl"), # search field (검색 필드)
-            stx: str = Query(None, alias="stx"), # search text (검색어)
-            page: int = Query(1, alias="page"), # 페이지
-            #    sod: Optional[str] = None, # search order (검색 오름, 내림차순)
-            #    sfl: Optional[str] = None, # search field (검색 필드) 
-            #    stx: Optional[str] = None, # search text (검색어)
-            #    page: Optional[str] = None, # 페이지
-               ):
+        sst: str = Query(default=""), # sort field (정렬 필드)
+        sod: str = Query(default=""), # search order (검색 오름, 내림차순)
+        sfl: str = Query(default=""), # search field (검색 필드)
+        stx: str = Query(default=""), # search text (검색어)
+        current_page: int = Query(default=1, alias="page"), # 페이지
+        # sst: str = Query(default="", alias="sst"), # sort field (정렬 필드)
+        # sod: str = Query(default="", alias="sod"), # search order (검색 오름, 내림차순)
+        # sfl: str = Query(default="", alias="sfl"), # search field (검색 필드)
+        # stx: str = Query(default="", alias="stx"), # search text (검색어)
+        # page: int = Query(default=1, alias="page"), # 페이지
+        ):
     '''
     게시판관리 목록
     '''
@@ -43,18 +46,17 @@ def board_list(request: Request, db: Session = Depends(get_db),
     # sfl = request.state.sfl
     # stx = request.state.stx
     # sca = request.state.sca
-    # page = request.state.page
+    # page = request.state.page if request.state.page else 1
+    # try:
+    #     page = int(page)
+    # except ValueError:
+    #     # "page" 값이 유효한 정수가 아닌 경우 기본값으로 1 사용
+    #     page = 1
     request.session["menu_key"] = "300100"
-
+    
     # 초기 쿼리 설정
     query = db.query(models.Board)
-    # 전체 레코드 개수 계산
-    total_records = query.count()
     records_per_page = request.state.config.cf_page_rows
-
-    # sst가 제공되면, 해당 열을 기준으로 필터링을 추가합니다.
-    # if sst:
-    #     query = query.filter(getattr(models.Board, sst))
 
     # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
     if sst is not None and sst != "":
@@ -66,70 +68,28 @@ def board_list(request: Request, db: Session = Depends(get_db),
     # sfl과 stx가 제공되면, 해당 열과 값으로 추가 필터링을 합니다.
     if sfl is not None and stx is not None:
         if hasattr(models.Board, sfl):  # sfl이 models.Board에 존재하는지 확인
-            query = query.filter(getattr(models.Board, sfl).like(f"%{stx}%"))
+            if sfl in ["gr_id", "bo_table"]:
+                query = query.filter(getattr(models.Board, sfl) == stx)
+            else:
+                query = query.filter(getattr(models.Board, sfl).like(f"%{stx}%"))
             
     # 페이지 번호에 따른 offset 계산
-    offset = (page - 1) * records_per_page
+    offset = (current_page - 1) * records_per_page
 
     # 최종 쿼리 결과를 가져옵니다.
     boards = query.offset(offset).limit(records_per_page).all()
-    # sod = "asc" if sod == "desc" else ""
+    # 전체 레코드 개수 계산
+    total_records = query.count()
     
-    # token = hash_password(hash_password("")) # 토큰값을 아무도 알수 없게 만듬
-    # request.session["token"] = token
-    
-    print(get_pagination(request, page, total_records, "/admin/board_list?page="))
+    query_string = generate_query_string(request)
     
     context = {
         "request": request,
         "boards": boards,
-        "pagination": get_pagination(request, page, total_records, "/admin/board_list?page="),
+        "total_records": total_records,
+        "paging": get_paging(request, current_page, total_records, f"/admin/board_list?{query_string}&page="),
     }
     return templates.TemplateResponse("admin/board_list.html", context)
-
-
-def get_pagination(request, current_page, total_records, url_prefix):
-    
-    config = request.state.config
-
-    # 한 페이지당 라인수
-    page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
-    # 페이지 표시수
-    page_count = config.cf_mobile_pages if request.state.is_mobile and config.cf_mobile_pages else config.cf_write_pages
-    
-    # 올바른 total_pages 계산
-    total_pages = math.ceil(total_records / page_rows)
-    
-    print(page_rows, page_count, total_pages)
-    
-    # 페이지 링크 목록 초기화
-    page_links = []
-
-    # 이전 페이지 링크 생성
-    if current_page > 1:
-        prev_url = f"{url_prefix}{current_page - 1}"
-        page_links.append(f'<a href="{prev_url}">이전</a>')
-
-    # 중앙 페이지 계산
-    middle = page_count // 2
-    start_page = max(1, current_page - middle)
-    end_page = min(total_pages, start_page + page_count - 1)
-
-    # 페이지 링크 생성
-    for page in range(start_page, end_page + 1):
-        page_url = f"{url_prefix}{page}"
-        if page == current_page:
-            page_links.append(f'<strong class="pg_current">{page}</strong>')
-        else:
-            page_links.append(f'<a href="{page_url}" class="pg_page">{page}</a>')
-
-    # 다음 페이지 링크 생성
-    if current_page < total_pages:
-        next_url = f"{url_prefix}{current_page + 1}"
-        page_links.append(f'<a href="{next_url}">다음</a>')
-
-    # 페이지 링크 목록을 문자열로 변환하여 반환
-    return '<nav class="pg_wrap">' + ''.join(page_links) + '</nav>'
 
 
 @router.post("/board_list_update")
