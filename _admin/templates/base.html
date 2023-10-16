@@ -185,17 +185,11 @@ var g5_admin_url = "/admin";
 
 
 <div id="wrapper">
-
     <div id="container" class="">
-
-        <h1 id="container_title">
-            {% block subtitle %}
-                관리자메인
-            {% endblock subtitle %}
-        </h1>
- 
-        {% block content %}{% endblock %}
-
+        <h1 id="container_title">{% block subtitle %}관리자메인{% endblock subtitle %}</h1>
+        <div class="container_wr">
+            {% block content %}{% endblock %}
+        </div>
         <footer id="ft">
             <p>
                 Copyright &copy; 49.247.41.166. All rights reserved. Version 5.5.8.3.4<br>
