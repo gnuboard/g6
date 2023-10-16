@@ -554,7 +554,7 @@ def extract_browser(user_agent):
 from ua_parser import user_agent_parser    
     
 
-# 방문 레코드 기록 로직을 처리하는 함수
+# 접속 레코드 기록 로직을 처리하는 함수
 def record_visit(request: Request):
     vi_ip = request.client.host
     
@@ -564,11 +564,11 @@ def record_visit(request: Request):
     # 세션 생성
     db = SessionLocal()
 
-    # 오늘의 방문이 이미 기록되어 있는지 확인
+    # 오늘의 접속이 이미 기록되어 있는지 확인
     existing_visit = db.query(Visit).filter(Visit.vi_date == date.today(), Visit.vi_ip == vi_ip).first()
 
     if not existing_visit:
-        # 새로운 방문 레코드 생성
+        # 새로운 접속 레코드 생성
         referer = request.headers.get("referer", "")
         user_agent = request.headers.get("User-Agent", "")
         ua = parse(user_agent)

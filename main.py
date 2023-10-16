@@ -142,13 +142,13 @@ async def main_common(request: Request, call_next):
                         
     response = await call_next(request)
 
-    # 방문객
+    # 접속자 기록
     vi_ip = request.client.host
     ck_visit_ip = request.cookies.get('ck_visit_ip', None)
     if ck_visit_ip != vi_ip:
-        # 방문을 추적하는 쿠키 설정 및 방문 레코드 기록
+        # 접속을 추적하는 쿠키 설정 및 접속 레코드 기록
         response.set_cookie('ck_visit_ip', vi_ip, max_age=86400)  # 쿠키를 하루 동안 유지
-        # 방문 레코드 기록
+        # 접속 레코드 기록
         record_visit(request)
         
     # print("After request")
