@@ -5,14 +5,13 @@
 {% endblock %}
 
 {% block content %}
-<form name="fboardform" id="fboardform" action="/admin/board_form_update" method="post" enctype="multipart/form-data" autocomplete="off">
-<input type="hidden" name="w" value="">
+<form method="post" name="fboardform" id="fboardform" action="/admin/board_form_update"  onsubmit="return fboardform_submit(this)" enctype="multipart/form-data" autocomplete="off">
 <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
 <input type="hidden" name="stx" value="{{ request.state.stx }}">
 <input type="hidden" name="sst" value="{{ request.state.sst }}">
 <input type="hidden" name="sod" value="{{ request.state.sod }}">
 <input type="hidden" name="page" value="{{ request.state.page }}">
-<input type="hidden" name="token" value="{{ generate_one_time_token('update' if board.bo_table else 'create') }}">
+<input type="hidden" name="token" value="{{ generate_one_time_token('update' if board.bo_table else 'insert') }}">
 
 <section id="anc_bo_basic">
     <h2 class="h2_frm">게시판 기본 설정</h2>
@@ -1282,9 +1281,6 @@ function fboardform_submit(f)
     if( captcha_chk ) {
         <?php echo isset($captcha_js) ? $captcha_js : ''; // 캡챠 사용시 자바스크립트에서 입력된 캡챠를 검사함  ?>
     } #}
-
-    // 토큰 출력해줘
-    alert(f.token.value);
 
     return true;
 }

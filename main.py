@@ -19,11 +19,7 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
-
-# # 1. main.py의 위치를 얻습니다.
-# current_path = os.path.dirname(os.path.abspath(__file__))
-# # 2. 해당 위치를 기준으로 Jinja2의 FileSystemLoader를 설정합니다.
-# env = Environment(loader=FileSystemLoader(current_path))
+templates.env.globals["outlogin"] = outlogin
 
 from _admin.admin import router as admin_router
 from _bbs.board import router as board_router
@@ -51,7 +47,7 @@ async def common(request: Request, call_next):
     # global is_mobile, user_device
     
     member = None
-    outlogin = None
+    # outlogin = None
 
     db: Session = SessionLocal()
     config = db.query(models.Config).first()
@@ -75,7 +71,7 @@ async def common(request: Request, call_next):
                     member.mb_login_ip = request.client.host
                     db.commit()
             
-                outlogin = templates.TemplateResponse("bbs/outlogin_after.html", {"request": request, "member": member})            
+                # outlogin = templates.TemplateResponse("bbs/outlogin_after.html", {"request": request, "member": member})            
             
     else:
         cookie_mb_id = request.cookies.get("ck_mb_id")
@@ -92,8 +88,8 @@ async def common(request: Request, call_next):
                         request.session["ss_mb_id"] = cookie_mb_id
                         return RedirectResponse(url="/", status_code=302)
 
-    if not outlogin:
-        outlogin = templates.TemplateResponse("bbs/outlogin_before.html", {"request": request})
+    # if not outlogin:
+    #     outlogin = templates.TemplateResponse("bbs/outlogin_before.html", {"request": request})
     
     if request.method == "GET":
         request.state.sst = request.query_params.get("sst") if request.query_params.get("sst") else ""
@@ -143,7 +139,7 @@ async def common(request: Request, call_next):
         "request": request,
         "config": config,
         "member": member,
-        "outlogin": outlogin.body.decode("utf-8"),
+        # "outlogin": outlogin.body.decode("utf-8"),
     }        
                         
     response = await call_next(request)
@@ -170,10 +166,9 @@ def index(request: Request, response: Response, db: Session = Depends(get_db)):
     
     context = {
         "request": request,
-        "outlogin": request.state.context["outlogin"],
+        # "outlogin": request.state.context["outlogin"],
         "latest": latest,
     }
-    # return templates.TemplateResponse(f"index.{user_device}.html", 
     return templates.TemplateResponse(f"index.{request.state.device}.html", context)
 
 
@@ -203,6 +198,6 @@ def latest(skin_dir='', bo_table='', rows=10, subject_len=40, request: Request =
         "bo_table": bo_table,
         "bo_subject": board.bo_subject,
     }
-        
-    template = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
-    return template.body.decode("utf-8")
+    temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
+    return temp.body.decode("utf-8")
+
