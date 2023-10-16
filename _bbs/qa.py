@@ -322,8 +322,8 @@ def qa_view(qa_id: int,
         elif sfl == "mb_id":
             query = query.filter(models.QaContent.mb_id.like(f"%{stx}%"))
 
-    prev = query.filter(model.qa_id < qa_id).order_by(model.qa_id.desc()).first()
-    next = query.filter(model.qa_id > qa_id).order_by(model.qa_id.asc()).first()
+    prev = query.filter(model.qa_type == 0, model.qa_id < qa_id).order_by(model.qa_id.desc()).first()
+    next = query.filter(model.qa_type == 0, model.qa_id > qa_id).order_by(model.qa_id.asc()).first()
 
     context = {
         "request": request,

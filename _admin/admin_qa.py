@@ -11,7 +11,7 @@ import datetime
 from common import *
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
 # templates.env.globals['today'] = SERVER_TIME.strftime("%Y%m%d")
 templates.env.globals["now"] = now
@@ -79,7 +79,7 @@ def qa_config_form(request: Request, db: Session = Depends(get_db)):
 
     qa_config = db.query(models.QaConfig).first()
     return templates.TemplateResponse(
-        "admin/qa_config_form.html", {"request": request, "qa_config": qa_config}
+        "qa_config_form.html", {"request": request, "qa_config": qa_config}
     )
 
 
