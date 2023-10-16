@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, Request, Form, HTTPException
+import math
+from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import asc, desc
@@ -8,6 +9,7 @@ import models
 from common import *
 from typing import List, Optional
 from dataclassform import BoardForm
+
 
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
@@ -21,32 +23,40 @@ templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
+templates.env.globals["get_paging"] = get_paging
 
 @router.get("/board_list")
 def board_list(request: Request, db: Session = Depends(get_db),
-            #    sst: Optional[str] = None, # search sort (검색 정렬 필드)
-            #    sod: Optional[str] = None, # search order (검색 오름, 내림차순)
-            #    sfl: Optional[str] = None, # search field (검색 필드) 
-            #    stx: Optional[str] = None, # search text (검색어)
-            #    page: Optional[str] = None, # 페이지
-               ):
+        sst: str = Query(default=""), # sort field (정렬 필드)
+        sod: str = Query(default=""), # search order (검색 오름, 내림차순)
+        sfl: str = Query(default=""), # search field (검색 필드)
+        stx: str = Query(default=""), # search text (검색어)
+        current_page: int = Query(default=1, alias="page"), # 페이지
+        # sst: str = Query(default="", alias="sst"), # sort field (정렬 필드)
+        # sod: str = Query(default="", alias="sod"), # search order (검색 오름, 내림차순)
+        # sfl: str = Query(default="", alias="sfl"), # search field (검색 필드)
+        # stx: str = Query(default="", alias="stx"), # search text (검색어)
+        # page: int = Query(default=1, alias="page"), # 페이지
+        ):
     '''
     게시판관리 목록
     '''
-    sst = request.state.sst if request.state.sst else ""
-    sod = request.state.sod
-    sfl = request.state.sfl
-    stx = request.state.stx
-    sca = request.state.sca
-    page = request.state.page
+    # sst = request.state.sst if request.state.sst else ""
+    # sod = request.state.sod
+    # sfl = request.state.sfl
+    # stx = request.state.stx
+    # sca = request.state.sca
+    # page = request.state.page if request.state.page else 1
+    # try:
+    #     page = int(page)
+    # except ValueError:
+    #     # "page" 값이 유효한 정수가 아닌 경우 기본값으로 1 사용
+    #     page = 1
     request.session["menu_key"] = "300100"
-
+    
     # 초기 쿼리 설정
     query = db.query(models.Board)
-
-    # sst가 제공되면, 해당 열을 기준으로 필터링을 추가합니다.
-    # if sst:
-    #     query = query.filter(getattr(models.Board, sst))
+    records_per_page = request.state.config.cf_page_rows
 
     # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
     if sst is not None and sst != "":
@@ -58,19 +68,26 @@ def board_list(request: Request, db: Session = Depends(get_db),
     # sfl과 stx가 제공되면, 해당 열과 값으로 추가 필터링을 합니다.
     if sfl is not None and stx is not None:
         if hasattr(models.Board, sfl):  # sfl이 models.Board에 존재하는지 확인
-            query = query.filter(getattr(models.Board, sfl).like(f"%{stx}%"))
+            if sfl in ["gr_id", "bo_table"]:
+                query = query.filter(getattr(models.Board, sfl) == stx)
+            else:
+                query = query.filter(getattr(models.Board, sfl).like(f"%{stx}%"))
+            
+    # 페이지 번호에 따른 offset 계산
+    offset = (current_page - 1) * records_per_page
 
     # 최종 쿼리 결과를 가져옵니다.
-    boards = query.all()
-    # sod = "asc" if sod == "desc" else ""
+    boards = query.offset(offset).limit(records_per_page).all()
+    # 전체 레코드 개수 계산
+    total_records = query.count()
     
-    # token = hash_password(hash_password("")) # 토큰값을 아무도 알수 없게 만듬
-    # request.session["token"] = token
+    query_string = generate_query_string(request)
     
     context = {
         "request": request,
         "boards": boards,
-        # "token": token,
+        "total_records": total_records,
+        "paging": get_paging(request, current_page, total_records, f"/admin/board_list?{query_string}&page="),
     }
     return templates.TemplateResponse("admin/board_list.html", context)
 
