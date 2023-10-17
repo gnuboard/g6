@@ -104,7 +104,7 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
     config = get_config()
 
     mb_id = request.session.get("ss_mb_id", "")
-    before_member_data: Union[Member, None] = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
+    before_member_data: Optional[Member] = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
     if not before_member_data:
         errors.append("회원정보가 없습니다.")
         return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
@@ -141,9 +141,10 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
         if result is not True:
             errors.append(result)
 
-        result = validate_nickname_change_date(before_member_data.mb_nick_date)
-        if result is not True:
-            errors.append(result)
+        if before_member_data.mb_nick_date:
+            result = validate_nickname_change_date(before_member_data.mb_nick_date)
+            if result is not True:
+                errors.append(result)
 
     member_image_path = f"data/member_image/{mb_id[:2]}/"
     member_icon_path = f"data/member/{mb_id[:2]}/"
@@ -243,8 +244,6 @@ def validate_nickname_change_date(nick_date: datetime) -> Union[str, bool]:
         Raises:
             ValidationError: 닉네임 변경 가능일 안내
     """
-    if nick_date is None:
-        return False
 
     config = get_config()
     change_date = timedelta(days=config.cf_nick_modify)

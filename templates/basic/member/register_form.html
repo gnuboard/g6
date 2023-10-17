@@ -1,7 +1,11 @@
 {% extends "base.html" %}
 
+{% block head %}
+    <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" async></script>
+{% endblock %}
+
 {% block title %}
-회원가입
+    회원가입
 {% endblock %}
 
 {% block content %}
@@ -49,14 +53,13 @@
                         <label for="reg_mb_password">비밀번호 (필수)</label>
                         <input type="password" name="mb_password" id="reg_mb_password"
                                {{ "required" if is_register else None }}
-                        class="frm_input full_input {% if is_register %} required {% endif %}" minlength="3" maxlength="20" placeholder="비밀번호">
+                                class="frm_input full_input {% if is_register %} required {% endif %}" minlength="3" maxlength="20" placeholder="비밀번호">
                     </li>
                     <li class="half_input left_input">
                         <label for="reg_mb_password_re">비밀번호 확인 (필수)</label>
                         <input type="password" name="mb_password_re" id="reg_mb_password_re"
                                {% if is_register %} 'required' {% endif %}
-                        
-                            
+    
                         class="frm_input full_input
                         {% if is_register %} required {% endif %}
                         " minlength="3" maxlength="20" placeholder="비밀번호 확인">

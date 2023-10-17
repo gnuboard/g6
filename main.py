@@ -2,7 +2,6 @@ import datetime
 from datetime import timedelta
 import re
 
-from debug_toolbar.middleware import DebugToolbarMiddleware
 from fastapi import FastAPI, Depends, Request, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
