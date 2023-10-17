@@ -1,28 +1,27 @@
-from dataclasses import dataclass
-from fastapi import APIRouter, Depends, Request, Form, HTTPException, UploadFile, File, Query
-from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
-from sqlalchemy import and_, or_
-from sqlalchemy.orm import Session
-from database import get_db
-import models
-import datetime
+from unittest import case
 from common import *
+from database import get_db
+from fastapi import APIRouter, Depends, Request, Form
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+from sqlalchemy import func
+from sqlalchemy.orm import aliased, Session
+from typing import List
+
+import models
+
 
 router = APIRouter()
-templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
+admin_templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
-# templates.env.globals['today'] = SERVER_TIME.strftime("%Y%m%d")
-templates.env.globals["now"] = now
-templates.env.globals['getattr'] = getattr
-templates.env.globals["get_admin_menus"] = get_admin_menus
-templates.env.globals["get_head_tail_img"] = get_head_tail_img
-templates.env.globals['get_selected'] = get_selected
-templates.env.globals["get_skin_select"] = get_skin_select
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
+admin_templates.env.globals["now"] = now
+admin_templates.env.globals['getattr'] = getattr
+admin_templates.env.globals["get_admin_menus"] = get_admin_menus
+admin_templates.env.globals['get_selected'] = get_selected
+admin_templates.env.globals["generate_one_time_token"] = generate_one_time_token
 
-
-MENU_KEY = "100290"
+MENU_KEY = "100290"  
 
 
 @router.get("/menu_list")
@@ -31,8 +30,159 @@ def menu_list(request: Request, db: Session = Depends(get_db)):
     메뉴 목록
     """
     request.session["menu_key"] = MENU_KEY
+    # 메뉴 목록 조회
+    model = models.Menu
+    menus = db.query(model).order_by(model.me_code.asc()).all()
 
-    menus = db.query(models.Menu).all()
-    return templates.TemplateResponse(
+    # me_code의 길이가 4이상 데이터는 subclass 속성을 추가.
+    for menu in menus:
+        if len(menu.me_code) >= 4:
+            menu.subclass = True
+        else:
+            menu.subclass = False
+
+    return admin_templates.TemplateResponse(
         "menu_list.html", {"request": request, "menus": menus}
     )
+
+
+@router.get("/menu/add")
+def menu_add(request: Request, code: str = None, new: str = None, db: Session = Depends(get_db)):
+    """
+    메뉴 추가 팝업 페이지
+    """
+    if new == 'new' or code is None:
+        me_code_10 = base36_to_base10(code)
+        me_code_10 += 36
+        code = base10_to_base36(me_code_10)
+
+    return admin_templates.TemplateResponse(
+        "menu_form.html", {"request": request, "code": code, "new": new}
+    )
+
+@router.post("/menu/search", response_class=HTMLResponse)
+def menu_search(request: Request, type: str = Form(None), db: Session = Depends(get_db)):
+    """
+    메뉴 추가 팝업 레이아웃
+    """
+    # type별 model 선언
+    datas = []
+    if type == "group":
+        alias = aliased(models.Group)
+        datas = db.query(alias.gr_id.label('id'), alias.gr_subject.label('subject')).order_by(alias.gr_order, alias.gr_id).all()
+    elif type == "board":
+        alias = aliased(models.Board)
+        datas = db.query(alias.bo_table.label('id'), alias.bo_subject.label('subject'), alias.gr_id).order_by(alias.bo_order, alias.bo_table).all()
+    elif type == "content":
+        alias = aliased(models.Content)
+        datas = db.query(alias.co_id.label('id'), alias.co_subject.label('subject')).order_by(alias.co_id).all()
+    else:
+        type = "input"
+
+    return admin_templates.TemplateResponse(
+        f"menu_search_{type}.html", {"request": request, "type": type, "datas": datas}
+    )
+
+
+@router.post("/menu/update")
+def menu_update(
+    request: Request,
+    db: Session = Depends(get_db),
+    token: str = Form(...),
+    parent_code: List[str] = Form(..., alias="code[]"),
+    me_name: List[str] = Form(..., alias="me_name[]"),
+    me_link: List[str] = Form(..., alias="me_link[]"),
+    me_target: List[str] = Form(..., alias="me_target[]"),
+    me_order: List[int] = Form(..., alias="me_order[]"),
+    me_use: List[int] = Form(..., alias="me_use[]"),
+    me_mobile_use: List[int] = Form(..., alias="me_mobile_use[]")
+):
+    """
+    메뉴 수정
+    """
+    if not token or not validate_one_time_token(token, 'update'):
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰값이 일치하지 않습니다."]})    
+
+    try:
+        # 메뉴 전체 삭제
+        db.query(models.Menu).delete()
+
+        # 새로운 메뉴 등록
+        # TODO: me_name, me_link 유효성검사
+        length = len(parent_code)
+        group_code = None
+        for i in range(0, length):
+            if group_code == parent_code[int(i)]:
+                max_me_code = db.query(func.max(func.substring(models.Menu.me_code, 3, 2))).filter(func.substring(models.Menu.me_code, 1, 2) == group_code).scalar()
+                max_me_code_10 = base36_to_base10(max_me_code)
+                max_me_code_10 += 36
+                insert_me_code = group_code + base10_to_base36(max_me_code_10)
+                
+            else:
+                max_me_code = db.query(func.max(func.substring(models.Menu.me_code, 1, 2))).filter(func.length(models.Menu.me_code) == 2).scalar()
+                max_me_code_10 = base36_to_base10(max_me_code)
+                max_me_code_10 += 36
+                insert_me_code = base10_to_base36(max_me_code_10)
+
+                group_code = parent_code[int(i)]
+
+            db.add(
+                models.Menu(
+                    me_code=insert_me_code,
+                    me_name=me_name[int(i)],
+                    me_link=me_link[int(i)],
+                    me_target=me_target[int(i)],
+                    me_order=me_order[int(i)],
+                    me_use=me_use[int(i)],
+                    me_mobile_use=me_mobile_use[int(i)],
+                )
+            )
+            db.commit()
+        
+    except Exception as e:
+        print(f"Error: {e}")
+        db.rollback()
+
+    return RedirectResponse(f"/admin/menu_list", status_code=303)
+
+
+def base36_to_base10(number: str = None):
+    """36진수 => 10진수 변환
+
+    Args:
+        number (str): 36진수
+
+    Raises:
+        ValueError: number가 36진수가 아닐 경우
+
+    Returns:
+        int: 10진수
+    """
+    return int(number or "0", 36)
+
+
+def base10_to_base36(number: int):
+    """10진수 => 36진수 변환
+
+    Args:
+        number (int): 10진수
+
+    Raises:
+        ValueError: number가 음수일 경우
+
+    Returns:
+        str: 36진수
+    """
+    if number < 0:
+        raise ValueError("Number must be a non-negative integer.")
+    if number == 0:
+        return "0"
+    
+    charset = "0123456789abcdefghijklmnopqrstuvwxyz"
+    base36_string = ""
+    
+    while number > 0:
+        number, remainder = divmod(number, 36)
+        base36_string = charset[remainder] + base36_string
+    
+    return base36_string
