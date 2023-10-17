@@ -35,7 +35,7 @@ class ConfigForm:
     cf_editor: Optional[str] = Form(default="")
     cf_captcha: Optional[str] = Form(default="")
     cf_captcha_mp3: Optional[str] = Form(default="")
-    cf_open_modify: Optional[int] = Form(default=0),
+    cf_open_modify: Optional[int] = Form(default=0)
     cf_recaptcha_site_key: Optional[str] = Form(default="")
     cf_recaptcha_secret_key: Optional[str] = Form(default="")
     cf_use_copy_log: Optional[int] = Form(default=0)
