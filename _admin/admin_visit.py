@@ -99,6 +99,8 @@ async def visit_delete(request: Request, db: Session = Depends(get_db),):
     '''
     접속자로그 삭제
     '''
+    request.session["menu_key"] = "200820"
+
     min_date = db.query(func.min(models.Visit.vi_date).label('min_date')).scalar()
     min_year = min_date.year if min_date else None
     now_year = datetime.now().year
