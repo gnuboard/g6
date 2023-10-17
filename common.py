@@ -416,6 +416,18 @@ def delete_image(directory: str, filename: str, delete: bool = True):
             os.remove(file_path)
 
 
+def save_image(directory: str, filename: str, file: UploadFile):
+    """이미지 저장 처리 함수
+
+    Args:
+        directory (str): 경로
+        filename (str): 파일이름
+        file (UploadFile): 파일 ojbect
+    """
+    if file and file.filename:
+        with open(f"{directory}{filename}", "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
 def outlogin(request: Request):
     templates = Jinja2Templates(directory=TEMPLATES_DIR)
     member = request.state.context["member"]

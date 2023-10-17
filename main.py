@@ -23,11 +23,6 @@ from user_agents import parse
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(debug=G6_IS_DEBUG)
-if G6_IS_DEBUG:
-    app.add_middleware(
-        DebugToolbarMiddleware,
-        panels=["debug_toolbar.panels.sqlalchemy.SQLAlchemyPanel"],
-    )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")

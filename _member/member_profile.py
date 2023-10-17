@@ -145,22 +145,20 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
         if result is not True:
             errors.append(result)
 
-    member_image_path = f"data/member_image/{mb_id[:2]}/{mb_id}"
-    member_icon_path = f"data/member/{mb_id[:2]}/{mb_id}"
+    member_image_path = f"data/member_image/{mb_id[:2]}/"
+    member_icon_path = f"data/member/{mb_id[:2]}/"
 
     # 이미지 삭제
     if del_mb_img:
-        if os.path.exists(f"{member_image_path}.gif"):
-            os.remove(f"{member_image_path}.gif")
+        delete_image(member_image_path, f"{mb_id}.gif")
 
     if del_mb_icon:
-        if os.path.exists(f"{member_icon_path}.gif"):
-            os.remove(f"{member_icon_path}.gif")
+        delete_image(member_icon_path, f"{mb_id}.gif")
 
     if mb_img and mb_img.filename:
         if not re.match(r".*\.(jpg|jpeg|png|gif)$", mb_img.filename, re.IGNORECASE):
             errors.append("이미지 파일만 업로드 가능합니다.")
-    
+
     # 이미지 검사
     if mb_icon and mb_icon.filename:
         mb_icon_info = Image.open(mb_icon.file)
