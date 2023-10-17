@@ -20,7 +20,7 @@ def content_view(request: Request, co_id: str, db: Session = Depends(get_db)):
     '''
     content = db.query(models.Content).filter(models.Content.co_id == co_id).first()
     if not content:
-        raise HTTPException(status_code=404, detail="{co_id} is not found.")
+        raise HTTPException(status_code=404, detail=f"{co_id} is not found.")
     
     # 상단 이미지가 있으면 상단 이미지를 출력하고 없으면 내용의 첫번째 이미지를 출력한다.
     co_himg_url = ""
@@ -34,7 +34,6 @@ def content_view(request: Request, co_id: str, db: Session = Depends(get_db)):
     
     context = {
         "request": request,
-        # "outlogin": request.state.context["outlogin"],
         "title": f"{content.co_subject}",
         "content": content,
         "co_himg_url": co_himg_url,

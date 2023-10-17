@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="/static/js/font-awesome/css/font-awesome.min.css">
 <link rel="stylesheet" href="/static/css/basic/connect.css">
 <link rel="stylesheet" href="/static/css/basic/faq.css">
+<link rel="stylesheet" href="/static/css/basic/qa.css">
 <link rel="stylesheet" href="/static/css/basic/popular.css">
 <link rel="stylesheet" href="/static/css/basic/member.css">
 <link rel="stylesheet" href="/static/css/basic/latest_list.css">
@@ -83,7 +84,7 @@ $(function() {
             </ul>
             <ul id="hd_qnb">
 	            <li><a href="{{ url_for('faq_view') }}">FAQ</a></li>
-	            <li><a href="/bbs/qalist">Q&A</a></li>
+	            <li><a href="{{ url_for('qa_list') }}">Q&A</a></li>
 	            <li><a href="/bbs/new">새글</a></li>
 	            <li><a href="/bbs/current_connect" class="visit">접속자<strong class="visit-num">0</strong></a></li>
 	        </ul>
@@ -227,9 +228,9 @@ $(function() {
 
     <div id="ft_wr">
         <div id="ft_link" class="ft_cnt">
-            <a href="/bbs/content?co_id=company">회사소개</a>
-            <a href="/bbs/content?co_id=privacy">개인정보처리방침</a>
-            <a href="/bbs/content?co_id=provision">서비스이용약관</a>
+            <a href="{{ url_for('content_view', co_id='company') }}">회사소개</a>
+            <a href="{{ url_for('content_view', co_id='privacy') }}">개인정보처리방침</a>
+            <a href="{{ url_for('content_view', co_id='provision') }}">서비스이용약관</a>
             <a href="/?device=mobile">모바일버전</a>
         </div>
         <div id="ft_company" class="ft_cnt">

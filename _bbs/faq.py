@@ -42,7 +42,6 @@ def faq_view(request: Request, fm_id: int = None, db: Session = Depends(get_db))
 
     context = {
         "request": request,
-        "outlogin": request.state.context["outlogin"],
         "faq_masters": faq_masters,
         "faq_master": faq_master,
         "faqs": faqs,
