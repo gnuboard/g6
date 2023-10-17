@@ -105,7 +105,7 @@
                     <li>
                         <label for="reg_mb_homepage" class="sound_only">홈페이지{% if config.cf_req_homepage %} (필수){% endif
                             %}</label>
-                        <input type="text" name="mb_homepage" value="{{ member.mb_homepage.value|default_if_none('') }}"
+                        <input type="text" name="mb_homepage" value="{{ member.mb_homepage|default_if_none('') }}"
                                id="reg_mb_homepage"
                                class="frm_input full_input {% if config.cf_req_homepage %} required{% endif %}"
                                maxlength="255"
@@ -118,7 +118,7 @@
                         <label for="reg_mb_tel" class="sound_only">전화번호
                             {% if config.cf_req_tel %} (필수) {% endif %}
                         </label>
-                        <input type="text" name="mb_tel" value="{{ member.mb_tel.value|default_if_none('') }}"
+                        <input type="text" name="mb_tel" value="{{ member.mb_tel|default_if_none('') }}"
                                id="reg_mb_tel"
                                class="frm_input full_input {% if config.cf_req_tel %} required{% endif %}"
                                maxlength="20"
@@ -135,7 +135,7 @@
                         <input type="text" name="mb_hp"
                                id="reg_mb_hp" 
                                {{ hp_readonly }}
-                               value="{{ member.mb_hp.value|default_if_none('') }}"
+                               value="{{ member.mb_hp|default_if_none('') }}"
                                class="frm_input full_input 
                                {% if config.cf_req_hp %}required{% endif %}
                                {{ hp_readonly }}"
@@ -162,7 +162,7 @@
                             주소 검색
                         </button>
                         <br>
-                        <input type="text" name="mb_addr1" value="{{ member.mb_addr1.value|default_if_none('') }}"
+                        <input type="text" name="mb_addr1" value="{{ member.mb_addr1|default_if_none('') }}"
                                id="reg_mb_addr1" 
                                {% if config.cf_req_addr %} required {% endif %} 
                                class="frm_input frm_address full_input 
@@ -198,7 +198,7 @@
                         <textarea name="mb_signature" id="reg_mb_signature"
                                   class=" {% if config.cf_req_signature %} required {% endif %}"
                                   {% if config.cf_req_signature %} required {% endif %}
-                                  placeholder="서명 {% if config.cf_req_signature %} (필수){% endif %}">{{ member.mb_signature.value|default_if_none('') }}</textarea>
+                                  placeholder="서명 {% if config.cf_req_signature %} (필수){% endif %}">{{ member.mb_signature|default_if_none('') }}</textarea>
                     </li>
                     {% endif %}
                     {% if config.cf_use_profile %}
@@ -207,7 +207,7 @@
                         <textarea name="mb_profile" id="reg_mb_profile"
                                   class="{% if config.cf_req_profile %} required{% endif %}" 
                                   {% if config.cf_req_profile %} required {% endif %}
-                                  placeholder="자기소개{% if config.cf_req_profile %} (필수){% endif %}">{{ member.mb_profile.value|default_if_none('') }}</textarea>
+                                  placeholder="자기소개{% if config.cf_req_profile %} (필수){% endif %}">{{ member.mb_profile|default_if_none('') }}</textarea>
                     </li>
                     {% endif %}
                     
@@ -221,15 +221,12 @@
                         </label>
                         <input type="file" name="mb_img" accept="image/*" id="id_mb_img">
                         
-                        {% if mb_img %}
-                        {# {% thumbnail member.mb_img.value avatar_size crop="center" as mb_img %} #}
-                            <img src="{{ mb_img.url }}" alt="회원이미지">
-                        {# {% endthumbnail %} #}
-                        <input type="checkbox" name="mb_img-clear" id="mb_img-clear_id">
-                        <label for="mb_img-clear_id" class="inline">삭제</label>
+                        {% if not is_register and form.mb_img_url %}
+                            <img src="{{ form.mb_img_url }}" alt="">
+                            <input type="checkbox" name="del_mb_img" value="1" id="del_mb_img">
+                            <label for="del_mb_img" class="inline">삭제</label>
                         {% endif %}
                     </li>
-                    
                     <li class="reg_mb_icon_file">
                         <label for="reg_mb_icon_file" class="frm_label">
                             회원아이콘
@@ -238,15 +235,10 @@
                             gif, jpg, png파일만 가능하며 용량 {{ config.cf_user_icon_size }}바이트 이하만 등록됩니다.</span>
                         </label>
                         <input type="file" name="mb_icon" accept="image/*" id="id_mb_icon">
-                        
-                        {% if member.mb_icon %}
-                        {#
-                            {% thumbnail member.mb_icon icon_size crop="center" as mb_icon %}
-                                <img src="{{ mb_icon.url }}" alt="회원이미지">
-                            {% endthumbnail %}
-                        #}
-                        <input type="checkbox" name="mb_icon-clear" id="mb_icon-clear_id">
-                        <label for="mb_icon-clear_id" class="inline">삭제</label>
+                        {% if not is_register and form.mb_icon_url %}
+                            <img src="{{ form.mb_icon_url }}" alt="">
+                            <input type="checkbox" name="del_mb_icon" value="1" id="del_mb_icon">
+                            <label for="del_mb_icon" class="inline">삭제</label>
                         {% endif %}
                     </li>
                     
@@ -284,7 +276,7 @@
                     <li class="chk_box">
                         <input type="checkbox" name="mb_open" value="1"
                                id="reg_mb_open"
-                               {% if is_register or member.mb_open.value %} checked {% endif %}
+                               {% if is_register or member.mb_open %} checked {% endif %}
                                class="selec_chk"
                         >
                         <label for="reg_mb_open">
@@ -300,7 +292,7 @@
                     
                      <li>
                         <span class="frm_label">정보공개</span>
-                        <input type="hidden" name="mb_open" value="{{ member.mb_open.value }}">
+                        <input type="hidden" name="mb_open" value="{{ member.mb_open }}">
 
                         <span class="frm_info">
                                 정보공개를 바꾸시면 앞으로 {{ config.cf_open_modify|default("0") }} 일 이내, 

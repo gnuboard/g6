@@ -1,6 +1,8 @@
 import hashlib
 import os
 import re
+import shutil
+from typing import Union
 
 import PIL
 from fastapi import Request
@@ -429,3 +431,42 @@ def valid_email(email: str):
         return True
 
     return False
+
+
+def upload_file(upload_object, filename, path, chunck_size: int = None):
+    """폼 파일 업로드
+    Args:
+        upload_object : form 업로드할 파일객체
+        filename (str): 확장자 포함 저장할 파일명 (with ext)
+        path (str): 저장할 경로
+        chunck_size (int, optional): 파일 저장 단위. 기본값 1MB 로 지정
+    Returns:
+        str: 저장된 파일명
+    """
+    # 파일 저장 경로 생성
+    os.makedirs(path, exist_ok=True)
+
+    # 파일 저장 경로
+    save_path = os.path.join(path, filename)
+    # 파일 저장
+    if chunck_size is None:
+        chunck_size = 1024 * 1024
+        with open(f"{save_path}", "wb") as buffer:
+            shutil.copyfileobj(upload_object.file, buffer, chunck_size)
+    else:
+        with open(f"{save_path}", "wb") as buffer:
+            shutil.copyfileobj(upload_object.file, buffer)
+
+
+def get_filetime_str(file_path) -> Union[int, str]:
+    """파일의 변경시간
+    Args:
+        file_path (str): 파일 이름포함 경로
+    Returns:
+        Union[int, str]: 파일 변경시간, 파일없을시 빈문자열
+    """
+    try:
+        file_time = os.path.getmtime(file_path)
+        return int(file_time)
+    except FileNotFoundError:
+        return ''

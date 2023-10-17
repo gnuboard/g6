@@ -1,9 +1,8 @@
-import shutil
-from io import BytesIO
 from typing import Optional
 
-from fastapi import APIRouter, Form, File, UploadFile
+from fastapi import APIRouter, Form, File, UploadFile, Depends
 from fastapi.responses import RedirectResponse, Response
+from sqlalchemy.orm import Session
 
 from _member.member_profile import validate_nickname, validate_userid
 from common import *
@@ -81,8 +80,9 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
                              mb_id: str = Form(None),
                              mb_password: str = Form(None),
                              mb_password_re: str = Form(None),
-                             mb_image: Optional[UploadFile] = File(None),
+                             mb_img: Optional[UploadFile] = File(None),
                              mb_icon: Optional[UploadFile] = File(None),
+                             mb_zip: Optional[str] = Form(default=""),
                              member_form: MemberForm = Depends(),
                              ):
     # 약관 동의 체크
@@ -124,6 +124,7 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
             if exists_email:
                 errors.append("이미 존재하는 이메일 입니다.")
 
+    # 닉네임 검사
     result = validate_nickname(member_form.mb_nick)
     if result is not True:
         errors.append(result)
@@ -132,13 +133,13 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
     if result is not True:
         errors.append(result)
 
-    if mb_image and mb_image.filename:
-        if not re.match(r".*\.(jpg|jpeg|png|gif)$", mb_image.filename, re.IGNORECASE):
+    # 이미지 검사
+    if mb_img and mb_img.filename:
+        if not re.match(r".*\.(jpg|jpeg|png|gif)$", mb_img.filename, re.IGNORECASE):
             errors.append("이미지 파일만 업로드 가능합니다.")
 
     if mb_icon and mb_icon.filename:
-        mb_icon_byte = await mb_icon.read()
-        mb_icon_info = Image.open(BytesIO(mb_icon_byte))
+        mb_icon_info = Image.open(mb_icon.file)
         width, height = mb_icon_info.size
 
         if 0 < config.cf_member_icon_size < mb_icon.size:
@@ -149,42 +150,48 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
                 errors.append(f"아이콘 크기는 {config.cf_member_icon_width}x{config.cf_member_icon_height} 이하로 업로드 해주세요.")
 
         if not re.match(r".*\.(gif)$", mb_icon.filename, re.IGNORECASE):
-            errors.append("git 파일만 업로드 가능합니다.")
+            errors.append("gif 파일만 업로드 가능합니다.")
 
-    valid_sex_values = {"m", "f"}
-    if not member_form.mb_sex in valid_sex_values:
+    if not member_form.mb_sex in {"m", "f"}:
         member_form.mb_sex = ""
 
     form_context = {
         "agree": agree,
         "agree2": agree2,
-        "name_readonly": "readonly" if (config.cf_cert_use and config.cf_cert_req) else ""
+        "name_readonly": "readonly" if (config.cf_cert_use and config.cf_cert_req) else "",
+        "mb_zip": mb_zip
     }
 
     if errors:
-        return templates.TemplateResponse("member/register_form.html",
-                                          context={
-                                              "request": request,
-                                              "member": models.Member(mb_id=mb_id, mb_level=1, **member_form.__dict__),
-                                              "is_register": True,
-                                              "config": get_config(),
-                                              "form": form_context, "errors": errors
-                                          })
+        return templates.TemplateResponse(
+            "member/register_form.html",
+            context={
+                "request": request,
+                "member": models.Member(mb_id=mb_id, mb_level=1, **member_form.__dict__),
+                "is_register": True,
+                "config": get_config(),
+                "form": form_context, "errors": errors
+            })
+
     # 유효성 검증 통과
 
-    if mb_image and mb_image.filename:
-        path = f"data/member_image/{mb_id[:2]}"
-        if not os.path.exists(path):
-            os.mkdir(path)
-        with open(f"{path}.gif", "wb") as buffer:
-            shutil.copyfileobj(mb_image.file, buffer)
+    # 우편번호 (postalcode)
+    member_form.mb_zip1 = mb_zip[:3]
+    member_form.mb_zip2 = mb_zip[3:]
 
-    if mb_icon and mb_icon.filename:
-        path = f"data/member/{mb_id[:2]}"
-        if not os.path.exists(path):
-            os.mkdir(path)
-        with open(f"{path}.gif", "wb") as buffer:
-            shutil.copyfileobj(mb_icon.file, buffer)
+    if mb_img and mb_img.filename:
+        upload_file(
+            mb_img,
+            filename=mb_id + os.path.splitext(mb_img.filename)[1],
+            path=os.path.join('data', 'member_image', f"{mb_id[:2]}")
+        )
+
+    if mb_icon and mb_icon.filename and mb_icon_info:
+        # 파일객체를 pillow에서 열었으므로 따로 지정.
+        path = os.path.join('data', 'member', f"{mb_id[:2]}")
+        os.makedirs(path, exist_ok=True)
+        filename = mb_id + os.path.splitext(mb_icon.filename)[1]
+        mb_icon_info.save(os.path.join(path, filename))
 
     member = models.Member(
         mb_id=mb_id,
