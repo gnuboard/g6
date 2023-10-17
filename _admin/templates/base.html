@@ -183,6 +183,13 @@ var g5_admin_url = "/admin";
     });
 </script>
 
+{% if errors %}
+<div class="errors">
+    {% for error in errors %}
+        <li>{{ errors|safe }}</li>
+    {% endfor %}
+</div>
+{% endif %}
 
 <div id="wrapper">
     <div id="container" class="">
