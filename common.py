@@ -3,13 +3,15 @@ import os
 import re
 import shutil
 from typing import Union
+from urllib.parse import urlencode
 
 import PIL
 from fastapi import Request, HTTPException, UploadFile
 from fastapi.templating import Jinja2Templates
 from passlib.context import CryptContext
-from requests import Session
 from sqlalchemy import Index, func
+from sqlalchemy.orm import Session
+
 import models
 from models import WriteBaseModel
 from database import SessionLocal, engine
@@ -413,9 +415,6 @@ def delete_image(directory: str, filename: str, delete: bool = True):
         if os.path.exists(file_path):
             os.remove(file_path)
 
-
-requests
-            
 
 def outlogin(request: Request):
     templates = Jinja2Templates(directory=TEMPLATES_DIR)

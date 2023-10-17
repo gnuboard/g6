@@ -104,4 +104,7 @@ def config_form_update(
         setattr(config, field, value)
     db.commit()
     
+    # config 테이블 캐시삭제
+    kv_cache.__delitem__("gnu_config")
+    
     return RedirectResponse("/admin/config_form", status_code=303)

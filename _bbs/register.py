@@ -234,5 +234,4 @@ def register_result(request: Request, db: Session = Depends(get_db)):
 
     return templates.TemplateResponse("bbs/register_result.html", {
         "request": request, "member": member,
-        "outlogin": request.state.context['outlogin']
     })
