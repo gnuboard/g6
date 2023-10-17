@@ -1,4 +1,5 @@
 !.gitignore
+.env
 .vscode-server
 __pycache__
 *.pyc
@@ -8,6 +9,6 @@ __pycache__
 .local
 .bash*
 data/
-test.py
+test*.py
 localhost.crt
 localhost.key
