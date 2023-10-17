@@ -12,3 +12,6 @@ data/
 .env
 prod.env
 dev.env
+test.py
+localhost.crt
+localhost.key

@@ -7,8 +7,8 @@
 {% block content %}
     <script>
         alert("{% for error in errors %}{{ error }}{% endfor %}");
-        {% if url %}
-            document.location.href = "{{ url }}";
+        {% if goto_url %}
+            document.location.href = "{{ goto_url }}";
         {% else %}
             history.back();
         {% endif %}

@@ -5,17 +5,39 @@ import shutil
 from typing import Union
 
 import PIL
-from fastapi import Request
+from fastapi import Request, HTTPException, UploadFile
+from fastapi.templating import Jinja2Templates
 from passlib.context import CryptContext
-from sqlalchemy import Index
+from requests import Session
+from sqlalchemy import Index, func
 import models
 from models import WriteBaseModel
 from database import SessionLocal, engine
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date, time
 import json
 from PIL import Image
+from user_agents import parse
 
-TEMPLATES_DIR = "templates/basic"
+
+TEMPLATES = "templates"
+def get_theme_from_db(config=None):
+    # main.py 에서 config 를 인수로 받아서 사용
+    if not config:
+        db: Session = SessionLocal()
+        config = db.query(models.Config).first()
+    theme = config.cf_theme if config and config.cf_theme else "basic"
+    theme_path = f"{TEMPLATES}/{theme}"
+    
+    # Check if the directory exists
+    if not os.path.exists(theme_path):
+        theme_path = f"{TEMPLATES}/basic"
+    
+    return theme_path
+
+TEMPLATES_DIR = get_theme_from_db()
+# print(TEMPLATES_DIR)
+ADMIN_TEMPLATES_DIR = "_admin/templates"
+
 SERVER_TIME = datetime.now()
 TIME_YMDHIS = SERVER_TIME.strftime("%Y-%m-%d %H:%M:%S")
 TIME_YMD = TIME_YMDHIS[:10]
@@ -148,6 +170,9 @@ def get_member_id_select(id, level, selected, event=''):
 
 # 필드에 저장된 값과 기본 값을 비교하여 selected 를 반환
 def get_selected(field_value, value):
+    if not field_value:
+        return ''
+
     if isinstance(value, int):
         return ' selected="selected"' if (int(field_value) == int(value)) else ''
     return ' selected="selected"' if (field_value == value) else ''
@@ -184,7 +209,9 @@ def option_selected(value, selected, text=''):
     
 
 
-def subject_sort_link(request: Request, col, query_string='', flag='asc'):
+
+def subject_sort_link(request: Request, column: str, query_string: str ='', flag: str ='asc'):
+    # 현재 상태에서 sst, sod, sfl, stx, sca, page 값을 가져온다.
     sst = request.state.sst if request.state.sst is not None else ""
     sod = request.state.sod if request.state.sod is not None else ""
     sfl = request.state.sfl if request.state.sfl is not None else ""
@@ -192,24 +219,31 @@ def subject_sort_link(request: Request, col, query_string='', flag='asc'):
     sca = request.state.sca if request.state.sca is not None else ""
     page = request.state.page if request.state.page is not None else "" 
     
-    q1 = f"sst={col}"
+    # q1에는 column 값을 추가한다.
+    q1 = f"sst={column}"
 
     if flag == 'asc':
+        # flag가 'asc'인 경우, q2에 'sod=asc'를 할당한다.
         q2 = 'sod=asc'
-        if sst == col:
+        if sst == column:
             if sod == 'asc':
+                # 현재 상태에서 sst와 col이 같고 sod가 'asc'인 경우, q2를 'sod=desc'로 변경한다.
                 q2 = 'sod=desc'
     else:
+        # flag가 'asc'가 아닌 경우, q2에 'sod=desc'를 할당한다.
         q2 = 'sod=desc'
-        if sst == col:
+        if sst == column:
             if sod == 'desc':
+                # 현재 상태에서 sst와 col이 같고 sod가 'desc'인 경우, q2를 'sod=asc'로 변경한다.
                 q2 = 'sod=asc'
 
+    # query_string, q1, q2를 arr_query 리스트에 추가한다.
     arr_query = []
     arr_query.append(query_string)
     arr_query.append(q1)
     arr_query.append(q2)
 
+    # sfl, stx, sca, page 값이 None이 아닌 경우, 각각의 값을 arr_query에 추가한다.
     if sfl is not None:
         arr_query.append(f'sfl={sfl}')
     if stx is not None:
@@ -219,48 +253,22 @@ def subject_sort_link(request: Request, col, query_string='', flag='asc'):
     if page is not None:
         arr_query.append(f'page={page}')
 
+    # arr_query의 첫 번째 요소를 제외한 나머지 요소를 '&'로 연결하여 qstr에 할당한다.
     qstr = '&'.join(arr_query[1:]) if arr_query else ''
-    # 여기에서 URL 인코딩을 수행합니다.
-    
-# |이 코드는 주어진 문자열을 파싱하여 URL 쿼리 문자열을 인코딩하는 기능을 수행합니다.
-# |
-# |좋은 점:
-# |- 딕셔너리 컴프리헨션을 사용하여 간결하고 효율적인 코드를 작성했습니다.
-# |- 문자열을 '&'로 분리하고, '='로 분리한 후, '='이 포함된 항목들만 딕셔너리에 추가하여 필터링합니다.
-# |- urlencode 함수를 사용하여 딕셔너리를 URL 쿼리 문자열로 인코딩합니다.
-# |
-# |나쁜 점:
-# |- 코드의 가독성이 좋지 않습니다. 한 줄에 모든 작업을 포함하고 있어 이해하기 어려울 수 있습니다.
-# |- 변수 이름이 약어로 되어 있어 의미를 파악하기 어렵습니다. 변수 이름을 더 명확하게 작성하는 것이 좋습니다.
-# |- 코드에 주석이 없어서 코드의 목적과 동작을 이해하기 어렵습니다. 주석을 추가하여 코드를 설명하는 것이 좋습니다.
-# |
-# |이 코드를 개선하기 위해서는 가독성을 높이고 코드의 목적을 명확히 전달할 수 있도록 변수 이름을 개선하고, 주석을 추가하는 것이 좋습니다. 또한, 코드를 여러 줄로 나누어 가독성을 향상시킬 수 있습니다.
-    # qstr = urlencode({k: v for k, v in [x.split('=') for x in qstr.split('&')] if '=' in x})
-    # '&' 문자로 분리
+    # qstr을 '&'로 분리하여 pairs 리스트에 저장한다.
     pairs = qstr.split('&')
 
-    # 빈 딕셔너리 생성
+    # params 딕셔너리를 생성한다.
     params = {}
 
-    # 각 쌍을 순회
+    # pairs 리스트의 각 요소를 '='로 분리하여 key와 value로 나누고, value가 빈 문자열이 아닌 경우 params에 추가한다.
     for pair in pairs:
-        # '=' 문자가 있는지 확인
         if '=' in pair:
-            # '=' 문자로 분리하여 key와 value 추출
             key, value = pair.split('=')
-            
-            # value가 'None'이거나 빈 문자열인 경우 제외
             if value != '':
-                # 딕셔너리에 추가
                 params[key] = value
 
-    # 딕셔너리를 URL 인코딩
-    # qstr_encoded = urlencode(params)
-
-    # short_url_clean, get_params_merge_url 함수는 구현에 따라 다릅니다.
-    # url = short_url_clean(get_params_merge_url(qstr_array))
-
-    # URL을 반환합니다.
+    # qstr을 쿼리 문자열로 사용하여 링크를 생성하고 반환한다.
     return f'<a href="?{qstr}">'
 
 
@@ -270,10 +278,18 @@ def subject_sort_link(request: Request, col, query_string='', flag='asc'):
 
 def get_admin_menus():
     '''
-    관리자 메뉴를 1, 2단계로 분류하여 반환하는 함수
+    1, 2단계로 구분된 관리자 메뉴 json 파일이 있으면 load 하여 반환하는 함수
     '''
-    with open("_admin/admin_menu.json", "r", encoding="utf-8") as file:
-        menus = json.load(file)
+    files = [
+        "_admin/admin_menu_bbs.json",
+        "_admin/admin_menu_shop.json",
+        "_admin/admin_menu_sms.json"
+    ]
+    menus = {}
+    for file_path in files:
+        if os.path.exists(file_path):
+            with open(file_path, "r", encoding="utf-8") as file:
+                menus.update(json.load(file))
     return menus
 
 
@@ -336,7 +352,7 @@ kv_cache = cachetools.Cache(maxsize=1)
 def generate_one_time_token(action: str = 'create'):
     '''
     1회용 토큰을 생성하여 반환하는 함수
-    action : 'create', 'update', 'delete' ...
+    action : 'insert', 'update', 'delete' ...
     '''
     token = os.urandom(24).hex()
     cache[token] = {'status': 'valid', 'action': action}
@@ -353,6 +369,235 @@ def validate_one_time_token(token, action: str = 'create'):
         return True
     return False
 
+
+def validate_token_or_raise(token: str = None):
+    """토큰을 검증하고 예외를 발생시키는 함수"""
+    if not validate_one_time_token(token):
+        raise HTTPException(status_code=403, detail="Invalid token.")
+
+
+def get_client_ip(request: Request):
+    '''
+    클라이언트의 IP 주소를 반환하는 함수 (PHP의 $_SERVER['REMOTE_ADDR'])
+    '''
+    x_forwarded_for = request.headers.get("X-Forwarded-For")
+    if x_forwarded_for:
+        # X-Forwarded-For can be a comma-separated list of IPs.
+        # The client's requested IP will be the first one.
+        client_ip = x_forwarded_for.split(",")[0]
+    else:
+        client_ip = request.client.host
+    return {"client_ip": client_ip}
+
+
+def make_directory(directory: str):
+    """이미지 경로 체크 및 생성
+
+    Args:
+        directory (str): 이미지 경로
+    """
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+
+def delete_image(directory: str, filename: str, delete: bool = True):
+    """이미지 삭제 처리 함수
+
+    Args:
+        directory (str): 경로
+        filename (str): 파일이름
+        delete (bool): 삭제여부. Defaults to True.
+    """
+    if delete:
+        file_path = f"{directory}{filename}"
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+
+requests
+            
+
+def outlogin(request: Request):
+    templates = Jinja2Templates(directory=TEMPLATES_DIR)
+    member = request.state.context["member"]
+    if member:
+        temp = templates.TemplateResponse("bbs/outlogin_after.html", {"request": request, "member": member})
+    else:
+        temp = templates.TemplateResponse("bbs/outlogin_before.html", {"request": request, "member": None})
+    return temp.body.decode("utf-8")
+
+
+def generate_query_string(request: Request):
+    search_fields = {}
+    if request.method == "GET":
+        search_fields = {
+            'sst': request.query_params.get("sst"),
+            'sod': request.query_params.get("sod"),
+            'sfl': request.query_params.get("sfl"),
+            'stx': request.query_params.get("stx"),
+            'sca': request.query_params.get("sca"),
+            # 'page': request.query_params.get("page")
+        }
+    else:
+        search_fields = {
+            'sst': request._form.get("sst") if request._form else "",
+            'sod': request._form.get("sod") if request._form else "",
+            'sfl': request._form.get("sfl") if request._form else "",
+            'stx': request._form.get("stx") if request._form else "",
+            'sca': request._form.get("sca") if request._form else "",
+            # 'page': request._form.get("page") if request._form else ""
+        }    
+        
+    # None 값을 제거
+    search_fields = {k: v for k, v in search_fields.items() if v is not None}
+
+    return urlencode(search_fields)    
+
+        
+# 파이썬의 내장함수인 list 와 이름이 충돌하지 않도록 변수명을 lst 로 변경함
+def get_from_list(lst, index, default=0):
+    if lst is None:
+        return default
+    try:
+        return 1 if index in lst else default
+    except (TypeError, IndexError):
+        return default
+
+
+# 그누보드5 get_paging() 함수와 다른점
+# 1. 인수에서 write_pages 삭제
+# 2. 인수에서 total_page 대신 total_records 를 사용함
+
+# current_page : 현재 페이지
+# total_records : 전체 레코드 수
+# url_prefix : 페이지 링크의 URL 접두사
+# add_url : 페이지 링크의 추가 URL
+def get_paging(request, current_page, total_records, url_prefix, add_url=""):
+    
+    config = request.state.config
+    try:
+        current_page = int(current_page)
+    except ValueError:
+        # current_page가 정수로 변환할 수 없는 경우 기본값으로 1을 사용하도록 설정
+        current_page = 1
+    total_records = int(total_records)
+
+    # 한 페이지당 라인수
+    page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
+    # 페이지 표시수
+    page_count = config.cf_mobile_pages if request.state.is_mobile and config.cf_mobile_pages else config.cf_write_pages
+    
+    # 올바른 total_pages 계산 (올림처리)
+    total_pages = (total_records + page_rows - 1) // page_rows
+    
+    # print(page_rows, page_count, total_pages)
+    
+    # 페이지 링크 목록 초기화
+    page_links = []
+    
+    start_page = ((current_page - 1) // page_count) * page_count + 1
+    end_page = start_page + page_count - 1
+
+    # # 중앙 페이지 계산
+    middle = page_count // 2
+    start_page = max(1, current_page - middle)
+    end_page = min(total_pages, start_page + page_count - 1)
+    
+    # 처음 페이지 링크 생성
+    if current_page > 1:
+        start_url = f"{url_prefix}1{add_url}"
+        page_links.append(f'<a href="{start_url}" class="pg_page pg_start" title="처음 페이지">처음</a>')
+
+    # 이전 페이지 구간 링크 생성
+    if start_page > 1:
+        prev_page = max(current_page - page_count, 1) 
+        prev_url = f"{url_prefix}{prev_page}{add_url}"
+        page_links.append(f'<a href="{prev_url}" class="pg_page pg_prev" title="이전 구간">이전</a>')
+
+    # 페이지 링크 생성
+    for page in range(start_page, end_page + 1):
+        page_url = f"{url_prefix}{page}{add_url}"
+        if page == current_page:
+            page_links.append(f'<a href="{page_url}"><strong class="pg_current" title="현재 {page} 페이지">{page}</strong></a>')
+        else:
+            page_links.append(f'<a href="{page_url}" class="pg_page" title="{page} 페이지">{page}</a>')
+
+    # 다음 페이지 구간 링크 생성
+    if total_pages > end_page:
+        next_page = min(current_page + page_count, total_pages)
+        next_url = f"{url_prefix}{next_page}{add_url}"
+        page_links.append(f'<a href="{next_url}" class="pg_page pg_next" title="다음 구간">다음</a>')
+    
+    # 마지막 페이지 링크 생성        
+    if current_page < total_pages:
+        end_url = f"{url_prefix}{total_pages}{add_url}"
+        page_links.append(f'<a href="{end_url}" class="pg_page pg_end" title="마지막 페이지">마지막</a>')
+
+    # 페이지 링크 목록을 문자열로 변환하여 반환
+    return '<nav class="pg_wrap"><span class="pg">' + ''.join(page_links) + '</span></nav>'
+
+
+def extract_browser(user_agent):
+    # 사용자 에이전트 문자열에서 브라우저 정보 추출
+    # 여기에 필요한 정규 표현식 또는 분석 로직을 추가
+    # 예를 들어, 단순히 "Mozilla/5.0" 문자열을 추출하는 예제
+    browser_match = re.search(r"Mozilla/5.0", user_agent)
+    if browser_match:
+        return "Mozilla/5.0"
+    else:
+        return "Unknown"
+    
+from ua_parser import user_agent_parser    
+    
+
+# 접속 레코드 기록 로직을 처리하는 함수
+def record_visit(request: Request):
+    vi_ip = request.client.host
+    
+    Visit = models.Visit
+    VisitSum = models.VisitSum
+
+    # 세션 생성
+    db = SessionLocal()
+
+    # 오늘의 접속이 이미 기록되어 있는지 확인
+    existing_visit = db.query(Visit).filter(Visit.vi_date == date.today(), Visit.vi_ip == vi_ip).first()
+
+    if not existing_visit:
+        # 새로운 접속 레코드 생성
+        referer = request.headers.get("referer", "")
+        user_agent = request.headers.get("User-Agent", "")
+        ua = parse(user_agent)
+        browser = ua.browser.family
+        os = ua.os.family
+        device = 'pc' if ua.is_pc else 'mobile' if ua.is_mobile else 'tablet' if ua.is_tablet else 'unknown'
+            
+        visit = Visit(
+            vi_ip=vi_ip,
+            vi_date=date.today(),
+            vi_time=datetime.now().time(),
+            vi_referer=referer,
+            vi_agent=user_agent,
+            vi_browser=browser,
+            vi_os=os,
+            vi_device=device,   
+        )
+        db.add(visit)
+        db.commit()
+
+        # VisitSum 테이블 업데이트
+        visit_count_today = db.query(func.count(Visit.vi_id)).filter(Visit.vi_date == date.today()).scalar()
+
+        visit_sum = db.query(VisitSum).filter(VisitSum.vs_date == date.today()).first()
+        if visit_sum:
+            visit_sum.vs_count = visit_count_today
+        else:
+            visit_sum = VisitSum(vs_date=date.today(), vs_count=visit_count_today)
+
+        db.add(visit_sum)
+        db.commit()
+
+    db.close()            
 
 def is_admin(request: Request):
     """관리자 여부 확인

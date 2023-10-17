@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}
+    접속자집계
+{% endblock %}
+
+{% block subtitle %}접속자집계{% endblock %}
+
+{% block content %}
+
+{% include "visit_sub.html" %}
+
+<div class="tbl_head01 tbl_wrap">
+    <table>
+    <caption>도메인별 접속자집계 목록</caption>
+    <thead>
+    <tr>
+        <th scope="col">순위</th>
+        <th scope="col">접속 도메인</th>
+        <th scope="col">그래프</th>
+        <th scope="col">접속자수</th>
+        <th scope="col">비율(%)</th>
+    </tr>
+    </thead>
+    <tfoot>
+    <tr>
+        <td colspan="3">합계</td>
+        <td><strong>13</strong></td>
+        <td>100%</td>
+    </tr>
+    </tfoot>
+    <tbody>
+        <tr class="bg1">
+        <td class="td_num">1</td>
+        <td class="td_category">직접</td>
+        <td>
+            <div class="visit_bar">
+                <span style="width:100.0%"></span>
+            </div>
+        </td>
+        <td class="td_num_c3">13</td>
+        <td class="td_num">100.0</td>
+    </tr>
+        </tbody>
+    </table>
+</div>
+
+{{ paging|safe }}
+
+{% endblock %}
