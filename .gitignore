@@ -9,3 +9,5 @@ __pycache__
 .bash*
 data/
 test.py
+localhost.crt
+localhost.key

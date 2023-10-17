@@ -1,6 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Form
 import aiosmtplib
 from email.message import EmailMessage
+
+from fastapi.responses import HTMLResponse
 
 app = FastAPI()
 
@@ -9,7 +11,11 @@ SMTP_SERVER = "localhost"  # 로컬 SMTP 서버 주소로 변경
 SMTP_PORT = 25  # SMTP 서버의 포트 번호로 변경
 
 @app.post("/send-email")
-async def send_email(recipient_email: str, subject: str, message: str):
+async def send_email(
+    recipient_email: str = Form(...),
+    subject: str = Form(...),
+    message: str = Form(...)
+):
     try:
         # 이메일 메시지 생성
         email_message = EmailMessage()
@@ -27,8 +33,21 @@ async def send_email(recipient_email: str, subject: str, message: str):
         return {"message": "Email sent successfully"}
     except Exception as e:
         return {"error": str(e)}
-
-if __name__ == "__test__":
-    print("test")
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    
+@app.get("/send-form")
+async def send_form():
+    html_content = """
+    <form method="post" action="/send-email">
+        <label for="recipient_email">Recipient email:</label>
+        <input type="email" id="recipient_email" name="recipient_email" required>
+        <br>
+        <label for="subject">Subject:</label>
+        <input type="text" id="subject" name="subject" required>
+        <br>
+        <label for="message">Message:</label>
+        <textarea id="message" name="message" rows="4" cols="50" required></textarea>
+        <br>
+        <button type="submit">Send email</button>
+    </form>
+    """  
+    return HTMLResponse(content=html_content)
