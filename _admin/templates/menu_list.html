@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}
+    메뉴설정
+{% endblock title %}
+{% block subtitle %}
+    메뉴설정
+{% endblock subtitle %}
+{% block content %}
+    <div class="local_desc01 local_desc">
+        <p><strong>주의!</strong> 메뉴설정 작업 후 반드시 <strong>확인</strong>을 누르셔야 저장됩니다.</p>
+    </div>
+    <form name="fmenulist" id="fmenulist" method="post" action="{{ url_for('menu_update') }}" onsubmit="return fmenulist_submit(this);">
+        <input type="hidden" name="token" value="{{ generate_one_time_token('update') }}">
+        <div id="menulist" class="tbl_head01 tbl_wrap">
+            <table>
+                <caption>메뉴설정 목록</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">메뉴</th>
+                        <th scope="col">링크</th>
+                        <th scope="col">새창</th>
+                        <th scope="col">순서</th>
+                        <th scope="col">PC사용</th>
+                        <th scope="col">모바일사용</th>
+                        <th scope="col">관리</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for menu in menus %}
+                        <tr class="bg0 menu_list menu_group_{{ menu.me_code[:2] }}">
+                            <td class="td_category {% if menu.subclass %}sub_menu_class{% endif %}">
+                                <input type="hidden" name="code[]" value="{{ menu.me_code[:2] }}">
+                                <label for="me_name_{{ loop.index0 }}" class="sound_only"> 메뉴<strong class="sound_only"> 필수</strong></label>
+                                <input type="text" name="me_name[]" value="{{ menu.me_name }}" id="me_name_{{ loop.index0 }}" required="" class="required tbl_input full_input">
+                            </td>
+                            <td>
+                                <label for="me_link_{{ loop.index0 }}" class="sound_only">링크<strong class="sound_only"> 필수</strong></label>
+                                <input type="text" name="me_link[]" value="{{ menu.me_link }}" id="me_link_{{ loop.index0 }}" required="" class="required tbl_input full_input">
+                            </td>
+                            <td class="td_mng">
+                                <label for="me_target_{{ loop.index0 }}" class="sound_only">새창</label>
+                                <select name="me_target[]" id="me_target_{{ loop.index0 }}">
+                                    <option value="self" {{ get_selected(menu.me_target, 'self') }}>사용안함</option>
+                                    <option value="blank" {{ get_selected(menu.me_target, 'blank') }}>사용함</option>
+                                </select>
+                            </td>
+                            <td class="td_num">
+                                <label for="me_order_{{ loop.index0 }}" class="sound_only">순서</label>
+                                <input type="text" name="me_order[]" value="{{ menu.me_order }}" id="me_order_{{ loop.index0 }}" class="tbl_input" size="5">
+                            </td>
+                            <td class="td_mng">
+                                <label for="me_use_{{ loop.index0 }}" class="sound_only">PC사용</label>
+                                <select name="me_use[]" id="me_use_{{ loop.index0 }}">
+                                    <option value="1" {{ get_selected(menu.me_use, 1) }}>사용함</option>
+                                    <option value="0" {{ get_selected(menu.me_use, 0) }}>사용안함</option>
+                                </select>
+                            </td>
+                            <td class="td_mng">
+                                <label for="me_mobile_use_{{ loop.index0 }}" class="sound_only">모바일사용</label>
+                                <select name="me_mobile_use[]" id="me_mobile_use_{{ loop.index0 }}">
+                                    <option value="1" {{ get_selected(menu.me_mobile_use, 1) }}>사용함</option>
+                                    <option value="0" {{ get_selected(menu.me_mobile_use, 0) }}>사용안함</option>
+                                </select>
+                            </td>
+                            <td class="td_mng">
+                                {% if not menu.subclass %}
+                                <button type="button" class="btn_add_submenu btn_03 ">추가</button>
+                                {% endif %}
+                                <button type="button" class="btn_del_menu btn_02">삭제</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="btn_fixed_top">
+            <button type="button" onclick="return add_menu();" class="btn btn_02">
+                메뉴추가<span class="sound_only"> 새창</span>
+            </button>
+            <input type="submit" name="act_button" value="확인" class="btn_submit btn">
+        </div>
+    </form>
+    <script>
+        $(function() {
+            $(document).on("click", ".btn_add_submenu", function() {
+                var code = $(this).closest("tr").find("input[name='code[]']").val().substr(0, 2);
+                add_submenu(code);
+            });
+    
+            $(document).on("click", ".btn_del_menu", function() {
+                if (!confirm("메뉴를 삭제하시겠습니까?\n메뉴 삭제후 메뉴설정의 확인 버튼을 눌러 메뉴를 저장해 주세요."))
+                    return false;
+    
+                var $tr = $(this).closest("tr");
+                if ($tr.find("td.sub_menu_class").length > 0) {
+                    $tr.remove();
+                } else {
+                    var code = $(this).closest("tr").find("input[name='code[]']").val().substr(0, 2);
+                    $("tr.menu_group_" + code).remove();
+                }
+    
+                if ($("#menulist tr.menu_list").length < 1) {
+                    var list = "<tr id=\"empty_menu_list\"><td colspan=\"7\" class=\"empty_table\">자료가 없습니다.</td></tr>\n";
+                    $("#menulist table tbody").append(list);
+                } else {
+                    $("#menulist tr.menu_list").each(function(index) {
+                        $(this).removeClass("bg0 bg1")
+                            .addClass("bg" + (index % 2));
+                    });
+                }
+            });
+        });
+    
+        function add_menu() {
+            var max_code = base_convert(0, 10, 36);
+            $("#menulist tr.menu_list").each(function() {
+                var me_code = $(this).find("input[name='code[]']").val().substr(0, 2);
+                if (max_code < me_code)
+                    max_code = me_code;
+            });
+    
+            var url = "{{ url_for('menu_add') }}" + "?code=" + max_code + "&new=new";
+            window.open(url, "add_menu", "left=100,top=100,width=550,height=650,scrollbars=yes,resizable=yes");
+            return false;
+        }
+    
+        function add_submenu(code) {
+            var url = "{{ url_for('menu_add') }}" + "?code=" + code;
+            window.open(url, "add_menu", "left=100,top=100,width=550,height=650,scrollbars=yes,resizable=yes");
+            return false;
+        }
+    
+        function base_convert(number, frombase, tobase) {
+            //  discuss at: http://phpjs.org/functions/base_convert/
+            // original by: Philippe Baumann
+            // improved by: Rafał Kukawski (http://blog.kukawski.pl)
+            //   example 1: base_convert('A37334', 16, 2);
+            //   returns 1: '101000110111001100110100'
+    
+            return parseInt(number + '', frombase | 0)
+                .toString(tobase | 0);
+        }
+    
+        function fmenulist_submit(f) {
+    
+            var me_links = document.getElementsByName('me_link[]');
+            var reg = /^javascript/;
+    
+            for (i = 0; i < me_links.length; i++) {
+    
+                if (reg.test(me_links[i].value)) {
+    
+                    alert('링크에 자바스크립트문을 입력할수 없습니다.');
+                    me_links[i].focus();
+                    return false;
+                }
+            }
+    
+            return true;
+        }
+    </script>
+
+{% endblock content %}
