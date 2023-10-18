@@ -6,10 +6,10 @@ import PIL
 import shutil
 from fastapi import Query, Request, HTTPException, UploadFile
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup, escape
 from passlib.context import CryptContext
-from requests import Session
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
-from sqlalchemy.orm import load_only
+from sqlalchemy.orm import load_only, Session
 import models
 from models import WriteBaseModel
 from database import SessionLocal, engine
@@ -20,6 +20,8 @@ from user_agents import parse
 
 
 TEMPLATES = "templates"
+EDITOR_PATH = f"{TEMPLATES}/editor"
+
 def get_theme_from_db(config=None):
     # main.py 에서 config 를 인수로 받아서 사용
     if not config:
@@ -662,4 +664,22 @@ def select_query(request: Request, table_class, search_params: dict,
         "rows": rows,
         "total_count": query.count(),
     }
-    
+
+
+def get_editor_path(editor_name: Optional[str] = None) -> str:
+    """지정한 에디터 경로를 반환하는 함수
+    미지정시 전체설정값 사용
+    """
+    if editor_name:
+        return editor_name
+
+    db = SessionLocal()
+    config = db.query(models.Config).first()
+    db.close()
+    return config.cf_editor if config.cf_editor else "normal"
+
+
+def nl2br(value) -> str:
+    """ \n 을 <br> 태그로 변환
+    """
+    return escape(value).replace('\n', Markup('<br>\n'))
