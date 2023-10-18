@@ -174,7 +174,7 @@ async def visit_delete_update(request: Request, db: Session = Depends(get_db),
     return templates.TemplateResponse("alert.html", 
         {
             "request": request, 
-            "errors": [f"총 {total_records}개의 자료 중 {deleted_records}개의 자료를 삭제하였습니다."],
+            "errors": [f"총 {total_records}개의 자료 중 {deleted_records}개의 자료가 삭제되었습니다."],
             "goto_url": f"/admin/visit_delete",
         })
     

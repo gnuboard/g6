@@ -12,14 +12,13 @@
 
 <h1 id="container_title">회원 {{ '수정' if member else '추가' }}</h1>
 <div class="container_wr">
-<form name="fmember" id="fmember" action="/admin/member_form_update" onsubmit="return fmember_submit(this);" method="post" enctype="multipart/form-data">
-<input type="hidden" name="w" value="">
-<input type="hidden" name="sfl" value="">
-<input type="hidden" name="stx" value="">
-<input type="hidden" name="sst" value="">
-<input type="hidden" name="sod" value="">
-<input type="hidden" name="page" value="">
-<input type="hidden" name="token" value="{{ token }}">
+<form name="fmember" id="fmember" action="/admin/member_form_update" onsubmit="return fmember_submit(this);" method="post" enctype="multipart/form-data" autocomplete="off">
+<input type="hidden" name="sfl" value="{{ request.state.sfl }}">
+<input type="hidden" name="stx" value="{{ request.state.stx }}">
+<input type="hidden" name="sst" value="{{ request.state.sst }}">
+<input type="hidden" name="sod" value="{{ request.state.sod }}">
+<input type="hidden" name="page" value="{{ request.state.page }}">
+<input type="hidden" name="token" value="{{ generate_one_time_token('update' if member.mb_id else 'insert') }}">
 
 <div class="tbl_frm01 tbl_wrap">
     <table>
@@ -45,18 +44,7 @@
                 <td>
                     <div>
                     {% set mb_password_required = 'required' if not member else '' %}
-                    <input type="password" name="mb_password" id="mb_password" class="frm_input {{ mb_password_required}}" size="15" maxlength="20" {{ mb_password_required}}>
-                    </div>
-                    <div id="mb_password_captcha_wrap" style="display:none">
-                        <script>var g5_captcha_url  = "http://g5.pypot.com/plugin/kcaptcha";</script>
-                        <script src="http://g5.pypot.com/plugin/kcaptcha/kcaptcha.js"></script>
-                        <fieldset id="captcha" class="captcha">
-                        <legend><label for="captcha_key">자동등록방지</label></legend>
-                        <img src="http://g5.pypot.com/plugin/kcaptcha/img/dot.gif" alt="" id="captcha_img"><input type="text" name="captcha_key" id="captcha_key" required class="captcha_box required" size="6" maxlength="6">
-                        <button type="button" id="captcha_mp3"><span></span>숫자음성듣기</button>
-                        <button type="button" id="captcha_reload"><span></span>새로고침</button>
-                        <span id="captcha_info">자동등록방지 숫자를 순서대로 입력하세요.</span>
-                        </fieldset>                        
+                    <input type="password" name="mb_password" id="mb_password" class="frm_input {{ mb_password_required }}" size="15" maxlength="20" {{ mb_password_required }}>
                     </div>
                 </td>
             </tr>
@@ -72,7 +60,7 @@
                     {{ get_member_level_select('mb_level', 2, 10, member.mb_level)|safe }}
                 </td>
                 <th scope="row">포인트</th>
-                <td><a href="/admin/point_list?sfl=mb_id&amp;stx=" target="_blank">0</a> 점</td>
+                <td><a href="/admin/point_list?sfl=mb_id&stx=" target="_blank">0</a> 점</td>
             </tr>
             <tr>
                 <th scope="row"><label for="mb_email">E-mail<strong class="sound_only">필수</strong></label></th>
@@ -235,7 +223,7 @@
     }
 
     jQuery(function($){
-        $("#captcha_key").prop('required', false).removeAttr("required").removeClass("required");
+        {# $("#captcha_key").prop('required', false).removeAttr("required").removeClass("required");
 
         $("#mb_password").on("keyup", function(e) {
             var $warp = $("#mb_password_captcha_wrap"),
@@ -244,7 +232,7 @@
                 $parent = $(this).parent(),
                 is_invisible_recaptcha = $("#captcha").hasClass("invisible_recaptcha");
 
-            {# if($(this).val()){
+            if($(this).val()){
                 $warp.show();
                 if(! is_invisible_recaptcha) {
                     $warp.css("margin-top","1em");

@@ -1,13 +1,15 @@
 import hashlib
 import os
 import re
+from typing import List, Optional
 import PIL
 import shutil
-from fastapi import Request, HTTPException, UploadFile
+from fastapi import Query, Request, HTTPException, UploadFile
 from fastapi.templating import Jinja2Templates
 from passlib.context import CryptContext
 from requests import Session
-from sqlalchemy import Index, func
+from sqlalchemy import Index, asc, desc, and_, or_, func, extract
+from sqlalchemy.orm import load_only
 import models
 from models import WriteBaseModel
 from database import SessionLocal, engine
@@ -157,7 +159,8 @@ def get_editor_select(id, selected):
 # 회원아이디를 SELECT 형식으로 얻음
 def get_member_id_select(id, level, selected, event=''):
     db = SessionLocal()
-    members = db.query(models.Member).filter(models.Member.mb_level >= level).all()
+    # 테이블에서 지정된 필드만 가져 오는 경우 load_only("field1", "field2") 함수를 사용 
+    members = db.query(models.Member).options(load_only("mb_id")).filter(models.Member.mb_level >= level).all()
     html_code = []
     html_code.append(f'<select id="{id}" name="{id}" {event}><option value="">선택하세요</option>')
     for member in members:
@@ -168,7 +171,7 @@ def get_member_id_select(id, level, selected, event=''):
 
 # 필드에 저장된 값과 기본 값을 비교하여 selected 를 반환
 def get_selected(field_value, value):
-    if not field_value:
+    if field_value is None:
         return ''
 
     if isinstance(value, int):
@@ -473,13 +476,13 @@ def get_from_list(lst, index, default=0):
 
 # 그누보드5 get_paging() 함수와 다른점
 # 1. 인수에서 write_pages 삭제
-# 2. 인수에서 total_page 대신 total_records 를 사용함
+# 2. 인수에서 total_page 대신 total_count 를 사용함
 
 # current_page : 현재 페이지
-# total_records : 전체 레코드 수
+# total_count : 전체 레코드 수
 # url_prefix : 페이지 링크의 URL 접두사
 # add_url : 페이지 링크의 추가 URL
-def get_paging(request, current_page, total_records, url_prefix, add_url=""):
+def get_paging(request, current_page, total_count, url_prefix, add_url=""):
     
     config = request.state.config
     try:
@@ -487,7 +490,7 @@ def get_paging(request, current_page, total_records, url_prefix, add_url=""):
     except ValueError:
         # current_page가 정수로 변환할 수 없는 경우 기본값으로 1을 사용하도록 설정
         current_page = 1
-    total_records = int(total_records)
+    total_count = int(total_count)
 
     # 한 페이지당 라인수
     page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
@@ -495,7 +498,7 @@ def get_paging(request, current_page, total_records, url_prefix, add_url=""):
     page_count = config.cf_mobile_pages if request.state.is_mobile and config.cf_mobile_pages else config.cf_write_pages
     
     # 올바른 total_pages 계산 (올림처리)
-    total_pages = (total_records + page_rows - 1) // page_rows
+    total_pages = (total_count + page_rows - 1) // page_rows
     
     # print(page_rows, page_count, total_pages)
     
@@ -605,3 +608,58 @@ def record_visit(request: Request):
         db.commit()
 
     db.close()            
+    
+    
+# 공통 쿼리 파라미터를 받는 함수를 정의합니다.
+def common_search_query_params(
+        sst: str = Query(default=""), 
+        sod: str = Query(default=""), 
+        sfl: str = Query(default=""), 
+        stx: str = Query(default=""), 
+        current_page: int = Query(default=1, alias="page")
+        ):
+    '''
+    공통 쿼리 파라미터를 받는 함수
+    '''
+    return {"sst": sst, "sod": sod, "sfl": sfl, "stx": stx, "current_page": current_page}
+
+
+def select_query(request: Request, table_class, search_params: dict, 
+        same_search_fields: Optional[List[str]] = "", # 값이 완전히 같아야지만 필터링 '검색어'
+        prefix_search_fields: Optional[List[str]] = "", # 뒤에 %를 붙여서 필터링 '검색어%'
+        # contains_search_fields": Optional[List[str]] = "", # 양쪽에 %를 붙여서 필터링 '%검색어%', 위의 두 경우가 아니면 else 로 처리
+    ):
+    records_per_page = request.state.config.cf_page_rows
+
+    db = SessionLocal()
+    query = db.query(table_class)
+    
+    # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
+    if search_params['sst'] is not None and search_params['sst'] != "":
+        if search_params['sod'] == "desc":
+            query = query.order_by(desc(getattr(table_class, search_params['sst'])))
+        else:
+            query = query.order_by(asc(getattr(table_class, search_params['sst'])))
+
+    # sfl과 stx가 제공되면, 해당 열과 값으로 추가 필터링을 합니다.
+    if search_params['sfl'] is not None and search_params['stx'] is not None:
+        if hasattr(table_class, search_params['sfl']):  # sfl이 Table에 존재하는지 확인
+            # if search_params['sfl'] in ["mb_level"]:
+            if search_params['sfl'] in same_search_fields:
+                query = query.filter(getattr(table_class, search_params['sfl']) == search_params['stx'])
+            elif search_params['sfl'] in prefix_search_fields:
+                query = query.filter(getattr(table_class, search_params['sfl']).like(f"{search_params['stx']}%"))
+            else:
+                query = query.filter(getattr(table_class, search_params['sfl']).like(f"%{search_params['stx']}%"))
+
+    # 페이지 번호에 따른 offset 계산
+    offset = (search_params['current_page'] - 1) * records_per_page
+    # 최종 쿼리 결과를 가져옵니다.
+    rows = query.offset(offset).limit(records_per_page).all()
+    # # 전체 레코드 개수 계산
+    # # total_count = query.count()
+    return {
+        "rows": rows,
+        "total_count": query.count(),
+    }
+    

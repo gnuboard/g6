@@ -184,7 +184,7 @@ class Member(Base):
     mb_name = Column(String(255), nullable=False, default='')
     mb_nick = Column(String(255), nullable=False, default='')
     mb_nick_date = Column(String(30), nullable=False)
-    mb_email = Column(String(255), unique=True, nullable=False, default='')
+    mb_email = Column(String(255), nullable=False, default='')
     mb_homepage = Column(String(255), nullable=False, default='')
     mb_level = Column(Integer, nullable=False, default=0, server_default=text('0'))
     mb_sex = Column(String(1), nullable=False, default='')
@@ -620,3 +620,16 @@ class QaContent(Base):
 
     # Index 추가
     qa_num_parent_index = Index('qa_num_parent', qa_num, qa_parent)
+
+
+class Menu(Base):
+    __tablename__ = 'g6_menu'
+
+    me_id = Column(Integer, primary_key=True, autoincrement=True)
+    me_code = Column(String(255), nullable=False, default='')
+    me_name = Column(String(255), nullable=False, default='')
+    me_link = Column(String(255), nullable=False, default='')
+    me_target = Column(String(255), nullable=False, default='')
+    me_order = Column(Integer, nullable=False, default=0)
+    me_use = Column(TINYINT, nullable=False, default=0)
+    me_mobile_use = Column(TINYINT, nullable=False, default=0)
