@@ -12,14 +12,13 @@
 
 <h1 id="container_title">회원 {{ '수정' if member else '추가' }}</h1>
 <div class="container_wr">
-<form name="fmember" id="fmember" action="/admin/member_form_update" onsubmit="return fmember_submit(this);" method="post" enctype="multipart/form-data">
-<input type="hidden" name="w" value="">
-<input type="hidden" name="sfl" value="">
-<input type="hidden" name="stx" value="">
-<input type="hidden" name="sst" value="">
-<input type="hidden" name="sod" value="">
-<input type="hidden" name="page" value="">
-<input type="hidden" name="token" value="{{ token }}">
+<form name="fmember" id="fmember" action="/admin/member_form_update" onsubmit="return fmember_submit(this);" method="post" enctype="multipart/form-data" autocomplete="off">
+<input type="hidden" name="sfl" value="{{ request.state.sfl }}">
+<input type="hidden" name="stx" value="{{ request.state.stx }}">
+<input type="hidden" name="sst" value="{{ request.state.sst }}">
+<input type="hidden" name="sod" value="{{ request.state.sod }}">
+<input type="hidden" name="page" value="{{ request.state.page }}">
+<input type="hidden" name="token" value="{{ generate_one_time_token('update' if member.mb_id else 'insert') }}">
 
 <div class="tbl_frm01 tbl_wrap">
     <table>
