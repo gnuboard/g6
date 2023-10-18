@@ -105,7 +105,6 @@ def config_form_update(
     db.commit()
     
     # config 테이블 캐시삭제
-    if 'gnu_config' in kv_cache:
-        kv_cache.__delitem__("gnu_config")
-
+    kv_cache.__delitem__("gnu_config")
+    
     return RedirectResponse("/admin/config_form", status_code=303)

@@ -151,57 +151,23 @@ class ConfigForm:
     cf_9: Optional[str] = Form(default="")
     cf_10_subj: Optional[str] = Form(default="")
     cf_10: Optional[str] = Form(default="")
-    
-    
-    
-    # mb_password: str = Form(None),
-    # mb_name: str = Form(None),
-    # mb_nick: str = Form(None),
-    # mb_level: int = Form(None),
-    # mb_email: str = Form(None),
-    # mb_homepage: str = Form(None),
-    # mb_hp: str = Form(None),
-    # mb_tel: str = Form(None),
-    # mb_certify_case: str = Form(None),
-    # mb_certify: int = Form(None),
-    # mb_adult: int = Form(None),
-    # mb_zip: str = Form(None),
-    # mb_addr1: str = Form(None),
-    # mb_addr2: str = Form(None),
-    # mb_addr3: str = Form(None),
-    # mb_mailling: int = Form(None),
-    # mb_sms: int = Form(None),
-    # mb_open: int = Form(None),
-    # mb_signature: str = Form(None),
-    # mb_profile: str = Form(None),
-    # mb_memo: str = Form(None),
-    # mb_intercept_date: str = Form(None),
-    # mb_leave_date: str = Form(None),
-    # mb_1: str = Form(None),
-    # mb_2: str = Form(None),
-    # mb_3: str = Form(None),
-    # mb_4: str = Form(None),
-    # mb_5: str = Form(None),
-    # mb_6: str = Form(None),
-    # mb_7: str = Form(None),
-    # mb_8: str = Form(None),
-    # mb_9: str = Form(None),
-    # mb_10: str = Form(None),
-    
+
 
 @dataclass
 class MemberForm:
-    mb_password: Optional[str] = Form(default="")
-    mb_name: str = Form(None)
-    mb_nick: str = Form(None)
-    mb_nick_date: Optional[str] = Form(default="")
-    mb_level: Optional[int] = Form(default=0)
+    mb_name: Optional[str] = Form(default="")
+    mb_birth: Optional[datetime] = Form(None)
     mb_email: Optional[str] = Form(default="")
+    mb_level: Optional[int] = Form(default=0)
+    mb_nick: Optional[str] = Form(default="")
+    mb_sex: Optional[str] = Form(default="")
+    mb_recommend: Optional[str] = Form(default="")
     mb_homepage: Optional[str] = Form(default="")
     mb_hp: Optional[str] = Form(default="")
     mb_tel: Optional[str] = Form(default="")
     mb_certify: Optional[int] = Form(default=0)
     mb_adult: Optional[int] = Form(default=0)
+    mb_addr_jibeon: Optional[str] = Form(default="")
     mb_zip1: Optional[str] = Form(default="")
     mb_zip2: Optional[str] = Form(default="")
     mb_addr1: Optional[str] = Form(default="")
@@ -213,8 +179,6 @@ class MemberForm:
     mb_signature: Optional[str] = Form(default="")
     mb_profile: Optional[str] = Form(default="")
     mb_memo: Optional[str] = Form(default="")
-    mb_intercept_date: Optional[str] = Form(default="")
-    mb_leave_date: Optional[str] = Form(default="")
     mb_1: Optional[str] = Form(default="")
     mb_2: Optional[str] = Form(default="")
     mb_3: Optional[str] = Form(default="")
@@ -225,7 +189,6 @@ class MemberForm:
     mb_8: Optional[str] = Form(default="")
     mb_9: Optional[str] = Form(default="")
     mb_10: Optional[str] = Form(default="")
-    
 
 @dataclass
 class BoardForm:
@@ -353,37 +316,3 @@ class GroupForm:
     gr_9: Optional[str] = Form(default="")
     gr_10: Optional[str] = Form(default="")
 
-
-@dataclass
-class MemberForm:
-    mb_name: Optional[str] = Form(default="")
-    mb_nick: Optional[str] = Form(default="")
-    mb_email: Optional[str] = Form(default="")
-    mb_birth: Optional[datetime] = Form(None)
-    mb_addr1: Optional[str] = Form(default="")
-    mb_addr2: Optional[str] = Form(default="")
-    mb_addr3: Optional[str] = Form(default="")
-    mb_addr_jibeon: Optional[str] = Form(default="")
-    mb_zip1: Optional[str] = Form(default="")
-    mb_zip2: Optional[str] = Form(default="")
-    mb_signature: Optional[str] = Form(default="")
-    mb_profile: Optional[str] = Form(default="")
-    mb_open: Optional[int] = 1
-    mb_sms: Optional[bool] = Form(default=False)
-    mb_mailling: Optional[bool] = Form(None)
-    mb_memo: Optional[str] = Form(default="")
-    mb_hp: Optional[str] = Form(default="")
-    mb_tel: Optional[str] = Form(None)
-    mb_homepage: Optional[str] = Form(default="")
-    mb_sex: Optional[str] = Form(default="")
-    mb_recommend: Optional[str] = Form(default="")
-    mb_1: Optional[str] = Form(default="")
-    mb_2: Optional[str] = Form(default="")
-    mb_3: Optional[str] = Form(default="")
-    mb_4: Optional[str] = Form(default="")
-    mb_5: Optional[str] = Form(default="")
-    mb_6: Optional[str] = Form(default="")
-    mb_7: Optional[str] = Form(default="")
-    mb_8: Optional[str] = Form(default="")
-    mb_9: Optional[str] = Form(default="")
-    mb_10: Optional[str] = Form(default="")

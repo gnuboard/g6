@@ -173,6 +173,9 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
                 "form": form_context, "errors": errors
             })
 
+    # 레벨 입력방지
+    del member_form.mb_level
+
     # 유효성 검증 통과
 
     # 우편번호 (postalcode)
@@ -196,7 +199,8 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
     member = models.Member(
         mb_id=mb_id,
         mb_datetime=datetime.now(),
-        mb_email_certify=datetime.now(),
+        # @todo datetime 컬럼들 nullable 로 변환
+        mb_email_certify=datetime(1, 1, 1, 0, 0),
         mb_password=hash_password(mb_password),
         mb_level=config.cf_register_level,
         mb_login_ip=request.client.host,

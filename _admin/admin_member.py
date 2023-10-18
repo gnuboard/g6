@@ -80,6 +80,7 @@ def member_form_update(
         token: str = Form(...),
         mb_id: str = Form(...),
         mb_certify_case: Optional[str] = Form(default=""),
+        mb_password: Optional[str] = Form(...),
         form_data: MemberForm = Depends(),
         ):
     
@@ -88,22 +89,27 @@ def member_form_update(
         if existing_member:
             errors = [f"{mb_id} 회원아이디가 이미 존재합니다. (등록불가)"]
             return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
-        
-        new_member = models.Member(mb_id=mb_id, **form_data.__dict__)
-        
+
+        request.state.time = datetime.now()
+        new_member = models.Member(mb_id=mb_id, mb_password=mb_password, **form_data.__dict__)
         if mb_certify_case and form_data.mb_certify:
             new_member.mb_certify = mb_certify_case
             new_member.mb_adult = form_data.mb_adult
         else:
             new_member.mb_certify = ''
             new_member.mb_adult = 0
-        
-        if form_data.mb_password:
-            new_member.mb_password = hash_password(form_data.mb_password)               
+
+        if mb_password:
+            new_member.mb_password = hash_password(mb_password)               
         else:
             # 비밀번호가 없다면 현재시간으로 해시값을 만든후 다시 해시 (알수없게 만드는게 목적)
-            new_member.mb_password = hash_password(hash_password(datetime.datetime.now())) 
-            
+            new_member.mb_password = hash_password(hash_password(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        
+        new_member.mb_nick_date= request.state.time
+        new_member.mb_datetime = request.state.time
+        new_member.mb_today_login = request.state.time
+        new_member.mb_open_date = request.state.time
+        new_member.mb_email_certify = datetime(1, 1, 1, 0, 0)
         db.add(new_member)
         db.commit()
         
@@ -118,9 +124,10 @@ def member_form_update(
             setattr(existing_member, field, value)
         
         # 비밀번호가 있다면 (수정했다면) : 수정에서는 비밀번호를 입력하지 않아도 됨 (선택사항)
-        if form_data.mb_password:
-            existing_member.mb_password = hash_password(form_data.mb_password)
-            
+        if mb_password:
+            existing_member.mb_password = hash_password(mb_password)
+        
+        
         db.commit()
         
     else:
