@@ -22,9 +22,6 @@ templates.env.globals['generate_one_time_token'] = generate_one_time_token
 
 MEMBER_MENU_KEY = "200100"
 
-
-    
-
 @router.get("/member_list")
 async def member_list(request: Request, db: Session = Depends(get_db), search_params: dict = Depends(common_search_query_params)):
     '''
@@ -39,34 +36,6 @@ async def member_list(request: Request, db: Session = Depends(get_db), search_pa
                 same_search_fields = ["mb_level"], 
                 prefix_search_fields = ["mb_name", "mb_nick", "mb_tel", "mb_hp", "mb_datetime", "mb_recommend"]
             )
-    # total_count = len(rows)
-    
-    # print(total_count)
-    # query = db.query(models.Member)
-    # records_per_page = request.state.config.cf_page_rows
-    
-    
-    # # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
-    # if cs['sst'] is not None and cs['sst'] != "":
-    #     if cs['sod'] == "desc":
-    #         query = query.order_by(desc(getattr(models.Board, cs['sst'])))
-    #     else:
-    #         query = query.order_by(asc(getattr(models.Board, cs['sst'])))
-            
-    # # sfl과 stx가 제공되면, 해당 열과 값으로 추가 필터링을 합니다.
-    # if cs['sfl'] is not None and cs['stx'] is not None:
-    #     if hasattr(models.Member, cs['sfl']):  # sfl이 models.Member에 존재하는지 확인
-    #         if cs['sfl'] in ["mb_level"]:
-    #             query = query.filter(getattr(models.Member, cs['sfl']) == cs['stx'])
-    #         else:
-    #             query = query.filter(getattr(models.Member, cs['sfl']).like(f"%{cs['stx']}%"))
-                
-    # # 페이지 번호에 따른 offset 계산
-    # offset = (cs['current_page'] - 1) * records_per_page
-    # # 최종 쿼리 결과를 가져옵니다.
-    # members = query.offset(offset).limit(records_per_page).all()
-    # 전체 레코드 개수 계산
-    # total_records = query.count()
     
     query_string = generate_query_string(request)
     
