@@ -31,6 +31,7 @@ from _admin.admin_theme import router as admin_theme_router
 from _admin.admin_visit import router as admin_visit_router
 from _admin.admin_qa import router as admin_qa_router
 from _admin.admin_sendmail import router as admin_sendmail_router
+from _admin.admin_menu import router as admin_menu_router
 
 router.include_router(admin_config_router, prefix="", tags=["admin_config"])
 router.include_router(admin_member_router, prefix="", tags=["admin_member"])
@@ -42,6 +43,7 @@ router.include_router(admin_theme_router, prefix="", tags=["admin_theme"])
 router.include_router(admin_visit_router, prefix="", tags=["admin_visit"])
 router.include_router(admin_qa_router, prefix="", tags=["admin_qa"])
 router.include_router(admin_sendmail_router, prefix="", tags=["admin_sendmail"])
+router.include_router(admin_menu_router,  prefix="", tags=["admin_menu"])
 
 @router.get("/")
 def base(request: Request, db: Session = Depends(get_db)):
