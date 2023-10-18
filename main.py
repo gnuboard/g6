@@ -44,10 +44,13 @@ app.include_router(menu_router, prefix="/menu", tags=["menu"])
 # is_mobile = False
 # user_device = 'pc'
 
+config = {}
+
 # 항상 실행해야 하는 미들웨어
 @app.middleware("http")
 async def main_middleware(request: Request, call_next):
     # global is_mobile, user_device
+    global config
 
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 시작    
     # 요청의 경로를 얻습니다.
