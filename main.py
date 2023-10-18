@@ -43,8 +43,17 @@ app.include_router(qa_router, prefix="/qa", tags=["qa"])
 
 # 항상 실행해야 하는 미들웨어
 @app.middleware("http")
-async def main_common(request: Request, call_next):
+async def main_middleware(request: Request, call_next):
     # global is_mobile, user_device
+
+    ### 미들웨어가 여러번 실행되는 것을 막는 코드 시작    
+    # 요청의 경로를 얻습니다.
+    path = request.url.path
+    # 경로가 정적 파일에 대한 것이 아닌지 확인합니다 (css, js, 이미지 등).
+    if (path.startswith('/static') or path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.webp'))):
+        response = await call_next(request)
+        return response
+    ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
     
     # 이미 처리된 요청인지 확인
     if getattr(request.state, 'processed', False):
