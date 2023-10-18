@@ -50,7 +50,7 @@ async def main_middleware(request: Request, call_next):
     # 요청의 경로를 얻습니다.
     path = request.url.path
     # 경로가 정적 파일에 대한 것이 아닌지 확인합니다 (css, js, 이미지 등).
-    if (path.startswith('/static') or path.endswith(('.css', '.js', '.jpg', '.png', '.gif'))):
+    if (path.startswith('/static') or path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.webp'))):
         response = await call_next(request)
         return response
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
