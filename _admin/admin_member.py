@@ -23,58 +23,6 @@ templates.env.globals['generate_one_time_token'] = generate_one_time_token
 MEMBER_MENU_KEY = "200100"
 
 
-# 공통 쿼리 파라미터를 받는 함수를 정의합니다.
-def common_search_query_params(
-        sst: str = Query(default=""), 
-        sod: str = Query(default=""), 
-        sfl: str = Query(default=""), 
-        stx: str = Query(default=""), 
-        current_page: int = Query(default=1, alias="page")
-        ):
-    '''
-    공통 쿼리 파라미터를 받는 함수
-    '''
-    return {"sst": sst, "sod": sod, "sfl": sfl, "stx": stx, "current_page": current_page}
-
-
-def select_query(request: Request, table_class, search_params: dict, 
-        same_search_fields: Optional[List[str]] = "", # 값이 완전히 같아야지만 필터링 '검색어'
-        prefix_search_fields: Optional[List[str]] = "", # 뒤에 %를 붙여서 필터링 '검색어%'
-        # contains_search_fields": Optional[List[str]] = "", # 양쪽에 %를 붙여서 필터링 '%검색어%', 위의 두 경우가 아니면 else 로 처리
-    ):
-    records_per_page = request.state.config.cf_page_rows
-
-    db = SessionLocal()
-    query = db.query(table_class)
-    
-    # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
-    if search_params['sst'] is not None and search_params['sst'] != "":
-        if search_params['sod'] == "desc":
-            query = query.order_by(desc(getattr(table_class, search_params['sst'])))
-        else:
-            query = query.order_by(asc(getattr(table_class, search_params['sst'])))
-
-    # sfl과 stx가 제공되면, 해당 열과 값으로 추가 필터링을 합니다.
-    if search_params['sfl'] is not None and search_params['stx'] is not None:
-        if hasattr(table_class, search_params['sfl']):  # sfl이 Table에 존재하는지 확인
-            # if search_params['sfl'] in ["mb_level"]:
-            if search_params['sfl'] in same_search_fields:
-                query = query.filter(getattr(table_class, search_params['sfl']) == search_params['stx'])
-            elif search_params['sfl'] in prefix_search_fields:
-                query = query.filter(getattr(table_class, search_params['sfl']).like(f"{search_params['stx']}%"))
-            else:
-                query = query.filter(getattr(table_class, search_params['sfl']).like(f"%{search_params['stx']}%"))
-
-    # 페이지 번호에 따른 offset 계산
-    offset = (search_params['current_page'] - 1) * records_per_page
-    # 최종 쿼리 결과를 가져옵니다.
-    rows = query.offset(offset).limit(records_per_page).all()
-    # # 전체 레코드 개수 계산
-    # # total_records = query.count()
-    return {
-        "rows": rows,
-        "total_count": query.count(),
-    }
     
 
 @router.get("/member_list")
