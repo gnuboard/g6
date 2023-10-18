@@ -1,6 +1,6 @@
-from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy import (create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, 
                         DateTime, Date,Time, Boolean)
+from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import ArgumentError, InvalidRequestError
@@ -185,7 +185,7 @@ class Member(Base):
     mb_name = Column(String(255), nullable=False, default='')
     mb_nick = Column(String(255), nullable=False, default='')
     mb_nick_date = Column(String(30), nullable=False)
-    mb_email = Column(String(255), unique=False, nullable=False, default='')
+    mb_email = Column(String(255), nullable=False, default='')
     mb_homepage = Column(String(255), nullable=False, default='')
     mb_level = Column(Integer, nullable=False, default=0, server_default=text('0'))
     mb_sex = Column(String(1), nullable=False, default='')
@@ -372,7 +372,7 @@ class WriteBaseModel(Base):
     wr_name = Column(String(255), nullable=False, default='')
     wr_email = Column(String(255), nullable=False, default='')
     wr_homepage = Column(String(255), nullable=False, default='')
-    wr_datetime = Column(DateTime, nullable=False, default='')
+    wr_datetime = Column(DateTime, nullable=False,default='')
     wr_file = Column(Integer, nullable=False, default=0, server_default=text('0'))
     wr_last = Column(String(30), nullable=False, default='')
     wr_ip = Column(String(255), nullable=False, default='')

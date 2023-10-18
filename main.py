@@ -1,7 +1,6 @@
 import datetime 
 from datetime import timedelta
 import re
-
 from fastapi import FastAPI, Depends, Request, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -76,7 +75,7 @@ async def main_middleware(request: Request, call_next):
     request.state.config = config
     
     ss_mb_id = request.session.get("ss_mb_id", "")
-    print("ss_mb_id:", ss_mb_id)
+    # print("ss_mb_id:", ss_mb_id)
     
     if ss_mb_id:
         member = db.query(models.Member).filter(models.Member.mb_id == ss_mb_id).first()
@@ -109,6 +108,7 @@ async def main_middleware(request: Request, call_next):
                     # 쿠키에 저장된 키와 여러가지 정보를 조합하여 만든 키가 일치한다면 로그인으로 간주
                     if request.cookies.get("ck_auto") == ss_mb_key:
                         request.session["ss_mb_id"] = cookie_mb_id
+                        response.set_cookie(key="ss_mb_id", value=cookie_mb_id, max_age=3600)
                         return RedirectResponse(url="/", status_code=302)
 
     # if not outlogin:
