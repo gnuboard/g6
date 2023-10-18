@@ -8,6 +8,7 @@ from fastapi.templating import Jinja2Templates
 from passlib.context import CryptContext
 from requests import Session
 from sqlalchemy import Index, func
+from sqlalchemy.orm import load_only
 import models
 from models import WriteBaseModel
 from database import SessionLocal, engine
@@ -157,7 +158,8 @@ def get_editor_select(id, selected):
 # 회원아이디를 SELECT 형식으로 얻음
 def get_member_id_select(id, level, selected, event=''):
     db = SessionLocal()
-    members = db.query(models.Member).filter(models.Member.mb_level >= level).all()
+    # 테이블에서 지정된 필드만 가져 오는 경우 load_only("field1", "field2") 함수를 사용 
+    members = db.query(models.Member).options(load_only("mb_id")).filter(models.Member.mb_level >= level).all()
     html_code = []
     html_code.append(f'<select id="{id}" name="{id}" {event}><option value="">선택하세요</option>')
     for member in members:
