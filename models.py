@@ -184,7 +184,7 @@ class Member(Base):
     mb_name = Column(String(255), nullable=False, default='')
     mb_nick = Column(String(255), nullable=False, default='')
     mb_nick_date = Column(String(30), nullable=False)
-    mb_email = Column(String(255), unique=True, nullable=False, default='')
+    mb_email = Column(String(255), nullable=False, default='')
     mb_homepage = Column(String(255), nullable=False, default='')
     mb_level = Column(Integer, nullable=False, default=0, server_default=text('0'))
     mb_sex = Column(String(1), nullable=False, default='')

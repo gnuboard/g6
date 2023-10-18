@@ -55,11 +55,6 @@ async def main_middleware(request: Request, call_next):
         return response
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
     
-    # 이미 처리된 요청인지 확인
-    if getattr(request.state, 'processed', False):
-        # 이미 처리된 요청이면 추가 처리 없이 진행
-        return await call_next(request)
-    
     member = None
     # outlogin = None
 
@@ -68,7 +63,7 @@ async def main_middleware(request: Request, call_next):
     request.state.config = config
     
     ss_mb_id = request.session.get("ss_mb_id", "")
-    print("ss_mb_id:", ss_mb_id)
+    # print("ss_mb_id:", ss_mb_id)
     
     if ss_mb_id:
         member = db.query(models.Member).filter(models.Member.mb_id == ss_mb_id).first()
@@ -101,6 +96,7 @@ async def main_middleware(request: Request, call_next):
                     # 쿠키에 저장된 키와 여러가지 정보를 조합하여 만든 키가 일치한다면 로그인으로 간주
                     if request.cookies.get("ck_auto") == ss_mb_key:
                         request.session["ss_mb_id"] = cookie_mb_id
+                        response.set_cookie(key="ss_mb_id", value=cookie_mb_id, max_age=3600)
                         return RedirectResponse(url="/", status_code=302)
 
     # if not outlogin:
@@ -157,8 +153,6 @@ async def main_middleware(request: Request, call_next):
         # "outlogin": outlogin.body.decode("utf-8"),
     }      
     
-    request.state.processed = True  # 요청이 처리되었음을 표시  
-                        
     response = await call_next(request)
 
     # 접속자 기록

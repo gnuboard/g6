@@ -1,8 +1,8 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, Request, Form, HTTPException
+from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import and_, or_
+from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
 from database import get_db
 import models 
@@ -22,19 +22,112 @@ templates.env.globals['generate_one_time_token'] = generate_one_time_token
 
 MEMBER_MENU_KEY = "200100"
 
+
+# 공통 쿼리 파라미터를 받는 함수를 정의합니다.
+def common_search_query_params(
+        sst: str = Query(default=""), 
+        sod: str = Query(default=""), 
+        sfl: str = Query(default=""), 
+        stx: str = Query(default=""), 
+        current_page: int = Query(default=1, alias="page")
+        ):
+    '''
+    공통 쿼리 파라미터를 받는 함수
+    '''
+    return {"sst": sst, "sod": sod, "sfl": sfl, "stx": stx, "current_page": current_page}
+
+
+def select_query(request: Request, table_class, search_params: dict, 
+        same_search_fields: Optional[List[str]] = "", # 값이 완전히 같아야지만 필터링 '검색어'
+        prefix_search_fields: Optional[List[str]] = "", # 뒤에 %를 붙여서 필터링 '검색어%'
+        # contains_search_fields": Optional[List[str]] = "", # 양쪽에 %를 붙여서 필터링 '%검색어%', 위의 두 경우가 아니면 else 로 처리
+    ):
+    records_per_page = request.state.config.cf_page_rows
+
+    db = SessionLocal()
+    query = db.query(table_class)
+    
+    # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
+    if search_params['sst'] is not None and search_params['sst'] != "":
+        if search_params['sod'] == "desc":
+            query = query.order_by(desc(getattr(table_class, search_params['sst'])))
+        else:
+            query = query.order_by(asc(getattr(table_class, search_params['sst'])))
+
+    # sfl과 stx가 제공되면, 해당 열과 값으로 추가 필터링을 합니다.
+    if search_params['sfl'] is not None and search_params['stx'] is not None:
+        if hasattr(table_class, search_params['sfl']):  # sfl이 Table에 존재하는지 확인
+            # if search_params['sfl'] in ["mb_level"]:
+            if search_params['sfl'] in same_search_fields:
+                query = query.filter(getattr(table_class, search_params['sfl']) == search_params['stx'])
+            elif search_params['sfl'] in prefix_search_fields:
+                query = query.filter(getattr(table_class, search_params['sfl']).like(f"{search_params['stx']}%"))
+            else:
+                query = query.filter(getattr(table_class, search_params['sfl']).like(f"%{search_params['stx']}%"))
+
+    # 페이지 번호에 따른 offset 계산
+    offset = (search_params['current_page'] - 1) * records_per_page
+    # 최종 쿼리 결과를 가져옵니다.
+    rows = query.offset(offset).limit(records_per_page).all()
+    # # 전체 레코드 개수 계산
+    # # total_records = query.count()
+    return {
+        "rows": rows,
+        "total_count": query.count(),
+    }
+    
+
 @router.get("/member_list")
-async def member_list(request: Request, db: Session = Depends(get_db)):
+async def member_list(request: Request, db: Session = Depends(get_db), search_params: dict = Depends(common_search_query_params)):
     '''
     회원관리 목록
     '''
     request.session["menu_key"] = MEMBER_MENU_KEY
     
-    members = db.query(models.Member).all()
-    admin = request.state.context['member']
+    result = select_query(
+                request, 
+                models.Member, 
+                search_params, 
+                same_search_fields = ["mb_level"], 
+                prefix_search_fields = ["mb_name", "mb_nick", "mb_tel", "mb_hp", "mb_datetime", "mb_recommend"]
+            )
+    # total_count = len(rows)
+    
+    # print(total_count)
+    # query = db.query(models.Member)
+    # records_per_page = request.state.config.cf_page_rows
+    
+    
+    # # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
+    # if cs['sst'] is not None and cs['sst'] != "":
+    #     if cs['sod'] == "desc":
+    #         query = query.order_by(desc(getattr(models.Board, cs['sst'])))
+    #     else:
+    #         query = query.order_by(asc(getattr(models.Board, cs['sst'])))
+            
+    # # sfl과 stx가 제공되면, 해당 열과 값으로 추가 필터링을 합니다.
+    # if cs['sfl'] is not None and cs['stx'] is not None:
+    #     if hasattr(models.Member, cs['sfl']):  # sfl이 models.Member에 존재하는지 확인
+    #         if cs['sfl'] in ["mb_level"]:
+    #             query = query.filter(getattr(models.Member, cs['sfl']) == cs['stx'])
+    #         else:
+    #             query = query.filter(getattr(models.Member, cs['sfl']).like(f"%{cs['stx']}%"))
+                
+    # # 페이지 번호에 따른 offset 계산
+    # offset = (cs['current_page'] - 1) * records_per_page
+    # # 최종 쿼리 결과를 가져옵니다.
+    # members = query.offset(offset).limit(records_per_page).all()
+    # 전체 레코드 개수 계산
+    # total_records = query.count()
+    
+    query_string = generate_query_string(request)
+    
     context = {
         "request": request,
-        "members": members,
-        "admin": admin,
+        "members": result['rows'],
+        "admin": request.state.context['member'], # 로그인해 있는 회원을 관리자로 간주함
+        "total_count": result['total_count'],
+        "paging": get_paging(request, search_params['current_page'], result['total_count'], f"/admin/member_list?{query_string}&page="),
     }
     return templates.TemplateResponse("member_list.html", context)
 
@@ -45,11 +138,11 @@ async def member_list_update(request: Request, db: Session = Depends(get_db),
         checks: Optional[List[int]] = Form(None, alias="chk[]"),
         mb_id: Optional[List[str]] = Form(None, alias="mb_id[]"),
         mb_certify: Optional[List[str]] = Form(None, alias="mb_certify[]"),
-        mb_open: Optional[List[str]] = Form(None, alias="mb_open[]"),
-        mb_mailling: Optional[List[str]] = Form(None, alias="mb_mailling[]"),
-        mb_sms: Optional[List[str]] = Form(None, alias="mb_sms[]"),
-        mb_adult: Optional[List[str]] = Form(None, alias="mb_adult[]"),
-        mb_intercept_date: Optional[List[str]] = Form(None, alias="mb_intercept_date[]"),
+        mb_open: Optional[List[int]] = Form(None, alias="mb_open[]"),
+        mb_mailling: Optional[List[int]] = Form(None, alias="mb_mailling[]"),
+        mb_sms: Optional[List[int]] = Form(None, alias="mb_sms[]"),
+        mb_adult: Optional[List[int]] = Form(None, alias="mb_adult[]"),
+        mb_intercept_date: Optional[List[int]] = Form(None, alias="mb_intercept_date[]"),
         mb_level: Optional[List[str]] = Form(None, alias="mb_level[]"),
         act_button: Optional[str] = Form(...),
         ):
@@ -60,8 +153,16 @@ async def member_list_update(request: Request, db: Session = Depends(get_db),
 
     if act_button == "선택삭제":
         for i in checks:
-            member = db.query(models.Member).filter(models.Member.bo_table == mb_id[i]).first()
+            member = db.query(models.Member).filter(models.Member.mb_id == mb_id[i]).first()
             if member:
+                
+                # // 이미 삭제된 회원은 제외
+                # if(preg_match('#^[0-9]{8}.*삭제함#', $mb['mb_memo']))
+                #     return
+                # 이미 삭제된 회원은 제외
+                if re.match(r'^[0-9]{8}.*삭제함', member.mb_memo):
+                    continue
+                
                 # member 의 경우 레코드를 삭제하는게 아니라 mb_id 를 남기고 모두 제거
                 # $sql = " update {$g5['member_table']} set mb_password = '', mb_level = 1, mb_email = '', mb_homepage = '', mb_tel = '', mb_hp = '', mb_zip1 = '', mb_zip2 = '', mb_addr1 = '', mb_addr2 = '', mb_addr3 = '', mb_point = 0, mb_profile = '', mb_birth = '', mb_sex = '', mb_signature = '', mb_memo = '".date('Ymd', G5_SERVER_TIME)." 삭제함\n".sql_real_escape_string($mb['mb_memo'])."', mb_certify = '', mb_adult = 0, mb_dupinfo = '' where mb_id = '{$mb_id}' ";
                 member.mb_password = ''
@@ -97,11 +198,11 @@ async def member_list_update(request: Request, db: Session = Depends(get_db),
                 # 관리권한 테이블에서 삭제
                 
                 # 그룹관리자인 경우 그룹관리자를 공백으로
-                db.query(models.Group).filter(models.Group.gr_admin == mb_id).update({models.Group.gr_admin: ''})                
+                db.query(models.Group).filter(models.Group.gr_admin == mb_id[i]).update({models.Group.gr_admin: ''})                
                 db.commit()
                 
                 # 게시판관리자인 경우 게시판관리자를 공백으로
-                db.query(models.Board).filter(models.Board.bo_admin == mb_id).update({models.Board.bo_admin: ''})                
+                db.query(models.Board).filter(models.Board.bo_admin == mb_id[i]).update({models.Board.bo_admin: ''})                
                 db.commit()
                 
                 # 소셜로그인에서 삭제 또는 해제
@@ -113,15 +214,17 @@ async def member_list_update(request: Request, db: Session = Depends(get_db),
             return RedirectResponse(f"/admin/member_list?{query_string}", status_code=303)
 
     # 선택수정
+    # print(mb_open)
     for i in checks:
         member = db.query(models.Member).filter(models.Member.mb_id == mb_id[i]).first()
         if member:
             member.mb_certify = mb_certify[i]
+            # print(get_from_list(mb_open, i, 0))
             member.mb_open = get_from_list(mb_open, i, 0)
             member.mb_mailling = get_from_list(mb_mailling, i, 0)
             member.mb_sms = get_from_list(mb_sms, i, 0)
             member.mb_adult = get_from_list(mb_adult, i, 0)
-            member.mb_intercept_date = get_from_list(mb_intercept_date, i, 0)
+            member.mb_intercept_date = datetime.now().strftime('%Y%m%d') if get_from_list(mb_intercept_date, i, 0) else ""
             member.mb_level = mb_level[i]
             
             # board.bo_read_point = int(bo_read_point[i]) if bo_read_point[i] is not None and bo_read_point[i].isdigit() else 0
