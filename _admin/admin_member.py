@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from fastapi import APIRouter, Depends, Request, Form, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -15,6 +15,7 @@ templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.globals['getattr'] = getattr
 templates.env.globals['today'] = SERVER_TIME.strftime("%Y%m%d")
+templates.env.globals['get_selected'] = get_selected
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals['generate_one_time_token'] = generate_one_time_token
@@ -22,14 +23,127 @@ templates.env.globals['generate_one_time_token'] = generate_one_time_token
 MEMBER_MENU_KEY = "200100"
 
 @router.get("/member_list")
-def member_list(request: Request, db: Session = Depends(get_db)):
+async def member_list(request: Request, db: Session = Depends(get_db)):
     '''
     회원관리 목록
     '''
     request.session["menu_key"] = MEMBER_MENU_KEY
     
     members = db.query(models.Member).all()
-    return templates.TemplateResponse("member_list.html", {"request": request, "members": members})
+    admin = request.state.context['member']
+    context = {
+        "request": request,
+        "members": members,
+        "admin": admin,
+    }
+    return templates.TemplateResponse("member_list.html", context)
+
+
+@router.post("/member_list_update")
+async def member_list_update(request: Request, db: Session = Depends(get_db),
+        token: Optional[str] = Form(...),
+        checks: Optional[List[int]] = Form(None, alias="chk[]"),
+        mb_id: Optional[List[str]] = Form(None, alias="mb_id[]"),
+        mb_certify: Optional[List[str]] = Form(None, alias="mb_certify[]"),
+        mb_open: Optional[List[str]] = Form(None, alias="mb_open[]"),
+        mb_mailling: Optional[List[str]] = Form(None, alias="mb_mailling[]"),
+        mb_sms: Optional[List[str]] = Form(None, alias="mb_sms[]"),
+        mb_adult: Optional[List[str]] = Form(None, alias="mb_adult[]"),
+        mb_intercept_date: Optional[List[str]] = Form(None, alias="mb_intercept_date[]"),
+        mb_level: Optional[List[str]] = Form(None, alias="mb_level[]"),
+        act_button: Optional[str] = Form(...),
+        ):
+
+    # if not token or not validate_one_time_token(token, 'update'):
+    #     return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰값이 일치하지 않습니다."]})    
+    query_string = generate_query_string(request)
+
+    if act_button == "선택삭제":
+        for i in checks:
+            member = db.query(models.Member).filter(models.Member.bo_table == mb_id[i]).first()
+            if member:
+                # member 의 경우 레코드를 삭제하는게 아니라 mb_id 를 남기고 모두 제거
+                # $sql = " update {$g5['member_table']} set mb_password = '', mb_level = 1, mb_email = '', mb_homepage = '', mb_tel = '', mb_hp = '', mb_zip1 = '', mb_zip2 = '', mb_addr1 = '', mb_addr2 = '', mb_addr3 = '', mb_point = 0, mb_profile = '', mb_birth = '', mb_sex = '', mb_signature = '', mb_memo = '".date('Ymd', G5_SERVER_TIME)." 삭제함\n".sql_real_escape_string($mb['mb_memo'])."', mb_certify = '', mb_adult = 0, mb_dupinfo = '' where mb_id = '{$mb_id}' ";
+                member.mb_password = ''
+                member.mb_level = 1
+                member.mb_email = ''
+                member.mb_homepage = ''
+                member.mb_tel = ''
+                member.mb_hp = ''
+                member.mb_zip1 = ''
+                member.mb_zip2 = ''
+                member.mb_addr1 = ''
+                member.mb_addr2 = ''
+                member.mb_addr3 = ''
+                member.mb_point = 0
+                member.mb_profile = ''
+                member.mb_birth = ''
+                member.mb_sex = ''
+                member.mb_signature = ''
+                member.mb_memo = f"{SERVER_TIME.strftime('%Y%m%d')} 삭제함\n{member.mb_memo}"
+                member.mb_certify = ''
+                member.mb_adult = 0
+                member.mb_dupinfo = ''
+                db.commit()
+                # 나머지 테이블에서도 삭제
+                # 포인트 테이블에서 삭제
+                
+                # 그룹접근가능 테이블에서 삭제
+                
+                # 쪽지 테이블에서 삭제
+                
+                # 스크랩 테이블에서 삭제
+                
+                # 관리권한 테이블에서 삭제
+                
+                # 그룹관리자인 경우 그룹관리자를 공백으로
+                db.query(models.Group).filter(models.Group.gr_admin == mb_id).update({models.Group.gr_admin: ''})                
+                db.commit()
+                
+                # 게시판관리자인 경우 게시판관리자를 공백으로
+                db.query(models.Board).filter(models.Board.bo_admin == mb_id).update({models.Board.bo_admin: ''})                
+                db.commit()
+                
+                # 소셜로그인에서 삭제 또는 해제
+                
+                # 아이콘 삭제
+                
+                # 프로필 이미지 삭제
+
+            return RedirectResponse(f"/admin/member_list?{query_string}", status_code=303)
+
+    # 선택수정
+    for i in checks:
+        member = db.query(models.Member).filter(models.Member.mb_id == mb_id[i]).first()
+        if member:
+            member.mb_certify = mb_certify[i]
+            member.mb_open = get_from_list(mb_open, i, 0)
+            member.mb_mailling = get_from_list(mb_mailling, i, 0)
+            member.mb_sms = get_from_list(mb_sms, i, 0)
+            member.mb_adult = get_from_list(mb_adult, i, 0)
+            member.mb_intercept_date = get_from_list(mb_intercept_date, i, 0)
+            member.mb_level = mb_level[i]
+            
+            # board.bo_read_point = int(bo_read_point[i]) if bo_read_point[i] is not None and bo_read_point[i].isdigit() else 0
+            # board.bo_write_point = int(bo_write_point[i]) if bo_write_point[i] is not None and bo_write_point[i].isdigit() else 0
+            # board.bo_comment_point = int(bo_comment_point[i]) if bo_comment_point[i] is not None and bo_comment_point[i].isdigit() else 0
+            # board.bo_download_point = int(bo_download_point[i]) if bo_download_point[i] is not None and bo_download_point[i].isdigit() else 0
+            
+            # # try:
+            # #     board.bo_use_sns = 1 if i in bo_use_sns is not None else 0
+            # # except (TypeError, IndexError):
+            # #     board.bo_use_sns = 0
+            # board.bo_use_sns = get_from_list(bo_use_sns, i, 0)
+            # board.bo_use_search = get_from_list(bo_use_search, i, 0)
+            
+            # checkbox 에 값을 집어 넣는것 까지 하다가 어느 정도 결과가 나와서 퇴근함 kagla 230922 17:50
+            # checkbox 에 value = 0, 1, 2, 3... n 으로 증가시켜야 함 (주의)
+    
+            # board.bo_order = int(bo_order[i]) if bo_order[i] is not None and bo_order[i].isdigit() else 0
+            # board.bo_device = bo_device[i] if bo_device[i] is not None else ""
+            db.commit()
+            
+    return RedirectResponse(f"/admin/member_list?{query_string}", status_code=303)
 
 
 @router.get("/member_form")

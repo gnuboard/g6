@@ -59,6 +59,7 @@ def check_login(request: Request, db: Session = Depends(get_db), mb_id: str = Fo
     '''
     errors = []
     member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
+    # print("member----------:", member.mb_id)
     if not member:
         # raise HTTPException(status_code=404, detail="{mb_id} is not found.")
         errors.append("아이디 또는 패스워드가 일치하지 않습니다.")

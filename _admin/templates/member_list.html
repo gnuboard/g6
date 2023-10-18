@@ -45,12 +45,12 @@
 
 
 <form name="fmemberlist" id="fmemberlist" action="/admin/member_list_update" onsubmit="return fmemberlist_submit(this);" method="post">
-    <input type="hidden" name="sst" value="mb_datetime">
-    <input type="hidden" name="sod" value="desc">
-    <input type="hidden" name="sfl" value="">
-    <input type="hidden" name="stx" value="">
-    <input type="hidden" name="page" value="1">
-    <input type="hidden" name="token" value="">
+    <input type="hidden" name="sst" value="{{ request.state.sst }}">
+    <input type="hidden" name="sod" value="{{ request.state.sod }}">
+    <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
+    <input type="hidden" name="stx" value="{{ request.state.stx }}">
+    <input type="hidden" name="page" value="{{ request.state.page }}">
+    <input type="hidden" name="token" value="{{ generate_one_time_token('update') }}">
 
     <div class="tbl_head01 tbl_wrap">
         <table>
@@ -89,34 +89,43 @@
                     {% set background_color = 'bg0' if loop.index0 % 2 == 0 else 'bg1' %}
                     <tr class="{{ background_color }}">
                     <td headers="mb_list_chk" class="td_chk" rowspan="2">
-                        <input type="hidden" name="mb_id[{{ loop.index0 }}]" value="{{ member.mb_id }}" id="mb_id_{{ loop.index0 }}">
-                        <label for="chk_0" class="sound_only">{{ member.mb_name }} {{ member.mb_nick }}님</label>
-                        <input type="checkbox" name="chk[]" value="0" id="chk_0">
+                        <input type="hidden" name="mb_id[]" value="{{ member.mb_id }}" id="mb_id_{{ loop.index0 }}">
+                        <label for="chk_{{ loop.index0 }}" class="sound_only">{{ member.mb_name }} {{ member.mb_nick }}님</label>
+                        <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
                     </td>
                     <td headers="mb_list_id" colspan="2" class="td_name sv_use">{{ member.mb_id }}</td>
                     <td headers="mb_list_cert" rowspan="2" class="td_mbcert">
-                        <input type="radio" name="mb_certify[{{ loop.index0 }}]" value="simple" id="mb_certify_sa_{{ loop.index0 }}" >
-                        <label for="mb_certify_sa_{{ loop.index0 }}">간편인증</label><br>
-                        <input type="radio" name="mb_certify[{{ loop.index0 }}]" value="hp" id="mb_certify_hp_{{ loop.index0 }}" >
-                        <label for="mb_certify_hp_{{ loop.index0 }}">휴대폰</label><br>
-                        <input type="radio" name="mb_certify[{{ loop.index0 }}]" value="ipin" id="mb_certify_ipin_{{ loop.index0 }}" >
-                        <label for="mb_certify_ipin_{{ loop.index0 }}">아이핀</label>
+                        <select id="mb_certify" name="mb_certify[]">
+                        <option value="">미인증</option>
+                        <option value="simple" {{ get_selected('simple', member.mb_certify)}}>간편인증</option>
+                        <option value="hp" {{ get_selected('hp', member.mb_certify)}}>휴대폰</option>
+                        <option value="ipin" {{ get_selected('ipin', member.mb_certify)}}>아이핀</option>
+                        </select>    
                     </td>
                     <td headers="mb_list_mailc"><span class="txt_true">Yes</span></td>
                     <td headers="mb_list_open">
                         <label for="mb_open_{{ loop.index0 }}" class="sound_only">정보공개</label>
-                        <input type="checkbox" name="mb_open[{{ loop.index0 }}]" value="1" id="mb_open_{{ loop.index0 }}" {{ 'checked' if member.mb_open else '' }}>
+                        <input type="checkbox" name="mb_open[]" value="{{ loop.index0 }}" id="mb_open_{{ loop.index0 }}" {{ 'checked' if member.mb_open else '' }}>
                     </td>
                     <td headers="mb_list_mailr">
                         <label for="mb_mailling_0" class="sound_only">메일수신</label>
-                        <input type="checkbox" name="mb_mailling[{{ loop.index0 }}]" value="1" id="mb_mailling_{{ loop.index0 }}" {{ 'checked' if member.mb_mailling else '' }}>
+                        <input type="checkbox" name="mb_mailling[]" value="{{ loop.index0 }}" id="mb_mailling_{{ loop.index0 }}" {{ 'checked' if member.mb_mailling else '' }}>
                     </td>
                     <td headers="mb_list_auth" class="td_mbstat">
-                        정상                        </td>
-                    <td headers="mb_list_mobile" class="td_tel"></td>
-                    <td headers="mb_list_lastcall" class="td_date">23-09-11</td>
+                        {% if member.mb_leave_date %}
+                            <span class="mb_leave_msg">탈퇴함</span>
+                        {% elif member.mb_intercept_date %}
+                            <span class="mb_intercept_msg">차단됨</span>
+                        {% else %}
+                            정상
+                        {% endif %}
+                    </td>
+                    <td headers="mb_list_mobile" class="td_tel">{{ member.mb_tel }}</td>
+                    <td headers="mb_list_lastcall" class="td_date">{{ member.mb_today_login[2:10] }}</td>
                     <td headers="mb_list_grp" class="td_numsmall"></td>
-                    <td headers="mb_list_mng" rowspan="2" class="td_mng td_mng_s"><a href="/admin/member_form/{{ member.mb_id }}?sst=&amp;sod=&amp;sfl=&amp;stx=&amp;page=&amp;w=u" class="btn btn_03">수정</a><a href="/admin/boardgroupmember_form?mb_id=kagla" class="btn btn_02">그룹</a></td>
+                    <td headers="mb_list_mng" rowspan="2" class="td_mng td_mng_s">
+                        <a href="/admin/member_form/{{ member.mb_id }}?{{ query_string }}" class="btn btn_03">수정</a>
+                        <a href="/admin/boardgroupmember_form?mb_id={{ member.mb_id }}" class="btn btn_02">그룹</a></td>
                 </tr>
                 <tr class="{{ background_color }}">
                     <td headers="mb_list_name" class="td_mbname">{{ member.mb_name }}</td>
@@ -139,33 +148,22 @@
 
                     <td headers="mb_list_sms">
                         <label for="mb_sms_0" class="sound_only">SMS수신</label>
-                        <input type="checkbox" name="mb_sms[{{ loop.index0 }}]"  value="1" id="mb_sms_{{ loop.index0 }}" {{ 'checked' if member.mb_sms else '' }}>
+                        <input type="checkbox" name="mb_sms[]"  value="{{ loop.index0 }}" id="mb_sms_{{ loop.index0 }}" {{ 'checked' if member.mb_sms else '' }}>
                     </td>
                     <td headers="mb_list_adultc">
                         <label for="mb_adult_0" class="sound_only">성인인증</label>
-                        <input type="checkbox" name="mb_adult[{{ loop.index0 }}]"  value="1" id="mb_adult_{{ loop.index0 }}" {{ 'checked' if member.mb_adult else '' }}>
+                        <input type="checkbox" name="mb_adult[]"  value="{{ loop.index0 }}" id="mb_adult_{{ loop.index0 }}" {{ 'checked' if member.mb_adult else '' }}>
                     </td>
                     <td headers="mb_list_deny">
-                        <input type="checkbox" name="mb_intercept_date[{{ loop.index0 }}]"  value="{{ member.mb_intercept_date }}" id="mb_intercept_date_{{ loop.index0 }}" title="차단하기">
+                        <input type="checkbox" name="mb_intercept_date[]"  value="{{ loop.index0 }}" id="mb_intercept_date_{{ loop.index0 }}" title="차단하기">
                         <label for="mb_intercept_date_{{ loop.index0 }}" class="sound_only">접근차단</label>
                     </td>
                     <td headers="mb_list_auth" class="td_mbstat">
-                        <select id="mb_level[{{ loop.index0 }}]" name="mb_level[{{ loop.index0 }}]">
-                        <option value="1">1</option>
-                        <option value="2" selected="selected">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                        <option value="7">7</option>
-                        <option value="8">8</option>
-                        <option value="9">9</option>
-                        <option value="10">10</option>
-                        </select>
+                        {{ get_member_level_select('mb_level[]', 1, admin.mb_level if admin else 1, member.mb_level if member else 1)|safe }}
                     </td>
                     <td headers="mb_list_tel" class="td_tel">{{ member.mb_tel }}</td>
-                    <td headers="mb_list_join" class="td_date">{{ member.mb_datetime }}</td>
-                    <td headers="mb_list_point" class="td_num"><a href="/admin/point_list?sfl=mb_id&amp;stx=kagla">1,000</a></td>
+                    <td headers="mb_list_join" class="td_date">{{ member.mb_datetime[2:10] }}</td>
+                    <td headers="mb_list_point" class="td_num"><a href="/admin/point_list?sfl=mb_id&stx={{ member.mb_id }}">{{ member.mb_point }}</a></td>
                 </tr>
                 {% endfor %}
             </tbody>

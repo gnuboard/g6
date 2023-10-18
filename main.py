@@ -46,6 +46,11 @@ app.include_router(qa_router, prefix="/qa", tags=["qa"])
 async def main_common(request: Request, call_next):
     # global is_mobile, user_device
     
+    # 이미 처리된 요청인지 확인
+    if getattr(request.state, 'processed', False):
+        # 이미 처리된 요청이면 추가 처리 없이 진행
+        return await call_next(request)
+    
     member = None
     # outlogin = None
 
@@ -54,6 +59,7 @@ async def main_common(request: Request, call_next):
     request.state.config = config
     
     ss_mb_id = request.session.get("ss_mb_id", "")
+    print("ss_mb_id:", ss_mb_id)
     
     if ss_mb_id:
         member = db.query(models.Member).filter(models.Member.mb_id == ss_mb_id).first()
@@ -140,7 +146,9 @@ async def main_common(request: Request, call_next):
         "config": config,
         "member": member,
         # "outlogin": outlogin.body.decode("utf-8"),
-    }        
+    }      
+    
+    request.state.processed = True  # 요청이 처리되었음을 표시  
                         
     response = await call_next(request)
 
