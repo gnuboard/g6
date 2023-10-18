@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 
 import models
 
+import cachetools
+
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
@@ -21,7 +23,6 @@ def get_menu_list(request: Request, db: Session = Depends(get_db)):
     메뉴 데이터 조회 레이아웃
     """
     # TODO: 캐싱 처리 추가
-    # FiX: 하위메뉴 스크립트 오류 (이유 : 비동기 처리)
 
     menus = []
     # 부모메뉴 조회

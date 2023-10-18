@@ -10,6 +10,8 @@ from typing import List
 
 import models
 
+import bleach
+
 
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
@@ -89,13 +91,13 @@ def menu_update(
     request: Request,
     db: Session = Depends(get_db),
     token: str = Form(...),
-    parent_code: List[str] = Form(..., alias="code[]"),
-    me_name: List[str] = Form(..., alias="me_name[]"),
-    me_link: List[str] = Form(..., alias="me_link[]"),
-    me_target: List[str] = Form(..., alias="me_target[]"),
-    me_order: List[int] = Form(..., alias="me_order[]"),
-    me_use: List[int] = Form(..., alias="me_use[]"),
-    me_mobile_use: List[int] = Form(..., alias="me_mobile_use[]")
+    parent_code: List[str] = Form(None, alias="code[]"),
+    me_name: List[str] = Form(None, alias="me_name[]"),
+    me_link: List[str] = Form(None, alias="me_link[]"),
+    me_target: List[str] = Form(None, alias="me_target[]"),
+    me_order: List[int] = Form(None, alias="me_order[]"),
+    me_use: List[int] = Form(None, alias="me_use[]"),
+    me_mobile_use: List[int] = Form(None, alias="me_mobile_use[]")
 ):
     """
     메뉴 수정
@@ -108,35 +110,40 @@ def menu_update(
         db.query(models.Menu).delete()
 
         # 새로운 메뉴 등록
-        # TODO: me_name, me_link 유효성검사
-        length = len(parent_code)
-        group_code = None
-        for i in range(0, length):
-            if group_code == parent_code[int(i)]:
-                max_me_code = db.query(func.max(func.substring(models.Menu.me_code, 3, 2))).filter(func.substring(models.Menu.me_code, 1, 2) == group_code).scalar()
-                max_me_code_10 = base36_to_base10(max_me_code)
-                max_me_code_10 += 36
-                insert_me_code = group_code + base10_to_base36(max_me_code_10)
-                
-            else:
-                max_me_code = db.query(func.max(func.substring(models.Menu.me_code, 1, 2))).filter(func.length(models.Menu.me_code) == 2).scalar()
-                max_me_code_10 = base36_to_base10(max_me_code)
-                max_me_code_10 += 36
-                insert_me_code = base10_to_base36(max_me_code_10)
+        if parent_code:
+            length = len(parent_code)
+            group_code = None
 
-                group_code = parent_code[int(i)]
+            for i in range(0, length):
+                insert_me_name = re.sub(r'<.*?>', '', me_name[int(i)])
+                insert_me_link = bleach.clean(me_link[int(i)])
+                if group_code == parent_code[int(i)]:
+                    max_me_code = db.query(func.max(func.substring(models.Menu.me_code, 3, 2))).filter(func.substring(models.Menu.me_code, 1, 2) == group_code).scalar()
+                    max_me_code_10 = base36_to_base10(max_me_code)
+                    max_me_code_10 += 36
+                    insert_me_code = group_code + base10_to_base36(max_me_code_10)
+                    
+                else:
+                    max_me_code = db.query(func.max(func.substring(models.Menu.me_code, 1, 2))).filter(func.length(models.Menu.me_code) == 2).scalar()
+                    max_me_code_10 = base36_to_base10(max_me_code)
+                    max_me_code_10 += 36
+                    insert_me_code = base10_to_base36(max_me_code_10)
 
-            db.add(
-                models.Menu(
-                    me_code=insert_me_code,
-                    me_name=me_name[int(i)],
-                    me_link=me_link[int(i)],
-                    me_target=me_target[int(i)],
-                    me_order=me_order[int(i)],
-                    me_use=me_use[int(i)],
-                    me_mobile_use=me_mobile_use[int(i)],
+                    group_code = parent_code[int(i)]
+
+                db.add(
+                    models.Menu(
+                        me_code=insert_me_code,
+                        me_name=insert_me_name,
+                        me_link=insert_me_link,
+                        me_target=me_target[int(i)],
+                        me_order=me_order[int(i)],
+                        me_use=me_use[int(i)],
+                        me_mobile_use=me_mobile_use[int(i)],
+                    )
                 )
-            )
+                db.commit()
+        else:
             db.commit()
         
     except Exception as e:

@@ -15,7 +15,7 @@
                         <ul class="gnb_2dul_box">
                             {% for sub in menu.sub %}
                                 <li class="gnb_2dli">
-                                    <a href="{{ sub.me_link }}" target="_{{ sub.me_target }}" class="gnb_1da">{{ sub.me_name }}</a>
+                                    <a href="{{ sub.me_link }}" target="_{{ sub.me_target }}" class="gnb_2da">{{ sub.me_name }}</a>
                                 </li>
                             {% endfor %}
                         </ul>
@@ -35,11 +35,11 @@
             {% for menu in menus %}
                 {% set is_submenu = True if menu.sub|count > 0 else False %}
                 <li class="gnb_al_li">
-                    <a href="{{ menu.me_link }}" target="_{{ menu.me_target }}" class="gnb_1da">{{ menu.me_name }}</a>
+                    <a href="{{ menu.me_link }}" target="_{{ menu.me_target }}" class="gnb_al_a">{{ menu.me_name }}</a>
                     {% if is_submenu %}
                         <ul>
                             {% for sub in menu.sub %}
-                                <li><a href="{{ sub.me_link }}" target="_{{ sub.me_target }}" class="gnb_1da">{{ sub.me_name }}</a></li>
+                                <li><a href="{{ sub.me_link }}" target="_{{ sub.me_target }}">{{ sub.me_name }}</a></li>
                             {% endfor %}
                         </ul>
                     {% endif %}
