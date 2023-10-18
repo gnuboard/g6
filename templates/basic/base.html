@@ -139,59 +139,37 @@ $(function() {
                 }
                 </script>
             </fieldset>
-                
-            
-<!-- 인기검색어 시작 { -->
-<section id="popular">
-    <h2>인기검색어</h2>
-    <div class="popular_inner">
-	    <ul>
-	    	    </ul>
-        <span class="popular_btns">
-            <a href="#" class="pp-next"><i class="fa fa-angle-right" aria-hidden="true"></i></a>
-            <a href="#" class="pp-prev"><i class="fa fa-angle-left" aria-hidden="true"></i></a>
-        </span>
-    </div>
-</section>
-
-<!-- } 인기검색어 끝 -->        </div>
+            <!-- 인기검색어 시작 { -->
+            <section id="popular">
+                <h2>인기검색어</h2>
+                <div class="popular_inner">
+                    <ul>
+                            </ul>
+                    <span class="popular_btns">
+                        <a href="#" class="pp-next"><i class="fa fa-angle-right" aria-hidden="true"></i></a>
+                        <a href="#" class="pp-prev"><i class="fa fa-angle-left" aria-hidden="true"></i></a>
+                    </span>
+                </div>
+            </section>
+            <!-- } 인기검색어 끝 -->
+        </div>
         <ul class="hd_login">        
-                        <li><a href="/bbs/member_confirm?url=/bbs/register_form">정보수정</a></li>
+            <li><a href="/bbs/member_confirm?url=/bbs/register_form">정보수정</a></li>
             <li><a href="/bbs/logout">로그아웃</a></li>
-                        <li class="tnb_admin"><a href="/admin">관리자</a></li>
-                        
+            <li class="tnb_admin"><a href="/admin">관리자</a></li>
         </ul>
     </div>
-    
+
     <nav id="gnb">
         <h2>메인메뉴</h2>
-        <div class="gnb_wrap">
-            <ul id="gnb_1dul">
-                <li class="gnb_1dli gnb_mnal"><button type="button" class="gnb_menu_btn" title="전체메뉴"><i class="fa fa-bars" aria-hidden="true"></i><span class="sound_only">전체메뉴열기</span></button></li>
-                                    <li class="gnb_empty">메뉴 준비 중입니다. <a href="/admin/menu_list">관리자모드 &gt; 환경설정 &gt; 메뉴설정</a>에서 설정하실 수 있습니다.</li>
-                            </ul>
-            <div id="gnb_all">
-                <h2>전체메뉴</h2>
-                <ul class="gnb_al_ul">
-                                            <li class="gnb_empty">메뉴 준비 중입니다. <br><a href="/admin/menu_list">관리자모드 &gt; 환경설정 &gt; 메뉴설정</a>에서 설정하실 수 있습니다.</li>
-                                    </ul>
-                <button type="button" class="gnb_close_btn"><i class="fa fa-times" aria-hidden="true"></i></button>
-            </div>
-            <div id="gnb_all_bg"></div>
-        </div>
+        <div class="gnb_wrap">&nbsp;</div>
     </nav>
     <script>
-    
-    $(function(){
-        $(".gnb_menu_btn").click(function(){
-            $("#gnb_all, #gnb_all_bg").show();
-        });
-        $(".gnb_close_btn, #gnb_all_bg").click(function(){
-            $("#gnb_all, #gnb_all_bg").hide();
-        });
-    });
-
+        $(function(){
+            $(".gnb_wrap").load("{{ url_for('get_menu_list') }}", {});
+        })
     </script>
+
 </div>
 <!-- } 상단 끝 -->
 

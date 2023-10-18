@@ -41,7 +41,8 @@ def config_form(request: Request, db: Session = Depends(get_db)):
     host_name = socket.gethostname()
     host_ip = socket.gethostbyname(host_name)
     
-    config = db.query(models.Config).first()
+    # config = db.query(models.Config).first()
+    config = request.state.context['config']
     return templates.TemplateResponse("config_form.html", 
         {
             "request": request, 

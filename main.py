@@ -39,6 +39,7 @@ from _bbs.content import router as content_router
 from _bbs.faq import router as faq_router
 from _bbs.qa import router as qa_router
 from _member.member_profile import router as user_profile_router
+from _bbs.menu import router as menu_router
 
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
@@ -48,14 +49,24 @@ app.include_router(user_profile_router, prefix="/bbs", tags=["profile"])
 app.include_router(content_router, prefix="/content", tags=["content"])
 app.include_router(faq_router, prefix="/faq", tags=["faq"])
 app.include_router(qa_router, prefix="/qa", tags=["qa"])
+app.include_router(menu_router, prefix="/menu", tags=["menu"])
 
 # is_mobile = False
 # user_device = 'pc'
 
 # 항상 실행해야 하는 미들웨어
 @app.middleware("http")
-async def main_common(request: Request, call_next):
+async def main_middleware(request: Request, call_next):
     # global is_mobile, user_device
+
+    ### 미들웨어가 여러번 실행되는 것을 막는 코드 시작    
+    # 요청의 경로를 얻습니다.
+    path = request.url.path
+    # 경로가 정적 파일에 대한 것이 아닌지 확인합니다 (css, js, 이미지 등).
+    if (path.startswith('/static') or path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.webp'))):
+        response = await call_next(request)
+        return response
+    ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
     
     member = None
     # outlogin = None
@@ -65,6 +76,7 @@ async def main_common(request: Request, call_next):
     request.state.config = config
     
     ss_mb_id = request.session.get("ss_mb_id", "")
+    print("ss_mb_id:", ss_mb_id)
     
     if ss_mb_id:
         member = db.query(models.Member).filter(models.Member.mb_id == ss_mb_id).first()
