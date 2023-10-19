@@ -452,6 +452,33 @@ def generate_query_string(request: Request):
     search_fields = {k: v for k, v in search_fields.items() if v is not None}
 
     return urlencode(search_fields)    
+            
+
+def query_string(request: Request):
+    search_fields = {}
+    if request.method == "GET":
+        search_fields = {
+            'sst': request.query_params.get("sst"),
+            'sod': request.query_params.get("sod"),
+            'sfl': request.query_params.get("sfl"),
+            'stx': request.query_params.get("stx"),
+            'sca': request.query_params.get("sca"),
+            # 'page': request.query_params.get("page")
+        }
+    else:
+        search_fields = {
+            'sst': request._form.get("sst") if request._form else "",
+            'sod': request._form.get("sod") if request._form else "",
+            'sfl': request._form.get("sfl") if request._form else "",
+            'stx': request._form.get("stx") if request._form else "",
+            'sca': request._form.get("sca") if request._form else "",
+            # 'page': request._form.get("page") if request._form else ""
+        }    
+        
+    # None 값을 제거
+    search_fields = {k: v for k, v in search_fields.items() if v is not None}
+
+    return urlencode(search_fields)    
 
         
 # 파이썬의 내장함수인 list 와 이름이 충돌하지 않도록 변수명을 lst 로 변경함
@@ -620,6 +647,7 @@ def select_query(request: Request, table_model, search_params: dict,
         same_search_fields: Optional[List[str]] = "", # 값이 완전히 같아야지만 필터링 '검색어'
         prefix_search_fields: Optional[List[str]] = "", # 뒤에 %를 붙여서 필터링 '검색어%'
         default_sod: str = "asc",
+        # default_sst: Optional[List[str]] = [],
         default_sst: str = "",
     ):
     config = request.state.config
@@ -646,10 +674,18 @@ def select_query(request: Request, table_model, search_params: dict,
     # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
     if sst:
         sod = search_params.get('sod', default_sod) or default_sod
-        if sod == "desc":
-            query = query.order_by(desc(getattr(table_model, sst)))
-        else:
-            query = query.order_by(asc(getattr(table_model, sst)))
+        # if sod == "desc":
+        #     query = query.order_by(desc(getattr(table_model, sst)))
+        # else:
+        #     query = query.order_by(asc(getattr(table_model, sst)))
+        # sst 가 배열인 경우, 여러 열을 기준으로 정렬을 추가합니다.
+        for sort_attribute in sst:
+            sort_column = getattr(table_model, sort_attribute)
+            if sod == "desc":
+                query = query.order_by(desc(sort_column))
+            else:
+                query = query.order_by(asc(sort_column))
+        
             
     # sfl과 stx가 제공되면, 해당 열과 값으로 추가 필터링을 합니다.
     if search_params['sfl'] is not None and search_params['stx'] is not None:
