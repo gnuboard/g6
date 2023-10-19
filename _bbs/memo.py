@@ -28,8 +28,7 @@ def memo_list(request: Request, db: Session = Depends(get_db),
     """
     쪽지 목록
     """
-    member = request.state.context['member']
-    # member = request.state.login_member
+    member = request.state.login_member
     if not member:
         errors = ["로그인 후 이용 가능합니다."]
         return templates.TemplateResponse("alert.html", {"request": request, "errors": errors, "url": "/bbs/login/"})
@@ -66,8 +65,7 @@ def memo_view(request: Request, db: Session = Depends(get_db), me_id: int = Path
     """
     쪽지 상세
     """
-    member = request.state.context['member']
-    # member = request.state.login_member
+    member = request.state.login_member
     if not member:
         errors = ["로그인 후 이용 가능합니다."]
         return templates.TemplateResponse("alert.html", {"request": request, "errors": errors, "url": "/bbs/login/"})
@@ -137,8 +135,7 @@ def memo_form(request: Request, db: Session = Depends(get_db),
     """
     쪽지 작성
     """
-    member = request.state.context['member']
-    # member = request.state.login_member
+    member = request.state.login_member
     if not member:
         errors = ["로그인 후 이용 가능합니다."]
         return templates.TemplateResponse("alert.html", {"request": request, "errors": errors, "url": "/bbs/login/"})
@@ -174,8 +171,7 @@ def memo_update(request: Request, db: Session = Depends(get_db),
     if not validate_one_time_token(token, 'create'):
         raise HTTPException(status_code=404, detail=f"{token} : 토큰이 존재하지 않습니다.")
 
-    member = request.state.context['member']
-    # member = request.state.login_member
+    member = request.state.login_member
     if not member:
         errors = ["로그인 후 이용 가능합니다."]
         return templates.TemplateResponse("alert.html", {"request": request, "errors": errors, "url": "/bbs/login/"})
@@ -234,8 +230,7 @@ def memo_delete(request: Request, db: Session = Depends(get_db),
     if not validate_one_time_token(token, 'delete'):
         raise HTTPException(status_code=404, detail=f"{token} : 토큰이 존재하지 않습니다.")
     
-    member = request.state.context['member']
-    # member = request.state.login_member
+    member = request.state.login_member
     if not member:
         errors = ["로그인 후 이용 가능합니다."]
         return templates.TemplateResponse("alert.html", {"request": request, "errors": errors, "url": "/bbs/login/"})

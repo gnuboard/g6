@@ -11,7 +11,7 @@ from passlib.context import CryptContext
 from requests import Session
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.orm import load_only
-from models import Config, Member, Board, Group, Point, Visit, VisitSum
+from models import Config, Member, Memo, Board, Group, Point, Visit, VisitSum
 from models import WriteBaseModel
 from database import SessionLocal, engine
 from datetime import datetime, timedelta, date, time
@@ -948,5 +948,4 @@ def get_memo_not_read(mb_id: str):
     메모를 읽지 않은 개수를 반환하는 함수
     '''
     db = SessionLocal()
-    model = models.Memo
-    return db.query(model).filter(model.me_recv_mb_id == mb_id, model.me_read_datetime == None, model.me_type == 'recv').count()
+    return db.query(Memo).filter(Memo.me_recv_mb_id == mb_id, Memo.me_read_datetime == None, Memo.me_type == 'recv').count()

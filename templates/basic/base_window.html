@@ -45,9 +45,9 @@ var g5_shop_url = "http://g5.pypot.com/shop";
 <script src="/static/js/jquery.bxslider.js"></script>
 </head>
 <body>
-    {% if request.state.context.member %}
+    {% if request.state.login_member %}
         <div id="hd_login_msg">
-            {{ request.state.context.member.mb_nick }} 님 로그인 중
+            {{ request.state.login_member.mb_nick }} 님 로그인 중
             <a href="{{ url_for('logout') }}">로그아웃</a>
         </div>
     {% endif %}
