@@ -11,7 +11,7 @@ from markupsafe import Markup, escape
 from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.orm import load_only, Session
-from models import Config, Member, Board, Group, Point, Visit, VisitSum
+from models import Config, Member, Memo, Board, Group, Point, Visit, VisitSum
 from models import WriteBaseModel
 from database import SessionLocal, engine
 from datetime import datetime, timedelta, date, time
@@ -945,6 +945,14 @@ def domain_mail_host(request: Request, is_at: bool = True):
         domain_host = domain_host[4:]
     
     return f"@{domain_host}" if is_at else domain_host
+        
+
+def get_memo_not_read(mb_id: str):
+    '''
+    메모를 읽지 않은 개수를 반환하는 함수
+    '''
+    db = SessionLocal()
+    return db.query(Memo).filter(Memo.me_recv_mb_id == mb_id, Memo.me_read_datetime == None, Memo.me_type == 'recv').count()
             
 
 
