@@ -1,9 +1,9 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime, Date, Time
 from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import ArgumentError, InvalidRequestError
-from datetime import datetime
+from datetime import datetime, date
 
 Base = declarative_base()
 
@@ -184,7 +184,7 @@ class Member(Base):
     mb_name = Column(String(255), nullable=False, default='')
     mb_nick = Column(String(255), nullable=False, default='')
     mb_nick_date = Column(String(30), nullable=False)
-    mb_email = Column(String(255), unique=True, nullable=False, default='')
+    mb_email = Column(String(255), nullable=False, default='')
     mb_homepage = Column(String(255), nullable=False, default='')
     mb_level = Column(Integer, nullable=False, default=0, server_default=text('0'))
     mb_sex = Column(String(1), nullable=False, default='')
@@ -489,8 +489,8 @@ class Content(Base):
     co_mobile_skin = Column(String(255), nullable=False, default='')
     co_tag_filter_use = Column(TINYINT, nullable=False, default=0)
     co_hit = Column(Integer, nullable=False, default=0)
-    co_include_head = Column(String(255), nullable=False)
-    co_include_tail = Column(String(255), nullable=False)
+    co_include_head = Column(String(255), nullable=True)
+    co_include_tail = Column(String(255), nullable=True)
 
 
 class FaqMaster(Base):
@@ -520,4 +520,155 @@ class Faq(Base):
     # 연관관계
     faq_master = relationship("FaqMaster", back_populates="faqs", foreign_keys=[fm_id])
 
+
+class Visit(Base):
+    __tablename__ = 'g6_visit'
+    
+    vi_id = Column(Integer, primary_key=True, autoincrement=True)
+    vi_ip = Column(String(100), nullable=False, default='')
+    vi_date = Column(Date, nullable=False, default='')
+    vi_time = Column(Time, nullable=False, default='')
+    vi_referer = Column(Text, nullable=False, default='')
+    vi_agent = Column(String(200), nullable=False, default='')
+    vi_browser = Column(String(255), nullable=False, default='')
+    vi_os = Column(String(255), nullable=False, default='')
+    vi_device = Column(String(255), nullable=False, default='')
+    
+    
+class VisitSum(Base):
+    __tablename__ = 'g6_visit_sum'
+    
+    vs_date = Column(Date, primary_key=True, nullable=False, default='')
+    vs_count = Column(Integer, nullable=False, default=0)
+
+class QaConfig(Base):
+    """ Q&A 설정 테이블
+    """
+    __tablename__ = 'g6_qa_config'
+
+    id = Column(Integer, primary_key=True)
+    qa_title = Column(String(255), nullable=False, default='')
+    qa_category = Column(String(255), nullable=False, default='')
+    qa_skin = Column(String(255), nullable=False, default='')
+    qa_mobile_skin = Column(String(255), nullable=False, default='')
+    qa_use_email = Column(TINYINT, nullable=False, default=0)
+    qa_req_email = Column(TINYINT, nullable=False, default=0)
+    qa_use_hp = Column(TINYINT, nullable=False, default=0)
+    qa_req_hp = Column(TINYINT, nullable=False, default=0)
+    qa_use_sms = Column(TINYINT, nullable=False, default=0)
+    qa_send_number = Column(String(255), nullable=False, default='0')
+    qa_admin_hp = Column(String(255), nullable=False, default='')
+    qa_admin_email = Column(String(255), nullable=False, default='')
+    qa_use_editor = Column(TINYINT, nullable=False, default=0)
+    qa_subject_len = Column(Integer, nullable=False, default=0)
+    qa_mobile_subject_len = Column(Integer, nullable=False, default=0)
+    qa_page_rows = Column(Integer, nullable=False, default=0)
+    qa_mobile_page_rows = Column(Integer, nullable=False, default=0)
+    qa_image_width = Column(Integer, nullable=False, default=0)
+    qa_upload_size = Column(Integer, nullable=False, default=0)
+    qa_insert_content = Column(Text, nullable=True)
+    qa_include_head = Column(String(255), nullable=True)
+    qa_include_tail = Column(String(255), nullable=True)
+    qa_content_head = Column(Text, nullable=True)
+    qa_content_tail = Column(Text, nullable=True)
+    qa_mobile_content_head = Column(Text, nullable=True)
+    qa_mobile_content_tail = Column(Text, nullable=True)
+    qa_1_subj = Column(String(255), nullable=True)
+    qa_2_subj = Column(String(255), nullable=True)
+    qa_3_subj = Column(String(255), nullable=True)
+    qa_4_subj = Column(String(255), nullable=True)
+    qa_5_subj = Column(String(255), nullable=True)
+    qa_1 = Column(String(255), nullable=True)
+    qa_2 = Column(String(255), nullable=True)
+    qa_3 = Column(String(255), nullable=True)
+    qa_4 = Column(String(255), nullable=True)
+    qa_5 = Column(String(255), nullable=True)
+
+
+class QaContent(Base):
+    """ Q&A 데이터 테이블
+    """
+    __tablename__ = 'g6_qa_content'
+
+    qa_id = Column(Integer, primary_key=True, autoincrement=True)
+    qa_num = Column(Integer, nullable=False, default=0)
+    qa_parent = Column(Integer, nullable=False, default=0)
+    qa_related = Column(Integer, nullable=False, default=0)
+    mb_id = Column(String(20), ForeignKey('g6_member.mb_id'), nullable=False, default='')
+    qa_name = Column(String(255), nullable=False, default='')
+    qa_email = Column(String(255), nullable=False, default='')
+    qa_hp = Column(String(255), nullable=False, default='')
+    qa_type = Column(Integer, nullable=False, default=0)
+    qa_category = Column(String(255), nullable=False, default='')
+    qa_email_recv = Column(TINYINT, nullable=False, default=0)
+    qa_sms_recv = Column(TINYINT, nullable=False, default=0)
+    qa_html = Column(TINYINT, nullable=False, default=0)
+    qa_subject = Column(String(255), nullable=False, default='')
+    qa_content = Column(Text, nullable=False)
+    qa_status = Column(Integer, nullable=False, default=0)
+    qa_file1 = Column(String(255), nullable=False, default='')
+    qa_source1 = Column(String(255), nullable=False, default='')
+    qa_file2 = Column(String(255), nullable=False, default='')
+    qa_source2 = Column(String(255), nullable=False, default='')
+    qa_ip = Column(String(255), nullable=False, default='')
+    qa_datetime = Column(DateTime, nullable=False, default=datetime(1900, 1, 1, 0, 0))
+    qa_1 = Column(String(255), nullable=False, default='')
+    qa_2 = Column(String(255), nullable=False, default='')
+    qa_3 = Column(String(255), nullable=False, default='')
+    qa_4 = Column(String(255), nullable=False, default='')
+    qa_5 = Column(String(255), nullable=False, default='')
+
+    # Index 추가
+    qa_num_parent_index = Index('qa_num_parent', qa_num, qa_parent)
+
+
+class Menu(Base):
+    __tablename__ = 'g6_menu'
+
+    me_id = Column(Integer, primary_key=True, autoincrement=True)
+    me_code = Column(String(255), nullable=False, default='')
+    me_name = Column(String(255), nullable=False, default='')
+    me_link = Column(String(255), nullable=False, default='')
+    me_target = Column(String(255), nullable=False, default='')
+    me_order = Column(Integer, nullable=False, default=0)
+    me_use = Column(TINYINT, nullable=False, default=0)
+    me_mobile_use = Column(TINYINT, nullable=False, default=0)
+    
+    
+# CREATE TABLE `g5_point` (
+#   `po_id` int NOT NULL,
+#   `mb_id` varchar(20) NOT NULL DEFAULT '',
+#   `po_datetime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+#   `po_content` varchar(255) NOT NULL DEFAULT '',
+#   `po_point` int NOT NULL DEFAULT '0',
+#   `po_use_point` int NOT NULL DEFAULT '0',
+#   `po_expired` tinyint NOT NULL DEFAULT '0',
+#   `po_expire_date` date NOT NULL DEFAULT '0000-00-00',
+#   `po_mb_point` int NOT NULL DEFAULT '0',
+#   `po_rel_table` varchar(20) NOT NULL DEFAULT '',
+#   `po_rel_id` varchar(20) NOT NULL DEFAULT '',
+#   `po_rel_action` varchar(100) NOT NULL DEFAULT ''
+# ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+    
+class Point(Base):
+    '''
+    포인트 테이블
+    '''
+    __tablename__ = 'g6_point'
+    
+    po_id = Column(Integer, primary_key=True, autoincrement=True)
+    mb_id = Column(String(20), nullable=False, default='')    
+    po_datetime = Column(DateTime, nullable=False, default='0000-00-00 00:00:00')
+    po_content = Column(String(255), nullable=False, default='')
+    po_point = Column(Integer, nullable=False, default=0)
+    po_use_point = Column(Integer, nullable=False, default=0)
+    po_expired = Column(TINYINT, nullable=False, default=0)
+    po_expire_date = Column(Date, nullable=False, default='0000-00-00')
+    po_mb_point = Column(Integer, nullable=False, default=0)
+    po_rel_table = Column(String(20), nullable=False, default='')
+    po_rel_id = Column(String(20), nullable=False, default='')
+    po_rel_action = Column(String(100), nullable=False, default='')
+    
+    
+    
     

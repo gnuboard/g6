@@ -1,6 +1,6 @@
 @charset "utf-8";
 
-/* 방문자 집계 */
+/* 접속자 집계 */
 #visit {position:relative}
 #visit .btn_admin {position:absolute;top:0;right:20px;height:25px;line-height:25px;padding:0 5px;border-radius:3px}
 #visit h2 {font-size:1.2em;margin-bottom:20px;text-align:left;color:#fff;position:relative}

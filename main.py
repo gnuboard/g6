@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 from common import *
 from user_agents import parse
+import os
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -20,17 +21,15 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
-# # 1. main.py의 위치를 얻습니다.
-# current_path = os.path.dirname(os.path.abspath(__file__))
-# # 2. 해당 위치를 기준으로 Jinja2의 FileSystemLoader를 설정합니다.
-# env = Environment(loader=FileSystemLoader(current_path))
-
 from _admin.admin import router as admin_router
 from _bbs.board import router as board_router
 from _bbs.login import router as login_router
 from _bbs.register import router as register_router
 from _bbs.content import router as content_router
 from _bbs.faq import router as faq_router
+from _bbs.qa import router as qa_router
+from _bbs.menu import router as menu_router
+
 import _user.user_router 
 
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
@@ -39,24 +38,32 @@ app.include_router(login_router, prefix="/bbs", tags=["login"])
 app.include_router(register_router, prefix="/bbs", tags=["register"])
 app.include_router(content_router, prefix="/content", tags=["content"])
 app.include_router(faq_router, prefix="/faq", tags=["faq"])
+app.include_router(qa_router, prefix="/qa", tags=["qa"])
+app.include_router(menu_router, prefix="/menu", tags=["menu"])
 
 # is_mobile = False
 # user_device = 'pc'
 
 # 항상 실행해야 하는 미들웨어
 @app.middleware("http")
-async def common(request: Request, call_next):
-    # global is_mobile, user_device
+async def main_middleware(request: Request, call_next):
+
+    ### 미들웨어가 여러번 실행되는 것을 막는 코드 시작    
+    # 요청의 경로를 얻습니다.
+    path = request.url.path
+    # 경로가 정적 파일에 대한 것이 아닌지 확인합니다 (css, js, 이미지 등).
+    if (path.startswith('/static') or path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.webp'))):
+        response = await call_next(request)
+        return response
+    ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
     
     member = None
-    outlogin = None
 
     db: Session = SessionLocal()
     config = db.query(models.Config).first()
     request.state.config = config
     
     ss_mb_id = request.session.get("ss_mb_id", "")
-    print(ss_mb_id)
     
     if ss_mb_id:
         member = db.query(models.Member).filter(models.Member.mb_id == ss_mb_id).first()
@@ -67,14 +74,12 @@ async def common(request: Request, call_next):
             else:
                 if member.mb_today_login[:10] != TIME_YMD: # 오늘 처음 로그인 이라면
                     # 첫 로그인 포인트 지급
-                    # insert_point(member.mb_id, config["cf_login_point"], current_date + " 첫로그인", "@login", member.mb_id, current_date)
+                    insert_point(request, member.mb_id, config.cf_login_point, TIME_YMD + " 첫로그인", "@login", member.mb_id, TIME_YMD)
                     # 오늘의 로그인이 될 수도 있으며 마지막 로그인일 수도 있음
                     # 해당 회원의 접근일시와 IP 를 저장
                     member.mb_today_login = TIME_YMDHIS
                     member.mb_login_ip = request.client.host
                     db.commit()
-            
-                outlogin = templates.TemplateResponse("bbs/outlogin_after.html", {"request": request, "member": member})            
             
     else:
         cookie_mb_id = request.cookies.get("ck_mb_id")
@@ -89,11 +94,9 @@ async def common(request: Request, call_next):
                     # 쿠키에 저장된 키와 여러가지 정보를 조합하여 만든 키가 일치한다면 로그인으로 간주
                     if request.cookies.get("ck_auto") == ss_mb_key:
                         request.session["ss_mb_id"] = cookie_mb_id
+                        response.set_cookie(key="ss_mb_id", value=cookie_mb_id, max_age=3600)
                         return RedirectResponse(url="/", status_code=302)
 
-    if not outlogin:
-        outlogin = templates.TemplateResponse("bbs/outlogin_before.html", {"request": request})
-    
     if request.method == "GET":
         request.state.sst = request.query_params.get("sst") if request.query_params.get("sst") else ""
         request.state.sod = request.query_params.get("sod") if request.query_params.get("sod") else ""
@@ -110,19 +113,6 @@ async def common(request: Request, call_next):
         request.state.page = request._form.get("page") if request._form and request._form.get("page") else ""
         
     # pc, mobile 구분
-    # if 'SET_DEVICE' in globals():
-    #     if SET_DEVICE == 'mobile':
-    #         is_mobile = True
-    #         user_device = 'mobile'
-    # else:
-    #     user_agent = request.headers.get("User-Agent", "")
-    #     ua = parse(user_agent)
-    #     if 'USE_MOBILE' in globals() and USE_MOBILE:
-    #         if ua.is_mobile or ua.is_tablet:
-    #             is_mobile = True
-    #             user_device = 'mobile'
-    
-    # pc, mobile 구분
     request.state.is_mobile = False
     request.state.device = 'pc'
     
@@ -138,15 +128,29 @@ async def common(request: Request, call_next):
                 request.state.is_mobile = True
                 request.state.device = 'mobile'
                 
-    request.state.context = {
-        "request": request,
-        "config": config,
-        "member": member,
-        "outlogin": outlogin.body.decode("utf-8"),
-    }        
-                        
+    # 로그인한 회원 정보
+    request.state.login_member = member
+                
+    # request.state.context = {
+    #     # "request": request,
+    #     # "config": config,
+    #     # "member": member,
+    #     # "outlogin": outlogin.body.decode("utf-8"),
+    # }      
+    
     response = await call_next(request)
+
+    # 접속자 기록
+    vi_ip = request.client.host
+    ck_visit_ip = request.cookies.get('ck_visit_ip', None)
+    if ck_visit_ip != vi_ip:
+        # 접속을 추적하는 쿠키 설정 및 접속 레코드 기록
+        response.set_cookie('ck_visit_ip', vi_ip, max_age=86400)  # 쿠키를 하루 동안 유지
+        # 접속 레코드 기록
+        record_visit(request)
+        
     # print("After request")
+
     return response
 
 # 아래 app.add_middleware(...) 코드는 반드시 common 함수의 아래에 위치해야 함. 
@@ -169,10 +173,9 @@ def index(request: Request, response: Response, db: Session = Depends(get_db)):
     
     context = {
         "request": request,
-        "outlogin": request.state.context["outlogin"],
+        # "outlogin": request.state.context["outlogin"],
         "latest": latest,
     }
-    # return templates.TemplateResponse(f"index.{user_device}.html", 
     return templates.TemplateResponse(f"index.{request.state.device}.html", context)
 
 
@@ -202,6 +205,6 @@ def latest(skin_dir='', bo_table='', rows=10, subject_len=40, request: Request =
         "bo_table": bo_table,
         "bo_subject": board.bo_subject,
     }
-        
-    template = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
-    return template.body.decode("utf-8")
+    temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
+    return temp.body.decode("utf-8")
+

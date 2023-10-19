@@ -1,33 +1,94 @@
+from typing import List, Optional
 from fastapi import APIRouter, Depends, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import MetaData, Table
 from sqlalchemy.orm import Session
-from database import SessionLocal, get_db, engine
-# from models import create_dynamic_create_write_table
+from sqlalchemy import asc, desc
+from database import get_db
 import models 
 from common import *
-from jinja2 import Environment, FileSystemLoader
-import random
-import os
-from typing import List, Optional
-import socket
+from dataclassform import GroupForm
 
 router = APIRouter()
 templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 templates.env.globals['getattr'] = getattr
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['get_admin_menus'] = get_admin_menus
+templates.env.globals['subject_sort_link'] = subject_sort_link
+templates.env.globals['generate_one_time_token'] = generate_one_time_token
 
 @router.get("/boardgroup_list")
 def boardgroup_list(request: Request, db: Session = Depends(get_db)):
     '''
     게시판그룹관리 목록
     '''
+    sst = request.state.sst if request.state.sst else ""
+    sod = request.state.sod
+    sfl = request.state.sfl
+    stx = request.state.stx
+    sca = request.state.sca
+    page = request.state.page
     request.session["menu_key"] = "300200"
     
-    groups = db.query(models.Group).all()
-    return templates.TemplateResponse("boardgroup_list.html", {"request": request, "groups": groups})
+    query = db.query(models.Group)
+    if sst is not None and sst != "":
+        if sod == "desc":
+            query = query.order_by(desc(getattr(models.Group, sst)))
+        else:
+            query = query.order_by(asc(getattr(models.Group, sst)))
+    if sfl is not None and stx is not None:
+        if hasattr(models.Group, sfl):
+            query = query.filter(getattr(models.Group, sfl).like(f"%{stx}%"))
+    groups = query.all()
+    
+    # groups = db.query(models.Group).all()
+    group_data = []
+
+    for group in groups:
+        # 그룹 테이블에서 원하는 필드 값을 가져와서 딕셔너리에 저장
+        group_info = group.__dict__
+        group_info.update({
+            'board_count': db.query(models.Board).filter(models.Board.gr_id == group.gr_id).count(),
+            # 접근회원수는 나중에 별도로 체크해야함
+            'access_member_count': db.query(models.Member).filter(models.Member.mb_level >= group.gr_use_access).count(),
+        })
+        group_data.append(group_info)
+        
+    return templates.TemplateResponse("admin/boardgroup_list.html", {"request": request, "groups": group_data})
+
+
+@router.post("/boardgroup_list_update")
+def boardgroup_list_update(
+        request: Request, 
+        db: Session = Depends(get_db),
+        token: Optional[str] = Form(...),
+        checks: Optional[List[int]] = Form(None, alias="chk[]"),
+        gr_id: Optional[List[str]] = Form(None, alias="gr_id[]"),
+        gr_subject: Optional[List[str]] = Form(None, alias="gr_subject[]"),
+        gr_admin: Optional[List[str]] = Form(None, alias="gr_admin[]"),
+        gr_use_access: Optional[List[int]] = Form(None, alias="gr_use_access[]"),
+        gr_order: Optional[List[int]] = Form(None, alias="gr_order[]"),
+        gr_device: Optional[List[str]] = Form(None, alias="gr_device[]"),
+        ):
+    
+    if not token or not validate_one_time_token(token, 'update'):
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰값이 일치하지 않습니다."]})    
+
+    # 선택수정
+    for i in checks:
+        group = db.query(models.Group).filter(models.Group.gr_id == gr_id[i]).first()
+        if group:
+            group.gr_id = gr_id[i]
+            group.gr_subject = gr_subject[i]
+            group.gr_admin = gr_admin[i]
+            group.gr_use_access = get_from_list(gr_use_access, i, 0)
+            group.gr_order = gr_order[i]
+            group.gr_device = gr_device[i]
+            db.commit()
+
+    query_string = generate_query_string(request)            
+    
+    return RedirectResponse(f"/admin/boardgroup_list?{query_string}", status_code=303)
 
 
 @router.get("/boardgroup_form")
@@ -55,106 +116,30 @@ def boardgroup_form(gr_id: str, request: Request, db: Session = Depends(get_db))
 def boardgroup_form_update(request: Request, db: Session = Depends(get_db),
                         token : str = Form(...),
                         gr_id: str = Form(...),
-                        gr_subject: str = Form(...),
-                        gr_device: str = Form(None),
-                        gr_admin: str = Form(None),
-                        gr_use_access: int = Form(None),
-                        gr_1_subj: str = Form(None),
-                        gr_2_subj: str = Form(None),
-                        gr_3_subj: str = Form(None),
-                        gr_4_subj: str = Form(None),
-                        gr_5_subj: str = Form(None),
-                        gr_6_subj: str = Form(None),
-                        gr_7_subj: str = Form(None),
-                        gr_8_subj: str = Form(None),
-                        gr_9_subj: str = Form(None),
-                        gr_10_subj: str = Form(None),
-                        gr_1: str = Form(None),
-                        gr_2: str = Form(None),
-                        gr_3: str = Form(None),
-                        gr_4: str = Form(None),
-                        gr_5: str = Form(None),
-                        gr_6: str = Form(None),
-                        gr_7: str = Form(None),
-                        gr_8: str = Form(None),
-                        gr_9: str = Form(None),
-                        gr_10: str = Form(None),
+                        form_data: GroupForm = Depends(),
                         ):
-
-    # 세션에 저장된 토큰값과 입력된 토큰값이 다르다면 에러 (토큰 변조시 에러)
-    # 토큰은 외부에서 접근하는 것을 막고 등록, 수정을 구분하는 용도로 사용
-    ss_token = request.session.get("token", "")
-    if not token or token != ss_token:
-        raise HTTPException(status_code=403, detail="Invalid token.")
-
-    # 수정의 경우 토큰값이 게시판그룹아이디로 만들어지므로 토큰값이 게시판그룹아이디와 다르다면 등록으로 처리 
-    # 게시판그룹아이디 변조시에도 등록으로 처리
-    if not verify_password(gr_id, token): # 등록
-        
-        chk_group = db.query(models.Group).filter(models.Group.gr_id == gr_id).first()
-        if chk_group:
-            raise HTTPException(status_code=404, detail=f"{gr_id} : 게시판그룹 아이디가 이미 존재합니다.")
-        
-        group = models.Group(
-            gr_id=gr_id,
-            gr_subject=gr_subject,
-            gr_device=gr_device if gr_device is not None else "",
-            gr_admin=gr_admin if gr_admin is not None else "",
-            gr_use_access=gr_use_access if gr_use_access is not None else 0,
-            gr_1_subj=gr_1_subj if gr_1_subj is not None else "",
-            gr_2_subj=gr_2_subj if gr_2_subj is not None else "",
-            gr_3_subj=gr_3_subj if gr_3_subj is not None else "",
-            gr_4_subj=gr_4_subj if gr_4_subj is not None else "",
-            gr_5_subj=gr_5_subj if gr_5_subj is not None else "",
-            gr_6_subj=gr_6_subj if gr_6_subj is not None else "",
-            gr_7_subj=gr_7_subj if gr_7_subj is not None else "",
-            gr_8_subj=gr_8_subj if gr_8_subj is not None else "",
-            gr_9_subj=gr_9_subj if gr_9_subj is not None else "",
-            gr_10_subj=gr_10_subj if gr_10_subj is not None else "",
-            gr_1=gr_1 if gr_1 is not None else "",
-            gr_2=gr_2 if gr_2 is not None else "",
-            gr_3=gr_3 if gr_3 is not None else "",
-            gr_4=gr_4 if gr_4 is not None else "",
-            gr_5=gr_5 if gr_5 is not None else "",
-            gr_6=gr_6 if gr_6 is not None else "",
-            gr_7=gr_7 if gr_7 is not None else "",
-            gr_8=gr_8 if gr_8 is not None else "",
-            gr_9=gr_9 if gr_9 is not None else "",
-            gr_10=gr_10 if gr_10 is not None else "",
-        )
-        db.add(group)
-        db.commit()
     
-    else: # 수정
+    if validate_one_time_token(token, 'insert'):
+        existing_group = db.query(models.Group).filter(models.Group.gr_id == gr_id).first()
+        if existing_group:
+            errors = [f"{gr_id} 게시판그룹 아이디가 이미 존재합니다. (등록불가)"]
+            return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
         
-        group = db.query(models.Group).filter(models.Group.gr_id == gr_id).first()
-        if not group:
-            raise HTTPException(status_code=404, detail=f"{gr_id} : 게시판그룹 아이디가 존재하지 않습니다.")
-        
-        group.gr_subject = gr_subject
-        group.gr_device = gr_device if gr_device is not None else ""
-        group.gr_admin = gr_admin if gr_admin is not None else ""
-        group.gr_use_access = gr_use_access if gr_use_access is not None else 0
-        group.gr_1_subj = gr_1_subj if gr_1_subj is not None else ""
-        group.gr_2_subj = gr_2_subj if gr_2_subj is not None else ""
-        group.gr_3_subj = gr_3_subj if gr_3_subj is not None else ""
-        group.gr_4_subj = gr_4_subj if gr_4_subj is not None else ""
-        group.gr_5_subj = gr_5_subj if gr_5_subj is not None else ""
-        group.gr_6_subj = gr_6_subj if gr_6_subj is not None else ""
-        group.gr_7_subj = gr_7_subj if gr_7_subj is not None else ""
-        group.gr_8_subj = gr_8_subj if gr_8_subj is not None else ""
-        group.gr_9_subj = gr_9_subj if gr_9_subj is not None else ""
-        group.gr_10_subj = gr_10_subj if gr_10_subj is not None else ""
-        group.gr_1 = gr_1 if gr_1 is not None else ""
-        group.gr_2 = gr_2 if gr_2 is not None else ""
-        group.gr_3 = gr_3 if gr_3 is not None else ""
-        group.gr_4 = gr_4 if gr_4 is not None else ""
-        group.gr_5 = gr_5 if gr_5 is not None else ""
-        group.gr_6 = gr_6 if gr_6 is not None else ""
-        group.gr_7 = gr_7 if gr_7 is not None else ""
-        group.gr_8 = gr_8 if gr_8 is not None else ""
-        group.gr_9 = gr_9 if gr_9 is not None else ""
-        group.gr_10 = gr_10 if gr_10 is not None else ""
+        new_group = models.Group(gr_id=gr_id, **form_data.__dict__)
+        db.add(new_group)
         db.commit()
+        
+    elif validate_one_time_token(token, 'update'):
+        existing_group = db.query(models.Group).filter(models.Group.gr_id == gr_id).first()
+        if not existing_group:
+            return templates.TemplateResponse("alert.html", {"request": request, "errors": [f"{gr_id} 게시판그룹 아이디가 존재하지 않습니다. (수정불가)"]})
+        
+        # 폼 데이터 반영 후 commit
+        for field, value in form_data.__dict__.items():
+            setattr(existing_group, field, value)
+        db.commit()
+        
+    else:
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["잘못된 접근입니다."]})
         
     return RedirectResponse(url=f"/admin/boardgroup_form/{gr_id}", status_code=303)

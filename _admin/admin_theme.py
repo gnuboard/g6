@@ -129,7 +129,7 @@ async def theme(request: Request, db: Session = Depends(get_db)):
     '''
     request.session["menu_key"] = "100280"
 
-    config = db.query(Config).first()
+    config = request.state.config
     
     themes = get_theme_dir()
     if config.cf_theme and config.cf_theme in themes:
@@ -139,7 +139,7 @@ async def theme(request: Request, db: Session = Depends(get_db)):
     
     # 설정된 테마가 존재하지 않는다면 cf_theme 초기화
     if config and config.cf_theme and config.cf_theme not in themes:
-        config.cf_theme = ""
+        config.cf_theme = "basic"
         db.commit()
     
     context = {

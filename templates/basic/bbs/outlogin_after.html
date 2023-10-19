@@ -1,5 +1,5 @@
-{% block outlogin %}
 <!-- 로그인 후 아웃로그인 시작 { -->
+{% set member=request.state.login_member %}
 <section id="ol_after" class="ol">
     <header id="ol_after_hd">
         <h2>나의 회원정보</h2>
@@ -42,4 +42,3 @@ function member_leave()
 }
 </script>
 <!-- } 로그인 후 아웃로그인 끝 -->
-{% endblock %}
