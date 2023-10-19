@@ -662,4 +662,12 @@ def select_query(request: Request, table_class, search_params: dict,
         "rows": rows,
         "total_count": query.count(),
     }
-    
+
+
+def get_memo_not_read(mb_id: str):
+    '''
+    메모를 읽지 않은 개수를 반환하는 함수
+    '''
+    db = SessionLocal()
+    model = models.Memo
+    return db.query(model).filter(model.me_recv_mb_id == mb_id, model.me_read_datetime == None, model.me_type == 'recv').count()
