@@ -37,7 +37,7 @@ def check_member(
 ):
     errors = []
     mb_id = request.session.get("ss_mb_id", "")
-    member = db.query(models.Member).filter(Member.mb_id == mb_id).first()
+    member = db.query(Member).filter(Member.mb_id == mb_id).first()
     if not member:
         return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
     else:
@@ -62,7 +62,7 @@ def member_profile(request: Request, db: Session = Depends(get_db)):
         errors.append("로그인한 회원만 접근하실 수 있습니다.")
         return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
 
-    member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
+    member = db.query(Member).filter(Member.mb_id == mb_id).first()
 
     if not member:
         errors.append("회원정보가 없습니다.")
@@ -104,7 +104,7 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
     config = get_config()
 
     mb_id = request.session.get("ss_mb_id", "")
-    before_member_data: Optional[Member] = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
+    before_member_data: Optional[Member] = db.query(Member).filter(Member.mb_id == mb_id).first()
     if not before_member_data:
         errors.append("회원정보가 없습니다.")
         return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
@@ -222,7 +222,7 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
     if is_password_changed:
         member_form.mb_password = hash_password(mb_password)
 
-    db.query(models.Member).filter(models.Member.mb_id == mb_id).update(member_form.__dict__)
+    db.query(Member).filter(Member.mb_id == mb_id).update(member_form.__dict__)
     db.commit()
     return RedirectResponse(url="/", status_code=302)
 
@@ -266,7 +266,7 @@ def validate_nickname(mb_nick: str) -> Union[str, bool]:
         return error_msg
 
     db = SessionLocal()
-    result = db.query(Member.mb_nick).filter(models.Member.mb_nick == mb_nick).first()
+    result = db.query(Member.mb_nick).filter(Member.mb_nick == mb_nick).first()
     if result:
         error_msg = "해당 닉네임이 존재합니다."
         return error_msg

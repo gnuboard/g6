@@ -53,7 +53,7 @@ def get_register_form(request: Request):
     if not agree2:
         return RedirectResponse(url="/bbs/register", status_code=302)
 
-    member = models.Member()
+    member = Member()
     member.mb_level = 1
 
     form_context = {
@@ -167,7 +167,7 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
             "member/register_form.html",
             context={
                 "request": request,
-                "member": models.Member(mb_id=mb_id, mb_level=1, **member_form.__dict__),
+                "member": Member(mb_id=mb_id, mb_level=1, **member_form.__dict__),
                 "is_register": True,
                 "config": get_config(),
                 "form": form_context, "errors": errors
@@ -196,7 +196,7 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
         filename = mb_id + os.path.splitext(mb_icon.filename)[1]
         mb_icon_info.save(os.path.join(path, filename))
 
-    member = models.Member(
+    member = Member(
         mb_id=mb_id,
         mb_datetime=datetime.now(),
         # @todo datetime 컬럼들 nullable 로 변환
@@ -231,7 +231,7 @@ def register_result(request: Request, db: Session = Depends(get_db)):
     if not register_mb_id:
         return RedirectResponse(url="/bbs/register", status_code=302)
 
-    member = db.query(models.Member).filter(models.Member.mb_id == register_mb_id).first()
+    member = db.query(Member).filter(Member.mb_id == register_mb_id).first()
     if not member:
         # 가입실패
         return RedirectResponse(url="/bbs/register", status_code=302)
