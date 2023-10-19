@@ -24,7 +24,7 @@ def get_register(request: Request, response: Response, db: Session = Depends(get
 
     request.session["ss_agree"] = ""
     request.session["ss_agree2"] = ""
-    return templates.TemplateResponse("bbs/register.html", request.state.context)
+    return templates.TemplateResponse("bbs/register.html", {"request": request, "errors": ''})
 
 
 @router.post("/register")

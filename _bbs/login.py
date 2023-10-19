@@ -24,7 +24,7 @@ def login(request: Request, db: Session = Depends(get_db), mb_id: str = Form(...
     """
     errors = []
 
-    member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
+    member = db.query(Member).filter(Member.mb_id == mb_id).first()
     if not member:
         errors.append("아이디 또는 패스워드가 일치하지 않습니다.")
     else:
@@ -49,8 +49,7 @@ def check_login(request: Request, db: Session = Depends(get_db), mb_id: str = Fo
     outlogin 의 로그인 정보를 검사한다.
     '''
     errors = []
-    member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
-    # print("member----------:", member.mb_id)
+    member = db.query(Member).filter(Member.mb_id == mb_id).first()
     if not member:
         # raise HTTPException(status_code=404, detail="{mb_id} is not found.")
         errors.append("아이디 또는 패스워드가 일치하지 않습니다.")

@@ -91,6 +91,7 @@ def member_profile(request: Request, db: Session = Depends(get_db)):
 
 @router.post("/member_profile/{mb_no}", name='member_profile_save')
 def member_profile_save(request: Request, db: Session = Depends(get_db),
+                        token: str = Form(...),
                         mb_img: Optional[UploadFile] = File(None),
                         mb_icon: Optional[UploadFile] = File(None),
                         mb_password: str = Form(None),
@@ -101,6 +102,10 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
                         del_mb_icon: str = Form(None),
                         ):
     errors = []
+    if not validate_one_time_token(token, 'update'):
+        errors.append("토큰이 유효하지 않습니다.")
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
+
     config = get_config()
 
     mb_id = request.session.get("ss_mb_id", "")
