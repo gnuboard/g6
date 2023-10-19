@@ -932,4 +932,13 @@ def delete_expire_point(request: Request, mb_id: str, point: int):
             db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: 0, Point.po_expired: po_expired, Point.po_expire_date: po_expire_date}, synchronize_session=False)
             db.commit()
             point1 = point1 - point2
+
+
+def domain_mail_host(request: Request, is_at: bool = True):
+    domain_host = request.base_url.hostname
+    
+    if domain_host.startswith("www."):
+        domain_host = domain_host[4:]
+    
+    return f"@{domain_host}" if is_at else domain_host
             
