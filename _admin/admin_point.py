@@ -24,6 +24,7 @@ templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.globals["get_paging"] = get_paging
+templates.env.globals["format"] = format
 
 
 @router.get("/point_list")
@@ -37,8 +38,6 @@ def point_list(request: Request, db: Session = Depends(get_db), search_params: d
     '''
     포인트 목록
     '''
-    global global_data
-    
     request.session["menu_key"] = "200200"
     
     # # 초기 쿼리 설정
@@ -70,6 +69,7 @@ def point_list(request: Request, db: Session = Depends(get_db), search_params: d
     # global config
    
     result = select_query(
+                request,
                 models.Point, 
                 search_params, 
                 same_search_fields = ["mb_id"], 
@@ -81,16 +81,18 @@ def point_list(request: Request, db: Session = Depends(get_db), search_params: d
         mb = db.query(Member.mb_name).filter_by(mb_id=row.mb_id).first()
         if mb:
             row.mb_name = mb.mb_name
+    
+    sum_point = db.query(func.sum(Point.po_point)).scalar()
    
     query_string = generate_query_string(request)
     
     context = {
         "request": request,
-        # "config": request.state.config,
-        "config": global_data['config'],
+        "config": request.state.config,
         "points": result['rows'],
         "total_count": result['total_count'],
-        "paging": get_paging(search_params['current_page'], result['total_count'], f"/admin/point_list?{query_string}&page="),
+        "sum_point": sum_point,
+        "paging": get_paging(request, search_params['current_page'], result['total_count'], f"/admin/point_list?{query_string}&page="),
     }
     return templates.TemplateResponse("point_list.html", context)
 
@@ -104,9 +106,6 @@ async def point_update(request: Request, db: Session = Depends(get_db),
         po_point: Optional[str] = Form(default="0"),
         po_expire_term: Optional[int] = Form(None),
         ):
-    global global_data
-    config = global_data['config']
-    
     try:
         # po_point 값을 정수로 변환합니다.
         po_point = int(po_point)
@@ -125,6 +124,45 @@ async def point_update(request: Request, db: Session = Depends(get_db),
     rel_action = exist_member.mb_id + '-' + str(uuid.uuid4())
     expire = po_expire_term if po_expire_term else 0
     
-    insert_point(mb_id, po_point, po_content, "@passive", mb_id, rel_action, expire);
+    insert_point(request, mb_id, po_point, po_content, "@passive", mb_id, rel_action, expire)
 
+    return RedirectResponse(f"/admin/point_list?{query_string}", status_code=303)
+
+
+@router.post("/point_list_delete")
+async def point_list_delete(request: Request, db: Session = Depends(get_db),
+        search_params: dict = Depends(common_search_query_params),
+        token: Optional[str] = Form(...),
+        checks: Optional[List[int]] = Form(None, alias="chk[]"),
+        po_id: Optional[List[int]] = Form(None, alias="po_id[]"),
+        ):
+
+    query_string = generate_query_string(request)
+
+    for i in checks:
+        point = db.query(models.Point).filter(models.Point.po_id == po_id[i]).first()
+        if point:
+            if point.po_point < 0:
+                abs_po_point = abs(point.po_point)
+            
+                if point.po_rel_table == "@expire":
+                    delete_expire_point(request, point.mb_id, abs_po_point)
+                else:
+                    delete_use_point(request, point.mb_id, abs_po_point)
+        elif point.po_use_point > 0:
+            insert_use_point(request, point.mb_id, point.po_use_point, point.po_id)
+                
+        # 포인트 내역 삭제
+        db.delete(point)
+        db.commit()
+        
+        # po_mb_point에 반영
+        db.query(Point).filter(Point.mb_id == point.mb_id, Point.po_id > point.po_id).update({Point.po_mb_point: Point.po_mb_point - point.po_point}, synchronize_session=False)
+        db.commit()
+
+        # 포인트 UPDATE        
+        sum_point = get_point_sum(request, point.mb_id)
+        db.query(Member).filter(Member.mb_id == point.mb_id).update({Member.mb_point: sum_point}, synchronize_session=False)
+        db.commit()
+        
     return RedirectResponse(f"/admin/point_list?{query_string}", status_code=303)

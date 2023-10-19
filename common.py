@@ -20,8 +20,6 @@ from PIL import Image
 from user_agents import parse
 
 # 전역변수 선언(global variables)
-global_data = {}
-
 TEMPLATES = "templates"
 EDITOR_PATH = f"{TEMPLATES}/editor"
 
@@ -480,8 +478,7 @@ def get_from_list(lst, index, default=0):
 # url_prefix : 페이지 링크의 URL 접두사
 # add_url : 페이지 링크의 추가 URL
 def get_paging(request, current_page, total_count, url_prefix, add_url=""):
-    global global_data
-    config = global_data['config']
+    config = request.state.config
     
     try:
         current_page = int(current_page)
@@ -611,22 +608,26 @@ def common_search_query_params(
         sod: str = Query(default=""), 
         sfl: str = Query(default=""), 
         stx: str = Query(default=""), 
-        current_page: int = Query(default=1, alias="page")
+        current_page: str = Query(default="1", alias="page")
         ):
     '''
     공통 쿼리 파라미터를 받는 함수
     '''
+    try:
+        current_page = int(current_page)
+    except ValueError:
+        # current_page가 정수로 변환할 수 없는 경우 기본값으로 1을 사용하도록 설정
+        current_page = 1
     return {"sst": sst, "sod": sod, "sfl": sfl, "stx": stx, "current_page": current_page}
 
 
-def select_query(table_model, search_params: dict, 
+def select_query(request: Request, table_model, search_params: dict, 
         same_search_fields: Optional[List[str]] = "", # 값이 완전히 같아야지만 필터링 '검색어'
         prefix_search_fields: Optional[List[str]] = "", # 뒤에 %를 붙여서 필터링 '검색어%'
         default_sod: str = "asc",
         default_sst: str = "",
     ):
-    global global_data
-    config = global_data['config']
+    config = request.state.config
     
     records_per_page = config.cf_page_rows
 
@@ -678,10 +679,16 @@ def select_query(table_model, search_params: dict,
     }
     
 
+# 회원 레코드 얻기    
+# fields : 가져올 필드, 예) "mb_id, mb_name, mb_nick"
+def get_member(mb_id: str, fields: str = '*'):
+    db = SessionLocal()
+    return db.query(Member).options(load_only(fields)).filter_by(mb_id=mb_id).first()
+    
+
 # 포인트 부여    
-def insert_point(mb_id: str, point: int, content: str = '', rel_table: str = '', rel_id: str = '', rel_action: str = '', expire: int = 0):
-    global global_data
-    config = global_data['config']
+def insert_point(request: Request, mb_id: str, point: int, content: str = '', rel_table: str = '', rel_id: str = '', rel_action: str = '', expire: int = 0):
+    config = request.state.config
     
     # 포인트를 사용하지 않는다면 종료
     if not config.cf_use_point:
@@ -702,7 +709,7 @@ def insert_point(mb_id: str, point: int, content: str = '', rel_table: str = '',
     if not member:
         return 0
     
-    mb_point = get_point_sum(mb_id)
+    mb_point = get_point_sum(request, mb_id)
 
     
     if rel_table or rel_id or rel_action:
@@ -720,17 +727,13 @@ def insert_point(mb_id: str, point: int, content: str = '', rel_table: str = '',
     # 포인트 건별 생성
     po_expire_date = '9999-12-31'
     if config.cf_point_term > 0:
-        # if expire > 0:
-        #     po_expire_date = (datetime.strptime(SERVER_TIME, '%Y-%m-%d %H:%M:%S') + timedelta(days=expire-1)).strftime('%Y-%m-%d')
-        # else:
-        #     po_expire_date = (datetime.strptime(SERVER_TIME, '%Y-%m-%d %H:%M:%S') + timedelta(days=config['cf_point_term'] - 1)).strftime('%Y-%m-%d')
         if expire > 0:
             po_expire_date = (SERVER_TIME + timedelta(days=expire-1)).strftime('%Y-%m-%d')
         else:
             po_expire_date = (SERVER_TIME + timedelta(days=config.cf_point_term - 1)).strftime('%Y-%m-%d')
             
     po_expired = 0
-    if point > 0:
+    if point < 0:
         po_expired = 1
         po_expire_date = TIME_YMD
     po_mb_point = mb_point + point
@@ -760,9 +763,8 @@ def insert_point(mb_id: str, point: int, content: str = '', rel_table: str = '',
 
 
 # 소멸 포인트 얻기
-def get_expire_point(mb_id: str):
-    global global_data
-    config = global_data['config']
+def get_expire_point(request: Request, mb_id: str):
+    config = request.state.config
     
     if  config.cf_point_term <= 0:
         return 0
@@ -771,24 +773,16 @@ def get_expire_point(mb_id: str):
     
     point_sum = db.query(func.sum(Point.po_point - Point.po_use_point)).filter_by(mb_id=mb_id, po_expired=False).filter(Point.po_expire_date < datetime.now()).scalar()
     return point_sum if point_sum else 0
-    
-
-# 회원 레코드 얻기    
-# fields : 가져올 필드, 예) "mb_id, mb_name, mb_nick"
-def get_member(mb_id: str, fields: str = '*'):
-    db = SessionLocal()
-    return db.query(Member).options(load_only(fields)).filter_by(mb_id=mb_id).first()
 
 
 # 포인트 내역 합계
-def get_point_sum(mb_id: str):
-    global global_data
-    config = global_data['config']
+def get_point_sum(request: Request, mb_id: str):
+    config = request.state.config
     
     db = SessionLocal()
     
-    if config and config.cf_point_term > 0:
-        expire_point = get_expire_point(mb_id)
+    if config.cf_point_term > 0:
+        expire_point = get_expire_point(request, mb_id)
         if expire_point > 0:
             mb = get_member(mb_id, 'mb_point')
             point = expire_point * (-1)
@@ -845,7 +839,7 @@ def insert_use_point(mb_id: str, point: int, po_id: str = ""):
                         Point.po_point > Point.po_use_point
                     )
                 )
-    if config['cf_point_term']:
+    if config.cf_point_term:
         query = query.order_by(Point.po_expire_date.asc(), Point.po_id.asc())
     else:
         query = query.order_by(Point.po_id.asc())
@@ -863,6 +857,86 @@ def insert_use_point(mb_id: str, point: int, po_id: str = ""):
             db.commit()
             point1 = point1 - point4
 
+
+# 포인트 삭제
+def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel_action: str):
+    db = SessionLocal()
+    result = False
+    if rel_table or rel_id or rel_action:
+        # 포인트 내역정보    
+        row = db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action).first()
+        if row.po_point and row.po_point > 0:
+            abs_po_point = abs(row.po_point)
+            delete_use_point(request, row.mb_id, abs_po_point)
+        else:
+            if row.po_use_point and row.po_use_point > 0:
+                insert_use_point(request, row.mb_id, row.po_use_point, row.po_id)
+                
+        db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action).delete(synchronize_session=False)
+        db.commit()
+
+        # po_mb_point에 반영
+        if row.po_point:
+            db.query(Point).filter(Point.mb_id == mb_id, Point.po_id > row.po_id).update({Point.po_mb_point: Point.po_mb_point - row.po_point}, synchronize_session=False)
+            db.commit()
+        
+        # 포인트 내역의 합을 구하고    
+        sum_point = get_point_sum(request, mb_id)
+        
+        # 포인트 UPDATE
+        db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: sum_point}, synchronize_session=False)
+        result = db.commit()
+
+    return result
+
+
+# 사용포인트 삭제
+def delete_use_point(request: Request, mb_id: str, point: int):
+    config = request.state.config
+    db = SessionLocal()
+    
+    point1 = abs(point)
+    rows = db.query(Point).filter(Point.mb_id == mb_id, Point.po_expired != 1, Point.po_use_point > 0).order_by(desc('po_expire_date', 'po_id') if config.cf_point_term else desc('po_id')).all()
+    for row in rows:
+        point2 = row.po_use_point
+        if row.po_expired == 100 and (row.po_expire_date == '9999-12-31' or row.po_expire_date >= TIME_YMD):
+            po_expired = 0
+        else:
+            po_expired = row.po_expired
+        
+        if point2 > point1:
+            db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: Point.po_use_point - point1, Point.po_expired: po_expired}, synchronize_session=False)
+            db.commit()
+            break
+        else:
+            db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: 0, Point.po_expired: po_expired}, synchronize_session=False)
+            db.commit()
+            point1 = point1 - point2
+
+
+# 소멸포인트 삭제
+def delete_expire_point(request: Request, mb_id: str, point: int):
+    config = request.state.config
+    db = SessionLocal()
+    
+    point1 = abs(point)
+    rows = db.query(Point).filter(Point.mb_id == mb_id, Point.po_expired == 1, Point.po_point >= 0, Point.po_use_point > 0).order_by(desc(Point.po_expire_date), desc(Point.po_id)).all()
+    for row in rows:
+        point2 = row.po_use_point
+        po_expired = 0
+        po_expire_date = '9999-12-31'
+        if config.cf_point_term > 0:
+            po_expire_date = (SERVER_TIME + timedelta(days=config.cf_point_term - 1)).strftime('%Y-%m-%d')
+    
+        if point2 > point1:
+            db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: Point.po_use_point - point1, Point.po_expired: po_expired, Point.po_expire_date: po_expire_date}, synchronize_session=False)
+            db.commit()
+            break
+        else:
+            db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: 0, Point.po_expired: po_expired, Point.po_expire_date: po_expire_date}, synchronize_session=False)
+            db.commit()
+            point1 = point1 - point2
+            
 
 
 def get_editor_path(editor_name: Optional[str] = None) -> str:

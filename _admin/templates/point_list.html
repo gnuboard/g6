@@ -12,7 +12,7 @@
 <div class="local_ov01 local_ov">
 <a href="/admin/point_list" class="ov_listall">전체목록</a>    
 <span class="btn_ov01"><span class="ov_txt">전체 </span><span class="ov_num"> {{ total_count }} 건 </span></span>
-&nbsp;<span class="btn_ov01"><span class="ov_txt">전체 합계</span><span class="ov_num">2,800점 </span></span></div>
+&nbsp;<span class="btn_ov01"><span class="ov_txt">전체 합계</span><span class="ov_num">{{ "{:,}".format(sum_point) }}점 </span></span></div>
 
 <form name="fsearch" id="fsearch" class="local_sch01 local_sch" method="get">
 <label for="sfl" class="sound_only">검색대상</label>
@@ -68,11 +68,16 @@
                 {{ point.mb_nick }}
             </td>
             <td class="td_left">{{ point.po_content }}</td>
-            <td class="td_num td_pt">{{ point.po_point }}</td>
+            <td class="td_num td_pt">{{ "{:,}".format(point.po_point) }}</td>
             <td class="td_datetime">{{ point.po_datetime }}</td>
-            <td class="td_datetime2">
-                &nbsp;                        </td>
-            <td class="td_num td_pt">1,800</td>
+            <td class="td_datetime2 {{ 'txt_expired' if point.po_expired else '' }}">
+                {% if point.po_expired %}
+                    만료{{ point.po_expire_date }}
+                {% else %}
+                    {{ '&nbsp;'|safe if point.po_expire_date|string() == '9999-12-31' else point.po_expire_date }}
+                {% endif %}
+            </td>
+            <td class="td_num td_pt">{{ "{:,}".format(point.po_mb_point) }}</td>
         </tr>
         {% endfor %}
         {% if points|length == 0 %}
@@ -110,7 +115,7 @@
         <tbody>
             <tr>
                 <th scope="row"><label for="mb_id">회원아이디<strong class="sound_only">필수</strong></label></th>
-                <td><input type="text" name="mb_id" value="{{ request.state.stx }}" id="mb_id" class="required frm_input" required></td>
+                <td><input type="text" name="mb_id" value="{{ request.state.stx if request.state.sfl == 'mb_id' else '' }}" id="mb_id" class="required frm_input" required></td>
             </tr>
             <tr>
                 <th scope="row"><label for="po_content">포인트 내용<strong class="sound_only">필수</strong></label></th>
@@ -118,7 +123,7 @@
             </tr>
             <tr>
                 <th scope="row"><label for="po_point">포인트<strong class="sound_only">필수</strong></label></th>
-                <td><input type="text" name="po_point" id="po_point" required class="required frm_input"></td>
+                <td><input type="text" name="po_point" id="po_point" required class="required frm_input" pattern="^[0-9]{1,7}$" title="1~7자리 이하로 숫자만 입력하세요."></td>
             </tr>
 
             {% if config.cf_point_term > 0 %}

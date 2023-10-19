@@ -47,8 +47,6 @@ app.include_router(menu_router, prefix="/menu", tags=["menu"])
 # 항상 실행해야 하는 미들웨어
 @app.middleware("http")
 async def main_middleware(request: Request, call_next):
-    # global is_mobile, user_device
-    global global_data
 
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 시작    
     # 요청의 경로를 얻습니다.
@@ -60,12 +58,10 @@ async def main_middleware(request: Request, call_next):
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
     
     member = None
-    # outlogin = None
 
     db: Session = SessionLocal()
     config = db.query(models.Config).first()
-    global_data['config'] = config
-    # request.state.config = config
+    request.state.config = config
     
     ss_mb_id = request.session.get("ss_mb_id", "")
     # print("ss_mb_id:", ss_mb_id)
@@ -79,14 +75,12 @@ async def main_middleware(request: Request, call_next):
             else:
                 if member.mb_today_login[:10] != TIME_YMD: # 오늘 처음 로그인 이라면
                     # 첫 로그인 포인트 지급
-                    # insert_point(member.mb_id, config["cf_login_point"], current_date + " 첫로그인", "@login", member.mb_id, current_date)
+                    insert_point(request, member.mb_id, config.cf_login_point, TIME_YMD + " 첫로그인", "@login", member.mb_id, TIME_YMD)
                     # 오늘의 로그인이 될 수도 있으며 마지막 로그인일 수도 있음
                     # 해당 회원의 접근일시와 IP 를 저장
                     member.mb_today_login = TIME_YMDHIS
                     member.mb_login_ip = request.client.host
                     db.commit()
-            
-                # outlogin = templates.TemplateResponse("bbs/outlogin_after.html", {"request": request, "member": member})            
             
     else:
         cookie_mb_id = request.cookies.get("ck_mb_id")
@@ -103,9 +97,6 @@ async def main_middleware(request: Request, call_next):
                         request.session["ss_mb_id"] = cookie_mb_id
                         return RedirectResponse(url="/", status_code=302).set_cookie(key="ss_mb_id", value=cookie_mb_id, max_age=3600)
 
-    # if not outlogin:
-    #     outlogin = templates.TemplateResponse("bbs/outlogin_before.html", {"request": request})
-    
     if request.method == "GET":
         request.state.sst = request.query_params.get("sst") if request.query_params.get("sst") else ""
         request.state.sod = request.query_params.get("sod") if request.query_params.get("sod") else ""
@@ -122,19 +113,6 @@ async def main_middleware(request: Request, call_next):
         request.state.page = request._form.get("page") if request._form and request._form.get("page") else ""
         
     # pc, mobile 구분
-    # if 'SET_DEVICE' in globals():
-    #     if SET_DEVICE == 'mobile':
-    #         is_mobile = True
-    #         user_device = 'mobile'
-    # else:
-    #     user_agent = request.headers.get("User-Agent", "")
-    #     ua = parse(user_agent)
-    #     if 'USE_MOBILE' in globals() and USE_MOBILE:
-    #         if ua.is_mobile or ua.is_tablet:
-    #             is_mobile = True
-    #             user_device = 'mobile'
-    
-    # pc, mobile 구분
     request.state.is_mobile = False
     request.state.device = 'pc'
     
@@ -150,12 +128,15 @@ async def main_middleware(request: Request, call_next):
                 request.state.is_mobile = True
                 request.state.device = 'mobile'
                 
-    request.state.context = {
-        # "request": request,
-        # "config": config,
-        # "member": member,
-        # "outlogin": outlogin.body.decode("utf-8"),
-    }      
+    # 로그인한 회원 정보
+    request.state.login_member = member
+                
+    # request.state.context = {
+    #     # "request": request,
+    #     # "config": config,
+    #     # "member": member,
+    #     # "outlogin": outlogin.body.decode("utf-8"),
+    # }      
     
     response = await call_next(request)
 
