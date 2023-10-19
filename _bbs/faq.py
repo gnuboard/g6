@@ -7,7 +7,7 @@ import models
 
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
-templates.env.globals["outlogin"] = outlogin
+
 
 @router.get("/")
 @router.get("/{fm_id}")

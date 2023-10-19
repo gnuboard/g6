@@ -15,7 +15,6 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.globals["generate_query_string"] = generate_query_string
-templates.env.globals["outlogin"] = outlogin
 
 
 FILE_DIRECTORY = "data/qa/"

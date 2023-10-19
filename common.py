@@ -18,7 +18,6 @@ from datetime import datetime, timedelta, date, time
 import json
 from PIL import Image
 from user_agents import parse
-from pydantic import BaseSettings
 
 # 전역변수 선언(global variables)
 global_data = {}
@@ -434,16 +433,6 @@ def save_image(directory: str, filename: str, file: UploadFile):
         with open(f"{directory}{filename}", "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
-
-def outlogin(request: Request):
-    templates = Jinja2Templates(directory=TEMPLATES_DIR)
-    member = request.state.context["member"]
-    if member:
-        temp = templates.TemplateResponse("bbs/outlogin_after.html", {"request": request, "member": member})
-    else:
-        temp = templates.TemplateResponse("bbs/outlogin_before.html", {"request": request, "member": None})
-    return temp.body.decode("utf-8")
-
 
 def generate_query_string(request: Request):
     search_fields = {}

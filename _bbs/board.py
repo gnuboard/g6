@@ -15,7 +15,6 @@ import models
 
 router = APIRouter()
 templates = Jinja2Templates(directory=[EDITOR_PATH, TEMPLATES_DIR])
-templates.env.globals["outlogin"] = outlogin
 templates.env.globals["bleach"] = bleach
 templates.env.globals["nl2br"] = nl2br
 
@@ -66,7 +65,7 @@ def write_form(bo_table: str, request: Request, db: Session = Depends(get_db)):
     if not board:
         raise HTTPException(status_code=404, detail="{bo_table} is not found.")
 
-    write: models.WriteBaseModel = dynamic_create_write_table(bo_table)
+    write = dynamic_create_write_table(bo_table)
     write.wr_content = ""
 
     return templates.TemplateResponse(f"board/{request.state.device}/{board.bo_skin}/write_form.html",
