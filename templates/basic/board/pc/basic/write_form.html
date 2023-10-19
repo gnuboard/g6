@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block head %}
-    {% include editor_head_path %}
+    {% include editor_head %}
 {% endblock %}
 
 {% block title %}
@@ -59,7 +59,7 @@
     </div>
 
         {% with tag_name='wr_content', content=write.wr_content %}
-            {% include editor_body_path %}
+            {% include editor_body %}
         {% endwith %}
 
         <div class="bo_w_link write_div">

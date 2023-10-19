@@ -152,6 +152,8 @@ def get_editor_select(id, selected):
     else:
         html_code.append(f'<option value="">사용안함</option>')
     for editor in os.listdir("static/plugin/editor"):
+        if editor == 'textarea':
+            continue
         if os.path.isdir(f"static/plugin/editor/{editor}"):
             html_code.append(f'<option value="{editor}" {"selected" if editor == selected else ""}>{editor}</option>')
     html_code.append('</select>')
@@ -668,7 +670,7 @@ def select_query(request: Request, table_class, search_params: dict,
 
 def get_editor_path(editor_name: Optional[str] = None) -> str:
     """지정한 에디터 경로를 반환하는 함수
-    미지정시 전체설정값 사용
+    미지정시 그누보드 환경설정값 사용
     """
     if editor_name:
         return editor_name
@@ -676,7 +678,7 @@ def get_editor_path(editor_name: Optional[str] = None) -> str:
     db = SessionLocal()
     config = db.query(models.Config).first()
     db.close()
-    return config.cf_editor if config.cf_editor else "normal"
+    return config.cf_editor if config.cf_editor else "textarea"
 
 
 def nl2br(value) -> str:

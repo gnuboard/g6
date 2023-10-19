@@ -74,8 +74,8 @@ def write_form(bo_table: str, request: Request, db: Session = Depends(get_db)):
                                           "request": request,
                                           "board": board,
                                           "write": write,
-                                          "editor_head_path": get_editor_path() + '/head.html',
-                                          "editor_body_path": get_editor_path() + '/body.html',
+                                          "editor_head": get_editor_path() + '/head.html',
+                                          "editor_body": get_editor_path() + '/body.html',
                                       })
 
 
