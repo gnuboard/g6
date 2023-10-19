@@ -66,7 +66,6 @@ async def main_middleware(request: Request, call_next):
     request.state.config = config
     
     ss_mb_id = request.session.get("ss_mb_id", "")
-    # print("ss_mb_id:", ss_mb_id)
     
     if ss_mb_id:
         member = db.query(models.Member).filter(models.Member.mb_id == ss_mb_id).first()
