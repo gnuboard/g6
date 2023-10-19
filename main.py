@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 from common import *
 from user_agents import parse
+import os
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -47,6 +48,7 @@ app.include_router(menu_router, prefix="/menu", tags=["menu"])
 @app.middleware("http")
 async def main_middleware(request: Request, call_next):
     # global is_mobile, user_device
+    global global_data
 
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 시작    
     # 요청의 경로를 얻습니다.
@@ -62,10 +64,11 @@ async def main_middleware(request: Request, call_next):
 
     db: Session = SessionLocal()
     config = db.query(models.Config).first()
-    request.state.config = config
+    global_data['config'] = config
+    # request.state.config = config
     
     ss_mb_id = request.session.get("ss_mb_id", "")
-    print("ss_mb_id:", ss_mb_id)
+    # print("ss_mb_id:", ss_mb_id)
     
     if ss_mb_id:
         member = db.query(models.Member).filter(models.Member.mb_id == ss_mb_id).first()
@@ -98,6 +101,7 @@ async def main_middleware(request: Request, call_next):
                     # 쿠키에 저장된 키와 여러가지 정보를 조합하여 만든 키가 일치한다면 로그인으로 간주
                     if request.cookies.get("ck_auto") == ss_mb_key:
                         request.session["ss_mb_id"] = cookie_mb_id
+                        response.set_cookie(key="ss_mb_id", value=cookie_mb_id, max_age=3600)
                         return RedirectResponse(url="/", status_code=302)
 
     # if not outlogin:
@@ -148,12 +152,12 @@ async def main_middleware(request: Request, call_next):
                 request.state.device = 'mobile'
                 
     request.state.context = {
-        "request": request,
-        "config": config,
-        "member": member,
+        # "request": request,
+        # "config": config,
+        # "member": member,
         # "outlogin": outlogin.body.decode("utf-8"),
-    }        
-                        
+    }      
+    
     response = await call_next(request)
 
     # 접속자 기록

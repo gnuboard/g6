@@ -27,94 +27,87 @@ templates.env.globals["get_paging"] = get_paging
 
 
 @router.get("/board_list")
-def board_list(request: Request, db: Session = Depends(get_db),
-        sst: str = Query(default=""), # sort field (정렬 필드)
-        sod: str = Query(default=""), # search order (검색 오름, 내림차순)
-        sfl: str = Query(default=""), # search field (검색 필드)
-        stx: str = Query(default=""), # search text (검색어)
-        current_page: int = Query(default=1, alias="page"), # 페이지
-        # sst: str = Query(default="", alias="sst"), # sort field (정렬 필드)
-        # sod: str = Query(default="", alias="sod"), # search order (검색 오름, 내림차순)
-        # sfl: str = Query(default="", alias="sfl"), # search field (검색 필드)
-        # stx: str = Query(default="", alias="stx"), # search text (검색어)
-        # page: int = Query(default=1, alias="page"), # 페이지
-        ):
+def board_list(request: Request, db: Session = Depends(get_db), search_params: dict = Depends(common_search_query_params)):
+        # sst: str = Query(default=""), # sort field (정렬 필드)
+        # sod: str = Query(default=""), # search order (검색 오름, 내림차순)
+        # sfl: str = Query(default=""), # search field (검색 필드)
+        # stx: str = Query(default=""), # search text (검색어)
+        # current_page: int = Query(default=1, alias="page"), # 페이지
+        # ):
     '''
     게시판관리 목록
     '''
-    # sst = request.state.sst if request.state.sst else ""
-    # sod = request.state.sod
-    # sfl = request.state.sfl
-    # stx = request.state.stx
-    # sca = request.state.sca
-    # page = request.state.page if request.state.page else 1
-    # try:
-    #     page = int(page)
-    # except ValueError:
-    #     # "page" 값이 유효한 정수가 아닌 경우 기본값으로 1 사용
-    #     page = 1
     request.session["menu_key"] = "300100"
     
-    # 초기 쿼리 설정
-    query = db.query(models.Board)
-    records_per_page = request.state.config.cf_page_rows
+    # # 초기 쿼리 설정
+    # query = db.query(models.Board)
+    # records_per_page = request.state.config.cf_page_rows
 
-    # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
-    if sst is not None and sst != "":
-        if sod == "desc":
-            query = query.order_by(desc(getattr(models.Board, sst)))
-        else:
-            query = query.order_by(asc(getattr(models.Board, sst)))
+    # # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
+    # if sst is not None and sst != "":
+    #     if sod == "desc":
+    #         query = query.order_by(desc(getattr(models.Board, sst)))
+    #     else:
+    #         query = query.order_by(asc(getattr(models.Board, sst)))
 
-    # sfl과 stx가 제공되면, 해당 열과 값으로 추가 필터링을 합니다.
-    if sfl is not None and stx is not None:
-        if hasattr(models.Board, sfl):  # sfl이 models.Board에 존재하는지 확인
-            if sfl in ["gr_id", "bo_table"]:
-                query = query.filter(getattr(models.Board, sfl) == stx)
-            else:
-                query = query.filter(getattr(models.Board, sfl).like(f"%{stx}%"))
+    # # sfl과 stx가 제공되면, 해당 열과 값으로 추가 필터링을 합니다.
+    # if sfl is not None and stx is not None:
+    #     if hasattr(models.Board, sfl):  # sfl이 models.Board에 존재하는지 확인
+    #         if sfl in ["gr_id", "bo_table"]:
+    #             query = query.filter(getattr(models.Board, sfl) == stx)
+    #         else:
+    #             query = query.filter(getattr(models.Board, sfl).like(f"%{stx}%"))
             
-    # 페이지 번호에 따른 offset 계산
-    offset = (current_page - 1) * records_per_page
+    # # 페이지 번호에 따른 offset 계산
+    # offset = (current_page - 1) * records_per_page
 
-    # 최종 쿼리 결과를 가져옵니다.
-    boards = query.offset(offset).limit(records_per_page).all()
-    # 전체 레코드 개수 계산
-    total_records = query.count()
+    # # 최종 쿼리 결과를 가져옵니다.
+    # boards = query.offset(offset).limit(records_per_page).all()
+    # # 전체 레코드 개수 계산
+    # total_records = query.count()
+    
+    result = select_query(
+                request, 
+                models.Board, 
+                search_params, 
+                same_search_fields = ["gr_id", "bo_table"], 
+            )
     
     query_string = generate_query_string(request)
     
     context = {
         "request": request,
-        "boards": boards,
-        "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records, f"/admin/board_list?{query_string}&page="),
+        "boards": result['rows'],
+        "total_count": result['total_count'],
+        "paging": get_paging(request, search_params['current_page'], result['total_count'], f"/admin/board_list?{query_string}&page="),
     }
     return templates.TemplateResponse("board_list.html", context)
 
 
 @router.post("/board_list_update")
 async def board_list_update(request: Request, db: Session = Depends(get_db),
-                      token: Optional[str] = Form(...),
-                      checks: Optional[List[int]] = Form(None, alias="chk[]"),
-                      gr_id: Optional[List[str]] = Form(None, alias="gr_id[]"),
-                      bo_table: Optional[List[str]] = Form(None, alias="bo_table[]"),
-                      bo_skin: Optional[List[str]] = Form(None, alias="bo_skin[]"),
-                      bo_mobile_skin: Optional[List[str]] = Form(None, alias="bo_mobile_skin[]"),
-                      bo_subject: Optional[List[str]] = Form(None, alias="bo_subject[]"),
-                      bo_read_point: Optional[List[str]] = Form(None, alias="bo_read_point[]"),
-                      bo_write_point: Optional[List[str]] = Form(None, alias="bo_write_point[]"),
-                      bo_comment_point: Optional[List[str]] = Form(None, alias="bo_comment_point[]"),
-                      bo_download_point: Optional[List[str]] = Form(None, alias="bo_download_point[]"),
-                      bo_use_sns: Optional[List[int]] = Form(None, alias="bo_use_sns[]"),
-                      bo_use_search: Optional[List[int]] = Form(None, alias="bo_use_search[]"),
-                      bo_order: Optional[List[str]] = Form(None, alias="bo_order[]"),
-                      bo_device: Optional[List[str]] = Form(None, alias="bo_device[]"),
-                      act_button: Optional[str] = Form(...),
-                      ):
+        token: Optional[str] = Form(...),
+        checks: Optional[List[int]] = Form(None, alias="chk[]"),
+        gr_id: Optional[List[str]] = Form(None, alias="gr_id[]"),
+        bo_table: Optional[List[str]] = Form(None, alias="bo_table[]"),
+        bo_skin: Optional[List[str]] = Form(None, alias="bo_skin[]"),
+        bo_mobile_skin: Optional[List[str]] = Form(None, alias="bo_mobile_skin[]"),
+        bo_subject: Optional[List[str]] = Form(None, alias="bo_subject[]"),
+        bo_read_point: Optional[List[str]] = Form(None, alias="bo_read_point[]"),
+        bo_write_point: Optional[List[str]] = Form(None, alias="bo_write_point[]"),
+        bo_comment_point: Optional[List[str]] = Form(None, alias="bo_comment_point[]"),
+        bo_download_point: Optional[List[str]] = Form(None, alias="bo_download_point[]"),
+        bo_use_sns: Optional[List[int]] = Form(None, alias="bo_use_sns[]"),
+        bo_use_search: Optional[List[int]] = Form(None, alias="bo_use_search[]"),
+        bo_order: Optional[List[str]] = Form(None, alias="bo_order[]"),
+        bo_device: Optional[List[str]] = Form(None, alias="bo_device[]"),
+        act_button: Optional[str] = Form(...),
+        ):
     
     if not token or not validate_one_time_token(token, 'update'):
         return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰값이 일치하지 않습니다."]})    
+
+    query_string = generate_query_string(request)
     
     if act_button == "선택삭제":
         for i in checks:
@@ -126,7 +119,6 @@ async def board_list_update(request: Request, db: Session = Depends(get_db),
                 # 게시판 테이블 삭제
                 models.Write = dynamic_create_write_table(table_name=board.bo_table, create_table=False)
                 models.Write.__table__.drop(engine)
-        query_string = generate_query_string(request)
         return RedirectResponse(f"/admin/board_list?{query_string}", status_code=303)
         
     # 선택수정
@@ -156,8 +148,6 @@ async def board_list_update(request: Request, db: Session = Depends(get_db),
             board.bo_device = bo_device[i] if bo_device[i] is not None else ""
             db.commit()
             
-    query_string = generate_query_string(request)            
-    
     return RedirectResponse(f"/admin/board_list?{query_string}", status_code=303)
 
 
