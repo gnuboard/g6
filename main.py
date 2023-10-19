@@ -47,8 +47,6 @@ app.include_router(menu_router, prefix="/menu", tags=["menu"])
 # 항상 실행해야 하는 미들웨어
 @app.middleware("http")
 async def main_middleware(request: Request, call_next):
-    # global is_mobile, user_device
-    global global_data
 
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 시작    
     # 요청의 경로를 얻습니다.
@@ -60,12 +58,10 @@ async def main_middleware(request: Request, call_next):
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
     
     member = None
-    # outlogin = None
 
     db: Session = SessionLocal()
     config = db.query(models.Config).first()
-    global_data['config'] = config
-    # request.state.config = config
+    request.state.config = config
     
     ss_mb_id = request.session.get("ss_mb_id", "")
     # print("ss_mb_id:", ss_mb_id)
@@ -151,12 +147,15 @@ async def main_middleware(request: Request, call_next):
                 request.state.is_mobile = True
                 request.state.device = 'mobile'
                 
-    request.state.context = {
-        # "request": request,
-        # "config": config,
-        # "member": member,
-        # "outlogin": outlogin.body.decode("utf-8"),
-    }      
+    # 로그인한 회원 정보
+    request.state.login_member = member
+                
+    # request.state.context = {
+    #     # "request": request,
+    #     # "config": config,
+    #     # "member": member,
+    #     # "outlogin": outlogin.body.decode("utf-8"),
+    # }      
     
     response = await call_next(request)
 

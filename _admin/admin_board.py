@@ -157,7 +157,7 @@ def board_form(request: Request, db: Session = Depends(get_db)):
     # token = hash_password(hash_password("")) # 토큰값을 아무도 알수 없게 만듬
     # request.session["token"] = token   
     
-    config = request.state.context['config']
+    config = request.state.config
     
     board = {
         "bo_table": "",
@@ -218,7 +218,7 @@ async def board_form(bo_table: str, request: Request, db: Session = Depends(get_
         "request": request,
         "board": board,
         "token": token,
-        "config": request.state.context['config']
+        "config": request.state.config,
     }
     return templates.TemplateResponse("board_form.html", context)
 

@@ -37,8 +37,6 @@ def point_list(request: Request, db: Session = Depends(get_db), search_params: d
     '''
     포인트 목록
     '''
-    global global_data
-    
     request.session["menu_key"] = "200200"
     
     # # 초기 쿼리 설정
@@ -70,6 +68,7 @@ def point_list(request: Request, db: Session = Depends(get_db), search_params: d
     # global config
    
     result = select_query(
+                request,
                 models.Point, 
                 search_params, 
                 same_search_fields = ["mb_id"], 
@@ -86,11 +85,10 @@ def point_list(request: Request, db: Session = Depends(get_db), search_params: d
     
     context = {
         "request": request,
-        # "config": request.state.config,
-        "config": global_data['config'],
+        "config": request.state.config,
         "points": result['rows'],
         "total_count": result['total_count'],
-        "paging": get_paging(search_params['current_page'], result['total_count'], f"/admin/point_list?{query_string}&page="),
+        "paging": get_paging(request, search_params['current_page'], result['total_count'], f"/admin/point_list?{query_string}&page="),
     }
     return templates.TemplateResponse("point_list.html", context)
 
@@ -104,8 +102,7 @@ async def point_update(request: Request, db: Session = Depends(get_db),
         po_point: Optional[str] = Form(default="0"),
         po_expire_term: Optional[int] = Form(None),
         ):
-    global global_data
-    config = global_data['config']
+    config = request.state.config
     
     try:
         # po_point 값을 정수로 변환합니다.

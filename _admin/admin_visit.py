@@ -130,7 +130,7 @@ async def visit_delete_update(request: Request, db: Session = Depends(get_db),
     if not validate_one_time_token(token, 'delete'):
         return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요."]})
     
-    member = request.state.context['member']
+    member = request.state.login_member
     if not member:
         return templates.TemplateResponse("alert.html", {"request": request, "errors": ["로그인 후 이용해 주세요."]})
     
