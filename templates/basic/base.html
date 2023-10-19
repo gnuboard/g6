@@ -192,7 +192,7 @@ $(function() {
             {% endblock %}
         </div>
     <div id="aside">
-        {% if request.state.context.member %}
+        {% if request.state.login_member %}
             {% include "bbs/outlogin_after.html" %}
         {% else %}
             {% include "bbs/outlogin_before.html" %}
