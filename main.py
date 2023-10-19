@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 from common import *
 from user_agents import parse
+import os
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -48,6 +49,7 @@ app.include_router(menu_router, prefix="/menu", tags=["menu"])
 @app.middleware("http")
 async def main_middleware(request: Request, call_next):
     # global is_mobile, user_device
+    global global_data
 
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 시작    
     # 요청의 경로를 얻습니다.
@@ -63,7 +65,8 @@ async def main_middleware(request: Request, call_next):
 
     db: Session = SessionLocal()
     config = db.query(models.Config).first()
-    request.state.config = config
+    global_data['config'] = config
+    # request.state.config = config
     
     ss_mb_id = request.session.get("ss_mb_id", "")
     # print("ss_mb_id:", ss_mb_id)
@@ -149,9 +152,9 @@ async def main_middleware(request: Request, call_next):
                 request.state.device = 'mobile'
                 
     request.state.context = {
-        "request": request,
-        "config": config,
-        "member": member,
+        # "request": request,
+        # "config": config,
+        # "member": member,
         # "outlogin": outlogin.body.decode("utf-8"),
     }      
     
