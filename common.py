@@ -18,7 +18,6 @@ from datetime import datetime, timedelta, date, time
 import json
 from PIL import Image
 from user_agents import parse
-from pydantic import BaseSettings
 
 # 전역변수 선언(global variables)
 global_data = {}
