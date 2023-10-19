@@ -634,3 +634,63 @@ class Menu(Base):
     me_order = Column(Integer, nullable=False, default=0)
     me_use = Column(TINYINT, nullable=False, default=0)
     me_mobile_use = Column(TINYINT, nullable=False, default=0)
+    
+    
+# CREATE TABLE `g5_point` (
+#   `po_id` int NOT NULL,
+#   `mb_id` varchar(20) NOT NULL DEFAULT '',
+#   `po_datetime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+#   `po_content` varchar(255) NOT NULL DEFAULT '',
+#   `po_point` int NOT NULL DEFAULT '0',
+#   `po_use_point` int NOT NULL DEFAULT '0',
+#   `po_expired` tinyint NOT NULL DEFAULT '0',
+#   `po_expire_date` date NOT NULL DEFAULT '0000-00-00',
+#   `po_mb_point` int NOT NULL DEFAULT '0',
+#   `po_rel_table` varchar(20) NOT NULL DEFAULT '',
+#   `po_rel_id` varchar(20) NOT NULL DEFAULT '',
+#   `po_rel_action` varchar(100) NOT NULL DEFAULT ''
+# ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+    
+class Point(Base):
+    '''
+    포인트 테이블
+    '''
+    __tablename__ = 'g6_point'
+    
+    po_id = Column(Integer, primary_key=True, autoincrement=True)
+    mb_id = Column(String(20), nullable=False, default='')    
+    po_datetime = Column(DateTime, nullable=False, default='0000-00-00 00:00:00')
+    po_content = Column(String(255), nullable=False, default='')
+    po_point = Column(Integer, nullable=False, default=0)
+    po_use_point = Column(Integer, nullable=False, default=0)
+    po_expired = Column(TINYINT, nullable=False, default=0)
+    po_expire_date = Column(Date, nullable=False, default='0000-00-00')
+    po_mb_point = Column(Integer, nullable=False, default=0)
+    po_rel_table = Column(String(20), nullable=False, default='')
+    po_rel_id = Column(String(20), nullable=False, default='')
+    po_rel_action = Column(String(100), nullable=False, default='')
+    
+    
+    
+    
+
+
+class Memo(Base):
+    '''
+    쪽지 테이블
+    '''
+    __tablename__ = 'g6_memo'
+    
+    me_id = Column(Integer, primary_key=True, autoincrement=True)
+    me_recv_mb_id = Column(String(20), nullable=False, default='')
+    me_send_mb_id = Column(String(20), nullable=False, default='')
+    me_send_datetime = Column(DateTime, nullable=False, default=datetime.now())
+    me_read_datetime = Column(DateTime, nullable=True)
+    me_memo = Column(Text, nullable=False)
+    me_send_id = Column(Integer, nullable=False, default=0)
+    me_type = Column(Enum('send', 'recv'), nullable=False, default='recv')
+    me_send_ip = Column(String(100), nullable=False, default='')
+    
+    # 종속관계
+    # recv_member = relationship("Member", foreign_keys=[me_recv_mb_id])
+    # send_member = relationship("Member", foreign_keys=[me_send_mb_id])

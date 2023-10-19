@@ -15,7 +15,6 @@ import models
 
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
-templates.env.globals["outlogin"] = outlogin
 
 
 # all board list
