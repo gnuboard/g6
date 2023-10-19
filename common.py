@@ -2,6 +2,7 @@ import hashlib
 import os
 import re
 from typing import List, Optional
+import uuid
 import PIL
 import shutil
 from fastapi import Query, Request, HTTPException, UploadFile
@@ -10,7 +11,7 @@ from passlib.context import CryptContext
 from requests import Session
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.orm import load_only
-import models
+from models import Config, Member, Board, Group, Point, Visit, VisitSum
 from models import WriteBaseModel
 from database import SessionLocal, engine
 from datetime import datetime, timedelta, date, time
@@ -18,13 +19,13 @@ import json
 from PIL import Image
 from user_agents import parse
 
-
+# 전역변수 선언(global variables)
 TEMPLATES = "templates"
 def get_theme_from_db(config=None):
     # main.py 에서 config 를 인수로 받아서 사용
     if not config:
         db: Session = SessionLocal()
-        config = db.query(models.Config).first()
+        config = db.query(Config).first()
     theme = config.cf_theme if config and config.cf_theme else "basic"
     theme_path = f"{TEMPLATES}/{theme}"
     
@@ -109,7 +110,7 @@ def get_real_client_ip(request: Request):
     return request.remote_addr    
 
 
-def session_member_key(request: Request, member: models.Member):
+def session_member_key(request: Request, member: Member):
     '''
     세션에 저장할 회원의 고유키를 생성하여 반환하는 함수
     '''
@@ -160,7 +161,7 @@ def get_editor_select(id, selected):
 def get_member_id_select(id, level, selected, event=''):
     db = SessionLocal()
     # 테이블에서 지정된 필드만 가져 오는 경우 load_only("field1", "field2") 함수를 사용 
-    members = db.query(models.Member).options(load_only("mb_id")).filter(models.Member.mb_level >= level).all()
+    members = db.query(Member).options(load_only("mb_id")).filter(Member.mb_level >= level).all()
     html_code = []
     html_code.append(f'<select id="{id}" name="{id}" {event}><option value="">선택하세요</option>')
     for member in members:
@@ -190,7 +191,7 @@ def option_array_checked(option, arr=[]):
 
 def get_group_select(id, selected='', event=''):
     db = SessionLocal()
-    groups = db.query(models.Group).order_by(models.Group.gr_id).all()
+    groups = db.query(Group).order_by(Group.gr_id).all()
     str = f'<select id="{id}" name="{id}" {event}>\n'
     for i, group in enumerate(groups):
         if i == 0:
@@ -427,16 +428,6 @@ def save_image(directory: str, filename: str, file: UploadFile):
             shutil.copyfileobj(file.file, buffer)
             
 
-def outlogin(request: Request):
-    templates = Jinja2Templates(directory=TEMPLATES_DIR)
-    member = request.state.context["member"]
-    if member:
-        temp = templates.TemplateResponse("bbs/outlogin_after.html", {"request": request, "member": member})
-    else:
-        temp = templates.TemplateResponse("bbs/outlogin_before.html", {"request": request, "member": None})
-    return temp.body.decode("utf-8")
-
-
 def generate_query_string(request: Request):
     search_fields = {}
     if request.method == "GET":
@@ -483,8 +474,8 @@ def get_from_list(lst, index, default=0):
 # url_prefix : 페이지 링크의 URL 접두사
 # add_url : 페이지 링크의 추가 URL
 def get_paging(request, current_page, total_count, url_prefix, add_url=""):
-    
     config = request.state.config
+    
     try:
         current_page = int(current_page)
     except ValueError:
@@ -564,9 +555,6 @@ from ua_parser import user_agent_parser
 def record_visit(request: Request):
     vi_ip = request.client.host
     
-    Visit = models.Visit
-    VisitSum = models.VisitSum
-
     # 세션 생성
     db = SessionLocal()
 
@@ -616,41 +604,64 @@ def common_search_query_params(
         sod: str = Query(default=""), 
         sfl: str = Query(default=""), 
         stx: str = Query(default=""), 
-        current_page: int = Query(default=1, alias="page")
+        current_page: str = Query(default="1", alias="page")
         ):
     '''
     공통 쿼리 파라미터를 받는 함수
     '''
+    try:
+        current_page = int(current_page)
+    except ValueError:
+        # current_page가 정수로 변환할 수 없는 경우 기본값으로 1을 사용하도록 설정
+        current_page = 1
     return {"sst": sst, "sod": sod, "sfl": sfl, "stx": stx, "current_page": current_page}
 
 
-def select_query(request: Request, table_class, search_params: dict, 
+def select_query(request: Request, table_model, search_params: dict, 
         same_search_fields: Optional[List[str]] = "", # 값이 완전히 같아야지만 필터링 '검색어'
         prefix_search_fields: Optional[List[str]] = "", # 뒤에 %를 붙여서 필터링 '검색어%'
-        # contains_search_fields": Optional[List[str]] = "", # 양쪽에 %를 붙여서 필터링 '%검색어%', 위의 두 경우가 아니면 else 로 처리
+        default_sod: str = "asc",
+        default_sst: str = "",
     ):
-    records_per_page = request.state.config.cf_page_rows
+    config = request.state.config
+    
+    records_per_page = config.cf_page_rows
 
     db = SessionLocal()
-    query = db.query(table_class)
+    query = db.query(table_model)
+    
+    # # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
+    # if search_params['sst'] is not None and search_params['sst'] != "":
+    #     # if search_params['sod'] == "desc":
+    #     #     query = query.order_by(desc(getattr(table_model, search_params['sst'])))
+    #     # else:
+    #     #     query = query.order_by(asc(getattr(table_model, search_params['sst'])))
+    #     if search_params.get('sod', default_sod) == "desc":  # 수정된 부분
+    #         query = query.order_by(desc(getattr(table_model, search_params['sst'])))
+    #     else:
+    #         query = query.order_by(asc(getattr(table_model, search_params['sst'])))
+
+    # 'sst' 매개변수가 제공되지 않거나 빈 문자열인 경우, default_sst를 사용합니다.
+    sst = search_params.get('sst', default_sst) or default_sst
     
     # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
-    if search_params['sst'] is not None and search_params['sst'] != "":
-        if search_params['sod'] == "desc":
-            query = query.order_by(desc(getattr(table_class, search_params['sst'])))
+    if sst:
+        sod = search_params.get('sod', default_sod) or default_sod
+        if sod == "desc":
+            query = query.order_by(desc(getattr(table_model, sst)))
         else:
-            query = query.order_by(asc(getattr(table_class, search_params['sst'])))
-
+            query = query.order_by(asc(getattr(table_model, sst)))
+            
     # sfl과 stx가 제공되면, 해당 열과 값으로 추가 필터링을 합니다.
     if search_params['sfl'] is not None and search_params['stx'] is not None:
-        if hasattr(table_class, search_params['sfl']):  # sfl이 Table에 존재하는지 확인
+        if hasattr(table_model, search_params['sfl']):  # sfl이 Table에 존재하는지 확인
             # if search_params['sfl'] in ["mb_level"]:
             if search_params['sfl'] in same_search_fields:
-                query = query.filter(getattr(table_class, search_params['sfl']) == search_params['stx'])
+                query = query.filter(getattr(table_model, search_params['sfl']) == search_params['stx'])
             elif search_params['sfl'] in prefix_search_fields:
-                query = query.filter(getattr(table_class, search_params['sfl']).like(f"{search_params['stx']}%"))
+                query = query.filter(getattr(table_model, search_params['sfl']).like(f"{search_params['stx']}%"))
             else:
-                query = query.filter(getattr(table_class, search_params['sfl']).like(f"%{search_params['stx']}%"))
+                query = query.filter(getattr(table_model, search_params['sfl']).like(f"%{search_params['stx']}%"))
 
     # 페이지 번호에 따른 offset 계산
     offset = (search_params['current_page'] - 1) * records_per_page
@@ -662,7 +673,275 @@ def select_query(request: Request, table_class, search_params: dict,
         "rows": rows,
         "total_count": query.count(),
     }
+    
 
+# 회원 레코드 얻기    
+# fields : 가져올 필드, 예) "mb_id, mb_name, mb_nick"
+def get_member(mb_id: str, fields: str = '*'):
+    db = SessionLocal()
+    return db.query(Member).options(load_only(fields)).filter_by(mb_id=mb_id).first()
+    
+
+# 포인트 부여    
+def insert_point(request: Request, mb_id: str, point: int, content: str = '', rel_table: str = '', rel_id: str = '', rel_action: str = '', expire: int = 0):
+    config = request.state.config
+    
+    # 포인트를 사용하지 않는다면 종료
+    if not config.cf_use_point:
+        return 0
+    
+    # 포인트가 없다면 업데이트를 할 필요가 없으므로 종료
+    if point == 0:
+        return 0
+    
+    # 회원아이디가 없다면 종료
+    if mb_id == '':
+        return 0
+    
+    # 회원정보가 없다면 종료
+    db = SessionLocal()
+    
+    member = db.query(Member).filter_by(mb_id=mb_id).first()
+    if not member:
+        return 0
+    
+    mb_point = get_point_sum(request, mb_id)
+
+    
+    if rel_table or rel_id or rel_action:
+        record_count = db.query(Point).filter(
+            and_(
+                Point.mb_id == mb_id,
+                Point.po_rel_table == rel_table,
+                Point.po_rel_id == rel_id,
+                Point.po_rel_action == rel_action
+            )
+        ).count()
+        if record_count:
+            return -1
+        
+    # 포인트 건별 생성
+    po_expire_date = '9999-12-31'
+    if config.cf_point_term > 0:
+        if expire > 0:
+            po_expire_date = (SERVER_TIME + timedelta(days=expire-1)).strftime('%Y-%m-%d')
+        else:
+            po_expire_date = (SERVER_TIME + timedelta(days=config.cf_point_term - 1)).strftime('%Y-%m-%d')
+            
+    po_expired = 0
+    if point < 0:
+        po_expired = 1
+        po_expire_date = TIME_YMD
+    po_mb_point = mb_point + point
+    
+    new_point = Point(
+        mb_id=mb_id,
+        po_datetime=TIME_YMDHIS,
+        po_content=content,
+        po_point=point,
+        po_use_point=0,
+        po_mb_point=po_mb_point,
+        po_expired=po_expired,
+        po_expire_date=po_expire_date,
+        po_rel_table=rel_table,
+        po_rel_id=rel_id,
+        po_rel_action=rel_action
+    )
+    db.add(new_point)
+    db.commit()
+    
+    # filter_by 는 filter 에 비해 기능이 제한적임    
+    db.query(Member).filter_by(mb_id=mb_id).update({Member.mb_point: po_mb_point})
+    # db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: po_mb_point})
+    db.commit()
+
+    return 1
+
+
+# 소멸 포인트 얻기
+def get_expire_point(request: Request, mb_id: str):
+    config = request.state.config
+    
+    if  config.cf_point_term <= 0:
+        return 0
+    
+    db = SessionLocal()
+    
+    point_sum = db.query(func.sum(Point.po_point - Point.po_use_point)).filter_by(mb_id=mb_id, po_expired=False).filter(Point.po_expire_date < datetime.now()).scalar()
+    return point_sum if point_sum else 0
+
+
+# 포인트 내역 합계
+def get_point_sum(request: Request, mb_id: str):
+    config = request.state.config
+    
+    db = SessionLocal()
+    
+    if config.cf_point_term > 0:
+        expire_point = get_expire_point(request, mb_id)
+        if expire_point > 0:
+            mb = get_member(mb_id, 'mb_point')
+            point = expire_point * (-1)
+            new_point = Point(
+                mb_id=mb_id,
+                po_datetime=TIME_YMDHIS,
+                po_content='포인트 소멸',
+                po_point=expire_point * (-1),
+                po_use_point=0,
+                po_mb_point=mb.mb_point + point,
+                po_expired=1,
+                po_expire_date=TIME_YMD,
+                po_rel_table='@expire',
+                po_rel_id=mb_id,
+                po_rel_action='expire-' + str(uuid.uuid4()),
+            )   
+            db.add(new_point)
+            db.commit()
+            
+            # 포인트를 사용한 경우 포인트 내역에 사용금액 기록
+            if point < 0:
+                # insert_use_point(mb_id, point)
+                pass
+        
+        # 유효기간이 있을 때 기간이 지난 포인트 expired 체크    
+        db.query(Point).filter(
+            and_(
+                Point.mb_id == mb_id,
+                Point.po_expired != 1,
+                Point.po_expire_date != '9999-12-31',
+                Point.po_expire_date < TIME_YMD
+            )
+        ).update({Point.po_expired: 1})
+        db.commit()            
+            
+    # 포인트합
+    point_sum = db.query(func.sum(Point.po_point)).filter_by(mb_id=mb_id).scalar()
+    return point_sum if point_sum else 0
+
+
+# 사용포인트 입력
+def insert_use_point(mb_id: str, point: int, po_id: str = ""):
+    global config
+    
+    point1 = abs(point)
+    db = SessionLocal()
+    query = db.query(Point).filter_by(mb_id=mb_id, po_expired=False).order_by(Point.po_id.desc())
+    query = query(Point.po_id, Point.po_point, Point.po_use_point)\
+                .filter(
+                    and_(
+                        Point.mb_id == mb_id,
+                        Point.po_id != po_id,
+                        Point.po_expired == 0,
+                        Point.po_point > Point.po_use_point
+                    )
+                )
+    if config.cf_point_term:
+        query = query.order_by(Point.po_expire_date.asc(), Point.po_id.asc())
+    else:
+        query = query.order_by(Point.po_id.asc())
+    rows = query.all()
+    for row in rows:
+        point2 = row.po_point
+        point3 = row.po_use_point
+        
+        if (point2 - point3) > point1:
+            db.query(Point).filter_by(po_id=row.po_id).update({"po_use_point": (Point.po_use_point + point1)})
+            db.commit()
+        else:
+            point4 = point2 - point3
+            db.query(Point).filter_by(po_id=row.po_id).update({"po_use_point": (Point.po_use_point + point4), "po_expired": 100})
+            db.commit()
+            point1 = point1 - point4
+
+
+# 포인트 삭제
+def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel_action: str):
+    db = SessionLocal()
+    result = False
+    if rel_table or rel_id or rel_action:
+        # 포인트 내역정보    
+        row = db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action).first()
+        if row.po_point and row.po_point > 0:
+            abs_po_point = abs(row.po_point)
+            delete_use_point(request, row.mb_id, abs_po_point)
+        else:
+            if row.po_use_point and row.po_use_point > 0:
+                insert_use_point(request, row.mb_id, row.po_use_point, row.po_id)
+                
+        db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action).delete(synchronize_session=False)
+        db.commit()
+
+        # po_mb_point에 반영
+        if row.po_point:
+            db.query(Point).filter(Point.mb_id == mb_id, Point.po_id > row.po_id).update({Point.po_mb_point: Point.po_mb_point - row.po_point}, synchronize_session=False)
+            db.commit()
+        
+        # 포인트 내역의 합을 구하고    
+        sum_point = get_point_sum(request, mb_id)
+        
+        # 포인트 UPDATE
+        db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: sum_point}, synchronize_session=False)
+        result = db.commit()
+
+    return result
+
+
+# 사용포인트 삭제
+def delete_use_point(request: Request, mb_id: str, point: int):
+    config = request.state.config
+    db = SessionLocal()
+    
+    point1 = abs(point)
+    rows = db.query(Point).filter(Point.mb_id == mb_id, Point.po_expired != 1, Point.po_use_point > 0).order_by(desc('po_expire_date', 'po_id') if config.cf_point_term else desc('po_id')).all()
+    for row in rows:
+        point2 = row.po_use_point
+        if row.po_expired == 100 and (row.po_expire_date == '9999-12-31' or row.po_expire_date >= TIME_YMD):
+            po_expired = 0
+        else:
+            po_expired = row.po_expired
+        
+        if point2 > point1:
+            db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: Point.po_use_point - point1, Point.po_expired: po_expired}, synchronize_session=False)
+            db.commit()
+            break
+        else:
+            db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: 0, Point.po_expired: po_expired}, synchronize_session=False)
+            db.commit()
+            point1 = point1 - point2
+
+
+# 소멸포인트 삭제
+def delete_expire_point(request: Request, mb_id: str, point: int):
+    config = request.state.config
+    db = SessionLocal()
+    
+    point1 = abs(point)
+    rows = db.query(Point).filter(Point.mb_id == mb_id, Point.po_expired == 1, Point.po_point >= 0, Point.po_use_point > 0).order_by(desc(Point.po_expire_date), desc(Point.po_id)).all()
+    for row in rows:
+        point2 = row.po_use_point
+        po_expired = 0
+        po_expire_date = '9999-12-31'
+        if config.cf_point_term > 0:
+            po_expire_date = (SERVER_TIME + timedelta(days=config.cf_point_term - 1)).strftime('%Y-%m-%d')
+    
+        if point2 > point1:
+            db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: Point.po_use_point - point1, Point.po_expired: po_expired, Point.po_expire_date: po_expire_date}, synchronize_session=False)
+            db.commit()
+            break
+        else:
+            db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: 0, Point.po_expired: po_expired, Point.po_expire_date: po_expire_date}, synchronize_session=False)
+            db.commit()
+            point1 = point1 - point2
+
+
+def domain_mail_host(request: Request, is_at: bool = True):
+    domain_host = request.base_url.hostname
+    
+    if domain_host.startswith("www."):
+        domain_host = domain_host[4:]
+    
+    return f"@{domain_host}" if is_at else domain_host
+        
 
 def get_memo_not_read(mb_id: str):
     '''

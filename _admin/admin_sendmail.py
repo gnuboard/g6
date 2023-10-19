@@ -62,6 +62,8 @@ templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.globals["get_paging"] = get_paging
+templates.env.globals["domain_mail_host"] = domain_mail_host
+
 
 @router.get("/sendmail_test")
 async def visit_search(request: Request, db: Session = Depends(get_db),
@@ -73,8 +75,8 @@ async def visit_search(request: Request, db: Session = Depends(get_db),
     
     context = {
         "request": request,
-        "config": request.state.context['config'],
-        "member": request.state.context['member'],
+        "config": request.state.config,
+        "member": request.state.login_member,
     }
     return templates.TemplateResponse("sendmail_test.html", context)
 
@@ -99,32 +101,15 @@ async def sendmail_test_result(request: Request, db: Session = Depends(get_db),
         raise HTTPException(status_code=400, detail="Recipient list is empty.")
     
     futures = {}
-    errors = []
     with ThreadPoolExecutor() as executor:
         for recipient in recipients:
             # 각 이메일 발송 작업을 ThreadPoolExecutor로 실행
             futures[recipient] = executor.submit(send_email, recipient.strip(), subject, body)
-            
-    # for recipient, future in futures.items():
-    #     try:
-    #         # result 는 의미 없이 사용함
-    #         result = future.result()
-    #     except Exception as e:
-    #         errors.append(str(e))
-    #         # print(f"An error occurred sending email to {recipient}: {e}")
-
-    # # 오류 메시지가 저장된 'errors' 딕셔너리를 출력합니다.
-    # print("errors:", errors)        
-            
-    # # # 각 Future의 결과를 확인하고 출력
-    # # for future in futures:
-    # #     print(future.result())
         
     context = {
         "request": request,
-        "config": request.state.context['config'],
-        "member": request.state.context['member'],
-        # "errors": errors,
+        "config": request.state.config,
+        "member": request.state.login_member,
         "real_emails": recipients,
     }
     return templates.TemplateResponse("sendmail_test_result.html", context)
