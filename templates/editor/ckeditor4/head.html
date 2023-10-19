@@ -4,4 +4,14 @@
     // ckeditor4 global variables
     let ck4editorAttachId = '';
     let ck4editors = [];
+    
+    function getEditorContent(id) {
+        let content = ck4editors[id].getData();
+        return content;
+    }
+
+
+    function setEditorContent(id, content) {
+        ck4editors[id].setData(content);
+    }
 </script>
