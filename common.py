@@ -21,8 +21,6 @@ from user_agents import parse
 from pydantic import BaseSettings
 
 # 전역변수 선언(global variables)
-global_data = {}
-
 TEMPLATES = "templates"
 def get_theme_from_db(config=None):
     # main.py 에서 config 를 인수로 받아서 사용
@@ -487,8 +485,7 @@ def get_from_list(lst, index, default=0):
 # url_prefix : 페이지 링크의 URL 접두사
 # add_url : 페이지 링크의 추가 URL
 def get_paging(request, current_page, total_count, url_prefix, add_url=""):
-    global global_data
-    config = global_data['config']
+    config = request.state.config
     
     try:
         current_page = int(current_page)
@@ -618,22 +615,26 @@ def common_search_query_params(
         sod: str = Query(default=""), 
         sfl: str = Query(default=""), 
         stx: str = Query(default=""), 
-        current_page: int = Query(default=1, alias="page")
+        current_page: str = Query(default="1", alias="page")
         ):
     '''
     공통 쿼리 파라미터를 받는 함수
     '''
+    try:
+        current_page = int(current_page)
+    except ValueError:
+        # current_page가 정수로 변환할 수 없는 경우 기본값으로 1을 사용하도록 설정
+        current_page = 1
     return {"sst": sst, "sod": sod, "sfl": sfl, "stx": stx, "current_page": current_page}
 
 
-def select_query(table_model, search_params: dict, 
+def select_query(request: Request, table_model, search_params: dict, 
         same_search_fields: Optional[List[str]] = "", # 값이 완전히 같아야지만 필터링 '검색어'
         prefix_search_fields: Optional[List[str]] = "", # 뒤에 %를 붙여서 필터링 '검색어%'
         default_sod: str = "asc",
         default_sst: str = "",
     ):
-    global global_data
-    config = global_data['config']
+    config = request.state.config
     
     records_per_page = config.cf_page_rows
 
@@ -686,9 +687,8 @@ def select_query(table_model, search_params: dict,
     
 
 # 포인트 부여    
-def insert_point(mb_id: str, point: int, content: str = '', rel_table: str = '', rel_id: str = '', rel_action: str = '', expire: int = 0):
-    global global_data
-    config = global_data['config']
+def insert_point(request: Request, mb_id: str, point: int, content: str = '', rel_table: str = '', rel_id: str = '', rel_action: str = '', expire: int = 0):
+    config = request.state.config
     
     # 포인트를 사용하지 않는다면 종료
     if not config.cf_use_point:
@@ -767,9 +767,8 @@ def insert_point(mb_id: str, point: int, content: str = '', rel_table: str = '',
 
 
 # 소멸 포인트 얻기
-def get_expire_point(mb_id: str):
-    global global_data
-    config = global_data['config']
+def get_expire_point(request: Request, mb_id: str):
+    config = request.state.config
     
     if  config.cf_point_term <= 0:
         return 0
@@ -788,9 +787,8 @@ def get_member(mb_id: str, fields: str = '*'):
 
 
 # 포인트 내역 합계
-def get_point_sum(mb_id: str):
-    global global_data
-    config = global_data['config']
+def get_point_sum(request: Request, mb_id: str):
+    config = request.state.config
     
     db = SessionLocal()
     

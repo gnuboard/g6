@@ -41,29 +41,28 @@ def config_form(request: Request, db: Session = Depends(get_db)):
     host_name = socket.gethostname()
     host_ip = socket.gethostbyname(host_name)
     
-    # config = db.query(models.Config).first()
-    config = request.state.context['config']
     return templates.TemplateResponse("config_form.html", 
         {
             "request": request, 
-            "config": config, 
+            "config": request.state.config,
             "host_name": host_name,
             "host_ip": host_ip,
         })
     
+    
 @router.post("/config_form_update")  
 def config_form_update(
-    request: Request, 
-    token: str = Form(None),
-    form_data: ConfigForm = Depends(), 
-    db: Session = Depends(get_db)
-    ):
+        request: Request, 
+        token: str = Form(None),
+        form_data: ConfigForm = Depends(), 
+        db: Session = Depends(get_db)
+        ):
     
     if not validate_one_time_token(token, 'update'):
         return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다."]})
     
     # 에러 체크
-    member = request.state.context['member']
+    member = request.state.login_member
     # print(member.__dict__)
     if member: 
         if member.mb_level < 10:
