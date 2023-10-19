@@ -53,7 +53,8 @@ def list_post(bo_table: str, request: Request, db: Session = Depends(get_db)):
     request.state.context["writes"] = writes
 
     # return templates.TemplateResponse("board/list_post.html", {"request": request, "board": board, "writes": writes})
-    return templates.TemplateResponse(f"board/{request.state.device}/{board.bo_skin}/list_post.html", request.state.context)
+    return templates.TemplateResponse(f"board/{request.state.device}/{board.bo_skin}/list_post.html",
+                                      {"request": request, "board": board, "writes": writes})
 
 
 @router.get("/write/{bo_table}")
