@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
 from database import get_db, engine
-import models 
+import models
 from common import *
 from typing import List, Optional
 from dataclassform import BoardForm
@@ -26,8 +26,8 @@ templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.globals["format"] = format
 
 
-@router.get("/point_list")
-def point_list(request: Request, db: Session = Depends(get_db), search_params: dict = Depends(common_search_query_params)):
+@router.get("/auth_list")
+def auth_list(request: Request, db: Session = Depends(get_db), search_params: dict = Depends(common_search_query_params)):
         # sst: str = Query(default=""), # sort field (정렬 필드)
         # sod: str = Query(default=""), # search order (검색 오름, 내림차순)
         # sfl: str = Query(default=""), # search field (검색 필드)
@@ -37,7 +37,7 @@ def point_list(request: Request, db: Session = Depends(get_db), search_params: d
     '''
     포인트 목록
     '''
-    request.session["menu_key"] = "200200"
+    request.session["menu_key"] = "100200"
     
     # # 초기 쿼리 설정
     # query = db.query(models.Board)
@@ -69,97 +69,101 @@ def point_list(request: Request, db: Session = Depends(get_db), search_params: d
    
     result = select_query(
                 request,
-                models.Point, 
+                models.Auth, 
                 search_params, 
                 same_search_fields = ["mb_id"], 
-                default_sst = "po_id",
-                default_sod = "desc",
+                default_sst = ["mb_id", "au_menu"],
+                default_sod = "",
             )
     
     for row in result['rows']:
-        mb = db.query(Member.mb_name).filter_by(mb_id=row.mb_id).first()
+        mb = db.query(Member.mb_nick).filter_by(mb_id=row.mb_id).first()
         if mb:
-            row.mb_name = mb.mb_name
+            row.mb_nick = mb.mb_nick
     
     sum_point = db.query(func.sum(Point.po_point)).scalar()
-   
+    
+    # JSON 파일에서 데이터 로드
+    with open('_admin/admin_menu_bbs.json', 'r', encoding='utf-8') as file:
+        auth_menu = json.load(file)
+        
+    # 사전의 각 키-값 쌍을 확인
+    auth_options = []
+    # 사전의 각 메뉴 항목을 순회
+    for menu_items in auth_menu.values():
+        # 메뉴의 각 항목을 순회
+        for item in menu_items:
+            # id와 name 값을 가져옴
+            id_value = item.get('id', '')
+            name_value = item.get('name', '')
+            # id와 name 값이 비어 있지 않은 경우 그들을 옵션으로 출력
+            if id_value and name_value:
+                # print(id_value, name_value)
+                auth_options.append(f'<option value="{id_value}">{id_value} {name_value}</option>')    
+                
     context = {
         "request": request,
         "config": request.state.config,
-        "points": result['rows'],
+        "rows": result['rows'],
         "total_count": result['total_count'],
         "sum_point": sum_point,
+        "auth_options": auth_options,
         "paging": get_paging(request, search_params['current_page'], result['total_count']),
     }
-    return templates.TemplateResponse("point_list.html", context)
+    return templates.TemplateResponse("auth_list.html", context)
 
 
-@router.post("/point_update")
-async def point_update(request: Request, db: Session = Depends(get_db),
+@router.post("/auth_update")
+async def auth_update(request: Request, db: Session = Depends(get_db),
         search_params: dict = Depends(common_search_query_params),
         token: Optional[str] = Form(...),
         mb_id: Optional[str] = Form(default=""),
-        po_content: Optional[str] = Form(default=""),
-        po_point: Optional[str] = Form(default="0"),
-        po_expire_term: Optional[int] = Form(None),
+        au_menu: Optional[str] = Form(default=""),
+        r: Optional[str] = Form(default=""),
+        w: Optional[str] = Form(default=""),
+        d: Optional[str] = Form(default=""),
         ):
-    try:
-        # po_point 값을 정수로 변환합니다.
-        po_point = int(po_point)
-    except ValueError:
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": [f"{po_point} : 포인트를 숫자(정수)로 입력하세요."]})
     
-    query_string = generate_query_string(request)
-    
-    exist_member = db.query(Member).filter_by(mb_id=mb_id).first()
-    if not exist_member:
+    exists_member = db.query(models.Member).filter_by(mb_id=mb_id).first()
+    if not exists_member:
         return templates.TemplateResponse("alert.html", {"request": request, "errors": [f"{mb_id} : 회원이 존재하지 않습니다."], "goto_url": f"/admin/point_list?{query_string}"})
     
-    if (po_point < 0) and ((po_point * -1) > exist_member.mb_point): 
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": [f"{mb_id} : 포인트를 깍는 경우 현재 포인트보다 작으면 안됩니다."], "goto_url": f"/admin/point_list?{query_string}"})
+    auth_values = [val for val in [r, w, d] if val]  # r, w, d 중 값이 있는 것만 선택
+    auth_string = ','.join(auth_values)  # 선택된 값들을 쉼표로 구분하여 문자열 생성
     
-    rel_action = exist_member.mb_id + '-' + str(uuid.uuid4())
-    expire = po_expire_term if po_expire_term else 0
-    
-    insert_point(request, mb_id, po_point, po_content, "@passive", mb_id, rel_action, expire)
+    exists_auth = db.query(models.Auth).filter_by(mb_id=mb_id, au_menu=au_menu).first()
+    if exists_auth:
+        # 수정
+        db.query(models.Auth).filter_by(mb_id=mb_id, au_menu=au_menu).update({
+            models.Auth.au_auth: auth_string
+        })
+        db.commit()
+    else:
+        # 추가
+        auth = models.Auth(
+            mb_id=mb_id,
+            au_menu=au_menu,
+            au_auth=auth_string,
+        )
+        db.add(auth)
+        db.commit()
 
-    return RedirectResponse(f"/admin/point_list?{query_string}", status_code=303)
+    return RedirectResponse(f"/admin/auth_list?{query_string(request)}", status_code=303)
 
 
-@router.post("/point_list_delete")
+@router.post("/auth_list_delete")
 async def point_list_delete(request: Request, db: Session = Depends(get_db),
         search_params: dict = Depends(common_search_query_params),
         token: Optional[str] = Form(...),
         checks: Optional[List[int]] = Form(None, alias="chk[]"),
-        po_id: Optional[List[int]] = Form(None, alias="po_id[]"),
+        mb_id: Optional[List[str]] = Form(None, alias="mb_id[]"),
+        au_menu: Optional[List[str]] = Form(None, alias="au_menu[]"),
         ):
 
-    query_string = generate_query_string(request)
-
     for i in checks:
-        point = db.query(models.Point).filter(models.Point.po_id == po_id[i]).first()
-        if point:
-            if point.po_point < 0:
-                abs_po_point = abs(point.po_point)
-            
-                if point.po_rel_table == "@expire":
-                    delete_expire_point(request, point.mb_id, abs_po_point)
-                else:
-                    delete_use_point(request, point.mb_id, abs_po_point)
-        elif point.po_use_point > 0:
-            insert_use_point(request, point.mb_id, point.po_use_point, point.po_id)
-                
-        # 포인트 내역 삭제
-        db.delete(point)
-        db.commit()
+        exists_auth = db.query(models.Auth).filter_by(mb_id=mb_id[i], au_menu=au_menu[i]).first()
+        if exists_auth:
+            db.delete(exists_auth)
+            db.commit()
         
-        # po_mb_point에 반영
-        db.query(Point).filter(Point.mb_id == point.mb_id, Point.po_id > point.po_id).update({Point.po_mb_point: Point.po_mb_point - point.po_point}, synchronize_session=False)
-        db.commit()
-
-        # 포인트 UPDATE        
-        sum_point = get_point_sum(request, point.mb_id)
-        db.query(Member).filter(Member.mb_id == point.mb_id).update({Member.mb_point: sum_point}, synchronize_session=False)
-        db.commit()
-        
-    return RedirectResponse(f"/admin/point_list?{query_string}", status_code=303)
+    return RedirectResponse(f"/admin/auth_list?{query_string(request)}", status_code=303)

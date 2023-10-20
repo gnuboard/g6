@@ -54,7 +54,7 @@ def memo_list(request: Request, db: Session = Depends(get_db),
         "memos": memos,
         "total_records": total_records,
         "page": current_page,
-        "paging": get_paging(request, current_page, total_records, f"/memo/list?kind={ kind }&page="),
+        "paging": get_paging(request, current_page, total_records),
     }
     
     return templates.TemplateResponse(f"memo/{request.state.device}/memo_list.html", context)

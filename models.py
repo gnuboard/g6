@@ -5,6 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import ArgumentError, InvalidRequestError
 from datetime import datetime, date
 
+
 Base = declarative_base()
 
 class Config(Base):
@@ -704,3 +705,16 @@ class Popular(Base):
 
     # Index 추가
     index1 = Index('index1', pp_date, pp_word, pp_ip, unique=True)
+
+
+class Auth(Base):
+# CREATE TABLE `g5_auth` (
+#   `mb_id` varchar(20) NOT NULL DEFAULT '',
+#   `au_menu` varchar(20) NOT NULL DEFAULT '',
+#   `au_auth` set('r','w','d') NOT NULL DEFAULT ''
+    __tablename__ = 'g6_auth'
+    
+    mb_id = Column(String(20), primary_key=True, nullable=False, default='')
+    au_menu = Column(String(20), primary_key=True, nullable=False, default='')
+    au_auth = Column(String(255), nullable=False, default='')    
+

@@ -452,6 +452,33 @@ def generate_query_string(request: Request):
     search_fields = {k: v for k, v in search_fields.items() if v is not None}
 
     return urlencode(search_fields)    
+            
+
+def query_string(request: Request):
+    search_fields = {}
+    if request.method == "GET":
+        search_fields = {
+            'sst': request.query_params.get("sst"),
+            'sod': request.query_params.get("sod"),
+            'sfl': request.query_params.get("sfl"),
+            'stx': request.query_params.get("stx"),
+            'sca': request.query_params.get("sca"),
+            # 'page': request.query_params.get("page")
+        }
+    else:
+        search_fields = {
+            'sst': request._form.get("sst") if request._form else "",
+            'sod': request._form.get("sod") if request._form else "",
+            'sfl': request._form.get("sfl") if request._form else "",
+            'stx': request._form.get("stx") if request._form else "",
+            'sca': request._form.get("sca") if request._form else "",
+            # 'page': request._form.get("page") if request._form else ""
+        }    
+        
+    # None 값을 제거
+    search_fields = {k: v for k, v in search_fields.items() if v is not None}
+
+    return urlencode(search_fields)    
 
         
 # 파이썬의 내장함수인 list 와 이름이 충돌하지 않도록 변수명을 lst 로 변경함
@@ -470,10 +497,10 @@ def get_from_list(lst, index, default=0):
 
 # current_page : 현재 페이지
 # total_count : 전체 레코드 수
-# url_prefix : 페이지 링크의 URL 접두사
 # add_url : 페이지 링크의 추가 URL
-def get_paging(request, current_page, total_count, url_prefix, add_url=""):
+def get_paging(request: Request, current_page, total_count, add_url=""):
     config = request.state.config
+    url_prefix = request.url
     
     try:
         current_page = int(current_page)
@@ -505,18 +532,18 @@ def get_paging(request, current_page, total_count, url_prefix, add_url=""):
     
     # 처음 페이지 링크 생성
     if current_page > 1:
-        start_url = f"{url_prefix}1{add_url}"
+        start_url = f"{url_prefix.include_query_params(page=1)}{add_url}"
         page_links.append(f'<a href="{start_url}" class="pg_page pg_start" title="처음 페이지">처음</a>')
 
     # 이전 페이지 구간 링크 생성
     if start_page > 1:
         prev_page = max(current_page - page_count, 1) 
-        prev_url = f"{url_prefix}{prev_page}{add_url}"
+        prev_url = f"{url_prefix.include_query_params(page=prev_page)}{add_url}"
         page_links.append(f'<a href="{prev_url}" class="pg_page pg_prev" title="이전 구간">이전</a>')
 
     # 페이지 링크 생성
     for page in range(start_page, end_page + 1):
-        page_url = f"{url_prefix}{page}{add_url}"
+        page_url = f"{url_prefix.include_query_params(page=page)}{add_url}"
         if page == current_page:
             page_links.append(f'<a href="{page_url}"><strong class="pg_current" title="현재 {page} 페이지">{page}</strong></a>')
         else:
@@ -525,12 +552,12 @@ def get_paging(request, current_page, total_count, url_prefix, add_url=""):
     # 다음 페이지 구간 링크 생성
     if total_pages > end_page:
         next_page = min(current_page + page_count, total_pages)
-        next_url = f"{url_prefix}{next_page}{add_url}"
+        next_url = f"{url_prefix.include_query_params(page=next_page)}{add_url}"
         page_links.append(f'<a href="{next_url}" class="pg_page pg_next" title="다음 구간">다음</a>')
     
     # 마지막 페이지 링크 생성        
     if current_page < total_pages:
-        end_url = f"{url_prefix}{total_pages}{add_url}"
+        end_url = f"{url_prefix.include_query_params(page=total_pages)}{add_url}"
         page_links.append(f'<a href="{end_url}" class="pg_page pg_end" title="마지막 페이지">마지막</a>')
 
     # 페이지 링크 목록을 문자열로 변환하여 반환
@@ -620,6 +647,7 @@ def select_query(request: Request, table_model, search_params: dict,
         same_search_fields: Optional[List[str]] = "", # 값이 완전히 같아야지만 필터링 '검색어'
         prefix_search_fields: Optional[List[str]] = "", # 뒤에 %를 붙여서 필터링 '검색어%'
         default_sod: str = "asc",
+        # default_sst: Optional[List[str]] = [],
         default_sst: str = "",
     ):
     config = request.state.config
@@ -646,10 +674,18 @@ def select_query(request: Request, table_model, search_params: dict,
     # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
     if sst:
         sod = search_params.get('sod', default_sod) or default_sod
-        if sod == "desc":
-            query = query.order_by(desc(getattr(table_model, sst)))
-        else:
-            query = query.order_by(asc(getattr(table_model, sst)))
+        # if sod == "desc":
+        #     query = query.order_by(desc(getattr(table_model, sst)))
+        # else:
+        #     query = query.order_by(asc(getattr(table_model, sst)))
+        # sst 가 배열인 경우, 여러 열을 기준으로 정렬을 추가합니다.
+        for sort_attribute in sst:
+            sort_column = getattr(table_model, sort_attribute)
+            if sod == "desc":
+                query = query.order_by(desc(sort_column))
+            else:
+                query = query.order_by(asc(sort_column))
+        
             
     # sfl과 stx가 제공되면, 해당 열과 값으로 추가 필터링을 합니다.
     if search_params['sfl'] is not None and search_params['stx'] is not None:

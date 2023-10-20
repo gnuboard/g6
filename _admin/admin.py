@@ -33,6 +33,7 @@ from _admin.admin_qa import router as admin_qa_router
 from _admin.admin_sendmail import router as admin_sendmail_router
 from _admin.admin_menu import router as admin_menu_router
 from _admin.admin_point import router as admin_point_router
+from _admin.admin_auth import router as admin_auth_router
 from _admin.admin_popular import router as admin_popular_router
 
 router.include_router(admin_config_router, prefix="", tags=["admin_config"])
@@ -45,8 +46,9 @@ router.include_router(admin_theme_router, prefix="", tags=["admin_theme"])
 router.include_router(admin_visit_router, prefix="", tags=["admin_visit"])
 router.include_router(admin_qa_router, prefix="", tags=["admin_qa"])
 router.include_router(admin_sendmail_router, prefix="", tags=["admin_sendmail"])
-router.include_router(admin_menu_router,  prefix="", tags=["admin_menu"])
-router.include_router(admin_point_router,  prefix="", tags=["admin_point"])
+router.include_router(admin_menu_router, prefix="", tags=["admin_menu"])
+router.include_router(admin_point_router, prefix="", tags=["admin_point"])
+router.include_router(admin_auth_router, prefix="", tags=["admin_auth"])
 router.include_router(admin_popular_router,  prefix="", tags=["admin_popular"])
 
 @router.get("/")

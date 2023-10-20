@@ -84,7 +84,7 @@ def qa_list(request: Request,
         "categories": qa_config.qa_category.split("|"),
         "total_records": total_records,
         "current_page": current_page,
-        "paging": get_paging(request, current_page, total_records, f"/qa/list?{generate_query_string(request)}&page="),
+        "paging": get_paging(request, current_page, total_records),
     }
 
     return templates.TemplateResponse(f"qa/pc/qa_list.html", context)
