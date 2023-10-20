@@ -35,24 +35,27 @@ def popular_list(request: Request, db: DBSession = Depends(get_db),
         default_sod="desc",
     )
 
-    query_string = generate_query_string(request)
     total_count = keywords['total_count']
     context = {
         "request": request,
         "keywords": keywords['rows'],
         "total_count": total_count,
-        "paging": get_paging(request, search_params['current_page'], total_count, f"/admin/popular_list?{query_string}&page="),
+        "paging": get_paging(request, search_params['current_page'], total_count),
     }
     return templates.TemplateResponse("popular_list.html", context)
 
 
 @router.post("/popular/delete")
 def popular_delete(request: Request,
-                        db: DBSession = Depends(get_db),
-                        checks: List[int] = Form(..., alias="chk[]")):
+                    token: str = Form(None),
+                    db: DBSession = Depends(get_db),
+                    checks: List[int] = Form(..., alias="chk[]")):
     '''
     인기검색어 목록 삭제
     '''
+    if not validate_one_time_token(token, 'delete'):
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요."]})
+
     # in 조건을 사용해서 일괄 삭제
     db.query(models.Popular).filter(models.Popular.pp_id.in_(checks)).delete()
     db.commit()
@@ -101,6 +104,6 @@ def popular_rank(request: Request,
         "to_date": to_date,
         "ranks": ranks,
         "total_count": total_count,
-        "paging": get_paging(request, current_page, total_count, f"/admin/popular_rank?{query_string}&page="),
+        "paging": get_paging(request, current_page, total_count),
     }
     return templates.TemplateResponse("popular_rank.html", context)

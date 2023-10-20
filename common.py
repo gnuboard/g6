@@ -674,17 +674,19 @@ def select_query(request: Request, table_model, search_params: dict,
     # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
     if sst:
         sod = search_params.get('sod', default_sod) or default_sod
-        # if sod == "desc":
-        #     query = query.order_by(desc(getattr(table_model, sst)))
-        # else:
-        #     query = query.order_by(asc(getattr(table_model, sst)))
         # sst 가 배열인 경우, 여러 열을 기준으로 정렬을 추가합니다.
-        for sort_attribute in sst:
-            sort_column = getattr(table_model, sort_attribute)
+        if isinstance(sst, list):
+            for sort_attribute in sst:
+                sort_column = getattr(table_model, sort_attribute)
+                if sod == "desc":
+                    query = query.order_by(desc(sort_column))
+                else:
+                    query = query.order_by(asc(sort_column))
+        else:
             if sod == "desc":
-                query = query.order_by(desc(sort_column))
+                query = query.order_by(desc(getattr(table_model, sst)))
             else:
-                query = query.order_by(asc(sort_column))
+                query = query.order_by(asc(getattr(table_model, sst)))
         
             
     # sfl과 stx가 제공되면, 해당 열과 값으로 추가 필터링을 합니다.
