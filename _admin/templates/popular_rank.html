@@ -1,36 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}
-    인기검색어 순위
-{% endblock title %}
-{% block subtitle %}
-    인기검색어 순위
-{% endblock subtitle %}
+{% block title %}인기검색어 순위{% endblock title %}
+{% block subtitle %}인기검색어 순위{% endblock subtitle %}
+{% block head %}
+    {% include "datepicker.html" %}
+{% endblock head %}
 
 {% block content %}
-    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
-    <script>
-    jQuery(function($){
-        $.datepicker.regional["ko"] = {
-            closeText: "닫기",
-            prevText: "이전달",
-            nextText: "다음달",
-            currentText: "오늘",
-            monthNames: ["1월(JAN)","2월(FEB)","3월(MAR)","4월(APR)","5월(MAY)","6월(JUN)", "7월(JUL)","8월(AUG)","9월(SEP)","10월(OCT)","11월(NOV)","12월(DEC)"],
-            monthNamesShort: ["1월","2월","3월","4월","5월","6월", "7월","8월","9월","10월","11월","12월"],
-            dayNames: ["일","월","화","수","목","금","토"],
-            dayNamesShort: ["일","월","화","수","목","금","토"],
-            dayNamesMin: ["일","월","화","수","목","금","토"],
-            weekHeader: "Wk",
-            dateFormat: "yymmdd",
-            firstDay: 0,
-            isRTL: false,
-            showMonthAfterYear: true,
-            yearSuffix: ""
-        };
-        $.datepicker.setDefaults($.datepicker.regional["ko"]);
-    });
-    </script>
     <script>
         $(function() {
             $("#fr_date, #to_date").datepicker({
@@ -55,10 +31,10 @@
     <form name="fsearch" id="fsearch" class="local_sch02 local_sch" method="get">
         <div class="sch_last">
             <strong>기간별검색</strong>
-            <input type="text" name="fr_date" value="{{ fr_date }}" id="fr_date" class="frm_input hasDatepicker" size="11" maxlength="10">
+            <input type="text" name="fr_date" value="{{ fr_date }}" id="fr_date" class="frm_input" size="11" maxlength="10">
             <label for="fr_date" class="sound_only">시작일</label>
             ~
-            <input type="text" name="to_date" value="{{ to_date }}" id="to_date" class="frm_input hasDatepicker" size="11" maxlength="10">
+            <input type="text" name="to_date" value="{{ to_date }}" id="to_date" class="frm_input" size="11" maxlength="10">
             <label for="to_date" class="sound_only">종료일</label>
             <input type="submit" class="btn_sch2" value="검색">
         </div>
@@ -82,6 +58,8 @@
                             <td class="td_left">{{ rank.pp_word }}</td>
                             <td class="td_num">{{ rank.search_count }}</td>
                         </tr>
+                    {% else %}
+                        <tr><td colspan="3" class="empty_table">자료가 없습니다.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

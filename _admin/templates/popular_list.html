@@ -47,7 +47,7 @@
                             <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                         </th>
                         <th scope="col">
-                            <a href="{{ url_for('popular_list') }}?sst=pp_word&amp;sod={{ 'asc' if request.state.sod == 'desc' else 'desc ' }}">검색어</a>
+                            <a href="{{ request.url.include_query_params(sst='pp_word', sod=('asc' if request.state.sod == 'desc' else 'desc')) }}">검색어</a>
                         </th>
                         <th scope="col">등록일</th>
                         <th scope="col">등록IP</th>
@@ -61,7 +61,7 @@
                                 <input type="checkbox" name="chk[]" value="{{ keyword.pp_id }}" id="chk_{{ loop.index0 }}">
                             </td>
                             <td class="td_left">
-                                <a href="{{ url_for('popular_list') }}?sfl=pp_word&amp;stx={{ keyword.pp_word|safe }}">
+                                <a href="{{ request.url.include_query_params(sfl='pp_word', stx=keyword.pp_word, page=1) }}">
                                     {{ keyword.pp_word|safe }}
                                 </a>
                             </td>
