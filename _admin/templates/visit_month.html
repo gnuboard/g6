@@ -12,11 +12,11 @@
 
 <div class="tbl_head01 tbl_wrap">
     <table>
-    <caption>도메인별 접속자집계 목록</caption>
+    <caption>월별 접속자집계 목록</caption>
     <thead>
     <tr>
         <th scope="col">순위</th>
-        <th scope="col">접속 도메인</th>
+        <th scope="col">년-월</th>
         <th scope="col">그래프</th>
         <th scope="col">접속자수</th>
         <th scope="col">비율(%)</th>
@@ -33,7 +33,7 @@
         {% for visit in visits %}
         <tr class="bg1">
             <td class="td_num">{{loop.index}}</td>
-            <td class="td_category">{{visit.vi_referer}}</td>
+            <td class="td_category">{{visit.visit_month}}</td>
             <td>
                 <div class="visit_bar">
                     <span style="width:{{visit.percent}}%"></span>
