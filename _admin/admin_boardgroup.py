@@ -54,7 +54,7 @@ def boardgroup_list(request: Request, db: Session = Depends(get_db)):
         })
         group_data.append(group_info)
         
-    return templates.TemplateResponse("admin/boardgroup_list.html", {"request": request, "groups": group_data})
+    return templates.TemplateResponse("boardgroup_list.html", {"request": request, "groups": group_data})
 
 
 @router.post("/boardgroup_list_update")

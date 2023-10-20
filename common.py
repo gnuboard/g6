@@ -11,7 +11,7 @@ from passlib.context import CryptContext
 from requests import Session
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.orm import load_only
-from models import Config, Member, Memo, Board, Group, Point, Visit, VisitSum
+from models import Config, Member, Memo, Board, Group, Point, Popular, Visit, VisitSum
 from models import WriteBaseModel
 from database import SessionLocal, engine
 from datetime import datetime, timedelta, date, time
@@ -497,10 +497,10 @@ def get_from_list(lst, index, default=0):
 
 # current_page : 현재 페이지
 # total_count : 전체 레코드 수
-# url_prefix : 페이지 링크의 URL 접두사
 # add_url : 페이지 링크의 추가 URL
-def get_paging(request, current_page, total_count, url_prefix, add_url=""):
+def get_paging(request: Request, current_page, total_count, add_url=""):
     config = request.state.config
+    url_prefix = request.url
     
     try:
         current_page = int(current_page)
@@ -532,18 +532,18 @@ def get_paging(request, current_page, total_count, url_prefix, add_url=""):
     
     # 처음 페이지 링크 생성
     if current_page > 1:
-        start_url = f"{url_prefix}1{add_url}"
+        start_url = f"{url_prefix.include_query_params(page=1)}{add_url}"
         page_links.append(f'<a href="{start_url}" class="pg_page pg_start" title="처음 페이지">처음</a>')
 
     # 이전 페이지 구간 링크 생성
     if start_page > 1:
         prev_page = max(current_page - page_count, 1) 
-        prev_url = f"{url_prefix}{prev_page}{add_url}"
+        prev_url = f"{url_prefix.include_query_params(page=prev_page)}{add_url}"
         page_links.append(f'<a href="{prev_url}" class="pg_page pg_prev" title="이전 구간">이전</a>')
 
     # 페이지 링크 생성
     for page in range(start_page, end_page + 1):
-        page_url = f"{url_prefix}{page}{add_url}"
+        page_url = f"{url_prefix.include_query_params(page=page)}{add_url}"
         if page == current_page:
             page_links.append(f'<a href="{page_url}"><strong class="pg_current" title="현재 {page} 페이지">{page}</strong></a>')
         else:
@@ -552,12 +552,12 @@ def get_paging(request, current_page, total_count, url_prefix, add_url=""):
     # 다음 페이지 구간 링크 생성
     if total_pages > end_page:
         next_page = min(current_page + page_count, total_pages)
-        next_url = f"{url_prefix}{next_page}{add_url}"
+        next_url = f"{url_prefix.include_query_params(page=next_page)}{add_url}"
         page_links.append(f'<a href="{next_url}" class="pg_page pg_next" title="다음 구간">다음</a>')
     
     # 마지막 페이지 링크 생성        
     if current_page < total_pages:
-        end_url = f"{url_prefix}{total_pages}{add_url}"
+        end_url = f"{url_prefix.include_query_params(page=total_pages)}{add_url}"
         page_links.append(f'<a href="{end_url}" class="pg_page pg_end" title="마지막 페이지">마지막</a>')
 
     # 페이지 링크 목록을 문자열로 변환하여 반환
@@ -674,17 +674,19 @@ def select_query(request: Request, table_model, search_params: dict,
     # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
     if sst:
         sod = search_params.get('sod', default_sod) or default_sod
-        # if sod == "desc":
-        #     query = query.order_by(desc(getattr(table_model, sst)))
-        # else:
-        #     query = query.order_by(asc(getattr(table_model, sst)))
         # sst 가 배열인 경우, 여러 열을 기준으로 정렬을 추가합니다.
-        for sort_attribute in sst:
-            sort_column = getattr(table_model, sort_attribute)
+        if isinstance(sst, list):
+            for sort_attribute in sst:
+                sort_column = getattr(table_model, sort_attribute)
+                if sod == "desc":
+                    query = query.order_by(desc(sort_column))
+                else:
+                    query = query.order_by(asc(sort_column))
+        else:
             if sod == "desc":
-                query = query.order_by(desc(sort_column))
+                query = query.order_by(desc(getattr(table_model, sst)))
             else:
-                query = query.order_by(asc(sort_column))
+                query = query.order_by(asc(getattr(table_model, sst)))
         
             
     # sfl과 stx가 제공되면, 해당 열과 값으로 추가 필터링을 합니다.
@@ -984,3 +986,31 @@ def get_memo_not_read(mb_id: str):
     '''
     db = SessionLocal()
     return db.query(Memo).filter(Memo.me_recv_mb_id == mb_id, Memo.me_read_datetime == None, Memo.me_type == 'recv').count()
+
+
+def get_popular_list(request: Request, limit: int = 7, day: int = 3):
+    """인기검색어 조회
+
+    Args:
+        limit (int, optional): 조회 갯수. Defaults to 7.
+        day (int, optional): 오늘부터 {day}일 전. Defaults to 3.
+
+    Returns:
+        List[Popular]: 인기검색어 리스트
+    """
+    db = SessionLocal()
+    # 현재 날짜와 day일 전 날짜를 구한다.
+    today = datetime.now()
+    before = today - timedelta(days=day)
+    # 현재 날짜와 day일 전 날짜 사이의 인기검색어를 조회한다.
+    popular_list = db.query(
+            Popular.pp_word,
+            func.count(Popular.pp_word).label('count'),
+        ).filter(
+        Popular.pp_word != '',
+        Popular.pp_date >= before,
+        Popular.pp_date <= today
+    ).group_by(Popular.pp_word).order_by(desc('count'), Popular.pp_word).limit(limit).all()
+    db.close()
+
+    return popular_list

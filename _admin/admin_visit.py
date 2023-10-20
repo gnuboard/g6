@@ -15,7 +15,6 @@ templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
-templates.env.globals["get_paging"] = get_paging
 
 VISIT_MENU_KEY = "200800"
 
@@ -36,7 +35,6 @@ def visit_search(request: Request, db: Session = Depends(get_db),
     # 초기 쿼리 설정
     query = db.query(Visit)
     records_per_page = request.state.config.cf_page_rows
-    query_string = generate_query_string(request)
 
     # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
     if sst is not None and sst != "":
@@ -82,7 +80,7 @@ def visit_search(request: Request, db: Session = Depends(get_db),
         "request": request,
         "visits": visits,
         "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records, f"/admin/visit_search?{query_string}&page="),
+        "paging": get_paging(request, current_page, total_records),
     }
     return templates.TemplateResponse("visit_search.html", context)
 
@@ -212,14 +210,12 @@ async def visit_list(request: Request, db: Session = Depends(get_db),
 
     # 전체 레코드 개수 계산
     total_records = query.count()
-
-    query_string = f"fr_date={from_date}&to_date={to_date}"
-
+    
     context = {
         "request": request,
         "visits": visits,
         "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records, f"/admin/visit_list?{query_string}&page="),
+        "paging": get_paging(request, current_page, total_records),
         "fr_date": from_date,
         "to_date": to_date,
     }
@@ -280,7 +276,7 @@ async def visit_domain(request: Request, db: Session = Depends(get_db),
         "request": request,
         "visits": visits,
         "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records, f"/admin/visit_list?{query_string}&page="),
+        "paging": get_paging(request, current_page, total_records),
         "fr_date": from_date,
         "to_date": to_date,
     }
@@ -330,7 +326,7 @@ async def visit_browser(request: Request, db: Session = Depends(get_db),
         "request": request,
         "visits": visits,
         "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records, f"/admin/visit_browser?{query_string}&page="),
+        "paging": get_paging(request, current_page, total_records),
         "fr_date": from_date,
         "to_date": to_date,
     }
@@ -381,7 +377,7 @@ def visit_os(request: Request, db: Session = Depends(get_db),
         "request": request,
         "visits": visits,
         "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records, f"/admin/visit_os?{query_string}&page="),
+        "paging": get_paging(request, current_page, total_records),
         "fr_date": from_date,
         "to_date": to_date,
     }
@@ -432,7 +428,7 @@ def visit_device(request: Request, db: Session = Depends(get_db),
         "request": request,
         "visits": visits,
         "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records, f"/admin/visit_device?{query_string}&page="),
+        "paging": get_paging(request, current_page, total_records),
         "fr_date": from_date,
         "to_date": to_date,
     }
@@ -483,7 +479,7 @@ def visit_device(request: Request, db: Session = Depends(get_db),
         "request": request,
         "visits": visits,
         "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records, f"/admin/visit_hour?{query_string}&page="),
+        "paging": get_paging(request, current_page, total_records),
         "fr_date": from_date,
         "to_date": to_date,
     }
@@ -544,7 +540,7 @@ def visit_device(request: Request, db: Session = Depends(get_db),
         "request": request,
         "visits": visits,
         "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records, f"/admin/visit_weekday?{query_string}&page="),
+        "paging": get_paging(request, current_page, total_records),
         "fr_date": from_date,
         "to_date": to_date,
     }
@@ -595,7 +591,7 @@ def visit_date(request: Request, db: Session = Depends(get_db),
         "request": request,
         "visits": visits,
         "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records, f"/admin/visit_date?{query_string}&page="),
+        "paging": get_paging(request, current_page, total_records),
         "fr_date": from_date,
         "to_date": to_date,
     }
@@ -646,7 +642,7 @@ def visit_month(request: Request, db: Session = Depends(get_db),
         "request": request,
         "visits": visits,
         "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records, f"/admin/visit_month?{query_string}&page="),
+        "paging": get_paging(request, current_page, total_records),
         "fr_date": from_date,
         "to_date": to_date,
     }
@@ -697,7 +693,7 @@ def visit_year(request: Request, db: Session = Depends(get_db),
         "request": request,
         "visits": visits,
         "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records, f"/admin/visit_year?{query_string}&page="),
+        "paging": get_paging(request, current_page, total_records),
         "fr_date": from_date,
         "to_date": to_date,
     }
