@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}인기검색어 순위{% endblock title %}
+{% block subtitle %}인기검색어 순위{% endblock subtitle %}
+{% block head %}
+    {% include "datepicker.html" %}
+{% endblock head %}
+
+{% block content %}
+    <script>
+        $(function() {
+            $("#fr_date, #to_date").datepicker({
+                changeMonth: true,
+                changeYear: true,
+                dateFormat: "yy-mm-dd",
+                showButtonPanel: true,
+                yearRange: "c-99:c+99",
+                maxDate: "+0d"
+            });
+        });
+    </script>
+    
+    <div class="local_ov01 local_ov">
+        <a href="{{ url_for('popular_rank') }}" class="ov_listall">전체목록</a>
+        <span class="btn_ov01">
+            <span class="ov_txt">건수</span>
+            <span class="ov_num">&nbsp;{{ total_count }}개</span>
+        </span>
+    </div>
+    
+    <form name="fsearch" id="fsearch" class="local_sch02 local_sch" method="get">
+        <div class="sch_last">
+            <strong>기간별검색</strong>
+            <input type="text" name="fr_date" value="{{ fr_date }}" id="fr_date" class="frm_input" size="11" maxlength="10">
+            <label for="fr_date" class="sound_only">시작일</label>
+            ~
+            <input type="text" name="to_date" value="{{ to_date }}" id="to_date" class="frm_input" size="11" maxlength="10">
+            <label for="to_date" class="sound_only">종료일</label>
+            <input type="submit" class="btn_sch2" value="검색">
+        </div>
+    </form>
+    
+    <form name="fpopularrank" id="fpopularrank" method="post">
+        <div class="tbl_head01 tbl_wrap">
+            <table>
+                <caption>인기검색어 순위 목록</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">순위</th>
+                        <th scope="col">검색어</th>
+                        <th scope="col">검색회수</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rank in ranks %}
+                        <tr>
+                            <td class="td_num">{{ rank.ranking }}</td>
+                            <td class="td_left">{{ rank.pp_word }}</td>
+                            <td class="td_num">{{ rank.search_count }}</td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="3" class="empty_table">자료가 없습니다.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form>
+
+    {{ paging|safe }}
+   
+{% endblock content %}

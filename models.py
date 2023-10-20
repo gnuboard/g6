@@ -669,10 +669,6 @@ class Point(Base):
     po_rel_table = Column(String(20), nullable=False, default='')
     po_rel_id = Column(String(20), nullable=False, default='')
     po_rel_action = Column(String(100), nullable=False, default='')
-    
-    
-    
-    
 
 
 class Memo(Base):
@@ -694,6 +690,21 @@ class Memo(Base):
     # 종속관계
     # recv_member = relationship("Member", foreign_keys=[me_recv_mb_id])
     # send_member = relationship("Member", foreign_keys=[me_send_mb_id])
+
+
+class Popular(Base):
+    '''
+    인기검색어 테이블
+    '''
+    __tablename__ = 'g6_popular'
+    
+    pp_id = Column(Integer, primary_key=True, autoincrement=True)
+    pp_word = Column(String(50), nullable=False, default='')
+    pp_date = Column(Date, nullable=False)
+    pp_ip = Column(String(50), nullable=False, default='')
+
+    # Index 추가
+    index1 = Index('index1', pp_date, pp_word, pp_ip, unique=True)
 
 
 class Auth(Base):
