@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Form
+from sqlalchemy.orm import Session
 
 from common import *
 from database import get_db
@@ -210,7 +211,7 @@ async def visit_list(request: Request, db: Session = Depends(get_db),
 
     # 전체 레코드 개수 계산
     total_records = query.count()
-    
+
     context = {
         "request": request,
         "visits": visits,
@@ -247,8 +248,6 @@ async def visit_domain(request: Request, db: Session = Depends(get_db),
 
     # 전체 레코드 개수 계산
     total_records = query.count()
-
-    query_string = f"fr_date={from_date}&to_date={to_date}"
 
     site_url = f"{request.base_url.scheme}://{request.base_url.hostname}"
     if request.base_url.port:
@@ -309,8 +308,6 @@ async def visit_browser(request: Request, db: Session = Depends(get_db),
     # 전체 레코드 개수 계산
     total_records = query.count()
 
-    query_string = f"fr_date={from_date}&to_date={to_date}"
-
     # 브라우저별 접속자집계
     filtered_visits = []
     for visit in visits:
@@ -359,8 +356,6 @@ def visit_os(request: Request, db: Session = Depends(get_db),
 
     # 전체 레코드 개수 계산
     total_records = query.count()
-
-    query_string = f"fr_date={from_date}&to_date={to_date}"
 
     # 브라우저별 접속자집계
     filtered_visits = []
@@ -411,8 +406,6 @@ def visit_device(request: Request, db: Session = Depends(get_db),
     # 전체 레코드 개수 계산
     total_records = query.count()
 
-    query_string = f"fr_date={from_date}&to_date={to_date}"
-
     # 브라우저별 접속자집계
     filtered_visits = []
     for visit in visits:
@@ -462,8 +455,6 @@ def visit_device(request: Request, db: Session = Depends(get_db),
     # 전체 레코드 개수 계산
     total_records = query.count()
 
-    query_string = f"fr_date={from_date}&to_date={to_date}"
-
     # 브라우저별 접속자집계
     filtered_visits = []
     for visit in visits:
@@ -512,8 +503,6 @@ def visit_device(request: Request, db: Session = Depends(get_db),
 
     # 전체 레코드 개수 계산
     total_records = query.count()
-
-    query_string = f"fr_date={from_date}&to_date={to_date}"
 
     # 요일별 접속자집계
     korean_week_day = {
@@ -574,8 +563,6 @@ def visit_date(request: Request, db: Session = Depends(get_db),
     # 전체 레코드 개수 계산
     total_records = query.count()
 
-    query_string = f"fr_date={from_date}&to_date={to_date}"
-
     # 접속자집계
     filtered_visits = []
     for visit in visits:
@@ -625,8 +612,6 @@ def visit_month(request: Request, db: Session = Depends(get_db),
     # 전체 레코드 개수 계산
     total_records = query.count()
 
-    query_string = f"fr_date={from_date}&to_date={to_date}"
-
     # 접속자집계
     filtered_visits = []
     for visit in visits:
@@ -675,8 +660,6 @@ def visit_year(request: Request, db: Session = Depends(get_db),
 
     # 전체 레코드 개수 계산
     total_records = query.count()
-
-    query_string = f"fr_date={from_date}&to_date={to_date}"
 
     # 접속자집계
     filtered_visits = []
