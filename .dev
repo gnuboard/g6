@@ -1,0 +1,5 @@
+SMTP_SERVER="smtp.worksmobile.com"
+SMTP_PORT=465
+SMTP_USERNAME="admin@sir.kr"
+SMTP_PASSWORD="UiN7mTCYntcv"
+
