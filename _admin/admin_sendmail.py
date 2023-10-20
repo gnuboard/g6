@@ -1,5 +1,4 @@
 import math
-from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -14,23 +13,19 @@ from fastapi import FastAPI, HTTPException
 from concurrent.futures import ThreadPoolExecutor
 import ssl
 import smtplib
+from dotenv import load_dotenv
+import os
 
 
-# load_dotenv()
+load_dotenv()
 
-# SMTP_SERVER = os.getenv("SMTP_SERVER")
-# SMTP_PORT = os.getenv("SMTP_PORT")
-# SMTP_USERNAME = os.getenv("SMTP_USERNAME")
-# SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+SMTP_SERVER = os.getenv("SMTP_SERVER")
+SMTP_PORT = os.getenv("SMTP_PORT")
+SMTP_USERNAME = os.getenv("SMTP_USERNAME")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
 
 def send_email(recipient_email, subject, body):
-    
-    SMTP_SERVER="smtp.worksmobile.com"
-    SMTP_PORT=465
-    SMTP_USERNAME="admin@sir.kr"
-    SMTP_PASSWORD="UiN7mTCYntcv"
-    
     sender_email = SMTP_USERNAME
 
     message = MIMEMultipart("alternative")
