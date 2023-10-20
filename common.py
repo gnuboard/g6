@@ -497,10 +497,10 @@ def get_from_list(lst, index, default=0):
 
 # current_page : 현재 페이지
 # total_count : 전체 레코드 수
-# url_prefix : 페이지 링크의 URL 접두사
 # add_url : 페이지 링크의 추가 URL
-def get_paging(request, current_page, total_count, url_prefix, add_url=""):
+def get_paging(request: Request, current_page, total_count, add_url=""):
     config = request.state.config
+    url_prefix = request.url
     
     try:
         current_page = int(current_page)
@@ -532,18 +532,18 @@ def get_paging(request, current_page, total_count, url_prefix, add_url=""):
     
     # 처음 페이지 링크 생성
     if current_page > 1:
-        start_url = f"{url_prefix}1{add_url}"
+        start_url = f"{url_prefix.include_query_params(page=1)}{add_url}"
         page_links.append(f'<a href="{start_url}" class="pg_page pg_start" title="처음 페이지">처음</a>')
 
     # 이전 페이지 구간 링크 생성
     if start_page > 1:
         prev_page = max(current_page - page_count, 1) 
-        prev_url = f"{url_prefix}{prev_page}{add_url}"
+        prev_url = f"{url_prefix.include_query_params(page=prev_page)}{add_url}"
         page_links.append(f'<a href="{prev_url}" class="pg_page pg_prev" title="이전 구간">이전</a>')
 
     # 페이지 링크 생성
     for page in range(start_page, end_page + 1):
-        page_url = f"{url_prefix}{page}{add_url}"
+        page_url = f"{url_prefix.include_query_params(page=page)}{add_url}"
         if page == current_page:
             page_links.append(f'<a href="{page_url}"><strong class="pg_current" title="현재 {page} 페이지">{page}</strong></a>')
         else:
@@ -552,12 +552,12 @@ def get_paging(request, current_page, total_count, url_prefix, add_url=""):
     # 다음 페이지 구간 링크 생성
     if total_pages > end_page:
         next_page = min(current_page + page_count, total_pages)
-        next_url = f"{url_prefix}{next_page}{add_url}"
+        next_url = f"{url_prefix.include_query_params(page=next_page)}{add_url}"
         page_links.append(f'<a href="{next_url}" class="pg_page pg_next" title="다음 구간">다음</a>')
     
     # 마지막 페이지 링크 생성        
     if current_page < total_pages:
-        end_url = f"{url_prefix}{total_pages}{add_url}"
+        end_url = f"{url_prefix.include_query_params(page=total_pages)}{add_url}"
         page_links.append(f'<a href="{end_url}" class="pg_page pg_end" title="마지막 페이지">마지막</a>')
 
     # 페이지 링크 목록을 문자열로 변환하여 반환

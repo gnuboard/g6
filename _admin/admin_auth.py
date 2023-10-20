@@ -23,7 +23,6 @@ templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
-templates.env.globals["get_paging"] = get_paging
 templates.env.globals["format"] = format
 
 
@@ -109,7 +108,7 @@ def auth_list(request: Request, db: Session = Depends(get_db), search_params: di
         "total_count": result['total_count'],
         "sum_point": sum_point,
         "auth_options": auth_options,
-        "paging": get_paging(request, search_params['current_page'], result['total_count'], f"/admin/point_list?{query_string(request)}&page="),
+        "paging": get_paging(request, search_params['current_page'], result['total_count']),
     }
     return templates.TemplateResponse("auth_list.html", context)
 
