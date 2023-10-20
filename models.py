@@ -1,10 +1,10 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime, Date, Time
-from sqlalchemy.dialects.mysql import TINYINT
+# from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import ArgumentError, InvalidRequestError
 from datetime import datetime, date
-
+from database import engine, get_db, SessionLocal
 
 Base = declarative_base()
 
@@ -481,14 +481,14 @@ class Content(Base):
     __tablename__ = 'g6_content'
 
     co_id = Column(String(20), primary_key=True, nullable=False, default='')
-    co_html = Column(TINYINT, nullable=False, default=0)
+    co_html = Column(Integer, nullable=False, default=0)
     co_subject = Column(String(255), nullable=False, default='')
     co_content = Column(Text, nullable=False)
     co_seo_title = Column(String(255), nullable=False, default='')
     co_mobile_content = Column(Text, nullable=False)
     co_skin = Column(String(255), nullable=False, default='')
     co_mobile_skin = Column(String(255), nullable=False, default='')
-    co_tag_filter_use = Column(TINYINT, nullable=False, default=0)
+    co_tag_filter_use = Column(Integer, nullable=False, default=0)
     co_hit = Column(Integer, nullable=False, default=0)
     co_include_head = Column(String(255), nullable=True)
     co_include_tail = Column(String(255), nullable=True)
@@ -552,15 +552,15 @@ class QaConfig(Base):
     qa_category = Column(String(255), nullable=False, default='')
     qa_skin = Column(String(255), nullable=False, default='')
     qa_mobile_skin = Column(String(255), nullable=False, default='')
-    qa_use_email = Column(TINYINT, nullable=False, default=0)
-    qa_req_email = Column(TINYINT, nullable=False, default=0)
-    qa_use_hp = Column(TINYINT, nullable=False, default=0)
-    qa_req_hp = Column(TINYINT, nullable=False, default=0)
-    qa_use_sms = Column(TINYINT, nullable=False, default=0)
+    qa_use_email = Column(Integer, nullable=False, default=0)
+    qa_req_email = Column(Integer, nullable=False, default=0)
+    qa_use_hp = Column(Integer, nullable=False, default=0)
+    qa_req_hp = Column(Integer, nullable=False, default=0)
+    qa_use_sms = Column(Integer, nullable=False, default=0)
     qa_send_number = Column(String(255), nullable=False, default='0')
     qa_admin_hp = Column(String(255), nullable=False, default='')
     qa_admin_email = Column(String(255), nullable=False, default='')
-    qa_use_editor = Column(TINYINT, nullable=False, default=0)
+    qa_use_editor = Column(Integer, nullable=False, default=0)
     qa_subject_len = Column(Integer, nullable=False, default=0)
     qa_mobile_subject_len = Column(Integer, nullable=False, default=0)
     qa_page_rows = Column(Integer, nullable=False, default=0)
@@ -601,9 +601,9 @@ class QaContent(Base):
     qa_hp = Column(String(255), nullable=False, default='')
     qa_type = Column(Integer, nullable=False, default=0)
     qa_category = Column(String(255), nullable=False, default='')
-    qa_email_recv = Column(TINYINT, nullable=False, default=0)
-    qa_sms_recv = Column(TINYINT, nullable=False, default=0)
-    qa_html = Column(TINYINT, nullable=False, default=0)
+    qa_email_recv = Column(Integer, nullable=False, default=0)
+    qa_sms_recv = Column(Integer, nullable=False, default=0)
+    qa_html = Column(Integer, nullable=False, default=0)
     qa_subject = Column(String(255), nullable=False, default='')
     qa_content = Column(Text, nullable=False)
     qa_status = Column(Integer, nullable=False, default=0)
@@ -632,8 +632,8 @@ class Menu(Base):
     me_link = Column(String(255), nullable=False, default='')
     me_target = Column(String(255), nullable=False, default='')
     me_order = Column(Integer, nullable=False, default=0)
-    me_use = Column(TINYINT, nullable=False, default=0)
-    me_mobile_use = Column(TINYINT, nullable=False, default=0)
+    me_use = Column(Integer, nullable=False, default=0)
+    me_mobile_use = Column(Integer, nullable=False, default=0)
     
     
 # CREATE TABLE `g5_point` (
@@ -663,7 +663,7 @@ class Point(Base):
     po_content = Column(String(255), nullable=False, default='')
     po_point = Column(Integer, nullable=False, default=0)
     po_use_point = Column(Integer, nullable=False, default=0)
-    po_expired = Column(TINYINT, nullable=False, default=0)
+    po_expired = Column(Integer, nullable=False, default=0)
     po_expire_date = Column(Date, nullable=False, default='0000-00-00')
     po_mb_point = Column(Integer, nullable=False, default=0)
     po_rel_table = Column(String(20), nullable=False, default='')
@@ -707,3 +707,6 @@ class Auth(Base):
     au_menu = Column(String(20), primary_key=True, nullable=False, default='')
     au_auth = Column(String(255), nullable=False, default='')    
 
+
+
+Base.metadata.create_all(bind=engine)

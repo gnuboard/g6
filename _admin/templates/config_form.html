@@ -483,9 +483,9 @@
                     <td>
                         <span class="frm_info">게시물에 게시자 닉네임 대신 아이콘 사용</span>                            
                         <select name="cf_use_member_icon" id="cf_use_member_icon">
-                            <option value="0" {{ get_selected(config.cf_use_member_icon, 0)|safe }}>미사용
-                            <option value="1" {{ get_selected(config.cf_use_member_icon, 1)|safe }}>아이콘만 표시
-                            <option value="2" {{ get_selected(config.cf_use_member_icon, 2)|safe }}>아이콘+이름 표시
+                            <option value="0" {{ get_selected(config.cf_use_member_icon if config is not none else '', 0)|safe }}>미사용
+                            <option value="1" {{ get_selected(config.cf_use_member_icon if config is not none else '', 1)|safe }}>아이콘만 표시
+                            <option value="2" {{ get_selected(config.cf_use_member_icon if config is not none else '', 2)|safe }}>아이콘+이름 표시
                         </select>
                     </td>
                     <th scope="row"><label for="cf_icon_level">회원 아이콘, 이미지 업로드 권한</label></th>
@@ -573,9 +573,9 @@
                     <th scope="row"><label for="cf_cert_use">본인확인</label></th>
                     <td>
                         <select name="cf_cert_use" id="cf_cert_use">
-                            <option value="0" {{ get_selected(config.cf_cert_use, 0)|safe }}>사용안함</option>
-                            <option value="1" {{ get_selected(config.cf_cert_use, 1)|safe }}>테스트</option>
-                            <option value="2" {{ get_selected(config.cf_cert_use, 2)|safe }}>실서비스</option>
+                            <option value="0" {{ get_selected(config.cf_cert_use if config is not none else '', 0)|safe }}>사용안함</option>
+                            <option value="1" {{ get_selected(config.cf_cert_use if config is not none else '', 1)|safe }}>테스트</option>
+                            <option value="2" {{ get_selected(config.cf_cert_use if config is not none else '', 2)|safe }}>실서비스</option>
                         </select>
                     </td>
                 </tr>
@@ -838,7 +838,7 @@
                     <th scope="row"><label for="cf_social_servicelist">소셜로그인설정</label></th>
                     <td colspan="3" class="social_config_explain">
                         <div class="explain_box">
-                            <input type="checkbox" name="cf_social_servicelist[]" id="check_social_naver" value="naver" {{ option_array_checked('naver', config.cf_social_servicelist) }}>
+                            <input type="checkbox" name="cf_social_servicelist[]" id="check_social_naver" value="naver" {{ option_array_checked('naver', config.cf_social_servicelist if config is not none else '') }}>
                             <label for="check_social_naver">네이버 로그인을 사용합니다</label>
                             <div>
                                 <h3>네이버 CallbackURL</h3>
@@ -846,7 +846,7 @@
                             </div>
                         </div>
                         <div class="explain_box">
-                            <input type="checkbox" name="cf_social_servicelist[]" id="check_social_kakao" value="kakao" {{ option_array_checked('kakao', config.cf_social_servicelist) }}>
+                            <input type="checkbox" name="cf_social_servicelist[]" id="check_social_kakao" value="kakao" {{ option_array_checked('kakao', config.cf_social_servicelist if config is not none else '') }}>
                             <label for="check_social_kakao">카카오 로그인을 사용합니다</label>
                             <div>
                                 <h3>카카오 로그인 Redirect URI</h3>
@@ -854,7 +854,7 @@
                             </div>
                         </div>
                         <div class="explain_box">
-                            <input type="checkbox" name="cf_social_servicelist[]" id="check_social_facebook" value="facebook" {{ option_array_checked('facebook', config.cf_social_servicelist) }}>
+                            <input type="checkbox" name="cf_social_servicelist[]" id="check_social_facebook" value="facebook" {{ option_array_checked('facebook', config.cf_social_servicelist if config is not none else '') }}>
                             <label for="check_social_facebook">페이스북 로그인을 사용합니다</label>
                             <div>
                                 <h3>페이스북 유효한 OAuth 리디렉션 URI</h3>
@@ -862,7 +862,7 @@
                             </div>
                         </div>
                         <div class="explain_box">
-                            <input type="checkbox" name="cf_social_servicelist[]" id="check_social_google" value="google" {{ option_array_checked('google', config.cf_social_servicelist) }}>
+                            <input type="checkbox" name="cf_social_servicelist[]" id="check_social_google" value="google" {{ option_array_checked('google', config.cf_social_servicelist if config is not none else '') }}>
                             <label for="check_social_google">구글 로그인을 사용합니다</label>
                             <div>
                                 <h3>구글 승인된 리디렉션 URI</h3>
@@ -870,7 +870,7 @@
                             </div>
                         </div>
                         <div class="explain_box">
-                            <input type="checkbox" name="cf_social_servicelist[]" id="check_social_twitter" value="twitter" {{ option_array_checked('twitter', config.cf_social_servicelist) }}>
+                            <input type="checkbox" name="cf_social_servicelist[]" id="check_social_twitter" value="twitter" {{ option_array_checked('twitter', config.cf_social_servicelist if config is not none else '') }}>
                             <label for="check_social_twitter">X(트위터) 로그인을 사용합니다</label>
                             <div>
                                 <h3>X(트위터) CallbackURL</h3>
@@ -878,7 +878,7 @@
                             </div>
                         </div>
                         <div class="explain_box">
-                            <input type="checkbox" name="cf_social_servicelist[]" id="check_social_payco" value="payco" {{ option_array_checked('payco', config.cf_social_servicelist) }}>
+                            <input type="checkbox" name="cf_social_servicelist[]" id="check_social_payco" value="payco" {{ option_array_checked('payco', config.cf_social_servicelist if config is not none else '') }}>
                             <label for="check_social_payco">페이코 로그인을 사용합니다</label>
                             <div>
                                 <h3>페이코 CallbackURL</h3>
