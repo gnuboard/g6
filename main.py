@@ -20,6 +20,7 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates.env.globals["get_popular_list"] = get_popular_list
 
 from _admin.admin import router as admin_router
 from _bbs.board import router as board_router

@@ -11,7 +11,7 @@ from passlib.context import CryptContext
 from requests import Session
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.orm import load_only
-from models import Config, Member, Memo, Board, Group, Point, Visit, VisitSum
+from models import Config, Member, Memo, Board, Group, Point, Popular, Visit, VisitSum
 from models import WriteBaseModel
 from database import SessionLocal, engine
 from datetime import datetime, timedelta, date, time
@@ -948,3 +948,31 @@ def get_memo_not_read(mb_id: str):
     '''
     db = SessionLocal()
     return db.query(Memo).filter(Memo.me_recv_mb_id == mb_id, Memo.me_read_datetime == None, Memo.me_type == 'recv').count()
+
+
+def get_popular_list(request: Request, limit: int = 7, day: int = 3):
+    """인기검색어 조회
+
+    Args:
+        limit (int, optional): 조회 갯수. Defaults to 7.
+        day (int, optional): 오늘부터 {day}일 전. Defaults to 3.
+
+    Returns:
+        List[Popular]: 인기검색어 리스트
+    """
+    db = SessionLocal()
+    # 현재 날짜와 day일 전 날짜를 구한다.
+    today = datetime.now()
+    before = today - timedelta(days=day)
+    # 현재 날짜와 day일 전 날짜 사이의 인기검색어를 조회한다.
+    popular_list = db.query(
+            Popular.pp_word,
+            func.count(Popular.pp_word).label('count'),
+        ).filter(
+        Popular.pp_word != '',
+        Popular.pp_date >= before,
+        Popular.pp_date <= today
+    ).group_by(Popular.pp_word).order_by(desc('count'), Popular.pp_word).limit(limit).all()
+    db.close()
+
+    return popular_list

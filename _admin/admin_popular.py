@@ -88,7 +88,7 @@ def popular_rank(request: Request,
         models.Popular.pp_word != '',
         models.Popular.pp_date >= fr_date,
         models.Popular.pp_date <= to_date
-    ).group_by(models.Popular.pp_word).order_by(desc('search_count'))
+    ).group_by(models.Popular.pp_word).order_by(desc('search_count'), models.Popular.pp_word)
 
     total_count = query.count()
     records_per_page = request.state.config.cf_page_rows
