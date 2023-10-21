@@ -990,6 +990,25 @@ def get_memo_not_read(mb_id: str):
     return db.query(Memo).filter(Memo.me_recv_mb_id == mb_id, Memo.me_read_datetime == None, Memo.me_type == 'recv').count()
 
 
+def get_editor_path(editor_name: Optional[str] = None) -> str:
+    """지정한 에디터 경로를 반환하는 함수
+    미지정시 그누보드 환경설정값 사용
+    """
+    if editor_name:
+        return editor_name
+
+    db = SessionLocal()
+    config = db.query(Config).first()
+    db.close()
+    return config.cf_editor if config.cf_editor else "textarea"
+
+
+def nl2br(value) -> str:
+    """ \n 을 <br> 태그로 변환
+    """
+    return escape(value).replace('\n', Markup('<br>\n'))
+
+
 def get_popular_list(request: Request, limit: int = 7, day: int = 3):
     """인기검색어 조회
 

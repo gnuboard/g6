@@ -14,8 +14,9 @@ from database import get_db
 import models
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
-templates.env.globals["get_popular_list"] = get_popular_list
+templates = Jinja2Templates(directory=[EDITOR_PATH, TEMPLATES_DIR])
+templates.env.globals["bleach"] = bleach
+templates.env.globals["nl2br"] = nl2br
 
 
 # all board list
