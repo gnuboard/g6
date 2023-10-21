@@ -499,10 +499,10 @@ class FaqMaster(Base):
 
     fm_id = Column(Integer, primary_key=True, autoincrement=True)
     fm_subject = Column(String(255), nullable=False, default='')
-    fm_head_html = Column(Text, nullable=True)
-    fm_tail_html = Column(Text, nullable=True)
-    fm_mobile_head_html = Column(Text, nullable=True)
-    fm_mobile_tail_html = Column(Text, nullable=False)
+    fm_head_html = Column(Text, nullable=False, default='')
+    fm_tail_html = Column(Text, nullable=False, default='')
+    fm_mobile_head_html = Column(Text, nullable=False, default='')
+    fm_mobile_tail_html = Column(Text, nullable=False, default='')
     fm_order = Column(Integer, nullable=False, default=0)
 
     # 연관관계
@@ -514,8 +514,8 @@ class Faq(Base):
 
     fa_id = Column(Integer, primary_key=True, autoincrement=True)
     fm_id = Column(Integer, ForeignKey('g6_faq_master.fm_id'), nullable=False, default=0)
-    fa_subject = Column(Text, nullable=False)
-    fa_content = Column(Text, nullable=False)
+    fa_subject = Column(Text, nullable=False, default='')
+    fa_content = Column(Text, nullable=False, default='')
     fa_order = Column(Integer, nullable=False, default=0)
 
     # 연관관계
