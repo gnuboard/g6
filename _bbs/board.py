@@ -48,8 +48,8 @@ def list_post(bo_table: str, request: Request, db: Session = Depends(get_db)):
     else:
         writes = []
         
-    request.state.context["board"] = board
-    request.state.context["writes"] = writes
+    # request.state.context["board"] = board
+    # request.state.context["writes"] = writes
 
     # return templates.TemplateResponse("board/list_post.html", {"request": request, "board": board, "writes": writes})
     return templates.TemplateResponse(f"board/{request.state.device}/{board.bo_skin}/list_post.html",
