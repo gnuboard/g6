@@ -10,7 +10,7 @@ from common import *
 from dataclassform import GroupForm
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 templates.env.globals['getattr'] = getattr
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['get_admin_menus'] = get_admin_menus
@@ -54,7 +54,7 @@ def boardgroup_list(request: Request, db: Session = Depends(get_db)):
         })
         group_data.append(group_info)
         
-    return templates.TemplateResponse("admin/boardgroup_list.html", {"request": request, "groups": group_data})
+    return templates.TemplateResponse("boardgroup_list.html", {"request": request, "groups": group_data})
 
 
 @router.post("/boardgroup_list_update")
@@ -96,7 +96,7 @@ def boardgroup_form(request: Request, db: Session = Depends(get_db)):
     token = hash_password(hash_password("")) # 토큰값을 아무도 알수 없게 만듬
     request.session["token"] = token   
     
-    return templates.TemplateResponse("admin/boardgroup_form.html", {"request": request, "group": None, "token": token})
+    return templates.TemplateResponse("boardgroup_form.html", {"request": request, "group": None, "token": token})
 
 
 @router.get("/boardgroup_form/{gr_id}")
@@ -109,7 +109,7 @@ def boardgroup_form(gr_id: str, request: Request, db: Session = Depends(get_db))
     token = hash_password(gr_id)
     request.session["token"] = token
     
-    return templates.TemplateResponse("admin/boardgroup_form.html", {"request": request, "group": group, "token": token })
+    return templates.TemplateResponse("boardgroup_form.html", {"request": request, "group": group, "token": token })
 
 
 @router.post("/boardgroup_form_update")  

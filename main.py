@@ -7,19 +7,20 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from jinja2 import Environment, FileSystemLoader
 from database import engine, get_db, SessionLocal
-import models
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 from common import *
 from user_agents import parse
 import os
+import models
 
-models.Base.metadata.create_all(bind=engine)
+# models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates.env.globals["get_popular_list"] = get_popular_list
 
 from _admin.admin import router as admin_router
 from _bbs.board import router as board_router
@@ -66,7 +67,6 @@ async def main_middleware(request: Request, call_next):
     request.state.config = config
     
     ss_mb_id = request.session.get("ss_mb_id", "")
-    # print("ss_mb_id:", ss_mb_id)
     
     if ss_mb_id:
         member = db.query(models.Member).filter(models.Member.mb_id == ss_mb_id).first()

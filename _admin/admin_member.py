@@ -37,14 +37,12 @@ async def member_list(request: Request, db: Session = Depends(get_db), search_pa
                 prefix_search_fields = ["mb_name", "mb_nick", "mb_tel", "mb_hp", "mb_datetime", "mb_recommend"]
             )
     
-    query_string = generate_query_string(request)
-    
     context = {
         "request": request,
         "members": result['rows'],
         "admin": request.state.login_member, # 로그인해 있는 회원을 관리자로 간주함
         "total_count": result['total_count'],
-        "paging": get_paging(request, search_params['current_page'], result['total_count'], f"/admin/member_list?{query_string}&page="),
+        "paging": get_paging(request, search_params['current_page'], result['total_count']),
     }
     return templates.TemplateResponse("member_list.html", context)
 

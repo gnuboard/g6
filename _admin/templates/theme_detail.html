@@ -1,0 +1,47 @@
+{% extends "base_window.html" %}
+
+{% block title %}
+    테마 상세보기
+{% endblock %}
+
+{% block content %}
+
+<div id="theme_detail">
+    <h2>{{ name }}</h2>
+    <div class="theme_dt_img">
+        {% if info.screenshot %}
+            <img src="{{ info.screenshot }}" alt="{{ name }}">
+        {% else %}
+            <img src="/static/img/theme_img.jpg" alt="">
+        {% endif %}
+    </div>
+    <div class="theme_dt_if">
+        <p>{{ info.detail }}</p>
+        <table>
+            <tr>
+                <th scope="row">Version</th>
+                <td>{{ info.version }}</td>
+            </tr>
+            <tr>
+                <th scope="row">Maker</th>
+                <td>{{ info.maker }}</td>
+            </tr>
+            <tr>
+                <th scope="row">License</th>
+                <td>{{ info.license }}</td>
+            </tr>
+        </table>
+        <div class="theme_dt_btn">
+            <!-- <a href="/admin/theme_preview?theme={{ theme }}" class="theme_pr btn_03" target="theme_preview">미리보기</a> -->
+            <button type="button" class="close_btn">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelector(".close_btn").addEventListener("click", function() {
+        document.getElementById("theme_detail").remove();
+    });
+</script>
+
+{% endblock %}

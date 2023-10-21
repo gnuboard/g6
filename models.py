@@ -1,9 +1,10 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime, Date, Time
-from sqlalchemy.dialects.mysql import TINYINT
+# from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import ArgumentError, InvalidRequestError
 from datetime import datetime, date
+from database import engine, get_db, SessionLocal
 
 Base = declarative_base()
 
@@ -480,14 +481,14 @@ class Content(Base):
     __tablename__ = 'g6_content'
 
     co_id = Column(String(20), primary_key=True, nullable=False, default='')
-    co_html = Column(TINYINT, nullable=False, default=0)
+    co_html = Column(Integer, nullable=False, default=0)
     co_subject = Column(String(255), nullable=False, default='')
     co_content = Column(Text, nullable=False)
     co_seo_title = Column(String(255), nullable=False, default='')
     co_mobile_content = Column(Text, nullable=False)
     co_skin = Column(String(255), nullable=False, default='')
     co_mobile_skin = Column(String(255), nullable=False, default='')
-    co_tag_filter_use = Column(TINYINT, nullable=False, default=0)
+    co_tag_filter_use = Column(Integer, nullable=False, default=0)
     co_hit = Column(Integer, nullable=False, default=0)
     co_include_head = Column(String(255), nullable=True)
     co_include_tail = Column(String(255), nullable=True)
@@ -498,10 +499,10 @@ class FaqMaster(Base):
 
     fm_id = Column(Integer, primary_key=True, autoincrement=True)
     fm_subject = Column(String(255), nullable=False, default='')
-    fm_head_html = Column(Text, nullable=True)
-    fm_tail_html = Column(Text, nullable=True)
-    fm_mobile_head_html = Column(Text, nullable=True)
-    fm_mobile_tail_html = Column(Text, nullable=False)
+    fm_head_html = Column(Text, nullable=False, default='')
+    fm_tail_html = Column(Text, nullable=False, default='')
+    fm_mobile_head_html = Column(Text, nullable=False, default='')
+    fm_mobile_tail_html = Column(Text, nullable=False, default='')
     fm_order = Column(Integer, nullable=False, default=0)
 
     # 연관관계
@@ -513,8 +514,8 @@ class Faq(Base):
 
     fa_id = Column(Integer, primary_key=True, autoincrement=True)
     fm_id = Column(Integer, ForeignKey('g6_faq_master.fm_id'), nullable=False, default=0)
-    fa_subject = Column(Text, nullable=False)
-    fa_content = Column(Text, nullable=False)
+    fa_subject = Column(Text, nullable=False, default='')
+    fa_content = Column(Text, nullable=False, default='')
     fa_order = Column(Integer, nullable=False, default=0)
 
     # 연관관계
@@ -551,15 +552,15 @@ class QaConfig(Base):
     qa_category = Column(String(255), nullable=False, default='')
     qa_skin = Column(String(255), nullable=False, default='')
     qa_mobile_skin = Column(String(255), nullable=False, default='')
-    qa_use_email = Column(TINYINT, nullable=False, default=0)
-    qa_req_email = Column(TINYINT, nullable=False, default=0)
-    qa_use_hp = Column(TINYINT, nullable=False, default=0)
-    qa_req_hp = Column(TINYINT, nullable=False, default=0)
-    qa_use_sms = Column(TINYINT, nullable=False, default=0)
+    qa_use_email = Column(Integer, nullable=False, default=0)
+    qa_req_email = Column(Integer, nullable=False, default=0)
+    qa_use_hp = Column(Integer, nullable=False, default=0)
+    qa_req_hp = Column(Integer, nullable=False, default=0)
+    qa_use_sms = Column(Integer, nullable=False, default=0)
     qa_send_number = Column(String(255), nullable=False, default='0')
     qa_admin_hp = Column(String(255), nullable=False, default='')
     qa_admin_email = Column(String(255), nullable=False, default='')
-    qa_use_editor = Column(TINYINT, nullable=False, default=0)
+    qa_use_editor = Column(Integer, nullable=False, default=0)
     qa_subject_len = Column(Integer, nullable=False, default=0)
     qa_mobile_subject_len = Column(Integer, nullable=False, default=0)
     qa_page_rows = Column(Integer, nullable=False, default=0)
@@ -600,9 +601,9 @@ class QaContent(Base):
     qa_hp = Column(String(255), nullable=False, default='')
     qa_type = Column(Integer, nullable=False, default=0)
     qa_category = Column(String(255), nullable=False, default='')
-    qa_email_recv = Column(TINYINT, nullable=False, default=0)
-    qa_sms_recv = Column(TINYINT, nullable=False, default=0)
-    qa_html = Column(TINYINT, nullable=False, default=0)
+    qa_email_recv = Column(Integer, nullable=False, default=0)
+    qa_sms_recv = Column(Integer, nullable=False, default=0)
+    qa_html = Column(Integer, nullable=False, default=0)
     qa_subject = Column(String(255), nullable=False, default='')
     qa_content = Column(Text, nullable=False)
     qa_status = Column(Integer, nullable=False, default=0)
@@ -631,8 +632,8 @@ class Menu(Base):
     me_link = Column(String(255), nullable=False, default='')
     me_target = Column(String(255), nullable=False, default='')
     me_order = Column(Integer, nullable=False, default=0)
-    me_use = Column(TINYINT, nullable=False, default=0)
-    me_mobile_use = Column(TINYINT, nullable=False, default=0)
+    me_use = Column(Integer, nullable=False, default=0)
+    me_mobile_use = Column(Integer, nullable=False, default=0)
     
     
 # CREATE TABLE `g5_point` (
@@ -662,16 +663,12 @@ class Point(Base):
     po_content = Column(String(255), nullable=False, default='')
     po_point = Column(Integer, nullable=False, default=0)
     po_use_point = Column(Integer, nullable=False, default=0)
-    po_expired = Column(TINYINT, nullable=False, default=0)
+    po_expired = Column(Integer, nullable=False, default=0)
     po_expire_date = Column(Date, nullable=False, default='0000-00-00')
     po_mb_point = Column(Integer, nullable=False, default=0)
     po_rel_table = Column(String(20), nullable=False, default='')
     po_rel_id = Column(String(20), nullable=False, default='')
     po_rel_action = Column(String(100), nullable=False, default='')
-    
-    
-    
-    
 
 
 class Memo(Base):
@@ -693,3 +690,30 @@ class Memo(Base):
     # 종속관계
     # recv_member = relationship("Member", foreign_keys=[me_recv_mb_id])
     # send_member = relationship("Member", foreign_keys=[me_send_mb_id])
+
+
+class Popular(Base):
+    '''
+    인기검색어 테이블
+    '''
+    __tablename__ = 'g6_popular'
+    
+    pp_id = Column(Integer, primary_key=True, autoincrement=True)
+    pp_word = Column(String(50), nullable=False, default='')
+    pp_date = Column(Date, nullable=False)
+    pp_ip = Column(String(50), nullable=False, default='')
+
+    # Index 추가
+    index1 = Index('index1', pp_date, pp_word, pp_ip, unique=True)
+
+
+class Auth(Base):
+# CREATE TABLE `g5_auth` (
+#   `mb_id` varchar(20) NOT NULL DEFAULT '',
+#   `au_menu` varchar(20) NOT NULL DEFAULT '',
+#   `au_auth` set('r','w','d') NOT NULL DEFAULT ''
+    __tablename__ = 'g6_auth'
+    
+    mb_id = Column(String(20), primary_key=True, nullable=False, default='')
+    au_menu = Column(String(20), primary_key=True, nullable=False, default='')
+    au_auth = Column(String(255), nullable=False, default='')    

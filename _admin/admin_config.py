@@ -61,6 +61,8 @@ def config_form_update(
     if not validate_one_time_token(token, 'update'):
         return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다."]})
     
+    # print(request.state.context['member'])
+    
     # 에러 체크
     member = request.state.login_member
     # print(member.__dict__)
@@ -103,5 +105,4 @@ def config_form_update(
     for field, value in form_data.__dict__.items():
         setattr(config, field, value)
     db.commit()
-    
     return RedirectResponse("/admin/config_form", status_code=303)

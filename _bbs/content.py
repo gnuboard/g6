@@ -11,7 +11,7 @@ import hashlib
 
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
-
+templates.env.globals["get_popular_list"] = get_popular_list
 
 @router.get("/{co_id}")
 def content_view(request: Request, co_id: str, db: Session = Depends(get_db)):

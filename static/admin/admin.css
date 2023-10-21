@@ -1053,7 +1053,7 @@ box-shadow: 2px 2px 3px 0px rgba(0,0,0,0.2);}
 #theme_list li .theme_deactive{margin-left:4px}
 #theme_list li .theme_sl_use{background:#ff3061;line-height:26px}
 #theme_list li .theme_pr{float:right;margin-top:5px;padding:0 5px;height:26px;line-height:24px; border: 1px solid #ccc; background: #fafafa; }
-#theme_list li .theme_preview{ float: right; margin-top: 5px; padding:0 5px;height:26px; border: 1px solid #ccc; background: #fafafa; margin-right:3px}
+#theme_list li .theme_detail{ float: right; margin-top: 5px; padding:0 5px;height:26px; border: 1px solid #ccc; background: #fafafa; margin-right:3px}
 
 #theme_detail{position:fixed;top:50%;height:540px;width:900px;margin-top:-271px;background:#fff;background:#f3f3f3;border:1px solid #000;
 -webkit-box-shadow: 1px 2px 5px rgba(150,150,150,100.5);

@@ -19,7 +19,6 @@ templates.env.globals["bleach"] = bleach
 templates.env.globals["nl2br"] = nl2br
 
 
-
 # all board list
 @router.get("/")
 def list_board(request: Request, db: Session = Depends(get_db)):

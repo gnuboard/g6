@@ -67,24 +67,6 @@
             "permission": "cf_thumbnail"
         },
         {
-            "id": "100500",
-            "name": "phpinfo()",
-            "url": "phpinfo",
-            "permission": "cf_phpinfo"
-        },
-        {
-            "id": "100510",
-            "name": "Browscap 업데이트",
-            "url": "browscap",
-            "permission": "cf_browscap"
-        },
-        {
-            "id": "100520",
-            "name": "접속로그 변환",
-            "url": "browscap_convert",
-            "permission": "cf_visit_cnvrt"
-        },
-        {
             "id": "100410",
             "name": "DB업그레이드",
             "url": "dbupgrade",
