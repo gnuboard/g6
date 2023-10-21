@@ -5,19 +5,21 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-DB_CASE = os.getenv("DB_CASE")
+DB_ENGINE = os.getenv("DB_ENGINE").lower() # 소문자
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
 DB_USER = os.getenv("DB_USER")
-DB_PASS = os.getenv("DB_PASS")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 
-if DB_CASE == "mysql":
-    DATABASE_URL = f"mysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-elif DB_CASE == "postgresql":
-    DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+if DB_ENGINE == "mysql":
+    DATABASE_URL = f"mysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+elif DB_ENGINE == "postgresql":
+    DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 else:
     DATABASE_URL = f"sqlite:///sqlite3.db"
+
+
     
 engine = create_engine(
     DATABASE_URL, 

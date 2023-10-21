@@ -14,7 +14,7 @@ from user_agents import parse
 import os
 import models
 
-# models.Base.metadata.create_all(bind=engine)
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")

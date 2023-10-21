@@ -706,7 +706,3 @@ class Auth(Base):
     mb_id = Column(String(20), primary_key=True, nullable=False, default='')
     au_menu = Column(String(20), primary_key=True, nullable=False, default='')
     au_auth = Column(String(255), nullable=False, default='')    
-
-
-
-Base.metadata.create_all(bind=engine)
