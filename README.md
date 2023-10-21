@@ -10,6 +10,11 @@ DB_PORT = ""
 DB_USER = ""
 DB_PASSWORD = ""
 DB_NAME = ""
+
+SMTP_SERVER="localhost"
+SMTP_PORT=25
+SMTP_USERNAME=""
+SMTP_PASSWORD=""
 ```
 
 아직 postgresql, sqlite3 는 정상 작동하지 않음
