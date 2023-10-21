@@ -1,7 +1,7 @@
 # 여기에서 write 와 post 는 글 한개라는 개념으로 사용합니다.
 # 그누보드5 버전에서 게시판 테이블을 write 로 사용하여 테이블명을 바꾸지 못하는 관계로
 # 테이블명은 write 로, 글 한개에 대한 의미는 write 와 post 를 혼용하여 사용합니다.
-
+import bleach
 from fastapi import APIRouter, Depends, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -52,7 +52,8 @@ def list_post(bo_table: str, request: Request, db: Session = Depends(get_db)):
     request.state.context["writes"] = writes
 
     # return templates.TemplateResponse("board/list_post.html", {"request": request, "board": board, "writes": writes})
-    return templates.TemplateResponse(f"board/{request.state.device}/{board.bo_skin}/list_post.html", request.state.context)
+    return templates.TemplateResponse(f"board/{request.state.device}/{board.bo_skin}/list_post.html",
+                                      {"request": request, "board": board, "writes": writes})
 
 
 @router.get("/write/{bo_table}")
@@ -63,11 +64,18 @@ def write_form(bo_table: str, request: Request, db: Session = Depends(get_db)):
     board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
     if not board:
         raise HTTPException(status_code=404, detail="{bo_table} is not found.")
-    
-    models.Write = dynamic_create_write_table(bo_table)
-    write = db.query(models.Write).order_by(models.Write.wr_num).all()
-        
-    return templates.TemplateResponse(f"board/{request.state.device}/{board.bo_skin}/write_form.html", {"request": request, "board": board, "write": write})
+
+    write = dynamic_create_write_table(bo_table)
+    write.wr_content = ""
+
+    return templates.TemplateResponse(f"board/{request.state.device}/{board.bo_skin}/write_form.html",
+                                      {
+                                          "request": request,
+                                          "board": board,
+                                          "write": write,
+                                          "editor_head": get_editor_path() + '/head.html',
+                                          "editor_body": get_editor_path() + '/body.html',
+                                      })
 
 
 @router.post("/write_update/")

@@ -7,8 +7,8 @@ import PIL
 import shutil
 from fastapi import Query, Request, HTTPException, UploadFile
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup, escape
 from passlib.context import CryptContext
-from requests import Session
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.orm import load_only
 from models import Config, Member, Memo, Board, Group, Point, Popular, Visit, VisitSum
@@ -21,6 +21,8 @@ from user_agents import parse
 
 # 전역변수 선언(global variables)
 TEMPLATES = "templates"
+EDITOR_PATH = f"{TEMPLATES}/editor"
+
 def get_theme_from_db(config=None):
     # main.py 에서 config 를 인수로 받아서 사용
     if not config:
@@ -150,6 +152,8 @@ def get_editor_select(id, selected):
     else:
         html_code.append(f'<option value="">사용안함</option>')
     for editor in os.listdir("static/plugin/editor"):
+        if editor == 'textarea':
+            continue
         if os.path.isdir(f"static/plugin/editor/{editor}"):
             html_code.append(f'<option value="{editor}" {"selected" if editor == selected else ""}>{editor}</option>')
     html_code.append('</select>')
@@ -1035,3 +1039,4 @@ def get_popular_list(request: Request, limit: int = 7, day: int = 3):
     db.close()
 
     return popular_list
+
