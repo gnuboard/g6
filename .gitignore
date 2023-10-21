@@ -12,3 +12,5 @@ data/
 test*.py
 localhost.crt
 localhost.key
+sqlite3.db
+*.db

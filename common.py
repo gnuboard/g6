@@ -171,11 +171,12 @@ def get_member_id_select(id, level, selected, event=''):
 
 # 필드에 저장된 값과 기본 값을 비교하여 selected 를 반환
 def get_selected(field_value, value):
-    if field_value is None:
+    if field_value is None or value is None or field_value == '' or value == '':
         return ''
 
-    if isinstance(value, int):
+    if isinstance(value, int) or (isinstance(value, str) and value.isdigit()):
         return ' selected="selected"' if (int(field_value) == int(value)) else ''
+    
     return ' selected="selected"' if (field_value == value) else ''
 
 
@@ -759,6 +760,7 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
         
     # 포인트 건별 생성
     po_expire_date = '9999-12-31'
+    # po_expire_date = datetime.strptime('9999-12-31', '%Y-%m-%d')
     if config.cf_point_term > 0:
         if expire > 0:
             po_expire_date = (SERVER_TIME + timedelta(days=expire-1)).strftime('%Y-%m-%d')
