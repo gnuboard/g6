@@ -19,7 +19,7 @@ elif DB_ENGINE == "postgresql":
 else:
     DATABASE_URL = f"sqlite:///sqlite3.db"
 
-
+DB_TABLE_PREFIX = os.getenv("DB_TABLE_PREFIX")
     
 engine = create_engine(
     DATABASE_URL, 

@@ -13,7 +13,7 @@ from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.orm import load_only
 from models import Config, Member, Memo, Board, Group, Point, Popular, Visit, VisitSum
 from models import WriteBaseModel
-from database import SessionLocal, engine
+from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
 import json
 from PIL import Image
@@ -74,7 +74,7 @@ _created_models = {}
 def dynamic_create_write_table(table_name: str, create_table: bool = False):
     '''
     WriteBaseModel 로 부터 게시판 테이블 구조를 복사하여 동적 모델로 생성하는 함수
-    인수의 table_name 에서는 g6_write_ 를 제외한 테이블 이름만 입력받는다.
+    인수의 table_name 에서는 DB_TABLE_PREFIX + 'write_' 를 제외한 테이블 이름만 입력받는다.
     Create Dynamic Write Table Model from WriteBaseModel
     '''
     # 이미 생성된 모델 반환
@@ -86,7 +86,7 @@ def dynamic_create_write_table(table_name: str, create_table: bool = False):
         class_name, 
         (WriteBaseModel,), 
         {   
-            "__tablename__": "g6_write_" + table_name,
+            "__tablename__": DB_TABLE_PREFIX + 'write_' + table_name,
             "__table_args__": (
                 Index(f'idx_wr_num_reply_{table_name}', 'wr_num', 'wr_reply'),
                 Index(f'idex_wr_is_comment_{table_name}', 'wr_is_comment'),
