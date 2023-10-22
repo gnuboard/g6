@@ -75,7 +75,8 @@ async def main_middleware(request: Request, call_next):
                 request.session["ss_mb_id"] = ""
                 member = None
             else:
-                if member.mb_today_login[:10] != TIME_YMD: # 오늘 처음 로그인 이라면
+                # if member.mb_today_login[:10] != TIME_YMD: # 오늘 처음 로그인 이라면
+                if member.mb_today_login.strftime("%Y-%m-%d") != TIME_YMD:  # 오늘 처음 로그인 이라면
                     # 첫 로그인 포인트 지급
                     insert_point(request, member.mb_id, config.cf_login_point, TIME_YMD + " 첫로그인", "@login", member.mb_id, TIME_YMD)
                     # 오늘의 로그인이 될 수도 있으며 마지막 로그인일 수도 있음
