@@ -25,6 +25,7 @@ if table is not None:
                 # 명시적 트랜잭션 시작
                 with conn.begin():
                     # text() 구조를 사용하여 쿼리 실행
+                    conn.execute(text(f"ALTER TABLE `{config_table_name}` CHANGE `cf_optimize_date` `cf_optimize_date` DATE NOT NULL;"))
                     conn.execute(text(f"ALTER TABLE `{config_table_name}` ADD `cf_id` INT NOT NULL DEFAULT 1 FIRST, ADD PRIMARY KEY (`cf_id`);"))
                     print(f"{config_table_name} 테이블에 cf_id 주키(Primary Key)를 추가했습니다.")
         else:

@@ -113,7 +113,8 @@ def session_member_key(request: Request, member: Member):
     '''
     세션에 저장할 회원의 고유키를 생성하여 반환하는 함수
     '''
-    ss_mb_key = hashlib.md5((member.mb_datetime + get_real_client_ip(request) + request.headers.get('User-Agent')).encode()).hexdigest()
+    mb_datetime_str = member.mb_datetime.strftime('%Y-%m-%d %H:%M:%S')
+    ss_mb_key = hashlib.md5((mb_datetime_str + get_real_client_ip(request) + request.headers.get('User-Agent')).encode()).hexdigest()
     return ss_mb_key
 
 
