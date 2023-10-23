@@ -350,3 +350,13 @@ class GroupForm:
     gr_8: Optional[str] = Form(default="")
     gr_9: Optional[str] = Form(default="")
     gr_10: Optional[str] = Form(default="")
+
+
+@dataclass
+class ContentForm:
+    co_subject: str = Form(...)
+    co_content: str = Form(None)
+    co_mobile_content: str = Form(None)
+    co_html: str = Form(None)
+    co_skin: str = Form(None)
+    co_mobile_skin: str = Form(None)
