@@ -929,3 +929,47 @@ class Auth(Base):
     mb_id = Column(String(20), primary_key=True, nullable=False, default="")
     au_menu = Column(String(20), primary_key=True, nullable=False, default="")
     au_auth = Column(String(255), nullable=False, default="")
+
+
+
+class Poll(Base):
+    __tablename__ = DB_TABLE_PREFIX + "poll"
+
+    po_id = Column(Integer, primary_key=True, autoincrement=True)
+    po_subject = Column(String(255), nullable=False, default='')
+    po_poll1 = Column(String(255), nullable=False, default='')
+    po_poll2 = Column(String(255), nullable=False, default='')
+    po_poll3 = Column(String(255), nullable=False, default='')
+    po_poll4 = Column(String(255), nullable=False, default='')
+    po_poll5 = Column(String(255), nullable=False, default='')
+    po_poll6 = Column(String(255), nullable=False, default='')
+    po_poll7 = Column(String(255), nullable=False, default='')
+    po_poll8 = Column(String(255), nullable=False, default='')
+    po_poll9 = Column(String(255), nullable=False, default='')
+    po_cnt1 = Column(Integer, nullable=False, default=0)
+    po_cnt2 = Column(Integer, nullable=False, default=0)
+    po_cnt3 = Column(Integer, nullable=False, default=0)
+    po_cnt4 = Column(Integer, nullable=False, default=0)
+    po_cnt5 = Column(Integer, nullable=False, default=0)
+    po_cnt6 = Column(Integer, nullable=False, default=0)
+    po_cnt7 = Column(Integer, nullable=False, default=0)
+    po_cnt8 = Column(Integer, nullable=False, default=0)
+    po_cnt9 = Column(Integer, nullable=False, default=0)
+    po_etc = Column(String(255), nullable=False, default='')
+    po_level = Column(Integer, nullable=False, default=0)
+    po_point = Column(Integer, nullable=False, default=0)
+    po_date = Column(Date, nullable=False, default=datetime.now())
+    po_ips = Column(Text, nullable=False, default='')
+    mb_ids = Column(Text, nullable=False, default='')
+    po_use = Column(Integer, nullable=False, default=1)
+
+
+class PollEtc(Base):
+    __tablename__ = DB_TABLE_PREFIX + "poll_etc"
+
+    pc_id = Column(Integer, primary_key=True, autoincrement=True)
+    po_id = Column(Integer, nullable=False, default=0)
+    mb_id = Column(String(20), nullable=False, default='')
+    pc_name = Column(String(255), nullable=False, default='')
+    pc_idea = Column(String(255), nullable=False, default='')
+    pc_datetime = Column(DateTime, nullable=False, default=datetime.now())
