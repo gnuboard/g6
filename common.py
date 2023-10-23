@@ -596,6 +596,12 @@ def record_visit(request: Request):
     existing_visit = db.query(Visit).filter(Visit.vi_date == date.today(), Visit.vi_ip == vi_ip).first()
 
     if not existing_visit:
+        
+        #$tmp_row = sql_fetch(" select max(vi_id) as max_vi_id from {$g5['visit_table']} ");
+        tmp_row = db.query(func.max(Visit.vi_id).label("max_vi_id")).first()
+        max_vi_id = tmp_row.max_vi_id if tmp_row.max_vi_id else 0
+        max_vi_id = max_vi_id + 1
+        
         # 새로운 접속 레코드 생성
         referer = request.headers.get("referer", "")
         user_agent = request.headers.get("User-Agent", "")
@@ -605,6 +611,7 @@ def record_visit(request: Request):
         device = 'pc' if ua.is_pc else 'mobile' if ua.is_mobile else 'tablet' if ua.is_tablet else 'unknown'
             
         visit = Visit(
+            vi_id=max_vi_id,
             vi_ip=vi_ip,
             vi_date=date.today(),
             vi_time=datetime.now().time(),
@@ -1023,3 +1030,32 @@ def get_popular_list(request: Request, limit: int = 7, day: int = 3):
     db.close()
 
     return popular_list
+
+
+def generate_token(request: Request, action: str = ''):
+    '''
+    토큰 생성 함수
+
+    Returns:
+        str: 생성된 토큰
+    '''
+    # token = str(uuid.uuid4())  # 임의의 유일한 키 생성
+    token = hash_password(action)
+    request.session["ss_token"] = token
+    return token
+
+
+def compare_token(request: Request, token: str, action: str = ''):
+    '''
+    토큰 비교 함수
+
+    Args:
+        token (str): 비교할 토큰
+
+    Returns:
+        bool: 토큰이 일치하면 True, 일치하지 않으면 False
+    '''
+    if request.session.get("ss_token") == token and token:
+        return verify_password(action, token)
+    else:
+        return False

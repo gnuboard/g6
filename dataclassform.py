@@ -192,7 +192,7 @@ class MemberForm:
     mb_password: Optional[str] = Form(default="")
     mb_name: str = Form(None)
     mb_nick: str = Form(None)
-    mb_nick_date: Optional[str] = Form(default=None)
+    # mb_nick_date: Optional[str] = Form(default=None)
     mb_level: Optional[int] = Form(default=0)
     mb_email: Optional[str] = Form(default="")
     mb_homepage: Optional[str] = Form(default="")
