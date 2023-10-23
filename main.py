@@ -9,7 +9,6 @@ from database import get_db
 
 from jinja2 import Environment, FileSystemLoader
 from database import engine, get_db, SessionLocal
-import models
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 from common import *
@@ -18,8 +17,9 @@ from typing import Optional
 from settings import APP_IS_DEBUG
 from user_agents import parse
 import os
+import models
 
-models.Base.metadata.create_all(bind=engine)
+# models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(debug=APP_IS_DEBUG)
 
@@ -29,6 +29,7 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR, extensions=["jinja2.ext.i18
 templates.env.globals["is_admin"] = is_admin
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.filters["default_if_none"] = default_if_none
+templates.env.globals["get_popular_list"] = get_popular_list
 
 from _admin.admin import router as admin_router
 from _bbs.board import router as board_router

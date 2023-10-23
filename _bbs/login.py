@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from common import *
 from database import get_db
 from main import templates
+from pbkdf2 import validate_password
 
 router = APIRouter()
 
@@ -26,20 +27,20 @@ def login(request: Request, db: Session = Depends(get_db), mb_id: str = Form(...
 
     member = db.query(Member).filter(Member.mb_id == mb_id).first()
     if not member:
-        errors.append("아이디 또는 패스워드가 일치하지 않습니다.")
+        errors.append("회원정보가 존재하지 않습니다.")
     else:
         if not verify_password(mb_password, member.mb_password):
             errors.append("아이디 또는 패스워드가 일치하지 않습니다.")
-
+            
     if errors:
         return templates.TemplateResponse("bbs/login_form.html", {"request": request, "mb_id": mb_id, "errors": errors})
-
+    
     # 로그인 성공시 세션에 저장
     request.session["ss_mb_id"] = member.mb_id
     # XSS 공격에 대응하기 위하여 회원의 고유키를 생성해 놓는다.
     # user_key = hashlib.md5((member.mb_datetime + get_real_client_ip(request) + request.headers.get('User-Agent')).encode()).hexdigest()
     request.session["ss_mb_key"] = session_member_key(request, member)
-
+    
     return RedirectResponse(url="/", status_code=302)
 
 
@@ -52,9 +53,9 @@ def check_login(request: Request, db: Session = Depends(get_db), mb_id: str = Fo
     member = db.query(Member).filter(Member.mb_id == mb_id).first()
     if not member:
         # raise HTTPException(status_code=404, detail="{mb_id} is not found.")
-        errors.append("아이디 또는 패스워드가 일치하지 않습니다.")
+        errors.append("회원정보가 존재하지 않습니다.")
     else:
-        if not verify_password(mb_password, member.mb_password):
+        if not validate_password(mb_password, member.mb_password):
             errors.append("아이디 또는 패스워드가 일치하지 않습니다.")
 
     if errors:

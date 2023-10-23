@@ -15,6 +15,7 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.globals["generate_query_string"] = generate_query_string
+templates.env.globals["get_popular_list"] = get_popular_list
 
 
 FILE_DIRECTORY = "data/qa/"
@@ -83,7 +84,7 @@ def qa_list(request: Request,
         "categories": qa_config.qa_category.split("|"),
         "total_records": total_records,
         "current_page": current_page,
-        "paging": get_paging(request, current_page, total_records, f"/qa/list?{generate_query_string(request)}&page="),
+        "paging": get_paging(request, current_page, total_records),
     }
 
     return templates.TemplateResponse(f"qa/pc/qa_list.html", context)

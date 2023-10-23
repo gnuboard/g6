@@ -16,3 +16,5 @@ dev.env
 test.py
 localhost.crt
 localhost.key
+sqlite3.db
+*.db

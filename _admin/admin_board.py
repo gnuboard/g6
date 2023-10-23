@@ -23,7 +23,6 @@ templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
-templates.env.globals["get_paging"] = get_paging
 
 
 @router.get("/board_list")
@@ -73,13 +72,11 @@ def board_list(request: Request, db: Session = Depends(get_db), search_params: d
                 same_search_fields = ["gr_id", "bo_table"], 
             )
     
-    query_string = generate_query_string(request)
-    
     context = {
         "request": request,
         "boards": result['rows'],
         "total_count": result['total_count'],
-        "paging": get_paging(request, search_params['current_page'], result['total_count'], f"/admin/board_list?{query_string}&page="),
+        "paging": get_paging(request, search_params['current_page'], result['total_count']),
     }
     return templates.TemplateResponse("board_list.html", context)
 
