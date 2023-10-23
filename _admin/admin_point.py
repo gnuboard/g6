@@ -22,7 +22,7 @@ templates.env.globals['get_editor_select'] = get_editor_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
+templates.env.globals["generate_token"] = generate_token
 templates.env.globals["format"] = format
 
 
@@ -77,9 +77,10 @@ def point_list(request: Request, db: Session = Depends(get_db), search_params: d
             )
     
     for row in result['rows']:
-        mb = db.query(Member.mb_name).filter_by(mb_id=row.mb_id).first()
+        mb = db.query(Member.mb_name, Member.mb_nick).filter_by(mb_id=row.mb_id).first()
         if mb:
             row.mb_name = mb.mb_name
+            row.mb_nick = mb.mb_nick
     
     sum_point = db.query(func.sum(Point.po_point)).scalar()
    
@@ -103,6 +104,9 @@ async def point_update(request: Request, db: Session = Depends(get_db),
         po_point: Optional[str] = Form(default="0"),
         po_expire_term: Optional[int] = Form(None),
         ):
+    if not compare_token(request, token, 'point_list'):
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다."]})
+    
     try:
         # po_point 값을 정수로 변환합니다.
         po_point = int(po_point)
@@ -133,6 +137,8 @@ async def point_list_delete(request: Request, db: Session = Depends(get_db),
         checks: Optional[List[int]] = Form(None, alias="chk[]"),
         po_id: Optional[List[int]] = Form(None, alias="po_id[]"),
         ):
+    if not compare_token(request, token, 'point_list'):
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다."]})
 
     query_string = generate_query_string(request)
 
