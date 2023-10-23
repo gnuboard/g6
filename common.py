@@ -8,9 +8,8 @@ import shutil
 from fastapi import Query, Request, HTTPException, UploadFile
 from fastapi.templating import Jinja2Templates
 from passlib.context import CryptContext
-from requests import Session
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
-from sqlalchemy.orm import load_only
+from sqlalchemy.orm import load_only, Session
 from models import Config, Member, Memo, Board, Group, Point, Popular, Visit, VisitSum
 from models import WriteBaseModel
 from database import SessionLocal, engine, DB_TABLE_PREFIX
