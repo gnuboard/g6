@@ -17,7 +17,7 @@ router = APIRouter()
 templates = Jinja2Templates(directory=[EDITOR_PATH, TEMPLATES_DIR])
 templates.env.globals["bleach"] = bleach
 templates.env.globals["nl2br"] = nl2br
-
+templates.env.globals["get_editor_path"] = get_editor_path
 
 # all board list
 @router.get("/")
@@ -73,8 +73,6 @@ def write_form(bo_table: str, request: Request, db: Session = Depends(get_db)):
                                           "request": request,
                                           "board": board,
                                           "write": write,
-                                          "editor_head": get_editor_path() + '/head.html',
-                                          "editor_body": get_editor_path() + '/body.html',
                                       })
 
 

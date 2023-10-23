@@ -1008,10 +1008,16 @@ def get_memo_not_read(mb_id: str):
     return db.query(Memo).filter(Memo.me_recv_mb_id == mb_id, Memo.me_read_datetime == None, Memo.me_type == 'recv').count()
 
 
-def get_editor_path(editor_name: Optional[str] = None) -> str:
+def get_editor_path(editor_name: Optional[str] = None, is_use_dhtml: bool = True) -> str:
     """지정한 에디터 경로를 반환하는 함수
     미지정시 그누보드 환경설정값 사용
+    Args:
+        editor_name (Optional[str]): 에디터 이름.
+        is_use_dhtml (Optional[bool]): dhtml 위지웍에디터 사용여부.
     """
+    if not is_use_dhtml:
+        return "textarea"
+
     if editor_name:
         return editor_name
 

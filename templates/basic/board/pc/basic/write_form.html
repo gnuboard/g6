@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block head %}
-    {% include editor_head %}
+    {% include get_editor_path(board.bo_select_editor, board.bo_use_dhtml_editor) + '/head.html' %}
 {% endblock %}
 
 {% block title %}
@@ -57,9 +57,8 @@
                     </div>
         
     </div>
-
         {% with tag_name='wr_content', content=write.wr_content %}
-            {% include editor_body %}
+            {% include get_editor_path(board.bo_select_editor, board.bo_use_dhtml_editor) + '/body.html' %}
         {% endwith %}
 
         <div class="bo_w_link write_div">
