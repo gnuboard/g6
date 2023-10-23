@@ -19,7 +19,6 @@ templates.env.globals["today"] = SERVER_TIME.strftime("%Y%m%d")
 templates.env.globals["get_selected"] = get_selected
 templates.env.globals["get_member_level_select"] = get_member_level_select
 templates.env.globals["get_admin_menus"] = get_admin_menus
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.globals["generate_token"] = generate_token
 
 MEMBER_MENU_KEY = "200100"
@@ -79,8 +78,9 @@ async def member_list_update(
     mb_level: Optional[List[str]] = Form(None, alias="mb_level[]"),
     act_button: Optional[str] = Form(...),
 ):
-    # if not token or not validate_one_time_token(token, 'update'):
-    #     return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰값이 일치하지 않습니다."]})
+    if not compare_token(request, token, "member_list"):
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다."]})
+        
     query_string = generate_query_string(request)
 
     if act_button == "선택삭제":

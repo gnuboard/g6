@@ -88,9 +88,9 @@
             <tr>
                 <th scope="row">본인확인</th>
                 <td>
-                    <input type="radio" name="mb_certify" value="1" id="mb_certify_yes" {{ 'checked' if member.mb_certify }}>
+                    <input type="radio" name="mb_certify" value="1" id="mb_certify_yes" {{ 'checked' if member.mb_certify else '' }}>
                     <label for="mb_certify_yes">예</label>
-                    <input type="radio" name="mb_certify" value="0" id="mb_certify_no" {{ 'checked' if not member.mb_certify }}>
+                    <input type="radio" name="mb_certify" value="0" id="mb_certify_no" {{ 'checked' if not member.mb_certify else '' }}>
                     <label for="mb_certify_no">아니오</label>
                 </td>
                 <th scope="row">성인인증</th>
