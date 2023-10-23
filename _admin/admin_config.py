@@ -27,7 +27,7 @@ templates.env.globals['get_selected'] = get_selected
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['option_array_checked'] = option_array_checked
 templates.env.globals['get_admin_menus'] = get_admin_menus
-templates.env.globals['generate_one_time_token'] = generate_one_time_token
+templates.env.globals['generate_token'] = generate_token
 templates.env.globals['get_client_ip'] = get_client_ip
     
 
@@ -58,7 +58,7 @@ def config_form_update(
         db: Session = Depends(get_db)
         ):
     
-    if not validate_one_time_token(token, 'update'):
+    if not compare_token(request, token, 'update'):
         return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다."]})
     
     # print(request.state.context['member'])
