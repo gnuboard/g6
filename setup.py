@@ -2,9 +2,10 @@
 import re
 import getpass
 from datetime import datetime
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, OperationalError
+from sqlalchemy import text, MetaData
 from common import dynamic_create_write_table, hash_password
-from database import engine, SessionLocal
+from database import engine, SessionLocal, DB_TABLE_PREFIX
 import models
 from version import G6_VERSION
 
@@ -341,7 +342,7 @@ def input_admin_information():
 
 # 함수를 호출하여 관리자 정보를 입력 받기
 admin_id, admin_password, admin_email = input_admin_information()
-               
+
 config_setup(admin_id, admin_email)
 admin_member_setup(admin_id, admin_password, admin_email)
 content_setup()

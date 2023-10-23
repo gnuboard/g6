@@ -121,7 +121,8 @@
                         {% endif %}
                     </td>
                     <td headers="mb_list_mobile" class="td_tel">{{ member.mb_hp }}</td>
-                    <td headers="mb_list_lastcall" class="td_date">{{ member.mb_today_login[2:10] }}</td>
+                    {# <td headers="mb_list_lastcall" class="td_date">{{ member.mb_today_login[2:10] }}</td> #}
+                    <td headers="mb_list_lastcall" class="td_date">{{ member.mb_today_login.strftime("%Y-%m-%d") }}</td>
                     <td headers="mb_list_grp" class="td_numsmall"></td>
                     <td headers="mb_list_mng" rowspan="2" class="td_mng td_mng_s">
                         <a href="/admin/member_form/{{ member.mb_id }}?{{ query_string }}" class="btn btn_03">수정</a>
@@ -162,7 +163,8 @@
                         {{ get_member_level_select('mb_level[]', 1, admin.mb_level if admin else 1, member.mb_level if member else 1)|safe }}
                     </td>
                     <td headers="mb_list_tel" class="td_tel">{{ member.mb_tel }}</td>
-                    <td headers="mb_list_join" class="td_date">{{ member.mb_datetime[2:10] }}</td>
+                    {# <td headers="mb_list_join" class="td_date">{{ member.mb_datetime[2:10] }}</td> #}
+                    <td headers="mb_list_join" class="td_date">{{ member.mb_datetime.strftime("%Y-%m-%d") }}</td>
                     <td headers="mb_list_point" class="td_num"><a href="/admin/point_list?sfl=mb_id&stx={{ member.mb_id }}">{{ member.mb_point }}</a></td>
                 </tr>
                 {% endfor %}

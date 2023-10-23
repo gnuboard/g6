@@ -10,10 +10,10 @@ from fastapi.templating import Jinja2Templates
 from markupsafe import Markup, escape
 from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
-from sqlalchemy.orm import load_only
+from sqlalchemy.orm import load_only, Session
 from models import Config, Member, Memo, Board, Group, Point, Popular, Visit, VisitSum
 from models import WriteBaseModel
-from database import SessionLocal, engine
+from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
 import json
 from PIL import Image
@@ -76,7 +76,7 @@ _created_models = {}
 def dynamic_create_write_table(table_name: str, create_table: bool = False):
     '''
     WriteBaseModel 로 부터 게시판 테이블 구조를 복사하여 동적 모델로 생성하는 함수
-    인수의 table_name 에서는 g6_write_ 를 제외한 테이블 이름만 입력받는다.
+    인수의 table_name 에서는 DB_TABLE_PREFIX + 'write_' 를 제외한 테이블 이름만 입력받는다.
     Create Dynamic Write Table Model from WriteBaseModel
     '''
     # 이미 생성된 모델 반환
@@ -88,7 +88,7 @@ def dynamic_create_write_table(table_name: str, create_table: bool = False):
         class_name, 
         (WriteBaseModel,), 
         {   
-            "__tablename__": "g6_write_" + table_name,
+            "__tablename__": DB_TABLE_PREFIX + 'write_' + table_name,
             "__table_args__": (
                 Index(f'idx_wr_num_reply_{table_name}', 'wr_num', 'wr_reply'),
                 Index(f'idex_wr_is_comment_{table_name}', 'wr_is_comment'),
@@ -115,7 +115,8 @@ def session_member_key(request: Request, member: Member):
     '''
     세션에 저장할 회원의 고유키를 생성하여 반환하는 함수
     '''
-    ss_mb_key = hashlib.md5((member.mb_datetime + get_real_client_ip(request) + request.headers.get('User-Agent')).encode()).hexdigest()
+    mb_datetime_str = member.mb_datetime.strftime('%Y-%m-%d %H:%M:%S')
+    ss_mb_key = hashlib.md5((mb_datetime_str + get_real_client_ip(request) + request.headers.get('User-Agent')).encode()).hexdigest()
     return ss_mb_key
 
 
@@ -174,14 +175,20 @@ def get_member_id_select(id, level, selected, event=''):
 
 
 # 필드에 저장된 값과 기본 값을 비교하여 selected 를 반환
+# def get_selected(field_value, value):
+#     if field_value is None or value is None or field_value == '' or value == '':
+#         return ''
+#     if isinstance(value, int) or (isinstance(value, str) and value.isdigit()):
+#         return ' selected="selected"' if (int(field_value) == int(value)) else ''
+#     return ' selected="selected"' if (field_value == value) else ''
+
 def get_selected(field_value, value):
     if field_value is None or value is None or field_value == '' or value == '':
         return ''
-
-    if isinstance(value, int) or (isinstance(value, str) and value.isdigit()):
-        return ' selected="selected"' if (int(field_value) == int(value)) else ''
-    
-    return ' selected="selected"' if (field_value == value) else ''
+    if (isinstance(field_value, str) and field_value.isdigit()) and \
+       (isinstance(value, int) or (isinstance(value, str) and value.isdigit())):
+        return ' selected="selected"' if int(field_value) == int(value) else ''
+    return ' selected="selected"' if field_value == value else ''
 
 
 def option_array_checked(option, arr=[]):
@@ -593,6 +600,12 @@ def record_visit(request: Request):
     existing_visit = db.query(Visit).filter(Visit.vi_date == date.today(), Visit.vi_ip == vi_ip).first()
 
     if not existing_visit:
+        
+        #$tmp_row = sql_fetch(" select max(vi_id) as max_vi_id from {$g5['visit_table']} ");
+        tmp_row = db.query(func.max(Visit.vi_id).label("max_vi_id")).first()
+        max_vi_id = tmp_row.max_vi_id if tmp_row.max_vi_id else 0
+        max_vi_id = max_vi_id + 1
+        
         # 새로운 접속 레코드 생성
         referer = request.headers.get("referer", "")
         user_agent = request.headers.get("User-Agent", "")
@@ -602,6 +615,7 @@ def record_visit(request: Request):
         device = 'pc' if ua.is_pc else 'mobile' if ua.is_mobile else 'tablet' if ua.is_tablet else 'unknown'
             
         visit = Visit(
+            vi_id=max_vi_id,
             vi_ip=vi_ip,
             vi_date=date.today(),
             vi_time=datetime.now().time(),
@@ -1040,3 +1054,31 @@ def get_popular_list(request: Request, limit: int = 7, day: int = 3):
 
     return popular_list
 
+
+def generate_token(request: Request, action: str = ''):
+    '''
+    토큰 생성 함수
+
+    Returns:
+        str: 생성된 토큰
+    '''
+    # token = str(uuid.uuid4())  # 임의의 유일한 키 생성
+    token = hash_password(action)
+    request.session["ss_token"] = token
+    return token
+
+
+def compare_token(request: Request, token: str, action: str = ''):
+    '''
+    토큰 비교 함수
+
+    Args:
+        token (str): 비교할 토큰
+
+    Returns:
+        bool: 토큰이 일치하면 True, 일치하지 않으면 False
+    '''
+    if request.session.get("ss_token") == token and token:
+        return verify_password(action, token)
+    else:
+        return False
