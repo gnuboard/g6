@@ -15,7 +15,7 @@ templates.env.globals['getattr'] = getattr
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals['subject_sort_link'] = subject_sort_link
-templates.env.globals['generate_one_time_token'] = generate_one_time_token
+templates.env.globals['generate_token'] = generate_token
 
 @router.get("/boardgroup_list")
 def boardgroup_list(request: Request, db: Session = Depends(get_db)):
@@ -71,8 +71,8 @@ def boardgroup_list_update(
         gr_device: Optional[List[str]] = Form(None, alias="gr_device[]"),
         ):
     
-    if not token or not validate_one_time_token(token, 'update'):
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰값이 일치하지 않습니다."]})    
+    if not compare_token(request, token, 'boardgroup_list'):
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰값이 일치하지 않습니다."]})
 
     # 선택수정
     for i in checks:
@@ -119,7 +119,7 @@ def boardgroup_form_update(request: Request, db: Session = Depends(get_db),
                         form_data: GroupForm = Depends(),
                         ):
     
-    if validate_one_time_token(token, 'insert'):
+    if compare_token(request, token, 'insert'):
         existing_group = db.query(models.Group).filter(models.Group.gr_id == gr_id).first()
         if existing_group:
             errors = [f"{gr_id} 게시판그룹 아이디가 이미 존재합니다. (등록불가)"]
@@ -129,7 +129,7 @@ def boardgroup_form_update(request: Request, db: Session = Depends(get_db),
         db.add(new_group)
         db.commit()
         
-    elif validate_one_time_token(token, 'update'):
+    elif compare_token(request, token, 'update'):
         existing_group = db.query(models.Group).filter(models.Group.gr_id == gr_id).first()
         if not existing_group:
             return templates.TemplateResponse("alert.html", {"request": request, "errors": [f"{gr_id} 게시판그룹 아이디가 존재하지 않습니다. (수정불가)"]})

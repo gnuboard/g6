@@ -11,7 +11,7 @@
 <input type="hidden" name="sst" value="{{ request.state.sst }}">
 <input type="hidden" name="sod" value="{{ request.state.sod }}">
 <input type="hidden" name="page" value="{{ request.state.page }}">
-<input type="hidden" name="token" value="{{ generate_one_time_token('update' if board.bo_table else 'insert') }}">
+<input type="hidden" name="token" value="{{ generate_token(request, 'update' if board.bo_table else 'insert') }}">
 
 <section id="anc_bo_basic">
     <h2 class="h2_frm">게시판 기본 설정</h2>

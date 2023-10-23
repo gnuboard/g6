@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Request, Form, HTTPException, UploadFile
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+from dataclassform import ContentForm
 from database import get_db
 import models
 from common import *
@@ -17,26 +18,26 @@ templates.env.globals["now"] = now
 templates.env.globals["get_skin_select"] = get_skin_select
 templates.env.globals["get_admin_menus"] = get_admin_menus
 templates.env.globals["get_head_tail_img"] = get_head_tail_img
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
+templates.env.globals["generate_token"] = generate_token
 
 
 MENU_KEY = "300600"
 IMAGE_DIRECTORY = "data/content/"
 
 
-@dataclass
-class ContentDataclass:
-    """내용 등록/수정 폼 데이터
-        - 그누보드5에서 사라지는 기능(변수)
-            1. 상단 파일 경로 (co_include_head)
-            2. 하단 파일 경로 (co_include_tail)
-    """
-    co_subject: str = Form(...)
-    co_content: str = Form(None)
-    co_mobile_content: str = Form(None)
-    co_html: str = Form(None)
-    co_skin: str = Form(None)
-    co_mobile_skin: str = Form(None)
+# @dataclass
+# class ContentDataclass:
+#     """내용 등록/수정 폼 데이터
+#         - 그누보드5에서 사라지는 기능(변수)
+#             1. 상단 파일 경로 (co_include_head)
+#             2. 하단 파일 경로 (co_include_tail)
+#     """
+#     co_subject: str = Form(...)
+#     co_content: str = Form(None)
+#     co_mobile_content: str = Form(None)
+#     co_html: str = Form(None)
+#     co_skin: str = Form(None)
+#     co_mobile_skin: str = Form(None)
 
 
 @router.get("/content_list")
@@ -83,7 +84,7 @@ def content_form_update(request: Request,
                         db: Session = Depends(get_db),
                         token: str = Form(...),
                         co_id: str = Form(...),
-                        form_data: ContentDataclass = Depends(),
+                        form_data: ContentForm = Depends(),
                         co_himg: UploadFile = File(None),
                         co_timg: UploadFile = File(None),
                         co_himg_del: int = Form(None),
@@ -113,10 +114,10 @@ def content_form_update(request: Request,
     Returns:
         RedirectResponse: 내용 등록/수정 후 상세 폼으로 이동
     """
-    if validate_one_time_token(token, 'create'): # 토큰에 등록돤 action이 create라면 신규 등록
+    if compare_token(request, token, 'insert'):
         # ID 중복 검사
-        chk_content = db.query(models.Content).filter(models.Content.co_id == co_id).first()
-        if chk_content:
+        exists_content = db.query(models.Content).filter(models.Content.co_id == co_id).first()
+        if exists_content:
             raise HTTPException(status_code=404, detail=f"{co_id} : 내용 아이디가 이미 존재합니다.")
         
         # 내용 등록
@@ -124,7 +125,7 @@ def content_form_update(request: Request,
         db.add(content)
         db.commit()
 
-    elif validate_one_time_token(token, 'update'):  # 토큰에 등록된 action이 create가 아니라면 수정
+    elif compare_token(request, token, 'update'):
         content = db.query(models.Content).filter(models.Content.co_id == co_id).first()
         if not content:
             raise HTTPException(status_code=404, detail=f"{co_id} : 내용 아이디가 존재하지 않습니다.")

@@ -678,15 +678,15 @@ class Content(Base):
     co_id = Column(String(20), primary_key=True, nullable=False, default="")
     co_html = Column(Integer, nullable=False, default=0)
     co_subject = Column(String(255), nullable=False, default="")
-    co_content = Column(Text, nullable=False)
+    co_content = Column(Text, nullable=False, default="")
     co_seo_title = Column(String(255), nullable=False, default="")
-    co_mobile_content = Column(Text, nullable=False)
+    co_mobile_content = Column(Text, nullable=False, default="")
     co_skin = Column(String(255), nullable=False, default="")
     co_mobile_skin = Column(String(255), nullable=False, default="")
     co_tag_filter_use = Column(Integer, nullable=False, default=0)
     co_hit = Column(Integer, nullable=False, default=0)
-    co_include_head = Column(String(255), nullable=True)
-    co_include_tail = Column(String(255), nullable=True)
+    co_include_head = Column(String(255), nullable=False, default="")
+    co_include_tail = Column(String(255), nullable=False, default="")
 
 
 class FaqMaster(Base):
