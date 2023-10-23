@@ -11,15 +11,15 @@ DB_PORT = os.getenv("DB_PORT")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
+DB_TABLE_PREFIX = os.getenv("DB_TABLE_PREFIX")
 
 if DB_ENGINE == "mysql":
-    DATABASE_URL = f"mysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 elif DB_ENGINE == "postgresql":
     DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 else:
     DATABASE_URL = f"sqlite:///sqlite3.db"
 
-DB_TABLE_PREFIX = os.getenv("DB_TABLE_PREFIX")
 
 engine = create_engine(
     DATABASE_URL,

@@ -2,12 +2,12 @@
 import os
 from logging.config import fileConfig
 
+from dotenv import load_dotenv
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
 
-from config import load_gnuboard_env
 
 # import app database schema
 from models import Base
@@ -42,12 +42,13 @@ def get_url():
     사용자 DB url 출력
     """
     driver = os.getenv("DB_DRIVER", "")
+    engine = os.getenv("DB_ENGINE", "").lower()
     user = os.getenv("DB_USER", "")
     password = os.getenv("DB_PASSWORD", "")
     db_host = os.getenv("DB_HOST", "")
     db_port = int(os.getenv("DB_PORT", ""))
     dbname = os.getenv("DB_NAME", "")
-    return f"{driver}://{user}:{password}@{db_host}:{db_port}/{dbname}"
+    return f"{engine}+{driver}://{user}:{password}@{db_host}:{db_port}/{dbname}"
 
 
 def run_migrations_offline() -> None:
@@ -100,7 +101,7 @@ def run_migrations_online() -> None:
             context.run_migrations()
 
 
-load_gnuboard_env()
+load_dotenv(".env", verbose=True)
 if context.is_offline_mode():
     run_migrations_offline()
 else:
