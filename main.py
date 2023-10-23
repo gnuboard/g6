@@ -7,14 +7,14 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from jinja2 import Environment, FileSystemLoader
 from database import engine, get_db, SessionLocal
-import models
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 from common import *
 from user_agents import parse
 import os
+import models
 
-models.Base.metadata.create_all(bind=engine)
+# models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -75,7 +75,8 @@ async def main_middleware(request: Request, call_next):
                 request.session["ss_mb_id"] = ""
                 member = None
             else:
-                if member.mb_today_login[:10] != TIME_YMD: # 오늘 처음 로그인 이라면
+                # if member.mb_today_login[:10] != TIME_YMD: # 오늘 처음 로그인 이라면
+                if member.mb_today_login.strftime("%Y-%m-%d") != TIME_YMD:  # 오늘 처음 로그인 이라면
                     # 첫 로그인 포인트 지급
                     insert_point(request, member.mb_id, config.cf_login_point, TIME_YMD + " 첫로그인", "@login", member.mb_id, TIME_YMD)
                     # 오늘의 로그인이 될 수도 있으며 마지막 로그인일 수도 있음

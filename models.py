@@ -1,18 +1,21 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime, Date, Time
-from sqlalchemy.dialects.mysql import TINYINT
+# from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import ArgumentError, InvalidRequestError
 from datetime import datetime, date
-
+from database import engine, get_db, SessionLocal, DB_TABLE_PREFIX
 
 Base = declarative_base()
+
+if not DB_TABLE_PREFIX:
+    DB_TABLE_PREFIX = 'g6_'
 
 class Config(Base):
     '''
     환경설정 테이블
     '''
-    __tablename__ = 'g6_config'
+    __tablename__ = DB_TABLE_PREFIX + 'config'
     
     cf_id = Column(Integer, primary_key=True)  
     cf_title = Column(String(255), nullable=False, default='')
@@ -177,7 +180,7 @@ class Member(Base):
     '''
     회원 테이블
     '''
-    __tablename__ = 'g6_member'
+    __tablename__ = DB_TABLE_PREFIX + 'member'
 
     mb_no = Column(Integer, primary_key=True)
     mb_id = Column(String(20), unique=True, nullable=False, default='')
@@ -204,7 +207,7 @@ class Member(Base):
     mb_signature = Column(Text, nullable=False, default='')
     mb_recommend = Column(String(255), nullable=False, default='')
     mb_point = Column(Integer, nullable=False, default=0, server_default=text('0'))
-    mb_today_login = Column(String(19), nullable=False, default='') # 오늘 접속일시 YYYY-MM-DD HH:MM:SS
+    mb_today_login = Column(DateTime, nullable=False, default='') # 오늘 접속일시 YYYY-MM-DD HH:MM:SS
     mb_login_ip = Column(String(255), nullable=False, default='')
     mb_datetime = Column(String(30), nullable=False, default='')
     mb_ip = Column(String(255), nullable=False, default='')
@@ -238,7 +241,7 @@ class Board(Base):
     '''
     게시판 설정 테이블
     '''
-    __tablename__ = 'g6_board'
+    __tablename__ = DB_TABLE_PREFIX + 'board'
     
     bo_table = Column(String(20), primary_key=True, nullable=False)
     gr_id = Column(String(255), nullable=False, default='')
@@ -345,7 +348,7 @@ class WriteBaseModel(Base):
     게시글, 댓글 테이블
     wr_is_comment : 0=글, 1=댓글
     '''
-    # __tablename__ = 'g6_write'
+    # __tablename__ = DB_TABLE_PREFIX + 'write'
     __abstract__ = True
     
     wr_id = Column(Integer, primary_key=True, nullable=False)
@@ -443,7 +446,7 @@ class Group(Base):
     '''
     게시판 그룹 테이블
     '''
-    __tablename__ = 'g6_group'
+    __tablename__ = DB_TABLE_PREFIX + 'group'
     
     gr_id = Column(String(10), primary_key=True, nullable=False)
     gr_subject = Column(String(255), nullable=False, default='')
@@ -478,31 +481,31 @@ class Content(Base):
     '''
     g5_content 테이블
     '''
-    __tablename__ = 'g6_content'
+    __tablename__ = DB_TABLE_PREFIX + 'content'
 
     co_id = Column(String(20), primary_key=True, nullable=False, default='')
-    co_html = Column(TINYINT, nullable=False, default=0)
+    co_html = Column(Integer, nullable=False, default=0)
     co_subject = Column(String(255), nullable=False, default='')
     co_content = Column(Text, nullable=False)
     co_seo_title = Column(String(255), nullable=False, default='')
     co_mobile_content = Column(Text, nullable=False)
     co_skin = Column(String(255), nullable=False, default='')
     co_mobile_skin = Column(String(255), nullable=False, default='')
-    co_tag_filter_use = Column(TINYINT, nullable=False, default=0)
+    co_tag_filter_use = Column(Integer, nullable=False, default=0)
     co_hit = Column(Integer, nullable=False, default=0)
     co_include_head = Column(String(255), nullable=True)
     co_include_tail = Column(String(255), nullable=True)
 
 
 class FaqMaster(Base):
-    __tablename__ = 'g6_faq_master'
+    __tablename__ = DB_TABLE_PREFIX + 'faq_master'
 
     fm_id = Column(Integer, primary_key=True, autoincrement=True)
     fm_subject = Column(String(255), nullable=False, default='')
-    fm_head_html = Column(Text, nullable=True)
-    fm_tail_html = Column(Text, nullable=True)
-    fm_mobile_head_html = Column(Text, nullable=True)
-    fm_mobile_tail_html = Column(Text, nullable=False)
+    fm_head_html = Column(Text, nullable=False, default='')
+    fm_tail_html = Column(Text, nullable=False, default='')
+    fm_mobile_head_html = Column(Text, nullable=False, default='')
+    fm_mobile_tail_html = Column(Text, nullable=False, default='')
     fm_order = Column(Integer, nullable=False, default=0)
 
     # 연관관계
@@ -510,12 +513,12 @@ class FaqMaster(Base):
 
 
 class Faq(Base):
-    __tablename__ = 'g6_faq'
+    __tablename__ = DB_TABLE_PREFIX + 'faq'
 
     fa_id = Column(Integer, primary_key=True, autoincrement=True)
-    fm_id = Column(Integer, ForeignKey('g6_faq_master.fm_id'), nullable=False, default=0)
-    fa_subject = Column(Text, nullable=False)
-    fa_content = Column(Text, nullable=False)
+    fm_id = Column(Integer, ForeignKey(DB_TABLE_PREFIX + 'faq_master.fm_id'), nullable=False, default=0)
+    fa_subject = Column(Text, nullable=False, default='')
+    fa_content = Column(Text, nullable=False, default='')
     fa_order = Column(Integer, nullable=False, default=0)
 
     # 연관관계
@@ -523,7 +526,7 @@ class Faq(Base):
 
 
 class Visit(Base):
-    __tablename__ = 'g6_visit'
+    __tablename__ = DB_TABLE_PREFIX + 'visit'
     
     vi_id = Column(Integer, primary_key=True, autoincrement=True)
     vi_ip = Column(String(100), nullable=False, default='')
@@ -537,7 +540,7 @@ class Visit(Base):
     
     
 class VisitSum(Base):
-    __tablename__ = 'g6_visit_sum'
+    __tablename__ = DB_TABLE_PREFIX + 'visit_sum'
     
     vs_date = Column(Date, primary_key=True, nullable=False, default='')
     vs_count = Column(Integer, nullable=False, default=0)
@@ -545,22 +548,22 @@ class VisitSum(Base):
 class QaConfig(Base):
     """ Q&A 설정 테이블
     """
-    __tablename__ = 'g6_qa_config'
+    __tablename__ = DB_TABLE_PREFIX + 'qa_config'
 
     id = Column(Integer, primary_key=True)
     qa_title = Column(String(255), nullable=False, default='')
     qa_category = Column(String(255), nullable=False, default='')
     qa_skin = Column(String(255), nullable=False, default='')
     qa_mobile_skin = Column(String(255), nullable=False, default='')
-    qa_use_email = Column(TINYINT, nullable=False, default=0)
-    qa_req_email = Column(TINYINT, nullable=False, default=0)
-    qa_use_hp = Column(TINYINT, nullable=False, default=0)
-    qa_req_hp = Column(TINYINT, nullable=False, default=0)
-    qa_use_sms = Column(TINYINT, nullable=False, default=0)
+    qa_use_email = Column(Integer, nullable=False, default=0)
+    qa_req_email = Column(Integer, nullable=False, default=0)
+    qa_use_hp = Column(Integer, nullable=False, default=0)
+    qa_req_hp = Column(Integer, nullable=False, default=0)
+    qa_use_sms = Column(Integer, nullable=False, default=0)
     qa_send_number = Column(String(255), nullable=False, default='0')
     qa_admin_hp = Column(String(255), nullable=False, default='')
     qa_admin_email = Column(String(255), nullable=False, default='')
-    qa_use_editor = Column(TINYINT, nullable=False, default=0)
+    qa_use_editor = Column(Integer, nullable=False, default=0)
     qa_subject_len = Column(Integer, nullable=False, default=0)
     qa_mobile_subject_len = Column(Integer, nullable=False, default=0)
     qa_page_rows = Column(Integer, nullable=False, default=0)
@@ -589,21 +592,21 @@ class QaConfig(Base):
 class QaContent(Base):
     """ Q&A 데이터 테이블
     """
-    __tablename__ = 'g6_qa_content'
+    __tablename__ = DB_TABLE_PREFIX + 'qa_content'
 
     qa_id = Column(Integer, primary_key=True, autoincrement=True)
     qa_num = Column(Integer, nullable=False, default=0)
     qa_parent = Column(Integer, nullable=False, default=0)
     qa_related = Column(Integer, nullable=False, default=0)
-    mb_id = Column(String(20), ForeignKey('g6_member.mb_id'), nullable=False, default='')
+    mb_id = Column(String(20), ForeignKey(DB_TABLE_PREFIX + 'member.mb_id'), nullable=False, default='')
     qa_name = Column(String(255), nullable=False, default='')
     qa_email = Column(String(255), nullable=False, default='')
     qa_hp = Column(String(255), nullable=False, default='')
     qa_type = Column(Integer, nullable=False, default=0)
     qa_category = Column(String(255), nullable=False, default='')
-    qa_email_recv = Column(TINYINT, nullable=False, default=0)
-    qa_sms_recv = Column(TINYINT, nullable=False, default=0)
-    qa_html = Column(TINYINT, nullable=False, default=0)
+    qa_email_recv = Column(Integer, nullable=False, default=0)
+    qa_sms_recv = Column(Integer, nullable=False, default=0)
+    qa_html = Column(Integer, nullable=False, default=0)
     qa_subject = Column(String(255), nullable=False, default='')
     qa_content = Column(Text, nullable=False)
     qa_status = Column(Integer, nullable=False, default=0)
@@ -624,7 +627,7 @@ class QaContent(Base):
 
 
 class Menu(Base):
-    __tablename__ = 'g6_menu'
+    __tablename__ = DB_TABLE_PREFIX + 'menu'
 
     me_id = Column(Integer, primary_key=True, autoincrement=True)
     me_code = Column(String(255), nullable=False, default='')
@@ -632,8 +635,8 @@ class Menu(Base):
     me_link = Column(String(255), nullable=False, default='')
     me_target = Column(String(255), nullable=False, default='')
     me_order = Column(Integer, nullable=False, default=0)
-    me_use = Column(TINYINT, nullable=False, default=0)
-    me_mobile_use = Column(TINYINT, nullable=False, default=0)
+    me_use = Column(Integer, nullable=False, default=0)
+    me_mobile_use = Column(Integer, nullable=False, default=0)
     
     
 # CREATE TABLE `g5_point` (
@@ -655,7 +658,7 @@ class Point(Base):
     '''
     포인트 테이블
     '''
-    __tablename__ = 'g6_point'
+    __tablename__ = DB_TABLE_PREFIX + 'point'
     
     po_id = Column(Integer, primary_key=True, autoincrement=True)
     mb_id = Column(String(20), nullable=False, default='')    
@@ -663,7 +666,7 @@ class Point(Base):
     po_content = Column(String(255), nullable=False, default='')
     po_point = Column(Integer, nullable=False, default=0)
     po_use_point = Column(Integer, nullable=False, default=0)
-    po_expired = Column(TINYINT, nullable=False, default=0)
+    po_expired = Column(Integer, nullable=False, default=0)
     po_expire_date = Column(Date, nullable=False, default='0000-00-00')
     po_mb_point = Column(Integer, nullable=False, default=0)
     po_rel_table = Column(String(20), nullable=False, default='')
@@ -675,7 +678,7 @@ class Memo(Base):
     '''
     쪽지 테이블
     '''
-    __tablename__ = 'g6_memo'
+    __tablename__ = DB_TABLE_PREFIX + 'memo'
     
     me_id = Column(Integer, primary_key=True, autoincrement=True)
     me_recv_mb_id = Column(String(20), nullable=False, default='')
@@ -696,7 +699,7 @@ class Popular(Base):
     '''
     인기검색어 테이블
     '''
-    __tablename__ = 'g6_popular'
+    __tablename__ = DB_TABLE_PREFIX + 'popular'
     
     pp_id = Column(Integer, primary_key=True, autoincrement=True)
     pp_word = Column(String(50), nullable=False, default='')
@@ -712,9 +715,8 @@ class Auth(Base):
 #   `mb_id` varchar(20) NOT NULL DEFAULT '',
 #   `au_menu` varchar(20) NOT NULL DEFAULT '',
 #   `au_auth` set('r','w','d') NOT NULL DEFAULT ''
-    __tablename__ = 'g6_auth'
+    __tablename__ = DB_TABLE_PREFIX + 'auth'
     
     mb_id = Column(String(20), primary_key=True, nullable=False, default='')
     au_menu = Column(String(20), primary_key=True, nullable=False, default='')
     au_auth = Column(String(255), nullable=False, default='')    
-

@@ -13,7 +13,7 @@ from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.orm import load_only
 from models import Config, Member, Memo, Board, Group, Point, Popular, Visit, VisitSum
 from models import WriteBaseModel
-from database import SessionLocal, engine
+from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
 import json
 from PIL import Image
@@ -74,7 +74,7 @@ _created_models = {}
 def dynamic_create_write_table(table_name: str, create_table: bool = False):
     '''
     WriteBaseModel 로 부터 게시판 테이블 구조를 복사하여 동적 모델로 생성하는 함수
-    인수의 table_name 에서는 g6_write_ 를 제외한 테이블 이름만 입력받는다.
+    인수의 table_name 에서는 DB_TABLE_PREFIX + 'write_' 를 제외한 테이블 이름만 입력받는다.
     Create Dynamic Write Table Model from WriteBaseModel
     '''
     # 이미 생성된 모델 반환
@@ -86,7 +86,7 @@ def dynamic_create_write_table(table_name: str, create_table: bool = False):
         class_name, 
         (WriteBaseModel,), 
         {   
-            "__tablename__": "g6_write_" + table_name,
+            "__tablename__": DB_TABLE_PREFIX + 'write_' + table_name,
             "__table_args__": (
                 Index(f'idx_wr_num_reply_{table_name}', 'wr_num', 'wr_reply'),
                 Index(f'idex_wr_is_comment_{table_name}', 'wr_is_comment'),
@@ -113,7 +113,8 @@ def session_member_key(request: Request, member: Member):
     '''
     세션에 저장할 회원의 고유키를 생성하여 반환하는 함수
     '''
-    ss_mb_key = hashlib.md5((member.mb_datetime + get_real_client_ip(request) + request.headers.get('User-Agent')).encode()).hexdigest()
+    mb_datetime_str = member.mb_datetime.strftime('%Y-%m-%d %H:%M:%S')
+    ss_mb_key = hashlib.md5((mb_datetime_str + get_real_client_ip(request) + request.headers.get('User-Agent')).encode()).hexdigest()
     return ss_mb_key
 
 
@@ -171,11 +172,12 @@ def get_member_id_select(id, level, selected, event=''):
 
 # 필드에 저장된 값과 기본 값을 비교하여 selected 를 반환
 def get_selected(field_value, value):
-    if field_value is None:
+    if field_value is None or value is None or field_value == '' or value == '':
         return ''
 
-    if isinstance(value, int):
+    if isinstance(value, int) or (isinstance(value, str) and value.isdigit()):
         return ' selected="selected"' if (int(field_value) == int(value)) else ''
+    
     return ' selected="selected"' if (field_value == value) else ''
 
 
@@ -759,6 +761,7 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
         
     # 포인트 건별 생성
     po_expire_date = '9999-12-31'
+    # po_expire_date = datetime.strptime('9999-12-31', '%Y-%m-%d')
     if config.cf_point_term > 0:
         if expire > 0:
             po_expire_date = (SERVER_TIME + timedelta(days=expire-1)).strftime('%Y-%m-%d')
