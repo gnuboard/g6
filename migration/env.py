@@ -41,12 +41,12 @@ def get_url():
     """
     사용자 DB url 출력
     """
-    driver = os.getenv("G6_DB_DRIVER", "")
-    user = os.getenv("G6_DB_USER", "")
-    password = os.getenv("G6_DB_PASSWORD", "")
-    db_host = os.getenv("G6_DB_HOST", "")
-    db_port = int(os.getenv("G6_DB_PORT", ""))
-    dbname = os.getenv("G6_DB_NAME", "")
+    driver = os.getenv("DB_DRIVER", "")
+    user = os.getenv("DB_USER", "")
+    password = os.getenv("DB_PASSWORD", "")
+    db_host = os.getenv("DB_HOST", "")
+    db_port = int(os.getenv("DB_PORT", ""))
+    dbname = os.getenv("DB_NAME", "")
     return f"{driver}://{user}:{password}@{db_host}:{db_port}/{dbname}"
 
 

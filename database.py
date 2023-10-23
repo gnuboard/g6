@@ -7,13 +7,13 @@ from config import load_gnuboard_env
 
 load_gnuboard_env()
 DB = {
-    'drivername': os.getenv("G6_DB_DRIVER", ""), 
-    'host': os.getenv("G6_DB_HOST", ""),
-    'port': int(os.getenv("G6_DB_PORT")),
-    'username': os.getenv("G6_DB_USER", ""),
-    'password': os.getenv("G6_DB_PASSWORD", ""),
-    'database': os.getenv("G6_DB_NAME", ""),
-    'query': {'charset': os.getenv("G6_DB_CHARSET", "utf8")}
+    'drivername': os.getenv("DB_DRIVER", ""), 
+    'host': os.getenv("DB_HOST", ""),
+    'port': int(os.getenv("DB_PORT")),
+    'username': os.getenv("DB_USER", ""),
+    'password': os.getenv("DB_PASSWORD", ""),
+    'database': os.getenv("DB_NAME", ""),
+    'query': {'charset': os.getenv("DB_CHARSET", "utf8")}
 }
 
 engine = create_engine(

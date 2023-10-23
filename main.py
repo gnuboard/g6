@@ -15,13 +15,13 @@ from starlette.middleware.sessions import SessionMiddleware
 from common import *
 from typing import Optional
 
-from settings import G6_IS_DEBUG
+from settings import APP_IS_DEBUG
 from user_agents import parse
 import os
 
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(debug=G6_IS_DEBUG)
+app = FastAPI(debug=APP_IS_DEBUG)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
