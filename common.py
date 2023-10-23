@@ -34,7 +34,10 @@ def get_theme_from_db(config=None):
     
     return theme_path
 
-TEMPLATES_DIR = get_theme_from_db()
+# python setup.py 를 실행하는 것이 아니라면
+if os.environ.get("is_setup") != "true":
+    TEMPLATES_DIR = get_theme_from_db()
+    
 ADMIN_TEMPLATES_DIR = "_admin/templates"
 
 SERVER_TIME = datetime.now()

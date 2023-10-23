@@ -1,13 +1,18 @@
 # 프로그램 실행전 필요한 정보 설치하는 스크립트
+import os
+# setup.py 에서 get_theme_from_db() 를 실행하지 않기 위해 환경변수를 설정합니다.
+os.environ["is_setup"] = "true"
+
 import re
 import getpass
 from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError, OperationalError
 from sqlalchemy import text, MetaData
-from common import dynamic_create_write_table, hash_password
+from common import dynamic_create_write_table
 from database import engine, SessionLocal, DB_TABLE_PREFIX
 import models
 from version import G6_VERSION
+from pbkdf2 import create_hash
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -117,16 +122,16 @@ def config_setup(admin_id, admin_email):
 def admin_member_setup(admin_id, admin_password, admin_email):
     print(f"관리자 : 기본값 등록을 시작합니다.")
     
-    exists_config = db.query(models.Config).filter_by(cf_id=1, cf_admin=admin_id).first()
-    if exists_config:
-        print(f"관리자 : {admin_id} 관리자 아이디가 이미 등록되어 있어 관리자를 새로 등록하지 않습니다.")
-        return
+    # exists_config = db.query(models.Config).filter_by(cf_id=1, cf_admin=admin_id).first()
+    # if exists_config:
+    #     print(f"관리자 : {admin_id} 관리자 아이디가 이미 등록되어 있어 관리자를 새로 등록하지 않습니다.")
+    #     return
 
     exists_admin_member = db.query(models.Member).filter_by(mb_id=admin_id).first()
-    if exists_admin_member is None:
+    if not exists_admin_member:
         new_admin_member = models.Member(
             mb_id=admin_id,
-            mb_password=hash_password(admin_password),
+            mb_password=create_hash(admin_password),
             mb_name=admin_id,
             mb_nick=admin_id,
             mb_email=admin_email,
@@ -305,6 +310,14 @@ def board_setup():
         models.Write = dynamic_create_write_table(bo_table, True)
         
         
+def make_directory():        
+    data_directory_path = "data"
+    print(f"디렉토리 : {data_directory_path} 디렉토리 생성을 시작합니다.")
+
+    if not os.path.exists(data_directory_path):
+        os.makedirs(data_directory_path)    
+        
+        
 def is_valid_email(email):
     regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w+$'
     return re.search(regex, email)        
@@ -349,4 +362,5 @@ content_setup()
 faq_master_setup()
 board_group_setup()
 board_setup()
+make_directory()
 print(f"{G6_VERSION} 등록 및 테이블 생성을 완료했습니다.")
