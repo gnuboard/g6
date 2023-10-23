@@ -37,6 +37,19 @@ def config_form(request: Request, db: Session = Depends(get_db)):
     기본환경설정
     '''
     request.session["menu_key"] = "100100"
+    member = request.state.login_member
+    if not member:
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["로그인 후 이용해 주세요."]})        
+    else:
+        print(member.__dict__)
+    # 최고관리자가 아니면 권한 체크
+    if member.mb_id != request.state.config.cf_admin:
+        auth = db.query(models.Auth).filterby(mb_id=member.mb_id, au_menu=request.session["menu_key"]).first()
+        if not auth:
+            return templates.TemplateResponse("alert.html", {"request": request, "errors": ["권한이 없습니다."]})
+        auth_set = set(auth.au_auth.split(','))
+        if not 'r' in auth_set:
+            return templates.TemplateResponse("alert.html", {"request": request, "errors": ["읽기 권한이 없습니다."]})
     
     host_name = socket.gethostname()
     host_ip = socket.gethostbyname(host_name)
