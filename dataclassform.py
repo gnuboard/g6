@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional, List
 from fastapi import Form
 
+
 @dataclass
 class ConfigForm:
     cf_title: str = Form(...)
@@ -109,7 +110,9 @@ class ConfigForm:
     cf_email_mb_member: Optional[int] = Form(default=0)
     cf_email_po_super_admin: Optional[int] = Form(default=0)
     cf_social_login_use: Optional[int] = Form(default=0)
-    cf_social_servicelist: Optional[List[str]] = Form(default="", alias="cf_social_servicelist[]")
+    cf_social_servicelist: Optional[List[str]] = Form(
+        default="", alias="cf_social_servicelist[]"
+    )
     # cf_social_servicelist: Optional[str] = Form(default="")
     cf_naver_clientid: Optional[str] = Form(default="")
     cf_naver_secret: Optional[str] = Form(default="")
@@ -148,9 +151,7 @@ class ConfigForm:
     cf_9: Optional[str] = Form(default="")
     cf_10_subj: Optional[str] = Form(default="")
     cf_10: Optional[str] = Form(default="")
-    
-    
-    
+
     # mb_password: str = Form(None),
     # mb_name: str = Form(None),
     # mb_nick: str = Form(None),
@@ -184,14 +185,14 @@ class ConfigForm:
     # mb_8: str = Form(None),
     # mb_9: str = Form(None),
     # mb_10: str = Form(None),
-    
+
 
 @dataclass
 class MemberForm:
     mb_password: Optional[str] = Form(default="")
     mb_name: str = Form(None)
     mb_nick: str = Form(None)
-    mb_nick_date: Optional[str] = Form(default="")
+    mb_nick_date: Optional[str] = Form(default=None)
     mb_level: Optional[int] = Form(default=0)
     mb_email: Optional[str] = Form(default="")
     mb_homepage: Optional[str] = Form(default="")
@@ -222,7 +223,7 @@ class MemberForm:
     mb_8: Optional[str] = Form(default="")
     mb_9: Optional[str] = Form(default="")
     mb_10: Optional[str] = Form(default="")
-    
+
 
 @dataclass
 class BoardForm:
