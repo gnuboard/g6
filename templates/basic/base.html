@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="/static/css/basic/connect.css">
 <link rel="stylesheet" href="/static/css/basic/faq.css">
 <link rel="stylesheet" href="/static/css/basic/qa.css">
+<link rel="stylesheet" href="/static/css/basic/poll.css">
 <link rel="stylesheet" href="/static/css/basic/popular.css">
 <link rel="stylesheet" href="/static/css/basic/member.css">
 <link rel="stylesheet" href="/static/css/basic/latest_list.css">
@@ -187,6 +188,7 @@ $(function() {
         {% else %}
             {% include "bbs/outlogin_before.html" %}
         {% endif %}
+        {% include "/bbs/poll.html" %}
     </div>
 </div>
 

@@ -20,7 +20,10 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates.env.globals['getattr'] = getattr
+templates.env.globals["get_poll"] = get_poll
 templates.env.globals["get_popular_list"] = get_popular_list
+templates.env.globals["generate_one_time_token"] = generate_one_time_token
 
 from _admin.admin import router as admin_router
 from _bbs.board import router as board_router
@@ -31,6 +34,7 @@ from _bbs.faq import router as faq_router
 from _bbs.qa import router as qa_router
 from _bbs.menu import router as menu_router
 from _bbs.memo import router as memo_router
+from _bbs.poll import router as poll_router
 
 import _user.user_router 
 
@@ -43,6 +47,7 @@ app.include_router(faq_router, prefix="/faq", tags=["faq"])
 app.include_router(qa_router, prefix="/qa", tags=["qa"])
 app.include_router(menu_router, prefix="/menu", tags=["menu"])
 app.include_router(memo_router, prefix="/memo", tags=["memo"])
+app.include_router(poll_router, prefix="/poll", tags=["poll"])
 
 # is_mobile = False
 # user_device = 'pc'

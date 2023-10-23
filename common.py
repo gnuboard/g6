@@ -11,7 +11,7 @@ from passlib.context import CryptContext
 from requests import Session
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.orm import load_only
-from models import Config, Member, Memo, Board, Group, Point, Popular, Visit, VisitSum
+from models import Config, Member, Memo, Board, Group, Point, Poll, Popular, Visit, VisitSum
 from models import WriteBaseModel
 from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
@@ -1023,3 +1023,11 @@ def get_popular_list(request: Request, limit: int = 7, day: int = 3):
     db.close()
 
     return popular_list
+
+
+def get_poll(request: Request):
+    db = SessionLocal()
+    poll = db.query(Poll).filter(Poll.po_use == 1).order_by(Poll.po_id.desc()).first()
+    db.close()
+
+    return poll
