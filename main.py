@@ -133,14 +133,11 @@ async def main_middleware(request: Request, call_next):
                 
     # 로그인한 회원 정보
     request.state.login_member = member
-                
-    # request.state.context = {
-    #     # "request": request,
-    #     # "config": config,
-    #     # "member": member,
-    #     # "outlogin": outlogin.body.decode("utf-8"),
-    # }      
     
+    # 에디터 전역변수
+    request.state.editor_name = ''
+    request.state.use_dhtml_editor = True
+
     response = await call_next(request)
 
     # 접속자 기록
