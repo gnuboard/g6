@@ -50,6 +50,10 @@ async def member_list(
             "mb_recommend",
         ],
     )
+    
+    for row in result["rows"]:
+        groupmember_count = db.query(models.GroupMember).filter(models.GroupMember.mb_id == row.mb_id).count()
+        row.groupmember_count = groupmember_count
 
     context = {
         "request": request,

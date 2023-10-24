@@ -131,7 +131,9 @@
                     </td>
                     <td headers="mb_list_mobile" class="td_tel"><!-- 휴대폰번호 -->{{ member.mb_hp }}</td>
                     <td headers="mb_list_lastcall" class="td_date"><!-- 최근접속일 -->{{ member.mb_today_login.strftime("%y-%m-%d") }}</td>
-                    <td headers="mb_list_grp" class="td_numsmall"></td>
+                    <td headers="mb_list_grp" class="td_numsmall">
+                        <a href="/admin/boardgroupmember_form/{{ member.mb_id }}">{{ member.groupmember_count }}</a>
+                    </td>
                     <td headers="mb_list_mng" rowspan="2" class="td_mng td_mng_s">
                         <a href="/admin/member_form/{{ member.mb_id }}?{{ query_string }}" class="btn btn_03">수정</a>
                         <a href="/admin/boardgroupmember_form?mb_id={{ member.mb_id }}" class="btn btn_02">그룹</a></td>
