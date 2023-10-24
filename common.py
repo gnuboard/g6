@@ -1,6 +1,9 @@
 import hashlib
+import logging
 import os
+import random
 import re
+from time import sleep
 from typing import List, Optional
 import uuid
 import PIL
@@ -10,8 +13,9 @@ from fastapi.templating import Jinja2Templates
 from markupsafe import Markup, escape
 from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
-from models import Config, Member, Memo, Board, Group, Point, Popular, Visit, VisitSum
+from models import Config, Member, Memo, Board, Group, Point, Popular, Visit, VisitSum, UniqId
 from models import WriteBaseModel
 from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
@@ -1009,17 +1013,20 @@ def get_memo_not_read(mb_id: str):
     return db.query(Memo).filter(Memo.me_recv_mb_id == mb_id, Memo.me_read_datetime == None, Memo.me_type == 'recv').count()
 
 
-def editor_path(request) -> str:
+def editor_path(request:Request) -> str:
     """지정한 에디터 경로를 반환하는 함수
     미지정시 그누보드 환경설정값 사용
-    request.state.editor_name 값이 있으면 그 값을 사용
-
+    request.state.editor: 에디터이름
+    request.state.use_editor: 에디터 사용여부 False 이면 'textarea' 반환
     """
     if not request.state.use_editor:
         return "textarea"
 
-    if editor_name := request.state.editor:
-        return editor_name
+    editor_name = request.state.editor
+    if not editor_name:
+        return "textarea"
+
+    return editor_name
 
 
 def nl2br(value) -> str:
@@ -1083,3 +1090,38 @@ def compare_token(request: Request, token: str, action: str = ''):
         return verify_password(action, token)
     else:
         return False
+
+
+def get_unique_id(request) -> Optional[str]:
+    """고유키 생성 함수
+    그누보드 5의 get_uniqid
+
+    년월일시분초00 ~ 년월일시분초99
+    년(4) 월(2) 일(2) 시(2) 분(2) 초(2) 100만분의 1초(2)
+    Args:
+        request (Request): FastAPI Request 객체
+    Returns:
+        Optional[str]: 고유 아이디, DB 오류시 None
+    """
+
+    ip: str = get_client_ip(request)["client_ip"]
+
+    while True:
+        current = datetime.now()
+        ten_milli_sec = str(current.microsecond)[:2].zfill(2)
+        key = f"{current.strftime('%Y%m%d%H%M%S')}{ten_milli_sec}"
+
+        with SessionLocal() as session:
+            try:
+                session.add(UniqId(uq_id=key, uq_ip=ip))
+                session.commit()
+                return key
+
+            except IntegrityError:
+                # key 중복 에러가 발생하면 다시 시도
+                session.rollback()
+                sleep(random.uniform(0.01, 0.02))
+            except Exception as e:
+                logging.log(logging.CRITICAL, 'unique table insert error', exc_info=e)
+                return None
+

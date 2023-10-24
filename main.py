@@ -196,6 +196,7 @@ async def main_middleware(request: Request, call_next):
     # 로그인한 회원 정보
     request.state.login_member = member
 
+    # 에디터 전역변수
     request.state.editor = config.cf_editor
     request.state.use_editor = True if config.cf_editor else False
 
