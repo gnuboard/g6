@@ -153,44 +153,9 @@ class ConfigForm:
     cf_10_subj: Optional[str] = Form(default="")
     cf_10: Optional[str] = Form(default="")
 
-    # mb_password: str = Form(None),
-    # mb_name: str = Form(None),
-    # mb_nick: str = Form(None),
-    # mb_level: int = Form(None),
-    # mb_email: str = Form(None),
-    # mb_homepage: str = Form(None),
-    # mb_hp: str = Form(None),
-    # mb_tel: str = Form(None),
-    # mb_certify_case: str = Form(None),
-    # mb_certify: int = Form(None),
-    # mb_adult: int = Form(None),
-    # mb_zip: str = Form(None),
-    # mb_addr1: str = Form(None),
-    # mb_addr2: str = Form(None),
-    # mb_addr3: str = Form(None),
-    # mb_mailling: int = Form(None),
-    # mb_sms: int = Form(None),
-    # mb_open: int = Form(None),
-    # mb_signature: str = Form(None),
-    # mb_profile: str = Form(None),
-    # mb_memo: str = Form(None),
-    # mb_intercept_date: str = Form(None),
-    # mb_leave_date: str = Form(None),
-    # mb_1: str = Form(None),
-    # mb_2: str = Form(None),
-    # mb_3: str = Form(None),
-    # mb_4: str = Form(None),
-    # mb_5: str = Form(None),
-    # mb_6: str = Form(None),
-    # mb_7: str = Form(None),
-    # mb_8: str = Form(None),
-    # mb_9: str = Form(None),
-    # mb_10: str = Form(None),
-
-
 @dataclass
 class MemberForm:
-    mb_password: Optional[str] = Form(default="")
+    # mb_password: Optional[str] = Form(default="")
     mb_name: str = Form(None)
     mb_nick: str = Form(None)
     # mb_nick_date: Optional[str] = Form(default=None)
@@ -212,8 +177,8 @@ class MemberForm:
     mb_signature: Optional[str] = Form(default="")
     mb_profile: Optional[str] = Form(default="")
     mb_memo: Optional[str] = Form(default="")
-    mb_intercept_date: Optional[str] = Form(default="")
-    mb_leave_date: Optional[str] = Form(default="")
+    # mb_intercept_date: Optional[str] = Form(default="")
+    # mb_leave_date: Optional[str] = Form(default="")
     mb_1: Optional[str] = Form(default="")
     mb_2: Optional[str] = Form(default="")
     mb_3: Optional[str] = Form(default="")
@@ -362,6 +327,32 @@ class ContentForm:
     co_skin: str = Form(None)
     co_mobile_skin: str = Form(None)
 
+
+@dataclass
+class PollForm:
+    po_subject: str = Form(...)
+    po_poll1: str = Form(...)
+    po_poll2: str = Form(...)
+    po_poll3: str = Form(None)
+    po_poll4: str = Form(None)
+    po_poll5: str = Form(None)
+    po_poll6: str = Form(None)
+    po_poll7: str = Form(None)
+    po_poll8: str = Form(None)
+    po_poll9: str = Form(None)
+    po_cnt1: int = Form(None)
+    po_cnt2: int = Form(None)
+    po_cnt3: int = Form(None)
+    po_cnt4: int = Form(None)
+    po_cnt5: int = Form(None)
+    po_cnt6: int = Form(None)
+    po_cnt7: int = Form(None)
+    po_cnt8: int = Form(None)
+    po_cnt9: int = Form(None)
+    po_etc: str = Form(None)
+    po_level: int = Form(None)
+    po_point: int = Form(None)
+    po_use: int = Form(None)
 
 @dataclass
 class AutoSaveForm:

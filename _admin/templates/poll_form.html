@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}
+    투표  {{ '입력 ' if not poll else '수정' }}
+{% endblock title %}
+{% block subtitle %}
+    투표  {{ '입력 ' if not poll else '수정' }}
+{% endblock subtitle %}
+
+{% block content %}
+    <form name="fpoll" id="fpoll" action="{{ url_for('poll_form_update') }}" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="po_id" value="{{ poll.po_id }}">
+        <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
+        <input type="hidden" name="stx" value="{{ request.state.stx }}">
+        <input type="hidden" name="sst" value="{{ request.state.sst }}">
+        <input type="hidden" name="sod" value="{{ request.state.sod }}">
+        <input type="hidden" name="page" value="{{ request.state.page }}">
+        <input type="hidden" name="token" value="{{ generate_token(request, 'update' if poll else 'insert') }}">
+
+        <div class="tbl_frm01 tbl_wrap">
+            <table>
+                <caption>투표 {{ '입력 ' if not poll else '수정' }}</caption>
+                <tbody>
+                    <tr>
+                        <th scope="row"><label for="po_subject">투표 제목<strong class="sound_only">필수</strong></label></th>
+                        <td><input type="text" name="po_subject" value="{{ poll.po_subject }}" id="po_subject" required="" class="required frm_input" size="80" maxlength="125"></td>
+                    </tr>
+                    {% for i in range(1, 10) %}
+                        {% set required='required' if i in [1, 2] else '' %}
+                        <tr>
+                            <th scope="row"><label for="po_poll{{ i }}">항목 {{ i }}<strong class="sound_only">필수</strong></label></th>
+                            <td>
+                                <input type="text" name="po_poll{{ i }}" value="{{ getattr(poll, 'po_poll' ~ i, '') }}" id="po_poll{{ i }}" class="frm_input {{ required }}" maxlength="125" {{ required }}>
+                                <label for="po_cnt{{ i }}">항목 {{ i }} 투표수</label>
+                                <input type="text" name="po_cnt{{ i }}" value="{{ getattr(poll, 'po_cnt' ~ i, 0) }}" id="po_cnt{{ i }}" class="frm_input" size="3">
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    <tr>
+                        <th scope="row"><label for="po_etc">기타의견</label></th>
+                        <td>
+                            <span class="frm_info">기타 의견을 남길 수 있도록 하려면, 간단한 질문을 입력하세요.</span>
+                            <input type="text" name="po_etc" value="{{ poll.po_etc }}" id="po_etc" class="frm_input" size="80" maxlength="125">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="po_level">투표가능 회원레벨</label></th>
+                        <td>
+                            <span class="frm_info">레벨을 1로 설정하면 손님도 투표할 수 있습니다.</span>     
+                            {{ get_member_level_select('po_level', 1, 10, poll.po_level)|safe }}
+                            이상 투표할 수 있음
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="po_point">포인트</label></th>
+                        <td>
+                            <span class="frm_info">투표에 참여한 회원에게 포인트를 부여합니다.</span>
+                            <input type="text" name="po_point" value="{{ poll.po_point }}" id="po_point" class="frm_input"> 점
+                        </td>
+                    </tr>
+                    {% if poll %}
+                        <tr>
+                            <th scope="row">투표사용</th>
+                            <td>
+                                <input type="checkbox" name="po_use" id="po_use" value="1" {{ "checked" if poll.po_use else "" }}>
+                                <label for="po_use">사용</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">투표등록일</th>
+                            <td>{{ poll.po_date }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="po_ips">투표참가 IP</label></th>
+                            <td>
+                                <textarea name="po_ips" id="po_ips" readonly="" rows="10">
+                                    {{- poll.po_ips -}}
+                                </textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="mb_ids">투표참가 회원</label></th>
+                            <td>
+                                <textarea name="mb_ids" id="mb_ids" readonly="" rows="10">
+                                    {{- poll.mb_ids -}}
+                                </textarea>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        <div class="btn_fixed_top">
+            <a href="{{ url_for('poll_list') }}?{{ request.query_params }}" class="btn_02 btn">목록</a>
+            <input type="submit" value="확인" class="btn_submit btn" accesskey="s">
+        </div>
+    </form>
+{% endblock content %}

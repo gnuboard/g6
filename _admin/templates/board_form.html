@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block head %}
+    {% include editor_path(request) + '/head.html' %}
+{% endblock %}
+
 {% block title %}
     게시판관리
 {% endblock %}
@@ -38,8 +42,10 @@
                 {% if board.bo_table %}
                     <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
                     <b>{{ board.bo_table }}</b>
+                    <a href="/board/{{ board.bo_table }}" class="btn_frmline">게시판 바로가기</a>
+                    <a href="/admin/board_list?{{ query_string }}" class="btn_frmline">목록으로</a>
                 {% else %}
-                    <input type="text" name="bo_table" value="{{ board.bo_table if board is defined else '' }}" id="bo_table" required  class="frm_input  required alnum_" maxlength="20">
+                    <input type="text" name="bo_table" value="" id="bo_table" required  class="frm_input  required alnum_" maxlength="20">
                     영문자, 숫자, _ 만 가능 (공백없이 20자 이내)
                 {% endif %}
             </td>
@@ -705,7 +711,7 @@
                 <label for="chk_all_mobile_skin">전체적용</label>
             </td>
         </tr>
-        <tr>
+        {#<tr>
             <th scope="row"><label for="bo_include_head">상단 파일 경로</label></th>
             <td>
                 <input type="text" name="bo_include_head" value="{{ board.bo_include_head }}" id="bo_include_head" class="frm_input" size="50">
@@ -728,11 +734,13 @@
                 <input type="checkbox" name="chk_all_include_tail" id="chk_all_include_tail">
                 <label for="chk_all_include_tail">전체적용</label>
             </td>
-        </tr>
+        </tr>#}
         <tr>
             <th scope="row"><label for="bo_content_head">상단 내용</label></th>
             <td>
-                에디터 적용
+                {% with tag_name='bo_content_head', content=board.bo_content_head %}
+                    {% include editor_path(request) + '/body.html' %}
+                {% endwith %}
             </td>
             <td class="td_grpset">
                 <input type="checkbox" name="chk_grp_content_head" id="chk_grp_content_head">
@@ -744,7 +752,9 @@
         <tr>
             <th scope="row"><label for="bo_content_tail">하단 내용</label></th>
             <td>
-                에디터 적용
+                {% with tag_name='bo_content_tail', content=board.bo_content_tail %}
+                    {% include editor_path(request) + '/body.html' %}
+                {% endwith %}
             </td>
             <td class="td_grpset">
                 <input type="checkbox" name="chk_grp_content_tail" id="chk_grp_content_tail">
@@ -756,9 +766,9 @@
         <tr>
             <th scope="row"><label for="bo_mobile_content_head">모바일 상단 내용</label></th>
             <td>
-                <span class="sound_only">웹에디터 시작</span><script>document.write("<div class='cke_sc'><button type='button' class='btn_cke_sc'>단축키 일람</button></div>");</script>
-                <textarea id="bo_mobile_content_head" name="bo_mobile_content_head" class="smarteditor2" maxlength="65536" style="width:100%;height:300px">{{ board.bo_mobile_content_head }}</textarea>
-                <span class="sound_only">웹 에디터 끝</span>
+                {% with tag_name='bo_mobile_content_head', content=board.bo_mobile_content_head %}
+                    {% include editor_path(request) + '/body.html' %}
+                {% endwith %}
             </td>
             <td class="td_grpset">
                 <input type="checkbox" name="chk_grp_mobile_content_head" id="chk_grp_mobile_content_head">
@@ -770,9 +780,9 @@
         <tr>
             <th scope="row"><label for="bo_mobile_content_tail">모바일 하단 내용</label></th>
             <td>
-                <span class="sound_only">웹에디터 시작</span><script>document.write("<div class='cke_sc'><button type='button' class='btn_cke_sc'>단축키 일람</button></div>");</script>
-                <textarea id="bo_mobile_content_tail" name="bo_mobile_content_tail" class="smarteditor2" maxlength="65536" style="width:100%;height:300px">{{ board.bo_mobile_content_tail }}</textarea>
-                <span class="sound_only">웹 에디터 끝</span>
+                {% with tag_name='bo_mobile_content_tail', content=board.bo_mobile_content_tail %}
+                    {% include editor_path(request) + '/body.html' %}
+                {% endwith %}
             </td>
             <td class="td_grpset">
                 <input type="checkbox" name="chk_grp_mobile_content_tail" id="chk_grp_mobile_content_tail">

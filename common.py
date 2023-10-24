@@ -15,7 +15,7 @@ from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
-from models import Config, Member, Memo, Board, Group, Point, Popular, Visit, VisitSum, UniqId
+from models import Config, Member, Memo, Board, Group, Point, Poll, Popular, Visit, VisitSum, UniqId
 from models import WriteBaseModel
 from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
@@ -41,7 +41,10 @@ def get_theme_from_db(config=None):
     
     return theme_path
 
-TEMPLATES_DIR = get_theme_from_db()
+# python setup.py 를 실행하는 것이 아니라면
+if os.environ.get("is_setup") != "true":
+    TEMPLATES_DIR = get_theme_from_db()
+    
 ADMIN_TEMPLATES_DIR = "_admin/templates"
 
 SERVER_TIME = datetime.now()
@@ -1090,6 +1093,56 @@ def compare_token(request: Request, token: str, action: str = ''):
         return verify_password(action, token)
     else:
         return False
+
+
+def get_poll(request: Request):
+    db = SessionLocal()
+    poll = db.query(Poll).filter(Poll.po_use == 1).order_by(Poll.po_id.desc()).first()
+    db.close()
+
+    return poll
+
+
+def get_member_level(request: Request):
+    """
+    request에서 회원 레벨 정보를 가져오는 함수
+    """
+    member = request.state.login_member
+
+    return member.mb_level if member else 1
+
+
+def auth_check(request: Request, menu_key: str, attribute: str):
+    '''
+    관리권한 체크
+    '''    
+    # 최고관리자이면 처리 안함
+    if request.state.is_super_admin:
+        return ""
+
+    db = SessionLocal()
+
+    exists_member = request.state.login_member
+    if not exists_member:
+        return "로그인 후 이용해 주세요."
+
+    exists_auth = db.query(models.Auth).filter_by(mb_id=exists_member.mb_id, au_menu=menu_key).first()
+    if not exists_auth:
+        return "이 메뉴에는 접근 권한이 없습니다.\\n\\n접근 권한은 최고관리자만 부여할 수 있습니다."
+
+    auth_set = set(exists_auth.au_auth.split(","))
+    if not attribute in auth_set:
+        if attribute == "r":
+            error = "읽을 권한이 없습니다."
+        elif attribute == "w":
+            error = "입력, 추가, 생성, 수정 권한이 없습니다."
+        elif attribute == "d":
+            error = "삭제 권한이 없습니다."
+        else:
+            error = f"속성(attribute={attribute})이 잘못 되었습니다."
+        return error
+
+    return ""
 
 
 def get_unique_id(request) -> Optional[str]:

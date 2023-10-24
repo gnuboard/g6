@@ -97,7 +97,7 @@ def auth_list(request: Request, db: Session = Depends(get_db), search_params: di
             id_value = item.get('id', '')
             name_value = item.get('name', '')
             # id와 name 값이 비어 있지 않은 경우 그들을 옵션으로 출력
-            if id_value and name_value:
+            if id_value and name_value and id_value[-3:] != '000':
                 # print(id_value, name_value)
                 auth_options.append(f'<option value="{id_value}">{id_value} {name_value}</option>')    
                 

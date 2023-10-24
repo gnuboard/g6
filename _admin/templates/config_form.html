@@ -1111,11 +1111,12 @@
         {% if config.cf_cert_use %}
             $(".cf_cert_service").addClass("cf_cert_hide");
         {% endif %}    
-        <!-- <?php
+        {# <!-- <?php
         if (!$config['cf_cert_use']) {
             echo '$(".cf_cert_service").addClass("cf_cert_hide");';
         }
         ?> -->
+        #}
         $("#cf_cert_use").change(function() {
             switch ($(this).val()) {
                 case "0":

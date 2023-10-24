@@ -10,10 +10,10 @@
 <div class="container_wr">
 
     <div class="local_ov01 local_ov">
-    <a href="/admin/member_list" class="ov_listall">전체목록</a>    <span class="btn_ov01"><span class="ov_txt">총회원수 </span><span class="ov_num"> {{ total_count }}명 </span></span>
-    <a href="?sst=mb_intercept_date&sod=desc&sfl=&stx=" class="btn_ov01" data-tooltip-text="차단된 순으로 정렬합니다.&#xa;전체 데이터를 출력합니다."> <span class="ov_txt">차단 </span><span class="ov_num">0명</span></a>
-    <a href="?sst=mb_leave_date&sod=desc&sfl=&stx=" class="btn_ov01" data-tooltip-text="탈퇴된 순으로 정렬합니다.&#xa;전체 데이터를 출력합니다."> <span class="ov_txt">탈퇴 </span><span class="ov_num">0명</span></a>
-</div>
+        <a href="/admin/member_list" class="ov_listall">전체목록</a>    <span class="btn_ov01"><span class="ov_txt">총회원수 </span><span class="ov_num"> {{ total_count }}명 </span></span>
+        <a href="?sst=mb_intercept_date&sod=desc" class="btn_ov01" data-tooltip-text="차단된 순으로 정렬합니다.&#xa;전체 데이터를 출력합니다."> <span class="ov_txt">차단 </span><span class="ov_num">0명</span></a>
+        <a href="?sst=mb_leave_date&sod=desc" class="btn_ov01" data-tooltip-text="탈퇴된 순으로 정렬합니다.&#xa;전체 데이터를 출력합니다."> <span class="ov_txt">탈퇴 </span><span class="ov_num">0명</span></a>
+    </div>
 
 <form id="fsearch" name="fsearch" class="local_sch01 local_sch" method="get">
 
@@ -61,27 +61,27 @@
                         <label for="chkall" class="sound_only">회원 전체</label>
                         <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                     </th>
-                    <th scope="col" id="mb_list_id" colspan="2"><a href="/admin/member_list?sst=mb_id&sod=asc&sfl=&stx=&sca=&page=1">아이디</a></th>
-                    <th scope="col" rowspan="2" id="mb_list_cert"><a href="/admin/member_list?sst=mb_certify&sod=desc&sfl=&stx=&sca=&page=1">본인확인</a></th>
-                    <th scope="col" id="mb_list_mailc"><a href="/admin/member_list?sst=mb_email_certify&sod=desc&sfl=&stx=&sca=&page=1">메일인증</a></th>
-                    <th scope="col" id="mb_list_open"><a href="/admin/member_list?sst=mb_open&sod=desc&sfl=&stx=&sca=&page=1">정보공개</a></th>
-                    <th scope="col" id="mb_list_mailr"><a href="/admin/member_list?sst=mb_mailling&sod=desc&sfl=&stx=&sca=&page=1">메일수신</a></th>
+                    <th scope="col" id="mb_list_id" colspan="2">{{ subject_sort_link(request, 'mb_id')|safe }}아이디</a></th>
                     <th scope="col" id="mb_list_auth">상태</th>
+                    <th scope="col" id="mb_list_mailc">{{ subject_sort_link(request, 'mb_email_certify')|safe }}메일인증</a></th>
+                    <th scope="col" id="mb_list_cert">{{ subject_sort_link(request, 'mb_certify')|safe }}본인확인</a></th>
+                    <th scope="col" id="mb_list_adultc">{{ subject_sort_link(request, 'mb_adult')|safe }}성인인증</a></th>
+                    <th scope="col" id="mb_list_open" rowspan="2">{{ subject_sort_link(request, 'mb_open')|safe }}정보공개</a></th>
                     <th scope="col" id="mb_list_mobile">휴대폰</th>
-                    <th scope="col" id="mb_list_lastcall"><a href="/admin/member_list?sst=mb_today_login&sod=desc&sfl=&stx=&sca=&page=1">최종접속</a></th>
+                    <th scope="col" id="mb_list_lastcall">{{ subject_sort_link(request, 'mb_today_login')|safe }}최종접속</a></th>
                     <th scope="col" id="mb_list_grp">접근그룹</th>
                     <th scope="col" rowspan="2" id="mb_list_mng">관리</th>
                 </tr>
                 <tr>
-                    <th scope="col" id="mb_list_name"><a href="/admin/member_list?sst=mb_name&sod=asc&sfl=&stx=&sca=&page=1">이름</a></th>
-                    <th scope="col" id="mb_list_nick"><a href="/admin/member_list?sst=mb_nick&sod=asc&sfl=&stx=&sca=&page=1">닉네임</a></th>
-                    <th scope="col" id="mb_list_sms"><a href="/admin/member_list?sst=mb_sms&sod=desc&sfl=&stx=&sca=&page=1">SMS수신</a></th>
-                    <th scope="col" id="mb_list_adultc"><a href="/admin/member_list?sst=mb_adult&sod=desc&sfl=&stx=&sca=&page=1">성인인증</a></th>
-                    <th scope="col" id="mb_list_auth"><a href="/admin/member_list?sst=mb_intercept_date&sod=desc&sfl=&stx=&sca=&page=1">접근차단</a></th>
-                    <th scope="col" id="mb_list_deny"><a href="/admin/member_list?sst=mb_level&sod=desc&sfl=&stx=&sca=&page=1">권한</a></th>
+                    <th scope="col" id="mb_list_name">{{ subject_sort_link(request, 'mb_name')|safe }}이름</a></th>
+                    <th scope="col" id="mb_list_nick">{{ subject_sort_link(request, 'mb_nick')|safe }}별명</a></th>
+                    <th scope="col" id="mb_list_deny">{{ subject_sort_link(request, 'mb_level')|safe }}권한(Level)</a></th>
+                    <th scope="col" id="mb_list_mailr">{{ subject_sort_link(request, 'mb_mailling')|safe }}메일수신</a></th>
+                    <th scope="col" id="mb_list_sms">{{ subject_sort_link(request, 'mb_sms')|safe }}SMS수신</a></th>
+                    <th scope="col" id="mb_list_auth">{{ subject_sort_link(request, 'mb_intercept_date')|safe }}접근차단</a></th>
                     <th scope="col" id="mb_list_tel">전화번호</th>
-                    <th scope="col" id="mb_list_join"><a href="/admin/member_list?sst=mb_datetime&sod=asc&sfl=&stx=&sca=&page=1">가입일</a></th>
-                    <th scope="col" id="mb_list_point"><a href="/admin/member_list?sst=mb_point&sod=desc&sfl=&stx=&sca=&page=1"> 포인트</a></th>
+                    <th scope="col" id="mb_list_join">{{ subject_sort_link(request, 'mb_datetime')|safe }}가입일</a></th>
+                    <th scope="col" id="mb_list_point">{{ subject_sort_link(request, 'mb_point')|safe }}포인트</a></th>
                 </tr>
             </thead>
             <tbody>
@@ -94,77 +94,72 @@
                         <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
                     </td>
                     <td headers="mb_list_id" colspan="2" class="td_name sv_use">{{ member.mb_id }}</td>
-                    <td headers="mb_list_cert" rowspan="2" class="td_mbcert">
-                        <select id="mb_certify" name="mb_certify[]">
-                        <option value="">미인증</option>
-                        <option value="simple" {{ get_selected('simple', member.mb_certify)}}>간편인증</option>
-                        <option value="hp" {{ get_selected('hp', member.mb_certify)}}>휴대폰</option>
-                        <option value="ipin" {{ get_selected('ipin', member.mb_certify)}}>아이핀</option>
-                        </select>    
-                    </td>
-                    <td headers="mb_list_mailc"><span class="txt_true">Yes</span></td>
-                    <td headers="mb_list_open">
-                        <label for="mb_open_{{ loop.index0 }}" class="sound_only">정보공개</label>
-                        <input type="checkbox" name="mb_open[]" value="{{ loop.index0 }}" id="mb_open_{{ loop.index0 }}" {{ 'checked' if member.mb_open }}>
-                    </td>
-                    <td headers="mb_list_mailr">
-                        <label for="mb_mailling_0" class="sound_only">메일수신</label>
-                        <input type="checkbox" name="mb_mailling[]" value="{{ loop.index0 }}" id="mb_mailling_{{ loop.index0 }}" {{ 'checked' if member.mb_mailling }}>
-                    </td>
-                    <td headers="mb_list_auth" class="td_mbstat">
+                    <td headers="mb_list_auth" class="td_mbstat"><!-- 상태 -->
                         {% if member.mb_leave_date %}
-                            <span class="mb_leave_msg">탈퇴함</span>
+                            <span class="mb_leave_msg" title="{{ member.mb_leave_date }}">탈퇴함</span>
                         {% elif member.mb_intercept_date %}
-                            <span class="mb_intercept_msg">차단됨</span>
+                            <span class="mb_intercept_msg" title="{{ member.mb_intercept_date }}">차단됨</span>
                         {% else %}
                             정상
                         {% endif %}
                     </td>
-                    <td headers="mb_list_mobile" class="td_tel">{{ member.mb_hp }}</td>
-                    {# <td headers="mb_list_lastcall" class="td_date">{{ member.mb_today_login[2:10] }}</td> #}
-                    <td headers="mb_list_lastcall" class="td_date">{{ member.mb_today_login.strftime("%Y-%m-%d") }}</td>
-                    <td headers="mb_list_grp" class="td_numsmall"></td>
+                    <td headers="mb_list_mailc"><!-- 메일인증 -->
+                        {% if member.mb_email_certify.strftime('%Y') > '1' %}
+                            <span class="txt_true">Yes</span>
+                        {% else %}
+                            <span class="txt_false">No</span>
+                        {% endif %}
+                    </td>
+                    <td headers="mb_list_cert" class="td_mbcert"><!-- 본인확인 -->
+                        {% if member.mb_certify == '' %}미인증
+                        {% elif member.mb_certify == 'simple' %}간편인증
+                        {% elif member.mb_certify == 'hp' %}휴대폰
+                        {% elif member.mb_certify == 'ipin' %}아이핀
+                        {% endif %}
+                    </td>
+                    <td headers="mb_list_adultc">
+                        <label for="mb_adult_{{ loop.index0 }}" class="sound_only">성인인증</label>
+                        {% if member.mb_adult %}
+                            <span class="txt_true">Yes</span>
+                        {% else %}
+                            <span class="txt_false">No</span>
+                        {% endif %}
+                    </td>
+                    <td headers="mb_list_open" rowspan="2">
+                        <label for="mb_open_{{ loop.index0 }}" class="sound_only">정보공개</label>
+                        <input type="checkbox" name="mb_open[]" value="{{ loop.index0 }}" id="mb_open_{{ loop.index0 }}" {{ 'checked' if member.mb_open }}>
+                    </td>
+                    <td headers="mb_list_mobile" class="td_tel"><!-- 휴대폰번호 -->{{ member.mb_hp }}</td>
+                    <td headers="mb_list_lastcall" class="td_date"><!-- 최근접속일 -->{{ member.mb_today_login.strftime("%y-%m-%d") }}</td>
+                    <td headers="mb_list_grp" class="td_numsmall">
+                        <a href="/admin/boardgroupmember_form/{{ member.mb_id }}">{{ member.groupmember_count }}</a>
+                    </td>
                     <td headers="mb_list_mng" rowspan="2" class="td_mng td_mng_s">
                         <a href="/admin/member_form/{{ member.mb_id }}?{{ query_string }}" class="btn btn_03">수정</a>
                         <a href="/admin/boardgroupmember_form?mb_id={{ member.mb_id }}" class="btn btn_02">그룹</a></td>
                 </tr>
                 <tr class="{{ background_color }}">
                     <td headers="mb_list_name" class="td_mbname">{{ member.mb_name }}</td>
-                    <td headers="mb_list_nick" class="td_name sv_use">
-                        <div><span class="sv_wrap">
-                            <a href="/bbs/profile/{{ member.mb_id }}" class="sv_member" title="{{ member.mb_nick }} 자기소개" target="_blank" rel="nofollow" onclick="return false;">
-                                <span class="profile_img"><img src="/static/img/no_profile.gif" alt="no_profile" width="22" height="22"></span> {{ member.mb_nick }}</a>
-                                <span class="sv"><a href="/bbs/memo_form?me_recv_mb_id={{ member.mb_id }}" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
-                            <a href="/bbs/formmail?mb_id=kagla&amp;name=%EA%B8%B8%EB%8F%99%EC%9D%B4&amp;email=m8ac0sJyp8XZl6qSmaHQ" onclick="win_email(this.href); return false;" rel="nofollow">메일보내기</a>
-                            <a href="/bbs/profile/kagla" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
-                            <a href="/bbs/new?mb_id=kagla" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a>
-                            <a href="/admin/member_form?w=u&amp;mb_id=kagla" target="_blank" rel="nofollow">회원정보변경</a>
-                            <a href="/admin/point_list?sfl=mb_id&amp;stx=kagla" target="_blank" rel="nofollow">포인트내역</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://g5.pypot.com/bbs/memo_form.php?me_recv_mb_id=kagla" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
-                            <a href="/bbs/formmail?mb_id=kagla&amp;name=%EA%B8%B8%EB%8F%99%EC%9D%B4&amp;email=m8ac0sJyp8XZl6qSmaHQ" onclick="win_email(this.href); return false;" rel="nofollow">메일보내기</a>
-                            <a href="/bbs/profile/kagla" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
-                            <a href="/bbs/new?mb_id=kagla" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a>
-                            <a href="/admin/member_form?w=u&amp;mb_id=kagla" target="_blank" rel="nofollow">회원정보변경</a>
-                            <a href="/admin/point_list?sfl=mb_id&amp;stx=kagla" target="_blank" rel="nofollow">포인트내역</a></span></noscript></span></div>
+                    <td headers="mb_list_nick" class="td_name sv_use"><!-- 닉네임 -->
+                        {{ member.mb_nick }}
                     </td>
-
+                    <td headers="mb_list_auth" class="td_mbstat"><!-- 권한(level) -->
+                        {{ get_member_level_select('mb_level[]', 1, admin.mb_level if admin else 1, member.mb_level if member else 1)|safe }}
+                    </td>
+                    <td headers="mb_list_mailr">
+                        <label for="mb_mailling_0" class="sound_only">메일수신</label>
+                        <input type="checkbox" name="mb_mailling[]" value="{{ loop.index0 }}" id="mb_mailling_{{ loop.index0 }}" {{ 'checked' if member.mb_mailling }}>
+                    </td>
                     <td headers="mb_list_sms">
                         <label for="mb_sms_0" class="sound_only">SMS수신</label>
                         <input type="checkbox" name="mb_sms[]"  value="{{ loop.index0 }}" id="mb_sms_{{ loop.index0 }}" {{ 'checked' if member.mb_sms }}>
                     </td>
-                    <td headers="mb_list_adultc">
-                        <label for="mb_adult_0" class="sound_only">성인인증</label>
-                        <input type="checkbox" name="mb_adult[]"  value="{{ loop.index0 }}" id="mb_adult_{{ loop.index0 }}" {{ 'checked' if member.mb_adult }}>
-                    </td>
-                    <td headers="mb_list_deny">
+                    <td headers="mb_list_deny"><!-- 접근차단 -->
                         <input type="checkbox" name="mb_intercept_date[]"  value="{{ loop.index0 }}" id="mb_intercept_date_{{ loop.index0 }}" title="차단하기" {{ 'checked' if member.mb_intercept_date }}>
                         <label for="mb_intercept_date_{{ loop.index0 }}" class="sound_only">접근차단</label>
                     </td>
-                    <td headers="mb_list_auth" class="td_mbstat">
-                        {{ get_member_level_select('mb_level[]', 1, admin.mb_level if admin else 1, member.mb_level if member else 1)|safe }}
-                    </td>
-                    <td headers="mb_list_tel" class="td_tel">{{ member.mb_tel }}</td>
-                    {# <td headers="mb_list_join" class="td_date">{{ member.mb_datetime[2:10] }}</td> #}
-                    <td headers="mb_list_join" class="td_date">{{ member.mb_datetime.strftime("%Y-%m-%d") }}</td>
+                    <td headers="mb_list_tel" class="td_tel"><!-- 전화번호 -->{{ member.mb_tel }}</td>
+                    <td headers="mb_list_join" class="td_date"><!--회원가입일 -->{{ member.mb_datetime.strftime("%y-%m-%d") }}</td>
                     <td headers="mb_list_point" class="td_num"><a href="/admin/point_list?sfl=mb_id&stx={{ member.mb_id }}">{{ member.mb_point }}</a></td>
                 </tr>
                 {% endfor %}
@@ -203,14 +198,6 @@
     }
 </script>
 
-<noscript>
-    <p>
-        귀하께서 사용하시는 브라우저는 현재 <strong>자바스크립트를 사용하지 않음</strong>으로 설정되어 있습니다.<br>
-        <strong>자바스크립트를 사용하지 않음</strong>으로 설정하신 경우는 수정이나 삭제시 별도의 경고창이 나오지 않으므로 이점 주의하시기 바랍니다.
-    </p>
-</noscript>
-
 </div>
-
 
 {% endblock %}
