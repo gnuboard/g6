@@ -24,7 +24,8 @@
     <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
     <input type="hidden" name="stx" value="{{ request.state.stx }}">
     <input type="hidden" name="page" value="{{ request.state.page }}">
-    <input type="hidden" name="token" value="{{ generate_one_time_token('delete') }}">
+    {% set token = generate_token(request, 'auth_list') %}
+    <input type="hidden" name="token" value="{{ token }}">
     
     <div class="tbl_head01 tbl_wrap">
         <table>
@@ -87,7 +88,7 @@
     <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
     <input type="hidden" name="stx" value="{{ request.state.stx }}">
     <input type="hidden" name="page" value="{{ request.state.page }}">
-    <input type="hidden" name="token" value="{{ generate_one_time_token('update') }}">
+    <input type="hidden" name="token" value="{{ token }}">
 
     <section id="add_admin">
         <h2 class="h2_frm">관리권한 추가</h2>

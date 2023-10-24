@@ -9,7 +9,7 @@
     {% block subtitle %}기본환경설정{% endblock %}
 
 <form name="fconfigform" id="fconfigform" method="post" action="/admin/config_form_update" onsubmit="return fconfigform_submit(this);" enctype="application/x-www-form-urlencoded" autocomplete="off">
-<input type="hidden" name="token" id="token" value="{{ generate_one_time_token('update') }}">
+<input type="hidden" name="token" id="token" value="{{ generate_token(request, 'update') }}">
 
 <section id="anc_cf_basic">
     <h2 class="h2_frm">홈페이지 기본환경 설정</h2>
@@ -1111,11 +1111,12 @@
         {% if config.cf_cert_use %}
             $(".cf_cert_service").addClass("cf_cert_hide");
         {% endif %}    
-        <!-- <?php
+        {# <!-- <?php
         if (!$config['cf_cert_use']) {
             echo '$(".cf_cert_service").addClass("cf_cert_hide");';
         }
         ?> -->
+        #}
         $("#cf_cert_use").change(function() {
             switch ($(this).val()) {
                 case "0":

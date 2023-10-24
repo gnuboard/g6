@@ -22,7 +22,7 @@ templates.env.globals['get_editor_select'] = get_editor_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
+templates.env.globals["generate_token"] = generate_token
 templates.env.globals["format"] = format
 
 
@@ -97,7 +97,7 @@ def auth_list(request: Request, db: Session = Depends(get_db), search_params: di
             id_value = item.get('id', '')
             name_value = item.get('name', '')
             # id와 name 값이 비어 있지 않은 경우 그들을 옵션으로 출력
-            if id_value and name_value:
+            if id_value and name_value and id_value[-3:] != '000':
                 # print(id_value, name_value)
                 auth_options.append(f'<option value="{id_value}">{id_value} {name_value}</option>')    
                 
@@ -123,6 +123,9 @@ async def auth_update(request: Request, db: Session = Depends(get_db),
         w: Optional[str] = Form(default=""),
         d: Optional[str] = Form(default=""),
         ):
+    
+    if not compare_token(request, token, 'auth_list'):
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다."]})
     
     exists_member = db.query(models.Member).filter_by(mb_id=mb_id).first()
     if not exists_member:
@@ -159,6 +162,9 @@ async def point_list_delete(request: Request, db: Session = Depends(get_db),
         mb_id: Optional[List[str]] = Form(None, alias="mb_id[]"),
         au_menu: Optional[List[str]] = Form(None, alias="au_menu[]"),
         ):
+    
+    if not compare_token(request, token, 'auth_list'):
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다."]})
 
     for i in checks:
         exists_auth = db.query(models.Auth).filter_by(mb_id=mb_id[i], au_menu=au_menu[i]).first()

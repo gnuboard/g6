@@ -50,7 +50,7 @@
     <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
     <input type="hidden" name="stx" value="{{ request.state.stx }}">
     <input type="hidden" name="page" value="{{ request.state.page }}">
-    <input type="hidden" name="token" value="{{ generate_one_time_token('update') }}">
+    <input type="hidden" name="token" value="{{ generate_token(request, 'member_list') }}">
 
     <div class="tbl_head01 tbl_wrap">
         <table>
