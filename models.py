@@ -1,18 +1,6 @@
-from sqlalchemy import (
-    create_engine,
-    Column,
-    Integer,
-    String,
-    Text,
-    Enum,
-    ForeignKey,
-    Index,
-    text,
-    DateTime,
-    Date,
-    Time,
-)
+from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime, Date, Time
 
+# TINYINT 대신 Integer 사용하기 바랍니다.
 # from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -224,17 +212,13 @@ class Member(Base):
     mb_signature = Column(Text, nullable=False, default="")
     mb_recommend = Column(String(255), nullable=False, default="")
     mb_point = Column(Integer, nullable=False, default=0, server_default=text("0"))
-    mb_today_login = Column(
-        DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0)
-    )
+    mb_today_login = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
     mb_login_ip = Column(String(255), nullable=False, default="")
     mb_datetime = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
     mb_ip = Column(String(255), nullable=False, default="")
     mb_leave_date = Column(String(8), nullable=False, default="")
     mb_intercept_date = Column(String(8), nullable=False, default="")
-    mb_email_certify = Column(
-        DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0)
-    )
+    mb_email_certify = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
     mb_email_certify2 = Column(String(255), nullable=False, default="")
     mb_memo = Column(Text, nullable=False, default="")
     mb_lost_certify = Column(String(255), nullable=False, default="")
@@ -436,35 +420,6 @@ class WriteBaseModel(Base):
 # Index('idx_write_bo_table_wr_id', WriteBaseModel.bo_table, WriteBaseModel.wr_id)
 
 
-# CREATE TABLE `g5_group` (
-#   `gr_id` varchar(10) NOT NULL DEFAULT '',
-#   `gr_subject` varchar(255) NOT NULL DEFAULT '',
-#   `gr_device` enum('both','pc','mobile') NOT NULL DEFAULT 'both',
-#   `gr_admin` varchar(255) NOT NULL DEFAULT '',
-#   `gr_use_access` tinyint NOT NULL DEFAULT '0',
-#   `gr_order` int NOT NULL DEFAULT '0',
-#   `gr_1_subj` varchar(255) NOT NULL DEFAULT '',
-#   `gr_2_subj` varchar(255) NOT NULL DEFAULT '',
-#   `gr_3_subj` varchar(255) NOT NULL DEFAULT '',
-#   `gr_4_subj` varchar(255) NOT NULL DEFAULT '',
-#   `gr_5_subj` varchar(255) NOT NULL DEFAULT '',
-#   `gr_6_subj` varchar(255) NOT NULL DEFAULT '',
-#   `gr_7_subj` varchar(255) NOT NULL DEFAULT '',
-#   `gr_8_subj` varchar(255) NOT NULL DEFAULT '',
-#   `gr_9_subj` varchar(255) NOT NULL DEFAULT '',
-#   `gr_10_subj` varchar(255) NOT NULL DEFAULT '',
-#   `gr_1` varchar(255) NOT NULL DEFAULT '',
-#   `gr_2` varchar(255) NOT NULL DEFAULT '',
-#   `gr_3` varchar(255) NOT NULL DEFAULT '',
-#   `gr_4` varchar(255) NOT NULL DEFAULT '',
-#   `gr_5` varchar(255) NOT NULL DEFAULT '',
-#   `gr_6` varchar(255) NOT NULL DEFAULT '',
-#   `gr_7` varchar(255) NOT NULL DEFAULT '',
-#   `gr_8` varchar(255) NOT NULL DEFAULT '',
-#   `gr_9` varchar(255) NOT NULL DEFAULT '',
-#   `gr_10` varchar(255) NOT NULL DEFAULT ''
-# ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
-# 위 sql 문을 model 로 만들어줘
 class Group(Base):
     """
     게시판 그룹 테이블
@@ -500,6 +455,21 @@ class Group(Base):
     gr_10 = Column(String(255), nullable=False, default="")
     # 종속관계
     # boards = relationship("Board", backref="group")
+    
+
+class GroupMember(Base):
+    '''
+    그룹회원 테이블
+    '''    
+    __tablename__ = DB_TABLE_PREFIX + "group_member"
+    
+    gm_id = Column(Integer, primary_key=True, autoincrement=True)
+    gr_id = Column(String(10), nullable=False, default="")
+    mb_id = Column(String(20), nullable=False, default="")
+    gm_datetime = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
+    
+    gr_id_index = Index("gr_id", gr_id)    
+    mb_id_index = Index("mb_id", mb_id)    
 
 
 class Content(Base):
@@ -654,7 +624,7 @@ class QaContent(Base):
     qa_file2 = Column(String(255), nullable=False, default="")
     qa_source2 = Column(String(255), nullable=False, default="")
     qa_ip = Column(String(255), nullable=False, default="")
-    qa_datetime = Column(DateTime, nullable=False, default=datetime(1900, 1, 1, 0, 0))
+    qa_datetime = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
     qa_1 = Column(String(255), nullable=False, default="")
     qa_2 = Column(String(255), nullable=False, default="")
     qa_3 = Column(String(255), nullable=False, default="")

@@ -35,41 +35,6 @@ templates.env.globals["get_client_ip"] = get_client_ip
 CONFIG_MENU_KEY = "100100"
 
 
-# @router.get("/auth_check", response_class=HTMLResponse)
-def auth_check(request: Request, menu_key: str, attribute: str):
-    # 최고관리자이면 처리 안함
-    if request.state.is_super_admin:
-        return ""
-
-    db = SessionLocal()
-
-    exists_member = request.state.login_member
-    if not exists_member:
-        return "로그인 후 이용해 주세요."
-
-    exists_auth = (
-        db.query(models.Auth)
-        .filter_by(mb_id=exists_member.mb_id, au_menu=menu_key)
-        .first()
-    )
-    if not exists_auth:
-        return "이 메뉴에는 접근 권한이 없습니다.\\n\\n접근 권한은 최고관리자만 부여할 수 있습니다."
-
-    auth_set = set(exists_auth.au_auth.split(","))
-    if not attribute in auth_set:
-        if attribute == "r":
-            error = "읽을 권한이 없습니다."
-        elif attribute == "w":
-            error = "입력, 추가, 생성, 수정 권한이 없습니다."
-        elif attribute == "d":
-            error = "삭제 권한이 없습니다."
-        else:
-            error = f"속성(attribute={attribute})이 잘못 되었습니다."
-        return error
-
-    return ""
-
-
 @router.get("/config_form")
 def config_form(request: Request, db: Session = Depends(get_db)):
     """
@@ -78,9 +43,7 @@ def config_form(request: Request, db: Session = Depends(get_db)):
     request.session["menu_key"] = CONFIG_MENU_KEY
     error = auth_check(request, request.session["menu_key"], "r")
     if error:
-        return templates.TemplateResponse(
-            "alert.html", {"request": request, "errors": [error]}
-        )
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": [error]})
 
     host_name = socket.gethostname()
     host_ip = socket.gethostbyname(host_name)
@@ -98,25 +61,22 @@ def config_form(request: Request, db: Session = Depends(get_db)):
 
 @router.post("/config_form_update")
 def config_form_update(
-    request: Request,
-    token: str = Form(None),
-    form_data: ConfigForm = Depends(),
-    db: Session = Depends(get_db),
-):
+        request: Request,
+        token: str = Form(None),
+        form_data: ConfigForm = Depends(),
+        db: Session = Depends(get_db),
+        ):
+    
     """
     기본환경설정 저장
     """
     request.session["menu_key"] = CONFIG_MENU_KEY
     error = auth_check(request, request.session["menu_key"], "w")
     if error:
-        return templates.TemplateResponse(
-            "alert.html", {"request": request, "errors": [error]}
-        )
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": [error]})
 
     if not compare_token(request, token, "update"):
-        return templates.TemplateResponse(
-            "alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다."]}
-        )
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다."]})
 
     # print(request.state.context['member'])
 
@@ -149,31 +109,10 @@ def config_form_update(
             pattern[i] = pattern[i].replace("+", "[0-9\.]+", pattern[i])
             pat = "/^{$pattern[$i]}$/"
             if re.match(pat, request.client.host):
-                return templates.TemplateResponse(
-                    "alert.html",
-                    {
-                        "request": request,
-                        "errors": [
-                            "현재 접속 IP : "
-                            + request.client.host
-                            + " 가 차단될수 있기 때문에, 다른 IP를 입력해 주세요."
-                        ],
-                    },
-                )
+                return templates.TemplateResponse("alert.html", {"request": request, "errors": ["현재 접속 IP : "+ request.client.host+ " 가 차단될수 있기 때문에, 다른 IP를 입력해 주세요."]})
 
-    if (
-        form_data.cf_cert_use
-        and not form_data.cf_cert_ipin
-        and not form_data.cf_cert_hp
-        and not form_data.cf_cert_simple
-    ):
-        return templates.TemplateResponse(
-            "alert.html",
-            {
-                "request": request,
-                "errors": ["본인확인을 위해 아이핀, 휴대폰 본인확인, KG이니시스 간편인증 서비스 중 하나 이상 선택해 주십시오."],
-            },
-        )
+    if (form_data.cf_cert_use and not form_data.cf_cert_ipin and not form_data.cf_cert_hp and not form_data.cf_cert_simple):
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["본인확인을 위해 아이핀, 휴대폰 본인확인, KG이니시스 간편인증 서비스 중 하나 이상 선택해 주십시오."]})
 
     if not form_data.cf_cert_use:
         form_data.cf_cert_ipin = ""
@@ -181,11 +120,7 @@ def config_form_update(
         form_data.cf_cert_simple = ""
 
     # 배열로 넘어오는 자료를 문자열로 변환. 예) "naver,kakao,facebook,google,twitter,payco"
-    form_data.cf_social_servicelist = (
-        ",".join(form_data.cf_social_servicelist)
-        if form_data.cf_social_servicelist
-        else ""
-    )
+    form_data.cf_social_servicelist = (",".join(form_data.cf_social_servicelist) if form_data.cf_social_servicelist else "" )
 
     config = db.query(models.Config).first()
 
