@@ -36,6 +36,7 @@
                     {% if member.mb_id %}
                         <input type="hidden" name="mb_id" value="{{ member.mb_id }}" id="mb_id">
                         <b>{{ member.mb_id }}</b>
+                        <a href="/admin/boardgroupmember_form/{{ member.mb_id }}" class="btn_frmline">접근가능그룹보기</a>
                     {% else %}
                         <input type="text" name="mb_id" value="" id="mb_id" required class="frm_input required alnum_" size="15" maxlength="20">
                     {% endif %}
