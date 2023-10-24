@@ -11,7 +11,7 @@ from markupsafe import Markup, escape
 from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.orm import load_only, Session
-from models import Config, Member, Memo, Board, Group, Point, Popular, Visit, VisitSum
+from models import Config, Member, Memo, Board, Group, Point, Poll, Popular, Visit, VisitSum
 from models import WriteBaseModel
 from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
@@ -1086,3 +1086,21 @@ def compare_token(request: Request, token: str, action: str = ''):
         return verify_password(action, token)
     else:
         return False
+
+
+
+def get_poll(request: Request):
+    db = SessionLocal()
+    poll = db.query(Poll).filter(Poll.po_use == 1).order_by(Poll.po_id.desc()).first()
+    db.close()
+
+    return poll
+
+
+def get_member_level(request: Request):
+    """
+    request에서 회원 레벨 정보를 가져오는 함수
+    """
+    member = request.state.login_member
+
+    return member.mb_level if member else 1
