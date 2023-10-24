@@ -174,6 +174,22 @@ async def main_middleware(request: Request, call_next):
 app.add_middleware(SessionMiddleware, secret_key="secret", session_cookie="session", max_age=3600 * 3)
 
 
+@app.exception_handler(AlertException)
+async def http_exception_handler(request: Request, exc: AlertException):
+    """예외 처리기를 등록하고 AlertException 동작 처리
+
+    Args:
+        request (Request): request 객체
+        exc (AlertException): 예외 객체
+
+    Returns:
+        _TemplateResponse: 경고창 템플릿
+    """
+    return templates.TemplateResponse(
+        "alert.html", {"request": request, "errors": exc.detail, "url": exc.url}
+    )
+
+
 def get_member(mb_id, db: Session = Depends(get_db)):
     member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
     return member

@@ -1104,3 +1104,16 @@ def get_member_level(request: Request):
     member = request.state.login_member
 
     return member.mb_level if member else 1
+
+
+class AlertException(HTTPException):
+    """스크립트 경고창 출력을 위한 예외 클래스
+        - HTTPExceptiond에서 페이지 이동을 위한 url 매개변수를 추가적으로 받는다.
+
+    Args:
+        HTTPException (HTTPException): HTTP 예외 클래스
+    """
+    def __init__(self, status_code: int, detail: str = None, url: str = None):
+        self.status_code = status_code
+        self.detail = detail
+        self.url = url
