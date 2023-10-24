@@ -13,7 +13,7 @@
               method="post"
               enctype="multipart/form-data">
             {# onsubmit="return frmfaqmasterform_check(this);" #}
-            <input type="hidden" name="token" value="{{ generate_one_time_token() }}">
+            <input type="hidden" name="token" value="{{ generate_token(request, 'update' if faq_master else 'insert') }}">
             <div class="tbl_frm01 tbl_wrap">
                 <table>
                     <caption>FAQ 입력 관리</caption>

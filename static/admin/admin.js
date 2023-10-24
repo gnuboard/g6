@@ -87,7 +87,7 @@ function delete_confirm3(element)
 {
     if(confirm("한번 삭제한 자료는 복구할 방법이 없습니다.\n\n정말 삭제하시겠습니까?")) {
         // DELETE 요청을 생성하고 서버로 보냅니다.
-        token = $("#generate_one_time_token").val();
+        token = $("#token").val();
         $.ajax({
             type: "DELETE",
             url: element.href + "?token=" + token,
@@ -97,8 +97,9 @@ function delete_confirm3(element)
                 }
                 location.reload();                  
             },
-            error: function(data) {
-                alert("Failed to delete resource.");
+            error: function(xhr, textStatus, errorThrown) {
+                responese = JSON.parse(xhr.responseText);
+                alert(responese.message);
             }
         });
     }

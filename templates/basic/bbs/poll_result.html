@@ -33,10 +33,11 @@
             <!-- } 설문조사 결과 그래프 끝 -->
 
             <!-- 설문조사 기타의견 시작 { -->
-            {# TODO: 기타의견의 generate_token로 인해 토큰이 갱신되어 삭제 오류가 발생함. #}
+            {# TODO: 기타의견 등록의 generate_token로 인해 토큰이 갱신되어 삭제 오류가 발생함. #}
             {% if poll.po_etc %}
                 <section id="poll_result_cmt">
                     <h2>이 설문에 대한 기타의견</h2>
+                    {% set delete_token=generate_token(request, 'delete')%}
                     {% for etc in etcs %}
                         <article>
                             <header>
@@ -45,7 +46,7 @@
                                 <span class="poll_datetime">{{ etc.pc_datetime|safe }}</span>
                                 {% if etc.mb_id == request.state.login_member.mb_id or request.state.login_member.mb_level == 10 %}
                                     <span class="poll_cmt_del">
-                                        <a href="{{ url_for('etc_delete', pc_id=etc.pc_id) }}?token={{ generate_token(request, 'delete') }}" class="poll_delete">
+                                        <a href="{{ url_for('etc_delete', pc_id=etc.pc_id) }}?token={{ delete_token }}" class="poll_delete">
                                             <i class="fa fa-times-circle" aria-hidden="true"></i>
                                             <span class="sound_only">삭제</span>
                                         </a>
@@ -55,30 +56,7 @@
                             <p>{{ etc.pc_idea[:255]|safe }}</p>
                         </article>
                     {% endfor %}
-                    {% if get_member_level(request) >= poll.po_level %}
-                        <form name="fpollresult" action="{{ url_for('poll_etc_update', po_id=poll.po_id) }}" onsubmit="return fpollresult_submit(this);" method="post" autocomplete="off" id="poll_other_q">
-                            <input type="hidden" name="token" value="{{ generate_token(request, 'insert') }}">
-                            <input type="hidden" name="skin_dir" value="theme%2Fbasic">
-                            {% if request.state.login_member.mb_id %}
-                                <input type="hidden" name="pc_name" value="{{ request.state.login_member.mb_nick }}">
-                            {% endif %}
-                            <div id="poll_result_wcmt">
-                                <h3><span>기타의견</span>{{ poll.po_etc|safe }}</h3>
-                                <div>
-                                    <label for="pc_idea" class="sound_only">의견<strong>필수</strong></label>
-                                    <input type="text" id="pc_idea" name="pc_idea" required="" class="full_input required" size="47" maxlength="100" placeholder="의견을 입력해주세요">
-                                </div>
-                            </div>
-                            {% if not request.state.login_member.mb_id %}
-                                <div class="poll_guest">
-                                    <label for="pc_name" class="sound_only">이름<strong>필수</strong></label>
-                                    <input type="text" name="pc_name" id="pc_name" required="" class="full_input required" size="20" placeholder="이름">
-                                </div>
-                            {% endif %}
-                            <!-- TODO: Capcha 추가 -->
-                            <button type="submit" class="btn_submit">의견남기기</button>
-                        </form>
-                    {% endif %}
+
                 </section>
             {% endif %}
             <!-- } 설문조사 기타의견 끝 -->

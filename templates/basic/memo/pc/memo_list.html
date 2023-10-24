@@ -48,7 +48,7 @@
                                     </a>
                                 </div>
                             </div>	
-                            <a href="{{ url_for('memo_delete', me_id=memo.me_id) }}?token={{ generate_one_time_token('delete') }}&page={{ page }}" onclick="del(this.href); return false;" class="memo_del"><i class="fa fa-trash-o" aria-hidden="true"></i> <span class="sound_only">삭제</span></a>
+                            <a href="{{ url_for('memo_delete', me_id=memo.me_id) }}?token={{ generate_token(request, 'delete') }}&page={{ page }}" onclick="del(this.href); return false;" class="memo_del"><i class="fa fa-trash-o" aria-hidden="true"></i> <span class="sound_only">삭제</span></a>
                         </li>
                     {% endfor %}
                 </ul>

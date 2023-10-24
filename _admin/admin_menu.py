@@ -1,27 +1,24 @@
-from unittest import case
-from common import *
-from database import get_db
-from fastapi import APIRouter, Depends, Request, Form
+
+from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func
 from sqlalchemy.orm import aliased, Session
 from typing import List
 
-import models
-
 import bleach
 
+from common import *
+from database import get_db
+from models import Board, Content, Group, Menu
 
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 admin_templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
-admin_templates.env.globals["now"] = now
-admin_templates.env.globals['getattr'] = getattr
 admin_templates.env.globals["get_admin_menus"] = get_admin_menus
 admin_templates.env.globals['get_selected'] = get_selected
-admin_templates.env.globals["generate_one_time_token"] = generate_one_time_token
+admin_templates.env.globals["generate_token"] = generate_token
 
 MENU_KEY = "100290"  
 
@@ -33,7 +30,7 @@ def menu_list(request: Request, db: Session = Depends(get_db)):
     """
     request.session["menu_key"] = MENU_KEY
     # 메뉴 목록 조회
-    model = models.Menu
+    model = Menu
     menus = db.query(model).order_by(model.me_code.asc()).all()
 
     # me_code의 길이가 4이상 데이터는 subclass 속성을 추가.
@@ -62,6 +59,7 @@ def menu_add(request: Request, code: str = None, new: str = None, db: Session = 
         "menu_form.html", {"request": request, "code": code, "new": new}
     )
 
+
 @router.post("/menu/search", response_class=HTMLResponse)
 def menu_search(request: Request, type: str = Form(None), db: Session = Depends(get_db)):
     """
@@ -70,13 +68,13 @@ def menu_search(request: Request, type: str = Form(None), db: Session = Depends(
     # type별 model 선언
     datas = []
     if type == "group":
-        alias = aliased(models.Group)
+        alias = aliased(Group)
         datas = db.query(alias.gr_id.label('id'), alias.gr_subject.label('subject')).order_by(alias.gr_order, alias.gr_id).all()
     elif type == "board":
-        alias = aliased(models.Board)
+        alias = aliased(Board)
         datas = db.query(alias.bo_table.label('id'), alias.bo_subject.label('subject'), alias.gr_id).order_by(alias.bo_order, alias.bo_table).all()
     elif type == "content":
-        alias = aliased(models.Content)
+        alias = aliased(Content)
         datas = db.query(alias.co_id.label('id'), alias.co_subject.label('subject')).order_by(alias.co_id).all()
     else:
         type = "input"
@@ -102,12 +100,12 @@ def menu_update(
     """
     메뉴 수정
     """
-    if not token or not validate_one_time_token(token, 'update'):
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰값이 일치하지 않습니다."]})    
+    if not compare_token(request, token, 'update'):
+        raise AlertException(status_code=403, detail="토큰이 유효하지 않습니다")
 
     try:
         # 메뉴 전체 삭제
-        db.query(models.Menu).delete()
+        db.query(Menu).delete()
 
         # 새로운 메뉴 등록
         if parent_code:
@@ -118,13 +116,13 @@ def menu_update(
                 insert_me_name = re.sub(r'<.*?>', '', me_name[int(i)])
                 insert_me_link = bleach.clean(me_link[int(i)])
                 if group_code == parent_code[int(i)]:
-                    max_me_code = db.query(func.max(func.substring(models.Menu.me_code, 3, 2))).filter(func.substring(models.Menu.me_code, 1, 2) == group_code).scalar()
+                    max_me_code = db.query(func.max(func.substring(Menu.me_code, 3, 2))).filter(func.substring(Menu.me_code, 1, 2) == group_code).scalar()
                     max_me_code_10 = base36_to_base10(max_me_code)
                     max_me_code_10 += 36
                     insert_me_code = group_code + base10_to_base36(max_me_code_10)
                     
                 else:
-                    max_me_code = db.query(func.max(func.substring(models.Menu.me_code, 1, 2))).filter(func.length(models.Menu.me_code) == 2).scalar()
+                    max_me_code = db.query(func.max(func.substring(Menu.me_code, 1, 2))).filter(func.length(Menu.me_code) == 2).scalar()
                     max_me_code_10 = base36_to_base10(max_me_code)
                     max_me_code_10 += 36
                     insert_me_code = base10_to_base36(max_me_code_10)
@@ -132,7 +130,7 @@ def menu_update(
                     group_code = parent_code[int(i)]
 
                 db.add(
-                    models.Menu(
+                    Menu(
                         me_code=insert_me_code,
                         me_name=insert_me_name,
                         me_link=insert_me_link,

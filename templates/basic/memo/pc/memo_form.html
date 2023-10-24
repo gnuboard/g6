@@ -17,7 +17,7 @@
             <!-- } 쪽지함 선택 끝 -->
 
             <form name="fmemoform" action="{{ url_for('memo_update') }}" onsubmit="return fmemoform_submit(this);" method="post" autocomplete="off">
-                <input type="hidden" name="token" value="{{ generate_one_time_token('create') }}">
+                <input type="hidden" name="token" value="{{ generate_token(request, 'insert') }}">
                 <div class="form_01">
                     <h2 class="sound_only">쪽지쓰기</h2>
                     <ul>
