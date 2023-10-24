@@ -18,7 +18,7 @@
 <input type="hidden" name="sst" value="{{ request.state.sst }}">
 <input type="hidden" name="sod" value="{{ request.state.sod }}">
 <input type="hidden" name="page" value="{{ request.state.page }}">
-<input type="hidden" name="token" value="{{ generate_one_time_token('update' if member.mb_id else 'insert') }}">
+<input type="hidden" name="token" value="{{ generate_token(request, 'update' if member.mb_id else 'insert') }}">
 
 <div class="tbl_frm01 tbl_wrap">
     <table>
@@ -36,6 +36,7 @@
                     {% if member.mb_id %}
                         <input type="hidden" name="mb_id" value="{{ member.mb_id }}" id="mb_id">
                         <b>{{ member.mb_id }}</b>
+                        <a href="/admin/boardgroupmember_form/{{ member.mb_id }}" class="btn_frmline">접근가능그룹보기</a>
                     {% else %}
                         <input type="text" name="mb_id" value="" id="mb_id" required class="frm_input required alnum_" size="15" maxlength="20">
                     {% endif %}
@@ -76,29 +77,34 @@
             </tr>
             <tr>
                 <th scope="row">본인확인방법</th>
-                <td colspan="3">
-                    <input type="radio" name="mb_certify_case" value="simple" id="mb_certify_sa" {{ 'checked' if member.mb_certify == 'simple' }}>
+                <td>
+                    {% if member.mb_certify == '' %}미인증{% endif %}
+                    {% if member.mb_certify == 'simple' %}간편인증{% endif %}
+                    {% if member.mb_certify == 'hp' %}휴대폰{% endif %}
+                    {% if member.mb_certify == 'ipin' %}아이핀{% endif %}
+                {#<input type="radio" name="mb_certify_case" value="simple" id="mb_certify_sa" {{ 'checked' if member.mb_certify == 'simple' }}>
                     <label for="mb_certify_sa">간편인증</label>
                     <input type="radio" name="mb_certify_case" value="hp" id="mb_certify_hp" {{ 'checked' if member.mb_certify == 'hp' }}>
                     <label for="mb_certify_hp">휴대폰</label>
                     <input type="radio" name="mb_certify_case" value="ipin" id="mb_certify_ipin" {{ 'checked' if member.mb_certify == 'ipin' }}>
-                    <label for="mb_certify_ipin">아이핀</label>
+                    <label for="mb_certify_ipin">아이핀</label>#}
                 </td>
-            </tr>
+            {#</tr>
             <tr>
                 <th scope="row">본인확인</th>
                 <td>
-                    <input type="radio" name="mb_certify" value="1" id="mb_certify_yes" {{ 'checked' if member.mb_certify }}>
+                    <input type="radio" name="mb_certify" value="1" id="mb_certify_yes" {{ 'checked' if member.mb_certify else '' }}>
                     <label for="mb_certify_yes">예</label>
-                    <input type="radio" name="mb_certify" value="0" id="mb_certify_no" {{ 'checked' if not member.mb_certify }}>
+                    <input type="radio" name="mb_certify" value="0" id="mb_certify_no" {{ 'checked' if not member.mb_certify else '' }}>
                     <label for="mb_certify_no">아니오</label>
-                </td>
+                </td>#}
                 <th scope="row">성인인증</th>
                 <td>
-                    <input type="radio" name="mb_adult" value="1" id="mb_adult_yes" {{ 'checked' if member.mb_adult }}>
+                    {#<input type="radio" name="mb_adult" value="1" id="mb_adult_yes" {{ 'checked' if member.mb_adult }}>
                     <label for="mb_adult_yes">예</label>
                     <input type="radio" name="mb_adult" value="0" id="mb_adult_no" {{ 'checked' if not member.mb_adult }}>
-                    <label for="mb_adult_no">아니오</label>
+                    <label for="mb_adult_no">아니오</label>#}
+                    {{ '예' if member.mb_adult else '아니오' }}
                 </td>
             </tr>
             <tr>

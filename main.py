@@ -29,7 +29,10 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR, extensions=["jinja2.ext.i18
 templates.env.globals["is_admin"] = is_admin
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.filters["default_if_none"] = default_if_none
+templates.env.globals['getattr'] = getattr
+templates.env.globals["get_poll"] = get_poll
 templates.env.globals["get_popular_list"] = get_popular_list
+templates.env.globals["generate_token"] = generate_token
 
 from _admin.admin import router as admin_router
 from _bbs.board import router as board_router
@@ -41,6 +44,7 @@ from _bbs.qa import router as qa_router
 from _member.member_profile import router as user_profile_router
 from _bbs.menu import router as menu_router
 from _bbs.memo import router as memo_router
+from _bbs.poll import router as poll_router
 
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
@@ -52,6 +56,7 @@ app.include_router(faq_router, prefix="/faq", tags=["faq"])
 app.include_router(qa_router, prefix="/qa", tags=["qa"])
 app.include_router(menu_router, prefix="/menu", tags=["menu"])
 app.include_router(memo_router, prefix="/memo", tags=["memo"])
+app.include_router(poll_router, prefix="/poll", tags=["poll"])
 
 # is_mobile = False
 # user_device = 'pc'
@@ -74,24 +79,27 @@ async def main_middleware(request: Request, call_next):
     db: Session = SessionLocal()
     config = db.query(models.Config).first()
     request.state.config = config
-    
+
+    is_super_admin = False
     ss_mb_id = request.session.get("ss_mb_id", "")
-    
     if ss_mb_id:
         member = db.query(models.Member).filter(models.Member.mb_id == ss_mb_id).first()
         if member:
-            if member.mb_intercept_date or member.mb_leave_date:  # 차단 되었거나, 탈퇴한 회원이면 세션 초기화
+            if member.mb_intercept_date or member.mb_leave_date: # 차단 되었거나, 탈퇴한 회원이면 세션 초기화
                 request.session["ss_mb_id"] = ""
                 member = None
-            else:
-                if member.mb_today_login.strftime(format="%Y-%m-%d") != TIME_YMD:  # 오늘 처음 로그인 이라면
-                    # 첫 로그인 포인트 지급
-                    insert_point(request, member.mb_id, config.cf_login_point, TIME_YMD + " 첫로그인", "@login", member.mb_id, TIME_YMD)
-                    # 오늘의 로그인이 될 수도 있으며 마지막 로그인일 수도 있음
-                    # 해당 회원의 접근일시와 IP 를 저장
-                    member.mb_today_login = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    member.mb_login_ip = request.client.host
-                    db.commit()
+            elif member.mb_today_login.strftime("%Y-%m-%d") != TIME_YMD:  # 오늘 처음 로그인 이라면
+                # if member.mb_today_login[:10] != TIME_YMD: # 오늘 처음 로그인 이라면
+                # 첫 로그인 포인트 지급
+                insert_point(request, member.mb_id, config.cf_login_point, TIME_YMD + " 첫로그인", "@login", member.mb_id, TIME_YMD)
+                # 오늘의 로그인이 될 수도 있으며 마지막 로그인일 수도 있음
+                # 해당 회원의 접근일시와 IP 를 저장
+                member.mb_today_login = TIME_YMDHIS
+                member.mb_login_ip = request.client.host
+                db.commit()
+            # 최고관리자인지 확인
+            if config.cf_admin == member.mb_id:
+                is_super_admin = True
             
     else:
         cookie_mb_id = request.cookies.get("ck_mb_id")
@@ -106,8 +114,9 @@ async def main_middleware(request: Request, call_next):
                     # 쿠키에 저장된 키와 여러가지 정보를 조합하여 만든 키가 일치한다면 로그인으로 간주
                     if request.cookies.get("ck_auto") == ss_mb_key:
                         request.session["ss_mb_id"] = cookie_mb_id
-                        response.set_cookie(key="ss_mb_id", value=cookie_mb_id, max_age=3600)
-                        return RedirectResponse(url="/", status_code=302)
+                        return RedirectResponse(url="/", status_code=302).set_cookie(key="ss_mb_id", value=cookie_mb_id, max_age=3600)
+    
+    request.state.is_super_admin = is_super_admin
 
     if request.method == "GET":
         request.state.sst = request.query_params.get("sst") if request.query_params.get("sst") else ""
@@ -142,6 +151,9 @@ async def main_middleware(request: Request, call_next):
                 
     # 로그인한 회원 정보
     request.state.login_member = member
+
+    request.state.editor = config.cf_editor
+    request.state.use_editor = True if config.cf_editor else False
                 
     # request.state.context = {
     #     # "request": request,

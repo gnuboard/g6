@@ -4,19 +4,15 @@ var AUTOSAVE_INTERVAL = 60; // 초
 // 글의 제목과 내용을 바뀐 부분이 있는지 비교하기 위하여 저장해 놓는 변수
 var save_wr_subject = null;
 var save_wr_content = null;
-
+var target_editor_id = 'wr_content'
 function autosave() {
-    $("form#fwrite").each(function() {
-        if(g5_editor != "") {
-            if (g5_editor.indexOf("ckeditor4") != -1 && typeof(CKEDITOR.instances.wr_content)!="undefined") {
-                this.wr_content.value = CKEDITOR.instances.wr_content.getData();
-            } else if (g5_editor.indexOf("cheditor5") != -1 && typeof(ed_wr_content)!="undefined") {
-                this.wr_content.value = ed_wr_content.outputBodyHTML();
-            } else {
-                if(typeof get_editor_wr_content == "function") {
-                    this.wr_content.value = get_editor_wr_content();
-                }
-            }
+    $("form#fwrite").each(function() {   
+        if (typeof getEditorContent === 'function') {
+            this.wr_content.value = getEditorContent(target_editor_id);
+        }
+
+        if (this.wr_content.value === '' || this.wr_subject.value === '') {
+            return false;
         }
 
         // 변수에 저장해 놓은 값과 다를 경우에만 임시 저장함
@@ -83,18 +79,8 @@ $(function(){
             var subject = $(data).find("item").find("subject").text();
             var content = $(data).find("item").find("content").text();
             $("#wr_subject").val(subject);
-            if(g5_editor != "") {
-                if (g5_editor.indexOf("ckeditor4") != -1 && typeof(CKEDITOR.instances.wr_content)!="undefined") {
-                    CKEDITOR.instances.wr_content.setData(content);
-                } else if (g5_editor.indexOf("cheditor5") != -1 && typeof(ed_wr_content)!="undefined") {
-                    ed_wr_content.putContents(content);
-                } else {
-                    if(typeof put_editor_wr_content == "function") {
-                        put_editor_wr_content(content);
-                    }
-                }
-            } else {
-                $("#fwrite #wr_content").val(content);
+            if (typeof setEditorContent === "function") {
+                    setEditorContent(target_editor_id, content);
             }
         }, "xml");
         $("#autosave_pop").hide();

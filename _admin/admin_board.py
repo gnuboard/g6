@@ -12,7 +12,7 @@ from dataclassform import BoardForm
 
 
 router = APIRouter()
-templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
+templates = Jinja2Templates(directory=[ADMIN_TEMPLATES_DIR, EDITOR_PATH])
 templates.env.globals['getattr'] = getattr
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['option_selected'] = option_selected
@@ -22,7 +22,8 @@ templates.env.globals['get_editor_select'] = get_editor_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
+templates.env.globals["generate_token"] = generate_token
+templates.env.globals["editor_path"] = editor_path
 
 
 @router.get("/board_list")
@@ -101,8 +102,8 @@ async def board_list_update(request: Request, db: Session = Depends(get_db),
         act_button: Optional[str] = Form(...),
         ):
     
-    if not token or not validate_one_time_token(token, 'update'):
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰값이 일치하지 않습니다."]})    
+    if not compare_token(request, token, 'board_list'):
+        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰값이 일치하지 않습니다."]})
 
     query_string = generate_query_string(request)
     
@@ -389,7 +390,7 @@ def board_form_update(request: Request,
                         chk_all_10: str = Form(None),
                         ):
 
-    if validate_one_time_token(token, 'insert'):
+    if compare_token(request, token, 'insert'):
         existing_board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
         if existing_board:
             errors = [f"{bo_table} 게시판아이디가 이미 존재합니다. (등록불가)"]
@@ -403,7 +404,7 @@ def board_form_update(request: Request,
         models.Write = dynamic_create_write_table(table_name=bo_table, create_table=True)        
         
     # else: # 수정
-    elif validate_one_time_token(token, 'update'):
+    elif compare_token(request, token, 'update'):
         existing_board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
         if not existing_board:
             return templates.TemplateResponse("alert.html", {"request": request, "errors": [f"{bo_table} 게시판아이디가 존재하지 않습니다. (수정불가)"]})

@@ -31,7 +31,8 @@
 <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
 <input type="hidden" name="stx" value="{{ request.state.stx }}">
 <input type="hidden" name="page" value="{{ request.state.page }}">
-<input type="hidden" name="token" value="{{ generate_one_time_token('delete') }}">
+{% set token = generate_token(request, 'point_list') %}
+<input type="hidden" name="token" value="{{ token }}">
 
 <div class="tbl_head01 tbl_wrap">
 <table>
@@ -64,9 +65,7 @@
             </td>
             <td class="td_left"><a href="?sfl=mb_id&stx={{ point.mb_id }}">{{ point.mb_id }}</a></td>
             <td class="td_left">{{ point.mb_name }}</td>
-            <td class="td_left sv_use">
-                {{ point.mb_nick }}
-            </td>
+            <td class="td_left sv_use">{{ point.mb_nick }}</td>
             <td class="td_left">{{ point.po_content }}</td>
             <td class="td_num td_pt">{{ "{:,}".format(point.po_point) }}</td>
             <td class="td_datetime">{{ point.po_datetime }}</td>
@@ -104,7 +103,7 @@
 <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
 <input type="hidden" name="stx" value="{{ request.state.stx }}">
 <input type="hidden" name="page" value="{{ request.state.page }}">
-<input type="hidden" name="token" value="{{ generate_one_time_token('insert') }}">
+<input type="hidden" name="token" value="{{ token }}">
     
 <div class="tbl_frm01 tbl_wrap">
     <table>

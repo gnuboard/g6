@@ -8,10 +8,11 @@ import PIL
 import shutil
 from fastapi import Query, Request, HTTPException, UploadFile
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup, escape
 from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.orm import load_only, Session
-from models import Config, Member, Memo, Board, Group, Point, Popular, Visit, VisitSum
+from models import Config, Member, Memo, Board, Group, Point, Poll, Popular, Visit, VisitSum
 from models import WriteBaseModel
 from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
@@ -21,6 +22,8 @@ from user_agents import parse
 
 # 전역변수 선언(global variables)
 TEMPLATES = "templates"
+EDITOR_PATH = f"{TEMPLATES}/editor"
+
 def get_theme_from_db(config=None):
     # main.py 에서 config 를 인수로 받아서 사용
     if not config:
@@ -35,7 +38,10 @@ def get_theme_from_db(config=None):
     
     return theme_path
 
-TEMPLATES_DIR = get_theme_from_db()
+# python setup.py 를 실행하는 것이 아니라면
+if os.environ.get("is_setup") != "true":
+    TEMPLATES_DIR = get_theme_from_db()
+    
 ADMIN_TEMPLATES_DIR = "_admin/templates"
 
 SERVER_TIME = datetime.now()
@@ -150,6 +156,8 @@ def get_editor_select(id, selected):
     else:
         html_code.append(f'<option value="">사용안함</option>')
     for editor in os.listdir("static/plugin/editor"):
+        if editor == 'textarea':
+            continue
         if os.path.isdir(f"static/plugin/editor/{editor}"):
             html_code.append(f'<option value="{editor}" {"selected" if editor == selected else ""}>{editor}</option>')
     html_code.append('</select>')
@@ -159,8 +167,8 @@ def get_editor_select(id, selected):
 # 회원아이디를 SELECT 형식으로 얻음
 def get_member_id_select(id, level, selected, event=''):
     db = SessionLocal()
-    # 테이블에서 지정된 필드만 가져 오는 경우 load_only("field1", "field2") 함수를 사용 
-    members = db.query(Member).options(load_only("mb_id")).filter(Member.mb_level >= level).all()
+    # 테이블에서 지정된 필드만 가져 오는 경우 load_only(Member.field1, Member.field2) 함수를 사용 
+    members = db.query(Member).options(load_only(Member.mb_id)).filter(Member.mb_level >= level).all()
     html_code = []
     html_code.append(f'<select id="{id}" name="{id}" {event}><option value="">선택하세요</option>')
     for member in members:
@@ -279,7 +287,6 @@ def subject_sort_link(request: Request, column: str, query_string: str ='', flag
     # qstr을 쿼리 문자열로 사용하여 링크를 생성하고 반환한다.
     return f'<a href="?{qstr}">'
 
-
 # 함수 테스트
 # print(subject_sort_link('title', query_string='type=list', flag='asc', sst='title', sod='asc', sfl='category', stx='example', page=2))
 
@@ -336,7 +343,6 @@ import cachetools
 
 # 캐시 크기와 만료 시간 설정
 cache = cachetools.TTLCache(maxsize=10000, ttl=3600)
-kv_cache = cachetools.Cache(maxsize=1)
 
 # def generate_one_time_token():
 #     '''
@@ -596,6 +602,12 @@ def record_visit(request: Request):
     existing_visit = db.query(Visit).filter(Visit.vi_date == date.today(), Visit.vi_ip == vi_ip).first()
 
     if not existing_visit:
+        
+        #$tmp_row = sql_fetch(" select max(vi_id) as max_vi_id from {$g5['visit_table']} ");
+        tmp_row = db.query(func.max(Visit.vi_id).label("max_vi_id")).first()
+        max_vi_id = tmp_row.max_vi_id if tmp_row.max_vi_id else 0
+        max_vi_id = max_vi_id + 1
+        
         # 새로운 접속 레코드 생성
         referer = request.headers.get("referer", "")
         user_agent = request.headers.get("User-Agent", "")
@@ -605,6 +617,7 @@ def record_visit(request: Request):
         device = 'pc' if ua.is_pc else 'mobile' if ua.is_mobile else 'tablet' if ua.is_tablet else 'unknown'
             
         visit = Visit(
+            vi_id=max_vi_id,
             vi_ip=vi_ip,
             vi_date=date.today(),
             vi_time=datetime.now().time(),
@@ -997,6 +1010,25 @@ def get_memo_not_read(mb_id: str):
     return db.query(Memo).filter(Memo.me_recv_mb_id == mb_id, Memo.me_read_datetime == None, Memo.me_type == 'recv').count()
 
 
+def editor_path(request) -> str:
+    """지정한 에디터 경로를 반환하는 함수
+    미지정시 그누보드 환경설정값 사용
+    request.state.editor_name 값이 있으면 그 값을 사용
+
+    """
+    if not request.state.use_editor:
+        return "textarea"
+
+    if editor_name := request.state.editor:
+        return editor_name
+
+
+def nl2br(value) -> str:
+    """ \n 을 <br> 태그로 변환
+    """
+    return escape(value).replace('\n', Markup('<br>\n'))
+
+
 def get_popular_list(request: Request, limit: int = 7, day: int = 3):
     """인기검색어 조회
 
@@ -1023,6 +1055,86 @@ def get_popular_list(request: Request, limit: int = 7, day: int = 3):
     db.close()
 
     return popular_list
+
+
+def generate_token(request: Request, action: str = ''):
+    '''
+    토큰 생성 함수
+
+    Returns:
+        str: 생성된 토큰
+    '''
+    # token = str(uuid.uuid4())  # 임의의 유일한 키 생성
+    token = hash_password(action)
+    request.session["ss_token"] = token
+    return token
+
+
+def compare_token(request: Request, token: str, action: str = ''):
+    '''
+    토큰 비교 함수
+
+    Args:
+        token (str): 비교할 토큰
+
+    Returns:
+        bool: 토큰이 일치하면 True, 일치하지 않으면 False
+    '''
+    if request.session.get("ss_token") == token and token:
+        return verify_password(action, token)
+    else:
+        return False
+
+
+def get_poll(request: Request):
+    db = SessionLocal()
+    poll = db.query(Poll).filter(Poll.po_use == 1).order_by(Poll.po_id.desc()).first()
+    db.close()
+
+    return poll
+
+
+def get_member_level(request: Request):
+    """
+    request에서 회원 레벨 정보를 가져오는 함수
+    """
+    member = request.state.login_member
+
+    return member.mb_level if member else 1
+
+
+def auth_check(request: Request, menu_key: str, attribute: str):
+    '''
+    관리권한 체크
+    '''    
+    # 최고관리자이면 처리 안함
+    if request.state.is_super_admin:
+        return ""
+
+    db = SessionLocal()
+
+    exists_member = request.state.login_member
+    if not exists_member:
+        return "로그인 후 이용해 주세요."
+
+    exists_auth = db.query(models.Auth).filter_by(mb_id=exists_member.mb_id, au_menu=menu_key).first()
+    if not exists_auth:
+        return "이 메뉴에는 접근 권한이 없습니다.\\n\\n접근 권한은 최고관리자만 부여할 수 있습니다."
+
+    auth_set = set(exists_auth.au_auth.split(","))
+    if not attribute in auth_set:
+        if attribute == "r":
+            error = "읽을 권한이 없습니다."
+        elif attribute == "w":
+            error = "입력, 추가, 생성, 수정 권한이 없습니다."
+        elif attribute == "d":
+            error = "삭제 권한이 없습니다."
+        else:
+            error = f"속성(attribute={attribute})이 잘못 되었습니다."
+        return error
+
+    return ""
+
 
 def is_admin(request: Request):
     """관리자 여부 확인
@@ -1076,20 +1188,6 @@ def default_if_none(value, arg):
     if value is None:
         return arg
     return value
-
-
-def get_config():
-    """그누보드 config 를 반환.
-    """
-    if config_cache := kv_cache.get('gnu_config'):
-        return config_cache
-
-    db = SessionLocal()
-    config = db.query(Config).first()
-    db.close()
-    kv_cache.__setitem__('gnu_config', config)
-
-    return config
 
 
 def valid_email(email: str):
