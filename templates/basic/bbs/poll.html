@@ -4,7 +4,7 @@
     <form name="fpoll" action="{{ url_for('poll_update', po_id=poll.po_id) }}" onsubmit="return fpoll_submit(this);" method="post" target="win_poll">
         <input type="hidden" name="po_id" value="{{ poll.po_id }}">
         <input type="hidden" name="skin_dir" value="theme%2Fbasic">
-        <input type="hidden" name="token" value="{{ generate_one_time_token('update') }}">
+        <input type="hidden" name="token" value="{{ generate_token(request, 'update') }}">
         <section id="poll">
             <header>
                 <h2>설문조사</h2>
@@ -39,10 +39,6 @@
     <script>
         function fpoll_submit(f)
         {
-            /*if ($member['mb_level'] < $po['po_level'])
-                echo " alert('권한 {$po['po_level']} 이상의 회원만 투표에 참여하실 수 있습니다.'); return false; ";
-                */
-
             var chk = false;
             for (i=0; i<f.gb_poll.length;i ++) {
                 if (f.gb_poll[i].checked == true) {
@@ -64,10 +60,6 @@
         
         function poll_result(url)
         {
-            /*if ($member['mb_level'] < $po['po_level'])
-                echo " alert('권한 {$po['po_level']} 이상의 회원만 결과를 보실 수 있습니다.'); return false; ";
-                */
-
             win_poll(url);
         }
         </script>

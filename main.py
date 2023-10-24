@@ -23,7 +23,7 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 templates.env.globals['getattr'] = getattr
 templates.env.globals["get_poll"] = get_poll
 templates.env.globals["get_popular_list"] = get_popular_list
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
+templates.env.globals["generate_token"] = generate_token
 
 from _admin.admin import router as admin_router
 from _bbs.board import router as board_router

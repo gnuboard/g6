@@ -15,7 +15,7 @@ templates.env.globals['getattr'] = getattr
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['get_selected'] = get_selected
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
+templates.env.globals["generate_token"] = generate_token
 
 MENU_KEY = "200900"
 
@@ -58,7 +58,7 @@ def poll_list_update(request: Request,
     """
     투표 목록 삭제
     """
-    if not validate_one_time_token(token, 'delete'):
+    if not compare_token(request, token, 'delete'):
         return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요."]})
 
     # in 조건을 사용해서 일괄 삭제
@@ -102,13 +102,13 @@ def poll_form_update(request: Request,
     """
     투표등록 및 수정 처리
     """
-    if validate_one_time_token(token, 'insert'): # 토큰에 등록돤 action이 insert라면 신규 등록
+    if compare_token(request, token, 'insert'): # 토큰에 등록돤 action이 insert라면 신규 등록
         # 투표 등록
         poll = Poll(**form_data.__dict__)
         db.add(poll)
         db.commit()
 
-    elif validate_one_time_token(token, 'update'):  # 토큰에 등록된  action이 update라면 수정
+    elif compare_token(request, token, 'update'):  # 토큰에 등록된 action이 update라면 수정
         poll = db.query(Poll).get(po_id)
         if not poll:
             raise HTTPException(status_code=404, detail=f"{po_id} : 투표 아이디가 존재하지 않습니다.")

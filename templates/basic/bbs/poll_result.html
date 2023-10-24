@@ -33,6 +33,7 @@
             <!-- } 설문조사 결과 그래프 끝 -->
 
             <!-- 설문조사 기타의견 시작 { -->
+            {# TODO: 기타의견의 generate_token로 인해 토큰이 갱신되어 삭제 오류가 발생함. #}
             {% if poll.po_etc %}
                 <section id="poll_result_cmt">
                     <h2>이 설문에 대한 기타의견</h2>
@@ -44,7 +45,7 @@
                                 <span class="poll_datetime">{{ etc.pc_datetime|safe }}</span>
                                 {% if etc.mb_id == request.state.login_member.mb_id or request.state.login_member.mb_level == 10 %}
                                     <span class="poll_cmt_del">
-                                        <a href="{{ url_for('etc_delete', pc_id=etc.pc_id) }}?token={{ generate_one_time_token('delete') }}" class="poll_delete">
+                                        <a href="{{ url_for('etc_delete', pc_id=etc.pc_id) }}?token={{ generate_token(request, 'delete') }}" class="poll_delete">
                                             <i class="fa fa-times-circle" aria-hidden="true"></i>
                                             <span class="sound_only">삭제</span>
                                         </a>
@@ -56,7 +57,7 @@
                     {% endfor %}
                     {% if get_member_level(request) >= poll.po_level %}
                         <form name="fpollresult" action="{{ url_for('poll_etc_update', po_id=poll.po_id) }}" onsubmit="return fpollresult_submit(this);" method="post" autocomplete="off" id="poll_other_q">
-                            <input type="hidden" name="token" value="{{ generate_one_time_token('insert') }}">
+                            <input type="hidden" name="token" value="{{ generate_token(request, 'insert') }}">
                             <input type="hidden" name="skin_dir" value="theme%2Fbasic">
                             {% if request.state.login_member.mb_id %}
                                 <input type="hidden" name="pc_name" value="{{ request.state.login_member.mb_nick }}">

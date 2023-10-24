@@ -14,7 +14,7 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.globals["now"] = now
 templates.env.globals['getattr'] = getattr
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
+templates.env.globals["generate_token"] = generate_token
 templates.env.globals["generate_query_string"] = generate_query_string
 templates.env.globals["get_member_level"] = get_member_level
 
@@ -37,7 +37,7 @@ def poll_update(request: Request, po_id: int, token: str = Form(...), gb_poll: i
             "alert.html", {"request": request, "errors": [f"권한 {poll.po_level} 이상의 회원만 투표하실 수 있습니다."]}
         )
 
-    if validate_one_time_token(token, "update"):
+    if compare_token(request, token, "update"):
 
         if request.client.host in poll.po_ips or (member and member.mb_id in poll.mb_ids):
             errors = [f"{poll.po_subject} 투표에 이미 참여하셨습니다."]
@@ -116,7 +116,7 @@ def poll_etc_update(request: Request,
     member = request.state.login_member
     member_level = get_member_level(request)
 
-    if validate_one_time_token(token, "insert"):
+    if compare_token(request, token, "insert"):
         if poll.po_level > 1 and member_level < poll.po_level:
             return templates.TemplateResponse(
                 "alert.html", {"request": request, "errors": [f"권한 {poll.po_level} 이상의 회원만 기타의견을 등록할 수 있습니다."]}
@@ -143,7 +143,7 @@ def etc_delete(request: Request, pc_id: int, token: str, db: Session = Depends(g
     member = request.state.login_member
     member_level = get_member_level(request)
 
-    if validate_one_time_token(token, "delete"):
+    if compare_token(request, token, "delete"):
         if poll_etc.mb_id != member.mb_id and not member_level == 10:
             return templates.TemplateResponse(
                 "alert.html", {"request": request, "errors": ["작성자만 삭제할 수 있습니다."]}
