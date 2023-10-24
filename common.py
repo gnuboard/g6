@@ -523,9 +523,10 @@ def get_paging(request: Request, current_page, total_count, add_url=""):
 
     # 한 페이지당 라인수
     page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
+    page_rows = 10
     # 페이지 표시수
     page_count = config.cf_mobile_pages if request.state.is_mobile and config.cf_mobile_pages else config.cf_write_pages
-    
+    page_count = 10
     # 올바른 total_pages 계산 (올림처리)
     total_pages = (total_count + page_rows - 1) // page_rows
     
@@ -1008,12 +1009,11 @@ def get_memo_not_read(mb_id: str):
     return db.query(Memo).filter(Memo.me_recv_mb_id == mb_id, Memo.me_read_datetime == None, Memo.me_type == 'recv').count()
 
 
-def get_editor_path(request) -> str:
+def editor_path(request) -> str:
     """지정한 에디터 경로를 반환하는 함수
     미지정시 그누보드 환경설정값 사용
-    Args:
-        editor_name (Optional[str]): 에디터 이름.
-        is_use_dhtml (Optional[bool]): dhtml 위지웍에디터 사용여부.
+    request.state.editor_name 값이 있으면 그 값을 사용
+
     """
     if not request.state.use_editor:
         return "textarea"
