@@ -42,29 +42,42 @@
                                 <h2>{{ etc.pc_name }}<span class="sound_only">님의 의견</span></h2>
                                 {{ etc.pc_name }}
                                 <span class="poll_datetime">{{ etc.pc_datetime|safe }}</span>
-                                <span class="poll_cmt_del">
-                                    <a href="" class="poll_delete">
-                                        <i class="fa fa-times-circle" aria-hidden="true"></i>
-                                        <span class="sound_only">삭제</span>
-                                    </a>
-                                </span>
+                                {% if etc.mb_id == request.state.login_member.mb_id or request.state.login_member.mb_level == 10 %}
+                                    <span class="poll_cmt_del">
+                                        <a href="{{ url_for('etc_delete', pc_id=etc.pc_id) }}?token={{ generate_one_time_token('delete') }}" class="poll_delete">
+                                            <i class="fa fa-times-circle" aria-hidden="true"></i>
+                                            <span class="sound_only">삭제</span>
+                                        </a>
+                                    </span>
+                                {% endif %}
                             </header>
                             <p>{{ etc.pc_idea[:255]|safe }}</p>
                         </article>
                     {% endfor %}
-                    <form name="fpollresult" action="{{ url_for('poll_etc_update', po_id=poll.po_id) }}" onsubmit="return fpollresult_submit(this);" method="post" autocomplete="off" id="poll_other_q">
-                        <input type="hidden" name="token" value="{{ generate_one_time_token('insert') }}">
-                        <input type="hidden" name="skin_dir" value="theme%2Fbasic">
-                        <input type="hidden" name="pc_name" value="{{ request.state.login_member.mb_nick }}">
-                        <div id="poll_result_wcmt">
-                            <h3><span>기타의견</span>{{ poll.po_etc|safe }}</h3>
-                            <div>
-                                <label for="pc_idea" class="sound_only">의견<strong>필수</strong></label>
-                                <input type="text" id="pc_idea" name="pc_idea" required="" class="full_input required" size="47" maxlength="100" placeholder="의견을 입력해주세요">
+                    {% if get_member_level(request) >= poll.po_level %}
+                        <form name="fpollresult" action="{{ url_for('poll_etc_update', po_id=poll.po_id) }}" onsubmit="return fpollresult_submit(this);" method="post" autocomplete="off" id="poll_other_q">
+                            <input type="hidden" name="token" value="{{ generate_one_time_token('insert') }}">
+                            <input type="hidden" name="skin_dir" value="theme%2Fbasic">
+                            {% if request.state.login_member.mb_id %}
+                                <input type="hidden" name="pc_name" value="{{ request.state.login_member.mb_nick }}">
+                            {% endif %}
+                            <div id="poll_result_wcmt">
+                                <h3><span>기타의견</span>{{ poll.po_etc|safe }}</h3>
+                                <div>
+                                    <label for="pc_idea" class="sound_only">의견<strong>필수</strong></label>
+                                    <input type="text" id="pc_idea" name="pc_idea" required="" class="full_input required" size="47" maxlength="100" placeholder="의견을 입력해주세요">
+                                </div>
                             </div>
-                        </div>
-                        <button type="submit" class="btn_submit">의견남기기</button>
-                    </form>
+                            {% if not request.state.login_member.mb_id %}
+                                <div class="poll_guest">
+                                    <label for="pc_name" class="sound_only">이름<strong>필수</strong></label>
+                                    <input type="text" name="pc_name" id="pc_name" required="" class="full_input required" size="20" placeholder="이름">
+                                </div>
+                            {% endif %}
+                            <!-- TODO: Capcha 추가 -->
+                            <button type="submit" class="btn_submit">의견남기기</button>
+                        </form>
+                    {% endif %}
                 </section>
             {% endif %}
             <!-- } 설문조사 기타의견 끝 -->

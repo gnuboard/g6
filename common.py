@@ -1031,3 +1031,12 @@ def get_poll(request: Request):
     db.close()
 
     return poll
+
+
+def get_member_level(request: Request):
+    """
+    request에서 회원 레벨 정보를 가져오는 함수
+    """
+    member = request.state.login_member
+
+    return member.mb_level if member else 1
