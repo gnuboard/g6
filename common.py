@@ -1139,7 +1139,7 @@ def auth_check(request: Request, menu_key: str, attribute: str):
 def is_admin(request: Request):
     """관리자 여부 확인
     """
-    config = get_config()
+    config = request.state.config
     if config.cf_admin.strip() == "":
         return False
 

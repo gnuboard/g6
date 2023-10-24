@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Union, Optional
 
 from fastapi import APIRouter, Form, UploadFile, File, Depends
 from sqlalchemy.orm import Session
@@ -68,11 +67,12 @@ def member_profile(request: Request, db: Session = Depends(get_db)):
         errors.append("회원정보가 없습니다.")
         return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
 
+    config = request.state.config
     form_context = {
         "page": True,
         "action_url": app.url_path_for("member_profile", mb_no=request.path_params["mb_no"]),
         "name_readonly": "readonly",
-        "hp_readonly": "readonly" if get_is_phone_certify(member) else "",
+        "hp_readonly": "readonly" if get_is_phone_certify(member, config) else "",
         "mb_icon_url": request.base_url.__str__() + f'data/member/{mb_id[:2]}/{mb_id}.gif?'
                        + f'{get_filetime_str(f"data/member/{mb_id[:2]}/{mb_id}.gif")}',
 
@@ -81,7 +81,7 @@ def member_profile(request: Request, db: Session = Depends(get_db)):
     }
 
     return templates.TemplateResponse("member/register_form.html", {
-        "config": get_config(),
+        "config": request.state.config,
         "request": request,
         "member": member,
         "errors": errors,
@@ -106,7 +106,7 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
         errors.append("토큰이 유효하지 않습니다.")
         return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
 
-    config = get_config()
+    config = request.state.config
 
     mb_id = request.session.get("ss_mb_id", "")
     before_member_data: Optional[Member] = db.query(Member).filter(Member.mb_id == mb_id).first()
@@ -142,12 +142,12 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
     # 닉네임변경 검사.
     is_nickname_changed = before_member_data.mb_nick != member_form.mb_nick
     if is_nickname_changed:
-        result = validate_nickname(member_form.mb_nick)
+        result = validate_nickname(member_form.mb_nick, config.cf_prohibit_id)
         if result is not True:
             errors.append(result)
 
         if before_member_data.mb_nick_date:
-            result = validate_nickname_change_date(before_member_data.mb_nick_date)
+            result = validate_nickname_change_date(before_member_data.mb_nick_date, config.cf_nick_modify)
             if result is not True:
                 errors.append(result)
 
@@ -190,7 +190,7 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
             "page": True,
             "action_url": app.url_path_for("member_profile", mb_no=request.path_params["mb_no"]),
             "name_readonly": "readonly",
-            "hp_readonly": "readonly" if get_is_phone_certify(before_member_data) else "",
+            "hp_readonly": "readonly" if get_is_phone_certify(before_member_data, config) else "",
             "mb_icon_url": request.base_url.__str__() + f'data/member/{mb_id[:2]}/{mb_id}.gif?'
                            + f'{get_filetime_str(f"data/member/{mb_id[:2]}/{mb_id}.gif")}',
 
@@ -199,7 +199,8 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
         }
 
         return templates.TemplateResponse("member/register_form.html", {
-            "request": request, "errors": errors, "member": member_form, "config": get_config(), "form": form_context,
+            "request": request, "errors": errors, "member": member_form, "config": config,
+            "form": form_context,
         })
 
     # 유효성검사 통과
@@ -232,37 +233,37 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
     return RedirectResponse(url="/", status_code=302)
 
 
-def get_is_phone_certify(member: Member) -> bool:
+def get_is_phone_certify(member: Member, config: Config) -> bool:
     """휴대폰 본인인증 사용여부 확인
     """
-    config = get_config()
     return (config.cf_cert_use and config.cf_cert_req and
             (config.cf_cert_hp or config.cf_cert_simple) and
             member.mb_certify != "ipin")
 
 
-def validate_nickname_change_date(nick_date: datetime) -> Union[str, bool]:
+def validate_nickname_change_date(before_nick_date: datetime, nick_modify_date) -> Union[str, bool]:
     """
         닉네임 변경 가능한지 날짜 검사
         Args:
-            nick_date (datetime) : 이전 닉네임 변경한 날짜
+            before_nick_date (datetime) : 이전 닉네임 변경한 날짜
+            nick_modify_date (bool) : 닉네임 수정가능일
         Raises:
             ValidationError: 닉네임 변경 가능일 안내
     """
 
-    config = get_config()
-    change_date = timedelta(days=config.cf_nick_modify)
-    available_date = nick_date + change_date
+    change_date = timedelta(days=nick_modify_date)
+    available_date = before_nick_date + change_date
     if datetime.now().timestamp() <= available_date.timestamp():
         return f"{available_date.strftime('%Y-%m-%d')} 이후 닉네임을 변경할 수있습니다."
 
     return True
 
 
-def validate_nickname(mb_nick: str) -> Union[str, bool]:
+def validate_nickname(mb_nick: str, prohibit_id: str) -> Union[str, bool]:
     """ 등록가능한 닉네임인지 검사
     Args:
-        mb_nick: 등록할 닉네임
+        mb_nick : 등록할 닉네임
+        prohibit_id : 금지된 닉네임
     Return:
         가능한 닉네임이면 True 아니면 에러메시지 배열
     """
@@ -276,29 +277,28 @@ def validate_nickname(mb_nick: str) -> Union[str, bool]:
         error_msg = "해당 닉네임이 존재합니다."
         return error_msg
 
-    config = get_config()
-    if mb_nick in config.cf_prohibit_id:
+    if mb_nick in prohibit_id:
         error_msg = "닉네임으로 정할 수없는 단어입니다."
         return error_msg
 
     return True
 
 
-def validate_userid(user_id: str):
+def validate_userid(user_id: str, prohibit_id: str):
     """
     ID 로 사용 불가인 단어 검사
     Args:
         user_id (str): ID
+        prohibit_id (str): 사용불가 아이디
     Raises:
-        ValueError 정할 수없는 ID 
+        ValueError 정할 수없는 ID
     """
 
     if not user_id or user_id.strip() == "":
         error_msg = "ID를 입력해주세요."
         return error_msg
 
-    config = get_config()
-    if user_id in config.cf_prohibit_id.strip():
+    if user_id in prohibit_id.strip():
         error_msg = "ID로 정할 수없는 단어입니다."
         return error_msg
 

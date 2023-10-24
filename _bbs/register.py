@@ -1,5 +1,3 @@
-from typing import Optional
-
 from fastapi import APIRouter, Form, File, UploadFile, Depends
 from fastapi.responses import RedirectResponse, Response
 from sqlalchemy.orm import Session
@@ -70,7 +68,7 @@ def get_register_form(request: Request):
             "member": member,
             "form": form_context,
             "errors": '',
-            "config": get_config(),
+            "config": request.state.config,
         }
     )
 
@@ -96,7 +94,7 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
     # 유효성 검사
     errors = []
     member = db.query(Member.mb_id, Member.mb_email).filter(Member.mb_id == mb_id).first()
-    config = get_config()
+    config = request.state.config
 
     if member:
         errors.append("이미 존재하는 회원아이디 입니다.")
@@ -125,11 +123,11 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
                 errors.append("이미 존재하는 이메일 입니다.")
 
     # 닉네임 검사
-    result = validate_nickname(member_form.mb_nick)
+    result = validate_nickname(member_form.mb_nick, config.cf_prohibit_id)
     if result is not True:
         errors.append(result)
 
-    result = validate_userid(mb_id)
+    result = validate_userid(mb_id, config.cf_prohibit_id)
     if result is not True:
         errors.append(result)
 
@@ -155,6 +153,11 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
     if not member_form.mb_sex in {"m", "f"}:
         member_form.mb_sex = ""
 
+    # 레벨 입력방지
+    del member_form.mb_level
+
+    # 유효성 검증 통과
+
     form_context = {
         "agree": agree,
         "agree2": agree2,
@@ -169,14 +172,9 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
                 "request": request,
                 "member": Member(mb_id=mb_id, mb_level=1, **member_form.__dict__),
                 "is_register": True,
-                "config": get_config(),
+                "config": request.state.config,
                 "form": form_context, "errors": errors
             })
-
-    # 레벨 입력방지
-    del member_form.mb_level
-
-    # 유효성 검증 통과
 
     # 우편번호 (postalcode)
     member_form.mb_zip1 = mb_zip[:3]
