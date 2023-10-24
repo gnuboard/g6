@@ -11,7 +11,7 @@ from markupsafe import Markup, escape
 from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.orm import load_only, Session
-from models import Config, Member, Memo, Board, Group, Point, Poll, Popular, Visit, VisitSum
+from models import Auth, Config, Member, Memo, Board, Group, Point, Poll, Popular, Visit, VisitSum
 from models import WriteBaseModel
 from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
@@ -1113,7 +1113,7 @@ def auth_check(request: Request, menu_key: str, attribute: str):
     if not exists_member:
         return "로그인 후 이용해 주세요."
 
-    exists_auth = db.query(models.Auth).filter_by(mb_id=exists_member.mb_id, au_menu=menu_key).first()
+    exists_auth = db.query(Auth).filter_by(mb_id=exists_member.mb_id, au_menu=menu_key).first()
     if not exists_auth:
         return "이 메뉴에는 접근 권한이 없습니다.\\n\\n접근 권한은 최고관리자만 부여할 수 있습니다."
 
