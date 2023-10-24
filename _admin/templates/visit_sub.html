@@ -1,4 +1,6 @@
-<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
+<link href="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/themes/base/jquery-ui.css" rel="stylesheet" />
+<link href="/static/admin/calendar_style.css" rel="stylesheet" />
 <script>
 jQuery(function($){
     $.datepicker.regional["ko"] = {
@@ -40,7 +42,7 @@ jQuery(function($){
     <li><a href="./visit_os?fr_date={{ fr_date }}&to_date={{ to_date }}">운영체제</a></li>
     <li><a href="./visit_device?fr_date={{ fr_date }}&to_date={{ to_date }}">접속기기</a></li>
     <li><a href="./visit_hour?fr_date={{ fr_date }}&to_date={{ to_date }}">시간</a></li>
-    <li><a href="./visit_week?fr_date={{ fr_date }}&to_date={{ to_date }}">요일</a></li>
+    <li><a href="./visit_weekday?fr_date={{ fr_date }}&to_date={{ to_date }}">요일</a></li>
     <li><a href="./visit_date?fr_date={{ fr_date }}&to_date={{ to_date }}">일</a></li>
     <li><a href="./visit_month?fr_date={{ fr_date }}&to_date={{ to_date }}">월</a></li>
     <li><a href="./visit_year?fr_date={{ fr_date }}&to_date={{ to_date }}">년</a></li>
