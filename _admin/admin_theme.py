@@ -10,6 +10,7 @@ from models import Config
 from sqlalchemy import update
 import re
 from pathlib import Path
+from sqlalchemy.orm import Session
 
 THEME_DIR = TEMPLATES  # Replace with actual theme directory
 

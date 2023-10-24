@@ -7,6 +7,7 @@ import PIL
 import shutil
 from fastapi import Query, Request, HTTPException, UploadFile
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup, escape
 from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.orm import load_only, Session
@@ -20,6 +21,8 @@ from user_agents import parse
 
 # 전역변수 선언(global variables)
 TEMPLATES = "templates"
+EDITOR_PATH = f"{TEMPLATES}/editor"
+
 def get_theme_from_db(config=None):
     # main.py 에서 config 를 인수로 받아서 사용
     if not config:
@@ -153,6 +156,8 @@ def get_editor_select(id, selected):
     else:
         html_code.append(f'<option value="">사용안함</option>')
     for editor in os.listdir("static/plugin/editor"):
+        if editor == 'textarea':
+            continue
         if os.path.isdir(f"static/plugin/editor/{editor}"):
             html_code.append(f'<option value="{editor}" {"selected" if editor == selected else ""}>{editor}</option>')
     html_code.append('</select>')
@@ -521,9 +526,10 @@ def get_paging(request: Request, current_page, total_count, add_url=""):
 
     # 한 페이지당 라인수
     page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
+    page_rows = 10
     # 페이지 표시수
     page_count = config.cf_mobile_pages if request.state.is_mobile and config.cf_mobile_pages else config.cf_write_pages
-    
+    page_count = 10
     # 올바른 total_pages 계산 (올림처리)
     total_pages = (total_count + page_rows - 1) // page_rows
     
@@ -1004,6 +1010,25 @@ def get_memo_not_read(mb_id: str):
     '''
     db = SessionLocal()
     return db.query(Memo).filter(Memo.me_recv_mb_id == mb_id, Memo.me_read_datetime == None, Memo.me_type == 'recv').count()
+
+
+def editor_path(request) -> str:
+    """지정한 에디터 경로를 반환하는 함수
+    미지정시 그누보드 환경설정값 사용
+    request.state.editor_name 값이 있으면 그 값을 사용
+
+    """
+    if not request.state.use_editor:
+        return "textarea"
+
+    if editor_name := request.state.editor:
+        return editor_name
+
+
+def nl2br(value) -> str:
+    """ \n 을 <br> 태그로 변환
+    """
+    return escape(value).replace('\n', Markup('<br>\n'))
 
 
 def get_popular_list(request: Request, limit: int = 7, day: int = 3):
