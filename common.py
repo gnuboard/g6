@@ -1086,3 +1086,36 @@ def compare_token(request: Request, token: str, action: str = ''):
         return verify_password(action, token)
     else:
         return False
+
+
+def auth_check(request: Request, menu_key: str, attribute: str):
+    '''
+    관리권한 체크
+    '''    
+    # 최고관리자이면 처리 안함
+    if request.state.is_super_admin:
+        return ""
+
+    db = SessionLocal()
+
+    exists_member = request.state.login_member
+    if not exists_member:
+        return "로그인 후 이용해 주세요."
+
+    exists_auth = db.query(models.Auth).filter_by(mb_id=exists_member.mb_id, au_menu=menu_key).first()
+    if not exists_auth:
+        return "이 메뉴에는 접근 권한이 없습니다.\\n\\n접근 권한은 최고관리자만 부여할 수 있습니다."
+
+    auth_set = set(exists_auth.au_auth.split(","))
+    if not attribute in auth_set:
+        if attribute == "r":
+            error = "읽을 권한이 없습니다."
+        elif attribute == "w":
+            error = "입력, 추가, 생성, 수정 권한이 없습니다."
+        elif attribute == "d":
+            error = "삭제 권한이 없습니다."
+        else:
+            error = f"속성(attribute={attribute})이 잘못 되었습니다."
+        return error
+
+    return ""
