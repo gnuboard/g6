@@ -1,4 +1,4 @@
-import datetime
+import datetime 
 from datetime import timedelta
 import re
 from fastapi import FastAPI, Depends, Request, Form
@@ -31,6 +31,7 @@ from _bbs.faq import router as faq_router
 from _bbs.qa import router as qa_router
 from _bbs.menu import router as menu_router
 from _bbs.memo import router as memo_router
+from _bbs.ajax_autosave import router as autosave_router
 
 import _user.user_router
 
@@ -43,6 +44,7 @@ app.include_router(faq_router, prefix="/faq", tags=["faq"])
 app.include_router(qa_router, prefix="/qa", tags=["qa"])
 app.include_router(menu_router, prefix="/menu", tags=["menu"])
 app.include_router(memo_router, prefix="/memo", tags=["memo"])
+app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
 
 # is_mobile = False
 # user_device = 'pc'

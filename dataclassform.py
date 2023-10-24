@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Optional, List
 from fastapi import Form
 
@@ -360,3 +361,12 @@ class ContentForm:
     co_html: str = Form(None)
     co_skin: str = Form(None)
     co_mobile_skin: str = Form(None)
+
+
+@dataclass
+class AutoSaveForm:
+    mb_id: str = Form(default="")
+    as_uid: Optional[int] = Form(default=0)
+    as_subject: str = Form(default="")
+    as_content: str = Form(default="")
+    as_datetime: Optional[datetime] = Form(default=None)

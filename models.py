@@ -11,6 +11,7 @@ from sqlalchemy import (
     DateTime,
     Date,
     Time,
+    BIGINT,
 )
 
 # from sqlalchemy.dialects.mysql import TINYINT
@@ -929,3 +930,21 @@ class Auth(Base):
     mb_id = Column(String(20), primary_key=True, nullable=False, default="")
     au_menu = Column(String(20), primary_key=True, nullable=False, default="")
     au_auth = Column(String(255), nullable=False, default="")
+
+
+class AutoSave(Base):
+    __tablename__ = DB_TABLE_PREFIX + "autosave"
+
+    as_id = Column(Integer, primary_key=True, autoincrement=True)
+    mb_id = Column(String(20), nullable=False, default="")
+    as_uid = Column(BIGINT, nullable=False, unique=True, default=0)
+    as_subject = Column(String(255), nullable=False, default="")
+    as_content = Column(Text, nullable=False, default="")
+    as_datetime = Column(DateTime, nullable=False, default=datetime.now())
+
+
+class UniqId(Base):
+    __tablename__ = DB_TABLE_PREFIX + "uniqid"
+
+    uq_id = Column(BIGINT, primary_key=True)
+    uq_ip = Column(String(255), nullable=False, default="")

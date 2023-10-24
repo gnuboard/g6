@@ -6,7 +6,7 @@ var save_wr_subject = null;
 var save_wr_content = null;
 var target_editor_id = 'wr_content'
 function autosave() {
-    $("form#fwrite").each(function() {   
+    $("form#fwrite").each(function () {
         if (typeof getEditorContent === 'function') {
             this.wr_content.value = getEditorContent(target_editor_id);
         }
@@ -17,17 +17,20 @@ function autosave() {
 
         // 변수에 저장해 놓은 값과 다를 경우에만 임시 저장함
         if (save_wr_subject != this.wr_subject.value || save_wr_content != this.wr_content.value) {
+            let formData = new FormData();
+            formData.append('as_subject', this.wr_subject.value);
+            formData.append('as_content', this.wr_content.value);
+            formData.append('as_uid', this.uid.value);
+
             $.ajax({
-                url: g5_bbs_url+"/ajax.autosave.php",
-                data: {
-                    "uid" : this.uid.value,
-                    "subject": this.wr_subject.value,
-                    "content": this.wr_content.value
-                },
+                url: g5_bbs_url + "/ajax/autosave",
+                data: formData,
                 type: "POST",
-                success: function(data){
-                    if (data) {
-                        $("#autosave_count").html(data);
+                processData: false,
+                contentType: false,
+                success: function (res) {
+                    if (res) {
+                        $("#autosave_count").html(res.count);
                     }
                 }
             });
@@ -37,67 +40,83 @@ function autosave() {
     });
 }
 
-$(function(){
+$(function () {
 
     if (g5_is_member) {
         setInterval(autosave, AUTOSAVE_INTERVAL * 1000);
     }
-
+    const autosavePop = $("#autosave_pop");
     // 임시저장된 글목록을 가져옴
-    $("#btn_autosave").click(function(){
-        if ($("#autosave_pop").is(":hidden")) {
-            $.get(g5_bbs_url+"/ajax.autosavelist.php", function(data){
-                //alert(data);
-                //console.log( "Data: " + data);
-                $("#autosave_pop ul").empty();
-                if ($(data).find("list").find("item").length > 0) {
-                    $(data).find("list").find("item").each(function(i) {
-                        var id = $(this).find("id").text();
-                        var uid = $(this).find("uid").text();
-                        var subject = $(this).find("subject").text();
-                        var datetime = $(this).find("datetime").text();
-                        $("#autosave_pop ul")
-                            .append('<li><a href="#none" class="autosave_load">'+subject+'</a><span>'+datetime+' <button type="button" class="autosave_del">삭제</button></span></li>')
-                            .find("li:eq("+i+")")
-                            .data({ as_id: id, uid: uid });
-                    });
+    $("#btn_autosave").click(function () {
+        if (autosavePop.is(":hidden")) {
+            $.ajax(g5_bbs_url + "/ajax/autosave_list", {
+                headers: {
+                    "Content-Type": "application/json;"
+                },
+                type: "get",
+                success: function (data) {
+                    const list = autosavePop.find("ul");
+                    list.empty();
+                    if (data.length > 0) {
+                        $(data).each(function (i, item) {
+
+                            let datetime = new Date(item.as_datetime).toLocaleDateString(navigator.language, {
+                                hour: "2-digit",
+                                minute: "numeric"
+                            });
+                            list.append('<li data-as_id=' + item.as_id + '>' +
+                                '<a href="#none" class="autosave_load">' + item.as_subject + '</a>' +
+                                '<span>' + datetime + ' <button type="button" name="as_id" value="' +
+                                item.as_id + '" class="autosave_del">삭제</input></span></li>'
+                            );
+                        });
+                    }
                 }
-            }, "xml");
-            $("#autosave_pop").show();
+            });
+
+            autosavePop.show();
         } else {
-            $("#autosave_pop").hide();
+            autosavePop.hide();
         }
     });
 
     // 임시저장된 글 제목과 내용을 가져와서 제목과 내용 입력박스에 노출해 줌
-    $(document).on( "click", ".autosave_load", function(){
-        var $li = $(this).parents("li");
-        var as_id = $li.data("as_id");
-        var as_uid = $li.data("uid");
-        $("#fwrite input[name='uid']").val(as_uid);
-        $.get(g5_bbs_url+"/ajax.autosaveload.php", {"as_id":as_id}, function(data){
-            var subject = $(data).find("item").find("subject").text();
-            var content = $(data).find("item").find("content").text();
-            $("#wr_subject").val(subject);
-            if (typeof setEditorContent === "function") {
-                    setEditorContent(target_editor_id, content);
+    $(document).on("click", ".autosave_load", function () {
+        const $li = $(this).parents("li");
+        const as_id = $li.data("as_id");
+        $.ajax(g5_bbs_url + "/ajax/autosave_load/" + as_id, {
+            success: function (data) {
+                const subject = data.as_subject;
+                const content = data.as_content;
+                document.querySelector('#wr_subject').value = subject;
+                if (typeof setEditorContent === "function") {
+                    setEditorContent('wr_content', content);
+                }
             }
-        }, "xml");
+        });
         $("#autosave_pop").hide();
     });
 
-    $(document).on( "click", ".autosave_del", function(){
-        var $li = $(this).parents("li");
-        var as_id = $li.data("as_id");
-        $.get(g5_bbs_url+"/ajax.autosavedel.php", {"as_id":as_id}, function(data){
-            if (data == -1) {
-                alert("임시 저장된글을 삭제중에 오류가 발생하였습니다.");
-            } else {
-                $("#autosave_count").html(data);
+    $(document).on("click", ".autosave_del", function () {
+        const $li = $(this).parents("li");
+        const as_id = $li.data("as_id");
+        $.ajax(g5_bbs_url + "/ajax/autosave/" + as_id, {
+            headers: {
+                "Content-Type": "application/json;"
+            },
+            type: "DELETE",
+            success: function (data) {
+                const countNode = document.querySelector('#autosave_count');
+                countNode.textContent = parseInt(countNode.textContent) - 1;
                 $li.remove();
+            },
+            error: function (res) {
+                alert(res.responseJSON.detail);
             }
         });
     });
 
-    $(".autosave_close").click(function(){ $("#autosave_pop").hide(); });
+    $(".autosave_close").click(function () {
+        $("#autosave_pop").hide();
+    });
 });
