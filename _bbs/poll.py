@@ -1,13 +1,11 @@
-from common import *
-from database import get_db
-from fastapi import APIRouter, Depends, Form, Path, Request
+from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
+from common import *
+from database import get_db
 from models import Poll, PollEtc
-
-from jinja2.ext import loopcontrols
 
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
@@ -33,15 +31,12 @@ def poll_update(request: Request, po_id: int, token: str = Form(...), gb_poll: i
     member_level = get_member_level(request)
 
     if poll.po_level > 1 and member_level < poll.po_level:
-        return templates.TemplateResponse(
-            "alert.html", {"request": request, "errors": [f"권한 {poll.po_level} 이상의 회원만 투표하실 수 있습니다."]}
-        )
+        raise AlertException(status_code=403, detail=f"권한 {poll.po_level} 이상의 회원만 투표하실 수 있습니다.")
 
     if compare_token(request, token, "update"):
 
         if request.client.host in poll.po_ips or (member and member.mb_id in poll.mb_ids):
-            errors = [f"{poll.po_subject} 투표에 이미 참여하셨습니다."]
-            return templates.TemplateResponse("alert.html", {"request": request, "errors": errors, "url": f"/poll/result/{po_id}"})
+            raise AlertException(status_code=403, detail=f"{poll.po_subject} 투표에 이미 참여하셨습니다.", url=f"/poll/result/{po_id}")
 
         if member:
             poll.mb_ids = ",".join([poll.mb_ids, member.mb_id]) if poll.mb_ids else member.mb_id
@@ -52,9 +47,7 @@ def poll_update(request: Request, po_id: int, token: str = Form(...), gb_poll: i
         poll.__setattr__(f"po_cnt{gb_poll}", poll.__getattribute__(f"po_cnt{gb_poll}") + 1)
         db.commit()
     else:
-        return templates.TemplateResponse(
-            "alert.html", {"request": request, "errors": ["잘못된 접근입니다."]}
-        )
+        raise AlertException(status_code=403, detail=f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.")
 
     return RedirectResponse(url=f"/poll/result/{po_id}", status_code=302)
       
@@ -68,9 +61,7 @@ def poll_result(request: Request, po_id: int, db: Session = Depends(get_db)):
     member_level = get_member_level(request)
 
     if poll.po_level > 1 and member_level < poll.po_level:
-        return templates.TemplateResponse(
-            "alert.html", {"request": request, "errors": [f"권한 {poll.po_level} 이상의 회원만 결과를 보실 수 있습니다."]}
-        )
+        raise AlertException(status_code=403, detail=f"권한 {poll.po_level} 이상의 회원만 결과를 보실 수 있습니다.")
 
     total_count = 0
     max_count = 0
@@ -118,17 +109,13 @@ def poll_etc_update(request: Request,
 
     if compare_token(request, token, "insert"):
         if poll.po_level > 1 and member_level < poll.po_level:
-            return templates.TemplateResponse(
-                "alert.html", {"request": request, "errors": [f"권한 {poll.po_level} 이상의 회원만 기타의견을 등록할 수 있습니다."]}
-            )
+            raise AlertException(status_code=403, detail=f"권한 {poll.po_level} 이상의 회원만 기타의견을 등록할 수 있습니다.")
 
         po_etc = PollEtc(po_id=po_id, pc_name=pc_name, pc_idea=pc_idea, mb_id=(member.mb_id if member else ''))
         db.add(po_etc)
         db.commit()
     else:
-        return templates.TemplateResponse(
-            "alert.html", {"request": request, "errors": ["잘못된 접근입니다."]}
-        )
+        raise AlertException(status_code=403, detail=f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.")
 
     return RedirectResponse(url=f"/poll/result/{po_id}", status_code=302)
 
@@ -145,15 +132,11 @@ def etc_delete(request: Request, pc_id: int, token: str, db: Session = Depends(g
 
     if compare_token(request, token, "delete"):
         if poll_etc.mb_id != member.mb_id and not member_level == 10:
-            return templates.TemplateResponse(
-                "alert.html", {"request": request, "errors": ["작성자만 삭제할 수 있습니다."]}
-            )
+            raise AlertException(status_code=403, detail=f"작성자만 삭제할 수 있습니다.")
 
         db.delete(poll_etc)
         db.commit()
     else:
-        return templates.TemplateResponse(
-            "alert.html", {"request": request, "errors": ["잘못된 접근입니다."]}
-        )
+        raise AlertException(status_code=403, detail=f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.")
 
     return RedirectResponse(url=f"/poll/result/{po_id}", status_code=302)

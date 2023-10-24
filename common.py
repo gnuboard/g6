@@ -385,12 +385,6 @@ def validate_one_time_token(token, action: str = 'create'):
     return False
 
 
-def validate_token_or_raise(token: str = None):
-    """토큰을 검증하고 예외를 발생시키는 함수"""
-    if not validate_one_time_token(token):
-        raise HTTPException(status_code=403, detail="Invalid token.")
-
-
 def get_client_ip(request: Request):
     '''
     클라이언트의 IP 주소를 반환하는 함수 (PHP의 $_SERVER['REMOTE_ADDR'])

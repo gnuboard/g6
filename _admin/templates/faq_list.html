@@ -23,7 +23,7 @@
     </div>
 
     <div class="tbl_head01 tbl_wrap">
-        <input type="hidden" id="generate_one_time_token" name="token" value="{{ generate_one_time_token() }}">
+        <input type="hidden" id="token" name="token" value="{{ generate_token(request, 'delete') }}">
         <table>
             <caption>{{ faq_master.fm_subject }} 목록</caption>
             <thead>

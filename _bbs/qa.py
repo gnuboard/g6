@@ -1,45 +1,28 @@
-from multiprocessing.util import is_exiting
-from common import *
-from database import get_db
-from dataclasses import dataclass
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, File, Form, Query, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-import models
+from common import *
+from database import get_db
+from dataclassform import QaContentForm
+from models import QaConfig, QaContent
 
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 templates.env.globals['get_selected'] = get_selected
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
+templates.env.globals["generate_token"] = generate_token
 templates.env.globals["generate_query_string"] = generate_query_string
 templates.env.globals["get_popular_list"] = get_popular_list
-
 
 FILE_DIRECTORY = "data/qa/"
 
 
-@dataclass
-class QaContentDataclass:
-    """
-    1:1문의 폼 데이터
-    """
-    qa_email: str = Form(None)
-    qa_hp: str = Form(None)
-    qa_category: str = Form(...)
-    qa_email_recv: bool = Form(None)
-    qa_sms_recv: bool = Form(None)
-    qa_html: int = Form(None)
-    qa_subject: str = Form(...)
-    qa_content: str = Form(...)
-
-
 @router.get("/list")
 def qa_list(request: Request,
-            db: Session = Depends(get_db)
-            , current_page: int = Query(default=1, alias="page"), # 페이지
+            db: Session = Depends(get_db),
+            current_page: int = Query(default=1, alias="page"), # 페이지
             ):
     '''
     Q&A 목록 보기
@@ -49,25 +32,25 @@ def qa_list(request: Request,
     sfl = request.state.sfl if request.state.sfl is not None else ""
 
     # Q&A 설정 조회
-    qa_config = db.query(models.QaConfig).order_by(models.QaConfig.id.asc()).first()
+    qa_config = db.query(QaConfig).order_by(QaConfig.id.asc()).first()
     if not qa_config:
-        raise HTTPException(status_code=404, detail=f"Q&A Config is not found.")
+        raise AlertException(status_code=404, detail=f"Q&A 설정이 존재하지 않습니다.")
     
     # Q&A 목록 조회
-    query = db.query(models.QaContent).filter(models.QaContent.qa_type == 0).order_by(models.QaContent.qa_id.desc())
+    query = db.query(QaContent).filter(QaContent.qa_type == 0).order_by(QaContent.qa_id.desc())
     # 카테고리
     if sca:
-        query = query.filter(models.QaContent.qa_category == sca)
+        query = query.filter(QaContent.qa_category == sca)
     # 검색어
     if stx:
         if sfl == "qa_subject":
-            query = query.filter(models.QaContent.qa_subject.like(f"%{stx}%"))
+            query = query.filter(QaContent.qa_subject.like(f"%{stx}%"))
         elif sfl == "qa_content":
-            query = query.filter(models.QaContent.qa_content.like(f"%{stx}%"))
+            query = query.filter(QaContent.qa_content.like(f"%{stx}%"))
         elif sfl == "qa_name":
-            query = query.filter(models.QaContent.qa_name.like(f"%{stx}%"))
+            query = query.filter(QaContent.qa_name.like(f"%{stx}%"))
         elif sfl == "mb_id":
-            query = query.filter(models.QaContent.mb_id.like(f"%{stx}%"))
+            query = query.filter(QaContent.mb_id.like(f"%{stx}%"))
 
     # 페이징 변수
     records_per_page = request.state.config.cf_page_rows
@@ -98,16 +81,16 @@ def qa_write(request: Request,
     Q&A 작성하기
     '''
     # Q&A 설정 조회
-    qa_config = db.query(models.QaConfig).order_by(models.QaConfig.id.asc()).first()
+    qa_config = db.query(QaConfig).order_by(QaConfig.id.asc()).first()
     if not qa_config:
-        raise HTTPException(status_code=404, detail=f"Q&A Config is not found.")
+        raise AlertException(status_code=404, detail=f"Q&A 설정이 존재하지 않습니다.")
     
     # 추가질문 작성 시, 원본질문 조회
     related = None
     if qa_related:
-        related = db.query(models.QaContent).filter(models.QaContent.qa_id == qa_related).first()
+        related = db.query(QaContent).filter(QaContent.qa_id == qa_related).first()
         if not related:
-            raise HTTPException(status_code=404, detail=f"{qa_related} is not found.")
+            raise AlertException(status_code=404, detail=f"{qa_related} : 연관된 Q&A아이디가 존재하지 않습니다.")
 
     context = {
         "request": request,
@@ -129,14 +112,14 @@ def qa_edit(qa_id: int,
     Q&A 수정하기
     '''
     # Q&A 설정 조회
-    qa_config = db.query(models.QaConfig).order_by(models.QaConfig.id.asc()).first()
+    qa_config = db.query(QaConfig).order_by(QaConfig.id.asc()).first()
     if not qa_config:
-        raise HTTPException(status_code=404, detail=f"Q&A Config is not found.")
+        raise AlertException(status_code=404, detail=f"Q&A 설정이 존재하지 않습니다.")
 
     # Q&A 상세 조회
-    qa = db.query(models.QaContent).filter(models.QaContent.qa_id == qa_id).first()
+    qa = db.query(QaContent).filter(QaContent.qa_id == qa_id).first()
     if not qa:
-        raise HTTPException(status_code=404, detail=f"{qa_id} is not found.")
+        raise AlertException(status_code=404, detail=f"{qa_id} : Q&A 아이디가 존재하지 않습니다.")
 
     context = {
         "request": request,
@@ -152,7 +135,7 @@ def qa_edit(qa_id: int,
 def qa_update(request: Request,
                 token: str = Form(...),
                 db: Session = Depends(get_db),
-                form_data: QaContentDataclass = Depends(),
+                form_data: QaContentForm = Depends(),
                 qa_id: int = Form(None),
                 qa_parent: str = Form(None),
                 qa_related: int = Form(None),
@@ -168,14 +151,14 @@ def qa_update(request: Request,
         form_data (QaConfigDataclass): 입력/수정 Form Data.
 
     Raises:
-        HTTPException: 토큰 유효성 검사
+        AlertException: 토큰 유효성 검사
 
     Returns:
         RedirectResponse: 1:1문의 설정 등록/수정 후 폼으로 이동
     """
     # 회원정보
 
-    if validate_one_time_token(token, 'create'): # 토큰에 등록돤 action이 create라면 신규 등록
+    if compare_token(request, token, 'insert'): # 토큰에 등록돤 action이 insert라면 신규 등록
         form_data.qa_related = qa_related
         form_data.qa_type = 1 if qa_parent else 0
         form_data.qa_parent = qa_parent if qa_parent else 0
@@ -184,25 +167,25 @@ def qa_update(request: Request,
         form_data.qa_datetime = datetime.now()
         form_data.qa_ip = ''
 
-        qa = models.QaContent(**form_data.__dict__)
+        qa = QaContent(**form_data.__dict__)
         db.add(qa)
 
         # 답변글이면 원본글의 답변여부를 1로 변경
         if qa_parent:
-            parent = db.query(models.QaContent).filter(models.QaContent.qa_id == qa_parent).first()
+            parent = db.query(QaContent).filter(QaContent.qa_id == qa_parent).first()
             parent.qa_status = 1
 
         db.commit()
 
-    elif validate_one_time_token(token, 'update'):  # 토큰에 등록된 action이 create가 아니라면 수정
+    elif compare_token(request, token, 'update'):  # 토큰에 등록된 action이 update라면 수정
         # 데이터 수정 후 commit
-        qa = db.query(models.QaContent).filter(models.QaContent.qa_id == qa_id).first()
+        qa = db.query(QaContent).filter(QaContent.qa_id == qa_id).first()
         for field, value in form_data.__dict__.items():
             setattr(qa, field, value)
         db.commit()
     
     else: # 토큰 검사 실패
-        raise HTTPException(status_code=404, detail=f"{token} : 토큰이 존재하지 않습니다.")
+        raise AlertException(status_code=403, detail=f"{token} : 토큰이 존재하지 않습니다.")
     
 
     # 파일 경로체크 및 생성
@@ -234,18 +217,18 @@ def qa_update(request: Request,
 
 
 @router.get("/delete/{qa_id}")
-def qa_delete(qa_id: int,
-              token: str = Query(...),
-              db: Session = Depends(get_db)):
+def qa_delete(request: Request,
+                qa_id: int,
+                token: str = Query(...),
+                db: Session = Depends(get_db)):
     '''
     Q&A 삭제하기
     '''
-    if not validate_one_time_token(token, 'delete'):
-        raise HTTPException(status_code=404, detail=f"{token} : 토큰이 존재하지 않습니다.")
-
+    if not compare_token(request, token, 'delete'):
+        raise AlertException(status_code=403, detail=f"{token} : 토큰이 존재하지 않습니다.")
 
     # Q&A 삭제
-    db.query(models.QaContent).filter(models.QaContent.qa_id == qa_id).delete()
+    db.query(QaContent).filter(QaContent.qa_id == qa_id).delete()
     db.commit()
 
     return RedirectResponse(url=f"/qa/list", status_code=302)
@@ -262,12 +245,11 @@ async def qa_list_delete(request: Request, db: Session = Depends(get_db),
         token (str): 입력/수정/삭제 변조 방지 토큰.
         checks (List[int]): Q&A ID list. Defaults to Form(None, alias="chk_qa_id[]").
     """
-    
-    if not token or not validate_one_time_token(token, 'delete'):
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰값이 일치하지 않습니다."]})    
+    if not compare_token(request, token, 'delete'):
+        raise AlertException(status_code=403, detail=f"{token} : 토큰이 존재하지 않습니다.")
     
     for i in checks:
-        qa = db.query(models.QaContent).filter(models.QaContent.qa_id == i).first()
+        qa = db.query(QaContent).filter(QaContent.qa_id == i).first()
         if qa:
             # Q&A 삭제
             db.delete(qa)
@@ -283,12 +265,12 @@ def qa_view(qa_id: int,
     '''
     Q&A 상세보기
     '''
-    model = models.QaContent
+    model = QaContent
 
     # Q&A 설정 조회
-    qa_config = db.query(models.QaConfig).order_by(models.QaConfig.id.asc()).first()
+    qa_config = db.query(QaConfig).order_by(QaConfig.id.asc()).first()
     if not qa_config:
-        raise HTTPException(status_code=404, detail=f"Q&A Config is not found.")
+        raise AlertException(status_code=404, detail=f"Q&A 설정이 존재하지 않습니다.")
     
     # Q&A 조회
     qa = db.query(model).filter(model.qa_id == qa_id).first()
@@ -310,17 +292,17 @@ def qa_view(qa_id: int,
     query = db.query(model)
     # 카테고리
     if sca:
-        query = query.filter(models.QaContent.qa_category == sca)
+        query = query.filter(QaContent.qa_category == sca)
     # 검색어
     if stx:
         if sfl == "qa_subject":
-            query = query.filter(models.QaContent.qa_subject.like(f"%{stx}%"))
+            query = query.filter(QaContent.qa_subject.like(f"%{stx}%"))
         elif sfl == "qa_content":
-            query = query.filter(models.QaContent.qa_content.like(f"%{stx}%"))
+            query = query.filter(QaContent.qa_content.like(f"%{stx}%"))
         elif sfl == "qa_name":
-            query = query.filter(models.QaContent.qa_name.like(f"%{stx}%"))
+            query = query.filter(QaContent.qa_name.like(f"%{stx}%"))
         elif sfl == "mb_id":
-            query = query.filter(models.QaContent.mb_id.like(f"%{stx}%"))
+            query = query.filter(QaContent.mb_id.like(f"%{stx}%"))
 
     prev = query.filter(model.qa_type == 0, model.qa_id < qa_id).order_by(model.qa_id.desc()).first()
     next = query.filter(model.qa_type == 0, model.qa_id > qa_id).order_by(model.qa_id.asc()).first()
@@ -338,15 +320,15 @@ def qa_view(qa_id: int,
     return templates.TemplateResponse(f"qa/pc/qa_view.html", context)
 
 
-def set_file_list(request: Request, qa: models.QaContent = None):
+def set_file_list(request: Request, qa: QaContent = None):
     """이미지 파일과 첨부파일 목록을 설정
 
     Args:
         request (Request): Request 객체
-        qa (models.QaContent, optional): Q&A 객체. Defaults to None.
+        qa (QaContent, optional): Q&A 객체. Defaults to None.
 
     Returns:
-        models.QaContent: 이미지/첨부파일 목록이 설정된 Q&A 객체
+        QaContent: 이미지/첨부파일 목록이 설정된 Q&A 객체
     """
     config = request.state.config
     if qa:

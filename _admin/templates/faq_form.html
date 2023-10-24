@@ -9,7 +9,7 @@
     <div class="container_wr">
         {% set form_action=url_for("faq_add", fm_id=faq_master.fm_id) if not faq else url_for("faq_update", fm_id=faq_master.fm_id, fa_id=faq.fa_id) %}
         <form name="frmfaqform" action="{{ form_action }}" onsubmit="return frmfaqform_check(this);" method="post">
-            <input type="hidden" name="token" value="{{ generate_one_time_token() }}">
+            <input type="hidden" name="token" value="{{ generate_token(request, 'update' if faq else 'insert') }}">
 
             <div class="tbl_frm01 tbl_wrap">
                 <table>

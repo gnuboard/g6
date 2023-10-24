@@ -186,7 +186,7 @@ async def http_exception_handler(request: Request, exc: AlertException):
         _TemplateResponse: 경고창 템플릿
     """
     return templates.TemplateResponse(
-        "alert.html", {"request": request, "errors": exc.detail, "url": exc.url}
+        "alert.html", {"request": request, "errors": exc.detail, "url": exc.url}, status_code=exc.status_code
     )
 
 
