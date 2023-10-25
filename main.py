@@ -13,17 +13,12 @@ from common import *
 from user_agents import parse
 import os
 import models
-
 # models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
-templates.env.globals['getattr'] = getattr
-templates.env.globals["get_poll"] = get_poll
-templates.env.globals["get_popular_list"] = get_popular_list
-templates.env.globals["generate_token"] = generate_token
+templates = MyTemplates(directory=TEMPLATES_DIR)
 
 from _admin.admin import router as admin_router
 from _bbs.board import router as board_router
@@ -32,7 +27,6 @@ from _bbs.register import router as register_router
 from _bbs.content import router as content_router
 from _bbs.faq import router as faq_router
 from _bbs.qa import router as qa_router
-from _bbs.menu import router as menu_router
 from _bbs.memo import router as memo_router
 from _bbs.poll import router as poll_router
 from _bbs.ajax_autosave import router as autosave_router
@@ -46,7 +40,6 @@ app.include_router(register_router, prefix="/bbs", tags=["register"])
 app.include_router(content_router, prefix="/content", tags=["content"])
 app.include_router(faq_router, prefix="/faq", tags=["faq"])
 app.include_router(qa_router, prefix="/qa", tags=["qa"])
-app.include_router(menu_router, prefix="/menu", tags=["menu"])
 app.include_router(memo_router, prefix="/memo", tags=["memo"])
 app.include_router(poll_router, prefix="/poll", tags=["poll"])
 app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])

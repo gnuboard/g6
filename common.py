@@ -15,7 +15,7 @@ from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
-from models import Auth, Config, Member, Memo, Board, Group, Point, Poll, Popular, Visit, VisitSum, UniqId
+from models import Auth, Config, Member, Memo, Board, Group, Menu, Point, Poll, Popular, Visit, VisitSum, UniqId
 from models import WriteBaseModel
 from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
@@ -1097,6 +1097,27 @@ def get_poll(request: Request):
     return poll
 
 
+def get_menus(request: Request):
+    db = SessionLocal()
+    menus = []
+    # 부모메뉴 조회
+    parent_menus = db.query(Menu).filter(func.length(Menu.me_code) == 2).order_by(Menu.me_order).all()
+    
+    for menu in parent_menus:
+        parent_code = menu.me_code
+
+        # 자식 메뉴 조회
+        child_menus = db.query(Menu).filter(
+            func.length(Menu.me_code) == 4,
+            func.substring(Menu.me_code, 1, 2) == parent_code
+        ).order_by(Menu.me_order).all()
+
+        menu.sub = child_menus
+        menus.append(menu)
+
+    return menus
+
+
 def get_member_level(request: Request):
     """
     request에서 회원 레벨 정보를 가져오는 함수
@@ -1183,3 +1204,35 @@ class AlertException(HTTPException):
         self.status_code = status_code
         self.detail = detail
         self.url = url
+
+
+class MyTemplates(Jinja2Templates):
+    def __init__(self, directory: str, context_processors: dict = None, globals: dict = None):
+        super().__init__(directory, context_processors)
+
+        # 사용자 템플릿, 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
+        if directory == TEMPLATES_DIR:
+            self.context_processors.append(self._default_context)
+            self.env.globals["generate_token"] = generate_token
+            self.env.globals["getattr"] = getattr
+            
+        elif directory == ADMIN_TEMPLATES_DIR:
+            self.context_processors.append(self._default_admin_context)
+
+        # 추가 글로벌 변수 설정
+        if globals:
+                self.env.globals.update(**globals.__dict__)
+
+    def _default_context(self, request: Request):
+        context = {
+            "menus" : get_menus(request),
+            "poll" : get_poll(request),
+            "populars" : get_popular_list(request),
+        }
+        return context
+    
+    def _default_admin_context(self, request: Request):
+        context = {
+            "admin_menus": get_admin_menus()
+        }
+        return context
