@@ -35,6 +35,7 @@ class ConfigForm:
     cf_editor: Optional[str] = Form(default="")
     cf_captcha: Optional[str] = Form(default="")
     cf_captcha_mp3: Optional[str] = Form(default="")
+    cf_open_modify: Optional[int] = Form(default=0)
     cf_recaptcha_site_key: Optional[str] = Form(default="")
     cf_recaptcha_secret_key: Optional[str] = Form(default="")
     cf_use_copy_log: Optional[int] = Form(default=0)
@@ -153,19 +154,24 @@ class ConfigForm:
     cf_10_subj: Optional[str] = Form(default="")
     cf_10: Optional[str] = Form(default="")
 
+
 @dataclass
 class MemberForm:
     # mb_password: Optional[str] = Form(default="")
     mb_name: str = Form(None)
+    mb_birth: Optional[str] = Form(default="")
     mb_nick: str = Form(None)
     # mb_nick_date: Optional[str] = Form(default=None)
     mb_level: Optional[int] = Form(default=0)
     mb_email: Optional[str] = Form(default="")
     mb_homepage: Optional[str] = Form(default="")
+    mb_sex: Optional[str] = Form(default="")
+    mb_recommend: Optional[str] = Form(default="")
     mb_hp: Optional[str] = Form(default="")
     mb_tel: Optional[str] = Form(default="")
     mb_certify: Optional[int] = Form(default=0)
     mb_adult: Optional[int] = Form(default=0)
+    mb_addr_jibeon: Optional[str] = Form(default="")
     mb_zip1: Optional[str] = Form(default="")
     mb_zip2: Optional[str] = Form(default="")
     mb_addr1: Optional[str] = Form(default="")

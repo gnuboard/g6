@@ -3,10 +3,11 @@ import getpass
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import OperationalError
 
+from pbkdf2 import create_hash
+
 sys.path.append('..')
 from database import engine
 from models import Config, Member
-from common import hash_password
 
 Session = sessionmaker(bind=engine)
 db = Session()
@@ -26,7 +27,7 @@ def change_password(admin_id, new_password):
             member = db.query(Member).filter_by(mb_id=cf_admin)
             if member:
                 # 비밀번호를 변경합니다.
-                member.mb_password = hash_password(new_password)
+                member.mb_password = create_hash(new_password)
                 db.commit()
                 print(f"{cf_admin} 관리자 비밀번호가 변경되었습니다.")
             else:
