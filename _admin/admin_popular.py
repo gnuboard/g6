@@ -2,24 +2,24 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
-from sqlalchemy.orm import Session as DBSession
-from database import get_db
-from common import *
+from sqlalchemy.orm import Session
 
-import models
+from common import *
+from database import get_db
+from models import Popular
 
 router = APIRouter()
 templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['get_admin_menus'] = get_admin_menus
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
+templates.env.globals["generate_token"] = generate_token
 
 LIST_MENU_KEY = "300300"
 RANK_MENU_KEY = "300400"
 
 
 @router.get("/popular_list")
-def popular_list(request: Request, db: DBSession = Depends(get_db),
+def popular_list(request: Request, db: Session = Depends(get_db),
                  search_params: dict = Depends(common_search_query_params)):
     '''
     인기검색어 목록
@@ -29,7 +29,7 @@ def popular_list(request: Request, db: DBSession = Depends(get_db),
     # 인기검색어 목록 데이터 출력
     keywords = select_query(
         request,
-        models.Popular,
+        Popular,
         search_params,
         default_sst="pp_id",
         default_sod="desc",
@@ -48,16 +48,16 @@ def popular_list(request: Request, db: DBSession = Depends(get_db),
 @router.post("/popular/delete")
 def popular_delete(request: Request,
                     token: str = Form(None),
-                    db: DBSession = Depends(get_db),
+                    db: Session = Depends(get_db),
                     checks: List[int] = Form(..., alias="chk[]")):
     '''
     인기검색어 목록 삭제
     '''
-    if not validate_one_time_token(token, 'delete'):
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요."]})
+    if not compare_token(request, token, 'delete'):
+        raise AlertException(status_code=403, detail="토큰이 유효하지 않습니다.")
 
     # in 조건을 사용해서 일괄 삭제
-    db.query(models.Popular).filter(models.Popular.pp_id.in_(checks)).delete()
+    db.query(Popular).filter(Popular.pp_id.in_(checks)).delete()
     db.commit()
         
     query_string = generate_query_string(request)
@@ -68,7 +68,7 @@ def popular_delete(request: Request,
 
 @router.get("/popular_rank")
 def popular_rank(request: Request,
-                db: DBSession = Depends(get_db),
+                db: Session = Depends(get_db),
                 fr_date: str = Query(default=str(datetime.now().date())),
                 to_date: str = Query(default=str(datetime.now().date())),
                 current_page: int = Query(default=1, alias="page")
@@ -80,18 +80,17 @@ def popular_rank(request: Request,
 
     fr_date = re.sub(r'[^0-9 :\-]', '', fr_date)
     to_date = re.sub(r'[^0-9 :\-]', '', to_date)
-    query_string = f"fr_date={fr_date}&to_date={to_date}"
 
     # 인기검색어 순위 데이터 출력
     query = db.query(
-            models.Popular.pp_word,
-            func.count(models.Popular.pp_word).label('search_count'),
+            Popular.pp_word,
+            func.count(Popular.pp_word).label('search_count'),
             func.rank().over(order_by=desc(text('search_count'))).label('ranking')
         ).filter(
-        models.Popular.pp_word != '',
-        models.Popular.pp_date >= fr_date,
-        models.Popular.pp_date <= to_date
-    ).group_by(models.Popular.pp_word).order_by(desc('search_count'), models.Popular.pp_word)
+        Popular.pp_word != '',
+        Popular.pp_date >= fr_date,
+        Popular.pp_date <= to_date
+    ).group_by(Popular.pp_word).order_by(desc('search_count'), Popular.pp_word)
 
     total_count = query.count()
     records_per_page = request.state.config.cf_page_rows

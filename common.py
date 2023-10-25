@@ -15,7 +15,7 @@ from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
-from models import Config, Member, Memo, Board, Group, Point, Poll, Popular, Visit, VisitSum, UniqId
+from models import Auth, Config, Member, Memo, Board, Group, Point, Poll, Popular, Visit, VisitSum, UniqId
 from models import WriteBaseModel
 from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
@@ -387,12 +387,6 @@ def validate_one_time_token(token, action: str = 'create'):
         del cache[token]
         return True
     return False
-
-
-def validate_token_or_raise(token: str = None):
-    """토큰을 검증하고 예외를 발생시키는 함수"""
-    if not validate_one_time_token(token):
-        raise HTTPException(status_code=403, detail="Invalid token.")
 
 
 def get_client_ip(request: Request):
@@ -1126,7 +1120,7 @@ def auth_check(request: Request, menu_key: str, attribute: str):
     if not exists_member:
         return "로그인 후 이용해 주세요."
 
-    exists_auth = db.query(models.Auth).filter_by(mb_id=exists_member.mb_id, au_menu=menu_key).first()
+    exists_auth = db.query(Auth).filter_by(mb_id=exists_member.mb_id, au_menu=menu_key).first()
     if not exists_auth:
         return "이 메뉴에는 접근 권한이 없습니다.\\n\\n접근 권한은 최고관리자만 부여할 수 있습니다."
 
@@ -1178,3 +1172,14 @@ def get_unique_id(request) -> Optional[str]:
                 logging.log(logging.CRITICAL, 'unique table insert error', exc_info=e)
                 return None
 
+class AlertException(HTTPException):
+    """스크립트 경고창 출력을 위한 예외 클래스
+        - HTTPExceptiond에서 페이지 이동을 위한 url 매개변수를 추가적으로 받는다.
+
+    Args:
+        HTTPException (HTTPException): HTTP 예외 클래스
+    """
+    def __init__(self, status_code: int, detail: str = None, url: str = None):
+        self.status_code = status_code
+        self.detail = detail
+        self.url = url

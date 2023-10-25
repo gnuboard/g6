@@ -6,11 +6,8 @@
     1:1문의 설정
 {% endblock subtitle %}
 {% block content %}
-    {# container_title 삭제예정 #}
-    <h1 id="container_title">1:1문의 설정</h1>
-
     <form name="fqaconfigform" id="fqaconfigform" action="{{ url_for('qa_config_update') }}" method="post" onsubmit="return fqaconfigform_submit(this);" autocomplete="off">
-        <input type="hidden" id="token" name="token" value="{{ generate_one_time_token('update' if qa_config else 'create') }}" >
+        <input type="hidden" id="token" name="token" value="{{ generate_token(request, 'update' if qa_config else 'insert') }}" >
     
         <section id="anc_cf_qa_config">
             <h2 class="h2_frm">1:1문의 설정</h2>
@@ -27,7 +24,7 @@
                             <th scope="row"><label for="qa_title">타이틀<strong class="sound_only">필수</strong></label></th>
                             <td>
                                 <input type="text" name="qa_title" value="{{ qa_config.qa_title|default('1:1문의') }}" id="qa_title" required="" class="required frm_input" size="40">
-                                <a href="" class="btn_frmline">1:1문의 바로가기</a>
+                                <a href="{{ url_for('qa_list') }}" class="btn_frmline">1:1문의 바로가기</a>
                             </td>
                         </tr>
                         <tr>

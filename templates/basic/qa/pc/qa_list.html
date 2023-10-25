@@ -96,7 +96,7 @@
             <input type="hidden" name="stx" value="{{ request.state.stx }}">
             <input type="hidden" name="sca" value="{{ request.state.sca }}">
             <input type="hidden" name="page" value="{{ current_page }}">
-            <input type="hidden" name="token" value="{{ generate_one_time_token('delete') }}">
+            <input type="hidden" name="token" value="{{ generate_token(request, 'delete') }}">
                     
             <div class="tbl_head01 tbl_wrap">
                 <table>
@@ -130,7 +130,7 @@
                                 <td class="td_num">{{ qa.qa_id }}</td>
                                 <td class="td_subject">
                                     <span class="bo_cate_link">{{ qa.qa_category }}</span>
-                                    <a href="{{ url_for('qa_view', qa_id=qa.qa_id) }}?{{ generate_query_string(request) }}" class="bo_tit">{{ qa.qa_subject }}</a>
+                                    <a href="{{ url_for('qa_view', qa_id=qa.qa_id) }}?{{ request.query_params }}" class="bo_tit">{{ qa.qa_subject }}</a>
                                 </td>
                                 <td class="td_name">{{ qa.qa_name }}</td>
                                 <td class="td_date">{{ qa.qa_datetime }}</td>
