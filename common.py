@@ -422,7 +422,7 @@ def delete_image(directory: str, filename: str, delete: bool = True):
         delete (bool): 삭제여부. Defaults to True.
     """
     if delete:
-        file_path = f"{directory}{filename}"
+        file_path = f"{directory}/{filename}"
         if os.path.exists(file_path):
             os.remove(file_path)
 
@@ -436,7 +436,7 @@ def save_image(directory: str, filename: str, file: UploadFile):
         file (UploadFile): 파일 ojbect
     """
     if file and file.filename:
-        with open(f"{directory}{filename}", "wb") as buffer:
+        with open(f"{directory}/{filename}", "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
 
