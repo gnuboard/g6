@@ -10,6 +10,8 @@ import datetime
 from common import *
 from dataclassform import MemberForm
 from pbkdf2 import create_hash
+# from PIL import Image
+# import io
 
 router = APIRouter()
 templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
@@ -193,6 +195,21 @@ def member_form_add(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse("member_form.html", {"request": request, "member": None})
 
 
+
+def get_member_icon(mb_id):
+    member_icon_dir = f"{IMAGE_DIRECTORY}/{mb_id[:2]}"
+    mb_dir = mb_id[:2]
+    icon_file = os.path.join(member_icon_dir, f"{mb_id}.gif")
+
+    if os.path.exists(icon_file):
+        # icon_url = icon_file.replace(G5_DATA_PATH, G5_DATA_URL)
+        icon_filemtime = os.path.getmtime(icon_file) # 캐시를 위해 파일수정시간을 추가
+        return f"{icon_file}?{icon_filemtime}"
+    # , f'<input type="checkbox" id="del_mb_icon" name="del_mb_icon" value="1">삭제'
+
+    return None
+
+
 # 회원수정 폼
 @router.get("/member_form/{mb_id}")
 def member_form_edit(mb_id: str, request: Request, db: Session = Depends(get_db)):
@@ -207,13 +224,15 @@ def member_form_edit(mb_id: str, request: Request, db: Session = Depends(get_db)
     exists_member = db.query(models.Member).filter_by(mb_id = mb_id).first()
     if not exists_member:
         return templates.TemplateResponse("alert.html", {"request": request, "errors": ["회원아이디가 존재하지 않습니다."]}) 
+    
+    exists_member.mb_icon = get_member_icon(mb_id)
 
     return templates.TemplateResponse("member_form.html", {"request": request, "member": exists_member})
 
 
 # DB등록 및 수정
 @router.post("/member_form_update")
-def member_form_update(
+async def member_form_update(
         request: Request,
         db: Session = Depends(get_db),
         token: str = Form(...),
@@ -234,14 +253,10 @@ def member_form_update(
 
     # token 값에 insert 가 포함되어 있다면 등록
     if compare_token(request, token, "insert"):
-        exists_member = (
-            db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
-        )
+        exists_member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
         if exists_member:
             errors = [f"{mb_id} 회원아이디가 이미 존재합니다. (등록불가)"]
-            return templates.TemplateResponse(
-                "alert.html", {"request": request, "errors": errors}
-            )
+            return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
 
         new_member = models.Member(mb_id=mb_id, **form_data.__dict__)
 
@@ -294,18 +309,25 @@ def member_form_update(
     else: # token 값에 insert, update 가 포함되어 있지 않다면 잘못된 접근
         return templates.TemplateResponse("alert.html", {"request": request, "errors": ["잘못된 접근입니다."]})
     
-    
-    if mb_icon and mb_icon.file:
+    # 이미지 경로체크 및 생성
+    member_icon_dir = f"{IMAGE_DIRECTORY}/{mb_id[:2]}"
+    # 이미지 삭제
+    delete_image(member_icon_dir, f"{mb_id}.gif", del_mb_icon)
+
+    if mb_icon.filename and mb_icon.size > 0:
         if mb_icon.filename[-3:].lower() != "gif":
-            alert("아이콘은 gif 파일만 업로드 가능합니다.")
+            raise AlertException(status_code=400, detail="아이콘은 gif 파일만 업로드 가능합니다.")
             # return templates.TemplateResponse("alert.html", {"request": request, "errors": ["아이콘은 gif 파일만 업로드 가능합니다."]})
+
+        # 파일의 내용을 읽어서 이미지 검증하는 것은 아닌것 같다. 에러도 나고 느리다.            
+        # file_contents = await mb_icon.read()
+        # image = Image.open(io.BytesIO(file_contents))
+        # image.verify() # 이미지 검증
+        # if image.format != 'GIF' : # 이미지 검증
+        #     raise AlertException(status_code=400, detail="아이콘이 gif 파일이 아닌것 같습니다.")
         
-        # 이미지 경로체크 및 생성
-        member_icon_dir = f"{IMAGE_DIRECTORY}/{mb_id[:2]}"
         # make_directory(IMAGE_DIRECTORY)
         make_directory(member_icon_dir) # 하위경로를 만들지 않아도 알아서 만들어줌 data/member/ka/kagla.gif
-        # 이미지 삭제
-        delete_image(member_icon_dir, f"{mb_id}.gif", del_mb_icon)
         # 이미지 저장
         save_image(member_icon_dir, f"{mb_id}.gif", mb_icon)
 
