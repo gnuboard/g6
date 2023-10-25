@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from common import *
 from database import get_db
+from pbkdf2 import validate_password
 
 router = APIRouter()
 templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
@@ -127,7 +128,7 @@ async def visit_delete_update(request: Request, db: Session = Depends(get_db),
     if not member:
         return templates.TemplateResponse("alert.html", {"request": request, "errors": ["로그인 후 이용해 주세요."]})
 
-    if not verify_password(admin_password, member.mb_password) is False:
+    if not validate_password(admin_password, member.mb_password) is False:
         return templates.TemplateResponse("alert.html", {"request": request, "errors": ["관리자 비밀번호가 일치하지 않습니다."]})
 
     if not year:
