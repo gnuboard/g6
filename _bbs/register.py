@@ -79,6 +79,7 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
                              mb_id: str = Form(None),
                              mb_password: str = Form(None),
                              mb_password_re: str = Form(None),
+                             mb_certify_case: Optional[str] = Form(default=""),
                              mb_img: Optional[UploadFile] = File(None),
                              mb_icon: Optional[UploadFile] = File(None),
                              mb_zip: Optional[str] = Form(default=""),
@@ -94,10 +95,10 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
 
     # 유효성 검사
     errors = []
-    member = db.query(Member.mb_id, Member.mb_email).filter(Member.mb_id == mb_id).first()
+    exists_member = db.query(Member.mb_id, Member.mb_email).filter(Member.mb_id == mb_id).first()
     config = request.state.config
 
-    if member:
+    if exists_member:
         errors.append("이미 존재하는 회원아이디 입니다.")
 
     if not (mb_password and mb_password_re):
@@ -132,6 +133,13 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
     if result is not True:
         errors.append(result)
 
+    if mb_certify_case and member_form.mb_certify:
+        member_form.mb_certify = mb_certify_case
+        member_form.mb_adult = member_form.mb_adult
+    else:
+        member_form.mb_certify = ""
+        member_form.mb_adult = 0
+
     # 이미지 검사
     if mb_img and mb_img.filename:
         if not re.match(r".*\.(jpg|jpeg|png|gif)$", mb_img.filename, re.IGNORECASE):
@@ -153,6 +161,10 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
 
     if not member_form.mb_sex in {"m", "f"}:
         member_form.mb_sex = ""
+
+    # 한국 우편번호 (postalcode)
+    member_form.mb_zip1 = mb_zip[:3]
+    member_form.mb_zip2 = mb_zip[3:]
 
     # 레벨 입력방지
     del member_form.mb_level
@@ -177,10 +189,6 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
                 "form": form_context, "errors": errors
             })
 
-    # 우편번호 (postalcode)
-    member_form.mb_zip1 = mb_zip[:3]
-    member_form.mb_zip2 = mb_zip[3:]
-
     if mb_img and mb_img.filename:
         upload_file(
             mb_img,
@@ -195,26 +203,32 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
         filename = mb_id + os.path.splitext(mb_icon.filename)[1]
         mb_icon_info.save(os.path.join(path, filename))
 
-    member = Member(
-        mb_id=mb_id,
-        mb_datetime=datetime.now(),
-        mb_email_certify=datetime(1, 1, 1, 0, 0),
-        mb_password=create_hash(mb_password),
-        mb_level=config.cf_register_level,
-        mb_login_ip=request.client.host,
-        mb_lost_certify="",
-        mb_nick_date=datetime.now(),
-        mb_open_date=datetime.now(),
-        mb_point=config.cf_register_point,
-        mb_today_login=datetime.now(),
-        **member_form.__dict__
-    )
-    db.add(member)
+    new_member = Member(mb_id=mb_id, **member_form.__dict__)
+    new_member.mb_datetime = datetime.now()
+    new_member.mb_email_certify = datetime(1, 1, 1, 0, 0, 0)
+    new_member.mb_password = create_hash(mb_password)
+    new_member.mb_level = config.cf_register_level
+    new_member.mb_login_ip = request.client.host
+    new_member.mb_lost_certify = ""
+    new_member.mb_nick_date = datetime.now()
+    new_member.mb_open_date = datetime.now()
+    new_member.mb_point = config.cf_register_point
+    new_member.mb_today_login = datetime.now()
+
+    # 본인인증
+    if mb_certify_case and member_form.mb_certify:
+        new_member.mb_certify = mb_certify_case
+        new_member.mb_adult = member_form.mb_adult
+    else:
+        new_member.mb_certify = ""
+        new_member.mb_adult = 0
+
+    db.add(new_member)
     db.commit()
 
-    request.session["ss_mb_id"] = member.mb_id
-    request.session["ss_mb_key"] = session_member_key(request, member)
-    request.session["ss_mb_reg"] = member.mb_id
+    request.session["ss_mb_id"] = new_member.mb_id
+    request.session["ss_mb_key"] = session_member_key(request, new_member)
+    request.session["ss_mb_reg"] = new_member.mb_id
 
     return RedirectResponse(url="/bbs/register_result", status_code=302)
 

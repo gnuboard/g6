@@ -97,6 +97,7 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
                         mb_icon: Optional[UploadFile] = File(None),
                         mb_password: str = Form(None),
                         mb_password_re: str = Form(None),
+                        mb_certify_case: Optional[str] = Form(default=""),
                         mb_zip: str = Form(None),
                         member_form: MemberForm = Depends(MemberForm),
                         del_mb_img: str = Form(None),
@@ -110,10 +111,14 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
     config = request.state.config
 
     mb_id = request.session.get("ss_mb_id", "")
-    before_member_data: Optional[Member] = db.query(Member).filter(Member.mb_id == mb_id).first()
-    if not before_member_data:
+    exists_member: Optional[Member] = db.query(Member).filter(Member.mb_id == mb_id).first()
+    if not exists_member:
         errors.append("회원정보가 없습니다.")
         return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
+
+    # 한국 우편번호 (postalcode)
+    member_form.mb_zip1 = mb_zip[:3]
+    member_form.mb_zip2 = mb_zip[3:]
 
     # 비밀번호 변경
     is_password_changed = False
@@ -122,14 +127,14 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
 
     if mb_password and mb_password_re:
         # 비밀번호 변경 확인
-        if not validate_password(password=mb_password, hash=before_member_data.mb_password):
+        if not validate_password(password=mb_password, hash=exists_member.mb_password):
             if mb_password != mb_password_re:
                 errors.append("패스워드가 일치하지 않습니다.")
                 return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
             is_password_changed = True
 
     # 이메일 변경
-    if before_member_data.mb_email != member_form.mb_email:
+    if exists_member.mb_email != member_form.mb_email:
         if not member_form.mb_email:
             errors.append("이메일을 입력해 주세요.")
 
@@ -142,14 +147,14 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
                 errors.append("이미 존재하는 이메일 입니다.")
 
     # 닉네임변경 검사.
-    is_nickname_changed = before_member_data.mb_nick != member_form.mb_nick
+    is_nickname_changed = exists_member.mb_nick != member_form.mb_nick
     if is_nickname_changed:
         result = validate_nickname(member_form.mb_nick, config.cf_prohibit_id)
         if result is not True:
             errors.append(result)
 
-        if before_member_data.mb_nick_date:
-            result = validate_nickname_change_date(before_member_data.mb_nick_date, config.cf_nick_modify)
+        if exists_member.mb_nick_date:
+            result = validate_nickname_change_date(exists_member.mb_nick_date, config.cf_nick_modify)
             if result is not True:
                 errors.append(result)
 
@@ -185,14 +190,14 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
     if not member_form.mb_sex in {"m", "f"}:
         member_form.mb_sex = ""
 
-    member_form.mb_level = before_member_data.mb_level
+    member_form.mb_level = exists_member.mb_level
 
     if errors:
         form_context = {
             "page": True,
             "action_url": app.url_path_for("member_profile", mb_no=request.path_params["mb_no"]),
             "name_readonly": "readonly",
-            "hp_readonly": "readonly" if get_is_phone_certify(before_member_data, config) else "",
+            "hp_readonly": "readonly" if get_is_phone_certify(exists_member, config) else "",
             "mb_icon_url": request.base_url.__str__() + f'data/member/{mb_id[:2]}/{mb_id}.gif?'
                            + f'{get_filetime_str(f"data/member/{mb_id[:2]}/{mb_id}.gif")}',
 
@@ -220,15 +225,18 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
         filename = mb_id + os.path.splitext(mb_icon.filename)[1]
         mb_icon_info.save(os.path.join(path, filename))
 
-    # 우편번호 (postalcode)
-    member_form.mb_zip1 = mb_zip[:3]
-    member_form.mb_zip2 = mb_zip[3:]
-
     del member_form.mb_birth
     del member_form.mb_name
 
     if is_password_changed:
         member_form.mb_password = create_hash(mb_password)
+
+    # 본인인증
+    if mb_certify_case and member_form.mb_certify:
+        member_form.mb_certify = mb_certify_case
+    else:
+        member_form.mb_certify = ""
+        member_form.mb_adult = 0
 
     db.query(Member).filter(Member.mb_id == mb_id).update(member_form.__dict__)
     db.commit()
@@ -243,19 +251,19 @@ def get_is_phone_certify(member: Member, config: Config) -> bool:
             member.mb_certify != "ipin")
 
 
-def validate_nickname_change_date(before_nick_date: datetime, nick_modify_date) -> Union[str, bool]:
+def validate_nickname_change_date(before_nick_date: date, nick_modify_date) -> Union[str, bool]:
     """
         닉네임 변경 가능한지 날짜 검사
         Args:
             before_nick_date (datetime) : 이전 닉네임 변경한 날짜
-            nick_modify_date (bool) : 닉네임 수정가능일
+            nick_modify_date (int) : 닉네임 수정가능일
         Raises:
             ValidationError: 닉네임 변경 가능일 안내
     """
 
     change_date = timedelta(days=nick_modify_date)
     available_date = before_nick_date + change_date
-    if datetime.now().timestamp() <= available_date.timestamp():
+    if datetime.now().date() <= available_date:
         return f"{available_date.strftime('%Y-%m-%d')} 이후 닉네임을 변경할 수있습니다."
 
     return True

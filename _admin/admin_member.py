@@ -214,10 +214,15 @@ def member_form_update(
         mb_certify_case: Optional[str] = Form(default=""),
         mb_intercept_date: Optional[str] = Form(default=""),
         mb_leave_date: Optional[str] = Form(default=""),
+        mb_zip: Optional[str] = Form(default=""),
         form_data: MemberForm = Depends(),
         ):
 
-    # token 값에 insert 가 포함되어 있다면 등록    
+    # 한국 우편번호 (postalcode)
+    form_data.mb_zip1 = mb_zip[:3]
+    form_data.mb_zip2 = mb_zip[3:]
+
+    # token 값에 insert 가 포함되어 있다면 등록
     if compare_token(request, token, "insert"):
         exists_member = (
             db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
@@ -237,8 +242,8 @@ def member_form_update(
             new_member.mb_certify = ""
             new_member.mb_adult = 0
 
-        if form_data.mb_password:
-            new_member.mb_password = create_hash(form_data.mb_password)
+        if mb_password:
+            new_member.mb_password = create_hash(mb_password)
         else:
             # 비밀번호가 없다면 현재시간으로 해시값을 만든후 다시 해시 (알수없게 만드는게 목적)
             new_member.mb_password = create_hash(create_hash(TIME_YMDHIS))
@@ -246,11 +251,12 @@ def member_form_update(
         db.add(new_member)
         db.commit()
 
+    # 회원 수정
     elif compare_token(request, token, "update"): # token 값에 update 가 포함되어 있다면 수정
         exists_member = (db.query(models.Member).filter(models.Member.mb_id == mb_id).first())
         if not exists_member:
             return templates.TemplateResponse("alert.html", {"request": request, "errors": [f"{mb_id} 회원아이디가 존재하지 않습니다. (수정불가)"]})
-        
+
         if (request.state.config.cf_admin == mb_id) or (request.state.login_member.mb_id == mb_id):
             # 관리자와 로그인된 본인은 차단일자, 탈퇴일자를 설정했다면 수정불가
             if mb_intercept_date:
@@ -265,11 +271,11 @@ def member_form_update(
         # 수정시 비밀번호를 입력했다면 (수정에서는 비밀번호를 입력하지 않아도 됨)
         if mb_password:
             exists_member.mb_password = create_hash(mb_password)
-            
+
         if mb_certify_case and form_data.mb_certify:
             exists_member.mb_certify = mb_certify_case
             exists_member.mb_adult = form_data.mb_adult
-            
+
         exists_member.mb_intercept_date = mb_intercept_date
         exists_member.mb_leave_date = mb_leave_date
 

@@ -159,7 +159,7 @@ class ConfigForm:
 class MemberForm:
     # mb_password: Optional[str] = Form(default="")
     mb_name: str = Form(None)
-    mb_birth: Optional[datetime] = Form(None)
+    mb_birth: Optional[str] = Form(default="")
     mb_nick: str = Form(None)
     # mb_nick_date: Optional[str] = Form(default=None)
     mb_level: Optional[int] = Form(default=0)
