@@ -19,6 +19,7 @@ templates.env.globals["bleach"] = bleach
 templates.env.globals["nl2br"] = nl2br
 templates.env.globals["editor_path"] = editor_path
 templates.env.globals["generate_token"] = generate_token
+templates.env.globals["get_unique_id"] = get_unique_id
 
 
 # all board list
@@ -79,8 +80,8 @@ def write_form(bo_table: str, request: Request, db: Session = Depends(get_db)):
     write = dynamic_create_write_table(bo_table)
     write.wr_content = ""
 
-    request.state.use_dhtml_editor = board.bo_use_dhtml_editor
-    request.state.editor_name = board.bo_select_editor
+    request.state.use_editor = board.bo_use_dhtml_editor
+    request.state.editor = board.bo_select_editor
 
     return templates.TemplateResponse(f"board/{request.state.device}/{board.bo_skin}/write_form.html",
                                       {

@@ -1,4 +1,4 @@
-import datetime 
+import datetime
 from datetime import timedelta
 import re
 from fastapi import FastAPI, Depends, Request, Form
@@ -45,6 +45,7 @@ from _bbs.member_profile import router as user_profile_router
 from _bbs.menu import router as menu_router
 from _bbs.memo import router as memo_router
 from _bbs.poll import router as poll_router
+from _bbs.ajax_autosave import router as autosave_router
 
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
@@ -57,6 +58,7 @@ app.include_router(qa_router, prefix="/qa", tags=["qa"])
 app.include_router(menu_router, prefix="/menu", tags=["menu"])
 app.include_router(memo_router, prefix="/memo", tags=["memo"])
 app.include_router(poll_router, prefix="/poll", tags=["poll"])
+app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
 
 # is_mobile = False
 # user_device = 'pc'
@@ -152,6 +154,7 @@ async def main_middleware(request: Request, call_next):
     # 로그인한 회원 정보
     request.state.login_member = member
 
+    # 에디터 전역변수
     request.state.editor = config.cf_editor
     request.state.use_editor = True if config.cf_editor else False
                 
@@ -181,6 +184,22 @@ async def main_middleware(request: Request, call_next):
 # 안 그러면 아래와 같은 오류를 맛볼수 있음 ㅠㅠ
 # AssertionError: SessionMiddleware must be installed to access request.session
 app.add_middleware(SessionMiddleware, secret_key="secret", session_cookie="session", max_age=3600 * 3)
+
+
+@app.exception_handler(AlertException)
+async def http_exception_handler(request: Request, exc: AlertException):
+    """예외 처리기를 등록하고 AlertException 동작 처리
+
+    Args:
+        request (Request): request 객체
+        exc (AlertException): 예외 객체
+
+    Returns:
+        _TemplateResponse: 경고창 템플릿
+    """
+    return templates.TemplateResponse(
+        "alert.html", {"request": request, "errors": exc.detail, "url": exc.url}, status_code=exc.status_code
+    )
 
 
 def get_member(mb_id, db: Session = Depends(get_db)):

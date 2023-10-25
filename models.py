@@ -480,14 +480,14 @@ class Content(Base):
     __tablename__ = DB_TABLE_PREFIX + "content"
 
     co_id = Column(String(20), primary_key=True, nullable=False, default="")
-    co_html = Column(Boolean, nullable=False, default=0)
+    co_html = Column(Integer, nullable=False, default=0)
     co_subject = Column(String(255), nullable=False, default="")
     co_content = Column(Text, nullable=False, default="")
     co_seo_title = Column(String(255), nullable=False, default="")
     co_mobile_content = Column(Text, nullable=False, default="")
     co_skin = Column(String(255), nullable=False, default="")
     co_mobile_skin = Column(String(255), nullable=False, default="")
-    co_tag_filter_use = Column(Boolean, nullable=False, default=0)
+    co_tag_filter_use = Column(Integer, nullable=False, default=0)
     co_hit = Column(Integer, nullable=False, default=0)
     co_include_head = Column(String(255), nullable=False, default="")
     co_include_tail = Column(String(255), nullable=False, default="")
@@ -559,15 +559,15 @@ class QaConfig(Base):
     qa_category = Column(String(255), nullable=False, default="")
     qa_skin = Column(String(255), nullable=False, default="")
     qa_mobile_skin = Column(String(255), nullable=False, default="")
-    qa_use_email = Column(Boolean, nullable=False, default=0)
-    qa_req_email = Column(Boolean, nullable=False, default=0)
-    qa_use_hp = Column(Boolean, nullable=False, default=0)
-    qa_req_hp = Column(Boolean, nullable=False, default=0)
-    qa_use_sms = Column(Boolean, nullable=False, default=0)
+    qa_use_email = Column(Integer, nullable=False, default=0)
+    qa_req_email = Column(Integer, nullable=False, default=0)
+    qa_use_hp = Column(Integer, nullable=False, default=0)
+    qa_req_hp = Column(Integer, nullable=False, default=0)
+    qa_use_sms = Column(Integer, nullable=False, default=0)
     qa_send_number = Column(String(255), nullable=False, default="0")
     qa_admin_hp = Column(String(255), nullable=False, default="")
     qa_admin_email = Column(String(255), nullable=False, default="")
-    qa_use_editor = Column(Boolean, nullable=False, default=0)
+    qa_use_editor = Column(Integer, nullable=False, default=0)
     qa_subject_len = Column(Integer, nullable=False, default=0)
     qa_mobile_subject_len = Column(Integer, nullable=False, default=0)
     qa_page_rows = Column(Integer, nullable=False, default=0)
@@ -613,9 +613,9 @@ class QaContent(Base):
     qa_hp = Column(String(255), nullable=False, default="")
     qa_type = Column(Integer, nullable=False, default=0)
     qa_category = Column(String(255), nullable=False, default="")
-    qa_email_recv = Column(Boolean, nullable=False, default=0)
-    qa_sms_recv = Column(Boolean, nullable=False, default=0)
-    qa_html = Column(Boolean, nullable=False, default=0)
+    qa_email_recv = Column(Integer, nullable=False, default=0)
+    qa_sms_recv = Column(Integer, nullable=False, default=0)
+    qa_html = Column(Integer, nullable=False, default=0)
     qa_subject = Column(String(255), nullable=False, default="")
     qa_content = Column(Text, nullable=False)
     qa_status = Column(Integer, nullable=False, default=0)
@@ -677,7 +677,7 @@ class Point(Base):
     po_content = Column(String(255), nullable=False, default="")
     po_point = Column(Integer, nullable=False, default=0)
     po_use_point = Column(Integer, nullable=False, default=0)
-    po_expired = Column(Boolean, nullable=False, default=0)
+    po_expired = Column(Integer, nullable=False, default=0)
     po_expire_date = Column(Date, nullable=False, default="0000-00-00")
     po_mb_point = Column(Integer, nullable=False, default=0)
     po_rel_table = Column(String(20), nullable=False, default="")
@@ -777,3 +777,20 @@ class PollEtc(Base):
     pc_name = Column(String(255), nullable=False, default='')
     pc_idea = Column(String(255), nullable=False, default='')
     pc_datetime = Column(DateTime, nullable=False, default=datetime.now())
+
+class AutoSave(Base):
+    __tablename__ = DB_TABLE_PREFIX + "autosave"
+
+    as_id = Column(Integer, primary_key=True, autoincrement=True)
+    mb_id = Column(String(20), nullable=False, default="")
+    as_uid = Column(BIGINT, nullable=False, unique=True, default=0)
+    as_subject = Column(String(255), nullable=False, default="")
+    as_content = Column(Text, nullable=False, default="")
+    as_datetime = Column(DateTime, nullable=False, default=datetime.now())
+
+
+class UniqId(Base):
+    __tablename__ = DB_TABLE_PREFIX + "uniqid"
+
+    uq_id = Column(BIGINT, primary_key=True)
+    uq_ip = Column(String(255), nullable=False, default="")

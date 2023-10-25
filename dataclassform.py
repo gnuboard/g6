@@ -359,3 +359,73 @@ class PollForm:
     po_level: int = Form(None)
     po_point: int = Form(None)
     po_use: int = Form(None)
+
+
+@dataclass
+class AutoSaveForm:
+    mb_id: str = Form(default="")
+    as_uid: Optional[int] = Form(default=0)
+    as_subject: str = Form(default="")
+    as_content: str = Form(default="")
+    as_datetime: Optional[datetime] = Form(default=None)
+
+      
+@dataclass
+class QaConfigForm:
+    """1:1문의 설정 폼 데이터
+        - 그누보드5에서 사라지는 기능(변수)
+            1. 상단 파일 경로 (qa_include_head)
+            2. 하단 파일 경로 (qa_include_tail)
+    """
+    qa_title: str = Form(...)
+    qa_category: str = Form(None)
+    qa_skin: str = Form(None)
+    qa_mobile_skin: str = Form(None)
+    qa_use_email: int = Form(None)
+    qa_req_email: int = Form(None)
+    qa_use_hp: int = Form(None)
+    qa_req_hp: int = Form(None)
+    qa_use_sms: int = Form(None)
+    qa_send_number: str = Form(None)
+    qa_admin_hp: str = Form(None)
+    qa_admin_email: str = Form(None)
+    qa_use_editor: int = Form(None)
+    qa_subject_len: int = Form(None)
+    qa_mobile_subject_len: int = Form(None)
+    qa_page_rows: int = Form(None)
+    qa_mobile_page_rows: int = Form(None)
+    qa_image_width: int = Form(None)
+    qa_upload_size: int = Form(None)
+    qa_insert_content: str = Form(None)
+    qa_include_head: str = Form(None)
+    qa_include_tail: str = Form(None)
+    qa_content_head: str = Form(None)
+    qa_content_tail: str = Form(None)
+    qa_mobile_content_head: str = Form(None)
+    qa_mobile_content_tail: str = Form(None)
+    qa_1_subj: str = Form(None)
+    qa_2_subj: str = Form(None)
+    qa_3_subj: str = Form(None)
+    qa_4_subj: str = Form(None)
+    qa_5_subj: str = Form(None)
+    qa_1: str = Form(None)
+    qa_2: str = Form(None)
+    qa_3: str = Form(None)
+    qa_4: str = Form(None)
+    qa_5: str = Form(None)
+
+
+@dataclass
+class QaContentForm:
+    """
+    1:1문의 폼 데이터
+    """
+    qa_email: str = Form(None)
+    qa_hp: str = Form(None)
+    qa_category: str = Form(...)
+    qa_email_recv: bool = Form(None)
+    qa_sms_recv: bool = Form(None)
+    qa_html: int = Form(None)
+    qa_subject: str = Form(...)
+    qa_content: str = Form(...)
+
