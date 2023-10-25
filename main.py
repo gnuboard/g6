@@ -200,17 +200,25 @@ def index(request: Request, response: Response, db: Session = Depends(get_db)):
     
     context = {
         "request": request,
-        # "outlogin": request.state.context["outlogin"],
         "latest": latest,
     }
     return templates.TemplateResponse(f"index.{request.state.device}.html", context)
 
 
 # 최신글
-def latest(skin_dir='', bo_table='', rows=10, subject_len=40, request: Request = None):
+def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
 
     if not skin_dir:
         skin_dir = 'basic'
+
+    cache_dir = "data/cache"
+    cache_file_dir = f"{cache_dir}/{bo_table}.html"
+
+    # 캐시된 파일이 있으면 파일을 읽어서 반환
+    if os.path.exists(cache_file_dir):
+        print("캐시 출력")
+        with open(cache_file_dir, "r", encoding="utf-8") as f:
+            return f.read()
     
     db = SessionLocal()
     board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
@@ -233,5 +241,14 @@ def latest(skin_dir='', bo_table='', rows=10, subject_len=40, request: Request =
         "bo_subject": board.bo_subject,
     }
     temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
-    return temp.body.decode("utf-8")
+    temp_decode = temp.body.decode("utf-8")
 
+    # data/cache/ 디렉토리가 없으면 생성
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
+    # 캐시 파일 생성
+    print("캐시 생성")
+    with open(cache_file_dir, "w", encoding="utf-8") as f:
+        f.write(temp_decode)
+
+    return temp_decode
