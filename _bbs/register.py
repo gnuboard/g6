@@ -8,6 +8,7 @@ from database import get_db
 from dataclassform import MemberForm
 from main import templates, app
 from models import Member
+from pbkdf2 import create_hash
 
 router = APIRouter()
 
@@ -197,9 +198,8 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
     member = Member(
         mb_id=mb_id,
         mb_datetime=datetime.now(),
-        # @todo datetime 컬럼들 nullable 로 변환
         mb_email_certify=datetime(1, 1, 1, 0, 0),
-        mb_password=hash_password(mb_password),
+        mb_password=create_hash(mb_password),
         mb_level=config.cf_register_level,
         mb_login_ip=request.client.host,
         mb_lost_certify="",

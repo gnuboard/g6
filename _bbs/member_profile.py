@@ -9,6 +9,7 @@ from database import get_db
 from dataclassform import MemberForm
 from main import templates, app
 from models import Member
+from pbkdf2 import validate_password, create_hash
 
 router = APIRouter()
 
@@ -40,7 +41,7 @@ def check_member(
     if not member:
         return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
     else:
-        if not verify_password(form.mb_password, member.mb_password):
+        if not validate_password(form.mb_password, member.mb_password):
             errors.append("아이디 또는 패스워드가 일치하지 않습니다.")
 
     if errors:
@@ -120,7 +121,8 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
     mb_password_re = mb_password_re.strip() if mb_password_re else ""
 
     if mb_password and mb_password_re:
-        if before_member_data.mb_password != hash_password(mb_password):
+        # 비밀번호 변경 확인
+        if not validate_password(password=mb_password, hash=before_member_data.mb_password):
             if mb_password != mb_password_re:
                 errors.append("패스워드가 일치하지 않습니다.")
                 return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
@@ -226,7 +228,7 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
     del member_form.mb_name
 
     if is_password_changed:
-        member_form.mb_password = hash_password(mb_password)
+        member_form.mb_password = create_hash(mb_password)
 
     db.query(Member).filter(Member.mb_id == mb_id).update(member_form.__dict__)
     db.commit()
