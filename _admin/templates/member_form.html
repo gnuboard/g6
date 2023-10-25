@@ -210,6 +210,16 @@
 </div>
 
 <script>
+    function check_member_id(mb_id) {
+        return fetch(`/admin/check_member_id/${mb_id}`)
+            .then(response => response.json())
+            .then(data => data.result === 'exists')
+            .catch(error => {
+                console.error('Error:', error);
+                return false;
+            });
+    }
+    
     function fmember_submit(f) {
         if (!f.mb_icon.value.match(/\.(gif|jpe?g|png)$/i) && f.mb_icon.value) {
             alert('아이콘은 이미지 파일만 가능합니다.');
@@ -221,35 +231,95 @@
             return false;
         }
 
-        //if( jQuery("#mb_password").val() ){
-        //    if (!chk_captcha()) return false;
-        //}
+        {% if not member.mb_id %}
+        // 아이디 중복 검증
+        var mb_id = f.mb_id.value;
+        var is_duplicated = false; // 중복 상태를 저장하는 변수
+        
+        $.ajax({
+            <!-- url: '/admin/check_member_id/'+mb_id, -->
+            url: `/admin/check_member_id/${mb_id}`,
+            type: 'GET',
+            async: false,
+            cache: false,
+            success: function(data) {
+                if (data.result === 'exists') {
+                    alert('이미 존재하는 회원아이디입니다.');
+                    is_duplicated = true;
+                }
+            },
+            error: function(error) {
+                console.error('Error:', error);
+                alert('회원아이디 중복 검증 중 에러가 발생했습니다.')
+                is_duplicated = true; // 에러가 발생하면 중복 상태로 간주
+            }
+        });
+        if (is_duplicated) {
+            f.mb_id.focus();
+            return false; // 중복이거나 에러가 발생한 경우 폼 제출 중지
+        }
+        {% endif %}
+
+        // 닉네임 중복 검증
+        if (f.mb_nick.value != '' && f.mb_nick.value != f.mb_nick.defaultValue) {
+            var mb_id = f.mb_id.value;
+            var mb_nick = f.mb_nick.value
+            var is_duplicated = false; // 중복 상태를 저장하는 변수
+
+            $.ajax({
+                url: `/admin/check_member_nick/${mb_nick}/${mb_id}`,
+                type: 'GET',
+                async: false,
+                cache: false,
+                success: function(data) {
+                    if (data.result === 'exists') {
+                        alert('중복된 닉네임입니다.');
+                        is_duplicated = true;
+                    }
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                    alert('닉네임 중복 검증 중 에러가 발생했습니다.')
+                    is_duplicated = true; // 에러가 발생하면 중복 상태로 간주
+                }
+            });
+        }
+        if (is_duplicated) {
+            f.mb_nick.focus();
+            return false; // 중복이거나 에러가 발생한 경우 폼 제출 중지
+        }
+
+        // 이메일 중복 검증
+        if (f.mb_email.value != '' && f.mb_email.value != f.mb_email.defaultValue) {
+            var mb_id = f.mb_id.value;
+            var mb_email = f.mb_email.value
+            var is_duplicated = false; // 중복 상태를 저장하는 변수
+
+            $.ajax({
+                url: `/admin/check_member_email/${mb_email}/${mb_id}`,
+                type: 'GET',
+                async: false,
+                cache: false,
+                success: function(data) {
+                    if (data.result === 'exists') {
+                        alert('중복된 이메일 주소입니다.');
+                        is_duplicated = true;
+                    }
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                    alert('이메일 중복 검증 중 에러가 발생했습니다.')
+                    is_duplicated = true; // 에러가 발생하면 중복 상태로 간주
+                }
+            });
+        }
+        if (is_duplicated) {
+            f.mb_email.focus();
+            return false; // 중복이거나 에러가 발생한 경우 폼 제출 중지
+        }
 
         return true;
     }
-
-    jQuery(function($){
-        {# $("#captcha_key").prop('required', false).removeAttr("required").removeClass("required");
-
-        $("#mb_password").on("keyup", function(e) {
-            var $warp = $("#mb_password_captcha_wrap"),
-                tooptipid = "mp_captcha_tooltip",
-                $span_text = $("<span>", {id:tooptipid, style:"font-size:0.95em;letter-spacing:-0.1em"}).html("비밀번호를 수정할 경우 캡챠를 입력해야 합니다."),
-                $parent = $(this).parent(),
-                is_invisible_recaptcha = $("#captcha").hasClass("invisible_recaptcha");
-
-            if($(this).val()){
-                $warp.show();
-                if(! is_invisible_recaptcha) {
-                    $warp.css("margin-top","1em");
-                    if(! $("#"+tooptipid).length){ $parent.append($span_text) }
-                }
-            } else {
-                $warp.hide();
-                if($("#"+tooptipid).length && ! is_invisible_recaptcha){ $parent.find("#"+tooptipid).remove(); }
-            } #}
-        });
-    });
 </script>
 
 {% endblock %}
