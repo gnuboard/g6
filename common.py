@@ -4,7 +4,7 @@ import os
 import random
 import re
 from time import sleep
-from typing import List, Optional
+from typing import List, Optional, Union
 import uuid
 import PIL
 import shutil
@@ -1032,7 +1032,9 @@ def nl2br(value) -> str:
     return escape(value).replace('\n', Markup('<br>\n'))
 
 
-def get_popular_list(request: Request, limit: int = 7, day: int = 3):
+popular_cache = cachetools.TTLCache(maxsize=10, ttl=300)
+
+def get_populars(limit: int = 7, day: int = 3):
     """인기검색어 조회
 
     Args:
@@ -1042,12 +1044,15 @@ def get_popular_list(request: Request, limit: int = 7, day: int = 3):
     Returns:
         List[Popular]: 인기검색어 리스트
     """
+    if popular_cache.get("populars"):
+        return popular_cache.get("populars")
+
     db = SessionLocal()
     # 현재 날짜와 day일 전 날짜를 구한다.
     today = datetime.now()
     before = today - timedelta(days=day)
     # 현재 날짜와 day일 전 날짜 사이의 인기검색어를 조회한다.
-    popular_list = db.query(
+    populars = db.query(
             Popular.pp_word,
             func.count(Popular.pp_word).label('count'),
         ).filter(
@@ -1057,7 +1062,9 @@ def get_popular_list(request: Request, limit: int = 7, day: int = 3):
     ).group_by(Popular.pp_word).order_by(desc('count'), Popular.pp_word).limit(limit).all()
     db.close()
 
-    return popular_list
+    popular_cache.update({"populars": populars})
+
+    return populars
 
 
 def generate_token(request: Request, action: str = ''):
@@ -1089,15 +1096,33 @@ def compare_token(request: Request, token: str, action: str = ''):
         return False
 
 
-def get_poll(request: Request):
+lfu_cache = cachetools.LFUCache(maxsize=128)
+
+def get_recent_poll():
+    """
+    최근 투표 정보 1건을 가져오는 함수
+    """
+    if lfu_cache.get("poll"):
+        return lfu_cache.get("poll")
+
     db = SessionLocal()
     poll = db.query(Poll).filter(Poll.po_use == 1).order_by(Poll.po_id.desc()).first()
     db.close()
 
+    lfu_cache.update({"poll": poll})
+
     return poll
 
 
-def get_menus(request: Request):
+def get_menus():
+    """사용자페이지 메뉴 조회 함수
+
+    Returns:
+        list: 자식메뉴가 포함된 메뉴 list
+    """
+    if lfu_cache.get("menus"):
+        return lfu_cache.get("menus")
+
     db = SessionLocal()
     menus = []
     # 부모메뉴 조회
@@ -1114,6 +1139,8 @@ def get_menus(request: Request):
 
         menu.sub = child_menus
         menus.append(menu)
+
+    lfu_cache.update({"menus": menus})
 
     return menus
 
@@ -1193,6 +1220,7 @@ def get_unique_id(request) -> Optional[str]:
                 logging.log(logging.CRITICAL, 'unique table insert error', exc_info=e)
                 return None
 
+
 class AlertException(HTTPException):
     """스크립트 경고창 출력을 위한 예외 클래스
         - HTTPExceptiond에서 페이지 이동을 위한 url 매개변수를 추가적으로 받는다.
@@ -1207,27 +1235,33 @@ class AlertException(HTTPException):
 
 
 class MyTemplates(Jinja2Templates):
-    def __init__(self, directory: str, context_processors: dict = None, globals: dict = None):
+    """
+    Jinja2Template 설정 클래스
+    """
+    def __init__(self, directory: Union[str, os.PathLike], context_processors: dict = None, globals: dict = None):
         super().__init__(directory, context_processors)
+        # 공통 env.global 설정
+        self.env.globals["generate_token"] = generate_token
+        self.env.globals["getattr"] = getattr
+        self.env.globals["get_selected"] = get_selected
 
         # 사용자 템플릿, 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
-        if directory == TEMPLATES_DIR:
+        if TEMPLATES_DIR in directory:
             self.context_processors.append(self._default_context)
-            self.env.globals["generate_token"] = generate_token
-            self.env.globals["getattr"] = getattr
-            
-        elif directory == ADMIN_TEMPLATES_DIR:
+        elif ADMIN_TEMPLATES_DIR in directory:
             self.context_processors.append(self._default_admin_context)
 
-        # 추가 글로벌 변수 설정
+        # 추가 env.global 설정
         if globals:
-                self.env.globals.update(**globals.__dict__)
+            self.env.globals.update(**globals.__dict__)
 
     def _default_context(self, request: Request):
+        # 메인페이지(main.py) latest 함수에서 templates.TemplateResponse가 추가적으로 호출되기 때문에
+        # context_processors가 2번 호출된다.
         context = {
-            "menus" : get_menus(request),
-            "poll" : get_poll(request),
-            "populars" : get_popular_list(request),
+            "menus" : get_menus(),
+            "poll" : get_recent_poll(),
+            "populars" : get_populars(),
         }
         return context
     

@@ -106,6 +106,9 @@ def poll_form_update(request: Request,
         poll = Poll(**form_data.__dict__)
         db.add(poll)
         db.commit()
+        
+        # 기존캐시 삭제
+        lfu_cache.update({"poll": None})
 
     elif compare_token(request, token, 'update'):  # 토큰에 등록된 action이 update라면 수정
         poll = db.query(Poll).get(po_id)

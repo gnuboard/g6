@@ -59,6 +59,9 @@ def popular_delete(request: Request,
     # in 조건을 사용해서 일괄 삭제
     db.query(Popular).filter(Popular.pp_id.in_(checks)).delete()
     db.commit()
+
+    # 기존 캐시 삭제
+    popular_cache.update({"populars": None})
         
     query_string = generate_query_string(request)
 
