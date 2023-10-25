@@ -2,14 +2,14 @@ from fastapi import APIRouter, Form, File, UploadFile, Depends
 from fastapi.responses import RedirectResponse, Response
 from sqlalchemy.orm import Session
 
-from _member.member_profile import validate_nickname, validate_userid
+from _bbs.member_profile import validate_nickname, validate_userid
 from common import *
 from database import get_db
 from dataclassform import MemberForm
 from main import templates, app
 from models import Member
 
-router = APIRouter(prefix="/bbs")
+router = APIRouter()
 
 
 @router.get("/register")

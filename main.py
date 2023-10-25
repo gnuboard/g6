@@ -41,7 +41,7 @@ from _bbs.register import router as register_router
 from _bbs.content import router as content_router
 from _bbs.faq import router as faq_router
 from _bbs.qa import router as qa_router
-from _member.member_profile import router as user_profile_router
+from _bbs.member_profile import router as user_profile_router
 from _bbs.menu import router as menu_router
 from _bbs.memo import router as memo_router
 from _bbs.poll import router as poll_router
@@ -49,7 +49,7 @@ from _bbs.poll import router as poll_router
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
 app.include_router(login_router, prefix="/bbs", tags=["login"])
-app.include_router(register_router, tags=["register"])
+app.include_router(register_router, prefix="/bbs", tags=["register"])
 app.include_router(user_profile_router, prefix="/bbs", tags=["profile"])
 app.include_router(content_router, prefix="/content", tags=["content"])
 app.include_router(faq_router, prefix="/faq", tags=["faq"])
