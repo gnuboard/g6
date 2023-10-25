@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime, Date, Time
+from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime, Date, Time, BIGINT
 
 # TINYINT 대신 Integer 사용하기 바랍니다.
 # from sqlalchemy.dialects.mysql import TINYINT
@@ -777,3 +777,20 @@ class PollEtc(Base):
     pc_name = Column(String(255), nullable=False, default='')
     pc_idea = Column(String(255), nullable=False, default='')
     pc_datetime = Column(DateTime, nullable=False, default=datetime.now())
+
+class AutoSave(Base):
+    __tablename__ = DB_TABLE_PREFIX + "autosave"
+
+    as_id = Column(Integer, primary_key=True, autoincrement=True)
+    mb_id = Column(String(20), nullable=False, default="")
+    as_uid = Column(BIGINT, nullable=False, unique=True, default=0)
+    as_subject = Column(String(255), nullable=False, default="")
+    as_content = Column(Text, nullable=False, default="")
+    as_datetime = Column(DateTime, nullable=False, default=datetime.now())
+
+
+class UniqId(Base):
+    __tablename__ = DB_TABLE_PREFIX + "uniqid"
+
+    uq_id = Column(BIGINT, primary_key=True)
+    uq_ip = Column(String(255), nullable=False, default="")

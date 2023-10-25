@@ -1,4 +1,4 @@
-import datetime 
+import datetime
 from datetime import timedelta
 import re
 from fastapi import FastAPI, Depends, Request, Form
@@ -35,6 +35,7 @@ from _bbs.qa import router as qa_router
 from _bbs.menu import router as menu_router
 from _bbs.memo import router as memo_router
 from _bbs.poll import router as poll_router
+from _bbs.ajax_autosave import router as autosave_router
 
 import _user.user_router 
 
@@ -48,6 +49,7 @@ app.include_router(qa_router, prefix="/qa", tags=["qa"])
 app.include_router(menu_router, prefix="/menu", tags=["menu"])
 app.include_router(memo_router, prefix="/memo", tags=["memo"])
 app.include_router(poll_router, prefix="/poll", tags=["poll"])
+app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
 
 # is_mobile = False
 # user_device = 'pc'
@@ -143,6 +145,7 @@ async def main_middleware(request: Request, call_next):
     # 로그인한 회원 정보
     request.state.login_member = member
 
+    # 에디터 전역변수
     request.state.editor = config.cf_editor
     request.state.use_editor = True if config.cf_editor else False
                 

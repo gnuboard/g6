@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Optional, List
 from fastapi import Form
 
@@ -355,6 +356,15 @@ class PollForm:
 
 
 @dataclass
+class AutoSaveForm:
+    mb_id: str = Form(default="")
+    as_uid: Optional[int] = Form(default=0)
+    as_subject: str = Form(default="")
+    as_content: str = Form(default="")
+    as_datetime: Optional[datetime] = Form(default=None)
+
+      
+@dataclass
 class QaConfigForm:
     """1:1문의 설정 폼 데이터
         - 그누보드5에서 사라지는 기능(변수)
@@ -412,3 +422,4 @@ class QaContentForm:
     qa_html: int = Form(None)
     qa_subject: str = Form(...)
     qa_content: str = Form(...)
+
