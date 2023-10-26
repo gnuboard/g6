@@ -1270,3 +1270,62 @@ class MyTemplates(Jinja2Templates):
             "admin_menus": get_admin_menus()
         }
         return context
+    
+
+class G6FileCache():
+    """파일 캐시 클래스
+    """
+    cache_dir = "data\cache"
+    cache_secret_key = None
+
+    def __init__(self):
+        # 캐시 디렉토리가 없으면 생성
+        if not os.path.exists(self.cache_dir):
+            os.makedirs(self.cache_dir)
+        
+    def get_cache_secret_key(self):
+        """
+        캐시 비밀키를 반환하는 함수
+        """
+        # 캐시된 값이 있다면, 해당 값을 반환
+        if self.cache_secret_key:
+            return self.cache_secret_key
+
+        # 서버 소프트웨어 및 DOCUMENT_ROOT 값을 해싱하여 6자리 문자열 생성
+        server_software = os.environ.get("SERVER_SOFTWARE", "")
+        document_root = os.environ.get("DOCUMENT_ROOT", "")
+        combined_data = server_software + document_root
+        self.cache_secret_key = hashlib.md5(combined_data.encode()).hexdigest()[:6]
+
+        return self.cache_secret_key
+    
+    def get(self, cache_file: str):
+        """
+        캐시된 파일이 있으면 파일을 읽어서 반환
+        """
+        if os.path.exists(cache_file):
+            with open(cache_file, "r", encoding="utf-8") as f:
+                return f.read()
+        return None
+    
+    def create(self, data: str, cache_file: str):
+        """
+        cache_file을 생성하는 함수
+        """
+        with open(cache_file, "w", encoding="utf-8") as f:
+            f.write(data)
+
+    def delete(self, cache_file: str):
+        """
+        cache_file을 삭제하는 함수
+        """
+        if os.path.exists(cache_file):
+            os.remove(cache_file)
+
+    def delete_prefix(self, prefix: str):
+        """
+        prefix로 시작하는 캐시 파일을 모두 삭제하는 함수
+        """
+        for file in os.listdir(self.cache_dir):
+            if file.startswith(prefix):
+                os.remove(os.path.join(self.cache_dir, file))

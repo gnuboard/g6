@@ -211,14 +211,13 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     if not skin_dir:
         skin_dir = 'basic'
 
-    cache_dir = "data/cache"
-    cache_file_dir = f"{cache_dir}/{bo_table}.html"
+    g6_file_cache = G6FileCache()
+    cache_filename = f"latest-{bo_table}-{skin_dir}-{rows}-{subject_len}-{g6_file_cache.get_cache_secret_key()}.html"
+    cache_file = os.path.join(g6_file_cache.cache_dir, cache_filename)
 
     # 캐시된 파일이 있으면 파일을 읽어서 반환
-    if os.path.exists(cache_file_dir):
-        print("캐시 출력")
-        with open(cache_file_dir, "r", encoding="utf-8") as f:
-            return f.read()
+    if os.path.exists(cache_file):
+        return g6_file_cache.get(cache_file)
     
     db = SessionLocal()
     board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
@@ -243,12 +242,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
     temp_decode = temp.body.decode("utf-8")
 
-    # data/cache/ 디렉토리가 없으면 생성
-    if not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
     # 캐시 파일 생성
-    print("캐시 생성")
-    with open(cache_file_dir, "w", encoding="utf-8") as f:
-        f.write(temp_decode)
+    g6_file_cache.create(temp_decode, cache_file)
 
     return temp_decode

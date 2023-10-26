@@ -117,6 +117,8 @@ async def board_list_update(request: Request, db: Session = Depends(get_db),
                 # 게시판 테이블 삭제
                 models.Write = dynamic_create_write_table(table_name=board.bo_table, create_table=False)
                 models.Write.__table__.drop(engine)
+                # 최신글 캐시 삭제
+                G6FileCache().delete_prefix(f'latest-{board.bo_table}')
         return RedirectResponse(f"/admin/board_list?{query_string}", status_code=303)
         
     # 선택수정
@@ -145,6 +147,9 @@ async def board_list_update(request: Request, db: Session = Depends(get_db),
             board.bo_order = int(bo_order[i]) if bo_order[i] is not None and bo_order[i].isdigit() else 0
             board.bo_device = bo_device[i] if bo_device[i] is not None else ""
             db.commit()
+
+            # 최신글 캐시 삭제
+            G6FileCache().delete_prefix(f'latest-{board.bo_table}')
             
     return RedirectResponse(f"/admin/board_list?{query_string}", status_code=303)
 
@@ -638,6 +643,9 @@ def board_form_update(request: Request,
             for key, value in chk_all.items():
                 setattr(board, key, value) 
             db.commit()
+
+    # 최신글 캐시 삭제
+    G6FileCache().delete_prefix(f'latest-{bo_table}')
             
     query_string = generate_query_string(request)
             
