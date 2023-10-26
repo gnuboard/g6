@@ -42,12 +42,14 @@ from _bbs.member_profile import router as user_profile_router
 from _bbs.memo import router as memo_router
 from _bbs.poll import router as poll_router
 from _bbs.ajax_autosave import router as autosave_router
+from _bbs.member_leave import router as member_leave_router
 
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
 app.include_router(login_router, prefix="/bbs", tags=["login"])
 app.include_router(register_router, prefix="/bbs", tags=["register"])
 app.include_router(user_profile_router, prefix="/bbs", tags=["profile"])
+app.include_router(member_leave_router, prefix="/bbs", tags=["member_leave"])
 app.include_router(content_router, prefix="/content", tags=["content"])
 app.include_router(faq_router, prefix="/faq", tags=["faq"])
 app.include_router(qa_router, prefix="/qa", tags=["qa"])
