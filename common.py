@@ -4,7 +4,7 @@ import os
 import random
 import re
 from time import sleep
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 import uuid
 from urllib.parse import urlencode
 import PIL
@@ -1340,8 +1340,13 @@ class MyTemplates(Jinja2Templates):
     """
     Jinja2Template 설정 클래스
     """
-    def __init__(self, directory: Union[str, os.PathLike], context_processors: dict = None, globals: dict = None):
-        super().__init__(directory, context_processors)
+    def __init__(self,
+                 directory: Union[str, os.PathLike],
+                 context_processors: dict = None,
+                 globals: dict = None,
+                 **env_options: Any,
+                 ):
+        super().__init__(directory, context_processors, **env_options)
         # 공통 env.global 설정
         self.env.globals["generate_token"] = generate_token
         self.env.globals["getattr"] = getattr
