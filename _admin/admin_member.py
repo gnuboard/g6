@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException
+from fastapi import APIRouter, Depends, File, Query, Request, Form, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import asc, desc
@@ -23,6 +23,7 @@ templates.env.globals["get_admin_menus"] = get_admin_menus
 templates.env.globals["generate_token"] = generate_token
 
 MEMBER_MENU_KEY = "200100"
+IMAGE_DIRECTORY = "data/member"
 
 
 @router.get("/member_list")
@@ -84,23 +85,19 @@ async def member_list_update(
     
     if not compare_token(request, token, "member_list"):
         return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다."]})
-        
-    query_string = generate_query_string(request)
 
     if act_button == "선택삭제":
         for i in checks:
             # 관리자와 로그인된 본인은 삭제 불가
             if (request.state.config.cf_admin == mb_id[i]) or (request.state.login_member.mb_id == mb_id[i]):
+                print("관리자와 로그인된 본인은 삭제 불가")
                 continue
-                
-            member = (db.query(models.Member).filter(models.Member.mb_id == mb_id[i]).first())
+            
+            member = db.query(models.Member).filter(models.Member.mb_id == mb_id[i]).first()
             if member:
-                # // 이미 삭제된 회원은 제외
-                # if(preg_match('#^[0-9]{8}.*삭제함#', $mb['mb_memo']))
-                #     return
                 # 이미 삭제된 회원은 제외
-                if re.match(r"^[0-9]{8}.*삭제함", member.mb_memo):
-                    continue
+                # if re.match(r"^[0-9]{8}.*삭제함", member.mb_memo):
+                #     continue
 
                 # member 의 경우 레코드를 삭제하는게 아니라 mb_id 를 남기고 모두 제거
                 member.mb_password = ""
@@ -124,22 +121,33 @@ async def member_list_update(
                 member.mb_adult = 0
                 member.mb_dupinfo = ""
                 db.commit()
+                
                 # 나머지 테이블에서도 삭제
                 # 포인트 테이블에서 삭제
+                db.query(models.Point).filter(models.Point.mb_id == mb_id[i]).delete()
+                db.commit()
 
                 # 그룹접근가능 테이블에서 삭제
-
+                db.query(models.GroupMember).filter(models.GroupMember.mb_id == mb_id[i]).delete()
+                db.commit()
+                
                 # 쪽지 테이블에서 삭제
-
+                db.query(models.Memo).filter(models.Memo.me_send_mb_id == mb_id[i]).delete()
+                db.commit()
+                
                 # 스크랩 테이블에서 삭제
-
+                # db.query(models.Scrap).filter(models.Scrap.mb_id == mb_id[i]).delete()
+                # db.commit()
+                
                 # 관리권한 테이블에서 삭제
+                db.query(models.Auth).filter(models.Auth.mb_id == mb_id[i]).delete()
+                db.commit()
 
                 # 그룹관리자인 경우 그룹관리자를 공백으로
                 db.query(models.Group).filter(models.Group.gr_admin == mb_id[i]).update({models.Group.gr_admin: ""})
                 db.commit()
 
-                # 게시판관리자인 경우 게시판관리자를 공백으로
+                # # 게시판관리자인 경우 게시판관리자를 공백으로
                 db.query(models.Board).filter(models.Board.bo_admin == mb_id[i]).update({models.Board.bo_admin: ""})
                 db.commit()
 
@@ -149,7 +157,7 @@ async def member_list_update(
 
                 # 프로필 이미지 삭제
 
-            return RedirectResponse(f"/admin/member_list?{query_string}", status_code=303)
+        return RedirectResponse(f"/admin/member_list?{query_string}", status_code=303)
 
     # 선택수정
     # print(mb_open)
@@ -169,7 +177,7 @@ async def member_list_update(
             member.mb_level = mb_level[i]
             db.commit()
 
-    return RedirectResponse(f"/admin/member_list?{query_string}", status_code=303)
+    return RedirectResponse(f"/admin/member_list?{query_string(request)}", status_code=303)
 
 
 @router.get("/member_form")
@@ -214,10 +222,17 @@ def member_form_update(
         mb_certify_case: Optional[str] = Form(default=""),
         mb_intercept_date: Optional[str] = Form(default=""),
         mb_leave_date: Optional[str] = Form(default=""),
+        mb_zip: Optional[str] = Form(default=""),
         form_data: MemberForm = Depends(),
+        mb_icon: UploadFile = File(None),
+        del_mb_icon: int = Form(None),
         ):
 
-    # token 값에 insert 가 포함되어 있다면 등록    
+    # 한국 우편번호 (postalcode)
+    form_data.mb_zip1 = mb_zip[:3]
+    form_data.mb_zip2 = mb_zip[3:]
+
+    # token 값에 insert 가 포함되어 있다면 등록
     if compare_token(request, token, "insert"):
         exists_member = (
             db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
@@ -237,8 +252,8 @@ def member_form_update(
             new_member.mb_certify = ""
             new_member.mb_adult = 0
 
-        if form_data.mb_password:
-            new_member.mb_password = create_hash(form_data.mb_password)
+        if mb_password:
+            new_member.mb_password = create_hash(mb_password)
         else:
             # 비밀번호가 없다면 현재시간으로 해시값을 만든후 다시 해시 (알수없게 만드는게 목적)
             new_member.mb_password = create_hash(create_hash(TIME_YMDHIS))
@@ -246,6 +261,7 @@ def member_form_update(
         db.add(new_member)
         db.commit()
 
+    # 회원 수정
     elif compare_token(request, token, "update"): # token 값에 update 가 포함되어 있다면 수정
         exists_member = (db.query(models.Member).filter(models.Member.mb_id == mb_id).first())
         if not exists_member:
@@ -265,11 +281,11 @@ def member_form_update(
         # 수정시 비밀번호를 입력했다면 (수정에서는 비밀번호를 입력하지 않아도 됨)
         if mb_password:
             exists_member.mb_password = create_hash(mb_password)
-            
+
         if mb_certify_case and form_data.mb_certify:
             exists_member.mb_certify = mb_certify_case
             exists_member.mb_adult = form_data.mb_adult
-            
+
         exists_member.mb_intercept_date = mb_intercept_date
         exists_member.mb_leave_date = mb_leave_date
 
@@ -277,5 +293,56 @@ def member_form_update(
 
     else: # token 값에 insert, update 가 포함되어 있지 않다면 잘못된 접근
         return templates.TemplateResponse("alert.html", {"request": request, "errors": ["잘못된 접근입니다."]})
+    
+    
+    if mb_icon and mb_icon.file:
+        if mb_icon.filename[-3:].lower() != "gif":
+            alert("아이콘은 gif 파일만 업로드 가능합니다.")
+            # return templates.TemplateResponse("alert.html", {"request": request, "errors": ["아이콘은 gif 파일만 업로드 가능합니다."]})
+        
+        # 이미지 경로체크 및 생성
+        member_icon_dir = f"{IMAGE_DIRECTORY}/{mb_id[:2]}"
+        # make_directory(IMAGE_DIRECTORY)
+        make_directory(member_icon_dir) # 하위경로를 만들지 않아도 알아서 만들어줌 data/member/ka/kagla.gif
+        # 이미지 삭제
+        delete_image(member_icon_dir, f"{mb_id}.gif", del_mb_icon)
+        # 이미지 저장
+        save_image(member_icon_dir, f"{mb_id}.gif", mb_icon)
 
     return RedirectResponse(url=f"/admin/member_form/{mb_id}", status_code=302)
+
+
+@router.get("/check_member_id/{mb_id}")
+async def check_member_id(mb_id: str, request: Request, db: Session = Depends(get_db)):
+    """
+    회원아이디 중복체크
+    """
+    exists_member = db.query(models.Member).filter_by(mb_id = mb_id).first()
+    if exists_member:
+        return {"result": "exists"}
+    else:
+        return {"result": "not_exists"}
+    
+
+@router.get("/check_member_email/{mb_email}/{mb_id}")
+async def check_member_email(mb_email: str, mb_id: str, request: Request, db: Session = Depends(get_db)):
+    """
+    회원이메일 중복체크
+    """
+    exists_member = db.query(models.Member).filter(models.Member.mb_email == mb_email).filter(models.Member.mb_id != mb_id).first()
+    if exists_member:
+        return {"result": "exists"}
+    else:
+        return {"result": "not_exists"}
+
+
+@router.get("/check_member_nick/{mb_nick}/{mb_id}")
+async def check_member_nick(mb_nick: str, mb_id: str, request: Request, db: Session = Depends(get_db)):
+    """
+    회원닉네임 중복체크
+    """
+    exists_member = db.query(models.Member).filter(models.Member.mb_nick == mb_nick).filter(models.Member.mb_id != mb_id).first()
+    if exists_member:
+        return {"result": "exists"}
+    else:
+        return {"result": "not_exists"}

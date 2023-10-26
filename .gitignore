@@ -1,5 +1,4 @@
 !.gitignore
-.env
 .vscode-server
 __pycache__
 *.pyc
@@ -10,6 +9,11 @@ __pycache__
 .bash*
 data/
 test*.py
+.idea
+.env
+prod.env
+dev.env
+test.py
 localhost.crt
 localhost.key
 sqlite3.db

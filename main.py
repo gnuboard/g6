@@ -5,20 +5,31 @@ from fastapi import FastAPI, Depends, Request, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
+from database import get_db
+
 from jinja2 import Environment, FileSystemLoader
 from database import engine, get_db, SessionLocal
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 from common import *
+from typing import Optional
+
+from settings import APP_IS_DEBUG
 from user_agents import parse
 import os
 import models
 # models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+app = FastAPI(debug=APP_IS_DEBUG)
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
-templates = MyTemplates(directory=TEMPLATES_DIR)
+templates = Jinja2Templates(directory=TEMPLATES_DIR, extensions=["jinja2.ext.i18n"])
+templates.env.globals["is_admin"] = is_admin
+templates.env.globals["generate_one_time_token"] = generate_one_time_token
+templates.env.filters["default_if_none"] = default_if_none
+templates.env.globals['getattr'] = getattr
+templates.env.globals["generate_token"] = generate_token
 
 from _admin.admin import router as admin_router
 from _bbs.board import router as board_router
@@ -27,16 +38,16 @@ from _bbs.register import router as register_router
 from _bbs.content import router as content_router
 from _bbs.faq import router as faq_router
 from _bbs.qa import router as qa_router
+from _bbs.member_profile import router as user_profile_router
 from _bbs.memo import router as memo_router
 from _bbs.poll import router as poll_router
 from _bbs.ajax_autosave import router as autosave_router
-
-import _user.user_router 
 
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
 app.include_router(login_router, prefix="/bbs", tags=["login"])
 app.include_router(register_router, prefix="/bbs", tags=["register"])
+app.include_router(user_profile_router, prefix="/bbs", tags=["profile"])
 app.include_router(content_router, prefix="/content", tags=["content"])
 app.include_router(faq_router, prefix="/faq", tags=["faq"])
 app.include_router(qa_router, prefix="/qa", tags=["qa"])
@@ -148,7 +159,7 @@ async def main_middleware(request: Request, call_next):
     #     # "member": member,
     #     # "outlogin": outlogin.body.decode("utf-8"),
     # }      
-    
+    db.close()
     response = await call_next(request)
 
     # 접속자 기록

@@ -1,38 +1,34 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, Form
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
-from fastapi.templating import Jinja2Templates
+from fastapi import APIRouter, Form, File, UploadFile, Depends
+from fastapi.responses import RedirectResponse, Response
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
+
+from _bbs.member_profile import validate_nickname, validate_userid
 from common import *
 from database import get_db
-import datetime
-import models
+from dataclassform import MemberForm
+from main import templates, app
+from models import Member
+from pbkdf2 import create_hash
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+
 
 @router.get("/register")
 def get_register(request: Request, response: Response, db: Session = Depends(get_db)):
     # 캐시 제어 헤더 설정 (캐시된 페이지를 보여주지 않고 새로운 페이지를 보여줌)
+
     response.headers["Cache-Control"] = "no-store"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
-    
-    # config = db.query(models.Config).first()
+
     request.session["ss_agree"] = ""
     request.session["ss_agree2"] = ""
-    return templates.TemplateResponse("bbs/register.html", request.state.context)
+    return templates.TemplateResponse("bbs/register.html", {"request": request, "errors": ''})
 
-    # user = models.User(username=username)
-    # db.add(user)
-    # db.commit()
-    # return {"username": username, "id": user.id}
-    
+
 @router.post("/register")
-def post_register(request: Request, db: Session = Depends(get_db),
-             agree: str = Form(...),
-             agree2: str = Form(...),
-             ):
+def post_register(request: Request, agree: str = Form(...), agree2: str = Form(...),
+                  ):
     errors = []
     if not agree:
         errors.append("회원가입약관에 동의해 주세요.")
@@ -40,179 +36,218 @@ def post_register(request: Request, db: Session = Depends(get_db),
         errors.append("개인정보 수집 및 이용에 동의해 주세요.")
     if errors:
         return templates.TemplateResponse("bbs/register.html", {"request": request, "errors": errors})
+
     request.session["ss_agree"] = agree
     request.session["ss_agree2"] = agree2
     return RedirectResponse(url="/bbs/register_form", status_code=302)
 
-@router.get("/register_form")
-def get_register_form(request: Request, db: Session = Depends(get_db)):
+
+@router.get("/register_form", name='register_form')
+def get_register_form(request: Request):
     # 약관에 동의를 하지 않았다면
-    agree = request.session.get("ss_agree", "")
-    agree2 = request.session.get("ss_agree", "")
+    agree = request.session.get("ss_agree", None)
+    agree2 = request.session.get("ss_agree2", None)
     if not agree:
         return RedirectResponse(url="/bbs/register", status_code=302)
     if not agree2:
-        return RedirectResponse(url="/bbs/register", status_code=302)        
-    return templates.TemplateResponse("bbs/register_form.html", {"request": request})
-    
-@router.post("/register_form")
-def post_register_form(request: Request, db: Session = Depends(get_db),
-                mb_id: str = Form(None),
-                mb_password: str = Form(None),
-                mb_password_re: str = Form(None),
-                mb_name: str = Form(None),
-                mb_nick: str = Form(None),
-                mb_email: str = Form(None),
-                ):
-    agree = request.session.get("ss_agree", "")
-    agree2 = request.session.get("ss_agree", "")
-    if not agree:
         return RedirectResponse(url="/bbs/register", status_code=302)
-    if not agree2:
-        return RedirectResponse(url="/bbs/register", status_code=302)        
-        
-    errors = []
-    member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
-    if member:
-        errors.append("이미 존재하는 회원아이디 입니다.")
-    if mb_password != mb_password_re:
-        errors.append("비밀번호와 비밀번호 확인이 일치하지 않습니다.")
-    if not mb_name:
-        errors.append("이름을 입력해 주세요.")
-    if not mb_nick:
-        errors.append("닉네임을 입력해 주세요.")
-    if not mb_email:
-        errors.append("이메일을 입력해 주세요.")
-    else:
-        exists_email = db.query(models.Member).filter(models.Member.mb_email == mb_email).first()
-        if exists_email:
-            errors.append("이미 존재하는 이메일 입니다.")
-            
-    register = {
+
+    member = Member()
+    member.mb_level = 1
+
+    form_context = {
+        "action_url": app.url_path_for("register_form_save"),
         "agree": agree,
         "agree2": agree2,
-        "mb_id": mb_id,
-        "mb_name": mb_name,
-        "mb_nick": mb_nick,
-        "mb_email": mb_email,   
-    }    
-    if errors:
-        return templates.TemplateResponse("bbs/register_form.html", {"request": request, "register": register, "errors": errors})
-    
-    # member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
-    # if member: 
-    #     raise HTTPException(status_code=404, detail="{mb_id} is already exists.")
-    
-    member = models.Member(
-        mb_id=mb_id, 
-        mb_password=hash_password(mb_password), 
-        mb_name=mb_name, 
-        mb_nick=mb_nick,
-        mb_nick_date=datetime.datetime.now(),
-        mb_email=mb_email,
-        mb_level=1,            
-        mb_login_ip=request.client.host,
-        mb_datetime=datetime.datetime.now(),
-        mb_signature="",
-        mb_today_login=datetime.datetime.now(),
-        mb_email_certify=datetime.datetime.now(),
-        mb_memo="",
-        mb_lost_certify="",
-        mb_open_date=datetime.datetime.now(),
-        mb_profile="",
+    }
+
+    return templates.TemplateResponse(
+        "member/register_form.html",
+        context={
+            "is_register": True,
+            "request": request,
+            "member": member,
+            "form": form_context,
+            "errors": '',
+            "config": request.state.config,
+        }
     )
-    db.add(member)
+
+
+@router.post("/register_form", name='register_form_save')
+async def post_register_form(request: Request, db: Session = Depends(get_db),
+                             mb_id: str = Form(None),
+                             mb_password: str = Form(None),
+                             mb_password_re: str = Form(None),
+                             mb_certify_case: Optional[str] = Form(default=""),
+                             mb_img: Optional[UploadFile] = File(None),
+                             mb_icon: Optional[UploadFile] = File(None),
+                             mb_zip: Optional[str] = Form(default=""),
+                             member_form: MemberForm = Depends(),
+                             ):
+    # 약관 동의 체크
+    agree = request.session.get("ss_agree", "")
+    agree2 = request.session.get("ss_agree", "")
+    if not agree:
+        return RedirectResponse(url="/bbs/register", status_code=302)
+    if not agree2:
+        return RedirectResponse(url="/bbs/register", status_code=302)
+
+    # 유효성 검사
+    errors = []
+    exists_member = db.query(Member.mb_id, Member.mb_email).filter(Member.mb_id == mb_id).first()
+    config = request.state.config
+
+    if exists_member:
+        errors.append("이미 존재하는 회원아이디 입니다.")
+
+    if not (mb_password and mb_password_re):
+        errors.append("비밀번호를 입력해 주세요.")
+
+    elif mb_password != mb_password_re:
+        errors.append("비밀번호와 비밀번호 확인이 일치하지 않습니다.")
+
+    if not member_form.mb_name:
+        errors.append("이름을 입력해 주세요.")
+    if not member_form.mb_nick:
+        errors.append("닉네임을 입력해 주세요.")
+
+    if config.cf_use_email_certify:
+        if not member_form.mb_email:
+            errors.append("이메일을 입력해 주세요.")
+
+        elif not valid_email(member_form.mb_email):
+            errors.append("이메일 양식이 올바르지 않습니다.")
+
+        else:
+            exists_email = db.query(Member.mb_email).filter(Member.mb_email == member_form.mb_email).first()
+            if exists_email:
+                errors.append("이미 존재하는 이메일 입니다.")
+
+    # 닉네임 검사
+    result = validate_nickname(member_form.mb_nick, config.cf_prohibit_id)
+    if result is not True:
+        errors.append(result)
+
+    result = validate_userid(mb_id, config.cf_prohibit_id)
+    if result is not True:
+        errors.append(result)
+
+    if mb_certify_case and member_form.mb_certify:
+        member_form.mb_certify = mb_certify_case
+        member_form.mb_adult = member_form.mb_adult
+    else:
+        member_form.mb_certify = ""
+        member_form.mb_adult = 0
+
+    # 이미지 검사
+    if mb_img and mb_img.filename:
+        if not re.match(r".*\.(jpg|jpeg|png|gif)$", mb_img.filename, re.IGNORECASE):
+            errors.append("이미지 파일만 업로드 가능합니다.")
+
+    if mb_icon and mb_icon.filename:
+        mb_icon_info = Image.open(mb_icon.file)
+        width, height = mb_icon_info.size
+
+        if 0 < config.cf_member_icon_size < mb_icon.size:
+            errors.append(f"아이콘 용량은 {config.cf_member_icon_size} 이하로 업로드 해주세요.")
+
+        if config.cf_member_icon_width and config.cf_member_icon_height:
+            if width > config.cf_member_icon_width or height > config.cf_member_icon_height:
+                errors.append(f"아이콘 크기는 {config.cf_member_icon_width}x{config.cf_member_icon_height} 이하로 업로드 해주세요.")
+
+        if not re.match(r".*\.(gif)$", mb_icon.filename, re.IGNORECASE):
+            errors.append("gif 파일만 업로드 가능합니다.")
+
+    if not member_form.mb_sex in {"m", "f"}:
+        member_form.mb_sex = ""
+
+    # 한국 우편번호 (postalcode)
+    member_form.mb_zip1 = mb_zip[:3]
+    member_form.mb_zip2 = mb_zip[3:]
+
+    # 레벨 입력방지
+    del member_form.mb_level
+
+    # 유효성 검증 통과
+
+    form_context = {
+        "agree": agree,
+        "agree2": agree2,
+        "name_readonly": "readonly" if (config.cf_cert_use and config.cf_cert_req) else "",
+        "mb_zip": mb_zip
+    }
+
+    if errors:
+        return templates.TemplateResponse(
+            "member/register_form.html",
+            context={
+                "request": request,
+                "member": Member(mb_id=mb_id, mb_level=1, **member_form.__dict__),
+                "is_register": True,
+                "config": request.state.config,
+                "form": form_context, "errors": errors
+            })
+
+    if mb_img and mb_img.filename:
+        upload_file(
+            mb_img,
+            filename=mb_id + os.path.splitext(mb_img.filename)[1],
+            path=os.path.join('data', 'member_image', f"{mb_id[:2]}")
+        )
+
+    if mb_icon and mb_icon.filename and mb_icon_info:
+        # 파일객체를 pillow에서 열었으므로 따로 지정.
+        path = os.path.join('data', 'member', f"{mb_id[:2]}")
+        os.makedirs(path, exist_ok=True)
+        filename = mb_id + os.path.splitext(mb_icon.filename)[1]
+        mb_icon_info.save(os.path.join(path, filename))
+
+    new_member = Member(mb_id=mb_id, **member_form.__dict__)
+    new_member.mb_datetime = datetime.now()
+    new_member.mb_email_certify = datetime(1, 1, 1, 0, 0, 0)
+    new_member.mb_password = create_hash(mb_password)
+    new_member.mb_level = config.cf_register_level
+    new_member.mb_login_ip = request.client.host
+    new_member.mb_lost_certify = ""
+    new_member.mb_nick_date = datetime.now()
+    new_member.mb_open_date = datetime.now()
+    new_member.mb_point = config.cf_register_point
+    new_member.mb_today_login = datetime.now()
+
+    # 본인인증
+    if mb_certify_case and member_form.mb_certify:
+        new_member.mb_certify = mb_certify_case
+        new_member.mb_adult = member_form.mb_adult
+    else:
+        new_member.mb_certify = ""
+        new_member.mb_adult = 0
+
+    db.add(new_member)
     db.commit()
-    
-    request.session["ss_mb_id"] = member.mb_id
-    request.session["ss_mb_key"] = session_member_key(request, member)
-    
-    request.session["ss_mb_reg"] = member.mb_id
-    
+
+    request.session["ss_mb_id"] = new_member.mb_id
+    request.session["ss_mb_key"] = session_member_key(request, new_member)
+    request.session["ss_mb_reg"] = new_member.mb_id
+
     return RedirectResponse(url="/bbs/register_result", status_code=302)
+
 
 @router.get("/register_result")
 def register_result(request: Request, db: Session = Depends(get_db)):
-    mb_id = request.session.get("ss_mb_reg", "")
-    if not mb_id:
+    register_mb_id = request.session.get("ss_mb_reg", "")
+    if "ss_mb_reg" in request.session:
+        request.session.pop("ss_mb_reg")
+
+    # 회원가입이 아닐때.
+    if not register_mb_id:
         return RedirectResponse(url="/bbs/register", status_code=302)
-    
-    member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
+
+    member = db.query(Member).filter(Member.mb_id == register_mb_id).first()
     if not member:
+        # 가입실패
         return RedirectResponse(url="/bbs/register", status_code=302)
-    
-    return templates.TemplateResponse("bbs/register_result.html", {"request": request, "member": member, "outlogin": request.state.context['outlogin']})
 
-    
-# @router.post("/register_form_update")  
-# def config_form_update(request: Request, 
-#                        db: Session = Depends(get_db),
-#                        agree: str = Form(...),
-#                        agree2: str = Form(...),
-#                        mb_id: str = Form(...),
-#                        mb_password: str = Form(...),
-#                        mb_password_re: str = Form(...),
-#                        mb_name: str = Form(...),
-#                        mb_nick: str = Form(...),
-#                        mb_email: str = Form(...),
-#                        ):
-    
-    
-    
-#     member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
-#     if member: 
-#         raise HTTPException(status_code=404, detail="{mb_id} is already exists.")
-    
-#     member = models.Member(
-#         mb_id=mb_id, 
-#         mb_password=hash_password(mb_password), 
-#         mb_name=mb_name, 
-#         mb_nick=mb_nick,
-#         mb_nick_date=datetime.datetime.now(),
-#         mb_email=mb_email,
-#         mb_level=1,            
-#         mb_login_ip=request.client.host,
-#         mb_datetime=datetime.datetime.now(),
-#         mb_signature="",
-#         mb_today_login=datetime.datetime.now(),
-#         mb_email_certify=datetime.datetime.now(),
-#         mb_memo="",
-#         mb_lost_certify="",
-#         mb_open_date=datetime.datetime.now(),
-#         mb_profile="",
-#     )
-#     db.add(member)
-#     db.commit()
-#     # try:
-#     #     member = models.Member(
-#     #         mb_id=mb_id, 
-#     #         mb_password=mb_password, 
-#     #         mb_name=mb_name, 
-#     #         mb_nick=mb_nick,
-#     #         mb_nick_date=datetime.datetime.now(),
-#     #         mb_email=mb_email,
-#     #         mb_level=1,            
-#     #         mb_login_ip=request.client.host,
-#     #         mb_datetime=datetime.datetime.now(),
-#     #     )
-#     #     db.add(member)
-#     #     db.commit()
-#     # except IntegrityError:
-#     #     db.rollback()
-#     #     return templates.TemplateResponse("register_result.html", {"request": request, "member": None})
-    
-#     return templates.TemplateResponse("bbs/register_result.html", {"request": request, "member": member})
-
-# @router.post("/post/")
-# def create_post(title: str = Form(...), user_id: int = Form(...), db: Session = Depends(get_db)):
-#     post = models.Post(title=title, user_id=user_id)
-#     db.add(post)
-#     db.commit()
-#     return {"title": title, "user_id": user_id}
-
-# @router.get("/{user_id}")
-# def get_user(request: Request, user_id: int, db: Session = Depends(get_db)):
-#     user = db.query(models.User).filter(models.User.id == user_id).first()
-#     # return {"username": user.username, "posts": [{"title": post.title, "id": post.id} for post in user.posts]}
-#     return templates.TemplateResponse("user.html", {"request": request, "user": user})
-
+    return templates.TemplateResponse("bbs/register_result.html", {
+        "request": request, "member": member,
+    })

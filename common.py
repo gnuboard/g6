@@ -6,6 +6,7 @@ import re
 from time import sleep
 from typing import List, Optional, Union
 import uuid
+from urllib.parse import urlencode
 import PIL
 import shutil
 from fastapi import Query, Request, HTTPException, UploadFile
@@ -115,15 +116,14 @@ def get_real_client_ip(request: Request):
     '''
     if 'X-Forwarded-For' in request.headers:
         return request.headers.getlist("X-Forwarded-For")[0].split(',')[0]
-    return request.remote_addr    
+    return request.client.host
 
 
 def session_member_key(request: Request, member: Member):
     '''
     세션에 저장할 회원의 고유키를 생성하여 반환하는 함수
     '''
-    mb_datetime_str = member.mb_datetime.strftime('%Y-%m-%d %H:%M:%S')
-    ss_mb_key = hashlib.md5((mb_datetime_str + get_real_client_ip(request) + request.headers.get('User-Agent')).encode()).hexdigest()
+    ss_mb_key = hashlib.md5((member.mb_datetime.strftime(format="%Y-%m-%d %H:%M:%S") + get_real_client_ip(request) + request.headers.get('User-Agent')).encode()).hexdigest()
     return ss_mb_key
 
 
@@ -192,8 +192,8 @@ def get_member_id_select(id, level, selected, event=''):
 def get_selected(field_value, value):
     if field_value is None or value is None or field_value == '' or value == '':
         return ''
-    if (isinstance(field_value, str) and field_value.isdigit()) and \
-       (isinstance(value, int) or (isinstance(value, str) and value.isdigit())):
+    if ((isinstance(field_value, str) and field_value.isdigit()) and (
+            isinstance(value, int) or (isinstance(value, str) and value.isdigit()))):
         return ' selected="selected"' if int(field_value) == int(value) else ''
     return ' selected="selected"' if field_value == value else ''
 
@@ -227,8 +227,7 @@ def option_selected(value, selected, text=''):
     else:
         return f'<option value="{value}">{text}</option>\n'
     
-    
-from urllib.parse import urlencode
+
 
 
 def subject_sort_link(request: Request, column: str, query_string: str ='', flag: str ='asc'):
@@ -422,7 +421,7 @@ def delete_image(directory: str, filename: str, delete: bool = True):
         delete (bool): 삭제여부. Defaults to True.
     """
     if delete:
-        file_path = f"{directory}{filename}"
+        file_path = f"{directory}/{filename}"
         if os.path.exists(file_path):
             os.remove(file_path)
 
@@ -436,7 +435,7 @@ def save_image(directory: str, filename: str, file: UploadFile):
         file (UploadFile): 파일 ojbect
     """
     if file and file.filename:
-        with open(f"{directory}{filename}", "wb") as buffer:
+        with open(f"{directory}/{filename}", "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
 
@@ -524,10 +523,9 @@ def get_paging(request: Request, current_page, total_count, add_url=""):
 
     # 한 페이지당 라인수
     page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
-    page_rows = 10
     # 페이지 표시수
     page_count = config.cf_mobile_pages if request.state.is_mobile and config.cf_mobile_pages else config.cf_write_pages
-    page_count = 10
+    
     # 올바른 total_pages 계산 (올림처리)
     total_pages = (total_count + page_rows - 1) // page_rows
     
@@ -1232,6 +1230,110 @@ class AlertException(HTTPException):
         self.status_code = status_code
         self.detail = detail
         self.url = url
+
+
+def is_admin(request: Request):
+    """관리자 여부 확인
+    """
+    config = request.state.config
+    if config.cf_admin.strip() == "":
+        return False
+
+    if mb_id := request.session.get("ss_mb_id", ""):
+        if mb_id.strip() == config.cf_admin.strip():
+            return True
+
+    return False
+
+
+def check_profile_open(open_date, config) -> bool:
+    """변경일이 지나서 프로필 공개가능 여부를 반환
+    Args:
+        open_date (datetime): 프로필 공개일
+        config (Config): config 모델
+    Returns:
+        bool: 프로필 공개 가능 여부
+    """
+    if not open_date:
+        return True
+
+    else:
+        return open_date < (datetime.now() - timedelta(days=config.cf_open_modify))
+
+
+def get_next_profile_openable_date(open_date: datetime, config):
+    """다음 프로필 공개 가능일을 반환
+    Args:
+        open_date (datetime): 프로필 공개일
+        config (Config): config 모델
+    Returns:
+        datetime: 다음 프로필 공개 가능일
+    """
+    cf_open_modify = config.cf_open_modify
+
+    if open_date:
+        calculated_date = datetime.strptime(open_date, "%Y-%m-%d") + timedelta(days=cf_open_modify)
+    else:
+        calculated_date = datetime.now() + timedelta(days=cf_open_modify)
+
+    return calculated_date
+
+
+def default_if_none(value, arg):
+    """If value is None"""
+    if value is None:
+        return arg
+    return value
+
+
+def valid_email(email: str):
+    # Define a basic email address regex pattern
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+
+    # Use the regex pattern to match the email address
+    if re.match(pattern, email):
+        return True
+
+    return False
+
+
+def upload_file(upload_object, filename, path, chunck_size: int = None):
+    """폼 파일 업로드
+    Args:
+        upload_object : form 업로드할 파일객체
+        filename (str): 확장자 포함 저장할 파일명 (with ext)
+        path (str): 저장할 경로
+        chunck_size (int, optional): 파일 저장 단위. 기본값 1MB 로 지정
+    Returns:
+        str: 저장된 파일명
+    """
+    # 파일 저장 경로 생성
+    os.makedirs(path, exist_ok=True)
+
+    # 파일 저장 경로
+    save_path = os.path.join(path, filename)
+    # 파일 저장
+    if chunck_size is None:
+        chunck_size = 1024 * 1024
+        with open(f"{save_path}", "wb") as buffer:
+            shutil.copyfileobj(upload_object.file, buffer, chunck_size)
+    else:
+        with open(f"{save_path}", "wb") as buffer:
+            shutil.copyfileobj(upload_object.file, buffer)
+
+
+def get_filetime_str(file_path) -> Union[int, str]:
+    """파일의 변경시간
+    Args:
+        file_path (str): 파일 이름포함 경로
+    Returns:
+        Union[int, str]: 파일 변경시간, 파일없을시 빈문자열
+    """
+    try:
+        file_time = os.path.getmtime(file_path)
+        return int(file_time)
+    except FileNotFoundError:
+        return ''
 
 
 class MyTemplates(Jinja2Templates):

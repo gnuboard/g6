@@ -6,7 +6,7 @@
 
 {% block content %}
 
-<div id="hd_login_msg">{{ outlogin.wr_nick }}님 로그인 중 <a href="/bbs/logout">로그아웃</a></div>
+<div id="hd_login_msg">{{ request.state.login_member.wr_nick }}님 로그인 중 <a href="/bbs/logout">로그아웃</a></div>
 
 <!-- 콘텐츠 시작 { -->
 <div id="wrapper">
@@ -61,5 +61,8 @@
     </div>
     </form>
 </aside>
+    </div>
+    </div>
+</div>
 
 {% endblock %}
