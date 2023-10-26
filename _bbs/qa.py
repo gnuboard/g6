@@ -14,7 +14,6 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals["generate_token"] = generate_token
 templates.env.globals["generate_query_string"] = generate_query_string
-templates.env.globals["get_popular_list"] = get_popular_list
 
 FILE_DIRECTORY = "data/qa/"
 

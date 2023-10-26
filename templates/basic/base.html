@@ -153,14 +153,10 @@ $(function() {
 
     <nav id="gnb">
         <h2>메인메뉴</h2>
-        <div class="gnb_wrap">&nbsp;</div>
+        <div class="gnb_wrap">
+            {% include "/bbs/menu.html" %}
+        </div>
     </nav>
-    <script>
-        $(function(){
-            $(".gnb_wrap").load("{{ url_for('get_menu_list') }}", {});
-        })
-    </script>
-
 </div>
 <!-- } 상단 끝 -->
 
