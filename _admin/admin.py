@@ -17,9 +17,8 @@ import hashlib
 
 
 router = APIRouter()
-templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
-# # 파이썬 함수를 jinja2 에서 사용할 수 있도록 등록
-templates.env.globals['get_admin_menus'] = get_admin_menus
+# templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
+templates = MyTemplates(directory=ADMIN_TEMPLATES_DIR)
 
 from _admin.admin_config import router as admin_config_router
 from _admin.admin_member import router as admin_member_router

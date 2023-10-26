@@ -18,7 +18,6 @@ from settings import APP_IS_DEBUG
 from user_agents import parse
 import os
 import models
-
 # models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(debug=APP_IS_DEBUG)
@@ -30,8 +29,6 @@ templates.env.globals["is_admin"] = is_admin
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals['getattr'] = getattr
-templates.env.globals["get_poll"] = get_poll
-templates.env.globals["get_popular_list"] = get_popular_list
 templates.env.globals["generate_token"] = generate_token
 
 from _admin.admin import router as admin_router
@@ -42,7 +39,6 @@ from _bbs.content import router as content_router
 from _bbs.faq import router as faq_router
 from _bbs.qa import router as qa_router
 from _bbs.member_profile import router as user_profile_router
-from _bbs.menu import router as menu_router
 from _bbs.memo import router as memo_router
 from _bbs.poll import router as poll_router
 from _bbs.ajax_autosave import router as autosave_router
@@ -55,7 +51,6 @@ app.include_router(user_profile_router, prefix="/bbs", tags=["profile"])
 app.include_router(content_router, prefix="/content", tags=["content"])
 app.include_router(faq_router, prefix="/faq", tags=["faq"])
 app.include_router(qa_router, prefix="/qa", tags=["qa"])
-app.include_router(menu_router, prefix="/menu", tags=["menu"])
 app.include_router(memo_router, prefix="/memo", tags=["memo"])
 app.include_router(poll_router, prefix="/poll", tags=["poll"])
 app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
@@ -216,17 +211,24 @@ def index(request: Request, response: Response, db: Session = Depends(get_db)):
     
     context = {
         "request": request,
-        # "outlogin": request.state.context["outlogin"],
         "latest": latest,
     }
     return templates.TemplateResponse(f"index.{request.state.device}.html", context)
 
 
 # 최신글
-def latest(skin_dir='', bo_table='', rows=10, subject_len=40, request: Request = None):
+def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
 
     if not skin_dir:
         skin_dir = 'basic'
+
+    g6_file_cache = G6FileCache()
+    cache_filename = f"latest-{bo_table}-{skin_dir}-{rows}-{subject_len}-{g6_file_cache.get_cache_secret_key()}.html"
+    cache_file = os.path.join(g6_file_cache.cache_dir, cache_filename)
+
+    # 캐시된 파일이 있으면 파일을 읽어서 반환
+    if os.path.exists(cache_file):
+        return g6_file_cache.get(cache_file)
     
     db = SessionLocal()
     board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
@@ -249,5 +251,9 @@ def latest(skin_dir='', bo_table='', rows=10, subject_len=40, request: Request =
         "bo_subject": board.bo_subject,
     }
     temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
-    return temp.body.decode("utf-8")
+    temp_decode = temp.body.decode("utf-8")
 
+    # 캐시 파일 생성
+    g6_file_cache.create(temp_decode, cache_file)
+
+    return temp_decode
