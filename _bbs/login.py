@@ -23,17 +23,12 @@ def login(request: Request, db: Session = Depends(get_db), mb_id: str = Form(...
     """
     로그인 폼화면에서 로그인
     """
-    errors = []
-
     member = db.query(Member).filter(Member.mb_id == mb_id).first()
     if not member:
-        errors.append("회원정보가 존재하지 않습니다.")
+        raise AlertException(status_code=404, detail="회원정보가 존재하지 않습니다.")
     else:
         if not validate_password(password=mb_password, hash=member.mb_password):
-            errors.append("아이디 또는 패스워드가 일치하지 않습니다.")
-
-    if errors:
-        return templates.TemplateResponse("bbs/login_form.html", {"request": request, "mb_id": mb_id, "errors": errors})
+            raise AlertException(status_code=404, detail="아이디 또는 패스워드가 일치하지 않습니다.")
 
     # 로그인 성공시 세션에 저장
     request.session["ss_mb_id"] = member.mb_id
@@ -48,16 +43,13 @@ def check_login(request: Request, db: Session = Depends(get_db), mb_id: str = Fo
     """
     outlogin 에서 로그인
     """
-    errors = []
     member = db.query(Member).filter(Member.mb_id == mb_id).first()
     if not member:
-        errors.append("회원정보가 존재하지 않습니다.")
+        raise AlertException(status_code=404, detail="회원정보가 존재하지 않습니다.")
     else:
-        if not validate_password(mb_password, member.mb_password):
-            errors.append("아이디 또는 패스워드가 일치하지 않습니다.")
+        if not validate_password(password=mb_password, hash=member.mb_password):
+            raise AlertException(status_code=404, detail="아이디 또는 패스워드가 일치하지 않습니다.")
 
-    if errors:
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
 
     # 로그인 성공시 세션에 저장
     request.session["ss_mb_id"] = member.mb_id

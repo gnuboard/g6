@@ -23,19 +23,15 @@ def get_register(request: Request, response: Response, db: Session = Depends(get
 
     request.session["ss_agree"] = ""
     request.session["ss_agree2"] = ""
-    return templates.TemplateResponse("bbs/register.html", {"request": request, "errors": ''})
+    return templates.TemplateResponse("bbs/register.html", {"request": request})
 
 
 @router.post("/register")
-def post_register(request: Request, agree: str = Form(...), agree2: str = Form(...),
-                  ):
-    errors = []
+def post_register(request: Request, agree: str = Form(...), agree2: str = Form(...)):
     if not agree:
-        errors.append("회원가입약관에 동의해 주세요.")
+        raise AlertException(status_code=400, detail="회원가입약관에 동의해 주세요.")
     if not agree2:
-        errors.append("개인정보 수집 및 이용에 동의해 주세요.")
-    if errors:
-        return templates.TemplateResponse("bbs/register.html", {"request": request, "errors": errors})
+        raise AlertException(status_code=400, detail="개인정보 수집 및 이용에 동의해 주세요.")
 
     request.session["ss_agree"] = agree
     request.session["ss_agree2"] = agree2
@@ -52,8 +48,9 @@ def get_register_form(request: Request):
     if not agree2:
         return RedirectResponse(url="/bbs/register", status_code=302)
 
+    config = request.state.config
     member = Member()
-    member.mb_level = 1
+    member.mb_level = config.cf_register_level
 
     form_context = {
         "action_url": app.url_path_for("register_form_save"),
@@ -68,7 +65,6 @@ def get_register_form(request: Request):
             "request": request,
             "member": member,
             "form": form_context,
-            "errors": '',
             "config": request.state.config,
         }
     )
@@ -94,44 +90,45 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
         return RedirectResponse(url="/bbs/register", status_code=302)
 
     # 유효성 검사
-    errors = []
     exists_member = db.query(Member.mb_id, Member.mb_email).filter(Member.mb_id == mb_id).first()
     config = request.state.config
 
     if exists_member:
-        errors.append("이미 존재하는 회원아이디 입니다.")
+        raise AlertException(status_code=400, detail="이미 존재하는 회원아이디 입니다.")
+
 
     if not (mb_password and mb_password_re):
-        errors.append("비밀번호를 입력해 주세요.")
+        raise AlertException(status_code=400, detail="비밀번호를 입력해 주세요.")
+
 
     elif mb_password != mb_password_re:
-        errors.append("비밀번호와 비밀번호 확인이 일치하지 않습니다.")
+        raise AlertException(status_code=400, detail="비밀번호와 비밀번호 확인이 일치하지 않습니다.")
 
     if not member_form.mb_name:
-        errors.append("이름을 입력해 주세요.")
+        raise AlertException(status_code=400, detail="이름을 입력해 주세요.")
     if not member_form.mb_nick:
-        errors.append("닉네임을 입력해 주세요.")
+        raise AlertException(status_code=400, detail="닉네임을 입력해 주세요.")
 
     if config.cf_use_email_certify:
         if not member_form.mb_email:
-            errors.append("이메일을 입력해 주세요.")
+            raise AlertException(status_code=400, detail="이메일을 입력해 주세요.")
 
         elif not valid_email(member_form.mb_email):
-            errors.append("이메일 양식이 올바르지 않습니다.")
+            raise AlertException(status_code=400, detail="이메일 양식이 올바르지 않습니다.")
 
         else:
             exists_email = db.query(Member.mb_email).filter(Member.mb_email == member_form.mb_email).first()
             if exists_email:
-                errors.append("이미 존재하는 이메일 입니다.")
+                raise AlertException(status_code=400, detail="이미 존재하는 이메일 입니다.")
 
     # 닉네임 검사
     result = validate_nickname(member_form.mb_nick, config.cf_prohibit_id)
-    if result is not True:
-        errors.append(result)
+    if result["msg"]:
+        raise AlertException(status_code=400, detail=result["msg"])
 
     result = validate_userid(mb_id, config.cf_prohibit_id)
-    if result is not True:
-        errors.append(result)
+    if result["msg"]:
+        raise AlertException(status_code=400, detail=result["msg"])
 
     if mb_certify_case and member_form.mb_certify:
         member_form.mb_certify = mb_certify_case
@@ -142,22 +139,22 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
 
     # 이미지 검사
     if mb_img and mb_img.filename:
-        if not re.match(r".*\.(jpg|jpeg|png|gif)$", mb_img.filename, re.IGNORECASE):
-            errors.append("이미지 파일만 업로드 가능합니다.")
+        if not re.match(r".*\.(gif)$", mb_img.filename, re.IGNORECASE):
+            raise AlertException(status_code=400, detail="gif 이미지 파일만 업로드 가능합니다.")
 
     if mb_icon and mb_icon.filename:
         mb_icon_info = Image.open(mb_icon.file)
         width, height = mb_icon_info.size
 
         if 0 < config.cf_member_icon_size < mb_icon.size:
-            errors.append(f"아이콘 용량은 {config.cf_member_icon_size} 이하로 업로드 해주세요.")
+            raise AlertException(status_code=400, detail=f"아이콘 용량은 {config.cf_member_icon_size} 이하로 업로드 해주세요.")
 
         if config.cf_member_icon_width and config.cf_member_icon_height:
             if width > config.cf_member_icon_width or height > config.cf_member_icon_height:
-                errors.append(f"아이콘 크기는 {config.cf_member_icon_width}x{config.cf_member_icon_height} 이하로 업로드 해주세요.")
+                raise AlertException(status_code=400, detail=f"아이콘 크기는 {config.cf_member_icon_width}x{config.cf_member_icon_height} 이하로 업로드 해주세요.")
 
         if not re.match(r".*\.(gif)$", mb_icon.filename, re.IGNORECASE):
-            errors.append("gif 파일만 업로드 가능합니다.")
+            raise AlertException(status_code=400, detail="gif 파일만 업로드 가능합니다.")
 
     if not member_form.mb_sex in {"m", "f"}:
         member_form.mb_sex = ""
@@ -170,24 +167,6 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
     del member_form.mb_level
 
     # 유효성 검증 통과
-
-    form_context = {
-        "agree": agree,
-        "agree2": agree2,
-        "name_readonly": "readonly" if (config.cf_cert_use and config.cf_cert_req) else "",
-        "mb_zip": mb_zip
-    }
-
-    if errors:
-        return templates.TemplateResponse(
-            "member/register_form.html",
-            context={
-                "request": request,
-                "member": Member(mb_id=mb_id, mb_level=1, **member_form.__dict__),
-                "is_register": True,
-                "config": request.state.config,
-                "form": form_context, "errors": errors
-            })
 
     if mb_img and mb_img.filename:
         upload_file(
