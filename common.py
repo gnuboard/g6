@@ -1348,6 +1348,7 @@ class MyTemplates(Jinja2Templates):
                  ):
         super().__init__(directory, context_processors, **env_options)
         # 공통 env.global 설정
+        self.env.globals["editor_path"] = editor_path
         self.env.globals["generate_token"] = generate_token
         self.env.globals["getattr"] = getattr
         self.env.globals["get_selected"] = get_selected
