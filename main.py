@@ -212,6 +212,7 @@ def index(request: Request, response: Response, db: Session = Depends(get_db)):
     context = {
         "request": request,
         "latest": latest,
+        "newwins": get_newwins(request)
     }
     return templates.TemplateResponse(f"index.{request.state.device}.html", context)
 
@@ -257,3 +258,24 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     g6_file_cache.create(temp_decode, cache_file)
 
     return temp_decode
+
+
+def get_newwins(request: Request):
+    """
+    레이어 팝업 목록을 반환하는 함수
+    """
+    db = SessionLocal()
+
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    current_division = "comm" # comm, both, shop
+    newwins = db.query(models.NewWin).filter(
+        models.NewWin.nw_begin_time <= now,
+        models.NewWin.nw_end_time >= now,
+        models.NewWin.nw_device.in_(["both", request.state.device]),
+        models.NewWin.nw_division.in_(["both", current_division]),
+    ).order_by(models.NewWin.nw_id.asc()).all()
+
+    # "hd_pops_" + nw_id 이름으로 선언된 쿠키가 있는지 확인하고 있다면 팝업을 제거
+    newwins = [newwin for newwin in newwins if not request.cookies.get("hd_pops_" + str(newwin.nw_id))]
+
+    return newwins
