@@ -1285,3 +1285,16 @@ def get_filetime_str(file_path) -> Union[int, str]:
         return int(file_time)
     except FileNotFoundError:
         return ''
+
+
+def is_min_year(input_date: Union[date, str]) -> bool:
+    """datetime 이 최소 연도인지 확인
+    0001, mysql 5.7이하 0000,
+    """
+    if isinstance(input_date, str):  # pymysql 라이브러리는 '0000', 12월 32일등 잘못된 날짜 일때 str 타입반환.
+        return True
+
+    if input_date.strftime("%Y")[:2] == "00":
+        return True
+
+    return False

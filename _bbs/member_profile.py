@@ -260,10 +260,16 @@ def validate_nickname_change_date(before_nick_date: date, nick_modify_date) -> U
         Raises:
             ValidationError: 닉네임 변경 가능일 안내
     """
-
+    if nick_modify_date == 0:
+        return True
     change_date = timedelta(days=nick_modify_date)
+
+    if is_min_year(before_nick_date):
+        before_nick_date = datetime.now().date()
+
     available_date = before_nick_date + change_date
-    if datetime.now().date() <= available_date:
+
+    if datetime.now().date() < available_date:
         return f"{available_date.strftime('%Y-%m-%d')} 이후 닉네임을 변경할 수있습니다."
 
     return True
