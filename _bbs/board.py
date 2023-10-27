@@ -18,6 +18,7 @@ templates.env.globals["bleach"] = bleach
 templates.env.globals["nl2br"] = nl2br
 templates.env.globals["editor_path"] = editor_path
 templates.env.globals["generate_token"] = generate_token
+templates.env.globals["get_selected"] = get_selected
 templates.env.globals["get_unique_id"] = get_unique_id
 
 
@@ -47,41 +48,97 @@ def group_board_list(request: Request, gr_id: str, db: Session = Depends(get_db)
     )
 
 @router.get("/{bo_table}")
-def list_post(bo_table: str, request: Request, db: Session = Depends(get_db)):
+def list_post(bo_table: str, request: Request, db: Session = Depends(get_db), search_params: dict = Depends(common_search_query_params)):
     """
     지정된 게시판의 글 목록을 보여준다.
     """
-    board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
+    # 게시판 정보 조회
+    board = db.query(models.Board).get(bo_table)
     if not board:
-        raise HTTPException(status_code=404, detail="{bo_table} is not found.")
+        raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
 
-    # models_write = lambda: None
+    # 게시판 카테고리 설정
+    categories = []
+    if board.bo_use_category:
+        categories = board.bo_category_list.split("|")
+
     models.Write = dynamic_create_write_table(bo_table)
-    writes = (
-        db.query(models.Write)
-        .filter(models.Write.wr_is_comment == False)
-        .order_by(models.Write.wr_num)
-        .all()
-    )
-    if writes:
-        for write in writes:
-            write.wr_num = abs(write.wr_num)  # 양수로 변경
-            write.wr_datetime = write.wr_datetime.strftime("%Y-%m-%d %H:%M:%S")
-    else:
-        writes = []
 
-    # request.state.context["board"] = board
-    # request.state.context["writes"] = writes
+    writes = []
+    # 공지 게시글 목록 조회
+    if search_params["current_page"] == 1:
+        notice_ids = board.bo_notice.split(",")
+        notice_writes = db.query(models.Write).filter(models.Write.wr_id.in_(notice_ids)).all()
+        # 게시글 정보 수정
+        for write in notice_writes:
+            write.is_notice = True
 
-    # return templates.TemplateResponse("board/list_post.html", {"request": request, "board": board, "writes": writes})
+        writes.extend(notice_writes)
+
+    # 게시글 목록 조회
+    result = select_query(
+            request,
+            models.Write, 
+            search_params, 
+            default_sst = ["wr_num", "wr_reply"],
+            default_sod = "",
+        )
+    writes.extend(result['rows'])
+    total_count = result['total_count']
+
+    # 게시글 정보 수정
+    for write in writes:
+        write.wr_num = abs(int(write.wr_num))  # 양수로 변경
+        write.wr_datetime2 = write.wr_datetime.strftime("%Y-%m-%d %H:%M:%S")
+        write.icon_hot = write.wr_hit >= board.bo_hot
+        write.icon_new = write.wr_datetime > (datetime.now() - timedelta(hours=int(board.bo_new)))
+        write.icon_file = write.wr_file
+        write.icon_link = write.wr_link1 or write.wr_link2
+
+
+        # 문자열을 datetime 객체로 변환
+        
+
     return templates.TemplateResponse(
         f"board/{request.state.device}/{board.bo_skin}/list_post.html",
-        {"request": request, "board": board, "writes": writes},
+        {
+            "request": request,
+            "categories": categories,
+            "board": board,
+            "notice_writes" : notice_writes,
+            "writes": writes,
+            "total_count": total_count,
+            "current_page": search_params['current_page'],
+            "paging": get_paging(request, search_params['current_page'], total_count)
+        }
+    )
+
+
+@router.get("/write")
+def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db)):
+    """
+    게시글을 작성하는 form을 보여준다.
+    """
+    # 게시판 정보 조회
+    board = db.query(models.Board).get(bo_table)
+    if not board:
+        raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
+
+    request.state.use_editor = board.bo_use_dhtml_editor
+    request.state.editor = board.bo_select_editor
+
+    return templates.TemplateResponse(
+        f"board/{request.state.device}/{board.bo_skin}/write_form.html",
+        {
+            "request": request,
+            "board": board,
+            "write": None,
+        }
     )
 
 
 @router.get("/write/{bo_table}")
-def write_form(bo_table: str, request: Request, db: Session = Depends(get_db)):
+def write_form_edit(bo_table: str, request: Request, db: Session = Depends(get_db)):
     """
     게시글을 작성하는 form을 보여준다.
     """
