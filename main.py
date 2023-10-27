@@ -182,8 +182,8 @@ app.add_middleware(SessionMiddleware, secret_key="secret", session_cookie="sessi
 
 
 @app.exception_handler(AlertException)
-async def http_exception_handler(request: Request, exc: AlertException):
-    """예외 처리기를 등록하고 AlertException 동작 처리
+async def alert_exception_handler(request: Request, exc: AlertException):
+    """AlertException 예외처리 등록
 
     Args:
         request (Request): request 객체
@@ -194,6 +194,21 @@ async def http_exception_handler(request: Request, exc: AlertException):
     """
     return templates.TemplateResponse(
         "alert.html", {"request": request, "errors": exc.detail, "url": exc.url}, status_code=exc.status_code
+    )
+
+@app.exception_handler(AlertCloseException)
+async def alert_close_exception_handler(request: Request, exc: AlertCloseException):
+    """AlertCloseException 예외처리 등록
+
+    Args:
+        request (Request): request 객체
+        exc (AlertCloseException): 예외 객체
+
+    Returns:
+        _TemplateResponse: 경고창 & 윈도우창 닫기 템플릿
+    """
+    return templates.TemplateResponse(
+        "alert_close.html", {"request": request, "errors": exc.detail}, status_code=exc.status_code
     )
 
 

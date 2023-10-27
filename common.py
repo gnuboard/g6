@@ -4,7 +4,7 @@ import os
 import random
 import re
 from time import sleep
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 import uuid
 from urllib.parse import urlencode
 import PIL
@@ -1230,6 +1230,21 @@ class AlertException(HTTPException):
         self.status_code = status_code
         self.detail = detail
         self.url = url
+
+
+class AlertCloseException(HTTPException):
+    """스크립트 경고창 출력 및 윈도우 창 닫기를 위한 예외 클래스
+
+    Args:
+        HTTPException (HTTPException): HTTP 예외 클래스
+    """
+    def __init__(
+        self,
+        status_code: int,
+        detail: Any = None,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> None:
+        super().__init__(status_code=status_code, detail=detail, headers=headers) 
 
 
 def is_admin(request: Request):
