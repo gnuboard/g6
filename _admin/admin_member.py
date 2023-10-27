@@ -82,7 +82,9 @@ async def member_list(
             return cache[f"name:{name}"]
         
         # 이메일과 홈페이지 처리
-        email = email  # 이메일 암호화 등의 추가 처리가 필요할 수 있음
+        enc = StringEncrypt()
+        encrypted_email = enc.encrypt(email)
+        
         homepage = homepage  # 홈페이지 URL 클리닝 및 검증
         
         get_member_icon(member.mb_id)
@@ -93,7 +95,7 @@ async def member_list(
             icon_file_url = get_member_icon(member.mb_id)
             # if os.path.exists(icon_file):
             #     icon_file_url = f'<img src="{icon_file}" alt="icon">'
-        
+            
         # HTML 생성
         if mb_id: # for member
             result = f"""
@@ -104,9 +106,9 @@ async def member_list(
                 </a>
                 <span class="sv">
                     <a href="/bbs/memo_form?me_recv_mb_id={mb_id}" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
-                    {f'<a href="/bbs/formmail.php?mb_id={mb_id}&name={name}&email={email}" onclick="win_email(this.href); return false;" rel="nofollow">메일보내기</a>' if email else ''}
+                    {f'<a href="/bbs/formmail/{mb_id}?name={name}&email={encrypted_email}" onclick="win_email(this.href); return false;" rel="nofollow">메일보내기</a>' if email else ''}
                     {f'<a href="{homepage}" rel="nofollow noopener" target="_blank">홈페이지</a>' if homepage else ''}
-                    <a href="/bbs/profile?mb_id={mb_id}" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+                    <a href="/bbs/profile/{mb_id}" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
                     <a href="/bbs/new?mb_id={mb_id}" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a>
                     {f'<a href="/admin/member_form?mb_id={mb_id}" target="_blank" rel="nofollow">회원정보변경</a>' if request.state.is_super_admin else ''}
                     {f'<a href="/bbs/point_list?sfl=mb_id&stx={mb_id}" target="_blank" rel="nofollow">포인트내역</a>' if request.state.is_super_admin else ''}
@@ -120,7 +122,7 @@ async def member_list(
                 {name}
                 <span class="sv">
                     <a href="/bbs/board/{bo_table}?sfl=wr_name,1&stx={name}" class="sv_guest" rel="nofollow">이름으로 검색</a>
-                    {f'<a href="/bbs/formmail.php?mb_id={mb_id}&name={name}&email={email}" onclick="win_email(this.href); return false;" rel="nofollow">메일보내기</a>' if email else ''}
+                    {f'<a href="/bbs/formmail/{mb_id}&name={name}&email={email}" onclick="win_email(this.href); return false;" rel="nofollow">메일보내기</a>' if email else ''}
                     {f'<a href="{homepage}" rel="nofollow noopener" target="_blank">홈페이지</a>' if homepage else ''}
                 </span>
             </span>
