@@ -201,18 +201,31 @@ def get_member(mb_id, db: Session = Depends(get_db)):
     member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
     return member
 
-@app.get("/root")
-def read_root():
-    return {"Hello": "World"}
-
 
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request, response: Response, db: Session = Depends(get_db)):
-    
+def index(request: Request, db: Session = Depends(get_db)):
+    """
+    메인 페이지
+    """
+    boards_query = db.query(models.Board).join(
+        models.Group, models.Board.gr_id == models.Group.gr_id
+    ).filter(models.Board.bo_device != 'mobile')
+    # 최고관리자는 모든 게시판을 볼 수 있음
+    if not request.state.is_super_admin:
+        boards_query = boards_query.filter(
+            models.Board.bo_use_cert == '',
+            models.Board.bo_table.notin_(['notice', 'gallery'])
+        )
+    boards = boards_query.order_by(
+        models.Group.gr_order,
+        models.Board.bo_order
+    ).all()
+
     context = {
         "request": request,
+        "newwins": get_newwins(request),
         "latest": latest,
-        "newwins": get_newwins(request)
+        "boards": boards,
     }
     return templates.TemplateResponse(f"index.{request.state.device}.html", context)
 
@@ -244,6 +257,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
         write.icon_file = write.wr_file
         write.icon_link = write.wr_link1 or write.wr_link2
         write.icon_reply = write.wr_reply
+        write.datetime = write.wr_datetime.strftime("%y-%m-%d")
     
     context = {
         "request": request,
