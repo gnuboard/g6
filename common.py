@@ -23,6 +23,8 @@ from datetime import datetime, timedelta, date, time
 import json
 from PIL import Image
 from user_agents import parse
+import base64
+
 
 # 전역변수 선언(global variables)
 TEMPLATES = "templates"
@@ -1285,3 +1287,52 @@ def get_filetime_str(file_path) -> Union[int, str]:
         return int(file_time)
     except FileNotFoundError:
         return ''
+
+
+class StringEncrypt:
+    def __init__(self, salt=''):
+        if not salt:
+            # You might want to implement your own salt generation logic here
+            self.salt = "your_default_salt"
+        else:
+            self.salt = salt
+        
+        self.length = len(self.salt)
+
+    def encrypt(self, str_):
+        length = len(str_)
+        result = ''
+
+        for i in range(length):
+            char = str_[i]
+            keychar = self.salt[i % self.length]
+            char = chr(ord(char) + ord(keychar))
+            result += char
+
+        result = base64.b64encode(result.encode()).decode()
+        result = result.translate(str.maketrans('+/=', '._-'))
+
+        return result
+
+    def decrypt(self, str_):
+        result = ''
+        str_ = str_.translate(str.maketrans('._-', '+/='))
+        str_ = base64.b64decode(str_).decode()
+
+        length = len(str_)
+
+        for i in range(length):
+            char = str_[i]
+            keychar = self.salt[i % self.length]
+            char = chr(ord(char) - ord(keychar))
+            result += char
+
+        return result
+
+# 사용 예
+# enc = StringEncrypt()
+# encrypted_text = enc.encrypt("hello")
+# print(encrypted_text)
+
+# decrypted_text = enc.decrypt(encrypted_text)
+# print(decrypted_text)
