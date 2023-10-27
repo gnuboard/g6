@@ -931,7 +931,7 @@ box-shadow: 2px 2px 3px 0px rgba(0,0,0,0.2);}
 .sv_wrap .sv a {display:inline-block;margin:0;padding:0 10px;line-height:30px;width:100px;font-weight:normal;color:#bbb }
 .sv_wrap .sv a:hover{background:#000;color:#fff}
 .sv_member{color:#333}
-.sv_on {display:block !important;position:absolute;top:23px;left:0px;width:auto;height:auto}
+.sv_on {display:block !important;position:absolute;top:23px;left:35px;width:auto;height:auto}
 .sv_nojs .sv {display:block}
 
 /* 페이징 */
@@ -1131,4 +1131,21 @@ input[type="text"]{max-width:200px}
 @media only screen and (max-device-width : 480px) and (orientation : portrait){
 /* Styles */
 input[type="text"]{max-width:200px}
+}
+
+.dynamic_layer {
+    position: absolute;
+    background-color: #ffffff;  /* 흰색 배경 */
+    border: 1px solid #e0e0e0; /* 회색 테두리 */
+    padding: 15px; /* 내부 패딩 */
+    box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.2); /* 그림자 효과 */
+    border-radius: 8px; /* 모서리 둥글게 */
+    font-family: 'Arial', sans-serif; /* 폰트 설정 */
+    max-width: 300px; /* 최대 너비 설정 */
+    z-index: 1000; /* 다른 요소 위에 올라오게 설정 */
+    transition: opacity 0.3s ease; /* 투명도 애니메이션 효과 */
+}
+
+.dynamic_layer:hover {
+    opacity: 0.9; /* 마우스 오버 시 투명도 조절 */
 }

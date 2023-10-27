@@ -71,7 +71,7 @@ function wrestEmail(fld)
     if (!wrestTrim(fld)) return;
 
     //var pattern = /(\S+)@(\S+)\.(\S+)/; 이메일주소에 한글 사용시
-    var pattern = /^([0-9a-zA-Z_-\.]+)@([0-9a-zA-Z_-]+)\.([0-9a-zA-Z_-]+)$/;
+    var pattern = /^([0-9a-zA-Z_\-\.]+)@([0-9a-zA-Z_\-]+)\.([0-9a-zA-Z_\-]+)$/;
     if (!pattern.test(fld.value)) {
         if (wrestFld == null) {
             wrestMsg = wrestItemname(fld) + " : 이메일주소 형식이 아닙니다.\n";

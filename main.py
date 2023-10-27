@@ -251,3 +251,25 @@ def latest(skin_dir='', bo_table='', rows=10, subject_len=40, request: Request =
     temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
     return temp.body.decode("utf-8")
 
+
+@app.get("/sideview/{mb_id}")
+def sideview(request: Request, mb_id: str, db: Session = Depends(get_db)):    
+    config = request.state.config
+    if config.cf_use_member_icon == 0:
+        return
+
+    exists_member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
+    if not exists_member:
+        return {"error": "존재하지 않는 회원입니다."}
+    
+    str = f'''<a href="">쪽지보내기</a><a href="">메일보내기</a><a href="">자기소개</a><a href="">전체게시물</a>'''
+    
+    return str
+
+
+
+@app.get("/get-member-info")
+def get_member_info(memberid: str):
+    # 여기에서 memberid 값에 대한 정보를 데이터베이스나 다른 소스에서 검색할 수 있습니다.
+    # 예제에서는 간단한 문자열을 반환합니다.
+    return f"{memberid}에 대한 정보입니다."
