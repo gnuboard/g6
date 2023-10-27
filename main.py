@@ -197,26 +197,21 @@ async def http_exception_handler(request: Request, exc: AlertException):
     )
 
 
-def get_member(mb_id, db: Session = Depends(get_db)):
-    member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
-    return member
-
-
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request, db: Session = Depends(get_db)):
     """
     메인 페이지
     """
-    boards_query = db.query(models.Board).join(
+    query_boards = db.query(models.Board).join(
         models.Group, models.Board.gr_id == models.Group.gr_id
     ).filter(models.Board.bo_device != 'mobile')
     # 최고관리자는 모든 게시판을 볼 수 있음
     if not request.state.is_super_admin:
-        boards_query = boards_query.filter(
+        query_boards = query_boards.filter(
             models.Board.bo_use_cert == '',
             models.Board.bo_table.notin_(['notice', 'gallery'])
         )
-    boards = boards_query.order_by(
+    boards = query_boards.order_by(
         models.Group.gr_order,
         models.Board.bo_order
     ).all()
@@ -228,68 +223,3 @@ def index(request: Request, db: Session = Depends(get_db)):
         "boards": boards,
     }
     return templates.TemplateResponse(f"index.{request.state.device}.html", context)
-
-
-# 최신글
-def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
-
-    if not skin_dir:
-        skin_dir = 'basic'
-
-    g6_file_cache = G6FileCache()
-    cache_filename = f"latest-{bo_table}-{skin_dir}-{rows}-{subject_len}-{g6_file_cache.get_cache_secret_key()}.html"
-    cache_file = os.path.join(g6_file_cache.cache_dir, cache_filename)
-
-    # 캐시된 파일이 있으면 파일을 읽어서 반환
-    if os.path.exists(cache_file):
-        return g6_file_cache.get(cache_file)
-    
-    db = SessionLocal()
-    board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
-    
-    models.Write = dynamic_create_write_table(bo_table)
-    writes = db.query(models.Write).filter(models.Write.wr_is_comment == False).order_by(models.Write.wr_num).limit(rows).all()
-    for write in writes:
-        write.is_notice = write.wr_id in board.bo_notice.split(",")
-        write.subject = write.wr_subject[:subject_len]
-        write.icon_hot = write.wr_hit >= 100
-        write.icon_new = write.wr_datetime > (datetime.now() - timedelta(days=1))
-        write.icon_file = write.wr_file
-        write.icon_link = write.wr_link1 or write.wr_link2
-        write.icon_reply = write.wr_reply
-        write.datetime = write.wr_datetime.strftime("%y-%m-%d")
-    
-    context = {
-        "request": request,
-        "writes": writes,
-        "bo_table": bo_table,
-        "bo_subject": board.bo_subject,
-    }
-    temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
-    temp_decode = temp.body.decode("utf-8")
-
-    # 캐시 파일 생성
-    g6_file_cache.create(temp_decode, cache_file)
-
-    return temp_decode
-
-
-def get_newwins(request: Request):
-    """
-    레이어 팝업 목록을 반환하는 함수
-    """
-    db = SessionLocal()
-
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    current_division = "comm" # comm, both, shop
-    newwins = db.query(models.NewWin).filter(
-        models.NewWin.nw_begin_time <= now,
-        models.NewWin.nw_end_time >= now,
-        models.NewWin.nw_device.in_(["both", request.state.device]),
-        models.NewWin.nw_division.in_(["both", current_division]),
-    ).order_by(models.NewWin.nw_id.asc()).all()
-
-    # "hd_pops_" + nw_id 이름으로 선언된 쿠키가 있는지 확인하고 있다면 팝업을 제거
-    newwins = [newwin for newwin in newwins if not request.cookies.get("hd_pops_" + str(newwin.nw_id))]
-
-    return newwins

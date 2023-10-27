@@ -16,7 +16,7 @@ from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
-from models import Auth, Config, Member, Memo, Board, Group, Menu, Point, Poll, Popular, Visit, VisitSum, UniqId
+from models import Auth, Config, Member, Memo, Board, Group, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
 from models import WriteBaseModel
 from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
@@ -1437,3 +1437,80 @@ class G6FileCache():
         for file in os.listdir(self.cache_dir):
             if file.startswith(prefix):
                 os.remove(os.path.join(self.cache_dir, file))
+
+
+def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
+    """최신글 목록 HTML 출력
+
+    Args:
+        request (Request): _description_
+        skin_dir (str, optional): 스킨 경로. Defaults to ''.
+        bo_table (str, optional): 게시판 코드. Defaults to ''.
+        rows (int, optional): 노출 게시글 수. Defaults to 10.
+        subject_len (int, optional): 제목길이 제한. Defaults to 40.
+
+    Returns:
+        str: 최신글 HTML
+    """
+    templates = MyTemplates(directory=TEMPLATES_DIR)
+
+    if not skin_dir:
+        skin_dir = 'basic'
+
+    g6_file_cache = G6FileCache()
+    cache_filename = f"latest-{bo_table}-{skin_dir}-{rows}-{subject_len}-{g6_file_cache.get_cache_secret_key()}.html"
+    cache_file = os.path.join(g6_file_cache.cache_dir, cache_filename)
+
+    # 캐시된 파일이 있으면 파일을 읽어서 반환
+    if os.path.exists(cache_file):
+        return g6_file_cache.get(cache_file)
+    
+    db = SessionLocal()
+    board = db.query(Board).filter(Board.bo_table == bo_table).first()
+    
+    Write = dynamic_create_write_table(bo_table)
+    writes = db.query(Write).filter(Write.wr_is_comment == False).order_by(Write.wr_num).limit(rows).all()
+    for write in writes:
+        write.is_notice = write.wr_id in board.bo_notice.split(",")
+        write.subject = write.wr_subject[:subject_len]
+        write.icon_hot = write.wr_hit >= 100
+        write.icon_new = write.wr_datetime > (datetime.now() - timedelta(days=1))
+        write.icon_file = write.wr_file
+        write.icon_link = write.wr_link1 or write.wr_link2
+        write.icon_reply = write.wr_reply
+        write.datetime = write.wr_datetime.strftime("%y-%m-%d")
+    
+    context = {
+        "request": request,
+        "writes": writes,
+        "bo_table": bo_table,
+        "bo_subject": board.bo_subject,
+    }
+    temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
+    temp_decode = temp.body.decode("utf-8")
+
+    # 캐시 파일 생성
+    g6_file_cache.create(temp_decode, cache_file)
+
+    return temp_decode
+
+
+def get_newwins(request: Request):
+    """
+    레이어 팝업 목록 조회
+    """
+    db = SessionLocal()
+
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    current_division = "comm" # comm, both, shop
+    newwins = db.query(NewWin).filter(
+        NewWin.nw_begin_time <= now,
+        NewWin.nw_end_time >= now,
+        NewWin.nw_device.in_(["both", request.state.device]),
+        NewWin.nw_division.in_(["both", current_division]),
+    ).order_by(NewWin.nw_id.asc()).all()
+
+    # "hd_pops_" + nw_id 이름으로 선언된 쿠키가 있는지 확인하고 있다면 팝업을 제거
+    newwins = [newwin for newwin in newwins if not request.cookies.get("hd_pops_" + str(newwin.nw_id))]
+
+    return newwins

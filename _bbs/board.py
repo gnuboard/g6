@@ -2,14 +2,13 @@
 # 그누보드5 버전에서 게시판 테이블을 write 로 사용하여 테이블명을 바꾸지 못하는 관계로
 # 테이블명은 write 로, 글 한개에 대한 의미는 write 와 post 를 혼용하여 사용합니다.
 import bleach
+import datetime
 from fastapi import APIRouter, Depends, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
-import datetime
-from common import *
 
+from common import *
 from database import get_db
 import models
 
@@ -22,17 +21,30 @@ templates.env.globals["generate_token"] = generate_token
 templates.env.globals["get_unique_id"] = get_unique_id
 
 
-# all board list
-@router.get("/")
-def list_board(request: Request, db: Session = Depends(get_db)):
+@router.get("/group/{gr_id}")
+def group_board_list(request: Request, gr_id: str, db: Session = Depends(get_db)):
     """
-    모든 게시판 목록을 보여준다.
+    게시판그룹의 모든 게시판 목록을 보여준다.
     """
-    boards = db.query(models.Board).all()
-    return templates.TemplateResponse(
-        "board/list_board.html", {"request": request, "boards": boards}
+    member_level = get_member_level(request)
+    is_super_admin = request.state.is_super_admin
+    
+    group = db.query(models.Group).get(gr_id)
+    if not is_super_admin and request.state.device == 'mobile':
+        raise AlertException(status_code=400, detail=f"{group.gr_subject} 그룹은 모바일에서만 접근할 수 있습니다.", url="/")
+    
+    query_boards = db.query(models.Board).filter(
+        models.Board.gr_id == gr_id,
+        models.Board.bo_list_level <= member_level,
+        models.Board.bo_device != 'mobile'
     )
+    if not is_super_admin:
+        query_boards = query_boards.filter(models.Board.bo_use_cert == '')
 
+    boards = query_boards.order_by(models.Board.bo_order).all()
+    return templates.TemplateResponse(
+        f"board/{request.state.device}/group.html", {"request": request, "group": group, "boards": boards, "latest": latest}
+    )
 
 @router.get("/{bo_table}")
 def list_post(bo_table: str, request: Request, db: Session = Depends(get_db)):
