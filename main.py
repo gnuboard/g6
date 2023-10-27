@@ -78,7 +78,9 @@ async def main_middleware(request: Request, call_next):
     request.state.config = config
 
     is_super_admin = False
+    is_autologin = False
     ss_mb_id = request.session.get("ss_mb_id", "")
+    # 로그인
     if ss_mb_id:
         member = db.query(models.Member).filter(models.Member.mb_id == ss_mb_id).first()
         if member:
@@ -97,9 +99,9 @@ async def main_middleware(request: Request, call_next):
             # 최고관리자인지 확인
             if config.cf_admin == member.mb_id:
                 is_super_admin = True
-            
+    # 자동로그인
     else:
-        cookie_mb_id = request.cookies.get("ck_mb_id")
+        cookie_mb_id = request.cookies.get("ck_mb_id", "")
         if cookie_mb_id:
             cookie_mb_id = re.sub("[^a-zA-Z0-9_]", "", cookie_mb_id)[:20] # 쿠키에 저장된 아이디에서 영문자,숫자,_ 20글자 얻는다.
         if cookie_mb_id and cookie_mb_id.lower() != config.cf_admin.lower(): # 최고관리자 아이디라면 자동로그인 금지
@@ -107,12 +109,13 @@ async def main_middleware(request: Request, call_next):
             if member and not (member.mb_intercept_date or member.mb_leave_date): # 차단 했거나 탈퇴한 회원이 아니면
                 # 메일인증을 사용하고 메일인증한 시간이 있다면, 년도만 체크하여 시간이 있음을 확인
                 if config.cf_use_email_certify and member.mb_email_certify[:2] != "00":
-                    ss_mb_key  = session_member_key(request, member)
+                    ss_mb_key = session_member_key(request, member)
                     # 쿠키에 저장된 키와 여러가지 정보를 조합하여 만든 키가 일치한다면 로그인으로 간주
                     if request.cookies.get("ck_auto") == ss_mb_key:
                         request.session["ss_mb_id"] = cookie_mb_id
-                        return RedirectResponse(url="/", status_code=302).set_cookie(key="ss_mb_id", value=cookie_mb_id, max_age=3600)
-    
+                        is_autologin = True
+
+    db.close()
     request.state.is_super_admin = is_super_admin
 
     if request.method == "GET":
@@ -159,8 +162,12 @@ async def main_middleware(request: Request, call_next):
     #     # "member": member,
     #     # "outlogin": outlogin.body.decode("utf-8"),
     # }      
-    db.close()
+
     response = await call_next(request)
+
+    if is_autologin:
+        # 자동로그인 쿠키를 설정
+        response.set_cookie(key="ss_mb_id", value=request.session["ss_mb_id"], max_age=3600)
 
     # 접속자 기록
     vi_ip = request.client.host
