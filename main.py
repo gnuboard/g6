@@ -96,9 +96,10 @@ async def main_middleware(request: Request, call_next):
                 member.mb_today_login = TIME_YMDHIS
                 member.mb_login_ip = request.client.host
                 db.commit()
-            # 최고관리자인지 확인
-            if config.cf_admin == member.mb_id:
-                is_super_admin = True
+
+                # 최고관리자인지 확인
+                if config.cf_admin == member.mb_id:
+                    is_super_admin = True
     # 자동로그인
     else:
         cookie_mb_id = request.cookies.get("ck_mb_id", "")
