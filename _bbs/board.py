@@ -172,9 +172,10 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
     """
     게시글을 작성하는 form을 보여준다.
     """
-    board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
+    # 게시판 정보 조회
+    board = db.query(models.Board).get(bo_table)
     if not board:
-        raise HTTPException(status_code=404, detail="{bo_table} is not found.")
+        raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
 
     # 게시판 카테고리 설정
     categories = []
@@ -185,9 +186,11 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
     request.state.editor = board.bo_select_editor or request.state.editor
 
     # 게시글 조회
+    models.Write = dynamic_create_write_table(bo_table)
     write = db.query(models.Write).get(wr_id)
     # 공지사항 설정
     is_notice = True if not write.wr_reply and request.state.is_super_admin else False
+    notice_checked = ""
     notice_ids = board.bo_notice.split(",")
     if str(wr_id) in notice_ids:
         notice_checked = "checked"
@@ -245,6 +248,7 @@ from dataclasses import dataclass
 @dataclass
 class writeForm:
     wr_id: int = Form(None)
+    parent_id: int = Form(None)
     ca_name: str = Form(None)
     wr_name: str = Form(None)
     wr_email: str = Form(None)
@@ -264,9 +268,10 @@ def write_update(
     """
     게시글을 Table 추가한다.
     """
-    board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
+    # 게시판 정보 조회
+    board = db.query(models.Board).get(bo_table)
     if not board:
-        raise HTTPException(status_code=404, detail="{bo_table} is not found.")
+        raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
     
     models.Write = dynamic_create_write_table(bo_table)
     
@@ -293,62 +298,55 @@ def write_update(
 
     db.commit()
 
-    wr_id = write.wr_id
-    write.wr_parent = wr_id
+    # 부모 글의 wr_reply 필드를 수정한다.
+    write.wr_parent = form_data.parent_id or write.wr_id
     db.commit()
 
     # 최신글 캐시 삭제
     G6FileCache().delete_prefix(f'latest-{board.bo_table}')
 
-    return RedirectResponse(f"/board/{board.bo_table}/{wr_id}", status_code=303)
+    return RedirectResponse(f"/board/{board.bo_table}/{write.wr_id}", status_code=303)
 
 
 @router.get("/{bo_table}/{wr_id}")
-def read_post(
-    bo_table: str, wr_id: int, request: Request, db: Session = Depends(get_db)
-):
+def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends(get_db)):
     """
     게시글을 1개 읽는다.
     """
-    board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
+    # 게시판 정보 조회
+    board = db.query(models.Board).get(bo_table)
     if not board:
-        raise HTTPException(status_code=404, detail="{bo_table} is not found.")
+        raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
 
+    # 게시글 정보 조회
     models.Write = dynamic_create_write_table(bo_table)
-    write = db.query(models.Write).filter(models.Write.wr_id == wr_id).first()
+    write = db.query(models.Write).get(wr_id)
     if not write:
-        raise HTTPException(
-            status_code=404, detail="{wr_id} of {bo_table} is not found."
-        )
+        raise AlertException(status_code=404, detail="{wr_id} of {bo_table} is not found.")
+
+    # 이전글 다음글 조회
+    prev = None
+    next = None
+
+    # 댓글 목록 조회
+    comments = db.query(models.Write).filter(
+        models.Write.wr_parent == wr_id,
+        models.Write.wr_is_comment == True
+    ).order_by(models.Write.wr_id.desc()).all()
+    
+
+    # 조회수 증가
     write.wr_hit = write.wr_hit + 1
     db.commit()
-    # print(write.__dict__)
-
-    comments = (
-        db.query(models.Write)
-        .filter(models.Write.wr_parent == wr_id and models.Write.wr_is_comment == True)
-        .order_by(models.Write.wr_id.desc())
-        .all()
-    )
-    if not comments:
-        # raise HTTPException(status_code=404, detail="{write.wr_id} comment is not found.")
-        comments = []
-    # for comment in comments:
-    #     print(vars(comment))
-
-    # return templates.TemplateResponse("view.html", {"request": request, "board": board, "write": write, "comments": comments})
-
-    # request.state.context["board"] = board
-    # request.state.context["write"] = write
-    # request.state.context["comments"] = comments
 
     context = {
         "request": request,
         "board": board,
         "write": write,
         "comments": comments,
+        "prev": prev,
+        "next": next,
     }
-    # return templates.TemplateResponse(f"board/{request.state.device}/{board.bo_skin}/read_post.html", request.state.context)
     return templates.TemplateResponse(
         f"board/{request.state.device}/{board.bo_skin}/read_post.html", context
     )
@@ -361,16 +359,14 @@ def write_comment_update(
     bo_table: str = Form(...),
     wr_id: int = Form(...),
     wr_content: str = Form(...),
-    #  wr_name: str = Form(...),
-    #  wr_password: str = Form(...),
 ):
     """
     댓글을 추가한다.
     """
-    # 게시판이 존재하는지 확인
-    board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
+    # 게시판 정보 조회
+    board = db.query(models.Board).get(bo_table)
     if not board:
-        raise HTTPException(status_code=404, detail="{bo_table} is not found.")
+        raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
 
     # 원글을 찾는다
     models.Write = dynamic_create_write_table(bo_table)
