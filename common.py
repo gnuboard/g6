@@ -1247,7 +1247,7 @@ class AlertException(HTTPException):
     Args:
         HTTPException (HTTPException): HTTP 예외 클래스
     """
-    def __init__(self, status_code: int, detail: str = None, url: str = None):
+    def __init__(self, detail: str = None, status_code: int = 200, url: str = None):
         self.status_code = status_code
         self.detail = detail
         self.url = url
@@ -1261,8 +1261,8 @@ class AlertCloseException(HTTPException):
     """
     def __init__(
         self,
-        status_code: int,
         detail: Any = None,
+        status_code: int = 200,
         headers: Optional[Dict[str, str]] = None,
     ) -> None:
         super().__init__(status_code=status_code, detail=detail, headers=headers) 
