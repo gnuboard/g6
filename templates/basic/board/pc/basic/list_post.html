@@ -53,7 +53,7 @@
                     </button>
                 </li>
                 <li>
-                    <a href="{{ url_for('write_form_add') }}" class="btn_b01 btn" title="글쓰기">
+                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table) }}" class="btn_b01 btn" title="글쓰기">
                         <i class="fa fa-pencil" aria-hidden="true"></i>
                         <span class="sound_only">글쓰기</span>
                     </a>
@@ -187,7 +187,7 @@
                 </li>
                 {% endif %}
                 <li>
-                    <a href="{{ url_for('write_form_add') }}" class="btn_b01 btn" title="글쓰기">
+                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table) }}" class="btn_b01 btn" title="글쓰기">
                         <i class="fa fa-pencil" aria-hidden="true"></i><span class="sound_only">글쓰기</span>
                     </a>
                 </li>
@@ -236,7 +236,7 @@
         });
     });
     </script>
-    <!-- } 게시판 검색 끝 --> 
+    <!-- } 게시판 검색 끝 -->
 </div>
 {% if request.state.is_super_admin %}
     <noscript>

@@ -18,6 +18,7 @@ templates.env.globals["bleach"] = bleach
 templates.env.globals["nl2br"] = nl2br
 templates.env.globals["editor_path"] = editor_path
 templates.env.globals["generate_token"] = generate_token
+templates.env.globals["getattr"] = getattr
 templates.env.globals["get_selected"] = get_selected
 templates.env.globals["get_unique_id"] = get_unique_id
 
@@ -76,6 +77,8 @@ def list_post(bo_table: str, request: Request, db: Session = Depends(get_db), se
         writes.extend(notice_writes)
 
     # 게시글 목록 조회
+    # TODO: sca 검색조건 추가
+    # TODO: sfl 검색필드가 wr_name,1 형식으로 구성되었을 경우
     result = select_query(
             request,
             models.Write, 
@@ -95,10 +98,6 @@ def list_post(bo_table: str, request: Request, db: Session = Depends(get_db), se
         write.icon_file = write.wr_file
         write.icon_link = write.wr_link1 or write.wr_link2
 
-
-        # 문자열을 datetime 객체로 변환
-        
-
     return templates.TemplateResponse(
         f"board/{request.state.device}/{board.bo_skin}/list_post.html",
         {
@@ -113,9 +112,8 @@ def list_post(bo_table: str, request: Request, db: Session = Depends(get_db), se
         }
     )
 
-
-@router.get("/write")
-def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db)):
+@router.get("/write/{bo_table}")
+def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db), wr_id: int = Query(None)):
     """
     게시글을 작성하는 form을 보여준다.
     """
@@ -123,22 +121,54 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
     board = db.query(models.Board).get(bo_table)
     if not board:
         raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
-
+    
+    # 게시판 카테고리 설정
+    categories = []
+    if board.bo_use_category:
+        categories = board.bo_category_list.split("|")
+    # 게시판 에디터 설정
     request.state.use_editor = board.bo_use_dhtml_editor
-    request.state.editor = board.bo_select_editor
+    request.state.editor = board.bo_select_editor or request.state.editor
+    # 공지사항 설정
+    is_notice = False
+    if request.state.is_super_admin and not wr_id:
+        is_notice = True
+    # HTML 설정
+    is_html = True if get_member_level(request) >= board.bo_html_level else False
+    # 비밀글 설정
+    is_secret = board.bo_use_secret
+    # 메일 설정
+    is_mail = True if request.state.config.cf_email_use and board.bo_use_email else False;
+    recv_email_checked = "checked"
+    # 링크 설정
+    is_link = True if get_member_level(request) >= board.bo_link_level else False
+    # 파일 설정
+    file_count = int(board.bo_upload_count) or 0
+    is_file = True if get_member_level(request) >= board.bo_upload_level else False
+    is_file_content = True if board.bo_use_file_content else False
 
     return templates.TemplateResponse(
         f"board/{request.state.device}/{board.bo_skin}/write_form.html",
         {
             "request": request,
+            "categories": categories,
             "board": board,
             "write": None,
+            "is_notice": is_notice,
+            "is_html": is_html,
+            "is_secret": is_secret,
+            "is_mail": is_mail,
+            "recv_email_checked": recv_email_checked,
+            "is_link": is_link,
+            "file_count": file_count,
+            "is_file": is_file,
+            "is_file_content": is_file_content,
         }
     )
 
 
-@router.get("/write/{bo_table}")
-def write_form_edit(bo_table: str, request: Request, db: Session = Depends(get_db)):
+@router.get("/write/{bo_table}/{wr_id}")
+def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = Depends(get_db)):
     """
     게시글을 작성하는 form을 보여준다.
     """
@@ -146,57 +176,121 @@ def write_form_edit(bo_table: str, request: Request, db: Session = Depends(get_d
     if not board:
         raise HTTPException(status_code=404, detail="{bo_table} is not found.")
 
-    write = dynamic_create_write_table(bo_table)
-    write.wr_content = ""
-
+    # 게시판 카테고리 설정
+    categories = []
+    if board.bo_use_category:
+        categories = board.bo_category_list.split("|")
+    # 게시판 에디터 설정
     request.state.use_editor = board.bo_use_dhtml_editor
-    request.state.editor = board.bo_select_editor
+    request.state.editor = board.bo_select_editor or request.state.editor
 
-    return templates.TemplateResponse(f"board/{request.state.device}/{board.bo_skin}/write_form.html",
-                                      {
-                                          "request": request,
-                                          "board": board,
-                                          "write": write,
-                                      })
+    # 게시글 조회
+    write = db.query(models.Write).get(wr_id)
+    # 공지사항 설정
+    is_notice = True if not write.wr_reply and request.state.is_super_admin else False
+    notice_ids = board.bo_notice.split(",")
+    if str(wr_id) in notice_ids:
+        notice_checked = "checked"
+    # HTML 설정
+    is_html = False
+    html_checked = ""
+    html_value = ""
+    if get_member_level(request) >= board.bo_html_level:
+        is_html = True
+    if "html1" in write.wr_option:
+        html_checked = "checked"
+        html_value = "html1"
+    elif "html2" in write.wr_option:
+        html_checked = "checked"
+        html_value = "html2"
+    # 비밀글
+    is_secret = board.bo_use_secret if "secret" in write.wr_option else True
+    # 메일 설정
+    is_mail = True if request.state.config.cf_email_use and board.bo_use_email else False;
+    recv_email_checked = "checked" if "mail" in write.wr_option else ""
+    # 링크 설정
+    is_link = False
+    if get_member_level(request) >= board.bo_link_level:
+        is_link = True
+    # 파일 설정
+    # TODO: 업로드한 파일이 file_count보다 클 경우, file_count를 증가시킨다.
+    file_count = int(board.bo_upload_count)
+    is_file = True if get_member_level(request) >= board.bo_upload_level else False
+    is_file_content = True if board.bo_use_file_content else False
 
+    return templates.TemplateResponse(
+        f"board/{request.state.device}/{board.bo_skin}/write_form.html",
+        {
+            "request": request,
+            "categories": categories,
+            "board": board,
+            "write": write,
+            "is_notice": is_notice,
+            "notice_checked": notice_checked,
+            "is_html": is_html,
+            "html_checked": html_checked,
+            "html_value": html_value,
+            "is_secret": is_secret,
+            "is_mail": is_mail,
+            "recv_email_checked": recv_email_checked,
+            "is_link": is_link,
+            "file_count": file_count,
+            "is_file": is_file,
+            "is_file_content": is_file_content,
+        }
+    )
+
+from dataclasses import dataclass
+
+@dataclass
+class writeForm:
+    wr_id: int = Form(None)
+    ca_name: str = Form(None)
+    wr_name: str = Form(None)
+    wr_email: str = Form(None)
+    wr_homepage: str = Form(None)
+    wr_subject: str = Form(...)
+    wr_content: str = Form(...)
+    wr_is_comment:bool = False
 
 @router.post("/write_update/")
 def write_update(
     request: Request,
-    db: Session = Depends(get_db),
+    token: str = Form(...),
     bo_table: str = Form(...),
-    wr_subject: str = Form(...),
-    wr_content: str = Form(...),
-    #  wr_name: str = Form(...),
-    #  wr_password: str = Form(...),
+    db: Session = Depends(get_db),
+    form_data: writeForm = Depends(),
 ):
     """
     게시글을 Table 추가한다.
     """
-    # print(bo_table, wr_subject, wr_content, wr_name, wr_password)
     board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
     if not board:
         raise HTTPException(status_code=404, detail="{bo_table} is not found.")
-
+    
     models.Write = dynamic_create_write_table(bo_table)
-    tmp_write = db.query(models.Write).order_by(models.Write.wr_num.asc()).first()
-    if tmp_write:
-        wr_num = tmp_write.wr_num - 1
-    else:
-        wr_num = -1
+    
 
-    wr_datetime = datetime.now()
-    wr_ip = request.client.host
-    models.Write = dynamic_create_write_table(bo_table)
-    write = models.Write(
-        wr_num=wr_num,
-        wr_is_comment=False,
-        wr_subject=wr_subject,
-        wr_content=wr_content,
-        wr_datetime=wr_datetime,
-        wr_ip=wr_ip,
-    )
-    db.add(write)
+    if compare_token(request, token, 'insert'): # 토큰에 등록돤 action이 insert라면 신규 등록
+        tmp_write = db.query(models.Write).order_by(models.Write.wr_num.asc()).first()
+        form_data.wr_name = request.state.login_member.mb_name if request.state.login_member else form_data.wr_name
+        write = models.Write(
+            wr_num= tmp_write.wr_num - 1 if tmp_write else -1,
+            wr_datetime=datetime.now(),
+            mb_id = request.state.login_member.mb_id if request.state.login_member else '',
+            wr_ip = request.client.host,
+            **form_data.__dict__
+        )
+        db.add(write)
+        db.commit()
+
+    elif compare_token(request, token, 'update'):  # 토큰에 등록된 action이 update라면 수정
+        # 데이터 수정 후 commit
+        write = db.query(models.Write).get(wr_id)
+        for field, value in form_data.__dict__.items():
+            setattr(write, field, value)
+        db.commit()
+
     db.commit()
 
     wr_id = write.wr_id
@@ -206,7 +300,7 @@ def write_update(
     # 최신글 캐시 삭제
     G6FileCache().delete_prefix(f'latest-{board.bo_table}')
 
-    return RedirectResponse(f"/board/{bo_table}/{wr_id}", status_code=303)
+    return RedirectResponse(f"/board/{board.bo_table}/{wr_id}", status_code=303)
 
 
 @router.get("/{bo_table}/{wr_id}")
