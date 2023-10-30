@@ -20,18 +20,20 @@ templates.env.globals["get_member_level"] = get_member_level
 templates.env.add_extension('jinja2.ext.loopcontrols')
 
 
-@router.post("/update/{po_id}")
+@router.post("/poll_update/{po_id}")
 def poll_update(request: Request, po_id: int, token: str = Form(...), gb_poll: int = Form(...), db: Session = Depends(get_db)):
     """
     투표하기
     """
-
     poll = db.query(Poll).get(po_id)
     member = request.state.login_member
     member_level = get_member_level(request)
 
+    if not poll:
+        raise AlertCloseException(status_code=404, detail="존재하지 않는 투표입니다.")
+
     if poll.po_level > 1 and member_level < poll.po_level:
-        raise AlertException(status_code=403, detail=f"권한 {poll.po_level} 이상의 회원만 투표하실 수 있습니다.")
+        raise AlertCloseException(status_code=403, detail=f"권한 {poll.po_level} 이상의 회원만 투표하실 수 있습니다.")
 
     if compare_token(request, token, "update"):
 
@@ -49,10 +51,10 @@ def poll_update(request: Request, po_id: int, token: str = Form(...), gb_poll: i
     else:
         raise AlertException(status_code=403, detail=f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.")
 
-    return RedirectResponse(url=f"/poll/result/{po_id}", status_code=302)
+    return RedirectResponse(url=f"/bbs/poll_result/{po_id}", status_code=302)
       
 
-@router.get("/result/{po_id}")
+@router.get("/poll_result/{po_id}")
 def poll_result(request: Request, po_id: int, db: Session = Depends(get_db)):
     """
     투표 결과
@@ -60,8 +62,11 @@ def poll_result(request: Request, po_id: int, db: Session = Depends(get_db)):
     poll = db.query(Poll).get(po_id)
     member_level = get_member_level(request)
 
+    if not poll:
+        raise AlertCloseException(status_code=404, detail="존재하지 않는 투표입니다.")
+
     if poll.po_level > 1 and member_level < poll.po_level:
-        raise AlertException(status_code=403, detail=f"권한 {poll.po_level} 이상의 회원만 결과를 보실 수 있습니다.")
+        raise AlertCloseException(status_code=403, detail=f"권한 {poll.po_level} 이상의 회원만 결과를 보실 수 있습니다.")
 
     total_count = 0
     max_count = 0
@@ -93,7 +98,7 @@ def poll_result(request: Request, po_id: int, db: Session = Depends(get_db)):
     )
 
 
-@router.post("/etc/{po_id}")
+@router.post("/poll_etc_update/{po_id}")
 def poll_etc_update(request: Request,
                     po_id: int, 
                     token: str = Form(...),
@@ -109,7 +114,7 @@ def poll_etc_update(request: Request,
 
     if compare_token(request, token, "insert"):
         if poll.po_level > 1 and member_level < poll.po_level:
-            raise AlertException(status_code=403, detail=f"권한 {poll.po_level} 이상의 회원만 기타의견을 등록할 수 있습니다.")
+            raise AlertCloseException(status_code=403, detail=f"권한 {poll.po_level} 이상의 회원만 기타의견을 등록할 수 있습니다.")
 
         po_etc = PollEtc(po_id=po_id, pc_name=pc_name, pc_idea=pc_idea, mb_id=(member.mb_id if member else ''))
         db.add(po_etc)
@@ -117,11 +122,11 @@ def poll_etc_update(request: Request,
     else:
         raise AlertException(status_code=403, detail=f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.")
 
-    return RedirectResponse(url=f"/poll/result/{po_id}", status_code=302)
+    return RedirectResponse(url=f"/bbs/poll_result/{po_id}", status_code=302)
 
 
-@router.get("/etc/delete/{pc_id}")
-def etc_delete(request: Request, pc_id: int, token: str, db: Session = Depends(get_db)):
+@router.get("/poll_etc_delete/{pc_id}")
+def poll_etc_delete(request: Request, pc_id: int, token: str, db: Session = Depends(get_db)):
     """
     기타의견 삭제
     """
@@ -139,4 +144,4 @@ def etc_delete(request: Request, pc_id: int, token: str, db: Session = Depends(g
     else:
         raise AlertException(status_code=403, detail=f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.")
 
-    return RedirectResponse(url=f"/poll/result/{po_id}", status_code=302)
+    return RedirectResponse(url=f"/bbs/poll_result/{po_id}", status_code=302)
