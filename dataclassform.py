@@ -429,3 +429,21 @@ class QaContentForm:
     qa_subject: str = Form(...)
     qa_content: str = Form(...)
 
+
+@dataclass
+class NewwinForm:
+    """
+    팝업 폼 데이터
+    """
+    nw_division: str = Form(...)
+    nw_device: str = Form(...)
+    nw_begin_time: datetime = Form(...)
+    nw_end_time: datetime = Form(...)
+    nw_disable_hours: int = Form(...)
+    nw_left: int = Form(...)
+    nw_top: int = Form(...)
+    nw_height: int = Form(...)
+    nw_width: int = Form(...)
+    nw_subject: str = Form(...)
+    nw_content: str = Form(...)
+    nw_content_html: int = Form(None)

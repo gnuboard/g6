@@ -18,7 +18,6 @@ from settings import APP_IS_DEBUG
 from user_agents import parse
 import os
 import models
-
 # models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(debug=APP_IS_DEBUG)
@@ -30,8 +29,6 @@ templates.env.globals["is_admin"] = is_admin
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals['getattr'] = getattr
-templates.env.globals["get_poll"] = get_poll
-templates.env.globals["get_popular_list"] = get_popular_list
 templates.env.globals["generate_token"] = generate_token
 
 from _admin.admin import router as admin_router
@@ -42,7 +39,6 @@ from _bbs.content import router as content_router
 from _bbs.faq import router as faq_router
 from _bbs.qa import router as qa_router
 from _bbs.member_profile import router as user_profile_router
-from _bbs.menu import router as menu_router
 from _bbs.memo import router as memo_router
 from _bbs.poll import router as poll_router
 from _bbs.ajax_autosave import router as autosave_router
@@ -56,7 +52,6 @@ app.include_router(user_profile_router, prefix="/bbs", tags=["profile"])
 app.include_router(content_router, prefix="/content", tags=["content"])
 app.include_router(faq_router, prefix="/faq", tags=["faq"])
 app.include_router(qa_router, prefix="/qa", tags=["qa"])
-app.include_router(menu_router, prefix="/menu", tags=["menu"])
 app.include_router(memo_router, prefix="/memo", tags=["memo"])
 app.include_router(poll_router, prefix="/poll", tags=["poll"])
 app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
@@ -189,8 +184,8 @@ app.add_middleware(SessionMiddleware, secret_key="secret", session_cookie="sessi
 
 
 @app.exception_handler(AlertException)
-async def http_exception_handler(request: Request, exc: AlertException):
-    """예외 처리기를 등록하고 AlertException 동작 처리
+async def alert_exception_handler(request: Request, exc: AlertException):
+    """AlertException 예외처리 등록
 
     Args:
         request (Request): request 객체
@@ -201,6 +196,21 @@ async def http_exception_handler(request: Request, exc: AlertException):
     """
     return templates.TemplateResponse(
         "alert.html", {"request": request, "errors": exc.detail, "url": exc.url}, status_code=exc.status_code
+    )
+
+@app.exception_handler(AlertCloseException)
+async def alert_close_exception_handler(request: Request, exc: AlertCloseException):
+    """AlertCloseException 예외처리 등록
+
+    Args:
+        request (Request): request 객체
+        exc (AlertCloseException): 예외 객체
+
+    Returns:
+        _TemplateResponse: 경고창 & 윈도우창 닫기 템플릿
+    """
+    return templates.TemplateResponse(
+        "alert_close.html", {"request": request, "errors": exc.detail}, status_code=exc.status_code
     )
 
 
@@ -218,17 +228,25 @@ def index(request: Request, response: Response, db: Session = Depends(get_db)):
     
     context = {
         "request": request,
-        # "outlogin": request.state.context["outlogin"],
         "latest": latest,
+        "newwins": get_newwins(request)
     }
     return templates.TemplateResponse(f"index.{request.state.device}.html", context)
 
 
 # 최신글
-def latest(skin_dir='', bo_table='', rows=10, subject_len=40, request: Request = None):
+def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
 
     if not skin_dir:
         skin_dir = 'basic'
+
+    g6_file_cache = G6FileCache()
+    cache_filename = f"latest-{bo_table}-{skin_dir}-{rows}-{subject_len}-{g6_file_cache.get_cache_secret_key()}.html"
+    cache_file = os.path.join(g6_file_cache.cache_dir, cache_filename)
+
+    # 캐시된 파일이 있으면 파일을 읽어서 반환
+    if os.path.exists(cache_file):
+        return g6_file_cache.get(cache_file)
     
     db = SessionLocal()
     board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
@@ -253,25 +271,22 @@ def latest(skin_dir='', bo_table='', rows=10, subject_len=40, request: Request =
     temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
     return temp.body.decode("utf-8")
 
+def get_newwins(request: Request):
+    """
+    레이어 팝업 목록을 반환하는 함수
+    """
+    db = SessionLocal()
 
-@app.get("/sideview/{mb_id}")
-def sideview(request: Request, mb_id: str, db: Session = Depends(get_db)):    
-    config = request.state.config
-    if config.cf_use_member_icon == 0:
-        return
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    current_division = "comm" # comm, both, shop
+    newwins = db.query(models.NewWin).filter(
+        models.NewWin.nw_begin_time <= now,
+        models.NewWin.nw_end_time >= now,
+        models.NewWin.nw_device.in_(["both", request.state.device]),
+        models.NewWin.nw_division.in_(["both", current_division]),
+    ).order_by(models.NewWin.nw_id.asc()).all()
 
-    exists_member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
-    if not exists_member:
-        return {"error": "존재하지 않는 회원입니다."}
-    
-    str = f'''<a href="">쪽지보내기</a><a href="">메일보내기</a><a href="">자기소개</a><a href="">전체게시물</a>'''
-    
-    return str
+    # "hd_pops_" + nw_id 이름으로 선언된 쿠키가 있는지 확인하고 있다면 팝업을 제거
+    newwins = [newwin for newwin in newwins if not request.cookies.get("hd_pops_" + str(newwin.nw_id))]
 
-
-
-@app.get("/get-member-info")
-def get_member_info(memberid: str):
-    # 여기에서 memberid 값에 대한 정보를 데이터베이스나 다른 소스에서 검색할 수 있습니다.
-    # 예제에서는 간단한 문자열을 반환합니다.
-    return f"{memberid}에 대한 정보입니다."
+    return newwins

@@ -134,6 +134,9 @@ def write_update(
     write.wr_parent = wr_id
     db.commit()
 
+    # 최신글 캐시 삭제
+    G6FileCache().delete_prefix(f'latest-{board.bo_table}')
+
     return RedirectResponse(f"/board/{bo_table}/{wr_id}", status_code=303)
 
 

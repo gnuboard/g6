@@ -794,3 +794,21 @@ class UniqId(Base):
 
     uq_id = Column(BIGINT, primary_key=True)
     uq_ip = Column(String(255), nullable=False, default="")
+
+
+class NewWin(Base):
+    __tablename__ = DB_TABLE_PREFIX + 'new_win'
+
+    nw_id = Column(Integer, primary_key=True, autoincrement=True)
+    nw_division = Column(String(10), nullable=False, default='both')
+    nw_device = Column(String(10), nullable=False, default='both')
+    nw_begin_time = Column(DateTime, nullable=False, default=datetime.now())
+    nw_end_time = Column(DateTime, nullable=False, default=datetime.now())
+    nw_disable_hours = Column(Integer, nullable=False, default=0)
+    nw_left = Column(Integer, nullable=False, default=0)
+    nw_top = Column(Integer, nullable=False, default=0)
+    nw_height = Column(Integer, nullable=False, default=0)
+    nw_width = Column(Integer, nullable=False, default=0)
+    nw_subject = Column(Text, nullable=False)
+    nw_content = Column(Text, nullable=False)
+    nw_content_html = Column(Integer, nullable=False, default=0)

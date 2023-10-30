@@ -12,7 +12,8 @@ user_device = 'pc'
 
 <div class="latest_top_wr">
 
-    {{ latest('basic', 'free', 5, 30)|safe }}
+    {{ latest(request, 'basic', 'free', 5, 30)|safe }}
+    {{ latest(request, 'basic', 'notice', 5, 30)|safe }}
     
 <div class="pic_li_lt">
     <h2 class="lat_title"><a href="/board/free">자유게시판</a></h2>

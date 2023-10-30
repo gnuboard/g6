@@ -4,7 +4,7 @@ import os
 import random
 import re
 from time import sleep
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 import uuid
 from urllib.parse import urlencode
 import PIL
@@ -16,7 +16,7 @@ from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
-from models import Auth, Config, Member, Memo, Board, Group, Point, Poll, Popular, Visit, VisitSum, UniqId
+from models import Auth, Config, Member, Memo, Board, Group, Menu, Point, Poll, Popular, Visit, VisitSum, UniqId
 from models import WriteBaseModel
 from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
@@ -24,6 +24,14 @@ import json
 from PIL import Image
 from user_agents import parse
 import base64
+from dotenv import load_dotenv
+import smtplib
+import threading
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+
+load_dotenv()
 
 
 # 전역변수 선언(global variables)
@@ -1032,7 +1040,9 @@ def nl2br(value) -> str:
     return escape(value).replace('\n', Markup('<br>\n'))
 
 
-def get_popular_list(request: Request, limit: int = 7, day: int = 3):
+popular_cache = cachetools.TTLCache(maxsize=10, ttl=300)
+
+def get_populars(limit: int = 7, day: int = 3):
     """인기검색어 조회
 
     Args:
@@ -1042,12 +1052,15 @@ def get_popular_list(request: Request, limit: int = 7, day: int = 3):
     Returns:
         List[Popular]: 인기검색어 리스트
     """
+    if popular_cache.get("populars"):
+        return popular_cache.get("populars")
+
     db = SessionLocal()
     # 현재 날짜와 day일 전 날짜를 구한다.
     today = datetime.now()
     before = today - timedelta(days=day)
     # 현재 날짜와 day일 전 날짜 사이의 인기검색어를 조회한다.
-    popular_list = db.query(
+    populars = db.query(
             Popular.pp_word,
             func.count(Popular.pp_word).label('count'),
         ).filter(
@@ -1057,7 +1070,9 @@ def get_popular_list(request: Request, limit: int = 7, day: int = 3):
     ).group_by(Popular.pp_word).order_by(desc('count'), Popular.pp_word).limit(limit).all()
     db.close()
 
-    return popular_list
+    popular_cache.update({"populars": populars})
+
+    return populars
 
 
 def generate_token(request: Request, action: str = ''):
@@ -1089,12 +1104,53 @@ def compare_token(request: Request, token: str, action: str = ''):
         return False
 
 
-def get_poll(request: Request):
+lfu_cache = cachetools.LFUCache(maxsize=128)
+
+def get_recent_poll():
+    """
+    최근 투표 정보 1건을 가져오는 함수
+    """
+    if lfu_cache.get("poll"):
+        return lfu_cache.get("poll")
+
     db = SessionLocal()
     poll = db.query(Poll).filter(Poll.po_use == 1).order_by(Poll.po_id.desc()).first()
     db.close()
 
+    lfu_cache.update({"poll": poll})
+
     return poll
+
+
+def get_menus():
+    """사용자페이지 메뉴 조회 함수
+
+    Returns:
+        list: 자식메뉴가 포함된 메뉴 list
+    """
+    if lfu_cache.get("menus"):
+        return lfu_cache.get("menus")
+
+    db = SessionLocal()
+    menus = []
+    # 부모메뉴 조회
+    parent_menus = db.query(Menu).filter(func.length(Menu.me_code) == 2).order_by(Menu.me_order).all()
+    
+    for menu in parent_menus:
+        parent_code = menu.me_code
+
+        # 자식 메뉴 조회
+        child_menus = db.query(Menu).filter(
+            func.length(Menu.me_code) == 4,
+            func.substring(Menu.me_code, 1, 2) == parent_code
+        ).order_by(Menu.me_order).all()
+
+        menu.sub = child_menus
+        menus.append(menu)
+
+    lfu_cache.update({"menus": menus})
+
+    return menus
 
 
 def get_member_level(request: Request):
@@ -1172,6 +1228,7 @@ def get_unique_id(request) -> Optional[str]:
                 logging.log(logging.CRITICAL, 'unique table insert error', exc_info=e)
                 return None
 
+
 class AlertException(HTTPException):
     """스크립트 경고창 출력을 위한 예외 클래스
         - HTTPExceptiond에서 페이지 이동을 위한 url 매개변수를 추가적으로 받는다.
@@ -1183,6 +1240,21 @@ class AlertException(HTTPException):
         self.status_code = status_code
         self.detail = detail
         self.url = url
+
+
+class AlertCloseException(HTTPException):
+    """스크립트 경고창 출력 및 윈도우 창 닫기를 위한 예외 클래스
+
+    Args:
+        HTTPException (HTTPException): HTTP 예외 클래스
+    """
+    def __init__(
+        self,
+        status_code: int,
+        detail: Any = None,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> None:
+        super().__init__(status_code=status_code, detail=detail, headers=headers) 
 
 
 def is_admin(request: Request):
@@ -1336,3 +1408,110 @@ class StringEncrypt:
 
 # decrypted_text = enc.decrypt(encrypted_text)
 # print(decrypted_text)
+
+
+class MyTemplates(Jinja2Templates):
+    """
+    Jinja2Template 설정 클래스
+    """
+    def __init__(self,
+                 directory: Union[str, os.PathLike],
+                 context_processors: dict = None,
+                 globals: dict = None,
+                 **env_options: Any,
+                 ):
+        super().__init__(directory, context_processors, **env_options)
+        # 공통 env.global 설정
+        self.env.globals["editor_path"] = editor_path
+        self.env.globals["generate_token"] = generate_token
+        self.env.globals["getattr"] = getattr
+        self.env.globals["get_selected"] = get_selected
+
+        # 사용자 템플릿, 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
+        if TEMPLATES_DIR in directory:
+            self.context_processors.append(self._default_context)
+        elif ADMIN_TEMPLATES_DIR in directory:
+            self.context_processors.append(self._default_admin_context)
+
+        # 추가 env.global 설정
+        if globals:
+            self.env.globals.update(**globals.__dict__)
+
+    def _default_context(self, request: Request):
+        # 메인페이지(main.py) latest 함수에서 templates.TemplateResponse가 추가적으로 호출되기 때문에
+        # context_processors가 2번 호출된다.
+        context = {
+            "menus" : get_menus(),
+            "poll" : get_recent_poll(),
+            "populars" : get_populars(),
+        }
+        return context
+    
+    def _default_admin_context(self, request: Request):
+        context = {
+            "admin_menus": get_admin_menus()
+        }
+        return context
+    
+
+class G6FileCache():
+    """파일 캐시 클래스
+    """
+    cache_dir = "data\cache"
+    cache_secret_key = None
+
+    def __init__(self):
+        # 캐시 디렉토리가 없으면 생성
+        if not os.path.exists(self.cache_dir):
+            os.makedirs(self.cache_dir)
+        
+    def get_cache_secret_key(self):
+        """
+        캐시 비밀키를 반환하는 함수
+        """
+        # 캐시된 값이 있다면, 해당 값을 반환
+        if self.cache_secret_key:
+            return self.cache_secret_key
+
+        # 서버 소프트웨어 및 DOCUMENT_ROOT 값을 해싱하여 6자리 문자열 생성
+        server_software = os.environ.get("SERVER_SOFTWARE", "")
+        document_root = os.environ.get("DOCUMENT_ROOT", "")
+        combined_data = server_software + document_root
+        self.cache_secret_key = hashlib.md5(combined_data.encode()).hexdigest()[:6]
+
+        return self.cache_secret_key
+    
+    def get(self, cache_file: str):
+        """
+        캐시된 파일이 있으면 파일을 읽어서 반환
+        """
+        if os.path.exists(cache_file):
+            with open(cache_file, "r", encoding="utf-8") as f:
+                return f.read()
+        return None
+    
+    def create(self, data: str, cache_file: str):
+        """
+        cache_file을 생성하는 함수
+        """
+        with open(cache_file, "w", encoding="utf-8") as f:
+            f.write(data)
+
+    def delete(self, cache_file: str):
+        """
+        cache_file을 삭제하는 함수
+        """
+        if os.path.exists(cache_file):
+            os.remove(cache_file)
+
+    def delete_prefix(self, prefix: str):
+        """
+        prefix로 시작하는 캐시 파일을 모두 삭제하는 함수
+        """
+        for file in os.listdir(self.cache_dir):
+            if file.startswith(prefix):
+                os.remove(os.path.join(self.cache_dir, file))
+                
+               
+                
+

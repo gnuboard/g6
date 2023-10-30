@@ -17,9 +17,8 @@ import hashlib
 
 
 router = APIRouter()
-templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
-# # 파이썬 함수를 jinja2 에서 사용할 수 있도록 등록
-templates.env.globals['get_admin_menus'] = get_admin_menus
+# templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
+templates = MyTemplates(directory=ADMIN_TEMPLATES_DIR)
 
 from _admin.admin_config import router as admin_config_router
 from _admin.admin_member import router as admin_member_router
@@ -37,6 +36,7 @@ from _admin.admin_point import router as admin_point_router
 from _admin.admin_auth import router as admin_auth_router
 from _admin.admin_popular import router as admin_popular_router
 from _admin.admin_poll import router as admin_poll_router
+from _admin.admin_newwin import router as admin_newwin_router
 
 router.include_router(admin_config_router, prefix="", tags=["admin_config"])
 router.include_router(admin_member_router, prefix="", tags=["admin_member"])
@@ -54,6 +54,7 @@ router.include_router(admin_point_router, prefix="", tags=["admin_point"])
 router.include_router(admin_auth_router, prefix="", tags=["admin_auth"])
 router.include_router(admin_popular_router,  prefix="", tags=["admin_popular"])
 router.include_router(admin_poll_router,  prefix="", tags=["admin_poll"])
+router.include_router(admin_newwin_router,  prefix="", tags=["admin_newwin"])
 
 @router.get("/")
 def base(request: Request, db: Session = Depends(get_db)):

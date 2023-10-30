@@ -84,7 +84,11 @@ var g5_admin_url = "/admin";
     <nav id="gnb" class="gnb_large ">
         <h2>관리자 주메뉴</h2>
         <ul class="gnb_ul">
-            {% for menu_key, submenus in get_admin_menus().items() %}
+            {# get_admin_menus 삭제 예정 #}
+            {% if get_admin_menus %}
+                {% set admin_menus=get_admin_menus() %}
+            {% endif %}
+            {% for menu_key, submenus in admin_menus.items() %}
                 <li class="gnb_li {{ 'on' if (request.session and request.session.get('menu_key')[:3] == menu_key[4:]) else '' }}">
                     <button type="button" class="btn_op menu-{{ menu_key[4:] }} menu-order-{{ loop.index }}" title="{{ submenus[0]['name'] }}">{{ submenus[0]['name'] }}</button>
                     <div class="gnb_oparea_wr">

@@ -25,7 +25,7 @@ def memo_list(request: Request, db: Session = Depends(get_db),
     """
     member = request.state.login_member
     if not member:
-        raise AlertException(status_code=403, detail="로그인 후 이용 가능합니다.", url="/bbs/login/")
+        raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
 
     model = Memo
     join_model = Member
@@ -61,7 +61,7 @@ def memo_view(request: Request, db: Session = Depends(get_db), me_id: int = Path
     """
     member = request.state.login_member
     if not member:
-        raise AlertException(status_code=403, detail="로그인 후 이용 가능합니다.", url="/bbs/login/")
+        raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
     
     # 본인 쪽지 조회
     memo = db.query(Memo).get(me_id)
@@ -126,7 +126,7 @@ def memo_form(request: Request, db: Session = Depends(get_db),
     """
     member = request.state.login_member
     if not member:
-        raise AlertException(status_code=403, detail="로그인 후 이용 가능합니다.", url="/bbs/login/")
+        raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
 
     # 쪽지를 전송할 회원 정보 조회
     target = None
@@ -158,7 +158,7 @@ def memo_update(request: Request, db: Session = Depends(get_db),
 
     member = request.state.login_member
     if not member:
-        raise AlertException(status_code=403, detail="로그인 후 이용 가능합니다.", url="/bbs/login/")
+        raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
 
     # me_recv_mb_id 공백 제거
     mb_id_list = me_recv_mb_id.replace(" ", "").split(',')
@@ -219,7 +219,7 @@ def memo_delete(request: Request, db: Session = Depends(get_db),
     
     member = request.state.login_member
     if not member:
-        raise AlertException(status_code=403, detail="로그인 후 이용 가능합니다.", url="/bbs/login/")
+        raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
     
     memo = db.query(Memo).get(me_id)
     if not memo:

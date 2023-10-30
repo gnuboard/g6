@@ -1,10 +1,9 @@
-{% if get_popular_list %}
-    {% set popular_list = get_popular_list(request) %}
+{% if populars %}
     <section id="popular">
         <h2>인기검색어</h2>
         <div class="popular_inner">
             <ul>
-                {% for popular in popular_list %}
+                {% for popular in populars %}
                     <li class="item">
                         <a href="">{{ popular.pp_word }}</a>
                     </li>

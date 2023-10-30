@@ -51,35 +51,14 @@ var g5_shop_url = "http://g5.pypot.com/shop";
 <body>
 <div id="hd_login_msg">최고관리자 최고관리자님 로그인 중 <a href="/bbs/logout">로그아웃</a></div>
 
-<!-- 상단 시작 { -->
-<div id="hd">
-    <h1 id="hd_h1"></h1>
-    <div id="skip_to_container"><a href="#container">본문 바로가기</a></div>
-
+    <!-- 상단 시작 { -->
+    <div id="hd">
+        <h1 id="hd_h1"></h1>
+        <div id="skip_to_container"><a href="#container">본문 바로가기</a></div>
     
-<!-- 팝업레이어 시작 { -->
-<div id="hd_pop">
-    <h2>팝업레이어 알림</h2>
-
-<span class="sound_only">팝업레이어 알림이 없습니다.</span></div>
-
-<script>
-$(function() {
-    $(".hd_pops_reject").click(function() {
-        var id = $(this).attr('class').split(' ');
-        var ck_name = id[1];
-        var exp_time = parseInt(id[2]);
-        $("#"+id[1]).css("display", "none");
-        set_cookie(ck_name, 1, exp_time, g5_cookie_domain);
-    });
-    $('.hd_pops_close').click(function() {
-        var idb = $(this).attr('class').split(' ');
-        $('#'+idb[1]).css('display','none');
-    });
-    $("#hd").css("z-index", 1000);
-});
-</script>
-<!-- } 팝업레이어 끝 -->    <div id="tnb">
+        {% include "/bbs/newwin.inc.html" %}
+        
+    <div id="tnb">
         <div class="inner">
             <ul id="hd_define">
     			<li class="active"><a href="/">커뮤니티</a></li>
@@ -153,14 +132,10 @@ $(function() {
 
     <nav id="gnb">
         <h2>메인메뉴</h2>
-        <div class="gnb_wrap">&nbsp;</div>
+        <div class="gnb_wrap">
+            {% include "/bbs/menu.html" %}
+        </div>
     </nav>
-    <script>
-        $(function(){
-            $(".gnb_wrap").load("{{ url_for('get_menu_list') }}", {});
-        })
-    </script>
-
 </div>
 <!-- } 상단 끝 -->
 

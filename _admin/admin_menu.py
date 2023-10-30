@@ -143,6 +143,9 @@ def menu_update(
                 db.commit()
         else:
             db.commit()
+
+        # 기존캐시 삭제
+        lfu_cache.update({"menus": None})
         
     except Exception as e:
         print(f"Error: {e}")
