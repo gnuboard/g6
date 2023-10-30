@@ -812,3 +812,15 @@ class NewWin(Base):
     nw_subject = Column(Text, nullable=False)
     nw_content = Column(Text, nullable=False)
     nw_content_html = Column(Integer, nullable=False, default=0)
+    
+    
+# 회원메일발송 테이블
+class Mail(Base):
+    __tablename__ = DB_TABLE_PREFIX + 'mail'
+
+    ma_id = Column(Integer, primary_key=True, autoincrement=True)
+    ma_subject = Column(String(255), nullable=False, default='')
+    ma_content = Column(Text, nullable=False, default='')
+    ma_time = Column(DateTime, nullable=False, default=datetime.now())
+    ma_ip = Column(String(255), nullable=False, default='')
+    ma_last_option = Column(Text, nullable=False, default='')

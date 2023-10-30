@@ -79,7 +79,7 @@ async def formmail_send(request: Request, db: Session = Depends(get_db),
                   name: str = Form(None, alias="fnick"),
                   fmail: str = Form(..., alias="fmail"),
                   subject: str = Form(..., alias="subject"),
-                  body: str = Form(..., alias="content"),
+                  content: str = Form(..., alias="content"),
                   ):
     '''
     폼메일 발송
@@ -89,7 +89,7 @@ async def formmail_send(request: Request, db: Session = Depends(get_db),
 
     enc = StringEncrypt()
     decrypted_to_email = enc.decrypt(email)
-    to_emails = decrypted_to_email.split(',') if ',' in decrypted_to_email else [decrypted_to_email]
-    print(to_emails[0], subject, body)
-    
-    send_email(to_emails, subject, body)
+    # to_emails = decrypted_to_email.split(',') if ',' in decrypted_to_email else [decrypted_to_email]
+    # print(to_emails[0], subject, body)
+    # mailer(to_emails, subject, body)
+    mailer(decrypted_to_email, subject, content)

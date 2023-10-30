@@ -3,7 +3,7 @@ from datetime import timedelta
 import re
 from fastapi import FastAPI, Depends, Request, Form
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, RedirectResponse, Response, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from database import get_db
 
@@ -18,6 +18,8 @@ from settings import APP_IS_DEBUG
 from user_agents import parse
 import os
 import models
+import secrets
+
 # models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(debug=APP_IS_DEBUG)
@@ -42,7 +44,6 @@ from _bbs.member_profile import router as user_profile_router
 from _bbs.memo import router as memo_router
 from _bbs.poll import router as poll_router
 from _bbs.ajax_autosave import router as autosave_router
-from _bbs.formmail import router as formmail_router
 
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
@@ -55,7 +56,6 @@ app.include_router(qa_router, prefix="/bbs", tags=["qa"])
 app.include_router(memo_router, prefix="/bbs", tags=["memo"])
 app.include_router(poll_router, prefix="/bbs", tags=["poll"])
 app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
-app.include_router(formmail_router, prefix="/bbs", tags=["formmail"])
 
 # is_mobile = False
 # user_device = 'pc'
@@ -269,7 +269,13 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
         "bo_subject": board.bo_subject,
     }
     temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
-    return temp.body.decode("utf-8")
+    temp_decode = temp.body.decode("utf-8")
+
+    # 캐시 파일 생성
+    g6_file_cache.create(temp_decode, cache_file)
+
+    return temp_decode
+
 
 def get_newwins(request: Request):
     """
@@ -290,3 +296,12 @@ def get_newwins(request: Request):
     newwins = [newwin for newwin in newwins if not request.cookies.get("hd_pops_" + str(newwin.nw_id))]
 
     return newwins
+
+
+@app.post("/generate_token")
+async def generate_token(request: Request):
+    token = secrets.token_hex(16)  # 16바이트 토큰 생성
+    request.session["ss_token"] = token  # 세션에 토큰 저장
+    
+    return JSONResponse(content={"success": True, "token": token})
+

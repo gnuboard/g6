@@ -64,7 +64,7 @@ async def sendmail_test_result(request: Request, db: Session = Depends(get_db),
     subject = "[메일검사] 제목"
     body = f'<span style="font-size:9pt;">[메일검사] 내용<p>이 내용이 제대로 보인다면 보내는 메일 서버에는 이상이 없는것입니다.<p>{datetime.now()}<p>이 메일 주소로는 회신되지 않습니다.</span>'
     
-    send_email(to_emails, subject, body)
+    mailer(to_emails, subject, body)
     
     context = {
         "request": request,
@@ -81,7 +81,7 @@ async def sendmail_test_result(request: Request, db: Session = Depends(get_db),
 # SMTP_USERNAME = os.getenv("SMTP_USERNAME")
 # SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
-# def send_email_thread(to_email: str, subject: str, body: str):
+# def mailer_thread(to_email: str, subject: str, body: str):
     
 #     try:
 #         msg = MIMEMultipart()
@@ -101,11 +101,11 @@ async def sendmail_test_result(request: Request, db: Session = Depends(get_db),
 #     except Exception as e:
 #         print(f"Error sending email to {to_email}: {e}")
 
-# def send_email(to_emails: List[str], subject: str, body: str):
+# def mailer(to_emails: List[str], subject: str, body: str):
 #     threads = []
 
 #     for to_email in to_emails:
-#         thread = threading.Thread(target=send_email_thread, args=(to_email, subject, body))
+#         thread = threading.Thread(target=mailer_thread, args=(to_email, subject, body))
 #         threads.append(thread)
 #         thread.start()
 
@@ -115,7 +115,7 @@ async def sendmail_test_result(request: Request, db: Session = Depends(get_db),
 #     return {"message": f"Emails sent successfully to {', '.join(to_emails)}"}
 
 # common.py 에서 사용
-# def send_email(to_emails: List[str], subject: str, body: str):
+# def mailer(to_emails: List[str], subject: str, body: str):
 #     for to_email in to_emails:
 #         try:
 #             msg = MIMEMultipart()

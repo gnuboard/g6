@@ -41,7 +41,7 @@ def config_form(request: Request, db: Session = Depends(get_db)):
     기본환경설정
     """
     request.session["menu_key"] = CONFIG_MENU_KEY
-    error = auth_check(request, request.session["menu_key"], "r")
+    error = auth_check_menu(request, request.session["menu_key"], "r")
     if error:
         return templates.TemplateResponse("alert.html", {"request": request, "errors": [error]})
 
@@ -71,7 +71,7 @@ def config_form_update(
     기본환경설정 저장
     """
     request.session["menu_key"] = CONFIG_MENU_KEY
-    error = auth_check(request, request.session["menu_key"], "w")
+    error = auth_check_menu(request, request.session["menu_key"], "w")
     if error:
         return templates.TemplateResponse("alert.html", {"request": request, "errors": [error]})
 

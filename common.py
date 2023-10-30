@@ -398,6 +398,17 @@ def validate_one_time_token(token, action: str = 'create'):
     return False
 
 
+def check_token(request: Request, token: str):
+    '''
+    세션과 인수로 넘어온 토큰확인 함수
+    '''
+    if token and token == request.session.get("ss_token"):
+        # 세션 삭제
+        request.session["ss_token"] = ""
+        return True
+    return False
+
+
 def get_client_ip(request: Request):
     '''
     클라이언트의 IP 주소를 반환하는 함수 (PHP의 $_SERVER['REMOTE_ADDR'])
@@ -1162,7 +1173,7 @@ def get_member_level(request: Request):
     return member.mb_level if member else 1
 
 
-def auth_check(request: Request, menu_key: str, attribute: str):
+def auth_check_menu(request: Request, menu_key: str, attribute: str):
     '''
     관리권한 체크
     '''    
@@ -1520,7 +1531,8 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
 # 메일 발송
 # return 은 수정 필요
-def send_email(to_emails: List[str], subject: str, body: str):
+def mailer(email: str, subject: str, content: str):
+    to_emails = email.split(',') if ',' in email else [email]
     for to_email in to_emails:
         try:
             msg = MIMEMultipart()
@@ -1529,7 +1541,7 @@ def send_email(to_emails: List[str], subject: str, body: str):
             msg['Subject'] = subject
             
             # Assuming body is HTML, if not change 'html' to 'plain'
-            msg.attach(MIMEText(body, 'html'))  
+            msg.attach(MIMEText(content, 'html'))  
 
             with smtplib.SMTP(SMTP_SERVER, int(SMTP_PORT)) as server:
                 if SMTP_USERNAME and SMTP_PASSWORD:

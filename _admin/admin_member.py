@@ -274,7 +274,7 @@ def member_form_add(request: Request, db: Session = Depends(get_db)):
     회원추가 폼
     """
     request.session["menu_key"] = MEMBER_MENU_KEY
-    error = auth_check(request, request.session["menu_key"], "r")
+    error = auth_check_menu(request, request.session["menu_key"], "r")
     if error:
         return templates.TemplateResponse("alert.html", {"request": request, "errors": [error]})
 
@@ -320,7 +320,7 @@ def member_form_edit(mb_id: str, request: Request, db: Session = Depends(get_db)
     회원수정 폼
     """
     request.session["menu_key"] = MEMBER_MENU_KEY
-    error = auth_check(request, request.session["menu_key"], "r")
+    error = auth_check_menu(request, request.session["menu_key"], "r")
     if error:
         return templates.TemplateResponse("alert.html", {"request": request, "errors": [error]})
 
