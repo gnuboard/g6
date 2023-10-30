@@ -6,7 +6,7 @@ import datetime
 from fastapi import APIRouter, Depends, Request, Form, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import aliased, Session
 
 from common import *
 from database import get_db
@@ -14,6 +14,7 @@ import models
 
 router = APIRouter()
 templates = Jinja2Templates(directory=[EDITOR_PATH, TEMPLATES_DIR])
+templates.env.filters["datetime_format"] = datetime_format
 templates.env.globals["bleach"] = bleach
 templates.env.globals["nl2br"] = nl2br
 templates.env.globals["editor_path"] = editor_path
@@ -35,6 +36,7 @@ def group_board_list(request: Request, gr_id: str, db: Session = Depends(get_db)
     if not is_super_admin and request.state.device == 'mobile':
         raise AlertException(status_code=400, detail=f"{group.gr_subject} 그룹은 모바일에서만 접근할 수 있습니다.", url="/")
     
+    # 그룹별 게시판 목록 조회
     query_boards = db.query(models.Board).filter(
         models.Board.gr_id == gr_id,
         models.Board.bo_list_level <= member_level,
@@ -48,8 +50,13 @@ def group_board_list(request: Request, gr_id: str, db: Session = Depends(get_db)
         f"board/{request.state.device}/group.html", {"request": request, "group": group, "boards": boards, "latest": latest}
     )
 
+
 @router.get("/{bo_table}")
-def list_post(bo_table: str, request: Request, db: Session = Depends(get_db), search_params: dict = Depends(common_search_query_params)):
+def list_post(bo_table: str, 
+              request: Request, 
+              db: Session = Depends(get_db),
+              search_params: dict = Depends(common_search_query_params)
+              ):
     """
     지정된 게시판의 글 목록을 보여준다.
     """
@@ -91,8 +98,6 @@ def list_post(bo_table: str, request: Request, db: Session = Depends(get_db), se
 
     # 게시글 정보 수정
     for write in writes:
-        write.wr_num = abs(int(write.wr_num))  # 양수로 변경
-        write.wr_datetime2 = write.wr_datetime.strftime("%Y-%m-%d %H:%M:%S")
         write.icon_hot = write.wr_hit >= board.bo_hot
         write.icon_new = write.wr_datetime > (datetime.now() - timedelta(hours=int(board.bo_new)))
         write.icon_file = write.wr_file
@@ -111,6 +116,112 @@ def list_post(bo_table: str, request: Request, db: Session = Depends(get_db), se
             "paging": get_paging(request, search_params['current_page'], total_count)
         }
     )
+
+
+@router.post("/list_delete/{bo_table}")
+def list_delete(
+        request: Request,
+        bo_table: str,
+        token: str = Form(...),
+        db: Session = Depends(get_db),
+        wr_ids: list = Form(..., alias="chk_wr_id[]"),
+    ):
+    """
+    게시글을 삭제한다.
+    """
+    # 토큰 검증    
+    if not compare_token(request, token, 'board_list'):
+        raise AlertException(status_code=403, detail="잘못된 접근입니다.")
+    # 게시판 정보 조회
+    board = db.query(models.Board).get(bo_table)
+    if not board:
+        raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
+    
+    # 게시글 조회
+    models.Write = dynamic_create_write_table(bo_table)
+    writes = db.query(models.Write).filter(models.Write.wr_id.in_(wr_ids)).all()
+    for write in writes:
+        db.delete(write)
+    db.commit()
+
+    # 최신글 캐시 삭제
+    G6FileCache().delete_prefix(f'latest-{bo_table}')
+
+    # TODO: 게시글 삭제시 같이 삭제해야할 것들 추가
+
+    return RedirectResponse(f"/board/{bo_table}", status_code=303)
+
+
+@router.post("/move/{bo_table}")
+def move_post(
+        request: Request,
+        bo_table: str,
+        sw: str = Form(...),
+        token: str = Form(...),
+        db: Session = Depends(get_db),
+        wr_ids: list = Form(..., alias="chk_wr_id[]"),
+    ):
+    """
+    게시글 복사/이동
+    """
+    member = request.state.login_member
+    act = "이동" if sw == "move" else "복사"
+
+    # 토큰 검증    
+    if not compare_token(request, token, 'board_list'):
+        raise AlertException(status_code=403, detail="잘못된 접근입니다.")
+    # 게시판 관리자 검증
+    # TODO: 게시판관리자/그룹관리자 허용 추가
+    if not request.state.is_super_admin:
+        raise AlertException(status_code=403, detail="게시판 관리자 이상 접근이 가능합니다.")
+
+    # 게시판 정보 조회
+    board = db.query(models.Board).get(bo_table)
+    if not board:
+        raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
+    # 게시판 목록 조회
+    br = aliased(models.Board)
+    gr = aliased(models.Group)
+    query = db.query(br, gr).join(gr, gr.gr_id == br.gr_id)
+    # TODO: 게시판관리자/그룹관리자 필터링 추가
+    # if request.state.is_group_admin:
+    #     query_boards = query_boards.filter(models.Group.gr_admin == member.mb_id)
+    # if request.state.is_board_admin:
+    #     query_boards = query_boards.filter(models.Board.bo_admin == member.mb_id)
+    results = query.order_by(br.gr_id, br.bo_order, br.bo_table).all()
+
+    return templates.TemplateResponse(
+        f"board/pc/move.html", {
+            "request": request,
+            "act": act,
+            "results": results,
+            "current_board": board,
+            "wr_ids": ','.join(wr_ids)
+        }
+    )
+
+
+# 작업 진행중....
+@router.post("/move_update/")
+def move_update(
+        request: Request,
+        token: str = Form(...),
+        sw: str = Form(...),
+        target_bo_table: str = Form(...),
+        wr_ids: list = Form(..., alias="chk_wr_id[]"),
+        db: Session = Depends(get_db),
+    ):
+    """
+    게시글 복사/이동
+    """
+    member = request.state.login_member
+    act = "이동" if sw == "move" else "복사"
+
+    # 토큰 검증    
+    if not compare_token(request, token, 'board_list'):
+        raise AlertException(status_code=403, detail="잘못된 접근입니다.")
+    
+
 
 @router.get("/write/{bo_table}")
 def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db), wr_id: int = Query(None)):
@@ -247,8 +358,6 @@ from dataclasses import dataclass
 
 @dataclass
 class writeForm:
-    wr_id: int = Form(None)
-    parent_id: int = Form(None)
     ca_name: str = Form(None)
     wr_name: str = Form(None)
     wr_email: str = Form(None)
@@ -262,6 +371,8 @@ def write_update(
     request: Request,
     token: str = Form(...),
     bo_table: str = Form(...),
+    wr_id: int = Form(None),
+    parent_id: int = Form(None),
     db: Session = Depends(get_db),
     form_data: writeForm = Depends(),
 ):
@@ -275,7 +386,6 @@ def write_update(
     
     models.Write = dynamic_create_write_table(bo_table)
     
-
     if compare_token(request, token, 'insert'): # 토큰에 등록돤 action이 insert라면 신규 등록
         tmp_write = db.query(models.Write).order_by(models.Write.wr_num.asc()).first()
         form_data.wr_name = request.state.login_member.mb_name if request.state.login_member else form_data.wr_name
@@ -288,24 +398,24 @@ def write_update(
         )
         db.add(write)
         db.commit()
-
     elif compare_token(request, token, 'update'):  # 토큰에 등록된 action이 update라면 수정
-        # 데이터 수정 후 commit
         write = db.query(models.Write).get(wr_id)
         for field, value in form_data.__dict__.items():
             setattr(write, field, value)
         db.commit()
+    else:
+        raise AlertException(status_code=403, detail="잘못된 접근입니다.")
 
     db.commit()
 
     # 부모 글의 wr_reply 필드를 수정한다.
-    write.wr_parent = form_data.parent_id or write.wr_id
+    write.wr_parent = parent_id or write.wr_id
     db.commit()
 
     # 최신글 캐시 삭제
-    G6FileCache().delete_prefix(f'latest-{board.bo_table}')
+    G6FileCache().delete_prefix(f'latest-{bo_table}')
 
-    return RedirectResponse(f"/board/{board.bo_table}/{write.wr_id}", status_code=303)
+    return RedirectResponse(f"/board/{bo_table}/{write.wr_id}", status_code=303)
 
 
 @router.get("/{bo_table}/{wr_id}")

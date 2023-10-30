@@ -25,8 +25,9 @@
         </nav>
     <!-- } 게시판 카테고리 끝 -->
     {% endif %}
-    <form name="fboardlist" id="fboardlist" action="/board_list_update" onsubmit="return fboardlist_submit(this);" method="post">
+    <form name="fboardlist" id="fboardlist" action="" onsubmit="return fboardlist_submit(this);" method="post">
         <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
+        <input type="hidden" name="sw" value="">
         <input type="hidden" name="sfl" value="{{ request.query_params.sfl }}">
         <input type="hidden" name="stx" value="{{ request.query_params.stx }}">
         <input type="hidden" name="spt" value="{{ request.query_params.spt }}">
@@ -129,7 +130,7 @@
                             {% elif wr_id == write.wr_id %}
                                 <span class="bo_current">열람중</span>
                             {% else %}
-                                {{ write.wr_num }}
+                                {{ write.wr_num|int|abs }}
                             {% endif %}
                         </td>
                         <td class="td_subject" style="padding-left:{{ reply_depth * 10 }}px">
@@ -161,7 +162,7 @@
                         {% if board.bo_use_nogood %}
                         <td class="td_num">{{ write.wr_nogood }}</td>
                         {% endif %}
-                        <td class="td_datetime">{{ write.wr_datetime2[2:10] }}</td>
+                        <td class="td_datetime">{{ write.wr_datetime|datetime_format('%y-%m-%d') }}</td>
                     </tr>
                 {% endfor %}
                 </tbody>
@@ -280,7 +281,7 @@
                 return false;
     
             f.removeAttribute("target");
-            f.action = "/admin/board_list_update";
+            f.action = "{{ url_for('list_delete', bo_table=board.bo_table) }}";
         }
     
         return true;
@@ -288,18 +289,12 @@
     
     // 선택한 게시물 복사 및 이동
     function select_copy(sw) {
-        var f = document.fboardlist;
-    
-        if (sw == "copy")
-            str = "복사";
-        else
-            str = "이동";
-    
+        var f = document.fboardlist;   
         var sub_win = window.open("", "move", "left=50, top=50, width=500, height=550, scrollbars=1");
     
         f.sw.value = sw;
         f.target = "move";
-        f.action = g5_bbs_url+"/move.php";
+        f.action = "{{ url_for('move_post', bo_table=board.bo_table) }}";
         f.submit();
     }
     

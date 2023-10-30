@@ -1514,3 +1514,13 @@ def get_newwins(request: Request):
     newwins = [newwin for newwin in newwins if not request.cookies.get("hd_pops_" + str(newwin.nw_id))]
 
     return newwins
+
+
+def datetime_format(date: datetime, format="%Y-%m-%d %H:%M:%S"):
+    """
+    날짜 포맷팅
+    """
+    if not date:
+        return ""
+
+    return date.strftime(format)

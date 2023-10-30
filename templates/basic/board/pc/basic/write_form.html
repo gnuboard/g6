@@ -35,7 +35,7 @@
                 <select name="ca_name" id="ca_name" required="">
                     <option value="">분류를 선택하세요</option>
                     {% for category in categories %}
-                        <option value="{{ category }}">{{ category }}</option>
+                        <option value="{{ category }}" {{ get_selected(write.ca_name, category) }}>{{ category }}</option>
                     {% endfor %}
                 </select>
             </div>
