@@ -74,13 +74,12 @@ async def sendmail_test_result(request: Request, db: Session = Depends(get_db),
     }
     return templates.TemplateResponse("sendmail_test_result.html", context)
 
-load_dotenv()
+# load_dotenv()
 
-
-SMTP_SERVER = os.getenv("SMTP_SERVER")
-SMTP_PORT = os.getenv("SMTP_PORT")
-SMTP_USERNAME = os.getenv("SMTP_USERNAME")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+# SMTP_SERVER = os.getenv("SMTP_SERVER")
+# SMTP_PORT = os.getenv("SMTP_PORT")
+# SMTP_USERNAME = os.getenv("SMTP_USERNAME")
+# SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
 # def send_email_thread(to_email: str, subject: str, body: str):
     
@@ -115,25 +114,26 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
 #     return {"message": f"Emails sent successfully to {', '.join(to_emails)}"}
 
-def send_email(to_emails: List[str], subject: str, body: str):
-    for to_email in to_emails:
-        try:
-            msg = MIMEMultipart()
-            msg['From'] = SMTP_USERNAME
-            msg['To'] = to_email
-            msg['Subject'] = subject
+# common.py 에서 사용
+# def send_email(to_emails: List[str], subject: str, body: str):
+#     for to_email in to_emails:
+#         try:
+#             msg = MIMEMultipart()
+#             msg['From'] = SMTP_USERNAME
+#             msg['To'] = to_email
+#             msg['Subject'] = subject
             
-            # Assuming body is HTML, if not change 'html' to 'plain'
-            msg.attach(MIMEText(body, 'html'))  
+#             # Assuming body is HTML, if not change 'html' to 'plain'
+#             msg.attach(MIMEText(body, 'html'))  
 
-            with smtplib.SMTP(SMTP_SERVER, int(SMTP_PORT)) as server:
-                if SMTP_USERNAME and SMTP_PASSWORD:
-                    server.starttls()
-                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
-                text = msg.as_string()
-                server.sendmail(SMTP_USERNAME, to_email, text)
+#             with smtplib.SMTP(SMTP_SERVER, int(SMTP_PORT)) as server:
+#                 if SMTP_USERNAME and SMTP_PASSWORD:
+#                     server.starttls()
+#                     server.login(SMTP_USERNAME, SMTP_PASSWORD)
+#                 text = msg.as_string()
+#                 server.sendmail(SMTP_USERNAME, to_email, text)
 
-        except Exception as e:
-            print(f"Error sending email to {to_email}: {e}")
+#         except Exception as e:
+#             print(f"Error sending email to {to_email}: {e}")
 
-    return {"message": f"Emails sent successfully to {', '.join(to_emails)}"}                
+#     return {"message": f"Emails sent successfully to {', '.join(to_emails)}"}                
