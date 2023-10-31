@@ -794,3 +794,33 @@ class UniqId(Base):
 
     uq_id = Column(BIGINT, primary_key=True)
     uq_ip = Column(String(255), nullable=False, default="")
+
+
+class NewWin(Base):
+    __tablename__ = DB_TABLE_PREFIX + 'new_win'
+
+    nw_id = Column(Integer, primary_key=True, autoincrement=True)
+    nw_division = Column(String(10), nullable=False, default='both')
+    nw_device = Column(String(10), nullable=False, default='both')
+    nw_begin_time = Column(DateTime, nullable=False, default=datetime.now())
+    nw_end_time = Column(DateTime, nullable=False, default=datetime.now())
+    nw_disable_hours = Column(Integer, nullable=False, default=0)
+    nw_left = Column(Integer, nullable=False, default=0)
+    nw_top = Column(Integer, nullable=False, default=0)
+    nw_height = Column(Integer, nullable=False, default=0)
+    nw_width = Column(Integer, nullable=False, default=0)
+    nw_subject = Column(Text, nullable=False)
+    nw_content = Column(Text, nullable=False)
+    nw_content_html = Column(Integer, nullable=False, default=0)
+    
+    
+# 회원메일발송 테이블
+class Mail(Base):
+    __tablename__ = DB_TABLE_PREFIX + 'mail'
+
+    ma_id = Column(Integer, primary_key=True, autoincrement=True)
+    ma_subject = Column(String(255), nullable=False, default='')
+    ma_content = Column(Text, nullable=False, default='')
+    ma_time = Column(DateTime, nullable=False, default=datetime.now())
+    ma_ip = Column(String(255), nullable=False, default='')
+    ma_last_option = Column(Text, nullable=False, default='')

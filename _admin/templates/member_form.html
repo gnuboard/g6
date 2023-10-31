@@ -128,6 +128,10 @@
                 <td colspan="3">
                     <span class="frm_info">이미지 크기는 <strong>넓이 22픽셀 높이 22픽셀</strong>로 해주세요.</span>
                     <input type="file" name="mb_icon" id="mb_icon">
+                    {% if member.mb_icon %}
+                        <img src="/{{ member.mb_icon|safe }}" title="{{ member.mb_id }}님 회원아이콘" target="_blank">
+                        <label><input type="checkbox" name="del_mb_icon" value="1" id="del_mb_icon"> 삭제</label>
+                    {% endif %}
                 </td>
             </tr>
             <tr>
@@ -135,6 +139,10 @@
                 <td colspan="3">
                     <span class="frm_info">이미지 크기는 <strong>넓이 60픽셀 높이 60픽셀</strong>로 해주세요.</span>
                     <input type="file" name="mb_img" id="mb_img">
+                    {% if member.mb_img %}
+                        <img src="/{{ member.mb_img|safe }}" title="{{ member.mb_id }}님 회원아이콘" target="_blank">
+                        <label><input type="checkbox" name="del_mb_icon" value="1" id="del_mb_icon"> 삭제</label>
+                    {% endif %}
                 </td>
             </tr>
             <tr>
@@ -221,8 +229,8 @@
     }
     
     function fmember_submit(f) {
-        if (!f.mb_icon.value.match(/\.(gif|jpe?g|png)$/i) && f.mb_icon.value) {
-            alert('아이콘은 이미지 파일만 가능합니다.');
+        if (!f.mb_icon.value.match(/\.(gif)$/i) && f.mb_icon.value) {
+            alert('아이콘은 gif 파일만 가능합니다.');
             return false;
         }
 

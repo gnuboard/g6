@@ -753,3 +753,23 @@ $(function() {
         return true;
     });
 });
+
+
+function generate_token() {
+    var token = "";
+    $.ajax({
+        url: '/generate_token',
+        type: 'POST',
+        async: false,
+        cache: false,
+        success: function(response) {
+            if(response.success) {
+                token = response.token;
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error(error);
+        }
+    });
+    return token;
+}

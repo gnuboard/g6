@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block head %}
+    {% include editor_path(request) + '/head.html' %}
+{% endblock %}
+
+{% block title %}회원메일발송 처리{% endblock %}
+
+{% block subtitle %}회원메일발송 처리{% endblock %}
+
+{% block content %}
+
+<div>
+    <p>메일 발송중 ...</p>
+    <p><font color="crimson"><strong>[끝]</strong></font> 이라는 단어가 나오기 전에는 중간에 중지하지 마세요.</p>
+    <p></p>
+</div>
+    
+<div id="status"></div>
+
+<script>
+    const evtSource = new EventSource("/admin/mail_select_send?ma_id={{ ma_id }}");
+    evtSource.onmessage = function(event) {
+        const data = event.data.trim();  // 공백 제거
+        
+        document.getElementById("status").innerHTML += data + "<br>"; // 메시지 출력
+        if (data.includes("[끝]")) {
+            evtSource.close(); // "[끝]" 메시지를 받으면 연결을 닫습니다.
+        }
+    }
+</script>
+
+{% endblock %}

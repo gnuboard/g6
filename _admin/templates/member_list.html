@@ -90,7 +90,7 @@
                     <tr class="{{ background_color }}">
                     <td headers="mb_list_chk" class="td_chk" rowspan="2">
                         <input type="hidden" name="mb_id[]" value="{{ member.mb_id }}" id="mb_id_{{ loop.index0 }}">
-                        <label for="chk_{{ loop.index0 }}" class="sound_only">{{ member.mb_name }} {{ member.mb_nick }}님</label>
+                        <label for="chk_{{ loop.index0 }}" class="sound_only">{{ member.mb_name }}님</label>
                         <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
                     </td>
                     <td headers="mb_list_id" colspan="2" class="td_name sv_use">{{ member.mb_id }}</td>
@@ -141,7 +141,8 @@
                 <tr class="{{ background_color }}">
                     <td headers="mb_list_name" class="td_mbname">{{ member.mb_name }}</td>
                     <td headers="mb_list_nick" class="td_name sv_use"><!-- 닉네임 -->
-                        {{ member.mb_nick }}
+                        {# {{ member.mb_nick|safe }} #}
+                        {{ member.nick_sideview|safe }}
                     </td>
                     <td headers="mb_list_auth" class="td_mbstat"><!-- 권한(level) -->
                         {{ get_member_level_select('mb_level[]', 1, admin.mb_level if admin else 1, member.mb_level if member else 1)|safe }}
@@ -182,22 +183,90 @@
 {{ paging|safe }}
 
 <script>
-    function fmemberlist_submit(f) {
-        if (!is_checked("chk[]")) {
-            alert(document.pressed + " 하실 항목을 하나 이상 선택하세요.");
+function fmemberlist_submit(f) {
+    if (!is_checked("chk[]")) {
+        alert(document.pressed + " 하실 항목을 하나 이상 선택하세요.");
+        return false;
+    }
+
+    if (document.pressed == "선택삭제") {
+        if (!confirm("선택한 자료를 정말 삭제하시겠습니까?")) {
             return false;
         }
-
-        if (document.pressed == "선택삭제") {
-            if (!confirm("선택한 자료를 정말 삭제하시겠습니까?")) {
-                return false;
-            }
-        }
-
-        return true;
     }
+
+    return true;
+}
+
+{#
+// sideview 를 동적으로 생성하려 했으나 기존 PHP 코드와의 호환성을 위하여 기존 방식대로 처리하기로 함    
+$('div.dynamic_sideview').css('position', 'relative');
+
+$('body').on('click', 'div.sv_wrap', function(e) {
+    e.stopPropagation();  // 이 이벤트가 상위 요소로 전파되지 않도록 합니다.
+
+    var mb_id = $(this).data('memberid');
+    console.log(mb_id);
+
+    if (!mb_id) return;
+
+    var that = this;  // 원래의 this 값을 저장
+
+    $.get('/sideview/' + mb_id)
+        .done(function(data) {
+            // 기존의 dynamic_layer 제거
+            $('div.sv_on').remove();
+
+            var dynamic_layer = $('<div class="sv sv_on"></div>').html(data);
+            // 위치 조정
+            dynamic_layer.css({
+                'top': '-5px',
+                'left': '40px',  // 클릭한 요소의 오른쪽에 위치시키기 위해 left 값을 조정
+                'position': 'absolute'
+            });
+
+            // Insert the dynamic_layer into the .sv_on class
+            $(that).find('div.dynamic_sideview').html(dynamic_layer);
+        })
+        .fail(function() {
+            console.error('Error fetching data');
+        });
+});
+
+// 페이지의 다른 부분을 클릭하면 모든 sv_on 요소를 숨깁니다.
+$(document).on('click', function(e) {
+    if (!$(e.target).closest('div.sv_wrap').length) {
+        $('div.sv_on').remove();
+    }
+});
+
+// sv_on 클래스를 가진 div 요소 내부를 클릭했을 때 이벤트 전파를 막습니다.
+$('body').on('click', 'div.sv_on', function(e) {
+    e.stopPropagation();
+}); 
+#}
+
+$(document).ready(function() {
+    $('.clickable-text').on('click', function() {
+        let memberId = $(this).data('memberid');
+        
+        // 서버에 AJAX 요청
+        $.get('/get-member-info', { memberid: memberId }, function(data) {
+            // data는 서버로부터 받아온 정보를 포함하고 있습니다.
+            // 이 정보를 사용하여 레이어를 구성하고 표시합니다.
+            $('#info-layer').html(data).show();
+        });
+    });
+});
 </script>
 
 </div>
+
+
+<span class="clickable-text" data-memberid="admin">Admin</span>
+
+
+<!-- 레이어로 표시될 div -->
+<div id="info-layer" style="display: none; position: absolute; background-color: #fff; border: 1px solid #ccc; padding: 10px;"></div>
 
 {% endblock %}
