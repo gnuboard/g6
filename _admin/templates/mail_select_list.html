@@ -10,7 +10,7 @@
 
 {% block content %}
 
-<form name="fmailselectlist" id="fmailselectlist" method="post" action="/admin/mail_select_update">
+<form method="post" name="fmailselectlist" action="/admin/mail_select_result" onsubmit="return fmailselectlist_submit(this);">
     <input type="hidden" name="token" value="">
     <input type="hidden" name="ma_id" value="{{ ma_id }}">
 
@@ -60,8 +60,20 @@
         <input type="submit" value="메일보내기" class="btn_submit">
         <a href="/admin/mail_select_form/{{ ma_id }}">뒤로</a>
     </div>
-
 </form>
+
+<script>
+function fmailselectlist_submit(f)
+{
+    f.token.value = generate_token();
+    if (f.token.value == "") {
+        alert("토큰값이 없습니다.");
+        return false;
+    }
+
+    return true;
+}    
+</script>
 
 
 {% endblock %}

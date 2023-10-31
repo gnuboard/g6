@@ -198,7 +198,7 @@ function fmemberlist_submit(f) {
     return true;
 }
 
-<!-- 
+{#
 // sideview 를 동적으로 생성하려 했으나 기존 PHP 코드와의 호환성을 위하여 기존 방식대로 처리하기로 함    
 $('div.dynamic_sideview').css('position', 'relative');
 
@@ -243,7 +243,8 @@ $(document).on('click', function(e) {
 // sv_on 클래스를 가진 div 요소 내부를 클릭했을 때 이벤트 전파를 막습니다.
 $('body').on('click', 'div.sv_on', function(e) {
     e.stopPropagation();
-}); -->
+}); 
+#}
 
 $(document).ready(function() {
     $('.clickable-text').on('click', function() {

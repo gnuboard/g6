@@ -32,14 +32,6 @@
             </thead>
             <tbody>
             {% for mail in mails %}
-            {#<?php
-            for ($i = 0; $row = sql_fetch_array($result); $i++) {
-                $s_vie = '<a href="./mail_preview.php?ma_id=' . $row['ma_id'] . '" target="_blank" class="btn btn_03">미리보기</a>';
-
-                $num = number_format($total_count - ($page - 1) * $config['cf_page_rows'] - $i);
-
-                $bg = 'bg' . ($i % 2);
-            ?>#}
                 <tr class="{{ 'bg0' if loop.index0 % 2 == 0 else 'bg1' }}">
                     <td class="td_chk">
                         <label for="chk_{{ loop.index0 }}" class="sound_only">{{ mail.ma_subject }} 메일</label>
@@ -51,7 +43,7 @@
                     <td class="td_datetime">{{ mail.ma_time }}</td>
                     <td class="td_test"><a href="/admin/mail_test/{{ mail.ma_id }}">테스트</a></td>
                     <td class="td_send"><a href="/admin/mail_select_form/{{ mail.ma_id }}">보내기</a></td>
-                    <td class="td_mng"><a href="/admin/mail_preview/{{ mail.ma_id }}"" target="_blank" class="btn btn_03">미리보기</a></a></td>
+                    <td class="td_mng"><a href="/admin/mail_preview/{{ mail.ma_id }}" target="_blank" class="btn btn_03">미리보기</a></a></td>
                 </tr>
             {% endfor %}
 

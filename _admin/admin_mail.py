@@ -15,7 +15,9 @@ import threading
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
-
+from sse_starlette.sse import EventSourceResponse
+import time
+import asyncio
 
 router = APIRouter()
 templates = Jinja2Templates(directory=[ADMIN_TEMPLATES_DIR, EDITOR_PATH])
@@ -301,44 +303,52 @@ async def mail_select_list(request: Request, db: Session = Depends(get_db),
         mb_mailling: str = Form(None, alias="mb_mailling"),
         mb_level_from: int = Form(None, alias="mb_level_from"),
         mb_level_to: int = Form(None, alias="mb_level_to"),
+        gr_id: str = Form(None, alias="gr_id"),
         ):
     '''
     회원메일발송 선택
     '''
-    # if not check_token(request, token):
-    #     raise AlertException("토큰이 유효하지 않습니다.")
-    
-    # $mb_id1         = isset($_POST['mb_id1'])       ? (int) $_POST['mb_id1'] : 1;
-    # $mb_id1_from    = isset($_POST['mb_id1_from'])  ? clean_xss_tags($_POST['mb_id1_from'], 1, 1, 30) : '';
-    # $mb_id1_to      = isset($_POST['mb_id1_to'])    ? clean_xss_tags($_POST['mb_id1_to'], 1, 1, 30) : '';
-    # $mb_email       = isset($_POST['mb_email'])     ? clean_xss_tags($_POST['mb_email'], 1, 1, 100) : '';
-    # $mb_mailling    = isset($_POST['mb_mailling'])  ? clean_xss_tags($_POST['mb_mailling'], 1, 1, 100) : '';
-    # $mb_level_from  = isset($_POST['mb_level_from'])? (int) $_POST['mb_level_from'] : 1;
-    # $mb_level_to    = isset($_POST['mb_level_to'])  ? (int) $_POST['mb_level_to'] : 10;
-    
     query = db.query(models.Member)
-    # if ($mb_id1 != 1) {
-    #     $sql_where .= " and mb_id between '{$mb_id1_from}' and '{$mb_id1_to}' ";
-    # }
     if mb_id1 != 1:
         query = query.filter(models.Member.mb_id.between(mb_id1_from, mb_id1_to))        
-    # # if ($mb_email != "") {
-    # #     $sql_where .= " and mb_email like '%{$mb_email}%' ";
-    # # }
     if mb_email:
         query = query.filter(models.Member.mb_email.like(f"%{mb_email}%"))
-        
-    # // 메일링
-    # if ($mb_mailling != "") {
-    #     $sql_where .= " and mb_mailling = '{$mb_mailling}' ";
-    # }
     if mb_mailling:
         query = query.filter(models.Member.mb_mailling == mb_mailling)
         
+    query = query.filter(models.Member.mb_level.between(mb_level_from, mb_level_to))
+    
+    if gr_id:
+        group_member = []
+        result = db.query(models.GroupMember.mb_id).filter(models.GroupMember.gr_id == gr_id).order_by(models.GroupMember.mb_id).all()
         
+        for row in result:
+            group_member.append(row.mb_id)
+            
+        if not group_member:
+            raise AlertException("선택하신 게시판 그룹회원이 한명도 없습니다.")
+        
+        qroup_str = ",".join(group_member)
+        query = query.filter(models.Member.mb_id.in_(group_member))
+    
+    # 탈퇴, 차단하지 않은 회원만 선택합니다.
+    # 1년 1월 1일의 datetime 객체를 생성합니다.
+    cutoff_date = datetime(1, 1, 1)
+    # cutoff_date 이전의 mb_leave_date와 mb_intercept_date를 가진 멤버만 선택합니다.
+    query = query.filter(
+        (models.Member.mb_leave_date <= cutoff_date) | (models.Member.mb_leave_date.is_(None)),
+        (models.Member.mb_intercept_date <= cutoff_date) | (models.Member.mb_intercept_date.is_(None))
+    )
     members = query.all()
     
-    # print(len(members))
+    # members 를 ma_last_option 필드에 저장함 (파이썬, PHP의 차이점으로 인해 POST로 넘기지 못하고 DB에 저장해야함)
+    save_members = []
+    for member in members:
+        save_members.append(member.mb_name+"||"+member.mb_nick+"||"+member.mb_id+"||"+member.mb_email)
+    save_members_str = "\n".join(save_members)
+    
+    db.query(models.Mail).filter(models.Mail.ma_id == ma_id).update({models.Mail.ma_last_option: save_members_str})
+    db.commit()
         
     extend = {
         "request": request,
@@ -348,3 +358,121 @@ async def mail_select_list(request: Request, db: Session = Depends(get_db),
         "ma_id": ma_id,
     }
     return templates.TemplateResponse("mail_select_list.html", extend)
+
+
+@router.post("/mail_select_result", response_class=HTMLResponse)
+async def mail_select_result(request: Request, db: Session = Depends(get_db),
+        token: str = Form(..., alias="token"),
+        ma_id: int = Form(..., alias="ma_id"),
+        ):
+    '''
+    회원메일발송 결과보여주는 HTML 페이지
+    '''
+    error = auth_check_menu(request, request.session.get("menu_key"), "w")
+    if error:
+        raise AlertException(error)    
+    
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다.")
+
+    context = {
+        "request": request,
+        "ma_id": ma_id,
+    }
+    return templates.TemplateResponse("mail_select_result.html", context)
+
+
+@router.get("/mail_select_send")
+async def mail_select_send(request: Request, db: Session = Depends(get_db),
+        ma_id: int = Query(...),
+        ):
+    '''
+    회원메일발송 처리
+    '''
+    error = auth_check_menu(request, request.session.get("menu_key"), "w")
+    if error:
+        raise AlertException(error)    
+    
+    async def send_events(members: list, mail_subject: str, mail_content: str):
+        count = 0
+        sleepsec = 1  # 1초 간격으로 조정
+        
+        for member in members:
+            mb_name, mb_nick, mb_id, mb_email = member.split("||")
+            
+            if not mb_email:
+                continue
+            
+            # $mb_md5 = md5($mb_id . $to_email . $datetime);
+            mb_md5 = hashlib.md5(f"{mb_id}{mb_email}{datetime.now()}".encode()).hexdigest()
+
+            # $content = $ma['ma_content'];
+            # $content = preg_replace("/{이름}/", $name, (string)$content);
+            # $content = preg_replace("/{닉네임}/", $nick, (string)$content);
+            # $content = preg_replace("/{회원아이디}/", $mb_id, (string)$content);
+            # $content = preg_replace("/{이메일}/", $to_email, (string)$content);
+            # $content = $content . "<hr size=0><p><span style='font-size:9pt; font-family:굴림'>▶ 더 이상 정보 수신을 원치 않으시면 [<a href='" . G5_BBS_URL . "/email_stop.php?mb_id={$mb_id}&amp;mb_md5={$mb_md5}' target='_blank'>수신거부</a>] 해 주십시오.</span></p>";
+            subject = mail_subject
+            content = mail_content
+            content = content.replace("{이름}", mb_name)
+            content = content.replace("{닉네임}", mb_nick)
+            content = content.replace("{회원아이디}", mb_id)
+            content = content.replace("{이메일}", mb_email)
+            content = content + f"<hr size=0><p><span style='font-size:10pt; font-family:돋움'>▶ 더 이상 정보 수신을 원치 않으시면 [<a href='/bbs/email_stop/{mb_id}&mb_md5={mb_md5}' target='_blank'>수신거부</a>] 해 주십시오.</span></p>"           
+            
+            # 메일 발송
+            mailer(mb_email, subject, content)
+            count += 1
+            
+            # 10명마다 1초씩 쉬어줍니다.
+            if count % 10 == 0:
+                await asyncio.sleep(sleepsec)  # 비동기 sleep 사용
+                
+            # 발송 상태를 'yield'를 사용하여 전송합니다.
+            # 전송시 필히 data: 로 시작하고 \n\n으로 끝나야 합니다.
+            yield f"data: {count}. {mb_name}({mb_email})님께 메일을 보내고 있습니다.\n\n"
+        
+        # 멤버 리스트 메일발송 완료 후 함수 종료
+        # 종료 메시지 전송
+        yield "data: [끝]\n\n"
+            
+    exists_mail = db.query(models.Mail).filter(models.Mail.ma_id == ma_id).first()
+    if not exists_mail.ma_subject or not exists_mail.ma_content:
+        raise AlertException("메일 내용이 없습니다.")
+
+    members = exists_mail.ma_last_option.split("\n")
+        
+    return EventSourceResponse(send_events(members, exists_mail.ma_subject, exists_mail.ma_content))
+
+
+@router.get("/mail_preview/{ma_id}")
+async def mail_preview(request: Request, db: Session = Depends(get_db),
+        ma_id: int = Path(...),
+        ):
+    '''
+    회원메일발송 미리보기
+    '''
+    request.session["menu_key"] = MAIL_MENU_KEY
+    
+    exists_mail = db.query(models.Mail).filter(models.Mail.ma_id == ma_id).first()
+    if not exists_mail:
+        raise AlertException("메일 정보가 없습니다.")
+    
+    login_member = request.state.login_member
+    
+    subject = exists_mail.ma_subject
+    content = exists_mail.ma_content
+
+    content = content.replace("{이름}", login_member.mb_name)
+    content = content.replace("{닉네임}", login_member.mb_nick)
+    content = content.replace("{회원아이디}", login_member.mb_id)
+    content = content.replace("{이메일}", login_member.mb_email)
+    
+    content = content + f"<hr size=0><p><span style='font-size:10pt; font-family:돋움'>▶ 더 이상 정보 수신을 원치 않으시면 [<a href='/bbs/email_stop/{login_member.mb_id}&mb_md5=***' target='_blank'>수신거부</a>] 해 주십시오.</span></p>"
+
+    context = {
+        "request": request,
+        "mail_subject": subject,
+        "mail_content": content,
+    }
+    return templates.TemplateResponse("mail_preview.html", context)
