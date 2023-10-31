@@ -80,19 +80,18 @@
                                 </a>
                             </li>
                             <li>
-                                <a href="" onclick="del(this.href); return false;">
+                                <a href="#" onclick="del(this.href); return false;">
                                     삭제<i class="fa fa-trash-o" aria-hidden="true"></i>
                                 </a>
                             </li>
                             <li>
-                                <a href="" onclick="board_move(this.href); return false;">
+                                <a href="#" onclick="board_move(this.href, 'copy'); return false;">
                                     복사<i class="fa fa-files-o" aria-hidden="true"></i>
                                 </a>
                             </li>
                             <li>
-                                <a href="" onclick="board_move(this.href); return false;">
-                                    이동
-                                    <i class="fa fa-arrows" aria-hidden="true"></i>
+                                <a href="#" onclick="board_move(this.href, 'move'); return false;">
+                                    이동<i class="fa fa-arrows" aria-hidden="true"></i>
                                 </a>
                             </li>
                         </ul> 
@@ -249,6 +248,11 @@
             </div>
         </form>
     </aside>
+
+    <form name="fwrite_copy" id="fwrite_copy" action="{{ url_for('move_post', bo_table=board.bo_table) }}" method="post">
+        <input type="hidden" name="sw" value="">
+        <input type="hidden" name="chk_wr_id[]" value="{{ write.wr_id }}">
+    </form>
 
     <script>
     var save_before = '';
@@ -422,11 +426,14 @@
     <!-- } 게시판 읽기 끝 -->
 
     <script>
+        function board_move(href, sw) {
+            var f = document.fwrite_copy;
+            var sub_win = window.open(href, "move", "left=50, top=50, width=500, height=550, scrollbars=1");
 
-    function board_move(href)
-    {
-    window.open(href, "boardmove", "left=50, top=50, width=500, height=550, scrollbars=1");
-    }
+            f.sw.value = sw;
+            f.target = "move";
+            f.submit();
+        }
     </script>
 
     <script>

@@ -3,7 +3,7 @@
 # 테이블명은 write 로, 글 한개에 대한 의미는 write 와 post 를 혼용하여 사용합니다.
 import bleach
 import datetime
-from fastapi import APIRouter, Depends, Request, Form, HTTPException
+from fastapi import APIRouter, Depends, Request, Form, HTTPException, Path
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import aliased, Session
@@ -154,11 +154,10 @@ def list_delete(
 
 
 @router.post("/move/{bo_table}")
-def move_post(
+async def move_post(
         request: Request,
         bo_table: str,
         sw: str = Form(...),
-        token: str = Form(...),
         db: Session = Depends(get_db),
         wr_ids: list = Form(..., alias="chk_wr_id[]"),
     ):
@@ -168,14 +167,11 @@ def move_post(
     member = request.state.login_member
     act = "이동" if sw == "move" else "복사"
 
-    # 토큰 검증    
-    if not compare_token(request, token, 'board_list'):
-        raise AlertException(status_code=403, detail="잘못된 접근입니다.")
     # 게시판 관리자 검증
     # TODO: 게시판관리자/그룹관리자 허용 추가
     if not request.state.is_super_admin:
         raise AlertException(status_code=403, detail="게시판 관리자 이상 접근이 가능합니다.")
-
+    print (bo_table)
     # 게시판 정보 조회
     board = db.query(models.Board).get(bo_table)
     if not board:
@@ -229,48 +225,74 @@ def move_update(
     models.Write = dynamic_create_write_table(bo_table)
     origin_board = db.query(models.Board).get(bo_table)
     target_writes = db.query(models.Write).filter(models.Write.wr_id.in_(wr_ids.split(','))).all()
-    for write in target_writes:
-        for target_bo_table in target_bo_tables:
-            models.TargetWrite = dynamic_create_write_table(target_bo_table)
 
+    # 게시글 복사/이동 작업 반복
+    for target_bo_table in target_bo_tables:
+        for write in target_writes:
+            models.TargetWrite = dynamic_create_write_table(target_bo_table)
+            
             # 복사/이동 로그 기록
             if not write.wr_is_comment and config.cf_use_copy_log:
-                start_tag = f'<div class="content_{sw}>' if "html" in write.wr_option else '\n'
-                end_tag = '</div>' if "html" in write.wr_option else ''
-                write.wr_content += f"\n{start_tag}[이 게시물은 {member.mb_nick}님에 의해 {datetime.now()} {origin_board.bo_subject}에서 {act} 됨]{end_tag}"
+                log_msg = f"[이 게시물은 {member.mb_nick}님에 의해 {datetime.now()} {origin_board.bo_subject}에서 {act} 됨]"
+                if "html" in write.wr_option:
+                    log_msg = f'<div class="content_{sw}>' + log_msg + '</div>'
+                else:
+                    log_msg = '\n' + log_msg
 
             # 게시글 복사
             initial_field = ["wr_id", "wr_parent"]
             target_write = models.TargetWrite()
+
             for field in write.__table__.columns.keys():
                 if field in initial_field:
                     continue
-                elif sw == "copy":
-                    target_write.wr_good = 0
-                    target_write.wr_nogood = 0
+                elif field == 'wr_content':
+                    target_write.wr_content = write.wr_content + log_msg
                 elif field == 'wr_num':
                     target_write.wr_num = get_next_num(target_bo_table)
                 else:
                     setattr(target_write, field, getattr(write, field))
+
+            if sw == "copy":
+                target_write.wr_good = 0
+                target_write.wr_nogood = 0
+                target_write.wr_hit = 0
+                target_write.wr_datetime = datetime.now()
+
+            # 게시글 추가
             db.add(target_write)
             db.commit()
 
-            if write.wr_is_comment:
-                if sw == "move":
-                    pass
-                    # 최신글 이동
-            else:
+            # TODO: 파일 복사
+            # files = db.query(models.BoardFile).filter(
+            #     models.BoardFile.bo_table==origin_board.bo_table,
+            #     models.BoardFile.wr_id==write.wr_id
+            # ).all()
+            # if files:
+            #     pass
+
+            if sw == "move":
+                # TODO: 최신글 이동(주석해제)
                 pass
-                # 파일 복사
-
-                # 이동일 경우
-                if sw == "move":
+                # write_new = db.query(models.boardNew).filter(bo_table == bo_table, wr_id=write.wr_id).first()
+                # write_new.bo_table = target_write.bo_table
+                # write_new.wr_id = write_new.parent_id = target_write.wr_id
+                # db.commit()
+                
+                # 게시글
+                if not write.wr_is_comment:
                     pass
-                    # 스크랩 이동
-                    # 최신글 이동
-                    # 추천데이터 이동
+                    # TODO: 추천데이터 이동
+                    # TODO: 스크랩 이동
 
-            # 이동일 경우 복사데이터(게시글, 파일,새글) 삭제
+                # 기존 데이터(게시글, 파일, 최신글) 삭제
+                db.delete(write)
+                db.commit()
+        # 최신글 캐시 삭제
+        G6FileCache().delete_prefix(f'latest-{target_bo_table}')
+    
+    # 원본 게시판 최신글 캐시 삭제
+    G6FileCache().delete_prefix(f'latest-{bo_table}')
 
     return templates.TemplateResponse(
         "alert_close.html", {"request": request, "errors": f"해당 게시물을 선택한 게시판으로 {act} 하였습니다."}, status_code=200
@@ -418,7 +440,7 @@ class writeForm:
     wr_homepage: str = Form(None)
     wr_subject: str = Form(...)
     wr_content: str = Form(...)
-    wr_is_comment:bool = False
+    wr_is_comment: bool = False
 
 @router.post("/write_update/")
 def write_update(
