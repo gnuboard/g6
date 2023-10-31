@@ -1656,3 +1656,50 @@ def get_next_num(bo_table: str):
     row = db.query(func.min(Write.wr_num).label("min_wr_num")).first()
 
     return (int(row.min_wr_num) if row.min_wr_num else 0) - 1
+
+
+# FIXME: 대댓글이 있는 상태에서 bo_reply_order를 바꾸면 입력하지 못하는 오류
+# ex) 처음에는 정방향 A B C가 입력되고 역방향으로 바꾸면 last_reply_char이 A가 된다(Min).
+# 역방향의 char_end는 A이고 A - 1은 예외처리하고 있음으로 대댓글이 입력되지 않는다
+def generate_reply_character(board: Board, write):
+    """ 대댓글 단계 문자열 생성 
+
+    Args:
+        board (Board): 게시판 object
+        write (Write): 댓글/답글을 달 게시글 object
+
+    Raises:
+        AlertException: Z를 넘어가는 문자열 예외처리
+
+    Returns:
+        str: A~Z의 연속된 문자열(Ex: A, B, AA, AB, ABA ..)
+    """
+    db = SessionLocal()
+    write_model = dynamic_create_write_table(board.bo_table)
+    # 마지막 문자열 1개 자르기
+    query = db.query(func.right(write_model.wr_reply, 1).label("reply")).filter(
+        write_model.wr_reply != "",
+        write_model.wr_parent == write.wr_id
+    )
+    # 정방향이면 최대값, 역방향이면 최소값
+    if board.bo_reply_order:
+        result = query.order_by(desc("reply")).first()
+        char_begin = "A"
+        char_end = "Z"
+        char_increase = 1
+    else:
+        result = query.order_by(asc("reply")).first()
+        char_begin = "Z"
+        char_end = "A"
+        char_increase = -1
+
+    last_reply_char = result.reply if result else None
+    if last_reply_char == char_end:  # A~Z은 26 입니다.
+        raise AlertException("더 이상 답변하실 수 없습니다. 답변은 26개 까지만 가능합니다.")
+
+    if not last_reply_char:
+        reply_char = char_begin
+    else:
+        reply_char = chr(ord(last_reply_char) + char_increase)
+
+    return write.wr_reply + reply_char

@@ -3,11 +3,10 @@
 # 테이블명은 write 로, 글 한개에 대한 의미는 write 와 post 를 혼용하여 사용합니다.
 import bleach
 import datetime
-from fastapi import APIRouter, Depends, Request, Form, HTTPException, Path
+from fastapi import APIRouter, Depends, Request, Form, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import aliased, Session
-from sqlalchemy.orm.session import make_transient
 
 from common import *
 from database import get_db
@@ -308,31 +307,34 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
     board = db.query(models.Board).get(bo_table)
     if not board:
         raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
-    
-    # 게시판 카테고리 설정
-    categories = []
-    if board.bo_use_category:
-        categories = board.bo_category_list.split("|")
-    # 게시판 에디터 설정
+    # 답글 생성가능여부 체크
+    if wr_id:
+        models.Write = dynamic_create_write_table(bo_table)
+        write = db.query(models.Write).get(wr_id)
+        wr_reply = generate_reply_character(board, write)
+
+    # 에디터 설정
     request.state.use_editor = board.bo_use_dhtml_editor
     request.state.editor = board.bo_select_editor or request.state.editor
-    # 공지사항 설정
-    is_notice = False
-    if request.state.is_super_admin and not wr_id:
-        is_notice = True
-    # HTML 설정
-    is_html = True if get_member_level(request) >= board.bo_html_level else False
-    # 비밀글 설정
+
+    member_level = get_member_level(request)
+    # 분류
+    categories = [] if not board.bo_use_category else board.bo_category_list.split("|")
+    # 공지사항
+    is_notice = False if request.state.is_super_admin and not wr_id else True
+    # HTML
+    is_html = member_level >= board.bo_html_level
+    # 비밀글
     is_secret = board.bo_use_secret
-    # 메일 설정
-    is_mail = True if request.state.config.cf_email_use and board.bo_use_email else False;
+    # 메일
+    is_mail = True if request.state.config.cf_email_use and board.bo_use_email else False
     recv_email_checked = "checked"
-    # 링크 설정
-    is_link = True if get_member_level(request) >= board.bo_link_level else False
-    # 파일 설정
+    # 링크
+    is_link = member_level >= board.bo_link_level
+    # 파일
     file_count = int(board.bo_upload_count) or 0
-    is_file = True if get_member_level(request) >= board.bo_upload_level else False
-    is_file_content = True if board.bo_use_file_content else False
+    is_file = member_level >= board.bo_upload_level
+    is_file_content = board.bo_use_file_content
 
     return templates.TemplateResponse(
         f"board/{request.state.device}/{board.bo_skin}/write_form.html",
@@ -455,6 +457,7 @@ def write_update(
     """
     게시글을 Table 추가한다.
     """
+    member = request.state.login_member
     # 게시판 정보 조회
     board = db.query(models.Board).get(bo_table)
     if not board:
@@ -463,28 +466,26 @@ def write_update(
     models.Write = dynamic_create_write_table(bo_table)
     
     if compare_token(request, token, 'insert'): # 토큰에 등록돤 action이 insert라면 신규 등록
-        tmp_write = db.query(models.Write).order_by(models.Write.wr_num.asc()).first()
-        form_data.wr_name = request.state.login_member.mb_name if request.state.login_member else form_data.wr_name
+        form_data.wr_name = getattr(member, "mb_name", form_data.wr_name)
+        parent_write = db.query(models.Write).get(parent_id) if parent_id else None
         write = models.Write(
-            wr_num= tmp_write.wr_num - 1 if tmp_write else -1,
-            wr_datetime=datetime.now(),
+            wr_num = parent_write.wr_num if parent_write else get_next_num(bo_table),
+            wr_reply = generate_reply_character(board, parent_write) if parent_write else "",
+            wr_datetime = datetime.now(),
             mb_id = request.state.login_member.mb_id if request.state.login_member else '',
             wr_ip = request.client.host,
             **form_data.__dict__
         )
         db.add(write)
-        db.commit()
     elif compare_token(request, token, 'update'):  # 토큰에 등록된 action이 update라면 수정
         write = db.query(models.Write).get(wr_id)
         for field, value in form_data.__dict__.items():
             setattr(write, field, value)
-        db.commit()
     else:
         raise AlertException(status_code=403, detail="잘못된 접근입니다.")
-
     db.commit()
 
-    # 부모 글의 wr_reply 필드를 수정한다.
+    # 추가한 글의 wr_parent 필드를 수정한다.
     write.wr_parent = parent_id or write.wr_id
     db.commit()
 
