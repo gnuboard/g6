@@ -264,7 +264,7 @@ def validate_nickname_change_date(before_nick_date: date, nick_modify_date) -> U
         return True
     change_date = timedelta(days=nick_modify_date)
 
-    if is_min_year(before_nick_date):
+    if is_none_datetime(before_nick_date):
         before_nick_date = datetime.now().date()
 
     available_date = before_nick_date + change_date
