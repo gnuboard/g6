@@ -1468,7 +1468,7 @@ class MyTemplates(Jinja2Templates):
 class G6FileCache():
     """파일 캐시 클래스
     """
-    cache_dir = "data\cache"
+    cache_dir = os.path.join("data", "cache")
     cache_secret_key = None
 
     def __init__(self):
