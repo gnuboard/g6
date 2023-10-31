@@ -67,12 +67,19 @@ async def main_middleware(request: Request, call_next):
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 시작    
     # 요청의 경로를 얻습니다.
     path = request.url.path
+    print(path)
     # 경로가 정적 파일에 대한 것이 아닌지 확인합니다 (css, js, 이미지 등).
     if (path.startswith('/static') or path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.webp'))):
         response = await call_next(request)
         return response
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
     
+    # if path.startswith("/admin"):
+    #     # 관리자 페이지는 로그인이 필요하다.
+    #     if not request.session.get("ss_mb_id"):
+    #         # return RedirectResponse(url="/bbs/login?url="+path, status_code=302)
+    #         raise AlertException(status_code=302, detail="로그인이 필요합니다.", url="/bbs/login?url="+path)
+
     member = None
 
     db: Session = SessionLocal()
