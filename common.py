@@ -4,7 +4,7 @@ import os
 import random
 import re
 from time import sleep
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 import uuid
 from urllib.parse import urlencode
 import PIL
@@ -23,6 +23,16 @@ from datetime import datetime, timedelta, date, time
 import json
 from PIL import Image
 from user_agents import parse
+import base64
+from dotenv import load_dotenv
+import smtplib
+import threading
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+
+load_dotenv()
+
 
 # 전역변수 선언(global variables)
 TEMPLATES = "templates"
@@ -384,6 +394,17 @@ def validate_one_time_token(token, action: str = 'create'):
     token_data = cache.get(token)
     if token_data and token_data.get("action") == action:
         del cache[token]
+        return True
+    return False
+
+
+def check_token(request: Request, token: str):
+    '''
+    세션과 인수로 넘어온 토큰확인 함수
+    '''
+    if token and token == request.session.get("ss_token"):
+        # 세션 삭제
+        request.session["ss_token"] = ""
         return True
     return False
 
@@ -1152,7 +1173,7 @@ def get_member_level(request: Request):
     return member.mb_level if member else 1
 
 
-def auth_check(request: Request, menu_key: str, attribute: str):
+def auth_check_menu(request: Request, menu_key: str, attribute: str):
     '''
     관리권한 체크
     '''    
@@ -1226,10 +1247,25 @@ class AlertException(HTTPException):
     Args:
         HTTPException (HTTPException): HTTP 예외 클래스
     """
-    def __init__(self, status_code: int, detail: str = None, url: str = None):
+    def __init__(self, detail: str = None, status_code: int = 200, url: str = None):
         self.status_code = status_code
         self.detail = detail
         self.url = url
+
+
+class AlertCloseException(HTTPException):
+    """스크립트 경고창 출력 및 윈도우 창 닫기를 위한 예외 클래스
+
+    Args:
+        HTTPException (HTTPException): HTTP 예외 클래스
+    """
+    def __init__(
+        self,
+        detail: Any = None,
+        status_code: int = 200,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> None:
+        super().__init__(status_code=status_code, detail=detail, headers=headers) 
 
 
 def is_admin(request: Request):
@@ -1336,6 +1372,55 @@ def get_filetime_str(file_path) -> Union[int, str]:
         return ''
 
 
+class StringEncrypt:
+    def __init__(self, salt=''):
+        if not salt:
+            # You might want to implement your own salt generation logic here
+            self.salt = "your_default_salt"
+        else:
+            self.salt = salt
+        
+        self.length = len(self.salt)
+
+    def encrypt(self, str_):
+        length = len(str_)
+        result = ''
+
+        for i in range(length):
+            char = str_[i]
+            keychar = self.salt[i % self.length]
+            char = chr(ord(char) + ord(keychar))
+            result += char
+
+        result = base64.b64encode(result.encode()).decode()
+        result = result.translate(str.maketrans('+/=', '._-'))
+
+        return result
+
+    def decrypt(self, str_):
+        result = ''
+        str_ = str_.translate(str.maketrans('._-', '+/='))
+        str_ = base64.b64decode(str_).decode()
+
+        length = len(str_)
+
+        for i in range(length):
+            char = str_[i]
+            keychar = self.salt[i % self.length]
+            char = chr(ord(char) - ord(keychar))
+            result += char
+
+        return result
+
+# 사용 예
+# enc = StringEncrypt()
+# encrypted_text = enc.encrypt("hello")
+# print(encrypted_text)
+
+# decrypted_text = enc.decrypt(encrypted_text)
+# print(decrypted_text)
+
+
 class MyTemplates(Jinja2Templates):
     """
     Jinja2Template 설정 클래스
@@ -1383,7 +1468,7 @@ class MyTemplates(Jinja2Templates):
 class G6FileCache():
     """파일 캐시 클래스
     """
-    cache_dir = "data\cache"
+    cache_dir = os.path.join("data", "cache")
     cache_secret_key = None
 
     def __init__(self):
@@ -1437,6 +1522,42 @@ class G6FileCache():
         for file in os.listdir(self.cache_dir):
             if file.startswith(prefix):
                 os.remove(os.path.join(self.cache_dir, file))
+
+
+SMTP_SERVER = os.getenv("SMTP_SERVER")
+SMTP_PORT = os.getenv("SMTP_PORT")
+SMTP_USERNAME = os.getenv("SMTP_USERNAME")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+
+# 메일 발송
+# return 은 수정 필요
+def mailer(email: str, subject: str, content: str):
+    to_emails = email.split(',') if ',' in email else [email]
+    for to_email in to_emails:
+        try:
+            msg = MIMEMultipart()
+            msg['From'] = SMTP_USERNAME
+            msg['To'] = to_email
+            msg['Subject'] = subject
+            
+            # Assuming body is HTML, if not change 'html' to 'plain'
+            msg.attach(MIMEText(content, 'html'))  
+
+            with smtplib.SMTP(SMTP_SERVER, int(SMTP_PORT)) as server:
+                if SMTP_USERNAME and SMTP_PASSWORD:
+                    server.starttls()
+                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                text = msg.as_string()
+                server.sendmail(SMTP_USERNAME, to_email, text)
+
+        except Exception as e:
+            print(f"Error sending email to {to_email}: {e}")
+
+    return {"message": f"Emails sent successfully to {', '.join(to_emails)}"}                                
+               
+                
+
+
 
 
 def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):

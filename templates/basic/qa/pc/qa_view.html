@@ -42,7 +42,7 @@
                         </a>
                     </li>
                     <li>
-                        <a href="{{ url_for('qa_write') }}" class="btn_b01 btn" title="글쓰기">
+                        <a href="{{ url_for('qa_form_write') }}" class="btn_b01 btn" title="글쓰기">
                             <i class="fa fa-pencil" aria-hidden="true"></i>
                             <span class="sound_only">글쓰기</span>
                         </a>
@@ -54,7 +54,7 @@
                         </button>
                         <ul class="more_opt" style="display: none;">
                             <li>
-                                <a href="{{ url_for('qa_edit', qa_id=qa.qa_id) }}" class="btn_b01 btn" title="수정">
+                                <a href="{{ url_for('qa_form_edit', qa_id=qa.qa_id) }}" class="btn_b01 btn" title="수정">
                                     수정
                                     <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
                                 </a>
@@ -136,7 +136,7 @@
                     <div id="ans_add">
                         <button type="button" class="btn_more_add btn_more_opt btn_b01 btn" title="답변 옵션"><i class="fa fa-ellipsis-v" aria-hidden="true"></i><span class="sound_only">답변 옵션</span></button>
                         <ul class="more_add">
-                            <li><a href="{{ url_for('qa_edit', qa_id=answer.qa_id) }}" class="btn_b01 btn" title="답변수정">답변수정</a></li>
+                            <li><a href="{{ url_for('qa_form_edit', qa_id=answer.qa_id) }}" class="btn_b01 btn" title="답변수정">답변수정</a></li>
                             <li><a href="{{ url_for('qa_delete', qa_id=answer.qa_id) }}?token={{ generate_token(request, 'delete') }}" class="btn_b01 btn" onclick="del(this.href); return false;" title="답변삭제">답변삭제</a></li>
                         </ul>
                     </div>
@@ -174,13 +174,13 @@
 
             </section>
             <div class="bo_v_btn">
-                <a href="{{ url_for('qa_write') }}?qa_related={{ qa.qa_id }}" class="add_qa" title="추가질문">추가질문</a>  
+                <a href="{{ url_for('qa_form_write') }}?qa_related={{ qa.qa_id }}" class="add_qa" title="추가질문">추가질문</a>  
             </div>
         {% else %}
             <section id="bo_v_ans_form">
                 <h2>답변등록</h2>
         
-                <form name="fanswer" method="post" action="{{ url_for('qa_update') }}" onsubmit="return fwrite_submit(this);" enctype="multipart/form-data" autocomplete="off">
+                <form name="fanswer" method="post" action="{{ url_for('qa_write_update') }}" onsubmit="return fwrite_submit(this);" enctype="multipart/form-data" autocomplete="off">
                     <input type="hidden" name="qa_parent" value="{{ qa.qa_id }}">
                     <input type="hidden" name="sca" value="">
                     <input type="hidden" name="stx" value="">

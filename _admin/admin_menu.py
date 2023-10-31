@@ -45,8 +45,8 @@ def menu_list(request: Request, db: Session = Depends(get_db)):
     )
 
 
-@router.get("/menu/add")
-def menu_add(request: Request, code: str = None, new: str = None, db: Session = Depends(get_db)):
+@router.get("/menu_form")
+def menu_form(request: Request, code: str = None, new: str = None, db: Session = Depends(get_db)):
     """
     메뉴 추가 팝업 페이지
     """
@@ -60,8 +60,8 @@ def menu_add(request: Request, code: str = None, new: str = None, db: Session = 
     )
 
 
-@router.post("/menu/search", response_class=HTMLResponse)
-def menu_search(request: Request, type: str = Form(None), db: Session = Depends(get_db)):
+@router.post("/menu_form_search", response_class=HTMLResponse)
+def menu_form_search(request: Request, type: str = Form(None), db: Session = Depends(get_db)):
     """
     메뉴 추가 팝업 레이아웃
     """
@@ -84,8 +84,8 @@ def menu_search(request: Request, type: str = Form(None), db: Session = Depends(
     )
 
 
-@router.post("/menu/update")
-def menu_update(
+@router.post("/menu_list_update")
+def menu_list_update(
     request: Request,
     db: Session = Depends(get_db),
     token: str = Form(...),

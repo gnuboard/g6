@@ -3,7 +3,7 @@ from datetime import timedelta
 import re
 from fastapi import FastAPI, Depends, Request, Form
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, RedirectResponse, Response, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from database import get_db
 
@@ -18,6 +18,8 @@ from settings import APP_IS_DEBUG
 from user_agents import parse
 import os
 import models
+import secrets
+
 # models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(debug=APP_IS_DEBUG)
@@ -48,11 +50,11 @@ app.include_router(board_router, prefix="/board", tags=["board"])
 app.include_router(login_router, prefix="/bbs", tags=["login"])
 app.include_router(register_router, prefix="/bbs", tags=["register"])
 app.include_router(user_profile_router, prefix="/bbs", tags=["profile"])
-app.include_router(content_router, prefix="/content", tags=["content"])
-app.include_router(faq_router, prefix="/faq", tags=["faq"])
-app.include_router(qa_router, prefix="/qa", tags=["qa"])
-app.include_router(memo_router, prefix="/memo", tags=["memo"])
-app.include_router(poll_router, prefix="/poll", tags=["poll"])
+app.include_router(content_router, prefix="/bbs", tags=["content"])
+app.include_router(faq_router, prefix="/bbs", tags=["faq"])
+app.include_router(qa_router, prefix="/bbs", tags=["qa"])
+app.include_router(memo_router, prefix="/bbs", tags=["memo"])
+app.include_router(poll_router, prefix="/bbs", tags=["poll"])
 app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
 
 # is_mobile = False
@@ -182,8 +184,8 @@ app.add_middleware(SessionMiddleware, secret_key="secret", session_cookie="sessi
 
 
 @app.exception_handler(AlertException)
-async def http_exception_handler(request: Request, exc: AlertException):
-    """예외 처리기를 등록하고 AlertException 동작 처리
+async def alert_exception_handler(request: Request, exc: AlertException):
+    """AlertException 예외처리 등록
 
     Args:
         request (Request): request 객체
@@ -194,6 +196,21 @@ async def http_exception_handler(request: Request, exc: AlertException):
     """
     return templates.TemplateResponse(
         "alert.html", {"request": request, "errors": exc.detail, "url": exc.url}, status_code=exc.status_code
+    )
+
+@app.exception_handler(AlertCloseException)
+async def alert_close_exception_handler(request: Request, exc: AlertCloseException):
+    """AlertCloseException 예외처리 등록
+
+    Args:
+        request (Request): request 객체
+        exc (AlertCloseException): 예외 객체
+
+    Returns:
+        _TemplateResponse: 경고창 & 윈도우창 닫기 템플릿
+    """
+    return templates.TemplateResponse(
+        "alert_close.html", {"request": request, "errors": exc.detail}, status_code=exc.status_code
     )
 
 
@@ -223,3 +240,12 @@ def index(request: Request, db: Session = Depends(get_db)):
         "boards": boards,
     }
     return templates.TemplateResponse(f"index.{request.state.device}.html", context)
+
+
+@app.post("/generate_token")
+async def generate_token(request: Request):
+    token = secrets.token_hex(16)  # 16바이트 토큰 생성
+    request.session["ss_token"] = token  # 세션에 토큰 저장
+    
+    return JSONResponse(content={"success": True, "token": token})
+

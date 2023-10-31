@@ -88,7 +88,7 @@
                     <!-- } 게시판 검색 끝 -->
                 </li>
                 <li>
-                    <a href="{{ url_for('qa_write') }}" class="btn_b01 btn" title="문의등록">
+                    <a href="{{ url_for('qa_form_write') }}" class="btn_b01 btn" title="문의등록">
                         <i class="fa fa-pencil" aria-hidden="true"></i>
                         <span class="sound_only">문의등록</span>
                     </a>
@@ -96,7 +96,7 @@
             </ul>
         </div>
         <!-- } 게시판 페이지 정보 및 버튼 끝 -->
-        <form name="fqalist" id="fqalist" action="{{ url_for('qa_list_delete') }}" onsubmit="return fqalist_submit(this);" method="post">
+        <form name="fqalist" id="fqalist" action="{{ url_for('qa_delete_list') }}" onsubmit="return fqalist_submit(this);" method="post">
             <input type="hidden" name="stx" value="{{ request.state.stx }}">
             <input type="hidden" name="sca" value="{{ request.state.sca }}">
             <input type="hidden" name="page" value="{{ current_page }}">
@@ -170,7 +170,7 @@
                         </a>
                     </li>
                     <li>
-                        <a href="{{ url_for('qa_write') }}" class="btn_b01 btn" title="문의등록">
+                        <a href="{{ url_for('qa_form_write') }}" class="btn_b01 btn" title="문의등록">
                             <i class="fa fa-pencil" aria-hidden="true"></i>
                             <span class="sound_only">문의등록</span>
                         </a>

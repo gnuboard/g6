@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block head %}
+    {% include editor_path(request) + '/head.html' %}
+{% endblock %}
+
+{% block title %}회원메일발송내용 작성{% endblock %}
+
+{% block subtitle %}회원메일발송내용 작성{% endblock %}
+
+{% block content %}
+
+<div class="local_desc">
+    <p>메일 내용에 {이름} , {닉네임} , {회원아이디} , {이메일} 처럼 내용에 삽입하면 해당 내용에 맞게 변환하여 메일을 발송합니다.</p>
+</div>
+
+<form name="fmailform" id="fmailform" action="/admin/mail_update" onsubmit="return fmailform_submit(this);" method="post">
+    <input type="hidden" name="w" value="" id="w">
+    <input type="hidden" name="ma_id" id="ma_id" value="{{ mail.ma_id }}">
+    <input type="hidden" name="token" id="token" value="">
+
+    <div class="tbl_frm01 tbl_wrap">
+        <table>
+            <colgroup>
+                <col class="grid_4">
+                <col>
+            </colgroup>
+            <tbody>
+                <tr>
+                    <th scope="row"><label for="ma_subject">메일 제목<strong class="sound_only">필수</strong></label></th>
+                    <td><input type="text" name="ma_subject" value="{{ mail.ma_subject }}" id="ma_subject" required class="required frm_input" size="100"></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="ma_content">메일 내용<strong class="sound_only">필수</strong></label></th>
+                    <td>
+                        {% with tag_name='ma_content', content=mail.ma_content %}
+                            {% include editor_path(request) + '/body.html' %}
+                        {% endwith %}
+                        </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="btn_fixed_top ">
+        <a href="/admin/mail_list" class="btn btn_02">목록</a>
+        <input type="submit" class="btn_submit btn" accesskey="s" value="확인">
+    </div>
+</form>
+
+<script>
+    function fmailform_submit(f) {
+        errmsg = "";
+        errfld = "";
+
+        check_field(f.ma_subject, "제목을 입력하세요.");
+        //check_field(f.ma_content, "내용을 입력하세요.");
+
+        if (errmsg != "") {
+            alert(errmsg);
+            errfld.focus();
+            return false;
+        }
+
+        f.token.value = generate_token();
+        if (!f.token.value) {
+            alert('토큰 생성에 실패하였습니다.');
+            return false;
+        }
+
+        return true;
+    }
+
+    document.fmailform.ma_subject.focus();
+</script>
+
+{% endblock %}

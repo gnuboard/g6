@@ -16,7 +16,7 @@
     <section id="bo_w">
         <h2>{{ qa_config.qa_title }} 작성</h2>
         <!-- 게시물 작성/수정 시작 { -->
-        <form name="fwrite" id="fwrite" action="{{ url_for('qa_update') }}" onsubmit="return fwrite_submit(this);" method="post" enctype="multipart/form-data" autocomplete="off">
+        <form name="fwrite" id="fwrite" action="{{ url_for('qa_write_update') }}" onsubmit="return fwrite_submit(this);" method="post" enctype="multipart/form-data" autocomplete="off">
             <input type="hidden" name="token" value="{{ generate_token(request, 'update' if qa else 'insert') }}">
             <input type="hidden" name="sca" value="">
             <input type="hidden" name="stx" value="">

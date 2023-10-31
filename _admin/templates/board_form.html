@@ -1271,11 +1271,6 @@ function fboardform_submit(f)
         return false;
     }
 
-    <?php echo get_editor_js("bo_content_head"); ?>
-    <?php echo get_editor_js("bo_content_tail"); ?>
-    <?php echo get_editor_js("bo_mobile_content_head"); ?>
-    <?php echo get_editor_js("bo_mobile_content_tail"); ?>
-
     if (parseInt(f.bo_count_modify.value) < 0) {
         alert("원글 수정 불가 댓글수는 0 이상 입력하셔야 합니다.");
         f.bo_count_modify.focus();

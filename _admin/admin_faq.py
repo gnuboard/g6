@@ -44,7 +44,7 @@ def faq_master_add_form(request: Request):
     )
 
 
-@router.post("/faq_master_form/add")
+@router.post("/faq_master_form_update")
 def faq_master_add(
         request: Request,
         db: Session = Depends(get_db),
@@ -103,7 +103,7 @@ def faq_master_update_form(fm_id: int, request: Request, db: Session = Depends(g
     )
 
 
-@router.post("/faq_master_form/{fm_id}")
+@router.post("/faq_master_form_update/{fm_id}")
 def faq_master_update(
         fm_id: int,
         request: Request,
@@ -159,7 +159,7 @@ def faq_master_update(
     return RedirectResponse(f"/admin/faq_master_form/{faq_master.fm_id}", status_code=303)
 
 
-@router.delete("/faq_master_form/{fm_id}/delete")
+@router.delete("/faq_master_form_delete/{fm_id}")
 def faq_master_delete(
         fm_id: int,
         request: Request,
@@ -179,7 +179,7 @@ def faq_master_delete(
     return JSONResponse(status_code=200, content={"message": "FAQ가 성공적으로 삭제되었습니다."})
 
 
-@router.get("/faq_master_form/{fm_id}/list")
+@router.get("/faq_list/{fm_id}")
 def faq_list(fm_id: int, request: Request, db: Session = Depends(get_db)):
     """
     FAQ목록
@@ -194,9 +194,9 @@ def faq_list(fm_id: int, request: Request, db: Session = Depends(get_db)):
     )
 
 
-@router.get("/faq_master_form/{fm_id}/add")
+@router.get("/faq_form/{fm_id}")
 def faq_add_form(fm_id: int, request: Request, db: Session = Depends(get_db)):
-    """FAQ관리 등록 폼"""
+    """FAQ항목 등록 폼"""
     request.session["menu_key"] = FAQ_MENU_KEY
 
     faq_master = db.query(FaqMaster).filter(FaqMaster.fm_id == fm_id).first()
@@ -206,7 +206,7 @@ def faq_add_form(fm_id: int, request: Request, db: Session = Depends(get_db)):
     )
 
 
-@router.post("/faq_master_form/{fm_id}/add")
+@router.post("/faq_form_update/{fm_id}")
 def faq_add(
         fm_id: int,
         request: Request,
@@ -230,12 +230,12 @@ def faq_add(
     db.add(faq)
     db.commit()
 
-    return RedirectResponse(f"/admin/faq_master_form/{fm_id}/faq/{faq.fa_id}", status_code=303)
+    return RedirectResponse(f"/admin/faq_form/{fm_id}/{faq.fa_id}", status_code=303)
 
 
-@router.get("/faq_master_form/{fm_id}/faq/{fa_id}")
+@router.get("/faq_form/{fm_id}/{fa_id}")
 def faq_update_form(fa_id: int, request: Request, db: Session = Depends(get_db)):
-    """FAQ관리 등록 폼"""
+    """FAQ항목 수정 폼"""
     request.session["menu_key"] = FAQ_MENU_KEY
 
     faq = db.query(Faq).filter(Faq.fa_id == fa_id).first()
@@ -246,7 +246,7 @@ def faq_update_form(fa_id: int, request: Request, db: Session = Depends(get_db))
     )
 
 
-@router.post("/faq_master_form/{fm_id}/faq/{fa_id}")
+@router.post("/faq_form_update/{fm_id}/{fa_id}")
 def faq_update(
         fm_id: int,
         fa_id: int,
@@ -257,7 +257,7 @@ def faq_update(
         fa_subject: str = Form(...),
         fa_content: str = Form(...),
     ):
-    """FAQ관리 등록 처리"""
+    """FAQ항목 수정 처리"""
     # 토큰 검사
     if not compare_token(request, token, 'update'):
         raise AlertException(status_code=403, detail="토큰이 유효하지 않습니다.")
@@ -269,10 +269,10 @@ def faq_update(
     faq.fa_order = fa_order
     db.commit()
 
-    return RedirectResponse(f"/admin/faq_master_form/{fm_id}/faq/{faq.fa_id}", status_code=303)
+    return RedirectResponse(f"/admin/faq_form/{fm_id}/{faq.fa_id}", status_code=303)
 
 
-@router.delete("/faq_master_form/{fm_id}/faq/{fa_id}")
+@router.delete("/faq_form_delete/{fa_id}")
 async def faq_delete(
         fa_id: int,
         request: Request,
