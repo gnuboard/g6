@@ -247,7 +247,7 @@
     function all_checked(sw) {
         var f = document.fboardlist;
     
-        for (var i=0; i<f.length; i++) {
+        for (var i = 0; i < f.length; i++) {
             if (f.elements[i].name == "chk_wr_id[]")
                 f.elements[i].checked = sw;
         }
@@ -256,7 +256,7 @@
     function fboardlist_submit(f) {
         var chk_count = 0;
     
-        for (var i=0; i<f.length; i++) {
+        for (var i = 0; i < f.length; i++) {
             if (f.elements[i].name == "chk_wr_id[]" && f.elements[i].checked)
                 chk_count++;
         }

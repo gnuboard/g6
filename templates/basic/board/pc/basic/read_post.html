@@ -69,6 +69,7 @@
                             <i class="fa fa-pencil" aria-hidden="true"></i><span class="sound_only">글쓰기</span>
                         </a>
                     </li>
+                    {% if request.state.is_super_admin or write.mb_id == login_member.mb_id %}
                     <li>
                         <button type="button" class="btn_more_opt is_view_btn btn_b01 btn">
                             <i class="fa fa-ellipsis-v" aria-hidden="true"></i><span class="sound_only">게시판 리스트 옵션</span>
@@ -80,10 +81,12 @@
                                 </a>
                             </li>
                             <li>
-                                <a href="#" onclick="del(this.href); return false;">
+                                <a href="{{ url_for('delete_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?token={{ generate_token(request, 'delete') }}" onclick="del(this.href); return false;">
                                     삭제<i class="fa fa-trash-o" aria-hidden="true"></i>
                                 </a>
                             </li>
+                            {# TODO: 게시판관리자, 그룹관리자 추가 #}
+                            {% if request.state.is_super_admin %}
                             <li>
                                 <a href="#" onclick="board_move(this.href, 'copy'); return false;">
                                     복사<i class="fa fa-files-o" aria-hidden="true"></i>
@@ -94,8 +97,10 @@
                                     이동<i class="fa fa-arrows" aria-hidden="true"></i>
                                 </a>
                             </li>
+                            {% endif %}
                         </ul> 
                     </li>
+                    {% endif %}
                 </ul>
                 <script>
                     jQuery(function($){

@@ -538,6 +538,43 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
     )
 
 
+# 게시글 삭제
+@router.get("/delete/{bo_table}/{wr_id}")
+def delete_post(
+    request: Request,
+    bo_table: str,
+    wr_id: int,
+    token: str,
+    db: Session = Depends(get_db),
+):
+    """
+    게시글을 삭제한다.
+    """
+    # 토큰 검증
+    if not compare_token(request, token, 'delete'):
+        raise AlertException(status_code=403, detail="잘못된 접근입니다.")
+    # 게시판 정보 조회
+    board = db.query(models.Board).get(bo_table)
+    if not board:
+        raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
+    # 게시글 조회
+    models.Write = dynamic_create_write_table(bo_table)
+    write = db.query(models.Write).get(wr_id)
+    if not write:
+        raise AlertException(status_code=404, detail="{wr_id} in {bo_table} is not found.")
+    
+    # 게시글 삭제
+    db.delete(write)
+    db.commit()
+
+    # TODO: 게시글 삭제에 따른 추가정보 삭제
+
+    # 최신글 캐시 삭제
+    G6FileCache().delete_prefix(f'latest-{bo_table}')
+
+    return RedirectResponse(f"/board/{bo_table}", status_code=303)
+
+
 @router.post("/write_comment_update/")
 def write_comment_update(
     request: Request,
