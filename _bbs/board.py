@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Request, Form, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import aliased, Session
+from sqlalchemy.orm.session import make_transient
 
 from common import *
 from database import get_db
@@ -193,6 +194,7 @@ def move_post(
     return templates.TemplateResponse(
         f"board/pc/move.html", {
             "request": request,
+            "sw": sw,
             "act": act,
             "results": results,
             "current_board": board,
@@ -201,26 +203,78 @@ def move_post(
     )
 
 
-# 작업 진행중....
 @router.post("/move_update/")
 def move_update(
         request: Request,
+        db: Session = Depends(get_db),
         token: str = Form(...),
         sw: str = Form(...),
-        target_bo_table: str = Form(...),
-        wr_ids: list = Form(..., alias="chk_wr_id[]"),
-        db: Session = Depends(get_db),
+        bo_table: str = Form(...),
+        wr_ids: str = Form(..., alias="wr_id_list"),
+        target_bo_tables: list = Form(..., alias="chk_bo_table[]"),
     ):
     """
     게시글 복사/이동
     """
+    config = request.state.config
     member = request.state.login_member
     act = "이동" if sw == "move" else "복사"
 
-    # 토큰 검증    
-    if not compare_token(request, token, 'board_list'):
+    # 토큰 검증
+    if not compare_token(request, token, 'board_move'):
         raise AlertException(status_code=403, detail="잘못된 접근입니다.")
-    
+    # 게시판관리자 검증
+
+    # 입력받은 정보를 토대로 게시글을 복사한다.
+    models.Write = dynamic_create_write_table(bo_table)
+    origin_board = db.query(models.Board).get(bo_table)
+    target_writes = db.query(models.Write).filter(models.Write.wr_id.in_(wr_ids.split(','))).all()
+    for write in target_writes:
+        for target_bo_table in target_bo_tables:
+            models.TargetWrite = dynamic_create_write_table(target_bo_table)
+
+            # 복사/이동 로그 기록
+            if not write.wr_is_comment and config.cf_use_copy_log:
+                start_tag = f'<div class="content_{sw}>' if "html" in write.wr_option else '\n'
+                end_tag = '</div>' if "html" in write.wr_option else ''
+                write.wr_content += f"\n{start_tag}[이 게시물은 {member.mb_nick}님에 의해 {datetime.now()} {origin_board.bo_subject}에서 {act} 됨]{end_tag}"
+
+            # 게시글 복사
+            initial_field = ["wr_id", "wr_parent"]
+            target_write = models.TargetWrite()
+            for field in write.__table__.columns.keys():
+                if field in initial_field:
+                    continue
+                elif sw == "copy":
+                    target_write.wr_good = 0
+                    target_write.wr_nogood = 0
+                elif field == 'wr_num':
+                    target_write.wr_num = get_next_num(target_bo_table)
+                else:
+                    setattr(target_write, field, getattr(write, field))
+            db.add(target_write)
+            db.commit()
+
+            if write.wr_is_comment:
+                if sw == "move":
+                    pass
+                    # 최신글 이동
+            else:
+                pass
+                # 파일 복사
+
+                # 이동일 경우
+                if sw == "move":
+                    pass
+                    # 스크랩 이동
+                    # 최신글 이동
+                    # 추천데이터 이동
+
+            # 이동일 경우 복사데이터(게시글, 파일,새글) 삭제
+
+    return templates.TemplateResponse(
+        "alert_close.html", {"request": request, "errors": f"해당 게시물을 선택한 게시판으로 {act} 하였습니다."}, status_code=200
+    )
 
 
 @router.get("/write/{bo_table}")

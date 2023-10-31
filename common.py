@@ -1524,3 +1524,14 @@ def datetime_format(date: datetime, format="%Y-%m-%d %H:%M:%S"):
         return ""
 
     return date.strftime(format)
+
+
+def get_next_num(bo_table: str):
+    """
+    게시판의 다음글 번호를 얻는다.
+    """
+    db = SessionLocal()
+    Write = dynamic_create_write_table(bo_table)
+    row = db.query(func.min(Write.wr_num).label("min_wr_num")).first()
+
+    return (int(row.min_wr_num) if row.min_wr_num else 0) - 1

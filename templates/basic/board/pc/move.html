@@ -7,18 +7,13 @@
 {% block content %}
 <div id="copymove" class="new_win">
     <h1 id="win_title">게시물 {{ act }}</h1>
-    <form name="fboardmoveall" method="post" action="./move_update.php" onsubmit="return fboardmoveall_submit(this);">
-        <input type="hidden" name="sw" value="copy">
+    <form name="fboardmoveall" method="post" action="{{ url_for('move_update') }}" onsubmit="return fboardmoveall_submit(this);">
+        <input type="hidden" name="sw" value="{{ sw }}">
+        <input type="hidden" name="act" value="{{ act }}">
         <input type="hidden" name="bo_table" value="{{ current_board.bo_table }}">
         <input type="hidden" name="wr_id_list" value="{{ wr_ids }}">
-        <input type="hidden" name="sfl" value="">
-        <input type="hidden" name="stx" value="">
-        <input type="hidden" name="spt" value="0">
-        <input type="hidden" name="sst" value="wr_num,wr_reply">
-        <input type="hidden" name="sod" value="">
-        <input type="hidden" name="page" value="1">
-        <input type="hidden" name="act" value="{{ act }}">
         <input type="hidden" name="url" value="{{ request.headers.get("referer", "") }}">
+        <input type="hidden" name="token" value="{{ generate_token(request, 'board_move') }}">
 
         <div class="tbl_head01 tbl_wrap">
             <table>
@@ -39,7 +34,7 @@
                     <tr class="{% if board.bo_table == current_board.bo_table %}copymove_currentbg{% endif %}">
                         <td class="td_chk">
                             <label for="chk{{ loop.index }}" class="sound_only">free</label>
-                            <input type="checkbox" value="free" id="chk{{ loop.index }}" name="chk_bo_table[]">
+                            <input type="checkbox" value="{{ board.bo_table }}" id="chk{{ loop.index }}" name="chk_bo_table[]">
                         </td>
                         <td>
                             <label for="chk{{ loop.index }}">
@@ -80,7 +75,7 @@
     function fboardmoveall_submit(f)
     {
         var check = false;
-        if (typeof(f.elements['chk_bo_table[]']) == 'undefined') {
+        if (typeof(f.elements['chk_bo_table[]']) != 'undefined') {
             if (typeof(f.elements['chk_bo_table[]'].length) == 'undefined') {
                 if (f.elements['chk_bo_table[]'].checked)
                     check = true;
