@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}글, 댓글 현황{% endblock %}
+{% block subtitle %}글, 댓글 현황{% endblock %}
+
+
+{% block content %}
+
+<div id="wr_cont">
+    <form>
+    <select name="bo_table">
+    <option value="">전체게시판</option>
+    {% for key, value in bo_table_array %}
+    <option value="{{ key }}" {% if key == bo_table %}selected="selected"{% endif %}>{{ value }}</option>
+    {% endfor %}
+    </select>
+
+    <select name="period">
+    {% for key, value in period_array.items() %}
+    <option value="{{ key }}" {% if key == period %}selected="selected"{% endif %}>{{ key }}</option>
+    {% endfor %}
+    </select>
+
+    <select name="graph">
+    <option value="line" {{ 'selected' if graph != 'bar' else ''}}>선그래프</option>
+    <option value="bar" {{ 'selected' if graph == 'bar' else '' }}>막대그래프</option>
+    </select>
+
+    <input type="submit" class="btn_submit" value="확인">
+    </form>
+    <ul id="grp_color">
+        <li><span></span>글 수</li>
+        <li class="color2"><span></span>댓글 수</li>
+    </ul>
+</div>
+<br>
+<div id="chart_wr">
+{% if graph_html %}
+    <div id="chart1" style="width:100%;">
+        {{ graph_html|safe }}
+    </div>
+{% else %}
+    <h5>그래프를 만들 데이터가 없습니다.</h5>
+{% endif %}
+</div>
+{% endblock %}
