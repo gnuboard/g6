@@ -1,8 +1,11 @@
-<div class="lat">
+<div class="pic_li_lt">
     <h2 class="lat_title"><a href="{{ url_for('list_post', bo_table=bo_table) }}">{{ bo_subject }}</a></h2>
     <ul>
         {% for write in writes -%}
         <li class="basic_li">
+            <a href="{{ url_for('list_post', bo_table=bo_table) }}" class="lt_img" >
+                <img src="{{ url_for('static', path='/img/no_img.png') }}" alt="이미지가 없습니다." width="210" height="150">
+            </a>
             {% if write.icon_secret -%}
                 <i class="fa fa-lock" aria-hidden="true"></i>
                 <span class="sound_only">비밀글</span>
