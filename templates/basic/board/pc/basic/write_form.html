@@ -1,7 +1,8 @@
 {% extends "base.html" %}
+{% import editor_macro(request) as editor %}
 
 {% block head %}
-    {% include editor_path(request) + '/head.html' %}
+    {{ editor.head() }}
 {% endblock head %}
 
 {% block title %}
@@ -111,9 +112,7 @@
             </div>
         </div>
 
-        {% with tag_name="wr_content", content=write.wr_content %}
-            {% include editor_path(request) + '/body.html' %}
-        {% endwith %}
+        {{ editor.body("wr_content", write.wr_content) }}
 
         {% for i in range(1, 3) %}
             <div class="bo_w_link write_div">

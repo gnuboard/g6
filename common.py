@@ -1049,6 +1049,19 @@ def editor_path(request:Request) -> str:
     return editor_name
 
 
+def editor_macro(request: Request) -> str:
+    """지정한 에디터 경로의 macros.html 파일을 반환하는 함수
+    - 미지정시 그누보드 환경설정값 사용
+    - request.state.editor: 에디터이름
+    - request.state.use_editor: 에디터 사용여부 False 이면 'textarea'로 설정
+    """
+    editor_name = request.state.editor
+    if not request.state.use_editor or not editor_name:
+        editor_name = "textarea"
+
+    return editor_name + "/macros.html"
+
+
 def nl2br(value) -> str:
     """ \n 을 <br> 태그로 변환
     """

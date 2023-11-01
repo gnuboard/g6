@@ -18,7 +18,7 @@ templates = Jinja2Templates(directory=[EDITOR_PATH, TEMPLATES_DIR])
 templates.env.filters["datetime_format"] = datetime_format
 templates.env.globals["bleach"] = bleach
 templates.env.globals["nl2br"] = nl2br
-templates.env.globals["editor_path"] = editor_path
+templates.env.globals["editor_macro"] = editor_macro
 templates.env.globals["generate_token"] = generate_token
 templates.env.globals["getattr"] = getattr
 templates.env.globals["get_selected"] = get_selected
