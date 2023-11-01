@@ -102,7 +102,7 @@ async def main_middleware(request: Request, call_next):
                 insert_point(request, member.mb_id, config.cf_login_point, TIME_YMD + " 첫로그인", "@login", member.mb_id, TIME_YMD)
                 # 오늘의 로그인이 될 수도 있으며 마지막 로그인일 수도 있음
                 # 해당 회원의 접근일시와 IP 를 저장
-                member.mb_today_login = TIME_YMDHIS
+                member.mb_today_login = datetime.now()
                 member.mb_login_ip = request.client.host
                 db.commit()
             # 최고관리자인지 확인

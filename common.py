@@ -802,8 +802,8 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
             return -1
         
     # 포인트 건별 생성
-    po_expire_date = '9999-12-31'
-    # po_expire_date = datetime.strptime('9999-12-31', '%Y-%m-%d')
+    # po_expire_date = '9999-12-31'
+    po_expire_date = datetime.strptime('9999-12-31', '%Y-%m-%d')
     if config.cf_point_term > 0:
         if expire > 0:
             po_expire_date = (SERVER_TIME + timedelta(days=expire-1)).strftime('%Y-%m-%d')
@@ -818,7 +818,7 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
     
     new_point = Point(
         mb_id=mb_id,
-        po_datetime=TIME_YMDHIS,
+        po_datetime=datetime.now(),
         po_content=content,
         po_point=point,
         po_use_point=0,
