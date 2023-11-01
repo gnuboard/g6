@@ -11,6 +11,11 @@ DB_USER = ""
 DB_PASSWORD = ""
 DB_NAME = ""
 
+# 테이블명 앞에 붙는 이름
+# g6_ 로 설정시
+# 예) g6_config, g6_member, g6_board
+DB_TABLE_PREFIX = "g6_"
+
 SMTP_SERVER="localhost"
 SMTP_PORT=25
 SMTP_USERNAME="username" # 메일 테스트시 보내는 사용자 이름 및 이메일 주소 반드시 넣어야 함 SMTP_USERNAME="username@domain.com"

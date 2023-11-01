@@ -73,6 +73,15 @@ async def main_middleware(request: Request, call_next):
         return response
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
     
+    try:
+        if path.startswith("/admin"):
+            # 관리자 페이지는 로그인이 필요합니다.
+            if not request.session.get("ss_mb_id"):
+                raise AlertException(status_code=302, detail="로그인이 필요합니다.", url="/bbs/login?url="+path)
+    except AlertException as e:
+        # 예외처리 실행
+        return await alert_exception_handler(request, e)
+
     member = None
 
     db: Session = SessionLocal()
@@ -93,7 +102,7 @@ async def main_middleware(request: Request, call_next):
                 insert_point(request, member.mb_id, config.cf_login_point, TIME_YMD + " 첫로그인", "@login", member.mb_id, TIME_YMD)
                 # 오늘의 로그인이 될 수도 있으며 마지막 로그인일 수도 있음
                 # 해당 회원의 접근일시와 IP 를 저장
-                member.mb_today_login = TIME_YMDHIS
+                member.mb_today_login = datetime.now()
                 member.mb_login_ip = request.client.host
                 db.commit()
             # 최고관리자인지 확인

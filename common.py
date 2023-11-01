@@ -402,6 +402,10 @@ def check_token(request: Request, token: str):
     '''
     세션과 인수로 넘어온 토큰확인 함수
     '''
+    if token is None:
+        return False
+    
+    token = token.strip()
     if token and token == request.session.get("ss_token"):
         # 세션 삭제
         request.session["ss_token"] = ""
@@ -798,8 +802,8 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
             return -1
         
     # 포인트 건별 생성
-    po_expire_date = '9999-12-31'
-    # po_expire_date = datetime.strptime('9999-12-31', '%Y-%m-%d')
+    # po_expire_date = '9999-12-31'
+    po_expire_date = datetime.strptime('9999-12-31', '%Y-%m-%d')
     if config.cf_point_term > 0:
         if expire > 0:
             po_expire_date = (SERVER_TIME + timedelta(days=expire-1)).strftime('%Y-%m-%d')
@@ -814,7 +818,7 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
     
     new_point = Point(
         mb_id=mb_id,
-        po_datetime=TIME_YMDHIS,
+        po_datetime=datetime.now(),
         po_content=content,
         po_point=point,
         po_use_point=0,
@@ -1189,14 +1193,14 @@ def auth_check_menu(request: Request, menu_key: str, attribute: str):
 
     exists_auth = db.query(Auth).filter_by(mb_id=exists_member.mb_id, au_menu=menu_key).first()
     if not exists_auth:
-        return "이 메뉴에는 접근 권한이 없습니다.\\n\\n접근 권한은 최고관리자만 부여할 수 있습니다."
+        return "이 메뉴에는 접근 권한이 없습니다.\n\n접근 권한은 최고관리자만 부여할 수 있습니다."
 
     auth_set = set(exists_auth.au_auth.split(","))
     if not attribute in auth_set:
         if attribute == "r":
             error = "읽을 권한이 없습니다."
         elif attribute == "w":
-            error = "입력, 추가, 생성, 수정 권한이 없습니다."
+            error = "입력, 추가, 생성, 등록, 수정 권한이 없습니다."
         elif attribute == "d":
             error = "삭제 권한이 없습니다."
         else:
