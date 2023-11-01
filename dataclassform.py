@@ -267,7 +267,7 @@ class BoardForm:
     bo_comment_min: Optional[int] = Form(default=0)
     bo_write_max: Optional[int] = Form(default=0)
     bo_comment_max: Optional[int] = Form(default=0)
-    bo_notice: Optional[int] = Form(default=0)
+    # bo_notice: Optional[int] = Form(default=0)
     bo_upload_count: Optional[int] = Form(default=0)
     bo_use_email: Optional[int] = Form(default=0)
     bo_use_cert: Optional[str] = Form(default="")
