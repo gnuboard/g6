@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', path="/css/basic/qa.css") }}">
+{% endblock head %}
+
 {% block subtitle %}
     {{ qa_config.qa_title }}
 {% endblock subtitle %}

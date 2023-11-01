@@ -267,7 +267,7 @@ class BoardForm:
     bo_comment_min: Optional[int] = Form(default=0)
     bo_write_max: Optional[int] = Form(default=0)
     bo_comment_max: Optional[int] = Form(default=0)
-    bo_notice: Optional[int] = Form(default=0)
+    # bo_notice: Optional[int] = Form(default=0)
     bo_upload_count: Optional[int] = Form(default=0)
     bo_use_email: Optional[int] = Form(default=0)
     bo_use_cert: Optional[str] = Form(default="")
@@ -322,6 +322,17 @@ class GroupForm:
     gr_8: Optional[str] = Form(default="")
     gr_9: Optional[str] = Form(default="")
     gr_10: Optional[str] = Form(default="")
+
+
+@dataclass
+class WriteForm:
+    ca_name: str = Form(None)
+    wr_name: str = Form(None)
+    wr_email: str = Form(None)
+    wr_homepage: str = Form(None)
+    wr_subject: str = Form(...)
+    wr_content: str = Form(...)
+    wr_is_comment: bool = False
 
 
 @dataclass
