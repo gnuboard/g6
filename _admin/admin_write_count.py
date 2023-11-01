@@ -2,7 +2,8 @@ import math
 from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException, Path
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import asc, desc, and_, or_, func, extract, text
+from sqlalchemy import asc, desc, case, func, and_, or_, extract, text
+from sqlalchemy.sql.expression import func, extract
 from sqlalchemy.orm import Session
 from database import get_db, engine
 from models import *
@@ -81,77 +82,139 @@ async def write_count(request: Request, db: Session = Depends(get_db),
     
     bo_table_array = db.query(Board.bo_table, Board.bo_subject).order_by(Board.bo_count_write.desc()).all()
 
+    # Determine the current dialect
+    dialect = db.bind.dialect.name
+
     x_data = []
     y_data = []
     x_label = ""
+    
     if day == '시간':
+        
         x_label = 'hours'
+        if dialect == 'postgresql':
+            hours_expr = func.to_char(BoardNew.bn_datetime, 'HH24')
+        else:
+            # 여기에 다른 방언에 대한 코드를 추가하세요
+            hours_expr = func.substr(BoardNew.bn_datetime, 12, 2)  # 이는 일반적인 경우에 대한 예입니다.
+        
         result = db.query(
-            func.substr(BoardNew.bn_datetime, 6, 8).label(x_label), 
-            func.sum(func.if_(BoardNew.wr_id == BoardNew.wr_parent, 1, 0)).label('write_count'),
-            func.sum(func.if_(BoardNew.wr_id == BoardNew.wr_parent, 0, 1)).label('comment_count')
+            hours_expr.label(x_label), 
+            func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
+            func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
         ).filter(
-            func.substr(BoardNew.bn_datetime, 1, 10).between(from_date, to_date),
+            BoardNew.bn_datetime.between(from_date, to_date),
             or_(BoardNew.bo_table == bo_table, bo_table == '')
-        ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime).all()
+        ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime).all()        
 
         for row in result:
             x_data.append(f"['{row.hours[:8]}',{row.write_count}]")
             y_data.append(f"['{row.hours[:8]}',{row.comment_count}]")
+            
     elif day == '일':
+        
         x_label = 'days'
+        
+        if dialect == 'mysql':
+            date_expr = func.date_format(BoardNew.bn_datetime, '%Y-%m-%d')
+        elif dialect == 'postgresql':
+            date_expr = func.to_char(BoardNew.bn_datetime, 'YYYY-MM-DD')
+        elif dialect == 'sqlite':
+            date_expr = func.strftime('%Y-%m-%d', BoardNew.bn_datetime)
+        else:
+            raise Exception(f"Unsupported dialect: {dialect}")
+                                    
         result = db.query(
-            func.substr(BoardNew.bn_datetime, 1, 10).label(x_label), 
-            func.sum(func.if_(BoardNew.wr_id == BoardNew.wr_parent, 1, 0)).label('write_count'),
-            func.sum(func.if_(BoardNew.wr_id == BoardNew.wr_parent, 0, 1)).label('comment_count')
+            date_expr.label(x_label), 
+            func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
+            func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
         ).filter(
-            func.substr(BoardNew.bn_datetime, 1, 10).between(from_date, to_date),
+            BoardNew.bn_datetime.between(from_date, to_date),
             or_(BoardNew.bo_table == bo_table, bo_table == '')
         ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime).all()
-
+        
         for row in result:
             x_data.append(f"['{row.days[5:10]}',{row.write_count}]")
             y_data.append(f"['{row.days[5:10]}',{row.comment_count}]")
+            
     elif day == '주':
+        
         x_label = 'weeks'
+        
+        if dialect == 'mysql':
+            week_expr = func.week(BoardNew.bn_datetime)
+            concat_expr = func.concat(func.substr(BoardNew.bn_datetime, 1, 4), '-', week_expr)
+        elif dialect == 'postgresql':
+            week_expr = func.extract('week', BoardNew.bn_datetime)
+            concat_expr = func.to_char(BoardNew.bn_datetime, 'IYYY-IW')  # Using ISO week numbering
+        elif dialect == 'sqlite':
+            week_expr = func.strftime('%W', BoardNew.bn_datetime)
+            concat_expr = func.substr(BoardNew.bn_datetime, 1, 4) + '-' + week_expr
+        else:
+            raise Exception(f"Unsupported dialect: {dialect}")
+
         result = db.query(
-            func.concat(func.substr(BoardNew.bn_datetime, 1, 4), '-', func.weekofyear(BoardNew.bn_datetime)).label(x_label), 
-            func.sum(func.if_(BoardNew.wr_id == BoardNew.wr_parent, 1, 0)).label('write_count'),
-            func.sum(func.if_(BoardNew.wr_id == BoardNew.wr_parent, 0, 1)).label('comment_count')
+            concat_expr.label(x_label), 
+            func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
+            func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
         ).filter(
-            func.substr(BoardNew.bn_datetime, 1, 10).between(from_date, to_date),
+            BoardNew.bn_datetime.between(from_date, to_date),
             or_(BoardNew.bo_table == bo_table, bo_table == '')
         ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime).all()
-
+        
         for row in result:
             lyear, lweek = row.weeks.split('-')
             date = (datetime.strptime(f"{lyear}W{str(lweek).zfill(2)}", "%YW%W") + timedelta(days=1)).strftime("%y-%m-%d")
             x_data.append(f"['{date}',{row.write_count}]")
             y_data.append(f"['{date}',{row.comment_count}]")
+            
     elif day == '월':
+        
         x_label = 'months'
+
+        if dialect == 'mysql':
+            month_expr = func.date_format(BoardNew.bn_datetime, '%Y-%m')
+        elif dialect == 'postgresql':
+            month_expr = func.to_char(BoardNew.bn_datetime, 'YYYY-MM')
+        elif dialect == 'sqlite':
+            month_expr = func.strftime('%Y-%m', BoardNew.bn_datetime)
+        else:
+            raise Exception(f"Unsupported dialect: {dialect}")
+
         result = db.query(
-            func.substr(BoardNew.bn_datetime, 1, 7).label(x_label), 
-            func.sum(func.if_(BoardNew.wr_id == BoardNew.wr_parent, 1, 0)).label('write_count'),
-            func.sum(func.if_(BoardNew.wr_id == BoardNew.wr_parent, 0, 1)).label('comment_count')
+            month_expr.label(x_label), 
+            func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
+            func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
         ).filter(
-            func.substr(BoardNew.bn_datetime, 1, 10).between(from_date, to_date),
+            BoardNew.bn_datetime.between(from_date, to_date),
             or_(BoardNew.bo_table == bo_table, bo_table == '')
         ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime).all()
 
         for row in result:
             x_data.append(f"['{row.months[2:7]}',{row.write_count}]")
             y_data.append(f"['{row.months[2:7]}',{row.comment_count}]")
+            
     elif day == '년':
+        
         x_label = 'years'
+        
+        if dialect == 'mysql':
+            year_expr = func.year(BoardNew.bn_datetime)
+        elif dialect == 'postgresql':
+            year_expr = func.extract('year', BoardNew.bn_datetime).cast(Integer)
+        elif dialect == 'sqlite':
+            year_expr = func.strftime('%Y', BoardNew.bn_datetime)
+        else:
+            raise Exception(f"Unsupported dialect: {dialect}")
+
         result = db.query(
-            func.substr(BoardNew.bn_datetime, 1, 4).label(x_label), 
-            func.sum(func.if_(BoardNew.wr_id == BoardNew.wr_parent, 1, 0)).label('write_count'),
-            func.sum(func.if_(BoardNew.wr_id == BoardNew.wr_parent, 0, 1)).label('comment_count')
+            year_expr.label('year'),
+            func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
+            func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
         ).filter(
-            func.substr(BoardNew.bn_datetime, 1, 10).between(from_date, to_date),
+            BoardNew.bn_datetime.between(from_date, to_date),
             or_(BoardNew.bo_table == bo_table, bo_table == '')
-        ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime).all()
+        ).group_by('year', BoardNew.bn_datetime).order_by(BoardNew.bn_datetime).all()
 
         for row in result:
             x_data.append(f"['{row.years[:4]}',{row.write_count}]")
@@ -187,6 +250,8 @@ async def write_count(request: Request, db: Session = Depends(get_db),
         # 'weeks' 열의 값을 변환
         df[x_label] = df[x_label].apply(lambda x: datetime.strptime(x + '-1', "%Y-%W-%w"))
         # 변환된 날짜를 'Week %U, %Y' 형식으로 다시 형식화
+        # df[x_label] = df[x_label].dt.strftime('Week %U, %Y')
+        df[x_label] = pd.to_datetime(df[x_label], errors='coerce')
         df[x_label] = df[x_label].dt.strftime('Week %U, %Y')
     elif x_label == "months":
         df[x_label] = pd.to_datetime(df[x_label]).dt.strftime('%b, %Y')
