@@ -18,7 +18,7 @@
 <input type="hidden" name="sst" value="{{ request.state.sst }}">
 <input type="hidden" name="sod" value="{{ request.state.sod }}">
 <input type="hidden" name="page" value="{{ request.state.page }}">
-<input type="hidden" name="token" value="{{ generate_token(request, 'update' if member.mb_id else 'insert') }}">
+<input type="hidden" name="token" value="">
 
 <div class="tbl_frm01 tbl_wrap">
     <table>
@@ -325,6 +325,8 @@
             f.mb_email.focus();
             return false; // 중복이거나 에러가 발생한 경우 폼 제출 중지
         }
+
+        f.token.value = generate_token();
 
         return true;
     }

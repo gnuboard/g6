@@ -763,8 +763,11 @@ function generate_token() {
         async: false,
         cache: false,
         success: function(response) {
-            if(response.success) {
+            if (response.success) {
                 token = response.token;
+            } else {
+                alert('토큰 생성에 실패하였습니다.');
+                token = '';
             }
         },
         error: function(xhr, status, error) {
