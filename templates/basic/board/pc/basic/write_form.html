@@ -68,6 +68,8 @@
                     {% if not board.bo_use_dhtml_editor %}
                     <input type="checkbox" id="html" name="html" onclick="html_auto_br(this);" class="selec_chk" value="{{ html_value }}" {{ html_checked }}>
                     <label for="html"><span>&nbsp;</span>html</label>
+                    {% else %}
+                    <input type="hidden" name="html" value="html1">
                     {% endif %}
                 </li>
             {% endif %}

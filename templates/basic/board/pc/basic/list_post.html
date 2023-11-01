@@ -91,7 +91,7 @@
                     <th scope="col" class="all_chk chk_box">
                         <input type="checkbox" id="chkall" onclick="if (this.checked) all_checked(true); else all_checked(false);" class="selec_chk">
                         <label for="chkall">
-                            <span></span>
+                            <span>&nbsp;</span>
                             <b class="sound_only">현재 페이지 게시물  전체선택</b>
                         </label>
                     </th>
@@ -99,26 +99,26 @@
                     <th scope="col">번호</th>
                     <th scope="col">제목</th>
                     <th scope="col">글쓴이</th>
-                    <th scope="col"><a href="{{ request.url.replace_query_params(sst="wr_hit", sod=sod_reverse, page=1) }}">조회</a></th>
+                    <th scope="col"><a href="{{ request.url.include_query_params(sst="wr_hit", sod=sod_reverse) }}">조회</a></th>
                     {% if board.bo_use_good %}
-                    <th scope="col"><a href="{{ request.url.replace_query_params(sst="wr_good", sod=sod_reverse, page=1) }}">추천</a></th>
+                    <th scope="col"><a href="{{ request.url.include_query_params(sst="wr_good", sod=sod_reverse) }}">추천</a></th>
                     {% endif %}
                     {% if board.bo_use_nogood %}
-                    <th scope="col"><a href="{{ request.url.replace_query_params(sst="wr_nogood", sod=sod_reverse, page=1) }}">비추천</a></th>
+                    <th scope="col"><a href="{{ request.url.include_query_params(sst="wr_nogood", sod=sod_reverse) }}">비추천</a></th>
                     {% endif %}
-                    <th scope="col"><a href="{{ request.url.replace_query_params(sst="wr_datetime", sod=sod_reverse, page=1) }}">날짜</a></th>
+                    <th scope="col"><a href="{{ request.url.include_query_params(sst="wr_datetime", sod=sod_reverse) }}">날짜</a></th>
             </tr>
             </thead>
                 <tbody>
                 {% for write in writes %}
-                {% set reply_depth=write.wr_reply|wordcount %}
+                {% set reply_depth=write.wr_reply|length %}
                     <tr class="{{ loop.cycle("", "even") }} {{ "bo_notice" if write.is_notice else "" }}">
                         {% if request.state.is_super_admin %}
                         <td class="td_chk chk_box">
                             {% if not write.is_notice %}
                             <input type="checkbox" name="chk_wr_id[]" value="{{ write.wr_id }}" id="chk_wr_id_{{ loop.index }}" class="selec_chk">
                             <label for="chk_wr_id_{{ loop.index }}">
-                                <span></span>
+                                <span>&nbsp;</span>
                                 <b class="sound_only">{{ write.wr_subject }}</b>
                             </label>
                             {% endif %}
@@ -130,7 +130,7 @@
                             {% elif wr_id == write.wr_id %}
                                 <span class="bo_current">열람중</span>
                             {% else %}
-                                {{ write.wr_num|int|abs }}
+                                {{ write.num }}
                             {% endif %}
                         </td>
                         <td class="td_subject" style="padding-left:{{ reply_depth * 10 }}px">
@@ -150,7 +150,7 @@
                                 {% if write.icon_new %}<span class="new_icon">N<span class="sound_only">새글</span></span>{% endif %}
                                 {% if write.icon_hot %}<i class="fa fa-heart" aria-hidden="true"></i>{% endif %}
                                 {% if write.icon_file %}<i class="fa fa-download" aria-hidden="true"></i>{% endif %}
-                                {% if write.icon_new %}<i class="fa fa-link" aria-hidden="true"></i>{% endif %}
+                                {% if write.icon_link %}<i class="fa fa-link" aria-hidden="true"></i>{% endif %}
                                 {% if write.wr_comment %}<span class="sound_only">댓글</span><span class="cnt_cmt">{{ write.wr_comment }}</span><span class="sound_only">개</span>{% endif %}
                             </div>
                         </td>

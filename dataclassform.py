@@ -325,6 +325,17 @@ class GroupForm:
 
 
 @dataclass
+class WriteForm:
+    ca_name: str = Form(None)
+    wr_name: str = Form(None)
+    wr_email: str = Form(None)
+    wr_homepage: str = Form(None)
+    wr_subject: str = Form(...)
+    wr_content: str = Form(...)
+    wr_is_comment: bool = False
+
+
+@dataclass
 class ContentForm:
     co_subject: str = Form(...)
     co_content: str = Form(None)

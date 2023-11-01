@@ -10,6 +10,7 @@ from sqlalchemy.orm import aliased, Session
 
 from common import *
 from database import get_db
+from dataclassform import WriteForm
 import models
 
 router = APIRouter()
@@ -65,16 +66,17 @@ def list_post(bo_table: str,
     if not board:
         raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
 
-    # 게시판 카테고리 설정
-    categories = []
-    if board.bo_use_category:
-        categories = board.bo_category_list.split("|")
-
     models.Write = dynamic_create_write_table(bo_table)
+    config = request.state.config
+    current_page = search_params['current_page']
+    page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
+
+    # 게시판 카테고리 설정
+    categories = board.bo_category_list.split("|") if board.bo_use_category else []
 
     writes = []
     # 공지 게시글 목록 조회
-    if search_params["current_page"] == 1:
+    if current_page == 1:
         notice_ids = board.bo_notice.split(",")
         notice_writes = db.query(models.Write).filter(models.Write.wr_id.in_(notice_ids)).all()
         # 게시글 정보 수정
@@ -98,6 +100,7 @@ def list_post(bo_table: str,
 
     # 게시글 정보 수정
     for write in writes:
+        write.num = total_count - (current_page - 1) * page_rows - (writes.index(write))
         write.icon_hot = write.wr_hit >= board.bo_hot
         write.icon_new = write.wr_datetime > (datetime.now() - timedelta(hours=int(board.bo_new)))
         write.icon_file = write.wr_file
@@ -109,7 +112,6 @@ def list_post(bo_table: str,
             "request": request,
             "categories": categories,
             "board": board,
-            "notice_writes" : notice_writes,
             "writes": writes,
             "total_count": total_count,
             "current_page": search_params['current_page'],
@@ -299,7 +301,7 @@ def move_update(
 
 
 @router.get("/write/{bo_table}")
-def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db), wr_id: int = Query(None)):
+def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db), parent_id: int = Query(None)):
     """
     게시글을 작성하는 form을 보여준다.
     """
@@ -308,9 +310,9 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
     if not board:
         raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
     # 답글 생성가능여부 체크
-    if wr_id:
+    if parent_id:
         models.Write = dynamic_create_write_table(bo_table)
-        write = db.query(models.Write).get(wr_id)
+        write = db.query(models.Write).get(parent_id)
         wr_reply = generate_reply_character(board, write)
 
     # 에디터 설정
@@ -321,7 +323,7 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
     # 분류
     categories = [] if not board.bo_use_category else board.bo_category_list.split("|")
     # 공지사항
-    is_notice = False if request.state.is_super_admin and not wr_id else True
+    is_notice = True if request.state.is_super_admin and not parent_id else False
     # HTML
     is_html = member_level >= board.bo_html_level
     # 비밀글
@@ -366,23 +368,19 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
     if not board:
         raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
 
-    # 게시판 카테고리 설정
-    categories = []
-    if board.bo_use_category:
-        categories = board.bo_category_list.split("|")
     # 게시판 에디터 설정
     request.state.use_editor = board.bo_use_dhtml_editor
     request.state.editor = board.bo_select_editor or request.state.editor
+
+    # 분류
+    categories = [] if not board.bo_use_category else board.bo_category_list.split("|")
 
     # 게시글 조회
     models.Write = dynamic_create_write_table(bo_table)
     write = db.query(models.Write).get(wr_id)
     # 공지사항 설정
     is_notice = True if not write.wr_reply and request.state.is_super_admin else False
-    notice_checked = ""
-    notice_ids = board.bo_notice.split(",")
-    if str(wr_id) in notice_ids:
-        notice_checked = "checked"
+    notice_checked = "checked" if is_board_notice(board, wr_id) else ""
     # HTML 설정
     is_html = False
     html_checked = ""
@@ -432,17 +430,6 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
         }
     )
 
-from dataclasses import dataclass
-
-@dataclass
-class writeForm:
-    ca_name: str = Form(None)
-    wr_name: str = Form(None)
-    wr_email: str = Form(None)
-    wr_homepage: str = Form(None)
-    wr_subject: str = Form(...)
-    wr_content: str = Form(...)
-    wr_is_comment: bool = False
 
 @router.post("/write_update/")
 def write_update(
@@ -452,20 +439,38 @@ def write_update(
     wr_id: int = Form(None),
     parent_id: int = Form(None),
     db: Session = Depends(get_db),
-    form_data: writeForm = Depends(),
+    uid: str = Form(None),
+    notice: bool = Form(False),
+    html: str = Form(None),
+    mail: str = Form(None),
+    secret: str = Form(None),
+    form_data: WriteForm = Depends(),
 ):
     """
     게시글을 Table 추가한다.
     """
     member = request.state.login_member
+
     # 게시판 정보 조회
     board = db.query(models.Board).get(bo_table)
     if not board:
-        raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
+        raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
     
+    # 비밀글 사용여부 체크
+    if not request.state.is_super_admin and not board.bo_use_secret and "secret" in secret and "secret" in html and "secret" in mail:
+        raise AlertException("비밀글 미사용 게시판 이므로 비밀글로 등록할 수 없습니다.", 403)
+    # 비밀글 옵션에 따라 비밀글 설정
+    if not request.state.is_super_admin and board.bo_use_secret == 2:
+        secret = "secret"
+    
+    # 게시글 테이블 정보 조회
     models.Write = dynamic_create_write_table(bo_table)
-    
-    if compare_token(request, token, 'insert'): # 토큰에 등록돤 action이 insert라면 신규 등록
+    # 옵션 설정
+    options = [opt for opt in [html, secret, mail] if opt]
+    form_data.wr_option = ",".join(map(str, options))
+
+    # 글 등록
+    if compare_token(request, token, 'insert'):
         form_data.wr_name = getattr(member, "mb_name", form_data.wr_name)
         parent_write = db.query(models.Write).get(parent_id) if parent_id else None
         write = models.Write(
@@ -477,18 +482,40 @@ def write_update(
             **form_data.__dict__
         )
         db.add(write)
-    elif compare_token(request, token, 'update'):  # 토큰에 등록된 action이 update라면 수정
+        db.commit()
+        
+        write.wr_parent = write.wr_id  # 부모아이디 설정
+        board.bo_count_write = board.bo_count_write + 1  # 게시판 글 갯수 1 증가
+        db.commit()
+        # TODO: 새글 추가
+        # TODO: 글작성 포인트 부여(답변글은 댓글 포인트로 부여)
+    # 글 수정
+    elif compare_token(request, token, 'update'):
+        # 게시글 정보 조회 및 수정
         write = db.query(models.Write).get(wr_id)
+        if not write:
+            raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
+
         for field, value in form_data.__dict__.items():
             setattr(write, field, value)
+
+        # 분류 수정 시 댓글/답글도 같이 수정
+        db.query(models.Write).filter(models.Write.wr_parent == wr_id).update({"ca_name": form_data.ca_name})
+        db.commit()
+    # 토큰 오류
     else:
-        raise AlertException(status_code=403, detail="잘못된 접근입니다.")
+        raise AlertException("잘못된 접근입니다.", 403)
+    
+    # 공지글 설정
+    board.bo_notice = set_board_notice(board, write.wr_id, notice)
+    # 자동저장 글 삭제
+    if uid:
+        db.query(models.AutoSave).filter(models.AutoSave.as_uid == uid).delete()
     db.commit()
-
-    # 추가한 글의 wr_parent 필드를 수정한다.
-    write.wr_parent = parent_id or write.wr_id
-    db.commit()
-
+    # TODO: 비밀글은 세션에 비밀글 저장 (자신의 글 확인)
+    # TODO: 파일처리
+    # TODO: 메일발송
+    
     # 최신글 캐시 삭제
     G6FileCache().delete_prefix(f'latest-{bo_table}')
 
@@ -500,18 +527,46 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
     """
     게시글을 1개 읽는다.
     """
+    config = request.state.config
+    member = request.state.login_member
     # 게시판 정보 조회
     board = db.query(models.Board).get(bo_table)
     if not board:
-        raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
+        raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
 
     # 게시글 정보 조회
     models.Write = dynamic_create_write_table(bo_table)
     write = db.query(models.Write).get(wr_id)
     if not write:
-        raise AlertException(status_code=404, detail="{wr_id} of {bo_table} is not found.")
+        raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
+    
+    # 세션 체크
+    # 한번 읽은 게시글은 세션만료까지 조회수, 포인트 처리를 하지 않는다.
+    session_name = f"ss_view_{bo_table}_{wr_id}"
+    if not request.session.get(session_name):
+        # 조회수 증가
+        write.wr_hit = write.wr_hit + 1
 
-    # 이전글 다음글 조회
+        # 관리자이거나 자신의 글이면 통과하는 함수
+        if not (request.state.is_super_admin 
+                or is_owner(write, member)
+                or (not member and board.bo_read_level == 1 and write.wr_ip == request.client.host)
+                ):
+            # 포인트 검사 및 소진
+            read_point = board.bo_read_point
+            if config.cf_use_point and read_point:
+                if member.mb_point + read_point < 0:
+                    raise AlertException(f"게시글을 읽기 위해 {read_point} 포인트가 필요합니다.", 403)
+                else:
+                    # TODO: 포인트 소진 처리
+                    pass
+        request.session[session_name] = True
+        db.commit()
+
+    # TODO: 스크랩 여부 확인
+    # TODO: 추천 여부 확인
+
+    # TODO: 이전글 다음글 조회
     prev = None
     next = None
 
@@ -521,11 +576,6 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
         models.Write.wr_is_comment == True
     ).order_by(models.Write.wr_id.desc()).all()
     
-
-    # 조회수 증가
-    write.wr_hit = write.wr_hit + 1
-    db.commit()
-
     context = {
         "request": request,
         "board": board,
@@ -615,3 +665,91 @@ def write_comment_update(
     db.commit()
 
     return RedirectResponse(f"/board/{bo_table}/{wr_id}", status_code=303)
+
+
+# TODO: 아래 함수들을 다른 경로로 옮겨야 한다.
+
+def is_board_notice(board: Board, wr_id: int) -> bool:
+    """
+    게시글이 공지글인지 확인한다.
+    """
+    return str(wr_id) in board.bo_notice.split(",")
+
+def set_board_notice(board: Board, wr_id: int, insert: bool = False) -> str:
+    """
+    게시판의 공지글 목록을 설정한다.
+    """
+    notice_ids = list(board.bo_notice.split(","))
+    exist = is_board_notice(board, wr_id)
+
+    if insert and not exist:
+        notice_ids.append(str(wr_id))
+    elif not insert and exist:
+        notice_ids.remove(str(wr_id))
+
+    return ",".join(map(str, notice_ids))
+
+
+def get_next_num(bo_table: str):
+    """
+    게시판의 다음글 번호를 얻는다.
+    """
+    db = SessionLocal()
+    Write = dynamic_create_write_table(bo_table)
+    row = db.query(func.min(Write.wr_num).label("min_wr_num")).first()
+
+    return (int(row.min_wr_num) if row.min_wr_num else 0) - 1
+
+
+# FIXME: 대댓글이 있는 상태에서 bo_reply_order를 바꾸면 입력하지 못하는 오류
+# ex) 처음에는 정방향 A B C가 입력되고 역방향으로 바꾸면 last_reply_char이 A가 된다(Min).
+# 역방향의 char_end는 A이고 A - 1은 예외처리하고 있음으로 대댓글이 입력되지 않는다
+def generate_reply_character(board: Board, write):
+    """ 대댓글 단계 문자열 생성 
+
+    Args:
+        board (Board): 게시판 object
+        write (Write): 댓글/답글을 달 게시글 object
+
+    Raises:
+        AlertException: Z를 넘어가는 문자열 예외처리
+
+    Returns:
+        str: A~Z의 연속된 문자열(Ex: A, B, AA, AB, ABA ..)
+    """
+    db = SessionLocal()
+    write_model = dynamic_create_write_table(board.bo_table)
+    # 마지막 문자열 1개 자르기
+    query = db.query(func.right(write_model.wr_reply, 1).label("reply")).filter(
+        write_model.wr_reply != "",
+        write_model.wr_parent == write.wr_id
+    )
+    # 정방향이면 최대값, 역방향이면 최소값
+    if board.bo_reply_order:
+        result = query.order_by(desc("reply")).first()
+        char_begin = "A"
+        char_end = "Z"
+        char_increase = 1
+    else:
+        result = query.order_by(asc("reply")).first()
+        char_begin = "Z"
+        char_end = "A"
+        char_increase = -1
+
+    last_reply_char = result.reply if result else None
+    if last_reply_char == char_end:  # A~Z은 26 입니다.
+        raise AlertException("더 이상 답변하실 수 없습니다. 답변은 26개 까지만 가능합니다.")
+
+    if not last_reply_char:
+        reply_char = char_begin
+    else:
+        reply_char = chr(ord(last_reply_char) + char_increase)
+
+    return write.wr_reply + reply_char
+
+
+def is_owner(object, member):
+    if object and object.mb_id:
+        return object.mb_id == member.mb_id
+    else:
+        return False
