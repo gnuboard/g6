@@ -824,3 +824,23 @@ class Mail(Base):
     ma_time = Column(DateTime, nullable=False, default=datetime.now())
     ma_ip = Column(String(255), nullable=False, default='')
     ma_last_option = Column(Text, nullable=False, default='')
+    
+    
+# CREATE TABLE `g5_board_new` (
+#   `bn_id` int NOT NULL,
+#   `bo_table` varchar(20) NOT NULL DEFAULT '',
+#   `wr_id` int NOT NULL DEFAULT '0',
+#   `wr_parent` int NOT NULL DEFAULT '0',
+#   `bn_datetime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+#   `mb_id` varchar(20) NOT NULL DEFAULT ''
+# ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+class BoardNew(Base):
+    __tablename__ = DB_TABLE_PREFIX + 'board_new'
+    
+    bn_id = Column(Integer, primary_key=True, autoincrement=True)
+    bo_table = Column(String(20), nullable=False, default='')
+    wr_id = Column(Integer, nullable=False, default=0)
+    wr_parent = Column(Integer, nullable=False, default=0)
+    bn_datetime = Column(DateTime, nullable=False, default=datetime.now())
+    mb_id = Column(String(20), nullable=False, default='')
+    
