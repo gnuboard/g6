@@ -126,7 +126,7 @@
                 <!-- SNS START -->
                 <!-- SNS END -->
                 {% if login_member %}
-                    <a href="" target="_blank" class="btn btn_b03" onclick="win_scrap(this.href); return false;">
+                    <a href="{{ url_for('scrap_form', bo_table=board.bo_table, wr_id=write.wr_id) }}" target="_blank" class="btn btn_b03" onclick="win_scrap(this.href); return false;">
                         <i class="fa fa-bookmark" aria-hidden="true"></i>스크랩
                     </a>
                 {% endif %}

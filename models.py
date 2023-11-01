@@ -844,4 +844,17 @@ class BoardNew(Base):
     wr_parent = Column(Integer, nullable=False, default=0)
     bn_datetime = Column(DateTime, nullable=False, default=datetime.now())
     mb_id = Column(String(20), nullable=False, default='')
+
+
+class Scrap(Base):
+    """
+    게시글 스크랩 테이블
+    """
+    __tablename__ = DB_TABLE_PREFIX + 'scrap'
+
+    ms_id = Column(Integer, primary_key=True, autoincrement=True)
+    mb_id = Column(String(20), nullable=False, default='')
+    bo_table = Column(String(20), nullable=False, default='')
+    wr_id = Column(Integer, nullable=False, default=0)
+    ms_datetime = Column(DateTime, nullable=False, default=datetime.now())
     
