@@ -41,9 +41,9 @@ def config_form(request: Request, db: Session = Depends(get_db)):
     기본환경설정
     """
     request.session["menu_key"] = CONFIG_MENU_KEY
-    error = auth_check_menu(request, request.session["menu_key"], "r")
-    if error:
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": [error]})
+
+    if not request.state.is_super_admin:
+        raise AlertException("최고관리자만 접근 가능합니다.")
 
     host_name = socket.gethostname()
     host_ip = socket.gethostbyname(host_name)
@@ -71,32 +71,33 @@ def config_form_update(
     기본환경설정 저장
     """
     request.session["menu_key"] = CONFIG_MENU_KEY
-    error = auth_check_menu(request, request.session["menu_key"], "w")
-    if error:
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": [error]})
+    
+    if not check_token(request, token):
+        raise AlertException("잘못된 접근입니다.")
 
-    if not compare_token(request, token, "update"):
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다."]})
+    if not request.state.is_super_admin:
+        raise AlertException("최고관리자만 접근 가능합니다.")
+    
 
     # print(request.state.context['member'])
 
-    # 에러 체크
-    member = request.state.login_member
-    # print(member.__dict__)
-    if member:
-        if member.mb_level < 10:
-            return templates.TemplateResponse(
-                "alert.html", {"request": request, "errors": ["최고관리자만 접근 가능합니다."]}
-            )
+    # # 에러 체크
+    # member = request.state.login_member
+    # # print(member.__dict__)
+    # if member:
+    #     if member.mb_level < 10:
+    #         return templates.TemplateResponse(
+    #             "alert.html", {"request": request, "errors": ["최고관리자만 접근 가능합니다."]}
+    #         )
 
-        if not member.mb_id:
-            return templates.TemplateResponse(
-                "alert.html", {"request": request, "errors": ["회원아이디가 존재하지 않습니다."]}
-            )
-    else:
-        return templates.TemplateResponse(
-            "alert.html", {"request": request, "errors": ["로그인 후 이용해 주세요."]}
-        )
+    #     if not member.mb_id:
+    #         return templates.TemplateResponse(
+    #             "alert.html", {"request": request, "errors": ["회원아이디가 존재하지 않습니다."]}
+    #         )
+    # else:
+    #     return templates.TemplateResponse(
+    #         "alert.html", {"request": request, "errors": ["로그인 후 이용해 주세요."]}
+    #     )
 
     # 차단 IP 리스트에 현재 접속 IP 가 있으면 접속이 불가하게 되므로 저장하지 않는다.
     if form_data.cf_intercept_ip:
