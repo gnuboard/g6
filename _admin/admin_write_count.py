@@ -7,20 +7,7 @@ from sqlalchemy.orm import Session
 from database import get_db, engine
 from models import *
 from common import *
-from fastapi import FastAPI, HTTPException
-import ssl
-import os
-import smtplib
-import threading
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from dotenv import load_dotenv
-from sse_starlette.sse import EventSourceResponse
-import time
-import asyncio
 import matplotlib.pyplot as plt
-from io import BytesIO
-from string import Template
 import plotly.express as px
 import pandas as pd
 from collections import defaultdict
@@ -52,31 +39,7 @@ async def write_count(request: Request, db: Session = Depends(get_db),
     글, 댓글 현황 그래프
     '''
     request.session["menu_key"] = WRITE_COUNT_MENU_KEY
-    
-    # $period_array = array(
-    #     '오늘'=>array('시간', 0),
-    #     '어제'=>array('시간', 0),
-    #     '7일전'=>array('일', 7),
-    #     '14일전'=>array('일', 14),
-    #     '30일전'=>array('일', 30),
-    #     '3개월전'=>array('주', 90),
-    #     '6개월전'=>array('주', 180),
-    #     '1년전'=>array('월', 365),
-    #     '2년전'=>array('월', 365*2),
-    #     '3년전'=>array('월', 365*3),
-    #     '5년전'=>array('년', 365*5),
-    #     '10년전'=>array('년', 365*10),
-    # );
-    # $is_period = false;
-    # foreach($period_array as $key=>$value) {
-    #     if ($key == $period) {
-    #         $is_period = true;
-    #         break;
-    #     }
-    # }
-    # if (!$is_period)
-    #     $period = '오늘';
-    # $day = $period_array[$period][0];
+
     period_array = {
         '오늘': ['시간', 0],
         '어제': ['시간', 0],
@@ -99,23 +62,7 @@ async def write_count(request: Request, db: Session = Depends(get_db),
     if not is_period:
         period = '오늘'
     day = period_array[period][0]
-    
-    # $today = date('Y-m-d', G5_SERVER_TIME);
-    # $yesterday = date('Y-m-d', G5_SERVER_TIME - 86400);
 
-    # if ($period == '오늘') {
-    #     $from = $today;
-    #     $to = $from;
-    # } else if ($period == '어제') {
-    #     $from = $yesterday;
-    #     $to = $from;
-    # } else if ($period == '내일') {
-    #     $from = date('Y-m-d', G5_SERVER_TIME + (86400 * 2));
-    #     $to = $from;
-    # } else {
-    #     $from = date('Y-m-d', G5_SERVER_TIME - (86400 * $period_array[$period][1]));
-    #     $to = $yesterday;
-    # }
     today = datetime.now().date()
     yesterday = today - timedelta(days=1)
         
@@ -131,84 +78,9 @@ async def write_count(request: Request, db: Session = Depends(get_db),
     else:
         from_date = datetime.now() - timedelta(days=period_array[period][1])
         to_date = yesterday
-
-    
-    # foreach($period_array as $key=>$value) {
-    #     echo "<option value=\"{$key}\"";
-    #     if ($key == $period)
-    #         echo " selected=\"selected\"";
-    #     echo ">{$key}</option>\n";
-    # }
-    
-    
-    # $sql = " select bo_table, bo_subject from {$g5['board_table']} order by bo_count_write desc ";
-    # $result = sql_query($sql);
-    # for($i=0; $row=sql_fetch_array($result); $i++) {
-    #     echo "<option value=\"{$row['bo_table']}\"";
-    #     if ($bo_table == $row['bo_table'])
-    #         echo ' selected="selected"';
-    #     echo ">{$row['bo_subject']}</option>\n";
-    # }
     
     bo_table_array = db.query(Board.bo_table, Board.bo_subject).order_by(Board.bo_count_write.desc()).all()
-    
-    
-    # $sql_bo_table = '';
-    # if ($bo_table)
-    #     $sql_bo_table = "and bo_table = '$bo_table'";
 
-    # $line1 = $line2 = array();
-
-    # switch ($day) {
-    #     case '시간' :
-    #         $sql = " select substr(bn_datetime,6,8) as hours, sum(if(wr_id=wr_parent,1,0)) as wcount, sum(if(wr_id=wr_parent,0,1)) as ccount from {$g5['board_new_table']} where substr(bn_datetime,1,10) between '$from' and '$to' {$sql_bo_table} group by hours order by bn_datetime ";
-    #         $result = sql_query($sql);
-    #         for ($i=0; $row=sql_fetch_array($result); $i++) {
-    #             // 월-일 시간
-    #             $line1[] = "['".substr($row['hours'],0,8)."',".$row['wcount'].']';
-    #             $line2[] = "['".substr($row['hours'],0,8)."',".$row['ccount'].']';
-    #         }
-    #         break;
-    #     case '일' :
-    #         $sql  = " select substr(bn_datetime,1,10) as days, sum(if(wr_id=wr_parent,1,0)) as wcount, sum(if(wr_id=wr_parent,0,1)) as ccount from {$g5['board_new_table']} where substr(bn_datetime,1,10) between '$from' and '$to' {$sql_bo_table} group by days order by bn_datetime ";
-    #         $result = sql_query($sql);
-    #         for ($i=0; $row=sql_fetch_array($result); $i++) {
-    #             // 월-일
-    #             $line1[] = "['".substr($row['days'],5,5)."',".$row['wcount'].']';
-    #             $line2[] = "['".substr($row['days'],5,5)."',".$row['ccount'].']';
-    #         }
-    #         break;
-    # case '주' :
-    #     $sql  = " select concat(substr(bn_datetime,1,4), '-', weekofyear(bn_datetime)) as weeks, sum(if(wr_id=wr_parent,1,0)) as wcount, sum(if(wr_id=wr_parent,0,1)) as ccount from {$g5['board_new_table']} where substr(bn_datetime,1,10) between '$from' and '$to' {$sql_bo_table} group by weeks order by bn_datetime ";
-    #     $result = sql_query($sql);
-    #     for ($i=0; $row=sql_fetch_array($result); $i++) {
-    #         // 올해의 몇주로 보여주면 바로 확인이 안되므로 주를 날짜로 바꾼다.
-    #         // 년-월-일
-    #         list($lyear, $lweek) = explode('-', $row['weeks']);
-    #         $date = date('y-m-d', strtotime($lyear.'W'.str_pad($lweek, 2, '0', STR_PAD_LEFT)));
-    #         $line1[] = "['".$date."',".$row['wcount'].']';
-    #         $line2[] = "['".$date."',".$row['ccount'].']';
-    #     }
-    #     break;
-    # case '월' :
-    #     $sql  = " select substr(bn_datetime,1,7) as months, sum(if(wr_id=wr_parent,1,0)) as wcount, sum(if(wr_id=wr_parent,0,1)) as ccount from {$g5['board_new_table']} where substr(bn_datetime,1,10) between '$from' and '$to' {$sql_bo_table} group by months order by bn_datetime ";
-    #     $result = sql_query($sql);
-    #     for ($i=0; $row=sql_fetch_array($result); $i++) {
-    #         // 년-월
-    #         $line1[] = "['".substr($row['months'],2,5)."',".$row['wcount'].']';
-    #         $line2[] = "['".substr($row['months'],2,5)."',".$row['ccount'].']';
-    #     }
-    #     break;
-    # case '년' :
-    #     $sql  = " select substr(bn_datetime,1,4) as years, sum(if(wr_id=wr_parent,1,0)) as wcount, sum(if(wr_id=wr_parent,0,1)) as ccount from {$g5['board_new_table']} where substr(bn_datetime,1,10) between '$from' and '$to' {$sql_bo_table} group by years order by bn_datetime ";
-    #     $result = sql_query($sql);
-    #     for ($i=0; $row=sql_fetch_array($result); $i++) {
-    #         // 년(4자리)
-    #         $line1[] = "['".substr($row['years'],0,4)."',".$row['wcount'].']';
-    #         $line2[] = "['".substr($row['years'],0,4)."',".$row['ccount'].']';
-    #     }
-    #     break;
-    # }
     x_data = []
     y_data = []
     x_label = ""
@@ -285,9 +157,6 @@ async def write_count(request: Request, db: Session = Depends(get_db),
             x_data.append(f"['{row.years[:4]}',{row.write_count}]")
             y_data.append(f"['{row.years[:4]}',{row.comment_count}]")
 
-    print(x_label)            
-    print(day)            
-    print(result)
     
     # 날짜별로 글과 댓글을 합침
     aggregated_data = defaultdict(lambda: [0, 0])
@@ -296,7 +165,10 @@ async def write_count(request: Request, db: Session = Depends(get_db),
         aggregated_data[x][0] += int(write_count)
         aggregated_data[x][1] += int(comment_count)
         
-    print(aggregated_data)
+    # print(day)            
+    # print(result)
+    # print(x_label)            
+    # print(aggregated_data)
             
     # 데이터 프레임 생성
     df = pd.DataFrame({
@@ -320,11 +192,24 @@ async def write_count(request: Request, db: Session = Depends(get_db),
         df[x_label] = pd.to_datetime(df[x_label]).dt.strftime('%b, %Y')
     elif x_label == "years":
         df[x_label] = pd.to_datetime(df[x_label]).dt.strftime('%Y')
-
+        
+    if not (graph == 'bar' or graph == 'line' or graph == 'scatter'):
+        graph = 'bar'
+    
+    # 그래프 생성 함수를 매핑합니다.
+    graph_mapping = {
+        'bar': px.bar,
+        'line': px.line,
+        'scatter': px.scatter,
+    }
+        
     # 그래프 생성
-    fig = px.line(df, x=x_label, y=['write_count', 'comment_count'], 
+    #fig = px.bar(...)
+    fig = graph_mapping[graph](df, x=x_label, y=['write_count', 'comment_count'], 
                 labels={'value': 'Count', 'x': x_label, 'variable': 'Type'},
-                title=f'Line plot of {x_label} vs write_count and comment_count')
+                title=f'글수(write_count), 댓글수(comment_count)')
+    # 라인 굵기 변경
+    # fig.update_traces(line=dict(width=100)) 
     
     # df = px.data.iris()  # 예제 데이터셋 로드
     # fig = px.scatter(df, x="sepal_width", y="sepal_length", color="species", 

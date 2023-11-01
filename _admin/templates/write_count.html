@@ -22,16 +22,13 @@
     </select>
 
     <select name="graph">
-    <option value="line" {{ 'selected' if graph != 'bar' else ''}}>선그래프</option>
-    <option value="bar" {{ 'selected' if graph == 'bar' else '' }}>막대그래프</option>
+    <option value="bar" {{ 'selected' if not (graph == 'bar' or graph == 'scatter' or graph == 'line') else '' }}>막대그래프</option>
+    <option value="scatter" {{ 'selected' if graph == 'scatter' else ''}}>점그래프</option>
+    <option value="line" {{ 'selected' if graph == 'line' else ''}}>선그래프</option>
     </select>
 
     <input type="submit" class="btn_submit" value="확인">
     </form>
-    <ul id="grp_color">
-        <li><span></span>글 수</li>
-        <li class="color2"><span></span>댓글 수</li>
-    </ul>
 </div>
 <br>
 <div id="chart_wr">
