@@ -68,39 +68,54 @@ def list_post(bo_table: str,
 
     models.Write = dynamic_create_write_table(bo_table)
     config = request.state.config
+    sca = request.query_params.get("sca")
+    sfl = search_params['sfl']
+    stx = search_params['stx']
+    sst = search_params['sst']
+    sod = search_params['sod']
     current_page = search_params['current_page']
     page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
 
     # 게시판 카테고리 설정
     categories = board.bo_category_list.split("|") if board.bo_use_category else []
 
-    writes = []
+    notice_writes = []
     # 공지 게시글 목록 조회
     if current_page == 1:
         notice_ids = board.bo_notice.split(",")
-        notice_writes = db.query(models.Write).filter(models.Write.wr_id.in_(notice_ids)).all()
-        # 게시글 정보 수정
-        for write in notice_writes:
-            write.is_notice = True
-
-        writes.extend(notice_writes)
+        notice_query = db.query(models.Write).filter(models.Write.wr_id.in_(notice_ids))
+        if sca:
+            notice_query = notice_query.filter(models.Write.ca_name == sca)
+        notice_writes = notice_query.all()
 
     # 게시글 목록 조회
-    # TODO: sca 검색조건 추가
     # TODO: sfl 검색필드가 wr_name,1 형식으로 구성되었을 경우
-    result = select_query(
-            request,
-            models.Write, 
-            search_params, 
-            default_sst = ["wr_num", "wr_reply"],
-            default_sod = "",
-        )
-    writes.extend(result['rows'])
-    total_count = result['total_count']
+    query = db.query(models.Write).filter_by(wr_is_comment = 0)
+    # 분류
+    if sca:
+        query = query.filter(models.Write.ca_name == sca)
+    # 검색
+    if sfl and stx and hasattr(models.Write, sfl):
+        query = query.filter(getattr(models.Write, sfl).like(f"%{stx}%"))
+    # 정렬
+    if sst and hasattr(models.Write, sst):
+        if sod == "desc":
+            query = query.order_by(desc(sst))
+        else:
+            query = query.order_by(asc(sst))
+    else:
+        query = query.order_by(models.Write.wr_num, models.Write.wr_reply)
+
+    # 페이지 번호에 따른 offset 계산
+    offset = (current_page - 1) * page_rows
+    # 최종 쿼리 결과를 가져옵니다.
+    writes = query.offset(offset).limit(page_rows).all()
+
+    total_count = query.count()
 
     # 게시글 정보 수정
     for write in writes:
-        write.num = total_count - (current_page - 1) * page_rows - (writes.index(write))
+        write.num = total_count - offset - (writes.index(write))
         write.icon_hot = write.wr_hit >= board.bo_hot
         write.icon_new = write.wr_datetime > (datetime.now() - timedelta(hours=int(board.bo_new)))
         write.icon_file = write.wr_file
@@ -112,6 +127,7 @@ def list_post(bo_table: str,
             "request": request,
             "categories": categories,
             "board": board,
+            "notice_writes": notice_writes,
             "writes": writes,
             "total_count": total_count,
             "current_page": search_params['current_page'],
@@ -562,29 +578,55 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
                     pass
         request.session[session_name] = True
         db.commit()
-
-    # TODO: 스크랩 여부 확인
-
-    # 추천 여부 확인
+    
     if member:
-        good_data = db.query(models.BoardGood).filter(
-            models.BoardGood.bo_table == bo_table,
-            models.BoardGood.wr_id == wr_id,
-            models.BoardGood.mb_id == member.mb_id
+        # 스크랩 여부 확인
+        scrap_data = db.query(models.Scrap).filter_by(
+            bo_table = bo_table, wr_id = wr_id, mb_id = member.mb_id
         ).first()
-        # good_data.type이 "good" 일 경우 추천 활성화, "nogood" 일 경우 비추천 활성화
+        if scrap_data:
+            write.is_scrap = True
+
+        # 추천/비추천 여부 확인
+        good_data = db.query(models.BoardGood).filter_by(
+            bo_table = bo_table, wr_id = wr_id, mb_id = member.mb_id
+        ).first()
         if good_data:
             setattr(write, f"is_{good_data.bg_flag}", True)
-        
-    # TODO: 이전글 다음글 조회
+
+    # 이전글 다음글 조회
     prev = None
     next = None
+    sca = request.query_params.get("sca")
+    sfl = request.query_params.get("sfl")
+    stx = request.query_params.get("stx")
+    if not board.bo_use_list_view:
+        query = db.query(models.Write).filter(models.Write.wr_is_comment == 0).order_by(models.Write.wr_num)
+        if sca:
+            query = query.filter(models.Write.ca_name == sca)
+        if sfl and stx and hasattr(models.Write, sfl):
+            query = query.filter(getattr(models.Write, sfl).like(f"%{stx}%"))
+         # 같은 wr_num 내에서 이전글 조회
+        prev = query.filter(
+            models.Write.wr_num == write.wr_num,
+            models.Write.wr_reply < write.wr_reply,
+        ).order_by(models.Write.wr_reply.desc()).first()
+        if not prev:
+            prev = query.filter(models.Write.wr_num < write.wr_num).first()
+
+        # 같은 wr_num 내에서 다음글 조회
+        next = query.filter(
+            models.Write.wr_num == write.wr_num,
+            models.Write.wr_reply > write.wr_reply,
+        ).order_by(models.Write.wr_reply).first()
+        if not next:
+            next = query.filter(models.Write.wr_num > write.wr_num).first()
 
     # 댓글 목록 조회
     comments = db.query(models.Write).filter(
         models.Write.wr_parent == wr_id,
         models.Write.wr_is_comment == True
-    ).order_by(models.Write.wr_id.desc()).all()
+    ).order_by(models.Write.wr_id).all()
     
     context = {
         "request": request,

@@ -97,6 +97,9 @@
                     </th>
                     {% endif %}
                     <th scope="col">번호</th>
+                    {% if board.bo_use_category %}
+                    <th scope="col">분류</th>
+                    {% endif %}
                     <th scope="col">제목</th>
                     <th scope="col">글쓴이</th>
                     <th scope="col"><a href="{{ request.url.include_query_params(sst="wr_hit", sod=sod_reverse) }}">조회</a></th>
@@ -110,6 +113,36 @@
             </tr>
             </thead>
                 <tbody>
+                {% for write in notice_writes %}
+                <tr class="bo_notice">
+                    <td class="td_chk chk_box"></td>
+                    <td class="td_num2"><strong class="notice_icon">공지</strong></td>
+                    {% if board.bo_use_category and write.ca_name %}
+                    <td class="td_mng">
+                        <a href="{{ request.url.replace_query_params(sca=write.ca_name) }}" class="bo_cate_link">
+                            {{ write.ca_name }}
+                        </a>
+                    </td>
+                    {% endif %}
+                    <td class="td_subject">
+                        <div class="bo_tit">
+                            {% if "secret" in write.wr_option %}
+                                <i class="fa fa-lock" aria-hidden="true"></i>
+                            {% endif %}
+                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?{{ request.query_params }}">{{ write.wr_subject }}</a>
+                        </div>
+                    </td>
+                    <td class="td_name sv_use"><span class="sv_member">{{ write.wr_nick }}</span></td>
+                    <td class="td_num">{{ write.wr_hit }}</td>
+                    {% if board.bo_use_good %}
+                    <td class="td_num">{{ write.wr_good }}</td>
+                    {% endif %}
+                    {% if board.bo_use_nogood %}
+                    <td class="td_num">{{ write.wr_nogood }}</td>
+                    {% endif %}
+                    <td class="td_datetime">{{ write.wr_datetime|datetime_format('%y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
                 {% for write in writes %}
                 {% set reply_depth=write.wr_reply|length %}
                     <tr class="{{ loop.cycle("", "even") }} {{ "bo_notice" if write.is_notice else "" }}">
@@ -125,20 +158,20 @@
                         </td>
                         {% endif %}
                         <td class="td_num2">
-                            {% if write.is_notice %}
-                                <strong class="notice_icon">공지</strong>
-                            {% elif wr_id == write.wr_id %}
+                            {% if wr_id == write.wr_id %}
                                 <span class="bo_current">열람중</span>
                             {% else %}
                                 {{ write.num }}
                             {% endif %}
                         </td>
+                        {% if board.bo_use_category and write.ca_name %}
+                        <td class="td_mng">
+                            <a href="{{ request.url.replace_query_params(sca=write.ca_name) }}" class="bo_cate_link">
+                                {{ write.ca_name }}
+                            </a>
+                        </td>
+                        {% endif %}
                         <td class="td_subject" style="padding-left:{{ reply_depth * 10 }}px">
-                            {% if board.bo_use_category and write.ca_name %}
-                                <a href="{{ request.url.replace_query_params(sca=write.ca_name) }}" class="bo_cate_link">
-                                    {{ write.ca_name }}
-                                </a>
-                            {% endif %}
                             <div class="bo_tit">
                                 {% if write.wr_reply %}
                                     <img src="{{ url_for('static', path="/img/icon_reply.gif") }}" class="icon_reply" alt="답변글">

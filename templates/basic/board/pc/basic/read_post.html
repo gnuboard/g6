@@ -146,30 +146,28 @@
             <!-- 서명 END -->
 
         <!--  추천 비추천 시작 { -->
-        {% if login_member %}
-            <div id="bo_v_act">
-                {% if board.bo_use_good %}
-                <span class="bo_v_act_gng">
-                    <a href="/bbs/ajax/good/{{ board.bo_table }}/{{ write.wr_id }}/good" id="good_button" class="bo_v_good {{ "active" if write.is_good else "" }}">
-                        <i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
-                        <span class="sound_only">추천</span>
-                        <strong>{{ write.wr_good }}</strong>
-                    </a>
-                    <b id="bo_v_act_good"></b>
-                </span>
-                {% endif %}
-                {% if board.bo_use_nogood %}
-                <span class="bo_v_act_gng">
-                    <a href="/bbs/ajax/good/{{ board.bo_table }}/{{ write.wr_id }}/nogood" id="nogood_button" class="bo_v_nogood {{ "active" if write.is_nogood else "" }}">
-                        <i class="fa fa-thumbs-o-down" aria-hidden="true"></i>
-                        <span class="sound_only">비추천</span>
-                        <strong>{{ write.wr_nogood }}</strong>
-                    </a>
-                    <b id="bo_v_act_nogood"></b>
-                </span>
-                {% endif %}
-            </div>
-        {% endif %}
+        <div id="bo_v_act">
+            {% if board.bo_use_good %}
+            <span class="bo_v_act_gng">
+                <a href="/bbs/ajax/good/{{ board.bo_table }}/{{ write.wr_id }}/good" id="good_button" class="bo_v_good {{ "active" if write.is_good else "" }}">
+                    <i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
+                    <span class="sound_only">추천</span>
+                    <strong>{{ write.wr_good }}</strong>
+                </a>
+                <b id="bo_v_act_good"></b>
+            </span>
+            {% endif %}
+            {% if board.bo_use_nogood %}
+            <span class="bo_v_act_gng">
+                <a href="/bbs/ajax/good/{{ board.bo_table }}/{{ write.wr_id }}/nogood" id="nogood_button" class="bo_v_nogood {{ "active" if write.is_nogood else "" }}">
+                    <i class="fa fa-thumbs-o-down" aria-hidden="true"></i>
+                    <span class="sound_only">비추천</span>
+                    <strong>{{ write.wr_nogood }}</strong>
+                </a>
+                <b id="bo_v_act_nogood"></b>
+            </span>
+            {% endif %}
+        </div>
         <!-- }  추천 비추천 끝 -->
     </section>
 
@@ -453,6 +451,11 @@
 
         // 추천, 비추천
         $("#good_button, #nogood_button").click(function() {
+            {% if not login_member: %}
+                alert("로그인 후 이용해주세요.");
+                return false;
+            {% endif %}
+
             $("#bo_v_act_good").stop().fadeOut()
             $("#bo_v_act_nogood").stop().fadeOut()
 
