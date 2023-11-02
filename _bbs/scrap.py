@@ -110,15 +110,10 @@ def scrap_form_update(request: Request, db: Session = Depends(get_db),
         # 게시판&스크랩 글에 댓글 수 증가
         board.bo_count_comment += 1
         write.wr_comment += 1
+
         # 새글 테이블에 추가
-        # TODO: 새글 등록하는 공용함수를 만들어서 사용하도록 수정
-        board_new = BoardNew(
-            bo_table=bo_table,
-            wr_id=wr_id,
-            wr_parent=wr_id,
-            mb_id=member.mb_id
-        )
-        db.add(board_new)
+        insert_board_new(bo_table, comment)
+
         # TODO: 포인트 부여
         db.commit()
 

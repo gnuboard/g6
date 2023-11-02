@@ -250,7 +250,7 @@ class Board(Base):
     __tablename__ = DB_TABLE_PREFIX + "board"
 
     bo_table = Column(String(20), primary_key=True, nullable=False)
-    gr_id = Column(String(255), nullable=False, default="")
+    gr_id = Column(String(255), ForeignKey(DB_TABLE_PREFIX + "group.gr_id"), nullable=False, default="")
     bo_subject = Column(String(255), nullable=False, default="")
     bo_mobile_subject = Column(String(255), nullable=False, default="")
     bo_device = Column(Enum("both", "pc", "mobile"), nullable=False, default="both")
@@ -347,6 +347,8 @@ class Board(Base):
     bo_10 = Column(String(255), nullable=False, default="")
     # 종속관계
     # writes = relationship("Write", backref="board")
+    # 연관관계
+    group = relationship("Group")
 
 
 class WriteBaseModel(Base):
@@ -826,24 +828,22 @@ class Mail(Base):
     ma_ip = Column(String(255), nullable=False, default='')
     ma_last_option = Column(Text, nullable=False, default='')
     
-    
-# CREATE TABLE `g5_board_new` (
-#   `bn_id` int NOT NULL,
-#   `bo_table` varchar(20) NOT NULL DEFAULT '',
-#   `wr_id` int NOT NULL DEFAULT '0',
-#   `wr_parent` int NOT NULL DEFAULT '0',
-#   `bn_datetime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-#   `mb_id` varchar(20) NOT NULL DEFAULT ''
-# ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
 class BoardNew(Base):
+    """
+    최신 게시물 테이블
+    """
     __tablename__ = DB_TABLE_PREFIX + 'board_new'
     
     bn_id = Column(Integer, primary_key=True, autoincrement=True)
-    bo_table = Column(String(20), nullable=False, default='')
+    bo_table = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "board.bo_table"), nullable=False, default='')
     wr_id = Column(Integer, nullable=False, default=0)
     wr_parent = Column(Integer, nullable=False, default=0)
     bn_datetime = Column(DateTime, nullable=False, default=datetime.now())
     mb_id = Column(String(20), nullable=False, default='')
+
+    # 연관관계
+    board = relationship("Board")
 
 
 class Scrap(Base):

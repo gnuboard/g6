@@ -503,7 +503,10 @@ def write_update(
         write.wr_parent = write.wr_id  # 부모아이디 설정
         board.bo_count_write = board.bo_count_write + 1  # 게시판 글 갯수 1 증가
         db.commit()
-        # TODO: 새글 추가
+
+        # 새글 추가
+        insert_board_new(bo_table, write)
+
         # TODO: 글작성 포인트 부여(답변글은 댓글 포인트로 부여)
     # 글 수정
     elif compare_token(request, token, 'update'):
