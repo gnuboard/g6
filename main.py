@@ -143,19 +143,29 @@ async def main_middleware(request: Request, call_next):
         
     # pc, mobile 구분
     request.state.is_mobile = False
-    request.state.device = 'pc'
+    request.state.device = "" # pc 의 기본값은 "" 이고, mobile 은 "mobile" 로 설정
     
-    if 'SET_DEVICE' in globals():
-        if SET_DEVICE == 'mobile':
-            request.state.is_mobile = True
-            request.state.device = 'mobile'
-    else:
-        user_agent = request.headers.get("User-Agent", "")
-        ua = parse(user_agent)
-        if 'USE_MOBILE' in globals() and USE_MOBILE:
-            if ua.is_mobile or ua.is_tablet: # 모바일과 태블릿에서 접속하면 모바일로 간주
-                request.state.is_mobile = True
-                request.state.device = 'mobile'
+    user_agent = request.headers.get("User-Agent", "")
+    ua = parse(user_agent)
+    if ua.is_mobile or ua.is_tablet: # 모바일과 태블릿에서 접속하면 모바일로 간주
+        request.state.is_mobile = True
+        
+    if not IS_RESPONSIVE: # 적응형
+        # 반영형이 아니라면 모바일 접속은 mobile 로, 그 외 접속은 pc 로 간주
+        if request.state.is_mobile:
+            request.state.device = "mobile"
+    
+    # if 'SET_DEVICE' in globals():
+    #     if SET_DEVICE == 'mobile':
+    #         request.state.is_mobile = True
+    #         request.state.device = 'mobile'
+    # else:
+    #     user_agent = request.headers.get("User-Agent", "")
+    #     ua = parse(user_agent)
+    #     if 'USE_MOBILE' in globals() and USE_MOBILE:
+    #         if ua.is_mobile or ua.is_tablet: # 모바일과 태블릿에서 접속하면 모바일로 간주
+    #             request.state.is_mobile = True
+    #             request.state.device = 'mobile'
                 
     # 로그인한 회원 정보
     request.state.login_member = member
@@ -248,7 +258,7 @@ def index(request: Request, db: Session = Depends(get_db)):
         "latest": latest,
         "boards": boards,
     }
-    return templates.TemplateResponse(f"index.{request.state.device}.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/main.html", context)
 
 
 @app.post("/generate_token")

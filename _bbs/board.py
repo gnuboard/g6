@@ -48,7 +48,7 @@ def group_board_list(request: Request, gr_id: str, db: Session = Depends(get_db)
 
     boards = query_boards.order_by(models.Board.bo_order).all()
     return templates.TemplateResponse(
-        f"board/{request.state.device}/group.html", {"request": request, "group": group, "boards": boards, "latest": latest}
+        f"{request.state.device}/board/group.html", {"request": request, "group": group, "boards": boards, "latest": latest}
     )
 
 
@@ -107,7 +107,7 @@ def list_post(bo_table: str,
         write.icon_link = write.wr_link1 or write.wr_link2
 
     return templates.TemplateResponse(
-        f"board/{request.state.device}/{board.bo_skin}/list_post.html",
+        f"{request.state.device}/board/{board.bo_skin}/list_post.html",
         {
             "request": request,
             "categories": categories,
@@ -339,7 +339,7 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
     is_file_content = board.bo_use_file_content
 
     return templates.TemplateResponse(
-        f"board/{request.state.device}/{board.bo_skin}/write_form.html",
+        f"{request.state.device}/board/{board.bo_skin}/write_form.html",
         {
             "request": request,
             "categories": categories,
@@ -409,7 +409,7 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
     is_file_content = True if board.bo_use_file_content else False
 
     return templates.TemplateResponse(
-        f"board/{request.state.device}/{board.bo_skin}/write_form.html",
+        f"{request.state.device}/board/{board.bo_skin}/write_form.html",
         {
             "request": request,
             "categories": categories,
@@ -585,7 +585,7 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
         "next": next,
     }
     return templates.TemplateResponse(
-        f"board/{request.state.device}/{board.bo_skin}/read_post.html", context
+        f"{request.state.device}/board/{board.bo_skin}/read_post.html", context
     )
 
 

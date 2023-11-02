@@ -58,17 +58,23 @@ if os.environ.get("is_setup") != "true":
     
 ADMIN_TEMPLATES_DIR = "_admin/templates"
 
+# 나중에 삭제할 코드
 SERVER_TIME = datetime.now()
 TIME_YMDHIS = SERVER_TIME.strftime("%Y-%m-%d %H:%M:%S")
 TIME_YMD = TIME_YMDHIS[:10]
 
-# pc 설정 시 모바일 기기에서도 PC화면 보여짐
-# mobile 설정 시 PC에서도 모바일화면 보여짐
-# both 설정 시 접속 기기에 따른 화면 보여짐 (pc에서 접속하면 pc화면을, mobile과 tablet에서 접속하면 mobile 화면)
-SET_DEVICE = 'both'
+# 나중에 삭제할 코드
+# # pc 설정 시 모바일 기기에서도 PC화면 보여짐
+# # mobile 설정 시 PC에서도 모바일화면 보여짐
+# # both 설정 시 접속 기기에 따른 화면 보여짐 (pc에서 접속하면 pc화면을, mobile과 tablet에서 접속하면 mobile 화면)
+# SET_DEVICE = 'both'
 
-# mobile 을 사용하지 않을 경우 False 로 설정
-USE_MOBILE = True
+# # mobile 을 사용하지 않을 경우 False 로 설정
+# USE_MOBILE = True
+
+
+IS_RESPONSIVE = os.getenv("IS_RESPONSIVE", default="True")
+IS_RESPONSIVE = IS_RESPONSIVE.lower() == "true"
     
 
 def hash_password(password: str):
@@ -100,6 +106,9 @@ def dynamic_create_write_table(table_name: str, create_table: bool = False):
     # 이미 생성된 모델 반환
     if table_name in _created_models:
         return _created_models[table_name]
+    
+    if isinstance(table_name, int):
+        table_name = str(table_name)
     
     class_name = "Write" + table_name.capitalize()
     DynamicModel = type(
