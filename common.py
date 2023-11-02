@@ -1544,8 +1544,8 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
 # 메일 발송
 # return 은 수정 필요
-def mailer(email: str, subject: str, content: str):
-    to_emails = email.split(',') if ',' in email else [email]
+def mailer(to_emails: List[str], subject: str, body: str):
+    # to_emails = email.split(',') if ',' in email else [email]
     for to_email in to_emails:
         try:
             msg = MIMEMultipart()
@@ -1554,7 +1554,7 @@ def mailer(email: str, subject: str, content: str):
             msg['Subject'] = subject
             
             # Assuming body is HTML, if not change 'html' to 'plain'
-            msg.attach(MIMEText(content, 'html'))  
+            msg.attach(MIMEText(body, 'html'))  
 
             with smtplib.SMTP(SMTP_SERVER, int(SMTP_PORT)) as server:
                 if SMTP_USERNAME and SMTP_PASSWORD:
