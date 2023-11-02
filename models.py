@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime, Date, Time, Boolean, BIGINT
+from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime, Date, Time, Boolean, BIGINT, UniqueConstraint
 
 # TINYINT 대신 Integer 사용하기 바랍니다.
 # from sqlalchemy.dialects.mysql import TINYINT
@@ -857,4 +857,19 @@ class Scrap(Base):
     bo_table = Column(String(20), nullable=False, default='')
     wr_id = Column(Integer, nullable=False, default=0)
     ms_datetime = Column(DateTime, nullable=False, default=datetime.now())
+
+
+class BoardGood(Base):
+    """
+    게시글 좋아요/싫어요 테이블
+    """
+    __tablename__ = DB_TABLE_PREFIX + 'board_good'
+    __table_args__ = (UniqueConstraint('bo_table', 'wr_id', 'mb_id', name='fkey1'), )
+
+    bg_id = Column(Integer, primary_key=True, autoincrement=True)
+    bo_table = Column(String(20), nullable=False, default='')
+    wr_id = Column(Integer, nullable=False, default=0)
+    mb_id = Column(String(20), nullable=False, default='')
+    bg_flag = Column(String(255), nullable=False, default='')
+    bg_datetime = Column(DateTime, nullable=False, default=datetime.now())
     

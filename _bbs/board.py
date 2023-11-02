@@ -172,7 +172,7 @@ async def move_post(
     # TODO: 게시판관리자/그룹관리자 허용 추가
     if not request.state.is_super_admin:
         raise AlertException(status_code=403, detail="게시판 관리자 이상 접근이 가능합니다.")
-    print (bo_table)
+
     # 게시판 정보 조회
     board = db.query(models.Board).get(bo_table)
     if not board:
@@ -564,8 +564,18 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
         db.commit()
 
     # TODO: 스크랩 여부 확인
-    # TODO: 추천 여부 확인
 
+    # 추천 여부 확인
+    if member:
+        good_data = db.query(models.BoardGood).filter(
+            models.BoardGood.bo_table == bo_table,
+            models.BoardGood.wr_id == wr_id,
+            models.BoardGood.mb_id == member.mb_id
+        ).first()
+        # good_data.type이 "good" 일 경우 추천 활성화, "nogood" 일 경우 비추천 활성화
+        if good_data:
+            setattr(write, f"is_{good_data.bg_flag}", True)
+        
     # TODO: 이전글 다음글 조회
     prev = None
     next = None
@@ -748,8 +758,10 @@ def generate_reply_character(board: Board, write):
     return write.wr_reply + reply_char
 
 
-def is_owner(object, member):
-    if object and object.mb_id:
-        return object.mb_id == member.mb_id
+def is_owner(object, member = None):
+    object_mb_id = getattr(object, "mb_id", None)
+    member_mb_id = getattr(member, "mb_id", None)
+    if object_mb_id:
+        return object_mb_id == member_mb_id
     else:
         return False

@@ -5,7 +5,7 @@
 {% endblock head %}
 
 {% block title %}
-    {{ write.subject }} > {{ board.bo_subject }}
+    {{ write.wr_subject|truncate(20, False, '...', 0) }} > {{ board.bo_subject }}
 {% endblock title %}
 {% block subtitle %}
     {{ board.bo_subject }}
@@ -150,7 +150,7 @@
             <div id="bo_v_act">
                 {% if board.bo_use_good %}
                 <span class="bo_v_act_gng">
-                    <a href="" id="good_button" class="bo_v_good">
+                    <a href="/bbs/ajax/good/{{ board.bo_table }}/{{ write.wr_id }}/good" id="good_button" class="bo_v_good {{ "active" if write.is_good else "" }}">
                         <i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
                         <span class="sound_only">추천</span>
                         <strong>{{ write.wr_good }}</strong>
@@ -160,7 +160,7 @@
                 {% endif %}
                 {% if board.bo_use_nogood %}
                 <span class="bo_v_act_gng">
-                    <a href="" id="nogood_button" class="bo_v_nogood">
+                    <a href="/bbs/ajax/good/{{ board.bo_table }}/{{ write.wr_id }}/nogood" id="nogood_button" class="bo_v_nogood {{ "active" if write.is_nogood else "" }}">
                         <i class="fa fa-thumbs-o-down" aria-hidden="true"></i>
                         <span class="sound_only">비추천</span>
                         <strong>{{ write.wr_nogood }}</strong>
@@ -443,50 +443,64 @@
 
     <script>
     $(function() {
-    $("a.view_image").click(function() {
-        window.open(this.href, "large_image", "location=yes,links=no,toolbar=no,top=10,left=10,width=10,height=10,resizable=yes,scrollbars=no,status=no");
-        return false;
-    });
+        // 이미지 리사이즈
+        $("#bo_v_atc").viewimageresize();
 
-    // 추천, 비추천
-    $("#good_button, #nogood_button").click(function() {
-        var $tx;
-        if(this.id == "good_button")
-            $tx = $("#bo_v_act_good");
-        else
-            $tx = $("#bo_v_act_nogood");
+        $("a.view_image").click(function() {
+            window.open(this.href, "large_image", "location=yes,links=no,toolbar=no,top=10,left=10,width=10,height=10,resizable=yes,scrollbars=no,status=no");
+            return false;
+        });
 
-        excute_good(this.href, $(this), $tx);
-        return false;
-    });
+        // 추천, 비추천
+        $("#good_button, #nogood_button").click(function() {
+            $("#bo_v_act_good").stop().fadeOut()
+            $("#bo_v_act_nogood").stop().fadeOut()
 
-    // 이미지 리사이즈
-    $("#bo_v_atc").viewimageresize();
-    });
+            $("#good_button").removeClass("active");
+            $("#nogood_button").removeClass("active");
 
-    function excute_good(href, $el, $tx)
-    {
-    $.post(
-        href,
-        { js: "on" },
-        function(data) {
-            if(data.error) {
-                alert(data.error);
-                return false;
+            var $tx;
+            if (this.id == "good_button") {
+                $tx = $("#bo_v_act_good");
+            } else {
+                $tx = $("#bo_v_act_nogood");
             }
 
-            if(data.count) {
-                $el.find("strong").text(number_format(String(data.count)));
-                if($tx.attr("id").search("nogood") > -1) {
-                    $tx.text("이 글을 비추천하셨습니다.");
-                    $tx.fadeIn(200).delay(2500).fadeOut(200);
-                } else {
-                    $tx.text("이 글을 추천하셨습니다.");
-                    $tx.fadeIn(200).delay(2500).fadeOut(200);
+            excute_good(this.href, $(this), $tx);
+            return false;
+        });
+    });
+
+    var isRun = true;
+    function excute_good(href, $el, $tx) {
+        $.ajax({
+            type: "POST",
+            url: href,
+            dataType: "json",
+            beforeSend: function() {
+                if (isRun == false) {
+                    alert("비정상적인 요청입니다. 잠시만 기다려주세요.")
+                    return false;
                 }
+                isRun = false;
+            },
+            success: function(data) {
+                if (data.status == "success") {
+                    $el.addClass("active");
+                }
+                $("#good_button").find("strong").text(number_format(data.good));
+                $("#nogood_button").find("strong").text(number_format(data.nogood));
+                $tx.text(data.message);
+                $tx.fadeIn(200).delay(2500).fadeOut(200);
+            },
+            error: function(xhr, status, error) {
+                // 메시지 출력
+                alert(xhr.status + " 오류 - " + xhr.responseJSON.message);
+            },
+            complete: function() {
+                isRun = true;
             }
-        }, "json"
-    );
+        });
     }
     </script>
     <!-- } 게시글 읽기 끝 -->

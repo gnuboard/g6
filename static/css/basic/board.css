@@ -227,7 +227,7 @@ box-shadow:1px 1px 5px 0px hsl(232, 36%, 96%)}
 #bo_v_act {margin-bottom:30px;text-align:center}
 #bo_v_act .bo_v_act_gng {position:relative}
 #bo_v_act a {margin-right:5px;vertical-align:middle;color:#4a5158}
-#bo_v_act a:hover {background-color:#fff;color:#ff484f;border-color:#ff484f}
+#bo_v_act a:hover, #bo_v_act a.active {background-color:#fff;color:#ff484f;border-color:#ff484f}
 #bo_v_act i {font-size:1.4em;margin-right:5px}
 #bo_v_act_good, #bo_v_act_nogood {display:none;position:absolute;top:30px;left:0;z-index:9999;padding:10px 0;width:165px;background:#ff3061;color:#fff;text-align:center}
 #bo_v_act .bo_v_good {display:inline-block;border:1px solid #dedede;width:70px;line-height:46px;border-radius:30px}

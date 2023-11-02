@@ -43,8 +43,9 @@ from _bbs.qa import router as qa_router
 from _bbs.member_profile import router as user_profile_router
 from _bbs.memo import router as memo_router
 from _bbs.poll import router as poll_router
-from _bbs.ajax_autosave import router as autosave_router
 from _bbs.scrap import router as scrap_router
+from _bbs.ajax_good import router as good_router
+from _bbs.ajax_autosave import router as autosave_router
 
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
@@ -57,6 +58,7 @@ app.include_router(qa_router, prefix="/bbs", tags=["qa"])
 app.include_router(memo_router, prefix="/bbs", tags=["memo"])
 app.include_router(poll_router, prefix="/bbs", tags=["poll"])
 app.include_router(scrap_router, prefix="/bbs", tags=["scrap"])
+app.include_router(good_router, prefix="/bbs/ajax", tags=["good"])
 app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
 
 # is_mobile = False
