@@ -60,17 +60,18 @@ async def sendmail_test_result(request: Request, db: Session = Depends(get_db),
         return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요."]})
 
     # ','를 기준으로 문자열을 분리하여 리스트로 변환하거나, 하나의 요소만 있는 리스트를 생성
-    to_emails = to_email.split(',') if ',' in to_email else [to_email]
     subject = "[메일검사] 제목"
     body = f'<span style="font-size:9pt;">[메일검사] 내용<p>이 내용이 제대로 보인다면 보내는 메일 서버에는 이상이 없는것입니다.<p>{datetime.now()}<p>이 메일 주소로는 회신되지 않습니다.</span>'
     
-    mailer(to_emails, subject, body)
+    mailer(to_email, subject, body)
+
+    real_emails = to_email.split(',') if ',' in to_email else [to_email]
     
     context = {
         "request": request,
         "config": request.state.config,
         "member": request.state.login_member,
-        "real_emails": to_emails,
+        "real_emails": real_emails,
     }
     return templates.TemplateResponse("sendmail_test_result.html", context)
 

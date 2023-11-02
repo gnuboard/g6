@@ -1544,8 +1544,8 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
 # 메일 발송
 # return 은 수정 필요
-def mailer(to_emails: List[str], subject: str, body: str):
-    # to_emails = email.split(',') if ',' in email else [email]
+def mailer(email: str, subject: str, body: str):
+    to_emails = email.split(',') if ',' in email else [email]
     for to_email in to_emails:
         try:
             msg = MIMEMultipart()
