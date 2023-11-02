@@ -28,6 +28,12 @@ SMTP_PASSWORD=""
 # SMTP_PASSWORD="네이버 로그인 비밀번호"
 
 
+# 웹사이트 표시 방법
+# "True" (기본값) : 반응형 웹사이트 (참고: 반응형 템플릿만 제공합니다.)
+# "False" : 적응형 웹사이트
+IS_RESPONSIVE = "False" # 반드시 문자열로 입력해야 합니다.
+
+
 ```
 
 아직 postgresql, sqlite3 는 정상 작동하지 않음
