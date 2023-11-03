@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime, Date, Time, Boolean, BIGINT
+from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime, Date, Time, Boolean, BIGINT, UniqueConstraint
 
 # TINYINT 대신 Integer 사용하기 바랍니다.
 # from sqlalchemy.dialects.mysql import TINYINT
@@ -250,7 +250,7 @@ class Board(Base):
     __tablename__ = DB_TABLE_PREFIX + "board"
 
     bo_table = Column(String(20), primary_key=True, nullable=False)
-    gr_id = Column(String(255), nullable=False, default="")
+    gr_id = Column(String(255), ForeignKey(DB_TABLE_PREFIX + "group.gr_id"), nullable=False, default="")
     bo_subject = Column(String(255), nullable=False, default="")
     bo_mobile_subject = Column(String(255), nullable=False, default="")
     bo_device = Column(Enum("both", "pc", "mobile", name="bo_device"), nullable=False, default="both")
@@ -347,6 +347,8 @@ class Board(Base):
     bo_10 = Column(String(255), nullable=False, default="")
     # 종속관계
     # writes = relationship("Write", backref="board")
+    # 연관관계
+    group = relationship("Group")
 
 
 class WriteBaseModel(Base):
@@ -825,22 +827,48 @@ class Mail(Base):
     ma_ip = Column(String(255), nullable=False, default='')
     ma_last_option = Column(Text, nullable=False, default='')
     
-    
-# CREATE TABLE `g5_board_new` (
-#   `bn_id` int NOT NULL,
-#   `bo_table` varchar(20) NOT NULL DEFAULT '',
-#   `wr_id` int NOT NULL DEFAULT '0',
-#   `wr_parent` int NOT NULL DEFAULT '0',
-#   `bn_datetime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-#   `mb_id` varchar(20) NOT NULL DEFAULT ''
-# ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
 class BoardNew(Base):
+    """
+    최신 게시물 테이블
+    """
     __tablename__ = DB_TABLE_PREFIX + 'board_new'
     
     bn_id = Column(Integer, primary_key=True, autoincrement=True)
-    bo_table = Column(String(20), nullable=False, default='')
+    bo_table = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "board.bo_table"), nullable=False, default='')
     wr_id = Column(Integer, nullable=False, default=0)
     wr_parent = Column(Integer, nullable=False, default=0)
     bn_datetime = Column(DateTime, nullable=False, default=datetime.now())
     mb_id = Column(String(20), nullable=False, default='')
+
+    # 연관관계
+    board = relationship("Board")
+
+
+class Scrap(Base):
+    """
+    게시글 스크랩 테이블
+    """
+    __tablename__ = DB_TABLE_PREFIX + 'scrap'
+
+    ms_id = Column(Integer, primary_key=True, autoincrement=True)
+    mb_id = Column(String(20), nullable=False, default='')
+    bo_table = Column(String(20), nullable=False, default='')
+    wr_id = Column(Integer, nullable=False, default=0)
+    ms_datetime = Column(DateTime, nullable=False, default=datetime.now())
+
+
+class BoardGood(Base):
+    """
+    게시글 좋아요/싫어요 테이블
+    """
+    __tablename__ = DB_TABLE_PREFIX + 'board_good'
+    __table_args__ = (UniqueConstraint('bo_table', 'wr_id', 'mb_id', name='fkey1'), )
+
+    bg_id = Column(Integer, primary_key=True, autoincrement=True)
+    bo_table = Column(String(20), nullable=False, default='')
+    wr_id = Column(Integer, nullable=False, default=0)
+    mb_id = Column(String(20), nullable=False, default='')
+    bg_flag = Column(String(255), nullable=False, default='')
+    bg_datetime = Column(DateTime, nullable=False, default=datetime.now())
     

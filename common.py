@@ -16,7 +16,7 @@ from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
-from models import Auth, Config, Member, Memo, Board, Group, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
+from models import Auth, Config, Member, Memo, Board, BoardNew, Group, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
 from models import WriteBaseModel
 from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
@@ -1058,6 +1058,19 @@ def editor_path(request:Request) -> str:
     return editor_name
 
 
+def editor_macro(request: Request) -> str:
+    """지정한 에디터 경로의 macros.html 파일을 반환하는 함수
+    - 미지정시 그누보드 환경설정값 사용
+    - request.state.editor: 에디터이름
+    - request.state.use_editor: 에디터 사용여부 False 이면 'textarea'로 설정
+    """
+    editor_name = request.state.editor
+    if not request.state.use_editor or not editor_name:
+        editor_name = "textarea"
+
+    return editor_name + "/macros.html"
+
+
 def nl2br(value) -> str:
     """ \n 을 <br> 태그로 변환
     """
@@ -1658,3 +1671,18 @@ def datetime_format(date: datetime, format="%Y-%m-%d %H:%M:%S"):
         return ""
 
     return date.strftime(format)
+
+
+def insert_board_new(bo_table: str, write: object):
+    """
+    최신글 테이블 등록 함수
+    """
+    db = SessionLocal()
+
+    new = BoardNew()
+    new.bo_table = bo_table
+    new.wr_id = write.wr_id
+    new.wr_parent = write.wr_parent
+    new.mb_id = write.mb_id
+    db.add(new)
+    db.commit()
