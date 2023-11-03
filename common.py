@@ -157,8 +157,9 @@ def get_member_level_select(id: str, start: int, end: int, selected: int, event=
 
     
 # skin_gubun(new, search, connect, faq 등) 에 따른 스킨을 SELECT 형식으로 얻음
-def get_skin_select(skin_gubun, id, selected, event='', device='pc'):
-    skin_path = TEMPLATES_DIR + f"/{skin_gubun}/{device}"
+def get_skin_select(skin_gubun, id, selected, event='', device=''):
+    skin_path = TEMPLATES_DIR + f"/{device}/{skin_gubun}"
+
     html_code = []
     html_code.append(f'<select id="{id}" name="{id}" {event}>')
     html_code.append(f'<option value="">선택</option>')

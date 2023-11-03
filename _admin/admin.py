@@ -57,6 +57,7 @@ router.include_router(admin_auth_router, prefix="", tags=["admin_auth"])
 router.include_router(admin_popular_router,  prefix="", tags=["admin_popular"])
 router.include_router(admin_poll_router,  prefix="", tags=["admin_poll"])
 router.include_router(admin_mail_router,  prefix="", tags=["admin_mail"])
+router.include_router(admin_newwin_router,  prefix="", tags=["admin_newwin"])
 router.include_router(admin_write_count_router,  prefix="", tags=["admin_write_count"])
 
 @router.get("/")
