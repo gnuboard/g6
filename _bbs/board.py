@@ -205,7 +205,7 @@ async def move_post(
     results = query.order_by(br.gr_id, br.bo_order, br.bo_table).all()
 
     return templates.TemplateResponse(
-        f"board/pc/move.html", {
+        f"{request.state.device}/board/move.html", {
             "request": request,
             "sw": sw,
             "act": act,

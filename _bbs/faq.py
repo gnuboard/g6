@@ -49,4 +49,4 @@ def faq_view(request: Request, fm_id: int = None, db: Session = Depends(get_db))
         "fm_timg_url": fm_timg_url,
     }
 
-    return templates.TemplateResponse(f"faq/pc/faq.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/faq/faq.html", context)

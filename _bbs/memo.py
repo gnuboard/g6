@@ -51,7 +51,7 @@ def memo_list(request: Request, db: Session = Depends(get_db),
         "paging": get_paging(request, current_page, total_records),
     }
     
-    return templates.TemplateResponse(f"memo/{request.state.device}/memo_list.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/memo/memo_list.html", context)
 
 
 @router.get("/memo_view/{me_id}")
@@ -113,7 +113,7 @@ def memo_view(request: Request, db: Session = Depends(get_db), me_id: int = Path
         "prev_memo": prev_memo,
         "next_memo": next_memo,
     }
-    return templates.TemplateResponse(f"memo/{request.state.device}/memo_view.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/memo/memo_view.html", context)
 
 
 @router.get("/memo_form")
@@ -141,7 +141,7 @@ def memo_form(request: Request, db: Session = Depends(get_db),
         "target": target,
         "memo": memo,
     }
-    return templates.TemplateResponse(f"memo/{request.state.device}/memo_form.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/memo/memo_form.html", context)
 
 
 @router.post("/memo_form_update")

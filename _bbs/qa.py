@@ -69,7 +69,7 @@ def qa_list(request: Request,
         "paging": get_paging(request, current_page, total_records),
     }
 
-    return templates.TemplateResponse(f"qa/pc/qa_list.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/qa/qa_list.html", context)
 
 
 @router.get("/qawrite")
@@ -99,7 +99,7 @@ def qa_form_write(request: Request,
         "related": related,
     }
 
-    return templates.TemplateResponse(f"qa/pc/qa_form.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/qa/qa_form.html", context)
 
 
 # Q&A 수정하기
@@ -127,7 +127,7 @@ def qa_form_edit(qa_id: int,
         "qa": qa,
     }
 
-    return templates.TemplateResponse(f"qa/pc/qa_form.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/qa/qa_form.html", context)
 
 
 @router.post("/qawrite_update")
@@ -316,7 +316,7 @@ def qa_view(qa_id: int,
         "next": next
     }
 
-    return templates.TemplateResponse(f"qa/pc/qa_view.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/qa/qa_view.html", context)
 
 
 def set_file_list(request: Request, qa: QaContent = None):

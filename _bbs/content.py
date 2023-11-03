@@ -37,5 +37,5 @@ def content_view(request: Request, co_id: str, db: Session = Depends(get_db)):
         "co_timg_url": co_timg_url,
     }
     
-    return templates.TemplateResponse(f"content/pc/{content.co_skin}/content.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/content/{content.co_skin}/content.html", context)
 
