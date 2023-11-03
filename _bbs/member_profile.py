@@ -8,12 +8,17 @@ from starlette.responses import RedirectResponse
 from common import *
 from database import get_db
 from dataclassform import MemberForm
-from main import templates, app
+
 from models import Member
 from pbkdf2 import validate_password, create_hash
 
 router = APIRouter()
-
+templates = Jinja2Templates(directory=TEMPLATES_DIR, extensions=["jinja2.ext.i18n"])
+templates.env.globals["is_admin"] = is_admin
+templates.env.globals["generate_one_time_token"] = generate_one_time_token
+templates.env.filters["default_if_none"] = default_if_none
+templates.env.globals['getattr'] = getattr
+templates.env.globals["generate_token"] = generate_token
 
 @router.get("/member_confirm")
 def check_member_form(request: Request):

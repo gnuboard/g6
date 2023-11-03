@@ -6,13 +6,18 @@ from _bbs.member_profile import validate_nickname, validate_userid
 from common import *
 from database import get_db
 from dataclassform import MemberForm
-from main import templates, app
+# from main import templates, app
 from models import Member
 from pbkdf2 import create_hash
 
 router = APIRouter()
 
-
+templates = Jinja2Templates(directory=TEMPLATES_DIR, extensions=["jinja2.ext.i18n"])
+templates.env.globals["is_admin"] = is_admin
+templates.env.globals["generate_one_time_token"] = generate_one_time_token
+templates.env.filters["default_if_none"] = default_if_none
+templates.env.globals['getattr'] = getattr
+templates.env.globals["generate_token"] = generate_token
 @router.get("/register")
 def get_register(request: Request, response: Response, db: Session = Depends(get_db)):
     # 캐시 제어 헤더 설정 (캐시된 페이지를 보여주지 않고 새로운 페이지를 보여줌)
@@ -53,7 +58,7 @@ def get_register_form(request: Request):
     member.mb_level = config.cf_register_level
 
     form_context = {
-        "action_url": app.url_path_for("register_form_save"),
+        "action_url": router.url_path_for("register_form_save"),
         "agree": agree,
         "agree2": agree2,
     }
@@ -71,16 +76,17 @@ def get_register_form(request: Request):
 
 
 @router.post("/register_form", name='register_form_save')
-async def post_register_form(request: Request, db: Session = Depends(get_db),
-                             mb_id: str = Form(None),
-                             mb_password: str = Form(None),
-                             mb_password_re: str = Form(None),
-                             mb_certify_case: Optional[str] = Form(default=""),
-                             mb_img: Optional[UploadFile] = File(None),
-                             mb_icon: Optional[UploadFile] = File(None),
-                             mb_zip: Optional[str] = Form(default=""),
-                             member_form: MemberForm = Depends(),
-                             ):
+async def post_register_form(
+        request: Request, db: Session = Depends(get_db),
+        mb_id: str = Form(None),
+        mb_password: str = Form(None),
+        mb_password_re: str = Form(None),
+        mb_certify_case: Optional[str] = Form(default=""),
+        mb_img: Optional[UploadFile] = File(None),
+        mb_icon: Optional[UploadFile] = File(None),
+        mb_zip: Optional[str] = Form(default=""),
+        member_form: MemberForm = Depends(),
+):
     # 약관 동의 체크
     agree = request.session.get("ss_agree", "")
     agree2 = request.session.get("ss_agree", "")
@@ -89,17 +95,14 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
     if not agree2:
         return RedirectResponse(url="/bbs/register", status_code=302)
 
+    config = request.state.config
     # 유효성 검사
     exists_member = db.query(Member.mb_id, Member.mb_email).filter(Member.mb_id == mb_id).first()
-    config = request.state.config
-
     if exists_member:
         raise AlertException(status_code=400, detail="이미 존재하는 회원아이디 입니다.")
 
-
     if not (mb_password and mb_password_re):
         raise AlertException(status_code=400, detail="비밀번호를 입력해 주세요.")
-
 
     elif mb_password != mb_password_re:
         raise AlertException(status_code=400, detail="비밀번호와 비밀번호 확인이 일치하지 않습니다.")

@@ -811,6 +811,7 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
     db.query(Member).filter_by(mb_id=mb_id).update({Member.mb_point: po_mb_point})
     # db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: po_mb_point})
     db.commit()
+    db.close()
 
     return 1
 
@@ -825,6 +826,7 @@ def get_expire_point(request: Request, mb_id: str):
     db = SessionLocal()
     
     point_sum = db.query(func.sum(Point.po_point - Point.po_use_point)).filter_by(mb_id=mb_id, po_expired=False).filter(Point.po_expire_date < datetime.now()).scalar()
+    db.close()
     return point_sum if point_sum else 0
 
 
@@ -873,6 +875,7 @@ def get_point_sum(request: Request, mb_id: str):
             
     # 포인트합
     point_sum = db.query(func.sum(Point.po_point)).filter_by(mb_id=mb_id).scalar()
+    db.close()
     return point_sum if point_sum else 0
 
 
@@ -909,6 +912,7 @@ def insert_use_point(mb_id: str, point: int, po_id: str = ""):
             db.query(Point).filter_by(po_id=row.po_id).update({"po_use_point": (Point.po_use_point + point4), "po_expired": 100})
             db.commit()
             point1 = point1 - point4
+    db.close()
 
 
 # 포인트 삭제
@@ -939,6 +943,7 @@ def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel
         # 포인트 UPDATE
         db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: sum_point}, synchronize_session=False)
         result = db.commit()
+    db.close()
 
     return result
 
@@ -965,6 +970,7 @@ def delete_use_point(request: Request, mb_id: str, point: int):
             db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: 0, Point.po_expired: po_expired}, synchronize_session=False)
             db.commit()
             point1 = point1 - point2
+    db.close()
 
 
 # 소멸포인트 삭제

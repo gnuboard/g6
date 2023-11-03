@@ -18,7 +18,7 @@ from settings import APP_IS_DEBUG
 from user_agents import parse
 import os
 import models
-# models.Base.metadata.create_all(bind=engine)
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(debug=APP_IS_DEBUG)
 
@@ -42,7 +42,7 @@ from _bbs.member_profile import router as user_profile_router
 from _bbs.memo import router as memo_router
 from _bbs.poll import router as poll_router
 from _bbs.ajax_autosave import router as autosave_router
-
+from _bbs.social import router as social_router
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
 app.include_router(login_router, prefix="/bbs", tags=["login"])
@@ -54,6 +54,7 @@ app.include_router(qa_router, prefix="/qa", tags=["qa"])
 app.include_router(memo_router, prefix="/memo", tags=["memo"])
 app.include_router(poll_router, prefix="/poll", tags=["poll"])
 app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
+app.include_router(social_router, prefix="/bbs", tags=["social"])
 
 # is_mobile = False
 # user_device = 'pc'
