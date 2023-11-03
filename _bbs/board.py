@@ -3,7 +3,7 @@
 # 테이블명은 write 로, 글 한개에 대한 의미는 write 와 post 를 혼용하여 사용합니다.
 import bleach
 import datetime
-from fastapi import APIRouter, Depends, Request, Form, HTTPException
+from fastapi import APIRouter, Depends, Request, File, Form, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import aliased, Session
@@ -23,6 +23,8 @@ templates.env.globals["generate_token"] = generate_token
 templates.env.globals["getattr"] = getattr
 templates.env.globals["get_selected"] = get_selected
 templates.env.globals["get_unique_id"] = get_unique_id
+
+FILE_DIRECTORY = "data/file/"
 
 
 @router.get("/group/{gr_id}")
@@ -354,9 +356,9 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
     # 링크
     is_link = member_level >= board.bo_link_level
     # 파일
-    file_count = int(board.bo_upload_count) or 0
     is_file = member_level >= board.bo_upload_level
     is_file_content = board.bo_use_file_content
+    file_count = int(board.bo_upload_count) or 0
 
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/write_form.html",
@@ -423,10 +425,22 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
     if get_member_level(request) >= board.bo_link_level:
         is_link = True
     # 파일 설정
-    # TODO: 업로드한 파일이 file_count보다 클 경우, file_count를 증가시킨다.
-    file_count = int(board.bo_upload_count)
     is_file = True if get_member_level(request) >= board.bo_upload_level else False
     is_file_content = True if board.bo_use_file_content else False
+
+    # TODO: 2023.11.06 작업예정 사항
+    # BoardFile객체 목록을 조회해서 전달
+    # 게시판 업로드 설정 갯수만큼 빈 객체를 생성해서 전달한다.
+    # 아래 코드는 삭제할 예정
+    query_file = db.query(models.BoardFile).filter(
+        models.BoardFile.bo_table == board.bo_table,
+        models.BoardFile.wr_id == write.wr_id
+    )
+    write_upload_count = query_file.count()
+    config_upload_count = int(board.bo_upload_count) or 0
+    # 업로드한 파일이 file_count보다 클 경우, file_count를 증가시킨다.
+    file_count = write_upload_count if write_upload_count > config_upload_count else config_upload_count
+    files = query_file.all()
 
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/write_form.html",
@@ -444,6 +458,7 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
             "is_mail": is_mail,
             "recv_email_checked": recv_email_checked,
             "is_link": is_link,
+            "files": files,
             "file_count": file_count,
             "is_file": is_file,
             "is_file_content": is_file_content,
@@ -465,6 +480,8 @@ def write_update(
     mail: str = Form(None),
     secret: str = Form(None),
     form_data: WriteForm = Depends(),
+    files: List[UploadFile] = File(None, alias="bf_file[]"),
+    file_dels: list = Form(None, alias="bf_file_del[]"),
 ):
     """
     게시글을 Table 추가한다.
@@ -535,8 +552,38 @@ def write_update(
     if uid:
         db.query(models.AutoSave).filter(models.AutoSave.as_uid == uid).delete()
     db.commit()
+
+    # 업로드 파일처리
+    directory = FILE_DIRECTORY + bo_table
+    make_directory(directory)
+    
+    # 업로드파일이 존재하는 객체만 가져온다.
+    # print(file) 자리에 파일업로드를 처리하는 함수를 만들어서 추가한다.
+    [print(file) for file in files if file.size > 0]
+
+    # # 파일 삭제
+    # delete_image(FILE_DIRECTORY, f"{qa.qa_source1}", qa_file_del1)
+    # delete_image(FILE_DIRECTORY, f"{qa.qa_source2}", qa_file_del2)
+    # # 파일 및 데이터 저장
+    # if file1.size > 0:
+    #     filename1 = os.urandom(16).hex() + "." + file1.filename.split(".")[-1]
+    #     qa.qa_file1 = FILE_DIRECTORY + filename1
+    #     qa.qa_source1 = file1.filename
+    #     save_image(FILE_DIRECTORY, f"{filename1}", file1)
+    # elif not qa.qa_source1:
+    #     qa.qa_file1 = None
+    # if file2.size > 0:
+    #     filename2 = os.urandom(16).hex() + "." + file2.filename.split(".")[-1]
+    #     qa.qa_file2 = FILE_DIRECTORY + filename2
+    #     qa.qa_source2 = file2.filename
+    #     save_image(FILE_DIRECTORY, f"{filename2}", file2)
+    # elif not qa.qa_source2: 
+    #     qa.qa_file2 = None
+    # db.commit()
+
+
+
     # TODO: 비밀글은 세션에 비밀글 저장 (자신의 글 확인)
-    # TODO: 파일처리
     # TODO: 메일발송
     
     # 최신글 캐시 삭제

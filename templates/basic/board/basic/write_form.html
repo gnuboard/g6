@@ -128,16 +128,14 @@
                         <label for="bf_file_{{ i }}" class="lb_icon">
                             <i class="fa fa-folder-open" aria-hidden="true"></i><span class="sound_only"> 파일 #{{ i }}</span>
                         </label>
-                        <input type="file" name="bf_file[]" id="bf_file_{{ i }}" title="파일첨부 1 : 용량 {{ board.bo_upload_size }} 바이트 이하만 업로드 가능" class="frm_file">
+                        <input type="file" name="bf_file[]" id="bf_file_{{ i }}" title="파일첨부{{ i }} : 용량 {{ board.bo_upload_size }} 바이트 이하만 업로드 가능" class="frm_file">
                     </div>
                     {% if is_file_content %}
                         <input type="text" name="bf_content[]" value="{{ write.bf_content }}" title="파일 설명을 입력해주세요." class="full_input frm_input" size="50" placeholder="파일 설명을 입력해주세요.">
                     {% endif %}
-                    <!--
                     <span class="file_del">
-                        <input type="checkbox" id="bf_file_del{{ i }}" name="bf_file_del[{{ i }}]" value="1"> <label for="bf_file_del{{ i }}"> 파일 삭제</label>
+                        <input type="checkbox" id="bf_file_del{{ i }}" name="bf_file_del[]" value="{{ i }}"> <label for="bf_file_del{{ i }}"> 파일 삭제</label>
                     </span>
-                    -->
                 </div>
             {% endfor %}
         {% endif %}
