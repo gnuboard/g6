@@ -241,34 +241,33 @@ def move_update(
     # 입력받은 정보를 토대로 게시글을 복사한다.
     models.Write = dynamic_create_write_table(bo_table)
     origin_board = db.query(models.Board).get(bo_table)
-    target_writes = db.query(models.Write).filter(models.Write.wr_id.in_(wr_ids.split(','))).all()
+    origin_writes = db.query(models.Write).filter(models.Write.wr_id.in_(wr_ids.split(','))).all()
 
     # 게시글 복사/이동 작업 반복
     for target_bo_table in target_bo_tables:
-        for write in target_writes:
+        for origin_write in origin_writes:
             models.TargetWrite = dynamic_create_write_table(target_bo_table)
-            
+            target_write = models.TargetWrite()
+
             # 복사/이동 로그 기록
-            if not write.wr_is_comment and config.cf_use_copy_log:
+            if not origin_write.wr_is_comment and config.cf_use_copy_log:
                 log_msg = f"[이 게시물은 {member.mb_nick}님에 의해 {datetime.now()} {origin_board.bo_subject}에서 {act} 됨]"
-                if "html" in write.wr_option:
-                    log_msg = f'<div class="content_{sw}>' + log_msg + '</div>'
+                if "html" in origin_write.wr_option:
+                    log_msg = f'<div class="content_{sw}">' + log_msg + '</div>'
                 else:
                     log_msg = '\n' + log_msg
 
             # 게시글 복사
             initial_field = ["wr_id", "wr_parent"]
-            target_write = models.TargetWrite()
-
-            for field in write.__table__.columns.keys():
+            for field in origin_write.__table__.columns.keys():
                 if field in initial_field:
                     continue
                 elif field == 'wr_content':
-                    target_write.wr_content = write.wr_content + log_msg
+                    target_write.wr_content = origin_write.wr_content + log_msg
                 elif field == 'wr_num':
                     target_write.wr_num = get_next_num(target_bo_table)
                 else:
-                    setattr(target_write, field, getattr(write, field))
+                    setattr(target_write, field, getattr(origin_write, field))
 
             if sw == "copy":
                 target_write.wr_good = 0
@@ -289,21 +288,26 @@ def move_update(
             #     pass
 
             if sw == "move":
-                # TODO: 최신글 이동(주석해제)
-                pass
-                # write_new = db.query(models.boardNew).filter(bo_table == bo_table, wr_id=write.wr_id).first()
-                # write_new.bo_table = target_write.bo_table
-                # write_new.wr_id = write_new.parent_id = target_write.wr_id
-                # db.commit()
+                # 최신글 이동
+                db.query(models.BoardNew).filter_by(
+                    bo_table = origin_board.bo_table, wr_id = origin_write.wr_id
+                ).update({"bo_table": target_bo_table, "wr_id": target_write.wr_id, "wr_parent": target_write.wr_id})
                 
                 # 게시글
-                if not write.wr_is_comment:
-                    pass
-                    # TODO: 추천데이터 이동
-                    # TODO: 스크랩 이동
+                if not origin_write.wr_is_comment:
+                    # 추천데이터 이동
+                    db.query(models.BoardGood).filter_by(
+                        bo_table = origin_board.bo_table, wr_id = origin_write.wr_id
+                    ).update({"bo_table": target_bo_table, "wr_id": target_write.wr_id})
 
-                # 기존 데이터(게시글, 파일, 최신글) 삭제
-                db.delete(write)
+                    # 스크랩 이동
+                    db.query(models.Scrap).filter_by(
+                        bo_table = bo_table, wr_id = origin_write.wr_id
+                    ).update({"bo_table": target_bo_table, "wr_id": target_write.wr_id})
+
+                # 기존 데이터 삭제
+                # TODO: 파일 삭제
+                db.delete(origin_write)
                 db.commit()
         # 최신글 캐시 삭제
         G6FileCache().delete_prefix(f'latest-{target_bo_table}')
