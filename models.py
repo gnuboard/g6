@@ -178,7 +178,6 @@ class Config(Base):
     cf_8 = Column(String(255), nullable=False, default="")
     cf_9 = Column(String(255), nullable=False, default="")
     cf_10 = Column(String(255), nullable=False, default="")
-    cf_11 = Column(String(255), nullable=False, default="")
 
 
 class Member(Base):
@@ -241,6 +240,7 @@ class Member(Base):
     mb_8 = Column(String(255), nullable=False, default="")
     mb_9 = Column(String(255), nullable=False, default="")
     mb_10 = Column(String(255), nullable=False, default="")
+    mb_11 = Column(String(255), nullable=False, default="")
 
 
 class Board(Base):
