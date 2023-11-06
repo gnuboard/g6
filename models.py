@@ -893,5 +893,4 @@ class BoardFile(Base):
     bf_width = Column(Integer, nullable=False, default=0)
     bf_height = Column(Integer, nullable=False, default=0)
     bf_type = Column(Integer, nullable=False, default=0)
-    bf_datetime = Column(DateTime, nullable=False, default=datetime.now())
-    
+    bf_datetime = Column(DateTime, nullable=False, default=datetime.now())    

@@ -182,8 +182,8 @@
         {% for file in files %}
             <li>
                 <i class="fa fa-folder-open" aria-hidden="true"></i>
-                <a href="{{ board.bo_table }}/{{ write.wr_id}}/download/{{ file.bf_no }}" class="view_file_download" download="{{ file.bf_source }}">
-                    <strong>{{ file.bf_source }}</strong>  ({{ file.bf_filesize|convert_filesize_unit }})
+                <a href="/board/{{ board.bo_table }}/{{ write.wr_id }}/download/{{ file.bf_no }}" class="view_file_download"> 
+                    <strong>{{ file.bf_source }}</strong>  ({{ file.bf_filesize|filesizeformat }})
                 </a>
                 <br>
                 <span class="bo_v_file_cnt">{{ file.bf_download }}회 다운로드 | DATE : {{ file.bf_datetime }}</span>

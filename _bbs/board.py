@@ -17,7 +17,6 @@ import models
 router = APIRouter()
 templates = Jinja2Templates(directory=[EDITOR_PATH, TEMPLATES_DIR])
 templates.env.filters["datetime_format"] = datetime_format
-templates.env.filters["convert_filesize_unit"] = convert_filesize_unit
 templates.env.globals["bleach"] = bleach
 templates.env.globals["nl2br"] = nl2br
 templates.env.globals["editor_macro"] = editor_macro
@@ -119,12 +118,12 @@ def list_post(bo_table: str,
 
     # 게시글 정보 수정
     for write in writes:
-        # 파일 존재여부 조회
-        file_query = db.query(models.BoardFile).filter_by(bo_table=board.bo_table, wr_id=write.wr_id)
+        file_manager = BoardFileManager(board, write.wr_id)
+
         write.num = total_count - offset - (writes.index(write))
         write.icon_hot = write.wr_hit >= board.bo_hot
         write.icon_new = write.wr_datetime > (datetime.now() - timedelta(hours=int(board.bo_new)))
-        write.icon_file = db.query(literal(True)).filter(file_query.exists()).scalar()
+        write.icon_file = file_manager.is_exist()
         write.icon_link = write.wr_link1 or write.wr_link2
 
     return templates.TemplateResponse(
@@ -362,8 +361,7 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
     # 파일
     is_file = member_level >= board.bo_upload_level
     is_file_content = board.bo_use_file_content
-    file_count = int(board.bo_upload_count) or 0
-    files = [models.BoardFile() for _ in range(file_count)]
+    files = BoardFileManager(board).get_board_files_by_form()
 
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/write_form.html",
@@ -429,16 +427,8 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
     # 파일 설정
     is_file = True if member_level >= board.bo_upload_level else False
     is_file_content = True if board.bo_use_file_content else False
-
     # 업로드 파일 목록 조회
-    query_file = db.query(models.BoardFile).filter_by(bo_table = board.bo_table, wr_id = write.wr_id)
-    write_upload_count = query_file.count()
-    config_upload_count = int(board.bo_upload_count) or 0
-    # 업로드 파일과 설정 값 중 큰 값을 가져온다.
-    file_count = write_upload_count if write_upload_count > config_upload_count else config_upload_count
-    files = query_file.all()
-    # 업로드 파일이 설정값보다 적으면 빈 객체를 추가한다.
-    files = files + [models.BoardFile() for _ in range(file_count - write_upload_count)]
+    files = BoardFileManager(board, wr_id).get_board_files_by_form()
 
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/write_form.html",
@@ -557,43 +547,24 @@ def write_update(
 
     # 파일 삭제
     if file_dels:
-        for file_del in file_dels:
-            board_file = db.query(models.BoardFile).filter_by(bo_table=bo_table, wr_id=write.wr_id, bf_no=file_del).first()
-            if os.path.exists(board_file.bf_file):
-                os.remove(board_file.bf_file)
-            db.delete(board_file)
-            db.commit()
+        for bf_no in file_dels:
+            BoardFileManager(board, write.wr_id).delete_board_file(bf_no)
     
     # 파일 업로드 처리 및 파일정보 저장
     for file in files:
         index = files.index(file)
         if file.size > 0:
-            filename = os.urandom(16).hex() + "." + file.filename.split(".")[-1]
-            board_file = db.query(models.BoardFile).filter_by(bo_table=bo_table, wr_id=write.wr_id, bf_no=index).first()
+            file_manager = BoardFileManager(board, write.wr_id)
+            board_file = file_manager.get_board_file(index)
+            bf_content = file_content[index] if file_content else ""
             if board_file:
                 # 기존파일 삭제
-                if os.path.exists(board_file.bf_file):
-                    os.remove(board_file.bf_file)
-                board_file.bf_source = file.filename
-                board_file.bf_file = f"{directory}/{filename}"
-                board_file.bf_download = 0
-                board_file.bf_content = file_content[index] if file_content else ""
-                board_file.bf_filesize = file.size
+                file_manager.remove_file(board_file.bf_file)
+                # 파일정보 업데이트
+                file_manager.update_board_file(board_file, directory, file, bf_content)
             else:
-                board_file = models.BoardFile()
-                board_file.bo_table = bo_table
-                board_file.wr_id = write.wr_id
-                board_file.bf_no = index
-                board_file.bf_source = file.filename
-                board_file.bf_file = f"{directory}/{filename}"
-                board_file.bf_download = 0
-                board_file.bf_content = file_content[index] if file_content else ""
-                board_file.bf_filesize = file.size
-                db.add(board_file)
-
-            save_image(directory, filename, file)
-            # 파일 정보 저장
-            db.commit()
+                # 파일정보 추가
+                file_manager.insert_board_file(index, directory, file, bf_content)
 
     # TODO: 비밀글은 세션에 비밀글 저장 (자신의 글 확인)
     # TODO: 메일발송
@@ -689,8 +660,7 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
             next = query.filter(models.Write.wr_num > write.wr_num).first()
 
     # 파일정보 조회
-    wr_files = db.query(models.BoardFile).filter_by(bo_table=bo_table, wr_id=wr_id).all()
-    images, files = set_file_list(request, wr_files)
+    images, files = BoardFileManager(board, wr_id).get_board_files_by_type(request)
 
     # 댓글 목록 조회
     comments = db.query(models.Write).filter(
@@ -698,7 +668,6 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
         models.Write.wr_is_comment == True
     ).order_by(models.Write.wr_id).all()
 
-    
     context = {
         "request": request,
         "board": board,
@@ -744,6 +713,9 @@ def delete_post(
     db.commit()
 
     # TODO: 게시글 삭제에 따른 추가정보 삭제
+    # 파일 삭제
+    file_manager = BoardFileManager(board, wr_id)
+    file_manager.delete_board_files()
 
     # 최신글 캐시 삭제
     G6FileCache().delete_prefix(f'latest-{bo_table}')
@@ -772,12 +744,16 @@ def download_file(
     Returns:
         FileResponse: 파일 다운로드
     """
-    board_file = db.query(models.BoardFile).filter_by(bo_table=bo_table, wr_id=wr_id, bf_no=bf_no).first()
+    board = db.query(models.Board).get(bo_table)
+    if not board:
+        raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
+
+    file_manager = BoardFileManager(board, wr_id)
+    board_file = file_manager.get_board_file(bf_no)
     if not board_file:
         raise AlertException("파일이 존재하지 않습니다.", 404)
     # 다운로드 횟수 증가
-    board_file.bf_download += 1
-    db.commit()
+    file_manager.update_download_count(board_file)
 
     return FileResponse(board_file.bf_file, filename=board_file.bf_source)
 
@@ -912,25 +888,198 @@ def is_owner(object, member = None):
     else:
         return False
 
+# TODO:
+# 6. 파일 이동
+# 7. 이미지, 동영상 업로드 파일 확인 (cf_image_extension, cf_movie_extension)
+# 8. 업로드 사이즈 체크 (bo_upload_size)
+class BoardFileManager():
+    model = models.BoardFile
 
-def set_file_list(request: Request, files: list):
-    """이미지 파일과 첨부파일 목록을 설정
+    def __init__(self, board: Board, wr_id: int = None):
+        self.board = board
+        self.bo_table = board.bo_table
+        self.wr_id = wr_id
+        self.db = SessionLocal()
 
-    Args:
-        request (Request): Request 객체
-        qa (QaContent, optional): Q&A 객체. Defaults to None.
+    def is_exist(self):
+        """게시글에 파일이 있는지 확인
 
-    Returns:
-        QaContent: 이미지/첨부파일 목록이 설정된 Q&A 객체
-    """
-    config = request.state.config
-    image_list = []
-    file_list = []
-    for file in files:
-        ext = file.bf_source.split('.')[-1]
-        if ext in config.cf_image_extension:
-            image_list.append(file)
+        Returns:
+            bool: 파일이 존재하면 True, 없으면 False
+        """
+        query = self.db.query(self.model).filter_by(bo_table=self.bo_table, wr_id=self.wr_id)
+
+        return self.db.query(literal(True)).filter(query.exists()).scalar()
+    
+    def get_board_files(self):
+        """업로드된 파일 목록을 가져온다.
+
+        Returns:
+            list[BoardFile]: 업로드된 파일 목록
+        """
+        return self.db.query(self.model).filter_by(
+            bo_table=self.bo_table,
+            wr_id=self.wr_id
+        ).all()
+    
+    def get_board_files_by_form(self):
+        """입력/수정 폼에서 사용할 파일 목록을 가져온다.
+
+        Returns:
+            list[BoardFile]: 업로드된 파일 목록 
+        """
+        config_count = int(self.board.bo_upload_count) or 0
+        upload_count = config_count
+        if self.wr_id:
+            query = self.db.query(self.model).filter_by(bo_table=self.bo_table, wr_id=self.wr_id)
+            uploaded_count = query.count()
+            uploaded_files = query.all()
+            # 파일 카운트는 업로드된 파일 수와 설정된 값 중 큰 수로 설정한다.
+            upload_count = (uploaded_count if uploaded_count > config_count else config_count) - uploaded_count
         else:
-            file_list.append(file)
+            uploaded_files = []
 
-    return image_list, file_list
+        # 업로드 파일 + 빈 객체
+        files = uploaded_files + [self.model() for _ in range(upload_count)]
+
+        return files
+
+    def get_board_files_by_type(self, request: Request):
+        """업로드된 파일 목록을 파일과 이미지로 분리한다.
+
+        Args:
+            request (Request): Request 객체
+
+        Returns:
+            list[BoardFile]: 파일 목록
+            list[BoardFile]: 이미지 목록
+        """
+        config = request.state.config
+        board_files = self.get_board_files()
+        images = []
+        files = []
+        for file in board_files:
+            ext = file.bf_source.split('.')[-1]
+            if ext in config.cf_image_extension:
+                images.append(file)
+            else:
+                files.append(file)
+
+        return images, files
+
+    def get_board_file(self, bf_no: int):
+        """업로드된 파일을 가져온다.
+
+        Args:
+            bf_no (int): 파일 순번
+
+        Returns:
+            BoardFile: 업로드된 파일
+        """
+        return self.db.query(self.model).filter_by(bo_table=self.bo_table, wr_id=self.wr_id, bf_no=bf_no).first()
+    
+    def get_filename(self, filename: str):
+        """파일이름을 생성한다.
+
+        Args:
+            filename (str): 업로드 파일이름
+
+        Returns:
+            str: 파일이름
+        """
+        return os.urandom(16).hex() + "." + filename.split(".")[-1]
+    
+    def insert_board_file(self, bf_no: int, directory: str, file: UploadFile, content: str = ""):
+        """게시글의 파일을 추가한다.
+
+        Args:
+            bf_no (int): 파일 순번
+            directory (str): 파일 저장 경로
+            file (UploadFile): 업로드 파일
+            content (str, optional): 파일 설명. Defaults to "".
+        """
+        filename = self.get_filename(file.filename)
+        board_file = self.model()
+        board_file.bo_table = self.bo_table
+        board_file.wr_id = self.wr_id
+        board_file.bf_no = bf_no
+        board_file.bf_source = file.filename
+        board_file.bf_file = f"{directory}/{filename}"
+        board_file.bf_download = 0
+        board_file.bf_content = content
+        board_file.bf_filesize = file.size
+        self.db.add(board_file)
+        self.db.commit()
+
+        self.upload_file(directory, filename, file)
+    
+    def update_board_file(self, board_file: model, directory: str, file: UploadFile, content: str = ""):
+        """게시글의 파일을 수정한다.
+
+        Args:
+            board_file (model): BoardFile 모델
+            directory (str): 파일 저장 경로
+            file (UploadFile): 업로드 파일
+            content (str, optional): 파일 설명. Defaults to "".
+        """
+        filename = self.get_filename(file.filename)
+        board_file.bf_source = file.filename
+        board_file.bf_file = f"{directory}/{filename}"
+        board_file.bf_download = 0
+        board_file.bf_content = content
+        board_file.bf_filesize = file.size
+        self.db.commit()
+
+        self.upload_file(directory, filename, file)
+
+    def update_download_count(self, board_file: model):
+        """다운로드 횟수를 증가시킨다.
+
+        Args:
+            board_file (model): BoardFile 모델
+        """
+        board_file.bf_download += 1
+        self.db.commit()
+        
+    def delete_board_file(self, bf_no: int):
+        """게시글의 파일을 삭제한다.
+
+        Args:
+            bf_no (int): 파일 순번
+        """
+        if self.wr_id and bf_no:
+            board_file = self.get_board_file(bf_no)
+            self.remove_file(board_file.bf_file)
+            self.db.delete(board_file)
+            self.db.commit()
+
+    def delete_board_files(self):
+        """게시글의 파일을 삭제한다.
+        """
+        if self.wr_id:
+            board_files = self.get_board_files()
+            for board_file in board_files:
+                self.remove_file(board_file.bf_file)
+                self.db.delete(board_file)
+            self.db.commit()
+
+    def upload_file(self, directory: str, filename: str, file: UploadFile):
+        """파일을 업로드한다.
+
+        Args:
+            directory (str): 파일 저장 경로
+            filename (str): 파일이름
+            file (UploadFile): 업로드 파일
+        """
+        if file and file.filename:
+            with open(f"{directory}/{filename}", "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+
+    def remove_file(self, path: str):
+        """파일을 삭제한다.
+
+        Args:
+            path (str): 파일 경로
+        """
+        if os.path.exists(path):
+            os.remove(path)
