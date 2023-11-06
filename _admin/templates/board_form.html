@@ -690,7 +690,7 @@
             <tr>
             <th scope="row"><label for="bo_skin">스킨 디렉토리<strong class="sound_only">필수</strong></label></th>
             <td>
-                {{ get_skin_select('board', 'bo_skin', board.bo_skin, event='required', device='pc')|safe }}
+                {{ get_skin_select('board', 'bo_skin', board.bo_skin, event='required', device='')|safe }}
             </td>
             <td class="td_grpset">
                 <input type="checkbox" name="chk_grp_skin" id="chk_grp_skin">
@@ -1270,11 +1270,6 @@ function fboardform_submit(f)
         alert("입력한 게시판 TABLE명을 사용할수 없습니다. 다른 이름으로 입력해 주세요.");
         return false;
     }
-
-    <?php echo get_editor_js("bo_content_head"); ?>
-    <?php echo get_editor_js("bo_content_tail"); ?>
-    <?php echo get_editor_js("bo_mobile_content_head"); ?>
-    <?php echo get_editor_js("bo_mobile_content_tail"); ?>
 
     if (parseInt(f.bo_count_modify.value) < 0) {
         alert("원글 수정 불가 댓글수는 0 이상 입력하셔야 합니다.");

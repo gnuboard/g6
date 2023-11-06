@@ -18,7 +18,7 @@ templates.env.globals["generate_query_string"] = generate_query_string
 FILE_DIRECTORY = "data/qa/"
 
 
-@router.get("/list")
+@router.get("/qalist")
 def qa_list(request: Request,
             db: Session = Depends(get_db),
             current_page: int = Query(default=1, alias="page"), # 페이지
@@ -69,11 +69,11 @@ def qa_list(request: Request,
         "paging": get_paging(request, current_page, total_records),
     }
 
-    return templates.TemplateResponse(f"qa/pc/qa_list.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/qa/qa_list.html", context)
 
 
-@router.get("/write")
-def qa_write(request: Request,
+@router.get("/qawrite")
+def qa_form_write(request: Request,
              db: Session = Depends(get_db),
              qa_related: int = None):
     '''
@@ -99,12 +99,12 @@ def qa_write(request: Request,
         "related": related,
     }
 
-    return templates.TemplateResponse(f"qa/pc/qa_form.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/qa/qa_form.html", context)
 
 
 # Q&A 수정하기
-@router.get("/write/{qa_id:int}")
-def qa_edit(qa_id: int,
+@router.get("/qawrite/{qa_id:int}")
+def qa_form_edit(qa_id: int,
             request: Request,
             db: Session = Depends(get_db)):
     '''
@@ -127,11 +127,11 @@ def qa_edit(qa_id: int,
         "qa": qa,
     }
 
-    return templates.TemplateResponse(f"qa/pc/qa_form.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/qa/qa_form.html", context)
 
 
-@router.post("/update")
-def qa_update(request: Request,
+@router.post("/qawrite_update")
+def qa_write_update(request: Request,
                 token: str = Form(...),
                 db: Session = Depends(get_db),
                 form_data: QaContentForm = Depends(),
@@ -215,7 +215,7 @@ def qa_update(request: Request,
         return RedirectResponse(url=f"/qa/{qa.qa_id}", status_code=302)
 
 
-@router.get("/delete/{qa_id}")
+@router.get("/qadelete/{qa_id}")
 def qa_delete(request: Request,
                 qa_id: int,
                 token: str = Query(...),
@@ -230,11 +230,11 @@ def qa_delete(request: Request,
     db.query(QaContent).filter(QaContent.qa_id == qa_id).delete()
     db.commit()
 
-    return RedirectResponse(url=f"/qa/list", status_code=302)
+    return RedirectResponse(url=f"/bbs/qalist", status_code=302)
 
 
-@router.post("/list/delete")
-async def qa_list_delete(request: Request, db: Session = Depends(get_db),
+@router.post("/qadelete/list")
+async def qa_delete_list(request: Request, db: Session = Depends(get_db),
                       token: Optional[str] = Form(...),
                       checks: List[int] = Form(..., alias="chk_qa_id[]")
                       ):
@@ -254,10 +254,10 @@ async def qa_list_delete(request: Request, db: Session = Depends(get_db),
             db.delete(qa)
             db.commit()
 
-    return RedirectResponse(f"/qa/list?{generate_query_string(request)}", status_code=303)
+    return RedirectResponse(f"/bbs/qalist?{generate_query_string(request)}", status_code=303)
 
 
-@router.get("/{qa_id}")
+@router.get("/qaview/{qa_id}")
 def qa_view(qa_id: int,
             request: Request,
             db: Session = Depends(get_db)):
@@ -316,7 +316,7 @@ def qa_view(qa_id: int,
         "next": next
     }
 
-    return templates.TemplateResponse(f"qa/pc/qa_view.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/qa/qa_view.html", context)
 
 
 def set_file_list(request: Request, qa: QaContent = None):

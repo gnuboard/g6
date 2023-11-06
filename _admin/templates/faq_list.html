@@ -44,7 +44,7 @@
                             <a href="{{ url_for('faq_update_form', fm_id=faq_master.fm_id, fa_id=faq.fa_id) }}" class="btn btn_03">
                                 <span class="sound_only">{{ faq.fa_subject }} </span>수정
                             </a>
-                            <a href="{{ url_for('faq_delete', fm_id=faq_master.fm_id, fa_id=faq.fa_id) }}" onclick="return delete_confirm3(this);" class="btn btn_02">
+                            <a href="{{ url_for('faq_delete', fa_id=faq.fa_id) }}" onclick="return delete_confirm3(this);" class="btn btn_02">
                                 <span class="sound_only">{{ faq.fa_subject }} </span>삭제
                             </a>
                         </td>

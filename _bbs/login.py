@@ -16,15 +16,24 @@ templates.env.globals['getattr'] = getattr
 templates.env.globals["generate_token"] = generate_token
 
 @router.get("/login")
-def login_form(request: Request):
+def login_form(request: Request,
+               url: str = "/"):
     """
     로그인 폼을 보여준다.
     """
-    return templates.TemplateResponse("bbs/login_form.html", {"request": request})
+    context = {
+        "request": request,
+        "url": url
+    }
+    return templates.TemplateResponse("bbs/login_form.html", context)
 
 
 @router.post("/login")
-def login(request: Request, db: Session = Depends(get_db), mb_id: str = Form(...), mb_password: str = Form(...)):
+def login(request: Request, db: Session = Depends(get_db), 
+        mb_id: str = Form(...), 
+        mb_password: str = Form(...),
+        url: str = Form(default="/")
+    ):
     """
     로그인 폼화면에서 로그인
     """
@@ -40,7 +49,7 @@ def login(request: Request, db: Session = Depends(get_db), mb_id: str = Form(...
     # XSS 공격에 대응하기 위하여 회원의 고유키를 생성해 놓는다.
     request.session["ss_mb_key"] = session_member_key(request, member)
 
-    return RedirectResponse(url="/", status_code=302)
+    return RedirectResponse(url=url, status_code=302)
 
 
 @router.post("/login_check")

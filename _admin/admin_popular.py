@@ -85,15 +85,38 @@ def popular_rank(request: Request,
     to_date = re.sub(r'[^0-9 :\-]', '', to_date)
 
     # 인기검색어 순위 데이터 출력
-    query = db.query(
+    # query = db.query(
+    #         Popular.pp_word,
+    #         func.count(Popular.pp_word).label('search_count'),
+    #         func.rank().over(order_by=desc(text('search_count'))).label('ranking')
+    #     ).filter(
+    #     Popular.pp_word != '',
+    #     Popular.pp_date >= fr_date,
+    #     Popular.pp_date <= to_date
+    # ).group_by(Popular.pp_word).order_by(desc('search_count'), Popular.pp_word)
+    
+    subquery = (
+        db.query(
             Popular.pp_word,
-            func.count(Popular.pp_word).label('search_count'),
-            func.rank().over(order_by=desc(text('search_count'))).label('ranking')
-        ).filter(
-        Popular.pp_word != '',
-        Popular.pp_date >= fr_date,
-        Popular.pp_date <= to_date
-    ).group_by(Popular.pp_word).order_by(desc('search_count'), Popular.pp_word)
+            func.count(Popular.pp_word).label('search_count')
+        )
+        .filter(
+            Popular.pp_word != '',
+            Popular.pp_date >= fr_date,
+            Popular.pp_date <= to_date
+        )
+        .group_by(Popular.pp_word)
+        .subquery()
+    )
+
+    query = (
+        db.query(
+            subquery.c.pp_word,
+            subquery.c.search_count,
+            func.rank().over(order_by=desc(subquery.c.search_count)).label('ranking')
+        )
+        .order_by(desc(subquery.c.search_count), subquery.c.pp_word)
+    )
 
     total_count = query.count()
     records_per_page = request.state.config.cf_page_rows

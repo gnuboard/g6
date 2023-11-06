@@ -16,7 +16,7 @@
             <a href="/bbs/register" class="join">회원가입</a>
         </div>
         <form name="flogin" action="/bbs/login" onsubmit="return flogin_submit(this);" method="post">
-
+        <input type="hidden" name="url" value="{{ url }}">
         <fieldset id="login_fs">
             <legend>회원로그인</legend>
             <label for="login_id" class="sound_only">회원아이디<strong class="sound_only"> 필수</strong></label>

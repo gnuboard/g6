@@ -24,7 +24,7 @@ templates.env.globals["generate_token"] = generate_token
 def check_member_form(request: Request):
     test_member = {"mb_id": ""}
 
-    return templates.TemplateResponse("member/member_confirm.html", {
+    return templates.TemplateResponse(f"{request.state.device}/member/member_confirm.html", {
         "request": request,
         "member": test_member
     })
@@ -71,7 +71,7 @@ def member_profile(request: Request, db: Session = Depends(get_db)):
                       + f'{get_filetime_str(f"data/member_image/{mb_id[:2]}/{mb_id}.gif")}',
     }
 
-    return templates.TemplateResponse("member/register_form.html", {
+    return templates.TemplateResponse(f"{request.state.device}/member/register_form.html", {
         "config": request.state.config,
         "request": request,
         "member": member,

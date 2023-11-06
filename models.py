@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime, Date, Time, Boolean, BIGINT
+from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime, Date, Time, Boolean, BIGINT, UniqueConstraint
 
 # TINYINT 대신 Integer 사용하기 바랍니다.
 # from sqlalchemy.dialects.mysql import TINYINT
@@ -250,10 +250,10 @@ class Board(Base):
     __tablename__ = DB_TABLE_PREFIX + "board"
 
     bo_table = Column(String(20), primary_key=True, nullable=False)
-    gr_id = Column(String(255), nullable=False, default="")
+    gr_id = Column(String(255), ForeignKey(DB_TABLE_PREFIX + "group.gr_id"), nullable=False, default="")
     bo_subject = Column(String(255), nullable=False, default="")
     bo_mobile_subject = Column(String(255), nullable=False, default="")
-    bo_device = Column(Enum("both", "pc", "mobile"), nullable=False, default="both")
+    bo_device = Column(Enum("both", "pc", "mobile", name="bo_device"), nullable=False, default="both")
     bo_admin = Column(String(255), nullable=False, default="")
     bo_list_level = Column(Integer, nullable=False, default=0, server_default=text("0"))
     bo_read_level = Column(Integer, nullable=False, default=0, server_default=text("0"))
@@ -321,7 +321,7 @@ class Board(Base):
     bo_notice = Column(Text, nullable=False, default="")
     bo_upload_count = Column(Integer, nullable=False, default=0, server_default=text("0"))
     bo_use_email = Column(Integer, nullable=False, default=0, server_default=text("0"))
-    bo_use_cert = Column(Enum("", "cert", "adult", "hp-cert", "hp-adult"), nullable=False, default="")
+    bo_use_cert = Column(Enum("", "cert", "adult", "hp-cert", "hp-adult", name="bo_use_cert"), nullable=False, default="")
     bo_use_sns = Column(Integer, nullable=False, default=0, server_default=text("0"))
     bo_use_captcha = Column(Integer, nullable=False, default=0, server_default=text("0"))
     bo_sort_field = Column(String(255), nullable=False, default="")
@@ -347,6 +347,8 @@ class Board(Base):
     bo_10 = Column(String(255), nullable=False, default="")
     # 종속관계
     # writes = relationship("Write", backref="board")
+    # 연관관계
+    group = relationship("Group")
 
 
 class WriteBaseModel(Base):
@@ -366,7 +368,7 @@ class WriteBaseModel(Base):
     wr_comment = Column(Integer, nullable=False, default=0, server_default=text("0"))
     wr_comment_reply = Column(String(5), nullable=False, default="")
     ca_name = Column(String(255), nullable=False, default="")
-    wr_option = Column(Enum("html1", "html2", "secret", "mail"), nullable=False, default="html1")
+    wr_option = Column(Enum("html1", "html2", "secret", "mail", name="wr_option"), nullable=False, default="html1")
     wr_subject = Column(String(255), nullable=False, default="")
     wr_content = Column(Text, nullable=False, default="")
     wr_seo_title = Column(String(255), nullable=False, default="")
@@ -429,7 +431,7 @@ class Group(Base):
 
     gr_id = Column(String(10), primary_key=True, nullable=False)
     gr_subject = Column(String(255), nullable=False, default="")
-    gr_device = Column(Enum("both", "pc", "mobile"), nullable=False, default="both")
+    gr_device = Column(Enum("both", "pc", "mobile", name="gr_device"), nullable=False, default="both")
     gr_admin = Column(String(255), nullable=False, default="")
     gr_use_access = Column(Integer, nullable=False, default=0, server_default=text("0"))
     gr_order = Column(Integer, nullable=False, default=0, server_default=text("0"))
@@ -673,12 +675,12 @@ class Point(Base):
 
     po_id = Column(Integer, primary_key=True, autoincrement=True)
     mb_id = Column(String(20), nullable=False, default="")
-    po_datetime = Column(DateTime, nullable=False, default="0000-00-00 00:00:00")
+    po_datetime = Column(DateTime, nullable=False, default=datetime.now())
     po_content = Column(String(255), nullable=False, default="")
     po_point = Column(Integer, nullable=False, default=0)
     po_use_point = Column(Integer, nullable=False, default=0)
     po_expired = Column(Integer, nullable=False, default=0)
-    po_expire_date = Column(Date, nullable=False, default="0000-00-00")
+    po_expire_date = Column(Date, nullable=False, default=datetime.now())
     po_mb_point = Column(Integer, nullable=False, default=0)
     po_rel_table = Column(String(20), nullable=False, default="")
     po_rel_id = Column(String(20), nullable=False, default="")
@@ -699,7 +701,7 @@ class Memo(Base):
     me_read_datetime = Column(DateTime, nullable=True)
     me_memo = Column(Text, nullable=False)
     me_send_id = Column(Integer, nullable=False, default=0)
-    me_type = Column(Enum("send", "recv"), nullable=False, default="recv")
+    me_type = Column(Enum("send", "recv", name="me_type"), nullable=False, default="recv")
     me_send_ip = Column(String(100), nullable=False, default="")
 
     # 종속관계
@@ -795,6 +797,81 @@ class UniqId(Base):
     uq_id = Column(BIGINT, primary_key=True)
     uq_ip = Column(String(255), nullable=False, default="")
 
+
+class NewWin(Base):
+    __tablename__ = DB_TABLE_PREFIX + 'new_win'
+
+    nw_id = Column(Integer, primary_key=True, autoincrement=True)
+    nw_division = Column(String(10), nullable=False, default='both')
+    nw_device = Column(String(10), nullable=False, default='both')
+    nw_begin_time = Column(DateTime, nullable=False, default=datetime.now())
+    nw_end_time = Column(DateTime, nullable=False, default=datetime.now())
+    nw_disable_hours = Column(Integer, nullable=False, default=0)
+    nw_left = Column(Integer, nullable=False, default=0)
+    nw_top = Column(Integer, nullable=False, default=0)
+    nw_height = Column(Integer, nullable=False, default=0)
+    nw_width = Column(Integer, nullable=False, default=0)
+    nw_subject = Column(Text, nullable=False)
+    nw_content = Column(Text, nullable=False)
+    nw_content_html = Column(Integer, nullable=False, default=0)
+    
+    
+# 회원메일발송 테이블
+class Mail(Base):
+    __tablename__ = DB_TABLE_PREFIX + 'mail'
+
+    ma_id = Column(Integer, primary_key=True, autoincrement=True)
+    ma_subject = Column(String(255), nullable=False, default='')
+    ma_content = Column(Text, nullable=False, default='')
+    ma_time = Column(DateTime, nullable=False, default=datetime.now())
+    ma_ip = Column(String(255), nullable=False, default='')
+    ma_last_option = Column(Text, nullable=False, default='')
+    
+
+class BoardNew(Base):
+    """
+    최신 게시물 테이블
+    """
+    __tablename__ = DB_TABLE_PREFIX + 'board_new'
+    
+    bn_id = Column(Integer, primary_key=True, autoincrement=True)
+    bo_table = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "board.bo_table"), nullable=False, default='')
+    wr_id = Column(Integer, nullable=False, default=0)
+    wr_parent = Column(Integer, nullable=False, default=0)
+    bn_datetime = Column(DateTime, nullable=False, default=datetime.now())
+    mb_id = Column(String(20), nullable=False, default='')
+
+    # 연관관계
+    board = relationship("Board")
+
+
+class Scrap(Base):
+    """
+    게시글 스크랩 테이블
+    """
+    __tablename__ = DB_TABLE_PREFIX + 'scrap'
+
+    ms_id = Column(Integer, primary_key=True, autoincrement=True)
+    mb_id = Column(String(20), nullable=False, default='')
+    bo_table = Column(String(20), nullable=False, default='')
+    wr_id = Column(Integer, nullable=False, default=0)
+    ms_datetime = Column(DateTime, nullable=False, default=datetime.now())
+
+
+class BoardGood(Base):
+    """
+    게시글 좋아요/싫어요 테이블
+    """
+    __tablename__ = DB_TABLE_PREFIX + 'board_good'
+    __table_args__ = (UniqueConstraint('bo_table', 'wr_id', 'mb_id', name='fkey1'), )
+
+    bg_id = Column(Integer, primary_key=True, autoincrement=True)
+    bo_table = Column(String(20), nullable=False, default='')
+    wr_id = Column(Integer, nullable=False, default=0)
+    mb_id = Column(String(20), nullable=False, default='')
+    bg_flag = Column(String(255), nullable=False, default='')
+    bg_datetime = Column(DateTime, nullable=False, default=datetime.now())
+    
 
 class MemberSocialProfiles(Base):
     __tablename__ = DB_TABLE_PREFIX + "member_social_profiles"

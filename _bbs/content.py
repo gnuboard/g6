@@ -10,7 +10,7 @@ router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 
-@router.get("/{co_id}")
+@router.get("/content/{co_id}")
 def content_view(request: Request, co_id: str, db: Session = Depends(get_db)):
     '''
     컨텐츠 보기
@@ -37,5 +37,5 @@ def content_view(request: Request, co_id: str, db: Session = Depends(get_db)):
         "co_timg_url": co_timg_url,
     }
     
-    return templates.TemplateResponse(f"content/pc/{content.co_skin}/content.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/content/{content.co_skin}/content.html", context)
 

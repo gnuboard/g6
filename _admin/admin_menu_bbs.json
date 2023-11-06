@@ -39,7 +39,7 @@
         {
             "id": "100310",
             "name": "팝업레이어관리",
-            "url": "newwinlist",
+            "url": "newwin_list",
             "permission": "scf_poplayer"
         },
         {

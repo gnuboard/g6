@@ -4,7 +4,7 @@ import os
 import random
 import re
 from time import sleep
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 import uuid
 from urllib.parse import urlencode
 import PIL
@@ -16,13 +16,23 @@ from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
-from models import Auth, Config, Member, Memo, Board, Group, Menu, Point, Poll, Popular, Visit, VisitSum, UniqId
+from models import Auth, Config, Member, Memo, Board, BoardNew, Group, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
 from models import WriteBaseModel
 from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
 import json
 from PIL import Image
 from user_agents import parse
+import base64
+from dotenv import load_dotenv
+import smtplib
+import threading
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+
+load_dotenv()
+
 
 # 전역변수 선언(global variables)
 TEMPLATES = "templates"
@@ -48,17 +58,23 @@ if os.environ.get("is_setup") != "true":
     
 ADMIN_TEMPLATES_DIR = "_admin/templates"
 
+# 나중에 삭제할 코드
 SERVER_TIME = datetime.now()
 TIME_YMDHIS = SERVER_TIME.strftime("%Y-%m-%d %H:%M:%S")
 TIME_YMD = TIME_YMDHIS[:10]
 
-# pc 설정 시 모바일 기기에서도 PC화면 보여짐
-# mobile 설정 시 PC에서도 모바일화면 보여짐
-# both 설정 시 접속 기기에 따른 화면 보여짐 (pc에서 접속하면 pc화면을, mobile과 tablet에서 접속하면 mobile 화면)
-SET_DEVICE = 'both'
+# 나중에 삭제할 코드
+# # pc 설정 시 모바일 기기에서도 PC화면 보여짐
+# # mobile 설정 시 PC에서도 모바일화면 보여짐
+# # both 설정 시 접속 기기에 따른 화면 보여짐 (pc에서 접속하면 pc화면을, mobile과 tablet에서 접속하면 mobile 화면)
+# SET_DEVICE = 'both'
 
-# mobile 을 사용하지 않을 경우 False 로 설정
-USE_MOBILE = True
+# # mobile 을 사용하지 않을 경우 False 로 설정
+# USE_MOBILE = True
+
+
+IS_RESPONSIVE = os.getenv("IS_RESPONSIVE", default="True")
+IS_RESPONSIVE = IS_RESPONSIVE.lower() == "true"
     
 
 def hash_password(password: str):
@@ -90,6 +106,9 @@ def dynamic_create_write_table(table_name: str, create_table: bool = False):
     # 이미 생성된 모델 반환
     if table_name in _created_models:
         return _created_models[table_name]
+    
+    if isinstance(table_name, int):
+        table_name = str(table_name)
     
     class_name = "Write" + table_name.capitalize()
     DynamicModel = type(
@@ -138,8 +157,9 @@ def get_member_level_select(id: str, start: int, end: int, selected: int, event=
 
     
 # skin_gubun(new, search, connect, faq 등) 에 따른 스킨을 SELECT 형식으로 얻음
-def get_skin_select(skin_gubun, id, selected, event='', device='pc'):
-    skin_path = TEMPLATES_DIR + f"/{skin_gubun}/{device}"
+def get_skin_select(skin_gubun, id, selected, event='', device=''):
+    skin_path = TEMPLATES_DIR + f"/{device}/{skin_gubun}"
+
     html_code = []
     html_code.append(f'<select id="{id}" name="{id}" {event}>')
     html_code.append(f'<option value="">선택</option>')
@@ -384,6 +404,21 @@ def validate_one_time_token(token, action: str = 'create'):
     token_data = cache.get(token)
     if token_data and token_data.get("action") == action:
         del cache[token]
+        return True
+    return False
+
+
+def check_token(request: Request, token: str):
+    '''
+    세션과 인수로 넘어온 토큰확인 함수
+    '''
+    if token is None:
+        return False
+    
+    token = token.strip()
+    if token and token == request.session.get("ss_token"):
+        # 세션 삭제
+        request.session["ss_token"] = ""
         return True
     return False
 
@@ -777,8 +812,8 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
             return -1
         
     # 포인트 건별 생성
-    po_expire_date = '9999-12-31'
-    # po_expire_date = datetime.strptime('9999-12-31', '%Y-%m-%d')
+    # po_expire_date = '9999-12-31'
+    po_expire_date = datetime.strptime('9999-12-31', '%Y-%m-%d')
     if config.cf_point_term > 0:
         if expire > 0:
             po_expire_date = (SERVER_TIME + timedelta(days=expire-1)).strftime('%Y-%m-%d')
@@ -793,7 +828,7 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
     
     new_point = Point(
         mb_id=mb_id,
-        po_datetime=TIME_YMDHIS,
+        po_datetime=datetime.now(),
         po_content=content,
         po_point=point,
         po_use_point=0,
@@ -1030,6 +1065,19 @@ def editor_path(request:Request) -> str:
     return editor_name
 
 
+def editor_macro(request: Request) -> str:
+    """지정한 에디터 경로의 macros.html 파일을 반환하는 함수
+    - 미지정시 그누보드 환경설정값 사용
+    - request.state.editor: 에디터이름
+    - request.state.use_editor: 에디터 사용여부 False 이면 'textarea'로 설정
+    """
+    editor_name = request.state.editor
+    if not request.state.use_editor or not editor_name:
+        editor_name = "textarea"
+
+    return editor_name + "/macros.html"
+
+
 def nl2br(value) -> str:
     """ \n 을 <br> 태그로 변환
     """
@@ -1158,7 +1206,7 @@ def get_member_level(request: Request):
     return member.mb_level if member else 1
 
 
-def auth_check(request: Request, menu_key: str, attribute: str):
+def auth_check_menu(request: Request, menu_key: str, attribute: str):
     '''
     관리권한 체크
     '''    
@@ -1174,14 +1222,14 @@ def auth_check(request: Request, menu_key: str, attribute: str):
 
     exists_auth = db.query(Auth).filter_by(mb_id=exists_member.mb_id, au_menu=menu_key).first()
     if not exists_auth:
-        return "이 메뉴에는 접근 권한이 없습니다.\\n\\n접근 권한은 최고관리자만 부여할 수 있습니다."
+        return "이 메뉴에는 접근 권한이 없습니다.\n\n접근 권한은 최고관리자만 부여할 수 있습니다."
 
     auth_set = set(exists_auth.au_auth.split(","))
     if not attribute in auth_set:
         if attribute == "r":
             error = "읽을 권한이 없습니다."
         elif attribute == "w":
-            error = "입력, 추가, 생성, 수정 권한이 없습니다."
+            error = "입력, 추가, 생성, 등록, 수정 권한이 없습니다."
         elif attribute == "d":
             error = "삭제 권한이 없습니다."
         else:
@@ -1232,10 +1280,25 @@ class AlertException(HTTPException):
     Args:
         HTTPException (HTTPException): HTTP 예외 클래스
     """
-    def __init__(self, status_code: int, detail: str = None, url: str = None):
+    def __init__(self, detail: str = None, status_code: int = 200, url: str = None):
         self.status_code = status_code
         self.detail = detail
         self.url = url
+
+
+class AlertCloseException(HTTPException):
+    """스크립트 경고창 출력 및 윈도우 창 닫기를 위한 예외 클래스
+
+    Args:
+        HTTPException (HTTPException): HTTP 예외 클래스
+    """
+    def __init__(
+        self,
+        detail: Any = None,
+        status_code: int = 200,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> None:
+        super().__init__(status_code=status_code, detail=detail, headers=headers) 
 
 
 def is_admin(request: Request):
@@ -1342,6 +1405,55 @@ def get_filetime_str(file_path) -> Union[int, str]:
         return ''
 
 
+class StringEncrypt:
+    def __init__(self, salt=''):
+        if not salt:
+            # You might want to implement your own salt generation logic here
+            self.salt = "your_default_salt"
+        else:
+            self.salt = salt
+        
+        self.length = len(self.salt)
+
+    def encrypt(self, str_):
+        length = len(str_)
+        result = ''
+
+        for i in range(length):
+            char = str_[i]
+            keychar = self.salt[i % self.length]
+            char = chr(ord(char) + ord(keychar))
+            result += char
+
+        result = base64.b64encode(result.encode()).decode()
+        result = result.translate(str.maketrans('+/=', '._-'))
+
+        return result
+
+    def decrypt(self, str_):
+        result = ''
+        str_ = str_.translate(str.maketrans('._-', '+/='))
+        str_ = base64.b64decode(str_).decode()
+
+        length = len(str_)
+
+        for i in range(length):
+            char = str_[i]
+            keychar = self.salt[i % self.length]
+            char = chr(ord(char) - ord(keychar))
+            result += char
+
+        return result
+
+# 사용 예
+# enc = StringEncrypt()
+# encrypted_text = enc.encrypt("hello")
+# print(encrypted_text)
+
+# decrypted_text = enc.decrypt(encrypted_text)
+# print(decrypted_text)
+
+
 class MyTemplates(Jinja2Templates):
     """
     Jinja2Template 설정 클래스
@@ -1354,6 +1466,7 @@ class MyTemplates(Jinja2Templates):
                  ):
         super().__init__(directory, context_processors, **env_options)
         # 공통 env.global 설정
+        self.env.globals["editor_path"] = editor_path
         self.env.globals["generate_token"] = generate_token
         self.env.globals["getattr"] = getattr
         self.env.globals["get_selected"] = get_selected
@@ -1388,7 +1501,7 @@ class MyTemplates(Jinja2Templates):
 class G6FileCache():
     """파일 캐시 클래스
     """
-    cache_dir = "data\cache"
+    cache_dir = os.path.join("data", "cache")
     cache_secret_key = None
 
     def __init__(self):
@@ -1442,3 +1555,141 @@ class G6FileCache():
         for file in os.listdir(self.cache_dir):
             if file.startswith(prefix):
                 os.remove(os.path.join(self.cache_dir, file))
+
+
+SMTP_SERVER = os.getenv("SMTP_SERVER")
+SMTP_PORT = os.getenv("SMTP_PORT")
+SMTP_USERNAME = os.getenv("SMTP_USERNAME")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+
+# 메일 발송
+# return 은 수정 필요
+def mailer(email: str, subject: str, body: str):
+    to_emails = email.split(',') if ',' in email else [email]
+    for to_email in to_emails:
+        try:
+            msg = MIMEMultipart()
+            msg['From'] = SMTP_USERNAME
+            msg['To'] = to_email
+            msg['Subject'] = subject
+            
+            # Assuming body is HTML, if not change 'html' to 'plain'
+            msg.attach(MIMEText(body, 'html'))  
+
+            with smtplib.SMTP(SMTP_SERVER, int(SMTP_PORT)) as server:
+                if SMTP_USERNAME and SMTP_PASSWORD:
+                    server.starttls()
+                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                text = msg.as_string()
+                server.sendmail(SMTP_USERNAME, to_email, text)
+
+        except Exception as e:
+            print(f"Error sending email to {to_email}: {e}")
+
+    return {"message": f"Emails sent successfully to {', '.join(to_emails)}"}                                
+               
+                
+
+
+
+
+def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
+    """최신글 목록 HTML 출력
+
+    Args:
+        request (Request): _description_
+        skin_dir (str, optional): 스킨 경로. Defaults to ''.
+        bo_table (str, optional): 게시판 코드. Defaults to ''.
+        rows (int, optional): 노출 게시글 수. Defaults to 10.
+        subject_len (int, optional): 제목길이 제한. Defaults to 40.
+
+    Returns:
+        str: 최신글 HTML
+    """
+    templates = MyTemplates(directory=TEMPLATES_DIR)
+
+    if not skin_dir:
+        skin_dir = 'basic'
+
+    g6_file_cache = G6FileCache()
+    cache_filename = f"latest-{bo_table}-{skin_dir}-{rows}-{subject_len}-{g6_file_cache.get_cache_secret_key()}.html"
+    cache_file = os.path.join(g6_file_cache.cache_dir, cache_filename)
+
+    # 캐시된 파일이 있으면 파일을 읽어서 반환
+    if os.path.exists(cache_file):
+        return g6_file_cache.get(cache_file)
+    
+    db = SessionLocal()
+    board = db.query(Board).filter(Board.bo_table == bo_table).first()
+    
+    Write = dynamic_create_write_table(bo_table)
+    writes = db.query(Write).filter(Write.wr_is_comment == False).order_by(Write.wr_num).limit(rows).all()
+    for write in writes:
+        write.is_notice = write.wr_id in board.bo_notice.split(",")
+        write.subject = write.wr_subject[:subject_len]
+        write.icon_hot = write.wr_hit >= 100
+        write.icon_new = write.wr_datetime > (datetime.now() - timedelta(days=1))
+        write.icon_file = write.wr_file
+        write.icon_link = write.wr_link1 or write.wr_link2
+        write.icon_reply = write.wr_reply
+        write.datetime = write.wr_datetime.strftime("%y-%m-%d")
+    
+    context = {
+        "request": request,
+        "writes": writes,
+        "bo_table": bo_table,
+        "bo_subject": board.bo_subject,
+    }
+    temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
+    temp_decode = temp.body.decode("utf-8")
+
+    # 캐시 파일 생성
+    g6_file_cache.create(temp_decode, cache_file)
+
+    return temp_decode
+
+
+def get_newwins(request: Request):
+    """
+    레이어 팝업 목록 조회
+    """
+    db = SessionLocal()
+
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    current_division = "comm" # comm, both, shop
+    newwins = db.query(NewWin).filter(
+        NewWin.nw_begin_time <= now,
+        NewWin.nw_end_time >= now,
+        NewWin.nw_device.in_(["both", request.state.device]),
+        NewWin.nw_division.in_(["both", current_division]),
+    ).order_by(NewWin.nw_id.asc()).all()
+
+    # "hd_pops_" + nw_id 이름으로 선언된 쿠키가 있는지 확인하고 있다면 팝업을 제거
+    newwins = [newwin for newwin in newwins if not request.cookies.get("hd_pops_" + str(newwin.nw_id))]
+
+    return newwins
+
+
+def datetime_format(date: datetime, format="%Y-%m-%d %H:%M:%S"):
+    """
+    날짜 포맷팅
+    """
+    if not date:
+        return ""
+
+    return date.strftime(format)
+
+
+def insert_board_new(bo_table: str, write: object):
+    """
+    최신글 테이블 등록 함수
+    """
+    db = SessionLocal()
+
+    new = BoardNew()
+    new.bo_table = bo_table
+    new.wr_id = write.wr_id
+    new.wr_parent = write.wr_parent
+    new.mb_id = write.mb_id
+    db.add(new)
+    db.commit()
