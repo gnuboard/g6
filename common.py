@@ -1686,3 +1686,14 @@ def insert_board_new(bo_table: str, write: object):
     new.mb_id = write.mb_id
     db.add(new)
     db.commit()
+
+
+def convert_filesize_unit(byte: int, decimals: int = 2):
+    """
+    데이터 사이즈 단위 변환
+    """
+    size = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+    factor = int((len(str(byte)) - 1) / 3)
+
+    return f"{round(byte / pow(1024, factor), decimals)}{size[factor]}"
+    
