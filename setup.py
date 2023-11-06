@@ -233,7 +233,7 @@ def board_group_setup():
     
     exists_board_group = db.query(models.Group).filter_by(gr_id=default_gr_id).first()
     if exists_board_group is None:
-        new_board_group = models.Group(gr_id='community', gr_subject='커뮤니티')
+        new_board_group = models.Group(gr_id=default_gr_id, gr_subject='커뮤니티')
         try:
             db.add(new_board_group)
             db.commit()
@@ -254,6 +254,7 @@ def board_setup():
         if exists_board is None:
             new_board = models.Board(
                 bo_table=bo_table,
+                gr_id=default_gr_id,
                 bo_subject=bo_subject,
                 bo_skin=bo_skin,
                 bo_mobile_skin=bo_skin,
