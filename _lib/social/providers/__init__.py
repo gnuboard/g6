@@ -14,7 +14,6 @@ for _, module_name, _ in pkgutil.walk_packages(package.__path__):
 __all__ = [
     "google",
     "facebook",
-    "instagram",
     "naver",
     "kakao",
     "twitter",

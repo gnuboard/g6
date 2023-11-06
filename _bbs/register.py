@@ -58,7 +58,7 @@ def get_register_form(request: Request):
     member.mb_level = config.cf_register_level
 
     form_context = {
-        "action_url": router.url_path_for("register_form_save"),
+        "action_url": f"{request.base_url.__str__()}'bbs'{router.url_path_for('register_form_save')}",
         "agree": agree,
         "agree2": agree2,
     }

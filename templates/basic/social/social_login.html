@@ -37,10 +37,10 @@
             <span class="txt">애플<i> 로그인</i></span>
         </a>
         {% endif %}
-        {% if 'instagram' in request.state.config.cf_social_servicelist %}
-        <a href="/bbs/social/login?provider=instagram" class="sns-icon social_link sns-instagram" title="인스타그램">
+        {% if 'apple' in request.state.config.cf_social_servicelist %}     <!-- 애플 로그인을 사용한다면 -->
+        <a href="/bbs/social/login?provider=apple" class="sns-icon social_link sns-apple" title="애플">
             <span class="ico"></span>
-            <span class="txt">인스타그램<i> 로그인</i></span>
+            <span class="txt">애플<i> 로그인</i></span>
         </a>
         {% endif %}
         {#
