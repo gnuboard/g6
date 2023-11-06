@@ -20,8 +20,8 @@
 #fregisterform .form_01 .reg-form .sns-wrap {margin:10px 0 0;text-align:left}
 .reg-form .sns-icon {display:inline-block;vertical-align:middle;text-decoration:none;border-width:1px;border-style:solid;overflow:hidden;margin:0 1px}
 .reg-form .sns-icon:hover {text-decoration:none}
-.reg-form .sns-icon .ico {display:block;background:url('./img/sns_logo.png') no-repeat;vertical-align:middle;width:24px;height:24px}
-.reg-form .sns-icon-not .ico {display:block;background:url('./img/sns_logo_not.png') no-repeat;vertical-align:middle}
+.reg-form .sns-icon .ico {display:block;background:url('/static/img/social/sns_logo.png') no-repeat;vertical-align:middle;width:24px;height:24px}
+.reg-form .sns-icon-not .ico {display:block;background:url('/static/img/social/sns_logo_not.png') no-repeat;vertical-align:middle}
 .reg-form .sns-icon .txt {position:absolute;line-height:0;font-size:0;vertical-align:middle;overflow:hidden}
 .reg-form .sns-icon .txt i {font-style:normal}
 
@@ -48,12 +48,12 @@
 .sns-wrap-reg .sns-kakao {border-color:#f2df00}
 
 /* SNS by COLOR */
-.sns-wrap-over .sns-naver {background:url('./img/sns_naver_s.png') no-repeat}
+.sns-wrap-over .sns-naver {background:url('/static/img/social/sns_naver_s.png') no-repeat}
 .sns-wrap-over .sns-google {}
-.sns-wrap-over .sns-facebook {background:url('./img/sns_fb_s.png') no-repeat}
-.sns-wrap-over .sns-twitter {background:url('./img/sns_twitter_s.png') no-repeat}
-.sns-wrap-over .sns-payco {background:url('./img/sns_payco_s.png') no-repeat}
-.sns-wrap-over .sns-kakao {background:url('./img/sns_kakao_s.png') no-repeat}
+.sns-wrap-over .sns-facebook {background:url('/static/img/social/sns_fb_s.png') no-repeat}
+.sns-wrap-over .sns-twitter {background:url('/static/img/social/sns_twitter_s.png') no-repeat}
+.sns-wrap-over .sns-payco {background:url('/static/img/social/sns_payco_s.png') no-repeat}
+.sns-wrap-over .sns-kakao {background:url('/static/img/social/sns_kakao_s.png') no-repeat}
 .reg-form .sns-icon-not {border-color:#8b8b8b}
 
 .social-login-loading {width:100%;height:auto;text-align:center}
@@ -74,7 +74,7 @@
 #sns_login .sns-kakao {color:#3c1e1e}
 #sns_login .sns-facebook {background-color:#3b579d;background-position:5px 5px;border-bottom:1px solid #28458f}
 #sns_login .sns-google {background-color:#4285F4;background-position:5px 5px;border-bottom:1px solid #3567c6;letter-spacing:-0.5px}
-#sns_login .sns-google .ico {position:absolute;top:3px;left:3px;width:33px;height:33px;background:url('./img/sns_gp_s.png') no-repeat center center;background-color:#fff;background-size:28px 28px!important;border-radius:2px}
+#sns_login .sns-google .ico {position:absolute;top:3px;left:3px;width:33px;height:33px;background:url('/static/img/social/sns_gp_s.png') no-repeat center center;background-color:#fff;background-size:28px 28px!important;border-radius:2px}
 #sns_login .sns-twitter {background-color:#1ea1f2;background-position:5px 5px;border-bottom:1px solid #1e82c0}
 #sns_login .sns-payco {background-color:#df0b00;background-position:5px 5px;border-bottom:1px solid #9d0800}
 #sns_login .txt {text-align:left;padding-left:10px;border-left:1px solid rgba(0,0,0,0.1);display:block;font-weight:bold}
@@ -91,7 +91,7 @@
 #sns_register .sns-kakao {background-color:#ffeb00;background-position:0 0}
 #sns_register .sns-facebook {background-color:#3b579d;background-position:0 0}
 #sns_register .sns-google {background-color:#fff;background-position:0 0;border-radius:2px;border:1px solid #999}
-#sns_register .sns-google .ico {background:url('./img/sns_gp_s.png') no-repeat;height:30px}
+#sns_register .sns-google .ico {background:url('/static/img/social/sns_gp_s.png') no-repeat;height:30px}
 #sns_register .sns-twitter {background-color:#1ea1f2;background-position:0 0}
 #sns_register .sns-payco {background-color:#df0b00;background-position:0 0}
 #sns_register .txt {position:absolute;line-height:0;font-size:0;vertical-align:middle;overflow:hidden}
@@ -167,8 +167,8 @@
 .mbskin .toggle .toggle-inner {padding:15px;line-height:1.5em;display:none;background:#fff;border-top:1px solid #e2e2e2}
 .mbskin .toggle .toggle-inner div {max-width:100%}
 .mbskin .right_i {position:absolute;font-size:0.92em;top:10px;right:10px;padding:0 10px 0 0;border-radius:3px;display:inline-block;z-index:2;background:#3497d9;color:#fff;border-bottom-color:#1977b5;cursor:pointer}
-.mbskin .toggle .toggle-title .right_i i {background:url("./img/plus_minus.png") 0 -24px no-repeat;width:20px;height:24px;display:inline-block;vertical-align:middle}
-.mbskin .toggle .toggle-title.active .right_i i {background:url("./img/plus_minus.png") 0 0 no-repeat}
+.mbskin .toggle .toggle-title .right_i i {background:url("/static/img/social/plus_minus.png") 0 -24px no-repeat;width:20px;height:24px;display:inline-block;vertical-align:middle}
+.mbskin .toggle .toggle-title.active .right_i i {background:url("/static/img/social/plus_minus.png") 0 0 no-repeat}
 .mbskin .all_agree {position:relative;display:block;margin-bottom:6px;background:#fff;border:1px solid #c6cacc;border-top:0;padding:13px 15px;line-height:20px}
 
 .sns_tbl {background:#fff;margin:10px 0;border:1px solid #c6cacc}
