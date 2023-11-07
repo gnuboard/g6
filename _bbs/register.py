@@ -12,6 +12,8 @@ from pbkdf2 import create_hash
 
 router = APIRouter()
 
+templates.env.globals["captcha_widget"] = captcha_widget
+
 
 @router.get("/register")
 def get_register(request: Request, response: Response, db: Session = Depends(get_db)):
@@ -55,6 +57,7 @@ def get_register_form(request: Request):
     member = Member()
     member.mb_level = 1
 
+    captcha = get_current_captcha_cls(captcha_name=request.state.config.cf_captcha)
     form_context = {
         "action_url": app.url_path_for("register_form_save"),
         "agree": agree,
@@ -64,6 +67,7 @@ def get_register_form(request: Request):
     return templates.TemplateResponse(
         "member/register_form.html",
         context={
+            "captcha": captcha.TEMPLATE_PATH if captcha is not None else '',
             "is_register": True,
             "request": request,
             "member": member,
@@ -84,6 +88,7 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
                              mb_icon: Optional[UploadFile] = File(None),
                              mb_zip: Optional[str] = Form(default=""),
                              member_form: MemberForm = Depends(),
+                             recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default="")
                              ):
     # 약관 동의 체크
     agree = request.session.get("ss_agree", "")
@@ -93,10 +98,14 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
     if not agree2:
         return RedirectResponse(url="/bbs/register", status_code=302)
 
+    config = request.state.config
+    captcha = get_current_captcha_cls(config.cf_captcha)
+    if (captcha is not None) and (not await captcha.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
+        raise AlertException("캡차가 올바르지 않습니다.")
+
     # 유효성 검사
     errors = []
     exists_member = db.query(Member.mb_id, Member.mb_email).filter(Member.mb_id == mb_id).first()
-    config = request.state.config
 
     if exists_member:
         errors.append("이미 존재하는 회원아이디 입니다.")
