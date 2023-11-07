@@ -114,7 +114,9 @@ def scrap_form_update(request: Request, db: Session = Depends(get_db),
         # 새글 테이블에 추가
         insert_board_new(bo_table, comment)
 
-        # TODO: 포인트 부여
+        # 포인트 부여
+        insert_point(request, member.mb_id, board.bo_comment_point, f"{board.bo_subject} {write.wr_id}-{comment.wr_id} 댓글쓰기(스크랩)", board.bo_table, comment.wr_id, '댓글')
+
         db.commit()
 
     # 스크랩 추가
@@ -168,9 +170,9 @@ def scrap_list(request: Request, db: Session = Depends(get_db),
         scrap.bo_subject = bo_subject or "[게시판 없음]"
         # 게시글 정보
         write_model = dynamic_create_write_table(scrap.bo_table)
-        write = db.query(write_model).filter(write_model.wr_id == scrap.wr_id).first()
-        scrap.wr_subject = write.wr_subject
-    
+        write = db.query(write_model).filter_by(wr_id = scrap.wr_id).first()
+        scrap.subject = write.wr_subject or write.wr_content[:100] if write else "[글 없음]"
+
     context = {
         "request": request,
         "results": results,

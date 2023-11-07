@@ -13,7 +13,7 @@
             {% set scrap = result[0] %}
             <li>
                 <a href="{{ url_for('read_post', bo_table=scrap.bo_table, wr_id=scrap.wr_id) }}" class="scrap_tit" target="_blank" onclick="open_parent_href(this.href); return false;">
-                    {{ scrap.wr_subject|truncate(100, False, '...', 0) }}
+                    {{ scrap.subject|truncate(100, False, '...', 0) }}
                 </a>
                 <a href="{{ url_for('list_post', bo_table=scrap.bo_table) }}" class="scrap_cate" target="_blank" onclick="open_parent_href(this.href); return false;">
                     {{ scrap.bo_subject }}

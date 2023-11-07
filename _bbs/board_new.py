@@ -95,13 +95,21 @@ def new_delete(
         
         if write:
             if write.wr_is_comment == 0:
-                # 게시글 삭제 
+                # 게시글 삭제
                 # TODO: 게시글 삭제 공용함수 추가
                 db.delete(write)
+
+                # 원글 포인트 삭제
+                if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
+                    insert_point(request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
             else:
                 # 댓글 삭제
                 # TODO: 댓글 삭제 공용함수 추가
                 db.delete(write)
+
+                # 댓글 포인트 삭제
+                if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "댓글"):
+                    insert_point(request, write.mb_id, board.bo_comment_point * (-1), f"{board.bo_subject} {write.wr_parent}-{write.wr_id} 댓글 삭제")
         db.delete(new)
 
         # 파일 삭제

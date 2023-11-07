@@ -163,8 +163,14 @@ def list_delete(
     writes = db.query(models.Write).filter(models.Write.wr_id.in_(wr_ids)).all()
     for write in writes:
         db.delete(write)
+        # 원글 포인트 삭제
+        if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
+            insert_point(request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
+        
         # 파일 삭제
         BoardFileManager(board, write.wr_id).delete_board_files()
+
+        # TODO: 댓글 삭제
     db.commit()
 
     # 최신글 캐시 삭제
@@ -517,7 +523,11 @@ def write_update(
         # 새글 추가
         insert_board_new(bo_table, write)
 
-        # TODO: 글작성 포인트 부여(답변글은 댓글 포인트로 부여)
+        # 글작성 포인트 부여(답변글은 댓글 포인트로 부여)
+        point = board.bo_comment_point if parent_write else board.bo_write_point
+        content = f"{board.bo_subject} {write.wr_id} 글" + ("답변" if parent_write else "쓰기")
+        insert_point(request, member.mb_id, point, content, board.bo_table, write.wr_id, "쓰기")
+
     # 글 수정
     elif compare_token(request, token, 'update'):
         # 게시글 정보 조회 및 수정
@@ -620,14 +630,13 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
                 ):
             # 포인트 검사 및 소진
             read_point = board.bo_read_point
-            if config.cf_use_point and read_point:
-                if member.mb_point + read_point < 0:
-                    raise AlertException(f"게시글을 읽기 위해 {read_point} 포인트가 필요합니다.", 403)
-                else:
-                    # TODO: 포인트 소진 처리
-                    pass
+            mb_point = member.mb_point if member else 0
+            if mb_point + read_point < 0:
+                raise AlertException(f"게시글을 읽기 위해 {abs(read_point)} 포인트가 필요합니다.", 403)
+            else:
+                # 포인트 소진 처리
+                insert_point(request, member.mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table, write.wr_id, "읽기")
         request.session[session_name] = True
-        db.commit()
     
     if member:
         # 스크랩 여부 확인
@@ -725,18 +734,24 @@ def delete_post(
     db.delete(write)
     db.commit()
 
-    # TODO: 게시글 삭제에 따른 추가정보 삭제
+    # 원글 포인트 삭제
+    if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
+        insert_point(request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
+
     # 파일 삭제
     BoardFileManager(board, wr_id).delete_board_files()
 
     # 최신글 캐시 삭제
     G6FileCache().delete_prefix(f'latest-{bo_table}')
 
+    # TODO: 게시글 삭제에 따른 추가정보 삭제
+
     return RedirectResponse(f"/board/{bo_table}", status_code=303)
 
 
 @router.get("/{bo_table}/{wr_id}/download/{bf_no}")
 def download_file(
+    request: Request,
     bo_table: str,
     wr_id: int,
     bf_no: int,
@@ -756,16 +771,53 @@ def download_file(
     Returns:
         FileResponse: 파일 다운로드
     """
+    config = request.state.config
+    member = request.state.login_member
+    member_level = get_member_level(request)
+
+    # 게시판/게시글 정보 조회
     board = db.query(models.Board).get(bo_table)
     if not board:
         raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
+    write_model = dynamic_create_write_table(bo_table)
+    write = db.query(write_model).get(wr_id)
+    if not write:
+        raise AlertException(status_code=404, detail=f"{wr_id} : 존재하지 않는 게시글입니다.")
 
+    # 회원레벨 검사
+    if not (member_level >= board.bo_download_level):
+        raise AlertException("다운로드 권한이 없습니다.", 403)
+
+    # 파일 정보 조회
     file_manager = BoardFileManager(board, wr_id)
     board_file = file_manager.get_board_file(bf_no)
     if not board_file:
         raise AlertException("파일이 존재하지 않습니다.", 404)
-    # 다운로드 횟수 증가
-    file_manager.update_download_count(board_file)
+    
+    # 게시물당 포인트가 한번만 차감되도록 세션 설정
+    session_name = f"ss_down_{bo_table}_{wr_id}"
+    if not request.session.get(session_name):
+        # 관리자이거나 자신의 글이면 통과하는 함수
+        if not (request.state.is_super_admin 
+                or is_owner(write, member)
+                or (not member and board.bo_download_level == 1 and write.wr_ip == request.client.host)
+                ):
+            # 포인트 검사 및 소진
+            download_point = board.bo_download_point
+            mb_point = member.mb_point if member else 0
+            if mb_point + download_point < 0:
+                raise AlertException(f"파일을 다운로드하기 위해 {abs(download_point)} 포인트가 필요합니다.", 403)
+            else:
+                insert_point(request, member.mb_id, download_point, f"{board.bo_subject} {write.wr_id} 파일 다운로드", board.bo_table, write.wr_id, "다운로드")
+
+        request.session[session_name] = True
+
+    download_session_name = f"ss_down_{bo_table}_{wr_id}_{board_file.bf_no}"
+    if not request.session.get(download_session_name):
+        # 다운로드 횟수 증가
+        file_manager.update_download_count(board_file)
+        # 파일 다운로드 세션 설정
+        request.session[download_session_name] = True
 
     return FileResponse(board_file.bf_file, filename=board_file.bf_source)
 

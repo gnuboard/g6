@@ -156,6 +156,7 @@ def memo_form_update(request: Request, db: Session = Depends(get_db),
     if not compare_token(request, token, 'insert'):
         raise AlertException(status_code=403, detail=f"{token} : 토큰이 존재하지 않습니다.")
 
+    config = request.state.config
     member = request.state.login_member
     if not member:
         raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
@@ -173,14 +174,16 @@ def memo_form_update(request: Request, db: Session = Depends(get_db),
             error_list.append(mb_id)
 
     if error_list:
-        raise AlertException(
-            status_code=404,
-            detail=f"{','.join(error_list)} : 존재(또는 정보공개)하지 않는 회원이거나 탈퇴/차단된 회원입니다.\\n쪽지를 발송하지 않았습니다."
-        )
+        raise AlertException(f"{','.join(error_list)} : 존재(또는 정보공개)하지 않는 회원이거나 탈퇴/차단된 회원입니다.\\n쪽지를 발송하지 않았습니다.", 404)
 
-    # TODO: 포인트 체크 추가
+    # 총 사용 포인트 체크
+    use_point = int(config.cf_memo_send_point)
+    total_use_point = use_point * len(target_list)
+    if total_use_point > 0:
+        if member.mb_point < total_use_point:
+            raise AlertException(f"보유하신 포인트({member.mb_point})가 부족합니다.\\n쪽지를 발송하지 않았습니다.", 403)
 
-    # send_list의 목록을 순회하며 쪽지 전송
+    # 전송대상의 목록을 순회하며 쪽지 전송
     for target in target_list:
         memo_dict = {
             "me_send_mb_id": member.mb_id,
@@ -195,12 +198,13 @@ def memo_form_update(request: Request, db: Session = Depends(get_db),
         db.add(memo_recv)
         db.commit()
 
-        # 실시간 쪽지 알림 기능
+        # 실시간 쪽지 알림
         target.mb_memo_call = member.mb_id
         target.mb_memo_cnt = get_memo_not_read(target.mb_id)
         db.commit()
 
-        # TODO: 포인트 소진 추가
+        # 포인트 소진
+        insert_point(request, member.mb_id, use_point * (-1), f"{target.mb_nick}({target.mb_id})님에게 쪽지 발송", "@memo", target.mb_id, member.mb_id)
 
     return RedirectResponse(url=f"/bbs/memo?kind=send", status_code=302)
 

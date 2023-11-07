@@ -36,9 +36,8 @@ def poll_update(request: Request, po_id: int, token: str = Form(...), gb_poll: i
         raise AlertCloseException(status_code=403, detail=f"권한 {poll.po_level} 이상의 회원만 투표하실 수 있습니다.")
 
     if compare_token(request, token, "update"):
-
         if request.client.host in poll.po_ips or (member and member.mb_id in poll.mb_ids):
-            raise AlertException(status_code=403, detail=f"{poll.po_subject} 투표에 이미 참여하셨습니다.", url=f"/poll/result/{po_id}")
+            raise AlertException(status_code=403, detail=f"{poll.po_subject} 투표에 이미 참여하셨습니다.", url=f"/bbs/poll_result/{po_id}")
 
         if member:
             poll.mb_ids = ",".join([poll.mb_ids, member.mb_id]) if poll.mb_ids else member.mb_id
@@ -48,6 +47,9 @@ def poll_update(request: Request, po_id: int, token: str = Form(...), gb_poll: i
         # gb_poll로 전달받은 컬럼번호에 1 증가시킨다.
         poll.__setattr__(f"po_cnt{gb_poll}", poll.__getattribute__(f"po_cnt{gb_poll}") + 1)
         db.commit()
+
+        # 포인트 지급
+        insert_point(request, member.mb_id, poll.po_point,  f'{poll.po_id}. {poll.po_subject[:20]} 투표 참여 ', '@poll', poll.po_id, '투표');
     else:
         raise AlertException(status_code=403, detail=f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.")
 
