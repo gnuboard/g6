@@ -36,8 +36,8 @@
                         </select>
                     </li>
                     <li class="bo_w_mail chk_box">
-                        <label for="qa_email" class="sound_only">이메일</label>
-                        <input type="text" name="qa_email" value="{{ qa.qa_email }}" id="qa_email" class="frm_input full_input email" size="50" maxlength="100" placeholder="이메일">
+                        <label for="qa_email" class="sound_only">이메일 </label>
+                        <input type="text" name="qa_email" value="{{ qa.qa_email|default(request.state.login_member.mb_email) }}" id="qa_email" class="frm_input full_input email" size="50" maxlength="100" placeholder="이메일">
                         <input type="checkbox" name="qa_email_recv" id="qa_email_recv" value="1" class="selec_chk" {{ "checked" if qa.qa_email_recv else "" }}>
                         <label for="qa_email_recv" class="frm_info"><span>&nbsp;</span>답변받기</label>
                     </li>

@@ -481,6 +481,7 @@ def write_update(
     """
     게시글을 Table 추가한다.
     """
+    config = request.state.config
     member = request.state.login_member
 
     # 게시판 정보 조회
@@ -504,6 +505,7 @@ def write_update(
     # 글 등록
     if compare_token(request, token, 'insert'):
         form_data.wr_name = getattr(member, "mb_name", form_data.wr_name)
+        form_data.wr_email = getattr(member, "mb_email", form_data.wr_email)
         parent_write = db.query(models.Write).get(parent_id) if parent_id else None
         write = models.Write(
             wr_num = parent_write.wr_num if parent_write else get_next_num(bo_table),
@@ -527,6 +529,52 @@ def write_update(
         point = board.bo_comment_point if parent_write else board.bo_write_point
         content = f"{board.bo_subject} {write.wr_id} 글" + ("답변" if parent_write else "쓰기")
         insert_point(request, member.mb_id, point, content, board.bo_table, write.wr_id, "쓰기")
+
+        # 메일 발송
+        if config.cf_email_use and board.bo_use_email:
+            send_email_list = []
+            if config.cf_email_wr_board_admin and board.bo_admin:
+                board_admin = db.query(models.Member).filter_by(mb_id = board.bo_admin).first()
+                if board_admin:
+                    # print(board_admin.mb_email, "게시판관리자 추가")
+                    send_email_list.append(board_admin.mb_email)
+            if config.cf_email_wr_group_admin and board.group.gr_admin:
+                group_admin = db.query(models.Member).filter_by(mb_id = board.group.gr_admin).first()
+                if group_admin:
+                    # print(group_admin.mb_email, "그룹관리자 추가")
+                    send_email_list.append(group_admin.mb_email)
+            if config.cf_email_wr_super_admin:
+                super_admin = db.query(models.Member).filter_by(mb_id = config.cf_admin).first()
+                if super_admin:
+                    # print(super_admin.mb_email, "최고관리자 추가")
+                    send_email_list.append(super_admin.mb_email)
+            # TODO: 원 글을 등록할 때 원글 작성자에게 메일이 발송되는 것이 맞는지 확인 필요
+            # if config.cf_email_wr_write:
+            #     email = parent_write.wr_email if parent_write else write.wr_email
+            #     print(email, "원글 게시자 추가")
+            #     send_email_list.append(email)
+            # TODO: 원글/답변글을 등록할 때 작성자에게 메일이 발송되는 것이 맞는지 확인 필요
+            # if "mail" in write.wr_option and write.wr_email:
+            #     print(write.wr_email, "글 등록 게시자 추가")
+            #     send_email_list.append(write.wr_email)
+            
+            # 중복 이메일 제거
+            send_email_list = list(set(send_email_list))
+
+            for email in send_email_list:
+                # TODO: 내용 HTML 처리 필요
+                act = "답변" if parent_write else "새"
+                subject = f"[{config.cf_title}] {board.bo_subject} 게시판에 {act} 글이 등록되었습니다."
+                body = templates.TemplateResponse(
+                    "bbs/mail_form/write_update_mail.html", {
+                        "request": request,
+                        "wr_subject": write.wr_subject,
+                        "wr_name": write.wr_name,
+                        "wr_content": write.wr_content,
+                        "link_url": request.url_for("read_post", bo_table=bo_table, wr_id=write.wr_id),
+                    }
+                ).body.decode("utf-8")
+                mailer(email, subject, body)
 
     # 글 수정
     elif compare_token(request, token, 'update'):

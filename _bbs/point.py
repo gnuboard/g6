@@ -1,12 +1,10 @@
-from fastapi import APIRouter, Depends, Form, Path, Request
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, Depends, Request
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import literal
-from sqlalchemy.orm import aliased, Session
+from sqlalchemy.orm import Session
 
 from common import *
 from database import get_db
-from models import Point, Scrap, Member, Board
+from models import Point
 
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
@@ -14,7 +12,6 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 templates.env.filters["datetime_format"] = datetime_format
 
 
-# TODO: 연관관계로 ORM 수정 => (쿼리요청 및 코드량 감소)
 @router.get("/point")
 def point_list(request: Request, db: Session = Depends(get_db),
     current_page: int = Query(default=1, alias="page")
@@ -41,7 +38,7 @@ def point_list(request: Request, db: Session = Depends(get_db),
         # 포인트 정보
         point.num = total_records - offset - (points.index(point))
         point.is_positive = point.po_point > 0
-
+        # 포인트 합계
         if point.is_positive:
             sum_positive += point.po_point
         else:

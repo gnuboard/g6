@@ -111,18 +111,35 @@ def poll_etc_update(request: Request,
     기타의견 등록
     """
     poll = db.query(Poll).get(po_id)
+    config = request.state.config
     member = request.state.login_member
     member_level = get_member_level(request)
 
     if compare_token(request, token, "insert"):
-        if poll.po_level > 1 and member_level < poll.po_level:
-            raise AlertCloseException(status_code=403, detail=f"권한 {poll.po_level} 이상의 회원만 기타의견을 등록할 수 있습니다.")
+        if poll.po_level > member_level:
+            raise AlertCloseException(f"권한 {poll.po_level} 이상의 회원만 기타의견을 등록할 수 있습니다.", 403)
 
         po_etc = PollEtc(po_id=po_id, pc_name=pc_name, pc_idea=pc_idea, mb_id=(member.mb_id if member else ''))
         db.add(po_etc)
         db.commit()
+
+        # 최고관리자 메일 발송 설정이 되어있으면 메일 발송
+        if config.cf_email_po_super_admin:
+            if config.cf_admin_email:
+                email = config.cf_admin_email
+                subject = f"[{config.cf_title}] 설문조사 - ({poll.po_subject}) 기타의견 메일"
+                body = templates.TemplateResponse(
+                    "bbs/mail_form/poll_etc_update_mail.html", {
+                        "request": request,
+                        "subject": subject,
+                        "mb_name": pc_name,
+                        "mb_id": member.mb_id if member else '비회원',
+                        "content": pc_idea
+                    }
+                ).body.decode("utf-8")
+                mailer(email, subject, body)
     else:
-        raise AlertException(status_code=403, detail=f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.")
+        raise AlertException(f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.", 403)
 
     return RedirectResponse(url=f"/bbs/poll_result/{po_id}", status_code=302)
 
