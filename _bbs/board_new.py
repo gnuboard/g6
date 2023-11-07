@@ -49,18 +49,18 @@ def board_new_list(
         # 게시글 정보 조회
         write_model = dynamic_create_write_table(new.bo_table)
         write = db.query(write_model).filter(write_model.wr_id == new.wr_id).first()
+        if write:
+            # 댓글/게시글 구분
+            if write.wr_is_comment:
+                new.subject = "[댓글] " + write.wr_content[:100]
+                new.add_link = f"#c_{write.wr_id}"
+            else:
+                new.subject = write.wr_subject
 
-        # 댓글/게시글 구분
-        if write.wr_is_comment:
-            new.subject = "[댓글] " + write.wr_content[:100]
-            new.add_link = f"#c_{write.wr_id}"
-        else:
-            new.subject = write.wr_subject
-
-        # 작성자
-        new.name = write.wr_name
-        # 시간설정
-        new.datetime = format_datetime(write.wr_datetime)
+            # 작성자
+            new.name = write.wr_name
+            # 시간설정
+            new.datetime = format_datetime(write.wr_datetime)
 
     context = {
         "request": request,
@@ -89,6 +89,7 @@ def new_delete(
     # 새글 정보 조회
     board_news = db.query(BoardNew).filter(BoardNew.bn_id.in_(bn_ids)).all()
     for new in board_news:
+        board = db.query(Board).filter(Board.bo_table == new.bo_table).first()
         write_model = dynamic_create_write_table(new.bo_table)
         write = db.query(write_model).filter(write_model.wr_id == new.wr_id).first()
         
@@ -102,6 +103,9 @@ def new_delete(
                 # TODO: 댓글 삭제 공용함수 추가
                 db.delete(write)
         db.delete(new)
+
+        # 파일 삭제
+        BoardFileManager(board, write.wr_id).delete_board_files()
 
         # 최신글 캐시 삭제
         G6FileCache().delete_prefix(f'latest-{new.bo_table}')
