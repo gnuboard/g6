@@ -6,7 +6,6 @@ import datetime
 from fastapi import APIRouter, Depends, Request, File, Form, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import literal
 from sqlalchemy.orm import aliased, Session
 
 from common import *
@@ -657,6 +656,7 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
     """
     config = request.state.config
     member = request.state.login_member
+    member_level = get_member_level(request)
     # 게시판 정보 조회
     board = db.query(models.Board).get(bo_table)
     if not board:
@@ -737,10 +737,16 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
     images, files = BoardFileManager(board, wr_id).get_board_files_by_type(request)
 
     # 댓글 목록 조회
-    comments = db.query(models.Write).filter(
-        models.Write.wr_parent == wr_id,
-        models.Write.wr_is_comment == True
-    ).order_by(models.Write.wr_id).all()
+    comments = db.query(models.Write).filter_by(
+        wr_parent = wr_id,
+        wr_is_comment = True
+    ).order_by(models.Write.wr_comment, models.Write.wr_comment_reply).all()
+
+    for comment in comments:
+        comment.name = comment.wr_name[:config.cf_cut_name] if config.cf_cut_name else comment.wr_name
+        comment.ip = comment.wr_ip if request.state.is_super_admin else display_ip(comment.wr_ip)
+        comment.is_reply = len(comment.wr_comment_reply) < 5 and board.bo_comment_level <= member_level
+        comment.is_edit = comment.is_del = (member and comment.mb_id == member.mb_id) or request.state.is_super_admin
 
     context = {
         "request": request,
@@ -881,28 +887,41 @@ def write_comment_update(
     bo_table: str = Form(...),
     wr_id: int = Form(...),
     wr_content: str = Form(...),
+    comment_id: int = Form(None),
 ):
     """
-    댓글을 추가한다.
+    댓글 등록
     """
     # 게시판 정보 조회
     board = db.query(models.Board).get(bo_table)
     if not board:
-        raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
+        raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
 
-    # 원글을 찾는다
-    models.Write = dynamic_create_write_table(bo_table)
-    write = db.query(models.Write).filter(models.Write.wr_id == wr_id).first()
+    # 게시글 정보 조회
+    write_model = dynamic_create_write_table(bo_table)
+    write = db.query(write_model).get(wr_id)
     if not write:
-        raise HTTPException(
-            status_code=404, detail="{wr_id} in {bo_table} is not found."
-        )
+        raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
+    
+    # 댓글 객체 생성
+    comment = write_model()
 
-    write.wr_comment = write.wr_comment + 1
-    db.commit()
+    if comment_id:
+        parent_comment = db.query(write_model).get(comment_id)
+        if not parent_comment:
+            raise AlertException(f"{comment_id} : 존재하지 않는 댓글입니다.", 404)
+        # 단계
+        comment.wr_comment_reply = generate_reply_character(board, parent_comment)
+        # 순서
+        comment.wr_comment = parent_comment.wr_comment
+    else:
+        # 순서
+        comment.wr_comment = db.query(func.max(write_model.wr_comment).label("max_wr_comment")).filter(
+            write_model.wr_parent == wr_id,
+            write_model.wr_is_comment == True
+        ).first().max_wr_comment
 
-    # 댓글 추가
-    comment = models.Write()
+    # 댓글 추가정보 등록
     comment.wr_is_comment = True
     comment.wr_parent = wr_id
     comment.wr_content = wr_content
@@ -910,6 +929,9 @@ def write_comment_update(
     comment.wr_ip = request.client.host
     comment.wr_last = datetime.now()
     db.add(comment)
+
+    # 게시글에 댓글 수 증가
+    write.wr_comment = write.wr_comment + 1
     db.commit()
 
     return RedirectResponse(f"/board/{bo_table}/{wr_id}", status_code=303)
@@ -967,11 +989,26 @@ def generate_reply_character(board: Board, write):
     """
     db = SessionLocal()
     write_model = dynamic_create_write_table(board.bo_table)
+
     # 마지막 문자열 1개 자르기
-    query = db.query(func.right(write_model.wr_reply, 1).label("reply")).filter(
-        write_model.wr_reply != "",
-        write_model.wr_parent == write.wr_id
-    )
+    if not write.wr_is_comment:
+        origin_reply = write.wr_reply
+        query = db.query(func.right(write_model.wr_reply, 1).label("reply")).filter(
+            write_model.wr_num == write.wr_num,
+            func.length(write_model.wr_reply) == (len(origin_reply) + 1)
+        )
+        if origin_reply:
+            query = query.filter(write_model.wr_reply.like(f"{origin_reply}%"))
+    else:
+        origin_reply = write.wr_comment_reply
+        query = db.query(func.right(write_model.wr_comment_reply, 1).label("reply")).filter(
+            write_model.wr_parent == write.wr_parent,
+            write_model.wr_comment == write.wr_comment,
+            func.length(write_model.wr_comment_reply) == (len(origin_reply) + 1)
+        )
+        if origin_reply:
+            query = query.filter(write_model.wr_comment_reply.like(f"{origin_reply}%"))
+
     # 정방향이면 최대값, 역방향이면 최소값
     if board.bo_reply_order:
         result = query.order_by(desc("reply")).first()
@@ -993,7 +1030,7 @@ def generate_reply_character(board: Board, write):
     else:
         reply_char = chr(ord(last_reply_char) + char_increase)
 
-    return write.wr_reply + reply_char
+    return origin_reply + reply_char
 
 
 def is_owner(object, member = None):

@@ -194,7 +194,7 @@
                         </td>
                         <td class="td_name sv_use">
                             {% if board.bo_use_sideview %}
-                                {{ sideview.get(request, write.mb_id, write.wr_name, write.wr_email, write.wr_homepage)|safe }}
+                                {{ sideview.get(request, write.mb_id, write.name, write.wr_email, write.wr_homepage)|safe }}
                             {% else %}
                                 <span class="{% if write.mb_id %}sv_member{% else %}sv_guest{% endif %}">
                                     {{ write.name }}

@@ -2008,3 +2008,11 @@ def captcha_widget(request):
         return cls.TEMPLATE_PATH
 
     return ''  # 템플릿 출력시 비어있을때는 빈 문자열
+
+
+def display_ip(ip: str) -> str:
+    """IP 주소를 표시형식으로 변환
+    Args:
+        ip (str): IP 주소
+    """
+    return re.sub(r"([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)", "\\1.#.#.\\4", ip)
