@@ -12,6 +12,7 @@ from models import Member
 from pbkdf2 import validate_password, create_hash
 
 router = APIRouter()
+templates.env.globals["captcha_widget"] = captcha_widget
 
 
 @router.get("/member_confirm")
@@ -69,6 +70,7 @@ def member_profile(request: Request, db: Session = Depends(get_db)):
         return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
 
     config = request.state.config
+    captcha = get_current_captcha_cls(captcha_name=config.cf_captcha)
     form_context = {
         "page": True,
         "action_url": app.url_path_for("member_profile", mb_no=request.path_params["mb_no"]),
@@ -87,11 +89,12 @@ def member_profile(request: Request, db: Session = Depends(get_db)):
         "member": member,
         "errors": errors,
         "form": form_context,
+        "captcha": captcha.TEMPLATE_PATH if captcha is not None else '',
     })
 
 
 @router.post("/member_profile/{mb_no}", name='member_profile_save')
-def member_profile_save(request: Request, db: Session = Depends(get_db),
+async def member_profile_save(request: Request, db: Session = Depends(get_db),
                         token: str = Form(...),
                         mb_img: Optional[UploadFile] = File(None),
                         mb_icon: Optional[UploadFile] = File(None),
@@ -102,6 +105,7 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
                         member_form: MemberForm = Depends(MemberForm),
                         del_mb_img: str = Form(None),
                         del_mb_icon: str = Form(None),
+                        recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
                         ):
     errors = []
     if not validate_one_time_token(token, 'update'):
@@ -109,6 +113,9 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
         return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
 
     config = request.state.config
+    captcha = get_current_captcha_cls(config.cf_captcha)
+    if (captcha is not None) and (not await captcha.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
+        raise AlertException("캡차가 올바르지 않습니다.")
 
     mb_id = request.session.get("ss_mb_id", "")
     exists_member: Optional[Member] = db.query(Member).filter(Member.mb_id == mb_id).first()

@@ -29,7 +29,8 @@ import smtplib
 import threading
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-
+from _extend.captcha.recaptch_v2 import ReCaptchaV2
+from _extend.captcha.recaptch_inv import ReCaptchaInvisible
 
 load_dotenv()
 
@@ -1975,3 +1976,27 @@ class BoardFileManager():
         """
         with open(path, "rb") as f:
             return UploadFile(f, filename=os.path.basename(path))
+
+
+def get_current_captcha_cls(captcha_name: str):
+    """캡챠 클래스를 반환하는 함수
+    Args:
+        captcha_name (str) : config cf_captcha에 저장된 캡차클래스이름
+    """
+    if captcha_name == "recaptcha":
+        return ReCaptchaV2
+    elif captcha_name == "recaptcha_inv":
+        return ReCaptchaInvisible
+    else:
+        return None
+
+
+def captcha_widget(request):
+    """템플릿에서 캡차 출력
+    Args:
+        request (Request): FastAPI Request
+    """
+    if cls := get_current_captcha_cls(captcha_name=request.state.config.cf_captcha):
+        return cls.TEMPLATE_PATH
+
+    return ''  # 템플릿 출력시 비어있을때는 빈 문자열
