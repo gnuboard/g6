@@ -58,7 +58,7 @@ def get_register_form(request: Request):
     member.mb_level = config.cf_register_level
 
     form_context = {
-        "action_url": f"{request.base_url.__str__()}'bbs'{router.url_path_for('register_form_save')}",
+        "action_url": f"{request.base_url.__str__()}bbs{router.url_path_for('register_form_save')}",
         "agree": agree,
         "agree2": agree2,
     }
@@ -163,8 +163,9 @@ async def post_register_form(
         member_form.mb_sex = ""
 
     # 한국 우편번호 (postalcode)
-    member_form.mb_zip1 = mb_zip[:3]
-    member_form.mb_zip2 = mb_zip[3:]
+    if mb_zip:
+        member_form.mb_zip1 = mb_zip[:3]
+        member_form.mb_zip2 = mb_zip[3:]
 
     # 레벨 입력방지
     del member_form.mb_level

@@ -103,8 +103,9 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
         raise AlertException(status_code=400, detail="회원정보가 없습니다.")
 
     # 한국 우편번호 (postalcode)
-    member_form.mb_zip1 = mb_zip[:3]
-    member_form.mb_zip2 = mb_zip[3:]
+    if mb_zip:
+        member_form.mb_zip1 = mb_zip[:3]
+        member_form.mb_zip2 = mb_zip[3:]
 
     # 비밀번호 변경
     is_password_changed = False
