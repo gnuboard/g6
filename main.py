@@ -126,7 +126,7 @@ async def main_middleware(request: Request, call_next):
             member = db.query(models.Member).filter(models.Member.mb_id == cookie_mb_id).first()
             if member and not (member.mb_intercept_date or member.mb_leave_date): # 차단 했거나 탈퇴한 회원이 아니면
                 # 메일인증을 사용하고 메일인증한 시간이 있다면, 년도만 체크하여 시간이 있음을 확인
-                if config.cf_use_email_certify and member.mb_email_certify[:2] != "00":
+                if config.cf_use_email_certify and not is_none_datetime(member.mb_email_certify):
                     ss_mb_key  = session_member_key(request, member)
                     # 쿠키에 저장된 키와 여러가지 정보를 조합하여 만든 키가 일치한다면 로그인으로 간주
                     if request.cookies.get("ck_auto") == ss_mb_key:

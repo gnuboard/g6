@@ -208,7 +208,7 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
     if mb_icon and mb_icon.filename and mb_icon_info:
         # 파일객체를 pillow에서 열었으므로 따로 지정.
         path = os.path.join('data', 'member', f"{mb_id[:2]}")
-        os.makedirs(path, exist_ok=True)
+        make_directory(path)
         filename = mb_id + os.path.splitext(mb_icon.filename)[1]
         mb_icon_info.save(os.path.join(path, filename))
 
@@ -219,8 +219,8 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
     new_member.mb_level = config.cf_register_level
     new_member.mb_login_ip = request.client.host
     new_member.mb_lost_certify = ""
-    new_member.mb_nick_date = datetime.now()
-    new_member.mb_open_date = datetime.now()
+    new_member.mb_nick_date = datetime(1, 1, 1, 0, 0, 0)
+    new_member.mb_open_date = datetime(1, 1, 1, 0, 0, 0)
     new_member.mb_point = config.cf_register_point
     new_member.mb_today_login = datetime.now()
 

@@ -1581,11 +1581,20 @@ def mailer(email: str, subject: str, body: str):
         except Exception as e:
             print(f"Error sending email to {to_email}: {e}")
 
-    return {"message": f"Emails sent successfully to {', '.join(to_emails)}"}                                
-               
-                
+    return {"message": f"Emails sent successfully to {', '.join(to_emails)}"}
 
 
+def is_none_datetime(input_date: Union[date, str]) -> bool:
+    """date, datetime 이 0001, 0000 등 유효하지 않은 날짜인지 확인하는 함수
+    0001, mysql 5.7이하 0000,
+    """
+    if isinstance(input_date, str):  # pymysql 라이브러리는 '0000', 12월 32일등 잘못된 날짜 일때 str 타입반환.
+        return True
+
+    if input_date.strftime("%Y")[:2] == "00":
+        return True
+
+    return False
 
 
 def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
