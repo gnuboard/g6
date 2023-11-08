@@ -368,7 +368,8 @@ class WriteBaseModel(Base):
     wr_comment = Column(Integer, nullable=False, default=0, server_default=text("0"))
     wr_comment_reply = Column(String(5), nullable=False, default="")
     ca_name = Column(String(255), nullable=False, default="")
-    wr_option = Column(Enum("html1", "html2", "secret", "mail", name="wr_option"), nullable=False, default="html1")
+    # wr_option = Column(Enum("html1", "html2", "secret", "mail", name="wr_option"), nullable=False, default="html1")
+    wr_option = Column(String(40), nullable=False, default="html1")
     wr_subject = Column(String(255), nullable=False, default="")
     wr_content = Column(Text, nullable=False, default="")
     wr_seo_title = Column(String(255), nullable=False, default="")
@@ -871,6 +872,29 @@ class BoardGood(Base):
     mb_id = Column(String(20), nullable=False, default='')
     bg_flag = Column(String(255), nullable=False, default='')
     bg_datetime = Column(DateTime, nullable=False, default=datetime.now())
+
+
+class BoardFile(Base):
+    """
+    게시글 파일 테이블
+    """
+    __tablename__ = DB_TABLE_PREFIX + 'board_file'
+
+    bo_table = Column(String(20), primary_key=True, nullable=False, default='')
+    wr_id = Column(Integer, primary_key=True, nullable=False, default=0)
+    bf_no = Column(Integer, primary_key=True, nullable=False, default=0)
+    bf_source = Column(String(255), nullable=False, default='')
+    bf_file = Column(String(255), nullable=False, default='')
+    bf_download = Column(Integer, nullable=False, default=0)
+    bf_content = Column(Text, nullable=False)
+    bf_fileurl = Column(String(255), nullable=False, default='')
+    bf_thumburl = Column(String(255), nullable=False, default='')
+    bf_storage = Column(String(50), nullable=False, default='')
+    bf_filesize = Column(Integer, nullable=False, default=0)
+    bf_width = Column(Integer, nullable=False, default=0)
+    bf_height = Column(Integer, nullable=False, default=0)
+    bf_type = Column(Integer, nullable=False, default=0)
+    bf_datetime = Column(DateTime, nullable=False, default=datetime.now())    
     
 
 class MemberSocialProfiles(Base):

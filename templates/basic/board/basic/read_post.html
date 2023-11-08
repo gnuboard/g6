@@ -133,7 +133,12 @@
             </div>
 
             <!-- 파일 출력 START -->
-            <div id="bo_v_img"></div>
+            <div id="bo_v_img">
+                {% for image in images %}
+                    <img src="/{{ image.bf_file }}" alt="" title="">
+                {% endfor %}
+
+            </div>
             <!-- 파일 출력 END -->
 
             <!-- 본문 내용 시작 { -->
@@ -169,6 +174,22 @@
             {% endif %}
         </div>
         <!-- }  추천 비추천 끝 -->
+    </section>
+
+    <section id="bo_v_file">
+        <h2>첨부파일</h2>
+        <ul>
+        {% for file in files %}
+            <li>
+                <i class="fa fa-folder-open" aria-hidden="true"></i>
+                <a href="/board/{{ board.bo_table }}/{{ write.wr_id }}/download/{{ file.bf_no }}" class="view_file_download"> 
+                    <strong>{{ file.bf_source }}</strong>  ({{ file.bf_filesize|filesizeformat }})
+                </a>
+                <br>
+                <span class="bo_v_file_cnt">{{ file.bf_download }}회 다운로드 | DATE : {{ file.bf_datetime }}</span>
+            </li>
+        {% endfor %}
+        </ul>
     </section>
 
     <ul class="bo_v_nb">

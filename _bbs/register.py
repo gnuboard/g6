@@ -6,18 +6,22 @@ from _bbs.member_profile import validate_nickname, validate_userid
 from common import *
 from database import get_db
 from dataclassform import MemberForm
-# from main import templates, app
 from models import Member
 from pbkdf2 import create_hash
 
 router = APIRouter()
 
-templates = Jinja2Templates(directory=TEMPLATES_DIR, extensions=["jinja2.ext.i18n"])
+templates = Jinja2Templates(directory=[TEMPLATES_DIR, CAPTCHA_PATH], extensions=["jinja2.ext.i18n"])
 templates.env.globals["is_admin"] = is_admin
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals['getattr'] = getattr
 templates.env.globals["generate_token"] = generate_token
+templates.env.globals["captcha_widget"] = captcha_widget
+templates.env.globals["check_profile_open"] = check_profile_open
+
+
+
 @router.get("/register")
 def get_register(request: Request, response: Response, db: Session = Depends(get_db)):
     # 캐시 제어 헤더 설정 (캐시된 페이지를 보여주지 않고 새로운 페이지를 보여줌)
@@ -57,15 +61,19 @@ def get_register_form(request: Request):
     member = Member()
     member.mb_level = config.cf_register_level
 
+    captcha = get_current_captcha_cls(captcha_name=request.state.config.cf_captcha)
     form_context = {
         "action_url": f"{request.base_url.__str__()}bbs{router.url_path_for('register_form_save')}",
         "agree": agree,
         "agree2": agree2,
+        "is_profile_open": check_profile_open(open_date=None, config=request.state.config),
+        "next_profile_open_date": get_next_profile_openable_date(open_date=None, config=request.state.config),
     }
 
     return templates.TemplateResponse(
         "member/register_form.html",
         context={
+            "captcha": captcha.TEMPLATE_PATH if captcha is not None else '',
             "is_register": True,
             "request": request,
             "member": member,
@@ -76,17 +84,17 @@ def get_register_form(request: Request):
 
 
 @router.post("/register_form", name='register_form_save')
-async def post_register_form(
-        request: Request, db: Session = Depends(get_db),
-        mb_id: str = Form(None),
-        mb_password: str = Form(None),
-        mb_password_re: str = Form(None),
-        mb_certify_case: Optional[str] = Form(default=""),
-        mb_img: Optional[UploadFile] = File(None),
-        mb_icon: Optional[UploadFile] = File(None),
-        mb_zip: Optional[str] = Form(default=""),
-        member_form: MemberForm = Depends(),
-):
+async def post_register_form(request: Request, db: Session = Depends(get_db),
+                             mb_id: str = Form(None),
+                             mb_password: str = Form(None),
+                             mb_password_re: str = Form(None),
+                             mb_certify_case: Optional[str] = Form(default=""),
+                             mb_img: Optional[UploadFile] = File(None),
+                             mb_icon: Optional[UploadFile] = File(None),
+                             mb_zip: Optional[str] = Form(default=""),
+                             member_form: MemberForm = Depends(),
+                             recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default="")
+                             ):
     # 약관 동의 체크
     agree = request.session.get("ss_agree", "")
     agree2 = request.session.get("ss_agree", "")
@@ -96,6 +104,10 @@ async def post_register_form(
         return RedirectResponse(url="/bbs/register", status_code=302)
 
     config = request.state.config
+    captcha = get_current_captcha_cls(config.cf_captcha)
+    if (captcha is not None) and (not await captcha.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
+        raise AlertException("캡차가 올바르지 않습니다.")
+
     # 유효성 검사
     exists_member = db.query(Member.mb_id, Member.mb_email).filter(Member.mb_id == mb_id).first()
     if exists_member:
@@ -154,7 +166,8 @@ async def post_register_form(
 
         if config.cf_member_icon_width and config.cf_member_icon_height:
             if width > config.cf_member_icon_width or height > config.cf_member_icon_height:
-                raise AlertException(status_code=400, detail=f"아이콘 크기는 {config.cf_member_icon_width}x{config.cf_member_icon_height} 이하로 업로드 해주세요.")
+                raise AlertException(status_code=400,
+                                     detail=f"아이콘 크기는 {config.cf_member_icon_width}x{config.cf_member_icon_height} 이하로 업로드 해주세요.")
 
         if not re.match(r".*\.(gif)$", mb_icon.filename, re.IGNORECASE):
             raise AlertException(status_code=400, detail="gif 파일만 업로드 가능합니다.")
@@ -182,7 +195,7 @@ async def post_register_form(
     if mb_icon and mb_icon.filename and mb_icon_info:
         # 파일객체를 pillow에서 열었으므로 따로 지정.
         path = os.path.join('data', 'member', f"{mb_id[:2]}")
-        os.makedirs(path, exist_ok=True)
+        make_directory(path)
         filename = mb_id + os.path.splitext(mb_icon.filename)[1]
         mb_icon_info.save(os.path.join(path, filename))
 
@@ -193,8 +206,8 @@ async def post_register_form(
     new_member.mb_level = config.cf_register_level
     new_member.mb_login_ip = request.client.host
     new_member.mb_lost_certify = ""
-    new_member.mb_nick_date = datetime.now()
-    new_member.mb_open_date = datetime.now()
+    new_member.mb_nick_date = datetime(1, 1, 1, 0, 0, 0)
+    new_member.mb_open_date = datetime(1, 1, 1, 0, 0, 0)
     new_member.mb_point = config.cf_register_point
     new_member.mb_today_login = datetime.now()
 

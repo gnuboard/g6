@@ -1,0 +1,17 @@
+<script type="text/javascript">
+    function getRecaptchaTokenName() {
+        return 'g-recaptcha-response';
+    }
+    
+    function check_captcha(form) {
+        if(document.getElementById(getRecaptchaTokenName()).value == "") {
+            alert("자동입력방지를 확인하세요");
+            return false;
+        }
+        return true;
+    }
+</script>
+
+
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<div class="g-recaptcha" data-sitekey="{{ request.state.config.cf_recaptcha_site_key }}"></div>
