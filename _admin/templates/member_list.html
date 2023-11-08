@@ -104,10 +104,10 @@
                         {% endif %}
                     </td>
                     <td headers="mb_list_mailc"><!-- 메일인증 -->
-                        {% if member.mb_email_certify.strftime('%Y') > '1' %}
-                            <span class="txt_true">Yes</span>
-                        {% else %}
+                        {% if is_none_datetime(member.mb_email_certify) %}
                             <span class="txt_false">No</span>
+                        {% else %}
+                            <span class="txt_true">Yes</span>
                         {% endif %}
                     </td>
                     <td headers="mb_list_cert" class="td_mbcert"><!-- 본인확인 -->
@@ -160,7 +160,7 @@
                         <label for="mb_intercept_date_{{ loop.index0 }}" class="sound_only">접근차단</label>
                     </td>
                     <td headers="mb_list_tel" class="td_tel"><!-- 전화번호 -->{{ member.mb_tel }}</td>
-                    <td headers="mb_list_join" class="td_date"><!--회원가입일 -->{{ member.mb_datetime.strftime("%y-%m-%d") }}</td>
+                    <td headers="mb_list_join" class="td_date"><!--회원가입일 -->{{ member.mb_datetime }}</td>
                     <td headers="mb_list_point" class="td_num"><a href="/admin/point_list?sfl=mb_id&stx={{ member.mb_id }}">{{ member.mb_point }}</a></td>
                 </tr>
                 {% endfor %}
