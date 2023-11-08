@@ -13,10 +13,10 @@ from fastapi import Query, Request, HTTPException, UploadFile
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup, escape
 from passlib.context import CryptContext
-from sqlalchemy import Index, asc, desc, and_, or_, func, extract
+from sqlalchemy import Index, asc, desc, and_, or_, func, extract, literal
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
-from models import Auth, Config, Member, Memo, Board, BoardNew, Group, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
+from models import Auth, Config, Member, Memo, Board, BoardFile, BoardNew, Group, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
 from models import WriteBaseModel
 from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
@@ -1623,7 +1623,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
         write.subject = write.wr_subject[:subject_len]
         write.icon_hot = write.wr_hit >= 100
         write.icon_new = write.wr_datetime > (datetime.now() - timedelta(days=1))
-        write.icon_file = write.wr_file
+        write.icon_file = BoardFileManager(board, write.wr_id).is_exist()
         write.icon_link = write.wr_link1 or write.wr_link2
         write.icon_reply = write.wr_reply
         write.datetime = write.wr_datetime.strftime("%y-%m-%d")
@@ -1687,3 +1687,282 @@ def insert_board_new(bo_table: str, write: object):
     new.mb_id = write.mb_id
     db.add(new)
     db.commit()
+
+
+# TODO:
+# 7. 이미지, 동영상 업로드 파일 확인 (cf_image_extension, cf_movie_extension)
+# 8. 업로드 사이즈 체크 (bo_upload_size)
+class BoardFileManager():
+    model = BoardFile
+
+    def __init__(self, board: Board, wr_id: int = None):
+        self.board = board
+        self.bo_table = board.bo_table
+        self.wr_id = wr_id
+        self.db = SessionLocal()
+
+    def is_exist(self, bo_table: str = None, wr_id: int = None):
+        """게시글에 파일이 있는지 확인
+
+        Returns:
+            bool: 파일이 존재하면 True, 없으면 False
+        """
+        bo_table = bo_table or self.bo_table
+        wr_id = wr_id or self.wr_id
+
+        query = self.db.query(self.model).filter_by(bo_table=bo_table, wr_id=wr_id)
+
+        return self.db.query(literal(True)).filter(query.exists()).scalar()
+    
+    def get_board_files(self):
+        """업로드된 파일 목록을 가져온다.
+
+        Returns:
+            list[BoardFile]: 업로드된 파일 목록
+        """
+        return self.db.query(self.model).filter_by(
+            bo_table=self.bo_table,
+            wr_id=self.wr_id
+        ).all()
+    
+    def get_board_files_by_form(self):
+        """입력/수정 폼에서 사용할 파일 목록을 가져온다.
+
+        Returns:
+            list[BoardFile]: 업로드된 파일 목록 
+        """
+        config_count = int(self.board.bo_upload_count) or 0
+        upload_count = config_count
+        if self.wr_id:
+            query = self.db.query(self.model).filter_by(bo_table=self.bo_table, wr_id=self.wr_id)
+            uploaded_count = query.count()
+            uploaded_files = query.all()
+            # 파일 카운트는 업로드된 파일 수와 설정된 값 중 큰 수로 설정한다.
+            upload_count = (uploaded_count if uploaded_count > config_count else config_count) - uploaded_count
+        else:
+            uploaded_files = []
+
+        # 업로드 파일 + 빈 객체
+        files = uploaded_files + [self.model() for _ in range(upload_count)]
+
+        return files
+
+    def get_board_files_by_type(self, request: Request):
+        """업로드된 파일 목록을 파일과 이미지로 분리한다.
+
+        Args:
+            request (Request): Request 객체
+
+        Returns:
+            list[BoardFile]: 파일 목록
+            list[BoardFile]: 이미지 목록
+        """
+        config = request.state.config
+        board_files = self.get_board_files()
+        images = []
+        files = []
+        for file in board_files:
+            ext = file.bf_source.split('.')[-1]
+            if ext in config.cf_image_extension:
+                images.append(file)
+            else:
+                files.append(file)
+
+        return images, files
+
+    def get_board_file(self, bf_no: int):
+        """업로드된 파일을 가져온다.
+
+        Args:
+            bf_no (int): 파일 순번
+
+        Returns:
+            BoardFile: 업로드된 파일
+        """
+        return self.db.query(self.model).filter_by(bo_table=self.bo_table, wr_id=self.wr_id, bf_no=bf_no).first()
+    
+    def get_filename(self, filename: str):
+        """파일이름을 생성한다.
+
+        Args:
+            filename (str): 업로드 파일이름
+
+        Returns:
+            str: 파일이름
+        """
+        return os.urandom(16).hex() + "." + filename.split(".")[-1]
+    
+    def insert_board_file(self, bf_no: int, directory: str, filename: str, file: UploadFile, content: str = "", bo_table: str = None, wr_id: int = None):
+        """게시글의 파일을 추가한다.
+
+        Args:
+            bf_no (int): 파일 순번
+            directory (str): 파일 저장 경로
+            file (UploadFile): 업로드 파일
+            content (str, optional): 파일 설명. Defaults to "".
+            bo_table (str, optional): 게시판 테이블명. Defaults to None.
+            wr_id (int, optional): 게시글 아이디. Defaults to None.
+        """
+        board_file = self.model()
+        board_file.bo_table = bo_table or self.bo_table
+        board_file.wr_id = wr_id or self.wr_id
+        board_file.bf_no = bf_no
+        board_file.bf_source = file.filename
+        board_file.bf_file = f"{directory}/{filename}"
+        board_file.bf_download = 0
+        board_file.bf_content = content
+        board_file.bf_filesize = file.size
+        self.db.add(board_file)
+        self.db.commit()
+    
+    def update_board_file(self, board_file: model, directory: str, filename: str, file: UploadFile, content: str = "", bo_table: str = None, wr_id: int = None):
+        """게시글의 파일을 수정한다.
+
+        Args:
+            board_file (model): BoardFile 모델
+            directory (str): 파일 저장 경로
+            file (UploadFile): 업로드 파일
+            content (str, optional): 파일 설명. Defaults to "".
+        """
+        if bo_table:
+            board_file.bo_table = bo_table
+        if wr_id:
+            board_file.wr_id = wr_id
+        board_file.bf_source = file.filename
+        board_file.bf_file = f"{directory}/{filename}"
+        board_file.bf_download = 0
+        board_file.bf_content = content
+        board_file.bf_filesize = file.size
+        self.db.commit()
+
+    def update_download_count(self, board_file: model):
+        """다운로드 횟수를 증가시킨다.
+
+        Args:
+            board_file (model): BoardFile 모델
+        """
+        board_file.bf_download += 1
+        self.db.commit()
+
+    def move_board_files(self, directory: str, target_bo_table: str, target_wr_id: int):
+        """게시글의 파일을 이동한다.
+
+        Args:
+            target_bo_table (str): 이동할 게시판 테이블명
+            target_wr_id (int): 이동할 게시글 아이디
+        """
+        directory = os.path.join(directory, target_bo_table)
+        make_directory(directory)
+
+        if self.wr_id and target_wr_id:
+            board_files = self.get_board_files()
+            for board_file in board_files:
+                file = self.create_upload_file_from_path(board_file.bf_file)
+                file.filename = board_file.bf_source
+                file.size = board_file.bf_filesize
+                filename = self.get_filename(file.filename)
+
+                # 파일 이동 및 정보 업데이트
+                self.move_file(board_file.bf_file, f"{directory}/{filename}")
+                self.update_board_file(board_file, directory, filename, file, board_file.bf_content, target_bo_table, target_wr_id)
+                board_file.bo_table = target_bo_table
+                board_file.wr_id = target_wr_id
+
+            self.db.commit()
+
+    def copy_board_files(self, directory : str, target_bo_table: str, target_wr_id: int):
+        """게시글의 파일을 복사한다.
+
+        Args:
+            target_bo_table (str): 복사할 게시판 테이블명
+            target_wr_id (int): 복사할 게시글 아이디
+        """
+        directory = os.path.join(directory, target_bo_table)
+        make_directory(directory)
+
+        if self.wr_id and target_wr_id:
+            board_files = self.get_board_files()
+            for board_file in board_files:
+                file = self.create_upload_file_from_path(board_file.bf_file)
+                file.filename = board_file.bf_source
+                file.size = board_file.bf_filesize
+                filename = self.get_filename(file.filename)
+                
+                # 파일 복사 및 정보 추가
+                self.copy_file(board_file.bf_file, f"{directory}/{filename}")
+                self.insert_board_file(board_file.bf_no, directory, filename, file, board_file.bf_content, target_bo_table, target_wr_id)
+        
+    def delete_board_file(self, bf_no: int):
+        """게시글의 파일을 삭제한다.
+
+        Args:
+            bf_no (int): 파일 순번
+        """
+        if self.wr_id and bf_no:
+            board_file = self.get_board_file(bf_no)
+            self.remove_file(board_file.bf_file)
+            self.db.delete(board_file)
+            self.db.commit()
+
+    def delete_board_files(self):
+        """게시글의 파일을 삭제한다.
+        """
+        if self.wr_id:
+            board_files = self.get_board_files()
+            for board_file in board_files:
+                self.remove_file(board_file.bf_file)
+                self.db.delete(board_file)
+            self.db.commit()
+
+    def upload_file(self, directory: str, filename: str, file: UploadFile):
+        """파일을 업로드한다.
+
+        Args:
+            directory (str): 파일 저장 경로
+            filename (str): 파일이름
+            file (UploadFile): 업로드 파일
+        """
+        if file and file.filename:
+            with open(f"{directory}/{filename}", "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+    
+    def move_file(self, origin: str, target: str):
+        """파일을 이동한다.
+
+        Args:
+            origin (str): 원본 파일 경로
+            target (str): 이동할 파일 경로
+        """
+        if os.path.exists(origin):
+            shutil.move(origin, target)
+
+    def copy_file(self, origin: str, target: str):
+        """파일을 복사한다.
+
+        Args:
+            origin (str): 원본 파일 경로
+            target (str): 복사할 파일 경로
+        """
+        if os.path.exists(origin):
+            shutil.copy(origin, target)
+
+    def remove_file(self, path: str):
+        """파일을 삭제한다.
+
+        Args:
+            path (str): 파일 경로
+        """
+        if os.path.exists(path):
+            os.remove(path)
+    
+    def create_upload_file_from_path(self, path: str):
+        """파일 경로로 UploadFile 객체를 생성한다.
+
+        Args:
+            path (str): 파일 경로
+
+        Returns:
+            UploadFile: 업로드 파일
+        """
+        with open(path, "rb") as f:
+            return UploadFile(f, filename=os.path.basename(path))

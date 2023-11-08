@@ -164,11 +164,13 @@
                                 {{ write.num }}
                             {% endif %}
                         </td>
-                        {% if board.bo_use_category and write.ca_name %}
+                        {% if board.bo_use_category %}
                         <td class="td_mng">
+                            {% if write.ca_name %}
                             <a href="{{ request.url.replace_query_params(sca=write.ca_name) }}" class="bo_cate_link">
                                 {{ write.ca_name }}
                             </a>
+                            {% endif %}
                         </td>
                         {% endif %}
                         <td class="td_subject" style="padding-left:{{ reply_depth * 10 }}px">
