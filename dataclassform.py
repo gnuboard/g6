@@ -112,18 +112,19 @@ class ConfigForm:
     cf_email_mb_member: Optional[int] = Form(default=0)
     cf_email_po_super_admin: Optional[int] = Form(default=0)
     cf_social_login_use: Optional[int] = Form(default=0)
-    cf_social_servicelist: Optional[List[str]] = Form(
-        default="", alias="cf_social_servicelist[]"
-    )
-    # cf_social_servicelist: Optional[str] = Form(default="")
+
     cf_naver_clientid: Optional[str] = Form(default="")
     cf_naver_secret: Optional[str] = Form(default="")
     cf_facebook_appid: Optional[str] = Form(default="")
+    cf_facebook_secret: Optional[str] = Form(default="")
     cf_twitter_key: Optional[str] = Form(default="")
+    cf_twitter_secret: Optional[str] = Form(default="")
     cf_google_clientid: Optional[str] = Form(default="")
+    cf_google_secret: Optional[str] = Form(default="")
     cf_googl_shorturl_apikey: Optional[str] = Form(default="")
     cf_kakao_rest_key: Optional[str] = Form(default="")
     cf_kakao_js_apikey: Optional[str] = Form(default="")
+    cf_kakao_client_secret: Optional[str] = Form(default="") 
     cf_payco_clientid: Optional[str] = Form(default="")
     cf_payco_secret: Optional[str] = Form(default="")
     cf_add_script: Optional[str] = Form(default="")
@@ -458,3 +459,16 @@ class NewwinForm:
     nw_subject: str = Form(...)
     nw_content: str = Form(...)
     nw_content_html: int = Form(None)
+
+@dataclass
+class SocialProfile:
+    """
+    그누보드 소셜 프로필 폼 데이터
+    """
+    mb_id: str
+    provider: str
+    identifier: str
+    profile_url: str
+    photourl: str
+    displayname: str
+    disciption: str

@@ -63,6 +63,7 @@ def config_form(request: Request, db: Session = Depends(get_db)):
 def config_form_update(
         request: Request,
         token: str = Form(None),
+        cf_social_servicelist: List[str] = Form(None, alias="cf_social_servicelist[]"),
         form_data: ConfigForm = Depends(),
         db: Session = Depends(get_db),
         ):
@@ -121,8 +122,8 @@ def config_form_update(
         form_data.cf_cert_simple = ""
 
     # 배열로 넘어오는 자료를 문자열로 변환. 예) "naver,kakao,facebook,google,twitter,payco"
-    form_data.cf_social_servicelist = (",".join(form_data.cf_social_servicelist) if form_data.cf_social_servicelist else "" )
-
+    cf_social_service = ','.join(cf_social_servicelist) if cf_social_servicelist else ""
+    form_data.cf_social_servicelist = cf_social_service
     config = db.query(models.Config).first()
 
     # 폼 데이터 반영 후 commit

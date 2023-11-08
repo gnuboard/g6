@@ -895,3 +895,19 @@ class BoardFile(Base):
     bf_height = Column(Integer, nullable=False, default=0)
     bf_type = Column(Integer, nullable=False, default=0)
     bf_datetime = Column(DateTime, nullable=False, default=datetime.now())    
+    
+
+class MemberSocialProfiles(Base):
+    __tablename__ = DB_TABLE_PREFIX + "member_social_profiles"
+
+    mp_id = Column(Integer, primary_key=True, autoincrement=True)
+    mb_id = Column(String(255), nullable=False, default="", comment="member.mb_id")
+    provider = Column(String(50), nullable=False, default="")
+    object_sha = Column(String(45), nullable=False, default="")
+    identifier = Column(String(255), nullable=False, default="")
+    profileurl = Column(String(255), nullable=False, default="")
+    photourl = Column(String(255), nullable=False, default="")
+    displayname = Column(String(255), nullable=False, default="")
+    description = Column(String(255), nullable=False, default="")
+    mp_register_day = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
+    mp_latest_day = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))

@@ -1,4 +1,6 @@
 <!-- 로그인 전 아웃로그인 시작 { -->
+<link rel="stylesheet" href="/static/css/basic/social.css">
+
 <section id="ol_before" class="ol">
     <div id="ol_be_cate">
         <h2><span class="sound_only">회원</span>로그인</h2>
@@ -27,6 +29,9 @@
     </fieldset>
     </form>
 </section>
+
+    {% include "social/social_login.html" %}
+
 
 <script>
 jQuery(function($) {
