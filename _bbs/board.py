@@ -3,9 +3,10 @@
 # 테이블명은 write 로, 글 한개에 대한 의미는 write 와 post 를 혼용하여 사용합니다.
 import bleach
 import datetime
-from fastapi import APIRouter, Depends, Request, Form, HTTPException
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, Depends, Request, File, Form, HTTPException
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import literal
 from sqlalchemy.orm import aliased, Session
 
 from common import *
@@ -23,6 +24,8 @@ templates.env.globals["generate_token"] = generate_token
 templates.env.globals["getattr"] = getattr
 templates.env.globals["get_selected"] = get_selected
 templates.env.globals["get_unique_id"] = get_unique_id
+
+FILE_DIRECTORY = "data/file/"
 
 
 @router.get("/group/{gr_id}")
@@ -118,7 +121,7 @@ def list_post(bo_table: str,
         write.num = total_count - offset - (writes.index(write))
         write.icon_hot = write.wr_hit >= board.bo_hot
         write.icon_new = write.wr_datetime > (datetime.now() - timedelta(hours=int(board.bo_new)))
-        write.icon_file = write.wr_file
+        write.icon_file = BoardFileManager(board, write.wr_id).is_exist()
         write.icon_link = write.wr_link1 or write.wr_link2
 
     return templates.TemplateResponse(
@@ -160,6 +163,14 @@ def list_delete(
     writes = db.query(models.Write).filter(models.Write.wr_id.in_(wr_ids)).all()
     for write in writes:
         db.delete(write)
+        # 원글 포인트 삭제
+        if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
+            insert_point(request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
+        
+        # 파일 삭제
+        BoardFileManager(board, write.wr_id).delete_board_files()
+
+        # TODO: 댓글 삭제
     db.commit()
 
     # 최신글 캐시 삭제
@@ -241,34 +252,33 @@ def move_update(
     # 입력받은 정보를 토대로 게시글을 복사한다.
     models.Write = dynamic_create_write_table(bo_table)
     origin_board = db.query(models.Board).get(bo_table)
-    target_writes = db.query(models.Write).filter(models.Write.wr_id.in_(wr_ids.split(','))).all()
+    origin_writes = db.query(models.Write).filter(models.Write.wr_id.in_(wr_ids.split(','))).all()
 
     # 게시글 복사/이동 작업 반복
     for target_bo_table in target_bo_tables:
-        for write in target_writes:
+        for origin_write in origin_writes:
             models.TargetWrite = dynamic_create_write_table(target_bo_table)
-            
+            target_write = models.TargetWrite()
+
             # 복사/이동 로그 기록
-            if not write.wr_is_comment and config.cf_use_copy_log:
-                log_msg = f"[이 게시물은 {member.mb_nick}님에 의해 {datetime.now()} {origin_board.bo_subject}에서 {act} 됨]"
-                if "html" in write.wr_option:
-                    log_msg = f'<div class="content_{sw}>' + log_msg + '</div>'
+            if not origin_write.wr_is_comment and config.cf_use_copy_log:
+                log_msg = f"[이 게시물은 {member.mb_nick}님에 의해 {datetime_format(datetime.now()) } {origin_board.bo_subject}에서 {act} 됨]"
+                if "html" in origin_write.wr_option:
+                    log_msg = f'<div class="content_{sw}">' + log_msg + '</div>'
                 else:
                     log_msg = '\n' + log_msg
 
             # 게시글 복사
             initial_field = ["wr_id", "wr_parent"]
-            target_write = models.TargetWrite()
-
-            for field in write.__table__.columns.keys():
+            for field in origin_write.__table__.columns.keys():
                 if field in initial_field:
                     continue
                 elif field == 'wr_content':
-                    target_write.wr_content = write.wr_content + log_msg
+                    target_write.wr_content = origin_write.wr_content + log_msg
                 elif field == 'wr_num':
                     target_write.wr_num = get_next_num(target_bo_table)
                 else:
-                    setattr(target_write, field, getattr(write, field))
+                    setattr(target_write, field, getattr(origin_write, field))
 
             if sw == "copy":
                 target_write.wr_good = 0
@@ -280,31 +290,37 @@ def move_update(
             db.add(target_write)
             db.commit()
 
-            # TODO: 파일 복사
-            # files = db.query(models.BoardFile).filter(
-            #     models.BoardFile.bo_table==origin_board.bo_table,
-            #     models.BoardFile.wr_id==write.wr_id
-            # ).all()
-            # if files:
-            #     pass
-
             if sw == "move":
-                # TODO: 최신글 이동(주석해제)
-                pass
-                # write_new = db.query(models.boardNew).filter(bo_table == bo_table, wr_id=write.wr_id).first()
-                # write_new.bo_table = target_write.bo_table
-                # write_new.wr_id = write_new.parent_id = target_write.wr_id
-                # db.commit()
-                
-                # 게시글
-                if not write.wr_is_comment:
-                    pass
-                    # TODO: 추천데이터 이동
-                    # TODO: 스크랩 이동
+                # 최신글 이동
+                db.query(models.BoardNew).filter_by(
+                    bo_table = origin_board.bo_table, wr_id = origin_write.wr_id
+                ).update({"bo_table": target_bo_table, "wr_id": target_write.wr_id, "wr_parent": target_write.wr_id})
 
-                # 기존 데이터(게시글, 파일, 최신글) 삭제
-                db.delete(write)
+                # 게시글
+                if not origin_write.wr_is_comment:
+                    # 추천데이터 이동
+                    db.query(models.BoardGood).filter_by(
+                        bo_table = origin_board.bo_table, wr_id = origin_write.wr_id
+                    ).update({"bo_table": target_bo_table, "wr_id": target_write.wr_id})
+
+                    # 스크랩 이동
+                    db.query(models.Scrap).filter_by(
+                        bo_table = bo_table, wr_id = origin_write.wr_id
+                    ).update({"bo_table": target_bo_table, "wr_id": target_write.wr_id})
+                
+                # 기존 데이터 삭제
+                db.delete(origin_write)
                 db.commit()
+
+            # 파일이 존재할 경우
+            file_manager = BoardFileManager(origin_board, origin_write.wr_id)
+            if file_manager.is_exist():
+                if sw == "move":
+                    file_manager.move_board_files(FILE_DIRECTORY, target_bo_table, target_write.wr_id)
+                else:
+                    file_manager.copy_board_files(FILE_DIRECTORY, target_bo_table, target_write.wr_id)
+
+
         # 최신글 캐시 삭제
         G6FileCache().delete_prefix(f'latest-{target_bo_table}')
     
@@ -350,9 +366,9 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
     # 링크
     is_link = member_level >= board.bo_link_level
     # 파일
-    file_count = int(board.bo_upload_count) or 0
     is_file = member_level >= board.bo_upload_level
     is_file_content = board.bo_use_file_content
+    files = BoardFileManager(board).get_board_files_by_form()
 
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/write_form.html",
@@ -367,9 +383,9 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
             "is_mail": is_mail,
             "recv_email_checked": recv_email_checked,
             "is_link": is_link,
-            "file_count": file_count,
             "is_file": is_file,
             "is_file_content": is_file_content,
+            "files": files
         }
     )
 
@@ -379,6 +395,8 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
     """
     게시글을 작성하는 form을 보여준다.
     """
+    member_level = get_member_level(request)
+
     # 게시판 정보 조회
     board = db.query(models.Board).get(bo_table)
     if not board:
@@ -390,7 +408,6 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
 
     # 분류
     categories = [] if not board.bo_use_category else board.bo_category_list.split("|")
-
     # 게시글 조회
     models.Write = dynamic_create_write_table(bo_table)
     write = db.query(models.Write).get(wr_id)
@@ -398,11 +415,9 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
     is_notice = True if not write.wr_reply and request.state.is_super_admin else False
     notice_checked = "checked" if is_board_notice(board, wr_id) else ""
     # HTML 설정
-    is_html = False
+    is_html = True if member_level >= board.bo_html_level else False
     html_checked = ""
     html_value = ""
-    if get_member_level(request) >= board.bo_html_level:
-        is_html = True
     if "html1" in write.wr_option:
         html_checked = "checked"
         html_value = "html1"
@@ -415,14 +430,12 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
     is_mail = True if request.state.config.cf_email_use and board.bo_use_email else False;
     recv_email_checked = "checked" if "mail" in write.wr_option else ""
     # 링크 설정
-    is_link = False
-    if get_member_level(request) >= board.bo_link_level:
-        is_link = True
+    is_link = True if member_level >= board.bo_link_level else False
     # 파일 설정
-    # TODO: 업로드한 파일이 file_count보다 클 경우, file_count를 증가시킨다.
-    file_count = int(board.bo_upload_count)
-    is_file = True if get_member_level(request) >= board.bo_upload_level else False
+    is_file = True if member_level >= board.bo_upload_level else False
     is_file_content = True if board.bo_use_file_content else False
+    # 업로드 파일 목록 조회
+    files = BoardFileManager(board, wr_id).get_board_files_by_form()
 
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/write_form.html",
@@ -440,9 +453,9 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
             "is_mail": is_mail,
             "recv_email_checked": recv_email_checked,
             "is_link": is_link,
-            "file_count": file_count,
             "is_file": is_file,
             "is_file_content": is_file_content,
+            "files": files,
         }
     )
 
@@ -461,10 +474,14 @@ def write_update(
     mail: str = Form(None),
     secret: str = Form(None),
     form_data: WriteForm = Depends(),
+    files: List[UploadFile] = File(None, alias="bf_file[]"),
+    file_content: list = Form(None, alias="bf_content[]"),
+    file_dels: list = Form(None, alias="bf_file_del[]"),
 ):
     """
     게시글을 Table 추가한다.
     """
+    config = request.state.config
     member = request.state.login_member
 
     # 게시판 정보 조회
@@ -488,6 +505,7 @@ def write_update(
     # 글 등록
     if compare_token(request, token, 'insert'):
         form_data.wr_name = getattr(member, "mb_name", form_data.wr_name)
+        form_data.wr_email = getattr(member, "mb_email", form_data.wr_email)
         parent_write = db.query(models.Write).get(parent_id) if parent_id else None
         write = models.Write(
             wr_num = parent_write.wr_num if parent_write else get_next_num(bo_table),
@@ -507,7 +525,57 @@ def write_update(
         # 새글 추가
         insert_board_new(bo_table, write)
 
-        # TODO: 글작성 포인트 부여(답변글은 댓글 포인트로 부여)
+        # 글작성 포인트 부여(답변글은 댓글 포인트로 부여)
+        point = board.bo_comment_point if parent_write else board.bo_write_point
+        content = f"{board.bo_subject} {write.wr_id} 글" + ("답변" if parent_write else "쓰기")
+        insert_point(request, member.mb_id, point, content, board.bo_table, write.wr_id, "쓰기")
+
+        # 메일 발송
+        if config.cf_email_use and board.bo_use_email:
+            send_email_list = []
+            if config.cf_email_wr_board_admin and board.bo_admin:
+                board_admin = db.query(models.Member).filter_by(mb_id = board.bo_admin).first()
+                if board_admin:
+                    # print(board_admin.mb_email, "게시판관리자 추가")
+                    send_email_list.append(board_admin.mb_email)
+            if config.cf_email_wr_group_admin and board.group.gr_admin:
+                group_admin = db.query(models.Member).filter_by(mb_id = board.group.gr_admin).first()
+                if group_admin:
+                    # print(group_admin.mb_email, "그룹관리자 추가")
+                    send_email_list.append(group_admin.mb_email)
+            if config.cf_email_wr_super_admin:
+                super_admin = db.query(models.Member).filter_by(mb_id = config.cf_admin).first()
+                if super_admin:
+                    # print(super_admin.mb_email, "최고관리자 추가")
+                    send_email_list.append(super_admin.mb_email)
+            # TODO: 원 글을 등록할 때 원글 작성자에게 메일이 발송되는 것이 맞는지 확인 필요
+            # if config.cf_email_wr_write:
+            #     email = parent_write.wr_email if parent_write else write.wr_email
+            #     print(email, "원글 게시자 추가")
+            #     send_email_list.append(email)
+            # TODO: 원글/답변글을 등록할 때 작성자에게 메일이 발송되는 것이 맞는지 확인 필요
+            # if "mail" in write.wr_option and write.wr_email:
+            #     print(write.wr_email, "글 등록 게시자 추가")
+            #     send_email_list.append(write.wr_email)
+            
+            # 중복 이메일 제거
+            send_email_list = list(set(send_email_list))
+
+            for email in send_email_list:
+                # TODO: 내용 HTML 처리 필요
+                act = "답변" if parent_write else "새"
+                subject = f"[{config.cf_title}] {board.bo_subject} 게시판에 {act} 글이 등록되었습니다."
+                body = templates.TemplateResponse(
+                    "bbs/mail_form/write_update_mail.html", {
+                        "request": request,
+                        "wr_subject": write.wr_subject,
+                        "wr_name": write.wr_name,
+                        "wr_content": write.wr_content,
+                        "link_url": request.url_for("read_post", bo_table=bo_table, wr_id=write.wr_id),
+                    }
+                ).body.decode("utf-8")
+                mailer(email, subject, body)
+
     # 글 수정
     elif compare_token(request, token, 'update'):
         # 게시글 정보 조회 및 수정
@@ -531,8 +599,45 @@ def write_update(
     if uid:
         db.query(models.AutoSave).filter(models.AutoSave.as_uid == uid).delete()
     db.commit()
+
+    # 업로드 파일처리
+    file_manager = BoardFileManager(board, write.wr_id)
+    directory = os.path.join(FILE_DIRECTORY, bo_table)
+    wr_file = write.wr_file
+
+    # 경로 생성
+    make_directory(directory)
+
+    # 파일 삭제
+    if file_dels:
+        for bf_no in file_dels:
+            file_manager.delete_board_file(bf_no)
+            wr_file -= 1
+    
+    # 파일 업로드 처리 및 파일정보 저장
+    for file in files:
+        index = files.index(file)
+        if file.size > 0:
+            board_file = file_manager.get_board_file(index)
+            bf_content = file_content[index] if file_content else ""
+            filename = file_manager.get_filename(file.filename)
+            if board_file:
+                # 기존파일 삭제
+                file_manager.remove_file(board_file.bf_file)
+                # 파일 업로드 및 정보 업데이트
+                file_manager.upload_file(directory, filename, file)
+                file_manager.update_board_file(board_file, directory, filename, file, bf_content)
+            else:
+                # 파일 업로드 및 정보 추가
+                file_manager.upload_file(directory, filename, file)
+                file_manager.insert_board_file(index, directory, filename, file, bf_content)
+                wr_file += 1
+
+    # 파일 개수 업데이트
+    write.wr_file = wr_file
+    db.commit()
+
     # TODO: 비밀글은 세션에 비밀글 저장 (자신의 글 확인)
-    # TODO: 파일처리
     # TODO: 메일발송
     
     # 최신글 캐시 삭제
@@ -573,14 +678,13 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
                 ):
             # 포인트 검사 및 소진
             read_point = board.bo_read_point
-            if config.cf_use_point and read_point:
-                if member.mb_point + read_point < 0:
-                    raise AlertException(f"게시글을 읽기 위해 {read_point} 포인트가 필요합니다.", 403)
-                else:
-                    # TODO: 포인트 소진 처리
-                    pass
+            mb_point = member.mb_point if member else 0
+            if mb_point + read_point < 0:
+                raise AlertException(f"게시글을 읽기 위해 {abs(read_point)} 포인트가 필요합니다.", 403)
+            else:
+                # 포인트 소진 처리
+                insert_point(request, member.mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table, write.wr_id, "읽기")
         request.session[session_name] = True
-        db.commit()
     
     if member:
         # 스크랩 여부 확인
@@ -625,12 +729,15 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
         if not next:
             next = query.filter(models.Write.wr_num > write.wr_num).first()
 
+    # 파일정보 조회
+    images, files = BoardFileManager(board, wr_id).get_board_files_by_type(request)
+
     # 댓글 목록 조회
     comments = db.query(models.Write).filter(
         models.Write.wr_parent == wr_id,
         models.Write.wr_is_comment == True
     ).order_by(models.Write.wr_id).all()
-    
+
     context = {
         "request": request,
         "board": board,
@@ -638,6 +745,8 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
         "comments": comments,
         "prev": prev,
         "next": next,
+        "images": images,
+        "files": files,
     }
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/read_post.html", context
@@ -673,12 +782,92 @@ def delete_post(
     db.delete(write)
     db.commit()
 
-    # TODO: 게시글 삭제에 따른 추가정보 삭제
+    # 원글 포인트 삭제
+    if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
+        insert_point(request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
+
+    # 파일 삭제
+    BoardFileManager(board, wr_id).delete_board_files()
 
     # 최신글 캐시 삭제
     G6FileCache().delete_prefix(f'latest-{bo_table}')
 
+    # TODO: 게시글 삭제에 따른 추가정보 삭제
+
     return RedirectResponse(f"/board/{bo_table}", status_code=303)
+
+
+@router.get("/{bo_table}/{wr_id}/download/{bf_no}")
+def download_file(
+    request: Request,
+    bo_table: str,
+    wr_id: int,
+    bf_no: int,
+    db: Session = Depends(get_db),
+):
+    """첨부파일 다운로드
+
+    Args:
+        bo_table (str): 게시판 테이블명
+        wr_id (int): 게시글 아이디
+        bf_no (int): 파일 순번
+        db (Session, optional): DB 세션. Defaults to Depends(get_db).
+
+    Raises:
+        AlertException: 파일이 존재하지 않을 경우
+
+    Returns:
+        FileResponse: 파일 다운로드
+    """
+    config = request.state.config
+    member = request.state.login_member
+    member_level = get_member_level(request)
+
+    # 게시판/게시글 정보 조회
+    board = db.query(models.Board).get(bo_table)
+    if not board:
+        raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
+    write_model = dynamic_create_write_table(bo_table)
+    write = db.query(write_model).get(wr_id)
+    if not write:
+        raise AlertException(status_code=404, detail=f"{wr_id} : 존재하지 않는 게시글입니다.")
+
+    # 회원레벨 검사
+    if not (member_level >= board.bo_download_level):
+        raise AlertException("다운로드 권한이 없습니다.", 403)
+
+    # 파일 정보 조회
+    file_manager = BoardFileManager(board, wr_id)
+    board_file = file_manager.get_board_file(bf_no)
+    if not board_file:
+        raise AlertException("파일이 존재하지 않습니다.", 404)
+    
+    # 게시물당 포인트가 한번만 차감되도록 세션 설정
+    session_name = f"ss_down_{bo_table}_{wr_id}"
+    if not request.session.get(session_name):
+        # 관리자이거나 자신의 글이면 통과하는 함수
+        if not (request.state.is_super_admin 
+                or is_owner(write, member)
+                or (not member and board.bo_download_level == 1 and write.wr_ip == request.client.host)
+                ):
+            # 포인트 검사 및 소진
+            download_point = board.bo_download_point
+            mb_point = member.mb_point if member else 0
+            if mb_point + download_point < 0:
+                raise AlertException(f"파일을 다운로드하기 위해 {abs(download_point)} 포인트가 필요합니다.", 403)
+            else:
+                insert_point(request, member.mb_id, download_point, f"{board.bo_subject} {write.wr_id} 파일 다운로드", board.bo_table, write.wr_id, "다운로드")
+
+        request.session[session_name] = True
+
+    download_session_name = f"ss_down_{bo_table}_{wr_id}_{board_file.bf_no}"
+    if not request.session.get(download_session_name):
+        # 다운로드 횟수 증가
+        file_manager.update_download_count(board_file)
+        # 파일 다운로드 세션 설정
+        request.session[download_session_name] = True
+
+    return FileResponse(board_file.bf_file, filename=board_file.bf_source)
 
 
 @router.post("/write_comment_update/")
