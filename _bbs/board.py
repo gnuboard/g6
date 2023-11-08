@@ -22,6 +22,7 @@ templates.env.globals["nl2br"] = nl2br
 templates.env.globals["editor_macro"] = editor_macro
 templates.env.globals["generate_token"] = generate_token
 templates.env.globals["getattr"] = getattr
+templates.env.globals["get_member_icon"] = get_member_icon
 templates.env.globals["get_selected"] = get_selected
 templates.env.globals["get_unique_id"] = get_unique_id
 
@@ -117,12 +118,15 @@ def list_post(bo_table: str,
     total_count = query.count()
 
     # 게시글 정보 수정
+    enc = StringEncrypt()
     for write in writes:
         write.num = total_count - offset - (writes.index(write))
         write.icon_hot = write.wr_hit >= board.bo_hot
         write.icon_new = write.wr_datetime > (datetime.now() - timedelta(hours=int(board.bo_new)))
         write.icon_file = BoardFileManager(board, write.wr_id).is_exist()
         write.icon_link = write.wr_link1 or write.wr_link2
+        write.name = write.wr_name[:config.cf_cut_name] if config.cf_cut_name else write.wr_name
+        write.email = enc.encrypt(write.wr_email)
 
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/list_post.html",

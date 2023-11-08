@@ -772,6 +772,23 @@ def select_query(request: Request, table_model, search_params: dict,
 def get_member(mb_id: str, fields: str = '*'):
     db = SessionLocal()
     return db.query(Member).options(load_only(fields)).filter_by(mb_id=mb_id).first()
+
+
+def get_member_icon(mb_id):
+    MEMBER_ICON_DIR = "data/member"
+    member_icon_dir = f"{MEMBER_ICON_DIR}/{mb_id[:2]}"
+
+    mb_dir = mb_id[:2]
+    icon_file = os.path.join(member_icon_dir, f"{mb_id}.gif")
+
+    if os.path.exists(icon_file):
+        # icon_url = icon_file.replace(G5_DATA_PATH, G5_DATA_URL)
+        icon_filemtime = os.path.getmtime(icon_file) # 캐시를 위해 파일수정시간을 추가
+        return f"{icon_file}?{icon_filemtime}"
+    # , f'<input type="checkbox" id="del_mb_icon" name="del_mb_icon" value="1">삭제'
+
+    # return None
+    return "static/img/no_profile.gif"
     
 
 # 포인트 부여    
