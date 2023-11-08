@@ -43,6 +43,10 @@ from _bbs.qa import router as qa_router
 from _bbs.member_profile import router as user_profile_router
 from _bbs.memo import router as memo_router
 from _bbs.poll import router as poll_router
+from _bbs.point import router as point_router
+from _bbs.scrap import router as scrap_router
+from _bbs.board_new import router as board_new_router
+from _bbs.ajax_good import router as good_router
 from _bbs.ajax_autosave import router as autosave_router
 
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
@@ -55,6 +59,10 @@ app.include_router(faq_router, prefix="/bbs", tags=["faq"])
 app.include_router(qa_router, prefix="/bbs", tags=["qa"])
 app.include_router(memo_router, prefix="/bbs", tags=["memo"])
 app.include_router(poll_router, prefix="/bbs", tags=["poll"])
+app.include_router(point_router, prefix="/bbs", tags=["point"])
+app.include_router(scrap_router, prefix="/bbs", tags=["scrap"])
+app.include_router(board_new_router, prefix="/bbs", tags=["board_new"])
+app.include_router(good_router, prefix="/bbs/ajax", tags=["good"])
 app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
 
 # is_mobile = False
@@ -73,6 +81,15 @@ async def main_middleware(request: Request, call_next):
         return response
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
     
+    try:
+        if path.startswith("/admin"):
+            # 관리자 페이지는 로그인이 필요합니다.
+            if not request.session.get("ss_mb_id"):
+                raise AlertException(status_code=302, detail="로그인이 필요합니다.", url="/bbs/login?url="+path)
+    except AlertException as e:
+        # 예외처리 실행
+        return await alert_exception_handler(request, e)
+
     member = None
 
     db: Session = SessionLocal()
@@ -93,7 +110,7 @@ async def main_middleware(request: Request, call_next):
                 insert_point(request, member.mb_id, config.cf_login_point, TIME_YMD + " 첫로그인", "@login", member.mb_id, TIME_YMD)
                 # 오늘의 로그인이 될 수도 있으며 마지막 로그인일 수도 있음
                 # 해당 회원의 접근일시와 IP 를 저장
-                member.mb_today_login = TIME_YMDHIS
+                member.mb_today_login = datetime.now()
                 member.mb_login_ip = request.client.host
                 db.commit()
             # 최고관리자인지 확인
@@ -134,19 +151,29 @@ async def main_middleware(request: Request, call_next):
         
     # pc, mobile 구분
     request.state.is_mobile = False
-    request.state.device = 'pc'
+    request.state.device = "" # pc 의 기본값은 "" 이고, mobile 은 "mobile" 로 설정
     
-    if 'SET_DEVICE' in globals():
-        if SET_DEVICE == 'mobile':
-            request.state.is_mobile = True
-            request.state.device = 'mobile'
-    else:
-        user_agent = request.headers.get("User-Agent", "")
-        ua = parse(user_agent)
-        if 'USE_MOBILE' in globals() and USE_MOBILE:
-            if ua.is_mobile or ua.is_tablet: # 모바일과 태블릿에서 접속하면 모바일로 간주
-                request.state.is_mobile = True
-                request.state.device = 'mobile'
+    user_agent = request.headers.get("User-Agent", "")
+    ua = parse(user_agent)
+    if ua.is_mobile or ua.is_tablet: # 모바일과 태블릿에서 접속하면 모바일로 간주
+        request.state.is_mobile = True
+        
+    if not IS_RESPONSIVE: # 적응형
+        # 반영형이 아니라면 모바일 접속은 mobile 로, 그 외 접속은 pc 로 간주
+        if request.state.is_mobile:
+            request.state.device = "mobile"
+    
+    # if 'SET_DEVICE' in globals():
+    #     if SET_DEVICE == 'mobile':
+    #         request.state.is_mobile = True
+    #         request.state.device = 'mobile'
+    # else:
+    #     user_agent = request.headers.get("User-Agent", "")
+    #     ua = parse(user_agent)
+    #     if 'USE_MOBILE' in globals() and USE_MOBILE:
+    #         if ua.is_mobile or ua.is_tablet: # 모바일과 태블릿에서 접속하면 모바일로 간주
+    #             request.state.is_mobile = True
+    #             request.state.device = 'mobile'
                 
     # 로그인한 회원 정보
     request.state.login_member = member
@@ -214,88 +241,32 @@ async def alert_close_exception_handler(request: Request, exc: AlertCloseExcepti
     )
 
 
-def get_member(mb_id, db: Session = Depends(get_db)):
-    member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
-    return member
-
-@app.get("/root")
-def read_root():
-    return {"Hello": "World"}
-
-
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request, response: Response, db: Session = Depends(get_db)):
-    
+def index(request: Request, db: Session = Depends(get_db)):
+    """
+    메인 페이지
+    """
+    query_boards = db.query(models.Board).join(
+        models.Group, models.Board.gr_id == models.Group.gr_id
+    ).filter(models.Board.bo_device != 'mobile')
+    # 최고관리자는 모든 게시판을 볼 수 있음
+    if not request.state.is_super_admin:
+        query_boards = query_boards.filter(
+            models.Board.bo_use_cert == '',
+            models.Board.bo_table.notin_(['notice', 'gallery'])
+        )
+    boards = query_boards.order_by(
+        models.Group.gr_order,
+        models.Board.bo_order
+    ).all()
+
     context = {
         "request": request,
+        "newwins": get_newwins(request),
         "latest": latest,
-        "newwins": get_newwins(request)
+        "boards": boards,
     }
-    return templates.TemplateResponse(f"index.{request.state.device}.html", context)
-
-
-# 최신글
-def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
-
-    if not skin_dir:
-        skin_dir = 'basic'
-
-    g6_file_cache = G6FileCache()
-    cache_filename = f"latest-{bo_table}-{skin_dir}-{rows}-{subject_len}-{g6_file_cache.get_cache_secret_key()}.html"
-    cache_file = os.path.join(g6_file_cache.cache_dir, cache_filename)
-
-    # 캐시된 파일이 있으면 파일을 읽어서 반환
-    if os.path.exists(cache_file):
-        return g6_file_cache.get(cache_file)
-    
-    db = SessionLocal()
-    board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
-    
-    models.Write = dynamic_create_write_table(bo_table)
-    writes = db.query(models.Write).filter(models.Write.wr_is_comment == False).order_by(models.Write.wr_num).limit(rows).all()
-    for write in writes:
-        write.is_notice = write.wr_id in board.bo_notice.split(",")
-        write.subject = write.wr_subject[:subject_len]
-        write.icon_hot = write.wr_hit >= 100
-        write.icon_new = write.wr_datetime > (datetime.now() - timedelta(days=1))
-        write.icon_file = write.wr_file
-        write.icon_link = write.wr_link1 or write.wr_link2
-        write.icon_reply = write.wr_reply
-    
-    context = {
-        "request": request,
-        "writes": writes,
-        "bo_table": bo_table,
-        "bo_subject": board.bo_subject,
-    }
-    temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
-    temp_decode = temp.body.decode("utf-8")
-
-    # 캐시 파일 생성
-    g6_file_cache.create(temp_decode, cache_file)
-
-    return temp_decode
-
-
-def get_newwins(request: Request):
-    """
-    레이어 팝업 목록을 반환하는 함수
-    """
-    db = SessionLocal()
-
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    current_division = "comm" # comm, both, shop
-    newwins = db.query(models.NewWin).filter(
-        models.NewWin.nw_begin_time <= now,
-        models.NewWin.nw_end_time >= now,
-        models.NewWin.nw_device.in_(["both", request.state.device]),
-        models.NewWin.nw_division.in_(["both", current_division]),
-    ).order_by(models.NewWin.nw_id.asc()).all()
-
-    # "hd_pops_" + nw_id 이름으로 선언된 쿠키가 있는지 확인하고 있다면 팝업을 제거
-    newwins = [newwin for newwin in newwins if not request.cookies.get("hd_pops_" + str(newwin.nw_id))]
-
-    return newwins
+    return templates.TemplateResponse(f"{request.state.device}/main.html", context)
 
 
 @app.post("/generate_token")

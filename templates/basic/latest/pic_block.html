@@ -1,0 +1,27 @@
+<div class="pic_lt">
+    <h2 class="lat_title"><a href="{{ url_for('list_post', bo_table=bo_table) }}">{{ bo_subject }}</a></h2>
+    <ul>
+        {% for write in writes -%}
+        <li class="galley_li">
+            <a href="{{ url_for('list_post', bo_table=bo_table) }}" class="lt_img">
+                <img src="{{ url_for('static', path='/img/no_img.png') }}" alt="이미지가 없습니다." width="210" height="150">
+            </a>
+            <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}">
+                {% if write.is_notice %}<strong>{{ write.subject }}</strong>{% else %}{{ write.subject }}{% endif %}
+            </a>
+            {% if write.icon_new %}<span class="new_icon">N<span class="sound_only">새글</span></span>{% endif %}
+            {% if write.icon_hot %}<span class="hot_icon">H<i class="fa fa-heart" aria-hidden="true"></i><span class="sound_only">인기글</span></span>{% endif %}
+            {% if write.wr_comment %}<span class="lt_cmt"><span class="sound_only">댓글</span>{{ write.wr_comment }}</span>{% endif %}
+            <div class="lt_info">
+                <span class="lt_nick">{{ write.wr_name }}</span>
+                <span class="lt_date">{{ write.datetime }}</span>              
+            </div>
+        </li>
+        {% else -%}
+            <li class="empty_li">게시물이 없습니다.</li>
+        {%- endfor %}
+    </ul>
+    <a href="{{ url_for('list_post', bo_table=bo_table) }}" class="lt_more">
+        <span class="sound_only">{{ bo_subject }}</span>더보기
+    </a>
+</div>

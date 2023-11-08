@@ -18,7 +18,7 @@ router = APIRouter()
 def check_member_form(request: Request):
     test_member = {"mb_id": ""}
 
-    return templates.TemplateResponse("member/member_confirm.html", {
+    return templates.TemplateResponse(f"{request.state.device}/member/member_confirm.html", {
         "request": request,
         "member": test_member
     })
@@ -45,7 +45,7 @@ def check_member(
             errors.append("아이디 또는 패스워드가 일치하지 않습니다.")
 
     if errors:
-        return templates.TemplateResponse("member/member_confirm.html", {
+        return templates.TemplateResponse(f"{request.state.device}/member/member_confirm.html", {
             "request": request,
             "member": None,
             "errors": errors
@@ -81,7 +81,7 @@ def member_profile(request: Request, db: Session = Depends(get_db)):
                       + f'{get_filetime_str(f"data/member_image/{mb_id[:2]}/{mb_id}.gif")}',
     }
 
-    return templates.TemplateResponse("member/register_form.html", {
+    return templates.TemplateResponse(f"{request.state.device}/member/register_form.html", {
         "config": request.state.config,
         "request": request,
         "member": member,

@@ -11,6 +11,7 @@ from common import *
 from dataclassform import MemberForm
 from pbkdf2 import create_hash
 import html
+import re
 
 
 router = APIRouter()
@@ -39,6 +40,10 @@ async def member_list(
     회원관리 목록
     """
     request.session["menu_key"] = MEMBER_MENU_KEY
+    
+    error = auth_check_menu(request, request.session["menu_key"], "r")
+    if error:
+        raise AlertException(error)
 
     result = select_query(
         request,
@@ -160,7 +165,7 @@ async def member_list(
 async def member_list_update(
         request: Request,
         db: Session = Depends(get_db),
-        token: Optional[str] = Form(...),
+        token: Optional[str] = Form(None),
         checks: Optional[List[int]] = Form(None, alias="chk[]"),
         mb_id: Optional[List[str]] = Form(None, alias="mb_id[]"),
         mb_open: Optional[List[int]] = Form(None, alias="mb_open[]"),
@@ -171,8 +176,8 @@ async def member_list_update(
         act_button: Optional[str] = Form(...),
         ):
     
-    if not compare_token(request, token, "member_list"):
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다."]})
+    if not check_token(request, token):
+        raise AlertException(f"{token} 잘못된 접근입니다.")
 
     if act_button == "선택삭제":
         for i in checks:
@@ -255,6 +260,7 @@ async def member_list_update(
             if (request.state.config.cf_admin == mb_id[i]) or (request.state.login_member.mb_id == mb_id[i]):
                 # 관리자와 로그인된 본인은 차단일자를 설정했다면 수정불가
                 if get_from_list(mb_intercept_date, i, 0):
+                    print("관리자와 로그인된 본인은 차단일자를 설정했다면 수정불가")
                     continue
             
             # print(get_from_list(mb_open, i, 0))
@@ -269,16 +275,28 @@ async def member_list_update(
 
 
 @router.get("/member_form")
-def member_form_add(request: Request, db: Session = Depends(get_db)):
+@router.get("/member_form/{mb_id}")
+def member_form(request: Request, db: Session = Depends(get_db),
+                mb_id: Optional[str] = None):
     """
-    회원추가 폼
+    회원추가, 수정 폼
     """
     request.session["menu_key"] = MEMBER_MENU_KEY
-    error = auth_check_menu(request, request.session["menu_key"], "r")
+    
+    error = auth_check_menu(request, request.session["menu_key"], "w")
     if error:
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": [error]})
+        raise AlertException(error)
 
-    return templates.TemplateResponse("member_form.html", {"request": request, "member": None})
+    exists_member = None
+    if mb_id:
+        exists_member = db.query(models.Member).filter_by(mb_id = mb_id).first()
+        if not exists_member:
+            raise AlertException("회원아이디가 존재하지 않습니다.")
+        
+        exists_member.mb_icon = get_member_icon(mb_id)
+        exists_member.mb_img = get_member_image(mb_id)
+
+    return templates.TemplateResponse("member_form.html", {"request": request, "member": exists_member})
 
 
 
@@ -314,24 +332,24 @@ def get_member_image(mb_id):
 
 
 # 회원수정 폼
-@router.get("/member_form/{mb_id}")
-def member_form_edit(mb_id: str, request: Request, db: Session = Depends(get_db)):
-    """
-    회원수정 폼
-    """
-    request.session["menu_key"] = MEMBER_MENU_KEY
-    error = auth_check_menu(request, request.session["menu_key"], "r")
-    if error:
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": [error]})
+# @router.get("/member_form/{mb_id}")
+# def member_form_edit(mb_id: str, request: Request, db: Session = Depends(get_db)):
+#     """
+#     회원수정 폼
+#     """
+#     request.session["menu_key"] = MEMBER_MENU_KEY
+#     error = auth_check_menu(request, request.session["menu_key"], "r")
+#     if error:
+#         return templates.TemplateResponse("alert.html", {"request": request, "errors": [error]})
 
-    exists_member = db.query(models.Member).filter_by(mb_id = mb_id).first()
-    if not exists_member:
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["회원아이디가 존재하지 않습니다."]}) 
+#     exists_member = db.query(models.Member).filter_by(mb_id = mb_id).first()
+#     if not exists_member:
+#         return templates.TemplateResponse("alert.html", {"request": request, "errors": ["회원아이디가 존재하지 않습니다."]}) 
     
-    exists_member.mb_icon = get_member_icon(mb_id)
-    exists_member.mb_img = get_member_image(mb_id)
+#     exists_member.mb_icon = get_member_icon(mb_id)
+#     exists_member.mb_img = get_member_image(mb_id)
 
-    return templates.TemplateResponse("member_form.html", {"request": request, "member": exists_member})
+#     return templates.TemplateResponse("member_form.html", {"request": request, "member": exists_member})
 
 
 # DB등록 및 수정
@@ -339,7 +357,7 @@ def member_form_edit(mb_id: str, request: Request, db: Session = Depends(get_db)
 async def member_form_update(
         request: Request,
         db: Session = Depends(get_db),
-        token: str = Form(...),
+        token: str = Form(None),
         mb_id: str = Form(...),
         mb_password: str = Form(default=""),
         mb_certify_case: Optional[str] = Form(default=""),
@@ -352,18 +370,21 @@ async def member_form_update(
         mb_img: UploadFile = File(None),
         del_mb_img: int = Form(None),
     ):
-
+    
+    if not check_token(request, token):
+        raise AlertException(f"{token} 잘못된 접근입니다.")
+    
+    error = auth_check_menu(request, request.session["menu_key"], "w")
+    if error:
+        raise AlertException(error)
+    
     # 한국 우편번호 (postalcode)
     form_data.mb_zip1 = mb_zip[:3]
     form_data.mb_zip2 = mb_zip[3:]
 
-    # token 값에 insert 가 포함되어 있다면 등록
-    if compare_token(request, token, "insert"):
-        exists_member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
-        if exists_member:
-            errors = [f"{mb_id} 회원아이디가 이미 존재합니다. (등록불가)"]
-            return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
-
+    exists_member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
+    if not exists_member: # 등록 (회원아이디가 존재하지 않으면)
+        
         new_member = models.Member(mb_id=mb_id, **form_data.__dict__)
 
         if mb_certify_case and form_data.mb_certify:
@@ -381,19 +402,15 @@ async def member_form_update(
 
         db.add(new_member)
         db.commit()
-
-    # 회원 수정
-    elif compare_token(request, token, "update"): # token 값에 update 가 포함되어 있다면 수정
-        exists_member = (db.query(models.Member).filter(models.Member.mb_id == mb_id).first())
-        if not exists_member:
-            return templates.TemplateResponse("alert.html", {"request": request, "errors": [f"{mb_id} 회원아이디가 존재하지 않습니다. (수정불가)"]})
         
+    else: # 수정 (회원아이디가 존재하면)
+
         if (request.state.config.cf_admin == mb_id) or (request.state.login_member.mb_id == mb_id):
             # 관리자와 로그인된 본인은 차단일자, 탈퇴일자를 설정했다면 수정불가
             if mb_intercept_date:
-                return templates.TemplateResponse("alert.html", {"request": request, "errors": ["로그인된 관리자의 차단일자를 설정할 수 없습니다."]})
+                raise AlertException("로그인된 관리자의 차단일자를 설정할 수 없습니다.")
             if mb_leave_date:
-                return templates.TemplateResponse("alert.html", {"request": request, "errors": ["로그인된 관리자의 탈퇴일자를 설정할 수 없습니다."]})
+                raise AlertException("로그인된 관리자의 탈퇴일자를 설정할 수 없습니다.")
 
         # 폼 데이터 반영 후 commit
         for field, value in form_data.__dict__.items():
@@ -412,33 +429,12 @@ async def member_form_update(
 
         db.commit()
 
-    else: # token 값에 insert, update 가 포함되어 있지 않다면 잘못된 접근
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["잘못된 접근입니다."]})
-    
-    # # 이미지 경로체크 및 생성
-    # member_icon_dir = f"{MEMBER_ICON_DIR}/{mb_id[:2]}"
-
-    # # 이미지 삭제
-    # delete_image(member_icon_dir, f"{mb_id}.gif", del_mb_icon)
-
-    # if mb_icon.filename and mb_icon.size > 0:
-    #     if mb_icon.filename[-3:].lower() != "gif":
-    #         raise AlertException(status_code=400, detail="아이콘은 gif 파일만 업로드 가능합니다.")
-    #         # return templates.TemplateResponse("alert.html", {"request": request, "errors": ["아이콘은 gif 파일만 업로드 가능합니다."]})
-        
-    #     # make_directory(MEMBER_ICON_DIR)
-
-    #     make_directory(member_icon_dir) # 하위경로를 만들지 않아도 알아서 만들어줌 data/member/ka/kagla.gif
-    #     # 이미지 저장
-    #     save_image(member_icon_dir, f"{mb_id}.gif", mb_icon)
-
     upload_member_icon(mb_id, mb_icon, del_mb_icon)
     upload_member_image(mb_id, mb_img, del_mb_img)
     
     return RedirectResponse(url=f"/admin/member_form/{mb_id}", status_code=302)
 
 
-import re
 CF_MEMBER_IMG_WIDTH = 60
 CF_MEMBER_IMG_HEIGHT = 60
 
@@ -529,4 +525,3 @@ async def check_member_nick(mb_nick: str, mb_id: str, request: Request, db: Sess
         return {"result": "exists"}
     else:
         return {"result": "not_exists"}
-    

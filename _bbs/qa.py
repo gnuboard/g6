@@ -14,6 +14,7 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals["generate_token"] = generate_token
 templates.env.globals["generate_query_string"] = generate_query_string
+templates.env.filters["default_if_none"] = default_if_none
 
 FILE_DIRECTORY = "data/qa/"
 
@@ -69,7 +70,7 @@ def qa_list(request: Request,
         "paging": get_paging(request, current_page, total_records),
     }
 
-    return templates.TemplateResponse(f"qa/pc/qa_list.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/qa/qa_list.html", context)
 
 
 @router.get("/qawrite")
@@ -99,7 +100,7 @@ def qa_form_write(request: Request,
         "related": related,
     }
 
-    return templates.TemplateResponse(f"qa/pc/qa_form.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/qa/qa_form.html", context)
 
 
 # Q&A 수정하기
@@ -127,7 +128,7 @@ def qa_form_edit(qa_id: int,
         "qa": qa,
     }
 
-    return templates.TemplateResponse(f"qa/pc/qa_form.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/qa/qa_form.html", context)
 
 
 @router.post("/qawrite_update")
@@ -155,7 +156,12 @@ def qa_write_update(request: Request,
     Returns:
         RedirectResponse: 1:1문의 설정 등록/수정 후 폼으로 이동
     """
-    # 회원정보
+    config = request.state.config
+
+    # Q&A 설정 조회
+    qa_config = db.query(QaConfig).order_by(QaConfig.id).first()
+    if not qa_config:
+        raise AlertException("Q&A 설정이 존재하지 않습니다.", 404)
 
     if compare_token(request, token, 'insert'): # 토큰에 등록돤 action이 insert라면 신규 등록
         form_data.qa_related = qa_related
@@ -169,10 +175,23 @@ def qa_write_update(request: Request,
         qa = QaContent(**form_data.__dict__)
         db.add(qa)
 
-        # 답변글이면 원본글의 답변여부를 1로 변경
+        # 답변글
+        # TODO : 메일 발송 템플릿 적용필요
         if qa_parent:
-            parent = db.query(QaContent).filter(QaContent.qa_id == qa_parent).first()
+            parent = db.query(QaContent).get(qa_parent)
+            # 원본글의 답변여부를 1로 변경
             parent.qa_status = 1
+            # 답변 알림메일 발송
+            if parent.qa_email_recv and parent.qa_email:
+                subject = f"[{config.cf_title}] {qa_config.qa_title} 답변 알림 메일"
+                content = form_data.qa_subject + "<br><br>" + form_data.qa_content
+                mailer(parent.qa_email, subject, content)
+        else:
+            # 문의 등록메일 발송
+            if qa_config.qa_admin_email:
+                subject = f"[{config.cf_title}] {qa_config.qa_title} 질문 알림 메일"
+                content = form_data.qa_subject + "<br><br>" + form_data.qa_content
+                mailer(qa_config.qa_admin_email, subject, content)
 
         db.commit()
 
@@ -210,9 +229,9 @@ def qa_write_update(request: Request,
     db.commit()
 
     if qa.qa_type == 1:
-        return RedirectResponse(url=f"/qa/{qa.qa_parent}", status_code=302)
+        return RedirectResponse(url=f"/bbs/qaview/{qa.qa_parent}", status_code=302)
     else:
-        return RedirectResponse(url=f"/qa/{qa.qa_id}", status_code=302)
+        return RedirectResponse(url=f"/bbs/qaview/{qa.qa_id}", status_code=302)
 
 
 @router.get("/qadelete/{qa_id}")
@@ -316,7 +335,7 @@ def qa_view(qa_id: int,
         "next": next
     }
 
-    return templates.TemplateResponse(f"qa/pc/qa_view.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/qa/qa_view.html", context)
 
 
 def set_file_list(request: Request, qa: QaContent = None):

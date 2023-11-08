@@ -690,7 +690,7 @@
             <tr>
             <th scope="row"><label for="bo_skin">스킨 디렉토리<strong class="sound_only">필수</strong></label></th>
             <td>
-                {{ get_skin_select('board', 'bo_skin', board.bo_skin, event='required', device='pc')|safe }}
+                {{ get_skin_select('board', 'bo_skin', board.bo_skin, event='required', device='')|safe }}
             </td>
             <td class="td_grpset">
                 <input type="checkbox" name="chk_grp_skin" id="chk_grp_skin">
