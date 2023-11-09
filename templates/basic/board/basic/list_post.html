@@ -18,7 +18,7 @@
     {% if board.bo_use_category %}
     <!-- 게시판 카테고리 시작 { -->
         <nav id="bo_cate">
-            <h2>자유게시판 카테고리</h2>
+            <h2>{{ board.bo_subject}} 카테고리</h2>
             <ul id="bo_cate_ul">
                 <li><a href="{{ request.url.replace_query_params() }}" {% if not sca %}id="bo_cate_on"{% endif %}>전체</a></li>
                 {% for category in categories %}

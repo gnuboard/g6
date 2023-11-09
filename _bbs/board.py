@@ -3,7 +3,7 @@
 # 테이블명은 write 로, 글 한개에 대한 의미는 write 와 post 를 혼용하여 사용합니다.
 import bleach
 import datetime
-from fastapi import APIRouter, Depends, Request, File, Form, HTTPException
+from fastapi import APIRouter, Depends, Request, File, Form, Path
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import aliased, Session
@@ -880,61 +880,122 @@ def download_file(
     return FileResponse(board_file.bf_file, filename=board_file.bf_source)
 
 
+from dataclasses import dataclass
+
+@dataclass
+class WriteCommentForm:
+    w: str = Form(...)
+    bo_table: str = Form(...)
+    wr_id: int = Form(...)
+    wr_content: str = Form(...)
+    wr_name: str = Form(None)
+    wr_password: str = Form(None)
+    wr_secret: str = Form(None)
+    comment_id: int = Form(None)
+
 @router.post("/write_comment_update/")
 def write_comment_update(
     request: Request,
     db: Session = Depends(get_db),
-    bo_table: str = Form(...),
-    wr_id: int = Form(...),
-    wr_content: str = Form(...),
-    comment_id: int = Form(None),
+    token: str = Form(...),
+    form: WriteCommentForm = Depends(),
 ):
     """
     댓글 등록
     """
+    member = request.state.login_member
+
+    if not check_token(request, token):
+        raise AlertException("잘못된 접근입니다.")
+
     # 게시판 정보 조회
-    board = db.query(models.Board).get(bo_table)
+    board = db.query(models.Board).get(form.bo_table)
     if not board:
-        raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
+        raise AlertException(f"{form.bo_table} : 존재하지 않는 게시판입니다.", 404)
 
     # 게시글 정보 조회
-    write_model = dynamic_create_write_table(bo_table)
-    write = db.query(write_model).get(wr_id)
+    write_model = dynamic_create_write_table(form.bo_table)
+    write = db.query(write_model).get(form.wr_id)
     if not write:
-        raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
+        raise AlertException(f"{form.wr_id} : 존재하지 않는 게시글입니다.", 404)
     
-    # 댓글 객체 생성
-    comment = write_model()
+    if form.w == "c":
+        # 댓글 객체 생성
+        comment = write_model()
 
-    if comment_id:
-        parent_comment = db.query(write_model).get(comment_id)
-        if not parent_comment:
-            raise AlertException(f"{comment_id} : 존재하지 않는 댓글입니다.", 404)
-        # 단계
-        comment.wr_comment_reply = generate_reply_character(board, parent_comment)
-        # 순서
-        comment.wr_comment = parent_comment.wr_comment
-    else:
-        # 순서
-        comment.wr_comment = db.query(func.max(write_model.wr_comment).label("max_wr_comment")).filter(
-            write_model.wr_parent == wr_id,
-            write_model.wr_is_comment == True
-        ).first().max_wr_comment
+        if form.comment_id:
+            parent_comment = db.query(write_model).get(form.comment_id)
+            if not parent_comment:
+                raise AlertException(f"{form.comment_id} : 존재하지 않는 댓글입니다.", 404)
+            comment.wr_comment_reply = generate_reply_character(board, parent_comment)
+            comment.wr_comment = parent_comment.wr_comment
+        else:
+            comment.wr_comment = db.query(func.max(write_model.wr_comment).label("max_wr_comment")).filter(
+                write_model.wr_parent == form.wr_id,
+                write_model.wr_is_comment == True
+            ).first().max_wr_comment + 1
 
-    # 댓글 추가정보 등록
-    comment.wr_is_comment = True
-    comment.wr_parent = wr_id
-    comment.wr_content = wr_content
-    comment.wr_datetime = datetime.now()
-    comment.wr_ip = request.client.host
-    comment.wr_last = datetime.now()
-    db.add(comment)
+        # 댓글 추가정보 등록
+        comment.ca_name = write.ca_name
+        comment.wr_option = form.wr_secret
+        comment.wr_num = write.wr_num
+        comment.wr_parent = form.wr_id
+        comment.wr_is_comment = True
+        comment.wr_content = form.wr_content
+        comment.mb_id = getattr(member, "mb_id", "")
+        comment.wr_password = form.wr_password
+        comment.wr_name = getattr(member, "mb_nick", form.wr_name)
+        comment.wr_email = getattr(member, "mb_email", "")
+        comment.wr_homepage = getattr(member, "mb_homepage", "")
+        comment.wr_datetime = comment.wr_last = datetime.now()
+        comment.wr_ip = request.client.host
+        db.add(comment)
 
-    # 게시글에 댓글 수 증가
-    write.wr_comment = write.wr_comment + 1
+        # 게시글에 댓글 수 증가
+        write.wr_comment = write.wr_comment + 1
+        db.commit()
+    elif form.w == "cu":
+        # 댓글 수정
+        comment = db.query(write_model).get(form.comment_id)
+        if not comment:
+            raise AlertException(f"{form.comment_id} : 존재하지 않는 댓글입니다.", 404)
+
+        comment.wr_content = form.wr_content
+        comment.wr_option = form.wr_secret
+        comment.wr_last = datetime.now()
+        db.commit()
+
+    return RedirectResponse(f"/board/{form.bo_table}/{form.wr_id}", status_code=303)
+
+
+@router.get("/delete_comment/{bo_table}/{comment_id}")
+def delete_comment(
+    request: Request,
+    db: Session = Depends(get_db),
+    bo_table: str = Path(...),
+    comment_id: int = Path(...),
+    token: str = Query(...),
+):
+    """
+    댓글 삭제
+    """
+    if not compare_token(request, token, 'delete_comment'):
+        raise AlertException("잘못된 접근입니다.", 403)
+    
+    write_model = dynamic_create_write_table(bo_table)
+    comment = db.query(write_model).get(comment_id)
+    if not comment:
+        raise AlertException(f"{comment_id} : 존재하지 않는 댓글입니다.", 404)
+    
+    # 댓글 삭제
+    db.delete(comment)
+    db.commit()
+    # 게시글에 댓글 수 감소
+    write = db.query(write_model).get(comment.wr_parent)
+    write.wr_comment = write.wr_comment - 1
     db.commit()
 
-    return RedirectResponse(f"/board/{bo_table}/{wr_id}", status_code=303)
+    return RedirectResponse(f"/board/{bo_table}/{write.wr_id}", status_code=303)
 
 
 # TODO: 아래 함수들을 다른 경로로 옮겨야 한다.
