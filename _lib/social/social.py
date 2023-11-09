@@ -35,30 +35,25 @@ def register_social_provider(config: Config):
         provider_class: SocialProvider = getattr(provider_module_name, f"{provider_name.capitalize()}")
 
         if provider_name == "naver":
-            if not (config.cf_naver_clientid.strip() and config.cf_naver_secret.strip()):
-                pass
-            provider_class.register(oauth, config.cf_naver_clientid.strip(), config.cf_naver_secret.strip())
+            if config.cf_naver_clientid.strip() and config.cf_naver_secret.strip():
+                provider_class.register(oauth, config.cf_naver_clientid.strip(), config.cf_naver_secret.strip())
 
         elif provider_name == 'kakao':
             if not config.cf_kakao_rest_key:
-                pass
-            # 카카오 client_secret 은 선택사항
-            provider_class.register(oauth, config.cf_kakao_rest_key.strip(), config.cf_kakao_client_secret.strip())
+                # 카카오 client_secret 은 선택사항
+                provider_class.register(oauth, config.cf_kakao_rest_key.strip(), config.cf_kakao_client_secret.strip())
 
         elif provider_name == 'google':
             if not (config.cf_google_clientid.strip() and config.cf_google_secret.strip()):
-                pass
-            provider_class.register(oauth, config.cf_google_clientid.strip(), config.cf_google_secret.strip())
+                provider_class.register(oauth, config.cf_google_clientid.strip(), config.cf_google_secret.strip())
 
         elif provider_name == 'twitter':
             if not (config.cf_twitter_key.strip() and config.cf_twitter_secret.strip()):
-                pass
-            provider_class.register(oauth, config.cf_twitter_key.strip(), config.cf_twitter_secret.strip())
+                provider_class.register(oauth, config.cf_twitter_key.strip(), config.cf_twitter_secret.strip())
 
         elif provider_name == 'facebook':
             if not (config.cf_facebook_appid.strip() and config.cf_facebook_secret.strip()):
-                pass
-            provider_class.register(oauth, config.cf_facebook_appid.strip(), config.cf_facebook_secret.strip())
+                provider_class.register(oauth, config.cf_facebook_appid.strip(), config.cf_facebook_secret.strip())
 
 
 async def get_social_login_token(provider_name, request: Request):
@@ -117,15 +112,13 @@ async def get_social_profile(auth_token, provider_name, request):
         raise AlertException(status_code=400, detail="유효하지 않은 요청입니다. 관리자에게 문의하십시오.",
                              url=request.url_for('login').__str__())
 
-def unlink_social_login(provider_name, request: Request):
+
+def unlink_social_login(member_id):
     """
     소셜계정 연결해제
     """
-    member = request.state.login_member
-    db = SessionLocal()
-    db.query(MemberSocialProfiles.mb_id).filter(MemberSocialProfiles.mb_id == member.mb_id)
-    db.delete()
-    db.close()
+    with SessionLocal() as db:
+        db.query(MemberSocialProfiles.mb_id).filter(MemberSocialProfiles.mb_id == member_id).delete()
 
 
 class SocialProvider:
