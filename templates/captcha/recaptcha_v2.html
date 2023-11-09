@@ -1,8 +1,11 @@
 <script type="text/javascript">
+    {# 캡차 토큰 이름을 가져옵니다. #}
     function getRecaptchaTokenName() {
         return 'g-recaptcha-response';
     }
     
+    
+    {# 사용자가 캡차를 입력했는지 폼전송시 확인 합니다. #}
     function check_captcha(form) {
         if(document.getElementById(getRecaptchaTokenName()).value == "") {
             alert("자동입력방지를 확인하세요");

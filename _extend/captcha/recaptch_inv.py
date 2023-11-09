@@ -11,7 +11,8 @@ class ReCaptchaInvisible:
 
     @classmethod
     async def verify(cls, recaptcha_secret_key, captcha_response_key: str = None) -> bool:
-        """Google recaptcha verify
+        """ 캡차 응답 토큰을 전송하여 캡차가 성공적으로 완료되었는지 확인합니다.
+        Google recaptcha verify
         Args:
             recaptcha_secret_key (str): recaptcha 비밀키
             captcha_response_key (str): captcha 응답 토큰키
