@@ -1,4 +1,5 @@
-<script type="text/javascript">
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<script>
     {# 캡차 토큰 이름을 가져옵니다. #}
     function getRecaptchaTokenName() {
         return 'g-recaptcha-response';
@@ -13,8 +14,18 @@
         }
         return true;
     }
+    
+    {# 캡차가 완료되면 포함된 폼을 전송하는 콜백함수 #}
+    function recaptchaOnSubmit(token) {
+        const form = document.getElementById(getRecaptchaTokenName()).closest("form");
+        if (form) {
+            form.submit();
+        }
+    }
 </script>
 
 
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
-<div class="g-recaptcha" data-sitekey="{{ request.state.config.cf_recaptcha_site_key }}"></div>
+<div class="g-recaptcha"
+     data-sitekey="{{ request.state.config.cf_recaptcha_site_key }}"
+     data-callback="recaptchaOnSubmit"
+></div>

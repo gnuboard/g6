@@ -454,9 +454,12 @@
             }
         }
     
-        if (!chk_captcha()) return false;
-    
-        document.getElementById("btn_submit").disabled = "disabled";
+        // captcha 사용시
+        if (typeof check_captcha === "function") {
+            if (!check_captcha(f)) return false;
+            // 캡차함수에서 폼 전송을 하므로 버튼 비활성화
+            document.getElementById("btn_submit").disabled = "disabled";
+        }
     
         return true;
     }
