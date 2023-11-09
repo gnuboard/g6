@@ -840,7 +840,7 @@
                             <label for="check_social_naver">네이버 로그인을 사용합니다</label>
                             <div>
                                 <h3>네이버 CallbackURL</h3>
-                                <p>http://49.247.41.166/gnuboard5/plugin/social/?hauth.done=naver</p>
+                                <p>{{request.base_url}}bbs/social/login/callback?provider=naver</p>
                             </div>
                         </div>
                         <div class="explain_box">
@@ -848,7 +848,7 @@
                             <label for="check_social_kakao">카카오 로그인을 사용합니다</label>
                             <div>
                                 <h3>카카오 로그인 Redirect URI</h3>
-                                <p>http://49.247.41.166/gnuboard5/plugin/social/?hauth.done=kakao</p>
+                                <p>{{request.base_url}}bbs/social/login/callback?provider=kakao</p>
                             </div>
                         </div>
                         <div class="explain_box">
@@ -856,7 +856,7 @@
                             <label for="check_social_facebook">페이스북 로그인을 사용합니다</label>
                             <div>
                                 <h3>페이스북 유효한 OAuth 리디렉션 URI</h3>
-                                <p>http://49.247.41.166/gnuboard5/plugin/social/?hauth.done=facebook</p>
+                                <p>{{request.base_url}}bbs/social/login/callback?provider=facebook</p>
                             </div>
                         </div>
                         <div class="explain_box">
@@ -864,7 +864,7 @@
                             <label for="check_social_google">구글 로그인을 사용합니다</label>
                             <div>
                                 <h3>구글 승인된 리디렉션 URI</h3>
-                                <p>http://49.247.41.166/gnuboard5/plugin/social/?hauth.done=google</p>
+                                <p>{{request.base_url}}bbs/social/login/callback?provider=google</p>
                             </div>
                         </div>
                         <div class="explain_box">
@@ -872,7 +872,7 @@
                             <label for="check_social_twitter">X(트위터) 로그인을 사용합니다</label>
                             <div>
                                 <h3>X(트위터) CallbackURL</h3>
-                                <p>http://49.247.41.166/gnuboard5/plugin/social/</p>
+                                <p>{{request.base_url}}bbs/social/login/callback?provider=twitter</p>
                             </div>
                         </div>
                         <div class="explain_box">
@@ -880,7 +880,7 @@
                             <label for="check_social_payco">페이코 로그인을 사용합니다</label>
                             <div>
                                 <h3>페이코 CallbackURL</h3>
-                                <p>http://49.247.41.166/gnuboard5/plugin/social/</p>
+                                <p>{{request.base_url}}bbs/social/login/callback?provider=payco</p>
                             </div>
                         </div>
                     </td>
@@ -888,7 +888,7 @@
                 <tr>
                     <th scope="row"><label for="cf_naver_clientid">네이버 Client ID</label></th>
                     <td>
-                        <input type="text" name="cf_naver_clientid" value="{{ config.cf_naver_client_id }}" id="cf_naver_clientid" class="frm_input" size="40"> 
+                        <input type="text" name="cf_naver_clientid" value="{{ config.cf_naver_clientid }}" id="cf_naver_clientid" class="frm_input" size="40"> 
                         <a href="https://developers.naver.com/apps/#/register" target="_blank" class="btn_frmline">앱 등록하기</a>
                     </td>
                     <th scope="row"><label for="cf_naver_secret">네이버 Client Secret</label></th>

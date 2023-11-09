@@ -1,33 +1,24 @@
 import datetime
-from datetime import timedelta
-import re
-from fastapi import FastAPI, Depends, Request, Form
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, RedirectResponse, Response, JSONResponse
+from fastapi import FastAPI, Depends, Request
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from database import get_db
 
-from jinja2 import Environment, FileSystemLoader
-from database import engine, get_db, SessionLocal
-from sqlalchemy.orm import Session
+from database import get_db
 from starlette.middleware.sessions import SessionMiddleware
 from common import *
-from typing import Optional
 
 from settings import APP_IS_DEBUG
 from user_agents import parse
-import os
 import models
 import secrets
 
 # models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(debug=APP_IS_DEBUG)
-CAPTCHA_PATH = f"{TEMPLATES}/captcha"
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
-templates = Jinja2Templates(directory=[TEMPLATES_DIR, CAPTCHA_PATH], extensions=["jinja2.ext.i18n"])
+templates = Jinja2Templates(directory=[TEMPLATES_DIR], extensions=["jinja2.ext.i18n"])
 templates.env.globals["is_admin"] = is_admin
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.filters["default_if_none"] = default_if_none
@@ -49,7 +40,7 @@ from _bbs.scrap import router as scrap_router
 from _bbs.board_new import router as board_new_router
 from _bbs.ajax_good import router as good_router
 from _bbs.ajax_autosave import router as autosave_router
-
+from _bbs.social import router as social_router
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
 app.include_router(login_router, prefix="/bbs", tags=["login"])
@@ -65,6 +56,7 @@ app.include_router(scrap_router, prefix="/bbs", tags=["scrap"])
 app.include_router(board_new_router, prefix="/bbs", tags=["board_new"])
 app.include_router(good_router, prefix="/bbs/ajax", tags=["good"])
 app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
+app.include_router(social_router, prefix="/bbs", tags=["social"])
 
 # is_mobile = False
 # user_device = 'pc'
@@ -98,41 +90,45 @@ async def main_middleware(request: Request, call_next):
     request.state.config = config
 
     is_super_admin = False
+    is_autologin = False
     ss_mb_id = request.session.get("ss_mb_id", "")
+    # 로그인
     if ss_mb_id:
         member = db.query(models.Member).filter(models.Member.mb_id == ss_mb_id).first()
         if member:
+            ymd_str = datetime.now().strftime("%Y-%m-%d")
             if member.mb_intercept_date or member.mb_leave_date: # 차단 되었거나, 탈퇴한 회원이면 세션 초기화
                 request.session["ss_mb_id"] = ""
                 member = None
-            elif member.mb_today_login.strftime("%Y-%m-%d") != TIME_YMD:  # 오늘 처음 로그인 이라면
-                # if member.mb_today_login[:10] != TIME_YMD: # 오늘 처음 로그인 이라면
+            elif member.mb_today_login.strftime("%Y-%m-%d") != datetime.now().strftime("%Y-%m-%d"):  # 오늘 처음 로그인 이라면
                 # 첫 로그인 포인트 지급
-                insert_point(request, member.mb_id, config.cf_login_point, TIME_YMD + " 첫로그인", "@login", member.mb_id, TIME_YMD)
+                insert_point(request, member.mb_id, config.cf_login_point, ymd_str + " 첫로그인", "@login", member.mb_id, ymd_str)
                 # 오늘의 로그인이 될 수도 있으며 마지막 로그인일 수도 있음
                 # 해당 회원의 접근일시와 IP 를 저장
                 member.mb_today_login = datetime.now()
                 member.mb_login_ip = request.client.host
                 db.commit()
+
             # 최고관리자인지 확인
-            if config.cf_admin == member.mb_id:
+            if member and config.cf_admin == member.mb_id:
                 is_super_admin = True
-            
+    # 자동로그인
     else:
-        cookie_mb_id = request.cookies.get("ck_mb_id")
+        cookie_mb_id = request.cookies.get("ck_mb_id", "")
         if cookie_mb_id:
             cookie_mb_id = re.sub("[^a-zA-Z0-9_]", "", cookie_mb_id)[:20] # 쿠키에 저장된 아이디에서 영문자,숫자,_ 20글자 얻는다.
         if cookie_mb_id and cookie_mb_id.lower() != config.cf_admin.lower(): # 최고관리자 아이디라면 자동로그인 금지
             member = db.query(models.Member).filter(models.Member.mb_id == cookie_mb_id).first()
             if member and not (member.mb_intercept_date or member.mb_leave_date): # 차단 했거나 탈퇴한 회원이 아니면
                 # 메일인증을 사용하고 메일인증한 시간이 있다면, 년도만 체크하여 시간이 있음을 확인
-                if config.cf_use_email_certify and member.mb_email_certify[:2] != "00":
+                if config.cf_use_email_certify and not is_none_datetime(member.mb_email_certify):
                     ss_mb_key  = session_member_key(request, member)
                     # 쿠키에 저장된 키와 여러가지 정보를 조합하여 만든 키가 일치한다면 로그인으로 간주
                     if request.cookies.get("ck_auto") == ss_mb_key:
                         request.session["ss_mb_id"] = cookie_mb_id
-                        return RedirectResponse(url="/", status_code=302).set_cookie(key="ss_mb_id", value=cookie_mb_id, max_age=3600)
-    
+                        is_autologin = True
+
+    db.close()
     request.state.is_super_admin = is_super_admin
 
     if request.method == "GET":
@@ -191,6 +187,10 @@ async def main_middleware(request: Request, call_next):
     # }      
     db.close()
     response = await call_next(request)
+
+    if is_autologin:
+        # 자동로그인 쿠키를 설정
+        response.set_cookie(key="ss_mb_id", value=request.session["ss_mb_id"], max_age=3600)
 
     # 접속자 기록
     vi_ip = request.client.host

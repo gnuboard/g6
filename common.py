@@ -864,6 +864,7 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
     db.query(Member).filter_by(mb_id=mb_id).update({Member.mb_point: po_mb_point})
     # db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: po_mb_point})
     db.commit()
+    db.close()
 
     return 1
 
@@ -878,6 +879,7 @@ def get_expire_point(request: Request, mb_id: str):
     db = SessionLocal()
     
     point_sum = db.query(func.sum(Point.po_point - Point.po_use_point)).filter_by(mb_id=mb_id, po_expired=False).filter(Point.po_expire_date < datetime.now()).scalar()
+    db.close()
     return point_sum if point_sum else 0
 
 
@@ -926,6 +928,7 @@ def get_point_sum(request: Request, mb_id: str):
             
     # 포인트합
     point_sum = db.query(func.sum(Point.po_point)).filter_by(mb_id=mb_id).scalar()
+    db.close()
     return point_sum if point_sum else 0
 
 
@@ -962,6 +965,7 @@ def insert_use_point(mb_id: str, point: int, po_id: str = ""):
             db.query(Point).filter_by(po_id=row.po_id).update({"po_use_point": (Point.po_use_point + point4), "po_expired": 100})
             db.commit()
             point1 = point1 - point4
+    db.close()
 
 
 # 포인트 삭제
@@ -992,6 +996,7 @@ def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel
         # 포인트 UPDATE
         db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: sum_point}, synchronize_session=False)
         result = db.commit()
+    db.close()
 
     return result
 
@@ -1018,6 +1023,7 @@ def delete_use_point(request: Request, mb_id: str, point: int):
             db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: 0, Point.po_expired: po_expired}, synchronize_session=False)
             db.commit()
             point1 = point1 - point2
+    db.close()
 
 
 # 소멸포인트 삭제
@@ -1327,7 +1333,7 @@ def is_admin(request: Request):
     return False
 
 
-def check_profile_open(open_date, config) -> bool:
+def check_profile_open(open_date: Optional[date], config) -> bool:
     """변경일이 지나서 프로필 공개가능 여부를 반환
     Args:
         open_date (datetime): 프로필 공개일
@@ -1339,10 +1345,11 @@ def check_profile_open(open_date, config) -> bool:
         return True
 
     else:
-        return open_date < (datetime.now() - timedelta(days=config.cf_open_modify))
+        opend_date_time = datetime(open_date.year, open_date.month, open_date.day)
+        return opend_date_time < (datetime.now() - timedelta(days=config.cf_open_modify))
 
 
-def get_next_profile_openable_date(open_date: datetime, config):
+def get_next_profile_openable_date(open_date: Optional[date], config):
     """다음 프로필 공개 가능일을 반환
     Args:
         open_date (datetime): 프로필 공개일
@@ -1351,13 +1358,18 @@ def get_next_profile_openable_date(open_date: datetime, config):
         datetime: 다음 프로필 공개 가능일
     """
     cf_open_modify = config.cf_open_modify
+    cf_open_modify = 3
+    if cf_open_modify == 0:
+        return ""
 
     if open_date:
-        calculated_date = datetime.strptime(open_date, "%Y-%m-%d") + timedelta(days=cf_open_modify)
+        calculated_date = datetime.strptime(open_date.strftime("%Y-%m-%d"), "%Y-%m-%d") + timedelta(days=cf_open_modify)
     else:
         calculated_date = datetime.now() + timedelta(days=cf_open_modify)
-
-    return calculated_date
+    print('--------------------ewr')
+    print(calculated_date)
+    
+    return calculated_date.strftime("%Y-%m-%d")
 
 
 def default_if_none(value, arg):
@@ -1598,11 +1610,20 @@ def mailer(email: str, subject: str, body: str):
         except Exception as e:
             print(f"Error sending email to {to_email}: {e}")
 
-    return {"message": f"Emails sent successfully to {', '.join(to_emails)}"}                                
-               
-                
+    return {"message": f"Emails sent successfully to {', '.join(to_emails)}"}
 
 
+def is_none_datetime(input_date: Union[date, str]) -> bool:
+    """date, datetime 이 0001, 0000 등 유효하지 않은 날짜인지 확인하는 함수
+    0001, mysql 5.7이하 0000,
+    """
+    if isinstance(input_date, str):  # pymysql 라이브러리는 '0000', 12월 32일등 잘못된 날짜 일때 str 타입반환.
+        return True
+
+    if input_date.strftime("%Y")[:2] == "00":
+        return True
+
+    return False
 
 
 def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
@@ -2010,9 +2031,13 @@ def captcha_widget(request):
     return ''  # 템플릿 출력시 비어있을때는 빈 문자열
 
 
+CAPTCHA_PATH = f"{TEMPLATES}/captcha"
+
+
 def display_ip(ip: str) -> str:
     """IP 주소를 표시형식으로 변환
     Args:
         ip (str): IP 주소
     """
     return re.sub(r"([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)", "\\1.#.#.\\4", ip)
+

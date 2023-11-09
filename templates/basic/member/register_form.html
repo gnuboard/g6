@@ -18,7 +18,6 @@
 </ul>
 {% endif %}
 <h1 id="container_title">회원가입</h1>
-<!-- 회원정보 입력/수정 시작 { -->
 
 {% if is_register %}
     {% set token_name='create' %}
@@ -101,16 +100,20 @@
                                maxlength="20" placeholder="닉네임">
                         <span id="msg_mb_nick"></span>
                     </li>
-                    {% if config.cf_use_email_certify %}
                     <li>
                         <label for="reg_mb_email">E-mail (필수)</label>
-
+                        {% if config.cf_use_email_certify %}
+                            {% if is_register %}
+                                <span class="frm_info">E-mail 로 발송된 내용을 확인한 후 인증하셔야 회원가입이 완료됩니다.</span>
+                            {% else %}
+                                <span class="frm_info">E-mail 주소를 변경하시면 다시 인증하셔야 합니다.</span>
+                            {% endif %}
+                        {% endif %}
                         <input type="hidden" name="old_email" value="">
                         <input type="text" name="mb_email" value="{{ member.mb_email|default_if_none('') }}"
                                id="reg_mb_email" required class="frm_input email full_input required" size="70"
                                maxlength="100" placeholder="E-mail">
                     </li>
-                    {% endif %}
 
                     {% if config.cf_use_homepage %}
                     <li>
@@ -283,7 +286,7 @@
                     </li>
                     {% endif %}
                     
-                    {% if is_register %}
+                    {% if form.is_profile_open %}
                     <li class="chk_box">
                         <input type="checkbox" name="mb_open" value="1"
                                id="reg_mb_open"
@@ -306,11 +309,10 @@
                         <input type="hidden" name="mb_open" value="{{ member.mb_open }}">
 
                         <span class="frm_info">
-                                정보공개를 바꾸시면 앞으로 {{ config.cf_open_modify|default("0") }} 일 이내, 
-                                {{ next_profile_openable_date }} 에는 변경이 안됩니다.<br>
+                                정보공개는 수정후 앞으로 {{ config.cf_open_modify|default("0") }} 일 이내, 
+                                {{ form.next_profile_open_date }} 까지는 변경이 안됩니다.<br>
                                 이렇게 하는 이유는 잦은 정보공개 수정으로 인하여 쪽지를 보낸 후 받지 않는 경우를 막기 위해서 입니다.
                         </span>
-                         
                          
                     </li>
                     {% endif %} 
@@ -328,7 +330,6 @@
                     </li>
 
                     <li class="is_captcha_use">
-                        자동등록방지
                         {% include captcha_widget(request) %}
                     </li>
                 </ul>
@@ -476,6 +477,5 @@
 
 </script>
 
-<!-- } 회원정보 입력/수정 끝 -->
 
 {% endblock %}

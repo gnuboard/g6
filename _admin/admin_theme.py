@@ -86,7 +86,7 @@ def get_theme_info(dir):
 
         text = os.path.join(path, 'readme.txt')
         if os.path.isfile(text):
-            with open(text, 'r') as f:
+            with open(text, 'r', encoding="UTF-8") as f:
                 content = [line.strip() for line in f.readlines()]
 
             patterns = [

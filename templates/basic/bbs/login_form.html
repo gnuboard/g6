@@ -5,6 +5,7 @@
 {% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="/static/css/basic/social.css">
 
 <!-- 로그인 시작 { -->
 <div id="mb_login" class="mbskin">
@@ -36,6 +37,8 @@
         </fieldset> 
         </form>
             </div>
+
+    {% include "social/social_login.html" %}
 
         
     <!-- 주문하기, 신청하기 -->

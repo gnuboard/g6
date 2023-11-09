@@ -24,6 +24,7 @@ templates.env.globals["get_member_level_select"] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals["get_admin_menus"] = get_admin_menus
 templates.env.globals["generate_token"] = generate_token
+templates.env.globals["is_none_datetime"] = is_none_datetime
 
 MEMBER_MENU_KEY = "200100"
 MEMBER_ICON_DIR = "data/member"
@@ -140,13 +141,16 @@ async def member_list(
             cache[f"name:{name}"] = result
         
         return result    
-    
-    
+
     for member in result["rows"]:
         groupmember_count = db.query(models.GroupMember).filter(models.GroupMember.mb_id == member.mb_id).count()
         member.groupmember_count = groupmember_count
         # member.mb_icon = get_member_icon(member.mb_id)
         # member.mb_nick = get_mb_nick(request, member)
+        if is_none_datetime(member.mb_datetime):
+            member.mb_datetime = ""
+        else:
+            member.mb_datetime = member.mb_datetime.strftime("%y-%m-%d")
         member.nick_sideview = get_sideview(member.mb_id, member.mb_nick, member.mb_email, member.mb_homepage)
 
     context = {
