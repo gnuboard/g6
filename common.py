@@ -1993,6 +1993,8 @@ def get_current_captcha_cls(captcha_name: str):
     """캡챠 클래스를 반환하는 함수
     Args:
         captcha_name (str) : config cf_captcha에 저장된 캡차클래스이름
+    Returns:
+        Optional[class]: 캡차 클래스 or None
     """
     if captcha_name == "recaptcha":
         return ReCaptchaV2
@@ -2006,6 +2008,8 @@ def captcha_widget(request):
     """템플릿에서 캡차 출력
     Args:
         request (Request): FastAPI Request
+    Returns:
+        str: 캡차 템플릿 or ''
     """
     if cls := get_current_captcha_cls(captcha_name=request.state.config.cf_captcha):
         return cls.TEMPLATE_PATH

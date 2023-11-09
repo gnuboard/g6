@@ -21,7 +21,6 @@ templates.env.globals["captcha_widget"] = captcha_widget
 templates.env.globals["check_profile_open"] = check_profile_open
 
 
-
 @router.get("/register")
 def get_register(request: Request, response: Response, db: Session = Depends(get_db)):
     # 캐시 제어 헤더 설정 (캐시된 페이지를 보여주지 않고 새로운 페이지를 보여줌)
@@ -61,7 +60,6 @@ def get_register_form(request: Request):
     member = Member()
     member.mb_level = config.cf_register_level
 
-    captcha = get_current_captcha_cls(captcha_name=request.state.config.cf_captcha)
     form_context = {
         "action_url": f"{request.base_url.__str__()}bbs{router.url_path_for('register_form_save')}",
         "agree": agree,
@@ -73,7 +71,6 @@ def get_register_form(request: Request):
     return templates.TemplateResponse(
         "member/register_form.html",
         context={
-            "captcha": captcha.TEMPLATE_PATH if captcha is not None else '',
             "is_register": True,
             "request": request,
             "member": member,

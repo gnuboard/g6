@@ -70,7 +70,6 @@ def member_profile(request: Request, db: Session = Depends(get_db)):
         raise AlertException(status_code=404, detail="회원정보가 없습니다.")
 
     config = request.state.config
-    captcha = get_current_captcha_cls(captcha_name=config.cf_captcha)
     form_context = {
         "page": True,
         "action_url": app.url_path_for("member_profile", mb_no=request.path_params["mb_no"]),
@@ -89,7 +88,6 @@ def member_profile(request: Request, db: Session = Depends(get_db)):
         "request": request,
         "member": member,
         "form": form_context,
-        "captcha": captcha.TEMPLATE_PATH if captcha is not None else '',
     })
 
 
