@@ -778,16 +778,25 @@ def get_member_icon(mb_id):
     MEMBER_ICON_DIR = "data/member"
     member_icon_dir = f"{MEMBER_ICON_DIR}/{mb_id[:2]}"
 
-    mb_dir = mb_id[:2]
     icon_file = os.path.join(member_icon_dir, f"{mb_id}.gif")
 
     if os.path.exists(icon_file):
-        # icon_url = icon_file.replace(G5_DATA_PATH, G5_DATA_URL)
         icon_filemtime = os.path.getmtime(icon_file) # 캐시를 위해 파일수정시간을 추가
         return f"{icon_file}?{icon_filemtime}"
-    # , f'<input type="checkbox" id="del_mb_icon" name="del_mb_icon" value="1">삭제'
 
-    # return None
+    return "static/img/no_profile.gif"
+
+
+def get_member_image(mb_id):
+    MEMBER_IMAGE_DIR = "data/member_image"
+    member_image_dir = f"{MEMBER_IMAGE_DIR}/{mb_id[:2]}"
+
+    image_file = os.path.join(member_image_dir, f"{mb_id}.gif")
+
+    if os.path.exists(image_file):
+        image_filemtime = os.path.getmtime(image_file) # 캐시를 위해 파일수정시간을 추가
+        return f"{image_file}?{image_filemtime}"
+
     return "static/img/no_profile.gif"
     
 
@@ -1494,6 +1503,8 @@ class MyTemplates(Jinja2Templates):
         self.env.globals["generate_token"] = generate_token
         self.env.globals["getattr"] = getattr
         self.env.globals["get_selected"] = get_selected
+        self.env.globals["get_member_icon"] = get_member_icon
+        self.env.globals["get_member_image"] = get_member_image
 
         # 사용자 템플릿, 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
         if TEMPLATES_DIR in directory:
@@ -1639,6 +1650,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     Returns:
         str: 최신글 HTML
     """
+    config = request.state.config
     templates = MyTemplates(directory=TEMPLATES_DIR)
 
     if not skin_dir:
@@ -1658,6 +1670,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     Write = dynamic_create_write_table(bo_table)
     writes = db.query(Write).filter(Write.wr_is_comment == False).order_by(Write.wr_num).limit(rows).all()
     for write in writes:
+        write.name = write.wr_name[:config.cf_cut_name] if config.cf_cut_name else write.wr_name
         write.is_notice = write.wr_id in board.bo_notice.split(",")
         write.subject = write.wr_subject[:subject_len]
         write.icon_hot = write.wr_hit >= 100
@@ -1669,6 +1682,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     
     context = {
         "request": request,
+        "board": board,
         "writes": writes,
         "bo_table": bo_table,
         "bo_subject": board.bo_subject,
@@ -2034,10 +2048,50 @@ def captcha_widget(request):
 CAPTCHA_PATH = f"{TEMPLATES}/captcha"
 
 
-def display_ip(ip: str) -> str:
+def get_display_ip(request: Request, board: Board, ip: str) -> str:
     """IP 주소를 표시형식으로 변환
     Args:
         ip (str): IP 주소
     """
-    return re.sub(r"([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)", "\\1.#.#.\\4", ip)
+    if request.state.is_super_admin:
+        return ip
+    
+    if board.bo_use_ip_view:
+        return re.sub(r"([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)", "\\1.#.#.\\4", ip)
+    else:
+        return ""
 
+
+def set_writer_name(board: Board, member: Member) -> str:
+    """실명사용 여부를 확인 후 실명이면 이름을, 아니면 닉네임을 반환한다.
+
+    Args:
+        board (Board): 게시판 object
+        member (Member): 회원 object 
+
+    Returns:
+        str: 이름 또는 닉네임
+    """
+    if board.bo_use_name:
+        return member.mb_name
+    else:
+        return member.mb_nick
+    
+
+def get_member_signature(board: Board, mb_id: str = None) -> str:
+    """게시판에서 서명보이기를 사용 중이면 회원의 서명을 반환한다.
+
+    Args:
+        board (Board): 게시판 object
+        mb_id (str): 회원 아이디. Defaults to None.
+
+    Returns:
+        str: 회원 서명
+    """
+    if board.bo_use_signature and mb_id:
+        db = SessionLocal()
+        member = db.query(Member).filter(Member.mb_id == mb_id).first()
+        db.close()
+        return member.mb_signature
+    else:
+        return ""

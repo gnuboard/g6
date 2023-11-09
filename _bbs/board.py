@@ -22,8 +22,11 @@ templates.env.globals["editor_macro"] = editor_macro
 templates.env.globals["generate_token"] = generate_token
 templates.env.globals["getattr"] = getattr
 templates.env.globals["get_member_icon"] = get_member_icon
+templates.env.globals["get_member_image"] = get_member_image
 templates.env.globals["get_selected"] = get_selected
 templates.env.globals["get_unique_id"] = get_unique_id
+templates.env.globals["get_member_signature"] = get_member_signature
+
 
 FILE_DIRECTORY = "data/file/"
 
@@ -403,7 +406,10 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
     # 게시판 정보 조회
     board = db.query(models.Board).get(bo_table)
     if not board:
-        raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
+        raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
+    
+    if not can_action_by_comment_count(request, bo_table, wr_id, board.bo_count_modify):
+        raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_modify}건 이상 존재하므로 수정 할 수 없습니다.", 403)
 
     # 게시판 에디터 설정
     request.state.use_editor = board.bo_use_dhtml_editor
@@ -507,14 +513,17 @@ def write_update(
 
     # 글 등록
     if compare_token(request, token, 'insert'):
-        form_data.wr_name = getattr(member, "mb_name", form_data.wr_name)
-        form_data.wr_email = getattr(member, "mb_email", form_data.wr_email)
         parent_write = db.query(models.Write).get(parent_id) if parent_id else None
+
+        form_data.wr_name = set_writer_name(board, member) if member else form_data.wr_name
+        form_data.wr_email = getattr(member, "mb_email", form_data.wr_email)
+        form_data.wr_homepage = getattr(member, "mb_homepage", form_data.wr_homepage)
+        
         write = models.Write(
             wr_num = parent_write.wr_num if parent_write else get_next_num(bo_table),
             wr_reply = generate_reply_character(board, parent_write) if parent_write else "",
             wr_datetime = datetime.now(),
-            mb_id = request.state.login_member.mb_id if request.state.login_member else '',
+            mb_id = request.state.login_member.mb_id if member else '',
             wr_ip = request.client.host,
             **form_data.__dict__
         )
@@ -529,9 +538,10 @@ def write_update(
         insert_board_new(bo_table, write)
 
         # 글작성 포인트 부여(답변글은 댓글 포인트로 부여)
-        point = board.bo_comment_point if parent_write else board.bo_write_point
-        content = f"{board.bo_subject} {write.wr_id} 글" + ("답변" if parent_write else "쓰기")
-        insert_point(request, member.mb_id, point, content, board.bo_table, write.wr_id, "쓰기")
+        if member:
+            point = board.bo_comment_point if parent_write else board.bo_write_point
+            content = f"{board.bo_subject} {write.wr_id} 글" + ("답변" if parent_write else "쓰기")
+            insert_point(request, member.mb_id, point, content, board.bo_table, write.wr_id, "쓰기")
 
         # 메일 발송
         if config.cf_email_use and board.bo_use_email:
@@ -581,6 +591,9 @@ def write_update(
 
     # 글 수정
     elif compare_token(request, token, 'update'):
+        if not can_action_by_comment_count(request, bo_table, wr_id, board.bo_count_modify):
+            raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_modify}건 이상 존재하므로 수정 할 수 없습니다.", 403)
+    
         # 게시글 정보 조회 및 수정
         write = db.query(models.Write).get(wr_id)
         if not write:
@@ -668,6 +681,10 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
     if not write:
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
     
+    # 게시글 정보 설정
+    write.ip = get_display_ip(request, board, write.wr_ip)
+    write.name = write.wr_name[:config.cf_cut_name] if config.cf_cut_name else write.wr_name
+    
     # 세션 체크
     # 한번 읽은 게시글은 세션만료까지 조회수, 포인트 처리를 하지 않는다.
     session_name = f"ss_view_{bo_table}_{wr_id}"
@@ -675,19 +692,21 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
         # 조회수 증가
         write.wr_hit = write.wr_hit + 1
 
-        # 관리자이거나 자신의 글이면 통과하는 함수
-        if not (request.state.is_super_admin 
+        # 포인트 검사 및 소진
+        read_point = board.bo_read_point
+        if config.cf_use_point and read_point != 0:
+            # 관리자이거나 자신의 글이면 통과
+            if not (request.state.is_super_admin 
                 or is_owner(write, member)
                 or (not member and board.bo_read_level == 1 and write.wr_ip == request.client.host)
-                ):
-            # 포인트 검사 및 소진
-            read_point = board.bo_read_point
-            mb_point = member.mb_point if member else 0
-            if mb_point + read_point < 0:
-                raise AlertException(f"게시글을 읽기 위해 {abs(read_point)} 포인트가 필요합니다.", 403)
-            else:
-                # 포인트 소진 처리
-                insert_point(request, member.mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table, write.wr_id, "읽기")
+            ):
+                # 포인트 검사 및 소진
+                mb_point = getattr(member, "mb_point", 0)
+                if mb_point + read_point < 0:
+                    raise AlertException(f"게시글을 읽기 위해 {abs(read_point)} 포인트가 필요합니다.", 403)
+                else:
+                    # 포인트 소진 처리
+                    insert_point(request, member.mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table, write.wr_id, "읽기")
         request.session[session_name] = True
     
     if member:
@@ -744,7 +763,7 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
 
     for comment in comments:
         comment.name = comment.wr_name[:config.cf_cut_name] if config.cf_cut_name else comment.wr_name
-        comment.ip = comment.wr_ip if request.state.is_super_admin else display_ip(comment.wr_ip)
+        comment.ip = get_display_ip(request, board, comment.wr_ip)
         comment.is_reply = len(comment.wr_comment_reply) < 5 and board.bo_comment_level <= member_level
         comment.is_edit = comment.is_del = (member and comment.mb_id == member.mb_id) or request.state.is_super_admin
 
@@ -776,12 +795,17 @@ def delete_post(
     게시글을 삭제한다.
     """
     # 토큰 검증
-    if not compare_token(request, token, 'delete'):
+    if not compare_token(request, token, 'delete_post'):
         raise AlertException(status_code=403, detail="잘못된 접근입니다.")
+
     # 게시판 정보 조회
     board = db.query(models.Board).get(bo_table)
     if not board:
         raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
+    
+    if not can_action_by_comment_count(request, bo_table, wr_id, board.bo_count_delete):
+        raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_delete}건 이상 존재하므로 삭제 할 수 없습니다.", 403)
+
     # 게시글 조회
     models.Write = dynamic_create_write_table(bo_table)
     write = db.query(models.Write).get(wr_id)
@@ -930,10 +954,10 @@ def write_comment_update(
             comment.wr_comment_reply = generate_reply_character(board, parent_comment)
             comment.wr_comment = parent_comment.wr_comment
         else:
-            comment.wr_comment = db.query(func.max(write_model.wr_comment).label("max_wr_comment")).filter(
+            comment.wr_comment = (db.query(func.max(write_model.wr_comment).label("max_wr_comment")).filter(
                 write_model.wr_parent == form.wr_id,
                 write_model.wr_is_comment == True
-            ).first().max_wr_comment + 1
+            ).first().max_wr_comment or 0) + 1
 
         # 댓글 추가정보 등록
         comment.ca_name = write.ca_name
@@ -944,7 +968,7 @@ def write_comment_update(
         comment.wr_content = form.wr_content
         comment.mb_id = getattr(member, "mb_id", "")
         comment.wr_password = form.wr_password
-        comment.wr_name = getattr(member, "mb_nick", form.wr_name)
+        comment.wr_name = set_writer_name(board, member) if member else form.wr_name
         comment.wr_email = getattr(member, "mb_email", "")
         comment.wr_homepage = getattr(member, "mb_homepage", "")
         comment.wr_datetime = comment.wr_last = datetime.now()
@@ -1101,3 +1125,34 @@ def is_owner(object, member = None):
         return object_mb_id == member_mb_id
     else:
         return False
+    
+
+def can_action_by_comment_count(request: Request, bo_table: str, wr_id: int, limit: int):
+    """댓글 수에 따라 행동 가능 여부를 판단한다.
+
+    Args:
+        request (Request): Request 객체
+        bo_table (st): 게시판 ID
+        wr_id (int): 게시글 아이디
+        limit (int): 제한할 댓글 수
+
+    Returns:
+        bool: 수정 가능 여부
+    """
+    if request.state.is_super_admin:
+        return True
+    
+    db = SessionLocal()
+    
+    write_model = dynamic_create_write_table(bo_table)
+    comment_count = db.query(write_model).filter_by(
+        wr_parent = wr_id,
+        wr_is_comment = True
+    ).count()
+
+    db.close()
+
+    if limit and limit <= comment_count:
+        return False
+    else:
+        return True

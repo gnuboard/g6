@@ -29,23 +29,20 @@
         <section id="bo_v_info">
             <h2>페이지 정보</h2>
             <div class="profile_info">
-                <div class="pf_img"><img src="{{ url_for('static', path='/img/no_profile.gif') }}" alt="profile_image"></div>
+                <div class="pf_img"><img src="/{{ get_member_image(write.mb_id) }}" alt="profile_image"></div>
                 <div class="profile_info_ct">
                     <span class="sound_only">작성자</span>
                     <strong>
-                        <span class="sv_wrap">
-                            <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member" title="최고관리자 자기소개" target="_blank" rel="nofollow" onclick="return false;">
-                                <span class="profile_img">
-                                    <img src="{{ url_for('static', path='/img/no_profile.gif') }}" alt="no_profile" width="22" height="22">
-                                </span>
-                                최고관리자
-                            </a>
+                        {% if board.bo_use_sideview %}
+                            {{ sideview.get(request, write.mb_id, write.name, write.wr_email, write.wr_homepage)|safe }}
+                        {% else %}
+                            <span class="{% if write.mb_id %}member{% else %}guest{% endif %}">
+                                {{ write.name }}
                             </span>
-                            {% if request.state.is_super_admin %}
-                                &nbsp;({{ write.wr_ip }})
-                            {% elif board.bo_use_ip_view %}
-                                &nbsp;({{ write.wr_ip }}) <!-- 변환된 IP 출력 -->
-                            {% endif %}
+                        {% endif %}
+                        {% if write.ip %}
+                        &nbsp;({{ write.ip }})
+                        {% endif %}
                     </strong>
                     <br>
                     <span class="sound_only">댓글</span><strong><a href="#bo_vc"> <i class="fa fa-commenting-o" aria-hidden="true"></i> {{ write.wr_comment }}건</a></strong>
@@ -83,7 +80,7 @@
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ url_for('delete_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?token={{ generate_token(request, 'delete') }}" onclick="del(this.href); return false;">
+                                <a href="{{ url_for('delete_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?token={{ generate_token(request, 'delete_post') }}" onclick="del(this.href); return false;">
                                     삭제<i class="fa fa-trash-o" aria-hidden="true"></i>
                                 </a>
                             </li>
@@ -147,9 +144,7 @@
             <div id="bo_v_con">{{ write.wr_content|safe }}</div>
             <!-- } 본문 내용 끝 -->
             <!-- 서명 START -->
-            {% if board.bo_use_signature and write.mb_id %}
-            <p>{{ login_member.mb_signature }}</p>
-            {% endif %}
+            {{ get_member_signature(board, write.mb_id) }}
             <!-- 서명 END -->
 
         <!--  추천 비추천 시작 { -->
@@ -235,10 +230,10 @@
         {% set reply_depth=comment.wr_comment_reply|length %}
         {% set delete_token=generate_token(request, 'delete_comment') %}
         <article id="c_{{ comment.wr_id }}" {% if reply_depth %}style="margin-left:{{ reply_depth * 50 }}px;border-top-color:#e0e0e0"{% endif %}>
-            <div class="pf_img"><img src="/{{ get_member_icon(comment.mb_id) }}" alt="profile_image"></div>
+            <div class="pf_img"><img src="/{{ get_member_image(comment.mb_id) }}" alt="profile_image"></div>
             <div class="cm_wrap">
                 <header>
-                    <h2>{{ comment.wr_name }}님의  댓글</h2>
+                    <h2>{{ comment.name }}님의  댓글</h2>
                     {% if board.bo_use_sideview %}
                         {{ sideview.get(request, comment.mb_id, comment.name, comment.wr_email, comment.wr_homepage)|safe }}
                     {% else %}
@@ -246,7 +241,7 @@
                             {{ comment.name }}
                         </span>
                     {% endif %}
-                    {% if board.bo_use_ip_view or request.state.is_super_admin %}
+                    {% if comment.ip %}
                         <span class="sound_only">아이피</span>
                         <span>({{ comment.ip }})</span>
                     {% endif %}
