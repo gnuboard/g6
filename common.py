@@ -4,7 +4,7 @@ import os
 import random
 import re
 from time import sleep
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 import uuid
 from urllib.parse import urlencode
 import PIL
@@ -13,16 +13,27 @@ from fastapi import Query, Request, HTTPException, UploadFile
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup, escape
 from passlib.context import CryptContext
-from sqlalchemy import Index, asc, desc, and_, or_, func, extract
+from sqlalchemy import Index, asc, desc, and_, or_, func, extract, literal
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
-from models import Auth, Config, Member, Memo, Board, Group, Menu, Point, Poll, Popular, Visit, VisitSum, UniqId
+from models import Auth, Config, Member, Memo, Board, BoardFile, BoardNew, Group, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
 from models import WriteBaseModel
 from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
 import json
 from PIL import Image
 from user_agents import parse
+import base64
+from dotenv import load_dotenv
+import smtplib
+import threading
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from _extend.captcha.recaptch_v2 import ReCaptchaV2
+from _extend.captcha.recaptch_inv import ReCaptchaInvisible
+
+load_dotenv()
+
 
 # 전역변수 선언(global variables)
 TEMPLATES = "templates"
@@ -48,17 +59,23 @@ if os.environ.get("is_setup") != "true":
     
 ADMIN_TEMPLATES_DIR = "_admin/templates"
 
+# 나중에 삭제할 코드
 SERVER_TIME = datetime.now()
 TIME_YMDHIS = SERVER_TIME.strftime("%Y-%m-%d %H:%M:%S")
 TIME_YMD = TIME_YMDHIS[:10]
 
-# pc 설정 시 모바일 기기에서도 PC화면 보여짐
-# mobile 설정 시 PC에서도 모바일화면 보여짐
-# both 설정 시 접속 기기에 따른 화면 보여짐 (pc에서 접속하면 pc화면을, mobile과 tablet에서 접속하면 mobile 화면)
-SET_DEVICE = 'both'
+# 나중에 삭제할 코드
+# # pc 설정 시 모바일 기기에서도 PC화면 보여짐
+# # mobile 설정 시 PC에서도 모바일화면 보여짐
+# # both 설정 시 접속 기기에 따른 화면 보여짐 (pc에서 접속하면 pc화면을, mobile과 tablet에서 접속하면 mobile 화면)
+# SET_DEVICE = 'both'
 
-# mobile 을 사용하지 않을 경우 False 로 설정
-USE_MOBILE = True
+# # mobile 을 사용하지 않을 경우 False 로 설정
+# USE_MOBILE = True
+
+
+IS_RESPONSIVE = os.getenv("IS_RESPONSIVE", default="True")
+IS_RESPONSIVE = IS_RESPONSIVE.lower() == "true"
     
 
 def hash_password(password: str):
@@ -90,6 +107,9 @@ def dynamic_create_write_table(table_name: str, create_table: bool = False):
     # 이미 생성된 모델 반환
     if table_name in _created_models:
         return _created_models[table_name]
+    
+    if isinstance(table_name, int):
+        table_name = str(table_name)
     
     class_name = "Write" + table_name.capitalize()
     DynamicModel = type(
@@ -138,8 +158,9 @@ def get_member_level_select(id: str, start: int, end: int, selected: int, event=
 
     
 # skin_gubun(new, search, connect, faq 등) 에 따른 스킨을 SELECT 형식으로 얻음
-def get_skin_select(skin_gubun, id, selected, event='', device='pc'):
-    skin_path = TEMPLATES_DIR + f"/{skin_gubun}/{device}"
+def get_skin_select(skin_gubun, id, selected, event='', device=''):
+    skin_path = TEMPLATES_DIR + f"/{device}/{skin_gubun}"
+
     html_code = []
     html_code.append(f'<select id="{id}" name="{id}" {event}>')
     html_code.append(f'<option value="">선택</option>')
@@ -384,6 +405,21 @@ def validate_one_time_token(token, action: str = 'create'):
     token_data = cache.get(token)
     if token_data and token_data.get("action") == action:
         del cache[token]
+        return True
+    return False
+
+
+def check_token(request: Request, token: str):
+    '''
+    세션과 인수로 넘어온 토큰확인 함수
+    '''
+    if token is None:
+        return False
+    
+    token = token.strip()
+    if token and token == request.session.get("ss_token"):
+        # 세션 삭제
+        request.session["ss_token"] = ""
         return True
     return False
 
@@ -777,8 +813,8 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
             return -1
         
     # 포인트 건별 생성
-    po_expire_date = '9999-12-31'
-    # po_expire_date = datetime.strptime('9999-12-31', '%Y-%m-%d')
+    # po_expire_date = '9999-12-31'
+    po_expire_date = datetime.strptime('9999-12-31', '%Y-%m-%d')
     if config.cf_point_term > 0:
         if expire > 0:
             po_expire_date = (SERVER_TIME + timedelta(days=expire-1)).strftime('%Y-%m-%d')
@@ -793,7 +829,7 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
     
     new_point = Point(
         mb_id=mb_id,
-        po_datetime=TIME_YMDHIS,
+        po_datetime=datetime.now(),
         po_content=content,
         po_point=point,
         po_use_point=0,
@@ -811,6 +847,7 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
     db.query(Member).filter_by(mb_id=mb_id).update({Member.mb_point: po_mb_point})
     # db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: po_mb_point})
     db.commit()
+    db.close()
 
     return 1
 
@@ -825,6 +862,7 @@ def get_expire_point(request: Request, mb_id: str):
     db = SessionLocal()
     
     point_sum = db.query(func.sum(Point.po_point - Point.po_use_point)).filter_by(mb_id=mb_id, po_expired=False).filter(Point.po_expire_date < datetime.now()).scalar()
+    db.close()
     return point_sum if point_sum else 0
 
 
@@ -873,6 +911,7 @@ def get_point_sum(request: Request, mb_id: str):
             
     # 포인트합
     point_sum = db.query(func.sum(Point.po_point)).filter_by(mb_id=mb_id).scalar()
+    db.close()
     return point_sum if point_sum else 0
 
 
@@ -909,6 +948,7 @@ def insert_use_point(mb_id: str, point: int, po_id: str = ""):
             db.query(Point).filter_by(po_id=row.po_id).update({"po_use_point": (Point.po_use_point + point4), "po_expired": 100})
             db.commit()
             point1 = point1 - point4
+    db.close()
 
 
 # 포인트 삭제
@@ -939,6 +979,7 @@ def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel
         # 포인트 UPDATE
         db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: sum_point}, synchronize_session=False)
         result = db.commit()
+    db.close()
 
     return result
 
@@ -965,6 +1006,7 @@ def delete_use_point(request: Request, mb_id: str, point: int):
             db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: 0, Point.po_expired: po_expired}, synchronize_session=False)
             db.commit()
             point1 = point1 - point2
+    db.close()
 
 
 # 소멸포인트 삭제
@@ -1022,6 +1064,19 @@ def editor_path(request:Request) -> str:
         return "textarea"
 
     return editor_name
+
+
+def editor_macro(request: Request) -> str:
+    """지정한 에디터 경로의 macros.html 파일을 반환하는 함수
+    - 미지정시 그누보드 환경설정값 사용
+    - request.state.editor: 에디터이름
+    - request.state.use_editor: 에디터 사용여부 False 이면 'textarea'로 설정
+    """
+    editor_name = request.state.editor
+    if not request.state.use_editor or not editor_name:
+        editor_name = "textarea"
+
+    return editor_name + "/macros.html"
 
 
 def nl2br(value) -> str:
@@ -1152,7 +1207,7 @@ def get_member_level(request: Request):
     return member.mb_level if member else 1
 
 
-def auth_check(request: Request, menu_key: str, attribute: str):
+def auth_check_menu(request: Request, menu_key: str, attribute: str):
     '''
     관리권한 체크
     '''    
@@ -1168,14 +1223,14 @@ def auth_check(request: Request, menu_key: str, attribute: str):
 
     exists_auth = db.query(Auth).filter_by(mb_id=exists_member.mb_id, au_menu=menu_key).first()
     if not exists_auth:
-        return "이 메뉴에는 접근 권한이 없습니다.\\n\\n접근 권한은 최고관리자만 부여할 수 있습니다."
+        return "이 메뉴에는 접근 권한이 없습니다.\n\n접근 권한은 최고관리자만 부여할 수 있습니다."
 
     auth_set = set(exists_auth.au_auth.split(","))
     if not attribute in auth_set:
         if attribute == "r":
             error = "읽을 권한이 없습니다."
         elif attribute == "w":
-            error = "입력, 추가, 생성, 수정 권한이 없습니다."
+            error = "입력, 추가, 생성, 등록, 수정 권한이 없습니다."
         elif attribute == "d":
             error = "삭제 권한이 없습니다."
         else:
@@ -1226,10 +1281,25 @@ class AlertException(HTTPException):
     Args:
         HTTPException (HTTPException): HTTP 예외 클래스
     """
-    def __init__(self, status_code: int, detail: str = None, url: str = None):
+    def __init__(self, detail: str = None, status_code: int = 200, url: str = None):
         self.status_code = status_code
         self.detail = detail
         self.url = url
+
+
+class AlertCloseException(HTTPException):
+    """스크립트 경고창 출력 및 윈도우 창 닫기를 위한 예외 클래스
+
+    Args:
+        HTTPException (HTTPException): HTTP 예외 클래스
+    """
+    def __init__(
+        self,
+        detail: Any = None,
+        status_code: int = 200,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> None:
+        super().__init__(status_code=status_code, detail=detail, headers=headers) 
 
 
 def is_admin(request: Request):
@@ -1246,7 +1316,7 @@ def is_admin(request: Request):
     return False
 
 
-def check_profile_open(open_date, config) -> bool:
+def check_profile_open(open_date: Optional[date], config) -> bool:
     """변경일이 지나서 프로필 공개가능 여부를 반환
     Args:
         open_date (datetime): 프로필 공개일
@@ -1258,10 +1328,11 @@ def check_profile_open(open_date, config) -> bool:
         return True
 
     else:
-        return open_date < (datetime.now() - timedelta(days=config.cf_open_modify))
+        opend_date_time = datetime(open_date.year, open_date.month, open_date.day)
+        return opend_date_time < (datetime.now() - timedelta(days=config.cf_open_modify))
 
 
-def get_next_profile_openable_date(open_date: datetime, config):
+def get_next_profile_openable_date(open_date: Optional[date], config):
     """다음 프로필 공개 가능일을 반환
     Args:
         open_date (datetime): 프로필 공개일
@@ -1270,13 +1341,18 @@ def get_next_profile_openable_date(open_date: datetime, config):
         datetime: 다음 프로필 공개 가능일
     """
     cf_open_modify = config.cf_open_modify
+    cf_open_modify = 3
+    if cf_open_modify == 0:
+        return ""
 
     if open_date:
-        calculated_date = datetime.strptime(open_date, "%Y-%m-%d") + timedelta(days=cf_open_modify)
+        calculated_date = datetime.strptime(open_date.strftime("%Y-%m-%d"), "%Y-%m-%d") + timedelta(days=cf_open_modify)
     else:
         calculated_date = datetime.now() + timedelta(days=cf_open_modify)
-
-    return calculated_date
+    print('--------------------ewr')
+    print(calculated_date)
+    
+    return calculated_date.strftime("%Y-%m-%d")
 
 
 def default_if_none(value, arg):
@@ -1336,6 +1412,55 @@ def get_filetime_str(file_path) -> Union[int, str]:
         return ''
 
 
+class StringEncrypt:
+    def __init__(self, salt=''):
+        if not salt:
+            # You might want to implement your own salt generation logic here
+            self.salt = "your_default_salt"
+        else:
+            self.salt = salt
+        
+        self.length = len(self.salt)
+
+    def encrypt(self, str_):
+        length = len(str_)
+        result = ''
+
+        for i in range(length):
+            char = str_[i]
+            keychar = self.salt[i % self.length]
+            char = chr(ord(char) + ord(keychar))
+            result += char
+
+        result = base64.b64encode(result.encode()).decode()
+        result = result.translate(str.maketrans('+/=', '._-'))
+
+        return result
+
+    def decrypt(self, str_):
+        result = ''
+        str_ = str_.translate(str.maketrans('._-', '+/='))
+        str_ = base64.b64decode(str_).decode()
+
+        length = len(str_)
+
+        for i in range(length):
+            char = str_[i]
+            keychar = self.salt[i % self.length]
+            char = chr(ord(char) - ord(keychar))
+            result += char
+
+        return result
+
+# 사용 예
+# enc = StringEncrypt()
+# encrypted_text = enc.encrypt("hello")
+# print(encrypted_text)
+
+# decrypted_text = enc.decrypt(encrypted_text)
+# print(decrypted_text)
+
+
 class MyTemplates(Jinja2Templates):
     """
     Jinja2Template 설정 클래스
@@ -1348,6 +1473,7 @@ class MyTemplates(Jinja2Templates):
                  ):
         super().__init__(directory, context_processors, **env_options)
         # 공통 env.global 설정
+        self.env.globals["editor_path"] = editor_path
         self.env.globals["generate_token"] = generate_token
         self.env.globals["getattr"] = getattr
         self.env.globals["get_selected"] = get_selected
@@ -1382,7 +1508,7 @@ class MyTemplates(Jinja2Templates):
 class G6FileCache():
     """파일 캐시 클래스
     """
-    cache_dir = "data\cache"
+    cache_dir = os.path.join("data", "cache")
     cache_secret_key = None
 
     def __init__(self):
@@ -1436,3 +1562,456 @@ class G6FileCache():
         for file in os.listdir(self.cache_dir):
             if file.startswith(prefix):
                 os.remove(os.path.join(self.cache_dir, file))
+
+
+SMTP_SERVER = os.getenv("SMTP_SERVER")
+SMTP_PORT = os.getenv("SMTP_PORT")
+SMTP_USERNAME = os.getenv("SMTP_USERNAME")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+
+# 메일 발송
+# return 은 수정 필요
+def mailer(email: str, subject: str, body: str):
+    to_emails = email.split(',') if ',' in email else [email]
+    for to_email in to_emails:
+        try:
+            msg = MIMEMultipart()
+            msg['From'] = SMTP_USERNAME
+            msg['To'] = to_email
+            msg['Subject'] = subject
+            
+            # Assuming body is HTML, if not change 'html' to 'plain'
+            msg.attach(MIMEText(body, 'html'))  
+
+            with smtplib.SMTP(SMTP_SERVER, int(SMTP_PORT)) as server:
+                if SMTP_USERNAME and SMTP_PASSWORD:
+                    server.starttls()
+                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                text = msg.as_string()
+                server.sendmail(SMTP_USERNAME, to_email, text)
+
+        except Exception as e:
+            print(f"Error sending email to {to_email}: {e}")
+
+    return {"message": f"Emails sent successfully to {', '.join(to_emails)}"}
+
+
+def is_none_datetime(input_date: Union[date, str]) -> bool:
+    """date, datetime 이 0001, 0000 등 유효하지 않은 날짜인지 확인하는 함수
+    0001, mysql 5.7이하 0000,
+    """
+    if isinstance(input_date, str):  # pymysql 라이브러리는 '0000', 12월 32일등 잘못된 날짜 일때 str 타입반환.
+        return True
+
+    if input_date.strftime("%Y")[:2] == "00":
+        return True
+
+    return False
+
+
+def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
+    """최신글 목록 HTML 출력
+
+    Args:
+        request (Request): _description_
+        skin_dir (str, optional): 스킨 경로. Defaults to ''.
+        bo_table (str, optional): 게시판 코드. Defaults to ''.
+        rows (int, optional): 노출 게시글 수. Defaults to 10.
+        subject_len (int, optional): 제목길이 제한. Defaults to 40.
+
+    Returns:
+        str: 최신글 HTML
+    """
+    templates = MyTemplates(directory=TEMPLATES_DIR)
+
+    if not skin_dir:
+        skin_dir = 'basic'
+
+    g6_file_cache = G6FileCache()
+    cache_filename = f"latest-{bo_table}-{skin_dir}-{rows}-{subject_len}-{g6_file_cache.get_cache_secret_key()}.html"
+    cache_file = os.path.join(g6_file_cache.cache_dir, cache_filename)
+
+    # 캐시된 파일이 있으면 파일을 읽어서 반환
+    if os.path.exists(cache_file):
+        return g6_file_cache.get(cache_file)
+    
+    db = SessionLocal()
+    board = db.query(Board).filter(Board.bo_table == bo_table).first()
+    
+    Write = dynamic_create_write_table(bo_table)
+    writes = db.query(Write).filter(Write.wr_is_comment == False).order_by(Write.wr_num).limit(rows).all()
+    for write in writes:
+        write.is_notice = write.wr_id in board.bo_notice.split(",")
+        write.subject = write.wr_subject[:subject_len]
+        write.icon_hot = write.wr_hit >= 100
+        write.icon_new = write.wr_datetime > (datetime.now() - timedelta(days=1))
+        write.icon_file = BoardFileManager(board, write.wr_id).is_exist()
+        write.icon_link = write.wr_link1 or write.wr_link2
+        write.icon_reply = write.wr_reply
+        write.datetime = write.wr_datetime.strftime("%y-%m-%d")
+    
+    context = {
+        "request": request,
+        "writes": writes,
+        "bo_table": bo_table,
+        "bo_subject": board.bo_subject,
+    }
+    temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
+    temp_decode = temp.body.decode("utf-8")
+
+    # 캐시 파일 생성
+    g6_file_cache.create(temp_decode, cache_file)
+
+    return temp_decode
+
+
+def get_newwins(request: Request):
+    """
+    레이어 팝업 목록 조회
+    """
+    db = SessionLocal()
+
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    current_division = "comm" # comm, both, shop
+    newwins = db.query(NewWin).filter(
+        NewWin.nw_begin_time <= now,
+        NewWin.nw_end_time >= now,
+        NewWin.nw_device.in_(["both", request.state.device]),
+        NewWin.nw_division.in_(["both", current_division]),
+    ).order_by(NewWin.nw_id.asc()).all()
+
+    # "hd_pops_" + nw_id 이름으로 선언된 쿠키가 있는지 확인하고 있다면 팝업을 제거
+    newwins = [newwin for newwin in newwins if not request.cookies.get("hd_pops_" + str(newwin.nw_id))]
+
+    return newwins
+
+
+def datetime_format(date: datetime, format="%Y-%m-%d %H:%M:%S"):
+    """
+    날짜 포맷팅
+    """
+    if not date:
+        return ""
+
+    return date.strftime(format)
+
+
+def insert_board_new(bo_table: str, write: object):
+    """
+    최신글 테이블 등록 함수
+    """
+    db = SessionLocal()
+
+    new = BoardNew()
+    new.bo_table = bo_table
+    new.wr_id = write.wr_id
+    new.wr_parent = write.wr_parent
+    new.mb_id = write.mb_id
+    db.add(new)
+    db.commit()
+
+
+# TODO:
+# 7. 이미지, 동영상 업로드 파일 확인 (cf_image_extension, cf_movie_extension)
+# 8. 업로드 사이즈 체크 (bo_upload_size)
+class BoardFileManager():
+    model = BoardFile
+
+    def __init__(self, board: Board, wr_id: int = None):
+        self.board = board
+        self.bo_table = board.bo_table
+        self.wr_id = wr_id
+        self.db = SessionLocal()
+
+    def is_exist(self, bo_table: str = None, wr_id: int = None):
+        """게시글에 파일이 있는지 확인
+
+        Returns:
+            bool: 파일이 존재하면 True, 없으면 False
+        """
+        bo_table = bo_table or self.bo_table
+        wr_id = wr_id or self.wr_id
+
+        query = self.db.query(self.model).filter_by(bo_table=bo_table, wr_id=wr_id)
+
+        return self.db.query(literal(True)).filter(query.exists()).scalar()
+    
+    def get_board_files(self):
+        """업로드된 파일 목록을 가져온다.
+
+        Returns:
+            list[BoardFile]: 업로드된 파일 목록
+        """
+        return self.db.query(self.model).filter_by(
+            bo_table=self.bo_table,
+            wr_id=self.wr_id
+        ).all()
+    
+    def get_board_files_by_form(self):
+        """입력/수정 폼에서 사용할 파일 목록을 가져온다.
+
+        Returns:
+            list[BoardFile]: 업로드된 파일 목록 
+        """
+        config_count = int(self.board.bo_upload_count) or 0
+        upload_count = config_count
+        if self.wr_id:
+            query = self.db.query(self.model).filter_by(bo_table=self.bo_table, wr_id=self.wr_id)
+            uploaded_count = query.count()
+            uploaded_files = query.all()
+            # 파일 카운트는 업로드된 파일 수와 설정된 값 중 큰 수로 설정한다.
+            upload_count = (uploaded_count if uploaded_count > config_count else config_count) - uploaded_count
+        else:
+            uploaded_files = []
+
+        # 업로드 파일 + 빈 객체
+        files = uploaded_files + [self.model() for _ in range(upload_count)]
+
+        return files
+
+    def get_board_files_by_type(self, request: Request):
+        """업로드된 파일 목록을 파일과 이미지로 분리한다.
+
+        Args:
+            request (Request): Request 객체
+
+        Returns:
+            list[BoardFile]: 파일 목록
+            list[BoardFile]: 이미지 목록
+        """
+        config = request.state.config
+        board_files = self.get_board_files()
+        images = []
+        files = []
+        for file in board_files:
+            ext = file.bf_source.split('.')[-1]
+            if ext in config.cf_image_extension:
+                images.append(file)
+            else:
+                files.append(file)
+
+        return images, files
+
+    def get_board_file(self, bf_no: int):
+        """업로드된 파일을 가져온다.
+
+        Args:
+            bf_no (int): 파일 순번
+
+        Returns:
+            BoardFile: 업로드된 파일
+        """
+        return self.db.query(self.model).filter_by(bo_table=self.bo_table, wr_id=self.wr_id, bf_no=bf_no).first()
+    
+    def get_filename(self, filename: str):
+        """파일이름을 생성한다.
+
+        Args:
+            filename (str): 업로드 파일이름
+
+        Returns:
+            str: 파일이름
+        """
+        return os.urandom(16).hex() + "." + filename.split(".")[-1]
+    
+    def insert_board_file(self, bf_no: int, directory: str, filename: str, file: UploadFile, content: str = "", bo_table: str = None, wr_id: int = None):
+        """게시글의 파일을 추가한다.
+
+        Args:
+            bf_no (int): 파일 순번
+            directory (str): 파일 저장 경로
+            file (UploadFile): 업로드 파일
+            content (str, optional): 파일 설명. Defaults to "".
+            bo_table (str, optional): 게시판 테이블명. Defaults to None.
+            wr_id (int, optional): 게시글 아이디. Defaults to None.
+        """
+        board_file = self.model()
+        board_file.bo_table = bo_table or self.bo_table
+        board_file.wr_id = wr_id or self.wr_id
+        board_file.bf_no = bf_no
+        board_file.bf_source = file.filename
+        board_file.bf_file = f"{directory}/{filename}"
+        board_file.bf_download = 0
+        board_file.bf_content = content
+        board_file.bf_filesize = file.size
+        self.db.add(board_file)
+        self.db.commit()
+    
+    def update_board_file(self, board_file: model, directory: str, filename: str, file: UploadFile, content: str = "", bo_table: str = None, wr_id: int = None):
+        """게시글의 파일을 수정한다.
+
+        Args:
+            board_file (model): BoardFile 모델
+            directory (str): 파일 저장 경로
+            file (UploadFile): 업로드 파일
+            content (str, optional): 파일 설명. Defaults to "".
+        """
+        if bo_table:
+            board_file.bo_table = bo_table
+        if wr_id:
+            board_file.wr_id = wr_id
+        board_file.bf_source = file.filename
+        board_file.bf_file = f"{directory}/{filename}"
+        board_file.bf_download = 0
+        board_file.bf_content = content
+        board_file.bf_filesize = file.size
+        self.db.commit()
+
+    def update_download_count(self, board_file: model):
+        """다운로드 횟수를 증가시킨다.
+
+        Args:
+            board_file (model): BoardFile 모델
+        """
+        board_file.bf_download += 1
+        self.db.commit()
+
+    def move_board_files(self, directory: str, target_bo_table: str, target_wr_id: int):
+        """게시글의 파일을 이동한다.
+
+        Args:
+            target_bo_table (str): 이동할 게시판 테이블명
+            target_wr_id (int): 이동할 게시글 아이디
+        """
+        directory = os.path.join(directory, target_bo_table)
+        make_directory(directory)
+
+        if self.wr_id and target_wr_id:
+            board_files = self.get_board_files()
+            for board_file in board_files:
+                file = self.create_upload_file_from_path(board_file.bf_file)
+                file.filename = board_file.bf_source
+                file.size = board_file.bf_filesize
+                filename = self.get_filename(file.filename)
+
+                # 파일 이동 및 정보 업데이트
+                self.move_file(board_file.bf_file, f"{directory}/{filename}")
+                self.update_board_file(board_file, directory, filename, file, board_file.bf_content, target_bo_table, target_wr_id)
+                board_file.bo_table = target_bo_table
+                board_file.wr_id = target_wr_id
+
+            self.db.commit()
+
+    def copy_board_files(self, directory : str, target_bo_table: str, target_wr_id: int):
+        """게시글의 파일을 복사한다.
+
+        Args:
+            target_bo_table (str): 복사할 게시판 테이블명
+            target_wr_id (int): 복사할 게시글 아이디
+        """
+        directory = os.path.join(directory, target_bo_table)
+        make_directory(directory)
+
+        if self.wr_id and target_wr_id:
+            board_files = self.get_board_files()
+            for board_file in board_files:
+                file = self.create_upload_file_from_path(board_file.bf_file)
+                file.filename = board_file.bf_source
+                file.size = board_file.bf_filesize
+                filename = self.get_filename(file.filename)
+                
+                # 파일 복사 및 정보 추가
+                self.copy_file(board_file.bf_file, f"{directory}/{filename}")
+                self.insert_board_file(board_file.bf_no, directory, filename, file, board_file.bf_content, target_bo_table, target_wr_id)
+        
+    def delete_board_file(self, bf_no: int):
+        """게시글의 파일을 삭제한다.
+
+        Args:
+            bf_no (int): 파일 순번
+        """
+        if self.wr_id and bf_no:
+            board_file = self.get_board_file(bf_no)
+            self.remove_file(board_file.bf_file)
+            self.db.delete(board_file)
+            self.db.commit()
+
+    def delete_board_files(self):
+        """게시글의 파일을 삭제한다.
+        """
+        if self.wr_id:
+            board_files = self.get_board_files()
+            for board_file in board_files:
+                self.remove_file(board_file.bf_file)
+                self.db.delete(board_file)
+            self.db.commit()
+
+    def upload_file(self, directory: str, filename: str, file: UploadFile):
+        """파일을 업로드한다.
+
+        Args:
+            directory (str): 파일 저장 경로
+            filename (str): 파일이름
+            file (UploadFile): 업로드 파일
+        """
+        if file and file.filename:
+            with open(f"{directory}/{filename}", "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+    
+    def move_file(self, origin: str, target: str):
+        """파일을 이동한다.
+
+        Args:
+            origin (str): 원본 파일 경로
+            target (str): 이동할 파일 경로
+        """
+        if os.path.exists(origin):
+            shutil.move(origin, target)
+
+    def copy_file(self, origin: str, target: str):
+        """파일을 복사한다.
+
+        Args:
+            origin (str): 원본 파일 경로
+            target (str): 복사할 파일 경로
+        """
+        if os.path.exists(origin):
+            shutil.copy(origin, target)
+
+    def remove_file(self, path: str):
+        """파일을 삭제한다.
+
+        Args:
+            path (str): 파일 경로
+        """
+        if os.path.exists(path):
+            os.remove(path)
+    
+    def create_upload_file_from_path(self, path: str):
+        """파일 경로로 UploadFile 객체를 생성한다.
+
+        Args:
+            path (str): 파일 경로
+
+        Returns:
+            UploadFile: 업로드 파일
+        """
+        with open(path, "rb") as f:
+            return UploadFile(f, filename=os.path.basename(path))
+
+
+def get_current_captcha_cls(captcha_name: str):
+    """캡챠 클래스를 반환하는 함수
+    Args:
+        captcha_name (str) : config cf_captcha에 저장된 캡차클래스이름
+    """
+    if captcha_name == "recaptcha":
+        return ReCaptchaV2
+    elif captcha_name == "recaptcha_inv":
+        return ReCaptchaInvisible
+    else:
+        return None
+
+
+def captcha_widget(request):
+    """템플릿에서 캡차 출력
+    Args:
+        request (Request): FastAPI Request
+    """
+    if cls := get_current_captcha_cls(captcha_name=request.state.config.cf_captcha):
+        return cls.TEMPLATE_PATH
+
+    return ''  # 템플릿 출력시 비어있을때는 빈 문자열
+
+
+CAPTCHA_PATH = f"{TEMPLATES}/captcha"

@@ -18,7 +18,6 @@
 </ul>
 {% endif %}
 <h1 id="container_title">회원가입</h1>
-<!-- 회원정보 입력/수정 시작 { -->
 
 {% if is_register %}
     {% set token_name='create' %}
@@ -27,7 +26,8 @@
 {% endif %}
 <div class="register">
     <form id="fregisterform" name="fregisterform" action="{{ form.action_url }}"
-          onsubmit="return fregisterform_submit(this);" method="post" enctype="multipart/form-data" autocomplete="off">
+          onsubmit="return fregisterform_submit(this)" method="post" enctype="multipart/form-data" autocomplete="off">
+        <input type="hidden" name="is_register" value="{{ is_register }}"/>
         <input type="hidden" name="agree" value="{{ True if form.agree is defined else '' }}">
         <input type="hidden" name="agree2" value="{{ True if form.agree2 is defined else '' }}">
         <input type="hidden" id="generate_one_time_token" name="token" value="{{ generate_one_time_token(token_name) }}">
@@ -100,16 +100,20 @@
                                maxlength="20" placeholder="닉네임">
                         <span id="msg_mb_nick"></span>
                     </li>
-                    {% if config.cf_use_email_certify %}
                     <li>
                         <label for="reg_mb_email">E-mail (필수)</label>
-
+                        {% if config.cf_use_email_certify %}
+                            {% if is_register %}
+                                <span class="frm_info">E-mail 로 발송된 내용을 확인한 후 인증하셔야 회원가입이 완료됩니다.</span>
+                            {% else %}
+                                <span class="frm_info">E-mail 주소를 변경하시면 다시 인증하셔야 합니다.</span>
+                            {% endif %}
+                        {% endif %}
                         <input type="hidden" name="old_email" value="">
                         <input type="text" name="mb_email" value="{{ member.mb_email|default_if_none('') }}"
                                id="reg_mb_email" required class="frm_input email full_input required" size="70"
                                maxlength="100" placeholder="E-mail">
                     </li>
-                    {% endif %}
 
                     {% if config.cf_use_homepage %}
                     <li>
@@ -282,7 +286,7 @@
                     </li>
                     {% endif %}
                     
-                    {% if is_register %}
+                    {% if form.is_profile_open %}
                     <li class="chk_box">
                         <input type="checkbox" name="mb_open" value="1"
                                id="reg_mb_open"
@@ -305,11 +309,10 @@
                         <input type="hidden" name="mb_open" value="{{ member.mb_open }}">
 
                         <span class="frm_info">
-                                정보공개를 바꾸시면 앞으로 {{ config.cf_open_modify|default("0") }} 일 이내, 
-                                {{ next_profile_openable_date }} 에는 변경이 안됩니다.<br>
+                                정보공개는 수정후 앞으로 {{ config.cf_open_modify|default("0") }} 일 이내, 
+                                {{ form.next_profile_open_date }} 까지는 변경이 안됩니다.<br>
                                 이렇게 하는 이유는 잦은 정보공개 수정으로 인하여 쪽지를 보낸 후 받지 않는 경우를 막기 위해서 입니다.
                         </span>
-                         
                          
                     </li>
                     {% endif %} 
@@ -323,22 +326,11 @@
 
                     </li>
                     {% endif %}
-
+                    <li>
+                    </li>
 
                     <li class="is_captcha_use">
-                        자동등록방지
-
-                        <script>var g5_captcha_url  = "http://g5.pypot.com/plugin/kcaptcha";</script>
-                        <script src="http://g5.pypot.com/plugin/kcaptcha/kcaptcha.js"></script>
-                        <fieldset id="captcha" class="captcha">
-                            <legend><label for="captcha_key">자동등록방지</label></legend>
-                            <img src="http://g5.pypot.com/plugin/kcaptcha/img/dot.gif" alt="" id="captcha_img"><input
-                                type="text" name="captcha_key" id="captcha_key" required class="captcha_box required"
-                                size="6" maxlength="6">
-                            <button type="button" id="captcha_mp3"><span></span>숫자음성듣기</button>
-                            <button type="button" id="captcha_reload"><span></span>새로고침</button>
-                            <span id="captcha_info">자동등록방지 숫자를 순서대로 입력하세요.</span>
-                        </fieldset>
+                        {% include captcha_widget(request) %}
                     </li>
                 </ul>
             </div>
@@ -350,127 +342,127 @@
     </form>
 </div>
 <script>
+    "use strict";
     $(function() {
         $("#reg_zip_find").css("display", "inline-block");
-        var pageTypeParam = "pageType=register";
-    
-                });
+        const pageTypeParam = "pageType=register";
+    });
     
     // submit 최종 폼체크
     function fregisterform_submit(f)
     {
-        // 회원아이디 검사
-        if (f.w.value == "") {
-            var msg = reg_mb_id_check();
-            if (msg) {
+        try {
+            /*
+            // 회원아이디 검사
+            if (reg_mb_id_check()) {
                 alert(msg);
                 f.mb_id.select();
                 return false;
             }
-        }
-    
-        if (f.w.value == "") {
+        
             if (f.mb_password.value.length < 3) {
                 alert("비밀번호를 3글자 이상 입력하십시오.");
                 f.mb_password.focus();
                 return false;
             }
-        }
-    
-        if (f.mb_password.value != f.mb_password_re.value) {
-            alert("비밀번호가 같지 않습니다.");
-            f.mb_password_re.focus();
-            return false;
-        }
-    
-        if (f.mb_password.value.length > 0) {
-            if (f.mb_password_re.value.length < 3) {
-                alert("비밀번호를 3글자 이상 입력하십시오.");
+        
+            if (f.mb_password.value != f.mb_password_re.value) {
+                alert("비밀번호가 같지 않습니다.");
                 f.mb_password_re.focus();
                 return false;
             }
-        }
-    
-        // 이름 검사
-        if (f.w.value=="") {
-            if (f.mb_name.value.length < 1) {
-                alert("이름을 입력하십시오.");
-                f.mb_name.focus();
-                return false;
+        
+            if (f.mb_password.value.length > 0) {
+                if (f.mb_password_re.value.length < 3) {
+                    alert("비밀번호를 3글자 이상 입력하십시오.");
+                    f.mb_password_re.focus();
+                    return false;
+                }
             }
-    
-            /*
-            var pattern = /([^가-힣\x20])/i;
-            if (pattern.test(f.mb_name.value)) {
-                alert("이름은 한글로 입력하십시오.");
-                f.mb_name.select();
-                return false;
+        
+            // 이름 검사
+            if (f.is_register == '' && f.getAttribute('mb_name')) {
+                if (f.mb_name.value.length < 1) {
+                    alert("이름을 입력하십시오.");
+                    f.mb_name.focus();
+                    return false;
+                }
+            }
+        
+            
+            // 닉네임 검사
+            if (f.mb_nick.defaultValue != f.mb_nick.value) {
+                const msg = reg_mb_nick_check();
+                if (msg) {
+                    alert(msg);
+                    f.reg_mb_nick.select();
+                    return false;
+                }
+            }
+        
+            // E-mail 검사
+            if (f.getAttribute('mb_email') && f.mb_email.defaultValue != f.mb_email.value) {
+                const msg = reg_mb_email_check();
+                if (msg) {
+                    alert(msg);
+                    f.reg_mb_email.select();
+                    return false;
+                }
+            }
+            
+            
+            
+            if (typeof f.mb_icon != "undefined") {
+                if (f.mb_icon.value) {
+                    if (!f.mb_icon.value.toLowerCase().match(/.(gif|jpe?g|png)$/i)) {
+                        alert("회원아이콘이 이미지 파일이 아닙니다.");
+                        f.mb_icon.focus();
+                        return false;
+                    }
+                }
+            }
+        
+            if (typeof f.mb_img != "undefined") {
+                if (f.mb_img.value) {
+                    if (!f.mb_img.value.toLowerCase().match(/.(gif|jpe?g|png)$/i)) {
+                        alert("회원이미지가 이미지 파일이 아닙니다.");
+                        f.mb_img.focus();
+                        return false;
+                    }
+                }
+            }
+        
+            if (typeof(f.mb_recommend) != "undefined" && f.mb_recommend.value) {
+                if (f.mb_id.value == f.mb_recommend.value) {
+                    alert("본인을 추천할 수 없습니다.");
+                    f.mb_recommend.focus();
+                    return false;
+                }
+        
+                const msg = reg_mb_recommend_check();
+                if (msg) {
+                    alert(msg);
+                    f.mb_recommend.select();
+                    return false;
+                }
             }
             */
-        }
-    
+            
+
+            // recaptcha
+            if (typeof check_captcha === "function") {
+                if (!check_captcha(f)) return false;
+            }
+            return false;
         
-        // 닉네임 검사
-        if ((f.w.value == "") || (f.w.value == "u" && f.mb_nick.defaultValue != f.mb_nick.value)) {
-            var msg = reg_mb_nick_check();
-            if (msg) {
-                alert(msg);
-                f.reg_mb_nick.select();
-                return false;
-            }
-        }
-    
-        // E-mail 검사
-        if ((f.w.value == "") || (f.w.value == "u" && f.mb_email.defaultValue != f.mb_email.value)) {
-            var msg = reg_mb_email_check();
-            if (msg) {
-                alert(msg);
-                f.reg_mb_email.select();
-                return false;
-            }
-        }
-    
+            document.getElementById("btn_submit").disabled = "disabled";
+            return true;
         
-        if (typeof f.mb_icon != "undefined") {
-            if (f.mb_icon.value) {
-                if (!f.mb_icon.value.toLowerCase().match(/.(gif|jpe?g|png)$/i)) {
-                    alert("회원아이콘이 이미지 파일이 아닙니다.");
-                    f.mb_icon.focus();
-                    return false;
-                }
-            }
+        } catch(e) {
+            console.log(e)
+            alert('회원가입에 실패했습니다')
+            return false;
         }
-    
-        if (typeof f.mb_img != "undefined") {
-            if (f.mb_img.value) {
-                if (!f.mb_img.value.toLowerCase().match(/.(gif|jpe?g|png)$/i)) {
-                    alert("회원이미지가 이미지 파일이 아닙니다.");
-                    f.mb_img.focus();
-                    return false;
-                }
-            }
-        }
-    
-        if (typeof(f.mb_recommend) != "undefined" && f.mb_recommend.value) {
-            if (f.mb_id.value == f.mb_recommend.value) {
-                alert("본인을 추천할 수 없습니다.");
-                f.mb_recommend.focus();
-                return false;
-            }
-    
-            var msg = reg_mb_recommend_check();
-            if (msg) {
-                alert(msg);
-                f.mb_recommend.select();
-                return false;
-            }
-        }
-    
-        if (!chk_captcha()) return false;
-    
-        document.getElementById("btn_submit").disabled = "disabled";
-    
-        return true;
     }
     
     jQuery(function($){
@@ -481,9 +473,9 @@
             $(this).next(".tooltip").fadeOut();
         });
     });
+    
 
 </script>
 
-<!-- } 회원정보 입력/수정 끝 -->
 
 {% endblock %}

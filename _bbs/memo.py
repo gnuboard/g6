@@ -16,7 +16,7 @@ templates.env.globals["generate_token"] = generate_token
 # TODO : 포인트 유효성검사&소진
 # TODO : user_sideview 추가
 
-@router.get("/list")
+@router.get("/memo")
 def memo_list(request: Request, db: Session = Depends(get_db),
                 kind: str = Query(default="recv"),
                 current_page: int = Query(default=1, alias="page")):
@@ -25,7 +25,7 @@ def memo_list(request: Request, db: Session = Depends(get_db),
     """
     member = request.state.login_member
     if not member:
-        raise AlertException(status_code=403, detail="로그인 후 이용 가능합니다.", url="/bbs/login/")
+        raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
 
     model = Memo
     join_model = Member
@@ -51,22 +51,22 @@ def memo_list(request: Request, db: Session = Depends(get_db),
         "paging": get_paging(request, current_page, total_records),
     }
     
-    return templates.TemplateResponse(f"memo/{request.state.device}/memo_list.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/memo/memo_list.html", context)
 
 
-@router.get("/view/{me_id}")
+@router.get("/memo_view/{me_id}")
 def memo_view(request: Request, db: Session = Depends(get_db), me_id: int = Path(...)):
     """
     쪽지 상세
     """
     member = request.state.login_member
     if not member:
-        raise AlertException(status_code=403, detail="로그인 후 이용 가능합니다.", url="/bbs/login/")
+        raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
     
     # 본인 쪽지 조회
     memo = db.query(Memo).get(me_id)
     if not memo:
-        raise AlertException(status_code=404, detail="쪽지가 존재하지 않습니다.", url="/memo/list")
+        raise AlertException(status_code=404, detail="쪽지가 존재하지 않습니다.", url="/bbs/memo")
     
     kind = memo.me_type
     target_mb_id = memo.me_send_mb_id if kind == "recv" else memo.me_recv_mb_id
@@ -74,7 +74,7 @@ def memo_view(request: Request, db: Session = Depends(get_db), me_id: int = Path
     memo_mb_column = Memo.me_recv_mb_id if kind == "recv" else Memo.me_send_mb_id
 
     if not memo_mb_id == member.mb_id:
-        raise AlertException(status_code=403, detail="본인의 쪽지만 조회 가능합니다.", url="/memo/list")
+        raise AlertException(status_code=403, detail="본인의 쪽지만 조회 가능합니다.", url="/bbs/memo")
 
     # 상대방 정보 조회
     target = db.query(Member).filter(Member.mb_id==target_mb_id).first()
@@ -113,10 +113,10 @@ def memo_view(request: Request, db: Session = Depends(get_db), me_id: int = Path
         "prev_memo": prev_memo,
         "next_memo": next_memo,
     }
-    return templates.TemplateResponse(f"memo/{request.state.device}/memo_view.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/memo/memo_view.html", context)
 
 
-@router.get("/form")
+@router.get("/memo_form")
 def memo_form(request: Request, db: Session = Depends(get_db),
     me_recv_mb_id : str = Query(default=None),
     me_id: int = Query(default=None)
@@ -126,7 +126,7 @@ def memo_form(request: Request, db: Session = Depends(get_db),
     """
     member = request.state.login_member
     if not member:
-        raise AlertException(status_code=403, detail="로그인 후 이용 가능합니다.", url="/bbs/login/")
+        raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
 
     # 쪽지를 전송할 회원 정보 조회
     target = None
@@ -141,11 +141,11 @@ def memo_form(request: Request, db: Session = Depends(get_db),
         "target": target,
         "memo": memo,
     }
-    return templates.TemplateResponse(f"memo/{request.state.device}/memo_form.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/memo/memo_form.html", context)
 
 
-@router.post("/form")
-def memo_update(request: Request, db: Session = Depends(get_db),
+@router.post("/memo_form_update")
+def memo_form_update(request: Request, db: Session = Depends(get_db),
     token: str = Form(...),
     me_recv_mb_id : str = Form(...),
     me_memo: str = Form(...)
@@ -156,9 +156,10 @@ def memo_update(request: Request, db: Session = Depends(get_db),
     if not compare_token(request, token, 'insert'):
         raise AlertException(status_code=403, detail=f"{token} : 토큰이 존재하지 않습니다.")
 
+    config = request.state.config
     member = request.state.login_member
     if not member:
-        raise AlertException(status_code=403, detail="로그인 후 이용 가능합니다.", url="/bbs/login/")
+        raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
 
     # me_recv_mb_id 공백 제거
     mb_id_list = me_recv_mb_id.replace(" ", "").split(',')
@@ -173,14 +174,16 @@ def memo_update(request: Request, db: Session = Depends(get_db),
             error_list.append(mb_id)
 
     if error_list:
-        raise AlertException(
-            status_code=404,
-            detail=f"{','.join(error_list)} : 존재(또는 정보공개)하지 않는 회원이거나 탈퇴/차단된 회원입니다.\\n쪽지를 발송하지 않았습니다."
-        )
+        raise AlertException(f"{','.join(error_list)} : 존재(또는 정보공개)하지 않는 회원이거나 탈퇴/차단된 회원입니다.\\n쪽지를 발송하지 않았습니다.", 404)
 
-    # TODO: 포인트 체크 추가
+    # 총 사용 포인트 체크
+    use_point = int(config.cf_memo_send_point)
+    total_use_point = use_point * len(target_list)
+    if total_use_point > 0:
+        if member.mb_point < total_use_point:
+            raise AlertException(f"보유하신 포인트({member.mb_point})가 부족합니다.\\n쪽지를 발송하지 않았습니다.", 403)
 
-    # send_list의 목록을 순회하며 쪽지 전송
+    # 전송대상의 목록을 순회하며 쪽지 전송
     for target in target_list:
         memo_dict = {
             "me_send_mb_id": member.mb_id,
@@ -195,17 +198,18 @@ def memo_update(request: Request, db: Session = Depends(get_db),
         db.add(memo_recv)
         db.commit()
 
-        # 실시간 쪽지 알림 기능
+        # 실시간 쪽지 알림
         target.mb_memo_call = member.mb_id
         target.mb_memo_cnt = get_memo_not_read(target.mb_id)
         db.commit()
 
-        # TODO: 포인트 소진 추가
+        # 포인트 소진
+        insert_point(request, member.mb_id, use_point * (-1), f"{target.mb_nick}({target.mb_id})님에게 쪽지 발송", "@memo", target.mb_id, member.mb_id)
 
-    return RedirectResponse(url=f"/memo/list?kind=send", status_code=302)
+    return RedirectResponse(url=f"/bbs/memo?kind=send", status_code=302)
 
 
-@router.get("/delete/{me_id}")
+@router.get("/memo_delete/{me_id}")
 def memo_delete(request: Request, db: Session = Depends(get_db), 
                 me_id: int = Path(...),
                 token:str = Query(...),
@@ -219,16 +223,16 @@ def memo_delete(request: Request, db: Session = Depends(get_db),
     
     member = request.state.login_member
     if not member:
-        raise AlertException(status_code=403, detail="로그인 후 이용 가능합니다.", url="/bbs/login/")
+        raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
     
     memo = db.query(Memo).get(me_id)
     if not memo:
-        raise AlertException(status_code=403, detail="쪽지가 존재하지 않습니다.", url="/memo/list")
+        raise AlertException(status_code=403, detail="쪽지가 존재하지 않습니다.", url="/bbs/memo")
     
     kind = memo.me_type
     memo_mb_id = memo.me_recv_mb_id if kind == "recv" else memo.me_send_mb_id
     if not memo_mb_id == member.mb_id:
-        raise AlertException(status_code=403, detail="본인의 쪽지만 삭제 가능합니다.", url="/memo/list")
+        raise AlertException(status_code=403, detail="본인의 쪽지만 삭제 가능합니다.", url="/bbs/memo")
     
     # 실시간 알림 삭제(업데이트)
     if memo.me_read_datetime is None:
@@ -248,4 +252,4 @@ def memo_delete(request: Request, db: Session = Depends(get_db),
     db_member.mb_memo_cnt = get_memo_not_read(member.mb_id)
     db.commit()
 
-    return RedirectResponse(url=f"/memo/list?kind={kind}&page={page}", status_code=302)
+    return RedirectResponse(url=f"/bbs/memo?kind={kind}&page={page}", status_code=302)

@@ -33,7 +33,6 @@ def content_list(request: Request, db: Session = Depends(get_db)):
     )
 
 
-# 
 @router.get("/content_form")
 def content_form_add(request: Request, db: Session = Depends(get_db)):
     """
@@ -127,7 +126,8 @@ def content_form_update(request: Request,
     save_image(IMAGE_DIRECTORY, f"{co_id}_h", co_himg)
     save_image(IMAGE_DIRECTORY, f"{co_id}_t", co_timg)
 
-    return RedirectResponse(url=f"/admin/content_form/{co_id}", status_code=302)
+    
+    return RedirectResponse(url=request.url_for('content_form_edit', co_id=co_id), status_code=302)
 
 
 @router.get("/content_delete/{co_id}")
@@ -138,7 +138,7 @@ def content_delete(co_id: str,
     """
     내용 삭제
     """
-    if not compare_token(request, token, 'delete'):
+    if not compare_token(request, token, 'content_list'):
         raise AlertException(status_code=403, detail=f"{token} : 토큰이 존재하지 않습니다.")
     
     content = db.query(Content).filter(Content.co_id == co_id).first()
@@ -152,4 +152,4 @@ def content_delete(co_id: str,
     db.delete(content)
     db.commit()
 
-    return RedirectResponse(url=f"/admin/content_list", status_code=302)
+    return RedirectResponse(url=request.url_for('content_list'), status_code=302)

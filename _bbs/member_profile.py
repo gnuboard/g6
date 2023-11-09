@@ -1,43 +1,57 @@
-from dataclasses import dataclass
-from typing import Dict
+from main import app
 
-from fastapi import APIRouter, Form, UploadFile, File, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Form, File, Depends
 from starlette.responses import RedirectResponse
 
 from common import *
 from database import get_db
 from dataclassform import MemberForm
-from main import templates, app
-from models import Member
+
+from models import Member, MemberSocialProfiles
 from pbkdf2 import validate_password, create_hash
 
 router = APIRouter()
+templates = Jinja2Templates(directory=[TEMPLATES_DIR, CAPTCHA_PATH], extensions=["jinja2.ext.i18n"])
+templates.env.globals["is_admin"] = is_admin
+templates.env.globals["generate_one_time_token"] = generate_one_time_token
+templates.env.filters["default_if_none"] = default_if_none
+templates.env.globals['getattr'] = getattr
+templates.env.globals["generate_token"] = generate_token
+templates.env.globals["captcha_widget"] = captcha_widget
+templates.env.globals["check_profile_open"] = check_profile_open
 
 
 @router.get("/member_confirm")
-def check_member_form(request: Request):
-    test_member = {"mb_id": ""}
+def check_member_form(request: Request, db: Session = Depends(get_db)):
+    member = request.state.login_member
+    if not member:
+        raise AlertException(status_code=404, detail="회원정보가 없습니다.")
 
-    return templates.TemplateResponse("member/member_confirm.html", {
+    if request.state.config.cf_social_login_use:
+        if db.query(MemberSocialProfiles.mb_id).filter(MemberSocialProfiles.mb_id == member.mb_id).first():
+            request.session["ss_profile_change"] = True
+            return RedirectResponse(url=f"/bbs/member_profile/{member.mb_no}", status_code=302)
+
+    return templates.TemplateResponse(f"{request.state.device}/member/member_confirm.html", {
         "request": request,
-        "member": test_member
+        "member": member
     })
 
 
 @router.post("/member_confirm", name='member_password')
 def check_member(
         request: Request,
-        mb_password: str = Form(...),
-        db: Session = Depends(get_db),
+        mb_password: str = Form(...)
 ):
-    mb_id = request.session.get("ss_mb_id", "")
-    member = db.query(Member).filter(Member.mb_id == mb_id).first()
+    member = request.state.login_member
+    request.session["ss_profile_change"] = False
     if not member:
-        raise AlertException(status_code=404, detail="회원정보가 존재하지 않습니다.")
+        raise AlertException(status_code=404, detail="회원정보가 없습니다.")
     else:
         if not validate_password(mb_password, member.mb_password):
             raise AlertException(status_code=404, detail="아이디 또는 패스워드가 일치하지 않습니다.")
+
+    request.session["ss_profile_change"] = True
 
     return RedirectResponse(url=f"/bbs/member_profile/{member.mb_no}", status_code=302)
 
@@ -46,14 +60,17 @@ def check_member(
 def member_profile(request: Request, db: Session = Depends(get_db)):
     mb_id = request.session.get("ss_mb_id", "")
     if not mb_id:
-        raise AlertException(status_code=400, detail="로그인한 회원만 접근하실 수 있습니다.")
+        raise AlertException(status_code=403, detail="로그인한 회원만 접근하실 수 있습니다.")
+    if not request.session.get("ss_profile_change", False):
+        raise AlertException(status_code=403, detail="잘못된 접근입니다", url="/")
 
     member = db.query(Member).filter(Member.mb_id == mb_id).first()
 
     if not member:
-        raise AlertException(status_code=400, detail="회원정보가 없습니다.")
+        raise AlertException(status_code=404, detail="회원정보가 없습니다.")
 
     config = request.state.config
+    captcha = get_current_captcha_cls(captcha_name=config.cf_captcha)
     form_context = {
         "page": True,
         "action_url": app.url_path_for("member_profile", mb_no=request.path_params["mb_no"]),
@@ -64,42 +81,52 @@ def member_profile(request: Request, db: Session = Depends(get_db)):
 
         "mb_img_url": request.base_url.__str__() + f'data/member_image/{mb_id[:2]}/{mb_id}.gif?'
                       + f'{get_filetime_str(f"data/member_image/{mb_id[:2]}/{mb_id}.gif")}',
+        "is_profile_open": check_profile_open(open_date=member.mb_open_date, config=request.state.config)
     }
 
-    return templates.TemplateResponse("member/register_form.html", {
+    return templates.TemplateResponse(f"{request.state.device}/member/register_form.html", {
         "config": request.state.config,
         "request": request,
         "member": member,
         "form": form_context,
+        "captcha": captcha.TEMPLATE_PATH if captcha is not None else '',
     })
 
 
 @router.post("/member_profile/{mb_no}", name='member_profile_save')
-def member_profile_save(request: Request, db: Session = Depends(get_db),
-                        token: str = Form(...),
-                        mb_img: Optional[UploadFile] = File(None),
-                        mb_icon: Optional[UploadFile] = File(None),
-                        mb_password: str = Form(None),
-                        mb_password_re: str = Form(None),
-                        mb_certify_case: Optional[str] = Form(default=""),
-                        mb_zip: str = Form(None),
-                        member_form: MemberForm = Depends(MemberForm),
-                        del_mb_img: str = Form(None),
-                        del_mb_icon: str = Form(None),
-                        ):
+async def member_profile_save(request: Request, db: Session = Depends(get_db),
+                              token: str = Form(...),
+                              mb_img: Optional[UploadFile] = File(None),
+                              mb_icon: Optional[UploadFile] = File(None),
+                              mb_password: str = Form(None),
+                              mb_password_re: str = Form(None),
+                              mb_certify_case: Optional[str] = Form(default=""),
+                              mb_zip: str = Form(None),
+                              member_form: MemberForm = Depends(MemberForm),
+                              del_mb_img: str = Form(None),
+                              del_mb_icon: str = Form(None),
+                              recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
+                              ):
     if not validate_one_time_token(token, 'update'):
         raise AlertException(status_code=400, detail="토큰이 유효하지 않습니다.")
 
+    if not request.session.get("ss_profile_change", False):
+        raise AlertException(status_code=403, detail="잘못된 접근입니다.", url=app.url_path_for("member_confirm"))
+
     config = request.state.config
+    captcha = get_current_captcha_cls(config.cf_captcha)
+    if (captcha is not None) and (not await captcha.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
+        raise AlertException("캡차가 올바르지 않습니다.")
 
     mb_id = request.session.get("ss_mb_id", "")
     exists_member: Optional[Member] = db.query(Member).filter(Member.mb_id == mb_id).first()
     if not exists_member:
-        raise AlertException(status_code=400, detail="회원정보가 없습니다.")
+        raise AlertException(status_code=403, detail="회원정보가 없습니다.")
 
     # 한국 우편번호 (postalcode)
-    member_form.mb_zip1 = mb_zip[:3]
-    member_form.mb_zip2 = mb_zip[3:]
+    if mb_zip:
+        member_form.mb_zip1 = mb_zip[:3]
+        member_form.mb_zip2 = mb_zip[3:]
 
     # 비밀번호 변경
     is_password_changed = False
@@ -110,7 +137,7 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
         # 비밀번호 변경 확인
         if not validate_password(password=mb_password, hash=exists_member.mb_password):
             if mb_password != mb_password_re:
-                raise AlertException(status_code=400, detail="패스워드가 일치하지 않습니다.")
+                raise AlertException(status_code=400, detail="비밀번호가 일치하지 않습니다.")
             is_password_changed = True
 
     # 이메일 변경
@@ -203,6 +230,8 @@ def member_profile_save(request: Request, db: Session = Depends(get_db),
 
     db.query(Member).filter(Member.mb_id == mb_id).update(member_form.__dict__)
     db.commit()
+    if "ss_profile_change" in request.session:
+        del request.session["ss_profile_change"]
     return RedirectResponse(url="/", status_code=302)
 
 
@@ -223,15 +252,22 @@ def validate_nickname_change_date(before_nick_date: date, nick_modify_date) -> D
         Raises:
             ValidationError: 닉네임 변경 가능일 안내
     """
-    error_msg = {
+    message = {
         "msg": ""
     }
+    if nick_modify_date == 0:
+        return message
     change_date = timedelta(days=nick_modify_date)
-    available_date = before_nick_date + change_date
-    if datetime.now().date() <= available_date:
-        error_msg["msg"] = f"{available_date.strftime('%Y-%m-%d')} 이후 닉네임을 변경할 수있습니다."
 
-    return error_msg
+    if is_none_datetime(before_nick_date):
+        before_nick_date = datetime.now().date()
+
+    available_date = before_nick_date + change_date
+
+    if datetime.now().date() < available_date:
+        message["msg"] = f"{available_date.strftime('%Y-%m-%d')} 이후 닉네임을 변경할 수있습니다."
+
+    return message
 
 
 def validate_nickname(mb_nick: str, prohibit_id: str) -> Dict[str, str]:
@@ -242,24 +278,24 @@ def validate_nickname(mb_nick: str, prohibit_id: str) -> Dict[str, str]:
     Return:
         가능한 닉네임이면 True 아니면 에러메시지 배열
     """
-    error_msg = {
+    message = {
         "msg": ""
     }
     if mb_nick is None or mb_nick.strip() == "":
-        error_msg["msg"] = "닉네임을 입력해주세요."
-        return error_msg
+        message["msg"] = "닉네임을 입력해주세요."
+        return message
 
     db = SessionLocal()
     result = db.query(Member.mb_nick).filter(Member.mb_nick == mb_nick).first()
     if result:
-        error_msg["msg"] = "해당 닉네임이 존재합니다."
-        return error_msg
+        message["msg"] = "해당 닉네임이 존재합니다."
+        return message
 
     if mb_nick in prohibit_id:
-        error_msg["msg"] = "닉네임으로 정할 수없는 단어입니다."
-        return error_msg
+        message["msg"] = "닉네임으로 정할 수없는 단어입니다."
+        return message
 
-    return error_msg
+    return message
 
 
 def validate_userid(user_id: str, prohibit_id: str):
@@ -271,15 +307,15 @@ def validate_userid(user_id: str, prohibit_id: str):
     Raises:
         ValueError 정할 수없는 ID
     """
-    error_msg = {
+    message = {
         "msg": ""
     }
     if not user_id or user_id.strip() == "":
-        error_msg["msg"] = "ID를 입력해주세요."
-        return error_msg
+        message["msg"] = "ID를 입력해주세요."
+        return message
 
     if user_id in prohibit_id.strip():
-        error_msg["msg"] = "ID로 정할 수없는 단어입니다."
-        return error_msg
+        message["msg"] = "ID로 정할 수없는 단어입니다."
+        return message
 
-    return error_msg
+    return message
