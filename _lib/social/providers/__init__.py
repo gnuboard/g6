@@ -1,6 +1,9 @@
 # Path: _lib/social/social.py
 import pkgutil
 import importlib
+from _lib.social.social import register_social_provider
+from database import SessionLocal
+from models import Config
 
 # Package.
 package_name = '_lib.social.providers'
@@ -18,3 +21,7 @@ __all__ = [
     "kakao",
     "twitter",
 ]
+
+with SessionLocal() as db:
+    config = db.query(Config).first()
+    register_social_provider(config)
