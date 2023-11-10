@@ -2,16 +2,17 @@ import logging
 import httpx
 
 
-class ReCaptchaV2:
+class ReCaptchaInvisible:
     """ google recaptcha v2 https://www.google.com/recaptcha/admin
     """
 
     VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify'
-    TEMPLATE_PATH = 'recaptcha_v2.html'
+    TEMPLATE_PATH = 'recaptcha_v2_invisible.html'
 
     @classmethod
     async def verify(cls, recaptcha_secret_key, captcha_response_key: str = None) -> bool:
-        """Google recaptcha verify
+        """ 캡차 응답 토큰을 전송하여 캡차가 성공적으로 완료되었는지 확인합니다.
+        Google recaptcha verify
         Args:
             recaptcha_secret_key (str): recaptcha 비밀키
             captcha_response_key (str): captcha 응답 토큰키
@@ -29,5 +30,5 @@ class ReCaptchaV2:
                 return json_result.get('success', False)
 
             except Exception as e:
-                logging.log(logging.CRITICAL, 'recaptcha v2 error', exc_info=e)
+                logging.log(logging.CRITICAL, 'recaptcha invisible version error', exc_info=e)
                 return False

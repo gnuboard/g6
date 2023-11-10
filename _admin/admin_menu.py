@@ -1,24 +1,17 @@
 
+import bleach
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy import func
 from sqlalchemy.orm import aliased, Session
 from typing import List
-
-import bleach
 
 from common import *
 from database import get_db
 from models import Board, Content, Group, Menu
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
-admin_templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
-# 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
-admin_templates.env.globals["get_admin_menus"] = get_admin_menus
-admin_templates.env.globals['get_selected'] = get_selected
-admin_templates.env.globals["generate_token"] = generate_token
+admin_templates = MyTemplates(directory=ADMIN_TEMPLATES_DIR)
 
 MENU_KEY = "100290"  
 
@@ -30,8 +23,7 @@ def menu_list(request: Request, db: Session = Depends(get_db)):
     """
     request.session["menu_key"] = MENU_KEY
     # 메뉴 목록 조회
-    model = Menu
-    menus = db.query(model).order_by(model.me_code.asc()).all()
+    menus = db.query(Menu).order_by(Menu.me_code.asc()).all()
 
     # me_code의 길이가 4이상 데이터는 subclass 속성을 추가.
     for menu in menus:
@@ -46,7 +38,7 @@ def menu_list(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/menu_form")
-def menu_form(request: Request, code: str = None, new: str = None, db: Session = Depends(get_db)):
+def menu_form(request: Request, code: str = Query(None), new: str = Query(None)):
     """
     메뉴 추가 팝업 페이지
     """
@@ -61,7 +53,7 @@ def menu_form(request: Request, code: str = None, new: str = None, db: Session =
 
 
 @router.post("/menu_form_search", response_class=HTMLResponse)
-def menu_form_search(request: Request, type: str = Form(None), db: Session = Depends(get_db)):
+def menu_form_search(request: Request, db: Session = Depends(get_db), type: str = Form(None)):
     """
     메뉴 추가 팝업 레이아웃
     """
@@ -100,8 +92,8 @@ def menu_list_update(
     """
     메뉴 수정
     """
-    if not compare_token(request, token, 'update'):
-        raise AlertException(status_code=403, detail="토큰이 유효하지 않습니다")
+    if not compare_token(request, token, 'menu_list_update'):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     try:
         # 메뉴 전체 삭제
@@ -148,8 +140,8 @@ def menu_list_update(
         lfu_cache.update({"menus": None})
         
     except Exception as e:
-        print(f"Error: {e}")
         db.rollback()
+        raise AlertException(f"Error: {e}", 400)
 
     return RedirectResponse(f"/admin/menu_list", status_code=303)
 

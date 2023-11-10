@@ -29,14 +29,17 @@ import smtplib
 import threading
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from _extend.captcha.recaptch_v2 import ReCaptchaV2
-from _extend.captcha.recaptch_inv import ReCaptchaInvisible
+from _lib.captcha.recaptch_v2 import ReCaptchaV2
+from _lib.captcha.recaptch_inv import ReCaptchaInvisible
 
 load_dotenv()
 
 
 # 전역변수 선언(global variables)
 TEMPLATES = "templates"
+WIDGET_PATH = "_widget"
+
+CAPTCHA_PATH = f"{WIDGET_PATH}/captcha"
 EDITOR_PATH = f"{TEMPLATES}/editor"
 
 def get_theme_from_db(config=None):
@@ -74,9 +77,8 @@ TIME_YMD = TIME_YMDHIS[:10]
 # USE_MOBILE = True
 
 
-IS_RESPONSIVE = os.getenv("IS_RESPONSIVE", default="True")
-IS_RESPONSIVE = IS_RESPONSIVE.lower() == "true"
-    
+is_response = os.getenv("IS_RESPONSIVE", default="true")
+IS_RESPONSIVE = is_response.lower() == "true"
 
 def hash_password(password: str):
     '''
@@ -1338,7 +1340,8 @@ def is_admin(request: Request):
     if config.cf_admin.strip() == "":
         return False
 
-    if mb_id := request.session.get("ss_mb_id", ""):
+    mb_id = request.session.get("ss_mb_id", "")
+    if mb_id:
         if mb_id.strip() == config.cf_admin.strip():
             return True
 
@@ -2027,6 +2030,8 @@ def get_current_captcha_cls(captcha_name: str):
     """캡챠 클래스를 반환하는 함수
     Args:
         captcha_name (str) : config cf_captcha에 저장된 캡차클래스이름
+    Returns:
+        Optional[class]: 캡차 클래스 or None
     """
     if captcha_name == "recaptcha":
         return ReCaptchaV2
@@ -2040,14 +2045,14 @@ def captcha_widget(request):
     """템플릿에서 캡차 출력
     Args:
         request (Request): FastAPI Request
+    Returns:
+        str: 캡차 템플릿 or ''
     """
-    if cls := get_current_captcha_cls(captcha_name=request.state.config.cf_captcha):
+    cls = get_current_captcha_cls(captcha_name=request.state.config.cf_captcha)
+    if cls:
         return cls.TEMPLATE_PATH
 
     return ''  # 템플릿 출력시 비어있을때는 빈 문자열
-
-
-CAPTCHA_PATH = f"{TEMPLATES}/captcha"
 
 
 def get_display_ip(request: Request, board: Board, ip: str) -> str:

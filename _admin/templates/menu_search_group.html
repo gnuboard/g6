@@ -1,4 +1,3 @@
-※ 사용자 페이지 링크가 없어서 링크가 추가되지 않음.
 <div class="tbl_head01 tbl_wrap">
     <table>
         <thead>
@@ -13,7 +12,7 @@
                     <td>{{ data.subject }} </td>
                     <td class="td_mngsmall">
                         <input type="hidden" name="subject[]" value="{{ data.subject }}">
-                        <input type="hidden" name="link[]" value="">
+                        <input type="hidden" name="link[]" value="{{ url_for('group_board_list', gr_id=data.id) }}">
                         <button type="button" class="add_select btn btn_03">
                             <span class="sound_only">{{ data.subject }} </span>
                             선택
