@@ -5,7 +5,6 @@ import bleach
 import datetime
 from fastapi import APIRouter, Depends, Request, File, Form, Path
 from fastapi.responses import FileResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import aliased, Session
 
 from common import *
@@ -14,16 +13,11 @@ from dataclassform import WriteForm
 import models
 
 router = APIRouter()
-templates = Jinja2Templates(directory=[EDITOR_PATH, TEMPLATES_DIR])
+templates = MyTemplates(directory=[EDITOR_PATH, TEMPLATES_DIR])
 templates.env.filters["datetime_format"] = datetime_format
 templates.env.globals["bleach"] = bleach
 templates.env.globals["nl2br"] = nl2br
 templates.env.globals["editor_macro"] = editor_macro
-templates.env.globals["generate_token"] = generate_token
-templates.env.globals["getattr"] = getattr
-templates.env.globals["get_member_icon"] = get_member_icon
-templates.env.globals["get_member_image"] = get_member_image
-templates.env.globals["get_selected"] = get_selected
 templates.env.globals["get_unique_id"] = get_unique_id
 templates.env.globals["get_member_signature"] = get_member_signature
 

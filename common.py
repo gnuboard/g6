@@ -1520,12 +1520,11 @@ class MyTemplates(Jinja2Templates):
             self.env.globals.update(**globals.__dict__)
 
     def _default_context(self, request: Request):
-        # 메인페이지(main.py) latest 함수에서 templates.TemplateResponse가 추가적으로 호출되기 때문에
-        # context_processors가 2번 호출된다.
         context = {
             "menus" : get_menus(),
             "poll" : get_recent_poll(),
             "populars" : get_populars(),
+            "latest": latest
         }
         return context
     

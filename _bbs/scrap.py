@@ -6,12 +6,10 @@ from sqlalchemy.orm import aliased, Session
 
 from common import *
 from database import get_db
-from models import BoardNew, Scrap
+from models import Scrap
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
-# 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
-templates.env.globals["generate_token"] = generate_token
+templates = MyTemplates(directory=TEMPLATES_DIR)
 templates.env.filters["datetime_format"] = datetime_format
 
 
