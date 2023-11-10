@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, Form, Path, Request
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from common import *
@@ -8,13 +7,10 @@ from database import get_db
 from models import Member, Memo
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
-# 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
-templates.env.globals["generate_token"] = generate_token
+templates = MyTemplates(directory=TEMPLATES_DIR)
+templates.env.filters["default_if_none"] = default_if_none
 
 # TODO : Capcha
-# TODO : 포인트 유효성검사&소진
-# TODO : user_sideview 추가
 
 @router.get("/memo")
 def memo_list(request: Request, db: Session = Depends(get_db),
@@ -153,8 +149,8 @@ def memo_form_update(request: Request, db: Session = Depends(get_db),
     """
     쪽지 전송
     """
-    if not compare_token(request, token, 'insert'):
-        raise AlertException(status_code=403, detail=f"{token} : 토큰이 존재하지 않습니다.")
+    if not check_token(request, token):
+        raise AlertException(f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.", 403)
 
     config = request.state.config
     member = request.state.login_member

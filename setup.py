@@ -298,6 +298,7 @@ def board_setup():
                 bo_reply_order='1',
                 bo_comment_level=1,
                 bo_sort_field='wr_datetime',
+                bo_table_width=100,
                 bo_1_subj='',
                 bo_2_subj='',
                 bo_3_subj='',

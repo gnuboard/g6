@@ -1,18 +1,12 @@
 from fastapi import APIRouter, Depends, Form, Path, Request
 from fastapi.responses import JSONResponse
-from fastapi.templating import Jinja2Templates
-from sqlalchemy import literal
-from sqlalchemy.orm import aliased, Session
+from sqlalchemy.orm import Session
 
 from common import *
 from database import get_db
 from models import Board, BoardGood
 
-
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
-# 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
-templates.env.globals["generate_token"] = generate_token
 
 
 @router.post("/good/{bo_table}/{wr_id}/{type}")

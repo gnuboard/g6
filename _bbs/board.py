@@ -3,10 +3,8 @@
 # 테이블명은 write 로, 글 한개에 대한 의미는 write 와 post 를 혼용하여 사용합니다.
 import bleach
 import datetime
-from fastapi import APIRouter, Depends, Request, File, Form, HTTPException
+from fastapi import APIRouter, Depends, Request, File, Form, Path
 from fastapi.responses import FileResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
-from sqlalchemy import literal
 from sqlalchemy.orm import aliased, Session
 
 from common import *
@@ -15,15 +13,14 @@ from dataclassform import WriteForm
 import models
 
 router = APIRouter()
-templates = Jinja2Templates(directory=[EDITOR_PATH, TEMPLATES_DIR])
+templates = MyTemplates(directory=[EDITOR_PATH, TEMPLATES_DIR])
 templates.env.filters["datetime_format"] = datetime_format
 templates.env.globals["bleach"] = bleach
 templates.env.globals["nl2br"] = nl2br
 templates.env.globals["editor_macro"] = editor_macro
-templates.env.globals["generate_token"] = generate_token
-templates.env.globals["getattr"] = getattr
-templates.env.globals["get_selected"] = get_selected
 templates.env.globals["get_unique_id"] = get_unique_id
+templates.env.globals["get_member_signature"] = get_member_signature
+
 
 FILE_DIRECTORY = "data/file/"
 
@@ -56,11 +53,11 @@ def group_board_list(request: Request, gr_id: str, db: Session = Depends(get_db)
 
 
 @router.get("/{bo_table}")
-def list_post(bo_table: str, 
-              request: Request, 
-              db: Session = Depends(get_db),
-              search_params: dict = Depends(common_search_query_params)
-              ):
+def list_post(request: Request,
+    db: Session = Depends(get_db),
+    bo_table: str = Path(..., title="게시판 아이디"),
+    search_params: dict = Depends(common_search_query_params)
+):
     """
     지정된 게시판의 글 목록을 보여준다.
     """
@@ -77,7 +74,9 @@ def list_post(bo_table: str,
     sst = search_params['sst']
     sod = search_params['sod']
     current_page = search_params['current_page']
+    bo_page_rows = board.bo_mobile_page_rows if request.state.is_mobile and board.bo_mobile_page_rows else board.bo_page_rows
     page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
+    page_rows = page_rows if bo_page_rows == 0 else bo_page_rows
 
     # 게시판 카테고리 설정
     categories = board.bo_category_list.split("|") if board.bo_use_category else []
@@ -117,12 +116,16 @@ def list_post(bo_table: str,
     total_count = query.count()
 
     # 게시글 정보 수정
+    enc = StringEncrypt()
     for write in writes:
         write.num = total_count - offset - (writes.index(write))
-        write.icon_hot = write.wr_hit >= board.bo_hot
-        write.icon_new = write.wr_datetime > (datetime.now() - timedelta(hours=int(board.bo_new)))
+        write.icon_hot = write.wr_hit >= board.bo_hot if board.bo_hot > 0 else False
+        write.icon_new = write.wr_datetime > (datetime.now() - timedelta(hours=int(board.bo_new))) if board.bo_new > 0 else False
         write.icon_file = BoardFileManager(board, write.wr_id).is_exist()
         write.icon_link = write.wr_link1 or write.wr_link2
+        write.name = write.wr_name[:config.cf_cut_name] if config.cf_cut_name else write.wr_name
+        write.email = enc.encrypt(write.wr_email)
+        write.subject = cut_write_subject(board, write.wr_subject, is_mobile=request.state.is_mobile)
 
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/list_post.html",
@@ -134,7 +137,7 @@ def list_post(bo_table: str,
             "writes": writes,
             "total_count": total_count,
             "current_page": search_params['current_page'],
-            "paging": get_paging(request, search_params['current_page'], total_count)
+            "paging": get_paging(request, search_params['current_page'], total_count, page_rows)
         }
     )
 
@@ -369,6 +372,9 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
     is_file = member_level >= board.bo_upload_level
     is_file_content = board.bo_use_file_content
     files = BoardFileManager(board).get_board_files_by_form()
+    # 글자수 제한 설정값
+    write_min = 0 if request.state.is_super_admin or board.bo_use_dhtml_editor else int(board.bo_write_min)
+    write_max = 0 if request.state.is_super_admin or board.bo_use_dhtml_editor else int(board.bo_write_max)
 
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/write_form.html",
@@ -385,7 +391,9 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
             "is_link": is_link,
             "is_file": is_file,
             "is_file_content": is_file_content,
-            "files": files
+            "files": files,
+            "write_min": write_min,
+            "write_max": write_max,
         }
     )
 
@@ -400,7 +408,10 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
     # 게시판 정보 조회
     board = db.query(models.Board).get(bo_table)
     if not board:
-        raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
+        raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
+    
+    if not can_action_by_comment_count(request, bo_table, wr_id, board.bo_count_modify):
+        raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_modify}건 이상 존재하므로 수정 할 수 없습니다.", 403)
 
     # 게시판 에디터 설정
     request.state.use_editor = board.bo_use_dhtml_editor
@@ -436,6 +447,9 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
     is_file_content = True if board.bo_use_file_content else False
     # 업로드 파일 목록 조회
     files = BoardFileManager(board, wr_id).get_board_files_by_form()
+    # 글자수 제한 설정값
+    write_min = 0 if request.state.is_super_admin or board.bo_use_dhtml_editor else int(board.bo_write_min)
+    write_max = 0 if request.state.is_super_admin or board.bo_use_dhtml_editor else int(board.bo_write_max)
 
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/write_form.html",
@@ -456,6 +470,8 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
             "is_file": is_file,
             "is_file_content": is_file_content,
             "files": files,
+            "write_min": write_min,
+            "write_max": write_max,
         }
     )
 
@@ -504,14 +520,17 @@ def write_update(
 
     # 글 등록
     if compare_token(request, token, 'insert'):
-        form_data.wr_name = getattr(member, "mb_name", form_data.wr_name)
-        form_data.wr_email = getattr(member, "mb_email", form_data.wr_email)
         parent_write = db.query(models.Write).get(parent_id) if parent_id else None
+
+        form_data.wr_name = set_writer_name(board, member) if member else form_data.wr_name
+        form_data.wr_email = getattr(member, "mb_email", form_data.wr_email)
+        form_data.wr_homepage = getattr(member, "mb_homepage", form_data.wr_homepage)
+        
         write = models.Write(
             wr_num = parent_write.wr_num if parent_write else get_next_num(bo_table),
             wr_reply = generate_reply_character(board, parent_write) if parent_write else "",
             wr_datetime = datetime.now(),
-            mb_id = request.state.login_member.mb_id if request.state.login_member else '',
+            mb_id = request.state.login_member.mb_id if member else '',
             wr_ip = request.client.host,
             **form_data.__dict__
         )
@@ -526,9 +545,10 @@ def write_update(
         insert_board_new(bo_table, write)
 
         # 글작성 포인트 부여(답변글은 댓글 포인트로 부여)
-        point = board.bo_comment_point if parent_write else board.bo_write_point
-        content = f"{board.bo_subject} {write.wr_id} 글" + ("답변" if parent_write else "쓰기")
-        insert_point(request, member.mb_id, point, content, board.bo_table, write.wr_id, "쓰기")
+        if member:
+            point = board.bo_comment_point if parent_write else board.bo_write_point
+            content = f"{board.bo_subject} {write.wr_id} 글" + ("답변" if parent_write else "쓰기")
+            insert_point(request, member.mb_id, point, content, board.bo_table, write.wr_id, "쓰기")
 
         # 메일 발송
         if config.cf_email_use and board.bo_use_email:
@@ -578,6 +598,9 @@ def write_update(
 
     # 글 수정
     elif compare_token(request, token, 'update'):
+        if not can_action_by_comment_count(request, bo_table, wr_id, board.bo_count_modify):
+            raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_modify}건 이상 존재하므로 수정 할 수 없습니다.", 403)
+    
         # 게시글 정보 조회 및 수정
         write = db.query(models.Write).get(wr_id)
         if not write:
@@ -653,6 +676,7 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
     """
     config = request.state.config
     member = request.state.login_member
+    member_level = get_member_level(request)
     # 게시판 정보 조회
     board = db.query(models.Board).get(bo_table)
     if not board:
@@ -664,6 +688,10 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
     if not write:
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
     
+    # 게시글 정보 설정
+    write.ip = get_display_ip(request, board, write.wr_ip)
+    write.name = write.wr_name[:config.cf_cut_name] if config.cf_cut_name else write.wr_name
+    
     # 세션 체크
     # 한번 읽은 게시글은 세션만료까지 조회수, 포인트 처리를 하지 않는다.
     session_name = f"ss_view_{bo_table}_{wr_id}"
@@ -671,19 +699,21 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
         # 조회수 증가
         write.wr_hit = write.wr_hit + 1
 
-        # 관리자이거나 자신의 글이면 통과하는 함수
-        if not (request.state.is_super_admin 
+        # 포인트 검사 및 소진
+        read_point = board.bo_read_point
+        if config.cf_use_point and read_point != 0:
+            # 관리자이거나 자신의 글이면 통과
+            if not (request.state.is_super_admin 
                 or is_owner(write, member)
                 or (not member and board.bo_read_level == 1 and write.wr_ip == request.client.host)
-                ):
-            # 포인트 검사 및 소진
-            read_point = board.bo_read_point
-            mb_point = member.mb_point if member else 0
-            if mb_point + read_point < 0:
-                raise AlertException(f"게시글을 읽기 위해 {abs(read_point)} 포인트가 필요합니다.", 403)
-            else:
-                # 포인트 소진 처리
-                insert_point(request, member.mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table, write.wr_id, "읽기")
+            ):
+                # 포인트 검사 및 소진
+                mb_point = getattr(member, "mb_point", 0)
+                if mb_point + read_point < 0:
+                    raise AlertException(f"게시글을 읽기 위해 {abs(read_point)} 포인트가 필요합니다.", 403)
+                else:
+                    # 포인트 소진 처리
+                    insert_point(request, member.mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table, write.wr_id, "읽기")
         request.session[session_name] = True
     
     if member:
@@ -733,15 +763,34 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
     images, files = BoardFileManager(board, wr_id).get_board_files_by_type(request)
 
     # 댓글 목록 조회
-    comments = db.query(models.Write).filter(
-        models.Write.wr_parent == wr_id,
-        models.Write.wr_is_comment == True
-    ).order_by(models.Write.wr_id).all()
+    comments = db.query(models.Write).filter_by(
+        wr_parent = wr_id,
+        wr_is_comment = True
+    ).order_by(models.Write.wr_comment, models.Write.wr_comment_reply).all()
+
+    for comment in comments:
+        comment.name = comment.wr_name[:config.cf_cut_name] if config.cf_cut_name else comment.wr_name
+        comment.ip = get_display_ip(request, board, comment.wr_ip)
+        comment.is_reply = len(comment.wr_comment_reply) < 5 and board.bo_comment_level <= member_level
+        comment.is_edit = comment.is_del = (member and comment.mb_id == member.mb_id) or request.state.is_super_admin
+
+    # TODO: 전체목록보이기 사용 => 게시글 목록 부분을 분리해야함
+    write_list = None
+    # if member_level >= board.bo_list_level and board.bo_use_list_view:
+    #     write_list = list_post(request, db, bo_table, search_params={
+    #         "current_page": 1,
+    #         "sca": request.query_params.get("sca"),
+    #         "sfl": request.query_params.get("sfl"),
+    #         "stx": request.query_params.get("stx"),
+    #         "sst": request.query_params.get("sst"),
+    #         "sod": request.query_params.get("sod"),
+    #     }).body.decode("utf-8")
 
     context = {
         "request": request,
         "board": board,
         "write": write,
+        "write_list": write_list,
         "comments": comments,
         "prev": prev,
         "next": next,
@@ -766,12 +815,17 @@ def delete_post(
     게시글을 삭제한다.
     """
     # 토큰 검증
-    if not compare_token(request, token, 'delete'):
+    if not compare_token(request, token, 'delete_post'):
         raise AlertException(status_code=403, detail="잘못된 접근입니다.")
+
     # 게시판 정보 조회
     board = db.query(models.Board).get(bo_table)
     if not board:
         raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
+    
+    if not can_action_by_comment_count(request, bo_table, wr_id, board.bo_count_delete):
+        raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_delete}건 이상 존재하므로 삭제 할 수 없습니다.", 403)
+
     # 게시글 조회
     models.Write = dynamic_create_write_table(bo_table)
     write = db.query(models.Write).get(wr_id)
@@ -870,45 +924,122 @@ def download_file(
     return FileResponse(board_file.bf_file, filename=board_file.bf_source)
 
 
+from dataclasses import dataclass
+
+@dataclass
+class WriteCommentForm:
+    w: str = Form(...)
+    bo_table: str = Form(...)
+    wr_id: int = Form(...)
+    wr_content: str = Form(...)
+    wr_name: str = Form(None)
+    wr_password: str = Form(None)
+    wr_secret: str = Form(None)
+    comment_id: int = Form(None)
+
 @router.post("/write_comment_update/")
 def write_comment_update(
     request: Request,
     db: Session = Depends(get_db),
-    bo_table: str = Form(...),
-    wr_id: int = Form(...),
-    wr_content: str = Form(...),
+    token: str = Form(...),
+    form: WriteCommentForm = Depends(),
 ):
     """
-    댓글을 추가한다.
+    댓글 등록
     """
+    member = request.state.login_member
+
+    if not check_token(request, token):
+        raise AlertException("잘못된 접근입니다.")
+
     # 게시판 정보 조회
-    board = db.query(models.Board).get(bo_table)
+    board = db.query(models.Board).get(form.bo_table)
     if not board:
-        raise AlertException(status_code=404, detail=f"{bo_table} : 존재하지 않는 게시판입니다.")
+        raise AlertException(f"{form.bo_table} : 존재하지 않는 게시판입니다.", 404)
 
-    # 원글을 찾는다
-    models.Write = dynamic_create_write_table(bo_table)
-    write = db.query(models.Write).filter(models.Write.wr_id == wr_id).first()
+    # 게시글 정보 조회
+    write_model = dynamic_create_write_table(form.bo_table)
+    write = db.query(write_model).get(form.wr_id)
     if not write:
-        raise HTTPException(
-            status_code=404, detail="{wr_id} in {bo_table} is not found."
-        )
+        raise AlertException(f"{form.wr_id} : 존재하지 않는 게시글입니다.", 404)
+    
+    if form.w == "c":
+        # 댓글 객체 생성
+        comment = write_model()
 
-    write.wr_comment = write.wr_comment + 1
+        if form.comment_id:
+            parent_comment = db.query(write_model).get(form.comment_id)
+            if not parent_comment:
+                raise AlertException(f"{form.comment_id} : 존재하지 않는 댓글입니다.", 404)
+            comment.wr_comment_reply = generate_reply_character(board, parent_comment)
+            comment.wr_comment = parent_comment.wr_comment
+        else:
+            comment.wr_comment = (db.query(func.max(write_model.wr_comment).label("max_wr_comment")).filter(
+                write_model.wr_parent == form.wr_id,
+                write_model.wr_is_comment == True
+            ).first().max_wr_comment or 0) + 1
+
+        # 댓글 추가정보 등록
+        comment.ca_name = write.ca_name
+        comment.wr_option = form.wr_secret
+        comment.wr_num = write.wr_num
+        comment.wr_parent = form.wr_id
+        comment.wr_is_comment = True
+        comment.wr_content = form.wr_content
+        comment.mb_id = getattr(member, "mb_id", "")
+        comment.wr_password = form.wr_password
+        comment.wr_name = set_writer_name(board, member) if member else form.wr_name
+        comment.wr_email = getattr(member, "mb_email", "")
+        comment.wr_homepage = getattr(member, "mb_homepage", "")
+        comment.wr_datetime = comment.wr_last = datetime.now()
+        comment.wr_ip = request.client.host
+        db.add(comment)
+
+        # 게시글에 댓글 수 증가
+        write.wr_comment = write.wr_comment + 1
+        db.commit()
+    elif form.w == "cu":
+        # 댓글 수정
+        comment = db.query(write_model).get(form.comment_id)
+        if not comment:
+            raise AlertException(f"{form.comment_id} : 존재하지 않는 댓글입니다.", 404)
+
+        comment.wr_content = form.wr_content
+        comment.wr_option = form.wr_secret
+        comment.wr_last = datetime.now()
+        db.commit()
+
+    return RedirectResponse(f"/board/{form.bo_table}/{form.wr_id}", status_code=303)
+
+
+@router.get("/delete_comment/{bo_table}/{comment_id}")
+def delete_comment(
+    request: Request,
+    db: Session = Depends(get_db),
+    bo_table: str = Path(...),
+    comment_id: int = Path(...),
+    token: str = Query(...),
+):
+    """
+    댓글 삭제
+    """
+    if not compare_token(request, token, 'delete_comment'):
+        raise AlertException("잘못된 접근입니다.", 403)
+    
+    write_model = dynamic_create_write_table(bo_table)
+    comment = db.query(write_model).get(comment_id)
+    if not comment:
+        raise AlertException(f"{comment_id} : 존재하지 않는 댓글입니다.", 404)
+    
+    # 댓글 삭제
+    db.delete(comment)
+    db.commit()
+    # 게시글에 댓글 수 감소
+    write = db.query(write_model).get(comment.wr_parent)
+    write.wr_comment = write.wr_comment - 1
     db.commit()
 
-    # 댓글 추가
-    comment = models.Write()
-    comment.wr_is_comment = True
-    comment.wr_parent = wr_id
-    comment.wr_content = wr_content
-    comment.wr_datetime = datetime.now()
-    comment.wr_ip = request.client.host
-    comment.wr_last = datetime.now()
-    db.add(comment)
-    db.commit()
-
-    return RedirectResponse(f"/board/{bo_table}/{wr_id}", status_code=303)
+    return RedirectResponse(f"/board/{bo_table}/{write.wr_id}", status_code=303)
 
 
 # TODO: 아래 함수들을 다른 경로로 옮겨야 한다.
@@ -963,11 +1094,26 @@ def generate_reply_character(board: Board, write):
     """
     db = SessionLocal()
     write_model = dynamic_create_write_table(board.bo_table)
+
     # 마지막 문자열 1개 자르기
-    query = db.query(func.right(write_model.wr_reply, 1).label("reply")).filter(
-        write_model.wr_reply != "",
-        write_model.wr_parent == write.wr_id
-    )
+    if not write.wr_is_comment:
+        origin_reply = write.wr_reply
+        query = db.query(func.right(write_model.wr_reply, 1).label("reply")).filter(
+            write_model.wr_num == write.wr_num,
+            func.length(write_model.wr_reply) == (len(origin_reply) + 1)
+        )
+        if origin_reply:
+            query = query.filter(write_model.wr_reply.like(f"{origin_reply}%"))
+    else:
+        origin_reply = write.wr_comment_reply
+        query = db.query(func.right(write_model.wr_comment_reply, 1).label("reply")).filter(
+            write_model.wr_parent == write.wr_parent,
+            write_model.wr_comment == write.wr_comment,
+            func.length(write_model.wr_comment_reply) == (len(origin_reply) + 1)
+        )
+        if origin_reply:
+            query = query.filter(write_model.wr_comment_reply.like(f"{origin_reply}%"))
+
     # 정방향이면 최대값, 역방향이면 최소값
     if board.bo_reply_order:
         result = query.order_by(desc("reply")).first()
@@ -989,7 +1135,7 @@ def generate_reply_character(board: Board, write):
     else:
         reply_char = chr(ord(last_reply_char) + char_increase)
 
-    return write.wr_reply + reply_char
+    return origin_reply + reply_char
 
 
 def is_owner(object, member = None):
@@ -999,3 +1145,34 @@ def is_owner(object, member = None):
         return object_mb_id == member_mb_id
     else:
         return False
+    
+
+def can_action_by_comment_count(request: Request, bo_table: str, wr_id: int, limit: int):
+    """댓글 수에 따라 행동 가능 여부를 판단한다.
+
+    Args:
+        request (Request): Request 객체
+        bo_table (st): 게시판 ID
+        wr_id (int): 게시글 아이디
+        limit (int): 제한할 댓글 수
+
+    Returns:
+        bool: 수정 가능 여부
+    """
+    if request.state.is_super_admin:
+        return True
+    
+    db = SessionLocal()
+    
+    write_model = dynamic_create_write_table(bo_table)
+    comment_count = db.query(write_model).filter_by(
+        wr_parent = wr_id,
+        wr_is_comment = True
+    ).count()
+
+    db.close()
+
+    if limit and limit <= comment_count:
+        return False
+    else:
+        return True

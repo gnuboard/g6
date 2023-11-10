@@ -548,7 +548,7 @@ def get_from_list(lst, index, default=0):
 # current_page : 현재 페이지
 # total_count : 전체 레코드 수
 # add_url : 페이지 링크의 추가 URL
-def get_paging(request: Request, current_page, total_count, add_url=""):
+def get_paging(request: Request, current_page, total_count, page_rows = 0, add_url=""):
     config = request.state.config
     url_prefix = request.url
     
@@ -560,7 +560,8 @@ def get_paging(request: Request, current_page, total_count, add_url=""):
     total_count = int(total_count)
 
     # 한 페이지당 라인수
-    page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
+    if not page_rows:
+        page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
     # 페이지 표시수
     page_count = config.cf_mobile_pages if request.state.is_mobile and config.cf_mobile_pages else config.cf_write_pages
     
@@ -774,6 +775,34 @@ def select_query(request: Request, table_model, search_params: dict,
 def get_member(mb_id: str, fields: str = '*'):
     db = SessionLocal()
     return db.query(Member).options(load_only(fields)).filter_by(mb_id=mb_id).first()
+
+
+def get_member_icon(mb_id):
+    MEMBER_ICON_DIR = "data/member"
+    member_icon_dir = f"{MEMBER_ICON_DIR}/{mb_id[:2]}"
+
+    icon_file = os.path.join(member_icon_dir, f"{mb_id}.gif")
+
+    if os.path.exists(icon_file):
+        icon_filemtime = os.path.getmtime(icon_file) # 캐시를 위해 파일수정시간을 추가
+        return f"{icon_file}?{icon_filemtime}"
+
+    return "static/img/no_profile.gif"
+
+
+def get_member_image(mb_id: str = None):
+    
+    if mb_id:
+        MEMBER_IMAGE_DIR = "data/member_image"
+        member_image_dir = f"{MEMBER_IMAGE_DIR}/{mb_id[:2]}"
+
+        image_file = os.path.join(member_image_dir, f"{mb_id}.gif")
+
+        if os.path.exists(image_file):
+            image_filemtime = os.path.getmtime(image_file) # 캐시를 위해 파일수정시간을 추가
+            return f"{image_file}?{image_filemtime}"
+
+    return "static/img/no_profile.gif"
     
 
 # 포인트 부여    
@@ -1480,6 +1509,8 @@ class MyTemplates(Jinja2Templates):
         self.env.globals["generate_token"] = generate_token
         self.env.globals["getattr"] = getattr
         self.env.globals["get_selected"] = get_selected
+        self.env.globals["get_member_icon"] = get_member_icon
+        self.env.globals["get_member_image"] = get_member_image
 
         # 사용자 템플릿, 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
         if TEMPLATES_DIR in directory:
@@ -1492,12 +1523,11 @@ class MyTemplates(Jinja2Templates):
             self.env.globals.update(**globals.__dict__)
 
     def _default_context(self, request: Request):
-        # 메인페이지(main.py) latest 함수에서 templates.TemplateResponse가 추가적으로 호출되기 때문에
-        # context_processors가 2번 호출된다.
         context = {
             "menus" : get_menus(),
             "poll" : get_recent_poll(),
             "populars" : get_populars(),
+            "latest": latest
         }
         return context
     
@@ -1625,6 +1655,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     Returns:
         str: 최신글 HTML
     """
+    config = request.state.config
     templates = MyTemplates(directory=TEMPLATES_DIR)
 
     if not skin_dir:
@@ -1644,10 +1675,11 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     Write = dynamic_create_write_table(bo_table)
     writes = db.query(Write).filter(Write.wr_is_comment == False).order_by(Write.wr_num).limit(rows).all()
     for write in writes:
+        write.subject = cut_write_subject(board, write.wr_subject, subject_len, is_mobile=request.state.is_mobile)
+        write.name = write.wr_name[:config.cf_cut_name] if config.cf_cut_name else write.wr_name
         write.is_notice = write.wr_id in board.bo_notice.split(",")
-        write.subject = write.wr_subject[:subject_len]
-        write.icon_hot = write.wr_hit >= 100
-        write.icon_new = write.wr_datetime > (datetime.now() - timedelta(days=1))
+        write.icon_hot = write.wr_hit >= board.bo_hot if board.bo_hot > 0 else False
+        write.icon_new = write.wr_datetime > (datetime.now() - timedelta(hours=int(board.bo_new))) if board.bo_new > 0 else False
         write.icon_file = BoardFileManager(board, write.wr_id).is_exist()
         write.icon_link = write.wr_link1 or write.wr_link2
         write.icon_reply = write.wr_reply
@@ -1655,6 +1687,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     
     context = {
         "request": request,
+        "board": board,
         "writes": writes,
         "bo_table": bo_table,
         "bo_subject": board.bo_subject,
@@ -2020,3 +2053,71 @@ def captcha_widget(request):
         return cls.TEMPLATE_PATH
 
     return ''  # 템플릿 출력시 비어있을때는 빈 문자열
+
+
+def get_display_ip(request: Request, board: Board, ip: str) -> str:
+    """IP 주소를 표시형식으로 변환
+    Args:
+        ip (str): IP 주소
+    """
+    if request.state.is_super_admin:
+        return ip
+    
+    if board.bo_use_ip_view:
+        return re.sub(r"([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)", "\\1.#.#.\\4", ip)
+    else:
+        return ""
+
+
+def set_writer_name(board: Board, member: Member) -> str:
+    """실명사용 여부를 확인 후 실명이면 이름을, 아니면 닉네임을 반환한다.
+
+    Args:
+        board (Board): 게시판 object
+        member (Member): 회원 object 
+
+    Returns:
+        str: 이름 또는 닉네임
+    """
+    if board.bo_use_name:
+        return member.mb_name
+    else:
+        return member.mb_nick
+    
+
+def get_member_signature(board: Board, mb_id: str = None) -> str:
+    """게시판에서 서명보이기를 사용 중이면 회원의 서명을 반환한다.
+
+    Args:
+        board (Board): 게시판 object
+        mb_id (str): 회원 아이디. Defaults to None.
+
+    Returns:
+        str: 회원 서명
+    """
+    if board.bo_use_signature and mb_id:
+        db = SessionLocal()
+        member = db.query(Member).filter(Member.mb_id == mb_id).first()
+        db.close()
+        return member.mb_signature
+    else:
+        return ""
+
+def cut_write_subject(board, subject, cut_length: int = 0, is_mobile: bool = False):
+    """주어진 cut_length에 기반하여 subject 문자열을 자르고 필요한 경우 "..."을 추가합니다.
+
+    Args:
+        - board: 게시판 객체.
+        - subject: 자를 대상인 주제 문자열.
+        - cut_length: subject 문자열의 최대 길이. Default: 0
+        - is_mobile: 모바일 여부. Default: False
+
+    Returns:
+        - str : 수정된 subject 문자열.
+    """
+    cut_length = cut_length or (board.bo_mobile_subject_len if is_mobile else board.bo_subject_len)
+    
+    if not cut_length:
+        return subject
+    
+    return subject[:cut_length] + "..." if len(subject) > cut_length else subject
