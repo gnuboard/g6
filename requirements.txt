@@ -1,6 +1,7 @@
 annotated-types>=0.5.0
 anyio==3.7.1
 Authlib==1.2.1
+bcrypt>=4.0.1
 bleach>=6.0.0
 cachetools==5.3.2
 certifi==2023.7.22
@@ -32,6 +33,7 @@ plotly==5.18.0
 pycparser==2.21
 pydantic==2.4.2
 pydantic-core==2.10.1
+pyopenssl>=23.3.0
 pyparsing==3.1.1
 python-dateutil==2.8.2
 python-dotenv>=0.21.1
