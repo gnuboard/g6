@@ -5,6 +5,12 @@ from common import *
 
 router = APIRouter(prefix="/ckeditor4")
 
+UPLOAD_IMAGE_RESIZE = os.getenv("UPLOAD_IMAGE_RESIZE", "True")  # True or False
+UPLOAD_IMAGE_SIZE_LIMIT = os.getenv("UPLOAD_IMAGE_SIZE_LIMIT", 1024 * 1024 * 20)  # 20MB
+UPLOAD_IMAGE_WIDTH_LIMIT = os.getenv("UPLOAD_IMAGE_WIDTH_LIMIT", 1200)  # px
+UPLOAD_IMAGE_HEIGHT_LIMIT = os.getenv("UPLOAD_IMAGE_HEIGHT_LIMIT", 2800)  # px
+UPLOAD_IMAGE_QUALITY = os.getenv("UPLOAD_IMAGE_QUALITY", 80)  # 80 (0~100) 기본값 80
+
 
 @router.post("/upload")
 def image_upload(request: Request, upload: UploadFile = File(...)):
@@ -33,7 +39,7 @@ def image_upload(request: Request, upload: UploadFile = File(...)):
         # todo config 에 파일용량 체크필드 추가
 
         ext = upload.filename.split('.')[-1]
-        if not ext in config.cf_image_extension:
+        if ext not in config.cf_image_extension:
             return JSONResponse(status_code=400, content="허용되지 않는 파일입니다.")
 
         # 파일 저장
