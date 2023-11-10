@@ -1,4 +1,7 @@
 import datetime
+import importlib
+import pkgutil
+
 from fastapi import FastAPI, Depends, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -56,9 +59,24 @@ app.include_router(board_new_router, prefix="/bbs", tags=["board_new"])
 app.include_router(good_router, prefix="/bbs/ajax", tags=["good"])
 app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
 app.include_router(social_router, prefix="/bbs", tags=["social"])
+from _lib.plugin.service import get_plugin_list, PLUGIN_DIR
 
 # is_mobile = False
 # user_device = 'pc'
+
+# for package in plugin_list:
+
+package_name = PLUGIN_DIR
+# pkgutil 로 서브디렉토리의 모듈을 가져온다.
+package = importlib.import_module(package_name)
+for _, module_name, _ in pkgutil.walk_packages(package.__path__):
+    full_module_name = f"{package_name}.{module_name}"
+    imported_module = importlib.import_module(full_module_name)
+
+
+# plugin_list = get_plugin_list()
+# plugin_list.sort()
+# print("plugin_list", plugin_list)
 
 # 항상 실행해야 하는 미들웨어
 @app.middleware("http")
