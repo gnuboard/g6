@@ -29,14 +29,17 @@ import smtplib
 import threading
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from _extend.captcha.recaptch_v2 import ReCaptchaV2
-from _extend.captcha.recaptch_inv import ReCaptchaInvisible
+from _lib.captcha.recaptch_v2 import ReCaptchaV2
+from _lib.captcha.recaptch_inv import ReCaptchaInvisible
 
 load_dotenv()
 
 
 # 전역변수 선언(global variables)
 TEMPLATES = "templates"
+WIDGET_PATH = "_widget"
+
+CAPTCHA_PATH = f"{WIDGET_PATH}/captcha"
 EDITOR_PATH = f"{TEMPLATES}/editor"
 
 def get_theme_from_db(config=None):
@@ -2016,6 +2019,3 @@ def captcha_widget(request):
         return cls.TEMPLATE_PATH
 
     return ''  # 템플릿 출력시 비어있을때는 빈 문자열
-
-
-CAPTCHA_PATH = f"{TEMPLATES}/captcha"
