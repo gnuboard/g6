@@ -59,11 +59,11 @@ def group_board_list(request: Request, gr_id: str, db: Session = Depends(get_db)
 
 
 @router.get("/{bo_table}")
-def list_post(bo_table: str, 
-              request: Request, 
-              db: Session = Depends(get_db),
-              search_params: dict = Depends(common_search_query_params)
-              ):
+def list_post(request: Request,
+    db: Session = Depends(get_db),
+    bo_table: str = Path(..., title="게시판 아이디"),
+    search_params: dict = Depends(common_search_query_params)
+):
     """
     지정된 게시판의 글 목록을 보여준다.
     """
@@ -80,7 +80,9 @@ def list_post(bo_table: str,
     sst = search_params['sst']
     sod = search_params['sod']
     current_page = search_params['current_page']
+    bo_page_rows = board.bo_mobile_page_rows if request.state.is_mobile and board.bo_mobile_page_rows else board.bo_page_rows
     page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
+    page_rows = page_rows if bo_page_rows == 0 else bo_page_rows
 
     # 게시판 카테고리 설정
     categories = board.bo_category_list.split("|") if board.bo_use_category else []
@@ -123,12 +125,13 @@ def list_post(bo_table: str,
     enc = StringEncrypt()
     for write in writes:
         write.num = total_count - offset - (writes.index(write))
-        write.icon_hot = write.wr_hit >= board.bo_hot
-        write.icon_new = write.wr_datetime > (datetime.now() - timedelta(hours=int(board.bo_new)))
+        write.icon_hot = write.wr_hit >= board.bo_hot if board.bo_hot > 0 else False
+        write.icon_new = write.wr_datetime > (datetime.now() - timedelta(hours=int(board.bo_new))) if board.bo_new > 0 else False
         write.icon_file = BoardFileManager(board, write.wr_id).is_exist()
         write.icon_link = write.wr_link1 or write.wr_link2
         write.name = write.wr_name[:config.cf_cut_name] if config.cf_cut_name else write.wr_name
         write.email = enc.encrypt(write.wr_email)
+        write.subject = cut_write_subject(board, write.wr_subject, is_mobile=request.state.is_mobile)
 
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/list_post.html",
@@ -140,7 +143,7 @@ def list_post(bo_table: str,
             "writes": writes,
             "total_count": total_count,
             "current_page": search_params['current_page'],
-            "paging": get_paging(request, search_params['current_page'], total_count)
+            "paging": get_paging(request, search_params['current_page'], total_count, page_rows)
         }
     )
 
@@ -375,6 +378,9 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
     is_file = member_level >= board.bo_upload_level
     is_file_content = board.bo_use_file_content
     files = BoardFileManager(board).get_board_files_by_form()
+    # 글자수 제한 설정값
+    write_min = 0 if request.state.is_super_admin or board.bo_use_dhtml_editor else int(board.bo_write_min)
+    write_max = 0 if request.state.is_super_admin or board.bo_use_dhtml_editor else int(board.bo_write_max)
 
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/write_form.html",
@@ -391,7 +397,9 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
             "is_link": is_link,
             "is_file": is_file,
             "is_file_content": is_file_content,
-            "files": files
+            "files": files,
+            "write_min": write_min,
+            "write_max": write_max,
         }
     )
 
@@ -445,6 +453,9 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
     is_file_content = True if board.bo_use_file_content else False
     # 업로드 파일 목록 조회
     files = BoardFileManager(board, wr_id).get_board_files_by_form()
+    # 글자수 제한 설정값
+    write_min = 0 if request.state.is_super_admin or board.bo_use_dhtml_editor else int(board.bo_write_min)
+    write_max = 0 if request.state.is_super_admin or board.bo_use_dhtml_editor else int(board.bo_write_max)
 
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/write_form.html",
@@ -465,6 +476,8 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
             "is_file": is_file,
             "is_file_content": is_file_content,
             "files": files,
+            "write_min": write_min,
+            "write_max": write_max,
         }
     )
 
@@ -767,10 +780,23 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
         comment.is_reply = len(comment.wr_comment_reply) < 5 and board.bo_comment_level <= member_level
         comment.is_edit = comment.is_del = (member and comment.mb_id == member.mb_id) or request.state.is_super_admin
 
+    # TODO: 전체목록보이기 사용 => 게시글 목록 부분을 분리해야함
+    write_list = None
+    # if member_level >= board.bo_list_level and board.bo_use_list_view:
+    #     write_list = list_post(request, db, bo_table, search_params={
+    #         "current_page": 1,
+    #         "sca": request.query_params.get("sca"),
+    #         "sfl": request.query_params.get("sfl"),
+    #         "stx": request.query_params.get("stx"),
+    #         "sst": request.query_params.get("sst"),
+    #         "sod": request.query_params.get("sod"),
+    #     }).body.decode("utf-8")
+
     context = {
         "request": request,
         "board": board,
         "write": write,
+        "write_list": write_list,
         "comments": comments,
         "prev": prev,
         "next": next,

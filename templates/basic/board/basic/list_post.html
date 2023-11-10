@@ -13,12 +13,13 @@
 {% block content %}
 {% set sca=request.query_params.sca %}
 {% set sod_reverse="asc" if request.query_params.sod == "desc" else "desc" %}
+{% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
 <!-- 게시판 목록 시작 { -->
-<div id="bo_list" style="width:100%">
+<div id="bo_list" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
     {% if board.bo_use_category %}
     <!-- 게시판 카테고리 시작 { -->
         <nav id="bo_cate">
-            <h2>{{ board.bo_subject}} 카테고리</h2>
+            <h2>{{ board.bo_subject }} 카테고리</h2>
             <ul id="bo_cate_ul">
                 <li><a href="{{ request.url.replace_query_params() }}" {% if not sca %}id="bo_cate_on"{% endif %}>전체</a></li>
                 {% for category in categories %}
@@ -132,7 +133,9 @@
                             {% if "secret" in write.wr_option %}
                                 <i class="fa fa-lock" aria-hidden="true"></i>
                             {% endif %}
-                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?{{ request.query_params }}">{{ write.wr_subject }}</a>
+                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?{{ request.query_params }}">
+                                {{ write.subject }}
+                            </a>
                         </div>
                     </td>
                     <td class="td_name sv_use"><span class="sv_member">{{ write.wr_nick }}</span></td>

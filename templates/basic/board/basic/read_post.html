@@ -15,8 +15,9 @@
 
 {% block content %}
 {% set login_member=request.state.login_member %}
+{% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
     <!-- 게시물 읽기 시작 { -->
-    <article id="bo_v" style="width:100%">
+    <article id="bo_v" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
         <header>
             <h2 id="bo_v_title">
                 {% if board.bo_use_category and write.ca_name %}
@@ -623,4 +624,7 @@
     }
     </script>
     <!-- } 게시글 읽기 끝 -->
+{% if write_list %}
+    {{ write_list|safe }}
+{% endif %}
 {% endblock content %}

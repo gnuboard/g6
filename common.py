@@ -546,7 +546,7 @@ def get_from_list(lst, index, default=0):
 # current_page : 현재 페이지
 # total_count : 전체 레코드 수
 # add_url : 페이지 링크의 추가 URL
-def get_paging(request: Request, current_page, total_count, add_url=""):
+def get_paging(request: Request, current_page, total_count, page_rows = 0, add_url=""):
     config = request.state.config
     url_prefix = request.url
     
@@ -558,7 +558,8 @@ def get_paging(request: Request, current_page, total_count, add_url=""):
     total_count = int(total_count)
 
     # 한 페이지당 라인수
-    page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
+    if not page_rows:
+        page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
     # 페이지 표시수
     page_count = config.cf_mobile_pages if request.state.is_mobile and config.cf_mobile_pages else config.cf_write_pages
     
@@ -1672,11 +1673,11 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     Write = dynamic_create_write_table(bo_table)
     writes = db.query(Write).filter(Write.wr_is_comment == False).order_by(Write.wr_num).limit(rows).all()
     for write in writes:
+        write.subject = cut_write_subject(board, write.wr_subject, subject_len, is_mobile=request.state.is_mobile)
         write.name = write.wr_name[:config.cf_cut_name] if config.cf_cut_name else write.wr_name
         write.is_notice = write.wr_id in board.bo_notice.split(",")
-        write.subject = write.wr_subject[:subject_len]
-        write.icon_hot = write.wr_hit >= 100
-        write.icon_new = write.wr_datetime > (datetime.now() - timedelta(days=1))
+        write.icon_hot = write.wr_hit >= board.bo_hot if board.bo_hot > 0 else False
+        write.icon_new = write.wr_datetime > (datetime.now() - timedelta(hours=int(board.bo_new))) if board.bo_new > 0 else False
         write.icon_file = BoardFileManager(board, write.wr_id).is_exist()
         write.icon_link = write.wr_link1 or write.wr_link2
         write.icon_reply = write.wr_reply
@@ -2097,3 +2098,22 @@ def get_member_signature(board: Board, mb_id: str = None) -> str:
         return member.mb_signature
     else:
         return ""
+
+def cut_write_subject(board, subject, cut_length: int = 0, is_mobile: bool = False):
+    """주어진 cut_length에 기반하여 subject 문자열을 자르고 필요한 경우 "..."을 추가합니다.
+
+    Args:
+        - board: 게시판 객체.
+        - subject: 자를 대상인 주제 문자열.
+        - cut_length: subject 문자열의 최대 길이. Default: 0
+        - is_mobile: 모바일 여부. Default: False
+
+    Returns:
+        - str : 수정된 subject 문자열.
+    """
+    cut_length = cut_length or (board.bo_mobile_subject_len if is_mobile else board.bo_subject_len)
+    
+    if not cut_length:
+        return subject
+    
+    return subject[:cut_length] + "..." if len(subject) > cut_length else subject
