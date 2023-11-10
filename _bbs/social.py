@@ -126,7 +126,8 @@ async def authorize_social_login(request: Request):
 
     # 가입된 소셜 서비스 아이디가 존재하는지 확인
     gnu_social_id = social_service.g5_convert_social_id(identifier, provider_name)
-    if mb_id := social_service.get_member_by_social_id(gnu_social_id, provider_name):
+    mb_id = social_service.get_member_by_social_id(gnu_social_id, provider_name)
+    if mb_id:
         # 이미 가입된 회원이라면 로그인
         with SessionLocal() as db:
             member = db.query(Member.mb_id, Member.mb_datetime).filter(Member.mb_id == mb_id).first()

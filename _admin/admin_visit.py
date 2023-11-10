@@ -261,7 +261,9 @@ async def visit_domain(request: Request, db: Session = Depends(get_db),
         match = re.search(r'^http[s]*\S+', visit.vi_referer)
         if not match:
             continue
-        if match_group := match.group():
+
+        match_group = match.group()
+        if match_group:
             referer: str = re.sub(r"^(www\.|search\.|dirsearch\.|dir\.search\.|dir\.|kr\.search\.|myhome\.)(.*)",
                                   "\\2", match_group)
             filtered_visits.append({

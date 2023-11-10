@@ -1311,7 +1311,8 @@ def is_admin(request: Request):
     if config.cf_admin.strip() == "":
         return False
 
-    if mb_id := request.session.get("ss_mb_id", ""):
+    mb_id = request.session.get("ss_mb_id", "")
+    if mb_id:
         if mb_id.strip() == config.cf_admin.strip():
             return True
 
@@ -2014,7 +2015,8 @@ def captcha_widget(request):
     Returns:
         str: 캡차 템플릿 or ''
     """
-    if cls := get_current_captcha_cls(captcha_name=request.state.config.cf_captcha):
+    cls = get_current_captcha_cls(captcha_name=request.state.config.cf_captcha)
+    if cls:
         return cls.TEMPLATE_PATH
 
     return ''  # 템플릿 출력시 비어있을때는 빈 문자열
