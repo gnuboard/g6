@@ -1,4 +1,5 @@
 {% extends "base_window.html" %}
+{% import "/sideview/macros.html" as sideview %}
 
 {% block title %}
     내 쪽지함
@@ -29,9 +30,11 @@
                     <div class="memo_view_li memo_view_name">
                         <ul class="memo_from">
                             <li class="memo_profile">
-                                <img src="{{ url_for('static', path='/img/no_profile.gif') }}" alt="profile_image">
+                                <img src="/{{ get_member_image(target.mb_id) }}" alt="profile_image">
                             </li>
-                            <li class="memo_view_nick">{{ target.mb_nick }}</li>
+                            <li class="memo_view_nick">
+                                {{ sideview.get(request, target.mb_id, getattr(target, "mb_nick", "[회원정보 없음]"))|safe }}
+                            </li>
                             <li class="memo_view_date">
                                 <span class="sound_only">받은시간</span>
                                 <i class="fa fa-clock-o" aria-hidden="true"></i>

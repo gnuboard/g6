@@ -787,15 +787,17 @@ def get_member_icon(mb_id):
     return "static/img/no_profile.gif"
 
 
-def get_member_image(mb_id):
-    MEMBER_IMAGE_DIR = "data/member_image"
-    member_image_dir = f"{MEMBER_IMAGE_DIR}/{mb_id[:2]}"
+def get_member_image(mb_id: str = None):
+    
+    if mb_id:
+        MEMBER_IMAGE_DIR = "data/member_image"
+        member_image_dir = f"{MEMBER_IMAGE_DIR}/{mb_id[:2]}"
 
-    image_file = os.path.join(member_image_dir, f"{mb_id}.gif")
+        image_file = os.path.join(member_image_dir, f"{mb_id}.gif")
 
-    if os.path.exists(image_file):
-        image_filemtime = os.path.getmtime(image_file) # 캐시를 위해 파일수정시간을 추가
-        return f"{image_file}?{image_filemtime}"
+        if os.path.exists(image_file):
+            image_filemtime = os.path.getmtime(image_file) # 캐시를 위해 파일수정시간을 추가
+            return f"{image_file}?{image_filemtime}"
 
     return "static/img/no_profile.gif"
     
