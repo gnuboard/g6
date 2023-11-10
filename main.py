@@ -2,20 +2,19 @@ import datetime
 from fastapi import FastAPI, Depends, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import TypeAdapter
 
 from database import get_db
 from starlette.middleware.sessions import SessionMiddleware
 from common import *
 
-from settings import APP_IS_DEBUG
 from user_agents import parse
 import models
 import secrets
 
 # models.Base.metadata.create_all(bind=engine)
-
+APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
 app = FastAPI(debug=APP_IS_DEBUG)
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
 templates = Jinja2Templates(directory=[TEMPLATES_DIR], extensions=["jinja2.ext.i18n"])

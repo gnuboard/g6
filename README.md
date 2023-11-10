@@ -21,6 +21,9 @@ SMTP_PORT=25
 SMTP_USERNAME="username" # 메일 테스트시 보내는 사용자 이름 및 이메일 주소 반드시 넣어야 함 SMTP_USERNAME="username@domain.com"
 SMTP_PASSWORD=""
 
+# 디버그 모드 설정 (True/False)
+APP_IS_DEBUG = "False"
+
 # 네이버 메일 설정
 # SMTP_SERVER="smtp.naver.com"
 # SMTP_PORT=465 # 보안 연결(SSL) 필요
