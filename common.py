@@ -77,9 +77,8 @@ TIME_YMD = TIME_YMDHIS[:10]
 # USE_MOBILE = True
 
 
-IS_RESPONSIVE = os.getenv("IS_RESPONSIVE", default="True")
-IS_RESPONSIVE = IS_RESPONSIVE.lower() == "true"
-    
+is_response = os.getenv("IS_RESPONSIVE", default="true")
+IS_RESPONSIVE = is_response.lower() == "true"
 
 def hash_password(password: str):
     '''

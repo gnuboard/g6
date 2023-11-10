@@ -37,7 +37,7 @@
             {% if poll.po_etc %}
                 <section id="poll_result_cmt">
                     <h2>이 설문에 대한 기타의견</h2>
-                    {% set delete_token=generate_token(request, 'delete') %}
+                    {% set delete_token=generate_token(request, 'poll_etc_delete') %}
                     {% for etc in etcs %}
                         <article>
                             <header>
@@ -58,7 +58,7 @@
                     {% endfor %}
                     {% if get_member_level(request) >= poll.po_level %}
                         <form name="fpollresult" action="{{ url_for('poll_etc_update', po_id=poll.po_id) }}" onsubmit="return fpollresult_submit(this);" method="post" autocomplete="off" id="poll_other_q">
-                            <input type="hidden" name="token" value="{{ generate_token(request, 'insert') }}">
+                            <input type="hidden" name="token" value="">
                             <input type="hidden" name="skin_dir" value="theme%2Fbasic">
                             {% if request.state.login_member.mb_id %}
                                 <input type="hidden" name="pc_name" value="{{ request.state.login_member.mb_nick }}">
@@ -117,6 +117,12 @@
     
     function fpollresult_submit(f)
     {
+        f.token.value = generate_token();
+        if (f.token.value == "") {
+            alert("토큰값이 없습니다.");
+            return false;
+        }
+
         return true;
     }
     </script>
