@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="imagetoolbar" content="no">
+<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+<title>{% block title %}그누보드{% endblock %}</title>
+<link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+<link rel="stylesheet" href="/static/css/default.css">
+<link rel="stylesheet" href="/static/js/font-awesome/css/font-awesome.min.css">
+<link rel="stylesheet" href="/static/css/basic/board.css">
+<link rel="stylesheet" href="/static/css/basic/connect.css">
+<link rel="stylesheet" href="/static/css/basic/poll.css">
+<link rel="stylesheet" href="/static/css/basic/popular.css">
+<link rel="stylesheet" href="/static/css/basic/member.css">
+<link rel="stylesheet" href="/static/css/basic/latest_list.css">
+<link rel="stylesheet" href="/static/css/basic/latest_block.css">
+<link rel="stylesheet" href="/static/css/basic/latest.css">
+<link rel="stylesheet" href="/static/css/basic/outlogin.css">
+<link rel="stylesheet" href="/static/css/basic/latest_notice.css">
+<link rel="stylesheet" href="/static/css/basic/visit.css">
+<link rel="stylesheet" href="/static/js/owlcarousel/owl.carousel.min.css">
+<!--[if lte IE 8]>
+<script src="/static/js/html5.js"></script>
+<![endif]-->
+<script>
+// 자바스크립트에서 사용하는 전역변수 선언
+var g5_url       = "http://g5.pypot.com";
+var g5_bbs_url   = "{{request.base_url}}bbs";
+var g5_is_member = "1";
+var g5_is_admin  = "super";
+var g5_is_mobile = "";
+var g5_bo_table  = "";
+var g5_sca       = "";
+var g5_editor    = "";
+var g5_cookie_domain = "";
+var g5_shop_url = "http://g5.pypot.com/shop";
+</script>
+<script src="/static/js/jquery-1.12.4.min.js"></script>
+<script src="/static/js/jquery-migrate-1.4.1.min.js"></script>
+<script src="/static/js/jquery.menu.js"></script>
+<script src="/static/js/common.js"></script>
+<script src="/static/js/wrest.js"></script>
+<script src="/static/js/placeholders.min.js"></script>
+<script src="/static/js/owlcarousel/owl.carousel.min.js"></script>
+<script src="/static/js/jquery.bxslider.js"></script>
+{% block head %}
+{% endblock %}
+</head>
+<body>
+<div id="hd_login_msg">최고관리자 최고관리자님 로그인 중 <a href="/bbs/logout">로그아웃</a></div>
+
+    <!-- 상단 시작 { -->
+    <div id="hd">
+        <h1 id="hd_h1"></h1>
+        <div id="skip_to_container"><a href="#container">본문 바로가기</a></div>
+    
+        {% include "/bbs/newwin.inc.html" %}
+        
+    <div id="tnb">
+        <div class="inner">
+            <ul id="hd_define">
+    			<li class="active"><a href="/">커뮤니티</a></li>
+                <li><a href="/shop">쇼핑몰</a></li>
+            </ul>
+            <ul id="hd_qnb">
+	            <li><a href="{{ url_for('faq_view') }}">FAQ</a></li>
+	            <li><a href="{{ url_for('qa_list') }}">Q&A</a></li>
+	            <li><a href="/bbs/new">새글</a></li>
+	            <li><a href="/bbs/current_connect" class="visit">접속자<strong class="visit-num">0</strong></a></li>
+	        </ul>
+		</div>
+    </div>
+    <div id="hd_wrapper">
+
+        <div id="logo">
+            <a href="/"><img src="/static/img/logo.png" alt="그누보드5"></a>
+        </div>
+    
+        <div class="hd_sch_wr">
+            <fieldset id="hd_sch">
+                <legend>사이트 내 전체검색</legend>
+                <form name="fsearchbox" method="get" action="/bbs/search" onsubmit="return fsearchbox_submit(this);">
+                <input type="hidden" name="sfl" value="wr_subject||wr_content">
+                <input type="hidden" name="sop" value="and">
+                <label for="sch_stx" class="sound_only">검색어 필수</label>
+                <input type="text" name="stx" id="sch_stx" maxlength="20" placeholder="검색어를 입력해주세요">
+                <button type="submit" id="sch_submit" value="검색"><i class="fa fa-search" aria-hidden="true"></i><span class="sound_only">검색</span></button>
+                </form>
+
+                <script>
+                function fsearchbox_submit(f)
+                {
+                    var stx = f.stx.value.trim();
+                    if (stx.length < 2) {
+                        alert("검색어는 두글자 이상 입력하십시오.");
+                        f.stx.select();
+                        f.stx.focus();
+                        return false;
+                    }
+
+                    // 검색에 많은 부하가 걸리는 경우 이 주석을 제거하세요.
+                    var cnt = 0;
+                    for (var i = 0; i < stx.length; i++) {
+                        if (stx.charAt(i) == ' ')
+                            cnt++;
+                    }
+
+                    if (cnt > 1) {
+                        alert("빠른 검색을 위하여 검색어에 공백은 한개만 입력할 수 있습니다.");
+                        f.stx.select();
+                        f.stx.focus();
+                        return false;
+                    }
+                    f.stx.value = stx;
+
+                    return true;
+                }
+                </script>
+            </fieldset>
+            <!-- 인기검색어 시작 { -->
+            {% include "/bbs/popular.html" %}
+            <!-- } 인기검색어 끝 -->
+        </div>
+        <ul class="hd_login">        
+            <li><a href="/bbs/member_confirm?url=/bbs/register_form">정보수정</a></li>
+            <li><a href="/bbs/logout">로그아웃</a></li>
+            <li class="tnb_admin"><a href="/admin">관리자</a></li>
+        </ul>
+    </div>
+
+    <nav id="gnb">
+        <h2>메인메뉴</h2>
+        <div class="gnb_wrap">
+            {% include "/bbs/menu.html" %}
+        </div>
+    </nav>
+</div>
+<!-- } 상단 끝 -->
+
+{% if errors %}
+<ul>
+    {% for error in errors %}
+    <li>{{ error }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+<hr>
+
+<!-- 콘텐츠 시작 { -->
+<div id="wrapper">
+    <div id="container_wr">
+   
+        <div id="container">
+            <h2 id="container_title"><span>{% block subtitle %}{% endblock %}</span></h2>
+            {% block content %}
+
+            {% endblock %}
+        </div>
+    <div id="aside">
+        {% if request.state.login_member %}
+            {% include "bbs/outlogin_after.html" %}
+        {% else %}
+            {% include "bbs/outlogin_before.html" %}
+        {% endif %}
+        {% include "/bbs/poll.html" %}
+    </div>
+</div>
+
+</div>
+<!-- } 콘텐츠 끝 -->
+
+<hr>
+
+<!-- 하단 시작 { -->
+<div id="ft">
+
+    <div id="ft_wr">
+        <div id="ft_link" class="ft_cnt">
+            <a href="{{ url_for('content_view', co_id='company') }}">회사소개</a>
+            <a href="{{ url_for('content_view', co_id='privacy') }}">개인정보처리방침</a>
+            <a href="{{ url_for('content_view', co_id='provision') }}">서비스이용약관</a>
+            <a href="/?device=mobile">모바일버전</a>
+        </div>
+        <div id="ft_company" class="ft_cnt">
+        	<h2>사이트 정보</h2>
+	        <p class="ft_info">
+	        	회사명 : 회사명 / 대표 : 대표자명<br>
+				주소  : OO도 OO시 OO구 OO동 123-45<br>
+				사업자 등록번호  : 123-45-67890<br>
+				전화 :  02-123-4567  팩스  : 02-123-4568<br>
+				통신판매업신고번호 :  제 OO구 - 123호<br>
+				개인정보관리책임자 :  정보책임자명<br>
+			</p>
+	    </div>
+        {% if latest %}
+            {{ latest(request, 'notice', 'notice', 4, 13)|safe }}
+        {% endif %}
+
+        <!-- 접속자집계 시작 { -->
+        <section id="visit" class="ft_cnt">
+            <h2>접속자집계</h2>
+            <dl>
+                <dt><span></span> 오늘</dt>
+                <dd><strong>1</strong></dd>
+                <dt><span></span> 어제</dt>
+                <dd><strong>1</strong></dd>
+                <dt><span></span> 최대</dt>
+                <dd><strong>1</strong></dd>
+                <dt><span></span> 전체</dt>
+                <dd><strong>3</strong></dd>
+            </dl>
+            <a href="/adminin/visit_list" class="btn_admin btn"><i class="fa fa-cog fa-spin fa-fw"></i><span class="sound_only">관리자</span></a>
+        </section>
+        <!-- } 접속자집계 끝 -->    
+    </div>
+    <!-- <div id="ft_catch"><img src="http://g5.pypot.com/img/ft_logo.png" alt="그누보드5"></div> -->
+    <div id="ft_copy">Copyright &copy; <b>소유하신 도메인.</b> All rights reserved.</div>
+
+    <button type="button" id="top_btn">
+    	<i class="fa fa-arrow-up" aria-hidden="true"></i><span class="sound_only">상단으로</span>
+    </button>
+    <script>
+    $(function() {
+        $("#top_btn").on("click", function() {
+            $("html, body").animate({scrollTop:0}, '500');
+            return false;
+        });
+    });
+    </script>
+</div>
+
+
+<!-- } 하단 끝 -->
+
+<script>
+$(function() {
+    // 폰트 리사이즈 쿠키있으면 실행
+    font_resize("container", get_cookie("ck_font_resize_rmv_class"), get_cookie("ck_font_resize_add_class"));
+});
+</script>
+
+</body>
+</html>
