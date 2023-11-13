@@ -11,6 +11,7 @@
 {% endblock subtitle %}
 
 {% block content %}
+{% set is_admin=get_admin_type(request, request.state.login_member.mb_id, group=board.group, board=board) %}
 {% set sca=request.query_params.sca %}
 {% set sod_reverse="asc" if request.query_params.sod == "desc" else "desc" %}
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
@@ -63,7 +64,7 @@
                         <span class="sound_only">글쓰기</span>
                     </a>
                 </li>
-                {% if request.state.is_super_admin %}
+                {% if is_admin %}
                 <li>
                     <button type="button" class="btn_more_opt is_list_btn btn_b01 btn" title="게시판 리스트 옵션">
                         <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
@@ -91,7 +92,7 @@
                 <caption>자유게시판 목록</caption>
                 <thead>
                 <tr>
-                    {% if request.state.is_super_admin %}
+                    {% if is_admin %}
                     <th scope="col" class="all_chk chk_box">
                         <input type="checkbox" id="chkall" onclick="if (this.checked) all_checked(true); else all_checked(false);" class="selec_chk">
                         <label for="chkall">
@@ -119,7 +120,9 @@
                 <tbody>
                 {% for write in notice_writes %}
                 <tr class="bo_notice">
+                    {% if is_admin %}
                     <td class="td_chk chk_box"></td>
+                    {% endif %}
                     <td class="td_num2"><strong class="notice_icon">공지</strong></td>
                     {% if board.bo_use_category and write.ca_name %}
                     <td class="td_mng">
@@ -136,9 +139,20 @@
                             <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?{{ request.query_params }}">
                                 {{ write.subject }}
                             </a>
+                            {% if write.icon_new %}<span class="new_icon">N<span class="sound_only">새글</span></span>{% endif %}
+                            {% if write.icon_hot %}<i class="fa fa-heart" aria-hidden="true"></i>{% endif %}
+                            {% if write.icon_file %}<i class="fa fa-download" aria-hidden="true"></i>{% endif %}
+                            {% if write.icon_link %}<i class="fa fa-link" aria-hidden="true"></i>{% endif %}
+                            {% if write.wr_comment %}<span class="sound_only">댓글</span><span class="cnt_cmt">{{ write.wr_comment }}</span><span class="sound_only">개</span>{% endif %}
                         </div>
                     </td>
-                    <td class="td_name sv_use"><span class="sv_member">{{ write.wr_nick }}</span></td>
+                    <td class="td_name sv_use">
+                        {% if board.bo_use_sideview %}
+                            {{ sideview.get(request, write.mb_id, write.name, write.wr_email, write.wr_homepage)|safe }}
+                        {% else %}
+                            <span class="sv_member">{{ write.name }}</span>
+                        {% endif %}
+                    </td>
                     <td class="td_num">{{ write.wr_hit }}</td>
                     {% if board.bo_use_good %}
                     <td class="td_num">{{ write.wr_good }}</td>
@@ -146,19 +160,19 @@
                     {% if board.bo_use_nogood %}
                     <td class="td_num">{{ write.wr_nogood }}</td>
                     {% endif %}
-                    <td class="td_datetime">{{ write.wr_datetime|datetime_format('%y-%m-%d') }}</td>
+                    <td class="td_datetime">{{ write.datetime }}</td>
                 </tr>
                 {% endfor %}
                 {% for write in writes %}
                 {% set reply_depth=write.wr_reply|length %}
                     <tr class="{{ loop.cycle("", "even") }} {{ "bo_notice" if write.is_notice else "" }}">
-                        {% if request.state.is_super_admin %}
+                        {% if is_admin %}
                         <td class="td_chk chk_box">
                             {% if not write.is_notice %}
                             <input type="checkbox" name="chk_wr_id[]" value="{{ write.wr_id }}" id="chk_wr_id_{{ loop.index }}" class="selec_chk">
                             <label for="chk_wr_id_{{ loop.index }}">
                                 <span>&nbsp;</span>
-                                <b class="sound_only">{{ write.wr_subject }}</b>
+                                <b class="sound_only">{{ write.subject }}</b>
                             </label>
                             {% endif %}
                         </td>
@@ -222,7 +236,7 @@
         <!-- 페이지 -->
         <div class="bo_fx">
             <ul class="btn_bo_user">
-                {% if request.state.is_super_admin %}
+                {% if is_admin %}
                 <li>
                     <a href="{{ url_for('board_form', bo_table=board.bo_table) }}" class="btn_admin btn" title="관리자">
                         <i class="fa fa-cog fa-spin fa-fw"></i><span class="sound_only">관리자</span>
@@ -288,7 +302,7 @@
     </script>
     <!-- } 게시판 검색 끝 -->
 </div>
-{% if request.state.is_super_admin %}
+{% if is_admin %}
     <noscript>
         <p>자바스크립트를 사용하지 않는 경우<br>별도의 확인 절차 없이 바로 선택삭제 처리하므로 주의하시기 바랍니다.</p>
     </noscript>

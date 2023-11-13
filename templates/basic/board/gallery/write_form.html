@@ -14,6 +14,7 @@
 
 {% block content %}
 {% set login_member=request.state.login_member %}
+{% set is_admin=get_admin_type(request, login_member.mb_id, group=board.group, board=board) %}
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
 <section id="bo_w">
     <!-- 게시물 작성/수정 시작 { -->
@@ -43,7 +44,7 @@
             </div>
         {% endif %}
                 
-        {% if not login_member or (request.state.is_super_admin and write and write.mb_id != login_member.mb_id) %}
+        {% if not login_member or (is_admin and write and write.mb_id != login_member.mb_id) %}
         <div class="bo_w_info write_div">
             <label for="wr_name" class="sound_only">이름<strong>필수</strong></label>
             <input type="text" name="wr_name" value="{{ write.wr_name if write else login_member.mb_name }}" id="wr_name" required class="frm_input half_input required" maxlength="20" placeholder="이름">
@@ -76,7 +77,7 @@
                 </li>
             {% endif %}
             {% if is_secret %}
-                {% if request.state.is_super_admin or is_secret %}
+                {% if is_admin or is_secret %}
                     <li class="chk_box">
                         <input type="checkbox" id="secret" name="secret"  class="selec_chk" value="secret" {{ secret_checked }}>
                         <label for="secret"><span>&nbsp;</span>비밀글</label>

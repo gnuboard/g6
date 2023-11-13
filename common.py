@@ -1347,6 +1347,36 @@ def is_admin(request: Request):
 
     return False
 
+# TODO: 그누보드5의 is_admin 함수
+# 이미 is_admin 함수가 존재하므로 함수 이름을 변경함 
+def get_admin_type(request: Request, mb_id: str = None, group: Group = None, board: Board = None) -> str:
+    """게시판 관리자 여부 확인 후 관리자 타입 반환
+
+    Args:
+        request (Request): FastAPI Request 객체
+        mb_id (str, optional): 회원 아이디. Defaults to None.
+        group (Group, optional): 게시판 그룹 정보. Defaults to None.
+        board (Board, optional): 게시판 정보. Defaults to None.
+
+    Returns:
+        str: 관리자 타입. super, group, board, None
+    """
+    if not mb_id:
+        return None
+    
+    config = request.state.config
+    group = board.group if board else None
+
+    is_authority = None
+    if config.cf_admin == mb_id:
+        is_authority = "super"
+    elif group and group.gr_admin == mb_id:
+        is_authority = "group"
+    elif board and board.bo_admin == mb_id:
+        is_authority = "board"
+    
+    return is_authority
+
 
 def check_profile_open(open_date: Optional[date], config) -> bool:
     """변경일이 지나서 프로필 공개가능 여부를 반환
@@ -1655,7 +1685,6 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     Returns:
         str: 최신글 HTML
     """
-    config = request.state.config
     templates = MyTemplates(directory=TEMPLATES_DIR)
 
     if not skin_dir:
@@ -1668,22 +1697,17 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     # 캐시된 파일이 있으면 파일을 읽어서 반환
     if os.path.exists(cache_file):
         return g6_file_cache.get(cache_file)
+
+    # Lazy import
+    import board_lib
     
     db = SessionLocal()
     board = db.query(Board).filter(Board.bo_table == bo_table).first()
-    
+
     Write = dynamic_create_write_table(bo_table)
     writes = db.query(Write).filter(Write.wr_is_comment == False).order_by(Write.wr_num).limit(rows).all()
     for write in writes:
-        write.subject = cut_write_subject(board, write.wr_subject, subject_len, is_mobile=request.state.is_mobile)
-        write.name = write.wr_name[:config.cf_cut_name] if config.cf_cut_name else write.wr_name
-        write.is_notice = write.wr_id in board.bo_notice.split(",")
-        write.icon_hot = write.wr_hit >= board.bo_hot if board.bo_hot > 0 else False
-        write.icon_new = write.wr_datetime > (datetime.now() - timedelta(hours=int(board.bo_new))) if board.bo_new > 0 else False
-        write.icon_file = BoardFileManager(board, write.wr_id).is_exist()
-        write.icon_link = write.wr_link1 or write.wr_link2
-        write.icon_reply = write.wr_reply
-        write.datetime = write.wr_datetime.strftime("%y-%m-%d")
+        write = board_lib.get_list(request, write, board)
     
     context = {
         "request": request,
@@ -1747,285 +1771,6 @@ def insert_board_new(bo_table: str, write: object):
     db.commit()
 
 
-# TODO:
-# 7. 이미지, 동영상 업로드 파일 확인 (cf_image_extension, cf_movie_extension)
-# 8. 업로드 사이즈 체크 (bo_upload_size)
-class BoardFileManager():
-    model = BoardFile
-
-    def __init__(self, board: Board, wr_id: int = None):
-        self.board = board
-        self.bo_table = board.bo_table
-        self.wr_id = wr_id
-        self.db = SessionLocal()
-
-    def is_exist(self, bo_table: str = None, wr_id: int = None):
-        """게시글에 파일이 있는지 확인
-
-        Returns:
-            bool: 파일이 존재하면 True, 없으면 False
-        """
-        bo_table = bo_table or self.bo_table
-        wr_id = wr_id or self.wr_id
-
-        query = self.db.query(self.model).filter_by(bo_table=bo_table, wr_id=wr_id)
-
-        return self.db.query(literal(True)).filter(query.exists()).scalar()
-    
-    def get_board_files(self):
-        """업로드된 파일 목록을 가져온다.
-
-        Returns:
-            list[BoardFile]: 업로드된 파일 목록
-        """
-        return self.db.query(self.model).filter_by(
-            bo_table=self.bo_table,
-            wr_id=self.wr_id
-        ).all()
-    
-    def get_board_files_by_form(self):
-        """입력/수정 폼에서 사용할 파일 목록을 가져온다.
-
-        Returns:
-            list[BoardFile]: 업로드된 파일 목록 
-        """
-        config_count = int(self.board.bo_upload_count) or 0
-        upload_count = config_count
-        if self.wr_id:
-            query = self.db.query(self.model).filter_by(bo_table=self.bo_table, wr_id=self.wr_id)
-            uploaded_count = query.count()
-            uploaded_files = query.all()
-            # 파일 카운트는 업로드된 파일 수와 설정된 값 중 큰 수로 설정한다.
-            upload_count = (uploaded_count if uploaded_count > config_count else config_count) - uploaded_count
-        else:
-            uploaded_files = []
-
-        # 업로드 파일 + 빈 객체
-        files = uploaded_files + [self.model() for _ in range(upload_count)]
-
-        return files
-
-    def get_board_files_by_type(self, request: Request):
-        """업로드된 파일 목록을 파일과 이미지로 분리한다.
-
-        Args:
-            request (Request): Request 객체
-
-        Returns:
-            list[BoardFile]: 파일 목록
-            list[BoardFile]: 이미지 목록
-        """
-        config = request.state.config
-        board_files = self.get_board_files()
-        images = []
-        files = []
-        for file in board_files:
-            ext = file.bf_source.split('.')[-1]
-            if ext in config.cf_image_extension:
-                images.append(file)
-            else:
-                files.append(file)
-
-        return images, files
-
-    def get_board_file(self, bf_no: int):
-        """업로드된 파일을 가져온다.
-
-        Args:
-            bf_no (int): 파일 순번
-
-        Returns:
-            BoardFile: 업로드된 파일
-        """
-        return self.db.query(self.model).filter_by(bo_table=self.bo_table, wr_id=self.wr_id, bf_no=bf_no).first()
-    
-    def get_filename(self, filename: str):
-        """파일이름을 생성한다.
-
-        Args:
-            filename (str): 업로드 파일이름
-
-        Returns:
-            str: 파일이름
-        """
-        return os.urandom(16).hex() + "." + filename.split(".")[-1]
-    
-    def insert_board_file(self, bf_no: int, directory: str, filename: str, file: UploadFile, content: str = "", bo_table: str = None, wr_id: int = None):
-        """게시글의 파일을 추가한다.
-
-        Args:
-            bf_no (int): 파일 순번
-            directory (str): 파일 저장 경로
-            file (UploadFile): 업로드 파일
-            content (str, optional): 파일 설명. Defaults to "".
-            bo_table (str, optional): 게시판 테이블명. Defaults to None.
-            wr_id (int, optional): 게시글 아이디. Defaults to None.
-        """
-        board_file = self.model()
-        board_file.bo_table = bo_table or self.bo_table
-        board_file.wr_id = wr_id or self.wr_id
-        board_file.bf_no = bf_no
-        board_file.bf_source = file.filename
-        board_file.bf_file = f"{directory}/{filename}"
-        board_file.bf_download = 0
-        board_file.bf_content = content
-        board_file.bf_filesize = file.size
-        self.db.add(board_file)
-        self.db.commit()
-    
-    def update_board_file(self, board_file: model, directory: str, filename: str, file: UploadFile, content: str = "", bo_table: str = None, wr_id: int = None):
-        """게시글의 파일을 수정한다.
-
-        Args:
-            board_file (model): BoardFile 모델
-            directory (str): 파일 저장 경로
-            file (UploadFile): 업로드 파일
-            content (str, optional): 파일 설명. Defaults to "".
-        """
-        if bo_table:
-            board_file.bo_table = bo_table
-        if wr_id:
-            board_file.wr_id = wr_id
-        board_file.bf_source = file.filename
-        board_file.bf_file = f"{directory}/{filename}"
-        board_file.bf_download = 0
-        board_file.bf_content = content
-        board_file.bf_filesize = file.size
-        self.db.commit()
-
-    def update_download_count(self, board_file: model):
-        """다운로드 횟수를 증가시킨다.
-
-        Args:
-            board_file (model): BoardFile 모델
-        """
-        board_file.bf_download += 1
-        self.db.commit()
-
-    def move_board_files(self, directory: str, target_bo_table: str, target_wr_id: int):
-        """게시글의 파일을 이동한다.
-
-        Args:
-            target_bo_table (str): 이동할 게시판 테이블명
-            target_wr_id (int): 이동할 게시글 아이디
-        """
-        directory = os.path.join(directory, target_bo_table)
-        make_directory(directory)
-
-        if self.wr_id and target_wr_id:
-            board_files = self.get_board_files()
-            for board_file in board_files:
-                file = self.create_upload_file_from_path(board_file.bf_file)
-                file.filename = board_file.bf_source
-                file.size = board_file.bf_filesize
-                filename = self.get_filename(file.filename)
-
-                # 파일 이동 및 정보 업데이트
-                self.move_file(board_file.bf_file, f"{directory}/{filename}")
-                self.update_board_file(board_file, directory, filename, file, board_file.bf_content, target_bo_table, target_wr_id)
-                board_file.bo_table = target_bo_table
-                board_file.wr_id = target_wr_id
-
-            self.db.commit()
-
-    def copy_board_files(self, directory : str, target_bo_table: str, target_wr_id: int):
-        """게시글의 파일을 복사한다.
-
-        Args:
-            target_bo_table (str): 복사할 게시판 테이블명
-            target_wr_id (int): 복사할 게시글 아이디
-        """
-        directory = os.path.join(directory, target_bo_table)
-        make_directory(directory)
-
-        if self.wr_id and target_wr_id:
-            board_files = self.get_board_files()
-            for board_file in board_files:
-                file = self.create_upload_file_from_path(board_file.bf_file)
-                file.filename = board_file.bf_source
-                file.size = board_file.bf_filesize
-                filename = self.get_filename(file.filename)
-                
-                # 파일 복사 및 정보 추가
-                self.copy_file(board_file.bf_file, f"{directory}/{filename}")
-                self.insert_board_file(board_file.bf_no, directory, filename, file, board_file.bf_content, target_bo_table, target_wr_id)
-        
-    def delete_board_file(self, bf_no: int):
-        """게시글의 파일을 삭제한다.
-
-        Args:
-            bf_no (int): 파일 순번
-        """
-        if self.wr_id and bf_no:
-            board_file = self.get_board_file(bf_no)
-            self.remove_file(board_file.bf_file)
-            self.db.delete(board_file)
-            self.db.commit()
-
-    def delete_board_files(self):
-        """게시글의 파일을 삭제한다.
-        """
-        if self.wr_id:
-            board_files = self.get_board_files()
-            for board_file in board_files:
-                self.remove_file(board_file.bf_file)
-                self.db.delete(board_file)
-            self.db.commit()
-
-    def upload_file(self, directory: str, filename: str, file: UploadFile):
-        """파일을 업로드한다.
-
-        Args:
-            directory (str): 파일 저장 경로
-            filename (str): 파일이름
-            file (UploadFile): 업로드 파일
-        """
-        if file and file.filename:
-            with open(f"{directory}/{filename}", "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
-    
-    def move_file(self, origin: str, target: str):
-        """파일을 이동한다.
-
-        Args:
-            origin (str): 원본 파일 경로
-            target (str): 이동할 파일 경로
-        """
-        if os.path.exists(origin):
-            shutil.move(origin, target)
-
-    def copy_file(self, origin: str, target: str):
-        """파일을 복사한다.
-
-        Args:
-            origin (str): 원본 파일 경로
-            target (str): 복사할 파일 경로
-        """
-        if os.path.exists(origin):
-            shutil.copy(origin, target)
-
-    def remove_file(self, path: str):
-        """파일을 삭제한다.
-
-        Args:
-            path (str): 파일 경로
-        """
-        if os.path.exists(path):
-            os.remove(path)
-    
-    def create_upload_file_from_path(self, path: str):
-        """파일 경로로 UploadFile 객체를 생성한다.
-
-        Args:
-            path (str): 파일 경로
-
-        Returns:
-            UploadFile: 업로드 파일
-        """
-        with open(path, "rb") as f:
-            return UploadFile(f, filename=os.path.basename(path))
-
-
 def get_current_captcha_cls(captcha_name: str):
     """캡챠 클래스를 반환하는 함수
     Args:
@@ -2053,71 +1798,3 @@ def captcha_widget(request):
         return cls.TEMPLATE_PATH
 
     return ''  # 템플릿 출력시 비어있을때는 빈 문자열
-
-
-def get_display_ip(request: Request, board: Board, ip: str) -> str:
-    """IP 주소를 표시형식으로 변환
-    Args:
-        ip (str): IP 주소
-    """
-    if request.state.is_super_admin:
-        return ip
-    
-    if board.bo_use_ip_view:
-        return re.sub(r"([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)", "\\1.#.#.\\4", ip)
-    else:
-        return ""
-
-
-def set_writer_name(board: Board, member: Member) -> str:
-    """실명사용 여부를 확인 후 실명이면 이름을, 아니면 닉네임을 반환한다.
-
-    Args:
-        board (Board): 게시판 object
-        member (Member): 회원 object 
-
-    Returns:
-        str: 이름 또는 닉네임
-    """
-    if board.bo_use_name:
-        return member.mb_name
-    else:
-        return member.mb_nick
-    
-
-def get_member_signature(board: Board, mb_id: str = None) -> str:
-    """게시판에서 서명보이기를 사용 중이면 회원의 서명을 반환한다.
-
-    Args:
-        board (Board): 게시판 object
-        mb_id (str): 회원 아이디. Defaults to None.
-
-    Returns:
-        str: 회원 서명
-    """
-    if board.bo_use_signature and mb_id:
-        db = SessionLocal()
-        member = db.query(Member).filter(Member.mb_id == mb_id).first()
-        db.close()
-        return member.mb_signature
-    else:
-        return ""
-
-def cut_write_subject(board, subject, cut_length: int = 0, is_mobile: bool = False):
-    """주어진 cut_length에 기반하여 subject 문자열을 자르고 필요한 경우 "..."을 추가합니다.
-
-    Args:
-        - board: 게시판 객체.
-        - subject: 자를 대상인 주제 문자열.
-        - cut_length: subject 문자열의 최대 길이. Default: 0
-        - is_mobile: 모바일 여부. Default: False
-
-    Returns:
-        - str : 수정된 subject 문자열.
-    """
-    cut_length = cut_length or (board.bo_mobile_subject_len if is_mobile else board.bo_subject_len)
-    
-    if not cut_length:
-        return subject
-    
-    return subject[:cut_length] + "..." if len(subject) > cut_length else subject
