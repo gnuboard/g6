@@ -26,7 +26,7 @@ def get_theme_dir():
             continue
 
         theme_path = os.path.join(dirname, file)
-        if os.path.isdir(theme_path) and all(os.path.isfile(os.path.join(theme_path, fname)) for fname in ['readme.txt', 'screenshot.png', 'index.pc.html']):
+        if os.path.isdir(theme_path) and all(os.path.isfile(os.path.join(theme_path, fname)) for fname in ['readme.txt', 'screenshot.png', 'LICENSE']):
             result_array.append(file)
 
     result_array.sort()  # Using Python's default sort which is similar to natsort for strings
