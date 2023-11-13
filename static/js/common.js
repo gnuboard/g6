@@ -283,11 +283,23 @@ var win_password_lost = function(href) {
     window.open(href, "win_password_lost", "left=50, top=50, width=617, height=330, scrollbars=1");
 }
 
-$(document).ready(function(){
-    $("#login_password_lost, #ol_password_lost").click(function(){
-        win_password_lost(this.href);
-        return false;
-    });
+document.addEventListener('DOMContentLoaded', function() {
+    var loginPasswordLost = document.getElementById('login_password_lost');
+    var olPasswordLost = document.getElementById('ol_password_lost');
+
+    if (loginPasswordLost) {
+        loginPasswordLost.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevents the default action of the click
+            win_password_lost(this.href); // Calls the win_password_lost function
+        });
+    }
+
+    if (olPasswordLost) {
+        olPasswordLost.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevents the default action of the click
+            win_password_lost(this.href); // Calls the win_password_lost function
+        });
+    }
 });
 
 /**
@@ -522,12 +534,18 @@ var win_coupon = function(href) {
  * 스크린리더 미사용자를 위한 스크립트 - 지운아빠 2013-04-22
  * alt 값만 갖는 그래픽 링크에 마우스오버 시 title 값 부여, 마우스아웃 시 title 값 제거
  **/
-$(function() {
-    $('a img').mouseover(function() {
-        $a_img_title = $(this).attr('alt');
-        $(this).attr('title', $a_img_title);
-    }).mouseout(function() {
-        $(this).attr('title', '');
+document.addEventListener('DOMContentLoaded', function() {
+    var images = document.querySelectorAll('a img');
+
+    images.forEach(function(img) {
+        img.addEventListener('mouseover', function() {
+            var aImgTitle = this.getAttribute('alt');
+            this.setAttribute('title', aImgTitle);
+        });
+
+        img.addEventListener('mouseout', function() {
+            this.setAttribute('title', '');
+        });
     });
 });
 
@@ -570,132 +588,184 @@ function set_comment_token(f)
     });
 }
 
-$(function(){
-    $(".win_point").click(function() {
-        win_point(this.href);
-        return false;
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.win_point').forEach(function(el) {
+        el.addEventListener('click', function(event) {
+            event.preventDefault();
+            win_point(this.href);
+        });
     });
 
-    $(".win_memo").click(function() {
-        win_memo(this.href);
-        return false;
+    document.querySelectorAll('.win_memo').forEach(function(el) {
+        el.addEventListener('click', function(event) {
+            event.preventDefault();
+            win_memo(this.href);
+        });
     });
 
-    $(".win_email").click(function() {
-        win_email(this.href);
-        return false;
+    document.querySelectorAll('.win_email').forEach(function(el) {
+        el.addEventListener('click', function(event) {
+            event.preventDefault();
+            win_email(this.href);
+        });
     });
 
-    $(".win_scrap").click(function() {
-        win_scrap(this.href);
-        return false;
+    document.querySelectorAll('.win_scrap').forEach(function(el) {
+        el.addEventListener('click', function(event) {
+            event.preventDefault();
+            win_scrap(this.href);
+        });
     });
 
-    $(".win_profile").click(function() {
-        win_profile(this.href);
-        return false;
+    document.querySelectorAll('.win_profile').forEach(function(el) {
+        el.addEventListener('click', function(event) {
+            event.preventDefault();
+            win_profile(this.href);
+        });
     });
 
-    $(".win_homepage").click(function() {
-        win_homepage(this.href);
-        return false;
+    document.querySelectorAll('.win_homepage').forEach(function(el) {
+        el.addEventListener('click', function(event) {
+            event.preventDefault();
+            win_homepage(this.href);
+        });
     });
 
-    $(".win_password_lost").click(function() {
-        win_password_lost(this.href);
-        return false;
+    document.querySelectorAll('.win_password_lost').forEach(function(el) {
+        el.addEventListener('click', function(event) {
+            event.preventDefault();
+            win_password_lost(this.href);
+        });
     });
 
-    /*
-    $(".win_poll").click(function() {
-        win_poll(this.href);
-        return false;
-    });
-    */
+    // Uncomment and adjust if needed
+    // document.querySelectorAll('.win_poll').forEach(function(el) {
+    //     el.addEventListener('click', function(event) {
+    //         event.preventDefault();
+    //         win_poll(this.href);
+    //     });
+    // });
 
-    $(".win_coupon").click(function() {
-        win_coupon(this.href);
-        return false;
+    document.querySelectorAll('.win_coupon').forEach(function(el) {
+        el.addEventListener('click', function(event) {
+            event.preventDefault();
+            win_coupon(this.href);
+        });
     });
 
-    // 사이드뷰
+    // Sideview
     var sv_hide = false;
-    $(".sv_member, .sv_guest").click(function() {
-        $(".sv").removeClass("sv_on");
-        $(this).closest(".sv_wrap").find(".sv").addClass("sv_on");
-    });
+    document.querySelectorAll('.sv_member, .sv_guest').forEach(function(el) {
+        el.addEventListener('click', function() {
+            document.querySelectorAll('.sv').forEach(function(sv) {
+                sv.classList.remove('sv_on');
+            });
+            this.closest('.sv_wrap').querySelector('.sv').classList.add('sv_on');
+        });
 
-    $(".sv, .sv_wrap").hover(
-        function() {
+        el.addEventListener('focusin', function() {
             sv_hide = false;
-        },
-        function() {
+            document.querySelectorAll('.sv').forEach(function(sv) {
+                sv.classList.remove('sv_on');
+            });
+            this.closest('.sv_wrap').querySelector('.sv').classList.add('sv_on');
+        });
+    });
+
+    document.querySelectorAll('.sv, .sv_wrap').forEach(function(el) {
+        el.addEventListener('mouseenter', function() {
+            sv_hide = false;
+        });
+
+        el.addEventListener('mouseleave', function() {
             sv_hide = true;
-        }
-    );
-
-    $(".sv_member, .sv_guest").focusin(function() {
-        sv_hide = false;
-        $(".sv").removeClass("sv_on");
-        $(this).closest(".sv_wrap").find(".sv").addClass("sv_on");
+        });
     });
 
-    $(".sv a").focusin(function() {
-        sv_hide = false;
+    document.querySelectorAll('.sv a').forEach(function(el) {
+        el.addEventListener('focusin', function() {
+            sv_hide = false;
+        });
+
+        el.addEventListener('focusout', function() {
+            sv_hide = true;
+        });
     });
 
-    $(".sv a").focusout(function() {
-        sv_hide = true;
-    });
-
-    // 셀렉트 ul
+    // Select ul
     var sel_hide = false;
-    $('.sel_btn').click(function() {
-        $('.sel_ul').removeClass('sel_on');
-        $(this).siblings('.sel_ul').addClass('sel_on');
+    document.querySelectorAll('.sel_btn').forEach(function(el) {
+        el.addEventListener('click', function() {
+            document.querySelectorAll('.sel_ul').forEach(function(sel_ul) {
+                sel_ul.classList.remove('sel_on');
+            });
+            this.nextElementSibling.classList.add('sel_on');
+        });
     });
 
-    $(".sel_wrap").hover(
-        function() {
+    document.querySelectorAll('.sel_wrap').forEach(function(el) {
+        el.addEventListener('mouseenter', function() {
             sel_hide = false;
-        },
-        function() {
+        });
+
+        el.addEventListener('mouseleave', function() {
             sel_hide = true;
-        }
-    );
-
-    $('.sel_a').focusin(function() {
-        sel_hide = false;
+        });
     });
 
-    $('.sel_a').focusout(function() {
-        sel_hide = true;
+    document.querySelectorAll('.sel_a').forEach(function(el) {
+        el.addEventListener('focusin', function() {
+            sel_hide = false;
+        });
+
+        el.addEventListener('focusout', function() {
+            sel_hide = true;
+        });
     });
 
-    $(document).click(function() {
-        if(sv_hide) { // 사이드뷰 해제
-            $(".sv").removeClass("sv_on");
+    document.addEventListener('click', function() {
+        if(sv_hide) {
+            document.querySelectorAll('.sv').forEach(function(sv) {
+                sv.classList.remove('sv_on');
+            });
         }
-        if (sel_hide) { // 셀렉트 ul 해제
-            $('.sel_ul').removeClass('sel_on');
-        }
-    });
-
-    $(document).focusin(function() {
-        if(sv_hide) { // 사이드뷰 해제
-            $(".sv").removeClass("sv_on");
-        }
-        if (sel_hide) { // 셀렉트 ul 해제
-            $('.sel_ul').removeClass('sel_on');
+        if (sel_hide) {
+            document.querySelectorAll('.sel_ul').forEach(function(sel_ul) {
+                sel_ul.classList.remove('sel_on');
+            });
         }
     });
 
-    $(document).on( "keyup change", "textarea#wr_content[maxlength]", function(){
-        var str = $(this).val();
-        var mx = parseInt($(this).attr("maxlength"));
-        if (str.length > mx) {
-            $(this).val(str.substr(0, mx));
-            return false;
+    document.addEventListener('focusin', function() {
+        if(sv_hide) {
+            document.querySelectorAll('.sv').forEach(function(sv) {
+                sv.classList.remove('sv_on');
+            });
+        }
+        if (sel_hide) {
+            document.querySelectorAll('.sel_ul').forEach(function(sel_ul) {
+                sel_ul.classList.remove('sel_on');
+            });
+        }
+    });
+
+    document.addEventListener('keyup', function(event) {
+        if (event.target.matches('textarea#wr_content[maxlength]')) {
+            var str = event.target.value;
+            var mx = parseInt(event.target.getAttribute('maxlength'));
+            if (str.length > mx) {
+                event.target.value = str.substr(0, mx);
+            }
+        }
+    });
+
+    document.addEventListener('change', function(event) {
+        if (event.target.matches('textarea#wr_content[maxlength]')) {
+            var str = event.target.value;
+            var mx = parseInt(event.target.getAttribute('maxlength'));
+            if (str.length > mx) {
+                event.target.value = str.substr(0, mx);
+            }
         }
     });
 });
@@ -727,52 +797,62 @@ function get_write_token(bo_table)
     return token;
 }
 
-$(function() {
-    $(document).on("click", "form[name=fwrite] input:submit, form[name=fwrite] button:submit, form[name=fwrite] input:image", function() {
-        // var f = this.form;
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('click', function(event) {
+        // Check if the clicked element matches the specified selectors
+        if (event.target.matches("form[name=fwrite] input[type=submit], form[name=fwrite] button[type=submit], form[name=fwrite] input[type=image]")) {
+            // Uncomment and adjust the code below as per your requirement
 
-        // if (typeof(f.bo_table) == "undefined") {
-        //     return;
-        // }
+            // var f = event.target.form;
 
-        // var bo_table = f.bo_table.value;
-        // var token = get_write_token(bo_table);
+            // if (typeof(f.bo_table) == "undefined") {
+            //     return;
+            // }
 
-        // if(!token) {
-        //     alert("토큰 정보가 올바르지 않습니다.");
-        //     return false;
-        // }
+            // var bo_table = f.bo_table.value;
+            // var token = get_write_token(bo_table);
 
-        // var $f = $(f);
+            // if(!token) {
+            //     alert("토큰 정보가 올바르지 않습니다.");
+            //     return false;
+            // }
 
-        // if(typeof f.token === "undefined")
-        //     $f.prepend('<input type="hidden" name="token" value="">');
+            // if(typeof f.token === "undefined") {
+            //     var input = document.createElement('input');
+            //     input.type = 'hidden';
+            //     input.name = 'token';
+            //     input.value = '';
+            //     f.appendChild(input);
+            // }
 
-        // $f.find("input[name=token]").val(token);
+            // f.querySelector("input[name=token]").value = token;
 
-        return true;
+            return true;
+        }
     });
 });
 
-
 function generate_token() {
     var token = "";
-    $.ajax({
-        url: '/generate_token',
-        type: 'POST',
-        async: false,
-        cache: false,
-        success: function(response) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/generate_token', false); // false for synchronous request
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
             if (response.success) {
                 token = response.token;
             } else {
                 alert('토큰 생성에 실패하였습니다.');
                 token = '';
             }
-        },
-        error: function(xhr, status, error) {
-            console.error(error);
+        } else {
+            console.error(xhr.statusText);
         }
-    });
+    };
+    xhr.onerror = function() {
+        console.error(xhr.statusText);
+    };
+    xhr.send();
     return token;
 }

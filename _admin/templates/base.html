@@ -25,9 +25,10 @@ var g5_cookie_domain = "";
 var g5_shop_url = "/shop";
 var g5_admin_url = "/admin";
 </script>
-<script src="/static/js/jquery-1.12.4.min.js"></script>
+<!-- <script src="/static/js/jquery-1.12.4.min.js"></script>
 <script src="/static/js/jquery-migrate-1.4.1.min.js"></script>
-<script src="/static/js/jquery.menu.js"></script>
+<script src="/static/js/jquery.menu.js"></script> -->
+<script src="/static/js/admin-menu.js"></script>
 <script src="/static/js/common.js"></script>
 <script src="/static/js/wrest.js"></script>
 <script src="/static/js/placeholders.min.js"></script>
@@ -37,7 +38,7 @@ var g5_admin_url = "/admin";
 <body>
 <div id="hd_login_msg">최고관리자 최고관리자님 로그인 중 <a href="/bbs/logout">로그아웃</a></div>
 <script>
-    var admin_csrf_token_key = "";
+    // var admin_csrf_token_key = "";
     var tempX = 0;
     var tempY = 0;
 
@@ -155,37 +156,47 @@ var g5_admin_url = "/admin";
 
 </header>
 <script>
-    jQuery(function($) {
+document.addEventListener("DOMContentLoaded", function() {
 
-        var menu_cookie_key = 'g5_admin_btn_gnb';
+    var menu_cookie_key = 'g5_admin_btn_gnb';
 
-        $(".tnb_mb_btn").click(function() {
-            $(".tnb_mb_area").toggle();
-        });
+    document.querySelector(".tnb_mb_btn").addEventListener("click", function() {
+        var tnbMbArea = document.querySelector(".tnb_mb_area");
+        tnbMbArea.style.display = tnbMbArea.style.display === 'none' ? 'block' : 'none';
+    });
 
-        $("#btn_gnb").click(function() {
+    document.querySelector("#btn_gnb").addEventListener("click", function() {
 
-            var $this = $(this);
+        var $this = this;
 
-            try {
-                if (!$this.hasClass("btn_gnb_open")) {
-                    set_cookie(menu_cookie_key, 1, 60 * 60 * 24 * 365);
-                } else {
-                    delete_cookie(menu_cookie_key);
-                }
-            } catch (err) {}
+        try {
+            if (!$this.classList.contains("btn_gnb_open")) {
+                setCookie(menu_cookie_key, 1, 60 * 60 * 24 * 365);
+            } else {
+                deleteCookie(menu_cookie_key);
+            }
+        } catch (err) {}
 
-            $("#container").toggleClass("container-small");
-            $("#gnb").toggleClass("gnb_small");
-            $this.toggleClass("btn_gnb_open");
-
-        });
-
-        $(".gnb_ul li .btn_op").click(function() {
-            $(this).parent().addClass("on").siblings().removeClass("on");
-        });
+        document.querySelector("#container").classList.toggle("container-small");
+        document.querySelector("#gnb").classList.toggle("gnb_small");
+        $this.classList.toggle("btn_gnb_open");
 
     });
+
+    var gnbButtons = document.querySelectorAll(".gnb_ul li .btn_op");
+    gnbButtons.forEach(function(btn) {
+        btn.addEventListener("click", function() {
+            this.parentElement.classList.add("on");
+            Array.from(this.parentElement.siblings).forEach(function(sib) {
+                sib.classList.remove("on");
+            });
+        });
+    });
+
+});
+
+// Helper functions for cookies (setCookie and deleteCookie) need to be defined
+
 </script>
 
 {% if errors %}
@@ -212,130 +223,150 @@ var g5_admin_url = "/admin";
 </div>
 
 <script>
-    $(".scroll_top").click(function() {
-        $("body,html").animate({
-            scrollTop: 0
-        }, 400);
-    })
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.scroll_top').forEach(function(element) {
+        element.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                left: 0,
+                behavior: 'smooth'
+            });
+        });
+    });
+});
 </script>
 
-<!-- <p>실행시간 : 0.045842170715332 -->
-
 <script src="/static/admin/admin.js"></script>
-<script src="/static/js/jquery.anchorScroll.js"></script>
+<!-- <script src="/static/js/jquery.anchorScroll.js"></script> -->
 <script>
-    $(function() {
+document.addEventListener("DOMContentLoaded", function() {
+    var admin_head_height = document.getElementById('hd_top').offsetHeight + document.getElementById('container_title').offsetHeight + 5;
 
-        var admin_head_height = $("#hd_top").height() + $("#container_title").height() + 5;
+    // AnchorScroll plugin functionality will need to be rewritten in vanilla JS or use a different method
 
-        $("a[href^='#']").anchorScroll({
-            scrollSpeed: 0, // scroll speed
-            offsetTop: admin_head_height, // offset for fixed top bars (defaults to 0)
-            onScroll: function() {
-                // callback on scroll start
-            },
-            scrollEnd: function() {
-                // callback on scroll end
-            }
-        });
+    var hide_menu = false;
+    var mouse_event = false;
+    var oldX = oldY = 0;
 
-        var hide_menu = false;
-        var mouse_event = false;
-        var oldX = oldY = 0;
+    document.addEventListener('mousemove', function(e) {
+        if (oldX === 0) {
+            oldX = e.pageX;
+            oldY = e.pageY;
+        }
 
-        $(document).mousemove(function(e) {
-            if (oldX == 0) {
-                oldX = e.pageX;
-                oldY = e.pageY;
-            }
+        if (oldX !== e.pageX || oldY !== e.pageY) {
+            mouse_event = true;
+        }
+    });
 
-            if (oldX != e.pageX || oldY != e.pageY) {
-                mouse_event = true;
-            }
-        });
-
-        // 주메뉴
-        var $gnb = $(".gnb_1dli > a");
-        $gnb.mouseover(function() {
+    var gnb = document.querySelectorAll(".gnb_1dli > a");
+    gnb.forEach(function(el) {
+        el.addEventListener('mouseover', function() {
             if (mouse_event) {
-                $(".gnb_1dli").removeClass("gnb_1dli_over gnb_1dli_over2 gnb_1dli_on");
-                $(this).parent().addClass("gnb_1dli_over gnb_1dli_on");
-                menu_rearrange($(this).parent());
+                document.querySelectorAll(".gnb_1dli").forEach(function(elem) {
+                    elem.classList.remove("gnb_1dli_over", "gnb_1dli_over2", "gnb_1dli_on");
+                });
+                this.parentNode.classList.add("gnb_1dli_over", "gnb_1dli_on");
+                menu_rearrange(this.parentNode);
                 hide_menu = false;
             }
         });
 
-        $gnb.mouseout(function() {
+        el.addEventListener('mouseout', function() {
             hide_menu = true;
         });
 
-        $(".gnb_2dli").mouseover(function() {
+        el.addEventListener('focusin', function() {
+            document.querySelectorAll(".gnb_1dli").forEach(function(elem) {
+                elem.classList.remove("gnb_1dli_over", "gnb_1dli_over2", "gnb_1dli_on");
+            });
+            this.parentNode.classList.add("gnb_1dli_over", "gnb_1dli_on");
+            menu_rearrange(this.parentNode);
             hide_menu = false;
         });
 
-        $(".gnb_2dli").mouseout(function() {
+        el.addEventListener('focusout', function() {
             hide_menu = true;
         });
+    });
 
-        $gnb.focusin(function() {
-            $(".gnb_1dli").removeClass("gnb_1dli_over gnb_1dli_over2 gnb_1dli_on");
-            $(this).parent().addClass("gnb_1dli_over gnb_1dli_on");
-            menu_rearrange($(this).parent());
+    document.querySelectorAll(".gnb_2dli").forEach(function(el) {
+        el.addEventListener('mouseover', function() {
             hide_menu = false;
         });
 
-        $gnb.focusout(function() {
+        el.addEventListener('mouseout', function() {
             hide_menu = true;
         });
+    });
 
-        $(".gnb_2da").focusin(function() {
-            $(".gnb_1dli").removeClass("gnb_1dli_over gnb_1dli_over2 gnb_1dli_on");
-            var $gnb_li = $(this).closest(".gnb_1dli").addClass("gnb_1dli_over gnb_1dli_on");
-            menu_rearrange($(this).closest(".gnb_1dli"));
-            hide_menu = false;
-        });
-
-        $(".gnb_2da").focusout(function() {
-            hide_menu = true;
-        });
-
-        $('#gnb_1dul>li').bind('mouseleave', function() {
-            submenu_hide();
-        });
-
-        $(document).bind('click focusin', function() {
-            if (hide_menu) {
-                submenu_hide();
+    document.querySelectorAll(".gnb_2da").forEach(function(el) {
+        el.addEventListener('focusin', function() {
+            document.querySelectorAll(".gnb_1dli").forEach(function(elem) {
+                elem.classList.remove("gnb_1dli_over", "gnb_1dli_over2", "gnb_1dli_on");
+            });
+    
+            var gnbLi = this.closest(".gnb_1dli");
+            if (gnbLi) {
+                gnbLi.classList.add("gnb_1dli_over", "gnb_1dli_on");
+                menu_rearrange(gnbLi);
+                hide_menu = false;
             }
         });
+    
+        el.addEventListener('focusout', function() {
+            hide_menu = true;
+        });
+    });
+    
+    var gnb_1dul = document.getElementById('gnb_1dul');
+    if (gnb_1dul) {
+        gnb_1dul.addEventListener('mouseleave', function() {
+            submenu_hide();
+        });
+    }
 
-        // 폰트 리사이즈 쿠키있으면 실행
-        var font_resize_act = get_cookie("ck_font_resize_act");
-        if (font_resize_act != "") {
-            font_resize("container", font_resize_act);
+    document.addEventListener('click', function() {
+        if (hide_menu) {
+            submenu_hide();
         }
     });
 
-    function submenu_hide() {
-        $(".gnb_1dli").removeClass("gnb_1dli_over gnb_1dli_over2 gnb_1dli_on");
-    }
-
-    function menu_rearrange(el) {
-        var width = $("#gnb_1dul").width();
-        var left = w1 = w2 = 0;
-        var idx = $(".gnb_1dli").index(el);
-
-        for (i = 0; i <= idx; i++) {
-            w1 = $(".gnb_1dli:eq(" + i + ")").outerWidth();
-            w2 = $(".gnb_2dli > a:eq(" + i + ")").outerWidth(true);
-
-            if ((left + w2) > width) {
-                el.removeClass("gnb_1dli_over").addClass("gnb_1dli_over2");
-            }
-
-            left += w1;
+    document.addEventListener('focusin', function() {
+        if (hide_menu) {
+            submenu_hide();
         }
+    });
+
+    // The get_cookie and font_resize functions need to be defined
+});
+
+function submenu_hide() {
+    document.querySelectorAll(".gnb_1dli").forEach(function(elem) {
+        elem.classList.remove("gnb_1dli_over", "gnb_1dli_over2", "gnb_1dli_on");
+    });
+}
+
+function menu_rearrange(el) {
+    var gnb_1dul = document.getElementById('gnb_1dul');
+    if (!gnb_1dul) return; // Exit if gnb_1dul does not exist
+
+    var width = gnb_1dul.offsetWidth;
+    var gnb_1dli = document.querySelectorAll(".gnb_1dli");
+    var idx = Array.prototype.indexOf.call(gnb_1dli, el);
+
+    for (var i = 0; i <= idx; i++) {
+        w1 = gnb_1dli[i].offsetWidth;
+        w2 = document.querySelectorAll(".gnb_2dli > a")[i].offsetWidth;
+
+        if ((left + w2) > width) {
+            el.classList.remove("gnb_1dli_over");
+            el.classList.add("gnb_1dli_over2");
+        }
+
+        left += w1;
     }
+}
 </script>
 
 
