@@ -1,12 +1,11 @@
 import datetime
-import importlib
-import pkgutil
 
 from fastapi import FastAPI, Depends, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import TypeAdapter
 
+from _lib.plugin.service import load_all_plugin, register_statics, PLUGIN_DIR
 from database import get_db
 from starlette.middleware.sessions import SessionMiddleware
 from common import *
@@ -18,8 +17,6 @@ import secrets
 # models.Base.metadata.create_all(bind=engine)
 APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
 app = FastAPI(debug=APP_IS_DEBUG)
-app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/data", StaticFiles(directory="data"), name="data")
 templates = Jinja2Templates(directory=[TEMPLATES_DIR], extensions=["jinja2.ext.i18n"])
 templates.env.globals["is_admin"] = is_admin
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
@@ -59,24 +56,20 @@ app.include_router(board_new_router, prefix="/bbs", tags=["board_new"])
 app.include_router(good_router, prefix="/bbs/ajax", tags=["good"])
 app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
 app.include_router(social_router, prefix="/bbs", tags=["social"])
-from _lib.plugin.service import get_plugin_list, PLUGIN_DIR
-
 # is_mobile = False
 # user_device = 'pc'
 
 # for package in plugin_list:
 
-package_name = PLUGIN_DIR
-# pkgutil 로 서브디렉토리의 모듈을 가져온다.
-package = importlib.import_module(package_name)
-for _, module_name, _ in pkgutil.walk_packages(package.__path__):
-    full_module_name = f"{package_name}.{module_name}"
-    imported_module = importlib.import_module(full_module_name)
+plugin_list = load_all_plugin(PLUGIN_DIR)
+register_statics(app, plugin_list)
 
+# 하위경로를 먼저 등록하고 상위경로를 등록
+# plugin/plugin_name/static 폴더 이후 등록
 
-# plugin_list = get_plugin_list()
-# plugin_list.sort()
-# print("plugin_list", plugin_list)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/data", StaticFiles(directory="data"), name="data")
+
 
 # 항상 실행해야 하는 미들웨어
 @app.middleware("http")
