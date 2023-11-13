@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends
+
+from _bbs.social import SocialAuthService
 from common import *
 from database import get_db
 from main import templates
@@ -43,7 +45,8 @@ def member_leave(request: Request, db=Depends(get_db)):
     member.mb_memo = f"{member.mb_memo}\n{leave_date}탈퇴함"
     db.commit(member)
 
-    # todo 소셜로그인 해제
+    if SocialAuthService.check_exists_by_member_id(member.mb_id):
+        SocialAuthService.unlink_social_login(member.mb_id)
 
     # 로그아웃
     request.session.clear()

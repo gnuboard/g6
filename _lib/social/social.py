@@ -6,9 +6,8 @@ from starlette.requests import Request
 
 from _lib.social import providers
 from common import AlertException
-from database import SessionLocal
 from dataclassform import SocialProfile
-from models import Config, MemberSocialProfiles
+from models import Config
 
 oauth = OAuth()
 
@@ -21,8 +20,8 @@ def register_social_provider(config: Config):
     Args:
         config (Config): 그누보드 설정 객체
     Examples:
-        서버재시작후 인증객체가 등록되지 않아
-        각 소셜서비스를 사용할 수없는 경우가 있음.
+        서버 재시작 후 인증 객체가 등록되지 않아
+        각 소셜서비스를 사용할 수 없는 경우가 있음.
     """
     if not config.cf_social_login_use:
         return
@@ -30,7 +29,7 @@ def register_social_provider(config: Config):
     available_providers = config.cf_social_servicelist.split(',')
     for provider_name in available_providers:
 
-        # 소셜프로바이더 등록 - 다형성으로 호출
+        # 소셜프로바이더 등록 - 등록된 클래스 찾아 호출
         provider_module_name = getattr(providers, f"{provider_name}")
         provider_class: SocialProvider = getattr(provider_module_name, f"{provider_name.capitalize()}")
 
@@ -74,8 +73,7 @@ async def get_social_login_token(provider_name, request: Request):
             raise ValueError
         return auth_token
     except Exception as e:
-
-        logging.critical('social login token error', exc_info=e)
+        logging.warning('social login token error', exc_info=e)
         # 토큰 불일치, 만료, 재사용 등 기존 인증 토큰 삭제
         if 'ss_social_access' in request.session:
             del request.session['ss_social_access']
@@ -113,17 +111,9 @@ async def get_social_profile(auth_token, provider_name, request):
                              url=request.url_for('login').__str__())
 
 
-def unlink_social_login(member_id):
-    """
-    소셜계정 연결해제
-    """
-    with SessionLocal() as db:
-        db.query(MemberSocialProfiles.mb_id).filter(MemberSocialProfiles.mb_id == member_id).delete()
-
-
 class SocialProvider:
     """
-    소셜 서비스에 필요한 메서드를 정의한 인터페이스
+    소셜 서비스제공자의 oauth 인증에 필요한 메서드를 정의한 인터페이스
     클래스 메서드만 사용하며 인스턴스를 생성하지 않는다.
     """
 
