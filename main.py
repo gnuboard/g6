@@ -59,7 +59,6 @@ app.include_router(social_router, prefix="/bbs", tags=["social"])
 # is_mobile = False
 # user_device = 'pc'
 
-# for package in plugin_list:
 
 plugin_list = load_all_plugin(PLUGIN_DIR)
 register_statics(app, plugin_list)

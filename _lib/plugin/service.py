@@ -74,33 +74,12 @@ def register_statics(app, import_list):
             logging.critical(f"register_statics: {e}")
 
 
-def delete_admin():
+def register_admin():
     pass
 
 
-def set_admin():
+def unregister_admin():
     pass
-
-
-def set_router():
-    pass
-
-
-def set_static():
-    pass
-
-
-def delete_static():
-    pass
-
-
-def plugin_disable():
-    """
-    플러그인을 비활성화 한다.
-    """
-    # delete_admin()
-    # delete_router()
-    # delete_router_by_tagname()
 
 
 def delete_router_by_tagname(app, tagname):
@@ -108,3 +87,11 @@ def delete_router_by_tagname(app, tagname):
     """
     app.router.routes = [item for item in app.routes
                          if not hasattr(item, "tags") or tagname not in getattr(item, "tags")]
+
+
+def unregister_plugin():
+    """
+    플러그인을 비활성화 한다.
+    """
+    # unregister_admin()
+    # delete_router_by_tagname()
