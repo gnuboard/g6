@@ -15,6 +15,7 @@
 {% endblock subtitle %}
 
 {% block content %}
+{% set is_admin=get_admin_type(request, request.state.login_member.mb_id, group=board.group, board=board) %}
 {% set sca=request.query_params.sca %}
 {% set sod_reverse="asc" if request.query_params.sod == "desc" else "desc" %}
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
@@ -67,7 +68,7 @@
                         <span class="sound_only">글쓰기</span>
                     </a>
                 </li>
-                {% if request.state.is_super_admin %}
+                {% if is_admin %}
                 <li>
                     <button type="button" class="btn_more_opt is_list_btn btn_b01 btn" title="게시판 리스트 옵션">
                         <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
@@ -90,7 +91,7 @@
         </div>
         <!-- } 게시판 페이지 정보 및 버튼 끝 -->
 
-        {% if request.state.is_super_admin %}
+        {% if is_admin %}
             <div id="gall_allchk" class="all_chk chk_box">
                 <input type="checkbox" id="chkall" onclick="if (this.checked) all_checked(true); else all_checked(false);" class="selec_chk">
                 <label for="chkall">
@@ -177,7 +178,7 @@
         <!-- 페이지 -->
         <div class="bo_fx">
             <ul class="btn_bo_user">
-                {% if request.state.is_super_admin %}
+                {% if is_admin %}
                 <li>
                     <a href="{{ url_for('board_form', bo_table=board.bo_table) }}" class="btn_admin btn" title="관리자">
                         <i class="fa fa-cog fa-spin fa-fw"></i><span class="sound_only">관리자</span>
@@ -243,7 +244,7 @@
     </script>
     <!-- } 게시판 검색 끝 -->
 </div>
-{% if request.state.is_super_admin %}
+{% if is_admin %}
     <noscript>
         <p>자바스크립트를 사용하지 않는 경우<br>별도의 확인 절차 없이 바로 선택삭제 처리하므로 주의하시기 바랍니다.</p>
     </noscript>

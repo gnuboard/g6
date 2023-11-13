@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
+from board_lib import *
 from common import *
 from database import get_db
 from models import BoardNew, Board
