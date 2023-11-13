@@ -1103,62 +1103,67 @@
 </form>
 
 <script>
-    $(function() {
-        {% if config.cf_cert_use %}
-            $(".cf_cert_service").addClass("cf_cert_hide");
-        {% endif %}    
-        {# <!-- <?php
-        if (!$config['cf_cert_use']) {
-            echo '$(".cf_cert_service").addClass("cf_cert_hide");';
-        }
-        ?> -->
-        #}
-        $("#cf_cert_use").change(function() {
-            switch ($(this).val()) {
-                case "0":
-                    $(".cf_cert_service").addClass("cf_cert_hide");
-                    break;
-                default:
-                    $(".cf_cert_service").removeClass("cf_cert_hide");
-                    break;
+    document.addEventListener('DOMContentLoaded', function() {
+        // Assuming config.cf_cert_use is set in your template engine and rendered as a boolean in JavaScript
+        {% if not config.cf_cert_use %}
+            document.querySelectorAll('.cf_cert_service').forEach(function(el) {
+                el.classList.add('cf_cert_hide');
+            });
+        {% endif %}
+
+        document.getElementById('cf_cert_use').addEventListener('change', function() {
+            var elements = document.querySelectorAll('.cf_cert_service');
+            if (this.value === '0') {
+                elements.forEach(function(el) {
+                    el.classList.add('cf_cert_hide');
+                });
+            } else {
+                elements.forEach(function(el) {
+                    el.classList.remove('cf_cert_hide');
+                });
             }
         });
 
-        $(".get_theme_confc").on("click", function() {
-            var type = $(this).data("type");
-            var msg = "기본환경 스킨 설정";
-            if (type == "conf_member")
-                msg = "기본환경 회원스킨 설정";
+        document.querySelectorAll('.get_theme_confc').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var type = this.getAttribute('data-type');
+                var msg = '기본환경 스킨 설정';
+                if (type === 'conf_member') {
+                    msg = '기본환경 회원스킨 설정';
+                }
 
-            if (!confirm("현재 테마의 " + msg + "을 적용하시겠습니까?"))
-                return false;
+                if (!confirm('현재 테마의 ' + msg + '을 적용하시겠습니까?')) {
+                    return false;
+                }
 
-            $.ajax({
-                type: "POST",
-                url: "./theme_config_load.php",
-                cache: false,
-                async: false,
-                data: {
-                    type: type
-                },
-                dataType: "json",
-                success: function(data) {
+                fetch('./theme_config_load.php', {
+                    method: 'POST',
+                    cache: 'no-cache',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ type: type })
+                })
+                .then(response => response.json())
+                .then(data => {
                     if (data.error) {
                         alert(data.error);
                         return false;
                     }
 
-                    var field = Array('cf_member_skin', 'cf_mobile_member_skin', 'cf_new_skin', 'cf_mobile_new_skin', 'cf_search_skin', 'cf_mobile_search_skin', 'cf_connect_skin', 'cf_mobile_connect_skin', 'cf_faq_skin', 'cf_mobile_faq_skin');
-                    var count = field.length;
-                    var key;
-
-                    for (i = 0; i < count; i++) {
-                        key = field[i];
-
-                        if (data[key] != undefined && data[key] != "")
-                            $("select[name=" + key + "]").val(data[key]);
-                    }
-                }
+                    var fields = ['cf_member_skin', 'cf_mobile_member_skin', 'cf_new_skin', 'cf_mobile_new_skin', 'cf_search_skin', 'cf_mobile_search_skin', 'cf_connect_skin', 'cf_mobile_connect_skin', 'cf_faq_skin', 'cf_mobile_faq_skin'];
+                    fields.forEach(function(key) {
+                        if (data[key] !== undefined && data[key] !== '') {
+                            var select = document.querySelector('select[name=' + key + ']');
+                            if (select) {
+                                select.value = data[key];
+                            }
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
             });
         });
     });

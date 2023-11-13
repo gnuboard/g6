@@ -134,23 +134,30 @@ function get_ajax_token()
     return token;
 }
 
-$(function() {
-    $(document).on("click", "form input:submit, form button:submit", function() {
-        // var f = this.form;
-        // var token = get_ajax_token();
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('click', function(event) {
+        if (event.target.matches('form input[type="submit"], form button[type="submit"]')) {
+            // Uncomment and adjust the code below as per your requirement
 
-        // if(!token) {
-        //     alert("토큰 정보가 올바르지 않습니다.");
-        //     return false;
-        // }
+            // var f = event.target.form;
+            // var token = get_ajax_token();
 
-        // var $f = $(f);
+            // if (!token) {
+            //     alert("토큰 정보가 올바르지 않습니다.");
+            //     return false;
+            // }
 
-        // if(typeof f.token === "undefined")
-        //     $f.prepend('<input type="hidden" name="token" value="">');
+            // if (typeof f.token === "undefined") {
+            //     var hiddenInput = document.createElement('input');
+            //     hiddenInput.setAttribute('type', 'hidden');
+            //     hiddenInput.setAttribute('name', 'token');
+            //     hiddenInput.value = token;
+            //     f.prepend(hiddenInput);
+            // } else {
+            //     f.token.value = token;
+            // }
 
-        // $f.find("input[name=token]").val(token);
-
-        return true;
+            return true;
+        }
     });
 });
