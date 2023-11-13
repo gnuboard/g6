@@ -187,7 +187,7 @@ async def main_middleware(request: Request, call_next):
 
     if is_autologin:
         # 자동로그인 쿠키를 설정
-        response.set_cookie(key="ss_mb_id", value=request.session["ss_mb_id"], max_age=3600)
+        response.set_cookie(key="ss_mb_id", value=request.session["ss_mb_id"], max_age=86400 * 30)  # 30 일 동안 유지
 
     # 접속자 기록
     vi_ip = request.client.host
