@@ -194,8 +194,12 @@
 
         function fwrite_submit(f)
         {
+            // TODO: 에디터 사용 시, 첫번째 submit 요청은 wr_content_editor.value를 가져오지 못한다.
+            /*
             var wr_content_editor = document.getElementById('wr_content');
+            console.log(wr_content_editor.value)
             if (!wr_content_editor.value) { alert("내용을 입력해 주십시오."); wr_content_editor.focus(); return false; }
+            */
             /*
             var subject = "";
             var content = "";

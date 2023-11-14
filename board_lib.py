@@ -1,7 +1,7 @@
 # 게시판/게시글 함수 모음 (임시)
 from datetime import datetime, timedelta
 from fastapi import Request
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, distinct, or_
 from sqlalchemy.orm import Query as SqlQuery
 
 from common import *
@@ -35,6 +35,15 @@ class BoardConfig():
         return bo_page_rows if bo_page_rows != 0 else page_rows
     
     @property
+    def select_editor(self) -> str:
+        """게시판에 사용할 에디터를 반환.
+
+        Returns:
+            str: 게시판에 사용할 에디터.
+        """
+        return self.board.bo_select_editor or self.config.cf_editor
+
+    @property
     def subject(self) -> str:
         """게시판 제목을 반환.
 
@@ -47,14 +56,23 @@ class BoardConfig():
             return self.board.bo_subject
         
     @property
+    def use_email(self) -> bool:
+        """게시판에 이메일 사용 여부를 반환.
+
+        Returns:
+            bool: 게시판에 이메일 사용 여부.
+        """
+        return self.config.cf_email_use and self.board.bo_use_email
+        
+    @property
     def write_min(self) -> int:
         """게시글 등록 최소 글수 제한"""
-        return self._get_text_limit(self.board.bo_write_min)
+        return self._get_write_text_limit(self.board.bo_write_min)
         
     @property
     def write_max(self) -> int:
         """게시글 등록 최대 글수 제한"""
-        return self._get_text_limit(self.board.bo_write_max)
+        return self._get_write_text_limit(self.board.bo_write_max)
                
     def cut_write_subject(self, subject, cut_length: int = 0) -> str:
         """주어진 cut_length에 기반하여 subject 문자열을 자르고 필요한 경우 "..."을 추가합니다.
@@ -281,7 +299,7 @@ class BoardConfig():
         else:
             return True
         
-    def _get_text_limit(self, limit: int) -> int:
+    def _get_write_text_limit(self, limit: int) -> int:
         """게시글/댓글 작성 제한 글 수를 반환.
 
         Args:
@@ -757,3 +775,69 @@ def is_owner(object: object, mb_id: str = None):
         return object_mb_id == mb_id
     else:
         return False
+    
+
+def send_write_mail(request: Request, board: Board, write: WriteBaseModel, origin_write: WriteBaseModel = None):
+    """게시글/답글/댓글 작성 시, 메일을 발송한다.
+
+    Args:
+        request (Request): request 객체
+        board (Board): 게시판 object
+        write (WriteBaseModel): 작성된 게시글/답글/댓글 object
+        origin_write (WriteBaseModel, optional): 원본 게시글/답글 object. Defaults to None.
+    """
+    db = SessionLocal()
+    config = request.state.config
+    templates = MyTemplates(directory=[TEMPLATES_DIR])
+
+    def _add_admin_email(admin_id):
+        admin = db.query(Member).filter_by(mb_id=admin_id).first()
+        if admin:
+            send_email_list.append(admin.mb_email)
+
+    send_email_list = []
+    if config.cf_email_wr_board_admin and board.bo_admin:
+        _add_admin_email(board.bo_admin)
+    if config.cf_email_wr_group_admin and board.group.gr_admin:
+        _add_admin_email(board.group.gr_admin)
+    if config.cf_email_wr_super_admin:
+        _add_admin_email(config.cf_admin)
+    if config.cf_email_wr_write and origin_write:
+        send_email_list.append(origin_write.wr_email)
+
+    if write.wr_is_comment:
+        act = "댓글"
+        link_url = str(request.url_for("read_post", bo_table=board.bo_table, wr_id=origin_write.wr_id)) + f"#c_{write.wr_id}"
+
+        if config.cf_email_wr_comment_all:
+            # 댓글 쓴 모든 이에게 메일 발송
+            write_model = dynamic_create_write_table(board.bo_table)
+            query = db.query(distinct(write_model.wr_email).label("email")).filter(
+                (write_model.wr_email.notin_(["", write.wr_email])), 
+                (write_model.wr_parent==origin_write.wr_id)
+            )
+            comments = query.all()
+            send_email_list.extend(comment.email for comment in comments)
+    else:
+        act = "답변글" if origin_write else "새글"
+        link_url = request.url_for("read_post", bo_table=board.bo_table, wr_id=write.wr_id)
+
+    # 중복 이메일 제거
+    send_email_list = list(set(send_email_list))
+    for email in send_email_list:
+        # TODO: 내용 HTML 처리 필요
+        subject = f"[{config.cf_title}] {board.bo_subject} 게시판에 {act}이 등록되었습니다."
+        body = templates.TemplateResponse(
+            "bbs/mail_form/write_update_mail.html", {
+                "request": request,
+                "act": act,
+                "board": board,
+                "wr_subject": write.wr_subject,
+                "wr_name": write.wr_name,
+                "wr_content": write.wr_content,
+                "link_url": link_url,
+            }
+        ).body.decode("utf-8")
+        mailer(email, subject, body)
+
+    db.close()

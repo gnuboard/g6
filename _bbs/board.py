@@ -359,15 +359,18 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
     board = db.query(Board).filter_by(bo_table=bo_table).first()
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
-    # 게시판 설정
-    board_config = BoardConfig(request, board)
-    board.subject = board_config.subject
+
+    # 게시판 관리자 확인
+    member = request.state.login_member
+    mb_id = getattr(member, "mb_id", None)
+    admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
     
-    # 답글 생성가능여부 체크
+    board_config = BoardConfig(request, board)
+    
     if parent_id:
         if not board_config.is_reply_level():
             raise AlertException("답변글을 작성할 권한이 없습니다.", 403)
-    
+        # 답글 생성가능여부 체크
         model_write = dynamic_create_write_table(bo_table)
         write = db.query(model_write).get(parent_id)
         generate_reply_character(board, write)
@@ -375,17 +378,11 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
         if not board_config.is_write_level():
             raise AlertException("글을 작성할 권한이 없습니다.", 403)
 
-    # 게시판 관리자 확인
-    member = request.state.login_member
-    mb_id = getattr(member, "mb_id", None)
-    admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
-
-    # 에디터 설정
+    # 게시판 제목 설정
+    board.subject = board_config.subject
+    # 게시판 에디터 설정
     request.state.use_editor = board.bo_use_dhtml_editor
-    request.state.editor = board.bo_select_editor or request.state.editor
-    # 메일
-    is_mail = True if request.state.config.cf_email_use and board.bo_use_email else False
-    recv_email_checked = "checked"
+    request.state.editor = board_config.select_editor
 
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/write_form.html",
@@ -395,11 +392,11 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
             "board": board,
             "write": None,
             "is_notice": True if admin_type and not parent_id else False,
-            "is_secret": board.bo_use_secret,
-            "is_mail": is_mail,
-            "recv_email_checked": recv_email_checked,
-            "is_link": board_config.is_link_level(),
             "is_html": board_config.is_html_level(),
+            "is_secret": board.bo_use_secret,
+            "is_mail": board_config.use_email,
+            "recv_email_checked": "checked",
+            "is_link": board_config.is_link_level(),
             "is_file": board_config.is_upload_level(),
             "is_file_content": bool(board.bo_use_file_content),
             "files": BoardFileManager(board).get_board_files_by_form(),
@@ -432,7 +429,6 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
 
     # 게시판 설정
     board_config = BoardConfig(request, board)
-    board.subject = board_config.subject
     # TODO: 익명글 수정 시 비밀번호
     if not board_config.is_write_level():
         raise AlertException("글을 수정할 권한이 없습니다.", 403)
@@ -441,13 +437,12 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
     if not board_config.is_modify_by_comment(wr_id):
         raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_modify}건 이상 존재하므로 수정 할 수 없습니다.", 403)
 
+    # 게시판 제목 설정
+    board.subject = board_config.subject
     # 게시판 에디터 설정
     request.state.use_editor = board.bo_use_dhtml_editor
-    request.state.editor = board.bo_select_editor or request.state.editor
+    request.state.editor = board_config.select_editor
 
-    # 공지사항 설정
-    is_notice = True if not write.wr_reply and admin_type else False
-    notice_checked = "checked" if board_config.is_board_notice(wr_id) else ""
     # HTML 설정
     html_checked = ""
     html_value = ""
@@ -457,9 +452,6 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
     elif "html2" in write.wr_option:
         html_checked = "checked"
         html_value = "html2"
-    # 메일 설정
-    is_mail = True if request.state.config.cf_email_use and board.bo_use_email else False;
-    recv_email_checked = "checked" if "mail" in write.wr_option else ""
 
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/write_form.html",
@@ -468,15 +460,15 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
             "categories": board_config.get_category_list(),
             "board": board,
             "write": write,
-            "is_notice": is_notice,
-            "notice_checked": notice_checked,
+            "is_notice": True if not write.wr_reply and admin_type else False,
+            "notice_checked": "checked" if board_config.is_board_notice(wr_id) else "",
+            "is_html": board_config.is_html_level(),
             "html_checked": html_checked,
             "html_value": html_value,
             "is_secret": board.bo_use_secret if "secret" in write.wr_option else True,
-            "is_mail": is_mail,
-            "recv_email_checked": recv_email_checked,
+            "is_mail": board_config.use_email,
+            "recv_email_checked": "checked" if "mail" in write.wr_option else "",
             "is_link": board_config.is_link_level(),
-            "is_html": board_config.is_html_level(),
             "is_file": board_config.is_upload_level(),
             "is_file_content": bool(board.bo_use_file_content),
             "files": BoardFileManager(board, wr_id).get_board_files_by_form(),
@@ -577,50 +569,8 @@ def write_update(
             insert_point(request, member.mb_id, point, content, board.bo_table, write.wr_id, "쓰기")
 
         # 메일 발송
-        if config.cf_email_use and board.bo_use_email:
-            send_email_list = []
-            if config.cf_email_wr_board_admin and board.bo_admin:
-                board_admin = db.query(Member).filter_by(mb_id = board.bo_admin).first()
-                if board_admin:
-                    # print(board_admin.mb_email, "게시판관리자 추가")
-                    send_email_list.append(board_admin.mb_email)
-            if config.cf_email_wr_group_admin and board.group.gr_admin:
-                group_admin = db.query(Member).filter_by(mb_id = board.group.gr_admin).first()
-                if group_admin:
-                    # print(group_admin.mb_email, "그룹관리자 추가")
-                    send_email_list.append(group_admin.mb_email)
-            if config.cf_email_wr_super_admin:
-                super_admin = db.query(Member).filter_by(mb_id = config.cf_admin).first()
-                if super_admin:
-                    # print(super_admin.mb_email, "최고관리자 추가")
-                    send_email_list.append(super_admin.mb_email)
-            # TODO: 원 글을 등록할 때 원글 작성자에게 메일이 발송되는 것이 맞는지 확인 필요
-            # if config.cf_email_wr_write:
-            #     email = parent_write.wr_email if parent_write else write.wr_email
-            #     print(email, "원글 게시자 추가")
-            #     send_email_list.append(email)
-            # TODO: 원글/답변글을 등록할 때 작성자에게 메일이 발송되는 것이 맞는지 확인 필요
-            # if "mail" in write.wr_option and write.wr_email:
-            #     print(write.wr_email, "글 등록 게시자 추가")
-            #     send_email_list.append(write.wr_email)
-            
-            # 중복 이메일 제거
-            send_email_list = list(set(send_email_list))
-
-            for email in send_email_list:
-                # TODO: 내용 HTML 처리 필요
-                act = "답변" if parent_write else "새"
-                subject = f"[{config.cf_title}] {board.bo_subject} 게시판에 {act} 글이 등록되었습니다."
-                body = templates.TemplateResponse(
-                    "bbs/mail_form/write_update_mail.html", {
-                        "request": request,
-                        "wr_subject": write.wr_subject,
-                        "wr_name": write.wr_name,
-                        "wr_content": write.wr_content,
-                        "link_url": request.url_for("read_post", bo_table=bo_table, wr_id=write.wr_id),
-                    }
-                ).body.decode("utf-8")
-                mailer(email, subject, body)
+        if board_config.use_email:
+            send_write_mail(request, board, write, parent_write)
 
     # 글 수정
     elif compare_token(request, token, 'update'):
@@ -689,7 +639,6 @@ def write_update(
         db.commit()
 
     # TODO: 비밀글은 세션에 비밀글 저장 (자신의 글 확인)
-    # TODO: 메일발송
     
     # 최신글 캐시 삭제
     G6FileCache().delete_prefix(f'latest-{bo_table}')
@@ -1052,6 +1001,11 @@ def write_comment_update(
         # 게시글에 댓글 수 증가
         write.wr_comment = write.wr_comment + 1
         db.commit()
+
+        # 메일 발송
+        if board_config.use_email:
+            send_write_mail(request, board, comment, write)
+
     elif form.w == "cu":
         # 댓글 수정
         comment = db.query(write_model).get(form.comment_id)
