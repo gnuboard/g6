@@ -835,8 +835,9 @@ document.addEventListener('DOMContentLoaded', function() {
 function generate_token() {
     var token = "";
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', '/generate_token', false); // false for synchronous request
+    xhr.open('POST', '/generate_token', false);  // false for synchronous request
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+
     xhr.onload = function() {
         if (xhr.status === 200) {
             var response = JSON.parse(xhr.responseText);
@@ -844,15 +845,16 @@ function generate_token() {
                 token = response.token;
             } else {
                 alert('토큰 생성에 실패하였습니다.');
-                token = '';
             }
         } else {
-            console.error(xhr.statusText);
+            console.error('Request failed. Returned status of ' + xhr.status);
         }
     };
+
     xhr.onerror = function() {
-        console.error(xhr.statusText);
+        console.error('Request error:', xhr.statusText);
     };
+
     xhr.send();
     return token;
 }

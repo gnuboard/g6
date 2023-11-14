@@ -227,6 +227,34 @@
                 return false;
             });
     }
+
+    function check_duplication(url) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, false); // false for synchronous request
+        xhr.setRequestHeader('Cache-Control', 'no-cache');
+        var is_duplicated = false;
+    
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var data = JSON.parse(xhr.responseText);
+                if (data.result === 'exists') {
+                    is_duplicated = true;
+                }
+            } else {
+                console.error('Request failed. Returned status of ' + xhr.status);
+                is_duplicated = true; // 에러가 발생하면 중복 상태로 간주
+            }
+        };
+    
+        xhr.onerror = function() {
+            console.error('Request error:', xhr.statusText);
+            is_duplicated = true; // 에러가 발생하면 중복 상태로 간주
+        };
+    
+        xhr.send();
+        return is_duplicated;
+    }
+        
     
     function fmember_submit(f) {
         if (!f.mb_icon.value.match(/\.(gif)$/i) && f.mb_icon.value) {
@@ -242,28 +270,10 @@
         {% if not member.mb_id %}
         // 아이디 중복 검증
         var mb_id = f.mb_id.value;
-        var is_duplicated = false; // 중복 상태를 저장하는 변수
-        
-        $.ajax({
-            <!-- url: '/admin/check_member_id/'+mb_id, -->
-            url: `/admin/check_member_id/${mb_id}`,
-            type: 'GET',
-            async: false,
-            cache: false,
-            success: function(data) {
-                if (data.result === 'exists') {
-                    alert('이미 존재하는 회원아이디입니다.');
-                    is_duplicated = true;
-                }
-            },
-            error: function(error) {
-                console.error('Error:', error);
-                alert('회원아이디 중복 검증 중 에러가 발생했습니다.')
-                is_duplicated = true; // 에러가 발생하면 중복 상태로 간주
-            }
-        });
-        if (is_duplicated) {
+        var is_mb_id_duplicated = check_duplication(`/admin/check_member_id/${mb_id}`);
+        if (is_mb_id_duplicated) {
             f.mb_id.focus();
+            alert('이미 존재하는 회원아이디입니다.');
             return false; // 중복이거나 에러가 발생한 경우 폼 제출 중지
         }
         {% endif %}
@@ -272,58 +282,26 @@
         if (f.mb_nick.value != '' && f.mb_nick.value != f.mb_nick.defaultValue) {
             var mb_id = f.mb_id.value;
             var mb_nick = f.mb_nick.value
-            var is_duplicated = false; // 중복 상태를 저장하는 변수
+            var is_mb_nick_duplicated = check_duplication(`/admin/check_member_nick/${mb_nick}/${mb_id}`);
 
-            $.ajax({
-                url: `/admin/check_member_nick/${mb_nick}/${mb_id}`,
-                type: 'GET',
-                async: false,
-                cache: false,
-                success: function(data) {
-                    if (data.result === 'exists') {
-                        alert('중복된 닉네임입니다.');
-                        is_duplicated = true;
-                    }
-                },
-                error: function(error) {
-                    console.error('Error:', error);
-                    alert('닉네임 중복 검증 중 에러가 발생했습니다.')
-                    is_duplicated = true; // 에러가 발생하면 중복 상태로 간주
-                }
-            });
-        }
-        if (is_duplicated) {
-            f.mb_nick.focus();
-            return false; // 중복이거나 에러가 발생한 경우 폼 제출 중지
+            if (is_mb_nick_duplicated) {
+                f.mb_nick.focus();
+                alert('중복된 닉네임입니다.');
+                return false; // 중복이거나 에러가 발생한 경우 폼 제출 중지
+            }
         }
 
         // 이메일 중복 검증
         if (f.mb_email.value != '' && f.mb_email.value != f.mb_email.defaultValue) {
             var mb_id = f.mb_id.value;
             var mb_email = f.mb_email.value
-            var is_duplicated = false; // 중복 상태를 저장하는 변수
+            var is_mb_email_duplicated = check_duplication(`/admin/check_member_email/${mb_email}/${mb_id}`);
 
-            $.ajax({
-                url: `/admin/check_member_email/${mb_email}/${mb_id}`,
-                type: 'GET',
-                async: false,
-                cache: false,
-                success: function(data) {
-                    if (data.result === 'exists') {
-                        alert('중복된 이메일 주소입니다.');
-                        is_duplicated = true;
-                    }
-                },
-                error: function(error) {
-                    console.error('Error:', error);
-                    alert('이메일 중복 검증 중 에러가 발생했습니다.')
-                    is_duplicated = true; // 에러가 발생하면 중복 상태로 간주
-                }
-            });
-        }
-        if (is_duplicated) {
-            f.mb_email.focus();
-            return false; // 중복이거나 에러가 발생한 경우 폼 제출 중지
+            if (is_mb_email_duplicated) {
+                f.mb_email.focus();
+                alert('중복된 이메일 주소입니다.');
+                return false; // 중복이거나 에러가 발생한 경우 폼 제출 중지
+            }
         }
 
         f.token.value = generate_token();
