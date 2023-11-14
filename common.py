@@ -1475,7 +1475,7 @@ class MyTemplates(Jinja2Templates):
                  globals: dict = None,
                  env: Environment = None
                  ):
-        super().__init__(directory=directory, context_processors=context_processors, env=env)
+        super().__init__(directory=directory, context_processors=context_processors)
         # 공통 env.global 설정
         self.env.globals["editor_path"] = editor_path
         self.env.globals["generate_token"] = generate_token

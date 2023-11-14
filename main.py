@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import TypeAdapter
 
-from _lib.plugin.service import load_all_plugin, register_statics, PLUGIN_DIR
+from _lib.plugin.service import load_all_plugin, register_statics, PLUGIN_DIR, plugin_state_setting
 from database import get_db
 from starlette.middleware.sessions import SessionMiddleware
 from common import *
@@ -59,9 +59,13 @@ app.include_router(social_router, prefix="/bbs", tags=["social"])
 # is_mobile = False
 # user_device = 'pc'
 
+plugin_info_list = []  # global variable 플러그인정보목록
+plugin_info_list = load_all_plugin(PLUGIN_DIR)
+register_statics(app, plugin_info_list)
 
-plugin_list = load_all_plugin(PLUGIN_DIR)
-register_statics(app, plugin_list)
+# todo: 플러그인 상태를 저장하는 테이블
+# plugin_state_setting(plugin_state, plugin_info_list)
+
 
 # 하위경로를 먼저 등록하고 상위경로를 등록
 # plugin/plugin_name/static 폴더 이후 등록
