@@ -6,10 +6,10 @@
 {% endblock head %}
 
 {% block title %}
-    {{ board.bo_subject }} 글쓰기
+    {{ board.subject }} 글쓰기
 {% endblock title %}
 {% block subtitle %}
-    {{ board.bo_subject }} 글쓰기
+    {{ board.subject }} 글쓰기
 {% endblock subtitle %}
 
 {% block content %}
@@ -18,7 +18,7 @@
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
 <section id="bo_w">
     <!-- 게시물 작성/수정 시작 { -->
-    <form name="fwrite" id="fwrite" action="{{ url_for('write_update') }}" method="post" enctype="multipart/form-data" autocomplete="off" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
+    <form name="fwrite" id="fwrite" action="{{ url_for('write_update') }}" method="post" enctype="multipart/form-data" onsubmit="return fwrite_submit(this);" autocomplete="off" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
         <input type="hidden" name="uid" value="{{ get_unique_id(request) }}">
         <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
         <input type="hidden" name="wr_id" value="{{ write.wr_id }}">
@@ -128,13 +128,14 @@
         </div>
 
         {{ editor.body("wr_content", write.wr_content) }}
-
-        {% for i in range(1, 3) %}
-            <div class="bo_w_link write_div">
-                <label for="wr_link{{ i }}"><i class="fa fa-link" aria-hidden="true"></i><span class="sound_only"> 링크 #{{ i }}</span></label>
-                <input type="text" name="wr_link{{ i }}" value="{{ getattr(write, "wr_link" ~ i, "") }}" id="wr_link{{ i }}" class="frm_input full_input" size="50">
-            </div>
-        {% endfor %}
+        {% if is_link %}
+            {% for i in range(1, 3) %}
+                <div class="bo_w_link write_div">
+                    <label for="wr_link{{ i }}"><i class="fa fa-link" aria-hidden="true"></i><span class="sound_only"> 링크 #{{ i }}</span></label>
+                    <input type="text" name="wr_link{{ i }}" value="{{ getattr(write, "wr_link" ~ i, "") }}" id="wr_link{{ i }}" class="frm_input full_input" size="50">
+                </div>
+            {% endfor %}
+        {% endif %}
         
         {% if is_file %}
             {% for file in files %}
@@ -193,8 +194,12 @@
 
         function fwrite_submit(f)
         {
+            // TODO: 에디터 사용 시, 첫번째 submit 요청은 wr_content_editor.value를 가져오지 못한다.
+            /*
             var wr_content_editor = document.getElementById('wr_content');
+            console.log(wr_content_editor.value)
             if (!wr_content_editor.value) { alert("내용을 입력해 주십시오."); wr_content_editor.focus(); return false; }
+            */
             /*
             var subject = "";
             var content = "";

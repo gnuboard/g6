@@ -583,7 +583,8 @@ def write_update(
             raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
 
         for field, value in form_data.__dict__.items():
-            setattr(write, field, value)
+            if value:
+                setattr(write, field, value)
 
         # 분류 수정 시 댓글/답글도 같이 수정
         db.query(model_write).filter(model_write.wr_parent == wr_id).update({"ca_name": form_data.ca_name})
@@ -907,7 +908,6 @@ def download_file(
     
     # 게시물당 포인트가 한번만 차감되도록 세션 설정
     session_name = f"ss_down_{bo_table}_{wr_id}"
-    request.session[session_name] = False
     if not request.session.get(session_name):
         # 관리자이거나 자신의 글이면 통과하는 함수
         if not (admin_type 

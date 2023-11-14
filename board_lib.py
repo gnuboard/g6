@@ -316,7 +316,6 @@ class BoardConfig():
 
 # TODO:
 # 7. 이미지, 동영상 업로드 파일 확인 (cf_image_extension, cf_movie_extension)
-# 8. 업로드 사이즈 체크 (bo_upload_size)
 class BoardFileManager():
     model = BoardFile
 
