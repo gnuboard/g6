@@ -755,6 +755,15 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
     # 파일정보 조회
     images, files = BoardFileManager(board, wr_id).get_board_files_by_type(request)
 
+    # 링크정보 조회
+    links = []
+    for i in range(1, 3):
+        url = getattr(write, f"wr_link{i}")
+        hit = getattr(write, f"wr_link{i}_hit")
+        if url:
+            links.append({"no": i, "url": url, "hit": hit})
+
+
     # 댓글 목록 조회
     comments = db.query(model_write).filter_by(
         wr_parent = wr_id,
@@ -789,6 +798,7 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
         "next": next,
         "images": images,
         "files": files,
+        "links": links,
         "is_write": board_config.is_write_level(),
         "is_reply": board_config.is_reply_level(),
         "is_comment_write": board_config.is_comment_level(),
@@ -1049,3 +1059,46 @@ def delete_comment(
     db.commit()
 
     return RedirectResponse(f"/board/{bo_table}/{write.wr_id}", status_code=303)
+
+
+@router.get("/{bo_table}/{wr_id}/link/{no}")
+def link_url(
+    request: Request,
+    db: Session = Depends(get_db),
+    bo_table: str = Path(...),
+    wr_id: int = Path(...),
+    no: int = Path(...)
+):
+    """
+    게시글에 포함된 링크이동
+    """
+    # 게시판 정보 조회
+    board = db.query(Board).filter_by(bo_table=bo_table).first()
+    if not board:
+        raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
+
+    # 게시글 조회
+    model_write = dynamic_create_write_table(bo_table)
+    write = db.query(model_write).get(wr_id)
+    if not write:
+        raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
+    
+    # 링크정보 조회
+    url = getattr(write, f"wr_link{no}")
+    if not url:
+        raise AlertException("링크가 존재하지 않습니다.", 404)
+    
+    # 링크 세션 설정
+    link_session_name = f"ss_link_{bo_table}_{wr_id}_{no}"
+    if not request.session.get(link_session_name):
+        # 링크 횟수 증가
+        setattr(write, f"wr_link{no}_hit", getattr(write, f"wr_link{no}_hit") + 1)
+        db.commit()
+        request.session[link_session_name] = True
+
+    # url에 http가 없으면 붙여줌
+    if not url.startswith("http"):
+        url = "http://" + url
+    
+    # 새 창의 외부 URL로 이동
+    return RedirectResponse(url, status_code=303)

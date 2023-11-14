@@ -194,6 +194,27 @@
         </ul>
     </section>
 
+    
+    <!-- 관련링크 시작 { -->
+    {% if links %}
+    <section id="bo_v_link">
+        <h2>관련링크</h2>
+        <ul>
+            {% for link in links %}
+            <li>
+                <i class="fa fa-link" aria-hidden="true"></i>
+                <a href="{{ url_for("link_url", bo_table=board.bo_table, wr_id=write.wr_id, no=link.no) }}" target="_blank">
+                    <strong>{{ link.url|truncate(70, False, '...', 0) }}</strong>
+                </a>
+                <br>
+                <span class="bo_v_link_cnt">{{ link.hit }}회 연결</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+    <!-- } 관련링크 끝 -->
+
     <ul class="bo_v_nb">
         {% if prev %}
         <li class="btn_prv">
