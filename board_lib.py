@@ -339,6 +339,23 @@ class BoardFileManager():
 
         return self.db.query(literal(True)).filter(query.exists()).scalar()
     
+    def is_upload_size(self, file: UploadFile) -> bool:
+        """업로드 파일 사이즈를 확인한다.
+
+        Args:
+            file (UploadFile): 업로드 파일
+
+        Returns:
+            bool: 업로드 파일 사이즈가 설정된 값보다 작으면 True, 크면 False
+        """
+        if file.size <= 0:
+            return False
+
+        if not self.board.bo_upload_size:
+            return True
+
+        return file.size <= self.board.bo_upload_size
+    
     def get_board_files(self):
         """업로드된 파일 목록을 가져온다.
 
@@ -357,7 +374,6 @@ class BoardFileManager():
             list[BoardFile]: 업로드된 파일 목록 
         """
         config_count = int(self.board.bo_upload_count) or 0
-        upload_count = config_count
         if self.wr_id:
             query = self.db.query(self.model).filter_by(bo_table=self.bo_table, wr_id=self.wr_id)
             uploaded_count = query.count()
@@ -366,6 +382,7 @@ class BoardFileManager():
             upload_count = (uploaded_count if uploaded_count > config_count else config_count) - uploaded_count
         else:
             uploaded_files = []
+            upload_count = config_count
 
         # 업로드 파일 + 빈 객체
         files = uploaded_files + [self.model() for _ in range(upload_count)]
