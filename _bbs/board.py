@@ -386,9 +386,6 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
     # 메일
     is_mail = True if request.state.config.cf_email_use and board.bo_use_email else False
     recv_email_checked = "checked"
-    # 글자수 제한 설정값
-    write_min = 0 if admin_type or board.bo_use_dhtml_editor else int(board.bo_write_min)
-    write_max = 0 if admin_type or board.bo_use_dhtml_editor else int(board.bo_write_max)
 
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/write_form.html",
@@ -406,8 +403,8 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
             "is_file": board_config.is_upload_level(),
             "is_file_content": bool(board.bo_use_file_content),
             "files": BoardFileManager(board).get_board_files_by_form(),
-            "write_min": write_min,
-            "write_max": write_max,
+            "write_min": board_config.write_min,
+            "write_max": board_config.write_max,
         }
     )
 
@@ -463,9 +460,6 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
     # 메일 설정
     is_mail = True if request.state.config.cf_email_use and board.bo_use_email else False;
     recv_email_checked = "checked" if "mail" in write.wr_option else ""
-    # 글자수 제한 설정값
-    write_min = 0 if admin_type or board.bo_use_dhtml_editor else int(board.bo_write_min)
-    write_max = 0 if admin_type or board.bo_use_dhtml_editor else int(board.bo_write_max)
 
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/write_form.html",
@@ -486,8 +480,8 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
             "is_file": board_config.is_upload_level(),
             "is_file_content": bool(board.bo_use_file_content),
             "files": BoardFileManager(board, wr_id).get_board_files_by_form(),
-            "write_min": write_min,
-            "write_max": write_max,
+            "write_min": board_config.write_min,
+            "write_max": board_config.write_max,
         }
     )
 

@@ -45,8 +45,17 @@ class BoardConfig():
             return self.board.bo_mobile_subject
         else:
             return self.board.bo_subject
-    
-    
+        
+    @property
+    def write_min(self) -> int:
+        """게시글 등록 최소 글수 제한"""
+        return self._get_text_limit(self.board.bo_write_min)
+        
+    @property
+    def write_max(self) -> int:
+        """게시글 등록 최대 글수 제한"""
+        return self._get_text_limit(self.board.bo_write_max)
+               
     def cut_write_subject(self, subject, cut_length: int = 0) -> str:
         """주어진 cut_length에 기반하여 subject 문자열을 자르고 필요한 경우 "..."을 추가합니다.
 
@@ -271,6 +280,20 @@ class BoardConfig():
             return False
         else:
             return True
+        
+    def _get_text_limit(self, limit: int) -> int:
+        """게시글/댓글 작성 제한 글 수를 반환.
+
+        Args:
+            limit (int): 게시글 작성 제한 글 수.
+
+        Returns:
+            int: 게시글 작성 제한 글 수.
+        """
+        if self.login_member_admin_type or self.board.bo_use_dhtml_editor:
+            return 0
+        else:
+            return limit
         
 
 # TODO:
