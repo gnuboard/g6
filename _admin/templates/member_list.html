@@ -200,63 +200,26 @@ function fmemberlist_submit(f) {
     return true;
 }
 
-{#
-// sideview 를 동적으로 생성하려 했으나 기존 PHP 코드와의 호환성을 위하여 기존 방식대로 처리하기로 함    
-$('div.dynamic_sideview').css('position', 'relative');
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.clickable-text').forEach(function(element) {
+        element.addEventListener('click', function() {
+            let memberId = this.getAttribute('data-memberid');
 
-$('body').on('click', 'div.sv_wrap', function(e) {
-    e.stopPropagation();  // 이 이벤트가 상위 요소로 전파되지 않도록 합니다.
-
-    var mb_id = $(this).data('memberid');
-    console.log(mb_id);
-
-    if (!mb_id) return;
-
-    var that = this;  // 원래의 this 값을 저장
-
-    $.get('/sideview/' + mb_id)
-        .done(function(data) {
-            // 기존의 dynamic_layer 제거
-            $('div.sv_on').remove();
-
-            var dynamic_layer = $('<div class="sv sv_on"></div>').html(data);
-            // 위치 조정
-            dynamic_layer.css({
-                'top': '-5px',
-                'left': '40px',  // 클릭한 요소의 오른쪽에 위치시키기 위해 left 값을 조정
-                'position': 'absolute'
+            // 서버에 Fetch API를 사용하여 요청
+            fetch('/get-member-info', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'memberid=' + memberId
+            })
+            .then(response => response.text())
+            .then(data => {
+                // data는 서버로부터 받아온 정보를 포함하고 있습니다.
+                // 이 정보를 사용하여 레이어를 구성하고 표시합니다.
+                document.getElementById('info-layer').innerHTML = data;
+                document.getElementById('info-layer').style.display = 'block';
             });
-
-            // Insert the dynamic_layer into the .sv_on class
-            $(that).find('div.dynamic_sideview').html(dynamic_layer);
-        })
-        .fail(function() {
-            console.error('Error fetching data');
-        });
-});
-
-// 페이지의 다른 부분을 클릭하면 모든 sv_on 요소를 숨깁니다.
-$(document).on('click', function(e) {
-    if (!$(e.target).closest('div.sv_wrap').length) {
-        $('div.sv_on').remove();
-    }
-});
-
-// sv_on 클래스를 가진 div 요소 내부를 클릭했을 때 이벤트 전파를 막습니다.
-$('body').on('click', 'div.sv_on', function(e) {
-    e.stopPropagation();
-}); 
-#}
-
-$(document).ready(function() {
-    $('.clickable-text').on('click', function() {
-        let memberId = $(this).data('memberid');
-        
-        // 서버에 AJAX 요청
-        $.get('/get-member-info', { memberid: memberId }, function(data) {
-            // data는 서버로부터 받아온 정보를 포함하고 있습니다.
-            // 이 정보를 사용하여 레이어를 구성하고 표시합니다.
-            $('#info-layer').html(data).show();
         });
     });
 });
