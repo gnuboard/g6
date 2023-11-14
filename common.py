@@ -1699,22 +1699,25 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
         return g6_file_cache.get(cache_file)
 
     # Lazy import
-    import board_lib
+    from board_lib import BoardConfig, get_list
     
     db = SessionLocal()
+    # 게시판 설정
     board = db.query(Board).filter(Board.bo_table == bo_table).first()
+    board_config = BoardConfig(request, board)
+    board.subject = board_config.subject
 
+    #게시글 목록 조회
     Write = dynamic_create_write_table(bo_table)
     writes = db.query(Write).filter(Write.wr_is_comment == False).order_by(Write.wr_num).limit(rows).all()
     for write in writes:
-        write = board_lib.get_list(request, write, board)
+        write = get_list(request, write, board)
     
     context = {
         "request": request,
         "board": board,
         "writes": writes,
         "bo_table": bo_table,
-        "bo_subject": board.bo_subject,
     }
     temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
     temp_decode = temp.body.decode("utf-8")

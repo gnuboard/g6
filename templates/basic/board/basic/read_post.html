@@ -7,10 +7,10 @@
     <script src="{{ url_for('static', path="js/viewimageresize.js") }}"></script>
 {% endblock head %}
 {% block title %}
-    {{ write.wr_subject|truncate(20, False, '...', 0) }} > {{ board.bo_subject }}
+    {{ write.wr_subject|truncate(20, False, '...', 0) }} > {{ board.subject }}
 {% endblock title %}
 {% block subtitle %}
-    {{ board.bo_subject }}
+    {{ board.subject }}
 {% endblock subtitle %}
 
 {% block content %}

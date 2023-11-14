@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta
 from fastapi import Request
 from sqlalchemy import and_, or_
-from sqlalchemy.orm import Query
+from sqlalchemy.orm import Query as SqlQuery
 
 from common import *
 from database import SessionLocal
@@ -28,6 +28,19 @@ class BoardConfig():
         page_rows = self.config.cf_mobile_page_rows if self.is_mobile else self.config.cf_page_rows
     
         return bo_page_rows if bo_page_rows != 0 else page_rows
+    
+    @property
+    def subject(self) -> str:
+        """게시판 제목을 반환.
+
+        Returns:
+            str: 게시판 제목.
+        """
+        if self.request.state.is_mobile and self.board.bo_mobile_subject:
+            return self.board.bo_mobile_subject
+        else:
+            return self.board.bo_subject
+    
     
     def cut_write_subject(self, subject, cut_length: int = 0) -> str:
         """주어진 cut_length에 기반하여 subject 문자열을 자르고 필요한 경우 "..."을 추가합니다.
@@ -159,7 +172,7 @@ class BoardConfig():
 
         return ",".join(map(str, notice_ids))
     
-    def set_wr_name(self, member: Member = None, default_name: str = None) -> str:
+    def set_wr_name(self, member: Member = None, default_name: str = "") -> str:
         """실명사용 여부를 확인 후 실명이면 이름을, 아니면 닉네임을 반환한다.
 
         Args:
@@ -493,7 +506,7 @@ def write_search_filter(
         category: str = None,
         search_field: str = None,
         keyword: str = None,
-        operator: str = "or") -> Query:
+        operator: str = "or") -> SqlQuery:
     """게시판 검색 필터를 적용합니다.
     - 그누보드5의 get_sql_search와 동일한 기능을 합니다.
 

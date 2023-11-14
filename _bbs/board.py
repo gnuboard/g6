@@ -36,6 +36,7 @@ def group_board_list(
     """
     게시판그룹의 모든 게시판 목록을 보여준다.
     """
+    # 게시판 그룹 정보 조회
     group = db.query(Group).get(gr_id)
     if not group:
         raise AlertException(f"{gr_id} : 존재하지 않는 게시판그룹입니다.", 404)
@@ -77,14 +78,16 @@ def list_post(
     board = db.query(Board).get(bo_table)
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
-    
-    board_config = BoardConfig(request, board)
-    model_write = dynamic_create_write_table(bo_table)
+
     sca = request.query_params.get("sca")
     sst = search_params['sst']
     sod = search_params['sod']
     current_page = search_params['current_page']
+
+    model_write = dynamic_create_write_table(bo_table)
+    board_config = BoardConfig(request, board)
     page_rows = board_config.page_rows
+    board.subject = board_config.subject
 
     notice_writes = []
     # 공지 게시글 목록 조회
@@ -352,7 +355,10 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
     board = db.query(Board).get(bo_table)
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
-
+    # 게시판 설정
+    board_config = BoardConfig(request, board)
+    board.subject = board_config.subject
+    
     # 게시판 관리자 확인
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
@@ -422,15 +428,17 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
     
-    board_config = BoardConfig(request, board)
-    if not board_config.is_modify_by_comment(wr_id):
-        raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_modify}건 이상 존재하므로 수정 할 수 없습니다.", 403)
-    
     # 게시판 관리자 확인
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
     member_level = get_member_level(request)
     admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
+
+    # 게시판 설정
+    board_config = BoardConfig(request, board)
+    board.subject = board_config.subject
+    if not board_config.is_modify_by_comment(wr_id) and not admin_type:
+        raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_modify}건 이상 존재하므로 수정 할 수 없습니다.", 403)
 
     # 게시판 에디터 설정
     request.state.use_editor = board.bo_use_dhtml_editor
@@ -696,13 +704,18 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
     """
     게시글을 1개 읽는다.
     """
+    config = request.state.config
+
     # 게시판 정보 조회
     board = db.query(Board).get(bo_table)
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
-    
-    config = request.state.config
+
+    # 게시판 설정
     board_config = BoardConfig(request, board)
+    board.subject = board_config.subject
+
+    # 게시판 관리자 확인
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
     member_level = get_member_level(request)
