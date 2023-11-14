@@ -62,12 +62,14 @@
                         <span class="sound_only">게시판 검색</span>
                     </button>
                 </li>
+                {% if is_write %}
                 <li>
                     <a href="{{ url_for('write_form_add', bo_table=board.bo_table) }}" class="btn_b01 btn" title="글쓰기">
                         <i class="fa fa-pencil" aria-hidden="true"></i>
                         <span class="sound_only">글쓰기</span>
                     </a>
                 </li>
+                {% endif %}
                 {% if is_admin %}
                 <li>
                     <button type="button" class="btn_more_opt is_list_btn btn_b01 btn" title="게시판 리스트 옵션">
@@ -192,11 +194,13 @@
                     </a>
                 </li>
                 {% endif %}
+                {% if is_write %}
                 <li>
                     <a href="{{ url_for('write_form_add', bo_table=board.bo_table) }}" class="btn_b01 btn" title="글쓰기">
                         <i class="fa fa-pencil" aria-hidden="true"></i><span class="sound_only">글쓰기</span>
                     </a>
                 </li>
+                {% endif %}
             </ul>
         </div>
     </form>

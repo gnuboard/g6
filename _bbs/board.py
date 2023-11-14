@@ -44,12 +44,12 @@ def group_board_list(
     # 게시판관리자 검증
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
+    member_level = get_member_level(request)
     admin_type = get_admin_type(request, mb_id, group=group)
     if not admin_type and request.state.device == 'mobile':
         raise AlertException(f"{group.gr_subject} 그룹은 모바일에서만 접근할 수 있습니다.", 400, url="/")
     
     # 그룹별 게시판 목록 조회
-    member_level = get_member_level(request)
     query_boards = db.query(Board).filter(
         Board.gr_id == gr_id,
         Board.bo_list_level <= member_level,
@@ -88,6 +88,9 @@ def list_post(
     board_config = BoardConfig(request, board)
     page_rows = board_config.page_rows
     board.subject = board_config.subject
+
+    if not board_config.is_list_level():
+        raise AlertException("목록을 볼 권한이 없습니다.", 403)
 
     notice_writes = []
     # 공지 게시글 목록 조회
@@ -131,7 +134,8 @@ def list_post(
             "writes": writes,
             "total_count": total_count,
             "current_page": search_params['current_page'],
-            "paging": get_paging(request, search_params['current_page'], total_count, page_rows)
+            "paging": get_paging(request, search_params['current_page'], total_count, page_rows),
+            "is_write": board_config.is_write_level(),
         }
     )
 
@@ -352,46 +356,36 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
     게시글을 작성하는 form을 보여준다.
     """
     # 게시판 정보 조회
-    board = db.query(Board).get(bo_table)
+    board = db.query(Board).filter_by(bo_table=bo_table).first()
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
     # 게시판 설정
     board_config = BoardConfig(request, board)
     board.subject = board_config.subject
     
+    # 답글 생성가능여부 체크
+    if parent_id:
+        if not board_config.is_reply_level():
+            raise AlertException("답변글을 작성할 권한이 없습니다.", 403)
+    
+        model_write = dynamic_create_write_table(bo_table)
+        write = db.query(model_write).get(parent_id)
+        generate_reply_character(board, write)
+    else:
+        if not board_config.is_write_level():
+            raise AlertException("글을 작성할 권한이 없습니다.", 403)
+
     # 게시판 관리자 확인
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
-    member_level = get_member_level(request)
     admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
-
-    # 답글 생성가능여부 체크
-    if parent_id:
-        model_write = dynamic_create_write_table(bo_table)
-        write = db.query(model_write).get(parent_id)
-        wr_reply = generate_reply_character(board, write)
 
     # 에디터 설정
     request.state.use_editor = board.bo_use_dhtml_editor
     request.state.editor = board.bo_select_editor or request.state.editor
-    
-    # 분류
-    categories = [] if not board.bo_use_category else board.bo_category_list.split("|")
-    # 공지사항
-    is_notice = True if admin_type and not parent_id else False
-    # HTML
-    is_html = member_level >= board.bo_html_level
-    # 비밀글
-    is_secret = board.bo_use_secret
     # 메일
     is_mail = True if request.state.config.cf_email_use and board.bo_use_email else False
     recv_email_checked = "checked"
-    # 링크
-    is_link = member_level >= board.bo_link_level
-    # 파일
-    is_file = member_level >= board.bo_upload_level
-    is_file_content = board.bo_use_file_content
-    files = BoardFileManager(board).get_board_files_by_form()
     # 글자수 제한 설정값
     write_min = 0 if admin_type or board.bo_use_dhtml_editor else int(board.bo_write_min)
     write_max = 0 if admin_type or board.bo_use_dhtml_editor else int(board.bo_write_max)
@@ -400,18 +394,18 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
         f"{request.state.device}/board/{board.bo_skin}/write_form.html",
         {
             "request": request,
-            "categories": categories,
+            "categories": board_config.get_category_list(),
             "board": board,
             "write": None,
-            "is_notice": is_notice,
-            "is_html": is_html,
-            "is_secret": is_secret,
+            "is_notice": True if admin_type and not parent_id else False,
+            "is_secret": board.bo_use_secret,
             "is_mail": is_mail,
             "recv_email_checked": recv_email_checked,
-            "is_link": is_link,
-            "is_file": is_file,
-            "is_file_content": is_file_content,
-            "files": files,
+            "is_link": board_config.is_link_level(),
+            "is_html": board_config.is_html_level(),
+            "is_file": board_config.is_upload_level(),
+            "is_file_content": bool(board.bo_use_file_content),
+            "files": BoardFileManager(board).get_board_files_by_form(),
             "write_min": write_min,
             "write_max": write_max,
         }
@@ -424,36 +418,40 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
     게시글을 작성하는 form을 보여준다.
     """
     # 게시판 정보 조회
-    board = db.query(Board).get(bo_table)
+    board = db.query(Board).filter_by(bo_table=bo_table).first()
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
+
+    # 게시글 조회
+    model_write = dynamic_create_write_table(bo_table)
+    write = db.query(model_write).get(wr_id)
+    if not write:
+        raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
     
     # 게시판 관리자 확인
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
-    member_level = get_member_level(request)
     admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
 
     # 게시판 설정
     board_config = BoardConfig(request, board)
     board.subject = board_config.subject
-    if not board_config.is_modify_by_comment(wr_id) and not admin_type:
+    # TODO: 익명글 수정 시 비밀번호
+    if not board_config.is_write_level():
+        raise AlertException("글을 수정할 권한이 없습니다.", 403)
+    elif not is_owner(write, mb_id) and not admin_type:
+        raise AlertException("본인 글만 수정할 수 있습니다.", 403)
+    if not board_config.is_modify_by_comment(wr_id):
         raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_modify}건 이상 존재하므로 수정 할 수 없습니다.", 403)
 
     # 게시판 에디터 설정
     request.state.use_editor = board.bo_use_dhtml_editor
     request.state.editor = board.bo_select_editor or request.state.editor
 
-    # 분류
-    categories = [] if not board.bo_use_category else board.bo_category_list.split("|")
-    # 게시글 조회
-    model_write = dynamic_create_write_table(bo_table)
-    write = db.query(model_write).get(wr_id)
     # 공지사항 설정
     is_notice = True if not write.wr_reply and admin_type else False
     notice_checked = "checked" if board_config.is_board_notice(wr_id) else ""
     # HTML 설정
-    is_html = True if member_level >= board.bo_html_level else False
     html_checked = ""
     html_value = ""
     if "html1" in write.wr_option:
@@ -462,18 +460,9 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
     elif "html2" in write.wr_option:
         html_checked = "checked"
         html_value = "html2"
-    # 비밀글
-    is_secret = board.bo_use_secret if "secret" in write.wr_option else True
     # 메일 설정
     is_mail = True if request.state.config.cf_email_use and board.bo_use_email else False;
     recv_email_checked = "checked" if "mail" in write.wr_option else ""
-    # 링크 설정
-    is_link = True if member_level >= board.bo_link_level else False
-    # 파일 설정
-    is_file = True if member_level >= board.bo_upload_level else False
-    is_file_content = True if board.bo_use_file_content else False
-    # 업로드 파일 목록 조회
-    files = BoardFileManager(board, wr_id).get_board_files_by_form()
     # 글자수 제한 설정값
     write_min = 0 if admin_type or board.bo_use_dhtml_editor else int(board.bo_write_min)
     write_max = 0 if admin_type or board.bo_use_dhtml_editor else int(board.bo_write_max)
@@ -482,21 +471,21 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
         f"{request.state.device}/board/{board.bo_skin}/write_form.html",
         {
             "request": request,
-            "categories": categories,
+            "categories": board_config.get_category_list(),
             "board": board,
             "write": write,
             "is_notice": is_notice,
             "notice_checked": notice_checked,
-            "is_html": is_html,
             "html_checked": html_checked,
             "html_value": html_value,
-            "is_secret": is_secret,
+            "is_secret": board.bo_use_secret if "secret" in write.wr_option else True,
             "is_mail": is_mail,
             "recv_email_checked": recv_email_checked,
-            "is_link": is_link,
-            "is_file": is_file,
-            "is_file_content": is_file_content,
-            "files": files,
+            "is_link": board_config.is_link_level(),
+            "is_html": board_config.is_html_level(),
+            "is_file": board_config.is_upload_level(),
+            "is_file_content": bool(board.bo_use_file_content),
+            "files": BoardFileManager(board, wr_id).get_board_files_by_form(),
             "write_min": write_min,
             "write_max": write_max,
         }
@@ -513,9 +502,9 @@ def write_update(
     db: Session = Depends(get_db),
     uid: str = Form(None),
     notice: bool = Form(False),
-    html: str = Form(None),
-    mail: str = Form(None),
-    secret: str = Form(None),
+    html: str = Form(""),
+    mail: str = Form(""),
+    secret: str = Form(""),
     form_data: WriteForm = Depends(),
     files: List[UploadFile] = File(None, alias="bf_file[]"),
     file_content: list = Form(None, alias="bf_content[]"),
@@ -536,21 +525,34 @@ def write_update(
     board_config = BoardConfig(request, board)
 
     # 비밀글 사용여부 체크
-    if not admin_type and not board.bo_use_secret and "secret" in secret and "secret" in html and "secret" in mail:
-        raise AlertException("비밀글 미사용 게시판 이므로 비밀글로 등록할 수 없습니다.", 403)
-    # 비밀글 옵션에 따라 비밀글 설정
-    if not admin_type and board.bo_use_secret == 2:
-        secret = "secret"
-    
+    if not admin_type:
+        if not board.bo_use_secret and "secret" in secret and "secret" in html and "secret" in mail:
+            raise AlertException("비밀글 미사용 게시판 이므로 비밀글로 등록할 수 없습니다.", 403)
+        # 비밀글 옵션에 따라 비밀글 설정
+        if board.bo_use_secret == 2:
+            secret = "secret"
+
     # 게시글 테이블 정보 조회
     model_write = dynamic_create_write_table(bo_table)
     # 옵션 설정
     options = [opt for opt in [html, secret, mail] if opt]
     form_data.wr_option = ",".join(map(str, options))
 
+    # 링크 설정
+    if not board_config.is_link_level():
+        form_data.wr_link1 = ""
+        form_data.wr_link2 = ""
+
     # 글 등록
     if compare_token(request, token, 'insert'):
-        parent_write = db.query(model_write).get(parent_id) if parent_id else None
+        if parent_id:
+            if not board_config.is_reply_level():
+                raise AlertException("답변글을 작성할 권한이 없습니다.", 403)
+            parent_write = db.query(model_write).get(parent_id) if parent_id else None
+        else:
+            if not board_config.is_write_level():
+                raise AlertException("글을 작성할 권한이 없습니다.", 403)
+            parent_write = None
 
         form_data.wr_name = board_config.set_wr_name(member, form_data.wr_name)
         form_data.wr_email = getattr(member, "mb_email", form_data.wr_email)
@@ -653,42 +655,44 @@ def write_update(
         db.query(AutoSave).filter(AutoSave.as_uid == uid).delete()
     db.commit()
 
-    # 업로드 파일처리
-    file_manager = BoardFileManager(board, write.wr_id)
-    directory = os.path.join(FILE_DIRECTORY, bo_table)
-    wr_file = write.wr_file
+    # 업로드 권한 검증
+    if board_config.is_upload_level():
+        # 업로드 파일처리
+        file_manager = BoardFileManager(board, write.wr_id)
+        directory = os.path.join(FILE_DIRECTORY, bo_table)
+        wr_file = write.wr_file
 
-    # 경로 생성
-    make_directory(directory)
+        # 경로 생성
+        make_directory(directory)
 
-    # 파일 삭제
-    if file_dels:
-        for bf_no in file_dels:
-            file_manager.delete_board_file(bf_no)
-            wr_file -= 1
-    
-    # 파일 업로드 처리 및 파일정보 저장
-    for file in files:
-        index = files.index(file)
-        if file.size > 0:
-            board_file = file_manager.get_board_file(index)
-            bf_content = file_content[index] if file_content else ""
-            filename = file_manager.get_filename(file.filename)
-            if board_file:
-                # 기존파일 삭제
-                file_manager.remove_file(board_file.bf_file)
-                # 파일 업로드 및 정보 업데이트
-                file_manager.upload_file(directory, filename, file)
-                file_manager.update_board_file(board_file, directory, filename, file, bf_content)
-            else:
-                # 파일 업로드 및 정보 추가
-                file_manager.upload_file(directory, filename, file)
-                file_manager.insert_board_file(index, directory, filename, file, bf_content)
-                wr_file += 1
+        # 파일 삭제
+        if file_dels:
+            for bf_no in file_dels:
+                file_manager.delete_board_file(bf_no)
+                wr_file -= 1
+        
+        # 파일 업로드 처리 및 파일정보 저장
+        for file in files:
+            index = files.index(file)
+            if file.size > 0:
+                board_file = file_manager.get_board_file(index)
+                bf_content = file_content[index] if file_content else ""
+                filename = file_manager.get_filename(file.filename)
+                if board_file:
+                    # 기존파일 삭제
+                    file_manager.remove_file(board_file.bf_file)
+                    # 파일 업로드 및 정보 업데이트
+                    file_manager.upload_file(directory, filename, file)
+                    file_manager.update_board_file(board_file, directory, filename, file, bf_content)
+                else:
+                    # 파일 업로드 및 정보 추가
+                    file_manager.upload_file(directory, filename, file)
+                    file_manager.insert_board_file(index, directory, filename, file, bf_content)
+                    wr_file += 1
 
-    # 파일 개수 업데이트
-    write.wr_file = wr_file
-    db.commit()
+        # 파일 개수 업데이트
+        write.wr_file = wr_file
+        db.commit()
 
     # TODO: 비밀글은 세션에 비밀글 저장 (자신의 글 확인)
     # TODO: 메일발송
@@ -726,6 +730,12 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
     write = db.query(model_write).get(wr_id)
     if not write:
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
+    
+    # TODO: 그룹 접근 사용
+
+    # 읽기 권한 검증
+    if not board_config.is_read_level():
+        raise AlertException("글을 읽을 권한이 없습니다.", 403)
     
     # 게시글 정보 설정
     write.ip = board_config.get_display_ip(write.wr_ip)
@@ -835,6 +845,9 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
         "next": next,
         "images": images,
         "files": files,
+        "is_write": board_config.is_write_level(),
+        "is_reply": board_config.is_reply_level(),
+        "is_comment_write": board_config.is_comment_level(),
     }
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/read_post.html", context
@@ -918,25 +931,25 @@ def download_file(
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
     
-    member = request.state.login_member
-    mb_id = getattr(member, "mb_id", None)
-    member_level = get_member_level(request)
-    admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
+    board_config = BoardConfig(request, board)
+    if not board_config.is_download_level():
+        raise AlertException("다운로드 권한이 없습니다.", 403)
 
     write_model = dynamic_create_write_table(bo_table)
     write = db.query(write_model).get(wr_id)
     if not write:
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
 
-    # 회원레벨 검사
-    if not (member_level >= board.bo_download_level):
-        raise AlertException("다운로드 권한이 없습니다.", 403)
-
     # 파일 정보 조회
     file_manager = BoardFileManager(board, wr_id)
     board_file = file_manager.get_board_file(bf_no)
     if not board_file:
         raise AlertException("파일이 존재하지 않습니다.", 404)
+
+    # 회원 정보
+    member = request.state.login_member
+    mb_id = getattr(member, "mb_id", None)
+    admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
     
     # 게시물당 포인트가 한번만 차감되도록 세션 설정
     session_name = f"ss_down_{bo_table}_{wr_id}"
@@ -996,10 +1009,7 @@ def write_comment_update(
     # 게시판 정보 조회
     board = db.query(Board).get(form.bo_table)
     if not board:
-        raise AlertException(f"{form.bo_table} : 존재하지 않는 게시판입니다.", 404)
-
-    member = request.state.login_member
-    board_config = BoardConfig(request, board)
+        raise AlertException(f"{form.bo_table} : 존재하지 않는 게시판입니다.", 404)  
 
     # 게시글 정보 조회
     write_model = dynamic_create_write_table(form.bo_table)
@@ -1007,7 +1017,11 @@ def write_comment_update(
     if not write:
         raise AlertException(f"{form.wr_id} : 존재하지 않는 게시글입니다.", 404)
     
+    board_config = BoardConfig(request, board)
     if form.w == "c":
+        if not board_config.is_comment_level():
+            raise AlertException("댓글을 작성할 권한이 없습니다.", 403)
+
         # 댓글 객체 생성
         comment = write_model()
 
@@ -1024,6 +1038,8 @@ def write_comment_update(
             ).first().max_wr_comment or 0) + 1
 
         # 댓글 추가정보 등록
+        member = request.state.login_member
+
         comment.ca_name = write.ca_name
         comment.wr_option = form.wr_secret
         comment.wr_num = write.wr_num

@@ -78,7 +78,7 @@ def scrap_form_update(request: Request, db: Session = Depends(get_db),
     # 댓글 추가
     board_config = BoardConfig(request, bo_table)
 
-    if wr_content and member.mb_level >= board.bo_comment_level:
+    if wr_content and board_config.is_comment_level():
         # TODO: 너무 빠른 시간내에 게시물을 연속해서 올릴 수 없습니다.
 
         max_comment = db.query(func.max(models_write.wr_comment).label('max_comment')).filter(

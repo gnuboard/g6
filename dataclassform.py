@@ -334,6 +334,8 @@ class WriteForm:
     wr_subject: str = Form(...)
     wr_content: str = Form(...)
     wr_is_comment: bool = False
+    wr_link1: str = Form(None)
+    wr_link2: str = Form(None)
 
 
 @dataclass

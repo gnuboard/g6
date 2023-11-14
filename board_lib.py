@@ -16,6 +16,11 @@ class BoardConfig():
         self.config = request.state.config
         self.is_mobile = request.state.is_mobile
 
+        self.login_member = request.state.login_member
+        self.login_member_id = getattr(self.login_member, "mb_id", None)
+        self.login_member_level = get_member_level(request)
+        self.login_member_admin_type = get_admin_type(self.request, self.login_member_id, group=self.board.group, board=self.board)
+
     @property
     def page_rows(self) -> int:
         """게시판 페이지당 출력할 행의 수를 반환.
@@ -72,9 +77,7 @@ class BoardConfig():
         Args:
             ip (str): IP 주소
         """
-        member = self.request.state.login_member
-        admin_type = get_admin_type(self.request, getattr(member, "mb_id", None), group=self.board.group, board=self.board)
-        if admin_type:
+        if self.login_member_admin_type:
             return ip
         
         if self.board.bo_use_ip_view:
@@ -107,6 +110,42 @@ class BoardConfig():
         """
         return self.board.bo_notice.split(",")
     
+    def is_list_level(self) -> bool:
+        """게시글 목록을 볼 수 있는 권한을 확인한다."""
+        return self._can_action_by_level(self.board.bo_list_level)
+    
+    def is_read_level(self) -> bool:
+        """게시글을 읽을 수 있는 권한을 확인한다."""
+        return self._can_action_by_level(self.board.bo_read_level)
+
+    def is_write_level(self) -> bool:
+        """게시글을 작성 할 수 있는 권한을 확인한다."""
+        return self._can_action_by_level(self.board.bo_write_level)
+
+    def is_reply_level(self) -> bool:
+        """게시글을 답변 할 수 있는 권한을 확인한다."""
+        return self._can_action_by_level(self.board.bo_reply_level)
+
+    def is_comment_level(self) -> bool:
+        """댓글을 작성 할 수 있는 권한을 확인한다."""
+        return self._can_action_by_level(self.board.bo_comment_level)
+
+    def is_link_level(self) -> bool:
+        """게시글 작성 시, 링크를 추가 할 수 있는 권한을 확인한다."""
+        return self._can_action_by_level(self.board.bo_link_level)
+
+    def is_upload_level(self) -> bool:
+        """게시글 작성 시, 파일을 업로드 할 수 있는 권한을 확인한다."""
+        return self._can_action_by_level(self.board.bo_upload_level)
+
+    def is_download_level(self) -> bool:
+        """게시글의 첨부파일을 다운로드 할 수 있는 권한을 확인한다."""
+        return self._can_action_by_level(self.board.bo_download_level)
+
+    def is_html_level(self) -> bool:
+        """게시글 작성 시, HTML을 추가할 수 있는 권한을 확인한다."""
+        return self._can_action_by_level(self.board.bo_html_level)
+
     def is_icon_hot(self, hit: int) -> bool:
         """인기글 아이콘 출력 여부를 반환.
 
@@ -189,6 +228,20 @@ class BoardConfig():
                 return member.mb_nick
         else:
             return default_name
+        
+    def _can_action_by_level(self, level: int) -> bool:
+        """회원 레벨에 따라 행동 가능 여부를 판단한다.
+
+        Args:
+            level (int): 권한 레벨
+
+        Returns:
+            bool: 행동 가능 여부
+        """
+        if self.login_member_admin_type:
+            return True
+        else:
+            return level <= self.login_member_level
             
     def _can_action_by_comment_count(self, wr_id: int, limit: int) -> bool:
         """댓글 수에 따라 행동 가능 여부를 판단한다.
@@ -201,13 +254,11 @@ class BoardConfig():
         Returns:
             bool: 수정 가능 여부
         """
-        db = SessionLocal()
-        member = self.request.state.login_member
-        admin_type = get_admin_type(self.request, member, group=self.board.group, board=self.board)
-
-        if admin_type:
+        if self.login_member_admin_type:
             return True
         
+        db = SessionLocal()
+
         write_model = dynamic_create_write_table(self.board.bo_table)
         comment_count = db.query(write_model).filter_by(
             wr_parent = wr_id,
