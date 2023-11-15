@@ -1,6 +1,5 @@
 @charset "utf-8";
 /* 초기화 */
- 
 html {overflow-y:scroll;}
 body {margin:0;padding:0;font-size:0.75em;font-family:'Malgun Gothic',AppleGothic,Dotum,"돋움", sans-serif;background:#EDF0F2;height:100%;}
 html, h1, h2, h3, h4, h5, h6, form, fieldset, img {margin:0;padding:0;border:0}
@@ -31,28 +30,28 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0}
 
 #wrapper {min-height:480px;width: 100%;display: flex;}
 /* 레이아웃 */
-#hd {position: sticky;top: 71px;width: 220px;height: 100vh; padding: 0px 20px;background-color: #272E3D;overflow-y: auto;}
+#hd {position: sticky;top: 71px;width: 220px;height: calc(100vh - 71px); padding: 0px 20px;background-color: #272E3D;overflow-y: auto;}
 #hd h1 {position:absolute;font-size:0;line-height:0;overflow:hidden}
 #hd_top{position: relative;height:50px;z-index:1000;border-radius: 12px;width: 220px;margin: 0px;}
 #hd_top:after{display:block;visibility:hidden;clear:both;content:""}
-#logo{height:100%;float:left;width:220px;text-align:center;display: flex;align-items: center;justify-content: center;}
+#logo{height:100%;width:220px;text-align:center;display: flex;align-items: center;justify-content: flex-start;}
 #btn_gnb, #tnb #btn_gnb {background:url(/static/admin/img/menu-cl.png) 50% 50% no-repeat;width:50px;height:50px;border:0;position:absolute;top:0px;right:0px;text-indent:-999px;overflow:hidden;border-radius: 12px 0px 0px 12px;}
-#tnb #btn_gnb.btn_gnb_open{background:url(/static/admin/img/menu-op.png) 50% 50% no-repeat;width:50px;height:50px;border:0;position:absolute;top:0px;left:0px;text-indent:-999px;overflow:hidden}
+#tnb #btn_gnb.btn_gnb_open{background:url(/static/admin/img/menu-op.png) 50% 50% no-repeat;width:50px;height:50px;border:0;position:absolute;top:0px;right:0px;text-indent:-999px;overflow:hidden}
 
 
 #tnb{padding: 10px 0px;background: #272E3D;border-bottom: 1px solid #45516b;position: sticky;top: 0;z-index: 500;display: flex;align-items: center;}
 #tnb ul {width: 100%;padding: 0px 40px;}
 #tnb ul:after{display:block;visibility:hidden;clear:both;content:""}
 #tnb li{float:right;position:relative;margin-left:3px;z-index: 500;}
-#tnb a{color:#fff;padding:0 10px;display:block;line-height:30px;}
+#tnb a{color:#fff;padding:0 20px;display:block;line-height:30px;}
 #tnb .tnb_service{border-radius:3px;border: 1px solid #dadada;color:#4d4d4d;padding:0 10px;text-align:left;height:30px;line-height:30px;background: #ffd343;}
-#tnb button{width:100px;border:0;border-radius:3px;background:#3776ab;color:#fff;padding:0 30px 0 10px;text-align:left;height:30px;position:relative;text-overflow: ellipsis;overflow: hidden;white-space: nowrap;}
-#tnb button span{display:block;text-indent:-999px;overflow:hidden;width:30px;border-radius:3px;height:30px;position:absolute;top:0;right:0;background:url(/static/admin/img/op_btn.png) 50% 50% no-repeat #3776ab}
+#tnb button{width:100px;border:1px solid #ffffff40;border-radius:3px;background:transparent;color:#fff;padding:0 30px 0 10px;text-align:left;height:30px;position:relative;text-overflow: ellipsis;overflow: hidden;white-space: nowrap;}
+#tnb button span{display:block;text-indent:-999px;overflow:hidden;width:30px;border-radius:3px;height:30px;position:absolute;top:0;right:0;background:url(/static/admin/img/op_btn.png) 50% 50% no-repeat}
 #tnb .tnb_mb_area{display:none;background:#3776ab;width:100px;position:absolute;padding:5px;margin-top:1px;}
 #tnb .tnb_mb_area a{padding:0}
 #tnb .tnb_mb_area li{float:none;}
-#tnb .tnb_community{background:url(/static/admin/img/home_icon.png) no-repeat 50% 50%;width:30px;height:30px;overflow:hidden;text-indent:-999px;border-radius:5px;background-color:#3776ab}
-#tnb .tnb_shop{background:url(/static/admin/img/shop_icon.png) no-repeat 50% 50%;width:30px;height:30px;overflow:hidden;text-indent:-999px;border-radius:5px;background-color:#3776ab}
+#tnb .tnb_community{background:url(/static/admin/img/home_icon.png) no-repeat 50% 50%;width:30px;height:30px;overflow:hidden;text-indent:-999px;border-radius:5px;border: 1px solid #ffffff40;}
+#tnb .tnb_shop{background:url(/static/admin/img/shop_icon.png) no-repeat 50% 50%;width:30px;height:30px;overflow:hidden;text-indent:-999px;border-radius:5px;border: 1px solid #ffffff40;}
 
 /*gnb*/
 #gnb{width: 100%;height:auto;margin-top:20px;z-index:999;border-radius: 12px;}
@@ -84,7 +83,7 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0}
 
 @media (min-width: 1100px) {
     .gnb_small {display: none;}
-    .hd_small {width: 60px !important;padding: 0px !important;}
+    .hd_small {width: 0px !important;padding: 0px !important;}
     .hd_small #logo {display: none;}
     #gnb.gnb_small .gnb_oparea{display:none;}
     #gnb.gnb_small .gnb_li:hover .gnb_oparea{display:block;}
@@ -137,7 +136,7 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0}
 
 /* 버튼 */
 .btn_confirm {margin:0px}
-.btn_fixed_top{position:fixed;bottom:10px;right:130px;z-index:100}
+.btn_fixed_top{position:fixed;bottom:10px;right:70px;z-index:100}
 
 .btn_confirm01 {}
 .btn_confirm01 button {padding:0 15px;height:30px;border:0;background:#9eacc6;color:#fff}
@@ -385,8 +384,8 @@ tfoot th {}
 @media (max-width: 1100px) {
     .anchor {position: static;}
     #wrapper {flex-direction: column;}
-    #hd{position: static;padding: 0px;height: auto;}
-    #hd_top {width: 96%;margin: 10px auto 0px;}
+    #hd{position: static;padding: 0px;height: auto;width: 100%;}
+    #hd_top {margin: 0px auto;}
     form[name="fconfigform"] table {display: grid;table-layout: fixed;}
     .tbl_frm01 tr{display: grid;grid-template-columns: 25% 75%;margin-bottom: 10px;}
     .tbl_frm01 th {width: 100%;}
@@ -396,8 +395,8 @@ tfoot th {}
     #fsendmailtest .frm_input {width: calc(100% - 140px)}
     #gnb .gnb_ul {display: flex;height: auto;width: 96%;position: relative;margin: 0 auto;justify-content: space-between;}
     #container {margin: 0px auto;width: 96%;max-width: 100%;}
-    #tnb {padding: 20px 0px 0px 0px;}
-    #container_title {margin: 0px;}
+    #tnb {padding: 0px;}
+    #container_title {margin: 0px;width: 100%;}
     #container.container-small {padding-left: 0px;margin-left: 0px;margin: auto;}
     #gnb {position: static;max-width: 100%;width: 100%;height: auto;padding-top: 0px;margin: 20px auto;}
     #gnb .gnb_li {width: calc((100% / 6) - 10px);margin-bottom: 0px;}
