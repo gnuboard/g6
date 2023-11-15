@@ -1,1 +1,1 @@
-from _plugin.demo_plugin.static import please 
+from _plugin.demo_plugin.static import please

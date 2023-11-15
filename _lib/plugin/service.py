@@ -7,13 +7,10 @@ from starlette.staticfiles import StaticFiles
 
 # 패키지 목록을 가져온다.
 # 가져온 목록을 import 한다.
-# __init__.py 가 있어야 패키지로 인식한다. - 파이썬 기본사양
+# __init__.py 가 있어야 패키지로 인식한다.
 # __init__.py 는 필수.
 # on/off 기능을 에따라 제외한다.
 
-# ------------------
-# - 등록
-# 사용가능한 패키지 목록을 순회.
 PLUGIN_DIR = '_plugin'
 
 
@@ -37,7 +34,7 @@ def load_all_plugin(plugin_dir):
     Returns:
         plugin_list (list): 플러그인 목록
     Examples:
-        main, 서버시작, 프로세스 시작시
+        main, 서버시작(프로세스 시작)
     """
     plugin_list = []
     # pkgutil 로 서브디렉토리의 모듈을 가져온다.
@@ -104,10 +101,28 @@ def register_statics(app, plugin_info):
             logging.warning(f"register_statics: {e}")
 
 
+def plugin_asset_url(plugin_module_name):
+    """
+    플러그인의 asset url 을 반환한다.
+    Args:
+        plugin_module_name (str): 플러그인 모듈 이름
+    Returns:
+        asset_url (str): asset url
+    """
+
+    plugin_name_split = plugin_module_name.split('.')
+    if plugin_name_split[0] != PLUGIN_DIR:
+        return ""
+    plugin_module_name = '.'.join(plugin_name_split[1:])
+
+    return f"/static/{PLUGIN_DIR}/{plugin_module_name}"
+
+
 def register_admin(admin_menu, plugin_id):
     """
     서버시작(프로세스 시작)할 때 관리자에 등록한다.
     """
+    admin_menu = admin_menu[plugin_id]
     for menu in admin_menu:
         menu['id'] = plugin_id
         menu['permission'] = f"{plugin_id}_[{menu['permission']}]"

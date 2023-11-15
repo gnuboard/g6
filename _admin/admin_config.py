@@ -17,6 +17,10 @@ import socket
 from dataclassform import ConfigForm
 
 # from pydanticmodel import ConfigForm
+def get_admin_plugin_menus():
+    from _plugin.demo_plugin.admin import admin_menu
+    return [admin_menu]
+
 
 router = APIRouter()
 templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
@@ -29,6 +33,7 @@ templates.env.globals["get_selected"] = get_selected
 templates.env.globals["get_member_level_select"] = get_member_level_select
 templates.env.globals["option_array_checked"] = option_array_checked
 templates.env.globals["get_admin_menus"] = get_admin_menus
+templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["generate_token"] = generate_token
 templates.env.globals["get_client_ip"] = get_client_ip
 
