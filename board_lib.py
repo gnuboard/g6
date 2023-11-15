@@ -23,7 +23,7 @@ class BoardConfig():
 
     @property
     def gallery_width(self) -> int:
-        """갤러리 이미지 가로 크기를 반환.
+        """갤러리 목록 이미지 가로 크기를 반환.
 
         Returns:
             int: 갤러리 이미지 가로 크기.
@@ -32,12 +32,21 @@ class BoardConfig():
     
     @property
     def gallery_height(self) -> int:
-        """갤러리 이미지 세로 크기를 반환.
+        """갤러리 목록 이미지 세로 크기를 반환.
 
         Returns:
             int: 갤러리 이미지 세로 크기.
         """
         return (self.board.bo_mobile_gallery_height if self.is_mobile else self.board.bo_gallery_height) or 150
+
+    @property
+    def image_width(self) -> int:
+        """게시판 상세페이지에서 보여줄 이미지 가로 크기를 반환.
+
+        Returns:
+            int: 이미지 가로 크기.
+        """
+        return self.board.bo_image_width or None
 
     @property
     def page_rows(self) -> int:
@@ -875,3 +884,68 @@ def send_write_mail(request: Request, board: Board, write: WriteBaseModel, origi
         mailer(email, subject, body)
 
     db.close()
+
+
+def get_list_thumbnail(request: Request, board: Board, write: WriteBaseModel, thumb_width: int, thumb_height: int, **kwargs):
+    """게시글 목록의 섬네일 이미지를 생성한다.
+
+    Args:
+        request (Request): _description_
+        board (Board): _description_
+        write (WriteBaseModel): _description_
+        thumb_width (int, optional): _description_. Defaults to 0.
+        thumb_height (int, optional): _description_. Defaults to 0.
+    """
+    config = request.state.config
+    images, files = BoardFileManager(board, write.wr_id).get_board_files_by_type(request)
+    source_file = None
+    result = {"src": "", "alt": ""}
+
+    if images:
+        # TODO : 게시글의 파일정보를 캐시된 데이터에서 조회한다.
+        # 업로드 파일 목록
+        source_file = images[0].bf_file
+        result["alt"] = images[0].bf_content
+    else:
+        # TODO : 게시글의 본문정보를 캐시된 데이터에서 조회한다.
+        # 게시글 본문
+        editor_images = get_editor_image(write.wr_content, view=False)
+        for image in editor_images:
+            ext = image.split(".")[-1].lower()
+            # TODO: 아래 코드가 정상처리되는지 확인 필요
+            # image의 경로 앞에 /가 있으면 /를 제거한다. 에디터 본문의 경로와 python의 경로가 다르기 때문에..
+            if image.startswith("/"):
+                image = image[1:]
+
+            # image경로의 파일이 존재하고 이미지파일인지 확인
+            if (os.path.exists(image) 
+                and os.path.isfile(image)
+                and os.path.getsize(image) > 0
+                and ext in config.cf_image_extension
+            ):
+                source_file = image
+                break
+
+    # 섬네일 생성
+    if source_file:
+        src = thumbnail(source_file, width=thumb_width, height=thumb_height, **kwargs)
+        if src:
+            result["src"] = src
+    
+    return result
+
+
+# 본문의 이미지 태그에 width를 강제로 지정하는 필터함수
+def set_image_width(content: str, width: str = None) -> str:
+    """본문의 이미지 태그에 width를 강제로 지정하는 필터함수
+
+    Args:
+        content (str): 게시글 본문
+        width (int, optional): 이미지 width. Defaults to 0.
+
+    Returns:
+        str: 이미지 태그에 width가 추가된 본문
+    """
+    if width:
+        content = re.sub(r"<img([^>]+)>", f"<img\\1 width={width}>", content)
+    return content

@@ -9,16 +9,16 @@
     <ul>
         {% for write in writes -%}
         <li class="basic_li">
-            <a href="{{ url_for('list_post', bo_table=bo_table) }}" class="lt_img" >
-                {% if loop.index == 1 %}
-                    {% set thumbnail=get_list_thumbnail(request, board, write, thumb_width, thumb_height) %}
-                    {% if thumbnail.src %}
-                    <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}">
-                    {% else %}
-                    <img src="{{ url_for('static', path='/img/no_img.png') }}" alt="이미지가 없습니다." width="{{ thumb_width }}" height="{{ thumb_height }}">
-                    {% endif %}
+            {% if loop.index == 1 %}
+            <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}" class="lt_img">
+                {% set thumbnail=get_list_thumbnail(request, board, write, thumb_width, thumb_height) %}
+                {% if thumbnail.src %}
+                <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}">
+                {% else %}
+                <img src="{{ url_for('static', path='/img/no_img.png') }}" alt="이미지가 없습니다." width="{{ thumb_width }}" height="{{ thumb_height }}">
                 {% endif %}
             </a>
+            {% endif %}
             {% if write.icon_secret -%}
                 <i class="fa fa-lock" aria-hidden="true"></i>
                 <span class="sound_only">비밀글</span>

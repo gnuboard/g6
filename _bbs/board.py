@@ -16,6 +16,7 @@ from models import AutoSave, Board, BoardGood, Group, Member, Scrap
 router = APIRouter()
 templates = MyTemplates(directory=[EDITOR_PATH, TEMPLATES_DIR])
 templates.env.filters["datetime_format"] = datetime_format
+templates.env.filters["set_image_width"] = set_image_width
 templates.env.globals["bleach"] = bleach
 templates.env.globals["nl2br"] = nl2br
 templates.env.globals["editor_macro"] = editor_macro

@@ -1686,7 +1686,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
         str: 최신글 HTML
     """
     # Lazy import
-    from board_lib import BoardConfig, get_list
+    from board_lib import BoardConfig, get_list, get_list_thumbnail
 
     templates = MyTemplates(directory=TEMPLATES_DIR)
     templates.env.globals["board_config"] = BoardConfig
@@ -1862,58 +1862,6 @@ def thumbnail(source_file: str, target_path: str = None, width: int = 200, heigh
     except Exception as e:
         print("섬네일 생성 실패 : ", e)
         return False
-
-
-def get_list_thumbnail(request: Request, board: Board, write: WriteBaseModel, thumb_width: int, thumb_height: int, **kwargs):
-    """게시글 목록의 섬네일 이미지를 생성한다.
-
-    Args:
-        request (Request): _description_
-        board (Board): _description_
-        write (WriteBaseModel): _description_
-        thumb_width (int, optional): _description_. Defaults to 0.
-        thumb_height (int, optional): _description_. Defaults to 0.
-    """
-    # Lazy import
-    from board_lib import BoardFileManager
-
-    config = request.state.config
-    images, files = BoardFileManager(board, write.wr_id).get_board_files_by_type(request)
-    source_file = None
-    result = {"src": "", "alt": ""}
-
-    if images:
-        # TODO : 게시글의 파일정보를 캐시된 데이터에서 조회한다.
-        # 업로드 파일 목록
-        source_file = images[0].bf_file
-        result["alt"] = images[0].bf_content
-    else:
-        # TODO : 게시글의 본문정보를 캐시된 데이터에서 조회한다.
-        # 게시글 본문
-        editor_images = get_editor_image(write.wr_content, view=False)
-        for image in editor_images:
-            ext = image.split(".")[-1].lower()
-            # TODO: 아래 코드가 정상처리되는지 확인 필요
-            # image의 경로 앞에 /가 있으면 /를 제거한다. 에디터 본문의 경로와 python의 경로가 다르기 때문에..
-            if image.startswith("/"):
-                image = image[1:]
-
-            # image경로의 파일이 존재하고 이미지파일인지 확인
-            if (os.path.exists(image) 
-                and os.path.isfile(image)
-                and os.path.getsize(image) > 0
-                and ext in config.cf_image_extension
-            ):
-                source_file = image
-                break
-
-    # 섬네일 생성
-    if source_file:
-        src = thumbnail(source_file, width=thumb_width, height=thumb_height, **kwargs)
-        if src:
-            result["src"] = src
-    
-    return result
 
 
 def get_editor_image(contents: str, view: bool = True) -> list:

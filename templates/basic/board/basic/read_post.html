@@ -14,6 +14,7 @@
 {% endblock subtitle %}
 
 {% block content %}
+{% set board_config=board_config(request, board) %}
 {% set login_member=request.state.login_member %}
 {% set is_admin=get_admin_type(request, login_member.mb_id, group=board.group, board=board) %}
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
@@ -139,17 +140,17 @@
             <!-- 파일 출력 START -->
             <div id="bo_v_img">
                 {% for image in images %}
-                    <img src="/{{ image.bf_file }}" alt="" title="">
+                    <img src="/{{ image.bf_file }}" width="{{ board_config.image_width }}" alt="" title="">
                 {% endfor %}
 
             </div>
             <!-- 파일 출력 END -->
 
             <!-- 본문 내용 시작 { -->
-            <div id="bo_v_con">{{ write.wr_content|safe }}</div>
+            <div id="bo_v_con">{{ write.wr_content|set_image_width(board_config.image_width)|safe }}</div>
             <!-- } 본문 내용 끝 -->
             <!-- 서명 START -->
-            {{ board_config(request, board).get_member_signature(write.mb_id) }}
+            {{ board_config.get_member_signature(write.mb_id) }}
             <!-- 서명 END -->
 
         <!--  추천 비추천 시작 { -->
