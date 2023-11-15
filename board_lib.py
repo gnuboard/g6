@@ -22,6 +22,24 @@ class BoardConfig():
         self.login_member_admin_type = get_admin_type(self.request, self.login_member_id, group=self.board.group, board=self.board)
 
     @property
+    def gallery_width(self) -> int:
+        """갤러리 이미지 가로 크기를 반환.
+
+        Returns:
+            int: 갤러리 이미지 가로 크기.
+        """
+        return (self.board.bo_mobile_gallery_width if self.is_mobile else self.board.bo_gallery_width) or 200
+    
+    @property
+    def gallery_height(self) -> int:
+        """갤러리 이미지 세로 크기를 반환.
+
+        Returns:
+            int: 갤러리 이미지 세로 크기.
+        """
+        return (self.board.bo_mobile_gallery_height if self.is_mobile else self.board.bo_gallery_height) or 150
+
+    @property
     def page_rows(self) -> int:
         """게시판 페이지당 출력할 행의 수를 반환.
 

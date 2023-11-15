@@ -15,6 +15,7 @@
 {% endblock subtitle %}
 
 {% block content %}
+{% set board_config=board_config(request, board) %}
 {% set is_admin=get_admin_type(request, request.state.login_member.mb_id, group=board.group, board=board) %}
 {% set sca=request.query_params.sca %}
 {% set sod_reverse="asc" if request.query_params.sod == "desc" else "desc" %}
@@ -127,8 +128,12 @@
                                 {% if write.wr_id|string in board.bo_notice %}
                                 <span class="is_notice" style="{{ line_height_style }}">공지</span>
                                 {% else %}
-                                    <!-- TODO: 섬네일 이미지 -->
+                                    {% set thumbnail=get_list_thumbnail(request, board, write, board_config.gallery_width, board_config.gallery_height) %}
+                                    {% if thumbnail.src %}
+                                    <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}">
+                                    {% else %}
                                     <span class="no_image" style="{{ line_height_style }}">no image</span>
+                                    {% endif %}
                                 {% endif %}
                             </a>
                         </div>
@@ -147,7 +152,7 @@
                                 <!-- TODO: 비밀글 아이콘 -->
                                 {% if write.wr_comment %}<span class="sound_only">댓글</span><span class="cnt_cmt">{{ write.wr_comment }}</span><span class="sound_only">개</span>{% endif %}
                             </a>
-                            <span class="bo_cnt">{{ write.wr_content|truncate(68, False, '...', 0)|safe }}</span>
+                            <span class="bo_cnt">{{ write.wr_content|striptags|truncate(68, False, '...', 0)|safe }}</span>
                         </div>
 
                         <div class="gall_info">

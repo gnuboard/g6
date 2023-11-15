@@ -22,7 +22,7 @@ templates.env.globals["editor_macro"] = editor_macro
 templates.env.globals["get_admin_type"] = get_admin_type
 templates.env.globals["get_unique_id"] = get_unique_id
 templates.env.globals["board_config"] = BoardConfig
-
+templates.env.globals["get_list_thumbnail"] = get_list_thumbnail
 
 FILE_DIRECTORY = "data/file/"
 
@@ -136,6 +136,8 @@ def list_post(
             "current_page": search_params['current_page'],
             "paging": get_paging(request, search_params['current_page'], total_count, page_rows),
             "is_write": board_config.is_write_level(),
+            "gallery_width": board_config.gallery_width,
+            "gallery_height": board_config.gallery_height,
         }
     )
 

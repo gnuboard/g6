@@ -1,13 +1,21 @@
 {% if board.bo_use_sideview %}
     {% import "/sideview/macros.html" as sideview %}
 {% endif %}
+
+{% set thumb_width, thumb_height = 210, 150 %}
+
 <div class="pic_lt">
     <h2 class="lat_title"><a href="{{ url_for('list_post', bo_table=bo_table) }}">{{ board.subject }}</a></h2>
     <ul>
         {% for write in writes -%}
         <li class="galley_li">
             <a href="{{ url_for('list_post', bo_table=bo_table) }}" class="lt_img">
-                <img src="{{ url_for('static', path='/img/no_img.png') }}" alt="이미지가 없습니다." width="210" height="150">
+                {% set thumbnail=get_list_thumbnail(request, board, write, thumb_width, thumb_height) %}
+                {% if thumbnail.src %}
+                <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}">
+                {% else %}
+                <img src="{{ url_for('static', path='/img/no_img.png') }}" alt="이미지가 없습니다." width="{{ thumb_width }}" height="{{ thumb_height }}">
+                {% endif %}
             </a>
             <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}">
                 {% if write.is_notice %}<strong>{{ write.subject }}</strong>{% else %}{{ write.subject }}{% endif %}

@@ -21,7 +21,7 @@ from models import WriteBaseModel
 from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
 import json
-from PIL import Image
+from PIL import Image, ImageOps, UnidentifiedImageError
 from user_agents import parse
 import base64
 from dotenv import load_dotenv
@@ -1685,7 +1685,12 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     Returns:
         str: 최신글 HTML
     """
+    # Lazy import
+    from board_lib import BoardConfig, get_list
+
     templates = MyTemplates(directory=TEMPLATES_DIR)
+    templates.env.globals["board_config"] = BoardConfig
+    templates.env.globals["get_list_thumbnail"] = get_list_thumbnail
 
     if not skin_dir:
         skin_dir = 'basic'
@@ -1697,9 +1702,6 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     # 캐시된 파일이 있으면 파일을 읽어서 반환
     if os.path.exists(cache_file):
         return g6_file_cache.get(cache_file)
-
-    # Lazy import
-    from board_lib import BoardConfig, get_list
     
     db = SessionLocal()
     # 게시판 설정
@@ -1801,3 +1803,151 @@ def captcha_widget(request):
         return cls.TEMPLATE_PATH
 
     return ''  # 템플릿 출력시 비어있을때는 빈 문자열
+
+
+def thumbnail(source_file: str, target_path: str = None, width: int = 200, height: int = 150, **kwargs) -> str:
+    """섬네일 이미지를 생성한다.
+
+    Args:
+        source_file (str): 원본 이미지 파일 경로
+        target_path (str, optional): 섬네일 이미지 파일 경로. Defaults to None.
+        width (int, optional): 섬네일 이미지 너비. Defaults to 200.
+        height (int, optional): 섬네일 이미지 높이. Defaults to 150.
+
+    Returns:
+        str: 섬네일 이미지 파일 경로
+    """
+    try:
+        source_basename = os.path.basename(source_file)
+        source_path = os.path.dirname(source_file)
+        target_path = target_path or source_path
+
+        # 섬네일 저장경로 생성
+        make_directory(target_path)
+
+        # 섬네일 파일 경로
+        thumbnail_file = os.path.join(target_path, f"thumbnail_{width}x{height}_{source_basename}")
+        # 섬네일 파일이 존재
+        # 원본파일 생성시간 < 섬네일 파일 생성시간
+        if os.path.exists(thumbnail_file):
+            if os.path.getmtime(source_file) < os.path.getmtime(thumbnail_file):
+                return thumbnail_file
+
+        # 이미지 객체 생성
+        # 파일이 없가나 이미지가 아닐 경우 예외가 발생하므로 검사를 따로 하지 않음.
+        source_image = Image.open(source_file)
+        source_width, source_height = source_image.size
+
+        # 이미지가 섬네일이미지보다 작을 경우
+        if source_width < width or source_height < height:
+            # 확장 이미지 생성
+            expanded_img = Image.new("RGB", (width, height), (255, 255, 255))
+            # 기존 이미지를 확장된 이미지 중앙에 삽입
+            left = (width - source_width) // 2
+            top = (height - source_height) // 2
+            expanded_img.paste(source_image, (left, top))
+            expanded_img.save(thumbnail_file)
+        else:
+            # 이미지를 지정한 크기로 자르고 저장
+            ImageOps.fit(source_image, (width, height)).save(thumbnail_file)
+            # source_image.thumbnail((width, height))
+            # source_image.save(thumbnail_file)
+
+        return thumbnail_file
+    
+    except UnidentifiedImageError as e:
+        print("원본 이미지 객체 생성 실패 : ", e)
+        return False
+
+    except Exception as e:
+        print("섬네일 생성 실패 : ", e)
+        return False
+
+
+def get_list_thumbnail(request: Request, board: Board, write: WriteBaseModel, thumb_width: int, thumb_height: int, **kwargs):
+    """게시글 목록의 섬네일 이미지를 생성한다.
+
+    Args:
+        request (Request): _description_
+        board (Board): _description_
+        write (WriteBaseModel): _description_
+        thumb_width (int, optional): _description_. Defaults to 0.
+        thumb_height (int, optional): _description_. Defaults to 0.
+    """
+    # Lazy import
+    from board_lib import BoardFileManager
+
+    config = request.state.config
+    images, files = BoardFileManager(board, write.wr_id).get_board_files_by_type(request)
+    source_file = None
+    result = {"src": "", "alt": ""}
+
+    if images:
+        # TODO : 게시글의 파일정보를 캐시된 데이터에서 조회한다.
+        # 업로드 파일 목록
+        source_file = images[0].bf_file
+        result["alt"] = images[0].bf_content
+    else:
+        # TODO : 게시글의 본문정보를 캐시된 데이터에서 조회한다.
+        # 게시글 본문
+        editor_images = get_editor_image(write.wr_content, view=False)
+        for image in editor_images:
+            ext = image.split(".")[-1].lower()
+            # TODO: 아래 코드가 정상처리되는지 확인 필요
+            # image의 경로 앞에 /가 있으면 /를 제거한다. 에디터 본문의 경로와 python의 경로가 다르기 때문에..
+            if image.startswith("/"):
+                image = image[1:]
+
+            # image경로의 파일이 존재하고 이미지파일인지 확인
+            if (os.path.exists(image) 
+                and os.path.isfile(image)
+                and os.path.getsize(image) > 0
+                and ext in config.cf_image_extension
+            ):
+                source_file = image
+                break
+
+    # 섬네일 생성
+    if source_file:
+        src = thumbnail(source_file, width=thumb_width, height=thumb_height, **kwargs)
+        if src:
+            result["src"] = src
+    
+    return result
+
+
+def get_editor_image(contents: str, view: bool = True) -> list:
+    """에디터에서 이미지 태그를 추출한다.
+
+    Args:
+        contents (str): 내용
+        view (bool, optional): 보기모드 여부. Defaults to True.
+
+    Returns:
+        list: 이미지 태그 src 속성 값
+    """
+    if not contents:
+        return False
+
+    # contents 중 img 태그 추출
+    if view:
+        pattern = re.compile(r"<img([^>]*)>", re.IGNORECASE | re.DOTALL)
+    else:
+        pattern = re.compile(r"<img[^>]*src=[\'\"]?([^>\'\"]+[^>\'\"]+)[\'\"]?[^>]*>", re.IGNORECASE | re.DOTALL)
+
+    matches = pattern.findall(contents)
+
+    return matches
+
+def extract_alt_attribute(img_tag: str) -> str:
+    """alt 속성 추출
+
+    Args:
+        img_tag (str): img 태그
+
+    Returns:
+        str: alt 속성 값
+    """
+    alt_match = re.search(r'alt=[\"\']?([^\"\']*)[\"\']?', img_tag, re.IGNORECASE)
+    alt = str(alt_match.group(1)) if alt_match else ''
+    return alt
