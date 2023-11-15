@@ -103,7 +103,7 @@ def list_post(
         notice_writes = [get_list(request, write, board) for write in notice_query.all()]
 
     # 게시글 목록 조회
-    query = write_search_filter(model_write, sca, search_params['sfl'], search_params['stx'])
+    query = write_search_filter(request, model_write, sca, search_params['sfl'], search_params['stx'])
     query = query.filter_by(wr_is_comment = 0)
     # 정렬
     if sst and hasattr(model_write, sst):

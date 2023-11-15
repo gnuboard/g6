@@ -1151,6 +1151,37 @@ def get_populars(limit: int = 7, day: int = 3):
     return populars
 
 
+def insert_popular(request: Request, fields: str, word: str):
+    """인기검색어 등록
+
+    Args:
+        request (Request): FastAPI Request 객체
+        fields (str): 검색 필드
+        word (str): 인기검색어
+    """
+    try:
+        today_date = datetime.now().strftime("%Y-%m-%d")
+        # 회원아이디로 검색은 제외
+        if not "mb_id" in fields:
+            with SessionLocal() as db:
+                # 현재 날짜의 인기검색어를 조회한다.
+                popular = db.query(Popular).filter_by(
+                    pp_word = word,
+                    pp_date = today_date
+                ).first()
+
+                # 인기검색어가 없으면 새로 등록한다.
+                if not popular:
+                    new_popular = Popular(
+                        pp_word=word,
+                        pp_date=today_date,
+                        pp_ip=get_client_ip(request)["client_ip"])
+                    db.add(new_popular)
+                    db.commit()
+    except Exception as e:
+        print(f"인기검색어 입력 오류: {e}")
+
+
 def generate_token(request: Request, action: str = ''):
     '''
     토큰 생성 함수
