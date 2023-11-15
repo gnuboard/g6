@@ -4,7 +4,7 @@ import os
 import random
 import re
 from time import sleep
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 import uuid
 from urllib.parse import urlencode
 import PIL
@@ -13,19 +13,33 @@ from fastapi import Query, Request, HTTPException, UploadFile
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup, escape
 from passlib.context import CryptContext
-from sqlalchemy import Index, asc, desc, and_, or_, func, extract
+from sqlalchemy import Index, asc, desc, and_, or_, func, extract, literal
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
-from models import Auth, Config, Member, Memo, Board, Group, Point, Poll, Popular, Visit, VisitSum, UniqId
+from models import Auth, Config, Member, Memo, Board, BoardFile, BoardNew, Group, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
 from models import WriteBaseModel
 from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
 import json
 from PIL import Image
 from user_agents import parse
+import base64
+from dotenv import load_dotenv
+import smtplib
+import threading
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from _lib.captcha.recaptch_v2 import ReCaptchaV2
+from _lib.captcha.recaptch_inv import ReCaptchaInvisible
+
+load_dotenv()
+
 
 # 전역변수 선언(global variables)
 TEMPLATES = "templates"
+WIDGET_PATH = "_widget"
+
+CAPTCHA_PATH = f"{WIDGET_PATH}/captcha"
 EDITOR_PATH = f"{TEMPLATES}/editor"
 
 def get_theme_from_db(config=None):
@@ -48,18 +62,23 @@ if os.environ.get("is_setup") != "true":
     
 ADMIN_TEMPLATES_DIR = "_admin/templates"
 
+# 나중에 삭제할 코드
 SERVER_TIME = datetime.now()
 TIME_YMDHIS = SERVER_TIME.strftime("%Y-%m-%d %H:%M:%S")
 TIME_YMD = TIME_YMDHIS[:10]
 
-# pc 설정 시 모바일 기기에서도 PC화면 보여짐
-# mobile 설정 시 PC에서도 모바일화면 보여짐
-# both 설정 시 접속 기기에 따른 화면 보여짐 (pc에서 접속하면 pc화면을, mobile과 tablet에서 접속하면 mobile 화면)
-SET_DEVICE = 'both'
+# 나중에 삭제할 코드
+# # pc 설정 시 모바일 기기에서도 PC화면 보여짐
+# # mobile 설정 시 PC에서도 모바일화면 보여짐
+# # both 설정 시 접속 기기에 따른 화면 보여짐 (pc에서 접속하면 pc화면을, mobile과 tablet에서 접속하면 mobile 화면)
+# SET_DEVICE = 'both'
 
-# mobile 을 사용하지 않을 경우 False 로 설정
-USE_MOBILE = True
-    
+# # mobile 을 사용하지 않을 경우 False 로 설정
+# USE_MOBILE = True
+
+
+is_response = os.getenv("IS_RESPONSIVE", default="true")
+IS_RESPONSIVE = is_response.lower() == "true"
 
 def hash_password(password: str):
     '''
@@ -90,6 +109,9 @@ def dynamic_create_write_table(table_name: str, create_table: bool = False):
     # 이미 생성된 모델 반환
     if table_name in _created_models:
         return _created_models[table_name]
+    
+    if isinstance(table_name, int):
+        table_name = str(table_name)
     
     class_name = "Write" + table_name.capitalize()
     DynamicModel = type(
@@ -138,8 +160,9 @@ def get_member_level_select(id: str, start: int, end: int, selected: int, event=
 
     
 # skin_gubun(new, search, connect, faq 등) 에 따른 스킨을 SELECT 형식으로 얻음
-def get_skin_select(skin_gubun, id, selected, event='', device='pc'):
-    skin_path = TEMPLATES_DIR + f"/{skin_gubun}/{device}"
+def get_skin_select(skin_gubun, id, selected, event='', device=''):
+    skin_path = TEMPLATES_DIR + f"/{device}/{skin_gubun}"
+
     html_code = []
     html_code.append(f'<select id="{id}" name="{id}" {event}>')
     html_code.append(f'<option value="">선택</option>')
@@ -388,6 +411,21 @@ def validate_one_time_token(token, action: str = 'create'):
     return False
 
 
+def check_token(request: Request, token: str):
+    '''
+    세션과 인수로 넘어온 토큰확인 함수
+    '''
+    if token is None:
+        return False
+    
+    token = token.strip()
+    if token and token == request.session.get("ss_token"):
+        # 세션 삭제
+        request.session["ss_token"] = ""
+        return True
+    return False
+
+
 def get_client_ip(request: Request):
     '''
     클라이언트의 IP 주소를 반환하는 함수 (PHP의 $_SERVER['REMOTE_ADDR'])
@@ -510,7 +548,7 @@ def get_from_list(lst, index, default=0):
 # current_page : 현재 페이지
 # total_count : 전체 레코드 수
 # add_url : 페이지 링크의 추가 URL
-def get_paging(request: Request, current_page, total_count, add_url=""):
+def get_paging(request: Request, current_page, total_count, page_rows = 0, add_url=""):
     config = request.state.config
     url_prefix = request.url
     
@@ -522,7 +560,8 @@ def get_paging(request: Request, current_page, total_count, add_url=""):
     total_count = int(total_count)
 
     # 한 페이지당 라인수
-    page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
+    if not page_rows:
+        page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
     # 페이지 표시수
     page_count = config.cf_mobile_pages if request.state.is_mobile and config.cf_mobile_pages else config.cf_write_pages
     
@@ -736,6 +775,34 @@ def select_query(request: Request, table_model, search_params: dict,
 def get_member(mb_id: str, fields: str = '*'):
     db = SessionLocal()
     return db.query(Member).options(load_only(fields)).filter_by(mb_id=mb_id).first()
+
+
+def get_member_icon(mb_id):
+    MEMBER_ICON_DIR = "data/member"
+    member_icon_dir = f"{MEMBER_ICON_DIR}/{mb_id[:2]}"
+
+    icon_file = os.path.join(member_icon_dir, f"{mb_id}.gif")
+
+    if os.path.exists(icon_file):
+        icon_filemtime = os.path.getmtime(icon_file) # 캐시를 위해 파일수정시간을 추가
+        return f"{icon_file}?{icon_filemtime}"
+
+    return "static/img/no_profile.gif"
+
+
+def get_member_image(mb_id: str = None):
+    
+    if mb_id:
+        MEMBER_IMAGE_DIR = "data/member_image"
+        member_image_dir = f"{MEMBER_IMAGE_DIR}/{mb_id[:2]}"
+
+        image_file = os.path.join(member_image_dir, f"{mb_id}.gif")
+
+        if os.path.exists(image_file):
+            image_filemtime = os.path.getmtime(image_file) # 캐시를 위해 파일수정시간을 추가
+            return f"{image_file}?{image_filemtime}"
+
+    return "static/img/no_profile.gif"
     
 
 # 포인트 부여    
@@ -777,8 +844,8 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
             return -1
         
     # 포인트 건별 생성
-    po_expire_date = '9999-12-31'
-    # po_expire_date = datetime.strptime('9999-12-31', '%Y-%m-%d')
+    # po_expire_date = '9999-12-31'
+    po_expire_date = datetime.strptime('9999-12-31', '%Y-%m-%d')
     if config.cf_point_term > 0:
         if expire > 0:
             po_expire_date = (SERVER_TIME + timedelta(days=expire-1)).strftime('%Y-%m-%d')
@@ -793,7 +860,7 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
     
     new_point = Point(
         mb_id=mb_id,
-        po_datetime=TIME_YMDHIS,
+        po_datetime=datetime.now(),
         po_content=content,
         po_point=point,
         po_use_point=0,
@@ -811,6 +878,7 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
     db.query(Member).filter_by(mb_id=mb_id).update({Member.mb_point: po_mb_point})
     # db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: po_mb_point})
     db.commit()
+    db.close()
 
     return 1
 
@@ -825,6 +893,7 @@ def get_expire_point(request: Request, mb_id: str):
     db = SessionLocal()
     
     point_sum = db.query(func.sum(Point.po_point - Point.po_use_point)).filter_by(mb_id=mb_id, po_expired=False).filter(Point.po_expire_date < datetime.now()).scalar()
+    db.close()
     return point_sum if point_sum else 0
 
 
@@ -873,6 +942,7 @@ def get_point_sum(request: Request, mb_id: str):
             
     # 포인트합
     point_sum = db.query(func.sum(Point.po_point)).filter_by(mb_id=mb_id).scalar()
+    db.close()
     return point_sum if point_sum else 0
 
 
@@ -909,6 +979,7 @@ def insert_use_point(mb_id: str, point: int, po_id: str = ""):
             db.query(Point).filter_by(po_id=row.po_id).update({"po_use_point": (Point.po_use_point + point4), "po_expired": 100})
             db.commit()
             point1 = point1 - point4
+    db.close()
 
 
 # 포인트 삭제
@@ -939,6 +1010,7 @@ def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel
         # 포인트 UPDATE
         db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: sum_point}, synchronize_session=False)
         result = db.commit()
+    db.close()
 
     return result
 
@@ -965,6 +1037,7 @@ def delete_use_point(request: Request, mb_id: str, point: int):
             db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: 0, Point.po_expired: po_expired}, synchronize_session=False)
             db.commit()
             point1 = point1 - point2
+    db.close()
 
 
 # 소멸포인트 삭제
@@ -1024,13 +1097,28 @@ def editor_path(request:Request) -> str:
     return editor_name
 
 
+def editor_macro(request: Request) -> str:
+    """지정한 에디터 경로의 macros.html 파일을 반환하는 함수
+    - 미지정시 그누보드 환경설정값 사용
+    - request.state.editor: 에디터이름
+    - request.state.use_editor: 에디터 사용여부 False 이면 'textarea'로 설정
+    """
+    editor_name = request.state.editor
+    if not request.state.use_editor or not editor_name:
+        editor_name = "textarea"
+
+    return editor_name + "/macros.html"
+
+
 def nl2br(value) -> str:
     """ \n 을 <br> 태그로 변환
     """
     return escape(value).replace('\n', Markup('<br>\n'))
 
 
-def get_popular_list(request: Request, limit: int = 7, day: int = 3):
+popular_cache = cachetools.TTLCache(maxsize=10, ttl=300)
+
+def get_populars(limit: int = 7, day: int = 3):
     """인기검색어 조회
 
     Args:
@@ -1040,12 +1128,15 @@ def get_popular_list(request: Request, limit: int = 7, day: int = 3):
     Returns:
         List[Popular]: 인기검색어 리스트
     """
+    if popular_cache.get("populars"):
+        return popular_cache.get("populars")
+
     db = SessionLocal()
     # 현재 날짜와 day일 전 날짜를 구한다.
     today = datetime.now()
     before = today - timedelta(days=day)
     # 현재 날짜와 day일 전 날짜 사이의 인기검색어를 조회한다.
-    popular_list = db.query(
+    populars = db.query(
             Popular.pp_word,
             func.count(Popular.pp_word).label('count'),
         ).filter(
@@ -1055,7 +1146,9 @@ def get_popular_list(request: Request, limit: int = 7, day: int = 3):
     ).group_by(Popular.pp_word).order_by(desc('count'), Popular.pp_word).limit(limit).all()
     db.close()
 
-    return popular_list
+    popular_cache.update({"populars": populars})
+
+    return populars
 
 
 def generate_token(request: Request, action: str = ''):
@@ -1087,12 +1180,53 @@ def compare_token(request: Request, token: str, action: str = ''):
         return False
 
 
-def get_poll(request: Request):
+lfu_cache = cachetools.LFUCache(maxsize=128)
+
+def get_recent_poll():
+    """
+    최근 투표 정보 1건을 가져오는 함수
+    """
+    if lfu_cache.get("poll"):
+        return lfu_cache.get("poll")
+
     db = SessionLocal()
     poll = db.query(Poll).filter(Poll.po_use == 1).order_by(Poll.po_id.desc()).first()
     db.close()
 
+    lfu_cache.update({"poll": poll})
+
     return poll
+
+
+def get_menus():
+    """사용자페이지 메뉴 조회 함수
+
+    Returns:
+        list: 자식메뉴가 포함된 메뉴 list
+    """
+    if lfu_cache.get("menus"):
+        return lfu_cache.get("menus")
+
+    db = SessionLocal()
+    menus = []
+    # 부모메뉴 조회
+    parent_menus = db.query(Menu).filter(func.length(Menu.me_code) == 2).order_by(Menu.me_order).all()
+    
+    for menu in parent_menus:
+        parent_code = menu.me_code
+
+        # 자식 메뉴 조회
+        child_menus = db.query(Menu).filter(
+            func.length(Menu.me_code) == 4,
+            func.substring(Menu.me_code, 1, 2) == parent_code
+        ).order_by(Menu.me_order).all()
+
+        menu.sub = child_menus
+        menus.append(menu)
+
+    lfu_cache.update({"menus": menus})
+
+    return menus
 
 
 def get_member_level(request: Request):
@@ -1104,7 +1238,7 @@ def get_member_level(request: Request):
     return member.mb_level if member else 1
 
 
-def auth_check(request: Request, menu_key: str, attribute: str):
+def auth_check_menu(request: Request, menu_key: str, attribute: str):
     '''
     관리권한 체크
     '''    
@@ -1120,14 +1254,14 @@ def auth_check(request: Request, menu_key: str, attribute: str):
 
     exists_auth = db.query(Auth).filter_by(mb_id=exists_member.mb_id, au_menu=menu_key).first()
     if not exists_auth:
-        return "이 메뉴에는 접근 권한이 없습니다.\\n\\n접근 권한은 최고관리자만 부여할 수 있습니다."
+        return "이 메뉴에는 접근 권한이 없습니다.\n\n접근 권한은 최고관리자만 부여할 수 있습니다."
 
     auth_set = set(exists_auth.au_auth.split(","))
     if not attribute in auth_set:
         if attribute == "r":
             error = "읽을 권한이 없습니다."
         elif attribute == "w":
-            error = "입력, 추가, 생성, 수정 권한이 없습니다."
+            error = "입력, 추가, 생성, 등록, 수정 권한이 없습니다."
         elif attribute == "d":
             error = "삭제 권한이 없습니다."
         else:
@@ -1170,6 +1304,7 @@ def get_unique_id(request) -> Optional[str]:
                 logging.log(logging.CRITICAL, 'unique table insert error', exc_info=e)
                 return None
 
+
 class AlertException(HTTPException):
     """스크립트 경고창 출력을 위한 예외 클래스
         - HTTPExceptiond에서 페이지 이동을 위한 url 매개변수를 추가적으로 받는다.
@@ -1177,10 +1312,25 @@ class AlertException(HTTPException):
     Args:
         HTTPException (HTTPException): HTTP 예외 클래스
     """
-    def __init__(self, status_code: int, detail: str = None, url: str = None):
+    def __init__(self, detail: str = None, status_code: int = 200, url: str = None):
         self.status_code = status_code
         self.detail = detail
         self.url = url
+
+
+class AlertCloseException(HTTPException):
+    """스크립트 경고창 출력 및 윈도우 창 닫기를 위한 예외 클래스
+
+    Args:
+        HTTPException (HTTPException): HTTP 예외 클래스
+    """
+    def __init__(
+        self,
+        detail: Any = None,
+        status_code: int = 200,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> None:
+        super().__init__(status_code=status_code, detail=detail, headers=headers) 
 
 
 def is_admin(request: Request):
@@ -1190,14 +1340,45 @@ def is_admin(request: Request):
     if config.cf_admin.strip() == "":
         return False
 
-    if mb_id := request.session.get("ss_mb_id", ""):
+    mb_id = request.session.get("ss_mb_id", "")
+    if mb_id:
         if mb_id.strip() == config.cf_admin.strip():
             return True
 
     return False
 
+# TODO: 그누보드5의 is_admin 함수
+# 이미 is_admin 함수가 존재하므로 함수 이름을 변경함 
+def get_admin_type(request: Request, mb_id: str = None, group: Group = None, board: Board = None) -> str:
+    """게시판 관리자 여부 확인 후 관리자 타입 반환
 
-def check_profile_open(open_date, config) -> bool:
+    Args:
+        request (Request): FastAPI Request 객체
+        mb_id (str, optional): 회원 아이디. Defaults to None.
+        group (Group, optional): 게시판 그룹 정보. Defaults to None.
+        board (Board, optional): 게시판 정보. Defaults to None.
+
+    Returns:
+        str: 관리자 타입. super, group, board, None
+    """
+    if not mb_id:
+        return None
+    
+    config = request.state.config
+    group = board.group if board else None
+
+    is_authority = None
+    if config.cf_admin == mb_id:
+        is_authority = "super"
+    elif group and group.gr_admin == mb_id:
+        is_authority = "group"
+    elif board and board.bo_admin == mb_id:
+        is_authority = "board"
+    
+    return is_authority
+
+
+def check_profile_open(open_date: Optional[date], config) -> bool:
     """변경일이 지나서 프로필 공개가능 여부를 반환
     Args:
         open_date (datetime): 프로필 공개일
@@ -1209,10 +1390,11 @@ def check_profile_open(open_date, config) -> bool:
         return True
 
     else:
-        return open_date < (datetime.now() - timedelta(days=config.cf_open_modify))
+        opend_date_time = datetime(open_date.year, open_date.month, open_date.day)
+        return opend_date_time < (datetime.now() - timedelta(days=config.cf_open_modify))
 
 
-def get_next_profile_openable_date(open_date: datetime, config):
+def get_next_profile_openable_date(open_date: Optional[date], config):
     """다음 프로필 공개 가능일을 반환
     Args:
         open_date (datetime): 프로필 공개일
@@ -1221,13 +1403,18 @@ def get_next_profile_openable_date(open_date: datetime, config):
         datetime: 다음 프로필 공개 가능일
     """
     cf_open_modify = config.cf_open_modify
+    cf_open_modify = 3
+    if cf_open_modify == 0:
+        return ""
 
     if open_date:
-        calculated_date = datetime.strptime(open_date, "%Y-%m-%d") + timedelta(days=cf_open_modify)
+        calculated_date = datetime.strptime(open_date.strftime("%Y-%m-%d"), "%Y-%m-%d") + timedelta(days=cf_open_modify)
     else:
         calculated_date = datetime.now() + timedelta(days=cf_open_modify)
-
-    return calculated_date
+    print('--------------------ewr')
+    print(calculated_date)
+    
+    return calculated_date.strftime("%Y-%m-%d")
 
 
 def default_if_none(value, arg):
@@ -1285,3 +1472,329 @@ def get_filetime_str(file_path) -> Union[int, str]:
         return int(file_time)
     except FileNotFoundError:
         return ''
+
+
+class StringEncrypt:
+    def __init__(self, salt=''):
+        if not salt:
+            # You might want to implement your own salt generation logic here
+            self.salt = "your_default_salt"
+        else:
+            self.salt = salt
+        
+        self.length = len(self.salt)
+
+    def encrypt(self, str_):
+        length = len(str_)
+        result = ''
+
+        for i in range(length):
+            char = str_[i]
+            keychar = self.salt[i % self.length]
+            char = chr(ord(char) + ord(keychar))
+            result += char
+
+        result = base64.b64encode(result.encode()).decode()
+        result = result.translate(str.maketrans('+/=', '._-'))
+
+        return result
+
+    def decrypt(self, str_):
+        result = ''
+        str_ = str_.translate(str.maketrans('._-', '+/='))
+        str_ = base64.b64decode(str_).decode()
+
+        length = len(str_)
+
+        for i in range(length):
+            char = str_[i]
+            keychar = self.salt[i % self.length]
+            char = chr(ord(char) - ord(keychar))
+            result += char
+
+        return result
+
+# 사용 예
+# enc = StringEncrypt()
+# encrypted_text = enc.encrypt("hello")
+# print(encrypted_text)
+
+# decrypted_text = enc.decrypt(encrypted_text)
+# print(decrypted_text)
+
+
+class MyTemplates(Jinja2Templates):
+    """
+    Jinja2Template 설정 클래스
+    """
+    def __init__(self,
+                 directory: Union[str, os.PathLike],
+                 context_processors: dict = None,
+                 globals: dict = None,
+                 **env_options: Any,
+                 ):
+        super().__init__(directory, context_processors, **env_options)
+        # 공통 env.global 설정
+        self.env.globals["editor_path"] = editor_path
+        self.env.globals["generate_token"] = generate_token
+        self.env.globals["getattr"] = getattr
+        self.env.globals["get_selected"] = get_selected
+        self.env.globals["get_member_icon"] = get_member_icon
+        self.env.globals["get_member_image"] = get_member_image
+
+        # 사용자 템플릿, 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
+        if TEMPLATES_DIR in directory:
+            self.context_processors.append(self._default_context)
+        elif ADMIN_TEMPLATES_DIR in directory:
+            self.context_processors.append(self._default_admin_context)
+
+        # 추가 env.global 설정
+        if globals:
+            self.env.globals.update(**globals.__dict__)
+
+    def _default_context(self, request: Request):
+        context = {
+            "menus" : get_menus(),
+            "poll" : get_recent_poll(),
+            "populars" : get_populars(),
+            "latest": latest
+        }
+        return context
+    
+    def _default_admin_context(self, request: Request):
+        context = {
+            "admin_menus": get_admin_menus()
+        }
+        return context
+    
+
+class G6FileCache():
+    """파일 캐시 클래스
+    """
+    cache_dir = os.path.join("data", "cache")
+    cache_secret_key = None
+
+    def __init__(self):
+        # 캐시 디렉토리가 없으면 생성
+        if not os.path.exists(self.cache_dir):
+            os.makedirs(self.cache_dir)
+        
+    def get_cache_secret_key(self):
+        """
+        캐시 비밀키를 반환하는 함수
+        """
+        # 캐시된 값이 있다면, 해당 값을 반환
+        if self.cache_secret_key:
+            return self.cache_secret_key
+
+        # 서버 소프트웨어 및 DOCUMENT_ROOT 값을 해싱하여 6자리 문자열 생성
+        server_software = os.environ.get("SERVER_SOFTWARE", "")
+        document_root = os.environ.get("DOCUMENT_ROOT", "")
+        combined_data = server_software + document_root
+        self.cache_secret_key = hashlib.md5(combined_data.encode()).hexdigest()[:6]
+
+        return self.cache_secret_key
+    
+    def get(self, cache_file: str):
+        """
+        캐시된 파일이 있으면 파일을 읽어서 반환
+        """
+        if os.path.exists(cache_file):
+            with open(cache_file, "r", encoding="utf-8") as f:
+                return f.read()
+        return None
+    
+    def create(self, data: str, cache_file: str):
+        """
+        cache_file을 생성하는 함수
+        """
+        with open(cache_file, "w", encoding="utf-8") as f:
+            f.write(data)
+
+    def delete(self, cache_file: str):
+        """
+        cache_file을 삭제하는 함수
+        """
+        if os.path.exists(cache_file):
+            os.remove(cache_file)
+
+    def delete_prefix(self, prefix: str):
+        """
+        prefix로 시작하는 캐시 파일을 모두 삭제하는 함수
+        """
+        for file in os.listdir(self.cache_dir):
+            if file.startswith(prefix):
+                os.remove(os.path.join(self.cache_dir, file))
+
+
+SMTP_SERVER = os.getenv("SMTP_SERVER")
+SMTP_PORT = os.getenv("SMTP_PORT")
+SMTP_USERNAME = os.getenv("SMTP_USERNAME")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+
+# 메일 발송
+# return 은 수정 필요
+def mailer(email: str, subject: str, body: str):
+    to_emails = email.split(',') if ',' in email else [email]
+    for to_email in to_emails:
+        try:
+            msg = MIMEMultipart()
+            msg['From'] = SMTP_USERNAME
+            msg['To'] = to_email
+            msg['Subject'] = subject
+            
+            # Assuming body is HTML, if not change 'html' to 'plain'
+            msg.attach(MIMEText(body, 'html'))  
+
+            with smtplib.SMTP(SMTP_SERVER, int(SMTP_PORT)) as server:
+                if SMTP_USERNAME and SMTP_PASSWORD:
+                    server.starttls()
+                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                text = msg.as_string()
+                server.sendmail(SMTP_USERNAME, to_email, text)
+
+        except Exception as e:
+            print(f"Error sending email to {to_email}: {e}")
+
+    return {"message": f"Emails sent successfully to {', '.join(to_emails)}"}
+
+
+def is_none_datetime(input_date: Union[date, str]) -> bool:
+    """date, datetime 이 0001, 0000 등 유효하지 않은 날짜인지 확인하는 함수
+    0001, mysql 5.7이하 0000,
+    """
+    if isinstance(input_date, str):  # pymysql 라이브러리는 '0000', 12월 32일등 잘못된 날짜 일때 str 타입반환.
+        return True
+
+    if input_date.strftime("%Y")[:2] == "00":
+        return True
+
+    return False
+
+
+def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
+    """최신글 목록 HTML 출력
+
+    Args:
+        request (Request): _description_
+        skin_dir (str, optional): 스킨 경로. Defaults to ''.
+        bo_table (str, optional): 게시판 코드. Defaults to ''.
+        rows (int, optional): 노출 게시글 수. Defaults to 10.
+        subject_len (int, optional): 제목길이 제한. Defaults to 40.
+
+    Returns:
+        str: 최신글 HTML
+    """
+    templates = MyTemplates(directory=TEMPLATES_DIR)
+
+    if not skin_dir:
+        skin_dir = 'basic'
+
+    g6_file_cache = G6FileCache()
+    cache_filename = f"latest-{bo_table}-{skin_dir}-{rows}-{subject_len}-{g6_file_cache.get_cache_secret_key()}.html"
+    cache_file = os.path.join(g6_file_cache.cache_dir, cache_filename)
+
+    # 캐시된 파일이 있으면 파일을 읽어서 반환
+    if os.path.exists(cache_file):
+        return g6_file_cache.get(cache_file)
+
+    # Lazy import
+    import board_lib
+    
+    db = SessionLocal()
+    board = db.query(Board).filter(Board.bo_table == bo_table).first()
+
+    Write = dynamic_create_write_table(bo_table)
+    writes = db.query(Write).filter(Write.wr_is_comment == False).order_by(Write.wr_num).limit(rows).all()
+    for write in writes:
+        write = board_lib.get_list(request, write, board)
+    
+    context = {
+        "request": request,
+        "board": board,
+        "writes": writes,
+        "bo_table": bo_table,
+        "bo_subject": board.bo_subject,
+    }
+    temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
+    temp_decode = temp.body.decode("utf-8")
+
+    # 캐시 파일 생성
+    g6_file_cache.create(temp_decode, cache_file)
+
+    return temp_decode
+
+
+def get_newwins(request: Request):
+    """
+    레이어 팝업 목록 조회
+    """
+    db = SessionLocal()
+
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    current_division = "comm" # comm, both, shop
+    newwins = db.query(NewWin).filter(
+        NewWin.nw_begin_time <= now,
+        NewWin.nw_end_time >= now,
+        NewWin.nw_device.in_(["both", request.state.device]),
+        NewWin.nw_division.in_(["both", current_division]),
+    ).order_by(NewWin.nw_id.asc()).all()
+
+    # "hd_pops_" + nw_id 이름으로 선언된 쿠키가 있는지 확인하고 있다면 팝업을 제거
+    newwins = [newwin for newwin in newwins if not request.cookies.get("hd_pops_" + str(newwin.nw_id))]
+
+    return newwins
+
+
+def datetime_format(date: datetime, format="%Y-%m-%d %H:%M:%S"):
+    """
+    날짜 포맷팅
+    """
+    if not date:
+        return ""
+
+    return date.strftime(format)
+
+
+def insert_board_new(bo_table: str, write: object):
+    """
+    최신글 테이블 등록 함수
+    """
+    db = SessionLocal()
+
+    new = BoardNew()
+    new.bo_table = bo_table
+    new.wr_id = write.wr_id
+    new.wr_parent = write.wr_parent
+    new.mb_id = write.mb_id
+    db.add(new)
+    db.commit()
+
+
+def get_current_captcha_cls(captcha_name: str):
+    """캡챠 클래스를 반환하는 함수
+    Args:
+        captcha_name (str) : config cf_captcha에 저장된 캡차클래스이름
+    Returns:
+        Optional[class]: 캡차 클래스 or None
+    """
+    if captcha_name == "recaptcha":
+        return ReCaptchaV2
+    elif captcha_name == "recaptcha_inv":
+        return ReCaptchaInvisible
+    else:
+        return None
+
+
+def captcha_widget(request):
+    """템플릿에서 캡차 출력
+    Args:
+        request (Request): FastAPI Request
+    Returns:
+        str: 캡차 템플릿 or ''
+    """
+    cls = get_current_captcha_cls(captcha_name=request.state.config.cf_captcha)
+    if cls:
+        return cls.TEMPLATE_PATH
+
+    return ''  # 템플릿 출력시 비어있을때는 빈 문자열

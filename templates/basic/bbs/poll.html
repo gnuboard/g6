@@ -1,10 +1,8 @@
-{% if get_poll %}
-    {% set poll = get_poll(request) %}
-    {% if poll %}
+{% if poll %}
     <form name="fpoll" action="{{ url_for('poll_update', po_id=poll.po_id) }}" onsubmit="return fpoll_submit(this);" method="post" target="win_poll">
         <input type="hidden" name="po_id" value="{{ poll.po_id }}">
         <input type="hidden" name="skin_dir" value="theme%2Fbasic">
-        <input type="hidden" name="token" value="{{ generate_token(request, 'update') }}">
+        <input type="hidden" name="token" value="">
         <section id="poll">
             <header>
                 <h2>설문조사</h2>
@@ -51,6 +49,12 @@
                 alert("투표하실 설문항목을 선택하세요");
                 return false;
             }
+
+            f.token.value = generate_token();
+            if (f.token.value == "") {
+                alert("토큰값이 없습니다.");
+                return false;
+            }
         
             var new_win = window.open("about:blank", "win_poll", "width=616,height=500,scrollbars=yes,resizable=yes");
             f.target = "win_poll";
@@ -62,6 +66,5 @@
         {
             win_poll(url);
         }
-        </script>
-    {% endif %}
+    </script>
 {% endif %}

@@ -1,17 +1,15 @@
 from fastapi import APIRouter, Depends, Request
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from common import *
 from database import get_db
 from models import FaqMaster, Faq
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
-templates.env.globals["get_popular_list"] = get_popular_list
+templates = MyTemplates(directory=TEMPLATES_DIR)
 
 
-@router.get("/")
-@router.get("/{fm_id}")
+@router.get("/faq")
+@router.get("/faq/{fm_id}")
 def faq_view(request: Request, fm_id: int = None, db: Session = Depends(get_db)):
     '''
     FAQ 보기
@@ -50,4 +48,4 @@ def faq_view(request: Request, fm_id: int = None, db: Session = Depends(get_db))
         "fm_timg_url": fm_timg_url,
     }
 
-    return templates.TemplateResponse(f"faq/pc/faq.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/faq/faq.html", context)

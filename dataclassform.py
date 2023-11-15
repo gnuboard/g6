@@ -112,18 +112,19 @@ class ConfigForm:
     cf_email_mb_member: Optional[int] = Form(default=0)
     cf_email_po_super_admin: Optional[int] = Form(default=0)
     cf_social_login_use: Optional[int] = Form(default=0)
-    cf_social_servicelist: Optional[List[str]] = Form(
-        default="", alias="cf_social_servicelist[]"
-    )
-    # cf_social_servicelist: Optional[str] = Form(default="")
+
     cf_naver_clientid: Optional[str] = Form(default="")
     cf_naver_secret: Optional[str] = Form(default="")
     cf_facebook_appid: Optional[str] = Form(default="")
+    cf_facebook_secret: Optional[str] = Form(default="")
     cf_twitter_key: Optional[str] = Form(default="")
+    cf_twitter_secret: Optional[str] = Form(default="")
     cf_google_clientid: Optional[str] = Form(default="")
+    cf_google_secret: Optional[str] = Form(default="")
     cf_googl_shorturl_apikey: Optional[str] = Form(default="")
     cf_kakao_rest_key: Optional[str] = Form(default="")
     cf_kakao_js_apikey: Optional[str] = Form(default="")
+    cf_kakao_client_secret: Optional[str] = Form(default="") 
     cf_payco_clientid: Optional[str] = Form(default="")
     cf_payco_secret: Optional[str] = Form(default="")
     cf_add_script: Optional[str] = Form(default="")
@@ -267,7 +268,7 @@ class BoardForm:
     bo_comment_min: Optional[int] = Form(default=0)
     bo_write_max: Optional[int] = Form(default=0)
     bo_comment_max: Optional[int] = Form(default=0)
-    bo_notice: Optional[int] = Form(default=0)
+    # bo_notice: Optional[int] = Form(default=0)
     bo_upload_count: Optional[int] = Form(default=0)
     bo_use_email: Optional[int] = Form(default=0)
     bo_use_cert: Optional[str] = Form(default="")
@@ -322,6 +323,17 @@ class GroupForm:
     gr_8: Optional[str] = Form(default="")
     gr_9: Optional[str] = Form(default="")
     gr_10: Optional[str] = Form(default="")
+
+
+@dataclass
+class WriteForm:
+    ca_name: str = Form(None)
+    wr_name: str = Form(None)
+    wr_email: str = Form(None)
+    wr_homepage: str = Form(None)
+    wr_subject: str = Form(...)
+    wr_content: str = Form(...)
+    wr_is_comment: bool = False
 
 
 @dataclass
@@ -429,3 +441,34 @@ class QaContentForm:
     qa_subject: str = Form(...)
     qa_content: str = Form(...)
 
+
+@dataclass
+class NewwinForm:
+    """
+    팝업 폼 데이터
+    """
+    nw_division: str = Form(...)
+    nw_device: str = Form(...)
+    nw_begin_time: datetime = Form(...)
+    nw_end_time: datetime = Form(...)
+    nw_disable_hours: int = Form(...)
+    nw_left: int = Form(...)
+    nw_top: int = Form(...)
+    nw_height: int = Form(...)
+    nw_width: int = Form(...)
+    nw_subject: str = Form(...)
+    nw_content: str = Form(...)
+    nw_content_html: int = Form(None)
+
+@dataclass
+class SocialProfile:
+    """
+    그누보드 소셜 프로필 폼 데이터
+    """
+    mb_id: str
+    provider: str
+    identifier: str
+    profile_url: str
+    photourl: str
+    displayname: str
+    disciption: str
