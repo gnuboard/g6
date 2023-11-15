@@ -40,7 +40,7 @@ TEMPLATES = "templates"
 WIDGET_PATH = "_widget"
 
 CAPTCHA_PATH = f"{WIDGET_PATH}/captcha"
-EDITOR_PATH = f"{TEMPLATES}/editor"
+EDITOR_PATH = f"{WIDGET_PATH}/editor"
 
 def get_theme_from_db(config=None):
     # main.py 에서 config 를 인수로 받아서 사용
