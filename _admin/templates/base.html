@@ -84,29 +84,47 @@ var g5_admin_url = "/admin";
     <nav id="gnb" class="gnb_large ">
         <h2>관리자 주메뉴</h2>
         <ul class="gnb_ul">
-            {# get_admin_menus 삭제 예정 #}
-            {% if get_admin_menus %}
-                {% set admin_menus=get_admin_menus() %}
-            {% endif %}
-            {% for menu_key, submenus in admin_menus.items() %}
-                <li class="gnb_li {{ 'on' if (request.session and request.session.get('menu_key')[:3] == menu_key[4:]) else '' }}">
-                    <button type="button" class="btn_op menu-{{ menu_key[4:] }} menu-order-{{ loop.index }}" title="{{ submenus[0]['name'] }}">{{ submenus[0]['name'] }}</button>
-                    <div class="gnb_oparea_wr">
-                        <div class="gnb_oparea">
-                            <h3>{{ submenus[0]['name'] }}</h3>
-                            <ul>
-                                {% for submenu in submenus[1:] %}
-                                    <li data-menu="{{ submenu['id'] }}">
-                                        <a href="/admin/{{ submenu['url'] }}" class="gnb_2da {{ 'on' if (request.session.get('menu_key') == submenu['id']) else '' }}">
-                                            {{ submenu['name'] }}
-                                        </a>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
-                </li>
+
+        {% macro render_admin_menu(menu_key, submenus, loop_index) %}
+        <li class="gnb_li {{ 'on' if request_menu_key == menu_key else '' }}">
+            <button type="button" class="btn_op menu-{{ menu_key }} menu-order-{{ loop_index }}" title="{{ submenus[0]['name'] }}">{{ submenus[0]['name'] }}</button>
+            <div class="gnb_oparea_wr">
+                <div class="gnb_oparea">
+                    <h3>{{ submenus[0]['name'] }}</h3>
+                    <ul>
+                        {% for submenu in submenus[1:] %}
+                            <li data-menu="{{ submenu['id'] }}">
+                                <a href="/admin/{{ submenu['url'] }}" class="gnb_2da">{{ submenu['name'] }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </li>
+        {% endmacro %}
+        
+        {# 관리자 메뉴 #}
+        {% set request_menu_key = request.session.get('menu_key', '')[:3] %}
+        {% if get_admin_menus %}
+            {% set admin_menus=get_admin_menus() %}
+        {% endif %}
+        {% for menu_key, submenus in admin_menus.items() %}
+            {{ render_admin_menu(menu_key[4:], submenus, loop.index) }}
+        {% endfor %}
+
+        {# 플러그인 메뉴 #}
+        {% set request_menu_key = request.session.get('menu_key', '') %}
+        {% if get_admin_plugin_menus %}
+            {% set plugin_menus=get_admin_plugin_menus() %}
+        {% endif %}
+            
+        {% for plugin in plugin_menus %}
+            {% for menu_key, submenus in plugin.items() %}
+                {{ render_admin_menu(menu_key, submenus, loop.index) }}
             {% endfor %}
+        {% endfor %}
+        
+
         </ul>
 
             <!-- <li class="gnb_li on">
@@ -245,6 +263,14 @@ var g5_admin_url = "/admin";
             }
         });
 
+        
+        // 현재 페이지 메뉴 활성화
+        const currentlink = window.location.pathname
+        const currentLinks = document.querySelector('#gnb').querySelectorAll('a[href="'+ currentlink +'"]')
+        if (currentLinks.length > 0) {
+            currentLinks[0].className += ' on';
+        }
+        
         var hide_menu = false;
         var mouse_event = false;
         var oldX = oldY = 0;
