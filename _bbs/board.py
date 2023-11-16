@@ -957,10 +957,11 @@ class WriteCommentForm:
     comment_id: int = Form(None)
 
 @router.post("/write_comment_update/")
-def write_comment_update(
+async def write_comment_update(
     request: Request,
     db: Session = Depends(get_db),
     token: str = Form(...),
+    recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
     form: WriteCommentForm = Depends(),
 ):
     """
@@ -979,9 +980,17 @@ def write_comment_update(
     write = db.query(write_model).get(form.wr_id)
     if not write:
         raise AlertException(f"{form.wr_id} : 존재하지 않는 게시글입니다.", 404)
-    
+
+    config = request.state.config
     board_config = BoardConfig(request, board)
+    member = request.state.login_member
     if form.w == "c":
+        # Captcha 검증
+        if not member:
+            captcha_cls = get_current_captcha_cls(config.cf_captcha)
+            if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
+                raise AlertException("캡차가 올바르지 않습니다.", 400)
+
         if not board_config.is_comment_level():
             raise AlertException("댓글을 작성할 권한이 없습니다.", 403)
 

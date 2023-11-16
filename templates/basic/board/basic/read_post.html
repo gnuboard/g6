@@ -378,8 +378,11 @@
                             <input type="text" name="wr_name" value="" id="wr_name" required class="frm_input required" size="25" placeholder="이름">
                             <label for="wr_password" class="sound_only">비밀번호<strong> 필수</strong></label>
                             <input type="password" name="wr_password" id="wr_password" required class="frm_input required" size="25"  placeholder="비밀번호">
-                            <!-- TODO: Capcha 추가 -->
+                            <!-- Captcha Start -->
+                            <fieldset id="captcha" class="captcha">{% include captcha_widget(request) ignore missing %}</fieldset>
+                            <!-- Captcha End -->
                         {% endif %}
+                        
 
                         <span class="bo_vc_secret chk_box">
                             <input type="checkbox" name="wr_secret" value="secret" id="wr_secret" class="selec_chk">
@@ -489,6 +492,13 @@
             if (f.token.value == "") {
                 alert("토큰값이 없습니다.");
                 return false;
+            }
+
+            // captcha 사용시
+            if (typeof check_captcha === "function") {
+                if (!check_captcha(f)) {
+                    return false;
+                }
             }
 
             document.getElementById("btn_submit").disabled = "disabled";

@@ -7,8 +7,9 @@ from database import get_db
 from models import Member, Memo
 
 router = APIRouter()
-templates = MyTemplates(directory=TEMPLATES_DIR)
+templates = MyTemplates(directory=[CAPTCHA_PATH, TEMPLATES_DIR])
 templates.env.filters["default_if_none"] = default_if_none
+templates.env.globals["captcha_widget"] = captcha_widget
 
 # TODO : Capcha
 
@@ -141,21 +142,28 @@ def memo_form(request: Request, db: Session = Depends(get_db),
 
 
 @router.post("/memo_form_update")
-def memo_form_update(request: Request, db: Session = Depends(get_db),
+async def memo_form_update(
+    request: Request,
+    db: Session = Depends(get_db),
     token: str = Form(...),
+    recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
     me_recv_mb_id : str = Form(...),
     me_memo: str = Form(...)
 ):
     """
     쪽지 전송
     """
-    if not check_token(request, token):
-        raise AlertException(f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.", 403)
-
     config = request.state.config
     member = request.state.login_member
     if not member:
         raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
+    
+    if not check_token(request, token):
+        raise AlertException(f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.", 403)
+
+    captcha_cls = get_current_captcha_cls(config.cf_captcha)
+    if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
+        raise AlertException("캡차가 올바르지 않습니다.", 400)
 
     # me_recv_mb_id 공백 제거
     mb_id_list = me_recv_mb_id.replace(" ", "").split(',')
