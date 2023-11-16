@@ -75,7 +75,7 @@
                         </a>
                     </li>
                     {% endif %}
-                    {% if is_admin or write.mb_id == login_member.mb_id %}
+                    {% if is_admin or write.mb_id == login_member.mb_id or not write.mb_id %}
                     <li>
                         <button type="button" class="btn_more_opt is_view_btn btn_b01 btn">
                             <i class="fa fa-ellipsis-v" aria-hidden="true"></i><span class="sound_only">게시판 리스트 옵션</span>
@@ -281,18 +281,23 @@
         
                 <div class="cmt_contents">
                     <p>
-                        {% if "secret" in comment.wr_option %}
-                            <img src="{{ url_for('static', path="/img/icon_secret.gif") }}" alt="비밀글">
+                        {% if comment.is_secret %}
+                            <img src="{{ url_for('static', path="/img/icon_secret.gif") }}" alt="비밀 댓글">
                         {% endif %}
-                        {{ comment.wr_content|safe }}
+                        {% if comment.is_secret_content %}
+                            <a href="{{ url_for('password_page', action="comment-view", bo_table=board.bo_table, wr_id=comment.wr_id) }}" class="s_cmt">
+                                댓글내용 확인
+                            </a>
+                        {% else %}
+                            {{ comment.wr_content|safe }}
+                        {% endif %}
                     </p>
                 </div>
                 <span id="edit_{{ comment.wr_id }}" class="bo_vc_w"></span><!-- 수정 -->
                 <span id="reply_{{ comment.wr_id }}" class="bo_vc_w"></span><!-- 답변 -->
 
                 <input type="hidden" value="{% if "secret" in comment.wr_option %}secret{% endif %}" id="secret_comment_{{ comment.wr_id }}">
-                <!-- TODO: 비밀글 처리 적용 -->
-                <textarea id="save_comment_{{ comment.wr_id }}" style="display:none">{{ comment.wr_content|safe }}</textarea>
+                <textarea id="save_comment_{{ comment.wr_id }}" style="display:none">{{ comment.save_content|safe }}</textarea>
             </div>
             <div class="bo_vl_opt">
                 <button type="button" class="btn_cm_opt btn_b01 btn">
@@ -387,7 +392,7 @@
                         <span class="bo_vc_secret chk_box">
                             <input type="checkbox" name="wr_secret" value="secret" id="wr_secret" class="selec_chk">
                             <label for="wr_secret" class="icon_lock">
-                                <span>&nbsp;</span>비밀글
+                                <span>&nbsp;</span>비밀댓글
                             </label>
                         </span>
                     </div>
@@ -626,34 +631,42 @@
 
     var isRun = true;
     function excute_good(href, $el, $tx) {
-        $.ajax({
-            type: "POST",
-            url: href,
-            dataType: "json",
-            beforeSend: function() {
-                if (isRun == false) {
-                    alert("비정상적인 요청입니다. 잠시만 기다려주세요.")
-                    return false;
+        token = generate_token();
+
+        if (token) {
+            $.ajax({
+                type: "POST",
+                url: href,
+                data: {"token": token},
+                dataType: "json",
+                beforeSend: function() {
+                    if (isRun == false) {
+                        alert("비정상적인 요청입니다. 잠시만 기다려주세요.")
+                        return false;
+                    }
+                    isRun = false;
+                },
+                success: function(data) {
+                    if (data.status == "success") {
+                        $el.addClass("active");
+                    }
+                    $("#good_button").find("strong").text(number_format(data.good));
+                    $("#nogood_button").find("strong").text(number_format(data.nogood));
+                    $tx.text(data.message);
+                    $tx.fadeIn(200).delay(2500).fadeOut(200);
+                },
+                error: function(xhr, status, error) {
+                    // 메시지 출력
+                    var message = xhr.responseJSON ? xhr.responseJSON.message : xhr.responseText;
+                    alert(xhr.status + " 오류 - " + message);
+                },
+                complete: function() {
+                    isRun = true;
                 }
-                isRun = false;
-            },
-            success: function(data) {
-                if (data.status == "success") {
-                    $el.addClass("active");
-                }
-                $("#good_button").find("strong").text(number_format(data.good));
-                $("#nogood_button").find("strong").text(number_format(data.nogood));
-                $tx.text(data.message);
-                $tx.fadeIn(200).delay(2500).fadeOut(200);
-            },
-            error: function(xhr, status, error) {
-                // 메시지 출력
-                alert(xhr.status + " 오류 - " + xhr.responseJSON.message);
-            },
-            complete: function() {
-                isRun = true;
-            }
-        });
+            });
+        } else {
+            alert("토큰 값이 없습니다.");
+        }
     }
     </script>
     <!-- } 게시글 읽기 끝 -->

@@ -11,7 +11,6 @@ templates = MyTemplates(directory=[CAPTCHA_PATH, TEMPLATES_DIR])
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals["captcha_widget"] = captcha_widget
 
-# TODO : Capcha
 
 @router.get("/memo")
 def memo_list(request: Request, db: Session = Depends(get_db),

@@ -6,6 +6,7 @@ import datetime
 from fastapi import APIRouter, Depends, Request, File, Form, Path, Query
 from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import aliased, Session
+from pbkdf2 import create_hash
 
 from board_lib import *
 from common import *
@@ -410,7 +411,12 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
 
 
 @router.get("/write/{bo_table}/{wr_id}")
-def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = Depends(get_db)):
+def write_form_edit(
+    request: Request,
+    db: Session = Depends(get_db),
+    bo_table: str = Path(...),
+    wr_id: int = Path(...)
+):
     """
     게시글을 작성하는 form을 보여준다.
     """
@@ -432,13 +438,19 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
 
     # 게시판 설정
     board_config = BoardConfig(request, board)
-    # TODO: 익명글 수정 시 비밀번호
     if not board_config.is_write_level():
         raise AlertException("글을 수정할 권한이 없습니다.", 403)
-    elif not is_owner(write, mb_id) and not admin_type:
-        raise AlertException("본인 글만 수정할 수 있습니다.", 403)
     if not board_config.is_modify_by_comment(wr_id):
         raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_modify}건 이상 존재하므로 수정 할 수 없습니다.", 403)
+
+    if not admin_type:
+        # 익명 글
+        if not write.mb_id:
+            if not request.session.get(f"ss_edit_{bo_table}_{wr_id}"):
+                return RedirectResponse(f"/bbs/password/update/{bo_table}/{write.wr_id}?{request.query_params}", status_code=303)
+        # 회원 글
+        elif write.mb_id and not is_owner(write, mb_id):
+            raise AlertException("본인 글만 수정할 수 있습니다.", 403)
 
     # 게시판 제목 설정
     board.subject = board_config.subject
@@ -550,10 +562,11 @@ async def write_update(
                 raise AlertException("글을 작성할 권한이 없습니다.", 403)
             parent_write = None
 
+        form_data.wr_password = create_hash(form_data.wr_password) if form_data.wr_password else ""
         form_data.wr_name = board_config.set_wr_name(member, form_data.wr_name)
         form_data.wr_email = getattr(member, "mb_email", form_data.wr_email)
         form_data.wr_homepage = getattr(member, "mb_homepage", form_data.wr_homepage)
-        
+
         write = model_write(
             wr_num = parent_write.wr_num if parent_write else get_next_num(bo_table),
             wr_reply = generate_reply_character(board, parent_write) if parent_write else "",
@@ -568,6 +581,10 @@ async def write_update(
         write.wr_parent = write.wr_id  # 부모아이디 설정
         board.bo_count_write = board.bo_count_write + 1  # 게시판 글 갯수 1 증가
         db.commit()
+
+        # 비밀글은 세션 생성
+        if secret:
+            request.session[f"ss_secret_{bo_table}_{write.wr_id}"] = True
 
         # 새글 추가
         insert_board_new(bo_table, write)
@@ -659,7 +676,12 @@ async def write_update(
 
 
 @router.get("/{bo_table}/{wr_id}")
-def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends(get_db)):
+def read_post(
+    request: Request,
+    db: Session = Depends(get_db),
+    bo_table: str = Path(...),
+    wr_id: int = Path(...)
+):
     """
     게시글을 1개 읽는다.
     """
@@ -682,7 +704,7 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
 
     # 게시글 정보 조회
     model_write = dynamic_create_write_table(bo_table)
-    write = db.query(model_write).get(wr_id)
+    write = db.query(model_write).filter_by(wr_id=wr_id).first()
     if not write:
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
     
@@ -691,6 +713,34 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
     # 읽기 권한 검증
     if not board_config.is_read_level():
         raise AlertException("글을 읽을 권한이 없습니다.", 403)
+    
+    # 비밀글 검증
+    session_secret_name = f"ss_secret_{bo_table}_{wr_id}"
+    print("비밀글 검증", not request.session.get(session_secret_name), not admin_type, not is_owner(write, mb_id), "secret" in write.wr_option)
+    if ("secret" in write.wr_option
+        and not admin_type
+        and not is_owner(write, mb_id)
+        and not request.session.get(session_secret_name)
+    ):
+        # 부모글이 본인글이라면 열람 가능
+        owner = False;
+        if write.wr_reply and mb_id:
+            print("부모글 확인")
+            parent_write = db.query(model_write).filter_by(
+                wr_num = write.wr_num,
+                wr_reply = "",
+                wr_is_comment = False
+            ).first()
+            print("부모글 아이디/로그인아이디", parent_write.mb_id, mb_id)
+            if parent_write.mb_id == mb_id:
+                owner = True
+        print ("owner : ", owner)
+        if not owner:
+            # TODO: 비밀번호 체크이동
+            print("비밀번호 체크이동")
+            return RedirectResponse(f"/bbs/password/view/{bo_table}/{write.wr_id}?{request.query_params}", status_code=303)
+        print("세션생성", session_secret_name)
+        request.session[session_secret_name] = True
     
     # 게시글 정보 설정
     write.ip = board_config.get_display_ip(write.wr_ip)
@@ -786,6 +836,20 @@ def read_post(bo_table: str, wr_id: int, request: Request, db: Session = Depends
         comment.ip = board_config.get_display_ip(comment.wr_ip)
         comment.is_reply = len(comment.wr_comment_reply) < 5 and board.bo_comment_level <= member_level
         comment.is_edit = comment.is_del = (member and comment.mb_id == member.mb_id) or admin_type
+        comment.is_secret = "secret" in comment.wr_option
+
+        # 비밀댓글 처리
+        session_secret_comment_name = f"ss_secret_comment_{bo_table}_{comment.wr_id}"
+        if (comment.is_secret 
+            and not admin_type 
+            and not is_owner(comment, mb_id)
+            and not request.session.get(session_secret_comment_name) 
+            ):
+            comment.is_secret_content = True
+            comment.save_content = "비밀글 입니다."
+        else:
+            comment.is_secret_content = False
+            comment.save_content = comment.wr_content
 
     # TODO: 전체목록보이기 사용 => 게시글 목록 부분을 분리해야함
     write_list = None

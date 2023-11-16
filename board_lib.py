@@ -752,6 +752,7 @@ def get_list(request: Request, write: WriteBaseModel, board: Board, subject_len:
     write.datetime = write.wr_datetime.strftime("%y-%m-%d")
 
     write.is_notice = board_config.is_board_notice(write.wr_id)
+    write.icon_secret = "secret" in write.wr_option
     write.icon_hot = board_config.is_icon_hot(write.wr_hit)
     write.icon_new = board_config.is_icon_new(write.wr_datetime)
     write.icon_file = BoardFileManager(board, write.wr_id).is_exist()

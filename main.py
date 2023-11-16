@@ -38,6 +38,7 @@ from _bbs.board_new import router as board_new_router
 from _bbs.ajax_good import router as good_router
 from _bbs.ajax_autosave import router as autosave_router
 from _bbs.social import router as social_router
+from _bbs.password import router as password_router
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
 app.include_router(login_router, prefix="/bbs", tags=["login"])
@@ -54,6 +55,7 @@ app.include_router(board_new_router, prefix="/bbs", tags=["board_new"])
 app.include_router(good_router, prefix="/bbs/ajax", tags=["good"])
 app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
 app.include_router(social_router, prefix="/bbs", tags=["social"])
+app.include_router(password_router, prefix="/bbs", tags=["password"])
 
 # is_mobile = False
 # user_device = 'pc'
