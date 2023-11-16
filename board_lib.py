@@ -83,6 +83,21 @@ class BoardConfig():
             return self.board.bo_subject
         
     @property
+    def use_captcha(self) -> bool:
+        """게시판에 캡차 사용 여부를 반환.
+
+        Returns:
+            bool: 게시판에 캡차 사용 여부.
+        """
+        if self.login_member_admin_type:
+            return False
+        
+        if not self.login_member or self.board.bo_use_captcha:
+            return True
+        
+        return False
+        
+    @property
     def use_email(self) -> bool:
         """게시판에 이메일 사용 여부를 반환.
 

@@ -11,10 +11,10 @@ from board_lib import *
 from common import *
 from database import get_db
 from dataclassform import WriteForm
-from models import AutoSave, Board, BoardGood, Group, Member, Scrap
+from models import AutoSave, Board, BoardGood, Group, Scrap
 
 router = APIRouter()
-templates = MyTemplates(directory=[EDITOR_PATH, TEMPLATES_DIR])
+templates = MyTemplates(directory=[EDITOR_PATH, CAPTCHA_PATH, TEMPLATES_DIR])
 templates.env.filters["datetime_format"] = datetime_format
 templates.env.filters["set_image_width"] = set_image_width
 templates.env.globals["bleach"] = bleach
@@ -24,6 +24,7 @@ templates.env.globals["get_admin_type"] = get_admin_type
 templates.env.globals["get_unique_id"] = get_unique_id
 templates.env.globals["board_config"] = BoardConfig
 templates.env.globals["get_list_thumbnail"] = get_list_thumbnail
+templates.env.globals["captcha_widget"] = captcha_widget
 
 FILE_DIRECTORY = "data/file/"
 
@@ -154,9 +155,8 @@ def list_delete(
     """
     게시글을 삭제한다.
     """
-    # 토큰 검증
     if not compare_token(request, token, 'board_list'):
-        raise AlertException("잘못된 접근입니다.", 403)
+        raise AlertException("토큰이 유효하지 않습니다.", 403)
 
     # 게시판 정보 조회
     board = db.query(Board).get(bo_table)
@@ -254,9 +254,8 @@ def move_update(
     """
     act = "이동" if sw == "move" else "복사"
 
-    # 토큰 검증
     if not compare_token(request, token, 'board_move'):
-        raise AlertException("잘못된 접근입니다.", 403)
+        raise AlertException("토큰이 유효하지 않습니다.", 403)
     
     # 게시판 검증
     origin_board = db.query(Board).get(bo_table)
@@ -403,6 +402,7 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
             "is_file": board_config.is_upload_level(),
             "is_file_content": bool(board.bo_use_file_content),
             "files": BoardFileManager(board).get_board_files_by_form(),
+            "is_use_captcha": board_config.use_captcha,
             "write_min": board_config.write_min,
             "write_max": board_config.write_max,
         }
@@ -475,6 +475,7 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
             "is_file": board_config.is_upload_level(),
             "is_file_content": bool(board.bo_use_file_content),
             "files": BoardFileManager(board, wr_id).get_board_files_by_form(),
+            "is_use_captcha": False,
             "write_min": board_config.write_min,
             "write_max": board_config.write_max,
         }
@@ -482,9 +483,10 @@ def write_form_edit(bo_table: str, wr_id: int, request: Request, db: Session = D
 
 
 @router.post("/write_update/")
-def write_update(
+async def write_update(
     request: Request,
     token: str = Form(...),
+    recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
     bo_table: str = Form(...),
     wr_id: int = Form(None),
     parent_id: int = Form(None),
@@ -533,7 +535,12 @@ def write_update(
         form_data.wr_link2 = ""
 
     # 글 등록
-    if compare_token(request, token, 'insert'):
+    if compare_token(request, token, 'write_insert'):
+        # Captcha 검증
+        if board_config.use_captcha:
+            captcha_cls = get_current_captcha_cls(config.cf_captcha)
+            if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
+                raise AlertException("캡차가 올바르지 않습니다.", 400)
         if parent_id:
             if not board_config.is_reply_level():
                 raise AlertException("답변글을 작성할 권한이 없습니다.", 403)
@@ -576,7 +583,7 @@ def write_update(
             send_write_mail(request, board, write, parent_write)
 
     # 글 수정
-    elif compare_token(request, token, 'update'):
+    elif compare_token(request, token, 'write_update'):
         if not board_config.is_modify_by_comment(wr_id):
             raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_modify}건 이상 존재하므로 수정 할 수 없습니다.", 403)
     
@@ -594,7 +601,7 @@ def write_update(
         db.commit()
     # 토큰 오류
     else:
-        raise AlertException("잘못된 접근입니다.", 403)
+        raise AlertException("토큰이 유효하지 않습니다.", 403)
     
     # 공지글 설정
     board.bo_notice = board_config.set_board_notice(write.wr_id, notice)
@@ -824,9 +831,8 @@ def delete_post(
     """
     게시글을 삭제한다.
     """
-    # 토큰 검증
     if not compare_token(request, token, 'delete_post'):
-        raise AlertException("잘못된 접근입니다.", 403)
+        raise AlertException("토큰이 유효하지 않습니다.", 403)
 
     # 게시판 정보 조회
     board = db.query(Board).get(bo_table)
@@ -961,7 +967,7 @@ def write_comment_update(
     댓글 등록
     """
     if not check_token(request, token):
-        raise AlertException("잘못된 접근입니다.")
+        raise AlertException("토큰이 유효하지 않습니다.", 403)
 
     # 게시판 정보 조회
     board = db.query(Board).get(form.bo_table)
@@ -1046,7 +1052,7 @@ def delete_comment(
     댓글 삭제
     """
     if not compare_token(request, token, 'delete_comment'):
-        raise AlertException("잘못된 접근입니다.", 403)
+        raise AlertException("토큰이 유효하지 않습니다.", 403)
     
     write_model = dynamic_create_write_table(bo_table)
     comment = db.query(write_model).get(comment_id)

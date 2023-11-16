@@ -30,7 +30,7 @@
         <input type="hidden" name="sst" value="{{ request.query_params.sst }}">
         <input type="hidden" name="sod" value="{{ request.query_params.sod }}">
         <input type="hidden" name="page" value="{{ request.query_params.page }}">
-        <input type="hidden" name="token" value="{{ generate_token(request, 'update' if write else 'insert') }}">
+        <input type="hidden" name="token" value="{{ generate_token(request, 'write_update' if write else 'write_insert') }}">
         
         {% if categories %}
             <div class="bo_w_select write_div">
@@ -159,6 +159,13 @@
                 </div>
             {% endfor %}
         {% endif %}
+
+        <!-- Captcha Start -->
+        {% if is_use_captcha %}
+            {% include captcha_widget(request) ignore missing %}
+        {% endif %}
+        <!-- Captcha End -->
+
         <div class="btn_confirm write_div">
             <a href="{{ url_for('list_post', bo_table=board.bo_table) }}?{{ request.query_params }}" class="btn_cancel btn">취소</a>
             <button type="submit" id="btn_submit" accesskey="s" class="btn_submit btn">작성완료</button>
@@ -233,10 +240,6 @@
                     f.wr_content.focus();
                 return false;
             }
-
-
-
-            if (!chk_captcha()) return false;
             */
             if (document.getElementById("char_count")) {
                 if (char_min > 0 || char_max > 0) {
@@ -249,6 +252,13 @@
                         alert("내용은 "+char_max+"글자 이하로 쓰셔야 합니다.");
                         return false;
                     }
+                }
+            }
+
+            // captcha 사용시
+            if (typeof check_captcha === "function") {
+                if (!check_captcha(f)) {
+                    return false;
                 }
             }
 
