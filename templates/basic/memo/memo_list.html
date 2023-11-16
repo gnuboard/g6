@@ -1,4 +1,5 @@
 {% extends "base_window.html" %}
+{% import "/sideview/macros.html" as sideview %}
 
 {% block title %}
     내 쪽지함
@@ -31,13 +32,13 @@
                         {% set is_read=(True if memo.me_read_datetime else False) %}
                         <li class="{% if is_read %}read{% endif %}">
                             <div class="memo_li profile_big_img">
-                                <img src="{{ url_for('static', path='/img/no_profile.gif') }}" alt="profile_image">
+                                <img src="/{{ get_member_image(target_id) }}" alt="profile_image">
                                 {% if not is_read %}
                                     <span class="no_read">안 읽은 쪽지</span>
                                 {% endif %}
                             </div>
                             <div class="memo_li memo_name">
-                                {{ target_nick }}
+                                {{ sideview.get(request, target_id, target_nick|default_if_none("[회원정보 없음]"))|safe }}
                                 <span class="memo_datetime">
                                     <i class="fa fa-clock-o" aria-hidden="true"></i>
                                     {{ memo.me_send_datetime }}

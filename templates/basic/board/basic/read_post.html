@@ -1,9 +1,11 @@
 {% extends "base.html" %}
+{% if board.bo_use_sideview %}
+    {% import "/sideview/macros.html" as sideview %}
+{% endif %}
 
 {% block head %}
     <script src="{{ url_for('static', path="js/viewimageresize.js") }}"></script>
 {% endblock head %}
-
 {% block title %}
     {{ write.wr_subject|truncate(20, False, '...', 0) }} > {{ board.bo_subject }}
 {% endblock title %}
@@ -13,8 +15,10 @@
 
 {% block content %}
 {% set login_member=request.state.login_member %}
+{% set is_admin=get_admin_type(request, login_member.mb_id, group=board.group, board=board) %}
+{% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
     <!-- 게시물 읽기 시작 { -->
-    <article id="bo_v" style="width:100%">
+    <article id="bo_v" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
         <header>
             <h2 id="bo_v_title">
                 {% if board.bo_use_category and write.ca_name %}
@@ -27,23 +31,20 @@
         <section id="bo_v_info">
             <h2>페이지 정보</h2>
             <div class="profile_info">
-                <div class="pf_img"><img src="{{ url_for('static', path='/img/no_profile.gif') }}" alt="profile_image"></div>
+                <div class="pf_img"><img src="/{{ get_member_image(write.mb_id) }}" alt="profile_image"></div>
                 <div class="profile_info_ct">
                     <span class="sound_only">작성자</span>
                     <strong>
-                        <span class="sv_wrap">
-                            <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member" title="최고관리자 자기소개" target="_blank" rel="nofollow" onclick="return false;">
-                                <span class="profile_img">
-                                    <img src="{{ url_for('static', path='/img/no_profile.gif') }}" alt="no_profile" width="22" height="22">
-                                </span>
-                                최고관리자
-                            </a>
+                        {% if board.bo_use_sideview %}
+                            {{ sideview.get(request, write.mb_id, write.name, write.wr_email, write.wr_homepage)|safe }}
+                        {% else %}
+                            <span class="{% if write.mb_id %}member{% else %}guest{% endif %}">
+                                {{ write.name }}
                             </span>
-                            {% if request.state.is_super_admin %}
-                                &nbsp;({{ write.wr_ip }})
-                            {% elif board.bo_use_ip_view %}
-                                &nbsp;({{ write.wr_ip }}) <!-- 변환된 IP 출력 -->
-                            {% endif %}
+                        {% endif %}
+                        {% if write.ip %}
+                        &nbsp;({{ write.ip }})
+                        {% endif %}
                     </strong>
                     <br>
                     <span class="sound_only">댓글</span><strong><a href="#bo_vc"> <i class="fa fa-commenting-o" aria-hidden="true"></i> {{ write.wr_comment }}건</a></strong>
@@ -69,7 +70,7 @@
                             <i class="fa fa-pencil" aria-hidden="true"></i><span class="sound_only">글쓰기</span>
                         </a>
                     </li>
-                    {% if request.state.is_super_admin or write.mb_id == login_member.mb_id %}
+                    {% if is_admin or write.mb_id == login_member.mb_id %}
                     <li>
                         <button type="button" class="btn_more_opt is_view_btn btn_b01 btn">
                             <i class="fa fa-ellipsis-v" aria-hidden="true"></i><span class="sound_only">게시판 리스트 옵션</span>
@@ -81,12 +82,11 @@
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ url_for('delete_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?token={{ generate_token(request, 'delete') }}" onclick="del(this.href); return false;">
+                                <a href="{{ url_for('delete_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?token={{ generate_token(request, 'delete_post') }}" onclick="del(this.href); return false;">
                                     삭제<i class="fa fa-trash-o" aria-hidden="true"></i>
                                 </a>
                             </li>
-                            {# TODO: 게시판관리자, 그룹관리자 추가 #}
-                            {% if request.state.is_super_admin %}
+                            {% if is_admin %}
                             <li>
                                 <a href="#" onclick="board_move(this.href, 'copy'); return false;">
                                     복사<i class="fa fa-files-o" aria-hidden="true"></i>
@@ -145,9 +145,7 @@
             <div id="bo_v_con">{{ write.wr_content|safe }}</div>
             <!-- } 본문 내용 끝 -->
             <!-- 서명 START -->
-            {% if board.bo_use_signature and write.mb_id %}
-            <p>{{ login_member.mb_signature }}</p>
-            {% endif %}
+            {{ board_config(request, board).get_member_signature(write.mb_id) }}
             <!-- 서명 END -->
 
         <!--  추천 비추천 시작 { -->
@@ -216,6 +214,7 @@
         </li>
         {% endif %}
     </ul>
+
     <script>
         // 글자수 제한
         var char_min = parseInt({{ board.bo_comment_min }}); // 최소
@@ -228,27 +227,112 @@
     <!-- 댓글 시작 { -->
     <section id="bo_vc">
         <h2>댓글목록</h2>
+        {% for comment in comments %}
+        {% set reply_depth=comment.wr_comment_reply|length %}
+        {% set delete_token=generate_token(request, 'delete_comment') %}
+        <article id="c_{{ comment.wr_id }}" {% if reply_depth %}style="margin-left:{{ reply_depth * 50 }}px;border-top-color:#e0e0e0"{% endif %}>
+            <div class="pf_img"><img src="/{{ get_member_image(comment.mb_id) }}" alt="profile_image"></div>
+            <div class="cm_wrap">
+                <header>
+                    <h2>{{ comment.name }}님의  댓글</h2>
+                    {% if board.bo_use_sideview %}
+                        {{ sideview.get(request, comment.mb_id, comment.name, comment.wr_email, comment.wr_homepage)|safe }}
+                    {% else %}
+                        <span class="{% if comment.mb_id %}member{% else %}guest{% endif %}">
+                            {{ comment.name }}
+                        </span>
+                    {% endif %}
+                    {% if comment.ip %}
+                        <span class="sound_only">아이피</span>
+                        <span>({{ comment.ip }})</span>
+                    {% endif %}
+                    <span class="sound_only">작성일</span>
+                    <span class="bo_vc_hdinfo">
+                        <i class="fa fa-clock-o" aria-hidden="true"></i>
+                        <time datetime="{{ comment.wr_datetime|datetime_format }}">{{ comment.wr_datetime|datetime_format }}</time>
+                    </span>
+                </header>
+        
+                <div class="cmt_contents">
+                    <p>
+                        {% if "secret" in comment.wr_option %}
+                            <img src="{{ url_for('static', path="/img/icon_secret.gif") }}" alt="비밀글">
+                        {% endif %}
+                        {{ comment.wr_content|safe }}
+                    </p>
+                </div>
+                <span id="edit_{{ comment.wr_id }}" class="bo_vc_w"></span><!-- 수정 -->
+                <span id="reply_{{ comment.wr_id }}" class="bo_vc_w"></span><!-- 답변 -->
+
+                <input type="hidden" value="{% if "secret" in comment.wr_option %}secret{% endif %}" id="secret_comment_{{ comment.wr_id }}">
+                <!-- TODO: 비밀글 처리 적용 -->
+                <textarea id="save_comment_{{ comment.wr_id }}" style="display:none">{{ comment.wr_content|safe }}</textarea>
+            </div>
+            <div class="bo_vl_opt">
+                <button type="button" class="btn_cm_opt btn_b01 btn">
+                    <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
+                    <span class="sound_only">댓글 옵션</span>
+                </button>
+                <ul class="bo_vc_act" style="display: none;">
+                    {% if comment.is_reply %}
+                    <li><a href="javascript:;" onclick="comment_box('{{ comment.wr_id }}', 'c'); return false;">답변</a></li>
+                    {% endif %}
+                    {% if comment.is_edit %}
+                    <li><a href="javascript:;" onclick="comment_box('{{ comment.wr_id }}', 'cu'); return false;">수정</a></li>
+                    {% endif %}
+                    {% if comment.is_del %}
+                    <li><a href="/board/delete_comment/{{ board.bo_table }}/{{ comment.wr_id }}?token={{ delete_token }}" onclick="return comment_delete();">삭제</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+            <script>
+                $(function() {			    
+                // 댓글 옵션창 열기
+                $(".btn_cm_opt").on("click", function(){
+                    $(this).parent("div").children(".bo_vc_act").show();
+                });
+                    
+                // 댓글 옵션창 닫기
+                $(document).mouseup(function (e){
+                    var container = $(".bo_vc_act");
+                    if( container.has(e.target).length === 0)
+                    container.hide();
+                });
+            });
+            </script>
+        </article>
+        {% else %}
         <p id="bo_vc_empty">등록된 댓글이 없습니다.</p>
+        {% endfor %}
     </section>
     <!-- } 댓글 끝 -->
 
     <!-- 댓글 쓰기 시작 { -->
     <aside id="bo_vc_w" class="bo_vc_w">
         <h2>댓글쓰기</h2>
-
         <form name="fviewcomment" id="fviewcomment" action="{{ url_for('write_comment_update') }}" onsubmit="return fviewcomment_submit(this);" method="post" autocomplete="off">
+            <input type="hidden" name="w" id="w" value="c">
             <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
             <input type="hidden" name="wr_id" value="{{ write.wr_id }}">
-            <input type="hidden" name="comment_id" value="" id="comment_id">
+            <input type="hidden" name="comment_id" value="{{ request.query_params.c_id }}" id="comment_id">
             <input type="hidden" name="sca" value="{{ request.query_params.sca }}">
             <input type="hidden" name="sfl" value="{{ request.query_params.sfl }}">
             <input type="hidden" name="stx" value="{{ request.query_params.stx }}">
             <input type="hidden" name="spt" value="{{ request.query_params.spt }}">
             <input type="hidden" name="page" value="{{ request.query_params.page }}">
-            <input type="hidden" name="is_good" value="">
+            <input type="hidden" name="token" value="">
+            
+            {% if board.bo_comment_min and board.bo_comment_max %}
+            <script> check_byte('wr_content', 'char_count'); </script>
+            <strong id="char_cnt"><span id="char_count">0</span>글자</strong>
+            {% endif %}
 
             <span class="sound_only">내용</span>
-            <textarea id="wr_content" name="wr_content" maxlength="10000" required="" class="required" title="내용" placeholder="댓글내용을 입력해주세요"></textarea>
+            <textarea id="wr_content" name="wr_content" maxlength="10000" required="" class="required"
+                {% if board.bo_comment_min and board.bo_comment_max %}
+                    onkeyup="check_byte('wr_content', 'char_count');"
+                {% endif %}
+                title="댓글 내용" placeholder="댓글내용을 입력해주세요"></textarea>
 
             <script>
             $(document).on("keyup change", "textarea#wr_content[maxlength]", function() {
@@ -261,12 +345,23 @@
             });
             </script>
             <div class="bo_vc_w_wr">
-                <div class="bo_vc_w_info"></div>
-                <div class="btn_confirm">
-                    <span class="secret_cm chk_box">
+                <div class="bo_vc_w_info">
+                    {% if not request.state.login_member %}
+                        <label for="wr_name" class="sound_only">이름<strong> 필수</strong></label>
+                        <input type="text" name="wr_name" value="" id="wr_name" required class="frm_input required" size="25" placeholder="이름">
+                        <label for="wr_password" class="sound_only">비밀번호<strong> 필수</strong></label>
+                        <input type="password" name="wr_password" id="wr_password" required class="frm_input required" size="25"  placeholder="비밀번호">
+                        <!-- TODO: Capcha 추가 -->
+                    {% endif %}
+
+                    <span class="bo_vc_secret chk_box">
                         <input type="checkbox" name="wr_secret" value="secret" id="wr_secret" class="selec_chk">
-                        <label for="wr_secret"><span>&nbsp;</span>비밀글</label>
+                        <label for="wr_secret" class="icon_lock">
+                            <span>&nbsp;</span>비밀글
+                        </label>
                     </span>
+                </div>
+                <div class="btn_confirm">
                     <button type="submit" id="btn_submit" class="btn_submit">댓글등록</button>
                 </div>
             </div>
@@ -281,155 +376,156 @@
     <script>
     var save_before = '';
     var save_html = document.getElementById('bo_vc_w').innerHTML;
-
+    /*
     function good_and_write()
     {
-    var f = document.fviewcomment;
-    if (fviewcomment_submit(f)) {
-        f.is_good.value = 1;
-        f.submit();
-    } else {
-        f.is_good.value = 0;
+        var f = document.fviewcomment;
+        if (fviewcomment_submit(f)) {
+            f.is_good.value = 1;
+            f.submit();
+        } else {
+            f.is_good.value = 0;
+        }
     }
-    }
-
+    */
     function fviewcomment_submit(f)
     {
-    var pattern = /(^\s*)|(\s*$)/g; // \s 공백 문자
+        var pattern = /(^\s*)|(\s*$)/g; // \s 공백 문자
 
-    f.is_good.value = 0;
+        // f.is_good.value = 0;
 
-    var subject = "";
-    var content = "";
-    $.ajax({
-        url: g5_bbs_url+"/ajax.filter.php",
-        type: "POST",
-        data: {
-            "subject": "",
-            "content": f.wr_content.value
-        },
-        dataType: "json",
-        async: false,
-        cache: false,
-        success: function(data, textStatus) {
-            subject = data.subject;
-            content = data.content;
-        }
-    });
+        var subject = "";
+        var content = "";
+        /*
+        $.ajax({
+            url: g5_bbs_url+"/ajax.filter.php",
+            type: "POST",
+            data: {
+                "subject": "",
+                "content": f.wr_content.value
+            },
+            dataType: "json",
+            async: false,
+            cache: false,
+            success: function(data, textStatus) {
+                subject = data.subject;
+                content = data.content;
+            }
+        });
 
-    if (content) {
-        alert("내용에 금지단어('"+content+"')가 포함되어있습니다");
-        f.wr_content.focus();
-        return false;
-    }
-
-    // 양쪽 공백 없애기
-    var pattern = /(^\s*)|(\s*$)/g; // \s 공백 문자
-    document.getElementById('wr_content').value = document.getElementById('wr_content').value.replace(pattern, "");
-    if (char_min > 0 || char_max > 0)
-    {
-        check_byte('wr_content', 'char_count');
-        var cnt = parseInt(document.getElementById('char_count').innerHTML);
-        if (char_min > 0 && char_min > cnt)
-        {
-            alert("댓글은 "+char_min+"글자 이상 쓰셔야 합니다.");
-            return false;
-        } else if (char_max > 0 && char_max < cnt)
-        {
-            alert("댓글은 "+char_max+"글자 이하로 쓰셔야 합니다.");
+        if (content) {
+            alert("내용에 금지단어('"+content+"')가 포함되어있습니다");
+            f.wr_content.focus();
             return false;
         }
-    }
-    else if (!document.getElementById('wr_content').value)
-    {
-        alert("댓글을 입력하여 주십시오.");
-        return false;
-    }
+        */
 
-    if (typeof(f.wr_name) != 'undefined')
-    {
-        f.wr_name.value = f.wr_name.value.replace(pattern, "");
-        if (f.wr_name.value == '')
+        // 양쪽 공백 없애기
+        var pattern = /(^\s*)|(\s*$)/g; // \s 공백 문자
+        document.getElementById('wr_content').value = document.getElementById('wr_content').value.replace(pattern, "");
+        if (char_min > 0 || char_max > 0)
         {
-            alert('이름이 입력되지 않았습니다.');
-            f.wr_name.focus();
+            check_byte('wr_content', 'char_count');
+            var cnt = parseInt(document.getElementById('char_count').innerHTML);
+            if (char_min > 0 && char_min > cnt) {
+                alert("댓글은 "+char_min+"글자 이상 쓰셔야 합니다.");
+                return false;
+            } else if (char_max > 0 && char_max < cnt) {
+                alert("댓글은 "+char_max+"글자 이하로 쓰셔야 합니다.");
+                return false;
+            }
+        }
+        else if (!document.getElementById('wr_content').value)
+        {
+            alert("댓글을 입력하여 주십시오.");
             return false;
         }
-    }
 
-    if (typeof(f.wr_password) != 'undefined')
-    {
-        f.wr_password.value = f.wr_password.value.replace(pattern, "");
-        if (f.wr_password.value == '')
+        if (typeof(f.wr_name) != 'undefined')
         {
-            alert('비밀번호가 입력되지 않았습니다.');
-            f.wr_password.focus();
+            f.wr_name.value = f.wr_name.value.replace(pattern, "");
+            if (f.wr_name.value == '')
+            {
+                alert('이름이 입력되지 않았습니다.');
+                f.wr_name.focus();
+                return false;
+            }
+        }
+
+        if (typeof(f.wr_password) != 'undefined')
+        {
+            f.wr_password.value = f.wr_password.value.replace(pattern, "");
+            if (f.wr_password.value == '')
+            {
+                alert('비밀번호가 입력되지 않았습니다.');
+                f.wr_password.focus();
+                return false;
+            }
+        }
+
+        f.token.value = generate_token();
+        if (f.token.value == "") {
+            alert("토큰값이 없습니다.");
             return false;
         }
-    }
 
+        document.getElementById("btn_submit").disabled = "disabled";
 
-    set_comment_token(f);
-
-    document.getElementById("btn_submit").disabled = "disabled";
-
-    return true;
+        return true;
     }
 
     function comment_box(comment_id, work)
     {
-    var el_id,
-        form_el = 'fviewcomment',
-        respond = document.getElementById(form_el);
+        var el_id,
+            form_el = 'fviewcomment',
+            respond = document.getElementById(form_el);
 
-    // 댓글 아이디가 넘어오면 답변, 수정
-    if (comment_id)
-    {
-        if (work == 'c')
-            el_id = 'reply_' + comment_id;
-        else
-            el_id = 'edit_' + comment_id;
-    }
-    else
-        el_id = 'bo_vc_w';
-
-    if (save_before != el_id)
-    {
-        if (save_before)
-        {
-            document.getElementById(save_before).style.display = 'none';
-        }
-
-        document.getElementById(el_id).style.display = '';
-        document.getElementById(el_id).appendChild(respond);
-        //입력값 초기화
-        document.getElementById('wr_content').value = '';
-        
-        // 댓글 수정
-        if (work == 'cu')
-        {
-            document.getElementById('wr_content').value = document.getElementById('save_comment_' + comment_id).value;
-            if (typeof char_count != 'undefined')
-                check_byte('wr_content', 'char_count');
-            if (document.getElementById('secret_comment_'+comment_id).value)
-                document.getElementById('wr_secret').checked = true;
+        // 댓글 아이디가 넘어오면 답변, 수정
+        if (comment_id) {
+            if (work == 'c')
+                el_id = 'reply_' + comment_id;
             else
-                document.getElementById('wr_secret').checked = false;
+                el_id = 'edit_' + comment_id;
+        } else {
+            el_id = 'bo_vc_w';
         }
 
-        document.getElementById('comment_id').value = comment_id;
-        document.getElementById('w').value = work;
+        if (save_before != el_id)
+        {
+            if (save_before)
+            {
+                document.getElementById(save_before).style.display = 'none';
+            }
 
-        if(save_before)
-            $("#captcha_reload").trigger("click");
+            document.getElementById(el_id).style.display = '';
+            document.getElementById(el_id).appendChild(respond);
+            //입력값 초기화
+            document.getElementById('wr_content').value = '';
+            
+            // 댓글 수정
+            if (work == 'cu')
+            {
+                document.getElementById('wr_content').value = document.getElementById('save_comment_' + comment_id).value;
+                if (typeof char_count != 'undefined')
+                    check_byte('wr_content', 'char_count');
+                if (document.getElementById('secret_comment_'+comment_id).value)
+                    document.getElementById('wr_secret').checked = true;
+                else
+                    document.getElementById('wr_secret').checked = false;
+            }
 
-        save_before = el_id;
+            document.getElementById('comment_id').value = comment_id;
+            document.getElementById('w').value = work;
+
+            if(save_before)
+                $("#captcha_reload").trigger("click");
+
+            save_before = el_id;
+        }
     }
-    }
 
-    function comment_delete()
-    {
-    return confirm("이 댓글을 삭제하시겠습니까?");
+    function comment_delete() {
+        return confirm("이 댓글을 삭제하시겠습니까?");
     }
 
     comment_box('', 'c'); // 댓글 입력폼이 보이도록 처리하기위해서 추가 (root님)
@@ -438,12 +534,12 @@
     <!-- } 댓글 쓰기 끝 -->
     <script>
     jQuery(function($) {            
-    //댓글열기
-    $(".cmt_btn").click(function(e){
-        e.preventDefault();
-        $(this).toggleClass("cmt_btn_op");
-        $("#bo_vc").toggle();
-    });
+        //댓글열기
+        $(".cmt_btn").click(function(e){
+            e.preventDefault();
+            $(this).toggleClass("cmt_btn_op");
+            $("#bo_vc").toggle();
+        });
     });
     </script>
     </article>
@@ -528,4 +624,7 @@
     }
     </script>
     <!-- } 게시글 읽기 끝 -->
+{% if write_list %}
+    {{ write_list|safe }}
+{% endif %}
 {% endblock content %}

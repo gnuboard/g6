@@ -1,5 +1,4 @@
 import datetime
-
 from fastapi import FastAPI, Depends, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -17,12 +16,11 @@ import secrets
 # models.Base.metadata.create_all(bind=engine)
 APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
 app = FastAPI(debug=APP_IS_DEBUG)
-templates = Jinja2Templates(directory=[TEMPLATES_DIR], extensions=["jinja2.ext.i18n"])
+
+templates = MyTemplates(directory=[TEMPLATES_DIR], extensions=["jinja2.ext.i18n"])
 templates.env.globals["is_admin"] = is_admin
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.filters["default_if_none"] = default_if_none
-templates.env.globals['getattr'] = getattr
-templates.env.globals["generate_token"] = generate_token
 
 from _admin.admin import router as admin_router
 from _bbs.board import router as board_router
@@ -65,7 +63,6 @@ register_statics(app, plugin_info_list)
 
 # todo: 플러그인 상태를 저장하는 테이블
 # plugin_state_setting(plugin_state, plugin_info_list)
-
 
 # 하위경로를 먼저 등록하고 상위경로를 등록
 # plugin/plugin_name/static 폴더 이후 등록
@@ -203,7 +200,7 @@ async def main_middleware(request: Request, call_next):
 
     if is_autologin:
         # 자동로그인 쿠키를 설정
-        response.set_cookie(key="ss_mb_id", value=request.session["ss_mb_id"], max_age=3600)
+        response.set_cookie(key="ss_mb_id", value=request.session["ss_mb_id"], max_age=86400 * 30)  # 30 일 동안 유지
 
     # 접속자 기록
     vi_ip = request.client.host
@@ -277,7 +274,6 @@ def index(request: Request, db: Session = Depends(get_db)):
     context = {
         "request": request,
         "newwins": get_newwins(request),
-        "latest": latest,
         "boards": boards,
     }
     return templates.TemplateResponse(f"{request.state.device}/main.html", context)
