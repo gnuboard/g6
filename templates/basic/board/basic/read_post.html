@@ -626,34 +626,42 @@
 
     var isRun = true;
     function excute_good(href, $el, $tx) {
-        $.ajax({
-            type: "POST",
-            url: href,
-            dataType: "json",
-            beforeSend: function() {
-                if (isRun == false) {
-                    alert("비정상적인 요청입니다. 잠시만 기다려주세요.")
-                    return false;
+        token = generate_token();
+
+        if (token) {
+            $.ajax({
+                type: "POST",
+                url: href,
+                data: {"token": token},
+                dataType: "json",
+                beforeSend: function() {
+                    if (isRun == false) {
+                        alert("비정상적인 요청입니다. 잠시만 기다려주세요.")
+                        return false;
+                    }
+                    isRun = false;
+                },
+                success: function(data) {
+                    if (data.status == "success") {
+                        $el.addClass("active");
+                    }
+                    $("#good_button").find("strong").text(number_format(data.good));
+                    $("#nogood_button").find("strong").text(number_format(data.nogood));
+                    $tx.text(data.message);
+                    $tx.fadeIn(200).delay(2500).fadeOut(200);
+                },
+                error: function(xhr, status, error) {
+                    // 메시지 출력
+                    var message = xhr.responseJSON ? xhr.responseJSON.message : xhr.responseText;
+                    alert(xhr.status + " 오류 - " + message);
+                },
+                complete: function() {
+                    isRun = true;
                 }
-                isRun = false;
-            },
-            success: function(data) {
-                if (data.status == "success") {
-                    $el.addClass("active");
-                }
-                $("#good_button").find("strong").text(number_format(data.good));
-                $("#nogood_button").find("strong").text(number_format(data.nogood));
-                $tx.text(data.message);
-                $tx.fadeIn(200).delay(2500).fadeOut(200);
-            },
-            error: function(xhr, status, error) {
-                // 메시지 출력
-                alert(xhr.status + " 오류 - " + xhr.responseJSON.message);
-            },
-            complete: function() {
-                isRun = true;
-            }
-        });
+            });
+        } else {
+            alert("토큰 값이 없습니다.");
+        }
     }
     </script>
     <!-- } 게시글 읽기 끝 -->
