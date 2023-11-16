@@ -5,7 +5,6 @@ body {margin:0;padding:0;font-size:0.75em;font-family:'Malgun Gothic',AppleGothi
 html, h1, h2, h3, h4, h5, h6, form, fieldset, img {margin:0;padding:0;border:0}
 h1, h2, h3, h4, h5, h6 {font-size:1em;font-family:'Malgun Gothic',AppleGothic,Dotum,"돋움", sans-serif;}
 article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section {display:block}
-section {padding: 20px 0px;}
 
 ul{margin:0;padding:0;list-style:none}
 li,dt,dd,ol{margin:0;padding:0}
@@ -30,7 +29,7 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0}
 
 #wrapper {min-height:480px;width: 100%;display: flex;}
 /* 레이아웃 */
-#hd {position: sticky;top: 71px;width: 220px;height: calc(100vh - 71px); padding: 0px 20px;background-color: #2b5b84;overflow-y: auto;}
+#hd {position: sticky;top: 71px;width: 220px;height: calc(100vh - 71px); padding: 0px 20px;background-color: #272E3D;overflow-y: auto;transition: all 0.2s;}
 #hd h1 {position:absolute;font-size:0;line-height:0;overflow:hidden}
 #hd_top{position: relative;height:50px;z-index:1000;border-radius: 12px;width: 220px;margin: 0px;}
 #hd_top:after{display:block;visibility:hidden;clear:both;content:""}
@@ -379,7 +378,7 @@ tfoot th {}
 .tbl_frm01 textarea {height:150px}
 .tbl_frm01 #captcha {margin:0;padding:0;border:0;background:transparent}
 .tbl_frm01 #captcha input {margin-left:5px;text-align:center}
-.h2_frm{text-align:left;color:#272E3D;font-size:1.09em;font-weight:bold;margin:0px 0 10px;}
+.h2_frm{text-align:left;color:#272E3D;font-size:1.09em;font-weight:bold;margin:0px 0 10px;padding-top: 60px;}
 
 @media (max-width: 1100px) {
     .anchor {position: static;}
@@ -427,6 +426,7 @@ tfoot th {}
     #theme_list li .tmli_if>img {width: 100% !important;height: auto !important;}
     #theme_list li .tmli_if {width: 100% !important;}
     #theme_list li {width: 100%;}
+
 }
 
 /* 테이블 그리드 */
