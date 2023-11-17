@@ -136,6 +136,8 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0}
 /* 버튼 */
 .btn_confirm {margin:0px}
 .btn_fixed_top{position:fixed;bottom:10px;right:70px;z-index:100}
+.btn_fixed_top .btn_02, .btn_fixed_top .btn_submit {height: 50px;}
+.btn_fixed_top .btn_01 {height: 50px;line-height: 50px;}
 
 .btn_confirm01 {}
 .btn_confirm01 button {padding:0 15px;height:30px;border:0;background:#9eacc6;color:#fff}
