@@ -10,23 +10,16 @@
 
 {% block content %}
 
-{% if errors %}
-<ul class="errors">
-    {% for error in errors %}
-    <li>{{ error }}</li>
-    {% endfor %}
-</ul>
-{% endif %}
 <h1 id="container_title">회원가입</h1>
 
 <div class="register">
-    <form id="fregisterform" name="fregisterform" action="/bbs/register_form"
+    <form id="fregisterform" name="fregisterform" action="{{ form.action_url }}"
           onsubmit="return fregisterform_submit(this)" method="post" enctype="multipart/form-data" autocomplete="off">
         <input type="hidden" name="is_register" value="{{ is_register }}"/>
         <input type="hidden" name="agree" value="{{ True if form.agree is defined else '' }}">
         <input type="hidden" name="agree2" value="{{ True if form.agree2 is defined else '' }}">
         <input type="hidden" name="token" value="">
-        
+
 <!--        <input type="hidden" name="cert_type" value="">-->
 <!--        <input type="hidden" name="cert_no" value="">-->
         <input type="hidden" name="mb_sex" value="">
