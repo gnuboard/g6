@@ -13,10 +13,8 @@ router = APIRouter()
 
 templates = Jinja2Templates(directory=[TEMPLATES_DIR, CAPTCHA_PATH], extensions=["jinja2.ext.i18n"])
 templates.env.globals["is_admin"] = is_admin
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals['getattr'] = getattr
-templates.env.globals["generate_token"] = generate_token
 templates.env.globals["captcha_widget"] = captcha_widget
 templates.env.globals["check_profile_open"] = check_profile_open
 
@@ -61,7 +59,8 @@ def get_register_form(request: Request):
     member.mb_level = config.cf_register_level
 
     form_context = {
-        "action_url": f"{request.base_url.__str__()}bbs{router.url_path_for('register_form_save')}",
+        # https 의 경우 http 경로가 넘어와서 제대로 전송이 되지 않음
+        # "action_url": f"{request.base_url.__str__()}bbs{router.url_path_for('register_form_save')}",
         "agree": agree,
         "agree2": agree2,
         "is_profile_open": check_profile_open(open_date=None, config=request.state.config),
@@ -82,6 +81,7 @@ def get_register_form(request: Request):
 
 @router.post("/register_form", name='register_form_save')
 async def post_register_form(request: Request, db: Session = Depends(get_db),
+                             token: str = Form(..., alias="token"),
                              mb_id: str = Form(None),
                              mb_password: str = Form(None),
                              mb_password_re: str = Form(None),
@@ -92,6 +92,10 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
                              member_form: MemberForm = Depends(),
                              recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default="")
                              ):
+
+    if not check_token(request, token):
+        raise AlertException("잘못된 접근입니다.")
+    
     # 약관 동의 체크
     agree = request.session.get("ss_agree", "")
     agree2 = request.session.get("ss_agree", "")

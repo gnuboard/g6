@@ -10,28 +10,16 @@
 
 {% block content %}
 
-{% if errors %}
-<ul class="errors">
-    {% for error in errors %}
-    <li>{{ error }}</li>
-    {% endfor %}
-</ul>
-{% endif %}
 <h1 id="container_title">회원가입</h1>
 
-{% if is_register %}
-    {% set token_name='create' %}
-{% else %}
-    {% set token_name='update' %}
-{% endif %}
 <div class="register">
     <form id="fregisterform" name="fregisterform" action="{{ form.action_url }}"
           onsubmit="return fregisterform_submit(this)" method="post" enctype="multipart/form-data" autocomplete="off">
         <input type="hidden" name="is_register" value="{{ is_register }}"/>
         <input type="hidden" name="agree" value="{{ True if form.agree is defined else '' }}">
         <input type="hidden" name="agree2" value="{{ True if form.agree2 is defined else '' }}">
-        <input type="hidden" id="generate_one_time_token" name="token" value="{{ generate_one_time_token(token_name) }}">
-        
+        <input type="hidden" name="token" value="">
+
 <!--        <input type="hidden" name="cert_type" value="">-->
 <!--        <input type="hidden" name="cert_no" value="">-->
         <input type="hidden" name="mb_sex" value="">
@@ -330,7 +318,7 @@
                     </li>
 
                     <li class="is_captcha_use">
-                        {% include captcha_widget(request) %}
+                        {% include captcha_widget(request) ignore missing %}
                     </li>
                 </ul>
             </div>
@@ -455,7 +443,10 @@
                 // 캡차함수에서 폼 전송을 하므로 버튼 비활성화
                 document.getElementById("btn_submit").disabled = "disabled";
             }
-        
+
+            // 토큰 생성은 폼 체크의 가장 마지막에서 한다.
+            f.token.value = generate_token(f);
+            
             return true;
         
         } catch(e) {

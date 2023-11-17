@@ -18,9 +18,9 @@
 {% set is_admin=get_admin_type(request, request.state.login_member.mb_id, group=board.group, board=board) %}
 {% set sca=request.query_params.sca %}
 {% set sod_reverse="asc" if request.query_params.sod == "desc" else "desc" %}
-{% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
+
 <!-- 게시판 목록 시작 { -->
-<div id="bo_gall" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
+<div id="bo_gall" style="width:{{ table_width }}">
     {% if board.bo_use_category %}
     <!-- 게시판 카테고리 시작 { -->
         <nav id="bo_cate">
@@ -34,6 +34,7 @@
         </nav>
     <!-- } 게시판 카테고리 끝 -->
     {% endif %}
+
     <form name="fboardlist" id="fboardlist" action="" onsubmit="return fboardlist_submit(this);" method="post">
         <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
         <input type="hidden" name="sw" value="">
@@ -46,8 +47,6 @@
         <input type="hidden" name="page" value="{{ current_page }}">
         <input type="hidden" name="token" value="{{ generate_token(request, 'board_list') }}">
         <input type="hidden" name="act_button" value="">
-        
-
         <!-- 게시판 페이지 정보 및 버튼 시작 { -->
         <div id="bo_btn_top">
             <div id="bo_list_total">
@@ -62,12 +61,14 @@
                         <span class="sound_only">게시판 검색</span>
                     </button>
                 </li>
+                {% if is_write %}
                 <li>
                     <a href="{{ url_for('write_form_add', bo_table=board.bo_table) }}" class="btn_b01 btn" title="글쓰기">
                         <i class="fa fa-pencil" aria-hidden="true"></i>
                         <span class="sound_only">글쓰기</span>
                     </a>
                 </li>
+                {% endif %}
                 {% if is_admin %}
                 <li>
                     <button type="button" class="btn_more_opt is_list_btn btn_b01 btn" title="게시판 리스트 옵션">
@@ -102,9 +103,9 @@
         {% endif %}
 
         <ul id="gall_ul" class="gall_row">
-            {% set line_height_style="line-height:" ~ board.bo_gallery_height ~ "px" if board.bo_gallery_height > 0 else "" %}
+            {% set line_height_style="line-height:" ~ gallery_height ~ "px" if gallery_height > 0 else "" %}
             {% for write in writes %}
-            <!-- 열람 중일 경우 class에 gall_now 추가 -->
+            <!-- TODO: 열람 중일 경우 class에 gall_now 추가 -->
             <li class="gall_li col-gn-{{ board.bo_gallery_cols|default(1) }} {% if (loop.index0 % board.bo_gallery_cols == 0) %}box_clear{% endif %}">
                 <div class="gall_box">
                     <div class="gall_chk chk_box">
@@ -119,14 +120,17 @@
                         </span>
                     </div>
                     <div class="gall_con">
-                        
-                        <div class="gall_img" style="{% if board.bo_gallery_height > 0 %}height:{{ board.bo_gallery_height }}px;max-height:{{ board.bo_gallery_height }}px{% endif %}">
+                        <div class="gall_img" style="{% if gallery_height > 0 %}height:{{ gallery_height }}px;max-height:{{ gallery_height }}px{% endif %}">
                             <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?{{ request.query_params }}">
                                 {% if write.wr_id|string in board.bo_notice %}
-                                <span class="is_notice" style="{{ line_height_style }}">공지</span>
+                                    <span class="is_notice" style="{{ line_height_style }}">공지</span>
                                 {% else %}
-                                    <!-- TODO: 섬네일 이미지 -->
-                                    <span class="no_image" style="{{ line_height_style }}">no image</span>
+                                    {% set thumbnail=get_list_thumbnail(request, board, write, gallery_width, gallery_height) %}
+                                    {% if thumbnail.src %}
+                                        <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}">
+                                    {% else %}
+                                        <span class="no_image" style="{{ line_height_style }}">no image</span>
+                                    {% endif %}
                                 {% endif %}
                             </a>
                         </div>
@@ -145,7 +149,7 @@
                                 <!-- TODO: 비밀글 아이콘 -->
                                 {% if write.wr_comment %}<span class="sound_only">댓글</span><span class="cnt_cmt">{{ write.wr_comment }}</span><span class="sound_only">개</span>{% endif %}
                             </a>
-                            <span class="bo_cnt">{{ write.wr_content|truncate(68, False, '...', 0)|safe }}</span>
+                            <span class="bo_cnt">{{ write.wr_content|striptags|truncate(68, False, '...', 0)|safe }}</span>
                         </div>
 
                         <div class="gall_info">
@@ -192,11 +196,13 @@
                     </a>
                 </li>
                 {% endif %}
+                {% if is_write %}
                 <li>
                     <a href="{{ url_for('write_form_add', bo_table=board.bo_table) }}" class="btn_b01 btn" title="글쓰기">
                         <i class="fa fa-pencil" aria-hidden="true"></i><span class="sound_only">글쓰기</span>
                     </a>
                 </li>
+                {% endif %}
             </ul>
         </div>
     </form>
@@ -206,7 +212,6 @@
         <fieldset class="bo_sch">
             <h3>검색</h3>
             <form name="fsearch" method="get">
-                <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
                 <input type="hidden" name="sca" value="{{ request.query_params.sca }}">
                 <input type="hidden" name="sop" value="{{ request.query_params.sop }}">
                 <label for="sfl" class="sound_only">검색대상</label>
@@ -286,7 +291,7 @@
                 return false;
     
             f.removeAttribute("target");
-            f.action = "{{ url_for('list_delete', bo_table=board.bo_table) }}";
+            f.action = "{{ url_for('list_delete', bo_table=board.bo_table) }}?{{ request.query_params }}";
         }
     
         return true;

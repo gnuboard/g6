@@ -2,7 +2,7 @@
     {% import "/sideview/macros.html" as sideview %}
 {% endif %}
 <div class="lat">
-    <h2 class="lat_title"><a href="{{ url_for('list_post', bo_table=bo_table) }}">{{ bo_subject }}</a></h2>
+    <h2 class="lat_title"><a href="{{ url_for('list_post', bo_table=bo_table) }}">{{ board.subject }}</a></h2>
     <ul>
         {% for write in writes -%}
         <li class="basic_li">
@@ -37,6 +37,6 @@
         {%- endfor %}
     </ul>
     <a href="{{ url_for('list_post', bo_table=bo_table) }}" class="lt_more">
-        <span class="sound_only">{{ bo_subject }}</span>더보기
+        <span class="sound_only">{{ board.subject }}</span>더보기
     </a>
 </div>
