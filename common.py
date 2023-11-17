@@ -27,6 +27,7 @@ import base64
 from dotenv import load_dotenv
 import smtplib
 import threading
+import cachetools
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from _lib.captcha.recaptch_v2 import ReCaptchaV2
