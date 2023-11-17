@@ -21,6 +21,7 @@ templates = MyTemplates(directory=[TEMPLATES_DIR], extensions=["jinja2.ext.i18n"
 templates.env.globals["is_admin"] = is_admin
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.filters["default_if_none"] = default_if_none
+templates.env.filters["datetime_format"] = datetime_format
 
 from _admin.admin import router as admin_router
 from _bbs.board import router as board_router
@@ -30,6 +31,7 @@ from _bbs.content import router as content_router
 from _bbs.faq import router as faq_router
 from _bbs.qa import router as qa_router
 from _bbs.member_profile import router as user_profile_router
+from _bbs.profile import router as profile_router
 from _bbs.memo import router as memo_router
 from _bbs.poll import router as poll_router
 from _bbs.point import router as point_router
@@ -44,6 +46,7 @@ app.include_router(board_router, prefix="/board", tags=["board"])
 app.include_router(login_router, prefix="/bbs", tags=["login"])
 app.include_router(register_router, prefix="/bbs", tags=["register"])
 app.include_router(user_profile_router, prefix="/bbs", tags=["profile"])
+app.include_router(profile_router, prefix="/bbs", tags=["profile"])
 app.include_router(content_router, prefix="/bbs", tags=["content"])
 app.include_router(faq_router, prefix="/bbs", tags=["faq"])
 app.include_router(qa_router, prefix="/bbs", tags=["qa"])
