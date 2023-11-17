@@ -15,13 +15,12 @@
 {% endblock subtitle %}
 
 {% block content %}
-{% set board_config=board_config(request, board) %}
 {% set is_admin=get_admin_type(request, request.state.login_member.mb_id, group=board.group, board=board) %}
 {% set sca=request.query_params.sca %}
 {% set sod_reverse="asc" if request.query_params.sod == "desc" else "desc" %}
-{% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
+
 <!-- 게시판 목록 시작 { -->
-<div id="bo_gall" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
+<div id="bo_gall" style="width:{{ table_width }}">
     {% if board.bo_use_category %}
     <!-- 게시판 카테고리 시작 { -->
         <nav id="bo_cate">
@@ -35,6 +34,7 @@
         </nav>
     <!-- } 게시판 카테고리 끝 -->
     {% endif %}
+
     <form name="fboardlist" id="fboardlist" action="" onsubmit="return fboardlist_submit(this);" method="post">
         <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
         <input type="hidden" name="sw" value="">
@@ -47,8 +47,6 @@
         <input type="hidden" name="page" value="{{ current_page }}">
         <input type="hidden" name="token" value="{{ generate_token(request, 'board_list') }}">
         <input type="hidden" name="act_button" value="">
-        
-
         <!-- 게시판 페이지 정보 및 버튼 시작 { -->
         <div id="bo_btn_top">
             <div id="bo_list_total">
@@ -105,9 +103,9 @@
         {% endif %}
 
         <ul id="gall_ul" class="gall_row">
-            {% set line_height_style="line-height:" ~ board.bo_gallery_height ~ "px" if board.bo_gallery_height > 0 else "" %}
+            {% set line_height_style="line-height:" ~ gallery_height ~ "px" if gallery_height > 0 else "" %}
             {% for write in writes %}
-            <!-- 열람 중일 경우 class에 gall_now 추가 -->
+            <!-- TODO: 열람 중일 경우 class에 gall_now 추가 -->
             <li class="gall_li col-gn-{{ board.bo_gallery_cols|default(1) }} {% if (loop.index0 % board.bo_gallery_cols == 0) %}box_clear{% endif %}">
                 <div class="gall_box">
                     <div class="gall_chk chk_box">
@@ -122,17 +120,16 @@
                         </span>
                     </div>
                     <div class="gall_con">
-                        
-                        <div class="gall_img" style="{% if board.bo_gallery_height > 0 %}height:{{ board.bo_gallery_height }}px;max-height:{{ board.bo_gallery_height }}px{% endif %}">
+                        <div class="gall_img" style="{% if gallery_height > 0 %}height:{{ gallery_height }}px;max-height:{{ gallery_height }}px{% endif %}">
                             <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?{{ request.query_params }}">
                                 {% if write.wr_id|string in board.bo_notice %}
-                                <span class="is_notice" style="{{ line_height_style }}">공지</span>
+                                    <span class="is_notice" style="{{ line_height_style }}">공지</span>
                                 {% else %}
-                                    {% set thumbnail=get_list_thumbnail(request, board, write, board_config.gallery_width, board_config.gallery_height) %}
+                                    {% set thumbnail=get_list_thumbnail(request, board, write, gallery_width, gallery_height) %}
                                     {% if thumbnail.src %}
-                                    <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}">
+                                        <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}">
                                     {% else %}
-                                    <span class="no_image" style="{{ line_height_style }}">no image</span>
+                                        <span class="no_image" style="{{ line_height_style }}">no image</span>
                                     {% endif %}
                                 {% endif %}
                             </a>
@@ -294,7 +291,7 @@
                 return false;
     
             f.removeAttribute("target");
-            f.action = "{{ url_for('list_delete', bo_table=board.bo_table) }}";
+            f.action = "{{ url_for('list_delete', bo_table=board.bo_table) }}?{{ request.query_params }}";
         }
     
         return true;

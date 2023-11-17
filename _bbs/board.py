@@ -1,7 +1,6 @@
 # 여기에서 write 와 post 는 글 한개라는 개념으로 사용합니다.
 # 그누보드5 버전에서 게시판 테이블을 write 로 사용하여 테이블명을 바꾸지 못하는 관계로
 # 테이블명은 write 로, 글 한개에 대한 의미는 write 와 post 를 혼용하여 사용합니다.
-import bleach
 import datetime
 from fastapi import APIRouter, Depends, Request, File, Form, Path, Query
 from fastapi.responses import FileResponse, RedirectResponse
@@ -11,15 +10,13 @@ from pbkdf2 import create_hash
 from board_lib import *
 from common import *
 from database import get_db
-from dataclassform import WriteForm
+from dataclassform import WriteForm, WriteCommentForm
 from models import AutoSave, Board, BoardGood, Group, Scrap
 
 router = APIRouter()
 templates = MyTemplates(directory=[EDITOR_PATH, CAPTCHA_PATH, TEMPLATES_DIR])
 templates.env.filters["datetime_format"] = datetime_format
 templates.env.filters["set_image_width"] = set_image_width
-templates.env.globals["bleach"] = bleach
-templates.env.globals["nl2br"] = nl2br
 templates.env.globals["editor_macro"] = editor_macro
 templates.env.globals["get_admin_type"] = get_admin_type
 templates.env.globals["get_unique_id"] = get_unique_id
@@ -40,11 +37,12 @@ def group_board_list(
     게시판그룹의 모든 게시판 목록을 보여준다.
     """
     # 게시판 그룹 정보 조회
-    group = db.query(Group).get(gr_id)
+    group = db.get(Group, gr_id)
     if not group:
         raise AlertException(f"{gr_id} : 존재하지 않는 게시판그룹입니다.", 404)
-    
+
     # 게시판관리자 검증
+    # TODO: 이 부분을 간단하게 개선 => 회원 클래스??
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
     member_level = get_member_level(request)
@@ -58,12 +56,15 @@ def group_board_list(
         Board.bo_list_level <= member_level,
         Board.bo_device != 'mobile'
     )
+
+    # 인증게시판 제외
     if not admin_type:
-        query_boards = query_boards.filter_by(bo_use_cert = '')
+        query_boards = query_boards.filter_by(bo_use_cert='')
 
     boards = query_boards.order_by(Board.bo_order).all()
     return templates.TemplateResponse(
-        f"{request.state.device}/board/group.html", {"request": request, "group": group, "boards": boards, "latest": latest}
+        f"{request.state.device}/board/group.html",
+        {"request": request, "group": group, "boards": boards, "latest": latest}
     )
 
 
@@ -78,35 +79,38 @@ def list_post(
     지정된 게시판의 글 목록을 보여준다.
     """
     # 게시판 정보 조회
-    board = db.query(Board).get(bo_table)
+    board = db.get(Board, bo_table)
+    board_config = BoardConfig(request, board)
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
-
-    sca = request.query_params.get("sca")
-    sst = search_params['sst']
-    sod = search_params['sod']
-    current_page = search_params['current_page']
-
-    model_write = dynamic_create_write_table(bo_table)
-    board_config = BoardConfig(request, board)
-    page_rows = board_config.page_rows
-    board.subject = board_config.subject
 
     if not board_config.is_list_level():
         raise AlertException("목록을 볼 권한이 없습니다.", 403)
 
-    notice_writes = []
+    board.subject = board_config.subject
+    sca = request.query_params.get("sca")
+    sfl = search_params['sfl']
+    stx = search_params['stx']
+    sst = search_params['sst']
+    sod = search_params['sod']
+    current_page = search_params['current_page']
+    page_rows = board_config.page_rows
+
+    # 게시판 테이블 모델 생성
+    model_write = dynamic_create_write_table(bo_table)
+
     # 공지 게시글 목록 조회
+    notice_writes = []
     if current_page == 1:
         notice_ids = board_config.get_notice_list()
         notice_query = db.query(model_write).filter(model_write.wr_id.in_(notice_ids))
         if sca:
             notice_query = notice_query.filter(model_write.ca_name == sca)
-        notice_writes = [get_list(request, write, board) for write in notice_query.all()]
+        notice_writes = [get_list(request, write, board_config) for write in notice_query.all()]
 
     # 게시글 목록 조회
-    query = write_search_filter(request, model_write, sca, search_params['sfl'], search_params['stx'])
-    query = query.filter_by(wr_is_comment = 0)
+    query = write_search_filter(request, model_write, sca, sfl, stx)
+    query = query.filter_by(wr_is_comment=0)
     # 정렬
     if sst and hasattr(model_write, sst):
         if sod == "desc":
@@ -125,20 +129,22 @@ def list_post(
     # 게시글 정보 수정
     for write in writes:
         write.num = total_count - offset - (writes.index(write))
-        write = get_list(request, write, board)
-        
+        write = get_list(request, write, board_config)
+
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/list_post.html",
         {
             "request": request,
             "categories": board_config.get_category_list(),
             "board": board,
+            "board_config": board_config,
             "notice_writes": notice_writes,
             "writes": writes,
             "total_count": total_count,
             "current_page": search_params['current_page'],
             "paging": get_paging(request, search_params['current_page'], total_count, page_rows),
             "is_write": board_config.is_write_level(),
+            "table_width": board_config.get_table_width,
             "gallery_width": board_config.gallery_width,
             "gallery_height": board_config.gallery_height,
         }
@@ -147,20 +153,20 @@ def list_post(
 
 @router.post("/list_delete/{bo_table}")
 def list_delete(
-        request: Request,
-        bo_table: str,
-        token: str = Form(...),
-        db: Session = Depends(get_db),
-        wr_ids: list = Form(..., alias="chk_wr_id[]"),
-    ):
+    request: Request,
+    db: Session = Depends(get_db),
+    bo_table: str = Path(...),
+    token: str = Form(...),
+    wr_ids: list = Form(..., alias="chk_wr_id[]"),
+):
     """
-    게시글을 삭제한다.
+    게시글을 일괄 삭제한다.
     """
     if not compare_token(request, token, 'board_list'):
         raise AlertException("토큰이 유효하지 않습니다.", 403)
 
     # 게시판 정보 조회
-    board = db.query(Board).get(bo_table)
+    board = db.get(Board, bo_table)
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
 
@@ -170,7 +176,7 @@ def list_delete(
     admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
     if not admin_type:
         raise AlertException("게시판 관리자 이상 접근이 가능합니다.", 403)
-    
+
     # 게시글 조회
     model_write = dynamic_create_write_table(bo_table)
     writes = db.query(model_write).filter(model_write.wr_id.in_(wr_ids)).all()
@@ -191,22 +197,22 @@ def list_delete(
 
     # TODO: 게시글 삭제시 같이 삭제해야할 것들 추가
 
-    return RedirectResponse(f"/board/{bo_table}", status_code=303)
+    return RedirectResponse(f"/board/{bo_table}?{request.query_params}", status_code=303)
 
 
 @router.post("/move/{bo_table}")
 async def move_post(
-        request: Request,
-        bo_table: str,
-        sw: str = Form(...),
-        db: Session = Depends(get_db),
-        wr_ids: list = Form(..., alias="chk_wr_id[]"),
-    ):
+    request: Request,
+    db: Session = Depends(get_db),
+    bo_table: str = Path(...),
+    sw: str = Form(...),
+    wr_ids: list = Form(..., alias="chk_wr_id[]"),
+):
     """
     게시글 복사/이동
     """
     # 게시판 정보 조회
-    board = db.query(Board).get(bo_table)
+    board = db.get(Board, bo_table)
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
 
@@ -242,29 +248,29 @@ async def move_post(
 
 @router.post("/move_update/")
 def move_update(
-        request: Request,
-        db: Session = Depends(get_db),
-        token: str = Form(...),
-        sw: str = Form(...),
-        bo_table: str = Form(...),
-        wr_ids: str = Form(..., alias="wr_id_list"),
-        target_bo_tables: list = Form(..., alias="chk_bo_table[]"),
-    ):
+    request: Request,
+    db: Session = Depends(get_db),
+    token: str = Form(...),
+    sw: str = Form(...),
+    bo_table: str = Form(...),
+    wr_ids: str = Form(..., alias="wr_id_list"),
+    target_bo_tables: list = Form(..., alias="chk_bo_table[]"),
+):
     """
     게시글 복사/이동
     """
+    config = request.state.config
     act = "이동" if sw == "move" else "복사"
 
     if not compare_token(request, token, 'board_move'):
         raise AlertException("토큰이 유효하지 않습니다.", 403)
-    
+
     # 게시판 검증
-    origin_board = db.query(Board).get(bo_table)
+    origin_board = db.get(Board, bo_table)
     if not origin_board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
 
     # 게시판관리자 검증
-    config = request.state.config
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
     admin_type = get_admin_type(request, mb_id, group=origin_board.group, board=origin_board)
@@ -314,21 +320,21 @@ def move_update(
             if sw == "move":
                 # 최신글 이동
                 db.query(BoardNew).filter_by(
-                    bo_table = origin_board.bo_table, wr_id = origin_write.wr_id
+                    bo_table=origin_board.bo_table, wr_id=origin_write.wr_id
                 ).update({"bo_table": target_bo_table, "wr_id": target_write.wr_id, "wr_parent": target_write.wr_id})
 
                 # 게시글
                 if not origin_write.wr_is_comment:
                     # 추천데이터 이동
                     db.query(BoardGood).filter_by(
-                        bo_table = origin_board.bo_table, wr_id = origin_write.wr_id
+                        bo_table=origin_board.bo_table, wr_id=origin_write.wr_id
                     ).update({"bo_table": target_bo_table, "wr_id": target_write.wr_id})
 
                     # 스크랩 이동
                     db.query(Scrap).filter_by(
-                        bo_table = bo_table, wr_id = origin_write.wr_id
+                        bo_table=bo_table, wr_id=origin_write.wr_id
                     ).update({"bo_table": target_bo_table, "wr_id": target_write.wr_id})
-                
+
                 # 기존 데이터 삭제
                 db.delete(origin_write)
                 db.commit()
@@ -341,10 +347,9 @@ def move_update(
                 else:
                     file_manager.copy_board_files(FILE_DIRECTORY, target_bo_table, target_write.wr_id)
 
-
         # 최신글 캐시 삭제
         G6FileCache().delete_prefix(f'latest-{target_bo_table}')
-    
+
     # 원본 게시판 최신글 캐시 삭제
     G6FileCache().delete_prefix(f'latest-{bo_table}')
 
@@ -354,29 +359,30 @@ def move_update(
 
 
 @router.get("/write/{bo_table}")
-def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db), parent_id: int = Query(None)):
+def write_form_add(
+    request: Request,
+    db: Session = Depends(get_db),
+    bo_table: str = Path(...),
+    parent_id: int = Query(None)
+):
     """
     게시글을 작성하는 form을 보여준다.
     """
     # 게시판 정보 조회
-    board = db.query(Board).filter_by(bo_table=bo_table).first()
+    board = db.get(Board, bo_table)
+    board_config = BoardConfig(request, board)
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
 
-    # 게시판 관리자 확인
-    member = request.state.login_member
-    mb_id = getattr(member, "mb_id", None)
-    admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
-    
-    board_config = BoardConfig(request, board)
-    
     if parent_id:
+        # 답글 작성권한 검증
         if not board_config.is_reply_level():
             raise AlertException("답변글을 작성할 권한이 없습니다.", 403)
-        # 답글 생성가능여부 체크
+
+        # 답글 생성가능여부 검증
         model_write = dynamic_create_write_table(bo_table)
-        write = db.query(model_write).get(parent_id)
-        generate_reply_character(board, write)
+        parent_write = db.get(model_write, parent_id)
+        generate_reply_character(board, parent_write)
     else:
         if not board_config.is_write_level():
             raise AlertException("글을 작성할 권한이 없습니다.", 403)
@@ -386,6 +392,11 @@ def write_form_add(bo_table: str, request: Request, db: Session = Depends(get_db
     # 게시판 에디터 설정
     request.state.use_editor = board.bo_use_dhtml_editor
     request.state.editor = board_config.select_editor
+
+    # 게시판 관리자 확인
+    member = request.state.login_member
+    mb_id = getattr(member, "mb_id", None)
+    admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
 
     return templates.TemplateResponse(
         f"{request.state.device}/board/{board.bo_skin}/write_form.html",
@@ -421,23 +432,23 @@ def write_form_edit(
     게시글을 작성하는 form을 보여준다.
     """
     # 게시판 정보 조회
-    board = db.query(Board).filter_by(bo_table=bo_table).first()
+    board = db.get(Board, bo_table)
+    board_config = BoardConfig(request, board)
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
 
     # 게시글 조회
     model_write = dynamic_create_write_table(bo_table)
-    write = db.query(model_write).get(wr_id)
+    write = db.get(model_write, wr_id)
     if not write:
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
-    
+
     # 게시판 관리자 확인
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
     admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
 
-    # 게시판 설정
-    board_config = BoardConfig(request, board)
+    # 게시판 수정 권한
     if not board_config.is_write_level():
         raise AlertException("글을 수정할 권한이 없습니다.", 403)
     if not board_config.is_modify_by_comment(wr_id):
@@ -516,16 +527,17 @@ async def write_update(
     """
     게시글을 Table 추가한다.
     """
+    config = request.state.config
     # 게시판 정보 조회
-    board = db.query(Board).get(bo_table)
+    board = db.get(Board, bo_table)
+    board_config = BoardConfig(request, board)
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
 
-    config = request.state.config
+    # 게시판 관리자 확인
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
     admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
-    board_config = BoardConfig(request, board)
 
     # 비밀글 사용여부 체크
     if not admin_type:
@@ -556,7 +568,7 @@ async def write_update(
         if parent_id:
             if not board_config.is_reply_level():
                 raise AlertException("답변글을 작성할 권한이 없습니다.", 403)
-            parent_write = db.query(model_write).get(parent_id) if parent_id else None
+            parent_write = db.get(model_write, parent_id) if parent_id else None
         else:
             if not board_config.is_write_level():
                 raise AlertException("글을 작성할 권한이 없습니다.", 403)
@@ -577,7 +589,7 @@ async def write_update(
         )
         db.add(write)
         db.commit()
-        
+
         write.wr_parent = write.wr_id  # 부모아이디 설정
         board.bo_count_write = board.bo_count_write + 1  # 게시판 글 갯수 1 증가
         db.commit()
@@ -605,11 +617,12 @@ async def write_update(
             raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_modify}건 이상 존재하므로 수정 할 수 없습니다.", 403)
     
         # 게시글 정보 조회 및 수정
-        write = db.query(model_write).get(wr_id)
+        write = db.get(model_write, wr_id)
         if not write:
             raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
-        
+
         form_data.wr_password = create_hash(form_data.wr_password) if form_data.wr_password else ""
+
         for field, value in form_data.__dict__.items():
             if value:
                 setattr(write, field, value)
@@ -620,7 +633,7 @@ async def write_update(
     # 토큰 오류
     else:
         raise AlertException("토큰이 유효하지 않습니다.", 403)
-    
+
     # 공지글 설정
     board.bo_notice = board_config.set_board_notice(write.wr_id, notice)
     # 자동저장 글 삭제
@@ -643,7 +656,7 @@ async def write_update(
             for bf_no in file_dels:
                 file_manager.delete_board_file(bf_no)
                 wr_file -= 1
-        
+
         # 파일 업로드 처리 및 파일정보 저장
         for file in files:
             index = files.index(file)
@@ -687,12 +700,12 @@ def read_post(
     config = request.state.config
 
     # 게시판 정보 조회
-    board = db.query(Board).get(bo_table)
+    board = db.get(Board, bo_table)
+    board_config = BoardConfig(request, board)
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
 
     # 게시판 설정
-    board_config = BoardConfig(request, board)
     board.subject = board_config.subject
 
     # 게시판 관리자 확인
@@ -703,63 +716,57 @@ def read_post(
 
     # 게시글 정보 조회
     model_write = dynamic_create_write_table(bo_table)
-    write = db.query(model_write).filter_by(wr_id=wr_id).first()
+    write = db.get(model_write, wr_id)
     if not write:
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
-    
+
     # TODO: 그룹 접근 사용
 
     # 읽기 권한 검증
     if not board_config.is_read_level():
         raise AlertException("글을 읽을 권한이 없습니다.", 403)
-    
+
     # 비밀글 검증
     session_secret_name = f"ss_secret_{bo_table}_{wr_id}"
-    print("비밀글 검증", not request.session.get(session_secret_name), not admin_type, not is_owner(write, mb_id), "secret" in write.wr_option)
     if ("secret" in write.wr_option
-        and not admin_type
-        and not is_owner(write, mb_id)
-        and not request.session.get(session_secret_name)
-    ):
+            and not admin_type
+            and not is_owner(write, mb_id)
+            and not request.session.get(session_secret_name)
+            ):
         # 부모글이 본인글이라면 열람 가능
-        owner = False;
+        owner = False
         if write.wr_reply and mb_id:
-            print("부모글 확인")
             parent_write = db.query(model_write).filter_by(
-                wr_num = write.wr_num,
-                wr_reply = "",
-                wr_is_comment = False
+                wr_num=write.wr_num,
+                wr_reply="",
+                wr_is_comment=False
             ).first()
-            print("부모글 아이디/로그인아이디", parent_write.mb_id, mb_id)
             if parent_write.mb_id == mb_id:
                 owner = True
-        print ("owner : ", owner)
         if not owner:
-            # TODO: 비밀번호 체크이동
-            print("비밀번호 체크이동")
             return RedirectResponse(f"/bbs/password/view/{bo_table}/{write.wr_id}?{request.query_params}", status_code=303)
-        print("세션생성", session_secret_name)
         request.session[session_secret_name] = True
-    
+
     # 게시글 정보 설정
     write.ip = board_config.get_display_ip(write.wr_ip)
     write.name = write.wr_name[:config.cf_cut_name] if config.cf_cut_name else write.wr_name
-    
+
     # 세션 체크
     # 한번 읽은 게시글은 세션만료까지 조회수, 포인트 처리를 하지 않는다.
     session_name = f"ss_view_{bo_table}_{wr_id}"
     if not request.session.get(session_name):
         # 조회수 증가
         write.wr_hit = write.wr_hit + 1
+        db.commit()
 
         # 포인트 검사 및 소진
         read_point = board.bo_read_point
         if config.cf_use_point and read_point != 0:
             # 관리자이거나 자신의 글이면 통과
-            if not (admin_type 
-                or is_owner(write, mb_id)
-                or (not member and board.bo_read_level == 1 and write.wr_ip == request.client.host)
-            ):
+            if not (admin_type
+                    or is_owner(write, mb_id)
+                    or (not member and board.bo_read_level == 1 and write.wr_ip == request.client.host)
+                    ):
                 # 포인트 검사 및 소진
                 mb_point = getattr(member, "mb_point", 0)
                 if mb_point + read_point < 0:
@@ -768,18 +775,18 @@ def read_post(
                     # 포인트 소진 처리
                     insert_point(request, member.mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table, write.wr_id, "읽기")
         request.session[session_name] = True
-    
+
     if member:
         # 스크랩 여부 확인
         scrap_data = db.query(Scrap).filter_by(
-            bo_table = bo_table, wr_id = wr_id, mb_id = member.mb_id
+            bo_table=bo_table, wr_id=wr_id, mb_id=member.mb_id
         ).first()
         if scrap_data:
             write.is_scrap = True
 
         # 추천/비추천 여부 확인
         good_data = db.query(BoardGood).filter_by(
-            bo_table = bo_table, wr_id = wr_id, mb_id = member.mb_id
+            bo_table=bo_table, wr_id=wr_id, mb_id=member.mb_id
         ).first()
         if good_data:
             setattr(write, f"is_{good_data.bg_flag}", True)
@@ -823,11 +830,10 @@ def read_post(
         if url:
             links.append({"no": i, "url": url, "hit": hit})
 
-
     # 댓글 목록 조회
     comments = db.query(model_write).filter_by(
-        wr_parent = wr_id,
-        wr_is_comment = True
+        wr_parent=wr_id,
+        wr_is_comment=True
     ).order_by(model_write.wr_comment, model_write.wr_comment_reply).all()
 
     for comment in comments:
@@ -840,10 +846,10 @@ def read_post(
 
         # 비밀댓글 처리
         session_secret_comment_name = f"ss_secret_comment_{bo_table}_{comment.wr_id}"
-        if (comment.is_secret 
-            and not admin_type 
-            and not is_owner(comment, mb_id)
-            and not request.session.get(session_secret_comment_name) 
+        if (comment.is_secret
+                and not admin_type
+                and not is_owner(comment, mb_id)
+                and not request.session.get(session_secret_comment_name)
             ):
             comment.is_secret_content = True
             comment.save_content = "비밀글 입니다."
@@ -899,24 +905,19 @@ def delete_post(
         raise AlertException("토큰이 유효하지 않습니다.", 403)
 
     # 게시판 정보 조회
-    board = db.query(Board).get(bo_table)
+    board = db.get(Board, bo_table)
+    board_config = BoardConfig(request, board)
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
-    
-    board_config = BoardConfig(request, board)
+
     if not board_config.is_delete_by_comment(wr_id):
         raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_delete}건 이상 존재하므로 삭제 할 수 없습니다.", 403)
 
     # 게시글 조회
     model_write = dynamic_create_write_table(bo_table)
-    write = db.query(model_write).get(wr_id)
+    write = db.get(model_write, wr_id)
     if not write:
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
-    
-    # 게시판관리자 검증
-    member = request.state.login_member
-    mb_id = getattr(member, "mb_id", None)
-    admin_type = get_admin_type(request, mb_id, board=board, group=board.group)
 
     # request.query_params에서 token 제거
     # POST 요청이면 없어도 될 듯..
@@ -925,31 +926,8 @@ def delete_post(
     query_params = "&".join([f"{key}={value}" for key, value in query_params.items()])
     query_params = query_params.replace("&amp;", "&")
 
-    # 게시글 삭제 권한 검증
-    if not admin_type:
-        # 익명 글
-        if not write.mb_id:
-            if not request.session.get(f"ss_delete_{bo_table}_{wr_id}"):
-                raise AlertException("삭제할 권한이 없습니다.", 403, f"/bbs/password/delete/{bo_table}/{wr_id}?{query_params}")
-        # 회원 글
-        elif write.mb_id and not is_owner(write, mb_id):
-            raise AlertException("본인 글만 삭제할 수 있습니다.", 403)
-
-    # 게시글 삭제
-    db.delete(write)
-    db.commit()
-
-    # 원글 포인트 삭제
-    if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
-        insert_point(request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
-
-    # 파일 삭제
-    BoardFileManager(board, wr_id).delete_board_files()
-
-    # 최신글 캐시 삭제
-    G6FileCache().delete_prefix(f'latest-{bo_table}')
-
-    # TODO: 게시글 삭제에 따른 추가정보 삭제
+    # 게시글 삭제 처리
+    delete_write(request, bo_table, write)
 
     return RedirectResponse(f"/board/{bo_table}?{query_params}", status_code=303)
 
@@ -957,10 +935,10 @@ def delete_post(
 @router.get("/{bo_table}/{wr_id}/download/{bf_no}")
 def download_file(
     request: Request,
-    bo_table: str,
-    wr_id: int,
-    bf_no: int,
     db: Session = Depends(get_db),
+    bo_table: str = Path(...),
+    wr_id: int = Path(...),
+    bf_no: int = Path(...),
 ):
     """첨부파일 다운로드
 
@@ -977,16 +955,16 @@ def download_file(
         FileResponse: 파일 다운로드
     """
     # 게시판/게시글 정보 조회
-    board = db.query(Board).get(bo_table)
+    board = db.get(Board, bo_table)
+    board_config = BoardConfig(request, board)
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
-    
-    board_config = BoardConfig(request, board)
+
     if not board_config.is_download_level():
         raise AlertException("다운로드 권한이 없습니다.", 403)
 
     write_model = dynamic_create_write_table(bo_table)
-    write = db.query(write_model).get(wr_id)
+    write = db.get(write_model, wr_id)
     if not write:
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
 
@@ -1000,12 +978,12 @@ def download_file(
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
     admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
-    
+
     # 게시물당 포인트가 한번만 차감되도록 세션 설정
     session_name = f"ss_down_{bo_table}_{wr_id}"
     if not request.session.get(session_name):
         # 관리자이거나 자신의 글이면 통과하는 함수
-        if not (admin_type 
+        if not (admin_type
                 or is_owner(write, mb_id)
                 or (not member and board.bo_download_level == 1 and write.wr_ip == request.client.host)
                 ):
@@ -1029,19 +1007,6 @@ def download_file(
     return FileResponse(board_file.bf_file, filename=board_file.bf_source)
 
 
-from dataclasses import dataclass
-
-@dataclass
-class WriteCommentForm:
-    w: str = Form(...)
-    bo_table: str = Form(...)
-    wr_id: int = Form(...)
-    wr_content: str = Form(...)
-    wr_name: str = Form(None)
-    wr_password: str = Form(None)
-    wr_secret: str = Form(None)
-    comment_id: int = Form(None)
-
 @router.post("/write_comment_update/")
 async def write_comment_update(
     request: Request,
@@ -1053,23 +1018,25 @@ async def write_comment_update(
     """
     댓글 등록
     """
+    config = request.state.config
+    member = request.state.login_member
+
     if not check_token(request, token):
         raise AlertException("토큰이 유효하지 않습니다.", 403)
 
     # 게시판 정보 조회
-    board = db.query(Board).get(form.bo_table)
+    board = db.get(Board, form.bo_table)
+    board_config = BoardConfig(request, board)
     if not board:
-        raise AlertException(f"{form.bo_table} : 존재하지 않는 게시판입니다.", 404)  
+        raise AlertException(f"{form.bo_table} : 존재하지 않는 게시판입니다.", 404)
 
     # 게시글 정보 조회
     write_model = dynamic_create_write_table(form.bo_table)
-    write = db.query(write_model).get(form.wr_id)
+    write = db.get(write_model, form.wr_id)
     if not write:
         raise AlertException(f"{form.wr_id} : 존재하지 않는 게시글입니다.", 404)
 
-    config = request.state.config
-    board_config = BoardConfig(request, board)
-    member = request.state.login_member
+    
     if form.w == "c":
         # Captcha 검증
         if not member:
@@ -1084,9 +1051,10 @@ async def write_comment_update(
         comment = write_model()
 
         if form.comment_id:
-            parent_comment = db.query(write_model).get(form.comment_id)
+            parent_comment = db.get(write_model, form.comment_id)
             if not parent_comment:
                 raise AlertException(f"{form.comment_id} : 존재하지 않는 댓글입니다.", 404)
+
             comment.wr_comment_reply = generate_reply_character(board, parent_comment)
             comment.wr_comment = parent_comment.wr_comment
         else:
@@ -1096,8 +1064,6 @@ async def write_comment_update(
             ).first().max_wr_comment or 0) + 1
 
         # 댓글 추가정보 등록
-        member = request.state.login_member
-
         comment.ca_name = write.ca_name
         comment.wr_option = form.wr_secret
         comment.wr_num = write.wr_num
@@ -1123,7 +1089,7 @@ async def write_comment_update(
 
     elif form.w == "cu":
         # 댓글 수정
-        comment = db.query(write_model).get(form.comment_id)
+        comment = db.get(write_model, form.comment_id)
         if not comment:
             raise AlertException(f"{form.comment_id} : 존재하지 않는 댓글입니다.", 404)
 
@@ -1150,15 +1116,15 @@ def delete_comment(
         raise AlertException("토큰이 유효하지 않습니다.", 403)
 
     # 게시판 정보 조회
-    board = db.query(Board).get(bo_table)
+    board = db.get(Board, bo_table)
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
-    
+
     write_model = dynamic_create_write_table(bo_table)
-    comment = db.query(write_model).get(comment_id)
+    comment = db.get(write_model, comment_id)
     if not comment:
         raise AlertException(f"{comment_id} : 존재하지 않는 댓글입니다.", 404)
-    
+
     # 게시판관리자 검증
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
@@ -1185,7 +1151,7 @@ def delete_comment(
     db.delete(comment)
     db.commit()
     # 게시글에 댓글 수 감소
-    write = db.query(write_model).get(comment.wr_parent)
+    write = db.get(write_model, comment.wr_parent)
     write.wr_comment = write.wr_comment - 1
     db.commit()
 
@@ -1204,21 +1170,21 @@ def link_url(
     게시글에 포함된 링크이동
     """
     # 게시판 정보 조회
-    board = db.query(Board).filter_by(bo_table=bo_table).first()
+    board = db.get(Board, bo_table)
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
 
     # 게시글 조회
     model_write = dynamic_create_write_table(bo_table)
-    write = db.query(model_write).get(wr_id)
+    write = db.get(model_write, wr_id)
     if not write:
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
-    
+
     # 링크정보 조회
     url = getattr(write, f"wr_link{no}")
     if not url:
         raise AlertException("링크가 존재하지 않습니다.", 404)
-    
+
     # 링크 세션 설정
     link_session_name = f"ss_link_{bo_table}_{wr_id}_{no}"
     if not request.session.get(link_session_name):
@@ -1230,6 +1196,6 @@ def link_url(
     # url에 http가 없으면 붙여줌
     if not url.startswith("http"):
         url = "http://" + url
-    
+
     # 새 창의 외부 URL로 이동
     return RedirectResponse(url, status_code=303)

@@ -340,6 +340,18 @@ class WriteForm:
 
 
 @dataclass
+class WriteCommentForm:
+    w: str = Form(...)
+    bo_table: str = Form(...)
+    wr_id: int = Form(...)
+    wr_content: str = Form(...)
+    wr_name: str = Form(None)
+    wr_password: str = Form(None)
+    wr_secret: str = Form(None)
+    comment_id: int = Form(None)
+
+
+@dataclass
 class ContentForm:
     co_subject: str = Form(...)
     co_content: str = Form(None)

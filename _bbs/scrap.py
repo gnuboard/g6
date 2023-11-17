@@ -62,6 +62,7 @@ def scrap_form_update(request: Request, db: Session = Depends(get_db),
         raise AlertCloseException("로그인 후 이용 가능합니다.", 403)
     
     board = db.query(Board).filter(Board.bo_table == bo_table).first()
+    board_config = BoardConfig(request, board)
     if not board:
         raise AlertCloseException("존재하지 않는 게시판 입니다.", 404)
     
@@ -76,8 +77,6 @@ def scrap_form_update(request: Request, db: Session = Depends(get_db),
         raise AlertException("이미 스크랩하신 글 입니다.", 302, request.url_for('scrap_list'))
     
     # 댓글 추가
-    board_config = BoardConfig(request, bo_table)
-
     if wr_content and board_config.is_comment_level():
         # TODO: 너무 빠른 시간내에 게시물을 연속해서 올릴 수 없습니다.
 

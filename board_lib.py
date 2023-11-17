@@ -6,20 +6,37 @@ from sqlalchemy.orm import Query as SqlQuery
 
 from common import *
 from database import SessionLocal
-from models import Board, WriteBaseModel
+from models import Board, BoardNew, Scrap, WriteBaseModel
 
 
 class BoardConfig():
+    """게시판 설정 정보를 담는 클래스."""
     def __init__(self, request: Request, board: Board) -> None:
         self.board = board
-        self.request = request
         self.config = request.state.config
         self.is_mobile = request.state.is_mobile
+        self.request = request
+        group = board.group if board else None
 
         self.login_member = request.state.login_member
         self.login_member_id = getattr(self.login_member, "mb_id", None)
         self.login_member_level = get_member_level(request)
-        self.login_member_admin_type = get_admin_type(self.request, self.login_member_id, group=self.board.group, board=self.board)
+        self.login_member_admin_type = get_admin_type(self.request, self.login_member_id, group=group, board=self.board)
+
+    @classmethod
+    def create_by_table(cls, request: Request, db: Session, bo_table: str):
+        """게시판 테이블명으로 BoardConfig 객체를 생성한다.
+
+        Args:
+            request (Request): Request 객체
+            db (Session): DB 세션
+            bo_table (str): 게시판 테이블명
+
+        Returns:
+            BoardConfig: BoardConfig 객체
+        """
+        board = db.get(Board, bo_table)
+        return cls(request, board)
 
     @property
     def gallery_width(self) -> int:
@@ -29,7 +46,7 @@ class BoardConfig():
             int: 갤러리 이미지 가로 크기.
         """
         return (self.board.bo_mobile_gallery_width if self.is_mobile else self.board.bo_gallery_width) or 200
-    
+
     @property
     def gallery_height(self) -> int:
         """갤러리 목록 이미지 세로 크기를 반환.
@@ -58,9 +75,29 @@ class BoardConfig():
         # 모바일 여부 확인
         bo_page_rows = self.board.bo_mobile_page_rows if self.is_mobile else self.board.bo_page_rows
         page_rows = self.config.cf_mobile_page_rows if self.is_mobile else self.config.cf_page_rows
-    
+
         return bo_page_rows if bo_page_rows != 0 else page_rows
     
+    @property
+    def table_width(self) -> int:
+        """게시판 테이블의 가로 크기를 반환.
+
+        Returns:
+            int: 게시판 테이블의 가로 크기.
+        """
+        return self.board.bo_table_width or 100
+    
+    @property
+    def get_table_width(self) -> str:
+        """게시판 테이블의 가로 크기를 단위와 함께 반환.
+
+        Returns:
+            str: 게시판 테이블의 가로 크기.
+        """
+        unit = "px" if self.table_width > 100 else "%"
+
+        return f"{self.table_width}{unit}"
+
     @property
     def select_editor(self) -> str:
         """게시판에 사용할 에디터를 반환.
@@ -81,7 +118,7 @@ class BoardConfig():
             return self.board.bo_mobile_subject
         else:
             return self.board.bo_subject
-        
+
     @property
     def use_captcha(self) -> bool:
         """게시판에 캡차 사용 여부를 반환.
@@ -91,12 +128,12 @@ class BoardConfig():
         """
         if self.login_member_admin_type:
             return False
-        
+
         if not self.login_member or self.board.bo_use_captcha:
             return True
-        
+
         return False
-        
+
     @property
     def use_email(self) -> bool:
         """게시판에 이메일 사용 여부를 반환.
@@ -105,17 +142,17 @@ class BoardConfig():
             bool: 게시판에 이메일 사용 여부.
         """
         return self.config.cf_email_use and self.board.bo_use_email
-        
+
     @property
     def write_min(self) -> int:
         """게시글 등록 최소 글수 제한"""
         return self._get_write_text_limit(self.board.bo_write_min)
-        
+
     @property
     def write_max(self) -> int:
         """게시글 등록 최대 글수 제한"""
         return self._get_write_text_limit(self.board.bo_write_max)
-               
+
     def cut_write_subject(self, subject, cut_length: int = 0) -> str:
         """주어진 cut_length에 기반하여 subject 문자열을 자르고 필요한 경우 "..."을 추가합니다.
 
@@ -130,9 +167,9 @@ class BoardConfig():
         
         if not cut_length:
             return subject
-        
+
         return subject[:cut_length] + "..." if len(subject) > cut_length else subject
-    
+
     def get_category_list(self) -> list:
         """게시판 카테고리 목록을 반환.
 
@@ -140,7 +177,7 @@ class BoardConfig():
             list: 게시판 카테고리 목록.
         """
         return self.board.bo_category_list.split("|") if self.board.bo_use_category else []
-    
+
     def get_display_ip(self, ip: str) -> str:
         """IP 주소를 표시형식으로 변환
         Args:
@@ -148,12 +185,12 @@ class BoardConfig():
         """
         if self.login_member_admin_type:
             return ip
-        
+
         if self.board.bo_use_ip_view:
             return re.sub(r"([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)", "\\1.#.#.\\4", ip)
         else:
             return ""
-        
+
     def get_member_signature(self, mb_id: str = None) -> str:
         """게시판에서 서명보이기를 사용 중이면 회원의 서명을 반환한다.
 
@@ -170,7 +207,7 @@ class BoardConfig():
             return member.mb_signature
         else:
             return ""
-    
+
     def get_notice_list(self) -> list:
         """게시판 공지글 번호 목록을 반환.
 
@@ -205,7 +242,7 @@ class BoardConfig():
     def is_list_level(self) -> bool:
         """게시글 목록을 볼 수 있는 권한을 확인한다."""
         return self._can_action_by_level(self.board.bo_list_level)
-    
+
     def is_read_level(self) -> bool:
         """게시글을 읽을 수 있는 권한을 확인한다."""
         return self._can_action_by_level(self.board.bo_read_level)
@@ -248,7 +285,7 @@ class BoardConfig():
             bool: 인기글 아이콘 출력 여부.
         """
         return hit >= self.board.bo_hot if self.board.bo_hot > 0 else False
-    
+
     def is_icon_new(self, reg_date: datetime) -> bool:
         """새글 아이콘 출력 여부를 반환.
 
@@ -263,7 +300,7 @@ class BoardConfig():
             result = reg_date > (datetime.now() - timedelta(hours=int(self.board.bo_new)))
         
         return result
-    
+
     def is_board_notice(self, wr_id: int) -> bool:
         """게시글이 공지글인지 확인한다.
 
@@ -274,7 +311,7 @@ class BoardConfig():
             bool: 공지글 여부
         """
         return str(wr_id) in self.board.bo_notice.split(",")
-    
+
     def is_modify_by_comment(self, wr_id: int) -> bool:
         """댓글 수에 따라 게시글 수정이 가능한지"""
         return self._can_action_by_comment_count(wr_id, self.board.bo_count_modify)
@@ -282,7 +319,7 @@ class BoardConfig():
     def is_delete_by_comment(self, wr_id: int) -> bool:
         """댓글 수에 따라 게시글 삭제가 가능한지"""
         return self._can_action_by_comment_count(wr_id, self.board.bo_count_delete)
-    
+
     def set_board_notice(self, wr_id: int, insert: bool = False) -> str:
         """게시판의 공지글 정보(`,`구분자 문자열)를 수정한다.
 
@@ -302,7 +339,7 @@ class BoardConfig():
             notice_ids.remove(str(wr_id))
 
         return ",".join(map(str, notice_ids))
-    
+
     def set_wr_name(self, member: Member = None, default_name: str = "") -> str:
         """실명사용 여부를 확인 후 실명이면 이름을, 아니면 닉네임을 반환한다.
 
@@ -320,7 +357,7 @@ class BoardConfig():
                 return member.mb_nick
         else:
             return default_name
-        
+
     def _can_action_by_level(self, level: int) -> bool:
         """회원 레벨에 따라 행동 가능 여부를 판단한다.
 
@@ -334,7 +371,7 @@ class BoardConfig():
             return True
         else:
             return level <= self.login_member_level
-            
+
     def _can_action_by_comment_count(self, wr_id: int, limit: int) -> bool:
         """댓글 수에 따라 행동 가능 여부를 판단한다.
 
@@ -348,13 +385,13 @@ class BoardConfig():
         """
         if self.login_member_admin_type:
             return True
-        
+
         db = SessionLocal()
 
         write_model = dynamic_create_write_table(self.board.bo_table)
         comment_count = db.query(write_model).filter_by(
-            wr_parent = wr_id,
-            wr_is_comment = True
+            wr_parent=wr_id,
+            wr_is_comment=True
         ).count()
 
         db.close()
@@ -363,7 +400,7 @@ class BoardConfig():
             return False
         else:
             return True
-        
+
     def _get_write_text_limit(self, limit: int) -> int:
         """게시글/댓글 작성 제한 글 수를 반환.
 
@@ -377,7 +414,7 @@ class BoardConfig():
             return 0
         else:
             return limit
-        
+
 
 # TODO:
 # 7. 이미지, 동영상 업로드 파일 확인 (cf_image_extension, cf_movie_extension)
@@ -402,7 +439,7 @@ class BoardFileManager():
         query = self.db.query(self.model).filter_by(bo_table=bo_table, wr_id=wr_id)
 
         return self.db.query(literal(True)).filter(query.exists()).scalar()
-    
+
     def is_upload_size(self, file: UploadFile) -> bool:
         """업로드 파일 사이즈를 확인한다.
 
@@ -419,7 +456,7 @@ class BoardFileManager():
             return True
 
         return file.size <= self.board.bo_upload_size
-    
+
     def get_board_files(self):
         """업로드된 파일 목록을 가져온다.
 
@@ -430,7 +467,7 @@ class BoardFileManager():
             bo_table=self.bo_table,
             wr_id=self.wr_id
         ).all()
-    
+
     def get_board_files_by_form(self):
         """입력/수정 폼에서 사용할 파일 목록을 가져온다.
 
@@ -486,7 +523,7 @@ class BoardFileManager():
             BoardFile: 업로드된 파일
         """
         return self.db.query(self.model).filter_by(bo_table=self.bo_table, wr_id=self.wr_id, bf_no=bf_no).first()
-    
+
     def get_filename(self, filename: str):
         """파일이름을 생성한다.
 
@@ -497,7 +534,7 @@ class BoardFileManager():
             str: 파일이름
         """
         return os.urandom(16).hex() + "." + filename.split(".")[-1]
-    
+
     def insert_board_file(self, bf_no: int, directory: str, filename: str, file: UploadFile, content: str = "", bo_table: str = None, wr_id: int = None):
         """게시글의 파일을 추가한다.
 
@@ -520,7 +557,7 @@ class BoardFileManager():
         board_file.bf_filesize = file.size
         self.db.add(board_file)
         self.db.commit()
-    
+
     def update_board_file(self, board_file: model, directory: str, filename: str, file: UploadFile, content: str = "", bo_table: str = None, wr_id: int = None):
         """게시글의 파일을 수정한다.
 
@@ -576,7 +613,7 @@ class BoardFileManager():
 
             self.db.commit()
 
-    def copy_board_files(self, directory : str, target_bo_table: str, target_wr_id: int):
+    def copy_board_files(self, directory: str, target_bo_table: str, target_wr_id: int):
         """게시글의 파일을 복사한다.
 
         Args:
@@ -593,7 +630,7 @@ class BoardFileManager():
                 file.filename = board_file.bf_source
                 file.size = board_file.bf_filesize
                 filename = self.get_filename(file.filename)
-                
+
                 # 파일 복사 및 정보 추가
                 self.copy_file(board_file.bf_file, f"{directory}/{filename}")
                 self.insert_board_file(board_file.bf_no, directory, filename, file, board_file.bf_content, target_bo_table, target_wr_id)
@@ -611,12 +648,20 @@ class BoardFileManager():
             self.db.commit()
 
     def delete_board_files(self):
-        """게시글의 파일을 삭제한다.
+        """게시글의 파일 전부를 삭제한다.
         """
         if self.wr_id:
             board_files = self.get_board_files()
             for board_file in board_files:
+                # 파일 삭제
                 self.remove_file(board_file.bf_file)
+                # 동일한 경로에 있는 파일 중 파일이름으로 끝나는 파일들 삭제
+                dir = os.path.dirname(board_file.bf_file)
+                filename = os.path.basename(board_file.bf_file)
+                for file in os.listdir(dir):
+                    if file.endswith(filename):
+                        self.remove_file(os.path.join(dir, file))
+                # 파일 정보 삭제
                 self.db.delete(board_file)
             self.db.commit()
 
@@ -631,7 +676,7 @@ class BoardFileManager():
         if file and file.filename:
             with open(f"{directory}/{filename}", "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
-    
+
     def move_file(self, origin: str, target: str):
         """파일을 이동한다.
 
@@ -660,7 +705,7 @@ class BoardFileManager():
         """
         if os.path.exists(path):
             os.remove(path)
-    
+
     def create_upload_file_from_path(self, path: str):
         """파일 경로로 UploadFile 객체를 생성한다.
 
@@ -698,7 +743,7 @@ def write_search_filter(
     db = SessionLocal()
     fields = []
     is_comment = False
-    
+
     query = db.query(model)
     # 분류
     if category:
@@ -726,12 +771,12 @@ def write_search_filter(
             # 단어별 인기검색어 등록
             insert_popular(request, fields, word)
 
-    # 분리된 단어 별 검색필터에 or 또는 and를 적용 
+    # 분리된 단어 별 검색필터에 or 또는 and를 적용
     if operator == "and":
         query = query.filter(or_(*word_filters))
     else:
         query = query.filter(and_(*word_filters))
-                
+
     # 댓글 검색
     if is_comment:
         query = query.filter_by(wr_is_comment=True)
@@ -750,9 +795,9 @@ def get_next_num(bo_table: str):
     row = db.query(func.min(Write.wr_num).label("min_wr_num")).first()
 
     return (int(row.min_wr_num) if row.min_wr_num else 0) - 1
-    
 
-def get_list(request: Request, write: WriteBaseModel, board: Board, subject_len: int = 0):
+
+def get_list(request: Request, write: WriteBaseModel, board_config: BoardConfig, subject_len: int = 0):
     """게시글 목록의 출력에 필요한 정보를 추가합니다.
     - 그누보드5의 get_list와 동일한 기능을 합니다.
 
@@ -765,9 +810,7 @@ def get_list(request: Request, write: WriteBaseModel, board: Board, subject_len:
     Returns:
         WriteBaseModel: 게시글 목록.
     """
-    
     config = request.state.config
-    board_config = BoardConfig(request, board)
 
     write.subject = board_config.cut_write_subject(write.wr_subject, subject_len)
     write.name = write.wr_name[:config.cf_cut_name] if config.cf_cut_name else write.wr_name
@@ -778,7 +821,7 @@ def get_list(request: Request, write: WriteBaseModel, board: Board, subject_len:
     write.icon_secret = "secret" in write.wr_option
     write.icon_hot = board_config.is_icon_hot(write.wr_hit)
     write.icon_new = board_config.is_icon_new(write.wr_datetime)
-    write.icon_file = BoardFileManager(board, write.wr_id).is_exist()
+    write.icon_file = BoardFileManager(board_config.board, write.wr_id).is_exist()
     write.icon_link = write.wr_link1 or write.wr_link2
     write.icon_reply = write.wr_reply
 
@@ -862,7 +905,7 @@ def is_owner(object: object, mb_id: str = None):
         return object_mb_id == mb_id
     else:
         return False
-    
+
 
 def send_write_mail(request: Request, board: Board, write: WriteBaseModel, origin_write: WriteBaseModel = None):
     """게시글/답글/댓글 작성 시, 메일을 발송한다.
@@ -900,8 +943,8 @@ def send_write_mail(request: Request, board: Board, write: WriteBaseModel, origi
             # 댓글 쓴 모든 이에게 메일 발송
             write_model = dynamic_create_write_table(board.bo_table)
             query = db.query(distinct(write_model.wr_email).label("email")).filter(
-                (write_model.wr_email.notin_(["", write.wr_email])), 
-                (write_model.wr_parent==origin_write.wr_id)
+                (write_model.wr_email.notin_(["", write.wr_email])),
+                (write_model.wr_parent == origin_write.wr_id)
             )
             comments = query.all()
             send_email_list.extend(comment.email for comment in comments)
@@ -962,11 +1005,11 @@ def get_list_thumbnail(request: Request, board: Board, write: WriteBaseModel, th
                 image = image[1:]
 
             # image경로의 파일이 존재하고 이미지파일인지 확인
-            if (os.path.exists(image) 
-                and os.path.isfile(image)
-                and os.path.getsize(image) > 0
-                and ext in config.cf_image_extension
-            ):
+            if (os.path.exists(image)
+                    and os.path.isfile(image)
+                    and os.path.getsize(image) > 0
+                    and ext in config.cf_image_extension
+                    ):
                 source_file = image
                 break
 
@@ -975,7 +1018,7 @@ def get_list_thumbnail(request: Request, board: Board, write: WriteBaseModel, th
         src = thumbnail(source_file, width=thumb_width, height=thumb_height, **kwargs)
         if src:
             result["src"] = src
-    
+
     return result
 
 
@@ -993,3 +1036,106 @@ def set_image_width(content: str, width: str = None) -> str:
     if width:
         content = re.sub(r"<img([^>]+)>", f"<img\\1 width={width}>", content)
     return content
+
+
+def delete_write(request: Request, bo_table: str, origin_write: WriteBaseModel) -> bool:
+    """게시글을 삭제한다.
+
+    Args:
+        request (Request): request 객체
+        bo_table (str): 게시판 코드
+        write (WriteBaseModel): 게시글 object
+
+    Returns:
+        bool: 결과
+    """
+    db = SessionLocal()
+    board = db.get(Board, bo_table)
+    board_config = BoardConfig(request, board)
+    group = board.group
+
+    member = request.state.login_member
+    member_id = getattr(member, "mb_id", None)
+    member_level = get_member_level(request)
+    member_admin_type = get_admin_type(request, member_id, group=group, board=board)
+
+    write_member = db.get(Member, origin_write.mb_id)
+    write_member_level = getattr(write_member, "mb_level", 1)
+
+    # 권한 체크
+    if member_admin_type and member_admin_type != "super" and write_member_level > member_level:
+        raise AlertException("자신보다 높은 권한의 게시글은 삭제할 수 없습니다.", 403)
+    elif origin_write.mb_id and not is_owner(origin_write, member_id):
+        raise AlertException("자신의 게시글만 삭제할 수 있습니다.", 403)
+    elif not origin_write.mb_id and not request.session.get(f"ss_delete_{bo_table}_{origin_write.wr_id}"):
+        raise AlertException("비회원 글을 삭제할 권한이 없습니다.", 403, f"/bbs/password/delete/{bo_table}/{origin_write.wr_id}?{request.query_params}")
+    
+    # 답변글이 있을 때 삭제 불가
+    write_model = dynamic_create_write_table(bo_table)
+    query = db.query(write_model).filter(
+        write_model.wr_reply.like(f"{origin_write.wr_reply}%"),
+        write_model.wr_num == origin_write.wr_num,
+        write_model.wr_is_comment == False,
+        write_model.wr_id != origin_write.wr_id
+    )
+    is_reply = db.query(literal(True)).filter(query.exists()).scalar()
+    if is_reply:
+        raise AlertException("답변이 있는 글은 삭제할 수 없습니다. \\n\\n우선 답변글부터 삭제하여 주십시오.", 403)
+
+    if not board_config.is_delete_by_comment(origin_write.wr_id):
+        raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_delete}건 이상 존재하므로 삭제 할 수 없습니다.", 403)
+
+    # 원글 + 댓글
+    count_write = 0
+    count_comment = 0
+    writes = db.query(write_model).filter_by(wr_parent=origin_write.wr_id).order_by(write_model.wr_id).all()
+    for write in writes:
+        # 원글 삭제
+        if not write.wr_is_comment:
+            # 원글 포인트 삭제
+            # TODO: 오류로 인한 주석
+            # if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
+            #     insert_point(request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
+
+            # 파일+섬네일 삭제
+            BoardFileManager(board, write.wr_id).delete_board_files()
+
+            # TODO: 에디터 섬네일 삭제
+
+            count_write += 1
+        else:
+            # 댓글 포인트 삭제
+            # TODO: 오류로 인한 주석
+            # if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "댓글"):
+            #     insert_point(request, write.mb_id, board.bo_comment_point * (-1), f"{board.bo_subject} {write.wr_id} 댓글 삭제")
+
+            count_comment += 1
+
+    # 원글+댓글 삭제
+    db.query(write_model).filter_by(wr_parent=origin_write.wr_id).delete()
+
+    # 최근 게시물 삭제
+    db.query(BoardNew).filter(
+        BoardNew.bo_table == bo_table,
+        BoardNew.wr_parent == origin_write.wr_id
+    ).delete()
+
+    # 스크랩 삭제
+    db.query(Scrap).filter_by(
+        bo_table = bo_table,
+        wr_id = origin_write.wr_id
+    ).delete()
+
+    # 공지사항 삭제
+    board.bo_notice = board_config.set_board_notice(origin_write.wr_id, False)
+
+    # 게시글 갯수 업데이트
+    board.bo_count_write -= count_write
+    board.bo_count_comment -= count_comment
+
+    db.commit()
+
+    # 최신글 캐시 삭제
+    G6FileCache().delete_prefix(f'latest-{bo_table}')
+
+    return True

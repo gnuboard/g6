@@ -14,9 +14,9 @@
 {% set is_admin=get_admin_type(request, request.state.login_member.mb_id, group=board.group, board=board) %}
 {% set sca=request.query_params.sca %}
 {% set sod_reverse="asc" if request.query_params.sod == "desc" else "desc" %}
-{% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
+
 <!-- 게시판 목록 시작 { -->
-<div id="bo_list" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
+<div id="bo_list" style="width:{{ table_width }}">
     {% if board.bo_use_category %}
     <!-- 게시판 카테고리 시작 { -->
         <nav id="bo_cate">
@@ -347,7 +347,7 @@
                 return false;
     
             f.removeAttribute("target");
-            f.action = "{{ url_for('list_delete', bo_table=board.bo_table) }}";
+            f.action = "{{ url_for('list_delete', bo_table=board.bo_table) }}?{{ request.query_params }}";
         }
     
         return true;

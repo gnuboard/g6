@@ -1721,7 +1721,6 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     from board_lib import BoardConfig, get_list, get_list_thumbnail
 
     templates = MyTemplates(directory=TEMPLATES_DIR)
-    templates.env.globals["board_config"] = BoardConfig
     templates.env.globals["get_list_thumbnail"] = get_list_thumbnail
 
     if not skin_dir:
@@ -1737,7 +1736,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     
     db = SessionLocal()
     # 게시판 설정
-    board = db.query(Board).filter(Board.bo_table == bo_table).first()
+    board = db.get(Board, bo_table)
     board_config = BoardConfig(request, board)
     board.subject = board_config.subject
 
@@ -1745,7 +1744,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     Write = dynamic_create_write_table(bo_table)
     writes = db.query(Write).filter(Write.wr_is_comment == False).order_by(Write.wr_num).limit(rows).all()
     for write in writes:
-        write = get_list(request, write, board)
+        write = get_list(request, write, board_config)
     
     context = {
         "request": request,
