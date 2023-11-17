@@ -178,7 +178,30 @@ class BoardConfig():
             list: 게시판 공지글 번호 목록.
         """
         return self.board.bo_notice.split(",")
-    
+
+    def get_list_sort_query(self, model: WriteBaseModel, query: SqlQuery) -> SqlQuery:
+        """게시글 목록의 정렬을 포함한 query를 반환.
+
+        Args:
+            query (SqlQuery): 게시글 목록 쿼리
+
+        Returns:
+            SqlQuery: 게시글 목록 쿼리
+        """
+        if self.board.bo_sort_field:
+            sort_fields = self.board.bo_sort_field.split(",")
+            for field in sort_fields:
+                field_parts = field.strip().split(" ")
+                sort_field = getattr(model, field_parts[0])
+                if not sort_field:
+                    continue
+                sort_order = asc(sort_field) if len(field_parts) == 1 or field_parts[1].lower() == "asc" else desc(sort_field)
+                query = query.order_by(sort_order)
+        else:
+            query = query.order_by(model.wr_num, model.wr_reply)
+
+        return query
+
     def is_list_level(self) -> bool:
         """게시글 목록을 볼 수 있는 권한을 확인한다."""
         return self._can_action_by_level(self.board.bo_list_level)

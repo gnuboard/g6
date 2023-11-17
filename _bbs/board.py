@@ -114,7 +114,7 @@ def list_post(
         else:
             query = query.order_by(asc(sst))
     else:
-        query = query.order_by(model_write.wr_num, model_write.wr_reply)
+        query = board_config.get_list_sort_query(model_write, query)
 
     # 페이지 번호에 따른 offset 계산
     offset = (current_page - 1) * page_rows
