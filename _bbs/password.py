@@ -85,5 +85,15 @@ async def password_check(
     elif action == "update":
         request.session[f"ss_edit_{bo_table}_{wr_id}"] = True
         redirect_url = f"/board/write/{bo_table}/{wr_id}?{request.query_params}"
+
+    elif action == "delete":
+        token = generate_token(request)
+        request.session[f"ss_delete_{bo_table}_{wr_id}"] = True
+        redirect_url = f"/board/delete/{bo_table}/{wr_id}?token={token}&{request.query_params}"
+
+    elif action == "comment-delete":
+        token = generate_token(request)
+        request.session[f"ss_delete_comment_{bo_table}_{wr_id}"] = True
+        redirect_url = f"/board/delete_comment/{bo_table}/{wr_id}?token={token}&{request.query_params}"
     
     return RedirectResponse(url=redirect_url, status_code=302)

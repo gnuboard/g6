@@ -18,18 +18,11 @@
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
 <section id="bo_w">
     <!-- 게시물 작성/수정 시작 { -->
-    <form name="fwrite" id="fwrite" action="{{ url_for('write_update') }}" method="post" enctype="multipart/form-data" onsubmit="return fwrite_submit(this);" autocomplete="off" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
+    <form name="fwrite" id="fwrite" action="{{ url_for('write_update') }}?{{ request.query_params }}" method="post" enctype="multipart/form-data" onsubmit="return fwrite_submit(this);" autocomplete="off" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
         <input type="hidden" name="uid" value="{{ get_unique_id(request) }}">
         <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
         <input type="hidden" name="wr_id" value="{{ write.wr_id }}">
         <input type="hidden" name="parent_id" value="{{ request.query_params.parent_id }}">
-        <input type="hidden" name="sca" value="{{ request.query_params.sca }}">
-        <input type="hidden" name="sfl" value="{{ request.query_params.sfl }}">
-        <input type="hidden" name="stx" value="{{ request.query_params.stx }}">
-        <input type="hidden" name="spt" value="{{ request.query_params.spt }}">
-        <input type="hidden" name="sst" value="{{ request.query_params.sst }}">
-        <input type="hidden" name="sod" value="{{ request.query_params.sod }}">
-        <input type="hidden" name="page" value="{{ request.query_params.page }}">
         <input type="hidden" name="token" value="{{ generate_token(request, 'write_update' if write else 'write_insert') }}">
         
         {% if categories %}

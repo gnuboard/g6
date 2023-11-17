@@ -497,12 +497,12 @@ def write_form_edit(
 @router.post("/write_update/")
 async def write_update(
     request: Request,
+    db: Session = Depends(get_db),
     token: str = Form(...),
     recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
     bo_table: str = Form(...),
     wr_id: int = Form(None),
     parent_id: int = Form(None),
-    db: Session = Depends(get_db),
     uid: str = Form(None),
     notice: bool = Form(False),
     html: str = Form(""),
@@ -608,7 +608,8 @@ async def write_update(
         write = db.query(model_write).get(wr_id)
         if not write:
             raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
-
+        
+        form_data.wr_password = create_hash(form_data.wr_password) if form_data.wr_password else ""
         for field, value in form_data.__dict__.items():
             if value:
                 setattr(write, field, value)
@@ -667,12 +668,10 @@ async def write_update(
         write.wr_file = wr_file
         db.commit()
 
-    # TODO: 비밀글은 세션에 비밀글 저장 (자신의 글 확인)
-    
     # 최신글 캐시 삭제
     G6FileCache().delete_prefix(f'latest-{bo_table}')
 
-    return RedirectResponse(f"/board/{bo_table}/{write.wr_id}", status_code=303)
+    return RedirectResponse(f"/board/{bo_table}/{write.wr_id}?{request.query_params}", status_code=303)
 
 
 @router.get("/{bo_table}/{wr_id}")
@@ -835,7 +834,8 @@ def read_post(
         comment.name = comment.wr_name[:config.cf_cut_name] if config.cf_cut_name else comment.wr_name
         comment.ip = board_config.get_display_ip(comment.wr_ip)
         comment.is_reply = len(comment.wr_comment_reply) < 5 and board.bo_comment_level <= member_level
-        comment.is_edit = comment.is_del = (member and comment.mb_id == member.mb_id) or admin_type
+        comment.is_edit = admin_type or (member and comment.mb_id == member.mb_id)
+        comment.is_del = admin_type or (member and comment.mb_id == member.mb_id) or not comment.mb_id 
         comment.is_secret = "secret" in comment.wr_option
 
         # 비밀댓글 처리
@@ -887,15 +887,15 @@ def read_post(
 @router.get("/delete/{bo_table}/{wr_id}")
 def delete_post(
     request: Request,
-    bo_table: str,
-    wr_id: int,
-    token: str,
     db: Session = Depends(get_db),
+    bo_table: str = Path(...),
+    wr_id: int = Path(...),
+    token: str = Query(...)
 ):
     """
     게시글을 삭제한다.
     """
-    if not compare_token(request, token, 'delete_post'):
+    if not check_token(request, token):
         raise AlertException("토큰이 유효하지 않습니다.", 403)
 
     # 게시판 정보 조회
@@ -913,6 +913,28 @@ def delete_post(
     if not write:
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
     
+    # 게시판관리자 검증
+    member = request.state.login_member
+    mb_id = getattr(member, "mb_id", None)
+    admin_type = get_admin_type(request, mb_id, board=board, group=board.group)
+
+    # request.query_params에서 token 제거
+    # POST 요청이면 없어도 될 듯..
+    query_params = dict(request.query_params)
+    query_params.pop("token", None)
+    query_params = "&".join([f"{key}={value}" for key, value in query_params.items()])
+    query_params = query_params.replace("&amp;", "&")
+
+    # 게시글 삭제 권한 검증
+    if not admin_type:
+        # 익명 글
+        if not write.mb_id:
+            if not request.session.get(f"ss_delete_{bo_table}_{wr_id}"):
+                raise AlertException("삭제할 권한이 없습니다.", 403, f"/bbs/password/delete/{bo_table}/{wr_id}?{query_params}")
+        # 회원 글
+        elif write.mb_id and not is_owner(write, mb_id):
+            raise AlertException("본인 글만 삭제할 수 있습니다.", 403)
+
     # 게시글 삭제
     db.delete(write)
     db.commit()
@@ -929,7 +951,7 @@ def delete_post(
 
     # TODO: 게시글 삭제에 따른 추가정보 삭제
 
-    return RedirectResponse(f"/board/{bo_table}", status_code=303)
+    return RedirectResponse(f"/board/{bo_table}?{query_params}", status_code=303)
 
 
 @router.get("/{bo_table}/{wr_id}/download/{bf_no}")
@@ -1083,7 +1105,7 @@ async def write_comment_update(
         comment.wr_is_comment = True
         comment.wr_content = form.wr_content
         comment.mb_id = getattr(member, "mb_id", "")
-        comment.wr_password = form.wr_password
+        comment.wr_password = create_hash(form.wr_password) if form.wr_password else ""
         comment.wr_name = board_config.set_wr_name(member, form.wr_name)
         comment.wr_email = getattr(member, "mb_email", "")
         comment.wr_homepage = getattr(member, "mb_homepage", "")
@@ -1124,14 +1146,41 @@ def delete_comment(
     """
     댓글 삭제
     """
-    if not compare_token(request, token, 'delete_comment'):
+    if not check_token(request, token):
         raise AlertException("토큰이 유효하지 않습니다.", 403)
+
+    # 게시판 정보 조회
+    board = db.query(Board).get(bo_table)
+    if not board:
+        raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
     
     write_model = dynamic_create_write_table(bo_table)
     comment = db.query(write_model).get(comment_id)
     if not comment:
         raise AlertException(f"{comment_id} : 존재하지 않는 댓글입니다.", 404)
     
+    # 게시판관리자 검증
+    member = request.state.login_member
+    mb_id = getattr(member, "mb_id", None)
+    admin_type = get_admin_type(request, mb_id, board=board, group=board.group)
+
+    # request.query_params에서 token 제거
+    # POST 요청이면 없어도 될 듯..
+    query_params = dict(request.query_params)
+    query_params.pop("token", None)
+    query_params = "&".join([f"{key}={value}" for key, value in query_params.items()])
+    query_params = query_params.replace("&amp;", "&")
+
+    # 게시글 삭제 권한 검증
+    if not admin_type:
+        # 익명 댓글
+        if not comment.mb_id:
+            if not request.session.get(f"ss_delete_comment_{bo_table}_{comment_id}"):
+                raise AlertException("삭제할 권한이 없습니다.", 403, f"/bbs/password/comment-delete/{bo_table}/{comment_id}?{query_params}")
+        # 회원 댓글
+        elif comment.mb_id and not is_owner(write, mb_id):
+            raise AlertException("본인 댓글만 삭제할 수 있습니다.", 403)
+
     # 댓글 삭제
     db.delete(comment)
     db.commit()
@@ -1140,7 +1189,7 @@ def delete_comment(
     write.wr_comment = write.wr_comment - 1
     db.commit()
 
-    return RedirectResponse(f"/board/{bo_table}/{write.wr_id}", status_code=303)
+    return RedirectResponse(f"/board/{bo_table}/{write.wr_id}?{query_params}", status_code=303)
 
 
 @router.get("/{bo_table}/{wr_id}/link/{no}")

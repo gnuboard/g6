@@ -989,27 +989,28 @@ def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel
     if rel_table or rel_id or rel_action:
         # 포인트 내역정보    
         row = db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action).first()
-        if row.po_point and row.po_point > 0:
-            abs_po_point = abs(row.po_point)
-            delete_use_point(request, row.mb_id, abs_po_point)
-        else:
-            if row.po_use_point and row.po_use_point > 0:
-                insert_use_point(request, row.mb_id, row.po_use_point, row.po_id)
-                
-        db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action).delete(synchronize_session=False)
-        db.commit()
-
-        # po_mb_point에 반영
-        if row.po_point:
-            db.query(Point).filter(Point.mb_id == mb_id, Point.po_id > row.po_id).update({Point.po_mb_point: Point.po_mb_point - row.po_point}, synchronize_session=False)
+        if row:
+            if row.po_point and row.po_point > 0:
+                abs_po_point = abs(row.po_point)
+                delete_use_point(request, row.mb_id, abs_po_point)
+            else:
+                if row.po_use_point and row.po_use_point > 0:
+                    insert_use_point(request, row.mb_id, row.po_use_point, row.po_id)
+                    
+            db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action).delete(synchronize_session=False)
             db.commit()
-        
-        # 포인트 내역의 합을 구하고    
-        sum_point = get_point_sum(request, mb_id)
-        
-        # 포인트 UPDATE
-        db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: sum_point}, synchronize_session=False)
-        result = db.commit()
+
+            # po_mb_point에 반영
+            if row.po_point:
+                db.query(Point).filter(Point.mb_id == mb_id, Point.po_id > row.po_id).update({Point.po_mb_point: Point.po_mb_point - row.po_point}, synchronize_session=False)
+                db.commit()
+            
+            # 포인트 내역의 합을 구하고    
+            sum_point = get_point_sum(request, mb_id)
+            
+            # 포인트 UPDATE
+            db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: sum_point}, synchronize_session=False)
+            result = db.commit()
     db.close()
 
     return result
