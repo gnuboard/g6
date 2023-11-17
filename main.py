@@ -19,7 +19,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
 templates = MyTemplates(directory=[TEMPLATES_DIR], extensions=["jinja2.ext.i18n"])
 templates.env.globals["is_admin"] = is_admin
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.filters["default_if_none"] = default_if_none
 
 from _admin.admin import router as admin_router

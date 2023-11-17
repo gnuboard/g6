@@ -13,10 +13,8 @@ router = APIRouter()
 
 templates = Jinja2Templates(directory=[TEMPLATES_DIR, CAPTCHA_PATH], extensions=["jinja2.ext.i18n"])
 templates.env.globals["is_admin"] = is_admin
-# templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals['getattr'] = getattr
-# templates.env.globals["generate_token"] = generate_token
 templates.env.globals["captcha_widget"] = captcha_widget
 templates.env.globals["check_profile_open"] = check_profile_open
 
@@ -83,7 +81,7 @@ def get_register_form(request: Request):
 
 @router.post("/register_form", name='register_form_save')
 async def post_register_form(request: Request, db: Session = Depends(get_db),
-                             token: str = Form(None),
+                             token: str = Form(..., alias="token"),
                              mb_id: str = Form(None),
                              mb_password: str = Form(None),
                              mb_password_re: str = Form(None),
