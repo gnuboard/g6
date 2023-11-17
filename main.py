@@ -4,7 +4,8 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import TypeAdapter
 
-from _lib.plugin.service import load_all_plugin, register_statics, PLUGIN_DIR, plugin_state_setting
+from _lib.plugin.service import load_all_plugin, register_statics, PLUGIN_DIR, write_plugin_state, \
+    register_plugin_admin, get_plugin_state_change_time, read_plugin_state
 from database import get_db
 from starlette.middleware.sessions import SessionMiddleware
 from common import *
@@ -17,7 +18,7 @@ import secrets
 APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
 app = FastAPI(debug=APP_IS_DEBUG)
 
-templates = MyTemplates(directory=[TEMPLATES_DIR], extensions=["jinja2.ext.i18n"])
+templates = MyTemplates(directory=[TEMPLATES_DIR])
 templates.env.globals["is_admin"] = is_admin
 templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.filters["default_if_none"] = default_if_none
@@ -57,13 +58,14 @@ app.include_router(social_router, prefix="/bbs", tags=["social"])
 # is_mobile = False
 # user_device = 'pc'
 
-plugin_info_list = []  # global variable 플러그인정보목록
-plugin_info_list = load_all_plugin(PLUGIN_DIR)
-register_statics(app, plugin_info_list)
-
-# todo: 플러그인 상태를 저장하는 테이블
-# plugin_state_setting(plugin_state, plugin_info_list)
-
+cache_plugin_menu = cachetools.Cache(maxsize=1)
+cache_plugin_state = cachetools.Cache(maxsize=2)
+plugins_state = []  # global variable 플러그인정보목록
+plugins_state = load_all_plugin(PLUGIN_DIR)
+register_statics(app, plugins_state)
+write_plugin_state(plugins_state)
+cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
+cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin(plugins_state))
 # 하위경로를 먼저 등록하고 상위경로를 등록
 # plugin/plugin_name/static 폴더 이후 등록
 
@@ -87,6 +89,13 @@ async def main_middleware(request: Request, call_next):
     try:
         if path.startswith("/admin"):
             # 관리자 페이지는 로그인이 필요합니다.
+            # 플러그인 상태변경시 캐시를 갱신한다.
+            # 갱신후 메뉴 재등록
+            if cache_plugin_state.__getitem__('change_time') != get_plugin_state_change_time():
+                new_plugin_state = read_plugin_state()
+                cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin(new_plugin_state))
+                cache_plugin_state.__setitem__('change_time',get_plugin_state_change_time())
+
             if not request.session.get("ss_mb_id"):
                 raise AlertException(status_code=302, detail="로그인이 필요합니다.", url="/bbs/login?url="+path)
     except AlertException as e:
@@ -195,7 +204,6 @@ async def main_middleware(request: Request, call_next):
     #     # "member": member,
     #     # "outlogin": outlogin.body.decode("utf-8"),
     # }      
-    db.close()
     response = await call_next(request)
 
     if is_autologin:

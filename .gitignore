@@ -20,3 +20,4 @@ localhost.key
 sqlite3.db
 *.db
 venv/
+plugins_state.json

@@ -39,5 +39,8 @@ IS_RESPONSIVE = "False" # 반드시 문자열로 입력해야 합니다.
 
 ```
 
+modules_state.json 에 모듈 활성화/비활성화가 기록됩니다.
+서버가 실행중일 때는 수정하면 안됩니다.
+
 아직 postgresql, sqlite3 는 정상 작동하지 않음
 mysql 관련 코드로 작성하면 안됨. 예) TINYINT
