@@ -14,11 +14,11 @@ import os
 from typing import List, Optional
 import socket
 import hashlib
-
+from _lib.plugin.service import get_admin_plugin_menus
 
 router = APIRouter()
-# templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 templates = MyTemplates(directory=ADMIN_TEMPLATES_DIR)
+templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 
 from _admin.admin_config import router as admin_config_router
 from _admin.admin_member import router as admin_member_router
