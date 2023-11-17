@@ -16,7 +16,6 @@ templates.env.globals['get_editor_select'] = get_editor_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
 
 VISIT_MENU_KEY = "200800"
 
@@ -120,9 +119,8 @@ async def visit_delete_update(request: Request, db: Session = Depends(get_db),
     접속자로그 레코드 삭제
     '''
 
-    if not validate_one_time_token(token, 'delete'):
-        return templates.TemplateResponse("alert.html",
-                                          {"request": request, "errors": ["토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요."]})
+    if not check_token(request, token):
+        raise AlertException("잘못된 접근입니다.")
 
     member = request.state.login_member
     if not member:

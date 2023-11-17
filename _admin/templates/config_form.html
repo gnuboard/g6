@@ -232,8 +232,8 @@
                             <br>1) reCAPTCHA V2 는 구글에서 서비스하는 원클릭 형식의 간편한 캡챠입니다. ( 모바일 친화적 UI )
                             <br>2) Invisible reCAPTCHA 는 구글에서 서비스하는 안보이는 형식의 캡챠입니다. ( 간혹 퀴즈를 풀어야 합니다. )<br>
                         </span>                            
-                        <select name="cf_captcha" id="cf_captcha" required class="required">
-                            <option value="">선택하세요</option>
+                        <select name="cf_captcha" id="cf_captcha">
+                            <option value="">사용안함</option>
                             <option value="recaptcha" {{ get_selected(config.cf_captcha, 'recaptcha')|safe }}>reCAPTCHA V2</option>
                             <option value="recaptcha_inv"  {{ get_selected(config.cf_captcha, 'recaptcha_inv')|safe }}>Invisible reCAPTCHA</option>
                         </select>

@@ -27,6 +27,7 @@ import base64
 from dotenv import load_dotenv
 import smtplib
 import threading
+import cachetools
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from _lib.captcha.recaptch_v2 import ReCaptchaV2
@@ -40,7 +41,7 @@ TEMPLATES = "templates"
 WIDGET_PATH = "_widget"
 
 CAPTCHA_PATH = f"{WIDGET_PATH}/captcha"
-EDITOR_PATH = f"{TEMPLATES}/editor"
+EDITOR_PATH = f"{WIDGET_PATH}/editor"
 
 def get_theme_from_db(config=None):
     # main.py 에서 config 를 인수로 받아서 사용
@@ -365,50 +366,6 @@ def now():
     현재 시간을 반환하는 함수
     '''
     return datetime.now().timestamp()
-
-import cachetools
-
-# 캐시 크기와 만료 시간 설정
-cache = cachetools.TTLCache(maxsize=10000, ttl=3600)
-
-# def generate_one_time_token():
-#     '''
-#     1회용 토큰을 생성하여 반환하는 함수
-#     '''
-#     token = os.urandom(24).hex()
-#     cache[token] = 'valid'
-#     return token
-
-
-# def validate_one_time_token(token):
-#     '''
-#     1회용 토큰을 검증하는 함수
-#     '''
-#     if token in cache:
-#         del cache[token]
-#         return True
-#     return False
-
-
-def generate_one_time_token(action: str = 'create'):
-    '''
-    1회용 토큰을 생성하여 반환하는 함수
-    action : 'insert', 'update', 'delete' ...
-    '''
-    token = os.urandom(24).hex()
-    cache[token] = {'status': 'valid', 'action': action}
-    return token
-
-
-def validate_one_time_token(token, action: str = 'create'):
-    '''
-    1회용 토큰을 검증하는 함수
-    '''
-    token_data = cache.get(token)
-    if token_data and token_data.get("action") == action:
-        del cache[token]
-        return True
-    return False
 
 
 def check_token(request: Request, token: str):
@@ -1834,6 +1791,48 @@ def captcha_widget(request):
         return cls.TEMPLATE_PATH
 
     return ''  # 템플릿 출력시 비어있을때는 빈 문자열
+
+
+def calculator_image_resize(source_width, source_height, target_width=0, target_height=0):
+    """
+    이미지 비율을 유지하며 계산 , 너비와 높이 중 하나만 입력된 경우 비율 계산
+    원본이미지가 target_width, target_height 보다 작으면 False 반환
+    Args:
+        source_width (int): 원본 이미지 너비
+        source_height (int): 원본 이미지 높이
+        target_width (int): 변경할 이미지 너비. Defaults 0.
+        target_height (int): 변경할 이미지 높이. Defaults 0.
+    Returns:
+        Union[bool, dict]: 변경할 이미지 너비, 높이 dict{'width': new_width, 'height': new_height} or False
+    """
+    # 작은경우 리사이즈 안함
+    if source_width < target_width and source_height < target_height:
+        return False
+
+    if source_width > target_width and source_height > target_height:
+        # 원본이 타겟보다 크면 축소 비율 계산
+        ratio_width = target_width / source_width
+        ratio_height = target_height / source_height
+        min_ratio = min(ratio_width, ratio_height)
+        return {'width': int(source_width * min_ratio), 'height': int(source_height * min_ratio)}
+
+    # 이미지 비율을 유지하며 계산
+    # 너비와 높이 중 하나만 입력된 경우 비율 계산
+    if target_width and not target_height:
+        ratio = target_width / source_width
+        new_width = target_width
+        new_height = int(source_height * ratio)
+
+    elif not target_width and target_height:
+        ratio = target_height / source_height
+        new_width = int(source_width * ratio)
+        new_height = target_height
+
+    else:
+        return False  # 너비와 높이 둘 다 입력되거나 입력되지 않은 경우 처리
+
+    return {'width': new_width, 'height': new_height}
+
 
 
 def thumbnail(source_file: str, target_path: str = None, width: int = 200, height: int = 150, **kwargs) -> str:

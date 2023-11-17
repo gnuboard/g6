@@ -13,7 +13,7 @@
 </div>
 
 <form method="post" name="fvisitdelete" class="visit_del" action="/admin/visit_delete_update" onsubmit="return form_submit(this);">
-    <input type="hidden" name="token" value="{{ generate_one_time_token('delete') }}">
+    <input type="hidden" name="token" value="">
     <div>
         <label for="year" class="sound_only">년도선택</label>
         <select name="year" id="year">
@@ -72,6 +72,8 @@ function form_submit(f)
     else
         msg += "의";
     msg += " 자료를 삭제하시겠습니까?";
+
+    f.token.value = generate_token(f);
 
     return confirm(msg);
 }
