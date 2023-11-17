@@ -37,6 +37,11 @@
                         </li>
                         <li>
                             <span class="sound_only">자동등록방지</span>
+                            <!-- Captcha Start -->
+                            <fieldset id="captcha" class="captcha">
+                                {% include captcha_widget(request) ignore missing %}
+                            </fieldset>
+                            <!-- Captcha End -->
                         </li>
                     </ul>
                 </div>
@@ -56,8 +61,12 @@
             alert("토큰값이 없습니다.");
             return false;
         }
-
-        // TODO: Capcha 검증 추가
+        // captcha 사용시
+        if (typeof check_captcha === "function") {
+            if (!check_captcha(f)) {
+                return false;
+            }
+        }
 
         return true;
     }
