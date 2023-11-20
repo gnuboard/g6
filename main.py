@@ -42,6 +42,7 @@ from _bbs.ajax_autosave import router as autosave_router
 from _bbs.member_leave import router as member_leave_router
 from _bbs.social import router as social_router
 from _bbs.password import router as password_router
+from _bbs.search import router as search_router
 from _lib.editor.ckeditor4 import router as editor_router
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
@@ -62,6 +63,7 @@ app.include_router(good_router, prefix="/bbs/ajax", tags=["good"])
 app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
 app.include_router(social_router, prefix="/bbs", tags=["social"])
 app.include_router(password_router, prefix="/bbs", tags=["password"])
+app.include_router(search_router, prefix="/bbs", tags=["search"])
 app.include_router(editor_router, prefix="/editor", tags=["editor"])
 # is_mobile = False
 # user_device = 'pc'

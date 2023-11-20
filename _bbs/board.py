@@ -11,7 +11,7 @@ from board_lib import *
 from common import *
 from database import get_db
 from dataclassform import WriteForm, WriteCommentForm
-from models import AutoSave, Board, BoardGood, Group, Scrap
+from models import AutoSave, Board, BoardGood, Group, GroupMember, Scrap
 
 router = APIRouter()
 templates = MyTemplates(directory=[EDITOR_PATH, CAPTCHA_PATH, TEMPLATES_DIR])
@@ -706,13 +706,14 @@ def read_post(
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
 
     # 게시판 설정
+    group = board.group
     board.subject = board_config.subject
 
     # 게시판 관리자 확인
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
     member_level = get_member_level(request)
-    admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
+    admin_type = get_admin_type(request, mb_id, group=group, board=board)
 
     # 게시글 정보 조회
     model_write = dynamic_create_write_table(bo_table)
@@ -720,7 +721,18 @@ def read_post(
     if not write:
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
 
-    # TODO: 그룹 접근 사용
+    # 그룹 접근 사용
+    if group.gr_use_access:
+        if not member:
+            raise AlertException(f"비회원은 이 게시판에 접근할 권한이 없습니다.\\n\\n회원이시라면 로그인 후 이용해 보십시오.", 403)
+        if not (admin_type == "super" or admin_type == "group"):
+            group_member = db.query(GroupMember).filter(
+                GroupMember.gr_id == group.gr_id,
+                GroupMember.mb_id == mb_id
+            ).one_or_none()
+            print(group.gr_id, mb_id, group_member)
+            if not group_member:
+                raise AlertException("접근 권한이 없으므로 글읽기가 불가합니다.\\n\\n궁금하신 사항은 관리자에게 문의 바랍니다.", 403, "/")
 
     # 읽기 권한 검증
     if not board_config.is_read_level():

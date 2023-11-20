@@ -157,7 +157,7 @@ def read_plugin_state() -> List[PluginState]:
     if not os.path.isfile(PLUGIN_STATE_FILE):
         return []
 
-    lock = FileLock("plugin_states.json.lock")
+    lock = FileLock("plugin_states.json.lock",timeout=5)
     with lock:
         with open(PLUGIN_STATE_FILE, 'r', encoding="UTF-8") as file:
             plugin_state = json.load(file)
@@ -175,15 +175,21 @@ def write_plugin_state(plugin_states: List[PluginState]):
     플러그인 활성 상태를 plugin_states.json 에 기록한다.
     Args:
         plugin_states (list): 플러그인 목록
+    Raises:
+        Timeout: 파일 lock 에서 Timeout 발생시
     Examples:
         초기 설치, 관리자메뉴에서 플러그인 상태값 변경시에만 사용
     """
     if not os.path.exists(PLUGIN_STATE_FILE):
-        return
+        with open(PLUGIN_STATE_FILE, 'w', encoding="UTF-8") as file:
+            json.dump({}, file, indent=4, ensure_ascii=False)
 
+    if not plugin_states:
+        return
     plugin_states_dict = [asdict(plugin) for plugin in plugin_states]
 
-    lock = FileLock("plugin_states.json.lock")
+    
+    lock = FileLock("plugin_states.json.lock", timeout=5)
     with lock:
         with open(PLUGIN_STATE_FILE, 'w', encoding="UTF-8") as file:
             json.dump(plugin_states_dict, file, indent=4, ensure_ascii=False)

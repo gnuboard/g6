@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from fastapi.params import Form
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+import logging
 
 from _admin.admin import templates
 from _lib.plugin import service
@@ -92,6 +93,12 @@ def update_plugin_state(
         else:
             exist_plugins.append(plugin_state[0])
         plugin_state = exist_plugins
-    service.write_plugin_state(plugin_state)
+
+    try:
+        service.write_plugin_state(plugin_state)
+    except Exception as e:
+
+        logging.error(e)
+        return JSONResponse(status_code=400, content={"message": "플러그인 상태를 변경할 수 없습니다."})
 
     return {"message": message}
