@@ -4,8 +4,8 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import TypeAdapter
 
-from _lib.plugin.service import load_all_plugin, register_statics, PLUGIN_DIR, write_plugin_state, \
-    register_plugin_admin, get_plugin_state_change_time, read_plugin_state
+from _lib.plugin.service import register_statics, import_plugin_admin, get_plugin_state_change_time, \
+    read_plugin_state, import_plugin_by_states, import_plugin_router, delete_router_by_tagname
 from database import get_db
 from starlette.middleware.sessions import SessionMiddleware
 from common import *
@@ -58,22 +58,24 @@ app.include_router(social_router, prefix="/bbs", tags=["social"])
 # is_mobile = False
 # user_device = 'pc'
 
+# 전역 캐시
 cache_plugin_menu = cachetools.Cache(maxsize=1)
-cache_plugin_state = cachetools.Cache(maxsize=2)
-plugins_state = []  # global variable 플러그인정보목록
-plugins_state = load_all_plugin(PLUGIN_DIR)
-register_statics(app, plugins_state)
-write_plugin_state(plugins_state)
+cache_plugin_state = cachetools.Cache(maxsize=1)  # 플러그인정보목록
+
+# 활성화된 플러그인만 로딩
+plugin_states = read_plugin_state()
+import_plugin_by_states(plugin_states)
+register_statics(app, plugin_states)
+import_plugin_router(plugin_states)
+
 cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
-cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin(plugins_state))
+cache_plugin_menu.__setitem__('admin_menus', import_plugin_admin(plugin_states))
 # 하위경로를 먼저 등록하고 상위경로를 등록
 # plugin/plugin_name/static 폴더 이후 등록
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
 
-
-# 항상 실행해야 하는 미들웨어
+# 요청마다 항상 실행되는 미들웨어
 @app.middleware("http")
 async def main_middleware(request: Request, call_next):
 
@@ -89,18 +91,23 @@ async def main_middleware(request: Request, call_next):
     try:
         if path.startswith("/admin"):
             # 관리자 페이지는 로그인이 필요합니다.
-            # 플러그인 상태변경시 캐시를 갱신한다.
-            # 갱신후 메뉴 재등록
-            if cache_plugin_state.__getitem__('change_time') != get_plugin_state_change_time():
-                new_plugin_state = read_plugin_state()
-                cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin(new_plugin_state))
-                cache_plugin_state.__setitem__('change_time',get_plugin_state_change_time())
-
             if not request.session.get("ss_mb_id"):
                 raise AlertException(status_code=302, detail="로그인이 필요합니다.", url="/bbs/login?url="+path)
     except AlertException as e:
         # 예외처리 실행
         return await alert_exception_handler(request, e)
+
+    if cache_plugin_state.__getitem__('change_time') != get_plugin_state_change_time():
+        # 플러그인 상태변경시 캐시를 업데이트.
+        # 업데이트 이후 관리자 메뉴, 라우터 재등록/삭제
+        new_plugin_state = read_plugin_state()
+        import_plugin_router(new_plugin_state)
+        for plugin in new_plugin_state:
+            if not plugin.is_enable:
+                delete_router_by_tagname(app, plugin.module_name)
+
+        cache_plugin_menu.__setitem__('admin_menus', import_plugin_admin(new_plugin_state))
+        cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
 
     member = None
 
