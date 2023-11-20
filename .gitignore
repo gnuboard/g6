@@ -9,12 +9,11 @@ __pycache__
 .local
 .bash*
 data/
-test*.py
+test.*
 .idea
 .env
 prod.env
 dev.env
-test.py
 localhost.crt
 localhost.key
 sqlite3.db

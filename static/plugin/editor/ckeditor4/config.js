@@ -100,12 +100,8 @@ CKEDITOR.editorConfig = function( config ) {
     }];
 
 	/* 이미지 업로드 관련 소스 */
-	var up_url = "/upload.php?type=Images";
-	if( typeof(g5_editor_url) != "undefined" )	{
-		up_url = g5_editor_url + up_url;
-	} else {
-		up_url = "/plugin/editor/ckeditor4" + up_url;
-	}
+	let up_url = g5_url + "editor/ckeditor4/upload?type=Images";
+
 	// 에디터 구분
 	if(typeof(editor_id) != "undefined" && editor_id != "") {
 		up_url += "&editor_id="+editor_id;
@@ -124,9 +120,9 @@ CKEDITOR.editorConfig = function( config ) {
 
 	// 이미지 다이얼로그 수정 
 	CKEDITOR.on('dialogDefinition', function (ev) {
-		var dialogName = ev.data.name;
-		var dialog = ev.data.definition.dialog;
-		var dialogDefinition = ev.data.definition;
+		let dialogName = ev.data.name;
+		let dialog = ev.data.definition.dialog;
+		let dialogDefinition = ev.data.definition;
 		if (dialogName == 'image') {
 			dialog.on('show', function (obj) {
 				//this.selectPage('Upload'); //업로드텝으로 시작

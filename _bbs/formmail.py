@@ -84,8 +84,8 @@ async def formmail_send(request: Request, db: Session = Depends(get_db),
     '''
     폼메일 발송
     '''
-    # if not validate_one_time_token(token, 'formmail_send'):
-    #     raise AlertException(status_code=400, detail="토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.")
+    if not check_token(request, token):
+        raise AlertException("잘못된 접근입니다.")
 
     enc = StringEncrypt()
     decrypted_to_email = enc.decrypt(email)

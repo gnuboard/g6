@@ -28,7 +28,6 @@ templates.env.globals['get_editor_select'] = get_editor_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.globals["domain_mail_host"] = domain_mail_host
 
 
@@ -56,8 +55,8 @@ async def sendmail_test_result(request: Request, db: Session = Depends(get_db),
     '''
     메일 테스트 실행
     '''
-    if not validate_one_time_token(token, 'sendmail_test_result'):
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요."]})
+    if not check_token(request, token):
+        raise AlertException("잘못된 접근입니다.")
 
     # ','를 기준으로 문자열을 분리하여 리스트로 변환하거나, 하나의 요소만 있는 리스트를 생성
     subject = "[메일검사] 제목"

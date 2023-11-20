@@ -22,12 +22,13 @@ from models import WriteBaseModel
 from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
 import json
-from PIL import Image
+from PIL import Image, ImageOps, UnidentifiedImageError
 from user_agents import parse
 import base64
 from dotenv import load_dotenv
 import smtplib
 import threading
+import cachetools
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from _lib.captcha.recaptch_v2 import ReCaptchaV2
@@ -41,7 +42,7 @@ TEMPLATES = "templates"
 WIDGET_PATH = "_widget"
 
 CAPTCHA_PATH = f"{WIDGET_PATH}/captcha"
-EDITOR_PATH = f"{TEMPLATES}/editor"
+EDITOR_PATH = f"{WIDGET_PATH}/editor"
 
 def get_theme_from_db(config=None):
     # main.py 에서 config 를 인수로 받아서 사용
@@ -366,50 +367,6 @@ def now():
     현재 시간을 반환하는 함수
     '''
     return datetime.now().timestamp()
-
-import cachetools
-
-# 캐시 크기와 만료 시간 설정
-cache = cachetools.TTLCache(maxsize=10000, ttl=3600)
-
-# def generate_one_time_token():
-#     '''
-#     1회용 토큰을 생성하여 반환하는 함수
-#     '''
-#     token = os.urandom(24).hex()
-#     cache[token] = 'valid'
-#     return token
-
-
-# def validate_one_time_token(token):
-#     '''
-#     1회용 토큰을 검증하는 함수
-#     '''
-#     if token in cache:
-#         del cache[token]
-#         return True
-#     return False
-
-
-def generate_one_time_token(action: str = 'create'):
-    '''
-    1회용 토큰을 생성하여 반환하는 함수
-    action : 'insert', 'update', 'delete' ...
-    '''
-    token = os.urandom(24).hex()
-    cache[token] = {'status': 'valid', 'action': action}
-    return token
-
-
-def validate_one_time_token(token, action: str = 'create'):
-    '''
-    1회용 토큰을 검증하는 함수
-    '''
-    token_data = cache.get(token)
-    if token_data and token_data.get("action") == action:
-        del cache[token]
-        return True
-    return False
 
 
 def check_token(request: Request, token: str):
@@ -990,27 +947,28 @@ def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel
     if rel_table or rel_id or rel_action:
         # 포인트 내역정보    
         row = db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action).first()
-        if row.po_point and row.po_point > 0:
-            abs_po_point = abs(row.po_point)
-            delete_use_point(request, row.mb_id, abs_po_point)
-        else:
-            if row.po_use_point and row.po_use_point > 0:
-                insert_use_point(request, row.mb_id, row.po_use_point, row.po_id)
-                
-        db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action).delete(synchronize_session=False)
-        db.commit()
-
-        # po_mb_point에 반영
-        if row.po_point:
-            db.query(Point).filter(Point.mb_id == mb_id, Point.po_id > row.po_id).update({Point.po_mb_point: Point.po_mb_point - row.po_point}, synchronize_session=False)
+        if row:
+            if row.po_point and row.po_point > 0:
+                abs_po_point = abs(row.po_point)
+                delete_use_point(request, row.mb_id, abs_po_point)
+            else:
+                if row.po_use_point and row.po_use_point > 0:
+                    insert_use_point(request, row.mb_id, row.po_use_point, row.po_id)
+                    
+            db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action).delete(synchronize_session=False)
             db.commit()
-        
-        # 포인트 내역의 합을 구하고    
-        sum_point = get_point_sum(request, mb_id)
-        
-        # 포인트 UPDATE
-        db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: sum_point}, synchronize_session=False)
-        result = db.commit()
+
+            # po_mb_point에 반영
+            if row.po_point:
+                db.query(Point).filter(Point.mb_id == mb_id, Point.po_id > row.po_id).update({Point.po_mb_point: Point.po_mb_point - row.po_point}, synchronize_session=False)
+                db.commit()
+            
+            # 포인트 내역의 합을 구하고    
+            sum_point = get_point_sum(request, mb_id)
+            
+            # 포인트 UPDATE
+            db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: sum_point}, synchronize_session=False)
+            result = db.commit()
     db.close()
 
     return result
@@ -1150,6 +1108,37 @@ def get_populars(limit: int = 7, day: int = 3):
     popular_cache.update({"populars": populars})
 
     return populars
+
+
+def insert_popular(request: Request, fields: str, word: str):
+    """인기검색어 등록
+
+    Args:
+        request (Request): FastAPI Request 객체
+        fields (str): 검색 필드
+        word (str): 인기검색어
+    """
+    try:
+        today_date = datetime.now().strftime("%Y-%m-%d")
+        # 회원아이디로 검색은 제외
+        if not "mb_id" in fields:
+            with SessionLocal() as db:
+                # 현재 날짜의 인기검색어를 조회한다.
+                popular = db.query(Popular).filter_by(
+                    pp_word = word,
+                    pp_date = today_date
+                ).first()
+
+                # 인기검색어가 없으면 새로 등록한다.
+                if not popular:
+                    new_popular = Popular(
+                        pp_word=word,
+                        pp_date=today_date,
+                        pp_ip=get_client_ip(request)["client_ip"])
+                    db.add(new_popular)
+                    db.commit()
+    except Exception as e:
+        print(f"인기검색어 입력 오류: {e}")
 
 
 def generate_token(request: Request, action: str = ''):
@@ -1686,7 +1675,11 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     Returns:
         str: 최신글 HTML
     """
+    # Lazy import
+    from board_lib import BoardConfig, get_list, get_list_thumbnail
+
     templates = MyTemplates(directory=TEMPLATES_DIR)
+    templates.env.globals["get_list_thumbnail"] = get_list_thumbnail
 
     if not skin_dir:
         skin_dir = 'basic'
@@ -1698,24 +1691,24 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     # 캐시된 파일이 있으면 파일을 읽어서 반환
     if os.path.exists(cache_file):
         return g6_file_cache.get(cache_file)
-
-    # Lazy import
-    import board_lib
     
     db = SessionLocal()
-    board = db.query(Board).filter(Board.bo_table == bo_table).first()
+    # 게시판 설정
+    board = db.get(Board, bo_table)
+    board_config = BoardConfig(request, board)
+    board.subject = board_config.subject
 
+    #게시글 목록 조회
     Write = dynamic_create_write_table(bo_table)
     writes = db.query(Write).filter(Write.wr_is_comment == False).order_by(Write.wr_num).limit(rows).all()
     for write in writes:
-        write = board_lib.get_list(request, write, board)
+        write = get_list(request, write, board_config)
     
     context = {
         "request": request,
         "board": board,
         "writes": writes,
         "bo_table": bo_table,
-        "bo_subject": board.bo_subject,
     }
     temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
     temp_decode = temp.body.decode("utf-8")
@@ -1799,3 +1792,141 @@ def captcha_widget(request):
         return cls.TEMPLATE_PATH
 
     return ''  # 템플릿 출력시 비어있을때는 빈 문자열
+
+
+def calculator_image_resize(source_width, source_height, target_width=0, target_height=0):
+    """
+    이미지 비율을 유지하며 계산 , 너비와 높이 중 하나만 입력된 경우 비율 계산
+    원본이미지가 target_width, target_height 보다 작으면 False 반환
+    Args:
+        source_width (int): 원본 이미지 너비
+        source_height (int): 원본 이미지 높이
+        target_width (int): 변경할 이미지 너비. Defaults 0.
+        target_height (int): 변경할 이미지 높이. Defaults 0.
+    Returns:
+        Union[bool, dict]: 변경할 이미지 너비, 높이 dict{'width': new_width, 'height': new_height} or False
+    """
+    # 작은경우 리사이즈 안함
+    if source_width < target_width and source_height < target_height:
+        return False
+
+    if source_width > target_width and source_height > target_height:
+        # 원본이 타겟보다 크면 축소 비율 계산
+        ratio_width = target_width / source_width
+        ratio_height = target_height / source_height
+        min_ratio = min(ratio_width, ratio_height)
+        return {'width': int(source_width * min_ratio), 'height': int(source_height * min_ratio)}
+
+    # 이미지 비율을 유지하며 계산
+    # 너비와 높이 중 하나만 입력된 경우 비율 계산
+    if target_width and not target_height:
+        ratio = target_width / source_width
+        new_width = target_width
+        new_height = int(source_height * ratio)
+
+    elif not target_width and target_height:
+        ratio = target_height / source_height
+        new_width = int(source_width * ratio)
+        new_height = target_height
+
+    else:
+        return False  # 너비와 높이 둘 다 입력되거나 입력되지 않은 경우 처리
+
+    return {'width': new_width, 'height': new_height}
+
+
+
+def thumbnail(source_file: str, target_path: str = None, width: int = 200, height: int = 150, **kwargs) -> str:
+    """섬네일 이미지를 생성한다.
+
+    Args:
+        source_file (str): 원본 이미지 파일 경로
+        target_path (str, optional): 섬네일 이미지 파일 경로. Defaults to None.
+        width (int, optional): 섬네일 이미지 너비. Defaults to 200.
+        height (int, optional): 섬네일 이미지 높이. Defaults to 150.
+
+    Returns:
+        str: 섬네일 이미지 파일 경로
+    """
+    try:
+        source_basename = os.path.basename(source_file)
+        source_path = os.path.dirname(source_file)
+        target_path = target_path or source_path
+
+        # 섬네일 저장경로 생성
+        make_directory(target_path)
+
+        # 섬네일 파일 경로
+        thumbnail_file = os.path.join(target_path, f"thumbnail_{width}x{height}_{source_basename}")
+        # 섬네일 파일이 존재
+        # 원본파일 생성시간 < 섬네일 파일 생성시간
+        if os.path.exists(thumbnail_file):
+            if os.path.getmtime(source_file) < os.path.getmtime(thumbnail_file):
+                return thumbnail_file
+
+        # 이미지 객체 생성
+        # 파일이 없가나 이미지가 아닐 경우 예외가 발생하므로 검사를 따로 하지 않음.
+        source_image = Image.open(source_file)
+        source_width, source_height = source_image.size
+
+        # 이미지가 섬네일이미지보다 작을 경우
+        if source_width < width or source_height < height:
+            # 확장 이미지 생성
+            expanded_img = Image.new("RGB", (width, height), (255, 255, 255))
+            # 기존 이미지를 확장된 이미지 중앙에 삽입
+            left = (width - source_width) // 2
+            top = (height - source_height) // 2
+            expanded_img.paste(source_image, (left, top))
+            expanded_img.save(thumbnail_file)
+        else:
+            # 이미지를 지정한 크기로 자르고 저장
+            ImageOps.fit(source_image, (width, height)).save(thumbnail_file)
+            # source_image.thumbnail((width, height))
+            # source_image.save(thumbnail_file)
+
+        return thumbnail_file
+    
+    except UnidentifiedImageError as e:
+        print("원본 이미지 객체 생성 실패 : ", e)
+        return False
+
+    except Exception as e:
+        print("섬네일 생성 실패 : ", e)
+        return False
+
+
+def get_editor_image(contents: str, view: bool = True) -> list:
+    """에디터에서 이미지 태그를 추출한다.
+
+    Args:
+        contents (str): 내용
+        view (bool, optional): 보기모드 여부. Defaults to True.
+
+    Returns:
+        list: 이미지 태그 src 속성 값
+    """
+    if not contents:
+        return False
+
+    # contents 중 img 태그 추출
+    if view:
+        pattern = re.compile(r"<img([^>]*)>", re.IGNORECASE | re.DOTALL)
+    else:
+        pattern = re.compile(r"<img[^>]*src=[\'\"]?([^>\'\"]+[^>\'\"]+)[\'\"]?[^>]*>", re.IGNORECASE | re.DOTALL)
+
+    matches = pattern.findall(contents)
+
+    return matches
+
+def extract_alt_attribute(img_tag: str) -> str:
+    """alt 속성 추출
+
+    Args:
+        img_tag (str): img 태그
+
+    Returns:
+        str: alt 속성 값
+    """
+    alt_match = re.search(r'alt=[\"\']?([^\"\']*)[\"\']?', img_tag, re.IGNORECASE)
+    alt = str(alt_match.group(1)) if alt_match else ''
+    return alt

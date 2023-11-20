@@ -10,7 +10,6 @@ from pbkdf2 import validate_password
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR, extensions=["jinja2.ext.i18n"])
 templates.env.globals["is_admin"] = is_admin
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals['getattr'] = getattr
 templates.env.globals["generate_token"] = generate_token
