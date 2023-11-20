@@ -4,6 +4,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import MetaData, Table
 from sqlalchemy.orm import Session
+
+from _lib.plugin.service import get_admin_plugin_menus
 from database import SessionLocal, get_db, engine
 
 # from models import create_dynamic_create_write_table
@@ -15,6 +17,7 @@ import os
 from typing import List, Optional
 import socket
 from dataclassform import ConfigForm
+
 
 # from pydanticmodel import ConfigForm
 
@@ -29,11 +32,11 @@ templates.env.globals["get_selected"] = get_selected
 templates.env.globals["get_member_level_select"] = get_member_level_select
 templates.env.globals["option_array_checked"] = option_array_checked
 templates.env.globals["get_admin_menus"] = get_admin_menus
+templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["generate_token"] = generate_token
 templates.env.globals["get_client_ip"] = get_client_ip
 
 CONFIG_MENU_KEY = "100100"
-
 
 @router.get("/config_form")
 def config_form(request: Request, db: Session = Depends(get_db)):
@@ -41,7 +44,6 @@ def config_form(request: Request, db: Session = Depends(get_db)):
     기본환경설정
     """
     request.session["menu_key"] = CONFIG_MENU_KEY
-
     if not request.state.is_super_admin:
         raise AlertException("최고관리자만 접근 가능합니다.")
 

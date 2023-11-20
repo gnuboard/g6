@@ -77,6 +77,12 @@
             "name": "부가서비스",
             "url": "service",
             "permission": "cf_service"
+        },
+        {
+            "id": "100420",
+            "name": "플러그인 관리",
+            "url": "plugin_list",
+            "permission": "admin_plugin"
         }
     ],
     "menu200": [

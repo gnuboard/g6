@@ -4,6 +4,8 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import TypeAdapter
 
+from _lib.plugin.service import register_statics, import_plugin_admin, get_plugin_state_change_time, \
+    read_plugin_state, import_plugin_by_states, import_plugin_router, delete_router_by_tagname
 from database import get_db
 from starlette.middleware.sessions import SessionMiddleware
 from common import *
@@ -15,9 +17,8 @@ import secrets
 # models.Base.metadata.create_all(bind=engine)
 APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
 app = FastAPI(debug=APP_IS_DEBUG)
-app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/data", StaticFiles(directory="data"), name="data")
-templates = MyTemplates(directory=[TEMPLATES_DIR], extensions=["jinja2.ext.i18n"])
+
+templates = MyTemplates(directory=[TEMPLATES_DIR])
 templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.filters["datetime_format"] = datetime_format
@@ -65,7 +66,24 @@ app.include_router(editor_router, prefix="/editor", tags=["editor"])
 # is_mobile = False
 # user_device = 'pc'
 
-# 항상 실행해야 하는 미들웨어
+# 전역 캐시
+cache_plugin_menu = cachetools.Cache(maxsize=1)
+cache_plugin_state = cachetools.Cache(maxsize=1)  # 플러그인정보목록
+
+# 활성화된 플러그인만 로딩
+plugin_states = read_plugin_state()
+import_plugin_by_states(plugin_states)
+register_statics(app, plugin_states)
+import_plugin_router(plugin_states)
+
+cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
+cache_plugin_menu.__setitem__('admin_menus', import_plugin_admin(plugin_states))
+# 하위경로를 먼저 등록하고 상위경로를 등록
+# plugin/plugin_name/static 폴더 이후 등록
+app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/data", StaticFiles(directory="data"), name="data")
+
+# 요청마다 항상 실행되는 미들웨어
 @app.middleware("http")
 async def main_middleware(request: Request, call_next):
 
@@ -86,6 +104,18 @@ async def main_middleware(request: Request, call_next):
     except AlertException as e:
         # 예외처리 실행
         return await alert_exception_handler(request, e)
+
+    if cache_plugin_state.__getitem__('change_time') != get_plugin_state_change_time():
+        # 플러그인 상태변경시 캐시를 업데이트.
+        # 업데이트 이후 관리자 메뉴, 라우터 재등록/삭제
+        new_plugin_state = read_plugin_state()
+        import_plugin_router(new_plugin_state)
+        for plugin in new_plugin_state:
+            if not plugin.is_enable:
+                delete_router_by_tagname(app, plugin.module_name)
+
+        cache_plugin_menu.__setitem__('admin_menus', import_plugin_admin(new_plugin_state))
+        cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
 
     member = None
 
@@ -189,7 +219,6 @@ async def main_middleware(request: Request, call_next):
     #     # "member": member,
     #     # "outlogin": outlogin.body.decode("utf-8"),
     # }      
-    db.close()
     response = await call_next(request)
 
     if is_autologin:
