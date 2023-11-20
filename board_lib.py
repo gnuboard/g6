@@ -773,9 +773,9 @@ def write_search_filter(
 
     # 분리된 단어 별 검색필터에 or 또는 and를 적용
     if operator == "and":
-        query = query.filter(or_(*word_filters))
-    else:
         query = query.filter(and_(*word_filters))
+    else:
+        query = query.filter(or_(*word_filters))
 
     # 댓글 검색
     if is_comment:
