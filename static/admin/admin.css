@@ -135,7 +135,7 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0}
 
 /* 버튼 */
 .btn_confirm {margin:0px}
-.btn_fixed_top{position:fixed;bottom:10px;right:70px;z-index:100}
+.btn_fixed_top{position:fixed;bottom:10px;right:100px;z-index:100}
 .btn_fixed_top .btn_02, .btn_fixed_top .btn_submit {height: 50px;}
 .btn_fixed_top .btn_01 {height: 50px;line-height: 50px;}
 
@@ -267,11 +267,17 @@ legend {position:absolute;width:0;height:0;font-size:0;line-height:0;text-indent
 /* 하단 레이아웃 */
 #ft{background:#f3f3f3;padding:0 25px;color:#777;text-align:center}
 #ft p{line-height:50px;}
-.scroll_top{position:fixed;bottom:10px;right:10px;width:50px;height:50px;border:0;text-align:center;background:#ddd;background:rgba(0,0,0,0.1)}
+.scroll_top{position:fixed;bottom:10px;right:40px;width:50px;height:50px;border:0;text-align:center;background:#ddd;background:rgba(0,0,0,0.1)}
 .scroll_top span.top_img{display:inline-block;width: 0; height: 0; border-left: 5px solid transparent;border-right: 5px solid transparent;
 border-bottom: 5px solid black;}
 .scroll_top span.top_txt{display:block}
-#darkmode_btn{position:fixed;bottom:10px;right:70px;width:50px;height:50px;border:0;text-align:center;background:#ddd;background:rgba(0,0,0,0.1);color: #000000;}
+#darkmode_btn{width:40px;height:40px;border:0;text-align:center;border-radius: 3px;border: 1px solid #ffffff40; color: #fff;display: flex;justify-content: center;align-items: center;cursor: pointer;}
+.toggle-switch{position: relative;}
+.toggle-switch::after{position: absolute;display: inline-block;width: 120px;bottom: -10px;background: #fff;padding: 4px 10px;color: #151c24;border-radius: 4px;transition: all 0.2s;}
+.toggle-switch.dark-mode::after {content: "Switch to light mode";opacity: 0;}
+.toggle-switch.light-mode::after {content: "Switch to dark mode";opacity: 0;}
+.toggle-switch.dark-mode:hover::after{opacity: 1;}
+.toggle-switch.light-mode:hover::after{opacity: 1;}
 #darkmode_btn input {opacity: 0;width: 0;height: 0;}
 #darkmode_btn .visible {width:24px; height:24px; vertical-align:middle;}
 
@@ -421,7 +427,7 @@ tfoot th {}
     .theme_dt_if {float: none;padding: 20px !important;width: 100% !important;}
     .theme_dt_img img {width: 100%;}
     .anchor .active a {background: #fff;color: #4b4b4b;}
-    .dark-mode .anchor .active a {background: #1e2933 !important;color: #fff !important;}
+    .dark-mode .anchor .active a {background: #272E3D !important;color: #fff !important;}
 }
 
 @media (max-width: 500px) {
@@ -1204,27 +1210,26 @@ input[type="text"]{max-width:200px}
 
 /* 다크모드 설정 */
 #darkmode_btn .visible.bright {display: none;}
-.dark-mode {background: #151c24;}
+
 .dark-mode #darkmode_btn .visible.dark {display: none;}
-.dark-mode #darkmode_btn .visible.bright {display: inline-block; margin: 0px 4px 4px 0px;}
+.dark-mode #darkmode_btn .visible.bright {display: inline-block;}
 .dark-mode #container {background: #151c24;}
 .dark-mode .scroll_top{background:#ddd;background:rgba(255, 255, 255, 0.4)}
-.dark-mode #darkmode_btn {background:#ddd;background:rgba(255, 255, 255, 0.4)}
 .dark-mode #gnb .gnb_oparea {border-right: #545454;}
 .dark-mode #gnb .gnb_oparea h3 {color: #eeeeee;}
 .dark-mode #container_title {background: #151c24;color: #eeeeee;border-bottom: 1px solid #ffffff30;}
 .dark-mode .container_wr section h2, .dark-mode a:link, .dark-mode a:visited {color: #eeeeee;}
 .dark-mode .btn_01, .dark-mode a.btn_01 {color: #4d4d4d;}
-.dark-mode .local_desc {background: #151c24;color: #eeeeee;border: none}
+.dark-mode .local_desc {background: #0e151d ;color: #eeeeee;border: none}
 .dark-mode .tbl_head01 tbody tr:nth-child(even) {background: #2c2c2c;}
 .dark-mode .tbl_head01 thead th {background: #151c24;border: 1px solid #545454;}
-.dark-mode .tbl_head01 tbody td {border: 1px solid #545454;color: #eeeeee;background: #1e2933;}
-.dark-mode #ft, .dark-mode .anchor a {background: #1e2933;}
+.dark-mode .tbl_head01 tbody td {border: 1px solid #545454;color: #eeeeee;background: #272E3D;}
+.dark-mode #ft, .dark-mode .anchor a {background: #272E3D;}
 .dark-mode .anchor a:hover, .dark-mode .anchor .active a {background: #ffd343;color: #1c3b56;}
-.dark-mode .tbl_frm01 td {color: #eeeeee;background: #1e2933;border: none;}
+.dark-mode .tbl_frm01 td {color: #eeeeee;background: #272E3D;border: none;}
 
-.dark-mode .frm_info {color: #eeeeee;}
-.dark-mode .tbl_frm01 th {background: #1e2933;color: #eeeeee;border: none;}
+.dark-mode .frm_info {color: #eeeeee80;}
+.dark-mode .tbl_frm01 th {background: #272E3D;color: #eeeeee;border: none;}
 .dark-mode .anchor li {border: none;}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          .dark-mode .anchor {background: #151c24;}                                                                                                                 
 .dark-mode .anchor a {border: 1px solid #ffffff20;}
 .dark-mode .sevice_1 {background: url('/static/admin/img/service_img2.jpg') no-repeat top center, #ffffff;}
@@ -1239,9 +1244,9 @@ input[type="text"]{max-width:200px}
 .dark-mode .pg_start {background: url(/static/admin/img/page_1.png) 50% 50% no-repeat, #545454;}
 
 .dark-mode .local_desc01 strong {color: #ffd343;}
-.dark-mode .service_wrap,.dark-mode #theme_list {background: #1e2933;}
-.dark-mode #processing {background: #1e2933;border: none;color: #fff;}
-.dark-mode .frm_input, .dark-mode .required, .dark-mode select, .dark-mode .tbl_frm01 textarea {background: #151c24 !important;color: #fff;border: 1px solid #ffffff40}
+.dark-mode .service_wrap,.dark-mode #theme_list {background: #272E3D;}
+.dark-mode #processing {background: #272E3D;border: none;color: #fff;}
+.dark-mode .frm_input, .dark-mode .required, .dark-mode select, .dark-mode .tbl_frm01 textarea {background: #0e151d !important;color: #fff;border: 1px solid #ffffff40}
 
 .dark-mode .tbl_frm01 tr{box-shadow: none;}
 
