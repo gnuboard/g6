@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}
+    FAQ 상세관리 : {{ faq_master.fm_subject }}
+{% endblock title %}
+{% block subtitle %}
+    FAQ 상세관리 : {{ faq_master.fm_subject }} > 항목 {{ '입력 ' if not faq else '수정' }} 관리
+{% endblock subtitle %}
+{% block content %}
+    <div class="container_wr">
+        {% set form_action=url_for("faq_add", fm_id=faq_master.fm_id) if not faq else url_for("faq_update", fm_id=faq_master.fm_id, fa_id=faq.fa_id) %}
+        <form name="frmfaqform" action="{{ form_action }}" onsubmit="return frmfaqform_check(this);" method="post">
+            <input type="hidden" name="token" value="{{ generate_token(request, 'update' if faq else 'insert') }}">
+
+            <div class="tbl_frm01 tbl_wrap">
+                <table>
+                    <caption>FAQ 상세관리 > {{ faq_master.fm_subject }} > 항목 {{ '입력 ' if not faq else '수정' }} 관리</caption>
+                    <colgroup>
+                        <col class="grid_4">
+                        <col>
+                    </colgroup>
+                    <tbody>
+                        <tr>
+                            <th scope="row"><label for="fa_order">출력순서</label></th>
+                            <td>
+                                <span class="frm_info">숫자가 작을수록 FAQ 페이지에서 먼저 출력됩니다.</span>
+                                <input type="text" name="fa_order" value="{{ faq.fa_order }}" id="fa_order" class="frm_input" maxlength="10" size="10">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">질문</th>
+                            <td>
+                                <textarea id="fa_subject" name="fa_subject" class="smarteditor2" maxlength="65536" style="width: 100%; height: 300px;">{{ faq.fa_subject }}</textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">답변</th>
+                            <td>
+                                <textarea id="fa_content" name="fa_content" class="smarteditor2" maxlength="65536" style="width: 100%; height: 300px;">{{ faq.fa_content }}</textarea>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="btn_fixed_top">
+                <input type="submit" value="확인" class="btn_submit btn" accesskey="s">
+                <a href="{{ url_for('faq_list', fm_id=faq_master.fm_id) }}" class="btn btn_02">목록</a>
+            </div>
+
+        </form>
+    </div>
+
+    <script>
+        function frmfaqform_check(f)
+        {
+        errmsg = "";
+        errfld = "";
+
+        if (errmsg != "")
+        {
+            alert(errmsg);
+            errfld.focus();
+            return false;
+        }
+        return true;
+        }
+
+        // document.getElementById('fa_order').focus(); 포커스 해제
+    </script>
+{% endblock content %}

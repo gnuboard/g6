@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+<title>{% block title %}관리자 base{% endblock %} | 그누보드5</title>
+<link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+<link rel="stylesheet" href="/static/admin/admin.css">
+<link rel="stylesheet" href="/static/admin/font-awesome.min.css">
+<script>
+// 자바스크립트에서 사용하는 전역변수 선언
+var g5_url       = "{{request.base_url}}";
+var g5_bbs_url   = "{{request.base_url}}bbs";
+var g5_is_member = "1";
+var g5_is_admin  = "super";
+var g5_is_mobile = "";
+var g5_bo_table  = "";
+var g5_sca       = "";
+var g5_editor    = "";
+var g5_cookie_domain = "";
+var g5_shop_url = "/shop";
+var g5_admin_url = "/admin";
+</script>
+<script src="/static/js/jquery-1.12.4.min.js"></script>
+<script src="/static/js/jquery-migrate-1.4.1.min.js"></script>
+<script src="/static/js/jquery.menu.js"></script>
+<script src="/static/js/common.js"></script>
+<script src="/static/js/wrest.js"></script>
+<script src="/static/js/placeholders.min.js"></script>
+{% block head %}
+{% endblock %}
+</head>
+<body>
+<div id="hd_login_msg">최고관리자 최고관리자님 로그인 중 <a href="/bbs/logout">로그아웃</a></div>
+<script>
+    var admin_csrf_token_key = "";
+    var tempX = 0;
+    var tempY = 0;
+
+    function imageview(id, w, h) {
+
+        menu(id);
+
+        var el_id = document.getElementById(id);
+
+        //submenu = eval(name+".style");
+        submenu = el_id.style;
+        submenu.left = tempX - (w + 11);
+        submenu.top = tempY - (h / 2);
+
+        selectBoxVisible();
+
+        if (el_id.style.display != 'none')
+            selectBoxHidden(id);
+    }
+</script>
+
+<div id="to_content"><a href="#container">본문 바로가기</a></div>
+
+<header id="hd">
+    <h1>그누보드5</h1>
+    <div id="hd_top">
+        <button type="button" id="btn_gnb" class="btn_gnb_close ">메뉴</button>
+        <div id="logo"><a href="/admin/"><img src="/static/admin/img/logo.png" alt="그누보드5 관리자"></a></div>
+
+        <div id="tnb">
+            <ul>
+                                    <li class="tnb_li"><a href="/shop/" class="tnb_shop" target="_blank" title="쇼핑몰 바로가기">쇼핑몰 바로가기</a></li>
+                                <li class="tnb_li"><a href="/" class="tnb_community" target="_blank" title="커뮤니티 바로가기">커뮤니티 바로가기</a></li>
+                <li class="tnb_li"><a href="/admin/service" class="tnb_service">부가서비스</a></li>
+                <li class="tnb_li"><button type="button" class="tnb_mb_btn">관리자<span class="./img/btn_gnb.png">메뉴열기</span></button>
+                    <ul class="tnb_mb_area">
+                        <li><a href="/admin/member_form?w=u&amp;mb_id=admin">관리자정보</a></li>
+                        <li id="tnb_logout"><a href="/bbs/logout">로그아웃</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <nav id="gnb" class="gnb_large ">
+        <h2>관리자 주메뉴</h2>
+        <ul class="gnb_ul">
+
+        {% macro render_admin_menu(menu_key, submenus, loop_index) %}
+        <li class="gnb_li {{ 'on' if request_menu_key == menu_key else '' }}">
+            <button type="button" class="btn_op menu-{{ menu_key }} menu-order-{{ loop_index }}" title="{{ submenus[0]['name'] }}">{{ submenus[0]['name'] }}</button>
+            <div class="gnb_oparea_wr">
+                <div class="gnb_oparea">
+                    <h3>{{ submenus[0]['name'] }}</h3>
+                    <ul>
+                        {% for submenu in submenus[1:] %}
+                            <li data-menu="{{ submenu['id'] }}">
+                                <a href="/admin/{{ submenu['url'] }}" class="gnb_2da">{{ submenu['name'] }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </li>
+        {% endmacro %}
+        
+        {# 관리자 메뉴 #}
+        {% set request_menu_key = request.session.get('menu_key', '')[:3] %}
+        {% if get_admin_menus %}
+            {% set admin_menus=get_admin_menus() %}
+        {% endif %}
+        {% for menu_key, submenus in admin_menus.items() %}
+            {{ render_admin_menu(menu_key[4:], submenus, loop.index) }}
+        {% endfor %}
+
+        {# 플러그인 메뉴 #}
+        {% set request_menu_key = request.session.get('menu_key', '') %}
+        {% if get_admin_plugin_menus %}
+            {% set plugin_menus=get_admin_plugin_menus() %}
+        {% endif %}
+            
+        {% for plugin in plugin_menus %}
+            {% for menu_key, submenus in plugin.items() %}
+                {{ render_admin_menu(menu_key, submenus, loop.index) }}
+            {% endfor %}
+        {% endfor %}
+        
+
+        </ul>
+
+            <!-- <li class="gnb_li on">
+                    <button type="button" class="btn_op menu-100 menu-order-1" title="환경설정">환경설정</button>
+                    <div class="gnb_oparea_wr">
+                        <div class="gnb_oparea">
+                            <h3>환경설정</h3>
+                            <ul><li data-menu="100100"><a href="/admin/config_form" class="gnb_2da  ">기본환경설정</a></li><li data-menu="100200"><a href="/admin/auth_list" class="gnb_2da  ">관리권한설정</a></li><li data-menu="100280"><a href="/admin/theme" class="gnb_2da gnb_grp_style gnb_grp_div">테마설정</a></li><li data-menu="100290"><a href="/admin/menu_list" class="gnb_2da gnb_grp_style gnb_grp_div">메뉴설정</a></li><li data-menu="100300"><a href="/admin/sendmail_test" class="gnb_2da  ">메일 테스트</a></li><li data-menu="100310"><a href="/admin/newwinlist" class="gnb_2da  ">팝업레이어관리</a></li><li data-menu="100800"><a href="/admin/session_file_delete" class="gnb_2da gnb_grp_style gnb_grp_div">세션파일 일괄삭제</a></li><li data-menu="100900"><a href="/admin/cache_file_delete" class="gnb_2da gnb_grp_style gnb_grp_div">캐시파일 일괄삭제</a></li><li data-menu="100910"><a href="/admin/captcha_file_delete" class="gnb_2da gnb_grp_style gnb_grp_div">캡챠파일 일괄삭제</a></li><li data-menu="100920"><a href="/admin/thumbnail_file_delete" class="gnb_2da gnb_grp_style gnb_grp_div">썸네일파일 일괄삭제</a></li><li data-menu="100500"><a href="/admin/phpinfo" class="gnb_2da  ">phpinfo()</a></li><li data-menu="100510"><a href="/admin/browscap" class="gnb_2da  ">Browscap 업데이트</a></li><li data-menu="100520"><a href="/admin/browscap_convert" class="gnb_2da  ">접속로그 변환</a></li><li data-menu="100410"><a href="/admin/dbupgrade" class="gnb_2da  ">DB업그레이드</a></li><li data-menu="100400"><a href="/admin/service" class="gnb_2da  ">부가서비스</a></li></ul>                        </div>
+                    </div>
+                </li>
+                            <li class="gnb_li">
+                    <button type="button" class="btn_op menu-200 menu-order-2" title="회원관리">회원관리</button>
+                    <div class="gnb_oparea_wr">
+                        <div class="gnb_oparea">
+                            <h3>회원관리</h3>
+                            <ul><li data-menu="200100"><a href="/admin/member_list" class="gnb_2da  ">회원관리</a></li><li data-menu="200300"><a href="/admin/mail_list" class="gnb_2da  ">회원메일발송</a></li><li data-menu="200800"><a href="/admin/visit_list" class="gnb_2da gnb_grp_style gnb_grp_div">접속자집계</a></li><li data-menu="200810"><a href="/admin/visit_search" class="gnb_2da gnb_grp_style gnb_grp_div">접속자검색</a></li><li data-menu="200820"><a href="/admin/visit_delete" class="gnb_2da gnb_grp_style gnb_grp_div">접속자로그삭제</a></li><li data-menu="200200"><a href="/admin/point_list" class="gnb_2da  ">포인트관리</a></li><li data-menu="200900"><a href="/admin/poll_list" class="gnb_2da  ">투표관리</a></li></ul>                        </div>
+                    </div>
+                </li>
+                            <li class="gnb_li">
+                    <button type="button" class="btn_op menu-300 menu-order-3" title="게시판관리">게시판관리</button>
+                    <div class="gnb_oparea_wr">
+                        <div class="gnb_oparea">
+                            <h3>게시판관리</h3>
+                            <ul><li data-menu="300100"><a href="/admin/board_list" class="gnb_2da  ">게시판관리</a></li><li data-menu="300200"><a href="/admin/boardgroup_list" class="gnb_2da  ">게시판그룹관리</a></li><li data-menu="300300"><a href="/admin/popular_list" class="gnb_2da gnb_grp_style gnb_grp_div">인기검색어관리</a></li><li data-menu="300400"><a href="/admin/popular_rank" class="gnb_2da gnb_grp_style gnb_grp_div">인기검색어순위</a></li><li data-menu="300500"><a href="/admin/qa_config" class="gnb_2da  ">1:1문의설정</a></li><li data-menu="300600"><a href="/admin/content_list" class="gnb_2da gnb_grp_style gnb_grp_div">내용관리</a></li><li data-menu="300700"><a href="/admin/faqmasterlist" class="gnb_2da gnb_grp_style gnb_grp_div">FAQ관리</a></li><li data-menu="300820"><a href="/admin/write_count" class="gnb_2da  ">글,댓글 현황</a></li></ul>                        </div>
+                    </div>
+                </li>
+                            <li class="gnb_li">
+                    <button type="button" class="btn_op menu-400 menu-order-4" title="쇼핑몰관리">쇼핑몰관리</button>
+                    <div class="gnb_oparea_wr">
+                        <div class="gnb_oparea">
+                            <h3>쇼핑몰관리</h3>
+                            <ul><li data-menu="400010"><a href="/admin/shop_admin" class="gnb_2da  ">쇼핑몰현황</a></li><li data-menu="400100"><a href="/admin/shop_admin/configform" class="gnb_2da  ">쇼핑몰설정</a></li><li data-menu="400400"><a href="/admin/shop_admin/orderlist" class="gnb_2da gnb_grp_style gnb_grp_div">주문내역</a></li><li data-menu="400440"><a href="/admin/shop_admin/personalpaylist" class="gnb_2da gnb_grp_style gnb_grp_div">개인결제관리</a></li><li data-menu="400200"><a href="/admin/shop_admin/categorylist" class="gnb_2da  ">분류관리</a></li><li data-menu="400300"><a href="/admin/shop_admin/itemlist" class="gnb_2da  ">상품관리</a></li><li data-menu="400660"><a href="/admin/shop_admin/itemqalist" class="gnb_2da  ">상품문의</a></li><li data-menu="400650"><a href="/admin/shop_admin/itemuselist" class="gnb_2da  ">사용후기</a></li><li data-menu="400620"><a href="/admin/shop_admin/itemstocklist" class="gnb_2da  ">상품재고관리</a></li><li data-menu="400610"><a href="/admin/shop_admin/itemtypelist" class="gnb_2da  ">상품유형관리</a></li><li data-menu="400500"><a href="/admin/shop_admin/optionstocklist" class="gnb_2da  ">상품옵션재고관리</a></li><li data-menu="400800"><a href="/admin/shop_admin/couponlist" class="gnb_2da  ">쿠폰관리</a></li><li data-menu="400810"><a href="/admin/shop_admin/couponzonelist" class="gnb_2da  ">쿠폰존관리</a></li><li data-menu="400750"><a href="/admin/shop_admin/sendcostlist" class="gnb_2da gnb_grp_style gnb_grp_div">추가배송비관리</a></li><li data-menu="400410"><a href="/admin/shop_admin/inorderlist" class="gnb_2da gnb_grp_style gnb_grp_div">미완료주문</a></li></ul>                        </div>
+                    </div>
+                </li>
+                            <li class="gnb_li">
+                    <button type="button" class="btn_op menu-500 menu-order-5" title="쇼핑몰현황/기타">쇼핑몰현황/기타</button>
+                    <div class="gnb_oparea_wr">
+                        <div class="gnb_oparea">
+                            <h3>쇼핑몰현황/기타</h3>
+                            <ul><li data-menu="500110"><a href="/admin/shop_admin/sale1" class="gnb_2da  ">매출현황</a></li><li data-menu="500100"><a href="/admin/shop_admin/itemsellrank" class="gnb_2da  ">상품판매순위</a></li><li data-menu="500120"><a href="/admin/shop_admin/orderprint" class="gnb_2da gnb_grp_style gnb_grp_div">주문내역출력</a></li><li data-menu="500400"><a href="/admin/shop_admin/itemstocksms" class="gnb_2da gnb_grp_style gnb_grp_div">재입고SMS알림</a></li><li data-menu="500300"><a href="/admin/shop_admin/itemevent" class="gnb_2da  ">이벤트관리</a></li><li data-menu="500310"><a href="/admin/shop_admin/itemeventlist" class="gnb_2da  ">이벤트일괄처리</a></li><li data-menu="500500"><a href="/admin/shop_admin/bannerlist" class="gnb_2da gnb_grp_style gnb_grp_div">배너관리</a></li><li data-menu="500140"><a href="/admin/shop_admin/wishlist" class="gnb_2da  ">보관함현황</a></li><li data-menu="500210"><a href="/admin/shop_admin/price" class="gnb_2da gnb_grp_style gnb_grp_div">가격비교사이트</a></li></ul>                        </div>
+                    </div>
+                </li>
+                            <li class="gnb_li">
+                    <button type="button" class="btn_op menu-900 menu-order-6" title="SMS 관리">SMS 관리</button>
+                    <div class="gnb_oparea_wr">
+                        <div class="gnb_oparea">
+                            <h3>SMS 관리</h3>
+                            <ul><li data-menu="900100"><a href="/admin/sms_admin/config" class="gnb_2da  ">SMS 기본설정</a></li><li data-menu="900200"><a href="/admin/sms_admin/member_update" class="gnb_2da  ">회원정보업데이트</a></li><li data-menu="900300"><a href="/admin/sms_admin/sms_write" class="gnb_2da  ">문자 보내기</a></li><li data-menu="900400"><a href="/admin/sms_admin/history_list" class="gnb_2da gnb_grp_style gnb_grp_div">전송내역-건별</a></li><li data-menu="900410"><a href="/admin/sms_admin/history_num" class="gnb_2da gnb_grp_style gnb_grp_div">전송내역-번호별</a></li><li data-menu="900500"><a href="/admin/sms_admin/form_group" class="gnb_2da  ">이모티콘 그룹</a></li><li data-menu="900600"><a href="/admin/sms_admin/form_list" class="gnb_2da  ">이모티콘 관리</a></li><li data-menu="900700"><a href="/admin/sms_admin/num_group" class="gnb_2da gnb_grp_style gnb_grp_div">휴대폰번호 그룹</a></li><li data-menu="900800"><a href="/admin/sms_admin/num_book" class="gnb_2da gnb_grp_style gnb_grp_div">휴대폰번호 관리</a></li><li data-menu="900900"><a href="/admin/sms_admin/num_book_file" class="gnb_2da gnb_grp_style gnb_grp_div">휴대폰번호 파일</a></li></ul>                        </div>
+                    </div>
+                </li> -->
+    </nav>
+
+</header>
+<script>
+    jQuery(function($) {
+
+        var menu_cookie_key = 'g5_admin_btn_gnb';
+
+        $(".tnb_mb_btn").click(function() {
+            $(".tnb_mb_area").toggle();
+        });
+
+        $("#btn_gnb").click(function() {
+
+            var $this = $(this);
+
+            try {
+                if (!$this.hasClass("btn_gnb_open")) {
+                    set_cookie(menu_cookie_key, 1, 60 * 60 * 24 * 365);
+                } else {
+                    delete_cookie(menu_cookie_key);
+                }
+            } catch (err) {}
+
+            $("#container").toggleClass("container-small");
+            $("#gnb").toggleClass("gnb_small");
+            $this.toggleClass("btn_gnb_open");
+
+        });
+
+        $(".gnb_ul li .btn_op").click(function() {
+            $(this).parent().addClass("on").siblings().removeClass("on");
+        });
+
+    });
+</script>
+
+{% if errors %}
+<div class="errors">
+    {% for error in errors %}
+        <li>{{ errors|safe }}</li>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div id="wrapper">
+    <div id="container" class="">
+        <h1 id="container_title">{% block subtitle %}관리자메인{% endblock subtitle %}</h1>
+        <div class="container_wr">
+            {% block content %}{% endblock %}
+        </div>
+        <footer id="ft">
+            <p>
+                Copyright &copy; 49.247.41.166. All rights reserved. Version 5.5.8.3.4<br>
+                <button type="button" class="scroll_top"><span class="top_img"></span><span class="top_txt">TOP</span></button>
+            </p>
+        </footer>
+    </div>
+</div>
+
+<script>
+    $(".scroll_top").click(function() {
+        $("body,html").animate({
+            scrollTop: 0
+        }, 400);
+    })
+</script>
+
+
+<script src="/static/admin/admin.js"></script>
+<script src="/static/js/jquery.anchorScroll.js"></script>
+<script>
+    $(function() {
+
+        var admin_head_height = $("#hd_top").height() + $("#container_title").height() + 5;
+
+        $("a[href^='#']").anchorScroll({
+            scrollSpeed: 0, // scroll speed
+            offsetTop: admin_head_height, // offset for fixed top bars (defaults to 0)
+            onScroll: function() {
+                // callback on scroll start
+            },
+            scrollEnd: function() {
+                // callback on scroll end
+            }
+        });
+
+        
+        // 현재 페이지 메뉴 활성화
+        const currentlink = window.location.pathname
+        const currentLinks = document.querySelector('#gnb').querySelectorAll('a[href="'+ currentlink +'"]')
+        if (currentLinks.length > 0) {
+            currentLinks[0].className += ' on';
+        }
+        
+        var hide_menu = false;
+        var mouse_event = false;
+        var oldX = oldY = 0;
+
+        $(document).mousemove(function(e) {
+            if (oldX == 0) {
+                oldX = e.pageX;
+                oldY = e.pageY;
+            }
+
+            if (oldX != e.pageX || oldY != e.pageY) {
+                mouse_event = true;
+            }
+        });
+
+        // 주메뉴
+        var $gnb = $(".gnb_1dli > a");
+        $gnb.mouseover(function() {
+            if (mouse_event) {
+                $(".gnb_1dli").removeClass("gnb_1dli_over gnb_1dli_over2 gnb_1dli_on");
+                $(this).parent().addClass("gnb_1dli_over gnb_1dli_on");
+                menu_rearrange($(this).parent());
+                hide_menu = false;
+            }
+        });
+
+        $gnb.mouseout(function() {
+            hide_menu = true;
+        });
+
+        $(".gnb_2dli").mouseover(function() {
+            hide_menu = false;
+        });
+
+        $(".gnb_2dli").mouseout(function() {
+            hide_menu = true;
+        });
+
+        $gnb.focusin(function() {
+            $(".gnb_1dli").removeClass("gnb_1dli_over gnb_1dli_over2 gnb_1dli_on");
+            $(this).parent().addClass("gnb_1dli_over gnb_1dli_on");
+            menu_rearrange($(this).parent());
+            hide_menu = false;
+        });
+
+        $gnb.focusout(function() {
+            hide_menu = true;
+        });
+
+        $(".gnb_2da").focusin(function() {
+            $(".gnb_1dli").removeClass("gnb_1dli_over gnb_1dli_over2 gnb_1dli_on");
+            var $gnb_li = $(this).closest(".gnb_1dli").addClass("gnb_1dli_over gnb_1dli_on");
+            menu_rearrange($(this).closest(".gnb_1dli"));
+            hide_menu = false;
+        });
+
+        $(".gnb_2da").focusout(function() {
+            hide_menu = true;
+        });
+
+        $('#gnb_1dul>li').bind('mouseleave', function() {
+            submenu_hide();
+        });
+
+        $(document).bind('click focusin', function() {
+            if (hide_menu) {
+                submenu_hide();
+            }
+        });
+
+        // 폰트 리사이즈 쿠키있으면 실행
+        var font_resize_act = get_cookie("ck_font_resize_act");
+        if (font_resize_act != "") {
+            font_resize("container", font_resize_act);
+        }
+    });
+
+    function submenu_hide() {
+        $(".gnb_1dli").removeClass("gnb_1dli_over gnb_1dli_over2 gnb_1dli_on");
+    }
+
+    function menu_rearrange(el) {
+        var width = $("#gnb_1dul").width();
+        var left = w1 = w2 = 0;
+        var idx = $(".gnb_1dli").index(el);
+
+        for (i = 0; i <= idx; i++) {
+            w1 = $(".gnb_1dli:eq(" + i + ")").outerWidth();
+            w2 = $(".gnb_2dli > a:eq(" + i + ")").outerWidth(true);
+
+            if ((left + w2) > width) {
+                el.removeClass("gnb_1dli_over").addClass("gnb_1dli_over2");
+            }
+
+            left += w1;
+        }
+    }
+</script>
+
+
+<!-- <div style='float:left; text-align:center;'>RUN TIME : 0.045850038528442<br></div> -->
+
+
+</body>
+</html>

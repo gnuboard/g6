@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}
+    플러그인 관리
+{% endblock %}
+
+{% block content %}
+
+<h1 id="container_title">플러그인 관리</h1>
+<div class="container_wr">
+
+    <div class="local_ov01 local_ov">
+        <a href="/admin/plugin_list" class="ov_listall">전체목록</a>
+        <span class="btn_ov01">
+            <span class="ov_txt">전체 </span>
+            <span class="ov_num"> {{ total_count }} 건 </span>
+        </span>
+
+        <form name="fsearch" id="fsearch" class="local_sch01 local_sch" method="get">
+            <label for="sfl" class="sound_only">검색대상</label>
+            <select name="sfl" id="sfl">
+                <option value="plugin_name" 
+                        {{ get_selected('plugin_name', request.state.sfl if request.state.sfl else '' ) }}>
+                        플러그인 이름
+                </option>
+            </select>
+            <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
+            <input type="text" name="stx" value="{{ request.state.stx if request.state.stx else '' }}" 
+                   id="stx" required class="required frm_input">
+            <input type="submit" class="btn_submit" value="검색">
+        </form>
+
+
+        {% if plugin_list %}
+        <ul id="theme_list">
+            {% for plugin in plugin_list %}
+            <li>
+                <div class="tmli_if">
+                    {% if plugin.screenshot %}
+                    <img src="{{ plugin.screenshot }}" alt="{{ plugin.plugin_name }}">
+                    {% else %}
+                    <img src="/static/admin/img/theme_img.jpg" alt="">
+                    {% endif %}
+                    <div class="tmli_tit">
+                        <p>{{ plugin.plugin_name }}</p>
+                    </div>
+                </div>
+                {{ plugin.btn_active|safe }}
+                {% if plugin.is_enable  == True %}
+                <span class="theme_sl theme_sl_use">사용중</span>
+                 <button type="button" class="theme_sl theme_deactive" 
+                         data-name="{{ plugin.plugin_name }}"
+                         data-module_name="{{ plugin.module_name }}">사용안함
+                 </button>
+                {% else %}
+                <button type="button" class="theme_sl theme_active" 
+                        data-name="{{ plugin.plugin_name }}"
+                        data-module_name="{{ plugin.module_name }}"
+                        data-set_plugin="">플러그인 적용
+                </button>
+                {% endif %}
+                <button type="button" class="tmli_dt theme_detail" data-module_name="{{ plugin.module_name }}">상세보기</button>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="no_theme">설치된 플러그인이 없습니다.</p>
+        {% endif %}
+
+    </div>
+</div>
+
+<script>
+    $(function() {
+        $(".theme_active").on("click", function() {
+            var plugin_name  = $(this).data("name");
+            var module_name  = $(this).data("module_name");
+    
+            if(!confirm(name+" 플러그인을 적용하시겠습니까?"))
+                return false;
+    
+            let formData = new FormData();
+            formData.append('type', 'enable');
+            formData.append('plugin_name', plugin_name);
+            formData.append('module_name', module_name);
+            $.ajax({
+                type: "POST",
+                url: "/admin/plugin_update",
+                data: formData,
+                processData: false,
+                contentType: false,
+                cache: false,
+                success: function(response) {
+                    if(response.message) {
+                        alert(response.message);
+                        document.location.reload();
+                    }
+                    
+                },fail: function(response) {
+                    alert(response.message);
+                }
+            });
+        });
+    
+        $(".theme_deactive").on("click", function() {
+            var plugin_name  = $(this).data("name");
+            var module_name  = $(this).data("module_name");
+    
+            if(!confirm(name+" 플러그인 사용설정을 해제하시겠습니까?"))
+                return false;
+                
+            let formData = new FormData();
+            formData.append('type', 'disable');
+            formData.append('plugin_name', plugin_name);
+            formData.append('module_name', module_name);
+    
+            $.ajax({
+                type: "POST",
+                url: "/admin/plugin_update",
+                data: formData,
+                processData: false,
+                contentType: false,
+                cache: false,
+                success: function(response) {
+                    if(response.message) {
+                        alert(response.message);
+                        document.location.reload();
+                    }
+                }
+            });
+        });
+    
+        $(".theme_detail").on("click", function() {
+            var module_name = $(this).data("module_name");
+    
+            $("#theme_detail").remove();
+    
+            $.ajax({
+                type: "POST",
+                url: "/admin/plugin_detail",
+                contentType: 'application/x-www-form-urlencoded',
+                data: {
+                    "module_name": module_name
+                },
+                cache: false,
+                async: false,
+                success: function(data) {
+                    $("#theme_list").after(data);
+                }
+            });
+        });
+    });
+</script>
+
+
+{% endblock %}

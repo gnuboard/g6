@@ -1,0 +1,194 @@
+{
+    "menu100": [
+        {
+            "id": "100000",
+            "name": "환경설정",
+            "url": "config_form",
+            "permission": "config"
+        },
+        {
+            "id": "100100",
+            "name": "기본환경설정",
+            "url": "config_form",
+            "permission": "cf_basic"
+        },
+        {
+            "id": "100200",
+            "name": "관리권한설정",
+            "url": "auth_list",
+            "permission": "cf_auth"
+        },
+        {
+            "id": "100280",
+            "name": "테마설정",
+            "url": "theme",
+            "permission": "cf_theme"
+        },
+        {
+            "id": "100290",
+            "name": "메뉴설정",
+            "url": "menu_list",
+            "permission": "cf_menu"
+        },
+        {
+            "id": "100300",
+            "name": "메일 테스트",
+            "url": "sendmail_test",
+            "permission": "cf_mailtest"
+        },
+        {
+            "id": "100310",
+            "name": "팝업레이어관리",
+            "url": "newwin_list",
+            "permission": "scf_poplayer"
+        },
+        {
+            "id": "100800",
+            "name": "세션파일 일괄삭제",
+            "url": "session_file_delete",
+            "permission": "cf_session"
+        },
+        {
+            "id": "100900",
+            "name": "캐시파일 일괄삭제",
+            "url": "cache_file_delete",
+            "permission": "cf_cache"
+        },
+        {
+            "id": "100910",
+            "name": "캡챠파일 일괄삭제",
+            "url": "captcha_file_delete",
+            "permission": "cf_captcha"
+        },
+        {
+            "id": "100920",
+            "name": "썸네일파일 일괄삭제",
+            "url": "thumbnail_file_delete",
+            "permission": "cf_thumbnail"
+        },
+        {
+            "id": "100410",
+            "name": "DB업그레이드",
+            "url": "dbupgrade",
+            "permission": "db_upgrade"
+        },
+        {
+            "id": "100400",
+            "name": "부가서비스",
+            "url": "service",
+            "permission": "cf_service"
+        },
+        {
+            "id": "100420",
+            "name": "플러그인 관리",
+            "url": "plugin_list",
+            "permission": "admin_plugin"
+        }
+    ],
+    "menu200": [
+        {
+            "id": "200000",
+            "name": "회원관리",
+            "url": "member_list",
+            "permission": "member"
+        },
+        {
+            "id": "200100",
+            "name": "회원관리",
+            "url": "member_list",
+            "permission": "mb_list"
+        },
+        {
+            "id": "200300",
+            "name": "회원메일발송",
+            "url": "mail_list",
+            "permission": "mb_mail"
+        },
+        {
+            "id": "200800",
+            "name": "접속자집계",
+            "url": "visit_list",
+            "permission": "mb_visit"
+        },
+        {
+            "id": "200810",
+            "name": "접속자검색",
+            "url": "visit_search",
+            "permission": "mb_search"
+        },
+        {
+            "id": "200820",
+            "name": "접속자로그삭제",
+            "url": "visit_delete",
+            "permission": "mb_delete"
+        },
+        {
+            "id": "200200",
+            "name": "포인트관리",
+            "url": "point_list",
+            "permission": "mb_point"
+        },
+        {
+            "id": "200900",
+            "name": "투표관리",
+            "url": "poll_list",
+            "permission": "mb_poll"
+        }
+    ],
+    "menu300": [
+        {
+            "id": "300000",
+            "name": "게시판관리",
+            "url": "board_list",
+            "permission": "board"
+        },
+        {
+            "id": "300100",
+            "name": "게시판관리",
+            "url": "board_list",
+            "permission": "bbs_board"
+        },
+        {
+            "id": "300200",
+            "name": "게시판그룹관리",
+            "url": "boardgroup_list",
+            "permission": "bbs_group"
+        },
+        {
+            "id": "300300",
+            "name": "인기검색어관리",
+            "url": "popular_list",
+            "permission": "bbs_poplist"
+        },
+        {
+            "id": "300400",
+            "name": "인기검색어순위",
+            "url": "popular_rank",
+            "permission": "bbs_poprank"
+        },
+        {
+            "id": "300500",
+            "name": "1:1문의설정",
+            "url": "qa_config",
+            "permission": "qa"
+        },
+        {
+            "id": "300600",
+            "name": "내용관리",
+            "url": "content_list",
+            "permission": "scf_contents"
+        },
+        {
+            "id": "300700",
+            "name": "FAQ관리",
+            "url": "faq_master_list",
+            "permission": "scf_faq"
+        },
+        {
+            "id": "300820",
+            "name": "글,댓글 현황",
+            "url": "write_count",
+            "permission": "scf_write_count"
+        }
+    ]
+}

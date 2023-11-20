@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}
+    접속자검색
+{% endblock %}
+
+{% block subtitle %}접속자검색{% endblock %}
+
+{% block content %}
+
+<div class="local_ov01 local_ov">
+    접속자 로그를 삭제할 년도와 방법을 선택해주십시오.
+</div>
+
+<form method="post" name="fvisitdelete" class="visit_del" action="/admin/visit_delete_update" onsubmit="return form_submit(this);">
+    <input type="hidden" name="token" value="">
+    <div>
+        <label for="year" class="sound_only">년도선택</label>
+        <select name="year" id="year">
+            <option value="">년도선택</option>
+            {% for year in range(min_year, now_year + 1) %}
+            <option value="{{ year }}">{{ year }}</option>
+            {% endfor %}
+            ?>
+        </select> 년
+        <label for="month" class="sound_only">월선택</label>
+        <select name="month" id="month">
+            <option value="">월선택</option>
+            {% for month in range(1, 13) %}
+            <option value="{{ month }}">{{ month }}</option>
+            {% endfor %}
+        </select> 월
+        <label for="method" class="sound_only">삭제방법선택</label>
+        <select name="method" id="method">
+            <option value="before">선택년월 이전 자료삭제</option>
+            <option value="specific">선택년월의 자료삭제</option>
+        </select>
+    </div>
+    <div class="visit_del_bt">
+        <label for="pass">관리자 비밀번호<strong class="sound_only"> 필수</strong></label>
+        <input type="password" name="pass" id="pass" class="frm_input required">
+        <input type="submit" value="확인" class="btn_submit">
+    </div>
+</form>
+
+<script>
+function form_submit(f)
+{
+    var year = $("#year").val();
+    var month = $("#month").val();
+    var method = $("#method").val();
+    var pass = $("#pass").val();
+
+    if(!year) {
+        alert("년도를 선택해 주십시오.");
+        return false;
+    }
+
+    if(!month) {
+        alert("월을 선택해 주십시오.");
+        return false;
+    }
+
+    if(!pass) {
+        alert("관리자 비밀번호를 입력해 주십시오.");
+        return false;
+    }
+
+    var msg = year+"년 "+month+"월";
+    if(method == "before")
+        msg += " 이전";
+    else
+        msg += "의";
+    msg += " 자료를 삭제하시겠습니까?";
+
+    f.token.value = generate_token(f);
+
+    return confirm(msg);
+}
+</script>
+
+{% endblock %}
