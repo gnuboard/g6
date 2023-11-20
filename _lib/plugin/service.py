@@ -262,7 +262,7 @@ def register_statics(app, plugin_info: List[PluginState], plugin_dir=PLUGIN_DIR)
     for plugin in plugin_info:
         try:
             app.mount(
-                f"/static/plugin/{plugin.module_name}",
+                f"/plugin/{plugin.module_name}/static",
                 StaticFiles(directory=f"{plugin_dir}/{plugin.module_name}/static"),
                 name=f"{plugin.module_name}"
             )
