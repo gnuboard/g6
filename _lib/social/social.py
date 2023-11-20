@@ -6,9 +6,8 @@ from starlette.requests import Request
 
 from _lib.social import providers
 from common import AlertException
-from database import SessionLocal
 from dataclassform import SocialProfile
-from models import Config, MemberSocialProfiles
+from models import Config
 
 oauth = OAuth()
 
@@ -21,8 +20,8 @@ def register_social_provider(config: Config):
     Args:
         config (Config): 그누보드 설정 객체
     Examples:
-        서버재시작후 인증객체가 등록되지 않아
-        각 소셜서비스를 사용할 수없는 경우가 있음.
+        서버 재시작 후 인증 객체가 등록되지 않아
+        각 소셜서비스를 사용할 수 없는 경우가 있음.
     """
     if not config.cf_social_login_use:
         return
@@ -30,35 +29,30 @@ def register_social_provider(config: Config):
     available_providers = config.cf_social_servicelist.split(',')
     for provider_name in available_providers:
 
-        # 소셜프로바이더 등록 - 다형성으로 호출
+        # 소셜프로바이더 등록 - 등록된 클래스 찾아 호출
         provider_module_name = getattr(providers, f"{provider_name}")
         provider_class: SocialProvider = getattr(provider_module_name, f"{provider_name.capitalize()}")
 
         if provider_name == "naver":
-            if not (config.cf_naver_clientid.strip() and config.cf_naver_secret.strip()):
-                pass
-            provider_class.register(oauth, config.cf_naver_clientid.strip(), config.cf_naver_secret.strip())
+            if config.cf_naver_clientid.strip() and config.cf_naver_secret.strip():
+                provider_class.register(oauth, config.cf_naver_clientid.strip(), config.cf_naver_secret.strip())
 
         elif provider_name == 'kakao':
             if not config.cf_kakao_rest_key:
-                pass
-            # 카카오 client_secret 은 선택사항
-            provider_class.register(oauth, config.cf_kakao_rest_key.strip(), config.cf_kakao_client_secret.strip())
+                # 카카오 client_secret 은 선택사항
+                provider_class.register(oauth, config.cf_kakao_rest_key.strip(), config.cf_kakao_client_secret.strip())
 
         elif provider_name == 'google':
             if not (config.cf_google_clientid.strip() and config.cf_google_secret.strip()):
-                pass
-            provider_class.register(oauth, config.cf_google_clientid.strip(), config.cf_google_secret.strip())
+                provider_class.register(oauth, config.cf_google_clientid.strip(), config.cf_google_secret.strip())
 
         elif provider_name == 'twitter':
             if not (config.cf_twitter_key.strip() and config.cf_twitter_secret.strip()):
-                pass
-            provider_class.register(oauth, config.cf_twitter_key.strip(), config.cf_twitter_secret.strip())
+                provider_class.register(oauth, config.cf_twitter_key.strip(), config.cf_twitter_secret.strip())
 
         elif provider_name == 'facebook':
             if not (config.cf_facebook_appid.strip() and config.cf_facebook_secret.strip()):
-                pass
-            provider_class.register(oauth, config.cf_facebook_appid.strip(), config.cf_facebook_secret.strip())
+                provider_class.register(oauth, config.cf_facebook_appid.strip(), config.cf_facebook_secret.strip())
 
 
 async def get_social_login_token(provider_name, request: Request):
@@ -79,8 +73,7 @@ async def get_social_login_token(provider_name, request: Request):
             raise ValueError
         return auth_token
     except Exception as e:
-
-        logging.critical('social login token error', exc_info=e)
+        logging.warning('social login token error', exc_info=e)
         # 토큰 불일치, 만료, 재사용 등 기존 인증 토큰 삭제
         if 'ss_social_access' in request.session:
             del request.session['ss_social_access']
@@ -117,20 +110,10 @@ async def get_social_profile(auth_token, provider_name, request):
         raise AlertException(status_code=400, detail="유효하지 않은 요청입니다. 관리자에게 문의하십시오.",
                              url=request.url_for('login').__str__())
 
-def unlink_social_login(provider_name, request: Request):
-    """
-    소셜계정 연결해제
-    """
-    member = request.state.login_member
-    db = SessionLocal()
-    db.query(MemberSocialProfiles.mb_id).filter(MemberSocialProfiles.mb_id == member.mb_id)
-    db.delete()
-    db.close()
-
 
 class SocialProvider:
     """
-    소셜 서비스에 필요한 메서드를 정의한 인터페이스
+    소셜 서비스제공자의 oauth 인증에 필요한 메서드를 정의한 인터페이스
     클래스 메서드만 사용하며 인스턴스를 생성하지 않는다.
     """
 

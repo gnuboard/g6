@@ -3,7 +3,7 @@ import logging
 import sys
 import zlib
 from datetime import datetime
-from typing import Optional, List
+from typing import List, Optional
 from urllib.parse import parse_qs
 
 from fastapi import APIRouter, Depends
@@ -17,7 +17,7 @@ from _lib.social import providers
 from _lib.social.social import oauth, SocialProvider, get_social_profile, get_social_login_token
 from common import AlertException, valid_email, hash_password, session_member_key, insert_point, TEMPLATES_DIR, \
     is_admin, default_if_none, generate_token
-from database import SessionLocal, get_db
+from database import get_db, SessionLocal
 from dataclassform import MemberForm
 
 from models import Config, MemberSocialProfiles, Member
@@ -30,7 +30,6 @@ templates.env.globals['getattr'] = getattr
 templates.env.globals["generate_token"] = generate_token
 
 log = logging.getLogger("authlib")
-log.addHandler(logging.StreamHandler(sys.stdout))
 logging.basicConfig()
 log.setLevel(logging.DEBUG)
 
@@ -85,14 +84,14 @@ async def social_login(request: Request):
 
         provider_class.register(oauth, config.cf_facebook_appid.strip(), config.cf_facebook_secret.strip())
 
-    redirect_uri = f"{request.url_for('authorize_social_login').__str__()}?provider={provider_name}"
-    redirect_uri = redirect_uri.replace(":443", "")
+    redirect_uri = (f"{request.url_for('authorize_social_login').__str__()}?provider={provider_name}"
+                    .replace(":443", ""))
 
     return await oauth.__getattr__(provider_name).authorize_redirect(request, redirect_uri)
 
 
 @router.get('/social/login/callback')
-async def authorize_social_login(request: Request):
+async def authorize_social_login(request: Request, db: Session = Depends(get_db), ):
     """
     소셜 로그인 인증 콜백
     """
@@ -105,8 +104,6 @@ async def authorize_social_login(request: Request):
     if auth_token is None:
         raise AlertException(status_code=400, detail="잠시후에 다시 시도해 주세요.",
                              url=request.url_for('login').__str__())
-
-    social_service = SocialAuthService()
 
     provider_module_name = getattr(providers, f"{provider_name}")
     provider_class: SocialProvider = getattr(provider_module_name, f"{provider_name.capitalize()}")
@@ -124,18 +121,17 @@ async def authorize_social_login(request: Request):
                              url=request.url_for('login').__str__())
 
     # 가입된 소셜 서비스 아이디가 존재하는지 확인
-    gnu_social_id = social_service.g5_convert_social_id(identifier, provider_name)
-    mb_id = social_service.get_member_by_social_id(gnu_social_id, provider_name)
-    if mb_id:
+    gnu_social_id = SocialAuthService.g5_convert_social_id(identifier, provider_name)
+    social_profile = SocialAuthService.get_profile_by_member_id(gnu_social_id, provider_name)
+    if social_profile:
         # 이미 가입된 회원이라면 로그인
-        with SessionLocal() as db:
-            member = db.query(Member.mb_id, Member.mb_datetime).filter(Member.mb_id == mb_id).first()
-
+        member = db.query(Member.mb_id, Member.mb_datetime).filter(Member.mb_id == social_profile.mb_id).first()
         if not member:
             raise AlertException(
                 status_code=400, detail="유효하지 않은 요청입니다.",
                 url=request.url_for('login').__str__())
 
+        # 로그인
         request.session["ss_mb_id"] = member.mb_id
         # XSS 공격에 대응하기 위하여 회원의 고유키를 생성해 놓는다.
         request.session["ss_mb_key"] = session_member_key(request, member)
@@ -145,10 +141,9 @@ async def authorize_social_login(request: Request):
         # 소셜 가입 연결
         member = request.state.login_member
         profile.mb_id = member.mb_id
-        db = SessionLocal()
         db.add(profile)
         db.commit()
-        db.close()
+
         return RedirectResponse(url=request.url_for('index'), status_code=302)
 
     # 회원가입
@@ -222,13 +217,13 @@ async def post_social_register(
         raise AlertException(status_code=400, detail="유효하지 않은 요청입니다. 관리자에게 문의하십시오.",
                              url=request.url_for('login').__str__())
 
-    social_service = SocialAuthService()
-    gnu_social_id = social_service.g5_convert_social_id(identifier, provider_name)
+    gnu_social_id = SocialAuthService.g5_convert_social_id(identifier, provider_name)
     exists_social_member = db.query(Member.mb_id, Member.mb_email).filter(Member.mb_id == gnu_social_id).first()
 
     # 유효성 검증
     if exists_social_member:
-        raise AlertException(status_code=400, detail="이미 소셜로그인으로 가입된 회원아이디 입니다.", url=request.url_for('login').__str__())
+        raise AlertException(status_code=400, detail="이미 소셜로그인으로 가입된 회원아이디 입니다.",
+                             url=request.url_for('login').__str__())
 
     result = validate_userid(gnu_social_id, config.cf_prohibit_id)
     if result["msg"]:
@@ -296,7 +291,7 @@ async def post_social_register(
 class SocialAuthService:
 
     @classmethod
-    def get_member_by_social_id(cls, identifier, provider) -> Optional[str]:
+    def get_profile_by_member_id(cls, identifier, provider) -> Optional[str]:
         """
         소셜 서비스 아이디로 그누보드5 회원 아이디를 가져옴
         Args:
@@ -312,12 +307,12 @@ class SocialAuthService:
             ).first()
 
         if result:
-            return result.mb_id
+            return result
 
         return None
 
     @classmethod
-    def check_exists_social_id(cls, identifier, provider) -> bool:
+    def check_exists_by_social_id(cls, identifier, provider) -> bool:
         """
         소셜 서비스 아이디가 존재하는지 확인
         Args:
@@ -331,6 +326,23 @@ class SocialAuthService:
                 MemberSocialProfiles.provider == provider,
                 MemberSocialProfiles.identifier == identifier
             ).first()
+
+        if result:
+            return True
+
+        return False
+
+    @classmethod
+    def check_exists_by_member_id(cls, member_id) -> bool:
+        """
+        회원아이디가 존재하는지 확인
+        Args:
+            member_id (str) : 회원 아이디
+        Returns:
+            True or False
+        """
+        with SessionLocal() as db:
+            result = db.query(MemberSocialProfiles.mb_id).filter(Member.mb_id == member_id).first()
 
         if result:
             return True
@@ -353,3 +365,11 @@ class SocialAuthService:
         adler32_hash = zlib.adler32(md5_hash.encode())
 
         return f"{provider}_{hex(adler32_hash)[2:]}"
+
+    @classmethod
+    def unlink_social_login(cls, member_id):
+        """
+        소셜계정 연결해제
+        """
+        with SessionLocal() as db:
+            db.query(MemberSocialProfiles.mb_id).filter(MemberSocialProfiles.mb_id == member_id).delete()
