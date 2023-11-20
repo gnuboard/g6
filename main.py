@@ -2,28 +2,24 @@ import datetime
 from fastapi import FastAPI, Depends, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import TypeAdapter
 
 from database import get_db
 from starlette.middleware.sessions import SessionMiddleware
 from common import *
 
-from settings import APP_IS_DEBUG
 from user_agents import parse
 import models
 import secrets
 
 # models.Base.metadata.create_all(bind=engine)
-
+APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
 app = FastAPI(debug=APP_IS_DEBUG)
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
-templates = Jinja2Templates(directory=[TEMPLATES_DIR], extensions=["jinja2.ext.i18n"])
+templates = MyTemplates(directory=[TEMPLATES_DIR], extensions=["jinja2.ext.i18n"])
 templates.env.globals["is_admin"] = is_admin
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.filters["default_if_none"] = default_if_none
-templates.env.globals['getattr'] = getattr
-templates.env.globals["generate_token"] = generate_token
 
 from _admin.admin import router as admin_router
 from _bbs.board import router as board_router
@@ -42,6 +38,8 @@ from _bbs.ajax_good import router as good_router
 from _bbs.ajax_autosave import router as autosave_router
 from _bbs.member_leave import router as member_leave_router
 from _bbs.social import router as social_router
+from _bbs.password import router as password_router
+from _lib.editor.ckeditor4 import router as editor_router
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
 app.include_router(login_router, prefix="/bbs", tags=["login"])
@@ -59,7 +57,8 @@ app.include_router(board_new_router, prefix="/bbs", tags=["board_new"])
 app.include_router(good_router, prefix="/bbs/ajax", tags=["good"])
 app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
 app.include_router(social_router, prefix="/bbs", tags=["social"])
-
+app.include_router(password_router, prefix="/bbs", tags=["password"])
+app.include_router(editor_router, prefix="/editor", tags=["editor"])
 # is_mobile = False
 # user_device = 'pc'
 
@@ -156,12 +155,12 @@ async def main_middleware(request: Request, call_next):
     ua = parse(user_agent)
     if ua.is_mobile or ua.is_tablet: # 모바일과 태블릿에서 접속하면 모바일로 간주
         request.state.is_mobile = True
-        
+
     if not IS_RESPONSIVE: # 적응형
         # 반영형이 아니라면 모바일 접속은 mobile 로, 그 외 접속은 pc 로 간주
         if request.state.is_mobile:
             request.state.device = "mobile"
-    
+
     # if 'SET_DEVICE' in globals():
     #     if SET_DEVICE == 'mobile':
     #         request.state.is_mobile = True
@@ -192,7 +191,7 @@ async def main_middleware(request: Request, call_next):
 
     if is_autologin:
         # 자동로그인 쿠키를 설정
-        response.set_cookie(key="ss_mb_id", value=request.session["ss_mb_id"], max_age=3600)
+        response.set_cookie(key="ss_mb_id", value=request.session["ss_mb_id"], max_age=86400 * 30)  # 30 일 동안 유지
 
     # 접속자 기록
     vi_ip = request.client.host
@@ -266,7 +265,6 @@ def index(request: Request, db: Session = Depends(get_db)):
     context = {
         "request": request,
         "newwins": get_newwins(request),
-        "latest": latest,
         "boards": boards,
     }
     return templates.TemplateResponse(f"{request.state.device}/main.html", context)
@@ -276,6 +274,6 @@ def index(request: Request, db: Session = Depends(get_db)):
 async def generate_token(request: Request):
     token = secrets.token_hex(16)  # 16바이트 토큰 생성
     request.session["ss_token"] = token  # 세션에 토큰 저장
-    
+
     return JSONResponse(content={"success": True, "token": token})
 

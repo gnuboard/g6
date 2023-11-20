@@ -13,7 +13,6 @@ from pbkdf2 import validate_password, create_hash
 router = APIRouter()
 templates = Jinja2Templates(directory=[TEMPLATES_DIR, CAPTCHA_PATH], extensions=["jinja2.ext.i18n"])
 templates.env.globals["is_admin"] = is_admin
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals['getattr'] = getattr
 templates.env.globals["generate_token"] = generate_token
@@ -70,7 +69,6 @@ def member_profile(request: Request, db: Session = Depends(get_db)):
         raise AlertException(status_code=404, detail="회원정보가 없습니다.")
 
     config = request.state.config
-    captcha = get_current_captcha_cls(captcha_name=config.cf_captcha)
     form_context = {
         "page": True,
         "action_url": app.url_path_for("member_profile", mb_no=request.path_params["mb_no"]),
@@ -89,7 +87,6 @@ def member_profile(request: Request, db: Session = Depends(get_db)):
         "request": request,
         "member": member,
         "form": form_context,
-        "captcha": captcha.TEMPLATE_PATH if captcha is not None else '',
     })
 
 
@@ -107,8 +104,8 @@ async def member_profile_save(request: Request, db: Session = Depends(get_db),
                               del_mb_icon: str = Form(None),
                               recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
                               ):
-    if not validate_one_time_token(token, 'update'):
-        raise AlertException(status_code=400, detail="토큰이 유효하지 않습니다.")
+    if not check_token(request, token):
+        raise AlertException("잘못된 접근입니다.")
 
     if not request.session.get("ss_profile_change", False):
         raise AlertException(status_code=403, detail="잘못된 접근입니다.", url=app.url_path_for("member_confirm"))

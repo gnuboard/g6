@@ -21,23 +21,27 @@ from models import WriteBaseModel
 from database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
 import json
-from PIL import Image
+from PIL import Image, ImageOps, UnidentifiedImageError
 from user_agents import parse
 import base64
 from dotenv import load_dotenv
 import smtplib
 import threading
+import cachetools
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from _extend.captcha.recaptch_v2 import ReCaptchaV2
-from _extend.captcha.recaptch_inv import ReCaptchaInvisible
+from _lib.captcha.recaptch_v2 import ReCaptchaV2
+from _lib.captcha.recaptch_inv import ReCaptchaInvisible
 
 load_dotenv()
 
 
 # 전역변수 선언(global variables)
 TEMPLATES = "templates"
-EDITOR_PATH = f"{TEMPLATES}/editor"
+WIDGET_PATH = "_widget"
+
+CAPTCHA_PATH = f"{WIDGET_PATH}/captcha"
+EDITOR_PATH = f"{WIDGET_PATH}/editor"
 
 def get_theme_from_db(config=None):
     # main.py 에서 config 를 인수로 받아서 사용
@@ -74,9 +78,8 @@ TIME_YMD = TIME_YMDHIS[:10]
 # USE_MOBILE = True
 
 
-IS_RESPONSIVE = os.getenv("IS_RESPONSIVE", default="True")
-IS_RESPONSIVE = IS_RESPONSIVE.lower() == "true"
-    
+is_response = os.getenv("IS_RESPONSIVE", default="true")
+IS_RESPONSIVE = is_response.lower() == "true"
 
 def hash_password(password: str):
     '''
@@ -364,50 +367,6 @@ def now():
     '''
     return datetime.now().timestamp()
 
-import cachetools
-
-# 캐시 크기와 만료 시간 설정
-cache = cachetools.TTLCache(maxsize=10000, ttl=3600)
-
-# def generate_one_time_token():
-#     '''
-#     1회용 토큰을 생성하여 반환하는 함수
-#     '''
-#     token = os.urandom(24).hex()
-#     cache[token] = 'valid'
-#     return token
-
-
-# def validate_one_time_token(token):
-#     '''
-#     1회용 토큰을 검증하는 함수
-#     '''
-#     if token in cache:
-#         del cache[token]
-#         return True
-#     return False
-
-
-def generate_one_time_token(action: str = 'create'):
-    '''
-    1회용 토큰을 생성하여 반환하는 함수
-    action : 'insert', 'update', 'delete' ...
-    '''
-    token = os.urandom(24).hex()
-    cache[token] = {'status': 'valid', 'action': action}
-    return token
-
-
-def validate_one_time_token(token, action: str = 'create'):
-    '''
-    1회용 토큰을 검증하는 함수
-    '''
-    token_data = cache.get(token)
-    if token_data and token_data.get("action") == action:
-        del cache[token]
-        return True
-    return False
-
 
 def check_token(request: Request, token: str):
     '''
@@ -546,7 +505,7 @@ def get_from_list(lst, index, default=0):
 # current_page : 현재 페이지
 # total_count : 전체 레코드 수
 # add_url : 페이지 링크의 추가 URL
-def get_paging(request: Request, current_page, total_count, add_url=""):
+def get_paging(request: Request, current_page, total_count, page_rows = 0, add_url=""):
     config = request.state.config
     url_prefix = request.url
     
@@ -558,7 +517,8 @@ def get_paging(request: Request, current_page, total_count, add_url=""):
     total_count = int(total_count)
 
     # 한 페이지당 라인수
-    page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
+    if not page_rows:
+        page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
     # 페이지 표시수
     page_count = config.cf_mobile_pages if request.state.is_mobile and config.cf_mobile_pages else config.cf_write_pages
     
@@ -772,6 +732,34 @@ def select_query(request: Request, table_model, search_params: dict,
 def get_member(mb_id: str, fields: str = '*'):
     db = SessionLocal()
     return db.query(Member).options(load_only(fields)).filter_by(mb_id=mb_id).first()
+
+
+def get_member_icon(mb_id):
+    MEMBER_ICON_DIR = "data/member"
+    member_icon_dir = f"{MEMBER_ICON_DIR}/{mb_id[:2]}"
+
+    icon_file = os.path.join(member_icon_dir, f"{mb_id}.gif")
+
+    if os.path.exists(icon_file):
+        icon_filemtime = os.path.getmtime(icon_file) # 캐시를 위해 파일수정시간을 추가
+        return f"{icon_file}?{icon_filemtime}"
+
+    return "static/img/no_profile.gif"
+
+
+def get_member_image(mb_id: str = None):
+    
+    if mb_id:
+        MEMBER_IMAGE_DIR = "data/member_image"
+        member_image_dir = f"{MEMBER_IMAGE_DIR}/{mb_id[:2]}"
+
+        image_file = os.path.join(member_image_dir, f"{mb_id}.gif")
+
+        if os.path.exists(image_file):
+            image_filemtime = os.path.getmtime(image_file) # 캐시를 위해 파일수정시간을 추가
+            return f"{image_file}?{image_filemtime}"
+
+    return "static/img/no_profile.gif"
     
 
 # 포인트 부여    
@@ -958,27 +946,28 @@ def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel
     if rel_table or rel_id or rel_action:
         # 포인트 내역정보    
         row = db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action).first()
-        if row.po_point and row.po_point > 0:
-            abs_po_point = abs(row.po_point)
-            delete_use_point(request, row.mb_id, abs_po_point)
-        else:
-            if row.po_use_point and row.po_use_point > 0:
-                insert_use_point(request, row.mb_id, row.po_use_point, row.po_id)
-                
-        db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action).delete(synchronize_session=False)
-        db.commit()
-
-        # po_mb_point에 반영
-        if row.po_point:
-            db.query(Point).filter(Point.mb_id == mb_id, Point.po_id > row.po_id).update({Point.po_mb_point: Point.po_mb_point - row.po_point}, synchronize_session=False)
+        if row:
+            if row.po_point and row.po_point > 0:
+                abs_po_point = abs(row.po_point)
+                delete_use_point(request, row.mb_id, abs_po_point)
+            else:
+                if row.po_use_point and row.po_use_point > 0:
+                    insert_use_point(request, row.mb_id, row.po_use_point, row.po_id)
+                    
+            db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action).delete(synchronize_session=False)
             db.commit()
-        
-        # 포인트 내역의 합을 구하고    
-        sum_point = get_point_sum(request, mb_id)
-        
-        # 포인트 UPDATE
-        db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: sum_point}, synchronize_session=False)
-        result = db.commit()
+
+            # po_mb_point에 반영
+            if row.po_point:
+                db.query(Point).filter(Point.mb_id == mb_id, Point.po_id > row.po_id).update({Point.po_mb_point: Point.po_mb_point - row.po_point}, synchronize_session=False)
+                db.commit()
+            
+            # 포인트 내역의 합을 구하고    
+            sum_point = get_point_sum(request, mb_id)
+            
+            # 포인트 UPDATE
+            db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: sum_point}, synchronize_session=False)
+            result = db.commit()
     db.close()
 
     return result
@@ -1118,6 +1107,37 @@ def get_populars(limit: int = 7, day: int = 3):
     popular_cache.update({"populars": populars})
 
     return populars
+
+
+def insert_popular(request: Request, fields: str, word: str):
+    """인기검색어 등록
+
+    Args:
+        request (Request): FastAPI Request 객체
+        fields (str): 검색 필드
+        word (str): 인기검색어
+    """
+    try:
+        today_date = datetime.now().strftime("%Y-%m-%d")
+        # 회원아이디로 검색은 제외
+        if not "mb_id" in fields:
+            with SessionLocal() as db:
+                # 현재 날짜의 인기검색어를 조회한다.
+                popular = db.query(Popular).filter_by(
+                    pp_word = word,
+                    pp_date = today_date
+                ).first()
+
+                # 인기검색어가 없으면 새로 등록한다.
+                if not popular:
+                    new_popular = Popular(
+                        pp_word=word,
+                        pp_date=today_date,
+                        pp_ip=get_client_ip(request)["client_ip"])
+                    db.add(new_popular)
+                    db.commit()
+    except Exception as e:
+        print(f"인기검색어 입력 오류: {e}")
 
 
 def generate_token(request: Request, action: str = ''):
@@ -1309,11 +1329,42 @@ def is_admin(request: Request):
     if config.cf_admin.strip() == "":
         return False
 
-    if mb_id := request.session.get("ss_mb_id", ""):
+    mb_id = request.session.get("ss_mb_id", "")
+    if mb_id:
         if mb_id.strip() == config.cf_admin.strip():
             return True
 
     return False
+
+# TODO: 그누보드5의 is_admin 함수
+# 이미 is_admin 함수가 존재하므로 함수 이름을 변경함 
+def get_admin_type(request: Request, mb_id: str = None, group: Group = None, board: Board = None) -> str:
+    """게시판 관리자 여부 확인 후 관리자 타입 반환
+
+    Args:
+        request (Request): FastAPI Request 객체
+        mb_id (str, optional): 회원 아이디. Defaults to None.
+        group (Group, optional): 게시판 그룹 정보. Defaults to None.
+        board (Board, optional): 게시판 정보. Defaults to None.
+
+    Returns:
+        str: 관리자 타입. super, group, board, None
+    """
+    if not mb_id:
+        return None
+    
+    config = request.state.config
+    group = board.group if board else None
+
+    is_authority = None
+    if config.cf_admin == mb_id:
+        is_authority = "super"
+    elif group and group.gr_admin == mb_id:
+        is_authority = "group"
+    elif board and board.bo_admin == mb_id:
+        is_authority = "board"
+    
+    return is_authority
 
 
 def check_profile_open(open_date: Optional[date], config) -> bool:
@@ -1477,6 +1528,8 @@ class MyTemplates(Jinja2Templates):
         self.env.globals["generate_token"] = generate_token
         self.env.globals["getattr"] = getattr
         self.env.globals["get_selected"] = get_selected
+        self.env.globals["get_member_icon"] = get_member_icon
+        self.env.globals["get_member_image"] = get_member_image
 
         # 사용자 템플릿, 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
         if TEMPLATES_DIR in directory:
@@ -1489,12 +1542,11 @@ class MyTemplates(Jinja2Templates):
             self.env.globals.update(**globals.__dict__)
 
     def _default_context(self, request: Request):
-        # 메인페이지(main.py) latest 함수에서 templates.TemplateResponse가 추가적으로 호출되기 때문에
-        # context_processors가 2번 호출된다.
         context = {
             "menus" : get_menus(),
             "poll" : get_recent_poll(),
             "populars" : get_populars(),
+            "latest": latest
         }
         return context
     
@@ -1622,7 +1674,11 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     Returns:
         str: 최신글 HTML
     """
+    # Lazy import
+    from board_lib import BoardConfig, get_list, get_list_thumbnail
+
     templates = MyTemplates(directory=TEMPLATES_DIR)
+    templates.env.globals["get_list_thumbnail"] = get_list_thumbnail
 
     if not skin_dir:
         skin_dir = 'basic'
@@ -1636,25 +1692,22 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
         return g6_file_cache.get(cache_file)
     
     db = SessionLocal()
-    board = db.query(Board).filter(Board.bo_table == bo_table).first()
-    
+    # 게시판 설정
+    board = db.get(Board, bo_table)
+    board_config = BoardConfig(request, board)
+    board.subject = board_config.subject
+
+    #게시글 목록 조회
     Write = dynamic_create_write_table(bo_table)
     writes = db.query(Write).filter(Write.wr_is_comment == False).order_by(Write.wr_num).limit(rows).all()
     for write in writes:
-        write.is_notice = write.wr_id in board.bo_notice.split(",")
-        write.subject = write.wr_subject[:subject_len]
-        write.icon_hot = write.wr_hit >= 100
-        write.icon_new = write.wr_datetime > (datetime.now() - timedelta(days=1))
-        write.icon_file = BoardFileManager(board, write.wr_id).is_exist()
-        write.icon_link = write.wr_link1 or write.wr_link2
-        write.icon_reply = write.wr_reply
-        write.datetime = write.wr_datetime.strftime("%y-%m-%d")
+        write = get_list(request, write, board_config)
     
     context = {
         "request": request,
+        "board": board,
         "writes": writes,
         "bo_table": bo_table,
-        "bo_subject": board.bo_subject,
     }
     temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
     temp_decode = temp.body.decode("utf-8")
@@ -1711,289 +1764,12 @@ def insert_board_new(bo_table: str, write: object):
     db.commit()
 
 
-# TODO:
-# 7. 이미지, 동영상 업로드 파일 확인 (cf_image_extension, cf_movie_extension)
-# 8. 업로드 사이즈 체크 (bo_upload_size)
-class BoardFileManager():
-    model = BoardFile
-
-    def __init__(self, board: Board, wr_id: int = None):
-        self.board = board
-        self.bo_table = board.bo_table
-        self.wr_id = wr_id
-        self.db = SessionLocal()
-
-    def is_exist(self, bo_table: str = None, wr_id: int = None):
-        """게시글에 파일이 있는지 확인
-
-        Returns:
-            bool: 파일이 존재하면 True, 없으면 False
-        """
-        bo_table = bo_table or self.bo_table
-        wr_id = wr_id or self.wr_id
-
-        query = self.db.query(self.model).filter_by(bo_table=bo_table, wr_id=wr_id)
-
-        return self.db.query(literal(True)).filter(query.exists()).scalar()
-    
-    def get_board_files(self):
-        """업로드된 파일 목록을 가져온다.
-
-        Returns:
-            list[BoardFile]: 업로드된 파일 목록
-        """
-        return self.db.query(self.model).filter_by(
-            bo_table=self.bo_table,
-            wr_id=self.wr_id
-        ).all()
-    
-    def get_board_files_by_form(self):
-        """입력/수정 폼에서 사용할 파일 목록을 가져온다.
-
-        Returns:
-            list[BoardFile]: 업로드된 파일 목록 
-        """
-        config_count = int(self.board.bo_upload_count) or 0
-        upload_count = config_count
-        if self.wr_id:
-            query = self.db.query(self.model).filter_by(bo_table=self.bo_table, wr_id=self.wr_id)
-            uploaded_count = query.count()
-            uploaded_files = query.all()
-            # 파일 카운트는 업로드된 파일 수와 설정된 값 중 큰 수로 설정한다.
-            upload_count = (uploaded_count if uploaded_count > config_count else config_count) - uploaded_count
-        else:
-            uploaded_files = []
-
-        # 업로드 파일 + 빈 객체
-        files = uploaded_files + [self.model() for _ in range(upload_count)]
-
-        return files
-
-    def get_board_files_by_type(self, request: Request):
-        """업로드된 파일 목록을 파일과 이미지로 분리한다.
-
-        Args:
-            request (Request): Request 객체
-
-        Returns:
-            list[BoardFile]: 파일 목록
-            list[BoardFile]: 이미지 목록
-        """
-        config = request.state.config
-        board_files = self.get_board_files()
-        images = []
-        files = []
-        for file in board_files:
-            ext = file.bf_source.split('.')[-1]
-            if ext in config.cf_image_extension:
-                images.append(file)
-            else:
-                files.append(file)
-
-        return images, files
-
-    def get_board_file(self, bf_no: int):
-        """업로드된 파일을 가져온다.
-
-        Args:
-            bf_no (int): 파일 순번
-
-        Returns:
-            BoardFile: 업로드된 파일
-        """
-        return self.db.query(self.model).filter_by(bo_table=self.bo_table, wr_id=self.wr_id, bf_no=bf_no).first()
-    
-    def get_filename(self, filename: str):
-        """파일이름을 생성한다.
-
-        Args:
-            filename (str): 업로드 파일이름
-
-        Returns:
-            str: 파일이름
-        """
-        return os.urandom(16).hex() + "." + filename.split(".")[-1]
-    
-    def insert_board_file(self, bf_no: int, directory: str, filename: str, file: UploadFile, content: str = "", bo_table: str = None, wr_id: int = None):
-        """게시글의 파일을 추가한다.
-
-        Args:
-            bf_no (int): 파일 순번
-            directory (str): 파일 저장 경로
-            file (UploadFile): 업로드 파일
-            content (str, optional): 파일 설명. Defaults to "".
-            bo_table (str, optional): 게시판 테이블명. Defaults to None.
-            wr_id (int, optional): 게시글 아이디. Defaults to None.
-        """
-        board_file = self.model()
-        board_file.bo_table = bo_table or self.bo_table
-        board_file.wr_id = wr_id or self.wr_id
-        board_file.bf_no = bf_no
-        board_file.bf_source = file.filename
-        board_file.bf_file = f"{directory}/{filename}"
-        board_file.bf_download = 0
-        board_file.bf_content = content
-        board_file.bf_filesize = file.size
-        self.db.add(board_file)
-        self.db.commit()
-    
-    def update_board_file(self, board_file: model, directory: str, filename: str, file: UploadFile, content: str = "", bo_table: str = None, wr_id: int = None):
-        """게시글의 파일을 수정한다.
-
-        Args:
-            board_file (model): BoardFile 모델
-            directory (str): 파일 저장 경로
-            file (UploadFile): 업로드 파일
-            content (str, optional): 파일 설명. Defaults to "".
-        """
-        if bo_table:
-            board_file.bo_table = bo_table
-        if wr_id:
-            board_file.wr_id = wr_id
-        board_file.bf_source = file.filename
-        board_file.bf_file = f"{directory}/{filename}"
-        board_file.bf_download = 0
-        board_file.bf_content = content
-        board_file.bf_filesize = file.size
-        self.db.commit()
-
-    def update_download_count(self, board_file: model):
-        """다운로드 횟수를 증가시킨다.
-
-        Args:
-            board_file (model): BoardFile 모델
-        """
-        board_file.bf_download += 1
-        self.db.commit()
-
-    def move_board_files(self, directory: str, target_bo_table: str, target_wr_id: int):
-        """게시글의 파일을 이동한다.
-
-        Args:
-            target_bo_table (str): 이동할 게시판 테이블명
-            target_wr_id (int): 이동할 게시글 아이디
-        """
-        directory = os.path.join(directory, target_bo_table)
-        make_directory(directory)
-
-        if self.wr_id and target_wr_id:
-            board_files = self.get_board_files()
-            for board_file in board_files:
-                file = self.create_upload_file_from_path(board_file.bf_file)
-                file.filename = board_file.bf_source
-                file.size = board_file.bf_filesize
-                filename = self.get_filename(file.filename)
-
-                # 파일 이동 및 정보 업데이트
-                self.move_file(board_file.bf_file, f"{directory}/{filename}")
-                self.update_board_file(board_file, directory, filename, file, board_file.bf_content, target_bo_table, target_wr_id)
-                board_file.bo_table = target_bo_table
-                board_file.wr_id = target_wr_id
-
-            self.db.commit()
-
-    def copy_board_files(self, directory : str, target_bo_table: str, target_wr_id: int):
-        """게시글의 파일을 복사한다.
-
-        Args:
-            target_bo_table (str): 복사할 게시판 테이블명
-            target_wr_id (int): 복사할 게시글 아이디
-        """
-        directory = os.path.join(directory, target_bo_table)
-        make_directory(directory)
-
-        if self.wr_id and target_wr_id:
-            board_files = self.get_board_files()
-            for board_file in board_files:
-                file = self.create_upload_file_from_path(board_file.bf_file)
-                file.filename = board_file.bf_source
-                file.size = board_file.bf_filesize
-                filename = self.get_filename(file.filename)
-                
-                # 파일 복사 및 정보 추가
-                self.copy_file(board_file.bf_file, f"{directory}/{filename}")
-                self.insert_board_file(board_file.bf_no, directory, filename, file, board_file.bf_content, target_bo_table, target_wr_id)
-        
-    def delete_board_file(self, bf_no: int):
-        """게시글의 파일을 삭제한다.
-
-        Args:
-            bf_no (int): 파일 순번
-        """
-        if self.wr_id and bf_no:
-            board_file = self.get_board_file(bf_no)
-            self.remove_file(board_file.bf_file)
-            self.db.delete(board_file)
-            self.db.commit()
-
-    def delete_board_files(self):
-        """게시글의 파일을 삭제한다.
-        """
-        if self.wr_id:
-            board_files = self.get_board_files()
-            for board_file in board_files:
-                self.remove_file(board_file.bf_file)
-                self.db.delete(board_file)
-            self.db.commit()
-
-    def upload_file(self, directory: str, filename: str, file: UploadFile):
-        """파일을 업로드한다.
-
-        Args:
-            directory (str): 파일 저장 경로
-            filename (str): 파일이름
-            file (UploadFile): 업로드 파일
-        """
-        if file and file.filename:
-            with open(f"{directory}/{filename}", "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
-    
-    def move_file(self, origin: str, target: str):
-        """파일을 이동한다.
-
-        Args:
-            origin (str): 원본 파일 경로
-            target (str): 이동할 파일 경로
-        """
-        if os.path.exists(origin):
-            shutil.move(origin, target)
-
-    def copy_file(self, origin: str, target: str):
-        """파일을 복사한다.
-
-        Args:
-            origin (str): 원본 파일 경로
-            target (str): 복사할 파일 경로
-        """
-        if os.path.exists(origin):
-            shutil.copy(origin, target)
-
-    def remove_file(self, path: str):
-        """파일을 삭제한다.
-
-        Args:
-            path (str): 파일 경로
-        """
-        if os.path.exists(path):
-            os.remove(path)
-    
-    def create_upload_file_from_path(self, path: str):
-        """파일 경로로 UploadFile 객체를 생성한다.
-
-        Args:
-            path (str): 파일 경로
-
-        Returns:
-            UploadFile: 업로드 파일
-        """
-        with open(path, "rb") as f:
-            return UploadFile(f, filename=os.path.basename(path))
-
-
 def get_current_captcha_cls(captcha_name: str):
     """캡챠 클래스를 반환하는 함수
     Args:
         captcha_name (str) : config cf_captcha에 저장된 캡차클래스이름
+    Returns:
+        Optional[class]: 캡차 클래스 or None
     """
     if captcha_name == "recaptcha":
         return ReCaptchaV2
@@ -2007,11 +1783,149 @@ def captcha_widget(request):
     """템플릿에서 캡차 출력
     Args:
         request (Request): FastAPI Request
+    Returns:
+        str: 캡차 템플릿 or ''
     """
-    if cls := get_current_captcha_cls(captcha_name=request.state.config.cf_captcha):
+    cls = get_current_captcha_cls(captcha_name=request.state.config.cf_captcha)
+    if cls:
         return cls.TEMPLATE_PATH
 
     return ''  # 템플릿 출력시 비어있을때는 빈 문자열
 
 
-CAPTCHA_PATH = f"{TEMPLATES}/captcha"
+def calculator_image_resize(source_width, source_height, target_width=0, target_height=0):
+    """
+    이미지 비율을 유지하며 계산 , 너비와 높이 중 하나만 입력된 경우 비율 계산
+    원본이미지가 target_width, target_height 보다 작으면 False 반환
+    Args:
+        source_width (int): 원본 이미지 너비
+        source_height (int): 원본 이미지 높이
+        target_width (int): 변경할 이미지 너비. Defaults 0.
+        target_height (int): 변경할 이미지 높이. Defaults 0.
+    Returns:
+        Union[bool, dict]: 변경할 이미지 너비, 높이 dict{'width': new_width, 'height': new_height} or False
+    """
+    # 작은경우 리사이즈 안함
+    if source_width < target_width and source_height < target_height:
+        return False
+
+    if source_width > target_width and source_height > target_height:
+        # 원본이 타겟보다 크면 축소 비율 계산
+        ratio_width = target_width / source_width
+        ratio_height = target_height / source_height
+        min_ratio = min(ratio_width, ratio_height)
+        return {'width': int(source_width * min_ratio), 'height': int(source_height * min_ratio)}
+
+    # 이미지 비율을 유지하며 계산
+    # 너비와 높이 중 하나만 입력된 경우 비율 계산
+    if target_width and not target_height:
+        ratio = target_width / source_width
+        new_width = target_width
+        new_height = int(source_height * ratio)
+
+    elif not target_width and target_height:
+        ratio = target_height / source_height
+        new_width = int(source_width * ratio)
+        new_height = target_height
+
+    else:
+        return False  # 너비와 높이 둘 다 입력되거나 입력되지 않은 경우 처리
+
+    return {'width': new_width, 'height': new_height}
+
+
+
+def thumbnail(source_file: str, target_path: str = None, width: int = 200, height: int = 150, **kwargs) -> str:
+    """섬네일 이미지를 생성한다.
+
+    Args:
+        source_file (str): 원본 이미지 파일 경로
+        target_path (str, optional): 섬네일 이미지 파일 경로. Defaults to None.
+        width (int, optional): 섬네일 이미지 너비. Defaults to 200.
+        height (int, optional): 섬네일 이미지 높이. Defaults to 150.
+
+    Returns:
+        str: 섬네일 이미지 파일 경로
+    """
+    try:
+        source_basename = os.path.basename(source_file)
+        source_path = os.path.dirname(source_file)
+        target_path = target_path or source_path
+
+        # 섬네일 저장경로 생성
+        make_directory(target_path)
+
+        # 섬네일 파일 경로
+        thumbnail_file = os.path.join(target_path, f"thumbnail_{width}x{height}_{source_basename}")
+        # 섬네일 파일이 존재
+        # 원본파일 생성시간 < 섬네일 파일 생성시간
+        if os.path.exists(thumbnail_file):
+            if os.path.getmtime(source_file) < os.path.getmtime(thumbnail_file):
+                return thumbnail_file
+
+        # 이미지 객체 생성
+        # 파일이 없가나 이미지가 아닐 경우 예외가 발생하므로 검사를 따로 하지 않음.
+        source_image = Image.open(source_file)
+        source_width, source_height = source_image.size
+
+        # 이미지가 섬네일이미지보다 작을 경우
+        if source_width < width or source_height < height:
+            # 확장 이미지 생성
+            expanded_img = Image.new("RGB", (width, height), (255, 255, 255))
+            # 기존 이미지를 확장된 이미지 중앙에 삽입
+            left = (width - source_width) // 2
+            top = (height - source_height) // 2
+            expanded_img.paste(source_image, (left, top))
+            expanded_img.save(thumbnail_file)
+        else:
+            # 이미지를 지정한 크기로 자르고 저장
+            ImageOps.fit(source_image, (width, height)).save(thumbnail_file)
+            # source_image.thumbnail((width, height))
+            # source_image.save(thumbnail_file)
+
+        return thumbnail_file
+    
+    except UnidentifiedImageError as e:
+        print("원본 이미지 객체 생성 실패 : ", e)
+        return False
+
+    except Exception as e:
+        print("섬네일 생성 실패 : ", e)
+        return False
+
+
+def get_editor_image(contents: str, view: bool = True) -> list:
+    """에디터에서 이미지 태그를 추출한다.
+
+    Args:
+        contents (str): 내용
+        view (bool, optional): 보기모드 여부. Defaults to True.
+
+    Returns:
+        list: 이미지 태그 src 속성 값
+    """
+    if not contents:
+        return False
+
+    # contents 중 img 태그 추출
+    if view:
+        pattern = re.compile(r"<img([^>]*)>", re.IGNORECASE | re.DOTALL)
+    else:
+        pattern = re.compile(r"<img[^>]*src=[\'\"]?([^>\'\"]+[^>\'\"]+)[\'\"]?[^>]*>", re.IGNORECASE | re.DOTALL)
+
+    matches = pattern.findall(contents)
+
+    return matches
+
+def extract_alt_attribute(img_tag: str) -> str:
+    """alt 속성 추출
+
+    Args:
+        img_tag (str): img 태그
+
+    Returns:
+        str: alt 속성 값
+    """
+    alt_match = re.search(r'alt=[\"\']?([^\"\']*)[\"\']?', img_tag, re.IGNORECASE)
+    alt = str(alt_match.group(1)) if alt_match else ''
+    return alt

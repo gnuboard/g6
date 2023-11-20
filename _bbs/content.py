@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, Request
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from common import *
@@ -7,7 +6,7 @@ from database import get_db
 from models import Content
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates = MyTemplates(directory=TEMPLATES_DIR)
 
 
 @router.get("/content/{co_id}")

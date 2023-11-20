@@ -4,14 +4,13 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import literal
 from sqlalchemy.orm import aliased, Session
 
+from board_lib import *
 from common import *
 from database import get_db
-from models import BoardNew, Scrap
+from models import Scrap
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
-# 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
-templates.env.globals["generate_token"] = generate_token
+templates = MyTemplates(directory=TEMPLATES_DIR)
 templates.env.filters["datetime_format"] = datetime_format
 
 
@@ -63,6 +62,7 @@ def scrap_form_update(request: Request, db: Session = Depends(get_db),
         raise AlertCloseException("로그인 후 이용 가능합니다.", 403)
     
     board = db.query(Board).filter(Board.bo_table == bo_table).first()
+    board_config = BoardConfig(request, board)
     if not board:
         raise AlertCloseException("존재하지 않는 게시판 입니다.", 404)
     
@@ -77,7 +77,7 @@ def scrap_form_update(request: Request, db: Session = Depends(get_db),
         raise AlertException("이미 스크랩하신 글 입니다.", 302, request.url_for('scrap_list'))
     
     # 댓글 추가
-    if wr_content and member.mb_level >= board.bo_comment_level:
+    if wr_content and board_config.is_comment_level():
         # TODO: 너무 빠른 시간내에 게시물을 연속해서 올릴 수 없습니다.
 
         max_comment = db.query(func.max(models_write.wr_comment).label('max_comment')).filter(
@@ -97,7 +97,7 @@ def scrap_form_update(request: Request, db: Session = Depends(get_db),
             wr_parent=wr_id,
             wr_comment=max_comment.max_comment + 1 if max_comment.max_comment else 1,
             wr_is_comment=1,
-            wr_name=member.mb_nick,
+            wr_name=board_config.set_wr_name(member),
             wr_password=member.mb_password,
             wr_email=member.mb_email,
             wr_homepage=member.mb_homepage,
@@ -152,7 +152,7 @@ def scrap_list(request: Request, db: Session = Depends(get_db),
     # 스크랩 목록 조회
     scrap = aliased(Scrap)
     board = aliased(Board)
-    query = db.query(scrap, board.bo_subject).outerjoin(
+    query = db.query(scrap, board).outerjoin(
         board, scrap.bo_table == board.bo_table
     ).filter(scrap.mb_id == member.mb_id).order_by(desc(scrap.ms_id))
 

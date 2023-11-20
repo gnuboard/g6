@@ -17,7 +17,7 @@
             <!-- } 쪽지함 선택 끝 -->
 
             <form name="fmemoform" action="{{ url_for('memo_form_update') }}" onsubmit="return fmemoform_submit(this);" method="post" autocomplete="off">
-                <input type="hidden" name="token" value="{{ generate_token(request, 'insert') }}">
+                <input type="hidden" name="token" value="">
                 <div class="form_01">
                     <h2 class="sound_only">쪽지쓰기</h2>
                     <ul>
@@ -37,6 +37,11 @@
                         </li>
                         <li>
                             <span class="sound_only">자동등록방지</span>
+                            <!-- Captcha Start -->
+                            <fieldset id="captcha" class="captcha">
+                                {% include captcha_widget(request) ignore missing %}
+                            </fieldset>
+                            <!-- Captcha End -->
                         </li>
                     </ul>
                 </div>
@@ -48,4 +53,22 @@
             </form>
         </div>
     </div>
+<script>
+    function fmemoform_submit(f)
+    {
+        f.token.value = generate_token();
+        if (f.token.value == "") {
+            alert("토큰값이 없습니다.");
+            return false;
+        }
+        // captcha 사용시
+        if (typeof check_captcha === "function") {
+            if (!check_captcha(f)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+</script>
 {% endblock content %}

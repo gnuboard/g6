@@ -2,14 +2,13 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
+from board_lib import *
 from common import *
 from database import get_db
 from models import BoardNew, Board
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
-templates.env.globals["get_selected"] = get_selected
-templates.env.globals["generate_token"] = generate_token
+templates = MyTemplates(directory=TEMPLATES_DIR)
 
 
 @router.get("/new")

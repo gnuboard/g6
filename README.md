@@ -18,8 +18,11 @@ DB_TABLE_PREFIX = "g6_"
 
 SMTP_SERVER="localhost"
 SMTP_PORT=25
-SMTP_USERNAME="username" # 메일 테스트시 보내는 사용자 이름 및 이메일 주소 반드시 넣어야 함 SMTP_USERNAME="username@domain.com"
+SMTP_USERNAME="account@your-domain.com" # 메일 테스트시 보내는 사용자 이름 및 이메일 주소 반드시 넣어야 함
 SMTP_PASSWORD=""
+
+# 디버그 모드 설정 (True/False)
+APP_IS_DEBUG = "False"
 
 # 네이버 메일 설정
 # SMTP_SERVER="smtp.naver.com"
@@ -33,6 +36,13 @@ SMTP_PASSWORD=""
 # "False" : 적응형 웹사이트
 IS_RESPONSIVE = "False" # 반드시 문자열로 입력해야 합니다.
 
+UPLOAD_IMAGE_RESIZE = "False"  # 이미지 크기변환 여부
+UPLOAD_IMAGE_SIZE_LIMIT = 20 # MB 이미지 업로드 용량 (기본값 20MB)
+UPLOAD_IMAGE_QUALITY = 80  # (0~100) default 80 이미지 업로드 퀄리티(jpg)
+
+# UPLOAD_IMAGE_RESIZE 가 true 이고 설정된값보다 크면 크기를 변환합니다.
+UPLOAD_IMAGE_RESIZE_WIDTH = 1200  # px 이미지 업로드 크기변환 가로 크기 
+UPLOAD_IMAGE_RESIZE_HEIGHT = 2800  # px 이미지 업로드 크기변환 세로 크기
 
 ```
 

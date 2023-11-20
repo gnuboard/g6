@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, File, Form, Query, Request
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -10,9 +9,7 @@ from dataclassform import QaContentForm
 from models import QaConfig, QaContent
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
-templates.env.globals['get_selected'] = get_selected
-templates.env.globals["generate_token"] = generate_token
+templates = MyTemplates(directory=TEMPLATES_DIR)
 templates.env.globals["generate_query_string"] = generate_query_string
 templates.env.filters["default_if_none"] = default_if_none
 
