@@ -62,7 +62,7 @@ def get_theme_from_db(config=None):
 if os.environ.get("is_setup") != "true":
     TEMPLATES_DIR = get_theme_from_db()
     
-ADMIN_TEMPLATES_DIR = "_admin/templates"
+ADMIN_TEMPLATES_DIR = "admin/templates"
 
 # 나중에 삭제할 코드
 SERVER_TIME = datetime.now()
@@ -325,9 +325,9 @@ def get_admin_menus():
     1, 2단계로 구분된 관리자 메뉴 json 파일이 있으면 load 하여 반환하는 함수
     '''
     files = [
-        "_admin/admin_menu_bbs.json",
-        "_admin/admin_menu_shop.json",
-        "_admin/admin_menu_sms.json"
+        "admin/admin_menu_bbs.json",
+        "admin/admin_menu_shop.json",
+        "admin/admin_menu_sms.json"
     ]
     menus = {}
     for file_path in files:
