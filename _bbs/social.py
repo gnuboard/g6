@@ -16,7 +16,7 @@ from _bbs.member_profile import validate_nickname, validate_userid
 from _lib.social import providers
 from _lib.social.social import oauth, SocialProvider, get_social_profile, get_social_login_token
 from common import AlertException, valid_email, hash_password, session_member_key, insert_point, TEMPLATES_DIR, \
-    is_admin, generate_one_time_token, default_if_none, generate_token
+    is_admin, default_if_none, generate_token
 from database import SessionLocal, get_db
 from dataclassform import MemberForm
 
@@ -25,7 +25,6 @@ from models import Config, MemberSocialProfiles, Member
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR, extensions=["jinja2.ext.i18n"])
 templates.env.globals["is_admin"] = is_admin
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals['getattr'] = getattr
 templates.env.globals["generate_token"] = generate_token

@@ -36,6 +36,13 @@ APP_IS_DEBUG = "False"
 # "False" : 적응형 웹사이트
 IS_RESPONSIVE = "False" # 반드시 문자열로 입력해야 합니다.
 
+UPLOAD_IMAGE_RESIZE = "False"  # 이미지 크기변환 여부
+UPLOAD_IMAGE_SIZE_LIMIT = 20 # MB 이미지 업로드 용량 (기본값 20MB)
+UPLOAD_IMAGE_QUALITY = 80  # (0~100) default 80 이미지 업로드 퀄리티(jpg)
+
+# UPLOAD_IMAGE_RESIZE 가 true 이고 설정된값보다 크면 크기를 변환합니다.
+UPLOAD_IMAGE_RESIZE_WIDTH = 1200  # px 이미지 업로드 크기변환 가로 크기 
+UPLOAD_IMAGE_RESIZE_HEIGHT = 2800  # px 이미지 업로드 크기변환 세로 크기
 
 ```
 

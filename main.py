@@ -19,7 +19,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
 templates = MyTemplates(directory=[TEMPLATES_DIR], extensions=["jinja2.ext.i18n"])
 templates.env.globals["is_admin"] = is_admin
-templates.env.globals["generate_one_time_token"] = generate_one_time_token
 templates.env.filters["default_if_none"] = default_if_none
 
 from _admin.admin import router as admin_router
@@ -38,6 +37,8 @@ from _bbs.board_new import router as board_new_router
 from _bbs.ajax_good import router as good_router
 from _bbs.ajax_autosave import router as autosave_router
 from _bbs.social import router as social_router
+from _bbs.password import router as password_router
+from _lib.editor.ckeditor4 import router as editor_router
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
 app.include_router(login_router, prefix="/bbs", tags=["login"])
@@ -54,7 +55,8 @@ app.include_router(board_new_router, prefix="/bbs", tags=["board_new"])
 app.include_router(good_router, prefix="/bbs/ajax", tags=["good"])
 app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
 app.include_router(social_router, prefix="/bbs", tags=["social"])
-
+app.include_router(password_router, prefix="/bbs", tags=["password"])
+app.include_router(editor_router, prefix="/editor", tags=["editor"])
 # is_mobile = False
 # user_device = 'pc'
 
@@ -151,12 +153,12 @@ async def main_middleware(request: Request, call_next):
     ua = parse(user_agent)
     if ua.is_mobile or ua.is_tablet: # 모바일과 태블릿에서 접속하면 모바일로 간주
         request.state.is_mobile = True
-        
+
     if not IS_RESPONSIVE: # 적응형
         # 반영형이 아니라면 모바일 접속은 mobile 로, 그 외 접속은 pc 로 간주
         if request.state.is_mobile:
             request.state.device = "mobile"
-    
+
     # if 'SET_DEVICE' in globals():
     #     if SET_DEVICE == 'mobile':
     #         request.state.is_mobile = True
@@ -270,6 +272,6 @@ def index(request: Request, db: Session = Depends(get_db)):
 async def generate_token(request: Request):
     token = secrets.token_hex(16)  # 16바이트 토큰 생성
     request.session["ss_token"] = token  # 세션에 토큰 저장
-    
+
     return JSONResponse(content={"success": True, "token": token})
 
