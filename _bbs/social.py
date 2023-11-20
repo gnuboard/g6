@@ -16,7 +16,7 @@ from _bbs.member_profile import validate_nickname, validate_userid
 from _lib.social import providers
 from _lib.social.social import oauth, SocialProvider, get_social_profile, get_social_login_token
 from common import AlertException, valid_email, hash_password, session_member_key, insert_point, TEMPLATES_DIR, \
-    is_admin, generate_one_time_token, default_if_none, generate_token
+    is_admin, default_if_none, generate_token
 from database import get_db, SessionLocal
 from dataclassform import MemberForm
 
