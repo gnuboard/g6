@@ -4,23 +4,23 @@
 {% endif %}
 
 {% block title %}
-    {{ board.bo_subject }} {{ current_page }} 페이지
+    {{ board.subject }} {{ current_page }} 페이지
 {% endblock title %}
 {% block subtitle %}
-    {{ board.bo_subject }}
+    {{ board.subject }}
 {% endblock subtitle %}
 
 {% block content %}
 {% set is_admin=get_admin_type(request, request.state.login_member.mb_id, group=board.group, board=board) %}
 {% set sca=request.query_params.sca %}
 {% set sod_reverse="asc" if request.query_params.sod == "desc" else "desc" %}
-{% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
+
 <!-- 게시판 목록 시작 { -->
-<div id="bo_list" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
+<div id="bo_list" style="width:{{ table_width }}">
     {% if board.bo_use_category %}
     <!-- 게시판 카테고리 시작 { -->
         <nav id="bo_cate">
-            <h2>{{ board.bo_subject }} 카테고리</h2>
+            <h2>{{ board.subject }} 카테고리</h2>
             <ul id="bo_cate_ul">
                 <li><a href="{{ request.url.replace_query_params() }}" {% if not sca %}id="bo_cate_on"{% endif %}>전체</a></li>
                 {% for category in categories %}
@@ -58,12 +58,14 @@
                         <span class="sound_only">게시판 검색</span>
                     </button>
                 </li>
+                {% if is_write %}
                 <li>
                     <a href="{{ url_for('write_form_add', bo_table=board.bo_table) }}" class="btn_b01 btn" title="글쓰기">
                         <i class="fa fa-pencil" aria-hidden="true"></i>
                         <span class="sound_only">글쓰기</span>
                     </a>
                 </li>
+                {% endif %}
                 {% if is_admin %}
                 <li>
                     <button type="button" class="btn_more_opt is_list_btn btn_b01 btn" title="게시판 리스트 옵션">
@@ -165,7 +167,7 @@
                 {% endfor %}
                 {% for write in writes %}
                 {% set reply_depth=write.wr_reply|length %}
-                    <tr class="{{ loop.cycle("", "even") }} {{ "bo_notice" if write.is_notice else "" }}">
+                    <tr class="{{ loop.cycle("", "even") }}">
                         {% if is_admin %}
                         <td class="td_chk chk_box">
                             {% if not write.is_notice %}
@@ -250,11 +252,13 @@
                     </a>
                 </li>
                 {% endif %}
+                {% if is_write %}
                 <li>
                     <a href="{{ url_for('write_form_add', bo_table=board.bo_table) }}" class="btn_b01 btn" title="글쓰기">
                         <i class="fa fa-pencil" aria-hidden="true"></i><span class="sound_only">글쓰기</span>
                     </a>
                 </li>
+                {% endif %}
             </ul>
         </div>
     </form>
@@ -264,7 +268,6 @@
         <fieldset class="bo_sch">
             <h3>검색</h3>
             <form name="fsearch" method="get">
-                <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
                 <input type="hidden" name="sca" value="{{ request.query_params.sca }}">
                 <input type="hidden" name="sop" value="{{ request.query_params.sop }}">
                 <label for="sfl" class="sound_only">검색대상</label>
@@ -344,7 +347,7 @@
                 return false;
     
             f.removeAttribute("target");
-            f.action = "{{ url_for('list_delete', bo_table=board.bo_table) }}";
+            f.action = "{{ url_for('list_delete', bo_table=board.bo_table) }}?{{ request.query_params }}";
         }
     
         return true;

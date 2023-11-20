@@ -6,10 +6,10 @@
 {% endblock head %}
 
 {% block title %}
-    {{ board.bo_subject }} 글쓰기
+    {{ board.subject }} 글쓰기
 {% endblock title %}
 {% block subtitle %}
-    {{ board.bo_subject }} 글쓰기
+    {{ board.subject }} 글쓰기
 {% endblock subtitle %}
 
 {% block content %}
@@ -18,19 +18,12 @@
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
 <section id="bo_w">
     <!-- 게시물 작성/수정 시작 { -->
-    <form name="fwrite" id="fwrite" action="{{ url_for('write_update') }}" method="post" enctype="multipart/form-data" autocomplete="off" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
+    <form name="fwrite" id="fwrite" action="{{ url_for('write_update') }}?{{ request.query_params }}" method="post" enctype="multipart/form-data" onsubmit="return fwrite_submit(this);" autocomplete="off" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
         <input type="hidden" name="uid" value="{{ get_unique_id(request) }}">
         <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
         <input type="hidden" name="wr_id" value="{{ write.wr_id }}">
         <input type="hidden" name="parent_id" value="{{ request.query_params.parent_id }}">
-        <input type="hidden" name="sca" value="{{ request.query_params.sca }}">
-        <input type="hidden" name="sfl" value="{{ request.query_params.sfl }}">
-        <input type="hidden" name="stx" value="{{ request.query_params.stx }}">
-        <input type="hidden" name="spt" value="{{ request.query_params.spt }}">
-        <input type="hidden" name="sst" value="{{ request.query_params.sst }}">
-        <input type="hidden" name="sod" value="{{ request.query_params.sod }}">
-        <input type="hidden" name="page" value="{{ request.query_params.page }}">
-        <input type="hidden" name="token" value="{{ generate_token(request, 'update' if write else 'insert') }}">
+        <input type="hidden" name="token" value="{{ generate_token(request, 'write_update' if write else 'write_insert') }}">
         
         {% if categories %}
             <div class="bo_w_select write_div">
@@ -128,13 +121,14 @@
         </div>
 
         {{ editor.body("wr_content", write.wr_content) }}
-
-        {% for i in range(1, 3) %}
-            <div class="bo_w_link write_div">
-                <label for="wr_link{{ i }}"><i class="fa fa-link" aria-hidden="true"></i><span class="sound_only"> 링크 #{{ i }}</span></label>
-                <input type="text" name="wr_link{{ i }}" value="{{ getattr(write, "wr_link" ~ i, "") }}" id="wr_link{{ i }}" class="frm_input full_input" size="50">
-            </div>
-        {% endfor %}
+        {% if is_link %}
+            {% for i in range(1, 3) %}
+                <div class="bo_w_link write_div">
+                    <label for="wr_link{{ i }}"><i class="fa fa-link" aria-hidden="true"></i><span class="sound_only"> 링크 #{{ i }}</span></label>
+                    <input type="text" name="wr_link{{ i }}" value="{{ getattr(write, "wr_link" ~ i, "") }}" id="wr_link{{ i }}" class="frm_input full_input" size="50">
+                </div>
+            {% endfor %}
+        {% endif %}
         
         {% if is_file %}
             {% for file in files %}
@@ -158,6 +152,13 @@
                 </div>
             {% endfor %}
         {% endif %}
+
+        <!-- Captcha Start -->
+        {% if is_use_captcha %}
+            {% include captcha_widget(request) ignore missing %}
+        {% endif %}
+        <!-- Captcha End -->
+
         <div class="btn_confirm write_div">
             <a href="{{ url_for('list_post', bo_table=board.bo_table) }}?{{ request.query_params }}" class="btn_cancel btn">취소</a>
             <button type="submit" id="btn_submit" accesskey="s" class="btn_submit btn">작성완료</button>
@@ -193,8 +194,12 @@
 
         function fwrite_submit(f)
         {
+            // TODO: 에디터 사용 시, 첫번째 submit 요청은 wr_content_editor.value를 가져오지 못한다.
+            /*
             var wr_content_editor = document.getElementById('wr_content');
+            console.log(wr_content_editor.value)
             if (!wr_content_editor.value) { alert("내용을 입력해 주십시오."); wr_content_editor.focus(); return false; }
+            */
             /*
             var subject = "";
             var content = "";
@@ -228,10 +233,6 @@
                     f.wr_content.focus();
                 return false;
             }
-
-
-
-            if (!chk_captcha()) return false;
             */
             if (document.getElementById("char_count")) {
                 if (char_min > 0 || char_max > 0) {
@@ -244,6 +245,13 @@
                         alert("내용은 "+char_max+"글자 이하로 쓰셔야 합니다.");
                         return false;
                     }
+                }
+            }
+
+            // captcha 사용시
+            if (typeof check_captcha === "function") {
+                if (!check_captcha(f)) {
+                    return false;
                 }
             }
 

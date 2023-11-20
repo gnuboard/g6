@@ -75,8 +75,12 @@
                                     <label for="pc_name" class="sound_only">이름<strong>필수</strong></label>
                                     <input type="text" name="pc_name" id="pc_name" required="" class="full_input required" size="20" placeholder="이름">
                                 </div>
+                                <!-- Captcha Start -->
+                                <fieldset id="captcha" class="captcha">
+                                    {% include captcha_widget(request) ignore missing %}
+                                </fieldset>
+                                <!-- Captcha End -->
                             {% endif %}
-                            <!-- TODO: Capcha 추가 -->
                             <button type="submit" class="btn_submit">의견남기기</button>
                         </form>
                     {% endif %}
@@ -121,6 +125,12 @@
         if (f.token.value == "") {
             alert("토큰값이 없습니다.");
             return false;
+        }
+        // captcha 사용시
+        if (typeof check_captcha === "function") {
+            if (!check_captcha(f)) {
+                return false;
+            }
         }
 
         return true;
