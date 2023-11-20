@@ -55,7 +55,7 @@
 <div id="sch_result">
     <section id="sch_res_ov">
         <h2>
-            <strong>`{{ request.query_params.stx }}`</strong> 전체검색 결과
+            <strong>'{{ request.query_params.stx }}'</strong> 전체검색 결과
         </h2>
         <ul>
             <li>게시판 {{ boards|length }}개</li>
@@ -88,17 +88,17 @@
                     <li>
                         <div class="sch_tit">
                             <a href="{{ write.href }}" class="sch_res_title">
-                                {% if write.wr_comment %}
+                                {% if write.wr_is_comment %}
                                 <span class="cmt_def"><i class="fa fa-commenting-o" aria-hidden="true"></i><span class="sound_only">댓글</span></span>
                                 {% endif %}
-                                {{ write.subject|truncate(100, False, '...', 0) }}
+                                {{ write.subject|truncate(100, False, '...', 0)|search_font(request.query_params.stx)|safe }}
                             </a>
                             <a href="{{ write.href }}" target="_blank" class="pop_a">
                                 <i class="fa fa-window-restore" aria-hidden="true"></i>
                                 <span class="sound_only">새창</span>
                             </a>
                         </div>
-                        <p>{{ write.wr_content|striptags|truncate(100, False, '...', 0) }}</p>
+                        <p>{{ write.wr_content|striptags|truncate(100, False, '...', 0)|search_font(request.query_params.stx)|safe }}</p>
                         <div class="sch_info">
                             {% if board.bo_use_sideview %}
                                 {{ sideview.get(request, write.mb_id, write.name, write.email, write.wr_homepage)|safe }}
@@ -106,7 +106,7 @@
                                 <span class="sv_member">{{ write.name }}</span>
                             {% endif %}
                             <span class="sch_datetime"><i class="fa fa-clock-o" aria-hidden="true"></i>
-                                {{ write.datetime }}
+                                {{ write.wr_datetime.strftime("%y-%m-%d %H:%M:%S") }}
                             </span>
                         </div>
                     </li>

@@ -8,6 +8,7 @@ from models import Board, Group, GroupMember
 
 router = APIRouter()
 templates = MyTemplates(directory=TEMPLATES_DIR)
+templates.env.filters["search_font"] = search_font
 
 
 @router.get("/search")
