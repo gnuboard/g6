@@ -73,8 +73,11 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0}
 #gnb .gnb_li .btn_op.menu-900{background:url(/static/admin/img/menu-4.png)20px 50% no-repeat}
 #gnb .on .btn_op.menu-900{background:url(/static/admin/img/menu-4-1.png)20px 50% no-repeat #ffd343}
 #gnb .gnb_li button:hover{background-color:#f3f3f3}
-#gnb .gnb_oparea{display:none;height:100%;width:100%;padding:10px;background: #00000032;margin-bottom: 10px;border-radius: 12px;}
-#gnb .on .gnb_oparea{display:block;}
+#gnb .gnb_oparea{display:none;position:absolute;top:0;left:50px;background:#fff;height:100%;width:170px;padding:20px;border-right:1px solid #dbdbdb;
+-webkit-box-shadow: 2px 0 2px rgba(150,150,150,100.1);
+-moz-box-shadow: 2px 0 2px rgba(150,150,150,0.1);
+box-shadow: 2px 0 2px rgba(150,150,150,0.1);}
+#gnb .on .gnb_oparea{display:block}
 #gnb .gnb_oparea h3{margin-bottom:10px;line-height:18px;font-size:1.17em}
 #gnb .gnb_oparea li{line-height:40px;padding-left: 10px;}
 #gnb .gnb_oparea li a{display: flex;color:#ffffff70;word-break: keep-all;height: 100%;justify-content: flex-start;align-items: center;padding: 0px 10px;font-size: 1.2em;}
