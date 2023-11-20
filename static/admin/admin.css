@@ -94,9 +94,9 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0}
 /*중간*/
 #container{margin:0px;position: relative;background:#EDF0F2;max-width: calc(100% - 220px);width: 100%;}
 #container_wr{padding:25px;min-height:500px;}
-#container_title{position: relative;line-height:50px;font-size:1.5em;z-index:99;margin: 20px 40px 0px;border-bottom: 1px solid #cecece;width: calc(100% - 80px);}
-#container_title::after {display: block;content: "";position: absolute;left: 0px;bottom: -2px;width: 30px;height: 3px;background: #ffd343;}
-.container_wr{padding:20px 40px;min-height: calc(100vh - 150px);margin-bottom: 24px;width: 100%;}
+.container_title.top{position: relative;line-height:50px;font-size:1.5em;z-index:99;margin: 20px 40px 0px;border-bottom: 1px solid #cecece;width: calc(100% - 80px);}
+.container_title.top::after {display: block;content: "";position: absolute;left: 0px;bottom: -2px;width: 30px;height: 3px;background: #ffd343;}
+.container_wr.top{padding:20px 40px;min-height: calc(100vh - 150px);margin-bottom: 24px;width: 100%;}
 
 
 
@@ -1217,14 +1217,15 @@ input[type="text"]{max-width:200px}
 .dark-mode .scroll_top{background:#ddd;background:rgba(255, 255, 255, 0.4)}
 .dark-mode #gnb .gnb_oparea {border-right: #545454;}
 .dark-mode #gnb .gnb_oparea h3 {color: #eeeeee;}
-.dark-mode #container_title {background: #151c24;color: #eeeeee;border-bottom: 1px solid #ffffff30;}
+.dark-mode .container_title.top {background: #151c24;color: #eeeeee;border-bottom: 1px solid #ffffff30;}
+.dark-mode .container_wr {color: #fff;}
 .dark-mode .container_wr section h2, .dark-mode a:link, .dark-mode a:visited {color: #eeeeee;}
 .dark-mode .btn_01, .dark-mode a.btn_01 {color: #4d4d4d;}
 .dark-mode .local_desc {background: #0e151d ;color: #eeeeee;border: none}
 .dark-mode .tbl_head01 tbody tr:nth-child(even) {background: #2c2c2c;}
 .dark-mode .tbl_head01 thead th {background: #151c24;border: 1px solid #545454;}
 .dark-mode .tbl_head01 tbody td {border: 1px solid #545454;color: #eeeeee;background: #272E3D;}
-.dark-mode #ft, .dark-mode .anchor a {background: #272E3D;}
+.dark-mode #ft, .dark-mode .anchor a {background: #0e151d;}
 .dark-mode .anchor a:hover, .dark-mode .anchor .active a {background: #ffd343;color: #1c3b56;}
 .dark-mode .tbl_frm01 td {color: #eeeeee;background: #272E3D;border: none;}
 
