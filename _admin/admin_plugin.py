@@ -10,8 +10,23 @@ from _admin.admin import templates
 from _lib.plugin import service
 from _lib.plugin.service import PLUGIN_DIR, get_all_plugin_info, PluginState
 from common import AlertException
+from fastapi import HTTPException
 
 router = APIRouter()
+
+
+@router.post("/plugin_detail")
+async def theme_detail(request: Request, module_name: str = Form(...)):
+    if not request.state.is_super_admin:
+        return AlertException(status_code=400, detail="관리자만 접근 가능합니다.")
+
+    module = module_name.strip()
+    info = service.get_plugin_info(module, PLUGIN_DIR)
+    if not info:
+        raise HTTPException(status_code=400, detail="The selected theme is not installed.")
+
+    return templates.TemplateResponse("theme_detail.html",
+                                      {"request": request, "name": info['plugin_name'], "info": info})
 
 
 @router.get("/plugin_list")

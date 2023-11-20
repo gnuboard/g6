@@ -93,32 +93,34 @@ def get_plugin_info(module_name, plugin_dir=PLUGIN_DIR):
                 pass
 
         info['screenshot'] = screenshot_url
-
-        text = os.path.join(path, 'readme.txt')
-        if os.path.isfile(text):
-            with open(text, 'r', encoding="UTF-8") as f:
-                content = [line.strip() for line in f.readlines()]
-
-            patterns = [
-                ("^Plugin Name:(.+)$", "plugin_name"),
-                ("^Plugin URI:(.+)$", "plugin_uri"),
-                ("^Maker:(.+)$", "maker"),
-                ("^Maker URI:(.+)$", "maker_uri"),
-                ("^Version:(.+)$", "version"),
-                ("^Detail:(.+)$", "detail"),
-                ("^License:(.+)$", "license"),
-                ("^License URI:(.+)$", "license_uri")
-            ]
-
-            for line in content:
-                for pattern, key in patterns:
-
-                    match = re.search(pattern, line, re.I)
-                    if match:
-                        info[key] = match.group(1).strip()
-
         info['module_name'] = module_name
 
+        text = os.path.join(path, 'readme.txt')
+        if not os.path.isfile(text):
+            return info
+
+        with open(text, 'r', encoding="UTF-8") as f:
+            content = [line.strip() for line in f.readlines()]
+
+        patterns = [
+            ("^Plugin Name:(.+)$", "plugin_name"),
+            ("^Plugin URI:(.+)$", "plugin_uri"),
+            ("^Maker:(.+)$", "maker"),
+            ("^Maker URI:(.+)$", "maker_uri"),
+            ("^Version:(.+)$", "version"),
+            ("^Detail:(.+)$", "detail"),
+            ("^License:(.+)$", "license"),
+            ("^License URI:(.+)$", "license_uri")
+        ]
+
+        for line in content:
+            for pattern, key in patterns:
+
+                match = re.search(pattern, line, re.I)
+                if match:
+                    info[key] = match.group(1).strip()
+
+        
     return info
 
 

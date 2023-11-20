@@ -59,7 +59,7 @@
                         data-set_plugin="">플러그인 적용
                 </button>
                 {% endif %}
-                <button type="button" class="tmli_dt theme_detail" data-plugin="{{ plugin.plugin_dir }}">상세보기</button>
+                <button type="button" class="tmli_dt theme_detail" data-module_name="{{ plugin.module_name }}">상세보기</button>
             </li>
             {% endfor %}
         </ul>
@@ -131,16 +131,16 @@
         });
     
         $(".theme_detail").on("click", function() {
-            var plugin = $(this).data("plugin");
+            var module_name = $(this).data("module_name");
     
             $("#theme_detail").remove();
     
             $.ajax({
                 type: "POST",
-                url: "/admin/theme_detail",
+                url: "/admin/plugin_detail",
                 contentType: 'application/x-www-form-urlencoded',
                 data: {
-                    "plugin": plugin
+                    "module_name": module_name
                 },
                 cache: false,
                 async: false,
