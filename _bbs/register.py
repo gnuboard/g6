@@ -20,7 +20,7 @@ templates.env.globals["check_profile_open"] = check_profile_open
 
 
 @router.get("/register")
-def get_register(request: Request, response: Response, db: Session = Depends(get_db)):
+def get_register(request: Request, response: Response):
     # 캐시 제어 헤더 설정 (캐시된 페이지를 보여주지 않고 새로운 페이지를 보여줌)
 
     response.headers["Cache-Control"] = "no-store"
@@ -173,7 +173,7 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
         if not re.match(r".*\.(gif)$", mb_icon.filename, re.IGNORECASE):
             raise AlertException(status_code=400, detail="gif 파일만 업로드 가능합니다.")
 
-    if not member_form.mb_sex in {"m", "f"}:
+    if member_form.mb_sex not in {"m", "f"}:
         member_form.mb_sex = ""
 
     # 한국 우편번호 (postalcode)
@@ -202,6 +202,7 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
 
     new_member = Member(mb_id=mb_id, **member_form.__dict__)
     new_member.mb_datetime = datetime.now()
+    # DB 스키마 호환성을 위해 null 대신 최저년도를 사용.
     new_member.mb_email_certify = datetime(1, 1, 1, 0, 0, 0)
     new_member.mb_password = create_hash(mb_password)
     new_member.mb_level = config.cf_register_level

@@ -46,5 +46,8 @@ UPLOAD_IMAGE_RESIZE_HEIGHT = 2800  # px 이미지 업로드 크기변환 세로 
 
 ```
 
+modules_state.json 에 모듈 활성화/비활성화가 기록됩니다.
+서버가 실행중일 때는 수정하면 안됩니다.
+
 아직 postgresql, sqlite3 는 정상 작동하지 않음
 mysql 관련 코드로 작성하면 안됨. 예) TINYINT
