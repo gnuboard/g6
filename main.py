@@ -23,7 +23,7 @@ templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.filters["datetime_format"] = datetime_format
 
-from _admin.admin import router as admin_router
+from admin.admin import router as admin_router
 from _bbs.board import router as board_router
 from _bbs.login import router as login_router
 from _bbs.register import router as register_router
@@ -301,7 +301,7 @@ def index(request: Request, db: Session = Depends(get_db)):
         "newwins": get_newwins(request),
         "boards": boards,
     }
-    return templates.TemplateResponse(f"{request.state.device}/main.html", context)
+    return templates.TemplateResponse(f"{request.state.device}/index.html", context)
 
 
 @app.post("/generate_token")
