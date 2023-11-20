@@ -29,9 +29,9 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0}
 
 #wrapper {min-height:480px;width: 100%;display: flex;}
 /* 레이아웃 */
-#hd {position: sticky;top: 71px;width: 220px;height: calc(100vh - 71px); padding: 0px 20px;background-color: #272E3D;overflow-y: auto;transition: all 0.2s;}
+#hd {position: sticky;top: 71px;width: 220px;height: calc(100vh - 71px); padding: 0px 20px;background-color: #272E3D;overflow-y: auto;overflow-x: hidden;transition: all 0.2s;}
 #hd h1 {position:absolute;font-size:0;line-height:0;overflow:hidden}
-#hd_top{position: relative;height:50px;z-index:1000;border-radius: 12px;width: 220px;margin: 0px;}
+#hd_top{position: relative;height:50px;z-index:1000;border-radius: 12px;margin: 0px;}
 #hd_top:after{display:block;visibility:hidden;clear:both;content:""}
 #logo{height:100%;width:220px;text-align:center;display: flex;align-items: center;justify-content: flex-start;}
 #btn_gnb, #tnb #btn_gnb {background:url(/static/admin/img/menu-cl.png) 50% 50% no-repeat;width:50px;height:50px;border:0;position:absolute;top:0px;right:0px;text-indent:-999px;overflow:hidden;border-radius: 12px 0px 0px 12px;}
@@ -43,7 +43,7 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0}
 #tnb ul:after{display:block;visibility:hidden;clear:both;content:""}
 #tnb li{float:right;position:relative;margin-left:8px;z-index: 500;}
 #tnb a{color:#fff;padding:0 20px;display:block;line-height:30px;}
-#tnb .tnb_service{border-radius:3px;border: 1px solid #dadada;color:#4d4d4d;padding:0 10px;text-align:left;height:40px;line-height:40px;background: #ffd343;}
+#tnb .tnb_service{border-radius:3px;border: 1px solid #dadada;color:#4d4d4d;padding:0 10px;text-align:left;height:40px;line-height:40px;background: #ffd343;white-space: nowrap;}
 #tnb button{width:100px;border:1px solid #ffffff40;border-radius:3px;background:transparent;color:#fff;padding:0 30px 0 10px;text-align:left;height:40px;position:relative;text-overflow: ellipsis;overflow: hidden;white-space: nowrap;}
 #tnb button span{display:block;text-indent:-999px;overflow:hidden;width:30px;border-radius:3px;height:40px;position:absolute;top:0;right:0;background:url(/static/admin/img/op_btn.png) 50% 50% no-repeat}
 #tnb .tnb_mb_area{display:none;background:rgb(61, 66, 80);width:100px;position:absolute;padding:5px;margin-top:1px;}
@@ -55,7 +55,7 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0}
 /*gnb*/
 #gnb{width: 100%;height:auto;margin-top:20px;z-index:999;border-radius: 12px;}
 #gnb h2 {position:absolute;font-size:0;line-height:0;overflow:hidden}
-#gnb .gnb_ul{position:relative;height:100%;width:100%}
+#gnb .gnb_ul{position:relative;height:100%;width:100%;white-space: nowrap;}
 
 #gnb .gnb_li button{background-color: #ebebeb;border:0;width:100%;height:46px;text-align: left;padding: 0px 20px 0px 50px;margin-bottom: 10px;font-size: 14px;}
 #gnb .gnb_li .btn_op{background:url(/static/admin/img/menu_default.png)20px 50% no-repeat #ebebeb;border-radius: 12px;color: #fff;}
@@ -253,7 +253,7 @@ legend {position:absolute;width:0;height:0;font-size:0;line-height:0;text-indent
 .anchor:after {display:block;visibility:hidden;clear:both;content:""}
 .anchor li{float:left;margin-left:-1px;list-style:none;border: 1px solid #eee;margin-right: 6px;margin-bottom: 6px;}
 .anchor a {display:inline-block;padding:10px 15px;text-decoration:none;transition: all 0.3s;background: #fff;border: 1px solid #dde0e4;color: #4b4b4b;border-radius:24px;font-weight: bold;}
-.anchor a:hover, .anchor .active a {background: #272E3D;color: #fff;} 
+.anchor a:hover, .anchor .active a {background: #ffd343;color: #1c3b56;} 
 .anchor .selected{background:#3776ab}
 
 
@@ -273,7 +273,7 @@ border-bottom: 5px solid black;}
 .scroll_top span.top_txt{display:block}
 #darkmode_btn{width:40px;height:40px;border:0;text-align:center;border-radius: 3px;border: 1px solid #ffffff40; color: #fff;display: flex;justify-content: center;align-items: center;cursor: pointer;}
 .toggle-switch{position: relative;}
-.toggle-switch::after{position: absolute;display: inline-block;width: 120px;bottom: -10px;background: #fff;padding: 4px 10px;color: #151c24;border-radius: 4px;transition: all 0.2s;}
+.toggle-switch::after{position: absolute;display: inline-block;width: 120px;bottom: -22px;background: #fff;padding: 4px 10px;color: #151c24;border-radius: 4px;transition: all 0.2s;}
 .toggle-switch.dark-mode::after {content: "Switch to light mode";opacity: 0;}
 .toggle-switch.light-mode::after {content: "Switch to dark mode";opacity: 0;}
 .toggle-switch.dark-mode:hover::after{opacity: 1;}
@@ -389,11 +389,15 @@ tfoot th {}
 .h2_frm{text-align:left;color:#272E3D;font-size:1.4em;font-weight:bold;margin:0px 0 10px;padding-top: 60px;}
 
 @media (max-width: 1100px) {
+    #tnb {flex-direction: column;justify-content: center;}
+    #tnb ul {display: flex;justify-content: center;padding: 0px 20px 20px;}
+    #tnb li {float: none;}
     .anchor {position: static;}
     #wrapper {flex-direction: column;}
     #hd{position: static;padding: 0px;height: auto;width: 100%;}
     #hd_top {margin: 0px auto;}
     form[name="fconfigform"] table {display: grid;table-layout: fixed;}
+    form[name="fconfigform"] select {width: 100%;}
     .tbl_frm01 tr{display: grid;grid-template-columns: 25% 75%;margin-bottom: 10px;}
     .tbl_frm01 th {width: 100%;}
     .tbl_frm01 td {width: 100%;}
@@ -428,13 +432,20 @@ tfoot th {}
     .theme_dt_img img {width: 100%;}
     .anchor .active a {background: #fff;color: #4b4b4b;}
     .dark-mode .anchor .active a {background: #272E3D !important;color: #fff !important;}
+    .toggle-switch::after {display: none;}
+    .scroll_top {right: 10px;}
+    .btn_fixed_top {right: 70px;}
 }
 
 @media (max-width: 500px) {
     #theme_list li .tmli_if>img {width: 100% !important;height: auto !important;}
     #theme_list li .tmli_if {width: 100% !important;}
     #theme_list li {width: 100%;}
-
+    #gnb .gnb_oparea ul li {width: calc(100%/3);}
+}
+@media (max-width: 360px) {
+  #gnb .gnb_oparea ul li {width: calc(100%/2);}
+  #tnb ul {flex-wrap: wrap;}
 }
 
 /* 테이블 그리드 */
@@ -1211,6 +1222,7 @@ input[type="text"]{max-width:200px}
 /* 다크모드 설정 */
 #darkmode_btn .visible.bright {display: none;}
 
+.dark-mode #wrapper {background: #151c24;}
 .dark-mode #darkmode_btn .visible.dark {display: none;}
 .dark-mode #darkmode_btn .visible.bright {display: inline-block;}
 .dark-mode #container {background: #151c24;}
