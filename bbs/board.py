@@ -505,7 +505,7 @@ def write_form_edit(
     )
 
 
-@router.post("/write_update/")
+@router.post("/write_update")
 async def write_update(
     request: Request,
     db: Session = Depends(get_db),
@@ -527,6 +527,9 @@ async def write_update(
     """
     게시글을 Table 추가한다.
     """
+    if not compare_token(request, token, 'board_write'):
+        raise AlertException("토큰이 유효하지 않습니다.", 403)
+    
     config = request.state.config
     # 게시판 정보 조회
     board = db.get(Board, bo_table)
@@ -557,9 +560,12 @@ async def write_update(
     if not board_config.is_link_level():
         form_data.wr_link1 = ""
         form_data.wr_link2 = ""
+        
+    exists_write = db.query(model_write).filter_by(wr_id=wr_id).one_or_none()
 
     # 글 등록
-    if compare_token(request, token, 'write_insert'):
+    if not exists_write:
+        
         # Captcha 검증
         if board_config.use_captcha:
             captcha_cls = get_current_captcha_cls(config.cf_captcha)
@@ -612,7 +618,8 @@ async def write_update(
             send_write_mail(request, board, write, parent_write)
 
     # 글 수정
-    elif compare_token(request, token, 'write_update'):
+    else:
+        
         if not board_config.is_modify_by_comment(wr_id):
             raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_modify}건 이상 존재하므로 수정 할 수 없습니다.", 403)
     
@@ -628,11 +635,9 @@ async def write_update(
                 setattr(write, field, value)
 
         # 분류 수정 시 댓글/답글도 같이 수정
-        db.query(model_write).filter(model_write.wr_parent == wr_id).update({"ca_name": form_data.ca_name})
-        db.commit()
-    # 토큰 오류
-    else:
-        raise AlertException("토큰이 유효하지 않습니다.", 403)
+        if form_data.ca_name:
+            db.query(model_write).filter(model_write.wr_parent == wr_id).update({"ca_name": form_data.ca_name})
+            db.commit()
 
     # 공지글 설정
     board.bo_notice = board_config.set_board_notice(write.wr_id, notice)
