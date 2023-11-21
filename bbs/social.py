@@ -18,7 +18,7 @@ from lib.social.social import oauth, SocialProvider, get_social_profile, get_soc
 from common.common import AlertException, valid_email, hash_password, session_member_key, insert_point, TEMPLATES_DIR, \
     is_admin, default_if_none, generate_token
 from common.database import get_db, SessionLocal
-from common.dataclassform import MemberForm
+from common.formclass import MemberForm
 
 from common.models import Config, MemberSocialProfiles, Member
 

@@ -4,7 +4,7 @@ from starlette.responses import Response, JSONResponse
 
 from common.common import *
 from common.database import get_db
-from common.dataclassform import AutoSaveForm
+from common.formclass import AutoSaveForm
 from common.models import AutoSave
 
 router = APIRouter()

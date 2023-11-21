@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from common.common import *
 from common.database import get_db
-from common.dataclassform import QaContentForm
+from common.formclass import QaContentForm
 from common.models import QaConfig, QaContent
 
 router = APIRouter()

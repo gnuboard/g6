@@ -10,7 +10,7 @@ from common.pbkdf2 import create_hash
 from common.board_lib import *
 from common.common import *
 from common.database import get_db
-from common.dataclassform import WriteForm, WriteCommentForm
+from common.formclass import WriteForm, WriteCommentForm
 from common.models import AutoSave, Board, BoardGood, Group, GroupMember, Scrap
 
 router = APIRouter()

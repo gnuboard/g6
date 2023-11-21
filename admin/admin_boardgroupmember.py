@@ -8,7 +8,7 @@ from common.database import get_db, engine
 import common.models as models 
 from common.common import *
 from typing import List, Optional
-from common.dataclassform import BoardForm
+from common.formclass import BoardForm
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 
 router = APIRouter()

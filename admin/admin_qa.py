@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from common.common import *
 from common.database import get_db
-from common.dataclassform import QaConfigForm
+from common.formclass import QaConfigForm
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import QaConfig
 

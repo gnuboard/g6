@@ -8,7 +8,7 @@ from common.database import get_db
 import common.models as models
 import datetime
 from common.common import *
-from common.dataclassform import MemberForm
+from common.formclass import MemberForm
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.pbkdf2 import create_hash
 import html

@@ -16,7 +16,7 @@ import random
 import os
 from typing import List, Optional
 import socket
-from common.dataclassform import ConfigForm
+from common.formclass import ConfigForm
 
 
 # from pydanticmodel import ConfigForm
