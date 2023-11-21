@@ -45,7 +45,7 @@ border:1px solid #558ab7 !important;
 .placeholdersjs {color:#aaa !important}
 
 /* 레이아웃 크기 지정 */
-#hd, #wrapper, #ft {min-width:1200px}
+/* #hd, #wrapper, #ft {min-width:1200px} */
 
 #hd_pop,
 #hd_wrapper,
@@ -53,7 +53,7 @@ border:1px solid #558ab7 !important;
 
 #gnb .gnb_wrap,
 #container_wr,
-#ft_wr {width:1200px}
+#ft_wr {max-width:1200px;width: 100%;}
 
 /* 팝업레이어 */
 #hd_pop {z-index:1000;position:relative;margin:0 auto;height:0}
@@ -163,14 +163,14 @@ box-shadow:0 2px 5px rgba(0,0,0,0.2)}
 #gnb_all_bg {display:none;background:rgba(0,0,0,0.1);width:100%;height:100%;position:fixed;left:0;top:0;z-index:999}
 
 /* 중간 레이아웃 */
-#wrapper {}
+#wrapper {background: #f8f8f8;}
 #container_wr:after {display:block;visibility:hidden;clear:both;content:""}
 #container_wr {margin:0 auto;zoom:1}
-#aside {float:right;width:235px;padding:0;height:100%;margin:20px 0 20px 20px}
+#aside {float:left;width:235px;padding:0;height:100%;margin:20px 20px 20px 0px}
 
-#container {position:relative;float:left;min-height:500px;height:auto !important;margin:20px 0;height:500px;font-size:1em;width:930px;zoom:1}
+#container {position:relative;float:right;min-height:500px;height:auto !important;margin:20px 0;height:500px;font-size:1em;width:calc(100% - 260px);zoom:1;padding: 20px;border-radius: 8px;box-shadow: 0px 3px 6px #00000010;background: #fff;}
 #container:after {display:block;visibility:hidden;clear:both;content:""}
-#container_title {font-size:1.333em;margin:0 auto;font-weight:bold}
+#container_title {font-size:1.333em;margin:0 auto;font-weight:bold;color: #ff8269;}
 #container_title span {margin:0 auto 10px;display:block;line-height:30px}
 
 .lt_wr {width:32%}
@@ -192,7 +192,7 @@ box-shadow:0 2px 5px rgba(0,0,0,0.2)}
 #ft_company h2 {font-size:1.2em;margin-bottom:20px}
 #ft_company {font-weight:normal;color:#e3e3e3;line-height:2em}
 #ft_catch {margin:20px 0 10px}
-#ft_copy {text-align:center;width:1200px;margin:0 auto;padding:20px 0;color:#5b5b5b;font-size:0.92em;border-top:1px solid #383838}
+#ft_copy {text-align:center;max-width:1200px;margin:0 auto;padding:20px 0;color:#5b5b5b;font-size:0.92em;border-top:1px solid #383838}
 #top_btn {position:fixed;bottom:20px;right:20px;width:50px;height:50px;line-height:46px;border:2px solid #333;color:#333;text-align:center;font-size:15px;z-index:90;background:rgba(255,255,255,0.5)}
 #top_btn:hover {border-color:#3059c7;background:#3059c7;color:#fff}
 
@@ -264,8 +264,8 @@ button.btn02 {display:inline-block;margin:0;padding:7px;border:1px solid #3b3c3f
 
 .btn_confirm {text-align:right} /* 서식단계 진행 */
 
-.btn_submit {border:0;background:#3a8afd;color:#fff;cursor:pointer;border-radius:3px}
-.btn_submit:hover {background:#2375eb}
+.btn_submit {border:0;background:#ff8269;color:#fff;cursor:pointer;border-radius:3px}
+.btn_submit:hover {background:#e7664d}
 .btn_close {border:1px solid #dcdcdc;cursor:pointer;border-radius:3px;background:#fff}
 a.btn_close {text-align:center;line-height:50px}
 
@@ -317,13 +317,9 @@ a.btn_admin,.btn_admin {display:inline-block;color:#d13f4a;text-decoration:none;
 .tbl_frm01 table {width:100%;border-collapse:collapse;border-spacing:0}
 .tbl_frm01 th {width:70px;padding:7px 13px;border:1px solid #e9e9e9;border-left:0;background:#f5f8f9;text-align:left}
 .tbl_frm01 td {padding:7px 10px;border-top:1px solid #e9e9e9;border-bottom:1px solid #e9e9e9;background:transparent}
-.wr_content textarea,.tbl_frm01 textarea,.form_01 textarea, .frm_input {border:1px solid #d0d3db;background:#fff;color:#000;vertical-align:middle;border-radius:3px;padding:5px;
--webkit-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
--moz-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
-}
+.wr_content textarea,.tbl_frm01 textarea,.form_01 textarea, .frm_input {border:1px solid #d0d3db;background:#fff;color:#000;vertical-align:middle;border-radius:3px;padding:5px;}
 .tbl_frm01 textarea {padding:2px 2px 3px}
-.frm_input {height:40px}
+.frm_input {height:45px}
 
 .full_input {width:100%}
 .half_input {width:49.5%}
@@ -350,6 +346,17 @@ box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
 .form_01 .margin_input {margin-right:1%}
 .form_01 textarea {height:100px;width:100%}
 .form_01 .frm_label {display:inline-block;width:130px}
+.form_01 ul li input[type="file"]::file-selector-button {
+  width: 150px;
+  height: 30px;
+  background: #ff8269;
+  color: #fff;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  margin-right: 10px;
+}
+.form_01 ul li input[type="file"]::file-selector-button:hover {background: #e7664d;}
 
 /* 자료 없는 목록 */
 .empty_table {padding:50px 0 !important;text-align:center}
