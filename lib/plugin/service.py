@@ -57,6 +57,24 @@ def get_all_plugin_info(plugin_dir):
     return all_plugin_info
 
 
+def get_all_plugin_module_names(plugin_dir=PLUGIN_DIR):
+    """
+    플러그인 폴더 내부의 모든 패키지들의 이름을 가져온다. (비활성화 포함)
+    Args:
+        plugin_dir (str): 플러그인 폴더
+    Returns:
+        plugin_name_list (list): 플러그인 이름 목록
+    """
+    plugin_names = []
+    for module_name in os.listdir(plugin_dir):
+        module_path = os.path.join(plugin_dir, module_name)
+        if module_name == '__pycache__':
+            continue
+        if os.path.isdir(module_path):
+            plugin_names.append(module_name)
+    return plugin_names
+
+
 def get_plugin_state_change_time():
     """플러그인 상태 변경 시간을 반환한다.
     Returns:
@@ -120,7 +138,6 @@ def get_plugin_info(module_name, plugin_dir=PLUGIN_DIR):
                 if match:
                     info[key] = match.group(1).strip()
 
-        
     return info
 
 
@@ -157,7 +174,7 @@ def read_plugin_state() -> List[PluginState]:
     if not os.path.isfile(PLUGIN_STATE_FILE):
         return []
 
-    lock = FileLock("plugin_states.json.lock",timeout=5)
+    lock = FileLock("plugin_states.json.lock", timeout=5)
     with lock:
         with open(PLUGIN_STATE_FILE, 'r', encoding="UTF-8") as file:
             plugin_state = json.load(file)
@@ -188,7 +205,6 @@ def write_plugin_state(plugin_states: List[PluginState]):
         return
     plugin_states_dict = [asdict(plugin) for plugin in plugin_states]
 
-    
     lock = FileLock("plugin_states.json.lock", timeout=5)
     with lock:
         with open(PLUGIN_STATE_FILE, 'w', encoding="UTF-8") as file:

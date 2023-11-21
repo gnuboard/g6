@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from common import *
 from database import get_db
 from dataclassform import PollForm
-from lib.plugin.service import get_admin_plugin_menus
+from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from models import Poll, PollEtc 
 
 router = APIRouter()
@@ -14,6 +14,7 @@ templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 templates.env.globals['getattr'] = getattr
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
+templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals["generate_token"] = generate_token

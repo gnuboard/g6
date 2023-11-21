@@ -1,0 +1,4 @@
+{# get_all_plugin_module_names() // 플러그인 모듈이름 배열로 리턴 #}
+{% for plugin in get_all_plugin_module_names() %}
+    <link rel="stylesheet" href="/plugin/{{ plugin }}/static/css/admin_menu.css">
+{% endfor %}

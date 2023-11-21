@@ -9,12 +9,13 @@ import models
 from common import *
 from typing import List, Optional
 from dataclassform import BoardForm
-from lib.plugin.service import get_admin_plugin_menus
+from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 
 router = APIRouter()
 templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 templates.env.globals['getattr'] = getattr
 templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
+templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['option_selected'] = option_selected
 templates.env.globals['get_skin_select'] = get_skin_select
