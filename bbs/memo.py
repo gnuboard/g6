@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, Form, Path, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from common import *
-from database import get_db
-from models import Member, Memo
+from common.common import *
+from common.database import get_db
+from common.models import Member, Memo
 
 router = APIRouter()
 templates = MyTemplates(directory=[CAPTCHA_PATH, TEMPLATES_DIR])

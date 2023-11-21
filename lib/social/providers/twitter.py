@@ -1,7 +1,7 @@
 from typing import Optional, Tuple, Union, Any
 
 from lib.social.social import SocialProvider
-from dataclassform import SocialProfile
+from common.dataclassform import SocialProfile
 
 
 class Twitter(SocialProvider):

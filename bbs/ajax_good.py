@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, Form, Path, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from common import *
-from database import get_db
-from models import Board, BoardGood
+from common.common import *
+from common.database import get_db
+from common.models import Board, BoardGood
 
 router = APIRouter()
 

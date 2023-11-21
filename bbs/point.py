@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
-from common import *
-from database import get_db
-from models import Point
+from common.common import *
+from common.database import get_db
+from common.models import Point
 
 router = APIRouter()
 templates = MyTemplates(directory=TEMPLATES_DIR)

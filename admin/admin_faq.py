@@ -2,12 +2,12 @@ from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from database import get_db
+from common.database import get_db
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
-from models import FaqMaster, Faq
+from common.models import FaqMaster, Faq
 import shutil
 
-from common import *
+from common.common import *
 
 
 router = APIRouter()

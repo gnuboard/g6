@@ -5,13 +5,13 @@ import datetime
 from fastapi import APIRouter, Depends, Request, File, Form, Path, Query
 from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import aliased, Session
-from pbkdf2 import create_hash
+from common.pbkdf2 import create_hash
 
-from board_lib import *
-from common import *
-from database import get_db
-from dataclassform import WriteForm, WriteCommentForm
-from models import AutoSave, Board, BoardGood, Group, GroupMember, Scrap
+from common.board_lib import *
+from common.common import *
+from common.database import get_db
+from common.dataclassform import WriteForm, WriteCommentForm
+from common.models import AutoSave, Board, BoardGood, Group, GroupMember, Scrap
 
 router = APIRouter()
 templates = MyTemplates(directory=[EDITOR_PATH, CAPTCHA_PATH, TEMPLATES_DIR])

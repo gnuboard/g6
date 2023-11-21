@@ -6,10 +6,10 @@ from sqlalchemy import func
 from sqlalchemy.orm import aliased, Session
 from typing import List
 
-from common import *
-from database import get_db
+from common.common import *
+from common.database import get_db
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
-from models import Board, Content, Group, Menu
+from common.models import Board, Content, Group, Menu
 
 router = APIRouter()
 admin_templates = MyTemplates(directory=ADMIN_TEMPLATES_DIR)

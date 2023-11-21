@@ -3,12 +3,12 @@ from main import app
 from fastapi import APIRouter, Form, File, Depends
 from starlette.responses import RedirectResponse
 
-from common import *
-from database import get_db
-from dataclassform import MemberForm
+from common.common import *
+from common.database import get_db
+from common.dataclassform import MemberForm
 
-from models import Member, MemberSocialProfiles
-from pbkdf2 import validate_password, create_hash
+from common.models import Member, MemberSocialProfiles
+from common.pbkdf2 import validate_password, create_hash
 
 router = APIRouter()
 templates = Jinja2Templates(directory=[TEMPLATES_DIR, CAPTCHA_PATH], extensions=["jinja2.ext.i18n"])

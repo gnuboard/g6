@@ -6,17 +6,17 @@ from sqlalchemy import MetaData, Table
 from sqlalchemy.orm import Session
 
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
-from database import SessionLocal, get_db, engine
+from common.database import SessionLocal, get_db, engine
 
-# from models import create_dynamic_create_write_table
-import models
-from common import *
+# from common.models import create_dynamic_create_write_table
+import common.models as models
+from common.common import *
 from jinja2 import Environment, FileSystemLoader
 import random
 import os
 from typing import List, Optional
 import socket
-from dataclassform import ConfigForm
+from common.dataclassform import ConfigForm
 
 
 # from pydanticmodel import ConfigForm

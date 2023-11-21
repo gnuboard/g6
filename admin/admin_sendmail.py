@@ -4,9 +4,9 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import asc, desc, and_, or_, func, extract
 from sqlalchemy.orm import Session
-from database import get_db, engine
-import models 
-from common import *
+from common.database import get_db, engine
+import common.models as models 
+from common.common import *
 from fastapi import FastAPI, HTTPException
 import ssl
 import os

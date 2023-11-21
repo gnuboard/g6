@@ -6,12 +6,12 @@ from pydantic import TypeAdapter
 
 from lib.plugin.service import register_statics, import_plugin_admin, get_plugin_state_change_time, \
     read_plugin_state, import_plugin_by_states, import_plugin_router, delete_router_by_tagname
-from database import get_db
+from common.database import get_db
 from starlette.middleware.sessions import SessionMiddleware
-from common import *
+from common.common import *
 
 from user_agents import parse
-import models
+import common.models as models
 import secrets
 
 # models.Base.metadata.create_all(bind=engine)

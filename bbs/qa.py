@@ -3,10 +3,10 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from common import *
-from database import get_db
-from dataclassform import QaContentForm
-from models import QaConfig, QaContent
+from common.common import *
+from common.database import get_db
+from common.dataclassform import QaContentForm
+from common.models import QaConfig, QaContent
 
 router = APIRouter()
 templates = MyTemplates(directory=TEMPLATES_DIR)

@@ -10,7 +10,7 @@ import logging
 from admin.admin import templates
 from lib.plugin import service
 from lib.plugin.service import PLUGIN_DIR, get_all_plugin_info, PluginState
-from common import AlertException
+from common.common import AlertException
 from fastapi import HTTPException
 
 router = APIRouter()

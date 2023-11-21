@@ -2,10 +2,10 @@ from fastapi import APIRouter, Form, Depends
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from common import *
-from database import get_db
+from common.common import *
+from common.database import get_db
 
-from pbkdf2 import validate_password
+from common.pbkdf2 import validate_password
 
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR, extensions=["jinja2.ext.i18n"])

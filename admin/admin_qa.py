@@ -3,11 +3,11 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from common import *
-from database import get_db
-from dataclassform import QaConfigForm
+from common.common import *
+from common.database import get_db
+from common.dataclassform import QaConfigForm
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
-from models import QaConfig
+from common.models import QaConfig
 
 router = APIRouter()
 templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
