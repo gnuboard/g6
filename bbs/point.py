@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
-from common.common import *
+from lib.common import *
 from common.database import get_db
 from common.models import Point
 

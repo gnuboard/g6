@@ -3,11 +3,11 @@ from fastapi.responses import RedirectResponse, Response
 from sqlalchemy.orm import Session
 
 from bbs.member_profile import validate_nickname, validate_userid
-from common.common import *
+from lib.common import *
 from common.database import get_db
 from common.formclass import MemberForm
 from common.models import Member
-from common.pbkdf2 import create_hash
+from lib.pbkdf2 import create_hash
 
 router = APIRouter()
 

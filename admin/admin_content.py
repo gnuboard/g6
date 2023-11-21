@@ -6,7 +6,7 @@ from common.formclass import ContentForm
 from common.database import get_db
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import Content
-from common.common import *
+from lib.common import *
 
 router = APIRouter()
 templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)

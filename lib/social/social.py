@@ -5,7 +5,7 @@ from authlib.integrations.starlette_client import OAuth
 from starlette.requests import Request
 
 from lib.social import providers
-from common.common import AlertException
+from lib.common import AlertException
 from common.formclass import SocialProfile
 from common.models import Config
 

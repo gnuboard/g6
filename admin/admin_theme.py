@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, FastAPI, Form, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from common.common import *
+from lib.common import *
 import os
 from PIL import Image
 from common.database import get_db

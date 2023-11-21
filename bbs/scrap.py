@@ -4,8 +4,8 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import literal
 from sqlalchemy.orm import aliased, Session
 
-from common.board_lib import *
-from common.common import *
+from lib.board_lib import *
+from lib.common import *
 from common.database import get_db
 from common.models import Scrap
 

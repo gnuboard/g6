@@ -2,7 +2,7 @@ from fastapi import APIRouter, File
 from pydantic import TypeAdapter
 from starlette.responses import JSONResponse
 
-from common.common import *
+from lib.common import *
 
 router = APIRouter(prefix="/ckeditor4")
 

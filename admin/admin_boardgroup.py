@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import asc, desc
 from common.database import get_db
 import common.models as models 
-from common.common import *
+from lib.common import *
 from common.formclass import GroupForm
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 

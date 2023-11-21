@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from common.database import get_db, engine
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import *
-from common.common import *
+from lib.common import *
 import matplotlib.pyplot as plt
 import plotly.express as px
 import pandas as pd

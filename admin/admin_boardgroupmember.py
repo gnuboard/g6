@@ -6,7 +6,7 @@ from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session, aliased
 from common.database import get_db, engine
 import common.models as models 
-from common.common import *
+from lib.common import *
 from typing import List, Optional
 from common.formclass import BoardForm
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names

@@ -6,7 +6,7 @@ from sqlalchemy import asc, desc, and_, or_, func, extract
 from sqlalchemy.orm import Session
 from common.database import get_db, engine
 import common.models as models 
-from common.common import *
+from lib.common import *
 from fastapi import FastAPI, HTTPException
 import ssl
 import os

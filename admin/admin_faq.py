@@ -7,7 +7,7 @@ from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_nam
 from common.models import FaqMaster, Faq
 import shutil
 
-from common.common import *
+from lib.common import *
 
 
 router = APIRouter()

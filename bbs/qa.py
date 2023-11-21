@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from common.common import *
+from lib.common import *
 from common.database import get_db
 from common.formclass import QaContentForm
 from common.models import QaConfig, QaContent

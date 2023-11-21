@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, Form
 from sqlalchemy.orm import Session
 
-from common.common import *
+from lib.common import *
 from common.database import get_db
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
-from common.pbkdf2 import validate_password
+from lib.pbkdf2 import validate_password
 
 router = APIRouter()
 templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)

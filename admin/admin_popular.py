@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from common.common import *
+from lib.common import *
 from common.database import get_db
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import Popular

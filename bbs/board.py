@@ -5,10 +5,10 @@ import datetime
 from fastapi import APIRouter, Depends, Request, File, Form, Path, Query
 from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import aliased, Session
-from common.pbkdf2 import create_hash
+from lib.pbkdf2 import create_hash
 
-from common.board_lib import *
-from common.common import *
+from lib.board_lib import *
+from lib.common import *
 from common.database import get_db
 from common.formclass import WriteForm, WriteCommentForm
 from common.models import AutoSave, Board, BoardGood, Group, GroupMember, Scrap

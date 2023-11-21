@@ -6,7 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import aliased, Session
 from typing import List
 
-from common.common import *
+from lib.common import *
 from common.database import get_db
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import Board, Content, Group, Menu

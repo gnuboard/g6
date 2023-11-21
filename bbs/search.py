@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, Request, Query
 from sqlalchemy.orm import Session
 
-from common.board_lib import *
-from common.common import *
+from lib.board_lib import *
+from lib.common import *
 from common.database import get_db
 from common.models import Board, Group, GroupMember
 

@@ -10,7 +10,7 @@ from common.database import SessionLocal, get_db, engine
 
 # from common.models import create_dynamic_create_write_table
 import common.models as models
-from common.common import *
+from lib.common import *
 from jinja2 import Environment, FileSystemLoader
 import random
 import os
