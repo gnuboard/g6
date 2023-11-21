@@ -2,7 +2,7 @@ from fastapi import APIRouter, Form, File, UploadFile, Depends
 from fastapi.responses import RedirectResponse, Response
 from sqlalchemy.orm import Session
 
-from _bbs.member_profile import validate_nickname, validate_userid
+from bbs.member_profile import validate_nickname, validate_userid
 from common import *
 from database import get_db
 from dataclassform import MemberForm

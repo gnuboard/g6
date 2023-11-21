@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from _bbs.social import SocialAuthService
+from bbs.social import SocialAuthService
 from common import *
 from database import get_db
 from main import templates

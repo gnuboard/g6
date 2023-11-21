@@ -12,7 +12,7 @@ from starlette.requests import Request
 from starlette.responses import RedirectResponse
 from starlette.templating import Jinja2Templates
 
-from _bbs.member_profile import validate_nickname, validate_userid
+from bbs.member_profile import validate_nickname, validate_userid
 from lib.social import providers
 from lib.social.social import oauth, SocialProvider, get_social_profile, get_social_login_token
 from common import AlertException, valid_email, hash_password, session_member_key, insert_point, TEMPLATES_DIR, \

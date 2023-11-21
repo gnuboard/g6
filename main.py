@@ -24,25 +24,25 @@ templates.env.filters["default_if_none"] = default_if_none
 templates.env.filters["datetime_format"] = datetime_format
 
 from admin.admin import router as admin_router
-from _bbs.board import router as board_router
-from _bbs.login import router as login_router
-from _bbs.register import router as register_router
-from _bbs.content import router as content_router
-from _bbs.faq import router as faq_router
-from _bbs.qa import router as qa_router
-from _bbs.member_profile import router as user_profile_router
-from _bbs.profile import router as profile_router
-from _bbs.memo import router as memo_router
-from _bbs.poll import router as poll_router
-from _bbs.point import router as point_router
-from _bbs.scrap import router as scrap_router
-from _bbs.board_new import router as board_new_router
-from _bbs.ajax_good import router as good_router
-from _bbs.ajax_autosave import router as autosave_router
-from _bbs.member_leave import router as member_leave_router
-from _bbs.social import router as social_router
-from _bbs.password import router as password_router
-from _bbs.search import router as search_router
+from bbs.board import router as board_router
+from bbs.login import router as login_router
+from bbs.register import router as register_router
+from bbs.content import router as content_router
+from bbs.faq import router as faq_router
+from bbs.qa import router as qa_router
+from bbs.member_profile import router as user_profile_router
+from bbs.profile import router as profile_router
+from bbs.memo import router as memo_router
+from bbs.poll import router as poll_router
+from bbs.point import router as point_router
+from bbs.scrap import router as scrap_router
+from bbs.board_new import router as board_new_router
+from bbs.ajax_good import router as good_router
+from bbs.ajax_autosave import router as autosave_router
+from bbs.member_leave import router as member_leave_router
+from bbs.social import router as social_router
+from bbs.password import router as password_router
+from bbs.search import router as search_router
 from lib.editor.ckeditor4 import router as editor_router
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
