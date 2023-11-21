@@ -9,6 +9,7 @@ import models
 import datetime
 from common import *
 from dataclassform import MemberForm
+from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from pbkdf2 import create_hash
 import html
 import re
@@ -19,6 +20,8 @@ templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.globals["getattr"] = getattr
 templates.env.globals["today"] = SERVER_TIME.strftime("%Y%m%d")
+templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
+templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 templates.env.globals["get_selected"] = get_selected
 templates.env.globals["get_member_level_select"] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link

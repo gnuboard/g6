@@ -8,12 +8,14 @@ from typing import List
 
 from common import *
 from database import get_db
+from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from models import Board, Content, Group, Menu
 
 router = APIRouter()
 admin_templates = MyTemplates(directory=ADMIN_TEMPLATES_DIR)
-
-MENU_KEY = "100290"  
+admin_templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
+admin_templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
+MENU_KEY = "100290"
 
 
 @router.get("/menu_list")

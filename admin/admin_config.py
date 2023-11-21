@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import MetaData, Table
 from sqlalchemy.orm import Session
 
-from lib.plugin.service import get_admin_plugin_menus
+from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from database import SessionLocal, get_db, engine
 
 # from models import create_dynamic_create_write_table
@@ -33,6 +33,7 @@ templates.env.globals["get_member_level_select"] = get_member_level_select
 templates.env.globals["option_array_checked"] = option_array_checked
 templates.env.globals["get_admin_menus"] = get_admin_menus
 templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
+templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 templates.env.globals["generate_token"] = generate_token
 templates.env.globals["get_client_ip"] = get_client_ip
 

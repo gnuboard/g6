@@ -8,6 +8,7 @@ from database import get_db
 import models 
 from common import *
 from dataclassform import GroupForm
+from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 
 router = APIRouter()
 templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
@@ -16,6 +17,8 @@ templates.env.globals['get_selected'] = get_selected
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['generate_token'] = generate_token
+templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
+templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 
 @router.get("/boardgroup_list")
 def boardgroup_list(request: Request, db: Session = Depends(get_db)):

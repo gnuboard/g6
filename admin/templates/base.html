@@ -7,6 +7,7 @@
 <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 <link rel="stylesheet" href="/static/admin/admin.css">
 <link rel="stylesheet" href="/static/admin/font-awesome.min.css">
+    
 <script>
 // 자바스크립트에서 사용하는 전역변수 선언
 var g5_url       = "{{request.base_url}}";
@@ -25,10 +26,12 @@ var g5_admin_url = "/admin";
 <script src="/static/js/jquery-migrate-1.4.1.min.js"></script>
 <script src="/static/js/jquery.menu.js"></script>
 <script src="/static/js/common.js"></script>
-<script src="/static/js/wrest.js"></script>
+
 <script src="/static/js/placeholders.min.js"></script>
 {% block head %}
 {% endblock %}
+{% include "plugin_menu_header.html" %}
+
 </head>
 <body>
 <div id="hd_login_msg">최고관리자 최고관리자님 로그인 중 <a href="/bbs/logout">로그아웃</a></div>

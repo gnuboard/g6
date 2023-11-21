@@ -9,7 +9,7 @@ import models
 from common import *
 from typing import List, Optional
 from dataclassform import BoardForm
-
+from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 
 router = APIRouter()
 templates = Jinja2Templates(directory=[ADMIN_TEMPLATES_DIR, EDITOR_PATH])
@@ -24,7 +24,8 @@ templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals["generate_token"] = generate_token
 templates.env.globals["editor_path"] = editor_path
-
+templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
+templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 
 @router.get("/board_list")
 def board_list(request: Request, db: Session = Depends(get_db), search_params: dict = Depends(common_search_query_params)):

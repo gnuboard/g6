@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from common import *
 from database import get_db
 from dataclassform import NewwinForm
+from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from models import NewWin
 
 router = APIRouter()
@@ -12,6 +13,8 @@ templates = MyTemplates(directory=[ADMIN_TEMPLATES_DIR, EDITOR_PATH])
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals["today"] = datetime.now().strftime("%Y-%m-%d 00:00:00")
 templates.env.globals["after_7days"] = (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d 23:59:59")
+templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
+templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 
 MENU_KEY = "100310"
 

@@ -6,6 +6,7 @@ from sqlalchemy import asc, desc, case, func, and_, or_, extract, text
 from sqlalchemy.sql.expression import func, extract
 from sqlalchemy.orm import Session
 from database import get_db, engine
+from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from models import *
 from common import *
 import matplotlib.pyplot as plt
@@ -24,6 +25,8 @@ templates.env.globals['get_editor_select'] = get_editor_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
+templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
+templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 templates.env.globals["domain_mail_host"] = domain_mail_host
 templates.env.globals["editor_path"] = editor_path
 

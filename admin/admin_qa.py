@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from common import *
 from database import get_db
 from dataclassform import QaConfigForm
+from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from models import QaConfig
 
 router = APIRouter()
@@ -13,6 +14,8 @@ templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.globals['getattr'] = getattr
 templates.env.globals["get_admin_menus"] = get_admin_menus
+templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
+templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 templates.env.globals["get_head_tail_img"] = get_head_tail_img
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals["get_skin_select"] = get_skin_select

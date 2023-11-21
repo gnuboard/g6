@@ -6,12 +6,15 @@ from sqlalchemy.orm import Session
 
 from common import *
 from database import get_db
+from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from models import Popular
 
 router = APIRouter()
 templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['get_admin_menus'] = get_admin_menus
+templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
+templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 templates.env.globals["generate_token"] = generate_token
 
 LIST_MENU_KEY = "300300"

@@ -1,9 +1,8 @@
 {% extends "base.html" %}
 {% block head %}
-    <link rel="stylesheet" href="{{request.host_url}}/plugin/demo_plugin/static/css/admin.css">
-    {# 상대주소를 사용할 수없으므로 {{request.host_url}} 를 붙여야합니다. /plugin/플러그인 모듈이름/static/css/admin.css #}
+    <link rel="stylesheet" href="/plugin/demo_plugin/static/css/admin.css">
+    {# /plugin/플러그인 모듈이름/static/css/admin.css #}
 {% endblock %}
-
 
 {% block title %}
     {{ title }}
