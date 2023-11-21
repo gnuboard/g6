@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from dataclassform import ContentForm
 from database import get_db
+from lib.plugin.service import get_admin_plugin_menus
 from models import Content
 from common import *
 
@@ -11,6 +12,7 @@ router = APIRouter()
 templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.globals["now"] = now
+templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["get_skin_select"] = get_skin_select
 templates.env.globals["get_admin_menus"] = get_admin_menus
 templates.env.globals["get_head_tail_img"] = get_head_tail_img

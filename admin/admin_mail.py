@@ -19,6 +19,8 @@ from sse_starlette.sse import EventSourceResponse
 import time
 import asyncio
 
+from lib.plugin.service import get_admin_plugin_menus
+
 router = APIRouter()
 templates = Jinja2Templates(directory=[ADMIN_TEMPLATES_DIR, EDITOR_PATH])
 templates.env.globals['getattr'] = getattr
@@ -30,6 +32,7 @@ templates.env.globals['get_editor_select'] = get_editor_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
+templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["domain_mail_host"] = domain_mail_host
 templates.env.globals["editor_path"] = editor_path
 

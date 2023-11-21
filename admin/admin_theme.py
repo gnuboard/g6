@@ -6,6 +6,7 @@ from common import *
 import os
 from PIL import Image
 from database import get_db
+from lib.plugin.service import get_admin_plugin_menus
 from models import Config
 from sqlalchemy import update
 import re
@@ -16,7 +17,7 @@ THEME_DIR = TEMPLATES  # Replace with actual theme directory
 
 router = APIRouter()
 templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
-
+templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 def get_theme_dir():
     result_array = []
 

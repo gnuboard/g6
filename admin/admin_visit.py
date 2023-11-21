@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from common import *
 from database import get_db
+from lib.plugin.service import get_admin_plugin_menus
 from pbkdf2 import validate_password
 
 router = APIRouter()
@@ -16,7 +17,7 @@ templates.env.globals['get_editor_select'] = get_editor_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
-
+templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 VISIT_MENU_KEY = "200800"
 
 
