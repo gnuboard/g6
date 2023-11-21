@@ -1,3 +1,4 @@
 /* gnb - admin global navigation bar  menu icon*/
-#gnb .gnb_li .btn_op.menu-plugin{background:url(/static/admin/img/menu-4-1.png) 50% 50% no-repeat #ebebeb }
-#gnb .on .btn_op.menu-plugin{background:url(/static/admin/img/menu-4.png) 50% 50% no-repeat #fff}
+/*.btn_op.menu-플러그인폴더이름   */
+#gnb .gnb_li .btn_op.menu-demo_plugin {background:url(/plugin/demo_plugin/static/img/img.png) 50% 50% no-repeat #ebebeb}
+#gnb .on .btn_op.menu-demo_plugin {background:url(/plugin/demo_plugin/static/img/img.png) 50% 50% no-repeat #fff}
