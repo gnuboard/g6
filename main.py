@@ -70,7 +70,7 @@ app.include_router(editor_router, prefix="/editor", tags=["editor"])
 
 # 전역 캐시
 cache_plugin_menu = cachetools.Cache(maxsize=1)
-cache_plugin_state = cachetools.Cache(maxsize=1)  # 플러그인정보목록
+cache_plugin_state = cachetools.Cache(maxsize=1)
 
 # 활성화된 플러그인만 로딩
 plugin_states = read_plugin_state()
