@@ -13,24 +13,9 @@
         <a href="/admin/plugin_list" class="ov_listall">전체목록</a>
         <span class="btn_ov01">
             <span class="ov_txt">전체 </span>
-            <span class="ov_num"> {{ total_count }} 건 </span>
+            <span class="ov_num"> {{ total_count }} </span>
         </span>
-
-        <form name="fsearch" id="fsearch" class="local_sch01 local_sch" method="get">
-            <label for="sfl" class="sound_only">검색대상</label>
-            <select name="sfl" id="sfl">
-                <option value="plugin_name" 
-                        {{ get_selected('plugin_name', request.state.sfl if request.state.sfl else '' ) }}>
-                        플러그인 이름
-                </option>
-            </select>
-            <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
-            <input type="text" name="stx" value="{{ request.state.stx if request.state.stx else '' }}" 
-                   id="stx" required class="required frm_input">
-            <input type="submit" class="btn_submit" value="검색">
-        </form>
-
-
+        
         {% if plugin_list %}
         <ul id="theme_list">
             {% for plugin in plugin_list %}
@@ -151,6 +136,5 @@
         });
     });
 </script>
-
 
 {% endblock %}

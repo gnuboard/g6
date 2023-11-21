@@ -16,7 +16,7 @@ import main
 # 추가/활성/비활화한다.
 
 PLUGIN_DIR = 'plugin'
-PLUGIN_STATE_FILE = 'plugin_states.json'
+PLUGIN_STATE_FILE_PATH = f'{PLUGIN_DIR}/plugin_states.json'
 
 
 @dataclass
@@ -80,10 +80,10 @@ def get_plugin_state_change_time():
     Returns:
         mtime (float): 플러그인 상태 변경 시간
     """
-    if not os.path.isfile(PLUGIN_STATE_FILE):
+    if not os.path.isfile(PLUGIN_STATE_FILE_PATH):
         return 0
 
-    return os.path.getmtime(PLUGIN_STATE_FILE)
+    return os.path.getmtime(PLUGIN_STATE_FILE_PATH)
 
 
 def get_plugin_info(module_name, plugin_dir=PLUGIN_DIR):
@@ -106,10 +106,9 @@ def get_plugin_info(module_name, plugin_dir=PLUGIN_DIR):
                 from PIL import Image
                 img = Image.open(screenshot)
                 if img.format == "PNG":
-                    screenshot_url = f"/admin/screenshot/{module_name}"
+                    screenshot_url = (f"/admin/plugin/screenshot/{module_name}")
             except:
                 pass
-
         info['screenshot'] = screenshot_url
         info['module_name'] = module_name
 
@@ -171,12 +170,12 @@ def read_plugin_state() -> List[PluginState]:
     Examples:
         플러그인 상태값 변경시
     """
-    if not os.path.isfile(PLUGIN_STATE_FILE):
+    if not os.path.isfile(PLUGIN_STATE_FILE_PATH):
         return []
 
-    lock = FileLock("plugin_states.json.lock", timeout=5)
+    lock = FileLock(f"{PLUGIN_DIR}/plugin_states.json.lock", timeout=5)
     with lock:
-        with open(PLUGIN_STATE_FILE, 'r', encoding="UTF-8") as file:
+        with open(PLUGIN_STATE_FILE_PATH, 'r', encoding="UTF-8") as file:
             plugin_state = json.load(file)
 
     plugin_state_list = []
@@ -197,17 +196,17 @@ def write_plugin_state(plugin_states: List[PluginState]):
     Examples:
         초기 설치, 관리자메뉴에서 플러그인 상태값 변경시에만 사용
     """
-    if not os.path.exists(PLUGIN_STATE_FILE):
-        with open(PLUGIN_STATE_FILE, 'w', encoding="UTF-8") as file:
+    if not os.path.exists(PLUGIN_STATE_FILE_PATH):
+        with open(PLUGIN_STATE_FILE_PATH, 'w', encoding="UTF-8") as file:
             json.dump({}, file, indent=4, ensure_ascii=False)
 
     if not plugin_states:
         return
     plugin_states_dict = [asdict(plugin) for plugin in plugin_states]
 
-    lock = FileLock("plugin_states.json.lock", timeout=5)
+    lock = FileLock(f"{PLUGIN_DIR}/plugin_states.json.lock", timeout=5)
     with lock:
-        with open(PLUGIN_STATE_FILE, 'w', encoding="UTF-8") as file:
+        with open(PLUGIN_STATE_FILE_PATH, 'w', encoding="UTF-8") as file:
             json.dump(plugin_states_dict, file, indent=4, ensure_ascii=False)
 
 

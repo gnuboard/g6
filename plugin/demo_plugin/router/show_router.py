@@ -1,5 +1,3 @@
-import logging
-
 from fastapi import APIRouter
 from starlette.requests import Request
 from starlette.templating import Jinja2Templates
@@ -7,7 +5,6 @@ from starlette.templating import Jinja2Templates
 from lib.common import TEMPLATES_DIR
 from ..__init__ import module_name
 
-logging.info('load show_router.py')
 show_router = APIRouter()
 
 PLUGIN_TEMPLATES_DIR = f"plugin/{module_name}/templates"
