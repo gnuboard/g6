@@ -86,7 +86,7 @@ def auth_list(request: Request, db: Session = Depends(get_db), search_params: di
     # JSON 파일에서 데이터 로드
     with open('admin/admin_menu_bbs.json', 'r', encoding='utf-8') as file:
         auth_menu = json.load(file)
-        print(auth_menu)
+        # print(auth_menu)
         
     # 사전의 각 키-값 쌍을 확인
     auth_options = []
