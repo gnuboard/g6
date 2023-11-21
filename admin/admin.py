@@ -4,10 +4,10 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import MetaData, Table
 from sqlalchemy.orm import Session
-from database import SessionLocal, get_db, engine
-# from models import create_dynamic_create_write_table
-import models 
-from common import *
+from common.database import SessionLocal, get_db, engine
+# from common.models import create_dynamic_create_write_table
+import common.models as models 
+from lib.common import *
 from jinja2 import Environment, FileSystemLoader
 import random
 import os

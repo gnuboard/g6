@@ -2,8 +2,8 @@
 import pkgutil
 import importlib
 from lib.social.social import register_social_provider
-from database import SessionLocal
-from models import Config
+from common.database import SessionLocal
+from common.models import Config
 
 # Package.
 package_name = 'lib.social.providers'

@@ -4,13 +4,13 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
-from database import get_db
-import models
+from common.database import get_db
+import common.models as models
 import datetime
-from common import *
-from dataclassform import MemberForm
+from lib.common import *
+from common.formclass import MemberForm
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
-from pbkdf2 import create_hash
+from lib.pbkdf2 import create_hash
 import html
 import re
 

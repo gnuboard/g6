@@ -1,8 +1,6 @@
 # 플러그인을 관리하는 메뉴
 # 플러그인을 활성/비활성하고 플러그인의 신규 플러그인을 등록한다.
-
 import logging
-
 from fastapi import APIRouter
 from fastapi import HTTPException
 from fastapi.params import Form
@@ -10,9 +8,11 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, FileResponse
 
 from admin.admin import templates
-from common import AlertException
 from lib.plugin import service
 from lib.plugin.service import PLUGIN_DIR, get_all_plugin_info, PluginState, get_plugin_info
+from lib.plugin import service
+from lib.common import AlertException
+from fastapi import HTTPException
 
 logging.basicConfig(level=logging.INFO)
 router = APIRouter()

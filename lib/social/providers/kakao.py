@@ -1,7 +1,7 @@
 from typing import Optional, Tuple
 
 from lib.social.social import SocialProvider
-from dataclassform import SocialProfile
+from common.formclass import SocialProfile
 
 
 class Kakao(SocialProvider):

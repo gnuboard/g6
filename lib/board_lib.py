@@ -4,9 +4,9 @@ from fastapi import Request
 from sqlalchemy import and_, distinct, or_
 from sqlalchemy.orm import Query as SqlQuery
 
-from common import *
-from database import SessionLocal
-from models import Board, BoardNew, Scrap, WriteBaseModel
+from lib.common import *
+from common.database import SessionLocal
+from common.models import Board, BoardNew, Scrap, WriteBaseModel
 
 
 class BoardConfig():

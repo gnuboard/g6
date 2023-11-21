@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 
 from bbs.social import SocialAuthService
-from common import *
-from database import get_db
+from lib.common import *
+from common.database import get_db
 from main import templates
 
 router = APIRouter()

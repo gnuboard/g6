@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, Request, Query
 from sqlalchemy.orm import Session
 
-from board_lib import *
-from common import *
-from database import get_db
-from models import Board, Group, GroupMember
+from lib.board_lib import *
+from lib.common import *
+from common.database import get_db
+from common.models import Board, Group, GroupMember
 
 router = APIRouter()
 templates = MyTemplates(directory=TEMPLATES_DIR)

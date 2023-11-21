@@ -17,9 +17,9 @@ from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract, literal
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
-from models import Auth, Config, Member, Memo, Board, BoardFile, BoardNew, Group, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
-from models import WriteBaseModel
-from database import SessionLocal, engine, DB_TABLE_PREFIX
+from common.models import Auth, Config, Member, Memo, Board, BoardFile, BoardNew, Group, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
+from common.models import WriteBaseModel
+from common.database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
 import json
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -1676,7 +1676,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
         str: 최신글 HTML
     """
     # Lazy import
-    from board_lib import BoardConfig, get_list, get_list_thumbnail
+    from lib.board_lib import BoardConfig, get_list, get_list_thumbnail
 
     templates = MyTemplates(directory=TEMPLATES_DIR)
     templates.env.globals["get_list_thumbnail"] = get_list_thumbnail

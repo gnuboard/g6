@@ -3,9 +3,10 @@ from starlette.requests import Request
 from starlette.templating import Jinja2Templates
 from admin.admin_config import get_admin_plugin_menus
 from lib.plugin.service import get_all_plugin_module_names
-from common import ADMIN_TEMPLATES_DIR, get_member_id_select, get_skin_select, get_editor_select, get_selected, \
+from lib.common import ADMIN_TEMPLATES_DIR, get_member_id_select, get_skin_select, get_editor_select, get_selected, \
     get_member_level_select, option_array_checked, get_admin_menus, generate_token, get_client_ip
 from ..__init__ import module_name
+
 PLUGIN_TEMPLATES_DIR = f"plugin/{module_name}/templates"
 templates = Jinja2Templates(directory=[PLUGIN_TEMPLATES_DIR, ADMIN_TEMPLATES_DIR])
 templates.env.globals["getattr"] = getattr
@@ -20,7 +21,6 @@ templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["generate_token"] = generate_token
 templates.env.globals["get_client_ip"] = get_client_ip
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
-
 admin_router = APIRouter(tags=['demo_admin'])
 
 

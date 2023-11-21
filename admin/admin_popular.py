@@ -4,10 +4,10 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from common import *
-from database import get_db
+from lib.common import *
+from common.database import get_db
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
-from models import Popular
+from common.models import Popular
 
 router = APIRouter()
 templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)

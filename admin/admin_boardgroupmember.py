@@ -4,11 +4,11 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session, aliased
-from database import get_db, engine
-import models 
-from common import *
+from common.database import get_db, engine
+import common.models as models 
+from lib.common import *
 from typing import List, Optional
-from dataclassform import BoardForm
+from common.formclass import BoardForm
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 
 router = APIRouter()

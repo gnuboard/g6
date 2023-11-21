@@ -15,12 +15,12 @@ from starlette.templating import Jinja2Templates
 from bbs.member_profile import validate_nickname, validate_userid
 from lib.social import providers
 from lib.social.social import oauth, SocialProvider, get_social_profile, get_social_login_token
-from common import AlertException, valid_email, hash_password, session_member_key, insert_point, TEMPLATES_DIR, \
+from lib.common import AlertException, valid_email, hash_password, session_member_key, insert_point, TEMPLATES_DIR, \
     is_admin, default_if_none, generate_token
-from database import get_db, SessionLocal
-from dataclassform import MemberForm
+from common.database import get_db, SessionLocal
+from common.formclass import MemberForm
 
-from models import Config, MemberSocialProfiles, Member
+from common.models import Config, MemberSocialProfiles, Member
 
 router = APIRouter()
 templates = Jinja2Templates(directory=TEMPLATES_DIR, extensions=["jinja2.ext.i18n"])

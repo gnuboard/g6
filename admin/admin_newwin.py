@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from common import *
-from database import get_db
-from dataclassform import NewwinForm
+from lib.common import *
+from common.database import get_db
+from common.formclass import NewwinForm
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
-from models import NewWin
+from common.models import NewWin
 
 router = APIRouter()
 templates = MyTemplates(directory=[ADMIN_TEMPLATES_DIR, EDITOR_PATH])

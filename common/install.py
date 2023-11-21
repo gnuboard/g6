@@ -19,11 +19,11 @@ import getpass
 from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError, OperationalError
 from sqlalchemy import text, MetaData
-from common import dynamic_create_write_table
-from database import engine, SessionLocal, DB_TABLE_PREFIX
-import models
+from lib.common import dynamic_create_write_table
+from common.database import engine, SessionLocal, DB_TABLE_PREFIX
+import common.models as models
 from version import G6_VERSION
-from pbkdf2 import create_hash
+from lib.pbkdf2 import create_hash
 
 
 models.Base.metadata.create_all(bind=engine)

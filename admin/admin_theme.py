@@ -2,12 +2,12 @@ from fastapi import APIRouter, Depends, FastAPI, Form, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from common import *
+from lib.common import *
 import os
 from PIL import Image
-from database import get_db
+from common.database import get_db
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
-from models import Config
+from common.models import Config
 from sqlalchemy import update
 import re
 from pathlib import Path

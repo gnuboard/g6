@@ -5,10 +5,10 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import asc, desc, case, func, and_, or_, extract, text
 from sqlalchemy.sql.expression import func, extract
 from sqlalchemy.orm import Session
-from database import get_db, engine
+from common.database import get_db, engine
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
-from models import *
-from common import *
+from common.models import *
+from lib.common import *
 import matplotlib.pyplot as plt
 import plotly.express as px
 import pandas as pd
