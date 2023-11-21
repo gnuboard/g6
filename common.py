@@ -39,7 +39,7 @@ load_dotenv()
 
 # 전역변수 선언(global variables)
 TEMPLATES = "templates"
-WIDGET_PATH = "_widget"
+WIDGET_PATH = "widget"
 
 CAPTCHA_PATH = f"{WIDGET_PATH}/captcha"
 EDITOR_PATH = f"{WIDGET_PATH}/editor"
