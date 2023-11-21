@@ -173,7 +173,7 @@ def read_plugin_state() -> List[PluginState]:
     if not os.path.isfile(PLUGIN_STATE_FILE_PATH):
         return []
 
-    lock = FileLock("plugin_states.json.lock", timeout=5)
+    lock = FileLock(f"{PLUGIN_DIR}/plugin_states.json.lock", timeout=5)
     with lock:
         with open(PLUGIN_STATE_FILE_PATH, 'r', encoding="UTF-8") as file:
             plugin_state = json.load(file)
@@ -204,7 +204,7 @@ def write_plugin_state(plugin_states: List[PluginState]):
         return
     plugin_states_dict = [asdict(plugin) for plugin in plugin_states]
 
-    lock = FileLock("plugin_states.json.lock", timeout=5)
+    lock = FileLock(f"{PLUGIN_DIR}/plugin_states.json.lock", timeout=5)
     with lock:
         with open(PLUGIN_STATE_FILE_PATH, 'w', encoding="UTF-8") as file:
             json.dump(plugin_states_dict, file, indent=4, ensure_ascii=False)
