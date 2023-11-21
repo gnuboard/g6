@@ -15,7 +15,7 @@ import main
 # __init__.py 는 필수 __init__.py 가 있어야 파이썬 모듈로 인식한다.
 # 추가/활성/비활화한다.
 
-PLUGIN_DIR = '_plugin'
+PLUGIN_DIR = 'plugin'
 PLUGIN_STATE_FILE = 'plugin_states.json'
 
 

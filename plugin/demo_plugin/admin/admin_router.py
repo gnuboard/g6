@@ -6,7 +6,7 @@ from common import ADMIN_TEMPLATES_DIR, get_member_id_select, get_skin_select, g
     get_member_level_select, option_array_checked, get_admin_menus, generate_token, get_client_ip
 from ..__init__ import module_name
 
-PLUGIN_TEMPLATES_DIR = f"_plugin/{module_name}/templates"
+PLUGIN_TEMPLATES_DIR = f"plugin/{module_name}/templates"
 templates = Jinja2Templates(directory=[PLUGIN_TEMPLATES_DIR, ADMIN_TEMPLATES_DIR])
 templates.env.globals["getattr"] = getattr
 templates.env.globals["get_member_id_select"] = get_member_id_select

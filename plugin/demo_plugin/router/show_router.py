@@ -10,7 +10,7 @@ from ..__init__ import module_name
 logging.info('load show_router.py')
 show_router = APIRouter()
 
-PLUGIN_TEMPLATES_DIR = f"_plugin/{module_name}/templates"
+PLUGIN_TEMPLATES_DIR = f"plugin/{module_name}/templates"
 templates = Jinja2Templates(directory=[TEMPLATES_DIR, PLUGIN_TEMPLATES_DIR])
 
 
