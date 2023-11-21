@@ -1,1 +1,0 @@
-show demo_plugin/static/test.txt
