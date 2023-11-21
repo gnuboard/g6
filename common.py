@@ -31,8 +31,8 @@ import threading
 import cachetools
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from _lib.captcha.recaptch_v2 import ReCaptchaV2
-from _lib.captcha.recaptch_inv import ReCaptchaInvisible
+from lib.captcha.recaptch_v2 import ReCaptchaV2
+from lib.captcha.recaptch_inv import ReCaptchaInvisible
 
 load_dotenv()
 

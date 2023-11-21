@@ -14,7 +14,7 @@ import os
 from typing import List, Optional
 import socket
 import hashlib
-from _lib.plugin.service import get_admin_plugin_menus
+from lib.plugin.service import get_admin_plugin_menus
 
 router = APIRouter()
 templates = MyTemplates(directory=ADMIN_TEMPLATES_DIR)

@@ -1,12 +1,12 @@
-# Path: _lib/social/social.py
+# Path: lib/social/social.py
 import pkgutil
 import importlib
-from _lib.social.social import register_social_provider
+from lib.social.social import register_social_provider
 from database import SessionLocal
 from models import Config
 
 # Package.
-package_name = '_lib.social.providers'
+package_name = 'lib.social.providers'
 
 # pkgutil 로 서브디렉토리의 모듈을 가져온다.
 package = importlib.import_module(package_name)

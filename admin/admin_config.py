@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import MetaData, Table
 from sqlalchemy.orm import Session
 
-from _lib.plugin.service import get_admin_plugin_menus
+from lib.plugin.service import get_admin_plugin_menus
 from database import SessionLocal, get_db, engine
 
 # from models import create_dynamic_create_write_table

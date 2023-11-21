@@ -1,26 +1,28 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union, Any
 
-from _lib.social.social import SocialProvider
+from lib.social.social import SocialProvider
 from dataclassform import SocialProfile
 
 
-class Naver(SocialProvider):
-    """네이버 소셜 로그인
-    doc: https://developers.naver.com/docs/login/api/
+class Facebook(SocialProvider):
+    """소셜 로그인
+    doc: https://developers.facebook.com/docs/permissions/
+    https://developers.facebook.com/docs/graph-api/reference/user/#default-public-profile-fields
     클래스 메서드만 사용하며 인스턴스를 생성하지 않는다.
     """
-    provider_name = "naver"
+    provider_name = "facebook"
+    version = "v18.0"  # https://developers.facebook.com/docs/graph-api/changelog/versions
 
     @classmethod
     def register(cls, oauth_instance, client_id, client_secret):
         oauth_instance.register(
-            name="naver",
-            access_token_url="https://nid.naver.com/oauth2.0/token",
+            name=cls.provider_name,
+            access_token_url=f"https://graph.facebook.com/{cls.version}/oauth/access_token",
             access_token_params=None,
-            authorize_url="https://nid.naver.com/oauth2.0/authorize",
+            authorize_url=f"https://www.facebook.com/{cls.version}/dialog/oauth",
             authorize_params=None,
-            api_base_url="https://openapi.naver.com/v1/nid/me",
-            client_kwargs={"scope": "user:email"},
+            api_base_url=f"https://graph.facebook.com",
+            client_kwargs={"scope": "email public_profile"},
         )
         oauth_instance.__getattr__(cls.provider_name).client_id = client_id
         oauth_instance.__getattr__(cls.provider_name).client_secret = client_secret
@@ -38,14 +40,13 @@ class Naver(SocialProvider):
             HTTPException: HTTP status code 200 아닐 때 발생
             ValueError: 소셜 로그인 실패 시 발생
         """
-        response = await oauth_instance.__getattr__(cls.provider_name).get('me', token=auth_token)
+        response = await oauth_instance.__getattr__(cls.provider_name).get(
+            f"{cls.version}/me",
+            token=auth_token
+        )
         # raise http status code 200 아닐 때 발생
         response.raise_for_status()
-        result = response.json()
-        if result.get("message", "") != "success":
-            raise ValueError(result)
-
-        return result
+        return response.json()
 
     @classmethod
     def convert_gnu_profile_data(cls, response) -> Tuple[str, SocialProfile]:
@@ -54,17 +55,16 @@ class Naver(SocialProvider):
         Args:
             response: 소셜 제공자에서 받은 프로필 정보
         """
-        response = response.get("response", {})
+
         email = response.get("email", "")
         socialprofile = SocialProfile(
             mb_id=response.get("id", ""),
             provider=cls.provider_name,
             identifier=response.get("id", ""),
-            profile_url="",
-            photourl=response.get("profile_image", ""),
-            displayname=response.get("nickname", ""),
-            disciption=""
+            profile_url=response.get("profile_image_url_https", ""),
+            photourl=response.get("profile_image_url_https", ""),
+            displayname=response.get("screen_name", ""),
+            disciption=response.get("description", "")
         )
-    
-        return email, socialprofile
 
+        return email, socialprofile

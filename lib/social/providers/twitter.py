@@ -1,6 +1,6 @@
 from typing import Optional, Tuple, Union, Any
 
-from _lib.social.social import SocialProvider
+from lib.social.social import SocialProvider
 from dataclassform import SocialProfile
 
 

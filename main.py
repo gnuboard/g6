@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import TypeAdapter
 
-from _lib.plugin.service import register_statics, import_plugin_admin, get_plugin_state_change_time, \
+from lib.plugin.service import register_statics, import_plugin_admin, get_plugin_state_change_time, \
     read_plugin_state, import_plugin_by_states, import_plugin_router, delete_router_by_tagname
 from database import get_db
 from starlette.middleware.sessions import SessionMiddleware
@@ -43,7 +43,7 @@ from _bbs.member_leave import router as member_leave_router
 from _bbs.social import router as social_router
 from _bbs.password import router as password_router
 from _bbs.search import router as search_router
-from _lib.editor.ckeditor4 import router as editor_router
+from lib.editor.ckeditor4 import router as editor_router
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
 app.include_router(login_router, prefix="/bbs", tags=["login"])

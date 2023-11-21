@@ -8,8 +8,8 @@ from starlette.responses import JSONResponse
 import logging
 
 from admin.admin import templates
-from _lib.plugin import service
-from _lib.plugin.service import PLUGIN_DIR, get_all_plugin_info, PluginState
+from lib.plugin import service
+from lib.plugin.service import PLUGIN_DIR, get_all_plugin_info, PluginState
 from common import AlertException
 from fastapi import HTTPException
 

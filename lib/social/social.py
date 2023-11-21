@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 from authlib.integrations.starlette_client import OAuth
 from starlette.requests import Request
 
-from _lib.social import providers
+from lib.social import providers
 from common import AlertException
 from dataclassform import SocialProfile
 from models import Config
