@@ -1576,6 +1576,7 @@ class MyTemplates(Jinja2Templates):
         self.env.globals["get_selected"] = get_selected
         self.env.globals["get_member_icon"] = get_member_icon
         self.env.globals["get_member_image"] = get_member_image
+        self.env.filters["number_format"] = number_format
 
         # 사용자 템플릿, 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
         if TEMPLATES_DIR in directory:
@@ -1976,3 +1977,18 @@ def extract_alt_attribute(img_tag: str) -> str:
     alt_match = re.search(r'alt=[\"\']?([^\"\']*)[\"\']?', img_tag, re.IGNORECASE)
     alt = str(alt_match.group(1)) if alt_match else ''
     return alt
+
+
+def number_format(number: int) -> str:
+    """숫자를 천단위로 구분하여 반환하는 템플릿 필터
+
+    Args:
+        number (int): 숫자
+
+    Returns:
+        str: 천단위로 구분된 숫자
+    """
+    if isinstance(number, int):
+        return "{:,}".format(number)
+    else:
+        return "Invalid input. Please provide an integer."
