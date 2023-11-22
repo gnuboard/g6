@@ -7,7 +7,7 @@ class ReCaptchaV2:
     """
 
     VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify'
-    TEMPLATE_PATH = 'recaptcha_v2.html'
+    TEMPLATE_NAME = 'recaptcha_v2.html'
 
     @classmethod
     async def verify(cls, recaptcha_secret_key, captcha_response_key: str = None) -> bool:

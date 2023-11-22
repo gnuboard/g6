@@ -39,10 +39,8 @@ load_dotenv()
 
 # 전역변수 선언(global variables)
 TEMPLATES = "templates"
-WIDGET_PATH = "common/widget"
-
-CAPTCHA_PATH = f"{WIDGET_PATH}/captcha"
-EDITOR_PATH = f"{WIDGET_PATH}/editor"
+CAPTCHA_PATH = "lib/captcha/templates"
+EDITOR_PATH = "lib/editor/templates"
 
 def get_theme_from_db(config=None):
     # main.py 에서 config 를 인수로 받아서 사용
@@ -1790,7 +1788,7 @@ def captcha_widget(request):
     """
     cls = get_current_captcha_cls(captcha_name=request.state.config.cf_captcha)
     if cls:
-        return cls.TEMPLATE_PATH
+        return cls.TEMPLATE_NAME
 
     return ''  # 템플릿 출력시 비어있을때는 빈 문자열
 
