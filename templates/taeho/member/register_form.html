@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-
+<div class="register_wrap input_form">
 {% if errors %}
 <ul class="errors">
     {% for error in errors %}
@@ -49,7 +49,7 @@
                                maxlength="20" placeholder="아이디">
                         <span id="msg_mb_id"></span>
                     </li>
-                    <li class="half_input left_input margin_input">
+                    <li class="left_input margin_input">
                         <label for="reg_mb_password">비밀번호 (필수)</label>
                         <input type="password" name="mb_password" id="reg_mb_password"
                                {{ "required" if is_register else None }}
@@ -335,6 +335,7 @@
             <button type="submit" id="btn_submit" class="btn_submit" accesskey="s">{% if is_register %}회원가입{% else %}정보수정{% endif %}</button>
         </div>
     </form>
+</div>
 </div>
 <script>
     "use strict";

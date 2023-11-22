@@ -146,7 +146,7 @@
 #fregisterform .frm_address {margin:5px 0 0}
 #fregisterform #mb_addr3 {display:inline-block;margin:5px 0 0;vertical-align:middle}
 #fregisterform #mb_addr_jibeon {display:block;margin:5px 0 0;}
-#fregisterform .btn_confirm {text-align:center}
+#fregisterform .btn_confirm {text-align:center;max-width: 600px;}
 #fregisterform .form_01 div {margin:0 0 20px}
 #fregisterform .captcha {display:block;margin:5px 0 0}
 #fregisterform .reg_mb_img_file img {max-width:100%;height:auto}

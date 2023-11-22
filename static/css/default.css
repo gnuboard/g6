@@ -68,23 +68,23 @@ border:1px solid #558ab7 !important;
 .hd_pops_footer .hd_pops_close {background:#393939;position:absolute;top:0;right:0}
 
 /* 상단 레이아웃 */
-#hd {background:#212020}
+#hd {background:#f8f8f8;padding-top: 10px;}
 #hd_h1 {position:absolute;font-size:0;line-height:0;overflow:hidden}
 
 #tnb {border-bottom:1px solid #383838;margin:0 auto}
 #tnb:after {display:block;visibility:hidden;clear:both;content:""}
 #tnb .inner {margin:0 auto}
 
-#hd_wrapper {position:relative;margin:0 auto;height:140px;zoom:1}
-#hd_wrapper:after {display:block;visibility:hidden;clear:both;content:""}
+#hd_wrapper {max-width: 1200px;margin: 0 auto;position: relative;background: #fff;border-radius: 8px;box-shadow: 0px 3px 6px #00000010;height: 80px;display: flex;justify-content: space-between;align-items: center;padding: 0px 20px;}
 
-#logo {float:left;padding:30px 0 0}
+#logo {float:left;}
 
-.hd_sch_wr {float:left;padding:30px 0;width:445px;margin-left:65px}
+.hd_sch_wr {width:445px;}
 #hd_sch h3 {position:absolute;font-size:0;line-height:0;overflow:hidden}
-#hd_sch {border-radius:30px;overflow:hidden}
-#hd_sch #sch_stx {float:left;width:385px;height:45px;padding-left:10px;border-radius:30px 0 0 30px;background:#2c2c2c;border:0;border-right:0;font-size:1.25em;color:#fff}
-#hd_sch #sch_submit {float:left;width:60px;height:45px;border:0;background:#2c2c2c;color:#fff;border-radius:0 30px 30px 0;cursor:pointer;font-size:16px}
+#hd_sch {text-align:center;padding:0px;border: 1px solid #e4e4e4;border-radius: 4px;}
+#hd_sch form {position:relative;padding-right:40px}
+#hd_sch #sch_stx {width:100%;height:38px;margin-right:40px;background:#fff;border: none;padding-left: 10px;}
+#hd_sch #sch_submit {position:absolute;top:0;right:0;width:40px;height:38px;border:0;border-radius:3px;cursor:pointer;color:#ff8269;background:#fff;font-size:1.25em}
 
 #hd_define {float:left}
 #hd_define:after {display:block;visibility:hidden;clear:both;content:""}
@@ -102,10 +102,10 @@ border:1px solid #558ab7 !important;
 #hd_qnb .visit .visit-num {display:inline-block;line-height:16px;padding:0 5px;margin-left:5px;border-radius:10px;background:#da22f5;color:#fff;font-size:10px}
 
 
-.hd_login {position:absolute;right:0;top:60px}
+.hd_login {}
 .hd_login li {float:left;margin:0 5px;border-left:1px solid #616161;padding-left:10px;line-height:13px}
 .hd_login li:first-child {border-left:0}
-.hd_login a {color:#fff}
+.hd_login a {color:#000}
 
 
 /* 메인메뉴 */
@@ -168,10 +168,11 @@ box-shadow:0 2px 5px rgba(0,0,0,0.2)}
 #container_wr {margin:0 auto;zoom:1}
 #aside {float:left;width:235px;padding:0;height:100%;margin:20px 20px 20px 0px}
 
-#container {position:relative;float:right;min-height:500px;height:auto !important;margin:20px 0;height:500px;font-size:1em;width:calc(100% - 260px);zoom:1;padding: 20px;border-radius: 8px;box-shadow: 0px 3px 6px #00000010;background: #fff;}
+#container {position:relative;float:right;min-height:500px;height:auto !important;margin:20px 0 56px;height:500px;font-size:1em;width:calc(100% - 260px);zoom:1;padding: 20px;border-radius: 8px;box-shadow: 0px 3px 6px #00000010;background: #fff;}
 #container:after {display:block;visibility:hidden;clear:both;content:""}
 #container_title {font-size:1.333em;margin:0 auto;font-weight:bold;color: #ff8269;}
-#container_title span {margin:0 auto 10px;display:block;line-height:30px}
+#container_title span {margin:0 auto 24px;display:block;line-height:30px}
+.register_tit {text-align: center;}
 
 .lt_wr {width:32%}
 .lt_wr:nth-child(3n+1) {clear:both}
@@ -181,18 +182,18 @@ box-shadow:0 2px 5px rgba(0,0,0,0.2)}
 .latest_top_wr:after {display:block;visibility:hidden;clear:both;content:""}
 
 /* 하단 레이아웃 */
-#ft {background:#212020;margin:0 auto;text-align:center}
+#ft {background:#f8f3f2;margin:0 auto;text-align:center}
 #ft h1 {position:absolute;font-size:0;line-height:0;overflow:hidden}
 #ft_wr {max-width:1240px;margin:0;padding:40px 0;position:relative;display:inline-block;text-align:left}
 #ft_wr:after {display:block;visibility:hidden;clear:both;content:""}
 #ft_wr .ft_cnt {width:25%;float:left;padding:0 20px}
 
 #ft_link {text-align:left}
-#ft_link a {display:block;color:#fff;line-height:2em;font-weight:bold}
+#ft_link a {display:block;color:#525252;line-height:2em;font-weight:bold}
 #ft_company h2 {font-size:1.2em;margin-bottom:20px}
-#ft_company {font-weight:normal;color:#e3e3e3;line-height:2em}
+#ft_company {font-weight:normal;color:#525252;line-height:2em}
 #ft_catch {margin:20px 0 10px}
-#ft_copy {text-align:center;max-width:1200px;margin:0 auto;padding:20px 0;color:#5b5b5b;font-size:0.92em;border-top:1px solid #383838}
+#ft_copy {text-align:center;margin:0 auto;padding:16px 0;color:#999999;font-size:0.92em;background: #f1e7e5;font-weight: bold;}
 #top_btn {position:fixed;bottom:20px;right:20px;width:50px;height:50px;line-height:46px;border:2px solid #333;color:#333;text-align:center;font-size:15px;z-index:90;background:rgba(255,255,255,0.5)}
 #top_btn:hover {border-color:#3059c7;background:#3059c7;color:#fff}
 
@@ -321,7 +322,7 @@ a.btn_admin,.btn_admin {display:inline-block;color:#d13f4a;text-decoration:none;
 .tbl_frm01 textarea {padding:2px 2px 3px}
 .frm_input {height:45px}
 
-.full_input {width:100%}
+.full_input {width:320px}
 .half_input {width:49.5%}
 .twopart_input {width:385px;margin-right:10px}
 .tbl_frm01 textarea, .write_div textarea {width:100%;height:100px}
@@ -342,7 +343,6 @@ a.btn_admin,.btn_admin {display:inline-block;color:#d13f4a;text-decoration:none;
 .form_01 li {margin-bottom:10px}
 .form_01 ul:after,
 .form_01 li:after {display:block;visibility:hidden;clear:both;content:""}
-.form_01 .left_input {float:left}
 .form_01 .margin_input {margin-right:1%}
 .form_01 textarea {height:100px;width:100%}
 .form_01 .frm_label {display:inline-block;width:130px}
