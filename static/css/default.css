@@ -77,7 +77,8 @@ border:1px solid #558ab7 !important;
 
 #hd_wrapper {max-width: 1200px;margin: 0 auto;position: relative;background: #fff;border-radius: 8px;box-shadow: 0px 3px 6px #00000010;height: 80px;display: flex;justify-content: space-between;align-items: center;padding: 0px 20px;}
 
-#logo {float:left;}
+#logo {float:left;width: 160px;}
+#logo img {width: 100%;}
 
 .hd_sch_wr {width:445px;}
 #hd_sch h3 {position:absolute;font-size:0;line-height:0;overflow:hidden}
@@ -478,4 +479,13 @@ box-sizing:content-box;
 
 .dynamic_layer:hover {
   opacity: 0.9; /* 마우스 오버 시 투명도 조절 */
+}
+
+@media (max-width: 1100px)  {
+  #aside {
+    display: none;
+  }
+  #container {
+    width: 100%;
+  }
 }
