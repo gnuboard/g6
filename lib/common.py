@@ -1788,7 +1788,7 @@ def captcha_widget(request):
     """
     cls = get_current_captcha_cls(captcha_name=request.state.config.cf_captcha)
     if cls:
-        return cls.TEMPLATE_PATH
+        return cls.TEMPLATE_NAME
 
     return ''  # 템플릿 출력시 비어있을때는 빈 문자열
 
