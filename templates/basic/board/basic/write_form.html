@@ -70,7 +70,7 @@
                 </li>
             {% endif %}
             {% if is_secret %}
-                {% if is_admin or is_secret %}
+                {% if is_admin or is_secret == 1 %}
                     <li class="chk_box">
                         <input type="checkbox" id="secret" name="secret"  class="selec_chk" value="secret" {{ secret_checked }}>
                         <label for="secret"><span>&nbsp;</span>비밀글</label>

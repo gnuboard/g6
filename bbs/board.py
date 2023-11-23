@@ -374,6 +374,7 @@ def write_form_add(
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
 
+    parent_write = None
     if parent_id:
         # 답글 작성권한 검증
         if not board_config.is_reply_level():
@@ -407,7 +408,8 @@ def write_form_add(
             "write": None,
             "is_notice": True if admin_type and not parent_id else False,
             "is_html": board_config.is_html_level(),
-            "is_secret": board.bo_use_secret,
+            "is_secret": 1 if is_secret_write(parent_write) else board.bo_use_secret,
+            "secret_checked": "checked" if is_secret_write(parent_write) else "",
             "is_mail": board_config.use_email,
             "recv_email_checked": "checked",
             "is_link": board_config.is_link_level(),
@@ -491,7 +493,8 @@ def write_form_edit(
             "is_html": board_config.is_html_level(),
             "html_checked": html_checked,
             "html_value": html_value,
-            "is_secret": board.bo_use_secret if "secret" in write.wr_option else True,
+            "is_secret": 1 if is_secret_write(write) else board.bo_use_secret,
+            "secret_checked": "checked" if is_secret_write(write) else "",
             "is_mail": board_config.use_email,
             "recv_email_checked": "checked" if "mail" in write.wr_option else "",
             "is_link": board_config.is_link_level(),
