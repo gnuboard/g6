@@ -551,6 +551,13 @@ async def write_update(
         if board.bo_use_secret == 2:
             secret = "secret"
 
+    # 게시글 내용 검증
+    subject_filter_word = filter_words(request, form_data.wr_subject)
+    content_filter_word = filter_words(request, form_data.wr_content)
+    if subject_filter_word or content_filter_word:
+        word = subject_filter_word if subject_filter_word else content_filter_word
+        raise AlertException(f"제목/내용에 금지단어({word})가 포함되어 있습니다.", 400)
+
     # 게시글 테이블 정보 조회
     model_write = dynamic_create_write_table(bo_table)
     # 옵션 설정
@@ -1056,7 +1063,11 @@ async def write_comment_update(
     write = db.get(write_model, form.wr_id)
     if not write:
         raise AlertException(f"{form.wr_id} : 존재하지 않는 게시글입니다.", 404)
-
+    
+    # 댓글 내용 검증
+    filter_word = filter_words(request, form.wr_content)
+    if filter_word:
+        raise AlertException(f"내용에 금지단어({filter_word})가 포함되어 있습니다.", 400)
     
     if form.w == "c":
         # 글쓰기 간격 검증

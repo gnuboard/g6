@@ -2067,3 +2067,25 @@ def is_write_delay(request: Request) -> bool:
         request.session["ss_write_time"] = current_time.strftime("%Y-%m-%d %H:%M:%S")
 
     return True
+
+
+def filter_words(request: Request, contents: str) -> str:
+    """글 내용에 필터링된 단어가 있는지 확인하는 함수
+
+    Args:
+        request (Request): FastAPI Request 객체
+        contents (str): 글 내용
+
+    Returns:
+        str: 필터링된 단어가 있으면 해당 단어, 없으면 빈 문자열
+    """
+    cf_filter = request.state.config.cf_filter
+    words = cf_filter.split(",")
+    for word in words:
+        word = word.strip()
+        if not word:
+            continue
+        if word in contents:
+            return word
+
+    return ''

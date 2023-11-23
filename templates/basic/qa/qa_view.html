@@ -235,63 +235,7 @@
             
                     function fwrite_submit(f)
                     {
-                        /*
-                        var qa_content_editor_data = oEditors.getById['qa_content'].getIR();
-                        oEditors.getById['qa_content'].exec('UPDATE_CONTENTS_FIELD', []);
-                        if(jQuery.inArray(document.getElementById('qa_content').value.toLowerCase().replace(/^\s*|\s*$/g, ''), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<div><br></div>','<p></p>','<br>','']) != -1){document.getElementById('qa_content').value='';}
-                        if (!qa_content_editor_data || jQuery.inArray(qa_content_editor_data.toLowerCase(), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<p></p>','<br>']) != -1) { alert("내용을 입력해 주십시오."); oEditors.getById['qa_content'].exec('FOCUS'); return false; }
-                
-                        var subject = "";
-                        var content = "";
-                        $.ajax({
-                            url: g5_bbs_url+"/ajax.filter.php",
-                            type: "POST",
-                            data: {
-                                "subject": f.qa_subject.value,
-                                "content": f.qa_content.value
-                            },
-                            dataType: "json",
-                            async: false,
-                            cache: false,
-                            success: function(data, textStatus) {
-                                subject = data.subject;
-                                content = data.content;
-                            }
-                        });
-                
-                        if (subject) {
-                            alert("제목에 금지단어('"+subject+"')가 포함되어있습니다");
-                            f.qa_subject.focus();
-                            return false;
-                        }
-                
-                        if (content) {
-                            alert("내용에 금지단어('"+content+"')가 포함되어있습니다");
-                            if (typeof(ed_qa_content) != "undefined")
-                                ed_qa_content.returnFalse();
-                            else
-                                f.qa_content.focus();
-                            return false;
-                        }
-                
-                        $.ajax({
-                            type: "POST",
-                            url: g5_bbs_url+"/ajax.write.token.php",
-                            data: { 'token_case' : 'qa_write' },
-                            cache: false,
-                            async: false,
-                            dataType: "json",
-                            success: function(data) {
-                                if (typeof data.token !== "undefined") {
-                                    token = data.token;
-                                    if(typeof f.token === "undefined")
-                                        $(f).prepend('<input type="hidden" name="token" value="">');
-                                    $(f).find("input[name=token]").val(token);
-                                }
-                            }
-                        });*/
-                
-                        document.getElementById("btn_submit").disabled = "disabled";
+                        // document.getElementById("btn_submit").disabled = "disabled";
                 
                         return true;
                     }

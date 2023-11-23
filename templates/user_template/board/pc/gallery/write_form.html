@@ -114,40 +114,7 @@
     function fwrite_submit(f)
     {
         var wr_content_editor = document.getElementById('wr_content');
-if (!wr_content_editor.value) { alert("내용을 입력해 주십시오."); wr_content_editor.focus(); return false; }
-
-        var subject = "";
-        var content = "";
-        $.ajax({
-            url: g5_bbs_url+"/ajax.filter.php",
-            type: "POST",
-            data: {
-                "subject": f.wr_subject.value,
-                "content": f.wr_content.value
-            },
-            dataType: "json",
-            async: false,
-            cache: false,
-            success: function(data, textStatus) {
-                subject = data.subject;
-                content = data.content;
-            }
-        });
-
-        if (subject) {
-            alert("제목에 금지단어('"+subject+"')가 포함되어있습니다");
-            f.wr_subject.focus();
-            return false;
-        }
-
-        if (content) {
-            alert("내용에 금지단어('"+content+"')가 포함되어있습니다");
-            if (typeof(ed_wr_content) != "undefined")
-                ed_wr_content.returnFalse();
-            else
-                f.wr_content.focus();
-            return false;
-        }
+        if (!wr_content_editor.value) { alert("내용을 입력해 주십시오."); wr_content_editor.focus(); return false; }
 
         if (document.getElementById("char_count")) {
             if (char_min > 0 || char_max > 0) {
@@ -165,7 +132,7 @@ if (!wr_content_editor.value) { alert("내용을 입력해 주십시오."); wr_c
 
         if (!chk_captcha()) return false;
 
-        document.getElementById("btn_submit").disabled = "disabled";
+        // document.getElementById("btn_submit").disabled = "disabled";
 
         return true;
     }
