@@ -1947,3 +1947,42 @@ def cut_name(name: str, request: Request) -> str:
         return ''
 
     return name[:config.cf_cut_name] if config.cf_cut_name else name
+
+
+def delete_old_data():
+    """설정일이 지난 데이터를 삭제
+    """
+    try:
+        db = SessionLocal()
+        config = db.query(Config).first()
+
+        # 방문자 기록 삭제
+        if config.cf_visit_del > 0:
+            result = db.query(Visit).filter(Visit.vi_time < datetime.now() - timedelta(days=config.cf_visit_del)).delete()
+            print("방문자기록 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_visit_del), f"{result}건 삭제")
+
+        # 인기검색어 삭제
+        if config.cf_popular_del > 0:
+            result = db.query(Popular).filter(Popular.pp_date < datetime.now() - timedelta(days=config.cf_popular_del)).delete()
+            print("인기검색어 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_popular_del), f"{result}건 삭제")
+            
+        # 최근게시물 삭제
+        if config.cf_new_del > 0:
+            result = db.query(BoardNew).filter(BoardNew.bn_datetime < datetime.now() - timedelta(days=config.cf_new_del)).delete()
+            print("최근게시물 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_new_del), f"{result}건 삭제")
+
+        # 쪽지 삭제
+        if config.cf_memo_del > 0:
+            result = db.query(Memo).filter(Memo.me_send_datetime < datetime.now() - timedelta(days=config.cf_memo_del)).delete()
+            print("쪽지 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_memo_del), f"{result}건 삭제")
+
+        # 탈퇴회원 자동 삭제
+        if config.cf_leave_day > 0:
+            # TODO: 회원삭제 처리 추가
+            # result = db.query(Member).filter(Member.mb_leave_date < datetime.now() - timedelta(days=config.cf_leave_day)).delete()
+            # print("회원 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_leave_day), f"{result}건 삭제")
+            pass
+
+        db.commit()
+    except Exception as e:
+        print(e)
