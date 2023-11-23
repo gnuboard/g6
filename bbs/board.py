@@ -289,7 +289,8 @@ def move_update(
 
             # 복사/이동 로그 기록
             if not origin_write.wr_is_comment and config.cf_use_copy_log:
-                log_msg = f"[이 게시물은 {member.mb_nick}님에 의해 {datetime_format(datetime.now()) } {origin_board.bo_subject}에서 {act} 됨]"
+                nick = cut_name(request, member.mb_nick)
+                log_msg = f"[이 게시물은 {nick}님에 의해 {datetime_format(datetime.now()) } {origin_board.bo_subject}에서 {act} 됨]"
                 if "html" in origin_write.wr_option:
                     log_msg = f'<div class="content_{sw}">' + log_msg + '</div>'
                 else:
@@ -766,7 +767,7 @@ def read_post(
 
     # 게시글 정보 설정
     write.ip = board_config.get_display_ip(write.wr_ip)
-    write.name = write.wr_name[:config.cf_cut_name] if config.cf_cut_name else write.wr_name
+    write.name = cut_name(request, write.wr_name)
 
     # 세션 체크
     # 한번 읽은 게시글은 세션만료까지 조회수, 포인트 처리를 하지 않는다.
@@ -854,7 +855,7 @@ def read_post(
     ).order_by(model_write.wr_comment, model_write.wr_comment_reply).all()
 
     for comment in comments:
-        comment.name = comment.wr_name[:config.cf_cut_name] if config.cf_cut_name else comment.wr_name
+        comment.name = cut_name(request, comment.wr_name)
         comment.ip = board_config.get_display_ip(comment.wr_ip)
         comment.is_reply = len(comment.wr_comment_reply) < 5 and board.bo_comment_level <= member_level
         comment.is_edit = admin_type or (member and comment.mb_id == member.mb_id)

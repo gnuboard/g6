@@ -810,10 +810,8 @@ def get_list(request: Request, write: WriteBaseModel, board_config: BoardConfig,
     Returns:
         WriteBaseModel: 게시글 목록.
     """
-    config = request.state.config
-
     write.subject = board_config.cut_write_subject(write.wr_subject, subject_len)
-    write.name = write.wr_name[:config.cf_cut_name] if config.cf_cut_name else write.wr_name
+    write.name = cut_name(request, write.wr_name)
     write.email = StringEncrypt().encrypt(write.wr_email)
     write.datetime = write.wr_datetime.strftime("%y-%m-%d")
 

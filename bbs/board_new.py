@@ -57,7 +57,7 @@ def board_new_list(
                 new.subject = write.wr_subject
 
             # 작성자
-            new.name = write.wr_name
+            new.name = cut_name(request, write.wr_name)
             # 시간설정
             new.datetime = format_datetime(write.wr_datetime)
 

@@ -1929,3 +1929,21 @@ def extract_alt_attribute(img_tag: str) -> str:
     alt_match = re.search(r'alt=[\"\']?([^\"\']*)[\"\']?', img_tag, re.IGNORECASE)
     alt = str(alt_match.group(1)) if alt_match else ''
     return alt
+
+
+def cut_name(name: str, request: Request) -> str:
+    """기본환경설정 > 이름(닉네임) 표시
+
+    Args:
+        request (Request): FastAPI Request
+        name (str): 이름
+
+    Returns:
+        str: 자른 이름
+    """
+    config = request.state.config
+
+    if not name:
+        return ''
+
+    return name[:config.cf_cut_name] if config.cf_cut_name else name

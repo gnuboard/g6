@@ -136,7 +136,7 @@ async def poll_etc_update(request: Request,
                 "bbs/mail_form/poll_etc_update_mail.html", {
                     "request": request,
                     "subject": subject,
-                    "mb_name": pc_name,
+                    "mb_name": cut_name(request, pc_name),
                     "mb_id": member.mb_id if member else '비회원',
                     "content": pc_idea
                 }
