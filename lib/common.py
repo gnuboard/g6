@@ -1986,3 +1986,63 @@ def delete_old_data():
         db.commit()
     except Exception as e:
         print(e)
+
+
+def is_possible_ip(request: Request, ip: str) -> bool:
+    """IP가 접근허용된 IP인지 확인
+
+    Args:
+        request (Request): FastAPI Request 객체
+        ip (str): IP
+
+    Returns:
+        bool: 허용된 IP이면 True, 아니면 False
+    """
+    cf_possible_ip = request.state.config.cf_possible_ip
+    return check_ip_list(request, ip, cf_possible_ip, allow=True)
+
+
+def is_intercept_ip(request: Request, ip: str) -> bool:
+    """IP가 접근차단된 IP인지 확인
+
+    Args:
+        request (Request): FastAPI Request 객체
+        ip (str): IP
+
+    Returns:
+        bool: 차단된 IP이면 True, 아니면 False
+    """
+    cf_intercept_ip = request.state.config.cf_intercept_ip
+    return check_ip_list(request, ip, cf_intercept_ip, allow=False)
+        
+    
+def check_ip_list(request: Request, current_ip: str, ip_list: str, allow: bool) -> bool:
+    """IP가 특정 목록에 속하는지 확인하는 함수
+
+    Args:
+        request (Request): FastAPI Request 객체
+        ip (str): IP
+        ip_list (str): IP 목록 문자열
+        allow (bool): True인 경우 허용 목록, False인 경우 차단 목록
+
+    Returns:
+        bool: 목록에 속하면 True, 아니면 False
+    """
+    if request.state.is_super_admin:
+        return allow
+
+    ip_list = ip_list.strip()
+    if not ip_list:
+        return allow
+
+    ip_patterns = ip_list.split("\n")
+    for pattern in ip_patterns:
+        pattern = pattern.strip()
+        if not pattern:
+            continue
+        pattern = pattern.replace(".", r"\.")
+        pattern = pattern.replace("+", r"[0-9\.]+")
+        if re.match(f"^{pattern}$", current_ip):
+            return True
+
+    return False

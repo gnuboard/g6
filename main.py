@@ -168,6 +168,13 @@ async def main_middleware(request: Request, call_next):
     db.close()
     request.state.is_super_admin = is_super_admin
 
+    # 접근가능/차단 IP 체크
+    current_ip = request.client.host
+    if not is_possible_ip(request, current_ip):
+        return HTMLResponse("<meta charset=utf-8>접근이 허용되지 않은 IP 입니다.")
+    if is_intercept_ip(request, current_ip):
+        return HTMLResponse("<meta charset=utf-8>접근이 차단된 IP 입니다.")
+    
     if request.method == "GET":
         request.state.sst = request.query_params.get("sst") if request.query_params.get("sst") else ""
         request.state.sod = request.query_params.get("sod") if request.query_params.get("sod") else ""
