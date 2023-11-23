@@ -134,11 +134,26 @@
 
 /* 회원가입 입력 */
 #register_form {background:#fff;margin-bottom:20px}
-#register_form h2 {padding:40px 0px 0px;}
+#register_form h2 {padding:40px 0px 10px;}
 .register_form_inner {border-radius:3px}
-.register_form_inner ul {padding:20px 0px;}
-.register_form_inner label {display:block;margin-bottom:10px;line-height:24px}
+.register_form_inner ul {padding:10px 0px 0px;}
+.register_form_inner ul li {position: relative;padding-top: 20px;}
+.register_form_inner ul li.reg_mb_icon_file {border-top: 1px solid #eee;}
+.register_form_inner label {display:block;margin-bottom:0px;}
 .register_form_inner label.inline {display:inline}
+.register_form_inner .frm_input {border-bottom:1px solid #cacaca; padding: 5px 0px;}
+.register_form_inner label.text_input {position:absolute; left:0%; bottom:0; width:100%; line-height: 45px; text-align:left;transition: all 0.2s;}
+.register_form_inner .frm_input:focus,
+.register_form_inner .frm_input:valid,
+.register_form_inner .frm_input:-webkit-autofill {border-bottom: 2px solid #ff8269;}
+.register_form_inner .frm_input:focus + label.text_input, 
+.register_form_inner .frm_input:valid + label.text_input,
+.register_form_inner .frm_input:-webkit-autofill + label.text_input { bottom: 40%; font-size:12px;color: #ff8269;}  /* input에 글을 입력하고 포커스가 지나간 상태에서 제어하려면 valid 선택자를 써야한다. */
+/* 포커스 될 때 label span(name)이 위로 올라감 */
+p input:focus + label::after,
+p input:valid + label::after { width:100%; transform:translateX(0); } 
+/* 포커스 될 때 파란색 가로줄이 생김 */
+
 
 #fregisterform .cert_desc {color:#3a8afd;}
 #fregisterform .cert_req {margin-left:5px;line-height:35px;}
@@ -152,10 +167,11 @@
 #fregisterform .reg_mb_img_file img {max-width:100%;height:auto}
 #reg_mb_icon, #reg_mb_img {float:right}
 
-.tooltip_icon {display:inline-block;vertical-align:baseline;color:#b3b5b8;border:0;font-size:1.4em;background:transparent;cursor:pointer}
-.tooltip_icon:hover {color:#448bf5}
-.tooltip {position:relative;width:auto;color:#fff;background:#000;padding:10px;font-size:small;line-height:18px;display:none;position:absolute;z-index:9;font-weight:normal;margin-left:15px;margin-top:10px}
-.tooltip:before {content:"";position:absolute;top:0;left:-10px;width:0;height:0;border-style:solid;border-top:0px solid transparent;border-bottom:10px solid transparent;border-left:0;border-right:10px solid #000}
+.tooltip_icon {position: relative;display:inline-block;vertical-align:baseline;color:#b3b5b8;border:0;font-size:1.4em;background:transparent;cursor:pointer;}
+.tooltip_icon:hover {color:#ff8269}
+.tooltip {position:absolute;display: inline-block;opacity: 0;width:auto;box-shadow: 0px 3px 6px #00000010;color:#fff;background:#464646;padding:10px;font-size:small;line-height:18px;visibility: hidden;z-index:9;font-weight:normal;margin-left:15px;margin-top:10px;white-space: nowrap;transition: all 0.2s;}
+.tooltip:before {content:"";position:absolute;top:0;left:-10px;width:0;height:0;border-style:solid;border-top:0px solid transparent;border-bottom:10px solid transparent;border-left:0;border-right:10px solid #464646}
+.tooltip_icon:hover .tooltip {visibility: visible;opacity: 1;}
 
 /*기존 계정에 연결하기*/
 

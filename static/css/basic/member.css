@@ -17,8 +17,8 @@
 /* ### 기본 스타일 커스터마이징 끝 ### */
 
 /* 회원가입 약관 */
-.register_wrap {max-width: 600px;margin: 0 auto;}
-.register_wrap.input_form {max-width: 320px;}
+.register_wrap {max-width: 400px;margin: 0 auto;}
+.register_wrap.input_form {max-width: 400px;}
 .register {margin:0 auto;padding-bottom: 40px;}
 .register:after {display:block;visibility:hidden;clear:both;content:""}
 .register .btn_confirm .btn_submit,
@@ -26,8 +26,8 @@
 .register .btn_confirm {text-align:left}
 .register .btn_confirm .btn_submit {margin-left:1%}
 
-#fregister p {position:relative;text-align:center;color:#fff;height:50px;line-height:50px;font-size:1.1em;background:#f2838f;margin:0 0 10px;border-radius:5px;font-weight:bold}
-#fregister p:before {content:"";position:absolute;top:0;left:0;width:5px;height:50px;border-radius:5px 0 0 5px;background:#da4453}
+#fregister p {position:relative;text-align:left;color:#fff;padding: 20px 10px;font-size:1.1em;background:#f2838f;margin:0 0 10px;border-radius:5px;font-weight:bold}
+#fregister p:before {content:"";position:absolute;top:0;left:0;width:5px;height:100%;border-radius:5px 0 0 5px;background:#da4453}
 #fregister p i {font-size:1.2em;vertical-align:middle}
 #fregister section {margin:10px auto 15px;position:relative;border-radius:3px}
 #fregister_chkall {position:relative;text-align:center;line-height:50px;border-radius:3px;margin-bottom:15px}
