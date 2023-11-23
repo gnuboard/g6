@@ -14,7 +14,7 @@ from fastapi.templating import Jinja2Templates
 from jinja2 import Environment
 from markupsafe import Markup, escape
 from passlib.context import CryptContext
-from sqlalchemy import Index, asc, desc, and_, or_, func, extract, literal
+from sqlalchemy import Index, asc, desc, and_, or_, func, extract, literal, inspect
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
 from common.models import Auth, Config, Member, Memo, Board, BoardFile, BoardNew, Group, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
@@ -41,6 +41,12 @@ load_dotenv()
 TEMPLATES = "templates"
 CAPTCHA_PATH = "lib/captcha/templates"
 EDITOR_PATH = "lib/editor/templates"
+
+# 테이블이 데이터베이스에 존재하는지 확인
+if not inspect(engine).has_table(DB_TABLE_PREFIX + "config"):
+    print("\033[93m" + "DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요." + "\033[0m")
+    print("python3 install.py")
+    exit()
 
 def get_theme_from_db(config=None):
     # main.py 에서 config 를 인수로 받아서 사용
