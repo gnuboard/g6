@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block head %}
+    <link rel="stylesheet" href="/plugin/popbill/static/css/sms_style.css">
+{% endblock %}
+{% block title %}
+    이모티콘 그룹
+{% endblock %}
+
+{% block subtitle %}
+    이모티콘 그룹
+{% endblock %}
+
+{% block content %}
+
+<form name="group" method="post" action="/admin/sms_admin/emoticon_group" class="local_sch03 local_sch">
+    <div>
+        <label for="fg_name">추가할 그룹이름<strong class="sound_only"> 필수</strong></label>
+        <input type="text" id="fg_name" name="fg_name" required class="required frm_input">
+        <input type="submit" value="추가" class="btn_submit">
+    </div>
+    <div class="sch_last">
+        <span class="count_add01">그룹 수 : {{ total_count }}</span>
+    </div>
+</form>
+
+<div class="local_desc01 local_desc">
+    <p>그룹 이름순으로 정렬됩니다.</p>
+</div>
+
+
+    {# <?php echo isset($group[$i]['fg_no']) ? $group[$i]['fg_no'] : ''; ?>" #}
+    <form name="group{{ emoticon_group.fg_no }}"
+          method="post" 
+          action="./form_group_update.php" 
+          onsubmit="return grouplist_submit(this);">
+    <input type="hidden" name="w" value="u">
+    
+    <div class="tbl_head01 tbl_wrap">
+        <table>
+        <caption>{{ title }} 목록</caption>
+        <thead>
+        <tr>
+            <th scope="col">
+                <label for="chkall" class="sound_only">그룹 전체</label>
+                <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
+            </th>
+            <th scope="col">그룹 이름</th>
+            <th scope="col">이모티콘 수</th>
+            <th scope="col">이동</th>
+            <th scope="col">보기</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td></td>
+            <td>미분류</td>
+            <td>{{ none_group_count }}</td>
+            <td class="td_mng">
+                <label for="select_fg_no_999" class="sound_only">그룹명</label>
+                <select name="select_fg_no_999" id="select_fg_no_999" onchange="move(0, '미분류', this);">
+                    <option value=""></option>
+                    {% for item in emoticon_group %}
+                        <option value="{{ item.fg_no }}">
+                            {{ item.fg_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td class="td_mng td_mng_s">
+                <a href="./form_list.php?fg_no=0" class="btn btn_03">보기</a>
+            </td>
+        </tr>
+        
+        {% for item in emoticon_group %}
+            <tr class="bg">
+                <td class="td_mng">
+                    <input type="hidden" name="fg_no[{{loop.index0}}]" value="{{ item.fg_no }}" id="fg_no_{{ loop.index0 }}">
+                    <label for="chk_{{ loop.index0 }}" class="sound_only">
+                        {{ item.fg_name }}
+                    </label>
+                    <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
+                </td>
+                <td class="td_left">
+                    <label for="fg_name_{{ loop.index0 }}" class="sound_only">그룹명</label>
+                    <input type="text" name="fg_name[{{ loop.index0 }}]" value="{{ item.fg_name }}"              
+                           id="fg_name_{{ loop.index0 }}" class="frm_input">
+                    <input type="checkbox" name="fg_member[{{ loop.index0 }}]" value="1" 
+                           id="fg_member_{{ loop.index0 }}" 
+                           {{ "checked" if item.fg_member }}
+                    >
+                    <label for="fg_member_{{ loop.index0 }}">회원</label>
+                </td>
+                <td >
+                    {{ item.fg_count }}
+                </td>
+                <td class="td_mng">
+                    <label for="select_fg_no_{{ loop.index0 }}" class="sound_only">그룹명</label>
+                    <select name="select_fg_no[{{ loop.index0 }}]" id="select_fg_no_{{ loop.index0 }}" onchange="move( {{ item.fg_no }}, '{{ item.fg_name }}', this );">
+                        <option value=''></option>
+                        <option value='0'>미분류</option>
+                        {% for group in emoticon_group %}
+                            {% if item.fg_no != group.fg_no %}
+                                <option value="{{ group.fg_no }}">{{ group.fg_name }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </td>
+                <td class="td_mng td_mng_s">
+                    <a href="./form_list.php?fg_no={{ item.fg_no }}" class="btn btn_03">보기</a>
+                </td>
+            </tr>
+
+        {% endfor %}
+        
+        </tbody>
+        </table>
+        
+    </div>
+    <div class="btn_fixed_top">
+        <input type="submit" name="act_button" value="선택수정" onclick="document.pressed=this.value" class="btn btn_02">
+        <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn btn_02">
+        <input type="submit" name="act_button" value="선택비우기" onclick="document.pressed=this.value" class="btn btn_02">
+    </div>
+
+</form>
+
+<!-- end -->
+
+<script>
+
+function move(fg_no, fg_name, sel) {
+    let msg = '';
+    if (sel.value) {
+        msg = "'" + fg_name + "' 그룹에 속한 모든 데이터를\n\n'";
+        msg += sel.options[sel.selectedIndex].text + "' 그룹으로 이동하시겠습니까?";
+
+        if (confirm(msg)) {
+            location.href = 'form_group_move?fg_no=' + fg_no + '&move_no=' + sel.value;
+        } else {
+            sel.selectedIndex = 0;
+        }
+    }
+}
+
+function empty(fg_no) {
+    if (confirm("한번 삭제한 자료는 복구할 방법이 없습니다.\n\n그룹에 속한 데이터를 정말로 비우시겠습니까?"))
+        location.href = 'form_group_update.php?w=' + fg_no + '&fg_no=' + fg_no;
+}
+
+function grouplist_submit(f) {
+    if (!is_checked("chk[]")) {
+        alert(document.pressed + " 하실 항목을 하나 이상 선택하세요.");
+        return false;
+    }
+
+    if (document.pressed == "선택삭제") {
+        if (confirm("한번 삭제한 자료는 복구할 방법이 없습니다.\n\n삭제되는 그룹에 속한 자료는 '미분류'로 이동됩니다.\n\n그래도 삭제하시겠습니까?")) {
+            f.w.value = "de";
+        } else {
+            return false;
+        }
+    }
+
+    if (document.pressed == "선택비우기") {
+        if (confirm("한번 삭제한 자료는 복구할 방법이 없습니다.\n\n그룹에 속한 데이터를 정말로 비우시겠습니까?")) {
+            f.w.value = "em";
+        } else {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+</script>
+{% endblock %}

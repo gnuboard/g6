@@ -1013,46 +1013,55 @@
                         <select id="cf_sms_use" name="cf_sms_use">
                             <option value="" {{ get_selected(config.cf_sms_use, '')|safe }}>사용안함</option>
                             <option value="icode" {{ get_selected(config.cf_sms_use, 'icode')|safe }}>아이코드</option>
+                            <option value="popbill" {{ get_selected(config.cf_sms_use, 'popbill')|safe }}>팝빌</option>
                         </select>
                     </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="cf_sms_type">SMS 전송유형</label></th>
                     <td>
-                        <span class="frm_info">전송유형을 SMS로 선택하시면 최대 80바이트까지 전송하실 수 있으며<br>LMS로 선택하시면 90바이트 이하는 SMS로, 그 이상은 1500바이트까지 LMS로 전송됩니다.<br>요금은 건당 SMS는 16원, LMS는 48원입니다.</span>                            
+                        <span class="frm_info">전송유형을 SMS로 선택하시면 최대 90바이트(한글 45자)까지 전송하실 수 있으며
+                            <br>LMS로 선택하시면 90바이트 이하는 SMS로, 그 이상은 2000바이트(한글 1000자)까지 LMS로 전송됩니다.
+                            <br>XMS로 선택하시면 입력된 메시지 길이에 따라 SMS 또는 LMS로 자동 변환되어 과금됩니다.
+                            <br>MMS 이미지 1장 + 최대 2,000byte (한글 1,000자) 이미지 규격 : 가로/세로 1,000px 이하, jpg, 최대 300KB
+                            
+                        
+                        </span>                            
                         <select id="cf_sms_type" name="cf_sms_type">
-                            <option value="" {{ get_selected(config.cf_sms_type, '')|safe }}>SMS</option>
-                            <option value="LMS" {{ get_selected(config.cf_sms_type, 'LMS')|safe }}>LMS</option>
+                            <option value="" {{ get_selected(config.cf_sms_type, 'SMS')|safe }}>SMS(단문)</option>
+                            <option value="LMS" {{ get_selected(config.cf_sms_type, 'LMS')|safe }}>LMS(장문)</option>
+                            <option value="XMS" {{ get_selected(config.cf_sms_type, 'XMS')|safe }}>XMS(SMS->LMS 자동변환)</option>
+                            <option value="MMS" {{ get_selected(config.cf_sms_type, 'MMS')|safe }}>MMS(이미지)</option>
                         </select>
                     </td>
                 </tr>
-                <tr class="icode_old_version">
-                    <th scope="row"><label for="cf_icode_id">아이코드 회원아이디<br>(구버전)</label></th>
+                <tr class="sms_version">
+                    <th scope="row"><label for="cf_icode_id">아이코드 회원아이디<br></label></th>
                     <td>
                         <span class="frm_info">아이코드에서 사용하시는 회원아이디를 입력합니다.</span>
                         <input type="text" name="cf_icode_id" value="{{ config.cf_icode_id }}" id="cf_icode_id" class="frm_input" size="20">
                     </td>
                 </tr>
-                <tr class="icode_old_version">
+                <tr class="sms_version">
                     <th scope="row"><label for="cf_icode_pw">아이코드 비밀번호<br>(구버전)</label></th>
                     <td>
                         <span class="frm_info">아이코드에서 사용하시는 비밀번호를 입력합니다.</span>
                         <input type="password" name="cf_icode_pw" value="{{ config.cf_icode_pw }}" id="cf_icode_pw" class="frm_input">
                     </td>
                 </tr>
-                <tr class="icode_old_version cf_tr_hide">
+                <tr class="sms_version cf_tr_hide">
                     <th scope="row">요금제<br>(구버전)</th>
                     <td>
                         <input type="hidden" name="cf_icode_server_ip" value="211.172.232.124">
                         가입해주세요.<input type="hidden" name="cf_icode_server_port" value="7295"></td>
                 </tr>
-                <tr class="icode_json_version">
+                <tr class="sms_version">
                     <th scope="row"><label for="cf_icode_token_key">아이코드 토큰키<br>(JSON버전)</label></th>
                     <td>
                         <span class="frm_info">아이코드 JSON 버전의 경우 아이코드 토큰키를 입력시 실행됩니다.<br>SMS 전송유형을 LMS로 설정시 90바이트 이내는 SMS, 90 ~ 2000 바이트는 LMS 그 이상은 절삭 되어 LMS로 발송됩니다.</span>
                         <input type="text" name="cf_icode_token_key" value="{{ config.cf_icode_token_key }}" id="cf_icode_token_key" class="frm_input" size="40">
                         <span class="frm_info">아이코드 사이트 -> 토큰키관리 메뉴에서 생성한 토큰키를 입력합니다.</span><br>
-                        서버아이피 : {{ host_ip }}<br>
+                        현재 서버아이피 : {{ host_ip }}<br>
                 </tr>
                 <tr>
                     <th scope="row">아이코드 SMS 신청<br>회원가입</th>
