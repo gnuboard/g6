@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+{% if request.state.config.cf_add_meta %}
+    {{ request.state.config.cf_add_meta|safe }}
+{% endif %}
 <title>로그인 | 그누보드5</title>
 <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 <link rel="stylesheet" href="/static/css/default.css">
@@ -31,16 +34,15 @@ var g5_shop_url = "{{request.base_url}}shop";
 <body>
 
 {% if errors %}
-<ul>
-    {% for error in errors %}
-    <li>{{ error }}</li>
-    {% endfor %}
-</ul>
+    <ul>
+        {% for error in errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+    </ul>
 {% endif %}
-
 
 {% block content %}    
 
-{% endblock %}
+{% endblock content %}
 </body>
 </html>
