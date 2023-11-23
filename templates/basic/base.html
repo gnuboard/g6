@@ -119,9 +119,16 @@ var g5_shop_url = "{{request.base_url}}shop";
             <!-- } 인기검색어 끝 -->
         </div>
         <ul class="hd_login">        
-            <li><a href="/bbs/member_confirm?url=/bbs/register_form">정보수정</a></li>
-            <li><a href="/bbs/logout">로그아웃</a></li>
-            <li class="tnb_admin"><a href="/admin">관리자</a></li>
+            {% if request.state.login_member %}
+                <li><a href="/bbs/member_confirm?url=/bbs/register_form">정보수정</a></li>
+                <li><a href="/bbs/logout">로그아웃</a></li>
+                {% if request.state.is_super_admin %}
+                    <li class="tnb_admin"><a href="/admin">관리자</a></li>
+                {% endif %}
+            {% else %}
+                <li><a href="/bbs/register">회원가입</a></li>
+                <li><a href="/bbs/login">로그인</a></li>
+            {% endif %}
         </ul>
     </div>
 
