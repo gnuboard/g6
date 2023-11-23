@@ -566,12 +566,15 @@ async def write_update(
 
     # 글 등록
     if not exists_write:
-        
+        # 글쓰기 간격 검증
+        if not is_write_delay(request):
+            raise AlertException("너무 빠른 시간내에 게시글을 연속해서 올릴 수 없습니다.", 400)
         # Captcha 검증
         if board_config.use_captcha:
             captcha_cls = get_current_captcha_cls(config.cf_captcha)
             if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
                 raise AlertException("캡차가 올바르지 않습니다.", 400)
+        # 글 작성 권한 검증
         if parent_id:
             if not board_config.is_reply_level():
                 raise AlertException("답변글을 작성할 권한이 없습니다.", 403)
@@ -1056,6 +1059,10 @@ async def write_comment_update(
 
     
     if form.w == "c":
+        # 글쓰기 간격 검증
+        if not is_write_delay(request):
+            raise AlertException("너무 빠른 시간내에 댓글을 연속해서 올릴 수 없습니다.", 400)
+
         # Captcha 검증
         if not member:
             captcha_cls = get_current_captcha_cls(config.cf_captcha)

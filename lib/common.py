@@ -1931,7 +1931,7 @@ def extract_alt_attribute(img_tag: str) -> str:
     return alt
 
 
-def cut_name(name: str, request: Request) -> str:
+def cut_name(request: Request, name: str) -> str:
     """기본환경설정 > 이름(닉네임) 표시
 
     Args:
@@ -2046,3 +2046,24 @@ def check_ip_list(request: Request, current_ip: str, ip_list: str, allow: bool) 
             return True
 
     return False
+
+
+def is_write_delay(request: Request) -> bool:
+    """특정 시간 간격 내에 다시 글을 작성할 수 있는지 확인하는 함수"""
+    if request.state.is_super_admin:
+        return True
+
+    delay_sec = int(request.state.config.cf_delay_sec)
+    current_time = datetime.now()
+    write_time = request.session.get("ss_write_time")
+
+    if delay_sec > 0:
+        time_interval = timedelta(seconds=delay_sec)
+        if write_time:
+            available_time = datetime.strptime(write_time, "%Y-%m-%d %H:%M:%S") + time_interval
+            if available_time > current_time:
+                return False
+
+        request.session["ss_write_time"] = current_time.strftime("%Y-%m-%d %H:%M:%S")
+
+    return True
