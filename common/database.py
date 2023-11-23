@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-DB_ENGINE = os.getenv("DB_ENGINE").lower()  # 소문자
+DB_ENGINE = os.getenv("DB_ENGINE", "sqlite").lower()  # 소문자
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
 DB_USER = os.getenv("DB_USER")
