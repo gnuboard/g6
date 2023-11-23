@@ -635,9 +635,55 @@ def record_visit(request: Request):
         db.add(visit_sum)
         db.commit()
 
-    db.close()            
-    
-    
+        # 기본설정 테이블에 방문자 수 기록
+
+        # VisitSum 테이블에서 오늘 방문자 수를 가져옴
+        vi_today = db.query(VisitSum.vs_count).filter(VisitSum.vs_date == date.today()).scalar()
+        vi_today = vi_today or 0
+
+        # VisitSum 테이블에서 어제 방문자 수를 가져옴
+        vi_yesterday = db.query(VisitSum.vs_count).filter(VisitSum.vs_date == date.today() - timedelta(days=1)).scalar()
+        vi_yesterday = vi_yesterday or 0
+
+        # VisitSum 테이블에서 최대 방문자 수를 가져옴
+        vi_max = db.query(func.max(VisitSum.vs_count)).scalar()
+        vi_max = vi_max or 0
+
+        # VisitSum 테이블에서 전체 방문자 수를 가져옴
+        vi_total = db.query(func.sum(VisitSum.vs_count)).scalar()
+        vi_total = vi_total or 0
+
+        cf_visit = f"오늘:{vi_today},어제:{vi_yesterday},최대:{vi_max},전체:{vi_total}"
+        config = db.query(Config).first()
+        config.cf_visit = cf_visit
+        db.commit()
+
+    db.close()
+
+
+def visit(request: Request):
+    """방문자 수 출력"""
+    cf_visit = request.state.config.cf_visit
+
+    visit_list = re.findall("오늘:(.*),어제:(.*),최대:(.*),전체:(.*)", cf_visit)
+    if visit_list:
+        today, yesterday, max, total = visit_list[0]
+    else:
+        today, yesterday, max, total = (0, 0, 0, 0)
+
+    context = {
+        "request": request,
+        "today": int(today),
+        "yesterday": int(yesterday),
+        "max": int(max),
+        "total": int(total)
+    }
+    templates = MyTemplates(directory=TEMPLATES_DIR)
+    visit_template = templates.TemplateResponse(f"visit/basic.html", context)
+
+    return visit_template.body.decode("utf-8")
+
+
 # 공통 쿼리 파라미터를 받는 함수를 정의합니다.
 def common_search_query_params(
         sst: str = Query(default=""), 
@@ -1530,6 +1576,7 @@ class MyTemplates(Jinja2Templates):
         self.env.globals["get_selected"] = get_selected
         self.env.globals["get_member_icon"] = get_member_icon
         self.env.globals["get_member_image"] = get_member_image
+        self.env.filters["number_format"] = number_format
 
         # 사용자 템플릿, 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
         if TEMPLATES_DIR in directory:
@@ -1546,7 +1593,8 @@ class MyTemplates(Jinja2Templates):
             "menus" : get_menus(),
             "poll" : get_recent_poll(),
             "populars" : get_populars(),
-            "latest": latest
+            "latest": latest,
+            "visit": visit,
         }
         return context
     
@@ -1929,3 +1977,18 @@ def extract_alt_attribute(img_tag: str) -> str:
     alt_match = re.search(r'alt=[\"\']?([^\"\']*)[\"\']?', img_tag, re.IGNORECASE)
     alt = str(alt_match.group(1)) if alt_match else ''
     return alt
+
+
+def number_format(number: int) -> str:
+    """숫자를 천단위로 구분하여 반환하는 템플릿 필터
+
+    Args:
+        number (int): 숫자
+
+    Returns:
+        str: 천단위로 구분된 숫자
+    """
+    if isinstance(number, int):
+        return "{:,}".format(number)
+    else:
+        return "Invalid input. Please provide an integer."
