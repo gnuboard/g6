@@ -174,19 +174,29 @@ var g5_shop_url = "{{request.base_url}}shop";
           </div>
       </div>
       <script>
-          $(document).ready(function(){
-              
-              $('.aside_tab ul.tab_01 li').click(function(){
-                  var aside_tab_id = $(this).attr('data-tab');
+        // aside/최신글 - 탭메뉴 기능
+        var tabItems = document.querySelectorAll('.aside_tab ul.tab_01 li');
 
-                  $('.aside_tab ul.tab_01 li').removeClass('current');
-                  $('.aside_tab .content01').removeClass('current');
+          tabItems.forEach(function (item) {
+            item.addEventListener('click', function () {
+                var asideTabId = this.getAttribute('data-tab');
 
-                  $(this).addClass('current');
-                  $("#"+aside_tab_id).addClass('current');
-              })
+                // Remove 'current' class from all tab items and content elements
+                tabItems.forEach(function (tabItem) {
+                    tabItem.classList.remove('current');
+                });
 
-          })
+                var contentElements = document.querySelectorAll('.aside_tab .content01');
+                contentElements.forEach(function (contentElement) {
+                    contentElement.classList.remove('current');
+                });
+
+                // Add 'current' class to the clicked tab item and corresponding content element
+                this.classList.add('current');
+                document.getElementById(asideTabId).classList.add('current');
+            });
+        });
+
       </script>
     </div>
 </div>
