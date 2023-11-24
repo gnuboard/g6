@@ -2,7 +2,7 @@ from fastapi import APIRouter, Form, File, UploadFile, Depends
 from fastapi.responses import RedirectResponse, Response
 from sqlalchemy.orm import Session
 
-from bbs.member_profile import validate_nickname, validate_userid
+from bbs.member_profile import validate_nickname, validate_userid, is_prohibit_email
 from lib.common import *
 from common.database import get_db
 from common.formclass import MemberForm
@@ -136,12 +136,14 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
             exists_email = db.query(Member.mb_email).filter(Member.mb_email == member_form.mb_email).first()
             if exists_email:
                 raise AlertException(status_code=400, detail="이미 존재하는 이메일 입니다.")
-
+    # 이메일 검사
+    if is_prohibit_email(request, member_form.mb_email):
+        raise AlertException(f"{member_form.mb_email} 메일은 사용할 수 없습니다.", 400)
     # 닉네임 검사
     result = validate_nickname(member_form.mb_nick, config.cf_prohibit_id)
     if result["msg"]:
         raise AlertException(status_code=400, detail=result["msg"])
-
+    # 회원 아이디 검사
     result = validate_userid(mb_id, config.cf_prohibit_id)
     if result["msg"]:
         raise AlertException(status_code=400, detail=result["msg"])
