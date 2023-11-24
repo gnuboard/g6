@@ -42,8 +42,13 @@ TEMPLATES = "templates"
 CAPTCHA_PATH = "lib/captcha/templates"
 EDITOR_PATH = "lib/editor/templates"
 
+# .env 파일이 없을 경우 경고 메시지 출력
+if not os.path.exists(".env"):
+    print("\033[93m" + "경고: .env 파일이 없습니다. 설치를 진행해 주세요." + "\033[0m")
+    #print("python3 install.py")
+    # exit()
 # 테이블이 데이터베이스에 존재하는지 확인
-if not inspect(engine).has_table(DB_TABLE_PREFIX + "config"):
+elif not inspect(engine).has_table(DB_TABLE_PREFIX + "config"):
     print("\033[93m" + "DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요." + "\033[0m")
     #print("python3 install.py")
     #exit()
