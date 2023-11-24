@@ -19,16 +19,15 @@ import getpass
 from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError, OperationalError
 from sqlalchemy import text, MetaData
-from lib.common import dynamic_create_write_table
+from lib.common import dynamic_create_write_table, read_version
 from common.database import engine, SessionLocal, DB_TABLE_PREFIX
 import common.models as models
-from version import G6_VERSION
 from lib.pbkdf2 import create_hash
 
+VERSION = read_version()
 
 models.Base.metadata.create_all(bind=engine)
 db = SessionLocal()
-
 
 # 기본값 설정
 default_gr_id = 'community'
@@ -54,11 +53,11 @@ def config_setup(admin_id, admin_email):
     if not exists_config:
         new_config = models.Config(
             cf_id=1,
-            cf_title=G6_VERSION,
+            cf_title=VERSION,
             cf_theme='basic',
             cf_admin=admin_id,
             cf_admin_email=admin_email,
-            cf_admin_email_name=G6_VERSION,
+            cf_admin_email_name=VERSION,
             cf_use_point=1,
             cf_use_copy_log=1,
             cf_login_point=100,
@@ -376,4 +375,4 @@ faq_master_setup()
 board_group_setup()
 board_setup()
 make_directory()
-print(f"{G6_VERSION} 등록 및 테이블 생성을 완료했습니다.")
+print(f"{VERSION} 등록 및 테이블 생성을 완료했습니다.")
