@@ -113,12 +113,7 @@ var g5_shop_url = "{{request.base_url}}shop";
         </ul>
     </div> 
 
-    <nav id="gnb">
-        <h2>메인메뉴</h2>
-        <div class="gnb_wrap">
-            {% include "/bbs/menu.html" %}
-        </div>
-    </nav>
+
 </div>
 <!-- } 상단 끝 -->
 
@@ -149,6 +144,14 @@ var g5_shop_url = "{{request.base_url}}shop";
             {% include "bbs/outlogin_before.html" %}
         {% endif %}
         {% include "/bbs/poll.html" %}
+        <!-- 메뉴 -->
+        <nav id="gnb">
+          <h2>메인메뉴</h2>
+          <div class="gnb_wrap">
+              {% include "/bbs/menu.html" %}
+          </div>
+        </nav>
+        <!-- 최신글 탭 -->
         <div class="aside_tab">
           <ul class="tabs tab_01">
               <li class="tab-link current" data-tab="aside-tab-1">커뮤니티</li>
@@ -174,7 +177,7 @@ var g5_shop_url = "{{request.base_url}}shop";
           </div>
         </div>
         <!-- 접속자집계 시작 { -->
-          <section id="visit" class="ft_cnt">
+        <section id="visit" class="ft_cnt">
             <h2>접속자집계</h2>
             <dl>
                 <dt><span></span> 오늘</dt>
