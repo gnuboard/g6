@@ -271,17 +271,8 @@ async def post_social_register(
     db.add(member_social_profiles)
     db.commit()
 
-    # 가입시 발생 이벤트
-    datetime_str = request_time.strftime("%Y-%m-%d %H:%M:%S")
-    insert_point(
-        request,
-        mb_id=member.mb_id,
-        point=config.cf_register_point,
-        content=datetime_str + " 첫로그인",
-        rel_table="@login",
-        rel_id=member.mb_id,
-        rel_action="회원가입"
-    )
+    # 회원가입 포인트 부여
+    insert_point(request, member.mb_id, config.cf_register_point,  "회원가입 축하", "@member", member.mb_id, "회원가입")
 
     # todo // 최고관리자에게 메일 발송
 

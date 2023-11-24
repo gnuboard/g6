@@ -210,7 +210,6 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
     new_member.mb_lost_certify = ""
     new_member.mb_nick_date = datetime(1, 1, 1, 0, 0, 0)
     new_member.mb_open_date = datetime(1, 1, 1, 0, 0, 0)
-    new_member.mb_point = config.cf_register_point
     new_member.mb_today_login = datetime.now()
 
     # 본인인증
@@ -223,6 +222,14 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
 
     db.add(new_member)
     db.commit()
+
+    # 회원가입 포인트 지급
+    insert_point(request, new_member.mb_id, config.cf_register_point,  "회원가입 축하", "@member", new_member.mb_id, "회원가입")
+
+    # 추천인 포인트 지급
+    mb_recommend = member_form.mb_recommend
+    if config.cf_use_recommend and mb_recommend:
+        insert_point(request, mb_recommend, config.cf_recommend_point, f"{new_member.mb_id}의 추천인", "@member", mb_recommend, f"{new_member.mb_id} 추천")
 
     request.session["ss_mb_id"] = new_member.mb_id
     request.session["ss_mb_key"] = session_member_key(request, new_member)
