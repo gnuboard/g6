@@ -17,6 +17,8 @@ from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract, literal, inspect
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
+from starlette.staticfiles import StaticFiles
+
 from common.models import Auth, Config, Member, Memo, Board, BoardFile, BoardNew, Group, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
 from common.models import WriteBaseModel
 from common.database import SessionLocal, engine, DB_TABLE_PREFIX
@@ -1583,6 +1585,7 @@ class MyTemplates(Jinja2Templates):
         self.env.globals["get_member_icon"] = get_member_icon
         self.env.globals["get_member_image"] = get_member_image
         self.env.filters["number_format"] = number_format
+        self.env.globals["theme_asset"] = theme_asset
 
         # 사용자 템플릿, 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
         if TEMPLATES_DIR in directory:
@@ -1998,3 +2001,33 @@ def number_format(number: int) -> str:
         return "{:,}".format(number)
     else:
         return "Invalid input. Please provide an integer."
+
+
+def theme_asset(asset_path: str):
+    """
+    현재 템플릿의 asset url을 반환하는 헬퍼 함수
+    Args:
+        asset_path (str): 플러그인 모듈 이름
+    Returns:
+        asset_url (str): asset url
+    """
+
+    theme_path = get_theme_from_db()
+    theme_name = theme_path.replace(TEMPLATES + '/', "")
+    return f"/theme_static/{theme_name}/{asset_path}"
+
+
+def register_theme_statics(app):
+    """
+    현재 테마의 static 디렉토리를 등록하는 함수
+    Args:
+        app (FastAPI): FastAPI 객체
+    """
+    # 테마의 static 디렉토리를 등록
+    # url 경로 /theme_static/{{theme_name}}/css, js, img 등 static 생략
+    # 실제 경로 /theme/{{theme_name}}/static/ 을 등록
+    theme_path = get_theme_from_db()
+    theme_name = theme_path.replace(TEMPLATES + '/', "")
+    app.mount(f"/theme_static/{theme_name}/",
+              StaticFiles(directory=f"{theme_path}/static"),  # real path
+              name=f"static/{theme_name}")  # tag 이름

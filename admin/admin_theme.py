@@ -201,7 +201,7 @@ async def theme_update(request: Request, theme: str = Form(...), db: Session = D
 
     theme = theme.strip()
     theme_dir = get_theme_dir()
-    
+
     info = get_theme_info(theme)
 
     if theme not in theme_dir:
@@ -210,5 +210,8 @@ async def theme_update(request: Request, theme: str = Form(...), db: Session = D
     config = db.query(Config).first()
     config.cf_theme = theme
     db.commit()
+
+    from main import app # 순환참조 방지
+    register_theme_statics(app)
 
     return {"success": f"{info['theme_name']} 테마로 변경하였습니다."}
