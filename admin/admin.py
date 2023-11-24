@@ -41,6 +41,7 @@ from admin.admin_newwin import router as admin_newwin_router
 from admin.admin_mail import router as admin_mail_router
 from admin.admin_write_count import router as admin_write_count_router
 from admin.admin_plugin import router as admin_plugin_router
+from admin.admin_cache import router as admin_cache_router
 
 router.include_router(admin_config_router, prefix="", tags=["admin_config"])
 router.include_router(admin_member_router, prefix="", tags=["admin_member"])
@@ -62,6 +63,8 @@ router.include_router(admin_mail_router,  prefix="", tags=["admin_mail"])
 router.include_router(admin_newwin_router,  prefix="", tags=["admin_newwin"])
 router.include_router(admin_write_count_router,  prefix="", tags=["admin_write_count"])
 router.include_router(admin_plugin_router,  prefix="", tags=["admin_plugin"])
+router.include_router(admin_cache_router,  prefix="", tags=["admin_cache"])
+
 @router.get("/")
 def base(request: Request, db: Session = Depends(get_db)):
     '''
