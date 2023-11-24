@@ -45,8 +45,8 @@ EDITOR_PATH = "lib/editor/templates"
 # 테이블이 데이터베이스에 존재하는지 확인
 if not inspect(engine).has_table(DB_TABLE_PREFIX + "config"):
     print("\033[93m" + "DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요." + "\033[0m")
-    print("python3 install.py")
-    exit()
+    #print("python3 install.py")
+    #exit()
 
 def get_theme_from_db(config=None):
     # main.py 에서 config 를 인수로 받아서 사용
@@ -1998,3 +1998,11 @@ def number_format(number: int) -> str:
         return "{:,}".format(number)
     else:
         return "Invalid input. Please provide an integer."
+
+def read_version():
+    """루트 디렉토의 version.txt 파일을 읽어서 버전을 반환하는 함수
+    Returns:
+        str: 버전
+    """
+    with open("version.txt", "r") as file:
+        return file.read().strip()
