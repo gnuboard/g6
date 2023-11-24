@@ -172,7 +172,23 @@ var g5_shop_url = "{{request.base_url}}shop";
                 {{ latest(request, 'pic_list', 'qa', 4, 23)|safe }}
               <!-- } 탭  최신글2 끝 -->
           </div>
-      </div>
+        </div>
+        <!-- 접속자집계 시작 { -->
+          <section id="visit" class="ft_cnt">
+            <h2>접속자집계</h2>
+            <dl>
+                <dt><span></span> 오늘</dt>
+                <dd><strong>1</strong></dd>
+                <dt><span></span> 어제</dt>
+                <dd><strong>1</strong></dd>
+                <dt><span></span> 최대</dt>
+                <dd><strong>1</strong></dd>
+                <dt><span></span> 전체</dt>
+                <dd><strong>3</strong></dd>
+            </dl>
+            <a href="/adminin/visit_list" class="btn_admin btn"><i class="fa fa-cog fa-spin fa-fw"></i><span class="sound_only">관리자</span></a>
+        </section>
+        <!-- } 접속자집계 끝 -->  
       <script>
         // aside/최신글 - 탭메뉴 기능
         var tabItems = document.querySelectorAll('.aside_tab ul.tab_01 li');
@@ -231,23 +247,7 @@ var g5_shop_url = "{{request.base_url}}shop";
           {% if latest %}
               {{ latest(request, 'notice', 'notice', 4, 13)|safe }}
           {% endif %}
-  
-          <!-- 접속자집계 시작 { -->
-          <section id="visit" class="ft_cnt">
-              <h2>접속자집계</h2>
-              <dl>
-                  <dt><span></span> 오늘</dt>
-                  <dd><strong>1</strong></dd>
-                  <dt><span></span> 어제</dt>
-                  <dd><strong>1</strong></dd>
-                  <dt><span></span> 최대</dt>
-                  <dd><strong>1</strong></dd>
-                  <dt><span></span> 전체</dt>
-                  <dd><strong>3</strong></dd>
-              </dl>
-              <a href="/adminin/visit_list" class="btn_admin btn"><i class="fa fa-cog fa-spin fa-fw"></i><span class="sound_only">관리자</span></a>
-          </section>
-          <!-- } 접속자집계 끝 -->  
+
         </div>
     </div>
     <!-- <div id="ft_catch"><img src="http://g5.pypot.com/img/ft_logo.png" alt="그누보드5"></div> -->
