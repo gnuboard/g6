@@ -142,7 +142,7 @@
 .register_form_inner label {display:block;margin-bottom:0px;}
 .register_form_inner label.inline {display:inline}
 .register_form_inner .frm_input {border-bottom:1px solid #cacaca; padding: 5px 0px;}
-.register_form_inner label.text_input {position:absolute; left:0%; bottom:0; width:100%; line-height: 45px; text-align:left;transition: all 0.2s;}
+.register_form_inner label.text_input {position:absolute; left:0%; bottom:0; width:100%; line-height: 45px; text-align:left;transition: all 0.2s;cursor: pointer;}
 .register_form_inner .frm_input:focus,
 .register_form_inner .frm_input:valid,
 .register_form_inner .frm_input:-webkit-autofill {border-bottom: 2px solid #ff8269;}

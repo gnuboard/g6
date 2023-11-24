@@ -20,6 +20,7 @@
 <link rel="stylesheet" href="/static/css/basic/latest_notice.css">
 <link rel="stylesheet" href="/static/css/basic/visit.css">
 <link rel="stylesheet" href="/static/js/owlcarousel/owl.carousel.min.css">
+<link rel="stylesheet" href="/static/js/slick/slick.css">
 <script>
 // 자바스크립트에서 사용하는 전역변수 선언
 var g5_url       = "{{request.base_url}}";
@@ -41,6 +42,7 @@ var g5_shop_url = "{{request.base_url}}shop";
 <script src="/static/js/placeholders.min.js"></script>
 <script src="/static/js/owlcarousel/owl.carousel.min.js"></script>
 <script src="/static/js/jquery.bxslider.js"></script>
+<script src="/static/js/slick/slick.min.js"></script>
 {% block head %}
 {% endblock %}
 </head>
@@ -147,6 +149,45 @@ var g5_shop_url = "{{request.base_url}}shop";
             {% include "bbs/outlogin_before.html" %}
         {% endif %}
         {% include "/bbs/poll.html" %}
+        <div class="aside_tab">
+          <ul class="tabs tab_01">
+              <li class="tab-link current" data-tab="aside-tab-1">커뮤니티</li>
+              <li class="tab-link" data-tab="aside-tab-2">뉴스</li>
+              <li class="tab-link" data-tab="aside-tab-3">배너</li>
+          </ul>
+          <div id="aside-tab-1" class="tab-content content01 current">
+              <!-- 탭  최신글 1 { -->
+                {{ latest(request, 'pic_list', 'notice', 4, 23)|safe }}
+              <!-- } 탭  최신글1 끝 -->
+          </div>
+      
+          <div id="aside-tab-2" class="tab-content content01">
+              <!-- 탭  최신글2 { -->
+                {{ latest(request, 'pic_list', 'free', 4, 23)|safe }}
+              <!-- } 탭  최신글2 끝 -->
+          </div>
+
+          <div id="aside-tab-3" class="tab-content content01">
+              <!-- 탭  최신글2 { -->
+                {{ latest(request, 'pic_list', 'qa', 4, 23)|safe }}
+              <!-- } 탭  최신글2 끝 -->
+          </div>
+      </div>
+      <script>
+          $(document).ready(function(){
+              
+              $('.aside_tab ul.tab_01 li').click(function(){
+                  var aside_tab_id = $(this).attr('data-tab');
+
+                  $('.aside_tab ul.tab_01 li').removeClass('current');
+                  $('.aside_tab .content01').removeClass('current');
+
+                  $(this).addClass('current');
+                  $("#"+aside_tab_id).addClass('current');
+              })
+
+          })
+      </script>
     </div>
 </div>
 

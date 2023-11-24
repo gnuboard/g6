@@ -172,9 +172,15 @@ box-shadow:0 2px 5px rgba(0,0,0,0.2)}
 #wrapper {background: #f8f8f8;}
 #container_wr:after {display:block;visibility:hidden;clear:both;content:""}
 #container_wr {margin:0 auto;zoom:1}
-#aside {float:left;width:235px;padding:0;height:100%;margin:20px 20px 20px 0px}
+#aside {float:left;width:270px;padding:0;height:100%;margin:20px 20px 20px 0px}
+#aside .aside_tab {background: #fff;border-radius: 8px;box-shadow: 0px 3px 6px #00000010;padding: 10px 20px;}
+#aside .aside_tab .tabs {display: flex;border-bottom: 1px solid #eee;}
+#aside .aside_tab .tabs .tab-link {padding: 10px 0px;margin-right: 16px;font-size: 1.2em;cursor: pointer;color: #c5c5c5;font-weight: 500;transition: all 0.3s;border-bottom: 2px solid transparent;}
+#aside .aside_tab .tabs .tab-link.current {border-bottom: 2px solid #f16245;color: #f16245;font-weight: 700;}
+#aside .tab-content {display: none;}
+#aside .tab-content.current {display: block;}
 
-#container {position:relative;float:right;min-height:500px;height:auto !important;margin:20px 0 56px;height:500px;font-size:1em;width:calc(100% - 260px);zoom:1;padding: 20px;border-radius: 8px;box-shadow: 0px 3px 6px #00000010;background: #fff;}
+#container {position:relative;float:right;min-height:500px;height:auto !important;margin:20px 0 56px;height:500px;font-size:1em;width:calc(100% - 290px);zoom:1;padding: 20px;border-radius: 8px;box-shadow: 0px 3px 6px #00000010;background: #fff;}
 #container:after {display:block;visibility:hidden;clear:both;content:""}
 #container_title {font-size:1.333em;margin:0 auto;font-weight:bold;color: #ff8269;}
 #container_title span {margin:0 auto 24px;display:block;line-height:30px}
