@@ -94,7 +94,7 @@ def menu_list_update(
     """
     메뉴 수정
     """
-    if not compare_token(request, token, 'menu_list_update'):
+    if not check_token(request, token):
         raise AlertException("토큰이 유효하지 않습니다", 403)
 
     try:

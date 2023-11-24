@@ -7,7 +7,7 @@
 {% endblock subtitle %}
 {% block content %}
     <form name="fqaconfigform" id="fqaconfigform" action="{{ url_for('qa_config_update') }}" method="post" onsubmit="return fqaconfigform_submit(this);" autocomplete="off">
-        <input type="hidden" id="token" name="token" value="{{ generate_token(request, 'update' if qa_config else 'insert') }}" >
+        <input type="hidden" id="token" name="token" value="" >
     
         <section id="anc_cf_qa_config">
             <h2 class="h2_frm">1:1문의 설정</h2>
@@ -204,20 +204,8 @@
     
     <script>
         function fqaconfigform_submit(f) {
-            var qa_content_head_editor_data = oEditors.getById['qa_content_head'].getIR();
-            oEditors.getById['qa_content_head'].exec('UPDATE_CONTENTS_FIELD', []);
-            if(jQuery.inArray(document.getElementById('qa_content_head').value.toLowerCase().replace(/^\s*|\s*$/g, ''), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<div><br></div>','<p></p>','<br>','']) != -1){document.getElementById('qa_content_head').value='';}
-            var qa_content_tail_editor_data = oEditors.getById['qa_content_tail'].getIR();
-            oEditors.getById['qa_content_tail'].exec('UPDATE_CONTENTS_FIELD', []);
-            if(jQuery.inArray(document.getElementById('qa_content_tail').value.toLowerCase().replace(/^\s*|\s*$/g, ''), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<div><br></div>','<p></p>','<br>','']) != -1){document.getElementById('qa_content_tail').value='';}
-            var qa_mobile_content_head_editor_data = oEditors.getById['qa_mobile_content_head'].getIR();
-            oEditors.getById['qa_mobile_content_head'].exec('UPDATE_CONTENTS_FIELD', []);
-            if(jQuery.inArray(document.getElementById('qa_mobile_content_head').value.toLowerCase().replace(/^\s*|\s*$/g, ''), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<div><br></div>','<p></p>','<br>','']) != -1){document.getElementById('qa_mobile_content_head').value='';}
-            var qa_mobile_content_tail_editor_data = oEditors.getById['qa_mobile_content_tail'].getIR();
-            oEditors.getById['qa_mobile_content_tail'].exec('UPDATE_CONTENTS_FIELD', []);
-            if(jQuery.inArray(document.getElementById('qa_mobile_content_tail').value.toLowerCase().replace(/^\s*|\s*$/g, ''), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<div><br></div>','<p></p>','<br>','']) != -1){document.getElementById('qa_mobile_content_tail').value='';}
-    
-            f.action = "./qa_config_update.php";
+            f.token.value = generate_token();
+
             return true;
         }
     </script>

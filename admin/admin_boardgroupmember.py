@@ -83,9 +83,12 @@ def board_form(mb_id: str, request: Request, db: Session = Depends(get_db)):
 async def boardgroupmember_insert(
     request: Request,
     db: Session = Depends(get_db),
+    token: str = Form(...),
     mb_id: str = Form(...),
     gr_id: str = Form(...),
     ):
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
     
     exists_member = db.query(models.Member).filter(models.Member.mb_id == mb_id).first()
     if not exists_member:
@@ -114,13 +117,12 @@ async def boardgroupmember_insert(
 async def boardgroupmember_delete(
     request: Request,
     db: Session = Depends(get_db),
-    token: Optional[str] = Form(...),
-    checks: Optional[List[int]] = Form(None, alias="chk[]"),
+    token: str = Form(...),
+    checks: List[int] = Form(None, alias="chk[]"),
     mb_id: str = Form(...),
     ):
-    
-    if not compare_token(request, token, 'boardgroupmember_delete'):
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰값이 일치하지 않습니다."]})
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     for i in checks:
         gm_id = i

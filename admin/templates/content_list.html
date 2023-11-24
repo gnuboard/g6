@@ -28,7 +28,6 @@
             </tr>
         </thead>
         <tbody>
-            {% set token = generate_token(request, 'content_list') %}
             {% for content in contents %}
                 <tr class="bg{{ loop.index0 }}">
                     <td class="td_id">{{ content.co_id }}</td>
@@ -36,7 +35,7 @@
                     <td class="td_mng td_mng_l">
                         <a href="{{ url_for('content_form_edit', co_id=content.co_id) }}" class="btn btn_03"><span class="sound_only">회사소개 </span>수정</a>
                         <a href="{{ url_for('content_view', co_id=content.co_id) }}" class="btn btn_02"><span class="sound_only">회사소개 </span> 보기</a>
-                        <a href="{{ url_for('content_delete', co_id=content.co_id) }}?token={{ token }}" onclick="return delete_confirm(this);" class="btn btn_02"><span class="sound_only">회사소개 </span>삭제</a>
+                        <a href="{{ url_for('content_delete', co_id=content.co_id) }}" onclick="return delete_confirm(this);" class="btn btn_02"><span class="sound_only">회사소개 </span>삭제</a>
                     </td>
                 </tr>
             {% endfor %}

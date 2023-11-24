@@ -9,10 +9,10 @@
 
 {% block content %}
 
-<form name="frmcontentform" action="/admin/content_form_update" onsubmit="return frmcontentform_check(this);" method="post" enctype="MULTIPART/FORM-DATA">
-    <input type="hidden" name="co_id" value="{{ content.co_id }}">
+<form name="frmcontentform" action="/admin/content_form_update" onsubmit="return frmcontentform_check(this);" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="action" value="{{ "u" if content.co_id else "w" }}">
     <input type="hidden" name="co_html" value="1">
-    <input type="hidden" name="token" value="{{ generate_token(request, 'update' if content.co_id else 'insert') }}">
+    <input type="hidden" name="token" value="">
 
     <div class="tbl_frm01 tbl_wrap">
         <table>
@@ -201,14 +201,6 @@
         errmsg = "";
         errfld = "";
 
-        var co_content_editor_data = oEditors.getById['co_content'].getIR();
-oEditors.getById['co_content'].exec('UPDATE_CONTENTS_FIELD', []);
-if(jQuery.inArray(document.getElementById('co_content').value.toLowerCase().replace(/^\s*|\s*$/g, ''), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<div><br></div>','<p></p>','<br>','']) != -1){document.getElementById('co_content').value='';}
-        if (!co_content_editor_data || jQuery.inArray(co_content_editor_data.toLowerCase(), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<p></p>','<br>']) != -1) { alert("내용을 입력해 주십시오."); oEditors.getById['co_content'].exec('FOCUS'); return false; }
-        var co_mobile_content_editor_data = oEditors.getById['co_mobile_content'].getIR();
-oEditors.getById['co_mobile_content'].exec('UPDATE_CONTENTS_FIELD', []);
-if(jQuery.inArray(document.getElementById('co_mobile_content').value.toLowerCase().replace(/^\s*|\s*$/g, ''), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<div><br></div>','<p></p>','<br>','']) != -1){document.getElementById('co_mobile_content').value='';}
-
         check_field(f.co_id, "ID를 입력하세요.");
         check_field(f.co_subject, "제목을 입력하세요.");
         check_field(f.co_content, "내용을 입력하세요.");
@@ -222,6 +214,8 @@ if(jQuery.inArray(document.getElementById('co_mobile_content').value.toLowerCase
         if (captcha_chk) {
             if (!chk_captcha()) return false;
         }
+
+        f.token.value = generate_token();
 
         return true;
     }

@@ -66,12 +66,16 @@ def newwin_form_update(request: Request,
     """
     팝업 등록 및 수정 처리
     """
-    if compare_token(request, token, 'insert'): # 토큰에 등록돤 action이 insert라면 신규 등록
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
+
+    # 등록
+    if not nw_id:
         newwin = NewWin(**form_data.__dict__)
         db.add(newwin)
         db.commit()
-        
-    elif compare_token(request, token, 'update'):  # 토큰에 등록된 action이 update라면 수정
+    # 수정
+    else:
         newwin = db.query(NewWin).get(nw_id)
         if not newwin:
             raise AlertException(status_code=404, detail=f"{nw_id} : 팝업이 존재하지 않습니다.")
@@ -80,9 +84,6 @@ def newwin_form_update(request: Request,
         for field, value in form_data.__dict__.items():
             setattr(newwin, field, value)
         db.commit()
-    
-    else: # 토큰 검사 실패
-        raise AlertException(status_code=403, detail=f"{token} : 토큰이 존재하지 않습니다.")
 
     return RedirectResponse(url=f"/admin/newwin_form/{newwin.nw_id}", status_code=302)
 
@@ -95,8 +96,8 @@ def newwin_delete(nw_id: int,
     """
     팝업 삭제
     """
-    if not compare_token(request, token, 'delete'):
-        raise AlertException(status_code=403, detail=f"{token} : 토큰이 존재하지 않습니다.")
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
     
     newwin = db.query(NewWin).get(nw_id)
     if not newwin:

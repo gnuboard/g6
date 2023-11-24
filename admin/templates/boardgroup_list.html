@@ -32,7 +32,7 @@
     <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
     <input type="hidden" name="stx" value="{{ request.state.stx }}">
     <input type="hidden" name="page" value="{{ request.state.page }}">
-    <input type="hidden" name="token" value="{{ generate_token(request, 'boardgroup_list') }}">
+    <input type="hidden" name="token" value="">
 
     <div class="tbl_head01 tbl_wrap">
         <table>
@@ -56,7 +56,7 @@
             </thead>
             <tbody>
                 {% for group in groups %}                
-                <tr class="bg0">
+                <tr class="bg{{ loop.cycle('0', '1') }}">
                     <td class="td_chk">
                         <input type="hidden" name="gr_id[]" value="{{ group.gr_id }}">
                         <label for="chk_{{ loop.index0 }}" class="sound_only">{{ group.gr_subject }} 그룹</label>
@@ -126,6 +126,8 @@
                 return false;
             }
         }
+
+        f.token.value = generate_token();
 
         return true;
     }

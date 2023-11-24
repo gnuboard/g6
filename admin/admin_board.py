@@ -22,7 +22,6 @@ templates.env.globals['get_editor_select'] = get_editor_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
-templates.env.globals["generate_token"] = generate_token
 templates.env.globals["editor_path"] = editor_path
 templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
@@ -85,7 +84,7 @@ def board_list(request: Request, db: Session = Depends(get_db), search_params: d
 
 @router.post("/board_list_update")
 async def board_list_update(request: Request, db: Session = Depends(get_db),
-        token: Optional[str] = Form(...),
+        token: str = Form(...),
         checks: Optional[List[int]] = Form(None, alias="chk[]"),
         gr_id: Optional[List[str]] = Form(None, alias="gr_id[]"),
         bo_table: Optional[List[str]] = Form(None, alias="bo_table[]"),
@@ -102,9 +101,8 @@ async def board_list_update(request: Request, db: Session = Depends(get_db),
         bo_device: Optional[List[str]] = Form(None, alias="bo_device[]"),
         act_button: Optional[str] = Form(...),
         ):
-    
-    if not compare_token(request, token, 'board_list'):
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰값이 일치하지 않습니다."]})
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     query_string = generate_query_string(request)
     
@@ -157,10 +155,7 @@ async def board_list_update(request: Request, db: Session = Depends(get_db),
 
 # 등록 폼
 @router.get("/board_form")
-def board_form(request: Request, db: Session = Depends(get_db)):
-    # token = hash_password(hash_password("")) # 토큰값을 아무도 알수 없게 만듬
-    # request.session["token"] = token   
-    
+def board_form(request: Request, db: Session = Depends(get_db)):    
     config = request.state.config
     
     board = {
@@ -195,7 +190,6 @@ def board_form(request: Request, db: Session = Depends(get_db)):
     
     context = {
         "request": request,
-        # "board": None,
         "board": board,
         "config": config,
     }
@@ -228,11 +222,12 @@ async def board_form(bo_table: str, request: Request, db: Session = Depends(get_
 
 
 # 등록, 수정 처리
-@router.post("/board_form_update")  
+@router.post("/board_form_update")
 def board_form_update(request: Request, 
                         db: Session = Depends(get_db),
                         sfl: str = Form(None),
                         stx: str = Form(None),
+                        action: str = Form(...),
                         token: str = Form(None),
                         bo_table: str = Form(...),
                         form_data: BoardForm = Depends(), 
@@ -395,12 +390,14 @@ def board_form_update(request: Request,
                         chk_all_9: str = Form(None),
                         chk_all_10: str = Form(None),
                         ):
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
 
-    if compare_token(request, token, 'insert'):
+    # 등록
+    if action == "w":
         existing_board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
         if existing_board:
-            errors = [f"{bo_table} 게시판아이디가 이미 존재합니다. (등록불가)"]
-            return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
+            raise AlertException(f"{bo_table} 게시판아이디가 이미 존재합니다. (등록불가)", 400)
         
         new_board = models.Board(bo_table=bo_table, **form_data.__dict__)
         db.add(new_board)
@@ -408,12 +405,12 @@ def board_form_update(request: Request,
         
         # 게시판 테이블 생성
         models.Write = dynamic_create_write_table(table_name=bo_table, create_table=True)        
-        
-    # else: # 수정
-    elif compare_token(request, token, 'update'):
+
+    # 수정
+    elif action == "u":
         existing_board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
         if not existing_board:
-            return templates.TemplateResponse("alert.html", {"request": request, "errors": [f"{bo_table} 게시판아이디가 존재하지 않습니다. (수정불가)"]})
+            raise AlertException(f"{bo_table} 게시판아이디가 존재하지 않습니다. (수정불가)", 404)
         
         # 폼 데이터 반영 후 commit
         for field, value in form_data.__dict__.items():
@@ -421,7 +418,7 @@ def board_form_update(request: Request,
         db.commit()
         
     else:
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["잘못된 접근입니다."]})
+        raise AlertException("잘못된 접근입니다.", 400)
 
     # 그룹적용
     chk_grp = {}

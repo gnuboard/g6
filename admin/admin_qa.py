@@ -19,7 +19,6 @@ templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_nam
 templates.env.globals["get_head_tail_img"] = get_head_tail_img
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals["get_skin_select"] = get_skin_select
-templates.env.globals["generate_token"] = generate_token
 
 MENU_KEY = "300500"
 
@@ -55,19 +54,18 @@ def qa_config_update(request: Request,
     Returns:
         RedirectResponse: 1:1문의 설정 등록/수정 후 폼으로 이동
     """
-    if compare_token(request, token, 'insert'): # 토큰에 등록돤 action이 insert라면 신규 등록
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
+
+    qa_config = db.query(QaConfig).first()
+    if not qa_config:
         qa_config = QaConfig(**form_data.__dict__)
         db.add(qa_config)
         db.commit()
-
-    elif compare_token(request, token, 'update'):  # 토큰에 등록된 action이 update라면 수정
+    else:
         # 데이터 수정 후 commit
-        qa_config = db.query(QaConfig).first()
         for field, value in form_data.__dict__.items():
             setattr(qa_config, field, value)
         db.commit()
     
-    else: # 토큰 검사 실패
-        raise AlertException(status_code=403, detail=f"{token} : 토큰이 존재하지 않습니다.")
-
     return RedirectResponse(url=f"/admin/qa_config", status_code=302)

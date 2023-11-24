@@ -8,14 +8,14 @@
 {% endblock subtitle %}
 
 {% block content %}
-    <form name="fpoll" id="fpoll" action="{{ url_for('poll_form_update') }}" method="post" enctype="multipart/form-data">
+    <form name="fpoll" id="fpoll" action="{{ url_for('poll_form_update') }}" method="post" enctype="multipart/form-data" onsubmit="return fpoll_submit(this);">
         <input type="hidden" name="po_id" value="{{ poll.po_id }}">
         <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
         <input type="hidden" name="stx" value="{{ request.state.stx }}">
         <input type="hidden" name="sst" value="{{ request.state.sst }}">
         <input type="hidden" name="sod" value="{{ request.state.sod }}">
         <input type="hidden" name="page" value="{{ request.state.page }}">
-        <input type="hidden" name="token" value="{{ generate_token(request, 'update' if poll else 'insert') }}">
+        <input type="hidden" name="token" value="">
 
         <div class="tbl_frm01 tbl_wrap">
             <table>
@@ -95,4 +95,12 @@
             <input type="submit" value="확인" class="btn_submit btn" accesskey="s">
         </div>
     </form>
+    <script>
+        function fpoll_submit(f) {
+
+            f.token.value = generate_token();
+
+            return true;
+        }
+    </script>
 {% endblock content %}

@@ -31,7 +31,7 @@
     <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
     <input type="hidden" name="stx" value="{{ request.state.stx }}">
     <input type="hidden" name="page" value="{{ request.state.page }}">
-    <input type="hidden" name="token" value="{{ generate_token(request, 'board_list') }}">
+    <input type="hidden" name="token" value="">
 
     <div class="tbl_head01 tbl_wrap">
         <table>
@@ -171,6 +171,8 @@
                 return false;
             }
         }
+
+        f.token.value = generate_token();
 
         return true;
     }
