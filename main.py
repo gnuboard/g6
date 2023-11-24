@@ -88,13 +88,13 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
 
 
-# class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
-#     async def dispatch(self, request: Request, call_next):
-#         if request.headers.get("X-Forwarded-Proto") != "https":
-#             request.scope["scheme"] = "https"
-#         return await call_next(request)
+class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if request.headers.get("X-Forwarded-Proto") != "https":
+            request.scope["scheme"] = "https"
+        return await call_next(request)
 
-# app.add_middleware(HTTPSRedirectMiddleware)
+app.add_middleware(HTTPSRedirectMiddleware)
 
 
 
