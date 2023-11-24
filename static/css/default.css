@@ -80,17 +80,18 @@ border:1px solid #558ab7 !important;
 #tnb:after {display:block;visibility:hidden;clear:both;content:""}
 #tnb .inner {margin:0 auto}
 
-#hd_wrapper {max-width: 1200px;margin: 0 auto;position: relative;background: #fff;border-radius: 8px;box-shadow: 0px 3px 6px #00000010;height: 80px;display: flex;justify-content: space-between;align-items: center;padding: 0px 20px;}
+#hd_wrapper {max-width: 1200px;margin: 0 auto;position: relative;background: #ff8269;border-radius: 8px;box-shadow: 0px 3px 6px #00000010;height: 80px;display: flex;justify-content: space-between;align-items: center;padding: 0px 20px;}
 
-#logo {float:left;width: 160px;}
+#logo {float:left;width: 130px;}
 #logo img {width: 100%;}
 
 .hd_sch_wr {width:445px;}
 #hd_sch h3 {position:absolute;font-size:0;line-height:0;overflow:hidden}
-#hd_sch {text-align:center;padding:0px;border: 1px solid #e4e4e4;border-radius: 4px;}
+#hd_sch {text-align:center;padding:0px;border-radius: 4px;}
 #hd_sch form {position:relative;padding-right:40px}
-#hd_sch #sch_stx {width:100%;height:38px;margin-right:40px;background:#fff;border: none;padding-left: 10px;}
-#hd_sch #sch_submit {position:absolute;top:0;right:0;width:40px;height:38px;border:0;border-radius:3px;cursor:pointer;color:#ff8269;background:#fff;font-size:1.25em}
+#hd_sch #sch_stx {width:100%;height:38px;margin-right:40px;background:#00000022;color: #fff;border: none;padding-left: 10px;}
+#hd_sch #sch_stx::placeholder {color: #fff;}
+#hd_sch #sch_submit {position:absolute;top:0;right:0;width:40px;height:38px;border:0;border-radius:3px;cursor:pointer;color:#fff;background:#00000022;font-size:1.25em}
 
 #hd_define {float:left}
 #hd_define:after {display:block;visibility:hidden;clear:both;content:""}
@@ -111,7 +112,7 @@ border:1px solid #558ab7 !important;
 .hd_login {}
 .hd_login li {float:left;margin:0 5px;border-left:1px solid #616161;padding-left:10px;line-height:13px}
 .hd_login li:first-child {border-left:0}
-.hd_login a {color:#000}
+.hd_login a {color:#fff}
 
 
 /* 메인메뉴 */
@@ -177,6 +178,9 @@ box-shadow:0 2px 5px rgba(0,0,0,0.2)}
 #aside .aside_tab .tabs {display: flex;border-bottom: 1px solid #eee;}
 #aside .aside_tab .tabs .tab-link {padding: 10px 0px;margin-right: 16px;font-size: 1.2em;cursor: pointer;color: #c5c5c5;font-weight: 500;transition: all 0.3s;border-bottom: 2px solid transparent;}
 #aside .aside_tab .tabs .tab-link.current {border-bottom: 2px solid #f16245;color: #f16245;font-weight: 700;}
+#aside .aside_tab .pic_li_lt {padding: 20px 0px;}
+#aside .aside_tab .pic_li_lt .lat_title {display: none;}
+#aside .aside_tab .pic_li_lt .lt_more {right: 0;top: -32px;}
 #aside .tab-content {display: none;}
 #aside .tab-content.current {display: block;}
 
