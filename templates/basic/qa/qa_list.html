@@ -100,7 +100,7 @@
             <input type="hidden" name="stx" value="{{ request.state.stx }}">
             <input type="hidden" name="sca" value="{{ request.state.sca }}">
             <input type="hidden" name="page" value="{{ current_page }}">
-            <input type="hidden" name="token" value="{{ generate_token(request, 'delete') }}">
+            <input type="hidden" name="token" value="">
                     
             <div class="tbl_head01 tbl_wrap">
                 <table>
@@ -206,7 +206,9 @@
                 if (!confirm("선택한 게시물을 정말 삭제하시겠습니까?\n\n한번 삭제한 자료는 복구할 수 없습니다"))
                     return false;
             }
-        
+
+            f.token.value = generate_token();
+
             return true;
         }
     </script>

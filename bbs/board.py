@@ -162,8 +162,8 @@ def list_delete(
     """
     게시글을 일괄 삭제한다.
     """
-    if not compare_token(request, token, 'board_list'):
-        raise AlertException("토큰이 유효하지 않습니다.", 403)
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     # 게시판 정보 조회
     board = db.get(Board, bo_table)
@@ -262,8 +262,8 @@ def move_update(
     config = request.state.config
     act = "이동" if sw == "move" else "복사"
 
-    if not compare_token(request, token, 'board_move'):
-        raise AlertException("토큰이 유효하지 않습니다.", 403)
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     # 게시판 검증
     origin_board = db.get(Board, bo_table)
@@ -315,6 +315,9 @@ def move_update(
 
             # 게시글 추가
             db.add(target_write)
+            db.commit()
+            # 부모아이디 설정
+            target_write.wr_parent = target_write.wr_id
             db.commit()
 
             if sw == "move":
@@ -530,8 +533,8 @@ async def write_update(
     """
     게시글을 Table 추가한다.
     """
-    if not compare_token(request, token, 'board_write'):
-        raise AlertException("토큰이 유효하지 않습니다.", 403)
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
     
     config = request.state.config
     # 게시판 정보 조회

@@ -1204,23 +1204,6 @@ def generate_token(request: Request, action: str = ''):
     return token
 
 
-def compare_token(request: Request, token: str, action: str = ''):
-    '''
-    토큰 비교 함수
-
-    Args:
-        token (str): 비교할 토큰
-
-    Returns:
-        bool: 토큰이 일치하면 True, 일치하지 않으면 False
-    '''
-    if request.session.get("ss_token") == token and token:
-        # return verify_password(action, token)
-        return True
-    else:
-        return False
-
-
 lfu_cache = cachetools.LFUCache(maxsize=128)
 
 def get_recent_poll():
@@ -1577,7 +1560,6 @@ class MyTemplates(Jinja2Templates):
         super().__init__(directory=directory, context_processors=context_processors)
         # 공통 env.global 설정
         self.env.globals["editor_path"] = editor_path
-        self.env.globals["generate_token"] = generate_token
         self.env.globals["getattr"] = getattr
         self.env.globals["get_selected"] = get_selected
         self.env.globals["get_member_icon"] = get_member_icon

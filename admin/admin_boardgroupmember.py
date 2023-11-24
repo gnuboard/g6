@@ -24,7 +24,6 @@ templates.env.globals['get_editor_select'] = get_editor_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
-templates.env.globals["generate_token"] = generate_token
 templates.env.globals["editor_path"] = editor_path
 
 

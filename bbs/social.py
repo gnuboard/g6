@@ -16,7 +16,7 @@ from bbs.member_profile import validate_nickname, validate_userid
 from lib.social import providers
 from lib.social.social import oauth, SocialProvider, get_social_profile, get_social_login_token
 from lib.common import AlertException, valid_email, hash_password, session_member_key, insert_point, TEMPLATES_DIR, \
-    is_admin, default_if_none, generate_token
+    is_admin, default_if_none
 from common.database import get_db, SessionLocal
 from common.formclass import MemberForm
 
@@ -27,7 +27,6 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR, extensions=["jinja2.ext.i18
 templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals['getattr'] = getattr
-templates.env.globals["generate_token"] = generate_token
 
 log = logging.getLogger("authlib")
 logging.basicConfig()
