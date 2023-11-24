@@ -389,6 +389,11 @@ tfoot th {}
 .tbl_head01 tbody .bg1cancel {background:#fdebf3 !important}
 .tbl_head01 tbody .bg1cancel td {border-color:#f9d8e6 !important}
 
+/* 홀짝 배경색 */
+.tbl_head01 tbody .bg:nth-child(odd) {background:#fff !important}
+.tbl_head01 tbody .bg:nth-child(even) {background:#eff3f9 !important}
+
+
 /* 메뉴설정 */
 #menu_frm #menu_result {margin:10px 0}
 
@@ -535,8 +540,9 @@ td.td_grpset {width:160px;border-left:1px solid #e9ecee;text-align:center}
 .is_rewrite .info-success{color:#155724}
 .is_rewrite .info-warning{color:#856404}
 
-.icode_old_version th{background-color:#FFFCED}
-.icode_json_version th{background-color:#F6F1FF}
+/* sms */
+.sms_version th{background-color:#FFFCED}
+.sms_json_version th{background-color:#F6F1FF}
 .cf_tr_hide {display:none}
 
 /* 관리권한설정 */
