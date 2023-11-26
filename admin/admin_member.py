@@ -26,7 +26,6 @@ templates.env.globals["get_selected"] = get_selected
 templates.env.globals["get_member_level_select"] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals["get_admin_menus"] = get_admin_menus
-templates.env.globals["generate_token"] = generate_token
 templates.env.globals["is_none_datetime"] = is_none_datetime
 
 MEMBER_MENU_KEY = "200100"

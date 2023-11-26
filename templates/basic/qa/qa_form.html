@@ -17,7 +17,7 @@
         <h2>{{ qa_config.qa_title }} 작성</h2>
         <!-- 게시물 작성/수정 시작 { -->
         <form name="fwrite" id="fwrite" action="{{ url_for('qa_write_update') }}" onsubmit="return fwrite_submit(this);" method="post" enctype="multipart/form-data" autocomplete="off">
-            <input type="hidden" name="token" value="{{ generate_token(request, 'update' if qa else 'insert') }}">
+            <input type="hidden" name="token" value="">
             <input type="hidden" name="sca" value="">
             <input type="hidden" name="stx" value="">
             <input type="hidden" name="page" value="">
@@ -111,11 +111,6 @@
         function fwrite_submit(f)
         {
             /*
-            var qa_content_editor_data = oEditors.getById['qa_content'].getIR();
-            oEditors.getById['qa_content'].exec('UPDATE_CONTENTS_FIELD', []);
-            if(jQuery.inArray(document.getElementById('qa_content').value.toLowerCase().replace(/^\s*|\s*$/g, ''), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<div><br></div>','<p></p>','<br>','']) != -1){document.getElementById('qa_content').value='';}
-            if (!qa_content_editor_data || jQuery.inArray(qa_content_editor_data.toLowerCase(), ['&nbsp;','<p>&nbsp;</p>','<p><br></p>','<p></p>','<br>']) != -1) { alert("내용을 입력해 주십시오."); oEditors.getById['qa_content'].exec('FOCUS'); return false; }
-
             var subject = "";
             var content = "";
             $.ajax({
@@ -154,27 +149,10 @@
                 alert("휴대폰번호는 숫자, - 으로만 입력해 주십시오.");
                 return false;
             }
-            
-            $.ajax({
-                type: "POST",
-                url: g5_bbs_url+"/ajax.write.token.php",
-                data: { 'token_case' : 'qa_write' },
-                cache: false,
-                async: false,
-                dataType: "json",
-                success: function(data) {
-                    if (typeof data.token !== "undefined") {
-                        token = data.token;
-
-                        if(typeof f.token === "undefined")
-                            $(f).prepend('<input type="hidden" name="token" value="">');
-
-                        $(f).find("input[name=token]").val(token);
-                    }
-                }
-            });
             */
-            document.getElementById("btn_submit").disabled = "disabled";
+            // document.getElementById("btn_submit").disabled = "disabled";
+
+            f.token.value = generate_token();
 
             return true;
         }

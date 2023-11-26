@@ -34,7 +34,6 @@ templates.env.globals["option_array_checked"] = option_array_checked
 templates.env.globals["get_admin_menus"] = get_admin_menus
 templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
-templates.env.globals["generate_token"] = generate_token
 templates.env.globals["get_client_ip"] = get_client_ip
 
 CONFIG_MENU_KEY = "100100"

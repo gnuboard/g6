@@ -29,13 +29,13 @@
         </div>
     </form>
     
-    <form name="fpopularlist" id="fpopularlist" action="{{ url_for('popular_delete') }}" method="post">
+    <form name="fpopularlist" id="fpopularlist" action="{{ url_for('popular_delete') }}" method="post" onsubmit="return fpopularlist_submit(this);">
         <input type="hidden" name="sst" value="{{ request.state.sst }}">
         <input type="hidden" name="sod" value="{{ request.state.sod }}">
         <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
         <input type="hidden" name="stx" value="{{ request.state.stx }}">
         <input type="hidden" name="page" value="{{ request.state.page }}">
-        <input type="hidden" name="token" value="{{ generate_token(request, 'delete') }}">
+        <input type="hidden" name="token" value="">
     
         <div class="tbl_head01 tbl_wrap">
             <table>
@@ -83,18 +83,18 @@
     {{ paging|safe }}
     
     <script>
-        $(function() {
-            $('#fpopularlist').submit(function() {
-                if (confirm("한번 삭제한 자료는 복구할 방법이 없습니다.\n\n정말 삭제하시겠습니까?")) {
-                    if (!is_checked("chk[]")) {
-                        alert("선택삭제 하실 항목을 하나 이상 선택하세요.");
-                        return false;
-                    }
-                    return true;
-                } else {
-                    return false;
-                }
-            });
-        });
+        function fpopularlist_submit(f) {
+            if (!is_checked("chk[]")) {
+                alert("선택삭제 하실 항목을 하나 이상 선택하세요.");
+                return false;
+            }
+
+            if (confirm("한번 삭제한 자료는 복구할 방법이 없습니다.\n\n정말 삭제하시겠습니까?")) {
+                f.token.value = generate_token();
+                return true;
+            } else {
+                return false;
+            }
+        }
     </script>
 {% endblock content %}

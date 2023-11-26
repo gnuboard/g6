@@ -1,21 +1,26 @@
 {% extends "base.html" %}
+{% if board.bo_use_sideview %}
+    {% import "/sideview/macros.html" as sideview %}
+{% endif %}
 
 {% block title %}
-    {{ board.bo_subject }} {{ current_page }} 페이지
+    {{ board.subject }} {{ current_page }} 페이지
 {% endblock title %}
 {% block subtitle %}
-    {{ board.bo_subject }}
+    {{ board.subject }}
 {% endblock subtitle %}
 
 {% block content %}
+{% set is_admin=get_admin_type(request, request.state.login_member.mb_id, group=board.group, board=board) %}
 {% set sca=request.query_params.sca %}
 {% set sod_reverse="asc" if request.query_params.sod == "desc" else "desc" %}
+
 <!-- 게시판 목록 시작 { -->
-<div id="bo_list" style="width:100%">
+<div id="bo_list" style="width:{{ table_width }}">
     {% if board.bo_use_category %}
     <!-- 게시판 카테고리 시작 { -->
         <nav id="bo_cate">
-            <h2>자유게시판 카테고리</h2>
+            <h2>{{ board.subject }} 카테고리</h2>
             <ul id="bo_cate_ul">
                 <li><a href="{{ request.url.replace_query_params() }}" {% if not sca %}id="bo_cate_on"{% endif %}>전체</a></li>
                 {% for category in categories %}
@@ -35,7 +40,7 @@
         <input type="hidden" name="sst" value="{{ request.query_params.sst }}">
         <input type="hidden" name="sod" value="{{ request.query_params.sod }}">
         <input type="hidden" name="page" value="{{ current_page }}">
-        <input type="hidden" name="token" value="{{ generate_token(request, 'board_list') }}">
+        <input type="hidden" name="token" value="">
         <input type="hidden" name="act_button" value="">
         
 
@@ -53,13 +58,15 @@
                         <span class="sound_only">게시판 검색</span>
                     </button>
                 </li>
+                {% if is_write %}
                 <li>
                     <a href="{{ url_for('write_form_add', bo_table=board.bo_table) }}" class="btn_b01 btn" title="글쓰기">
                         <i class="fa fa-pencil" aria-hidden="true"></i>
                         <span class="sound_only">글쓰기</span>
                     </a>
                 </li>
-                {% if request.state.is_super_admin %}
+                {% endif %}
+                {% if is_admin %}
                 <li>
                     <button type="button" class="btn_more_opt is_list_btn btn_b01 btn" title="게시판 리스트 옵션">
                         <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
@@ -87,7 +94,7 @@
                 <caption>자유게시판 목록</caption>
                 <thead>
                 <tr>
-                    {% if request.state.is_super_admin %}
+                    {% if is_admin %}
                     <th scope="col" class="all_chk chk_box">
                         <input type="checkbox" id="chkall" onclick="if (this.checked) all_checked(true); else all_checked(false);" class="selec_chk">
                         <label for="chkall">
@@ -97,6 +104,9 @@
                     </th>
                     {% endif %}
                     <th scope="col">번호</th>
+                    {% if board.bo_use_category %}
+                    <th scope="col">분류</th>
+                    {% endif %}
                     <th scope="col">제목</th>
                     <th scope="col">글쓴이</th>
                     <th scope="col"><a href="{{ request.url.include_query_params(sst="wr_hit", sod=sod_reverse) }}">조회</a></th>
@@ -110,35 +120,82 @@
             </tr>
             </thead>
                 <tbody>
+                {% for write in notice_writes %}
+                <tr class="bo_notice">
+                    {% if is_admin %}
+                    <td class="td_chk chk_box"></td>
+                    {% endif %}
+                    <td class="td_num2"><strong class="notice_icon">공지</strong></td>
+                    {% if board.bo_use_category and write.ca_name %}
+                    <td class="td_mng">
+                        <a href="{{ request.url.replace_query_params(sca=write.ca_name) }}" class="bo_cate_link">
+                            {{ write.ca_name }}
+                        </a>
+                    </td>
+                    {% endif %}
+                    <td class="td_subject">
+                        <div class="bo_tit">
+                            {% if "secret" in write.wr_option %}
+                                <i class="fa fa-lock" aria-hidden="true"></i>
+                            {% endif %}
+                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?{{ request.query_params }}">
+                                {{ write.subject }}
+                            </a>
+                            {% if write.icon_new %}<span class="new_icon">N<span class="sound_only">새글</span></span>{% endif %}
+                            {% if write.icon_hot %}<i class="fa fa-heart" aria-hidden="true"></i>{% endif %}
+                            {% if write.icon_file %}<i class="fa fa-download" aria-hidden="true"></i>{% endif %}
+                            {% if write.icon_link %}<i class="fa fa-link" aria-hidden="true"></i>{% endif %}
+                            {% if write.wr_comment %}<span class="sound_only">댓글</span><span class="cnt_cmt">{{ write.wr_comment }}</span><span class="sound_only">개</span>{% endif %}
+                        </div>
+                    </td>
+                    <td class="td_name sv_use">
+                        {% if board.bo_use_sideview %}
+                            {{ sideview.get(request, write.mb_id, write.name, write.wr_email, write.wr_homepage)|safe }}
+                        {% else %}
+                            <span class="sv_member">{{ write.name }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="td_num">{{ write.wr_hit }}</td>
+                    {% if board.bo_use_good %}
+                    <td class="td_num">{{ write.wr_good }}</td>
+                    {% endif %}
+                    {% if board.bo_use_nogood %}
+                    <td class="td_num">{{ write.wr_nogood }}</td>
+                    {% endif %}
+                    <td class="td_datetime">{{ write.datetime }}</td>
+                </tr>
+                {% endfor %}
                 {% for write in writes %}
                 {% set reply_depth=write.wr_reply|length %}
-                    <tr class="{{ loop.cycle("", "even") }} {{ "bo_notice" if write.is_notice else "" }}">
-                        {% if request.state.is_super_admin %}
+                    <tr class="{{ loop.cycle("", "even") }}">
+                        {% if is_admin %}
                         <td class="td_chk chk_box">
                             {% if not write.is_notice %}
                             <input type="checkbox" name="chk_wr_id[]" value="{{ write.wr_id }}" id="chk_wr_id_{{ loop.index }}" class="selec_chk">
                             <label for="chk_wr_id_{{ loop.index }}">
                                 <span>&nbsp;</span>
-                                <b class="sound_only">{{ write.wr_subject }}</b>
+                                <b class="sound_only">{{ write.subject }}</b>
                             </label>
                             {% endif %}
                         </td>
                         {% endif %}
                         <td class="td_num2">
-                            {% if write.is_notice %}
-                                <strong class="notice_icon">공지</strong>
-                            {% elif wr_id == write.wr_id %}
+                            {% if wr_id == write.wr_id %}
                                 <span class="bo_current">열람중</span>
                             {% else %}
                                 {{ write.num }}
                             {% endif %}
                         </td>
-                        <td class="td_subject" style="padding-left:{{ reply_depth * 10 }}px">
-                            {% if board.bo_use_category and write.ca_name %}
-                                <a href="{{ request.url.replace_query_params(sca=write.ca_name) }}" class="bo_cate_link">
-                                    {{ write.ca_name }}
-                                </a>
+                        {% if board.bo_use_category %}
+                        <td class="td_mng">
+                            {% if write.ca_name %}
+                            <a href="{{ request.url.replace_query_params(sca=write.ca_name) }}" class="bo_cate_link">
+                                {{ write.ca_name }}
+                            </a>
                             {% endif %}
+                        </td>
+                        {% endif %}
+                        <td class="td_subject" style="padding-left:{{ reply_depth * 10 }}px">
                             <div class="bo_tit">
                                 {% if write.wr_reply %}
                                     <img src="{{ url_for('static', path="/img/icon_reply.gif") }}" class="icon_reply" alt="답변글">
@@ -154,7 +211,15 @@
                                 {% if write.wr_comment %}<span class="sound_only">댓글</span><span class="cnt_cmt">{{ write.wr_comment }}</span><span class="sound_only">개</span>{% endif %}
                             </div>
                         </td>
-                        <td class="td_name sv_use"><span class="sv_member">{{ write.wr_nick }}</span></td>
+                        <td class="td_name sv_use">
+                            {% if board.bo_use_sideview %}
+                                {{ sideview.get(request, write.mb_id, write.name, write.wr_email, write.wr_homepage)|safe }}
+                            {% else %}
+                                <span class="{% if write.mb_id %}sv_member{% else %}sv_guest{% endif %}">
+                                    {{ write.name }}
+                                </span>
+                            {% endif %}
+                        </td>
                         <td class="td_num">{{ write.wr_hit }}</td>
                         {% if board.bo_use_good %}
                         <td class="td_num">{{ write.wr_good }}</td>
@@ -173,7 +238,7 @@
         <!-- 페이지 -->
         <div class="bo_fx">
             <ul class="btn_bo_user">
-                {% if request.state.is_super_admin %}
+                {% if is_admin %}
                 <li>
                     <a href="{{ url_for('board_form', bo_table=board.bo_table) }}" class="btn_admin btn" title="관리자">
                         <i class="fa fa-cog fa-spin fa-fw"></i><span class="sound_only">관리자</span>
@@ -187,11 +252,13 @@
                     </a>
                 </li>
                 {% endif %}
+                {% if is_write %}
                 <li>
                     <a href="{{ url_for('write_form_add', bo_table=board.bo_table) }}" class="btn_b01 btn" title="글쓰기">
                         <i class="fa fa-pencil" aria-hidden="true"></i><span class="sound_only">글쓰기</span>
                     </a>
                 </li>
+                {% endif %}
             </ul>
         </div>
     </form>
@@ -201,7 +268,6 @@
         <fieldset class="bo_sch">
             <h3>검색</h3>
             <form name="fsearch" method="get">
-                <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
                 <input type="hidden" name="sca" value="{{ request.query_params.sca }}">
                 <input type="hidden" name="sop" value="{{ request.query_params.sop }}">
                 <label for="sfl" class="sound_only">검색대상</label>
@@ -239,7 +305,7 @@
     </script>
     <!-- } 게시판 검색 끝 -->
 </div>
-{% if request.state.is_super_admin %}
+{% if is_admin %}
     <noscript>
         <p>자바스크립트를 사용하지 않는 경우<br>별도의 확인 절차 없이 바로 선택삭제 처리하므로 주의하시기 바랍니다.</p>
     </noscript>
@@ -281,9 +347,11 @@
                 return false;
     
             f.removeAttribute("target");
-            f.action = "{{ url_for('list_delete', bo_table=board.bo_table) }}";
+            f.action = "{{ url_for('list_delete', bo_table=board.bo_table) }}?{{ request.query_params }}";
         }
-    
+
+        f.token.value = generate_token();
+
         return true;
     }
     

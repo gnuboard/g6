@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Form
 
 from bbs.social import SocialAuthService
 from lib.common import *
@@ -21,16 +21,15 @@ def member_leave_form(request: Request):
     return templates.TemplateResponse("member/member_confirm.html", {
         "request": request,
         "member": member,
-        "token": generate_token(request, 'member_leave'),
     })
 
 
 @router.post("/member_leave")
-def member_leave(request: Request, db=Depends(get_db)):
+def member_leave(request: Request, db: Session = Depends(get_db), token: str = Form(...)):
     """회원탈퇴
     """
-    if not compare_token(request, 'member_leave'):
-        raise AlertException(status_code=400, detail="잘못된 접근입니다.")
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     member = request.state.login_member
     if not member:
