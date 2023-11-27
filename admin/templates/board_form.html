@@ -10,12 +10,13 @@
 
 {% block content %}
 <form method="post" name="fboardform" id="fboardform" action="/admin/board_form_update"  onsubmit="return fboardform_submit(this)" enctype="multipart/form-data" autocomplete="off">
+<input type="hidden" name="action" value="{{ 'u' if board.bo_table else 'w' }}">
 <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
 <input type="hidden" name="stx" value="{{ request.state.stx }}">
 <input type="hidden" name="sst" value="{{ request.state.sst }}">
 <input type="hidden" name="sod" value="{{ request.state.sod }}">
 <input type="hidden" name="page" value="{{ request.state.page }}">
-<input type="hidden" name="token" value="{{ generate_token(request, 'update' if board.bo_table else 'insert') }}">
+<input type="hidden" name="token" value="">
 
 <section id="anc_bo_basic">
     <h2 class="h2_frm">게시판 기본 설정</h2>
@@ -1286,6 +1287,8 @@ function fboardform_submit(f)
     if( captcha_chk ) {
         <?php echo isset($captcha_js) ? $captcha_js : ''; // 캡챠 사용시 자바스크립트에서 입력된 캡챠를 검사함  ?>
     } #}
+
+    f.token.value = generate_token();
 
     return true;
 }

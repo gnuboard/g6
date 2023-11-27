@@ -15,7 +15,6 @@ templates.env.globals['get_selected'] = get_selected
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
-templates.env.globals["generate_token"] = generate_token
 
 LIST_MENU_KEY = "300300"
 RANK_MENU_KEY = "300400"
@@ -56,8 +55,8 @@ def popular_delete(request: Request,
     '''
     인기검색어 목록 삭제
     '''
-    if not compare_token(request, token, 'delete'):
-        raise AlertException(status_code=403, detail="토큰이 유효하지 않습니다.")
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     # in 조건을 사용해서 일괄 삭제
     db.query(Popular).filter(Popular.pp_id.in_(checks)).delete()

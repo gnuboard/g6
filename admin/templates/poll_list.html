@@ -28,13 +28,13 @@
         </div>
     </form>
     
-    <form name="fpolllist" id="fpolllist" action="{{ url_for('poll_list_update') }}" method="post">
+    <form name="fpolllist" id="fpolllist" action="{{ url_for('poll_list_update') }}" method="post" onsubmit="return fpolllist_submit(this);">
         <input type="hidden" name="sst" value="{{ request.state.sst }}">
         <input type="hidden" name="sod" value="{{ request.state.sod }}">
         <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
         <input type="hidden" name="stx" value="{{ request.state.stx }}">
         <input type="hidden" name="page" value="{{ request.state.page }}">
-        <input type="hidden" name="token" value="{{ generate_token(request, 'delete') }}">
+        <input type="hidden" name="token" value="">
         <div class="tbl_head01 tbl_wrap">
             <table>
                 <caption>투표 관리 목록</caption>
@@ -86,18 +86,20 @@
     {{ paging|safe }}
     
     <script>
-        $(function() {
-            $('#fpolllist').submit(function() {
-                if (confirm("한번 삭제한 자료는 복구할 방법이 없습니다.\n\n정말 삭제하시겠습니까?")) {
-                    if (!is_checked("chk[]")) {
-                        alert("선택삭제 하실 항목을 하나 이상 선택하세요.");
-                        return false;
-                    }
-                    return true;
-                } else {
-                    return false;
-                }
-            });
-        });
+        function fpolllist_submit(f) {
+            if (!is_checked("chk[]")) {
+                alert("선택삭제 하실 항목을 하나 이상 선택하세요.");
+                return false;
+            }
+
+            if (confirm("한번 삭제한 자료는 복구할 방법이 없습니다.\n\n정말 삭제하시겠습니까?")) {
+
+                f.token.value = generate_token();
+
+                return true;
+            } else {
+                return false;
+            }
+        }
     </script>
 {% endblock content %}

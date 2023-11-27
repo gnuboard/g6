@@ -44,7 +44,7 @@
     <input type="hidden" name="sfl" value="{{ request.query_params.sfl }}">
     <input type="hidden" name="stx" value="{{ request.query_params.stx }}">
     <input type="hidden" name="page" value="{{ request.query_params.page }}">
-    <input type="hidden" name="token" value="{{ generate_token(request, 'new_delete') }}">
+    <input type="hidden" name="token" value="">
     <input type="hidden" name="pressed" value="">
 
     <div class="admin_new_btn">
@@ -134,6 +134,7 @@
             return false;
         }
 
+        f.token.value = generate_token();
         f.action = "./new_delete";
 
         return true;

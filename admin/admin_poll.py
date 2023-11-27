@@ -17,7 +17,6 @@ templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['get_selected'] = get_selected
-templates.env.globals["generate_token"] = generate_token
 
 MENU_KEY = "200900"
 
@@ -60,8 +59,8 @@ def poll_list_update(request: Request,
     """
     투표 목록 삭제
     """
-    if not compare_token(request, token, 'delete'):
-        raise AlertException(status_code=403, detail=f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.")
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     # in 조건을 사용해서 일괄 삭제
     db.query(Poll).filter(Poll.po_id.in_(checks)).delete()
@@ -104,26 +103,23 @@ def poll_form_update(request: Request,
     """
     투표등록 및 수정 처리
     """
-    if compare_token(request, token, 'insert'): # 토큰에 등록돤 action이 insert라면 신규 등록
-        # 투표 등록
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
+    
+    poll = db.query(Poll).filter_by(po_id=po_id).first()
+    # 투표 수정
+    if poll:
+        # 데이터 수정 후 commit
+        for field, value in form_data.__dict__.items():
+            setattr(poll, field, value)
+        db.commit()
+    # 투표 등록
+    else:
         poll = Poll(**form_data.__dict__)
         db.add(poll)
         db.commit()
         
         # 기존캐시 삭제
         lfu_cache.update({"poll": None})
-
-    elif compare_token(request, token, 'update'):  # 토큰에 등록된 action이 update라면 수정
-        poll = db.query(Poll).get(po_id)
-        if not poll:
-            raise AlertException(status_code=404, detail=f"{po_id} : 투표 아이디가 존재하지 않습니다.")
-
-        # 데이터 수정 후 commit
-        for field, value in form_data.__dict__.items():
-            setattr(poll, field, value)
-        db.commit()
-    
-    else: # 토큰 검사 실패
-        raise AlertException(status_code=403, detail=f"{token} : 토큰이 존재하지 않습니다.")
 
     return RedirectResponse(url=f"/admin/poll_form/{poll.po_id}", status_code=302)

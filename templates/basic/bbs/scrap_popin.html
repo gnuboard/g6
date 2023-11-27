@@ -13,8 +13,8 @@
 </script>
 <div id="scrap_do" class="new_win">
     <h1 id="win_title">스크랩하기</h1>
-    <form name="f_scrap_popin" action="{{ url_for('scrap_form_update', bo_table=bo_table, wr_id=write.wr_id) }}" method="post">
-        <input type="hidden" name="token" value="{{ generate_token(request, 'scrap_insert') }}">
+    <form name="f_scrap_popin" action="{{ url_for('scrap_form_update', bo_table=bo_table, wr_id=write.wr_id) }}" method="post" onsubmit="return fscrappopin_submit(this);">
+        <input type="hidden" name="token" value="">
         <div class="new_win_con">
             <h2 class="sound_only">제목 확인 및 댓글 쓰기</h2>
             <ul>
@@ -34,4 +34,10 @@
         </div>
     </form>
 </div>
+<script>
+    function fscrappopin_submit(f) {
+        f.token.value = generate_token();
+        return true;
+    }
+</script>
 {% endblock content %}

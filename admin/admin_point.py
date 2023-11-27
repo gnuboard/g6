@@ -24,7 +24,6 @@ templates.env.globals['get_editor_select'] = get_editor_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
-templates.env.globals["generate_token"] = generate_token
 templates.env.globals["format"] = format
 
 
@@ -106,8 +105,8 @@ async def point_update(request: Request, db: Session = Depends(get_db),
         po_point: Optional[str] = Form(default="0"),
         po_expire_term: Optional[int] = Form(None),
         ):
-    if not compare_token(request, token, 'point_list'):
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다."]})
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
     
     try:
         # po_point 값을 정수로 변환합니다.
@@ -139,8 +138,8 @@ async def point_list_delete(request: Request, db: Session = Depends(get_db),
         checks: Optional[List[int]] = Form(None, alias="chk[]"),
         po_id: Optional[List[int]] = Form(None, alias="po_id[]"),
         ):
-    if not compare_token(request, token, 'point_list'):
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다."]})
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     query_string = generate_query_string(request)
 

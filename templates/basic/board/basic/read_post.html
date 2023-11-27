@@ -87,7 +87,7 @@
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ url_for('delete_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?token={{ generate_token(request, 'delete_post') }}&{{ request.query_params }}" onclick="del(this.href); return false;">
+                                <a href="{{ url_for('delete_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?{{ request.query_params }}" onclick="del(this.href); return false;">
                                     삭제<i class="fa fa-trash-o" aria-hidden="true"></i>
                                 </a>
                             </li>

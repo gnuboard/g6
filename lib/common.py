@@ -45,11 +45,16 @@ TEMPLATES = "templates"
 CAPTCHA_PATH = "lib/captcha/templates"
 EDITOR_PATH = "lib/editor/templates"
 
+# .env 파일이 없을 경우 경고 메시지 출력
+if not os.path.exists(".env"):
+    print("\033[93m" + "경고: .env 파일이 없습니다. 설치를 진행해 주세요." + "\033[0m")
+    #print("python3 install.py")
+    # exit()
 # 테이블이 데이터베이스에 존재하는지 확인
-if not inspect(engine).has_table(DB_TABLE_PREFIX + "config"):
+elif not inspect(engine).has_table(DB_TABLE_PREFIX + "config"):
     print("\033[93m" + "DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요." + "\033[0m")
-    print("python3 install.py")
-    exit()
+    #print("python3 install.py")
+    #exit()
 
 def get_theme_from_db(config=None):
     # main.py 에서 config 를 인수로 받아서 사용
@@ -1207,23 +1212,6 @@ def generate_token(request: Request, action: str = ''):
     return token
 
 
-def compare_token(request: Request, token: str, action: str = ''):
-    '''
-    토큰 비교 함수
-
-    Args:
-        token (str): 비교할 토큰
-
-    Returns:
-        bool: 토큰이 일치하면 True, 일치하지 않으면 False
-    '''
-    if request.session.get("ss_token") == token and token:
-        # return verify_password(action, token)
-        return True
-    else:
-        return False
-
-
 lfu_cache = cachetools.LFUCache(maxsize=128)
 
 def get_recent_poll():
@@ -1588,7 +1576,6 @@ class UserTemplates(Jinja2Templates):
         super().__init__(directory=directory, context_processors=context_processors)
         # 공통 env.global 설정
         self.env.globals["editor_path"] = editor_path
-        self.env.globals["generate_token"] = generate_token
         self.env.globals["getattr"] = getattr
         self.env.globals["get_selected"] = get_selected
         self.env.globals["get_member_icon"] = get_member_icon
@@ -1635,7 +1622,6 @@ class AdminTemplates(Jinja2Templates):
         super().__init__(directory=directory, context_processors=context_processors)
         # 공통 env.global 설정
         self.env.globals["editor_path"] = editor_path
-        self.env.globals["generate_token"] = generate_token
         self.env.globals["getattr"] = getattr
         self.env.globals["get_selected"] = get_selected
         self.env.globals["get_member_icon"] = get_member_icon
@@ -1670,7 +1656,6 @@ class MyTemplates(Jinja2Templates):
         super().__init__(directory=directory, context_processors=context_processors)
         # 공통 env.global 설정
         self.env.globals["editor_path"] = editor_path
-        self.env.globals["generate_token"] = generate_token
         self.env.globals["getattr"] = getattr
         self.env.globals["get_selected"] = get_selected
         self.env.globals["get_member_icon"] = get_member_icon
@@ -2094,6 +2079,15 @@ def number_format(number: int) -> str:
         return "Invalid input. Please provide an integer."
 
 
+def read_version():
+    """루트 디렉토의 version.txt 파일을 읽어서 버전을 반환하는 함수
+    Returns:
+        str: 버전
+    """
+    with open("version.txt", "r") as file:
+        return file.read().strip()
+
+
 def theme_asset(asset_path: str):
     """
     현재 템플릿의 asset url을 반환하는 헬퍼 함수
@@ -2105,8 +2099,7 @@ def theme_asset(asset_path: str):
 
     theme_path = get_theme_from_db()
     theme_name = theme_path.replace(TEMPLATES + '/', "")
-    print('theme_asset')
-    print(theme_name)
+
     return f"/theme_static/{theme_name}/{asset_path}"
 
 

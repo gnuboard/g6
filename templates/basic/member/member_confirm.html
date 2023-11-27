@@ -26,7 +26,7 @@
           onsubmit="return fmemberconfirm_submit(this)"
           method="post">
         <input type="hidden" name="mb_id" value="{{ member.mb_id }}">
-        <input type="hidden" name="token" value="{{ token }}">
+        <input type="hidden" name="token" value="">
 
         <fieldset>
             <span class="confirm_id">회원아이디</span>
@@ -45,7 +45,9 @@
     function fmemberconfirm_submit(f)
     {
         document.getElementById("btn_submit").disabled = true;
-    
+
+        f.token.value = generate_token();
+
         return true;
     }
 </script>

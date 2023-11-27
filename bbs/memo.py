@@ -221,8 +221,8 @@ def memo_delete(request: Request, db: Session = Depends(get_db),
     """
     쪽지 삭제
     """
-    if not compare_token(request, token, 'delete'):
-        raise AlertException(status_code=403, detail=f"{token} : 토큰이 존재하지 않습니다.")
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
     
     member = request.state.login_member
     if not member:

@@ -24,7 +24,6 @@ templates.env.globals['get_editor_select'] = get_editor_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
-templates.env.globals["generate_token"] = generate_token
 templates.env.globals["format"] = format
 
 @router.get("/auth_list")
@@ -126,8 +125,8 @@ async def auth_update(request: Request, db: Session = Depends(get_db),
         d: Optional[str] = Form(default=""),
         ):
     
-    if not compare_token(request, token, 'auth_list'):
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다."]})
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다.")
     
     exists_member = db.query(models.Member).filter_by(mb_id=mb_id).first()
     if not exists_member:
@@ -157,21 +156,21 @@ async def auth_update(request: Request, db: Session = Depends(get_db),
 
 
 @router.post("/auth_list_delete")
-async def point_list_delete(request: Request, db: Session = Depends(get_db),
+async def auth_list_delete(request: Request, db: Session = Depends(get_db),
         search_params: dict = Depends(common_search_query_params),
         token: Optional[str] = Form(...),
-        checks: Optional[List[int]] = Form(None, alias="chk[]"),
-        mb_id: Optional[List[str]] = Form(None, alias="mb_id[]"),
-        au_menu: Optional[List[str]] = Form(None, alias="au_menu[]"),
+        checks: List[int] = Form(..., alias="chk[]"),
+        mb_id: List[str] = Form(..., alias="mb_id[]"),
+        au_menu: List[str] = Form(..., alias="au_menu[]"),
         ):
     
-    if not compare_token(request, token, 'auth_list'):
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰이 유효하지 않습니다."]})
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다.")
 
     for i in checks:
         exists_auth = db.query(models.Auth).filter_by(mb_id=mb_id[i], au_menu=au_menu[i]).first()
         if exists_auth:
             db.delete(exists_auth)
             db.commit()
-        
+
     return RedirectResponse(f"/admin/auth_list?{query_string(request)}", status_code=303)
