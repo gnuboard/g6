@@ -7,7 +7,7 @@
 {% block content %}
     <h2 class="sound_only">최신글</h2>
     <div class="latest_top_wr">
-        {{ latest(request, 'pic_list', 'notice', 4, 23)|safe }}
+        {{ latest(request, 'main_list', 'notice', 4, 23)|safe }}
     </div>
     <div class="latest_wr">
         {{ latest(request, 'pic_block', 'gallery', 4, 23)|safe }}
