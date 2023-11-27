@@ -233,6 +233,31 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
     if config.cf_use_recommend and mb_recommend:
         insert_point(request, mb_recommend, config.cf_recommend_point, f"{new_member.mb_id}의 추천인", "@member", mb_recommend, f"{new_member.mb_id} 추천")
 
+    if config.cf_email_use:
+        # 회원에게 회원가입 메일 발송
+        if config.cf_email_mb_member:
+            subject = f"[{config.cf_title}] 회원가입을 축하드립니다."
+            body = templates.TemplateResponse(
+                "bbs/mail_form/register_send_member_mail.html",
+                {
+                    "request": request,
+                    "member": new_member,
+                }
+            ).body.decode("utf-8")
+            mailer(new_member.mb_email, subject, body)
+
+        # 최고관리자에게 회원가입 메일 발송
+        if config.cf_email_mb_super_admin:
+            subject = f"[{config.cf_title}] {new_member.mb_nick} 님께서 회원으로 가입하셨습니다."
+            body = templates.TemplateResponse(
+                "bbs/mail_form/register_send_admin_mail.html",
+                {
+                    "request": request,
+                    "member": new_member,
+                }
+            ).body.decode("utf-8")
+            mailer(config.cf_admin_email, subject, body)
+
     request.session["ss_mb_id"] = new_member.mb_id
     request.session["ss_mb_key"] = session_member_key(request, new_member)
     request.session["ss_mb_reg"] = new_member.mb_id

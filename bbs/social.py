@@ -16,7 +16,7 @@ from bbs.member_profile import validate_nickname, validate_userid
 from lib.social import providers
 from lib.social.social import oauth, SocialProvider, get_social_profile, get_social_login_token
 from lib.common import AlertException, valid_email, hash_password, session_member_key, insert_point, TEMPLATES_DIR, \
-    is_admin, default_if_none, generate_token
+    is_admin, default_if_none, generate_token, mailer
 from common.database import get_db, SessionLocal
 from common.formclass import MemberForm
 
@@ -274,7 +274,17 @@ async def post_social_register(
     # 회원가입 포인트 부여
     insert_point(request, member.mb_id, config.cf_register_point,  "회원가입 축하", "@member", member.mb_id, "회원가입")
 
-    # todo // 최고관리자에게 메일 발송
+    # 최고관리자에게 회원가입 메일 발송
+    if config.cf_email_mb_super_admin:
+        subject = f"[{config.cf_title}] {member.mb_nick} 님께서 회원으로 가입하셨습니다."
+        body = templates.TemplateResponse(
+            "bbs/mail_form/register_send_admin_mail.html",
+            {
+                "request": request,
+                "member": member,
+            }
+        ).body.decode("utf-8")
+        mailer(config.cf_admin_email, subject, body)
 
     return RedirectResponse(url="/", status_code=302)
 
