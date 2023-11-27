@@ -680,14 +680,18 @@ async def write_update(
                 wr_file -= 1
 
         # 파일 업로드 처리 및 파일정보 저장
+        exclude_file = {"size": [], "ext": []}
         for file in files:
             index = files.index(file)
             if file.filename:
                 # 관리자가 아니면서 설정한 업로드 사이즈보다 크거나 업로드 가능 확장자가 아니면 업로드하지 않음
-                if (not admin_type 
-                    and (not file_manager.is_upload_size(file)
-                         or not file_manager.is_upload_extension(request, file))):
-                    continue
+                if not admin_type:
+                    if not file_manager.is_upload_size(file):
+                        exclude_file["size"].append(file.filename)
+                        continue
+                    if not file_manager.is_upload_extension(request, file):
+                        exclude_file["ext"].append(file.filename)
+                        continue
 
                 board_file = file_manager.get_board_file(index)
                 bf_content = file_content[index] if file_content else ""
@@ -711,7 +715,19 @@ async def write_update(
     # 최신글 캐시 삭제
     G6FileCache().delete_prefix(f'latest-{bo_table}')
 
-    return RedirectResponse(f"/board/{bo_table}/{write.wr_id}?{request.query_params}", status_code=303)
+    redirect_url = f"/board/{bo_table}/{write.wr_id}?{request.query_params}"
+
+    # exclude_file이 존재하면 파일 업로드 실패 메시지 출력
+    if exclude_file:
+        msg = ""
+        if exclude_file.get("size"):
+            msg += f"{','.join(exclude_file['size'])} 파일은 업로드 용량({board.bo_upload_size}byte)을 초과하였습니다.\\n"
+        if exclude_file.get("ext"):
+            msg += f"{','.join(exclude_file['ext'])} 파일은 업로드 가능 확장자가 아닙니다.\\n"
+        if msg:
+            raise AlertException(msg, 400, redirect_url)
+
+    return RedirectResponse(redirect_url, status_code=303)
 
 
 @router.get("/{bo_table}/{wr_id}")
