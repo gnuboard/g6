@@ -146,13 +146,15 @@
             "id": "300100",
             "name": "게시판관리",
             "url": "board_list",
-            "permission": "bbs_board"
+            "permission": "bbs_board",
+            "tags": "admin_board"
         },
         {
             "id": "300200",
             "name": "게시판그룹관리",
             "url": "boardgroup_list",
-            "permission": "bbs_group"
+            "permission": "bbs_group",
+            "tags": "admin_boardgroup"
         },
         {
             "id": "300300",

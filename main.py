@@ -88,13 +88,13 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
 
 
-class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        if request.headers.get("X-Forwarded-Proto") != "https":
-            request.scope["scheme"] = "https"
-        return await call_next(request)
+# class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
+#     async def dispatch(self, request: Request, call_next):
+#         if request.headers.get("X-Forwarded-Proto") != "https":
+#             request.scope["scheme"] = "https"
+#         return await call_next(request)
 
-app.add_middleware(HTTPSRedirectMiddleware)
+# app.add_middleware(HTTPSRedirectMiddleware)
 
 
 
@@ -110,12 +110,59 @@ async def main_middleware(request: Request, call_next):
         response = await call_next(request)
         return response
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
+
+    print("미들웨어 시작")
+    # 라우트 목록 출력
+    routes = app.routes
+    # JSON 파일에서 데이터 로드
+    auth_menu = {}
+    with open('admin/admin_menu_bbs.json', 'r', encoding='utf-8') as file:
+        auth_menu = json.load(file)
     
+    try:
+        current_id = None
+        for route in routes:
+            if route.path.startswith("/admin") and route.path_regex.match(path):
+                methods = route.methods
+                tags = route.tags
+                print("라우터 태그: ", tags)
+
+                # auth_menu 에서 태그에 해당하는 메뉴를 찾아서 활성화
+                for tag in tags:
+                    for menu_items in auth_menu.values():
+                        item = next((item for item in menu_items if item.get('tags', '') == tag), None)
+                        if item:
+                            current_id = item.get("id")
+                            print("메뉴 ID:", item.get("id"))
+                            break
+                if current_id:
+                    db: Session = SessionLocal()
+                    mb_id = request.session.get("ss_mb_id", "")
+                    auth = db.query(models.Auth).filter_by(au_menu = current_id, mb_id = mb_id).one_or_none()
+                    au_auth = auth.au_auth if auth else ""
+                    for method in methods:
+                        # path에 "_delete" 문자열이 포함되어 있는지 확인 후 삭제 권한 체크
+                        if "_delete" in path and not "d" in au_auth:
+                            raise AlertException(status_code=302, detail="삭제 권한이 없습니다.", url="/")
+                        elif (method == "POST" and not "w" in au_auth):
+                            raise AlertException(status_code=302, detail="수정 권한이 없습니다.", url="/bbs/login?url="+path)
+                        elif (method == "GET" and not "r" in au_auth):
+                            raise AlertException(status_code=302, detail="읽기 권한이 없습니다.", url="/bbs/login?url="+path)
+                    db.close()
+                break
+    except AlertException as e:
+        # 예외처리 실행
+        return await alert_exception_handler(request, e)
+
     try:
         if path.startswith("/admin"):
             # 관리자 페이지는 로그인이 필요합니다.
             if not request.session.get("ss_mb_id"):
                 raise AlertException(status_code=302, detail="로그인이 필요합니다.", url="/bbs/login?url="+path)
+            else:
+                # 관리자페이지 별 권한 체크
+                pass
+
     except AlertException as e:
         # 예외처리 실행
         return await alert_exception_handler(request, e)
