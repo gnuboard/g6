@@ -94,11 +94,9 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0}
 /*중간*/
 #container{margin:0px;position: relative;background:#EDF0F2;max-width: calc(100% - 220px);width: 100%;transition: all 0.2s;}
 #container_wr{padding:25px;min-height:500px;}
-.container_title.top{position: relative;line-height:50px;font-size:1.5em;z-index:99;margin: 20px 40px 0px;border-bottom: 1px solid #cecece;width: calc(100% - 80px);}
+.container_title.top{position: sticky;top: 71px;line-height:50px;font-size:1.5em;z-index:99;margin: 0px 40px;padding-top: 20px;background: #EDF0F2;border-bottom: 1px solid #cecece;width: calc(100% - 80px);}
 .container_title.top::after {display: block;content: "";position: absolute;left: 0px;bottom: -2px;width: 30px;height: 3px;background: #ffd343;}
 .container_wr.top{padding:20px 40px;min-height: calc(100vh - 150px);margin-bottom: 24px;width: 100%;}
-
-
 
 
 /* 화면낭독기 사용자용 */
@@ -135,9 +133,9 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0}
 
 /* 버튼 */
 .btn_confirm {margin:0px}
-.btn_fixed_top{position:fixed;bottom:10px;right:100px;z-index:100}
-.btn_fixed_top .btn_02, .btn_fixed_top .btn_submit {height: 50px;line-height: 50px;}
-.btn_fixed_top .btn_01 {height: 50px;line-height: 50px;}
+.btn_fixed_top{position:fixed;top:85px;right:40px;z-index:100}
+.btn_fixed_top .btn_02, .btn_fixed_top .btn_submit {height: 40px;line-height: 40px;}
+.btn_fixed_top .btn_01 {height: 40px;line-height: 40px;}
 
 .btn_confirm01 {}
 .btn_confirm01 button {padding:0 15px;height:30px;border:0;background:#9eacc6;color:#fff}
@@ -153,7 +151,7 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0}
 a.btn_submit{background:#ff4081;color:#fff}
 
 
-.btn_confirm .btn_submit {padding:0px 15px;border:0;height:50px;line-height: 50px;color:#4d4d4d}
+.btn_confirm .btn_submit {padding:0px 15px;border:0;height:40px;line-height: 40px;color:#4d4d4d}
 .btn_frmline {display:inline-block;padding:0 7px;height:24px;border:0;background:#444;color:#fff !important;letter-spacing:-0.1em;text-decoration:none;vertical-align:middle;line-height:2em} /* 우편번호검색버튼 등 */
 .btn_frmline:focus, .btn_frmline:hover, .btn_frmline:active {text-decoration:none}
 
@@ -249,7 +247,7 @@ legend {position:absolute;width:0;height:0;font-size:0;line-height:0;text-indent
 .frm_info {display:block;padding:0 0 5px;color:#5b747e}
 
 /* 목록 바로가기 */
-.anchor {position: sticky;top: 71px;padding:20px 0 10px;zoom:1;width: 100%;background: #EDF0F2;}
+.anchor {position: sticky;top: 142px;padding:20px 0 10px;zoom:1;width: 100%;background: #EDF0F2;}
 .anchor:after {display:block;visibility:hidden;clear:both;content:""}
 .anchor li{float:left;margin-left:-1px;list-style:none;border: 1px solid #eee;margin-right: 6px;margin-bottom: 6px;}
 .anchor a {display:inline-block;padding:10px 15px;text-decoration:none;transition: all 0.3s;background: #fff;border: 1px solid #dde0e4;color: #4b4b4b;border-radius:24px;font-weight: bold;}
@@ -386,7 +384,7 @@ tfoot th {}
 .tbl_frm01 textarea {height:150px}
 .tbl_frm01 #captcha {margin:0;padding:0;border:0;background:transparent}
 .tbl_frm01 #captcha input {margin-left:5px;text-align:center}
-.h2_frm{text-align:left;color:#272E3D;font-size:1.4em;font-weight:bold;margin:0px 0 10px;padding-top: 60px;}
+.h2_frm{text-align:left;color:#272E3D;font-size:1.4em;font-weight:bold;margin:0px 0 10px;padding-top: 132px;}
 
 @media (max-width: 1100px) {
     #tnb {flex-direction: column;justify-content: center;}
@@ -639,6 +637,7 @@ td.td_grpset {width:160px;border-left:1px solid #e9ecee;text-align:center}
 .session_del li{list-style:disc }
 .session_del strong{color:#ff0000}
 .session_del p{line-height:1.7em;padding:10px 15px ;background:#f7ecea;border:2px solid #ffb6c1}
+.cache_wrap {font-size: 1.2em;}
 
 /* ########## 쇼핑몰 사용시 적용 ########## */
 .sidx {padding:20px 0 30px;zoom:1}

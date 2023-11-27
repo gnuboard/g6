@@ -7,14 +7,15 @@
 {% block subtitle %}{{ title }}{% endblock %}
 
 {% block content %}
-
-<div>
+<div class="cache_wrap">
+  <div class="local_desc">
     <p>캐시파일 삭제중 ...</p>
     <p>[끝] 이라는 단어가 나오기 전에는 중간에 중지하지 마세요.</p>
     <p>&nbsp;</p>
+  </div>
+  <div id="status"></div>
 </div>
-    
-<div id="status"></div>
+
 
 <script>
     const evtSource = new EventSource("/admin/cache_file_deleting");
