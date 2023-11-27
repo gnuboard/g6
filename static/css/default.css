@@ -116,30 +116,27 @@ border:1px solid #ff8269 !important;
 
 
 /* 메인메뉴 */
-#gnb {position:relative;background:#fff}
+#gnb {position:relative;background:#f0eded;border: 1px solid #e9e9e9;border-radius: 8px;overflow: hidden;}
 #gnb > h2 {position:absolute;font-size:0;line-height:0;overflow:hidden}
 #gnb .gnb_wrap {margin:0 auto;position:relative}
 #gnb .gnb_wrap:hover, #gnb .gnb_wrap:focus, #gnb .gnb_wrap:active{z-index:3}
-#gnb #gnb_1dul {font-size:1.083em;padding:0;border-bottom:1px solid #e0e2e5;zoom:1}
+#gnb #gnb_1dul {font-size:1.083em;padding:0;zoom:1}
 #gnb ul:after {display:block;visibility:hidden;clear:both;content:""}
-#gnb .gnb_1dli {float:left;line-height:55px;padding:0px;position:relative}
-#gnb .gnb_1dli:hover > a {color:#3a8afd;
--webkit-transition:background-color 2s ease-out;
--moz-transition:background-color 0.3s ease-out;
--o-transition:background-color 0.3s ease-out;
-transition:background-color 0.3s ease-out}
+#gnb .gnb_1dli {line-height:55px;padding:0px;position:relative}
+#gnb .gnb_1dli:hover > a {background: #ff8269;color: #fff;
+-webkit-transition: all 2s ease-out;
+-moz-transition: all 0.3s ease-out;
+-o-transition: all 0.3s ease-out;
+transition: all 0.3s ease-out}
 
 .gnb_1dli .bg {position:absolute;top:24px;right:8px;display:inline-block;width:10px;height:10px;overflow:hidden;background:url('./images/gnb_bg2.gif') no-repeat 50% 50%;text-indent:-999px}
-.gnb_1da {display:block;font-weight:bold;padding:0 15px;color:#080808;text-decoration:none}
+.gnb_1da {display:block;font-weight:bold;padding:0 15px;color:#a5a5a5;text-decoration:none}
 .gnb_1dli.gnb_al_li_plus .gnb_1da{padding-right:25px}
 .gnb_2dli:first-child {border:0}
-.gnb_2dul {display:none;position:absolute;top:54px;min-width:140px;padding-top:2px}
-.gnb_2dul .gnb_2dul_box {border:1px solid #e0e2e5;border-top:0;padding:0;
--webkit-box-shadow:0px 1px 5px rgba(97, 97, 97, 0.2);
--moz-box-shadow:0px 1px 5px rgba(97, 97, 97, 0.2);
-box-shadow:0px 1px 5px rgba(97, 97, 97, 0.2)}
-.gnb_2da {display:block;padding:0 10px;line-height:40px;background:#fff;color:#080808;text-align:left;text-decoration:none}
-a.gnb_2da:hover {color:#3a8afd;background:#f7f7f8;
+.gnb_2dul {display:none;}
+.gnb_2dul .gnb_2dul_box {border-top:0;padding:0;}
+.gnb_2da {display:block;padding:0 10px;line-height:40px;background:#ff8269;color:#fff;text-align:left;text-decoration:none}
+a.gnb_2da:hover {color:#fff;background:#e7664d;
 -moz-transition:all 0.3s ease-out;
 -o-transition:all 0.3s ease-out;
 transition:all 0.3s ease-out}
@@ -153,7 +150,7 @@ transition:all 0.3s ease-out}
 .gnb_wrap .gnb_empty a {color:#3a8afd;text-decoration:underline}
 .gnb_wrap .gnb_al_ul .gnb_empty, .gnb_wrap .gnb_al_ul .gnb_empty a {color:#555}
 
-#gnb .gnb_menu_btn {background:#4158d1;color:#fff;width:50px;height:55px;border:0;vertical-align:top;font-size:18px}
+#gnb .gnb_menu_btn {display: none;background:#4158d1;color:#fff;width:50px;height:55px;border:0;vertical-align:top;font-size:18px}
 #gnb .gnb_close_btn {background:#fff;color:#b6b9bb;width:50px;height:50px;border:0;vertical-align:top;font-size:18px;position:absolute;top:0;right:0}
 #gnb .gnb_mnal {float:right;padding:0}
 
