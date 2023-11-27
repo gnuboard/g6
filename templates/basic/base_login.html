@@ -30,6 +30,9 @@ var g5_shop_url = "{{request.base_url}}shop";
 <script src="/static/js/common.js?ver=2304171"></script>
 <script src="/static/js/wrest.js?ver=2304171"></script>
 <script src="/static/js/placeholders.min.js?ver=2304171"></script>
+{% if request.state.config %}
+    {{ request.state.config.cf_add_script|safe }}
+{% endif %}
 </head>
 <body>
 

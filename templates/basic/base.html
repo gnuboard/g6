@@ -44,7 +44,10 @@ var g5_shop_url = "{{request.base_url}}shop";
 <script src="/static/js/owlcarousel/owl.carousel.min.js"></script>
 <script src="/static/js/jquery.bxslider.js"></script>
 {% block head %}
-{% endblock %}
+{% endblock head %}
+{% if request.state.config %}
+    {{ request.state.config.cf_add_script|safe }}
+{% endif %}
 </head>
 <body>
 <div id="hd_login_msg">최고관리자 최고관리자님 로그인 중 <a href="/bbs/logout">로그아웃</a></div>
