@@ -676,8 +676,13 @@ async def write_update(
         # 파일 업로드 처리 및 파일정보 저장
         for file in files:
             index = files.index(file)
-            # 관리자가 아니면서 설정한 업로드 사이즈보다 크다면 건너뜀
-            if file.filename and (admin_type or file_manager.is_upload_size(file)):
+            if file.filename:
+                # 관리자가 아니면서 설정한 업로드 사이즈보다 크거나 업로드 가능 확장자가 아니면 업로드하지 않음
+                if (not admin_type 
+                    and (not file_manager.is_upload_size(file)
+                         or not file_manager.is_upload_extension(request, file))):
+                    continue
+
                 board_file = file_manager.get_board_file(index)
                 bf_content = file_content[index] if file_content else ""
                 filename = file_manager.get_filename(file.filename)

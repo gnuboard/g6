@@ -416,8 +416,6 @@ class BoardConfig():
             return limit
 
 
-# TODO:
-# 7. 이미지, 동영상 업로드 파일 확인 (cf_image_extension, cf_movie_extension)
 class BoardFileManager():
     model = BoardFile
 
@@ -439,6 +437,26 @@ class BoardFileManager():
         query = self.db.query(self.model).filter_by(bo_table=bo_table, wr_id=wr_id)
 
         return self.db.query(literal(True)).filter(query.exists()).scalar()
+    
+    def is_upload_extension(self, request: Request, file: UploadFile) -> bool:
+        """업로드 파일 확장자를 확인한다.
+
+        Args:
+            file (UploadFile): 업로드 파일
+
+        Returns:
+            bool: 파일 확장자가 업로드 가능하면 True, 아니면 False
+        """
+        config = request.state.config
+        ext = file.filename.split(".")[-1]
+        content = file.content_type
+
+        if (("image" in content and not ext in config.cf_image_extension)
+            or ("x-shockwave-flash" in content and not ext in config.cf_flash_extension)
+            or (("audio" in content or "video" in content) and not ext in config.cf_movie_extension)):
+            return False
+        
+        return True
 
     def is_upload_size(self, file: UploadFile) -> bool:
         """업로드 파일 사이즈를 확인한다.
