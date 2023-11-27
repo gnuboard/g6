@@ -134,21 +134,21 @@
 
 /* 회원가입 입력 */
 #register_form {background:#fff;margin-bottom:20px}
-#register_form h2 {padding:40px 0px 10px;}
+#register_form h2 {padding:40px 0px 20px;}
 .register_form_inner {border-radius:3px}
 .register_form_inner ul {padding:10px 0px 0px;}
 .register_form_inner ul li {position: relative;padding-top: 20px;}
 .register_form_inner ul li.reg_mb_icon_file {border-top: 1px solid #eee;}
 .register_form_inner label {display:block;margin-bottom:0px;}
 .register_form_inner label.inline {display:inline}
-.register_form_inner .frm_input {border-bottom:1px solid #cacaca; padding: 5px 0px;}
-.register_form_inner label.text_input {position:absolute; left:0%; bottom:0; width:100%; line-height: 45px; text-align:left;transition: all 0.2s;cursor: pointer;}
+.register_form_inner .frm_input {padding: 5px 10px;}
+.register_form_inner label.text_input {position:absolute;padding-left: 10px; left:0%; bottom:0; width:100%; line-height: 45px; text-align:left;transition: all 0.2s;cursor: pointer;}
 .register_form_inner .frm_input:focus,
 .register_form_inner .frm_input:valid,
-.register_form_inner .frm_input:-webkit-autofill {border-bottom: 2px solid #ff8269;}
+.register_form_inner .frm_input:-webkit-autofill {border: 1px solid #ff8269;}
 .register_form_inner .frm_input:focus + label.text_input, 
 .register_form_inner .frm_input:valid + label.text_input,
-.register_form_inner .frm_input:-webkit-autofill + label.text_input { bottom: 40%; font-size:12px;color: #ff8269;}  /* input에 글을 입력하고 포커스가 지나간 상태에서 제어하려면 valid 선택자를 써야한다. */
+.register_form_inner .frm_input:-webkit-autofill + label.text_input { padding-left: 0px; bottom: 60%; font-size:12px;color: #ff8269;}  /* input에 글을 입력하고 포커스가 지나간 상태에서 제어하려면 valid 선택자를 써야한다. */
 /* 포커스 될 때 label span(name)이 위로 올라감 */
 p input:focus + label::after,
 p input:valid + label::after { width:100%; transform:translateX(0); } 
