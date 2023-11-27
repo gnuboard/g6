@@ -1,3 +1,5 @@
+import secrets
+
 from fastapi import APIRouter, Depends, Form, Path, Request
 from fastapi.responses import RedirectResponse
 from lib.pbkdf2 import validate_password
@@ -87,13 +89,25 @@ async def password_check(
         redirect_url = f"/board/write/{bo_table}/{wr_id}?{request.query_params}"
 
     elif action == "delete":
-        token = generate_token(request)
+        token = make_token(request)
         request.session[f"ss_delete_{bo_table}_{wr_id}"] = True
         redirect_url = f"/board/delete/{bo_table}/{wr_id}?token={token}&{request.query_params}"
 
     elif action == "comment-delete":
-        token = generate_token(request)
+        token = make_token(request)
         request.session[f"ss_delete_comment_{bo_table}_{wr_id}"] = True
         redirect_url = f"/board/delete_comment/{bo_table}/{wr_id}?token={token}&{request.query_params}"
     
     return RedirectResponse(url=redirect_url, status_code=302)
+
+
+def make_token(request: Request):
+    """
+    토큰 생성
+    - main.py > generate_token() 함수와 동일
+    - TODO: 코드가 중복되므로 합쳐야 함
+    """
+    token = secrets.token_hex(16)  # 16바이트 토큰 생성
+    request.session["ss_token"] = token  # 세션에 토큰 저장
+
+    return token

@@ -1183,3 +1183,18 @@ def search_font(content, stx):
     replace = "<b class=\"sch_word\">\\1</b>"
 
     return re.sub(f'({pattern})', replace, content, flags=re.IGNORECASE)
+
+
+def is_secret_write(write: WriteBaseModel = None) -> bool:
+    """비밀글인지 확인한다.
+
+    Args:
+        write (WriteBaseModel, optional): 게시글 object. Defaults to None.
+
+    Returns:
+        bool: 비밀글 여부
+    """
+    return "secret" in getattr(write, "wr_option", "")
+
+    
+

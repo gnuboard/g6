@@ -18,7 +18,7 @@
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
 <section id="bo_w">
     <!-- 게시물 작성/수정 시작 { -->
-    <form name="fwrite" id="fwrite" action="/board/write_update?{{ request.query_params }}" method="post" enctype="multipart/form-data" onsubmit="return fwrite_submit(this);" autocomplete="off" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
+    <form name="fwrite" id="fwrite" action="{{ url_for('write_update') }}?{{ request.query_params }}" method="post" enctype="multipart/form-data" onsubmit="return fwrite_submit(this);" autocomplete="off" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
         <input type="hidden" name="uid" value="{{ get_unique_id(request) }}">
         <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
         <input type="hidden" name="wr_id" value="{{ write.wr_id }}">
@@ -70,7 +70,7 @@
                 </li>
             {% endif %}
             {% if is_secret %}
-                {% if is_admin or is_secret %}
+                {% if is_admin or is_secret == 1 %}
                     <li class="chk_box">
                         <input type="checkbox" id="secret" name="secret"  class="selec_chk" value="secret" {{ secret_checked }}>
                         <label for="secret"><span>&nbsp;</span>비밀글</label>
@@ -217,7 +217,7 @@
 
             f.token.value = generate_token();
 
-            // document.getElementById("btn_submit").disabled = "disabled";
+            document.getElementById("btn_submit").disabled = "disabled";
 
             return true;
         }

@@ -15,6 +15,8 @@ from user_agents import parse
 import common.models as models
 import secrets
 
+from starlette.middleware.base import BaseHTTPMiddleware
+
 # models.Base.metadata.create_all(bind=engine)
 APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
 app = FastAPI(debug=APP_IS_DEBUG)
@@ -85,6 +87,17 @@ cache_plugin_menu.__setitem__('admin_menus', import_plugin_admin(plugin_states))
 # plugin/plugin_name/static 폴더 이후 등록
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
+
+
+class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if request.headers.get("X-Forwarded-Proto") != "https":
+            request.scope["scheme"] = "https"
+        return await call_next(request)
+
+app.add_middleware(HTTPSRedirectMiddleware)
+
+
 
 # 요청마다 항상 실행되는 미들웨어
 @app.middleware("http")

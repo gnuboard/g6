@@ -15,7 +15,6 @@ templates = Jinja2Templates(directory=[TEMPLATES_DIR, CAPTCHA_PATH], extensions=
 templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals['getattr'] = getattr
-templates.env.globals["generate_token"] = generate_token
 templates.env.globals["captcha_widget"] = captcha_widget
 templates.env.globals["check_profile_open"] = check_profile_open
 

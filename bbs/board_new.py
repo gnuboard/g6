@@ -82,8 +82,8 @@ def new_delete(
     게시글을 삭제한다.
     """
     # 토큰 검증    
-    if not compare_token(request, token, 'new_delete'):
-        raise AlertException("잘못된 접근입니다.", 403)
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
     
     # 새글 정보 조회
     board_news = db.query(BoardNew).filter(BoardNew.bn_id.in_(bn_ids)).all()
@@ -99,16 +99,18 @@ def new_delete(
                 db.delete(write)
 
                 # 원글 포인트 삭제
-                if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
-                    insert_point(request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
+                # TODO: 포인트 오류로 인한 주석처리
+                # if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
+                #     insert_point(request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
             else:
                 # 댓글 삭제
                 # TODO: 댓글 삭제 공용함수 추가
                 db.delete(write)
 
                 # 댓글 포인트 삭제
-                if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "댓글"):
-                    insert_point(request, write.mb_id, board.bo_comment_point * (-1), f"{board.bo_subject} {write.wr_parent}-{write.wr_id} 댓글 삭제")
+                # TODO: 포인트 오류로 인한 주석처리
+                # if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "댓글"):
+                #     insert_point(request, write.mb_id, board.bo_comment_point * (-1), f"{board.bo_subject} {write.wr_parent}-{write.wr_id} 댓글 삭제")
         db.delete(new)
 
         # 파일 삭제

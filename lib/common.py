@@ -14,7 +14,7 @@ from fastapi.templating import Jinja2Templates
 from jinja2 import Environment
 from markupsafe import Markup, escape
 from passlib.context import CryptContext
-from sqlalchemy import Index, asc, desc, and_, or_, func, extract, literal
+from sqlalchemy import Index, asc, desc, and_, or_, func, extract, literal, inspect
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
 from common.models import Auth, Config, Member, Memo, Board, BoardFile, BoardNew, Group, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
@@ -41,6 +41,17 @@ load_dotenv()
 TEMPLATES = "templates"
 CAPTCHA_PATH = "lib/captcha/templates"
 EDITOR_PATH = "lib/editor/templates"
+
+# .env 파일이 없을 경우 경고 메시지 출력
+if not os.path.exists(".env"):
+    print("\033[93m" + "경고: .env 파일이 없습니다. 설치를 진행해 주세요." + "\033[0m")
+    #print("python3 install.py")
+    # exit()
+# 테이블이 데이터베이스에 존재하는지 확인
+elif not inspect(engine).has_table(DB_TABLE_PREFIX + "config"):
+    print("\033[93m" + "DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요." + "\033[0m")
+    #print("python3 install.py")
+    #exit()
 
 def get_theme_from_db(config=None):
     # main.py 에서 config 를 인수로 받아서 사용
@@ -635,9 +646,55 @@ def record_visit(request: Request):
         db.add(visit_sum)
         db.commit()
 
-    db.close()            
-    
-    
+        # 기본설정 테이블에 방문자 수 기록
+
+        # VisitSum 테이블에서 오늘 방문자 수를 가져옴
+        vi_today = db.query(VisitSum.vs_count).filter(VisitSum.vs_date == date.today()).scalar()
+        vi_today = vi_today or 0
+
+        # VisitSum 테이블에서 어제 방문자 수를 가져옴
+        vi_yesterday = db.query(VisitSum.vs_count).filter(VisitSum.vs_date == date.today() - timedelta(days=1)).scalar()
+        vi_yesterday = vi_yesterday or 0
+
+        # VisitSum 테이블에서 최대 방문자 수를 가져옴
+        vi_max = db.query(func.max(VisitSum.vs_count)).scalar()
+        vi_max = vi_max or 0
+
+        # VisitSum 테이블에서 전체 방문자 수를 가져옴
+        vi_total = db.query(func.sum(VisitSum.vs_count)).scalar()
+        vi_total = vi_total or 0
+
+        cf_visit = f"오늘:{vi_today},어제:{vi_yesterday},최대:{vi_max},전체:{vi_total}"
+        config = db.query(Config).first()
+        config.cf_visit = cf_visit
+        db.commit()
+
+    db.close()
+
+
+def visit(request: Request):
+    """방문자 수 출력"""
+    cf_visit = request.state.config.cf_visit
+
+    visit_list = re.findall("오늘:(.*),어제:(.*),최대:(.*),전체:(.*)", cf_visit)
+    if visit_list:
+        today, yesterday, max, total = visit_list[0]
+    else:
+        today, yesterday, max, total = (0, 0, 0, 0)
+
+    context = {
+        "request": request,
+        "today": int(today),
+        "yesterday": int(yesterday),
+        "max": int(max),
+        "total": int(total)
+    }
+    templates = MyTemplates(directory=TEMPLATES_DIR)
+    visit_template = templates.TemplateResponse(f"visit/basic.html", context)
+
+    return visit_template.body.decode("utf-8")
+
+
 # 공통 쿼리 파라미터를 받는 함수를 정의합니다.
 def common_search_query_params(
         sst: str = Query(default=""), 
@@ -1152,23 +1209,6 @@ def generate_token(request: Request, action: str = ''):
     return token
 
 
-def compare_token(request: Request, token: str, action: str = ''):
-    '''
-    토큰 비교 함수
-
-    Args:
-        token (str): 비교할 토큰
-
-    Returns:
-        bool: 토큰이 일치하면 True, 일치하지 않으면 False
-    '''
-    if request.session.get("ss_token") == token and token:
-        # return verify_password(action, token)
-        return True
-    else:
-        return False
-
-
 lfu_cache = cachetools.LFUCache(maxsize=128)
 
 def get_recent_poll():
@@ -1525,11 +1565,11 @@ class MyTemplates(Jinja2Templates):
         super().__init__(directory=directory, context_processors=context_processors)
         # 공통 env.global 설정
         self.env.globals["editor_path"] = editor_path
-        self.env.globals["generate_token"] = generate_token
         self.env.globals["getattr"] = getattr
         self.env.globals["get_selected"] = get_selected
         self.env.globals["get_member_icon"] = get_member_icon
         self.env.globals["get_member_image"] = get_member_image
+        self.env.filters["number_format"] = number_format
 
         # 사용자 템플릿, 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
         if TEMPLATES_DIR in directory:
@@ -1546,7 +1586,8 @@ class MyTemplates(Jinja2Templates):
             "menus" : get_menus(),
             "poll" : get_recent_poll(),
             "populars" : get_populars(),
-            "latest": latest
+            "latest": latest,
+            "visit": visit,
         }
         return context
     
@@ -2089,3 +2130,26 @@ def filter_words(request: Request, contents: str) -> str:
             return word
 
     return ''
+
+
+def number_format(number: int) -> str:
+    """숫자를 천단위로 구분하여 반환하는 템플릿 필터
+
+    Args:
+        number (int): 숫자
+
+    Returns:
+        str: 천단위로 구분된 숫자
+    """
+    if isinstance(number, int):
+        return "{:,}".format(number)
+    else:
+        return "Invalid input. Please provide an integer."
+
+def read_version():
+    """루트 디렉토의 version.txt 파일을 읽어서 버전을 반환하는 함수
+    Returns:
+        str: 버전
+    """
+    with open("version.txt", "r") as file:
+        return file.read().strip()

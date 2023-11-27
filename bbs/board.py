@@ -162,8 +162,8 @@ def list_delete(
     """
     게시글을 일괄 삭제한다.
     """
-    if not compare_token(request, token, 'board_list'):
-        raise AlertException("토큰이 유효하지 않습니다.", 403)
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     # 게시판 정보 조회
     board = db.get(Board, bo_table)
@@ -262,8 +262,8 @@ def move_update(
     config = request.state.config
     act = "이동" if sw == "move" else "복사"
 
-    if not compare_token(request, token, 'board_move'):
-        raise AlertException("토큰이 유효하지 않습니다.", 403)
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     # 게시판 검증
     origin_board = db.get(Board, bo_table)
@@ -316,6 +316,9 @@ def move_update(
 
             # 게시글 추가
             db.add(target_write)
+            db.commit()
+            # 부모아이디 설정
+            target_write.wr_parent = target_write.wr_id
             db.commit()
 
             if sw == "move":
@@ -375,6 +378,7 @@ def write_form_add(
     if not board:
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
 
+    parent_write = None
     if parent_id:
         # 답글 작성권한 검증
         if not board_config.is_reply_level():
@@ -408,7 +412,8 @@ def write_form_add(
             "write": None,
             "is_notice": True if admin_type and not parent_id else False,
             "is_html": board_config.is_html_level(),
-            "is_secret": board.bo_use_secret,
+            "is_secret": 1 if is_secret_write(parent_write) else board.bo_use_secret,
+            "secret_checked": "checked" if is_secret_write(parent_write) else "",
             "is_mail": board_config.use_email,
             "recv_email_checked": "checked",
             "is_link": board_config.is_link_level(),
@@ -492,7 +497,8 @@ def write_form_edit(
             "is_html": board_config.is_html_level(),
             "html_checked": html_checked,
             "html_value": html_value,
-            "is_secret": board.bo_use_secret if "secret" in write.wr_option else True,
+            "is_secret": 1 if is_secret_write(write) else board.bo_use_secret,
+            "secret_checked": "checked" if is_secret_write(write) else "",
             "is_mail": board_config.use_email,
             "recv_email_checked": "checked" if "mail" in write.wr_option else "",
             "is_link": board_config.is_link_level(),
@@ -528,8 +534,8 @@ async def write_update(
     """
     게시글을 Table 추가한다.
     """
-    if not compare_token(request, token, 'board_write'):
-        raise AlertException("토큰이 유효하지 않습니다.", 403)
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
     
     config = request.state.config
     # 게시판 정보 조회

@@ -153,6 +153,8 @@ def qa_write_update(request: Request,
     Returns:
         RedirectResponse: 1:1문의 설정 등록/수정 후 폼으로 이동
     """
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
     config = request.state.config
 
     # Q&A 설정 조회
@@ -167,7 +169,13 @@ def qa_write_update(request: Request,
         word = subject_filter_word if subject_filter_word else content_filter_word
         raise AlertException(f"제목/내용에 금지단어({word})가 포함되어 있습니다.", 400)
 
-    if compare_token(request, token, 'insert'): # 토큰에 등록돤 action이 insert라면 신규 등록
+    qa = db.query(QaContent).filter(QaContent.qa_id == qa_id).first()
+    if qa: # 수정
+        for field, value in form_data.__dict__.items():
+            setattr(qa, field, value)
+        db.commit()
+
+    else: # 등록
         form_data.qa_related = qa_related
         form_data.qa_type = 1 if qa_parent else 0
         form_data.qa_parent = qa_parent if qa_parent else 0
@@ -198,18 +206,7 @@ def qa_write_update(request: Request,
                 mailer(qa_config.qa_admin_email, subject, content)
 
         db.commit()
-
-    elif compare_token(request, token, 'update'):  # 토큰에 등록된 action이 update라면 수정
-        # 데이터 수정 후 commit
-        qa = db.query(QaContent).filter(QaContent.qa_id == qa_id).first()
-        for field, value in form_data.__dict__.items():
-            setattr(qa, field, value)
-        db.commit()
     
-    else: # 토큰 검사 실패
-        raise AlertException(status_code=403, detail=f"{token} : 토큰이 존재하지 않습니다.")
-    
-
     # 파일 경로체크 및 생성
     make_directory(FILE_DIRECTORY)
     # 파일 삭제
@@ -246,8 +243,8 @@ def qa_delete(request: Request,
     '''
     Q&A 삭제하기
     '''
-    if not compare_token(request, token, 'delete'):
-        raise AlertException(status_code=403, detail=f"{token} : 토큰이 존재하지 않습니다.")
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     # Q&A 삭제
     db.query(QaContent).filter(QaContent.qa_id == qa_id).delete()
@@ -267,8 +264,8 @@ async def qa_delete_list(request: Request, db: Session = Depends(get_db),
         token (str): 입력/수정/삭제 변조 방지 토큰.
         checks (List[int]): Q&A ID list. Defaults to Form(None, alias="chk_qa_id[]").
     """
-    if not compare_token(request, token, 'delete'):
-        raise AlertException(status_code=403, detail=f"{token} : 토큰이 존재하지 않습니다.")
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
     
     for i in checks:
         qa = db.query(QaContent).filter(QaContent.qa_id == i).first()
