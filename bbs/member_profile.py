@@ -143,6 +143,9 @@ async def member_profile_save(request: Request, db: Session = Depends(get_db),
 
         elif not valid_email(member_form.mb_email):
             raise AlertException(status_code=400, detail="이메일 양식이 올바르지 않습니다.")
+        
+        elif is_prohibit_email(request, member_form.mb_email):
+            raise AlertException(f"{member_form.mb_email} 메일은 사용할 수 없습니다.", 400)
 
         else:
             exists_email = db.query(Member.mb_email).filter(Member.mb_email == member_form.mb_email).first()
@@ -315,3 +318,27 @@ def validate_userid(user_id: str, prohibit_id: str):
         return message
 
     return message
+
+def is_prohibit_email(request: Request, email: str):
+    """금지된 메일인지 검사
+
+    Args:
+        request (Request): request 객체
+        email (str): 이메일 주소
+
+    Returns:
+        bool: 금지된 메일이면 True, 아니면 False
+    """
+    config = request.state.config
+    _, domain = email.split("@")
+
+    # config에서 금지된 도메인 목록 가져오기
+    cf_prohibit_email = getattr(config, "cf_prohibit_email", "")
+    if cf_prohibit_email:
+        prohibited_domains = [d.lower().strip() for d in cf_prohibit_email.split('\n')]
+
+        # 주어진 도메인이 금지된 도메인 목록에 있는지 확인
+        if domain.lower() in prohibited_domains:
+            return True
+
+    return False

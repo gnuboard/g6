@@ -293,7 +293,8 @@
                 <tr>
                     <th scope="row"><label for="cf_analytics">접속자분석 스크립트</label></th>
                     <td colspan="3">
-                        <span class="frm_info">접속자 분석 스크립트 코드를 입력합니다. 예) 구글 애널리틱스<br>관리자 페이지에서는 이 코드를 사용하지 않습니다.</span>                            <textarea name="cf_analytics" id="cf_analytics"></textarea>
+                        <span class="frm_info">접속자 분석 스크립트 코드를 입력합니다. 예) 구글 애널리틱스<br>관리자 페이지에서는 이 코드를 사용하지 않습니다.</span>
+                        <textarea name="cf_analytics" id="cf_analytics">{{ config.cf_analytics }}</textarea>
                     </td>
                 </tr>
                 <tr>
@@ -1164,7 +1165,7 @@
     });
 
     function fconfigform_submit(f) {
-        var current_user_ip = "{{ get_client_ip(request) }}";
+        var current_user_ip = "{{ get_client_ip(request)['client_ip'] }}";
         var cf_intercept_ip_val = f.cf_intercept_ip.value;
 
         if (cf_intercept_ip_val && current_user_ip) {

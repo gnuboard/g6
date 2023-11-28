@@ -2064,6 +2064,166 @@ def extract_alt_attribute(img_tag: str) -> str:
     return alt
 
 
+def cut_name(request: Request, name: str) -> str:
+    """기본환경설정 > 이름(닉네임) 표시
+
+    Args:
+        request (Request): FastAPI Request
+        name (str): 이름
+
+    Returns:
+        str: 자른 이름
+    """
+    config = request.state.config
+
+    if not name:
+        return ''
+
+    return name[:config.cf_cut_name] if config.cf_cut_name else name
+
+
+def delete_old_data():
+    """설정일이 지난 데이터를 삭제
+    """
+    try:
+        db = SessionLocal()
+        config = db.query(Config).first()
+
+        # 방문자 기록 삭제
+        if config.cf_visit_del > 0:
+            result = db.query(Visit).filter(Visit.vi_time < datetime.now() - timedelta(days=config.cf_visit_del)).delete()
+            print("방문자기록 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_visit_del), f"{result}건 삭제")
+
+        # 인기검색어 삭제
+        if config.cf_popular_del > 0:
+            result = db.query(Popular).filter(Popular.pp_date < datetime.now() - timedelta(days=config.cf_popular_del)).delete()
+            print("인기검색어 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_popular_del), f"{result}건 삭제")
+            
+        # 최근게시물 삭제
+        if config.cf_new_del > 0:
+            result = db.query(BoardNew).filter(BoardNew.bn_datetime < datetime.now() - timedelta(days=config.cf_new_del)).delete()
+            print("최근게시물 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_new_del), f"{result}건 삭제")
+
+        # 쪽지 삭제
+        if config.cf_memo_del > 0:
+            result = db.query(Memo).filter(Memo.me_send_datetime < datetime.now() - timedelta(days=config.cf_memo_del)).delete()
+            print("쪽지 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_memo_del), f"{result}건 삭제")
+
+        # 탈퇴회원 자동 삭제
+        if config.cf_leave_day > 0:
+            # TODO: 회원삭제 처리 추가
+            # result = db.query(Member).filter(Member.mb_leave_date < datetime.now() - timedelta(days=config.cf_leave_day)).delete()
+            # print("회원 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_leave_day), f"{result}건 삭제")
+            pass
+
+        db.commit()
+    except Exception as e:
+        print(e)
+
+
+def is_possible_ip(request: Request, ip: str) -> bool:
+    """IP가 접근허용된 IP인지 확인
+
+    Args:
+        request (Request): FastAPI Request 객체
+        ip (str): IP
+
+    Returns:
+        bool: 허용된 IP이면 True, 아니면 False
+    """
+    cf_possible_ip = request.state.config.cf_possible_ip
+    return check_ip_list(request, ip, cf_possible_ip, allow=True)
+
+
+def is_intercept_ip(request: Request, ip: str) -> bool:
+    """IP가 접근차단된 IP인지 확인
+
+    Args:
+        request (Request): FastAPI Request 객체
+        ip (str): IP
+
+    Returns:
+        bool: 차단된 IP이면 True, 아니면 False
+    """
+    cf_intercept_ip = request.state.config.cf_intercept_ip
+    return check_ip_list(request, ip, cf_intercept_ip, allow=False)
+        
+    
+def check_ip_list(request: Request, current_ip: str, ip_list: str, allow: bool) -> bool:
+    """IP가 특정 목록에 속하는지 확인하는 함수
+
+    Args:
+        request (Request): FastAPI Request 객체
+        ip (str): IP
+        ip_list (str): IP 목록 문자열
+        allow (bool): True인 경우 허용 목록, False인 경우 차단 목록
+
+    Returns:
+        bool: 목록에 속하면 True, 아니면 False
+    """
+    if request.state.is_super_admin:
+        return allow
+
+    ip_list = ip_list.strip()
+    if not ip_list:
+        return allow
+
+    ip_patterns = ip_list.split("\n")
+    for pattern in ip_patterns:
+        pattern = pattern.strip()
+        if not pattern:
+            continue
+        pattern = pattern.replace(".", r"\.")
+        pattern = pattern.replace("+", r"[0-9\.]+")
+        if re.match(f"^{pattern}$", current_ip):
+            return True
+
+    return False
+
+
+def is_write_delay(request: Request) -> bool:
+    """특정 시간 간격 내에 다시 글을 작성할 수 있는지 확인하는 함수"""
+    if request.state.is_super_admin:
+        return True
+
+    delay_sec = int(request.state.config.cf_delay_sec)
+    current_time = datetime.now()
+    write_time = request.session.get("ss_write_time")
+
+    if delay_sec > 0:
+        time_interval = timedelta(seconds=delay_sec)
+        if write_time:
+            available_time = datetime.strptime(write_time, "%Y-%m-%d %H:%M:%S") + time_interval
+            if available_time > current_time:
+                return False
+
+        request.session["ss_write_time"] = current_time.strftime("%Y-%m-%d %H:%M:%S")
+
+    return True
+
+
+def filter_words(request: Request, contents: str) -> str:
+    """글 내용에 필터링된 단어가 있는지 확인하는 함수
+
+    Args:
+        request (Request): FastAPI Request 객체
+        contents (str): 글 내용
+
+    Returns:
+        str: 필터링된 단어가 있으면 해당 단어, 없으면 빈 문자열
+    """
+    cf_filter = request.state.config.cf_filter
+    words = cf_filter.split(",")
+    for word in words:
+        word = word.strip()
+        if not word:
+            continue
+        if word in contents:
+            return word
+
+    return ''
+
+
 def number_format(number: int) -> str:
     """숫자를 천단위로 구분하여 반환하는 템플릿 필터
 

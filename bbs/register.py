@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Form, File, UploadFile, Depends
+import secrets
+from fastapi import APIRouter, Form, File, Path, UploadFile, Depends
 from fastapi.responses import RedirectResponse, Response
 from sqlalchemy.orm import Session
 
-from bbs.member_profile import validate_nickname, validate_userid
+from bbs.member_profile import validate_nickname, validate_userid, is_prohibit_email
 from lib.common import *
 from common.database import get_db
 from common.formclass import MemberForm
@@ -136,12 +137,14 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
             exists_email = db.query(Member.mb_email).filter(Member.mb_email == member_form.mb_email).first()
             if exists_email:
                 raise AlertException(status_code=400, detail="이미 존재하는 이메일 입니다.")
-
+    # 이메일 검사
+    if is_prohibit_email(request, member_form.mb_email):
+        raise AlertException(f"{member_form.mb_email} 메일은 사용할 수 없습니다.", 400)
     # 닉네임 검사
     result = validate_nickname(member_form.mb_nick, config.cf_prohibit_id)
     if result["msg"]:
         raise AlertException(status_code=400, detail=result["msg"])
-
+    # 회원 아이디 검사
     result = validate_userid(mb_id, config.cf_prohibit_id)
     if result["msg"]:
         raise AlertException(status_code=400, detail=result["msg"])
@@ -202,16 +205,22 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
 
     new_member = Member(mb_id=mb_id, **member_form.__dict__)
     new_member.mb_datetime = datetime.now()
-    # DB 스키마 호환성을 위해 null 대신 최저년도를 사용.
-    new_member.mb_email_certify = datetime(1, 1, 1, 0, 0, 0)
     new_member.mb_password = create_hash(mb_password)
     new_member.mb_level = config.cf_register_level
     new_member.mb_login_ip = request.client.host
     new_member.mb_lost_certify = ""
+    # DB 스키마 호환성을 위해 null 대신 최저년도를 사용.
     new_member.mb_nick_date = datetime(1, 1, 1, 0, 0, 0)
     new_member.mb_open_date = datetime(1, 1, 1, 0, 0, 0)
-    new_member.mb_point = config.cf_register_point
     new_member.mb_today_login = datetime.now()
+
+    # 메일인증
+    if config.cf_use_email_certify:
+        # 일회용 인증키 생성
+        new_member.mb_email_certify2 = secrets.token_hex(16)
+    else:
+        # 메일인증을 사용하지 않을 경우 바로 인증처리
+        new_member.mb_email_certify = datetime.now()
 
     # 본인인증
     if mb_certify_case and member_form.mb_certify:
@@ -224,8 +233,53 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
     db.add(new_member)
     db.commit()
 
-    request.session["ss_mb_id"] = new_member.mb_id
-    request.session["ss_mb_key"] = session_member_key(request, new_member)
+    # 회원가입 포인트 지급
+    insert_point(request, new_member.mb_id, config.cf_register_point,  "회원가입 축하", "@member", new_member.mb_id, "회원가입")
+
+    # 추천인 포인트 지급
+    mb_recommend = member_form.mb_recommend
+    if config.cf_use_recommend and mb_recommend:
+        insert_point(request, mb_recommend, config.cf_recommend_point, f"{new_member.mb_id}의 추천인", "@member", mb_recommend, f"{new_member.mb_id} 추천")
+
+    # 회원에게 인증메일 발송
+    if config.cf_use_email_certify:
+        subject = f"[{config.cf_title}] 회원가입 인증메일 발송"
+        body = templates.TemplateResponse(
+            "bbs/mail_form/register_certify_mail.html",
+            {
+                "request": request,
+                "member": new_member,
+                "certify_href": f"{request.base_url.__str__()}bbs/email_certify/{new_member.mb_id}?certify={new_member.mb_email_certify2}",
+            }
+        ).body.decode("utf-8")
+        mailer(new_member.mb_email, subject, body)
+    # 회원에게 회원가입 메일 발송
+    elif config.cf_email_mb_member:
+        subject = f"[{config.cf_title}] 회원가입을 축하드립니다."
+        body = templates.TemplateResponse(
+            "bbs/mail_form/register_send_member_mail.html",
+            {
+                "request": request,
+                "member": new_member,
+            }
+        ).body.decode("utf-8")
+        mailer(new_member.mb_email, subject, body)
+
+    # 최고관리자에게 회원가입 메일 발송
+    if config.cf_email_mb_super_admin:
+        subject = f"[{config.cf_title}] {new_member.mb_nick} 님께서 회원으로 가입하셨습니다."
+        body = templates.TemplateResponse(
+            "bbs/mail_form/register_send_admin_mail.html",
+            {
+                "request": request,
+                "member": new_member,
+            }
+        ).body.decode("utf-8")
+        mailer(config.cf_admin_email, subject, body)
+
+    if not config.cf_use_email_certify:
+        request.session["ss_mb_id"] = new_member.mb_id
+        request.session["ss_mb_key"] = session_member_key(request, new_member)
     request.session["ss_mb_reg"] = new_member.mb_id
 
     return RedirectResponse(url="/bbs/register_result", status_code=302)
@@ -249,3 +303,28 @@ def register_result(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse("bbs/register_result.html", {
         "request": request, "member": member,
     })
+
+
+@router.get("/email_certify/{mb_id}")
+def email_certify(
+    request: Request,
+    db: Session = Depends(get_db),
+    mb_id: str = Path(...),
+    certify: str = Query(...),
+):
+    member = db.query(Member).filter(Member.mb_id == mb_id).first()
+    if not member:
+        raise AlertException("존재하는 회원이 아닙니다.", 404, "/")
+    
+    if member.mb_leave_date or member.mb_intercept_date:
+        raise AlertException("탈퇴한 회원이거나 차단된 회원입니다.", 403, "/")
+    elif member.mb_email_certify != datetime(1, 1, 1, 0, 0, 0):
+        raise AlertException("이미 인증된 회원입니다.", 403, "/")
+    elif member.mb_email_certify2 != certify:
+        raise AlertException("메일인증 요청 정보가 올바르지 않습니다.", 403, "/")
+
+    member.mb_email_certify = datetime.now()
+    member.mb_email_certify2 = ""
+    db.commit()
+
+    raise AlertException(f"메일인증 처리를 완료 하였습니다.\\n\\n지금부터 {mb_id} 아이디로 로그인 가능합니다", 200, "/")

@@ -18,7 +18,7 @@
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
 <section id="bo_w">
     <!-- 게시물 작성/수정 시작 { -->
-    <form name="fwrite" id="fwrite" action="/board/write_update?{{ request.query_params }}" method="post" enctype="multipart/form-data" onsubmit="return fwrite_submit(this);" autocomplete="off" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
+    <form name="fwrite" id="fwrite" action="{{ url_for('write_update') }}?{{ request.query_params }}" method="post" enctype="multipart/form-data" onsubmit="return fwrite_submit(this);" autocomplete="off" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
         <input type="hidden" name="uid" value="{{ get_unique_id(request) }}">
         <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
         <input type="hidden" name="wr_id" value="{{ write.wr_id }}">
@@ -194,46 +194,6 @@
 
         function fwrite_submit(f)
         {
-            // TODO: 에디터 사용 시, 첫번째 submit 요청은 wr_content_editor.value를 가져오지 못한다.
-            /*
-            var wr_content_editor = document.getElementById('wr_content');
-            console.log(wr_content_editor.value)
-            if (!wr_content_editor.value) { alert("내용을 입력해 주십시오."); wr_content_editor.focus(); return false; }
-            */
-            /*
-            var subject = "";
-            var content = "";
-            $.ajax({
-                url: g5_bbs_url+"/ajax.filter.php",
-                type: "POST",
-                data: {
-                    "subject": f.wr_subject.value,
-                    "content": f.wr_content.value
-                },
-                dataType: "json",
-                async: false,
-                cache: false,
-                success: function(data, textStatus) {
-                    subject = data.subject;
-                    content = data.content;
-                }
-            });
-
-            if (subject) {
-                alert("제목에 금지단어('"+subject+"')가 포함되어있습니다");
-                f.wr_subject.focus();
-                return false;
-            }
-
-            if (content) {
-                alert("내용에 금지단어('"+content+"')가 포함되어있습니다");
-                if (typeof(ed_wr_content) != "undefined")
-                    ed_wr_content.returnFalse();
-                else
-                    f.wr_content.focus();
-                return false;
-            }
-            */
             if (document.getElementById("char_count")) {
                 if (char_min > 0 || char_max > 0) {
                     var cnt = parseInt(check_byte("wr_content", "char_count"));
