@@ -2,7 +2,7 @@
 
 /* ### 기본 스타일 커스터마이징 시작 ### */
 /* 기본박스 */
-.mbskin {position:relative;margin:100px auto 0;width:360px;text-align:center}
+.mbskin {position:relative;margin:40px auto 0;width:360px;text-align:center}
 .mbskin:after {right:10px;left:auto;
   -webkit-transform:skew(8deg) rotate(3deg);
     -moz-transform:skew(8deg) rotate(3deg);

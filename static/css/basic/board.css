@@ -18,7 +18,7 @@
 #bo_list .txt_active {color:#5d910b}
 #bo_list .txt_expired {color:#ccc}
 #bo_list tbody tr {border-left:2px solid transparent}
-#bo_list tbody tr:hover {border-left:2px solid #253dbe}
+#bo_list tbody tr:hover {border-left:2px solid #ff8269}
 #bo_list tbody .even td {background:#fbfbfb}
 
 #bo_cate {margin:25px 0}
@@ -197,7 +197,7 @@ box-shadow:1px 1px 5px 0px hsl(232, 36%, 96%)}
 #bo_v_bot h2 {position:absolute;font-size:0;line-height:0;overflow:hidden}
 #bo_v_bot ul {padding:0;list-style:none}
 
-.bo_v_com {margin:20px 0;float:right}
+.bo_v_com {float:right}
 .bo_v_com > li {position:relative;float:left;margin-left:5px}
 
 .bo_v_nb {position:relative;margin:20px 0;clear:both;text-align:left}

@@ -20,7 +20,7 @@ box-shadow:inset 0 2px 5px #ff8269}
 #faq_wrap li:first-child {border-top:1px solid #ececec}
 #faq_wrap li h3 {min-height:50px;line-height:30px;padding:15px;padding-left:50px;position:relative}
 #faq_wrap li h3 .tit_btn {position:absolute;right:15px;top:15px;border:0;width:30px;height:30px;background:#fff;color:#c5cdd8;font-size:1.2em}
-#faq_wrap li h3 .tit_bg {display:inline-block;position:absolute;top:15px;left:15px;text-align:center;color:#000;font-size:1.6em}
+#faq_wrap li h3 .tit_bg {display:inline-block;position:absolute;top:15px;left:15px;text-align:center;color:#ff8269;font-size:1.6em}
 #faq_wrap li h3.faq_li_open a {color:#ff8269}
 
 #faq_con .con_inner {display:none;padding:5px 5px 20px 50px}
