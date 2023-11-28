@@ -17,6 +17,8 @@ from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract, literal, inspect
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
+from starlette.staticfiles import StaticFiles
+
 from common.models import Auth, Config, Member, Memo, Board, BoardFile, BoardNew, Group, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
 from common.models import WriteBaseModel
 from common.database import SessionLocal, engine, DB_TABLE_PREFIX
@@ -33,6 +35,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from lib.captcha.recaptch_v2 import ReCaptchaV2
 from lib.captcha.recaptch_inv import ReCaptchaInvisible
+from lib.plugin.service import get_admin_plugin_menus
 
 load_dotenv()
 
@@ -1552,6 +1555,94 @@ class StringEncrypt:
 # print(decrypted_text)
 
 
+class UserTemplates(Jinja2Templates):
+    """
+    Jinja2Template 설정 클래스
+    """
+
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(UserTemplates, cls).__new__(cls)
+        return cls._instance
+
+    def __init__(self,
+                 directory: Union[str, os.PathLike],
+                 context_processors: dict = None,
+                 globals: dict = None,
+                 env: Environment = None,
+                 ):
+        super().__init__(directory=directory, context_processors=context_processors)
+        # 공통 env.global 설정
+        self.env.globals["editor_path"] = editor_path
+        self.env.globals["getattr"] = getattr
+        self.env.globals["get_selected"] = get_selected
+        self.env.globals["get_member_icon"] = get_member_icon
+        self.env.globals["get_member_image"] = get_member_image
+        self.env.filters["number_format"] = number_format
+        self.env.globals["theme_asset"] = theme_asset
+
+        # 사용자 템플릿, 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
+        if TEMPLATES_DIR in directory:
+            self.context_processors.append(self._default_context)
+
+        # 추가 env.global 설정
+        if globals:
+            self.env.globals.update(**globals.__dict__)
+
+    def _default_context(self, request: Request):
+        context = {
+            "menus": get_menus(),
+            "poll": get_recent_poll(),
+            "populars": get_populars(),
+            "latest": latest,
+            "visit": visit,
+        }
+        return context
+
+
+class AdminTemplates(Jinja2Templates):
+    """
+    Jinja2Template 설정 클래스
+    """
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(AdminTemplates, cls).__new__(cls)
+        return cls._instance
+
+    def __init__(self,
+                 directory: Union[str, os.PathLike],
+                 context_processors: dict = None,
+                 globals: dict = None,
+                 env: Environment = None
+                 ):
+        super().__init__(directory=directory, context_processors=context_processors)
+        # 공통 env.global 설정
+        self.env.globals["editor_path"] = editor_path
+        self.env.globals["getattr"] = getattr
+        self.env.globals["get_selected"] = get_selected
+        self.env.globals["get_member_icon"] = get_member_icon
+        self.env.globals["get_member_image"] = get_member_image
+        self.env.filters["number_format"] = number_format
+        self.env.globals["theme_asset"] = theme_asset
+
+        # 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
+        self.context_processors.append(self._default_admin_context)
+
+        # 추가 env.global 설정
+        if globals:
+            self.env.globals.update(**globals.__dict__)
+
+    def _default_admin_context(self, request: Request):
+        context = {
+            "admin_menus": get_admin_menus(),
+            "admin_plugin_menus": get_admin_plugin_menus(),
+        }
+        return context
+
 class MyTemplates(Jinja2Templates):
     """
     Jinja2Template 설정 클래스
@@ -1570,6 +1661,7 @@ class MyTemplates(Jinja2Templates):
         self.env.globals["get_member_icon"] = get_member_icon
         self.env.globals["get_member_image"] = get_member_image
         self.env.filters["number_format"] = number_format
+        self.env.globals["theme_asset"] = theme_asset
 
         # 사용자 템플릿, 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
         if TEMPLATES_DIR in directory:
@@ -1986,6 +2078,7 @@ def number_format(number: int) -> str:
     else:
         return "Invalid input. Please provide an integer."
 
+
 def read_version():
     """루트 디렉토의 version.txt 파일을 읽어서 버전을 반환하는 함수
     Returns:
@@ -1993,3 +2086,34 @@ def read_version():
     """
     with open("version.txt", "r") as file:
         return file.read().strip()
+
+
+def theme_asset(asset_path: str):
+    """
+    현재 템플릿의 asset url을 반환하는 헬퍼 함수
+    Args:
+        asset_path (str): 플러그인 모듈 이름
+    Returns:
+        asset_url (str): asset url
+    """
+
+    theme_path = get_theme_from_db()
+    theme_name = theme_path.replace(TEMPLATES + '/', "")
+
+    return f"/theme_static/{theme_name}/{asset_path}"
+
+
+def register_theme_statics(app):
+    """
+    현재 테마의 static 디렉토리를 등록하는 함수
+    Args:
+        app (FastAPI): FastAPI 객체
+    """
+    # 테마의 static 디렉토리를 등록
+    # url 경로 /theme_static/{{theme_name}}/css, js, img 등 static 생략
+    # 실제 경로 /theme/{{theme_name}}/static/ 을 등록
+    theme_path = get_theme_from_db()
+    theme_name = theme_path.replace(TEMPLATES + '/', "")
+    app.mount(f"/theme_static/{theme_name}/",
+              StaticFiles(directory=f"{theme_path}/static"),  # real path
+              name=f"static/{theme_name}")  # tag 이름

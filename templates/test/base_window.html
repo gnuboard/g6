@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+<title>{% block title %}그누보드{% endblock %}</title>
+<link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+<link rel="stylesheet" href="/static/css/default.css">
+<link rel="stylesheet" href="/static/js/font-awesome/css/font-awesome.min.css">
+<link rel="stylesheet" href="/static/css/basic/connect.css">
+<link rel="stylesheet" href="/static/css/basic/faq.css">
+<link rel="stylesheet" href="/static/css/basic/poll.css">
+<link rel="stylesheet" href="/static/css/basic/popular.css">
+<link rel="stylesheet" href="/static/css/basic/member.css">
+<link rel="stylesheet" href="/static/css/basic/latest_list.css">
+<link rel="stylesheet" href="/static/css/basic/latest_block.css">
+<link rel="stylesheet" href="/static/css/basic/latest.css">
+<link rel="stylesheet" href="/static/css/basic/outlogin.css">
+<link rel="stylesheet" href="/static/css/basic/latest_notice.css">
+<link rel="stylesheet" href="/static/css/basic/visit.css">
+<link rel="stylesheet" href="/static/js/owlcarousel/owl.carousel.min.css">
+<script>
+// 자바스크립트에서 사용하는 전역변수 선언
+var g5_url       = "{{request.base_url}}";
+var g5_bbs_url   = "{{request.base_url}}bbs";
+var g5_is_member = "1";
+var g5_is_admin  = "super";
+var g5_is_mobile = "";
+var g5_bo_table  = "";
+var g5_sca       = "";
+var g5_editor    = "";
+var g5_cookie_domain = "";
+var g5_shop_url = "{{request.base_url}}shop";
+</script>
+<script src="/static/js/jquery-1.12.4.min.js"></script>
+<script src="/static/js/jquery-migrate-1.4.1.min.js"></script>
+<script src="/static/js/jquery.menu.js"></script>
+<script src="/static/js/common.js"></script>
+<script src="/static/js/wrest.js"></script>
+<script src="/static/js/placeholders.min.js"></script>
+<script src="/static/js/owlcarousel/owl.carousel.min.js"></script>
+<script src="/static/js/jquery.bxslider.js"></script>
+</head>
+<body>
+    {% if request.state.login_member %}
+        <div id="hd_login_msg">
+            {{ request.state.login_member.mb_nick }} 님 로그인 중
+            <a href="{{ url_for('logout') }}">로그아웃</a>
+        </div>
+    {% endif %}
+    {% block content %}
+    {% endblock content %}
+</body>
+</html>
