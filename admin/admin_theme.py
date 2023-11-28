@@ -211,13 +211,10 @@ async def theme_update(request: Request, theme: str = Form(...), db: Session = D
     from main import app # 순환참조 방지
 
     register_theme_statics(app)
-    current_theme = get_theme_from_db()
-    user_template = UserTemplates(current_theme)
-    user_template.env.loader.searchpath.remove(TEMPLATES_DIR)
-    user_template.env.loader.searchpath.append(f"{TEMPLATES}/{theme}")
-
-    admin_template = AdminTemplates(current_theme)
-    admin_template.env.loader.searchpath.remove(TEMPLATES_DIR)
-    admin_template.env.loader.searchpath.append(f"{TEMPLATES}/{theme}")
+    db_set_theme = get_theme_from_db()
+    user_template = UserTemplates(db_set_theme)
+    current_theme_path = user_template.env.loader.searchpath
+    if current_theme_path[0] in user_template.env.loader.searchpath:
+        user_template.env.loader.searchpath = [f"{TEMPLATES}/{theme}"]
 
     return {"success": f"{info['theme_name']} 테마로 변경하였습니다."}
