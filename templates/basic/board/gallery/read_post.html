@@ -87,7 +87,7 @@
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ url_for('delete_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?token={{ generate_token(request, 'delete_post') }}&{{ request.query_params }}" onclick="del(this.href); return false;">
+                                <a href="{{ url_for('delete_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?{{ request.query_params }}" onclick="del(this.href); return false;">
                                     삭제<i class="fa fa-trash-o" aria-hidden="true"></i>
                                 </a>
                             </li>
@@ -419,36 +419,6 @@
         */
         function fviewcomment_submit(f)
         {
-            var pattern = /(^\s*)|(\s*$)/g; // \s 공백 문자
-
-            // f.is_good.value = 0;
-
-            var subject = "";
-            var content = "";
-            /*
-            $.ajax({
-                url: g5_bbs_url+"/ajax.filter.php",
-                type: "POST",
-                data: {
-                    "subject": "",
-                    "content": f.wr_content.value
-                },
-                dataType: "json",
-                async: false,
-                cache: false,
-                success: function(data, textStatus) {
-                    subject = data.subject;
-                    content = data.content;
-                }
-            });
-
-            if (content) {
-                alert("내용에 금지단어('"+content+"')가 포함되어있습니다");
-                f.wr_content.focus();
-                return false;
-            }
-            */
-
             // 양쪽 공백 없애기
             var pattern = /(^\s*)|(\s*$)/g; // \s 공백 문자
             document.getElementById('wr_content').value = document.getElementById('wr_content').value.replace(pattern, "");
@@ -505,7 +475,7 @@
                 }
             }
 
-            document.getElementById("btn_submit").disabled = "disabled";
+            // document.getElementById("btn_submit").disabled = "disabled";
 
             return true;
         }

@@ -16,7 +16,6 @@ templates.env.globals['getattr'] = getattr
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals['subject_sort_link'] = subject_sort_link
-templates.env.globals['generate_token'] = generate_token
 templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 
@@ -73,9 +72,8 @@ def boardgroup_list_update(
         gr_order: Optional[List[int]] = Form(None, alias="gr_order[]"),
         gr_device: Optional[List[str]] = Form(None, alias="gr_device[]"),
         ):
-    
-    if not compare_token(request, token, 'boardgroup_list'):
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["토큰값이 일치하지 않습니다."]})
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     # 선택수정
     for i in checks:
@@ -117,12 +115,15 @@ def boardgroup_form(gr_id: str, request: Request, db: Session = Depends(get_db))
 
 @router.post("/boardgroup_form_update")  
 def boardgroup_form_update(request: Request, db: Session = Depends(get_db),
+                        action: str = Form(...),
                         token : str = Form(...),
                         gr_id: str = Form(...),
                         form_data: GroupForm = Depends(),
                         ):
-    
-    if compare_token(request, token, 'insert'):
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
+
+    if action == "w":
         existing_group = db.query(models.Group).filter(models.Group.gr_id == gr_id).first()
         if existing_group:
             errors = [f"{gr_id} 게시판그룹 아이디가 이미 존재합니다. (등록불가)"]
@@ -132,7 +133,7 @@ def boardgroup_form_update(request: Request, db: Session = Depends(get_db),
         db.add(new_group)
         db.commit()
         
-    elif compare_token(request, token, 'update'):
+    elif action == "u":
         existing_group = db.query(models.Group).filter(models.Group.gr_id == gr_id).first()
         if not existing_group:
             return templates.TemplateResponse("alert.html", {"request": request, "errors": [f"{gr_id} 게시판그룹 아이디가 존재하지 않습니다. (수정불가)"]})

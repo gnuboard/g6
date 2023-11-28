@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Path, Query, Request, UploadFile
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -17,7 +17,6 @@ templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_nam
 templates.env.globals["get_skin_select"] = get_skin_select
 templates.env.globals["get_admin_menus"] = get_admin_menus
 templates.env.globals["get_head_tail_img"] = get_head_tail_img
-templates.env.globals["generate_token"] = generate_token
 
 MENU_KEY = "300600"
 IMAGE_DIRECTORY = "data/content/"
@@ -64,6 +63,7 @@ def content_form_edit(co_id: str, request: Request, db: Session = Depends(get_db
 @router.post("/content_form_update")
 def content_form_update(request: Request,
                         db: Session = Depends(get_db),
+                        action: str = Form(...),
                         token: str = Form(...),
                         co_id: str = Form(...),
                         form_data: ContentForm = Depends(),
@@ -96,7 +96,10 @@ def content_form_update(request: Request,
     Returns:
         RedirectResponse: 내용 등록/수정 후 상세 폼으로 이동
     """
-    if compare_token(request, token, 'insert'):
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
+
+    if action == "w":
         # ID 중복 검사
         exists_content = db.query(Content).filter(Content.co_id == co_id).first()
         if exists_content:
@@ -107,8 +110,8 @@ def content_form_update(request: Request,
         db.add(content)
         db.commit()
 
-    elif compare_token(request, token, 'update'):
-        content = db.query(Content).filter(Content.co_id == co_id).first()
+    elif action == "u":
+        content = db.get(Content, co_id)
         if not content:
             raise AlertException(status_code=404, detail=f"{co_id} : 내용 아이디가 존재하지 않습니다.")
 
@@ -116,9 +119,6 @@ def content_form_update(request: Request,
         for field, value in form_data.__dict__.items():
             setattr(content, field, value)
         db.commit()
-    
-    else: # 토큰 검사 실패
-        raise AlertException(status_code=403, detail=f"{token} : 토큰이 존재하지 않습니다.")
 
     # 이미지 경로체크 및 생성
     make_directory(IMAGE_DIRECTORY)
@@ -134,15 +134,15 @@ def content_form_update(request: Request,
 
 
 @router.get("/content_delete/{co_id}")
-def content_delete(co_id: str, 
-                   request: Request, 
+def content_delete(request: Request, 
                    db: Session = Depends(get_db),
-                   token: str = Query(...)):
+                   token: str = Query(...),
+                   co_id: str = Path(...)):
     """
     내용 삭제
     """
-    if not compare_token(request, token, 'content_list'):
-        raise AlertException(status_code=403, detail=f"{token} : 토큰이 존재하지 않습니다.")
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
     
     content = db.query(Content).filter(Content.co_id == co_id).first()
     if not content:

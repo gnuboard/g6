@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, Form, Path, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -48,7 +48,7 @@ def poll_update(request: Request, po_id: int, token: str = Form(...), gb_poll: i
     db.commit()
 
     # 포인트 지급
-    insert_point(request, member.mb_id, poll.po_point,  f'{poll.po_id}. {poll.po_subject[:20]} 투표 참여 ', '@poll', poll.po_id, '투표');
+    insert_point(request, member.mb_id, poll.po_point,  f'{poll.po_id}. {poll.po_subject[:20]} 투표 참여 ', '@poll', poll.po_id, '투표')
 
     return RedirectResponse(url=f"/bbs/poll_result/{po_id}", status_code=302)
       
@@ -136,7 +136,7 @@ async def poll_etc_update(request: Request,
                 "bbs/mail_form/poll_etc_update_mail.html", {
                     "request": request,
                     "subject": subject,
-                    "mb_name": pc_name,
+                    "mb_name": cut_name(request, pc_name),
                     "mb_id": member.mb_id if member else '비회원',
                     "content": pc_idea
                 }
@@ -147,12 +147,16 @@ async def poll_etc_update(request: Request,
 
 
 @router.get("/poll_etc_delete/{pc_id}")
-def poll_etc_delete(request: Request, pc_id: int, token: str, db: Session = Depends(get_db)):
+def poll_etc_delete(
+    request: Request,
+    db: Session = Depends(get_db),
+    pc_id: int = Path(...),
+    token: str = Query(...)):
     """
     기타의견 삭제
     """
-    if compare_token(request, token, "poll_etc_delete"):
-        raise AlertException(f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.", 403)
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
     
     poll_etc = db.query(PollEtc).get(pc_id)
     po_id = poll_etc.po_id

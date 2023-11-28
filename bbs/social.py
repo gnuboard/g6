@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import secrets
 import sys
 import zlib
 from datetime import datetime
@@ -16,7 +17,7 @@ from bbs.member_profile import validate_nickname, validate_userid
 from lib.social import providers
 from lib.social.social import oauth, SocialProvider, get_social_profile, get_social_login_token
 from lib.common import AlertException, valid_email, hash_password, session_member_key, insert_point, TEMPLATES_DIR, \
-    is_admin, default_if_none, generate_token
+    is_admin, default_if_none, mailer
 from common.database import get_db, SessionLocal
 from common.formclass import MemberForm
 
@@ -27,7 +28,6 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR, extensions=["jinja2.ext.i18
 templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals['getattr'] = getattr
-templates.env.globals["generate_token"] = generate_token
 
 log = logging.getLogger("authlib")
 logging.basicConfig()
@@ -124,12 +124,17 @@ async def authorize_social_login(request: Request, db: Session = Depends(get_db)
     gnu_social_id = SocialAuthService.g5_convert_social_id(identifier, provider_name)
     social_profile = SocialAuthService.get_profile_by_member_id(gnu_social_id, provider_name)
     if social_profile:
+        config = request.state.config
         # 이미 가입된 회원이라면 로그인
-        member = db.query(Member.mb_id, Member.mb_datetime).filter(Member.mb_id == social_profile.mb_id).first()
+        member = db.query(Member).filter(Member.mb_id == social_profile.mb_id).first()
         if not member:
             raise AlertException(
                 status_code=400, detail="유효하지 않은 요청입니다.",
                 url=request.url_for('login').__str__())
+        elif member.mb_leave_date or member.mb_intercept_date:
+            raise AlertException("탈퇴 또는 차단된 회원입니다.", 404)
+        elif config.cf_use_email_certify and member.mb_email_certify == datetime(1, 1, 1, 0, 0, 0):
+            raise AlertException(f"{member.mb_email} 메일로 메일인증을 받으셔야 로그인 가능합니다.", 404)
 
         # 로그인
         request.session["ss_mb_id"] = member.mb_id
@@ -267,23 +272,46 @@ async def post_social_register(
     member.mb_datetime = request_time
     member.mb_today_login = request_time
     member.mb_level = config.cf_register_level
+
+    # 메일인증
+    if config.cf_use_email_certify:
+        # 일회용 인증키 생성
+        member.mb_email_certify2 = secrets.token_hex(16)
+    else:
+        # 메일인증을 사용하지 않을 경우 바로 인증처리
+        member.mb_email_certify = datetime.now()
+
     db.add(member)
     db.add(member_social_profiles)
     db.commit()
 
-    # 가입시 발생 이벤트
-    datetime_str = request_time.strftime("%Y-%m-%d %H:%M:%S")
-    insert_point(
-        request,
-        mb_id=member.mb_id,
-        point=config.cf_register_point,
-        content=datetime_str + " 첫로그인",
-        rel_table="@login",
-        rel_id=member.mb_id,
-        rel_action="회원가입"
-    )
+    # 회원가입 포인트 부여
+    insert_point(request, member.mb_id, config.cf_register_point,  "회원가입 축하", "@member", member.mb_id, "회원가입")
 
-    # todo // 최고관리자에게 메일 발송
+    # 회원에게 인증메일 발송
+    if config.cf_use_email_certify:
+        subject = f"[{config.cf_title}] 회원가입 인증메일 발송"
+        body = templates.TemplateResponse(
+            "bbs/mail_form/register_certify_mail.html",
+            {
+                "request": request,
+                "member": member,
+                "certify_href": f"{request.base_url.__str__()}bbs/email_certify/{member.mb_id}?certify={member.mb_email_certify2}",
+            }
+        ).body.decode("utf-8")
+        mailer(member.mb_email, subject, body)
+
+    # 최고관리자에게 회원가입 메일 발송
+    if config.cf_email_mb_super_admin:
+        subject = f"[{config.cf_title}] {member.mb_nick} 님께서 회원으로 가입하셨습니다."
+        body = templates.TemplateResponse(
+            "bbs/mail_form/register_send_admin_mail.html",
+            {
+                "request": request,
+                "member": member,
+            }
+        ).body.decode("utf-8")
+        mailer(config.cf_admin_email, subject, body)
 
     return RedirectResponse(url="/", status_code=302)
 

@@ -59,19 +59,22 @@ function is_checked(elements_name)
 
 function delete_confirm(el)
 {
-    return confirm("한번 삭제한 자료는 복구할 방법이 없습니다.\n\n정말 삭제하시겠습니까?");
-    // if(confirm("한번 삭제한 자료는 복구할 방법이 없습니다.\n\n정말 삭제하시겠습니까?")) {
-    //     // var token = get_ajax_token();
-    //     // var href = el.href.replace(/&token=.+$/g, "");
-    //     // if(!token) {
-    //     //     alert("토큰 정보가 올바르지 않습니다.");
-    //     //     return false;
-    //     // }
-    //     // el.href = href+"&token="+token;
-    //     return true;
-    // } else {
-    //     return false;
-    // }
+    if (confirm("한번 삭제한 자료는 복구할 방법이 없습니다.\n\n정말 삭제하시겠습니까?")) {
+        var token = generate_token();
+
+        var url = el.href;
+        if (url.indexOf("?") > -1) {
+            url += "&token=" + token;
+        } else {
+            url += "?token=" + token;
+        }
+
+        el.href = url;
+
+        return true;
+    } else {
+        return false;
+    }
 }
 
 function delete_confirm2(msg)
@@ -87,21 +90,23 @@ function delete_confirm3(element)
 {
     if(confirm("한번 삭제한 자료는 복구할 방법이 없습니다.\n\n정말 삭제하시겠습니까?")) {
         // DELETE 요청을 생성하고 서버로 보냅니다.
-        token = $("#token").val();
-        $.ajax({
-            type: "DELETE",
-            url: element.href + "?token=" + token,
-            success: function(data) {
-                if (data.message) {
-                    alert(data.message);
+        token = generate_token();
+        if (token) {
+            $.ajax({
+                type: "DELETE",
+                url: element.href + "?token=" + token,
+                success: function(data) {
+                    if (data.message) {
+                        alert(data.message);
+                    }
+                    location.reload();                  
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    responese = JSON.parse(xhr.responseText);
+                    alert(responese.message);
                 }
-                location.reload();                  
-            },
-            error: function(xhr, textStatus, errorThrown) {
-                responese = JSON.parse(xhr.responseText);
-                alert(responese.message);
-            }
-        });
+            });
+        }
     }
     return false;
 }

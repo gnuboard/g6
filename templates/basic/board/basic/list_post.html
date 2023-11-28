@@ -40,7 +40,7 @@
         <input type="hidden" name="sst" value="{{ request.query_params.sst }}">
         <input type="hidden" name="sod" value="{{ request.query_params.sod }}">
         <input type="hidden" name="page" value="{{ current_page }}">
-        <input type="hidden" name="token" value="{{ generate_token(request, 'board_list') }}">
+        <input type="hidden" name="token" value="">
         <input type="hidden" name="act_button" value="">
         
 
@@ -349,7 +349,9 @@
             f.removeAttribute("target");
             f.action = "{{ url_for('list_delete', bo_table=board.bo_table) }}?{{ request.query_params }}";
         }
-    
+
+        f.token.value = generate_token();
+
         return true;
     }
     

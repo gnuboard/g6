@@ -1,10 +1,15 @@
 {% macro get(request, mb_id, name='', email='', homepage='') -%}
-    {% set bo_table=request.path_params.bo_table %}
+    {% set bo_table = request.path_params.bo_table %}
+    {% set use_member_icon = request.state.config.cf_use_member_icon %}
     {% if mb_id %}
         <span class="sv_wrap">
             <a href="/bbs/profile/{{ mb_id }}" class="sv_member" title="{{ name }} 자기소개" target="_blank" rel="nofollow" onclick="return false;">
+                {% if use_member_icon != 0 %}
                 <span class="profile_img"><img src="/{{ get_member_icon(mb_id) }}" width="22" height="22" alt=""></span>
+                {% endif %}
+                {% if use_member_icon != 1 %}
                 {{ name }}
+                {% endif %}
             </a>
             <span class="sv">
                 <a href="/bbs/memo_form?me_recv_mb_id={{ mb_id }}" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>

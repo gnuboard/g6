@@ -54,8 +54,8 @@ def scrap_form_update(request: Request, db: Session = Depends(get_db),
     """
     스크랩 등록
     """
-    if not compare_token(request, token, 'scrap_insert'):
-        raise AlertException(f"{token} : 토큰이 존재하지 않습니다.", 403)
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     member = request.state.login_member
     if not member:
@@ -78,7 +78,9 @@ def scrap_form_update(request: Request, db: Session = Depends(get_db),
     
     # 댓글 추가
     if wr_content and board_config.is_comment_level():
-        # TODO: 너무 빠른 시간내에 게시물을 연속해서 올릴 수 없습니다.
+        # 글쓰기 간격 검증
+        if not is_write_delay(request):
+            raise AlertException("너무 빠른 시간내에 게시글을 연속해서 올릴 수 없습니다.", 400)
 
         max_comment = db.query(func.max(models_write.wr_comment).label('max_comment')).filter(
             models_write.wr_parent == wr_id,
@@ -194,8 +196,8 @@ def scrap_delete(request: Request, db: Session = Depends(get_db),
     """
     return_url = request.url_for('scrap_list').path + f"?page={page}"
 
-    if not compare_token(request, token, 'scrap_delete'):
-        raise AlertException(status_code=403, detail=f"{token} : 토큰이 존재하지 않습니다.")
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
     
     member = request.state.login_member
     if not member:

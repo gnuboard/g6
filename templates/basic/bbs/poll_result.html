@@ -33,11 +33,9 @@
             <!-- } 설문조사 결과 그래프 끝 -->
 
             <!-- 설문조사 기타의견 시작 { -->
-            {# TODO: 기타의견 등록의 generate_token로 인해 토큰이 갱신되어 삭제 오류가 발생함. #}
             {% if poll.po_etc %}
                 <section id="poll_result_cmt">
                     <h2>이 설문에 대한 기타의견</h2>
-                    {% set delete_token=generate_token(request, 'poll_etc_delete') %}
                     {% for etc in etcs %}
                         <article>
                             <header>
@@ -46,7 +44,7 @@
                                 <span class="poll_datetime">{{ etc.pc_datetime|safe }}</span>
                                 {% if etc.mb_id == request.state.login_member.mb_id or request.state.login_member.mb_level == 10 %}
                                     <span class="poll_cmt_del">
-                                        <a href="{{ url_for('poll_etc_delete', pc_id=etc.pc_id) }}?token={{ delete_token }}" class="poll_delete">
+                                        <a href="{{ url_for('poll_etc_delete', pc_id=etc.pc_id) }}" class="poll_delete" onclick="del(this.href); return false;">
                                             <i class="fa fa-times-circle" aria-hidden="true"></i>
                                             <span class="sound_only">삭제</span>
                                         </a>
@@ -111,14 +109,7 @@
         </div>
     </div>
     
-    <script>
-    $(function() {
-        $(".poll_delete").click(function() {
-            if(!confirm("해당 기타의견을 삭제하시겠습니까?"))
-                return false;
-        });
-    });
-    
+    <script>    
     function fpollresult_submit(f)
     {
         f.token.value = generate_token();

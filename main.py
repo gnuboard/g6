@@ -1,4 +1,5 @@
 import datetime
+from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, Depends, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -180,6 +181,13 @@ async def main_middleware(request: Request, call_next):
     db.close()
     request.state.is_super_admin = is_super_admin
 
+    # 접근가능/차단 IP 체크
+    current_ip = request.client.host
+    if not is_possible_ip(request, current_ip):
+        return HTMLResponse("<meta charset=utf-8>접근이 허용되지 않은 IP 입니다.")
+    if is_intercept_ip(request, current_ip):
+        return HTMLResponse("<meta charset=utf-8>접근이 차단된 IP 입니다.")
+    
     if request.method == "GET":
         request.state.sst = request.query_params.get("sst") if request.query_params.get("sst") else ""
         request.state.sod = request.query_params.get("sod") if request.query_params.get("sod") else ""
@@ -288,6 +296,17 @@ async def alert_close_exception_handler(request: Request, exc: AlertCloseExcepti
     return templates.TemplateResponse(
         "alert_close.html", {"request": request, "errors": exc.detail}, status_code=exc.status_code
     )
+
+
+# 예약 작업을 관리할 스케줄러 생성
+scheduler = BackgroundScheduler(timezone='Asia/Seoul')
+# 매일 새벽 1시 스케줄러가 작동
+# https://apscheduler.readthedocs.io/en/3.x/modules/triggers/cron.html
+@scheduler.scheduled_job('cron', hour=1, id='remove_data_by_config')
+def job():
+    delete_old_data()
+# FastAPI 앱 시작 시 스케줄러 시작
+scheduler.start()
 
 
 @app.get("/", response_class=HTMLResponse)

@@ -13,7 +13,7 @@
         <input type="hidden" name="bo_table" value="{{ current_board.bo_table }}">
         <input type="hidden" name="wr_id_list" value="{{ wr_ids }}">
         <input type="hidden" name="url" value="{{ request.headers.get("referer", "") }}">
-        <input type="hidden" name="token" value="{{ generate_token(request, 'board_move') }}">
+        <input type="hidden" name="token" value="">
 
         <div class="tbl_head01 tbl_wrap">
             <table>
@@ -94,6 +94,8 @@
             alert('게시물을 ' + f.act.value + '할 게시판을 한개 이상 선택해 주십시오.');
             return false;
         }
+
+        f.token.value = generate_token();
     
         document.getElementById('btn_submit').disabled = true;
     

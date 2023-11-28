@@ -10,12 +10,13 @@
 <h1 id="container_title">게시판그룹 추가</h1>
 <div class="container_wr">
 <form  method="post" name="fboardgroup" id="fboardgroup" action="/admin/boardgroup_form_update" onsubmit="return fboardgroup_check(this);" enctype="multipart/form-data" autocomplete="off">
+<input type="hidden" name="action" value="{{ 'u' if group.gr_id else 'w' }}">
 <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
 <input type="hidden" name="stx" value="{{ request.state.stx }}">
 <input type="hidden" name="sst" value="{{ request.state.sst }}">
 <input type="hidden" name="sod" value="{{ request.state.sod }}">
 <input type="hidden" name="page" value="{{ request.state.page }}">
-<input type="hidden" name="token" value="{{ generate_token(request, 'update' if group.gr_id else 'insert') }}">
+<input type="hidden" name="token" value="">
 
 <div class="tbl_frm01 tbl_wrap">
     <table>
@@ -105,6 +106,9 @@
 
 <script>
     function fboardgroup_check(f) {
+
+        f.token.value = generate_token();
+
         return true;
     }
 </script>

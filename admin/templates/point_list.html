@@ -31,8 +31,7 @@
 <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
 <input type="hidden" name="stx" value="{{ request.state.stx }}">
 <input type="hidden" name="page" value="{{ request.state.page }}">
-{% set token = generate_token(request, 'point_list') %}
-<input type="hidden" name="token" value="{{ token }}">
+<input type="hidden" name="token" value="">
 
 <div class="tbl_head01 tbl_wrap">
 <table>
@@ -97,13 +96,13 @@
 <section id="point_mng">
 <h2 class="h2_frm">개별회원 포인트 증감 설정</h2>
 
-<form name="fpointlist2" method="post" id="fpointlist2" action="/admin/point_update" autocomplete="off">
+<form name="fpointlist2" method="post" id="fpointlist2" action="/admin/point_update" autocomplete="off" onsubmit="return fpoint_submit(this);">
 <input type="hidden" name="sst" value="{{ request.state.sst }}">
 <input type="hidden" name="sod" value="{{ request.state.sod }}">
 <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
 <input type="hidden" name="stx" value="{{ request.state.stx }}">
 <input type="hidden" name="page" value="{{ request.state.page }}">
-<input type="hidden" name="token" value="{{ token }}">
+<input type="hidden" name="token" value="">
     
 <div class="tbl_frm01 tbl_wrap">
     <table>
@@ -144,20 +143,27 @@
 </section>
 
 <script>
-function fpointlist_submit(f) {
-if (!is_checked("chk[]")) {
-    alert(document.pressed + " 하실 항목을 하나 이상 선택하세요.");
-    return false;
-}
+    function fpoint_submit(f) {
 
-if (document.pressed == "선택삭제") {
-    if (!confirm("선택한 자료를 정말 삭제하시겠습니까?")) {
-        return false;
+        f.token.value = generate_token();
+
+        return true;
     }
-}
+    function fpointlist_submit(f) {
+        if (!is_checked("chk[]")) {
+            alert(document.pressed + " 하실 항목을 하나 이상 선택하세요.");
+            return false;
+        }
 
-return true;
-}
+        if (document.pressed == "선택삭제") {
+            if (!confirm("선택한 자료를 정말 삭제하시겠습니까?")) {
+                return false;
+            }
+        }
+
+        f.token.value = generate_token();
+
+        return true;
+    }
 </script>
-
-{% endblock %}
+{% endblock content %}

@@ -1,14 +1,11 @@
 from fastapi import APIRouter, Depends, FastAPI, Form, HTTPException
-from fastapi.responses import FileResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import FileResponse
 from lib.common import *
 import os
 from PIL import Image
 from common.database import get_db
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import Config
-from sqlalchemy import update
 import re
 from pathlib import Path
 from sqlalchemy.orm import Session
@@ -212,6 +209,15 @@ async def theme_update(request: Request, theme: str = Form(...), db: Session = D
     db.commit()
 
     from main import app # 순환참조 방지
+
     register_theme_statics(app)
+    current_theme = get_theme_from_db()
+    user_template = UserTemplates(current_theme)
+    user_template.env.loader.searchpath.remove(TEMPLATES_DIR)
+    user_template.env.loader.searchpath.append(f"{TEMPLATES}/{theme}")
+
+    admin_template = AdminTemplates(current_theme)
+    admin_template.env.loader.searchpath.remove(TEMPLATES_DIR)
+    admin_template.env.loader.searchpath.append(f"{TEMPLATES}/{theme}")
 
     return {"success": f"{info['theme_name']} 테마로 변경하였습니다."}
