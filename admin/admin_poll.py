@@ -51,11 +51,13 @@ def poll_list(request: Request,
     return templates.TemplateResponse("poll_list.html", context)
 
 
-@router.post("/poll_list_update")
-def poll_list_update(request: Request,
-                    token: str = Form(None),
-                    db: Session = Depends(get_db),
-                    checks: List[int] = Form(..., alias="chk[]")):
+@router.post("/poll_list_delete")
+def poll_list_delete(
+    request: Request,
+    db: Session = Depends(get_db),
+    token: str = Form(None),
+    checks: List[int] = Form(..., alias="chk[]")
+):
     """
     투표 목록 삭제
     """
