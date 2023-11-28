@@ -53,11 +53,12 @@
                     </li>
                     <li class="qa_content_wrap smarteditor2">
                         <label for="qa_content" class="sound_only">내용<strong class="sound_only">필수</strong></label>
-                        <textarea id="qa_content" name="qa_content" class="smarteditor2" maxlength="65536" style="width: 100%; height: 300px;">{{ qa.qa_content }}
-                            {% if related %}
+                        <textarea id="qa_content" name="qa_content" class="smarteditor2" maxlength="65536" style="width: 100%; height: 300px;">
+                            {{- qa.qa_content -}}
+                            {% if related -%}
                                 ====== 이전 답변내용 =======
-                                {{ related.qa_content|safe }}
-                            {% endif %}
+                                {{ related.qa_content|safe -}}
+                            {% endif -%}
                         </textarea>
                     </li>
                     <li class="bo_w_flie">
@@ -111,39 +112,6 @@
         function fwrite_submit(f)
         {
             /*
-            var subject = "";
-            var content = "";
-            $.ajax({
-                url: g5_bbs_url+"/ajax.filter.php",
-                type: "POST",
-                data: {
-                    "subject": f.qa_subject.value,
-                    "content": f.qa_content.value
-                },
-                dataType: "json",
-                async: false,
-                cache: false,
-                success: function(data, textStatus) {
-                    subject = data.subject;
-                    content = data.content;
-                }
-            });
-
-            if (subject) {
-                alert("제목에 금지단어('"+subject+"')가 포함되어있습니다");
-                f.qa_subject.focus();
-                return false;
-            }
-
-            if (content) {
-                alert("내용에 금지단어('"+content+"')가 포함되어있습니다");
-                if (typeof(ed_qa_content) != "undefined")
-                    ed_qa_content.returnFalse();
-                else
-                    f.qa_content.focus();
-                return false;
-            }
-
             var hp = f.qa_hp.value.replace(/[0-9\-]/g, "");
             if(hp.length > 0) {
                 alert("휴대폰번호는 숫자, - 으로만 입력해 주십시오.");

@@ -36,7 +36,7 @@ def board_new_list(
         query = query.filter(BoardNew.wr_parent != BoardNew.wr_id)
 
     # 페이지 번호에 따른 offset 계산
-    page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
+    page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_new_rows
     offset = (current_page - 1) * page_rows
     # 최종 쿼리 결과를 가져옵니다.
     board_news = query.offset(offset).limit(page_rows).all()
@@ -57,7 +57,7 @@ def board_new_list(
                 new.subject = write.wr_subject
 
             # 작성자
-            new.name = write.wr_name
+            new.name = cut_name(request, write.wr_name)
             # 시간설정
             new.datetime = format_datetime(write.wr_datetime)
 

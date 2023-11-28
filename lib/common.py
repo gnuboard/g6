@@ -17,6 +17,8 @@ from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, and_, or_, func, extract, literal, inspect
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
+from starlette.staticfiles import StaticFiles
+
 from common.models import Auth, Config, Member, Memo, Board, BoardFile, BoardNew, Group, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
 from common.models import WriteBaseModel
 from common.database import SessionLocal, engine, DB_TABLE_PREFIX
@@ -33,6 +35,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from lib.captcha.recaptch_v2 import ReCaptchaV2
 from lib.captcha.recaptch_inv import ReCaptchaInvisible
+from lib.plugin.service import get_admin_plugin_menus
 
 load_dotenv()
 
@@ -1552,6 +1555,94 @@ class StringEncrypt:
 # print(decrypted_text)
 
 
+class UserTemplates(Jinja2Templates):
+    """
+    Jinja2Template 설정 클래스
+    """
+
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(UserTemplates, cls).__new__(cls)
+        return cls._instance
+
+    def __init__(self,
+                 directory: Union[str, os.PathLike],
+                 context_processors: dict = None,
+                 globals: dict = None,
+                 env: Environment = None,
+                 ):
+        super().__init__(directory=directory, context_processors=context_processors)
+        # 공통 env.global 설정
+        self.env.globals["editor_path"] = editor_path
+        self.env.globals["getattr"] = getattr
+        self.env.globals["get_selected"] = get_selected
+        self.env.globals["get_member_icon"] = get_member_icon
+        self.env.globals["get_member_image"] = get_member_image
+        self.env.filters["number_format"] = number_format
+        self.env.globals["theme_asset"] = theme_asset
+
+        # 사용자 템플릿, 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
+        if TEMPLATES_DIR in directory:
+            self.context_processors.append(self._default_context)
+
+        # 추가 env.global 설정
+        if globals:
+            self.env.globals.update(**globals.__dict__)
+
+    def _default_context(self, request: Request):
+        context = {
+            "menus": get_menus(),
+            "poll": get_recent_poll(),
+            "populars": get_populars(),
+            "latest": latest,
+            "visit": visit,
+        }
+        return context
+
+
+class AdminTemplates(Jinja2Templates):
+    """
+    Jinja2Template 설정 클래스
+    """
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(AdminTemplates, cls).__new__(cls)
+        return cls._instance
+
+    def __init__(self,
+                 directory: Union[str, os.PathLike],
+                 context_processors: dict = None,
+                 globals: dict = None,
+                 env: Environment = None
+                 ):
+        super().__init__(directory=directory, context_processors=context_processors)
+        # 공통 env.global 설정
+        self.env.globals["editor_path"] = editor_path
+        self.env.globals["getattr"] = getattr
+        self.env.globals["get_selected"] = get_selected
+        self.env.globals["get_member_icon"] = get_member_icon
+        self.env.globals["get_member_image"] = get_member_image
+        self.env.filters["number_format"] = number_format
+        self.env.globals["theme_asset"] = theme_asset
+
+        # 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
+        self.context_processors.append(self._default_admin_context)
+
+        # 추가 env.global 설정
+        if globals:
+            self.env.globals.update(**globals.__dict__)
+
+    def _default_admin_context(self, request: Request):
+        context = {
+            "admin_menus": get_admin_menus(),
+            "admin_plugin_menus": get_admin_plugin_menus(),
+        }
+        return context
+
 class MyTemplates(Jinja2Templates):
     """
     Jinja2Template 설정 클래스
@@ -1570,6 +1661,7 @@ class MyTemplates(Jinja2Templates):
         self.env.globals["get_member_icon"] = get_member_icon
         self.env.globals["get_member_image"] = get_member_image
         self.env.filters["number_format"] = number_format
+        self.env.globals["theme_asset"] = theme_asset
 
         # 사용자 템플릿, 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
         if TEMPLATES_DIR in directory:
@@ -1972,6 +2064,166 @@ def extract_alt_attribute(img_tag: str) -> str:
     return alt
 
 
+def cut_name(request: Request, name: str) -> str:
+    """기본환경설정 > 이름(닉네임) 표시
+
+    Args:
+        request (Request): FastAPI Request
+        name (str): 이름
+
+    Returns:
+        str: 자른 이름
+    """
+    config = request.state.config
+
+    if not name:
+        return ''
+
+    return name[:config.cf_cut_name] if config.cf_cut_name else name
+
+
+def delete_old_data():
+    """설정일이 지난 데이터를 삭제
+    """
+    try:
+        db = SessionLocal()
+        config = db.query(Config).first()
+
+        # 방문자 기록 삭제
+        if config.cf_visit_del > 0:
+            result = db.query(Visit).filter(Visit.vi_time < datetime.now() - timedelta(days=config.cf_visit_del)).delete()
+            print("방문자기록 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_visit_del), f"{result}건 삭제")
+
+        # 인기검색어 삭제
+        if config.cf_popular_del > 0:
+            result = db.query(Popular).filter(Popular.pp_date < datetime.now() - timedelta(days=config.cf_popular_del)).delete()
+            print("인기검색어 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_popular_del), f"{result}건 삭제")
+            
+        # 최근게시물 삭제
+        if config.cf_new_del > 0:
+            result = db.query(BoardNew).filter(BoardNew.bn_datetime < datetime.now() - timedelta(days=config.cf_new_del)).delete()
+            print("최근게시물 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_new_del), f"{result}건 삭제")
+
+        # 쪽지 삭제
+        if config.cf_memo_del > 0:
+            result = db.query(Memo).filter(Memo.me_send_datetime < datetime.now() - timedelta(days=config.cf_memo_del)).delete()
+            print("쪽지 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_memo_del), f"{result}건 삭제")
+
+        # 탈퇴회원 자동 삭제
+        if config.cf_leave_day > 0:
+            # TODO: 회원삭제 처리 추가
+            # result = db.query(Member).filter(Member.mb_leave_date < datetime.now() - timedelta(days=config.cf_leave_day)).delete()
+            # print("회원 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_leave_day), f"{result}건 삭제")
+            pass
+
+        db.commit()
+    except Exception as e:
+        print(e)
+
+
+def is_possible_ip(request: Request, ip: str) -> bool:
+    """IP가 접근허용된 IP인지 확인
+
+    Args:
+        request (Request): FastAPI Request 객체
+        ip (str): IP
+
+    Returns:
+        bool: 허용된 IP이면 True, 아니면 False
+    """
+    cf_possible_ip = request.state.config.cf_possible_ip
+    return check_ip_list(request, ip, cf_possible_ip, allow=True)
+
+
+def is_intercept_ip(request: Request, ip: str) -> bool:
+    """IP가 접근차단된 IP인지 확인
+
+    Args:
+        request (Request): FastAPI Request 객체
+        ip (str): IP
+
+    Returns:
+        bool: 차단된 IP이면 True, 아니면 False
+    """
+    cf_intercept_ip = request.state.config.cf_intercept_ip
+    return check_ip_list(request, ip, cf_intercept_ip, allow=False)
+        
+    
+def check_ip_list(request: Request, current_ip: str, ip_list: str, allow: bool) -> bool:
+    """IP가 특정 목록에 속하는지 확인하는 함수
+
+    Args:
+        request (Request): FastAPI Request 객체
+        ip (str): IP
+        ip_list (str): IP 목록 문자열
+        allow (bool): True인 경우 허용 목록, False인 경우 차단 목록
+
+    Returns:
+        bool: 목록에 속하면 True, 아니면 False
+    """
+    if request.state.is_super_admin:
+        return allow
+
+    ip_list = ip_list.strip()
+    if not ip_list:
+        return allow
+
+    ip_patterns = ip_list.split("\n")
+    for pattern in ip_patterns:
+        pattern = pattern.strip()
+        if not pattern:
+            continue
+        pattern = pattern.replace(".", r"\.")
+        pattern = pattern.replace("+", r"[0-9\.]+")
+        if re.match(f"^{pattern}$", current_ip):
+            return True
+
+    return False
+
+
+def is_write_delay(request: Request) -> bool:
+    """특정 시간 간격 내에 다시 글을 작성할 수 있는지 확인하는 함수"""
+    if request.state.is_super_admin:
+        return True
+
+    delay_sec = int(request.state.config.cf_delay_sec)
+    current_time = datetime.now()
+    write_time = request.session.get("ss_write_time")
+
+    if delay_sec > 0:
+        time_interval = timedelta(seconds=delay_sec)
+        if write_time:
+            available_time = datetime.strptime(write_time, "%Y-%m-%d %H:%M:%S") + time_interval
+            if available_time > current_time:
+                return False
+
+        request.session["ss_write_time"] = current_time.strftime("%Y-%m-%d %H:%M:%S")
+
+    return True
+
+
+def filter_words(request: Request, contents: str) -> str:
+    """글 내용에 필터링된 단어가 있는지 확인하는 함수
+
+    Args:
+        request (Request): FastAPI Request 객체
+        contents (str): 글 내용
+
+    Returns:
+        str: 필터링된 단어가 있으면 해당 단어, 없으면 빈 문자열
+    """
+    cf_filter = request.state.config.cf_filter
+    words = cf_filter.split(",")
+    for word in words:
+        word = word.strip()
+        if not word:
+            continue
+        if word in contents:
+            return word
+
+    return ''
+
+
 def number_format(number: int) -> str:
     """숫자를 천단위로 구분하여 반환하는 템플릿 필터
 
@@ -1985,6 +2237,7 @@ def number_format(number: int) -> str:
         return "{:,}".format(number)
     else:
         return "Invalid input. Please provide an integer."
+
 
 def read_version():
     """루트 디렉토의 version.txt 파일을 읽어서 버전을 반환하는 함수
@@ -2029,3 +2282,32 @@ def get_current_admin_menu_id(request: Request) -> Optional[str]:
         return None
     
     
+def theme_asset(asset_path: str):
+    """
+    현재 템플릿의 asset url을 반환하는 헬퍼 함수
+    Args:
+        asset_path (str): 플러그인 모듈 이름
+    Returns:
+        asset_url (str): asset url
+    """
+
+    theme_path = get_theme_from_db()
+    theme_name = theme_path.replace(TEMPLATES + '/', "")
+
+    return f"/theme_static/{theme_name}/{asset_path}"
+
+
+def register_theme_statics(app):
+    """
+    현재 테마의 static 디렉토리를 등록하는 함수
+    Args:
+        app (FastAPI): FastAPI 객체
+    """
+    # 테마의 static 디렉토리를 등록
+    # url 경로 /theme_static/{{theme_name}}/css, js, img 등 static 생략
+    # 실제 경로 /theme/{{theme_name}}/static/ 을 등록
+    theme_path = get_theme_from_db()
+    theme_name = theme_path.replace(TEMPLATES + '/', "")
+    app.mount(f"/theme_static/{theme_name}/",
+              StaticFiles(directory=f"{theme_path}/static"),  # real path
+              name=f"static/{theme_name}")  # tag 이름
