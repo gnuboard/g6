@@ -638,6 +638,7 @@ td.td_grpset {width:160px;border-left:1px solid #e9ecee;text-align:center}
 .session_del strong{color:#ff0000}
 .session_del p{line-height:1.7em;padding:10px 15px ;background:#f7ecea;border:2px solid #ffb6c1}
 .cache_wrap {font-size: 1.2em;}
+.cache_wrap #status {padding: 20px;background: #fff;border-radius: 4px;}
 
 /* ########## 쇼핑몰 사용시 적용 ########## */
 .sidx {padding:20px 0 30px;zoom:1}
