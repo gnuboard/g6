@@ -60,7 +60,8 @@ var g5_shop_url = "{{request.base_url}}shop";
         <div id="logo">
             <a href="/"><img src="/static/img/logo_white.png" alt="그누보드5"></a>
         </div>
-    
+
+        <!-- 검색영역 -->
         <div class="hd_sch_wr">
             <fieldset id="hd_sch">
                 <legend>사이트 내 전체검색</legend>
@@ -106,13 +107,55 @@ var g5_shop_url = "{{request.base_url}}shop";
             {% include "/bbs/popular.html" %}
             <!-- } 인기검색어 끝 -->
         </div>
-        <ul class="hd_login">        
-            <li><a href="/bbs/member_confirm?url=/bbs/register_form">정보수정</a></li>
-            <li><a href="/bbs/logout">로그아웃</a></li>
-            <li class="tnb_admin"><a href="/admin">관리자</a></li>
-        </ul>
-    </div> 
 
+        <!-- 모바일 검색 버튼 -->
+        <button type="button" id="user_btn" class="hd_opener"><i class="fa fa-search" aria-hidden="true"></i><span class="sound_only">사용자메뉴</span></button>
+
+        <script>
+          var hd_opener = document.querySelector(".hd_opener");
+          var hd_sch_wr = document.querySelector(".hd_sch_wr");
+  
+          function handleSearchClick() {
+            hd_sch_wr.classList.toggle("active");
+          }
+  
+          hd_opener.addEventListener("click", handleSearchClick);
+        </script>
+
+        <!-- 프로필 -->
+        <div class="profile_wrap">
+          <span class="profile_img" tabindex="0">
+            <img src="/static/img/no_profile.gif" alt="profile_image">
+          </span>
+          <ul class="hd_login">       
+            {% if request.state.login_member %}
+            <li><a href="/bbs/member_confirm?url=/bbs/register_form">정보수정</a></li>
+            <li class="tnb_admin"><a href="/admin">관리자</a></li>
+            <li><a href="/bbs/logout">로그아웃</a></li>
+            {% else %}
+            <li><a href="/bbs/register">회원가입</a></li>
+            <li><a href="/bbs/login">로그인</a></li>
+            {% endif %}
+          </ul>
+        </div>
+    </div>
+
+    <!-- 프로필 이미지 클릭 이벤트 -->
+    <script>
+        var profileImg = document.querySelector(".profile_img");
+        var mypageBox = document.querySelector(".hd_login");
+
+        function handleProfileClick() {
+          mypageBox.classList.add("active");
+        }
+
+        function handleProfileFocusout() {
+          mypageBox.classList.remove("active");
+        }
+
+        profileImg.addEventListener("click", handleProfileClick);
+        profileImg.addEventListener("focusout", handleProfileFocusout);
+    </script>
 
 </div>
 <!-- } 상단 끝 -->
