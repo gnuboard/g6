@@ -125,9 +125,12 @@
             if (!confirm("선택한 자료를 정말 삭제하시겠습니까?")) {
                 return false;
             }
+
+            f.action = "/admin/boardgroup_list_delete";
         }
 
         f.token.value = generate_token();
+        f.action += "?{{ request.query_params|safe }}";
 
         return true;
     }

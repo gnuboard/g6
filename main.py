@@ -111,14 +111,40 @@ async def main_middleware(request: Request, call_next):
         response = await call_next(request)
         return response
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
-    
+
+    db: Session = SessionLocal()
+    config = db.query(models.Config).first()
+    request.state.config = config
+
+    member = None
+    is_super_admin = False
+    is_autologin = False
+    ss_mb_id = request.session.get("ss_mb_id", "")
+
     try:
+        # 관리자페이지 접근시
         if path.startswith("/admin"):
-            # 관리자 페이지는 로그인이 필요합니다.
-            if not request.session.get("ss_mb_id"):
+            if not ss_mb_id:
                 raise AlertException(status_code=302, detail="로그인이 필요합니다.", url="/bbs/login?url="+path)
+            elif not is_admin(request):
+                method = request.method
+                admin_menu_id = get_current_admin_menu_id(request)
+
+                if admin_menu_id:
+                    # 관리자 메뉴에 대한 권한 체크
+                    auth = db.query(models.Auth).filter_by(au_menu = admin_menu_id, mb_id = ss_mb_id).one_or_none()
+                    au_auth = auth.au_auth if auth else ""
+
+                    # 각 요청 별 권한 체크
+                    # delete 요청은 GET 요청으로 처리되므로, 요청에 "delete"를 포함하는지 확인하여 처리
+                    if "delete" in path and not "d" in au_auth:
+                        raise AlertException("삭제 권한이 없습니다.", 302, url="/")
+                    elif (method == "POST" and not "w" in au_auth):
+                        raise AlertException("수정 권한이 없습니다.", 302, url="/")
+                    elif (method == "GET" and not "r" in au_auth):
+                        raise AlertException("읽기 권한이 없습니다.", 302, url="/")
+
     except AlertException as e:
-        # 예외처리 실행
         return await alert_exception_handler(request, e)
 
     if cache_plugin_state.__getitem__('change_time') != get_plugin_state_change_time():
@@ -133,15 +159,6 @@ async def main_middleware(request: Request, call_next):
         cache_plugin_menu.__setitem__('admin_menus', import_plugin_admin(new_plugin_state))
         cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
 
-    member = None
-
-    db: Session = SessionLocal()
-    config = db.query(models.Config).first()
-    request.state.config = config
-
-    is_super_admin = False
-    is_autologin = False
-    ss_mb_id = request.session.get("ss_mb_id", "")
     # 로그인
     if ss_mb_id:
         member = db.query(models.Member).filter(models.Member.mb_id == ss_mb_id).first()

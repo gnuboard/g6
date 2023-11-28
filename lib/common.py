@@ -2248,6 +2248,40 @@ def read_version():
         return file.read().strip()
 
 
+def get_current_admin_menu_id(request: Request) -> Optional[str]:
+    """현재 경로의 관리자 메뉴 아이디를 반환하는 함수
+
+    Args:
+        request (Request): FastAPI Request 객체
+
+    Returns:
+        Optional[str]: 관리자 메뉴 아이디
+    """
+    try:
+        admin_menu = get_admin_menus()
+
+        path = request.url.path
+        routes = request.app.routes
+
+        for route in routes:
+            # 현재 경로가 router 형식에 맞다면
+            if route.path_regex.match(path):
+                tags = route.tags
+                # 라우터의 태그와 일치하는 메뉴 아이디를 반환
+                for tag in tags:
+                    for menu_items in admin_menu.values():
+                        item = next((item for item in menu_items if item.get("tag", "") == tag), None)
+                        if item:
+                            return item.get("id")
+                break
+
+        raise Exception("관리자 메뉴 아이디를 찾을 수 없습니다.")
+
+    except Exception as e:
+        print(e)
+        return None
+    
+    
 def theme_asset(asset_path: str):
     """
     현재 템플릿의 asset url을 반환하는 헬퍼 함수

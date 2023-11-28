@@ -20,7 +20,7 @@ LIST_MENU_KEY = "300300"
 RANK_MENU_KEY = "300400"
 
 
-@router.get("/popular_list")
+@router.get("/popular_list", tags=["admin_popular_list"])
 def popular_list(request: Request, db: Session = Depends(get_db),
                  search_params: dict = Depends(common_search_query_params)):
     '''
@@ -47,7 +47,7 @@ def popular_list(request: Request, db: Session = Depends(get_db),
     return templates.TemplateResponse("popular_list.html", context)
 
 
-@router.post("/popular/delete")
+@router.post("/popular/delete", tags=["admin_popular_list"])
 def popular_delete(request: Request,
                     token: str = Form(None),
                     db: Session = Depends(get_db),
@@ -71,7 +71,7 @@ def popular_delete(request: Request,
 
 
 
-@router.get("/popular_rank")
+@router.get("/popular_rank", tags=["admin_popular_rank"])
 def popular_rank(request: Request,
                 db: Session = Depends(get_db),
                 fr_date: str = Query(default=str(datetime.now().date())),

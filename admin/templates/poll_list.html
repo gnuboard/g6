@@ -28,7 +28,7 @@
         </div>
     </form>
     
-    <form name="fpolllist" id="fpolllist" action="{{ url_for('poll_list_update') }}" method="post" onsubmit="return fpolllist_submit(this);">
+    <form name="fpolllist" id="fpolllist" action="{{ url_for('poll_list_delete') }}" method="post" onsubmit="return fpolllist_submit(this);">
         <input type="hidden" name="sst" value="{{ request.state.sst }}">
         <input type="hidden" name="sod" value="{{ request.state.sod }}">
         <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
@@ -95,6 +95,7 @@
             if (confirm("한번 삭제한 자료는 복구할 방법이 없습니다.\n\n정말 삭제하시겠습니까?")) {
 
                 f.token.value = generate_token();
+                f.action += "?{{ request.query_params|safe }}";
 
                 return true;
             } else {
