@@ -2285,6 +2285,12 @@ def register_theme_statics(app):
     # 실제 경로 /theme/{{theme_name}}/static/ 을 등록
     theme_path = get_theme_from_db()
     theme_name = theme_path.replace(TEMPLATES + '/', "")
-    app.mount(f"/theme_static/{theme_name}/",
-              StaticFiles(directory=f"{theme_path}/static"),  # real path
-              name=f"static/{theme_name}")  # tag 이름
+
+    if not os.path.isdir(f"{TEMPLATES}/{theme_name}/static"):
+        logger = logging.getLogger("uvicorn.error")
+        logger.warning("template has not static directory")
+        return
+
+    url = f"/theme_static/{theme_name}"
+    path = StaticFiles(directory=f"{TEMPLATES}/{theme_name}/static")
+    app.mount(url, path, name=f"static_{theme_name}")  # tag
