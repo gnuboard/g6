@@ -8,16 +8,17 @@ from fastapi import APIRouter, Depends
 from fastapi import Request
 from fastapi.params import Form, Query
 from popbill import PopbillException
+from sqlalchemy import func
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from starlette.responses import RedirectResponse
 
-from common.database import get_db, engine
-from lib.common import MyTemplates, ADMIN_TEMPLATES_DIR, datetime_format, auth_check_menu, AlertException
+from common.database import get_db
+from lib.common import MyTemplates, ADMIN_TEMPLATES_DIR, datetime_format, auth_check_menu, AlertException, get_paging, \
+    default_if_none
 from lib.plugin.service import PLUGIN_DIR, get_all_plugin_module_names
 from plugin.popbill import module_name, models, POPBILL_LINK_ID, POPBILL_SECRET_KEY
-from plugin.popbill.models import SmsForm
+from plugin.popbill.models import SmsForm, SmsBook, SmsBookGroup, SmsWrite, SmsHistory
 from plugin.popbill.models import SmsFormGroup, SmsConfig
 from plugin.popbill.router import messageService
 
@@ -28,7 +29,25 @@ templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_nam
 templates.env.globals["datetime"] = datetime
 templates.env.filters["datetime_format"] = datetime_format
 templates.env.globals['relativedelta'] = relativedelta
-models.Base.metadata.create_all(bind=engine)
+templates.env.filters["default_if_none"] = default_if_none
+
+
+def number_format(number: int) -> str:
+    """숫자를 천단위로 구분하여 반환하는 템플릿 필터
+
+    Args:
+        number (int): 숫자
+
+    Returns:
+        str: 천단위로 구분된 숫자
+    """
+    if isinstance(number, int):
+        return "{:,}".format(number)
+    else:
+        return "Invalid input. Please provide an integer."
+
+
+templates.env.globals['number_format'] = number_format
 
 
 @admin_router.get("/config")
@@ -45,13 +64,15 @@ def show_sms_config(request: Request, db: Session = Depends(get_db)):
 
     popbill_registered = POPBILL_LINK_ID and POPBILL_SECRET_KEY
     company_register_num = os.getenv("POPBILL_COMPANY_REGISTER_NUM")
+    charge_url = ""
     remain_point = 0
-    try:
-        remain_point = messageService.getBalance(company_register_num)
-        charge_url = messageService.getChargeURL(company_register_num, POPBILL_LINK_ID)
+    if popbill_registered:
+        try:
+            remain_point = messageService.getBalance(company_register_num)
+            charge_url = messageService.getChargeURL(company_register_num, POPBILL_LINK_ID)
 
-    except PopbillException as e:
-        logging.warning(f"Exception Occur : {e.code}, {e.message}")
+        except PopbillException as e:
+            logging.warning(f"Exception Occur : {e.code}, {e.message}")
 
     return templates.TemplateResponse("admin/sms_config.html", {
         "config": request.state.config,
@@ -192,16 +213,16 @@ def show_emoticon_form_list(request: Request, db: Session = Depends(get_db), fg_
     fg_no = fg_no or 0
 
     if not sfl:
-        emoticon_group = db.query(models.SmsFormGroup).filter(SmsFormGroup.fg_no == fg_no).order_by(
-            SmsFormGroup.fg_name.desc()).all()
+        emoticon_group = (db.query(models.SmsFormGroup).filter(SmsFormGroup.fg_no == fg_no)
+                          .order_by(SmsFormGroup.fg_name.desc()).all())
     else:
         emoticon_group = (db.query(models.SmsFormGroup).filter(
             SmsFormGroup.fg_no == fg_no and SmsFormGroup.fg_name == request.state.stx)
                           .order_by(SmsFormGroup.fg_name.desc()).all())
 
     # 미분류 그룹
-    none_group = db.query(SmsForm).filter(SmsForm.fg_no == 0).all()
-    none_group_count = db.query(SmsForm).filter(SmsForm.fg_no == 0).count()
+    none_group = db.query(SmsForm).filter(SmsForm.fg_no == 0).scalar()
+    none_group_count = db.query(func.count()).filter(SmsForm.fg_no == 0).scalar()
 
     context = {
         "config": request.state.config,

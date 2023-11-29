@@ -13,6 +13,8 @@ __all__ = [
     "module_name"
 ]
 
+PLUGIN_TEMPLATES_DIR = f"plugin/{module_name}/templates"
+
 POPBILL_LINK_ID = os.getenv("POPBILL_LINK_ID")
 POPBILL_SECRET_KEY = os.getenv("POPBILL_SECRET_KEY")
 # 연동환경 설정값, 개발용(True), 상업용(False)

@@ -63,7 +63,7 @@
         </div>
 
         <div id="send_write">
-            <form name="form_sms" id="form_sms" method="post" action="sms_write_send.php" 
+            <form name="form_sms" id="form_sms" method="post" action="ajax/sms_send"
                   onsubmit="return sms5_chk_send(this);">
                 <input type="hidden" name="send_list" value="">
 
@@ -393,7 +393,7 @@ const emoticon_list = {
 
                 (function ($) {
                     var $form = $("#form_sms");
-                    $form.find("input[name='send_list']").val(JSON.stringify(list));
+                    $form.find("input[name='send_list']").val(list);
                     var params = $form.serialize();
                     $.ajax({
                         url: './sms_write_overlap_check.php',
@@ -452,7 +452,7 @@ const emoticon_list = {
                 //act = window.open('sms_ing.php', 'act', 'width=300, height=200, left=' + w + ', top=' + h);
                 //act.focus();
                 
-                f.send_list.value = JSON.stringify(list);
+                f.send_list.value = list;
                 return true;
             } else {
                 alert("데이터 전송중입니다.");

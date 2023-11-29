@@ -1,0 +1,36 @@
+<div class="tbl_head01 tbl_wrap">
+    <table>
+        <thead>
+        <tr>
+            <th scope="col">그룹명</th>
+            <th scope="col">수신가능</th>
+            <th scope="col">추가</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td><a href="javascript:sms_obj.person(1)"> 미분류 </a></td>
+            <td class="td_num">{{ number_format(none_group.bg_receipt) }}</td>
+            <td class="td_mngsmall">
+                <button type="button" class="btn_frmline"
+                        onclick="sms_obj.group_add(1, '{{ none_group.bg_name }}', '{{ number_format(none_group.bg_receipt) }}')">
+                    추가
+                </button>
+            </td>
+        </tr>
+
+        {% for group in groups %}
+        <tr class="bg">
+            <td><a href="javascript:sms_obj.person({{ group.bg_no }}">{{ group.bg_name }}</a></td>
+            <td class="td_num">{{ number_format(group.bg_receipt) }}</td>
+            <td class="td_mngsmall">
+                <button type="button" class="btn_frmline"
+                        onclick="sms_obj.group_add({{ group.bg_no }}, '{{ group.bg_name }}', '{{ number_format(group.bg_receipt) }}')">
+                    추가
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
