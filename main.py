@@ -71,6 +71,7 @@ app.include_router(editor_router, prefix="/editor", tags=["editor"])
 # is_mobile = False
 # user_device = 'pc'
 
+register_theme_statics(app)
 # 전역 캐시
 cache_plugin_menu = cachetools.Cache(maxsize=1)
 cache_plugin_state = cachetools.Cache(maxsize=1)

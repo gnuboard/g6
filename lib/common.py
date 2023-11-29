@@ -1604,6 +1604,23 @@ class UserTemplates(Jinja2Templates):
         }
         return context
 
+    # temp debug
+    def TemplateResponse(
+            self,
+            name: str,
+            context: dict,
+            status_code: int = 200,
+            headers: typing.Optional[typing.Mapping[str, str]] = None,
+            media_type: typing.Optional[str] = None,
+            background=None):
+
+        logger = logging.getLogger("uvicorn.error")
+        logger.warning("------template---------")
+        logger.info(name)
+        logger.info(self.env.loader.searchpath)
+
+        return super().TemplateResponse(name, context, status_code, headers, media_type, background)
+
 
 class AdminTemplates(Jinja2Templates):
     _instance = None
@@ -2268,6 +2285,12 @@ def register_theme_statics(app):
     # 실제 경로 /theme/{{theme_name}}/static/ 을 등록
     theme_path = get_theme_from_db()
     theme_name = theme_path.replace(TEMPLATES + '/', "")
-    app.mount(f"/theme_static/{theme_name}/",
-              StaticFiles(directory=f"{theme_path}/static"),  # real path
-              name=f"static/{theme_name}")  # tag 이름
+
+    if not os.path.isdir(f"{TEMPLATES}/{theme_name}/static"):
+        logger = logging.getLogger("uvicorn.error")
+        logger.warning("template has not static directory")
+        return
+
+    url = f"/theme_static/{theme_name}"
+    path = StaticFiles(directory=f"{TEMPLATES}/{theme_name}/static")
+    app.mount(url, path, name=f"static_{theme_name}")  # tag
