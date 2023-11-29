@@ -1604,6 +1604,23 @@ class UserTemplates(Jinja2Templates):
         }
         return context
 
+    # temp debug
+    def TemplateResponse(
+            self,
+            name: str,
+            context: dict,
+            status_code: int = 200,
+            headers: typing.Optional[typing.Mapping[str, str]] = None,
+            media_type: typing.Optional[str] = None,
+            background=None):
+
+        logger = logging.getLogger("uvicorn.error")
+        logger.warning("------template---------")
+        logger.info(name)
+        logger.info(self.env.loader.searchpath)
+
+        return super().TemplateResponse(name, context, status_code, headers, media_type, background)
+
 
 class AdminTemplates(Jinja2Templates):
     _instance = None
