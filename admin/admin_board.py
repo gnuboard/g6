@@ -98,26 +98,14 @@ async def board_list_update(request: Request, db: Session = Depends(get_db),
         bo_use_search: Optional[List[int]] = Form(None, alias="bo_use_search[]"),
         bo_order: Optional[List[str]] = Form(None, alias="bo_order[]"),
         bo_device: Optional[List[str]] = Form(None, alias="bo_device[]"),
-        act_button: Optional[str] = Form(...),
         ):
+    """
+    게시판관리 목록 일괄수정
+    """
     if not check_token(request, token):
         raise AlertException("토큰이 유효하지 않습니다", 403)
 
     query_string = generate_query_string(request)
-    
-    if act_button == "선택삭제":
-        for i in checks:
-            board = db.query(models.Board).filter(models.Board.bo_table == bo_table[i]).first()
-            if board:
-                # 게시판 관리 레코드 삭제
-                db.delete(board)
-                db.commit()
-                # 게시판 테이블 삭제
-                models.Write = dynamic_create_write_table(table_name=board.bo_table, create_table=False)
-                models.Write.__table__.drop(engine)
-                # 최신글 캐시 삭제
-                G6FileCache().delete_prefix(f'latest-{board.bo_table}')
-        return RedirectResponse(f"/admin/board_list?{query_string}", status_code=303)
         
     # 선택수정
     for i in checks:
@@ -150,6 +138,50 @@ async def board_list_update(request: Request, db: Session = Depends(get_db),
             G6FileCache().delete_prefix(f'latest-{board.bo_table}')
             
     return RedirectResponse(f"/admin/board_list?{query_string}", status_code=303)
+
+
+@router.post("/board_list_delete")
+async def board_list_delete(
+    request: Request,
+    db: Session = Depends(get_db),
+    token: str = Form(...),
+    checks: List[int] = Form(None, alias="chk[]"),
+    bo_table: List[str] = Form(None, alias="bo_table[]"),
+):
+    """
+    게시판관리 목록 일괄삭제
+    """
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
+
+    for i in checks:
+        board = db.query(models.Board).filter(models.Board.bo_table == bo_table[i]).first()
+        if board:
+            # 게시판 관리 레코드 삭제
+            db.delete(board)
+            
+            # 최신글 삭제
+            db.query(models.BoardNew).filter_by(bo_table=board.bo_table).delete()
+
+            # 스크랩 삭제
+            db.query(models.Scrap).filter_by(bo_table=board.bo_table).delete()
+
+            # 파일 삭제
+            db.query(models.BoardFile).filter_by(bo_table=board.bo_table).delete()
+
+            # 좋아요 기록 삭제
+            db.query(models.BoardGood).filter_by(bo_table=board.bo_table).delete()
+
+            # 게시판 테이블 삭제
+            models.Write = dynamic_create_write_table(table_name=board.bo_table, create_table=False)
+            models.Write.__table__.drop(engine)
+
+            # 최신글 캐시 삭제
+            G6FileCache().delete_prefix(f'latest-{board.bo_table}')
+
+            db.commit()
+
+    return RedirectResponse(f"/admin/board_list?{request.query_params}", status_code=303)
 
 
 # 등록 폼

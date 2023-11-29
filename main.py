@@ -1,4 +1,5 @@
 import datetime
+from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, Depends, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -110,14 +111,40 @@ async def main_middleware(request: Request, call_next):
         response = await call_next(request)
         return response
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
-    
+
+    db: Session = SessionLocal()
+    config = db.query(models.Config).first()
+    request.state.config = config
+
+    member = None
+    is_super_admin = False
+    is_autologin = False
+    ss_mb_id = request.session.get("ss_mb_id", "")
+
     try:
+        # 관리자페이지 접근시
         if path.startswith("/admin"):
-            # 관리자 페이지는 로그인이 필요합니다.
-            if not request.session.get("ss_mb_id"):
+            if not ss_mb_id:
                 raise AlertException(status_code=302, detail="로그인이 필요합니다.", url="/bbs/login?url="+path)
+            elif not is_admin(request):
+                method = request.method
+                admin_menu_id = get_current_admin_menu_id(request)
+
+                if admin_menu_id:
+                    # 관리자 메뉴에 대한 권한 체크
+                    auth = db.query(models.Auth).filter_by(au_menu = admin_menu_id, mb_id = ss_mb_id).one_or_none()
+                    au_auth = auth.au_auth if auth else ""
+
+                    # 각 요청 별 권한 체크
+                    # delete 요청은 GET 요청으로 처리되므로, 요청에 "delete"를 포함하는지 확인하여 처리
+                    if "delete" in path and not "d" in au_auth:
+                        raise AlertException("삭제 권한이 없습니다.", 302, url="/")
+                    elif (method == "POST" and not "w" in au_auth):
+                        raise AlertException("수정 권한이 없습니다.", 302, url="/")
+                    elif (method == "GET" and not "r" in au_auth):
+                        raise AlertException("읽기 권한이 없습니다.", 302, url="/")
+
     except AlertException as e:
-        # 예외처리 실행
         return await alert_exception_handler(request, e)
 
     if cache_plugin_state.__getitem__('change_time') != get_plugin_state_change_time():
@@ -132,15 +159,6 @@ async def main_middleware(request: Request, call_next):
         cache_plugin_menu.__setitem__('admin_menus', import_plugin_admin(new_plugin_state))
         cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
 
-    member = None
-
-    db: Session = SessionLocal()
-    config = db.query(models.Config).first()
-    request.state.config = config
-
-    is_super_admin = False
-    is_autologin = False
-    ss_mb_id = request.session.get("ss_mb_id", "")
     # 로그인
     if ss_mb_id:
         member = db.query(models.Member).filter(models.Member.mb_id == ss_mb_id).first()
@@ -180,6 +198,13 @@ async def main_middleware(request: Request, call_next):
     db.close()
     request.state.is_super_admin = is_super_admin
 
+    # 접근가능/차단 IP 체크
+    current_ip = request.client.host
+    if not is_possible_ip(request, current_ip):
+        return HTMLResponse("<meta charset=utf-8>접근이 허용되지 않은 IP 입니다.")
+    if is_intercept_ip(request, current_ip):
+        return HTMLResponse("<meta charset=utf-8>접근이 차단된 IP 입니다.")
+    
     if request.method == "GET":
         request.state.sst = request.query_params.get("sst") if request.query_params.get("sst") else ""
         request.state.sod = request.query_params.get("sod") if request.query_params.get("sod") else ""
@@ -288,6 +313,17 @@ async def alert_close_exception_handler(request: Request, exc: AlertCloseExcepti
     return templates.TemplateResponse(
         "alert_close.html", {"request": request, "errors": exc.detail}, status_code=exc.status_code
     )
+
+
+# 예약 작업을 관리할 스케줄러 생성
+scheduler = BackgroundScheduler(timezone='Asia/Seoul')
+# 매일 새벽 1시 스케줄러가 작동
+# https://apscheduler.readthedocs.io/en/3.x/modules/triggers/cron.html
+@scheduler.scheduled_job('cron', hour=1, id='remove_data_by_config')
+def job():
+    delete_old_data()
+# FastAPI 앱 시작 시 스케줄러 시작
+scheduler.start()
 
 
 @app.get("/", response_class=HTMLResponse)

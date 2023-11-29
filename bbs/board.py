@@ -289,7 +289,8 @@ def move_update(
 
             # 복사/이동 로그 기록
             if not origin_write.wr_is_comment and config.cf_use_copy_log:
-                log_msg = f"[이 게시물은 {member.mb_nick}님에 의해 {datetime_format(datetime.now()) } {origin_board.bo_subject}에서 {act} 됨]"
+                nick = cut_name(request, member.mb_nick)
+                log_msg = f"[이 게시물은 {nick}님에 의해 {datetime_format(datetime.now()) } {origin_board.bo_subject}에서 {act} 됨]"
                 if "html" in origin_write.wr_option:
                     log_msg = f'<div class="content_{sw}">' + log_msg + '</div>'
                 else:
@@ -556,6 +557,13 @@ async def write_update(
         if board.bo_use_secret == 2:
             secret = "secret"
 
+    # 게시글 내용 검증
+    subject_filter_word = filter_words(request, form_data.wr_subject)
+    content_filter_word = filter_words(request, form_data.wr_content)
+    if subject_filter_word or content_filter_word:
+        word = subject_filter_word if subject_filter_word else content_filter_word
+        raise AlertException(f"제목/내용에 금지단어({word})가 포함되어 있습니다.", 400)
+
     # 게시글 테이블 정보 조회
     model_write = dynamic_create_write_table(bo_table)
     # 옵션 설정
@@ -571,12 +579,15 @@ async def write_update(
 
     # 글 등록
     if not exists_write:
-        
+        # 글쓰기 간격 검증
+        if not is_write_delay(request):
+            raise AlertException("너무 빠른 시간내에 게시글을 연속해서 올릴 수 없습니다.", 400)
         # Captcha 검증
         if board_config.use_captcha:
             captcha_cls = get_current_captcha_cls(config.cf_captcha)
             if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
                 raise AlertException("캡차가 올바르지 않습니다.", 400)
+        # 글 작성 권한 검증
         if parent_id:
             if not board_config.is_reply_level():
                 raise AlertException("답변글을 작성할 권한이 없습니다.", 403)
@@ -669,10 +680,19 @@ async def write_update(
                 wr_file -= 1
 
         # 파일 업로드 처리 및 파일정보 저장
+        exclude_file = {"size": [], "ext": []}
         for file in files:
             index = files.index(file)
-            # 관리자가 아니면서 설정한 업로드 사이즈보다 크다면 건너뜀
-            if file.filename and (admin_type or file_manager.is_upload_size(file)):
+            if file.filename:
+                # 관리자가 아니면서 설정한 업로드 사이즈보다 크거나 업로드 가능 확장자가 아니면 업로드하지 않음
+                if not admin_type:
+                    if not file_manager.is_upload_size(file):
+                        exclude_file["size"].append(file.filename)
+                        continue
+                    if not file_manager.is_upload_extension(request, file):
+                        exclude_file["ext"].append(file.filename)
+                        continue
+
                 board_file = file_manager.get_board_file(index)
                 bf_content = file_content[index] if file_content else ""
                 filename = file_manager.get_filename(file.filename)
@@ -695,7 +715,19 @@ async def write_update(
     # 최신글 캐시 삭제
     G6FileCache().delete_prefix(f'latest-{bo_table}')
 
-    return RedirectResponse(f"/board/{bo_table}/{write.wr_id}?{request.query_params}", status_code=303)
+    redirect_url = f"/board/{bo_table}/{write.wr_id}?{request.query_params}"
+
+    # exclude_file이 존재하면 파일 업로드 실패 메시지 출력
+    if exclude_file:
+        msg = ""
+        if exclude_file.get("size"):
+            msg += f"{','.join(exclude_file['size'])} 파일은 업로드 용량({board.bo_upload_size}byte)을 초과하였습니다.\\n"
+        if exclude_file.get("ext"):
+            msg += f"{','.join(exclude_file['ext'])} 파일은 업로드 가능 확장자가 아닙니다.\\n"
+        if msg:
+            raise AlertException(msg, 400, redirect_url)
+
+    return RedirectResponse(redirect_url, status_code=303)
 
 
 @router.get("/{bo_table}/{wr_id}")
@@ -772,7 +804,7 @@ def read_post(
 
     # 게시글 정보 설정
     write.ip = board_config.get_display_ip(write.wr_ip)
-    write.name = write.wr_name[:config.cf_cut_name] if config.cf_cut_name else write.wr_name
+    write.name = cut_name(request, write.wr_name)
 
     # 세션 체크
     # 한번 읽은 게시글은 세션만료까지 조회수, 포인트 처리를 하지 않는다.
@@ -860,7 +892,7 @@ def read_post(
     ).order_by(model_write.wr_comment, model_write.wr_comment_reply).all()
 
     for comment in comments:
-        comment.name = comment.wr_name[:config.cf_cut_name] if config.cf_cut_name else comment.wr_name
+        comment.name = cut_name(request, comment.wr_name)
         comment.ip = board_config.get_display_ip(comment.wr_ip)
         comment.is_reply = len(comment.wr_comment_reply) < 5 and board.bo_comment_level <= member_level
         comment.is_edit = admin_type or (member and comment.mb_id == member.mb_id)
@@ -1058,9 +1090,17 @@ async def write_comment_update(
     write = db.get(write_model, form.wr_id)
     if not write:
         raise AlertException(f"{form.wr_id} : 존재하지 않는 게시글입니다.", 404)
-
+    
+    # 댓글 내용 검증
+    filter_word = filter_words(request, form.wr_content)
+    if filter_word:
+        raise AlertException(f"내용에 금지단어({filter_word})가 포함되어 있습니다.", 400)
     
     if form.w == "c":
+        # 글쓰기 간격 검증
+        if not is_write_delay(request):
+            raise AlertException("너무 빠른 시간내에 댓글을 연속해서 올릴 수 없습니다.", 400)
+
         # Captcha 검증
         if not member:
             captcha_cls = get_current_captcha_cls(config.cf_captcha)

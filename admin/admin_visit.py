@@ -23,7 +23,7 @@ templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_nam
 VISIT_MENU_KEY = "200800"
 
 
-@router.get("/visit_search")
+@router.get("/visit_search", tags=["admin_visit_search"])
 def visit_search(request: Request, db: Session = Depends(get_db),
                  sst: str = Query(default=""),  # sort field (정렬 필드)
                  sod: str = Query(default=""),  # search order (검색 오름, 내림차순)
@@ -89,7 +89,7 @@ def visit_search(request: Request, db: Session = Depends(get_db),
     return templates.TemplateResponse("visit_search.html", context)
 
 
-@router.get("/visit_delete")
+@router.get("/visit_delete", tags=["admin_visit_delete"])
 def visit_delete(request: Request, db: Session = Depends(get_db), ):
     '''
     접속자로그 삭제
@@ -110,7 +110,7 @@ def visit_delete(request: Request, db: Session = Depends(get_db), ):
                                       })
 
 
-@router.post("/visit_delete_update")
+@router.post("/visit_delete_update", tags=["admin_visit_delete"])
 async def visit_delete_update(request: Request, db: Session = Depends(get_db),
                               token: str = Form(None),
                               year: str = Form(default=""),  # 년도
@@ -173,7 +173,7 @@ async def visit_delete_update(request: Request, db: Session = Depends(get_db),
                                       })
 
 
-@router.get("/visit_list")
+@router.get("/visit_list", tags=["admin_visit_list"])
 async def visit_list(request: Request, db: Session = Depends(get_db),
                      current_page: int = Query(default=1, alias="page"),  # 페이지
                      from_date: str = Query(default="", alias="fr_date"),  # 시작일
@@ -225,7 +225,7 @@ async def visit_list(request: Request, db: Session = Depends(get_db),
     return templates.TemplateResponse("visit_list.html", context)
 
 
-@router.get("/visit_domain")
+@router.get("/visit_domain", tags=["admin_visit_list"])
 async def visit_domain(request: Request, db: Session = Depends(get_db),
                        current_page: int = Query(default=1, alias="page"),  # 페이지
                        from_date: str = Query(default="", alias="fr_date"),  # 시작일
@@ -286,7 +286,7 @@ async def visit_domain(request: Request, db: Session = Depends(get_db),
     return templates.TemplateResponse("visit_domain.html", context)
 
 
-@router.get("/visit_browser")
+@router.get("/visit_browser", tags=["admin_visit_list"])
 async def visit_browser(request: Request, db: Session = Depends(get_db),
                         current_page: int = Query(default=1, alias="page"),  # 페이지
                         from_date: str = Query(default="", alias="fr_date"),  # 시작일
@@ -335,7 +335,7 @@ async def visit_browser(request: Request, db: Session = Depends(get_db),
     return templates.TemplateResponse("visit_browser.html", context)
 
 
-@router.get("/visit_os")
+@router.get("/visit_os", tags=["admin_visit_list"])
 def visit_os(request: Request, db: Session = Depends(get_db),
              current_page: int = Query(default=1, alias="page"),  # 페이지
              from_date: str = Query(default="", alias="fr_date"),  # 시작일
@@ -482,7 +482,7 @@ def visit_device(request: Request, db: Session = Depends(get_db),
     return templates.TemplateResponse("visit_hour.html", context)
 
 
-@router.get("/visit_weekday")
+@router.get("/visit_weekday", tags=["admin_visit_list"])
 def visit_device(request: Request, db: Session = Depends(get_db),
                  current_page: int = Query(default=1, alias="page"),  # 페이지
                  from_date: str = Query(default="", alias="fr_date"),  # 시작일
@@ -541,7 +541,7 @@ def visit_device(request: Request, db: Session = Depends(get_db),
     return templates.TemplateResponse("visit_weekday.html", context)
 
 
-@router.get("/visit_date")
+@router.get("/visit_date", tags=["admin_visit_list"])
 def visit_date(request: Request, db: Session = Depends(get_db),
                current_page: int = Query(default=1, alias="page"),  # 페이지
                from_date: str = Query(default="", alias="fr_date"),  # 시작일
@@ -590,7 +590,7 @@ def visit_date(request: Request, db: Session = Depends(get_db),
     return templates.TemplateResponse("visit_date.html", context)
 
 
-@router.get("/visit_month")
+@router.get("/visit_month", tags=["admin_visit_list"])
 def visit_month(request: Request, db: Session = Depends(get_db),
                 current_page: int = Query(default=1, alias="page"),  # 페이지
                 from_date: str = Query(default="", alias="fr_date"),  # 시작일
@@ -639,7 +639,7 @@ def visit_month(request: Request, db: Session = Depends(get_db),
     return templates.TemplateResponse("visit_month.html", context)
 
 
-@router.get("/visit_year")
+@router.get("/visit_year", tags=["admin_visit_list"])
 def visit_year(request: Request, db: Session = Depends(get_db),
                current_page: int = Query(default=1, alias="page"),  # 페이지
                from_date: str = Query(default="", alias="fr_date"),  # 시작일

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 from fastapi import APIRouter, Depends, Request, Form, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -60,17 +60,18 @@ def boardgroup_list(request: Request, db: Session = Depends(get_db)):
 
 @router.post("/boardgroup_list_update")
 def boardgroup_list_update(
-        request: Request, 
-        db: Session = Depends(get_db),
-        token: Optional[str] = Form(...),
-        checks: Optional[List[int]] = Form(None, alias="chk[]"),
-        gr_id: Optional[List[str]] = Form(None, alias="gr_id[]"),
-        gr_subject: Optional[List[str]] = Form(None, alias="gr_subject[]"),
-        gr_admin: Optional[List[str]] = Form(None, alias="gr_admin[]"),
-        gr_use_access: Optional[List[int]] = Form(None, alias="gr_use_access[]"),
-        gr_order: Optional[List[int]] = Form(None, alias="gr_order[]"),
-        gr_device: Optional[List[str]] = Form(None, alias="gr_device[]"),
-        ):
+    request: Request, 
+    db: Session = Depends(get_db),
+    token: str = Form(...),
+    checks: List[int]= Form(None, alias="chk[]"),
+    gr_id: List[str] = Form(None, alias="gr_id[]"),
+    gr_subject: List[str] = Form(None, alias="gr_subject[]"),
+    gr_admin: List[str] = Form(None, alias="gr_admin[]"),
+    gr_use_access: List[int]= Form(None, alias="gr_use_access[]"),
+    gr_order: List[int]= Form(None, alias="gr_order[]"),
+    gr_device: List[str] = Form(None, alias="gr_device[]"),
+):
+    """게시판그룹 일괄 수정"""
     if not check_token(request, token):
         raise AlertException("토큰이 유효하지 않습니다", 403)
 
@@ -89,6 +90,30 @@ def boardgroup_list_update(
     query_string = generate_query_string(request)            
     
     return RedirectResponse(f"/admin/boardgroup_list?{query_string}", status_code=303)
+
+
+@router.post("/boardgroup_list_delete")
+def boardgroup_list_delete(
+    request: Request, 
+    db: Session = Depends(get_db),
+    token: str = Form(...),
+    checks: List[int]= Form(None, alias="chk[]"),
+    gr_id: List[str] = Form(None, alias="gr_id[]"),
+):
+    """게시판그룹 일괄 삭제"""
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
+
+    for i in checks:
+        exists_board = db.query(models.Board).filter_by(gr_id = gr_id[i]).first()
+        if not exists_board:
+            db.query(models.Group).filter_by(gr_id = gr_id[i]).delete()
+            db.query(models.GroupMember).filter_by(gr_id = gr_id[i]).delete()
+        else:
+            raise AlertException(f"{gr_id[i]} 게시판그룹에 속한 게시판이 존재합니다. (삭제불가)", 403)
+    db.commit()
+        
+    return RedirectResponse(f"/admin/boardgroup_list?{request.query_params}", status_code=303)
 
 
 @router.get("/boardgroup_form")

@@ -48,7 +48,7 @@ def poll_update(request: Request, po_id: int, token: str = Form(...), gb_poll: i
     db.commit()
 
     # 포인트 지급
-    insert_point(request, member.mb_id, poll.po_point,  f'{poll.po_id}. {poll.po_subject[:20]} 투표 참여 ', '@poll', poll.po_id, '투표');
+    insert_point(request, member.mb_id, poll.po_point,  f'{poll.po_id}. {poll.po_subject[:20]} 투표 참여 ', '@poll', poll.po_id, '투표')
 
     return RedirectResponse(url=f"/bbs/poll_result/{po_id}", status_code=302)
       
@@ -136,7 +136,7 @@ async def poll_etc_update(request: Request,
                 "bbs/mail_form/poll_etc_update_mail.html", {
                     "request": request,
                     "subject": subject,
-                    "mb_name": pc_name,
+                    "mb_name": cut_name(request, pc_name),
                     "mb_id": member.mb_id if member else '비회원',
                     "content": pc_idea
                 }

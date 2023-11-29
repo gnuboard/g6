@@ -35,12 +35,17 @@ def login(request: Request, db: Session = Depends(get_db),
     """
     로그인 폼화면에서 로그인
     """
+    config = request.state.config
+
     member = db.query(Member).filter(Member.mb_id == mb_id).first()
     if not member:
         raise AlertException(status_code=404, detail="회원정보가 존재하지 않습니다.")
-    else:
-        if not validate_password(password=mb_password, hash=member.mb_password):
-            raise AlertException(status_code=404, detail="아이디 또는 패스워드가 일치하지 않습니다.")
+    elif not validate_password(password=mb_password, hash=member.mb_password):
+        raise AlertException(status_code=404, detail="아이디 또는 패스워드가 일치하지 않습니다.")
+    elif member.mb_leave_date or member.mb_intercept_date:
+        raise AlertException("탈퇴 또는 차단된 회원입니다.", 404)
+    elif config.cf_use_email_certify and member.mb_email_certify == datetime(1, 1, 1, 0, 0, 0):
+        raise AlertException(f"{member.mb_email} 메일로 메일인증을 받으셔야 로그인 가능합니다.", 404)
 
     # 로그인 성공시 세션에 저장
     request.session["ss_mb_id"] = member.mb_id
@@ -55,13 +60,17 @@ def check_login(request: Request, db: Session = Depends(get_db), mb_id: str = Fo
     """
     outlogin 에서 로그인
     """
+    config = request.state.config
+
     member = db.query(Member).filter(Member.mb_id == mb_id).first()
     if not member:
         raise AlertException(status_code=404, detail="회원정보가 존재하지 않습니다.")
-    else:
-        if not validate_password(password=mb_password, hash=member.mb_password):
-            raise AlertException(status_code=404, detail="아이디 또는 패스워드가 일치하지 않습니다.")
-
+    elif not validate_password(password=mb_password, hash=member.mb_password):
+        raise AlertException(status_code=404, detail="아이디 또는 패스워드가 일치하지 않습니다.")
+    elif member.mb_leave_date or member.mb_intercept_date:
+        raise AlertException("탈퇴 또는 차단된 회원입니다.", 404)
+    elif config.cf_use_email_certify and member.mb_email_certify == datetime(1, 1, 1, 0, 0, 0):
+        raise AlertException(f"{member.mb_email} 메일로 메일인증을 받으셔야 로그인 가능합니다.", 404)
 
     # 로그인 성공시 세션에 저장
     request.session["ss_mb_id"] = member.mb_id

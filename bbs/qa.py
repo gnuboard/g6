@@ -161,6 +161,13 @@ def qa_write_update(request: Request,
     qa_config = db.query(QaConfig).order_by(QaConfig.id).first()
     if not qa_config:
         raise AlertException("Q&A 설정이 존재하지 않습니다.", 404)
+    
+    # Q&A 내용 검증
+    subject_filter_word = filter_words(request, form_data.qa_subject)
+    content_filter_word = filter_words(request, form_data.qa_content)
+    if subject_filter_word or content_filter_word:
+        word = subject_filter_word if subject_filter_word else content_filter_word
+        raise AlertException(f"제목/내용에 금지단어({word})가 포함되어 있습니다.", 400)
 
     qa = db.query(QaContent).filter(QaContent.qa_id == qa_id).first()
     if qa: # 수정

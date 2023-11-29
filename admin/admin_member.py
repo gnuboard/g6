@@ -10,6 +10,7 @@ from lib.common import *
 from common.formclass import MemberForm
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from lib.pbkdf2 import create_hash
+from bbs.social import SocialAuthService
 import html
 import re
 
@@ -180,85 +181,11 @@ async def member_list_update(
         mb_level: Optional[List[str]] = Form(None, alias="mb_level[]"),
         act_button: Optional[str] = Form(...),
         ):
-    
+    """회원관리 목록 일괄 수정"""
     if not check_token(request, token):
         raise AlertException(f"{token} 잘못된 접근입니다.")
 
-    if act_button == "선택삭제":
-        for i in checks:
-            # 관리자와 로그인된 본인은 삭제 불가
-            if (request.state.config.cf_admin == mb_id[i]) or (request.state.login_member.mb_id == mb_id[i]):
-                print("관리자와 로그인된 본인은 삭제 불가")
-                continue
-            
-            member = db.query(models.Member).filter(models.Member.mb_id == mb_id[i]).first()
-            if member:
-                # 이미 삭제된 회원은 제외
-                # if re.match(r"^[0-9]{8}.*삭제함", member.mb_memo):
-                #     continue
-
-                # member 의 경우 레코드를 삭제하는게 아니라 mb_id 를 남기고 모두 제거
-                member.mb_password = ""
-                member.mb_level = 1
-                member.mb_email = ""
-                member.mb_homepage = ""
-                member.mb_tel = ""
-                member.mb_hp = ""
-                member.mb_zip1 = ""
-                member.mb_zip2 = ""
-                member.mb_addr1 = ""
-                member.mb_addr2 = ""
-                member.mb_addr3 = ""
-                member.mb_point = 0
-                member.mb_profile = ""
-                member.mb_birth = ""
-                member.mb_sex = ""
-                member.mb_signature = ""
-                member.mb_memo = (f"{SERVER_TIME.strftime('%Y%m%d')} 삭제함\n{member.mb_memo}")
-                member.mb_certify = ""
-                member.mb_adult = 0
-                member.mb_dupinfo = ""
-                db.commit()
-                
-                # 나머지 테이블에서도 삭제
-                # 포인트 테이블에서 삭제
-                db.query(models.Point).filter(models.Point.mb_id == mb_id[i]).delete()
-                db.commit()
-
-                # 그룹접근가능 테이블에서 삭제
-                db.query(models.GroupMember).filter(models.GroupMember.mb_id == mb_id[i]).delete()
-                db.commit()
-                
-                # 쪽지 테이블에서 삭제
-                db.query(models.Memo).filter(models.Memo.me_send_mb_id == mb_id[i]).delete()
-                db.commit()
-                
-                # 스크랩 테이블에서 삭제
-                # db.query(models.Scrap).filter(models.Scrap.mb_id == mb_id[i]).delete()
-                # db.commit()
-                
-                # 관리권한 테이블에서 삭제
-                db.query(models.Auth).filter(models.Auth.mb_id == mb_id[i]).delete()
-                db.commit()
-
-                # 그룹관리자인 경우 그룹관리자를 공백으로
-                db.query(models.Group).filter(models.Group.gr_admin == mb_id[i]).update({models.Group.gr_admin: ""})
-                db.commit()
-
-                # # 게시판관리자인 경우 게시판관리자를 공백으로
-                db.query(models.Board).filter(models.Board.bo_admin == mb_id[i]).update({models.Board.bo_admin: ""})
-                db.commit()
-
-                # 소셜로그인에서 삭제 또는 해제
-
-                # 아이콘 삭제
-
-                # 프로필 이미지 삭제
-
-        return RedirectResponse(f"/admin/member_list?{query_string}", status_code=303)
-
     # 선택수정
-    # print(mb_open)
     for i in checks:
         member = db.query(models.Member).filter(models.Member.mb_id == mb_id[i]).first()
         if member:
@@ -277,6 +204,89 @@ async def member_list_update(
             db.commit()
 
     return RedirectResponse(f"/admin/member_list?{query_string(request)}", status_code=303)
+
+
+@router.post("/member_list_delete")
+async def member_list_delete(
+    request: Request,
+    db: Session = Depends(get_db),
+    token: str = Form(...),
+    checks: List[int] = Form(None, alias="chk[]"),
+    mb_id: List[str] = Form(None, alias="mb_id[]"),
+):
+    """회원관리 목록 일괄 삭제"""
+    if not check_token(request, token):
+        raise AlertException(f"{token} 잘못된 접근입니다.")
+
+    for i in checks:
+        # 관리자와 로그인된 본인은 삭제 불가
+        if (request.state.config.cf_admin == mb_id[i]) or (request.state.login_member.mb_id == mb_id[i]):
+            print("관리자와 로그인된 본인은 삭제 불가")
+            continue
+        
+        member = db.query(models.Member).filter(models.Member.mb_id == mb_id[i]).first()
+        if member:
+            # 이미 삭제된 회원은 제외
+            # if re.match(r"^[0-9]{8}.*삭제함", member.mb_memo):
+            #     continue
+
+            # member 의 경우 레코드를 삭제하는게 아니라 mb_id 를 남기고 모두 제거
+            member.mb_password = ""
+            member.mb_level = 1
+            member.mb_email = ""
+            member.mb_homepage = ""
+            member.mb_tel = ""
+            member.mb_hp = ""
+            member.mb_zip1 = ""
+            member.mb_zip2 = ""
+            member.mb_addr1 = ""
+            member.mb_addr2 = ""
+            member.mb_addr3 = ""
+            member.mb_point = 0
+            member.mb_profile = ""
+            member.mb_birth = ""
+            member.mb_sex = ""
+            member.mb_signature = ""
+            member.mb_memo = (f"{SERVER_TIME.strftime('%Y%m%d')} 삭제함\n{member.mb_memo}")
+            member.mb_certify = ""
+            member.mb_adult = 0
+            member.mb_dupinfo = ""
+            
+            # 나머지 테이블에서도 삭제
+            # 포인트 테이블에서 삭제
+            db.query(models.Point).filter(models.Point.mb_id == mb_id[i]).delete()
+
+            # 그룹접근가능 테이블에서 삭제
+            db.query(models.GroupMember).filter(models.GroupMember.mb_id == mb_id[i]).delete()
+            
+            # 쪽지 테이블에서 삭제
+            db.query(models.Memo).filter(models.Memo.me_send_mb_id == mb_id[i]).delete()
+            
+            # 스크랩 테이블에서 삭제
+            db.query(models.Scrap).filter(models.Scrap.mb_id == mb_id[i]).delete()
+            
+            # 관리권한 테이블에서 삭제
+            db.query(models.Auth).filter(models.Auth.mb_id == mb_id[i]).delete()
+
+            # 그룹관리자인 경우 그룹관리자를 공백으로
+            db.query(models.Group).filter(models.Group.gr_admin == mb_id[i]).update({models.Group.gr_admin: ""})
+
+            # # 게시판관리자인 경우 게시판관리자를 공백으로
+            db.query(models.Board).filter(models.Board.bo_admin == mb_id[i]).update({models.Board.bo_admin: ""})
+
+            # 소셜로그인에서 삭제 또는 해제
+            # if SocialAuthService.check_exists_by_member_id(mb_id[i]):
+            #     SocialAuthService.unlink_social_login(mb_id[i])
+
+            # 아이콘 삭제
+            delete_image(f"{MEMBER_ICON_DIR}/{mb_id[i][:2]}", f"{mb_id[i]}.gif", 1)
+
+            # 프로필 이미지 삭제
+            delete_image(f"{MEMBER_IMAGE_DIR}/{mb_id[i][:2]}", f"{mb_id[i]}.gif", 1)
+
+            db.commit()
+
+    return RedirectResponse(f"/admin/member_list?{request.query_params}", status_code=303)
 
 
 @router.get("/member_form")

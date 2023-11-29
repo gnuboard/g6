@@ -77,7 +77,9 @@ def scrap_form_update(request: Request, db: Session = Depends(get_db),
     
     # 댓글 추가
     if wr_content and board_config.is_comment_level():
-        # TODO: 너무 빠른 시간내에 게시물을 연속해서 올릴 수 없습니다.
+        # 글쓰기 간격 검증
+        if not is_write_delay(request):
+            raise AlertException("너무 빠른 시간내에 게시글을 연속해서 올릴 수 없습니다.", 400)
 
         max_comment = db.query(func.max(models_write.wr_comment).label('max_comment')).filter(
             models_write.wr_parent == wr_id,

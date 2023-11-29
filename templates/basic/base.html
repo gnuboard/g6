@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+{% if request.state.config.cf_add_meta %}
+    {{ request.state.config.cf_add_meta|safe }}
+{% endif %}
 <title>{% block title %}그누보드{% endblock %}</title>
 <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 <link rel="stylesheet" href="/static/css/default.css">
@@ -41,7 +44,10 @@ var g5_shop_url = "{{request.base_url}}shop";
 <script src="/static/js/owlcarousel/owl.carousel.min.js"></script>
 <script src="/static/js/jquery.bxslider.js"></script>
 {% block head %}
-{% endblock %}
+{% endblock head %}
+{% if request.state.config %}
+    {{ request.state.config.cf_add_script|safe }}
+{% endif %}
 </head>
 <body>
 <div id="hd_login_msg">최고관리자 최고관리자님 로그인 중 <a href="/bbs/logout">로그아웃</a></div>
@@ -119,9 +125,16 @@ var g5_shop_url = "{{request.base_url}}shop";
             <!-- } 인기검색어 끝 -->
         </div>
         <ul class="hd_login">        
-            <li><a href="/bbs/member_confirm?url=/bbs/register_form">정보수정</a></li>
-            <li><a href="/bbs/logout">로그아웃</a></li>
-            <li class="tnb_admin"><a href="/admin">관리자</a></li>
+            {% if request.state.login_member %}
+                <li><a href="/bbs/member_confirm?url=/bbs/register_form">정보수정</a></li>
+                <li><a href="/bbs/logout">로그아웃</a></li>
+                {% if request.state.is_super_admin %}
+                    <li class="tnb_admin"><a href="/admin">관리자</a></li>
+                {% endif %}
+            {% else %}
+                <li><a href="/bbs/register">회원가입</a></li>
+                <li><a href="/bbs/login">로그인</a></li>
+            {% endif %}
         </ul>
     </div>
 
@@ -206,16 +219,21 @@ var g5_shop_url = "{{request.base_url}}shop";
     <button type="button" id="top_btn">
     	<i class="fa fa-arrow-up" aria-hidden="true"></i><span class="sound_only">상단으로</span>
     </button>
-    <script>
-
-    </script>
 </div>
 
+{% if request.state.config.cf_analytics %}
+    {{ request.state.config.cf_analytics|safe }}
+{% endif %}
 
 <!-- } 하단 끝 -->
 
 <script>
-
+    $(function() {
+        $("#top_btn").on("click", function() {
+            $("html, body").animate({scrollTop:0}, '500');
+            return false;
+        });
+    });
 </script>
 
 </body>
