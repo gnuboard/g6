@@ -14,7 +14,7 @@ from common.formclass import WriteForm, WriteCommentForm
 from common.models import AutoSave, Board, BoardGood, Group, GroupMember, Scrap
 
 router = APIRouter()
-templates = MyTemplates(directory=[EDITOR_PATH, CAPTCHA_PATH, TEMPLATES_DIR])
+templates = UserTemplates(directory=[EDITOR_PATH, CAPTCHA_PATH, TEMPLATES_DIR])
 templates.env.filters["datetime_format"] = datetime_format
 templates.env.filters["set_image_width"] = set_image_width
 templates.env.globals["editor_macro"] = editor_macro

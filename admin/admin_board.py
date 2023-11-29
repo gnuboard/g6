@@ -1,7 +1,6 @@
 import math
 from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
 from common.database import get_db, engine
@@ -12,7 +11,7 @@ from common.formclass import BoardForm
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 
 router = APIRouter()
-templates = Jinja2Templates(directory=[ADMIN_TEMPLATES_DIR, EDITOR_PATH])
+templates = AdminTemplates(directory=[ADMIN_TEMPLATES_DIR, EDITOR_PATH])
 templates.env.globals['getattr'] = getattr
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['option_selected'] = option_selected

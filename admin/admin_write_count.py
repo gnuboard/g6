@@ -1,7 +1,6 @@
 import math
 from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException, Path
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy import asc, desc, case, func, and_, or_, extract, text
 from sqlalchemy.sql.expression import func, extract
 from sqlalchemy.orm import Session
@@ -15,7 +14,7 @@ import pandas as pd
 from collections import defaultdict
 
 router = APIRouter()
-templates = Jinja2Templates(directory=[ADMIN_TEMPLATES_DIR, EDITOR_PATH])
+templates = AdminTemplates(directory=[ADMIN_TEMPLATES_DIR, EDITOR_PATH])
 templates.env.globals['getattr'] = getattr
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['option_selected'] = option_selected

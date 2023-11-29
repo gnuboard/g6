@@ -9,7 +9,7 @@ from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_nam
 from common.models import NewWin
 
 router = APIRouter()
-templates = MyTemplates(directory=[ADMIN_TEMPLATES_DIR, EDITOR_PATH])
+templates = AdminTemplates(directory=[ADMIN_TEMPLATES_DIR, EDITOR_PATH])
 templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals["today"] = datetime.now().strftime("%Y-%m-%d 00:00:00")
 templates.env.globals["after_7days"] = (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d 23:59:59")

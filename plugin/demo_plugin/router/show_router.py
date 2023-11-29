@@ -1,14 +1,13 @@
 from fastapi import APIRouter
 from starlette.requests import Request
-from starlette.templating import Jinja2Templates
 
-from lib.common import TEMPLATES_DIR
+from lib.common import TEMPLATES_DIR, UserTemplates
 from ..__init__ import module_name
 
 show_router = APIRouter()
 
 PLUGIN_TEMPLATES_DIR = f"plugin/{module_name}/templates"
-templates = Jinja2Templates(directory=[TEMPLATES_DIR, PLUGIN_TEMPLATES_DIR])
+templates = UserTemplates(directory=[TEMPLATES_DIR, PLUGIN_TEMPLATES_DIR])
 
 
 @show_router.get("/show")

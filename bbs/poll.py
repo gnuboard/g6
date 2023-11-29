@@ -7,7 +7,7 @@ from common.database import get_db
 from common.models import Poll, PollEtc
 
 router = APIRouter()
-templates = MyTemplates(directory=[CAPTCHA_PATH, TEMPLATES_DIR])
+templates = UserTemplates(directory=[CAPTCHA_PATH, TEMPLATES_DIR])
 templates.env.globals["now"] = now
 templates.env.globals["generate_query_string"] = generate_query_string
 templates.env.globals["get_member_level"] = get_member_level

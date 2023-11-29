@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -10,7 +9,7 @@ from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_nam
 from common.models import Popular
 
 router = APIRouter()
-templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
+templates = AdminTemplates(directory=ADMIN_TEMPLATES_DIR)
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus

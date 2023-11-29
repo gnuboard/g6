@@ -7,7 +7,7 @@ from common.database import get_db
 from common.models import Member, Memo
 
 router = APIRouter()
-templates = MyTemplates(directory=[CAPTCHA_PATH, TEMPLATES_DIR])
+templates = UserTemplates(directory=[CAPTCHA_PATH, TEMPLATES_DIR])
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals["captcha_widget"] = captcha_widget
 

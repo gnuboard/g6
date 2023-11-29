@@ -1,7 +1,6 @@
 import asyncio
 from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException, Path
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sse_starlette import EventSourceResponse
 from common.database import get_db, engine
@@ -11,7 +10,7 @@ from lib.common import *
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 
 router = APIRouter()
-templates = Jinja2Templates(directory=[ADMIN_TEMPLATES_DIR, EDITOR_PATH])
+templates = AdminTemplates(directory=[ADMIN_TEMPLATES_DIR, EDITOR_PATH])
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 

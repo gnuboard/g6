@@ -21,7 +21,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
 app = FastAPI(debug=APP_IS_DEBUG)
 
-templates = MyTemplates(directory=[TEMPLATES_DIR])
+templates = UserTemplates(directory=[TEMPLATES_DIR])
 templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.filters["datetime_format"] = datetime_format

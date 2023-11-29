@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 THEME_DIR = TEMPLATES  # Replace with actual theme directory
 
 router = APIRouter()
-templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
+templates = AdminTemplates(directory=ADMIN_TEMPLATES_DIR)
 templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 
@@ -210,14 +210,13 @@ async def theme_update(request: Request, theme: str = Form(...), db: Session = D
 
     from main import app # 순환참조 방지
 
+    # todo 미들웨어로 옮기기
     register_theme_statics(app)
-    current_theme = get_theme_from_db()
-    user_template = UserTemplates(current_theme)
-    user_template.env.loader.searchpath.remove(TEMPLATES_DIR)
-    user_template.env.loader.searchpath.append(f"{TEMPLATES}/{theme}")
-
-    admin_template = AdminTemplates(current_theme)
-    admin_template.env.loader.searchpath.remove(TEMPLATES_DIR)
-    admin_template.env.loader.searchpath.append(f"{TEMPLATES}/{theme}")
+    db_set_theme = get_theme_from_db()
+    user_template = UserTemplates(db_set_theme)
+    current_theme_path = user_template.env.loader.searchpath
+    if current_theme_path[0] in user_template.env.loader.searchpath:
+        user_template.env.loader.searchpath = [f"{TEMPLATES}/{theme}"]
+        user_template.env.cache.clear()
 
     return {"success": f"{info['theme_name']} 테마로 변경하였습니다."}
