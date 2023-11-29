@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 THEME_DIR = TEMPLATES  # Replace with actual theme directory
 
 router = APIRouter()
-templates = AdminTemplates(directory=ADMIN_TEMPLATES_DIR)
+templates = AdminTemplates()
 templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 
@@ -212,8 +212,7 @@ async def theme_update(request: Request, theme: str = Form(...), db: Session = D
 
     # todo 미들웨어로 옮기기
     register_theme_statics(app)
-    db_set_theme = get_theme_from_db()
-    user_template = UserTemplates(db_set_theme)
+    user_template = UserTemplates()
     current_theme_path = user_template.env.loader.searchpath
     if current_theme_path[0] in user_template.env.loader.searchpath:
         user_template.env.loader.searchpath = [f"{TEMPLATES}/{theme}"]

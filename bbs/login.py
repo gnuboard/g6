@@ -8,7 +8,7 @@ from common.database import get_db
 from lib.pbkdf2 import validate_password
 
 router = APIRouter()
-templates = UserTemplates(directory=TEMPLATES_DIR)
+templates = UserTemplates()
 templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals['getattr'] = getattr

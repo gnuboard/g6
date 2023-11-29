@@ -10,11 +10,12 @@ from common.formclass import GroupForm
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 
 router = APIRouter()
-templates = AdminTemplates(directory=ADMIN_TEMPLATES_DIR)
+templates = AdminTemplates()
 templates.env.globals['getattr'] = getattr
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals['subject_sort_link'] = subject_sort_link
+templates.env.globals['number_format'] = number_format
 templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 
@@ -51,7 +52,7 @@ def boardgroup_list(request: Request, db: Session = Depends(get_db)):
         group_info.update({
             'board_count': db.query(models.Board).filter(models.Board.gr_id == group.gr_id).count(),
             # 접근회원수는 나중에 별도로 체크해야함
-            'access_member_count': db.query(models.Member).filter(models.Member.mb_level >= group.gr_use_access).count(),
+            'access_member_count': db.query(models.GroupMember).filter_by(gr_id = group.gr_id).count(),
         })
         group_data.append(group_info)
         
@@ -130,11 +131,9 @@ def boardgroup_form(gr_id: str, request: Request, db: Session = Depends(get_db))
     if not group:
         raise HTTPException(status_code=404, detail=f"{gr_id} Group is not found.")
 
-    # 토큰값을 게시판아이디로 만들어 세션에 저장하고 수정시 넘어오는 토큰값을 비교하여 수정 상태임을 확인
-    token = hash_password(gr_id)
-    request.session["token"] = token
+    member_count = db.query(models.GroupMember).filter_by(gr_id=gr_id).count()
     
-    return templates.TemplateResponse("boardgroup_form.html", {"request": request, "group": group, "token": token })
+    return templates.TemplateResponse("boardgroup_form.html", {"request": request, "group": group, "member_count": member_count })
 
 
 @router.post("/boardgroup_form_update")  

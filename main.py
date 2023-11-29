@@ -21,7 +21,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
 app = FastAPI(debug=APP_IS_DEBUG)
 
-templates = UserTemplates(directory=[TEMPLATES_DIR])
+templates = UserTemplates()
 templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.filters["datetime_format"] = datetime_format
@@ -110,7 +110,7 @@ async def main_middleware(request: Request, call_next):
     # 요청의 경로를 얻습니다.
     path = request.url.path
     # 경로가 정적 파일에 대한 것이 아닌지 확인합니다 (css, js, 이미지 등).
-    if (path.startswith('/static') or path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.webp'))):
+    if path.startswith('/static') or path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.webp')):
         response = await call_next(request)
         return response
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
@@ -255,13 +255,13 @@ async def main_middleware(request: Request, call_next):
     # 에디터 전역변수
     request.state.editor = config.cf_editor
     request.state.use_editor = True if config.cf_editor else False
-                
+
     # request.state.context = {
     #     # "request": request,
     #     # "config": config,
     #     # "member": member,
     #     # "outlogin": outlogin.body.decode("utf-8"),
-    # }      
+    # }
     response = await call_next(request)
 
     if is_autologin:

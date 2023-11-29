@@ -6,7 +6,7 @@ from common.database import get_db
 from common.models import Point
 
 router = APIRouter()
-templates = UserTemplates(directory=TEMPLATES_DIR)
+templates = UserTemplates()
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.filters["datetime_format"] = datetime_format
 

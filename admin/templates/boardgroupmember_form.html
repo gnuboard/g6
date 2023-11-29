@@ -60,16 +60,15 @@
                         <label for="chk_{{ loop.index0 }}" class="sound_only">{{ gr_row.gr_subject }} 그룹</label>
                         <input type="checkbox" name="chk[]" value="{{ gm_row.gm_id }}" id="chk_{{ loop.index0 }}">
                     </td>
-                    <td class="td_grid"><a href="/bbs/group/{{ gr_row.gr_id }}">{{ gr_row.gr_id }}</a></td>
+                    <td class="td_grid"><a href="/board/group/{{ gr_row.gr_id }}">{{ gr_row.gr_id }}</a></td>
                     <td class="td_category">{{ gr_row.gr_subject }}</td>
                     <td class="td_datetime">{{ gm_row.gm_datetime }}</td>
                 </tr>
-                {% endfor %}
-                {% if not group_members %}
+                {% else %}
                 <tr>
                     <td colspan="4" class="empty_table">접근가능 그룹이 없습니다.</td>
                 </tr>
-                {% endif %}
+                {% endfor %}
             </tbody>
         </table>
     </div>
