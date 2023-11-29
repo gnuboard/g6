@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ group.gr_subject }}(ID: {{ group.gr_id }}) 그룹 접근가능회원 목록
+{% endblock title %}
+{% block subtitle %}
+    {{ group.gr_subject }}(ID: {{ group.gr_id }}) 그룹 접근가능회원 목록
+{% endblock subtitle %}
+
+{% block content %}
+{% set sod_reverse="asc" if request.query_params.sod == "desc" else "desc" %}
+    <form name="fsearch" id="fsearch" class="local_sch01 local_sch" method="get">
+        <label for="sfl" class="sound_only">검색대상</label>
+        <select name="sfl" id="sfl">
+            <option value="mb_id" {{ get_selected(request.state.sfl, 'mb_id')|safe }}>회원아이디</option>
+        </select>
+        <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
+        <input type="text" name="stx" value="{{ request.query_params.get("stx", "") }}" id="stx" class="frm_input">
+        <input type="submit" value="검색" class="btn_submit">
+    </form>
+    
+    <form name="fboardgroupmember" id="fboardgroupmember" action="/admin/boardgroupmember_delete" onsubmit="return fboardgroupmember_submit(this);" method="post">
+        <input type="hidden" name="gr_id" value="{{ group.gr_id }}">
+        <input type="hidden" name="token" value="">
+    
+        <div class="tbl_head01 tbl_wrap">
+            <table>
+                <caption>{{ group.gr_subject }}(ID: {{ group.gr_id }}) 그룹 접근가능회원 목록</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">
+                            <label for="chkall" class="sound_only">접근가능회원 전체</label>
+                            <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
+                        </th>
+                        <th scope="col">접근가능 그룹 수</th>
+                        <th scope="col"><a href="{{ request.url.include_query_params(sst="mb_id", sod=sod_reverse) }}">회원아이디</a></th>
+                        <th scope="col">이름</th>
+                        <th scope="col">별명</th>
+                        <th scope="col">최종접속</th>
+                        <th scope="col"><a href="{{ request.url.include_query_params(sst="gm_datetime", sod=sod_reverse) }}">처리일시</a></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for row in group_members %}
+                    <tr class="bg{{ loop.cycle('0', '1') }}">
+                        <td class="td_chk">
+                            <label for="chk_{{ loop.index0 }}" class="sound_only">{{ row.member.mb_nick }} 회원</label>
+                            <input type="checkbox" name="chk[]" value="{{ row.gm_id }}" id="chk_{{ loop.index0 }}">
+                        </td>
+                        <td class="td_grid"><a href="/admin/boardgroupmember_form/{{ row.mb_id }}">{{ row.group_count|number_format }}</a></td>
+                        <td class="td_mbid">{{ row.mb_id }}</td>
+                        <td class="td_mbname">{{ row.member.mb_nick }}</td>
+                        <td class="td_name sv_use">
+                            {{ row.member.mb_nick }}
+                        </td>
+                        <td class="td_datetime">{{ row.member.mb_today_login }}</td>
+                        <td class="td_datetime">{{ row.gm_datetime }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="btn_list01 btn_list">
+            <input type="submit" name="" value="선택삭제" class="btn btn_02">
+        </div>
+    </form>
+
+    <script>
+        function fboardgroupmember_submit(f) {
+            if (!is_checked("chk[]")) {
+                alert("삭제하실 항목을 하나 이상 선택하세요.");
+                return false;
+            }
+
+            if (!confirm("선택한 자료를 정말 삭제하시겠습니까?")) {
+                return false;
+            }
+
+            f.token.value = generate_token();
+            f.action += "?{{ request.query_params|safe }}";
+    
+            return true;
+        }
+    </script>
+{% endblock content %}
