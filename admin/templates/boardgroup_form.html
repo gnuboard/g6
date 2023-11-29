@@ -72,7 +72,7 @@
             <tr>
                 <th scope="row">접근회원수</th>
                 <td>
-                    <a href="/admin/boardgroupmember_list?gr_id={{ group.gr_id }}">0</a>                    
+                    <a href="/admin/boardgroupmember_list/{{ group.gr_id }}">{{ member_count|number_format }}</a>                    
                 </td>
             </tr>
             {% for i in range(1, 11) %}
