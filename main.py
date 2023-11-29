@@ -43,6 +43,7 @@ from bbs.board_new import router as board_new_router
 from bbs.ajax_good import router as good_router
 from bbs.ajax_autosave import router as autosave_router
 from bbs.member_leave import router as member_leave_router
+from bbs.member_find import router as member_find_router
 from bbs.social import router as social_router
 from bbs.password import router as password_router
 from bbs.search import router as search_router
@@ -54,6 +55,7 @@ app.include_router(register_router, prefix="/bbs", tags=["register"])
 app.include_router(user_profile_router, prefix="/bbs", tags=["profile"])
 app.include_router(profile_router, prefix="/bbs", tags=["profile"])
 app.include_router(member_leave_router, prefix="/bbs", tags=["member_leave"])
+app.include_router(member_find_router, prefix="/bbs", tags=["member_find"])
 app.include_router(content_router, prefix="/bbs", tags=["content"])
 app.include_router(faq_router, prefix="/bbs", tags=["faq"])
 app.include_router(qa_router, prefix="/bbs", tags=["qa"])
