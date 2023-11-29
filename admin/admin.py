@@ -1,7 +1,6 @@
 import json
 from fastapi import FastAPI, APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy import MetaData, Table
 from sqlalchemy.orm import Session
 from common.database import SessionLocal, get_db, engine
@@ -17,7 +16,7 @@ import hashlib
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 
 router = APIRouter()
-templates = MyTemplates(directory=ADMIN_TEMPLATES_DIR)
+templates = AdminTemplates(directory=ADMIN_TEMPLATES_DIR)
 templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 

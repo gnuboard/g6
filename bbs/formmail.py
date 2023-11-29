@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, Request, Form
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from lib.common import *
 from common.database import get_db
@@ -8,7 +7,7 @@ import re
 
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates = UserTemplates(directory=TEMPLATES_DIR)
 # templates.env.globals["get_popular_list"] = get_popular_list
 
 

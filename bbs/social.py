@@ -10,20 +10,19 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
-from starlette.templating import Jinja2Templates
 
 from bbs.member_profile import validate_nickname, validate_userid
 from lib.social import providers
 from lib.social.social import oauth, SocialProvider, get_social_profile, get_social_login_token
-from lib.common import AlertException, valid_email, hash_password, session_member_key, insert_point, TEMPLATES_DIR, \
-    is_admin, default_if_none
+from lib.common import AlertException, valid_email, hash_password, session_member_key, insert_point, \
+    is_admin, default_if_none, UserTemplates, TEMPLATES_DIR
 from common.database import get_db, SessionLocal
 from common.formclass import MemberForm
 
 from common.models import Config, MemberSocialProfiles, Member
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR, extensions=["jinja2.ext.i18n"])
+templates = UserTemplates(directory=TEMPLATES_DIR)
 templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals['getattr'] = getattr

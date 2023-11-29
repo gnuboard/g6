@@ -918,7 +918,7 @@ def send_write_mail(request: Request, board: Board, write: WriteBaseModel, origi
     """
     db = SessionLocal()
     config = request.state.config
-    templates = MyTemplates(directory=[TEMPLATES_DIR])
+    templates = UserTemplates(directory=[TEMPLATES_DIR])
 
     def _add_admin_email(admin_id):
         admin = db.query(Member).filter_by(mb_id=admin_id).first()

@@ -11,7 +11,7 @@ from lib.pbkdf2 import create_hash
 
 router = APIRouter()
 
-templates = Jinja2Templates(directory=[TEMPLATES_DIR, CAPTCHA_PATH], extensions=["jinja2.ext.i18n"])
+templates = UserTemplates(directory=[TEMPLATES_DIR, CAPTCHA_PATH])
 templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals['getattr'] = getattr

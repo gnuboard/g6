@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, Form, Path, Request
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy import literal
 from sqlalchemy.orm import aliased, Session
 
@@ -10,7 +9,7 @@ from common.database import get_db
 from common.models import Scrap
 
 router = APIRouter()
-templates = MyTemplates(directory=TEMPLATES_DIR)
+templates = UserTemplates(directory=TEMPLATES_DIR)
 templates.env.filters["datetime_format"] = datetime_format
 
 
