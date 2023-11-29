@@ -14,7 +14,7 @@ import pandas as pd
 from collections import defaultdict
 
 router = APIRouter()
-templates = AdminTemplates(directory=[ADMIN_TEMPLATES_DIR, EDITOR_PATH])
+templates = AdminTemplates()
 templates.env.globals['getattr'] = getattr
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['option_selected'] = option_selected

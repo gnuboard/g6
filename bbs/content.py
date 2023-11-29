@@ -6,7 +6,7 @@ from common.database import get_db
 from common.models import Content
 
 router = APIRouter()
-templates = UserTemplates(directory=TEMPLATES_DIR)
+templates = UserTemplates()
 
 
 @router.get("/content/{co_id}")

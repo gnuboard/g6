@@ -16,7 +16,7 @@ import re
 
 
 router = APIRouter()
-templates = AdminTemplates(directory=ADMIN_TEMPLATES_DIR)
+templates = AdminTemplates()
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.globals["getattr"] = getattr
 templates.env.globals["today"] = SERVER_TIME.strftime("%Y%m%d")

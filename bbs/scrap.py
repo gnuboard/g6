@@ -9,7 +9,7 @@ from common.database import get_db
 from common.models import Scrap
 
 router = APIRouter()
-templates = UserTemplates(directory=TEMPLATES_DIR)
+templates = UserTemplates()
 templates.env.filters["datetime_format"] = datetime_format
 
 

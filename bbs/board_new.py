@@ -8,7 +8,7 @@ from common.database import get_db
 from common.models import BoardNew, Board
 
 router = APIRouter()
-templates = UserTemplates(directory=TEMPLATES_DIR)
+templates = UserTemplates()
 
 
 @router.get("/new")

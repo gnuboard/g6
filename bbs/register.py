@@ -12,7 +12,7 @@ from lib.pbkdf2 import create_hash
 
 router = APIRouter()
 
-templates = UserTemplates(directory=[TEMPLATES_DIR, CAPTCHA_PATH])
+templates = UserTemplates()
 templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals['getattr'] = getattr

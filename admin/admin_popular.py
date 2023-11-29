@@ -9,7 +9,7 @@ from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_nam
 from common.models import Popular
 
 router = APIRouter()
-templates = AdminTemplates(directory=ADMIN_TEMPLATES_DIR)
+templates = AdminTemplates()
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus

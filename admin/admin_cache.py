@@ -10,7 +10,7 @@ from lib.common import *
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 
 router = APIRouter()
-templates = AdminTemplates(directory=[ADMIN_TEMPLATES_DIR, EDITOR_PATH])
+templates = AdminTemplates()
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 

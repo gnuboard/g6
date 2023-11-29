@@ -7,7 +7,7 @@ import re
 
 
 router = APIRouter()
-templates = UserTemplates(directory=TEMPLATES_DIR)
+templates = UserTemplates()
 # templates.env.globals["get_popular_list"] = get_popular_list
 
 

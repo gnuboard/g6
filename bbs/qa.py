@@ -9,7 +9,7 @@ from common.formclass import QaContentForm
 from common.models import QaConfig, QaContent
 
 router = APIRouter()
-templates = UserTemplates(directory=TEMPLATES_DIR)
+templates = UserTemplates()
 templates.env.globals["generate_query_string"] = generate_query_string
 templates.env.filters["default_if_none"] = default_if_none
 

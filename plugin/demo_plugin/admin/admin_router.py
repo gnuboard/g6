@@ -5,7 +5,7 @@ from starlette.templating import Jinja2Templates
 from admin.admin_config import get_admin_plugin_menus
 from lib.plugin.service import get_all_plugin_module_names
 from lib.common import ADMIN_TEMPLATES_DIR, get_member_id_select, get_skin_select, get_editor_select, get_selected, \
-    get_member_level_select, option_array_checked, get_admin_menus, generate_token, get_client_ip, AdminTemplates
+    get_member_level_select, option_array_checked, get_admin_menus, generate_token, get_client_ip
 from ..__init__ import module_name
 
 PLUGIN_TEMPLATES_DIR = f"plugin/{module_name}/templates"

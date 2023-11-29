@@ -12,7 +12,7 @@ from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_nam
 from common.models import Board, Content, Group, Menu
 
 router = APIRouter()
-admin_templates = AdminTemplates(directory=ADMIN_TEMPLATES_DIR)
+admin_templates = AdminTemplates()
 admin_templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 admin_templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 MENU_KEY = "100290"

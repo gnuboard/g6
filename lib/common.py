@@ -693,7 +693,7 @@ def visit(request: Request):
         "max": int(max),
         "total": int(total)
     }
-    templates = UserTemplates(directory=TEMPLATES_DIR)
+    templates = UserTemplates()
     visit_template = templates.TemplateResponse(f"visit/basic.html", context)
 
     return visit_template.body.decode("utf-8")
@@ -1561,6 +1561,7 @@ class UserTemplates(Jinja2Templates):
     Jinja2Template 설정 클래스
     """
     _instance = None
+    default_directories = [TEMPLATES_DIR, EDITOR_PATH, CAPTCHA_PATH]
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
@@ -1569,26 +1570,26 @@ class UserTemplates(Jinja2Templates):
         return cls._instance
 
     def __init__(self,
-                 directory: Union[str, os.PathLike],
                  context_processors: dict = None,
                  globals: dict = None,
                  env: Environment = None
                  ):
         if not getattr(self, '_initialized', False):
             self._initialized = True
-            super().__init__(directory=directory, context_processors=context_processors)
+
+            super().__init__(directory=self.default_directories, context_processors=context_processors)
 
             # 공통 env.global 설정
             self.env.globals["editor_path"] = editor_path
             self.env.globals["getattr"] = getattr
             self.env.globals["get_selected"] = get_selected
             self.env.globals["get_member_icon"] = get_member_icon
+            self.env.globals["generate_token"] = generate_token
             self.env.globals["get_member_image"] = get_member_image
             self.env.filters["number_format"] = number_format
             self.env.globals["theme_asset"] = theme_asset
 
-            if TEMPLATES_DIR in directory:
-                self.context_processors.append(self._default_context)
+            self.context_processors.append(self._default_context)
 
             # 추가 env.global 설정
             if globals:
@@ -1624,6 +1625,7 @@ class UserTemplates(Jinja2Templates):
 
 class AdminTemplates(Jinja2Templates):
     _instance = None
+    default_directories = [ADMIN_TEMPLATES_DIR, EDITOR_PATH]
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
@@ -1632,7 +1634,6 @@ class AdminTemplates(Jinja2Templates):
         return cls._instance
 
     def __init__(self,
-                 directory: Union[str, os.PathLike],
                  context_processors: dict = None,
                  globals: dict = None,
                  env: Environment = None
@@ -1640,7 +1641,8 @@ class AdminTemplates(Jinja2Templates):
         if not getattr(self, '_initialized', False):
             self._initialized = True
 
-            super().__init__(directory=directory, context_processors=context_processors)
+
+            super().__init__(directory=self.default_directories, context_processors=context_processors)
 
             # 공통 env.global 설정
             self.env.globals["editor_path"] = editor_path
@@ -1787,7 +1789,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     # Lazy import
     from lib.board_lib import BoardConfig, get_list, get_list_thumbnail
 
-    templates = UserTemplates(directory=TEMPLATES_DIR)
+    templates = UserTemplates()
     templates.env.globals["get_list_thumbnail"] = get_list_thumbnail
 
     if not skin_dir:

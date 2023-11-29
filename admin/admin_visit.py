@@ -7,7 +7,7 @@ from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_nam
 from lib.pbkdf2 import validate_password
 
 router = APIRouter()
-templates = AdminTemplates(directory=ADMIN_TEMPLATES_DIR)
+templates = AdminTemplates()
 templates.env.globals['getattr'] = getattr
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['option_selected'] = option_selected
