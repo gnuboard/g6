@@ -7,7 +7,7 @@ from common.database import get_db
 from common.models import Board, Group, GroupMember
 
 router = APIRouter()
-templates = UserTemplates(directory=TEMPLATES_DIR)
+templates = UserTemplates()
 templates.env.filters["search_font"] = search_font
 
 
