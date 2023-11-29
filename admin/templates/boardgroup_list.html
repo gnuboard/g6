@@ -76,7 +76,7 @@
                         <label for="gr_use_access_{{ loop.index0 }}" class="sound_only">접근회원 사용</label>
                         <input type="checkbox" name="gr_use_access[]"  value="{{ loop.index0 }}" id="gr_use_access_{{ loop.index0 }}" {{ 'checked' if group.gr_use_access }}>
                     </td>
-                    <td class="td_num"><a href="/admin/boardgroupmember_list?gr_id={{ group.gr_id }}">{{ group.access_member_count }}</a></td>
+                    <td class="td_num"><a href="/admin/boardgroupmember_list/{{ group.gr_id }}">{{ group.access_member_count }}</a></td>
                     <td class="td_numsmall">
                         <label for="gr_order_{{ loop.index0 }}" class="sound_only">메인메뉴 출력순서</label>
                         <input type="text" name="gr_order[]" value="{{ group.gr_order }}" id="gr_order_{{ loop.index0 }}" class="tbl_input" size="2">
