@@ -1,3 +1,5 @@
+import logging
+import os
 from datetime import datetime
 from typing import Optional, Union
 
@@ -5,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 from fastapi import APIRouter, Depends
 from fastapi import Request
 from fastapi.params import Form, Query
+from popbill import PopbillException
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -13,9 +16,10 @@ from starlette.responses import RedirectResponse
 from common.database import get_db, engine
 from lib.common import MyTemplates, ADMIN_TEMPLATES_DIR, datetime_format, auth_check_menu, AlertException
 from lib.plugin.service import PLUGIN_DIR, get_all_plugin_module_names
-from plugin.popbill import module_name, models
+from plugin.popbill import module_name, models, POPBILL_LINK_ID, POPBILL_SECRET_KEY
 from plugin.popbill.models import SmsForm
 from plugin.popbill.models import SmsFormGroup, SmsConfig
+from plugin.popbill.router import messageService
 
 admin_router = APIRouter(prefix="/sms_admin")
 
@@ -39,10 +43,25 @@ def show_sms_config(request: Request, db: Session = Depends(get_db)):
     if not sms_config:
         sms_config = {}
 
+    popbill_registered = POPBILL_LINK_ID and POPBILL_SECRET_KEY
+    company_register_num = os.getenv("POPBILL_COMPANY_REGISTER_NUM")
+    remain_point = 0
+    try:
+        remain_point = messageService.getBalance(company_register_num)
+        charge_url = messageService.getChargeURL(company_register_num, POPBILL_LINK_ID)
+
+    except PopbillException as e:
+        logging.warning(f"Exception Occur : {e.code}, {e.message}")
+
     return templates.TemplateResponse("admin/sms_config.html", {
         "config": request.state.config,
         "sms_config": sms_config,
-        "request": request})
+        "popbill_id": POPBILL_LINK_ID,
+        "remain_point": int(float(remain_point)),
+        "charge_url": charge_url,
+        "popbill_registered": popbill_registered,
+        "request": request
+    })
 
 
 @admin_router.get("/sms_write")

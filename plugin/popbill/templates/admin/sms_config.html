@@ -10,8 +10,7 @@
 
 {% block content %}
 
-{% if not popbill_registerd %}
-<?php if (!($config['cf_icode_pw'] || $config['cf_icode_token_key'])) { ?>
+{% if not popbill_registered %}
 <div class="local_desc01 local_desc">
     <p>
         SMS 기능을 사용하시려면 먼저 팝빌에 서비스 신청을 하셔야 합니다.<br>
@@ -26,7 +25,7 @@
 <input type="hidden" name="cf_sms_use" value="{{ config['cf_sms_use'] }}">
 <div class="tbl_frm01 tbl_wrap">
     <table>
-    <caption> sms 기본설정></caption>
+    <caption> sms 기본설정 </caption>
     <colgroup>
         <col class="grid_4">
         <col>
@@ -56,22 +55,21 @@
             </label>
         </th>
         <td>
-            <span class="frm_info">팝빌에서 사용하는 회원아이디를 입력합니다.</span>
+            <span class="frm_info">팝빌에서 사용하는 회원아이디를 입력합니다. .env 파일의 POPBILL_LINK_ID 에 입력합니다.</span>
             <input type="text" name="popbill_id" value="{{ popbill_id }}" id="popbill_id" class="frm_input">
         </td>
     </tr>
     <tr class="sms_version">
-        <th scope="row"><label for="cf_icode_pw">팝빌 비밀번호<br><strong class="sound_only"> 필수</strong></label></th>
+        <th scope="row"><label for="popbill_id">팝빌 api key<br><strong class="sound_only"> 필수 </strong></label></th>
         <td>
-            <span class="frm_info">팝빌에서 사용하는 비밀번호를 입력합니다.</span>
-            <input type="password" name="cf_icode_pw" value="<?php echo $config['cf_icode_pw']; ?>" id="cf_icode_pw" class="frm_input">
+            <span class="frm_info">팝빌에서 사용하는 문자 api key .env 파일의 POPBILL_SECREKEY 를 입력합니다.</span>
         </td>
     </tr>
     <tr class="sms_version">
         <th scope="row">충전 잔여포인트<br></th>
         <td>
-            <?php echo number_format($userinfo['coin'])?> 원
-            <a href="" target="_blank" class="btn_frmline">충전하기</a>
+            {{ remain_point }} 원
+            <a href="https://www.popbill.com" target="_blank" class="btn_frmline">충전하기</a>
         </td>
     </tr>
     <tr>
