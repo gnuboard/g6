@@ -2,11 +2,11 @@ import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, Depends, Request
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import TypeAdapter
 
 from lib.plugin.service import register_statics, import_plugin_admin, get_plugin_state_change_time, \
-    read_plugin_state, import_plugin_by_states, import_plugin_router, delete_router_by_tagname
+    read_plugin_state, import_plugin_by_states, import_plugin_router, delete_router_by_tagname, cache_plugin_state, \
+    cache_plugin_menu
 from common.database import get_db
 from starlette.middleware.sessions import SessionMiddleware
 from lib.common import *
@@ -74,9 +74,6 @@ app.include_router(editor_router, prefix="/editor", tags=["editor"])
 # user_device = 'pc'
 
 register_theme_statics(app)
-# 전역 캐시
-cache_plugin_menu = cachetools.Cache(maxsize=1)
-cache_plugin_state = cachetools.Cache(maxsize=1)
 
 # 활성화된 플러그인만 로딩
 plugin_states = read_plugin_state()

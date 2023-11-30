@@ -4,11 +4,15 @@ import logging
 import json
 import os
 from dataclasses import dataclass, field, asdict
+
+import cachetools
 from filelock import FileLock
 from starlette.staticfiles import StaticFiles
 from typing import List
 
-import main
+# 전역 캐시
+cache_plugin_menu = cachetools.Cache(maxsize=1)
+cache_plugin_state = cachetools.Cache(maxsize=1)
 
 # 플러그인 목록을 가져온다.
 # 가져온 목록을 import 한다.
@@ -147,7 +151,7 @@ def get_admin_plugin_menus():
         admin_menus (list): 관리자 메뉴 목록
     """
     # 전역변수 cache_plugin_menu
-    return main.cache_plugin_menu.get('admin_menus')
+    return cache_plugin_menu.get('admin_menus')
 
 
 def delete_router_by_tagname(app, tagname):
