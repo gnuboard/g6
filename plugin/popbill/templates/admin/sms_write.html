@@ -17,267 +17,257 @@
     회원정보 최근 업데이트 : {{ sms_config['cf_datetime'] }}
 </div>
 
-    <div id="sms5_send">
+<div id="sms5_send">
 
-        <div id="send_emo">
-            <h2>이모티콘 목록</h2>
-            
-            <!-- start -->
-            <form name="emo_frm">
-                <label for="emo_sel" class="sound_only">이모티콘 그룹</label>
-                <select name="fg_no" id="emo_sel">
-                    <option value="all" {{ get_selected('all', fg_no) }}> 전체 </option>
-                    <option value="0" {{ get_selected('0', fg_no) }} > 
-                        미분류 ({{ no_group_count }})
+    <div id="send_emo">
+        <h2>이모티콘 목록</h2>
+        <!-- start -->
+        <form name="emo_frm">
+            <label for="emo_sel" class="sound_only">이모티콘 그룹</label>
+            <select name="fg_no" id="emo_sel">
+                <option value="all" {{ get_selected('all', fg_no) }}> 전체 </option>
+                <option value="0" {{ get_selected('0', fg_no) }} > 
+                    미분류 ({{ no_group_count }})
+                </option>
+                {% for group in form_group %}
+                    <option value="{{ group.fg_no }}" {{ get_selected(fg_no, group.fg_no) }}>
+                        {{ group.fg_name }}({{ group.fg_count }})
                     </option>
-                    {% for group in form_group %}
-                        <option value="{{ group.fg_no }}" {{ get_selected(fg_no, group.fg_no) }}>
-                            {{ group.fg_name }}({{ group.fg_count }})
+                {% endfor %}
+            </select>
+        </form>
+
+        <ul class="emo_list">
+        </ul>
+        
+        <form name="emo_sch" id="emo_sch" method="get" action="">
+        <input type="hidden" name="fg_no" value="{{ fg_no }}">
+        <input type="hidden" name="page" id="hidden_page" >
+        <input type="hidden" name="fg_no" id="hidden_fg_no" >
+        <label for="st" class="sound_only">검색대상</label>
+        <select name="st" id="st">
+            <option value="all" {{ get_selected('all', st) }}>제목 + 이모티콘</option>
+            <option value="name" {{ get_selected('name', st) }}>제목</option>
+            <option value="content" {{ get_selected('content', st) }}>이모티콘</option>
+        </select>
+        <label for="sv" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
+        <input type="text" name="sv" value="{{ sv }}" id="sv" required class="frm_input required" size="15">
+        <input type="submit" value="검색" class="btn_submit">
+        </form>
+        
+        <nav class="pg_wrap">
+            <span class="pg" id="emo_pg"></span>
+        </nav>
+        <!-- end -->
+    </div>
+
+    <div id="send_write">
+        <form name="form_sms" id="form_sms" method="post" action="ajax/sms_send"
+              onsubmit="return sms5_chk_send(this);">
+            <input type="hidden" name="send_list" value="">
+
+            <h2>보낼내용</h2>
+            <div class="sms5_box write_wrap">
+                <span class="box_ico"></span>
+                <label for="wr_message" id="wr_message_lbl">내용</label>
+                <textarea name="wr_message" id="wr_message" class="box_txt box_square"
+                          onkeyup="byte_check('wr_message', 'sms_bytes');"
+                          accesskey="m"></textarea>
+
+                <div id="sms_byte">
+                    <span id="sms_bytes">0</span> / 
+                    <span id="sms_max_bytes">
+                        {% if config['cf_sms_type'] == 'LMS' or  config['cf_sms_type'] == 'MMS' %}
+                            2000
+                        {% else %}
+                            90
+                        {% endif %}
+                    </span> byte
+                </div>
+
+                <button type="button" id="write_sc_btn" class="write_scemo_btn">특수<br>기호</button>
+                <div id="write_sc" class="write_scemo">
+                    <span class="scemo_ico"></span>
+                    <div class="scemo_list">
+                        <button type="button" class="scemo_add" onclick="add('■')">■</button>
+                        <button type="button" class="scemo_add" onclick="add('□')">□</button>
+                        <button type="button" class="scemo_add" onclick="add('▣')">▣</button>
+                        <button type="button" class="scemo_add" onclick="add('◈')">◈</button>
+                        <button type="button" class="scemo_add" onclick="add('◆')">◆</button>
+                        <button type="button" class="scemo_add" onclick="add('◇')">◇</button>
+                        <button type="button" class="scemo_add" onclick="add('♥')">♥</button>
+                        <button type="button" class="scemo_add" onclick="add('♡')">♡</button>
+                        <button type="button" class="scemo_add" onclick="add('●')">●</button>
+                        <button type="button" class="scemo_add" onclick="add('○')">○</button>
+                        <button type="button" class="scemo_add" onclick="add('▲')">▲</button>
+                        <button type="button" class="scemo_add" onclick="add('▼')">▼</button>
+                        <button type="button" class="scemo_add" onclick="add('▶')">▶</button>
+                        <button type="button" class="scemo_add" onclick="add('▷')">▷</button>
+                        <button type="button" class="scemo_add" onclick="add('◀')">◀</button>
+                        <button type="button" class="scemo_add" onclick="add('◁')">◁</button>
+                        <button type="button" class="scemo_add" onclick="add('☎')">☎</button>
+                        <button type="button" class="scemo_add" onclick="add('☏')">☏</button>
+                        <button type="button" class="scemo_add" onclick="add('♠')">♠</button>
+                        <button type="button" class="scemo_add" onclick="add('♤')">♤</button>
+                        <button type="button" class="scemo_add" onclick="add('♣')">♣</button>
+                        <button type="button" class="scemo_add" onclick="add('♧')">♧</button>
+                        <button type="button" class="scemo_add" onclick="add('★')">★</button>
+                        <button type="button" class="scemo_add" onclick="add('☆')">☆</button>
+                        <button type="button" class="scemo_add" onclick="add('☞')">☞</button>
+                        <button type="button" class="scemo_add" onclick="add('☜')">☜</button>
+                        <button type="button" class="scemo_add" onclick="add('㈜')">㈜</button>
+                        <button type="button" class="scemo_add" onclick="add('▒')">▒</button>
+                        <button type="button" class="scemo_add" onclick="add('⊙')">⊙</button>
+                        <button type="button" class="scemo_add" onclick="add('№')">№</button>
+                        <button type="button" class="scemo_add" onclick="add('㉿')">㉿</button>
+                        <button type="button" class="scemo_add" onclick="add('♨')">♨</button>
+                        <button type="button" class="scemo_add" onclick="add('™')">™</button>
+                        <button type="button" class="scemo_add" onclick="add('℡')">℡</button>
+                        <button type="button" class="scemo_add" onclick="add('∑')">∑</button>
+                        <button type="button" class="scemo_add" onclick="add('∏')">∏</button>
+                        <button type="button" class="scemo_add" onclick="add('♬')">♬</button>
+                        <button type="button" class="scemo_add" onclick="add('♪')">♪</button>
+                        <button type="button" class="scemo_add" onclick="add('♩')">♩</button>
+                        <button type="button" class="scemo_add" onclick="add('♭')">♭</button>
+                    </div>
+                    <div class="scemo_cls">
+                        <button type="button" class="scemo_cls_btn">닫기</button>
+                    </div>
+                </div>
+                <button type="button" id="write_emo_btn" class="write_scemo_btn">이모<br>티콘</button>
+                <div id="write_emo" class="write_scemo">
+                    <span class="scemo_ico"></span>
+                    <div class="scemo_list">
+                        <button type="button" class="scemo_add" onclick="add('*^^*')">*^^*</button>
+                        <button type="button" class="scemo_add" onclick="add('♡.♡')">♡.♡</button>
+                        <button type="button" class="scemo_add" onclick="add('@_@')">@_@</button>
+                        <button type="button" class="scemo_add" onclick="add('☞_☜')">☞_☜</button>
+                        <button type="button" class="scemo_add" onclick="add('ㅠ ㅠ')">ㅠ ㅠ</button>
+                        <button type="button" class="scemo_add" onclick="add('Θ.Θ')">Θ.Θ</button>
+                        <button type="button" class="scemo_add" onclick="add('^_~♥')">^_~♥</button>
+                        <button type="button" class="scemo_add" onclick="add('~o~')">~o~</button>
+                        <button type="button" class="scemo_add" onclick="add('★.★')">★.★</button>
+                        <button type="button" class="scemo_add" onclick="add('(!.!)')">(!.!)</button>
+                        <button type="button" class="scemo_add" onclick="add('⊙.⊙')">⊙.⊙</button>
+                        <button type="button" class="scemo_add" onclick="add('q.p')">q.p</button>
+                        <button type="button" class="scemo_add emo_long" onclick="add('┏( \'\')┛')">┏( \'\')┛</button>
+                        <button type="button" class="scemo_add emo_long" onclick="add('@)-)--')">@)-)--')</button>
+                        <button type="button" class="scemo_add emo_long" onclick="add('↖(^-^)↗')">↖(^-^)↗</button>
+                        <button type="button" class="scemo_add emo_long" onclick="add('(*^-^*)')">(*^-^*)</button>
+                    </div>
+                    <div class="scemo_cls">
+                        <button type="button" class="scemo_cls_btn">닫기</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <div id="write_preset">
+                {이름} : 받는사람 이름
+            </div>
+
+            <div id="write_reply">
+                <label for="wr_reply">회신<strong class="sound_only"> 필수</strong></label>
+                <input type="text" name="wr_reply" 
+                       value="{{ sms_config['cf_phone'] }}"
+                       id="wr_reply" 
+                       required 
+                       class="frm_input required" 
+                       size="17"
+                       maxlength="20" readonly="readonly">
+            </div>
+
+            <div id="write_recv" class="write_inner">
+                <h2>받는사람</h2>
+                <button type="button" class="write_floater write_floater_btn" onclick="hp_list_del()">선택삭제</button>
+
+                <label for="hp_list" class="sound_only">받는사람들</label>
+                <select name="hp_list" id="hp_list" size="5"></select>
+
+                <div id="recv_add">
+                    <label for="hp_name" class="sound_only">이름</label>
+                    <input type="text" name="hp_name" id="hp_name" class="frm_input" size="11" maxlength="20"
+                           onkeypress="if(event.keyCode==13) document.getElementById('hp_number').focus();" placeholder="이름"><br>
+                    <label for="hp_number" class="sound_only">번호</label>
+                    <input type="text" name="hp_number" id="hp_number" class="frm_input" size="11" maxlength="20"
+                           onkeypress="if(event.keyCode==13) hp_add()" placeholder="번호">
+                    <button type="button" onclick="hp_add()">추가</button>
+                    <br>
+                </div>
+            </div>
+
+            <div id="write_rsv" class="write_inner">
+                <h2>예약전송</h2>
+
+                <div class="write_floater">
+                    <label for="wr_booking"><span class="sound_only">예약전송 </span>사용</label>
+                    <input type="checkbox" name="wr_booking" id="wr_booking" onclick="booking(this.checked)">
+                </div>
+
+                <select name="wr_by" id="wr_by" disabled>
+                    <option value="{{ datetime.today() |datetime_format('Y') }}">
+                        {{ datetime.today() |datetime_format('%Y') }}
+                    </option>
+                    <option value="{{ datetime.now() + relativedelta(years=1) }}">
+                        {{ (datetime.now() + relativedelta(years=1)) |datetime_format('%Y') }}
+                    </option>
+                </select>
+                <label for="wr_by">년</label><br>
+                <select name="wr_bm" id="wr_bm" disabled>
+                    {% for i in range(1, 13) %}
+                        <option value="{{ "%02d"|format(i) }}" {% if datetime.now().strftime('%m') == i %}selected{% endif %}>
+                            {{ "%02d"|format(i) }}
+                        </option>
+                    {% endfor %}
+
+                </select>
+                <label for="wr_bm">월</label>
+                <select name="wr_bd" id="wr_bd" disabled>
+                    {% for i in range(1, 32) %}
+                        <option value="{{ "%02d"|format(i) }}" {% if datetime.now().strftime('%m') == i %}selected{% endif %}>
+                            {{ "%02d"|format(i) }}
                         </option>
                     {% endfor %}
                 </select>
-            </form>
-
-            <ul class="emo_list">
-            </ul>
-            
-            <form name="emo_sch" id="emo_sch" method="get" action="">
-            <input type="hidden" name="fg_no" value="{{ fg_no }}">
-            <input type="hidden" name="page" id="hidden_page" >
-            <input type="hidden" name="fg_no" id="hidden_fg_no" >
-            <label for="st" class="sound_only">검색대상</label>
-            <select name="st" id="st">
-                <option value="all" {{ get_selected('all', st) }}>제목 + 이모티콘</option>
-                <option value="name" {{ get_selected('name', st) }}>제목</option>
-                <option value="content" {{ get_selected('content', st) }}>이모티콘</option>
-            </select>
-            <label for="sv" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
-            <input type="text" name="sv" value="{{ sv }}" id="sv" required class="frm_input required" size="15">
-            <input type="submit" value="검색" class="btn_submit">
-            </form>
-            
-            <nav class="pg_wrap">
-                <span class="pg" id="emo_pg"></span>
-            </nav>
-            <!-- end -->
-        </div>
-
-        <div id="send_write">
-            <form name="form_sms" id="form_sms" method="post" action="ajax/sms_send"
-                  onsubmit="return sms5_chk_send(this);">
-                <input type="hidden" name="send_list" value="">
-
-                <h2>보낼내용</h2>
-                <div class="sms5_box write_wrap">
-                    <span class="box_ico"></span>
-                    <label for="wr_message" id="wr_message_lbl">내용</label>
-                    <textarea name="wr_message" id="wr_message" class="box_txt box_square"
-                              onkeyup="byte_check('wr_message', 'sms_bytes');"
-                              accesskey="m"></textarea>
-
-                    <div id="sms_byte">
-                        <span id="sms_bytes">0</span> / 
-                        <span id="sms_max_bytes">
-                            {% if config['cf_sms_type'] == 'LMS' %}
-                                2000
-                            {% else %}
-                                90
-                            {% endif %}
-                           {# todo <?php echo($config['cf_sms_type'] == 'LMS' ? 90 : 80); ?> #}
-                        </span> byte
-                    </div>
-
-                    <button type="button" id="write_sc_btn" class="write_scemo_btn">특수<br>기호</button>
-                    <div id="write_sc" class="write_scemo">
-                        <span class="scemo_ico"></span>
-                        <div class="scemo_list">
-                            <button type="button" class="scemo_add" onclick="add('■')">■</button>
-                            <button type="button" class="scemo_add" onclick="add('□')">□</button>
-                            <button type="button" class="scemo_add" onclick="add('▣')">▣</button>
-                            <button type="button" class="scemo_add" onclick="add('◈')">◈</button>
-                            <button type="button" class="scemo_add" onclick="add('◆')">◆</button>
-                            <button type="button" class="scemo_add" onclick="add('◇')">◇</button>
-                            <button type="button" class="scemo_add" onclick="add('♥')">♥</button>
-                            <button type="button" class="scemo_add" onclick="add('♡')">♡</button>
-                            <button type="button" class="scemo_add" onclick="add('●')">●</button>
-                            <button type="button" class="scemo_add" onclick="add('○')">○</button>
-                            <button type="button" class="scemo_add" onclick="add('▲')">▲</button>
-                            <button type="button" class="scemo_add" onclick="add('▼')">▼</button>
-                            <button type="button" class="scemo_add" onclick="add('▶')">▶</button>
-                            <button type="button" class="scemo_add" onclick="add('▷')">▷</button>
-                            <button type="button" class="scemo_add" onclick="add('◀')">◀</button>
-                            <button type="button" class="scemo_add" onclick="add('◁')">◁</button>
-                            <button type="button" class="scemo_add" onclick="add('☎')">☎</button>
-                            <button type="button" class="scemo_add" onclick="add('☏')">☏</button>
-                            <button type="button" class="scemo_add" onclick="add('♠')">♠</button>
-                            <button type="button" class="scemo_add" onclick="add('♤')">♤</button>
-                            <button type="button" class="scemo_add" onclick="add('♣')">♣</button>
-                            <button type="button" class="scemo_add" onclick="add('♧')">♧</button>
-                            <button type="button" class="scemo_add" onclick="add('★')">★</button>
-                            <button type="button" class="scemo_add" onclick="add('☆')">☆</button>
-                            <button type="button" class="scemo_add" onclick="add('☞')">☞</button>
-                            <button type="button" class="scemo_add" onclick="add('☜')">☜</button>
-                            <button type="button" class="scemo_add" onclick="add('㈜')">㈜</button>
-                            <button type="button" class="scemo_add" onclick="add('▒')">▒</button>
-                            <button type="button" class="scemo_add" onclick="add('⊙')">⊙</button>
-                            <button type="button" class="scemo_add" onclick="add('№')">№</button>
-                            <button type="button" class="scemo_add" onclick="add('㉿')">㉿</button>
-                            <button type="button" class="scemo_add" onclick="add('♨')">♨</button>
-                            <button type="button" class="scemo_add" onclick="add('™')">™</button>
-                            <button type="button" class="scemo_add" onclick="add('℡')">℡</button>
-                            <button type="button" class="scemo_add" onclick="add('∑')">∑</button>
-                            <button type="button" class="scemo_add" onclick="add('∏')">∏</button>
-                            <button type="button" class="scemo_add" onclick="add('♬')">♬</button>
-                            <button type="button" class="scemo_add" onclick="add('♪')">♪</button>
-                            <button type="button" class="scemo_add" onclick="add('♩')">♩</button>
-                            <button type="button" class="scemo_add" onclick="add('♭')">♭</button>
-                        </div>
-                        <div class="scemo_cls">
-                            <button type="button" class="scemo_cls_btn">닫기</button>
-                        </div>
-                    </div>
-                    <button type="button" id="write_emo_btn" class="write_scemo_btn">이모<br>티콘</button>
-                    <div id="write_emo" class="write_scemo">
-                        <span class="scemo_ico"></span>
-                        <div class="scemo_list">
-                            <button type="button" class="scemo_add" onclick="add('*^^*')">*^^*</button>
-                            <button type="button" class="scemo_add" onclick="add('♡.♡')">♡.♡</button>
-                            <button type="button" class="scemo_add" onclick="add('@_@')">@_@</button>
-                            <button type="button" class="scemo_add" onclick="add('☞_☜')">☞_☜</button>
-                            <button type="button" class="scemo_add" onclick="add('ㅠ ㅠ')">ㅠ ㅠ</button>
-                            <button type="button" class="scemo_add" onclick="add('Θ.Θ')">Θ.Θ</button>
-                            <button type="button" class="scemo_add" onclick="add('^_~♥')">^_~♥</button>
-                            <button type="button" class="scemo_add" onclick="add('~o~')">~o~</button>
-                            <button type="button" class="scemo_add" onclick="add('★.★')">★.★</button>
-                            <button type="button" class="scemo_add" onclick="add('(!.!)')">(!.!)</button>
-                            <button type="button" class="scemo_add" onclick="add('⊙.⊙')">⊙.⊙</button>
-                            <button type="button" class="scemo_add" onclick="add('q.p')">q.p</button>
-                            <button type="button" class="scemo_add emo_long" onclick="add('┏( \'\')┛')">┏( \'\')┛</button>
-                            <button type="button" class="scemo_add emo_long" onclick="add('@)-)--')">@)-)--')</button>
-                            <button type="button" class="scemo_add emo_long" onclick="add('↖(^-^)↗')">↖(^-^)↗</button>
-                            <button type="button" class="scemo_add emo_long" onclick="add('(*^-^*)')">(*^-^*)</button>
-                        </div>
-                        <div class="scemo_cls">
-                            <button type="button" class="scemo_cls_btn">닫기</button>
-                        </div>
-                    </div>
-
-                </div>
-
-                <div id="write_preset">
-                    {이름} : 받는사람 이름
-                </div>
-
-                <div id="write_reply">
-                    <label for="wr_reply">회신<strong class="sound_only"> 필수</strong></label>
-                    <input type="text" name="wr_reply" 
-                           value="{{ sms_config['cf_phone'] }}"
-                           id="wr_reply" 
-                           required 
-                           class="frm_input required" 
-                           size="17"
-                           maxlength="20" readonly="readonly">
-                </div>
-
-                <div id="write_recv" class="write_inner">
-                    <h2>받는사람</h2>
-                    <button type="button" class="write_floater write_floater_btn" onclick="hp_list_del()">선택삭제</button>
-
-                    <label for="hp_list" class="sound_only">받는사람들</label>
-                    <select name="hp_list" id="hp_list" size="5"></select>
-
-                    <div id="recv_add">
-                        <label for="hp_name" class="sound_only">이름</label>
-                        <input type="text" name="hp_name" id="hp_name" class="frm_input" size="11" maxlength="20"
-                               onkeypress="if(event.keyCode==13) document.getElementById('hp_number').focus();" placeholder="이름"><br>
-                        <label for="hp_number" class="sound_only">번호</label>
-                        <input type="text" name="hp_number" id="hp_number" class="frm_input" size="11" maxlength="20"
-                               onkeypress="if(event.keyCode==13) hp_add()" placeholder="번호">
-                        <button type="button" onclick="hp_add()">추가</button>
-                        <br>
-                    </div>
-                </div>
-
-                <div id="write_rsv" class="write_inner">
-                    <h2>예약전송</h2>
-
-                    <div class="write_floater">
-                        <label for="wr_booking"><span class="sound_only">예약전송 </span>사용</label>
-                        <input type="checkbox" name="wr_booking" id="wr_booking" onclick="booking(this.checked)">
-                    </div>
-
-                    <select name="wr_by" id="wr_by" disabled>
-                        <option value="{{ datetime.today() |datetime_format('Y') }}">
-                            {{ datetime.today() |datetime_format('%Y') }}
+                <label for="wr_bd">일</label><br>
+                <select name="wr_bh" id="wr_bh" disabled>
+                    {% for i in range(0, 24) %}
+                        <option value="{{ "%02d"|format(i) }}" {% if datetime.now().strftime('%m') == i %}selected{% endif %}>
+                            {{ "%02d"|format(i) }}
                         </option>
-                        <option value="{{ datetime.now() + relativedelta(years=1) }}">
-                            {{ (datetime.now() + relativedelta(years=1)) |datetime_format('%Y') }}
+                    {% endfor %}
+                </select>
+                <label for="wr_bh">시</label>
+                <select name="wr_bi" id="wr_bi" disabled>
+                    {% for i in range(0, 60) %}
+                        <option value="{{ "%02d"|format(i) }}" {% if datetime.now().strftime('%m') == i %}selected{% endif %}>
+                            {{ "%02d"|format(i) }}
                         </option>
-                    </select>
-                    <label for="wr_by">년</label><br>
-                    <select name="wr_bm" id="wr_bm" disabled>
-                        {#<?php
-                        for ($i = 1;$i <= 12;$i++) { ?>
-                            <option value="<?php echo sprintf("%02d", $i) ?>"
-                                <?php echo get_selected(date('m'), $i); ?>
-                                >
-                                <?php echo sprintf("%02d", $i) ?>
-                            </option>
-                        <?php } ?>#}
-                        {% for i in range(1, 13) %}
-                            <option value="{{ "%02d"|format(i) }}" {% if datetime.now().strftime('%m') == i %}selected{% endif %}>
-                                {{ "%02d"|format(i) }}
-                            </option>
-                        {% endfor %}
-
-                    </select>
-                    <label for="wr_bm">월</label>
-                    <select name="wr_bd" id="wr_bd" disabled>
-                        {% for i in range(1, 32) %}
-                            <option value="{{ "%02d"|format(i) }}" {% if datetime.now().strftime('%m') == i %}selected{% endif %}>
-                                {{ "%02d"|format(i) }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                    <label for="wr_bd">일</label><br>
-                    <select name="wr_bh" id="wr_bh" disabled>
-                        {% for i in range(0, 24) %}
-                            <option value="{{ "%02d"|format(i) }}" {% if datetime.now().strftime('%m') == i %}selected{% endif %}>
-                                {{ "%02d"|format(i) }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                    <label for="wr_bh">시</label>
-                    <select name="wr_bi" id="wr_bi" disabled>
-                        {% for i in range(0, 60) %}
-                            <option value="{{ "%02d"|format(i) }}" {% if datetime.now().strftime('%m') == i %}selected{% endif %}>
-                                {{ "%02d"|format(i) }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                    <label for="wr_bi">분</label>
-                </div>
-
-                <div class="btn_confirm01 btn_confirm">
-                    <input type="submit" value="전송" class="btn_submit">
-                    <!-- <input type="submit" value="전송" onclick="send()"> -->
-                </div>
-            </form>
-        </div>
-
-        <div id="send_book">
-            <h2>휴대폰번호 목록</h2>
-            <div id="book_tab">
-                <a href="#book_group" id="book_group" class="btn btn_02">그룹</a>
-                <a href="#book_person" id="book_person" class="btn btn_02">개인</a>
-                <a href="#book_level" id="book_level" class="btn btn_02">권한</a>
+                    {% endfor %}
+                </select>
+                <label for="wr_bi">분</label>
             </div>
 
-            <div id="num_book"></div>
-
-            <div id="book_desc">SMS 수신을 허용한 회원님만 출력됩니다.</div>
-        </div>
+            <div class="btn_confirm01 btn_confirm">
+                <input type="submit" value="전송" class="btn_submit">
+                <!-- <input type="submit" value="전송" onclick="send()"> -->
+            </div>
+        </form>
     </div>
+
+    <div id="send_book">
+        <h2>휴대폰번호 목록</h2>
+        <div id="book_tab">
+            <a href="#book_group" id="book_group" class="btn btn_02">그룹</a>
+            <a href="#book_person" id="book_person" class="btn btn_02">개인</a>
+            <a href="#book_level" id="book_level" class="btn btn_02">권한</a>
+        </div>
+
+        <div id="num_book"></div>
+
+        <div id="book_desc">SMS 수신을 허용한 회원님만 출력됩니다.</div>
+    </div>
+</div>
 
 <!--start emoji -->
 <script src="/static/js/jquery.sms_paging.js"></script>
@@ -652,80 +642,48 @@ const emoticon_list = {
                 }
             }
         }
-        {#
-        <?php
-        if ($bk_no) {
-        $row = sql_fetch("select * from {$g5['sms5_book_table']} where bk_no='$bk_no'");
-        ?>
-
-        var hp_list = document.getElementById('hp_list');
-        var item = "<?php echo $row['bk_name']?> (<?php echo $row['bk_hp']?>)";
-        var value = "p,<?php echo $row['bk_no']?>";
-
-        hp_list.options[hp_list.length] = new Option(item, value);
-
-        <?php } ?>
-
-        <?php
-        if ($fo_no) {
-            $row = sql_fetch("select * from {$g5['sms5_form_table']} where fo_no='$fo_no'");
-            $fo_content = str_replace(array("\r\n", "\n"), "\\n", $row['fo_content']);
-            echo "add(\"$fo_content\");";
-        }
-        ?>
-#}
+        
+        
+        {% if sms_book %}
+            var hp_list = document.getElementById('hp_list');
+            var item = "{{ sms_book.bk_name }} ({{ sms_book.bk_hp }})";
+            var value = "p,{{ sms_book.bk_no }}";
+            hp_list.options[hp_list.length] = new Option(item, value);
+        {% endif %}
+        
+        {% if sms_form_content %}
+            add("{{ sms_form_content }}");
+        {% endif %}
+        
         byte_check('wr_message', 'sms_bytes');
         document.getElementById('wr_message').focus();
     </script>
-{#
-    <?php
 
-    if ($wr_no) {
-        // 메세지와 회신번호
-        $row = sql_fetch(" select * from {$g5['sms5_write_table']} where wr_no = '$wr_no' ");
-
-        echo "<script>\n";
-        echo "var hp_list = document.getElementById('hp_list');\n";
-        //echo "add(\"$row[wr_message]\");\n";
-        $wr_message = str_replace('"', '\"', $row['wr_message']);
-        $wr_message = str_replace(array("\r\n", "\n"), "\\n", $wr_message);
-        echo "add(\"$wr_message\");\n";
-        echo "document.getElementById('wr_reply').value = '{$row['wr_reply']}';\n";
-
-        // 회원목록
-        $sql = " select * from {$g5['sms5_history_table']} where wr_no = '$wr_no' and bk_no > 0 ";
-        $qry = sql_query($sql);
-        $tot = sql_num_rows($qry);
-
-        if ($tot > 0) {
-            $str = '재전송그룹 (' . number_format($tot) . '명)';
-            $val = 'p,';
-
-            while ($row = sql_fetch_array($qry)) {
-                $val .= $row['bk_no'] . ',';
-            }
-
-            echo "hp_list.options[hp_list.length] = new Option('$str', '$val');\n";
-        }
-
-        // 비회원 목록
-        $sql = " select * from {$g5['sms5_history_table']} where wr_no = '$wr_no' and bk_no = 0 ";
-        $qry = sql_query($sql);
-        $tot = sql_num_rows($qry);
-
-        if ($tot > 0) {
-            while ($row = sql_fetch_array($qry)) {
-                $str = "{$row['hs_name']} ({$row['hs_hp']})";
-                $val = "h,{$row['hs_name']}:{$row['hs_hp']}";
-                echo "hp_list.options[hp_list.length] = new Option('$str', '$val');\n";
-            }
-        }
-        echo "</script>\n";
-    }
-    ?>
-#}
-
-
+    {% if sms_write %} {# wr_no 있을경우 #} 
+        <script>
+            var hp_list = document.getElementById('hp_list');
+            add("{{ sms_write.wr_message }}");
+            document.getElementById('wr_reply').value = '{{ sms_write }}';
+            
+            # 회원 목록      
+            {% if member_sms_history_count > 0 %}
+                str = '재전송그룹 ('{{ member_sms_history_count }}) + '명)';
+                val ='member_sms_hitory_send_data'
+                hp_list.options[hp_list.length] = new Option(str, val)
+            {% endif %}
+      
+            # 비회원 목록
+            {% if guest_sms_history_count > 0 %}
+            
+                {% for guest in guest_sms_history %}
+                    str = "{{ guest.hs_name }} ({{ guest.hs_hp }})";
+                    val = "h,{{ guest.hs_name }}:{{ guest.hs_hp }}";
+                    hp_list.options[hp_list.length] = new Option(str, val);
+                {% endfor %}
+            {% endif %}
+            
+        </script>
+    {% endif %}
 
     <script>
         $(function () {

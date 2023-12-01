@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
@@ -23,14 +24,15 @@ admin_router = APIRouter(prefix="/sms_admin")
 @admin_router.post("/ajax/sms_send")
 async def send_sms(request: Request, wr_reply: str = Form(),
                    wr_message: str = Form(default=""),
+                   message_subject: str = Form(default=""),
                    wr_target: Optional[str] = Form(default=None),
                    send_list: str = Form(default=""),  # gnuboard serialize  g, l, h, p
-                   wr_no: Optional[int] = Form(default=None),
                    wr_by: Optional[str] = Form(default=None),  # year 년
                    wr_bm: Optional[str] = Form(default=None),  # month 월
                    wr_bd: Optional[str] = Form(default=None),  # day 일
                    wr_bh: Optional[str] = Form(default=None),  # hour 시
                    wr_bi: Optional[str] = Form(default=None),  # minute 분
+                   adsYN: Optional[str] = Form(default="N"),
                    db: Session = Depends(get_db)):
     """문자 발송
     Args:
@@ -207,18 +209,43 @@ async def send_sms(request: Request, wr_reply: str = Form(),
         str_serialize = phpserialize.dumps(duplicate_data)
 
     if total_count > 1:
-        send_result = send_sms_multi(data_list, wr_message, wr_reply, booking_date, total_count=total_count,
-                                     str_serialize=str_serialize)
+        # 대량 전송
+        messages = []
+        for data in data_list:
+            messages.append(MultiMessage(
+                snd=None,
+                sndnm="발신자명",
+                rcv=data.get('sms_book_hp'),
+                rcvnm=data.get('sms_book_name'),
+                msg=None,
+                sjt=message_subject,
+                interOPRefKey=None
+            ))
+
+        send_result = send_sms_multi(
+            data_list,
+            message_subject,
+            message_content=wr_message,
+            messages=messages,
+            sender_number=wr_reply,
+            sender_name="발신자명",
+            booking_date=booking_date,
+            total_count=total_count,
+            str_serialize=str_serialize,
+            adsYN=adsYN
+        )
 
 
     elif total_count == 1:
         send_result = send_sms_one(
             data_list=data_list,
+            message_subject=message_subject,
             message=wr_message,
             sender_number=wr_reply,
             booking_date=booking_date,
             total_count=total_count,
-            str_serialize=str_serialize
+            str_serialize=str_serialize,
+            adsYN=adsYN
         )
 
 
@@ -239,16 +266,12 @@ async def send_sms(request: Request, wr_reply: str = Form(),
     #     return {"result": "fail", "msg": f"문자 발송에 실패했습니다. \n{e.message}"}
 
 
-def send_sms_one(data_list, message, sender_number, booking_date, total_count, str_serialize, adsYN="N"):
+def send_sms_one(data_list, message_subject, message, sender_number, booking_date, total_count, str_serialize,
+                 adsYN="N"):
     send_result_number = 0
     error_code = None
     error_message = None
-
-    print('----------data')
-    print(data_list)
-    print('----------data_list[0]')
-
-    # 멈추기위해 일부러 에러발생
+    # 에러
     # print(data_list[0].sms_book_hp)
     # print('data_list[0].sms_book_hp')
     COMPANY_REGISTER_NUM = os.getenv("POPBILL_COMPANY_REGISTER_NUM")
@@ -362,8 +385,127 @@ def send_sms_one(data_list, message, sender_number, booking_date, total_count, s
         db.commit()
 
 
-def send_sms_multi(data_list, message, sender_number, booking_date, total_count, str_serialize, adsYN="N"):
-    pass
+def send_sms_multi(data_list, message_subject, message_content, messages, sender_number, sender_name, booking_date,
+                   total_count,
+                   str_serialize,
+                   adsYN="N"):
+    send_result_number = 0
+    error_code = None
+    error_message = None
+    """
+    단일메시지를 다수의 번호에 전송 요청을합니다. (동보전송)
+    """
+
+    COMPANY_REGISTER_NUM = os.getenv("xxxPOPBILL_COMPANY_REGISTER_NUM")
+    POPBILL_LINK_ID = os.getenv("xxxxxxPOPBILL_LINK_ID")
+    with SessionLocal() as db:
+        sms_config = db.query(SmsConfig).first()
+        sender_number = sms_config.cf_phone
+    if not sms_config:
+        raise PopbillException(-99999999, "문자 설정이 필요합니다.")
+
+    try:
+        send_result_number = messageService.sendSMS_multi(
+            COMPANY_REGISTER_NUM,
+            sender=sender_number,
+            senderName="발신자명",
+            Messages=messages,
+            reserveDT=booking_date,
+            adsYN=adsYN,
+            UserID=POPBILL_LINK_ID,
+            SenderName="발신자명",
+            RequestNum=None
+        )
+        print('send_result_number')
+        print(send_result_number)
+
+    except PopbillException as e:
+        logging.critical(f"fail send message popbill error code:{e.code} message: {e.message}", exc_info=True)
+        error_message = e.message
+        error_code = e.code
+        print('error_message')
+        print(error_message)
+        print('error_code')
+        print(error_code)
+
+    except Exception as e:
+        logging.critical(f"fail send message error", exc_info=True)
+        error_message = '문자 발송에 실패했습니다.'
+        error_code = 5  # 팝빌이외의 에러
+
+    success_count = 0
+    fail_count = 0
+
+    # success
+    if send_result_number and error_message is None:
+        success_count += 1
+        hs_code = "0000"
+        hs_memo = f"{data_list[0].get('sms_book_hp')} 로 전송했습니다. 팝빌전송번호: {send_result_number}"
+        hs_log = {"send_result_number": send_result_number}
+        hs_flag = 1  # success constant
+
+    # fail
+    else:
+        fail_count += 1
+        hs_code = error_code
+        hs_memo = error_message
+        hs_log = error_message
+        hs_flag = 0  # fail constant
+
+    """
+    sql_query("insert into {$g5['sms5_history_table']} set wr_no='$wr_no', 
+                wr_renum=0,
+                 bg_no='{$row['bg_no']}', 
+                 mb_id='{$row['mb_id']}', 
+                 bk_no='{$row['bk_no']}', 
+                 hs_name='".addslashes($row['bk_name'])."', 
+                 hs_hp='{$row['bk_hp']}', hs_datetime='".G5_TIME_YMDHIS."', 
+                 hs_flag='$hs_flag', 
+                 hs_code='$hs_code',
+                 hs_memo='".addslashes($hs_memo)."',
+                 hs_log='".addslashes($log)."'", 
+                 false);
+    """
+
+    # sms_write 테이블이 auto_increment 지정안되어 있어서 wr_no 를 계산해야함.
+    with SessionLocal() as db:
+        latest_id = db.query(func.max(SmsWrite.wr_no)).scalar()
+
+        if latest_id:
+            latest_id += 1
+        else:
+            latest_id = 1
+
+        new_history = SmsHistory(
+            wr_no=latest_id,
+            bg_no=data_list[0].get('bg_no'),
+            mb_id=data_list[0].get('mb_id'),
+            bk_no=data_list[0].get('bk_no'),
+            hs_name=data_list[0].get('sms_book_name'),
+            hs_hp=data_list[0].get('sms_book_hp'),
+            hs_datetime=datetime.now(),
+            hs_flag=hs_flag,
+            hs_code=hs_code,
+            hs_memo=hs_memo,
+            hs_log=hs_log
+        )
+
+        db.add(new_history)
+
+        sms_write = SmsWrite(
+            wr_no=latest_id,
+            wr_renum=0,
+            wr_reply=sender_number,
+            wr_success=success_count,
+            wr_failure=fail_count,
+            wr_message=messages,
+            wr_booking=booking_date,
+            wr_total=total_count,
+            wr_datetime=datetime.now(),
+            wr_memo=str_serialize
+        )
+        db.add(sms_write)
+        db.commit()
 
 
 def sms_result_save():
@@ -419,3 +561,24 @@ def check_valid_callback(callback_number):
         return False
 
     return True
+
+
+@dataclass
+class MultiMessage:
+    """문자 발송용 데이터 클래스
+     Attributes:
+        snd: 발신번호
+        sndnm: 발신자명
+        rcv: 수신번호
+        rcvnm: 수신자명
+        msg: 메시지 내용
+        sjt: 문자제목
+        interOPRefKey: 파트너 지정키
+    """
+    snd: Optional[str]  # 발신번호
+    sndnm: Optional[str]  # 발신자명
+    rcv: str  # 수신번호
+    rcvnm: str  # 수신자명
+    msg: Optional[str]  # 메시지 내용
+    sjt: str  # 문자제목
+    interOPRefKey: Optional[str]  # 파트너 지정키

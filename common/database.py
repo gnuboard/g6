@@ -27,7 +27,8 @@ engine = create_engine(
     poolclass=QueuePool,
     pool_size=20,  # adjust as needed
     max_overflow=40,  # adjust as needed
-    pool_timeout=60
+    pool_timeout=60,
+    echo=False,
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, expire_on_commit=True)
 

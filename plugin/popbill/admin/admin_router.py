@@ -86,8 +86,13 @@ def show_sms_config(request: Request, db: Session = Depends(get_db)):
 
 
 @admin_router.get("/sms_write")
-def show_sms_send_form(request: Request, db: Session = Depends(get_db), fg_no: Optional[str] = Form(default=0),
-                       wr_no: Optional[int] = Form(default=0)):
+def show_sms_send_form(request: Request, db: Session = Depends(get_db),
+                       fg_no: Optional[str] = Form(default=0),
+                       wr_no: Optional[int] = Form(default=0),
+                       bk_no: Optional[int] = Query(default=None),
+                       fo_no: Optional[int] = Query(default=None)
+
+                       ):
     MEMBER_MENU_KEY = "900100"
     request.session["menu_key"] = MEMBER_MENU_KEY
     error = auth_check_menu(request, MEMBER_MENU_KEY, "r")
@@ -102,37 +107,47 @@ def show_sms_send_form(request: Request, db: Session = Depends(get_db), fg_no: O
 
     form_group = db.query(SmsFormGroup).order_by(SmsFormGroup.fg_name).all()
 
+    sms_book = []
+    if bk_no:  # smsbook (연락처) 기본키
+        sms_book = db.query(SmsBook).filter(SmsBook.bk_no == bk_no).scalar()
+
+    sms_form_content = ""
+    if fo_no:  # sms_form 기본키
+        sms_form = db.query(SmsForm).filter(SmsForm.fo_no == fo_no).scalar()
+        if sms_form:
+            sms_form_content = sms_form.fo_content.replace(r"\r\n", "\\n").replace(r"\n", "\\n")
+
     member_sms_history = []
     guest_sms_history = []
+    sms_write = []
+    member_sms_hitory_send_data = ''
     if wr_no:  # SMSWrite(발송내역) 번호
         # 메세지와 발송번호
-        sms_write = db.query(SmsWrite).filter(SmsForm.fo_no == wr_no).first()
+        sms_write = db.query(SmsWrite).filter(SmsForm.fo_no == wr_no).scalar()
 
         member_sms_history = db.query(SmsHistory).filter(SmsHistory.wr_no == wr_no, SmsHistory.bk_no > 0).all()
         if len(member_sms_history) > 0:
-            option_title = f"재전송그룹 ({len(member_sms_history)} 명"
-            val = 'p,'
+            send_data = 'p,'
             for data in member_sms_history:
-                val += f"{data.bk_no},"
+                send_data += f"{data.bk_no},"
 
-            options = "hp_list.options[hp_list.length] = new Option('$str', '$val');\n"
+            member_sms_hitory_send_data = send_data
 
         # 비회원 목록
 
         guest_sms_history = db.query(SmsHistory).filter(SmsHistory.wr_no == wr_no, SmsHistory.bk_no == 0).all()
-        if len(guest_sms_history) > 0:
-
-            for data in guest_sms_history:
-                option_title = data.hs_name(data.hs_hp)
-                val = f"h, {data.hs_name}: {data.hs_hp}"
-                options += f"hp_list.options[hp_list.length] = new Option('$str', '$val');\n"
 
     return templates.TemplateResponse("admin/sms_write.html", {
         "next_year": next_year,
         "sms_config": sms_config,
         "sms_write": sms_write,
+        "sms_book": sms_book,
+        "sms_form_content": sms_form_content,
         "member_sms_history": member_sms_history,
+        "member_sms_history_count": len(member_sms_history),
+        "member_sms_hitory_send_data": member_sms_hitory_send_data,
         "guest_sms_history": guest_sms_history,
+        "guest_sms_history_count": len(guest_sms_history),
         "config": request.state.config,
         "request": request,
         "fg_no": fg_no,
@@ -232,7 +247,7 @@ def move_emoticon_group(request: Request, db: Session = Depends(get_db),
 def show_emoticon_form_list(request: Request, db: Session = Depends(get_db), fg_no: Optional[int] = Form(default=0)):
     MEMBER_MENU_KEY = "900600"
     request.session["menu_key"] = MEMBER_MENU_KEY
-    
+
     error = auth_check_menu(request, MEMBER_MENU_KEY, "r")
     if error:
         raise AlertException(error)
@@ -397,6 +412,7 @@ def show_sms_write_group_form(
         "none_group": none_group,
         "groups": groups,
     })
+
 
 @admin_router.get("/num_book")
 def show_sms_num_book_form(
