@@ -74,7 +74,9 @@ def get_theme_from_db(config=None):
 # python setup.py 를 실행하는 것이 아니라면
 if os.environ.get("is_setup") != "true":
     TEMPLATES_DIR = get_theme_from_db()
-    
+else :
+    TEMPLATES_DIR = TEMPLATES + "/basic"
+
 ADMIN_TEMPLATES_DIR = "admin/templates"
 
 # 나중에 삭제할 코드
@@ -2223,7 +2225,7 @@ def read_version():
     Returns:
         str: 버전
     """
-    with open("version.txt", "r") as file:
+    with open("version.txt", "r", encoding="UTF-8") as file:
         return file.read().strip()
 
 

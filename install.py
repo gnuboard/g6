@@ -9,8 +9,8 @@ os.environ["is_setup"] = "true"
 env_path = os.path.join(os.getcwd(), '.env')
 
 # 파일이 존재하는지 확인합니다.
-if not os.path.exists(env_path):
-    print(".env 파일이 없습니다. 프로그램을 중지합니다.")
+if os.path.exists(env_path):
+    print(".env 파일이 존재하면 설치를 진행하지 않습니다.")
     sys.exit(1)  # 프로그램 종료
 
 
