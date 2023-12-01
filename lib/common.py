@@ -46,16 +46,17 @@ TEMPLATES = "templates"
 CAPTCHA_PATH = "lib/captcha/templates"
 EDITOR_PATH = "lib/editor/templates"
 
-# .env 파일이 없을 경우 경고 메시지 출력
-if not os.path.exists(".env"):
-    print("\033[93m" + "경고: .env 파일이 없습니다. 설치를 진행해 주세요." + "\033[0m")
-    #print("python3 install.py")
-    # exit()
-# 테이블이 데이터베이스에 존재하는지 확인
-elif not inspect(engine).has_table(DB_TABLE_PREFIX + "config"):
-    print("\033[93m" + "DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요." + "\033[0m")
-    #print("python3 install.py")
-    #exit()
+# .env, DB 테이블 존재 여부 체크
+# - 설치 과정일 경우에는 체크하지 않음.
+try:
+    if not os.environ.get("is_setup"):
+        if not os.path.exists(".env"):
+            raise Exception("\033[93m" + "경고: .env 파일이 없습니다. 설치를 진행해 주세요." + "\033[0m")
+        elif not inspect(engine).has_table(DB_TABLE_PREFIX + "config"):
+            raise Exception("\033[93m" + "DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요." + "\033[0m")
+except Exception as e:
+    exit(e)
+
 
 def get_theme_from_db(config=None):
     # main.py 에서 config 를 인수로 받아서 사용
