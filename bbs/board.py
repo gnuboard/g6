@@ -17,6 +17,7 @@ router = APIRouter()
 templates = UserTemplates()
 templates.env.filters["datetime_format"] = datetime_format
 templates.env.filters["set_image_width"] = set_image_width
+templates.env.filters["url_auto_link"] = url_auto_link
 templates.env.globals["editor_macro"] = editor_macro
 templates.env.globals["get_admin_type"] = get_admin_type
 templates.env.globals["get_unique_id"] = get_unique_id
