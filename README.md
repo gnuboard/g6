@@ -48,8 +48,8 @@ UPLOAD_IMAGE_RESIZE_HEIGHT = 2800  # px 이미지 업로드 크기변환 세로 
 #팝빌 회원 ID
 POPBILL_LINK_ID = ''
 
-#팝빌에서 발급받은 비밀키. 유출에 주의하시기 바랍니다.
-POPBILL_SECREKEY = ''
+#팝빌에서 발급받은 api 비밀키. 유출에 주의하시기 바랍니다.
+POPBILL_SECRET_KEY = ''
 
 # 연동환경 설정값, 개발용(True), 상업용(False)
 POPBILL_IS_TEST = False

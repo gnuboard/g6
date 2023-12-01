@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}
+    휴대폰번호 관리
+{% endblock %}
+
+{% block subtitle %}
+    휴대폰번호 관리
+{% endblock %}
+
+{% block content %}
+
+<div class="local_ov01 local_ov">
+    <span class="btn_ov01"><span class="ov_txt">업데이트 </span><span class="ov_num">{{ sms_config.cf_datatime }}</span></span>
+    <span class="btn_ov01"><span class="ov_txt"> 건수  </span><span class="ov_num">{{ number_format(total_count) }}명</span></span>
+    <span class="btn_ov01"><span class="ov_txt"> 회원  </span><span class="ov_num">{{ number_format(member_count) }}명</span></span>
+    <span class="btn_ov01"><span class="ov_txt"> 비회원  </span><span class="ov_num">{{ number_format(none_member_count) }}명</span></span>
+    <span class="btn_ov01"><span class="ov_txt"> 수신  </span><span class="ov_num">{{ number_format(receipt_count) }}명</span></span>
+    <span class="btn_ov01"><span class="ov_txt"> 거부  </span><span class="ov_num">{{ number_format(reject_count) }}명</span></span>
+</div>
+
+<form name="search_form" method="get" action="{{request.url.path}}" class="local_sch01 local_sch">
+<input type="hidden" name="bg_no" value="{{ bg_no }}" >
+<label for="st" class="sound_only">검색대상</label>
+<select name="st" id="st">
+    <option value="all"{{ get_selected('all', st) }}>이름 + 휴대폰번호</option>
+    <option value="name"{{ get_selected('name', st) }}>이름</option>
+    <option value="hp" {{ get_selected('hp', st) }}>휴대폰번호</option>
+</select>
+<label for="sv" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
+<input type="text" name="sv" value="{{ sv }}" id="sv" required class="frm_input required">
+<input type="submit" value="검색" class="btn_submit">
+</form>
+
+
+<form name="search_form" class="local_sch01 local_sch">
+<label for="bg_no" class="sound_only">그룹명</label>
+<select name="bg_no" id="bg_no" onchange="change_group(this.value)">
+    <option value=""{{ get_selected('', bg_no) }}> 전체 </option>
+    
+    <option value="{{ none_group.bg_no }}"{{ get_selected(none_group.bg_no, bg_no) }}> {{ none_group.bg_name }}
+        ( {{ number_format(none_group.bg_count if none_group.bg_count else 0 ) }} 명) </option>
+    {% for group in groups %}
+    <option value="{{ group.bg_no }}"{{ get_selected(group.bg_no, bg_no) }}> {{ group.bg_name }}
+        ( {{ number_format(group.bg_count if group.bg_count else 0) }} 명) </option>
+    {% endfor %}
+</select>
+<input type="checkbox" name="no_hp" id="no_hp" {{ no_hp_checked }}  value="1" onclick="no_hp_click(this.checked)">
+<label for="no_hp">휴대폰 소유자만 보기</label>
+</form>
+
+
+
+<form name="hp_manage_list" id="hp_manage_list" method="post" action="./num_book/multi_update" onsubmit="return hplist_submit(this);" >
+<input type="hidden" name="token" value="">
+<input type="hidden" name="sw" value="">
+<input type="hidden" name="atype" value="del">
+<input type="hidden" name="str_query" value="{{ request.url.query }}" >
+
+<div class="tbl_head01 tbl_wrap">
+    <table>
+    <caption>{{ title }} 목록</caption>
+    <thead>
+    <tr>
+        <th scope="col">
+            <label for="chk_all" class="sound_only">현재 페이지 전체</label>
+            <input type="checkbox" id="chk_all" onclick="book_all_checked(this.checked)">
+        </th>
+        <th scope="col">번호</th>
+        <th scope="col">그룹</th>
+        <th scope="col">이름</th>
+        <th scope="col">휴대폰</th>
+        <th scope="col">수신</th>
+        <th scope="col">아이디</th>
+        <th scope="col">업데이트</th>
+        <th scope="col">관리</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% if not total_count %}
+    <tr>
+        <td colspan="10" class="empty_table">데이터가 없습니다.</td>
+    </tr>
+    {% endif %}
+    {% for person_phone_group in person_phone_groups %}
+    <tr class="bg">
+        <td class="td_chk">
+            <label for="bk_no_{{ loop.index0 }}" class="sound_only">{{ person_phone_group.group_name }} 의 {{ person_phone_group.bk_name }}</label>
+            <input type="checkbox" name="bk_no[]" value="{{ person_phone_group.bk_no }}" id="bk_no_{{loop.index0}}">
+        </td>
+        <td class="td_num">{{ person_phone_group.bk_no }}</td>
+        <td>{{ person_phone_group.group_name }}</td>
+        <td class="td_mbname">{{ person_phone_group.bk_name }}</td>
+        <td class="td_numbig">{{ person_phone_group.bk_hp }}</td>
+        <td class="td_boolean">
+           {% if person_phone_group.bk_receipt %}
+            <font color="blue">수신</font>
+            {% else %}
+            <font color=red>거부</font>
+            {% endif %}
+        </td>
+        <td class="td_mbid">
+            {% if person_phone_group.mb_id %}
+                {{ person_phone_group.mb_id }}
+            {% else %}
+                비회원
+            {% endif %}
+        </td>
+        <td class="td_datetime">{{ person_phone_group.bk_datetime }}</td>
+        <td class="td_mng td_mng_l">
+            <a href="./num_book/write?w=u&amp;bk_no={{ person_phone_group.bk_no }}&amp;page={{ request.state.page }}&amp;bg_no={{ bg_no }}&amp;st={{ st }}&amp;sv={{ sv }}&amp;ap={{ ap }}"
+               class="btn btn_03">수정
+            </a>
+            <a href="./sms_write?bk_no={{ person_phone_group.bk_no }}" class="btn btn_02">보내기</a>
+            <a href="./history_num.php?st=hs_hp&amp;sv={{ person_phone_group.bk_hp }}" class="btn btn_02">내역</a>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+    {{ paging|safe }}
+
+</div>
+<div class="btn_fixed_top">
+    <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn btn_02">
+    <input type="submit" name="act_button" value="수신허용" onclick="document.pressed=this.value" class="btn btn_02">
+    <input type="submit" name="act_button" value="수신거부" onclick="document.pressed=this.value" class="btn btn_02">
+    <input type="submit" name="act_button" value="선택이동" onclick="document.pressed=this.value" class="btn btn_02">
+    <input type="submit" name="act_button" value="선택복사" onclick="document.pressed=this.value" class="btn btn_02">
+    <a href="./num_book/write?page={{ request.state.page }}&amp;bg_no={{ bg_no }}" class="btn btn_01">번호추가</a>
+</div>
+</form>
+<script>
+function change_group(value)
+{
+    const url = window.location.href
+    if (location.href.indexOf('?') > -1){ 
+        location.href = url + '&bg_no='+ value;
+    }
+    else {
+        location.href = url + '?bg_no='+ value;
+    }
+}
+function book_all_checked(chk)
+{
+    if (chk) {
+        $('[name="bk_no[]"]').attr('checked', true);
+    } else {
+        $('[name="bk_no[]"]').attr('checked', false);
+    }
+}
+
+function no_hp_click(is_checked)
+{
+    const url = window.location.href
+    if (is_checked)
+        if (location.href.indexOf('?') > -1){ 
+            location.href = url + '&no_hp=yes';
+        } else {
+            location.href = url + '?no_hp=yes';
+
+        }
+    else {
+        if (location.href.indexOf('?') > -1){ 
+            location.href = url + '&no_hp=no';
+        } else {
+            location.href = url + '?no_hp=no';
+
+        }
+    }
+    
+    
+}
+
+function hplist_submit(f){
+    if (!is_checked("bk_no[]")) {
+        alert(document.pressed+" 하실 항목을 하나 이상 선택하세요.");
+        return false;
+    }
+    if(document.pressed == "선택이동") {
+        select_copy("move", f);
+        return;
+    }
+    if(document.pressed == "선택복사") {
+        select_copy("copy", f);
+        return;
+    }
+    if(document.pressed == "선택삭제") {
+        if(!confirm("선택한 자료를 정말 삭제하시겠습니까?")) {
+            return false;
+        }
+    }
+    if(document.pressed == "수신허용") {
+        f.atype.value="receipt";
+    }
+    if(document.pressed == "수신거부") {
+        f.atype.value="reject";
+    }
+    return true;
+}
+// 선택한 이모티콘 그룹 이동
+function select_copy(sw, f) {
+    if(!f ){
+        var f = document.emoticonlist;
+    }
+    if (sw == "copy")
+        str = "복사";
+    else
+        str = "이동";
+
+    var sub_win = window.open("", "move", "left=50, top=50, width=500, height=550, scrollbars=1");
+
+    f.sw.value = sw;
+    f.target = "move";
+    f.action = "./num_book_move.php";
+    f.submit();
+}
+</script>
+{% endblock %}

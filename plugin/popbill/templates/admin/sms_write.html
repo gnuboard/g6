@@ -841,7 +841,7 @@ const emoticon_list = {
                 book_change('book_person');
             },
             group_add: function (bg_no, bg_name, bg_count) {
-                if (bg_count == '0') {
+                if (bg_count == '0' || bg_count == '') {
                     alert('그룹이 비어있습니다.');
                     return;
                 }
@@ -896,7 +896,7 @@ const emoticon_list = {
             sms_obj.person_select = function (params, type) {
                 emoticon_list.loading(sms_obj.el_box, "/plugin/popbill/static/img/ajax-loader.gif"); //로딩 이미지 보여줌
                 $.ajax({
-                    url: "./ajax.sms_write_person.php",
+                    url: "./ajax/sms_write_person_form",
                     cache: false,
                     timeout: 30000,
                     dataType: type,
@@ -961,7 +961,7 @@ const emoticon_list = {
                 book_change($(this).attr("id"));
                 emoticon_list.loading(sms_obj.el_box, "/plugin/popbill/static/img/ajax-loader.gif"); //로딩 이미지 보여줌
                 $.ajax({
-                    url: "./ajax.sms_write_group.php",
+                    url: "./ajax/sms_write_group_form",
                     cache: false,
                     timeout: 30000,
                     dataType: 'html',
