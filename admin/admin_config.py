@@ -10,7 +10,7 @@ from common.database import get_db
 from common.formclass import ConfigForm
 from common.models import Config
 from lib.common import *
-from lib.plugin.service import get_admin_plugin_menus
+from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 
 
 router = APIRouter()
@@ -22,6 +22,8 @@ templates.env.globals["get_editor_select"] = get_editor_select
 templates.env.globals["get_member_level_select"] = get_member_level_select
 templates.env.globals["option_array_checked"] = option_array_checked
 templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
+templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
+
 
 CONFIG_MENU_KEY = "100100"
 
