@@ -21,7 +21,6 @@ templates.env.globals["get_skin_select"] = get_skin_select
 templates.env.globals["get_editor_select"] = get_editor_select
 templates.env.globals["get_member_level_select"] = get_member_level_select
 templates.env.globals["option_array_checked"] = option_array_checked
-templates.env.globals["get_admin_menus"] = get_admin_menus
 templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 
 CONFIG_MENU_KEY = "100100"
