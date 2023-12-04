@@ -2,6 +2,7 @@
 # 그누보드5 버전에서 게시판 테이블을 write 로 사용하여 테이블명을 바꾸지 못하는 관계로
 # 테이블명은 write 로, 글 한개에 대한 의미는 write 와 post 를 혼용하여 사용합니다.
 import datetime
+
 from fastapi import APIRouter, Depends, Request, File, Form, Path, Query
 from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import aliased, Session
@@ -74,12 +75,15 @@ def list_post(
     request: Request,
     db: Session = Depends(get_db),
     bo_table: str = Path(..., title="게시판 아이디"),
-    search_params: dict = Depends(common_search_query_params)
+    search_params: dict = Depends(common_search_query_params),
+    spt: int = Query(None, title="검색단위"),
 ):
     """
     지정된 게시판의 글 목록을 보여준다.
     """
     # 게시판 정보 조회
+    config = request.state.config
+
     board = db.get(Board, bo_table)
     board_config = BoardConfig(request, board)
     if not board:
@@ -121,10 +125,24 @@ def list_post(
     else:
         query = board_config.get_list_sort_query(model_write, query)
 
+    # 검색일 경우 검색단위 갯수 설정
+    prev_spt = None
+    next_spt = None
+    if (sca or (sfl and stx)):
+        search_part = int(config.cf_search_part) or 10000
+        min_spt = db.query(func.min(model_write.wr_num)).scalar() or 0
+        spt = int(request.query_params.get("spt", min_spt))
+        prev_spt = spt - search_part if spt > min_spt else None
+        next_spt = spt + search_part if spt + search_part < 0 else None
+
+        # wr_num 컬럼을 기준으로 검색단위를 구분합니다. (wr_num은 음수)
+        query = query.filter(model_write.wr_num.between(spt, spt + search_part))
+
     # 페이지 번호에 따른 offset 계산
     offset = (current_page - 1) * page_rows
     # 최종 쿼리 결과를 가져옵니다.
     writes = query.offset(offset).limit(page_rows).all()
+    # 전체 게시글 갯수 조회
     total_count = query.count()
 
     # 게시글 정보 수정
@@ -148,6 +166,8 @@ def list_post(
             "table_width": board_config.get_table_width,
             "gallery_width": board_config.gallery_width,
             "gallery_height": board_config.gallery_height,
+            "prev_spt": prev_spt,
+            "next_spt": next_spt,
         }
     )
 
