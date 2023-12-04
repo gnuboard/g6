@@ -399,7 +399,7 @@ def check_token(request: Request, token: str):
     return False
 
 
-def get_client_ip(request: Request):
+def get_client_ip(request: Request) -> str:
     '''
     클라이언트의 IP 주소를 반환하는 함수 (PHP의 $_SERVER['REMOTE_ADDR'])
     '''
@@ -407,10 +407,9 @@ def get_client_ip(request: Request):
     if x_forwarded_for:
         # X-Forwarded-For can be a comma-separated list of IPs.
         # The client's requested IP will be the first one.
-        client_ip = x_forwarded_for.split(",")[0]
+        return x_forwarded_for.split(",")[0]
     else:
-        client_ip = request.client.host
-    return {"client_ip": client_ip}
+        return request.client.host
 
 
 def make_directory(directory: str):
@@ -1195,7 +1194,7 @@ def insert_popular(request: Request, fields: str, word: str):
                     new_popular = Popular(
                         pp_word=word,
                         pp_date=today_date,
-                        pp_ip=get_client_ip(request)["client_ip"])
+                        pp_ip=get_client_ip(request))
                     db.add(new_popular)
                     db.commit()
     except Exception as e:
@@ -1318,7 +1317,7 @@ def get_unique_id(request) -> Optional[str]:
         Optional[str]: 고유 아이디, DB 오류시 None
     """
 
-    ip: str = get_client_ip(request)["client_ip"]
+    ip: str = get_client_ip(request)
 
     while True:
         current = datetime.now()
