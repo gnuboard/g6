@@ -244,7 +244,11 @@ def move_emoticon_group(request: Request, db: Session = Depends(get_db),
 
 
 @admin_router.get("/form_list")
-def show_emoticon_form_list(request: Request, db: Session = Depends(get_db), fg_no: Optional[int] = Form(default=0)):
+def show_emoticon_form_list(request: Request, db: Session = Depends(get_db),
+                            fg_no: Optional[str] = Form(default="0"),
+                            st: Optional[str] = None,
+                            sv: Optional[str] = None,
+                            ):
     MEMBER_MENU_KEY = "900600"
     request.session["menu_key"] = MEMBER_MENU_KEY
 
@@ -252,12 +256,36 @@ def show_emoticon_form_list(request: Request, db: Session = Depends(get_db), fg_
     if error:
         raise AlertException(error)
 
-    sfl = request.state.sfl
-    if not ['all', "content", "name"]:
-        sfl = "all"
-    fg_no = fg_no or 0
+    if request.state.page == "":
+        request.state.page = 1
 
-    if not sfl:
+    filters = []
+    group_filter = []
+    if fg_no.isnumeric():
+        fg_no = int(fg_no)
+        filters.append(SmsForm.fg_no == fg_no)
+        group_filter.append(SmsForm.fg_no == fg_no)
+    else:
+        fg_no = 0
+
+    if st == 'all':
+        filters.append(or_(SmsForm.fo_name.like(f'%{sv}%'), SmsForm.fo_content.like(f'%{sv}%')))
+    elif st == 'name':
+        filters.append(SmsForm.fo_name.like(f'%{sv}%'))
+    elif st == 'content':
+        filters.append(SmsForm.fo_content.like(f'%{sv}%'))
+
+    page_size = 12
+
+    total_count = db.query(func.count()).filter(*filters).scalar()
+    total_page = int(total_count / page_size) + (1 if total_count % page_size != 0 else 0)
+    page_start = page_size * (request.state.page - 1)
+
+    st = request.state.sfl
+    if not ['all', "content", "name"]:
+        st = "all"
+
+    if not st:
         emoticon_group = (db.query(models.SmsFormGroup).filter(SmsFormGroup.fg_no == fg_no)
                           .order_by(SmsFormGroup.fg_name.desc()).all())
     else:
@@ -269,13 +297,38 @@ def show_emoticon_form_list(request: Request, db: Session = Depends(get_db), fg_
     none_group = db.query(SmsForm).filter(SmsForm.fg_no == 0).scalar()
     none_group_count = db.query(func.count()).filter(SmsForm.fg_no == 0).scalar()
 
+    result = (db.query(SmsForm, SmsFormGroup)
+              .outerjoin(SmsFormGroup, SmsForm.fg_no == SmsFormGroup.fg_no)  # left 테이블, join 조건
+              .order_by(SmsForm.fo_no.desc())
+              .offset(page_start)
+              .limit(page_size).all())
+
+    emoticon_forms = []
+    form_li_tag_id = 0
+    form_index = 0
+    for sms_form, sms_form_group in result:
+        group_name = '미분류' if not sms_form_group else sms_form_group.fg_name
+        print(sms_form)
+        print(sms_form_group)
+        if form_index == 0:
+            form_li_tag_id = 1
+        else:
+            if form_li_tag_id < 12:
+                form_li_tag_id += 1
+            elif form_li_tag_id == 12:
+                form_li_tag_id = 1
+
+        emoticon_forms.append({"fo_no": sms_form.fo_no, "fo_name": sms_form.fo_name, "fo_datetime": sms_form.fo_datetime.strftime("%y-%m-%d"),
+                      "group_name": group_name, "li_i": form_li_tag_id})
+
     context = {
+        "request": request,
         "config": request.state.config,
         "emoticon_group": emoticon_group,
         "none_group": none_group,
         "none_group_count": none_group_count,
-        "request": request,
-        "total_count": len(emoticon_group) + none_group_count
+        "emoticon_forms": emoticon_forms,
+        "total_count": len(emoticon_forms) + none_group_count
     }
 
     return templates.TemplateResponse("admin/form_emoticon_list.html", context)

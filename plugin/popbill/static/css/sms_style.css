@@ -105,7 +105,7 @@
 #sms5_preset li {float:left;margin:0 20px 20px 0;width:270px;height:125px;background:#fbec99;zoom:1}
 #sms5_preset li:after {display:block;visibility:hidden;clear:both;content:''}
 #sms5_preset .li_chk {position:absolute;bottom:10px;left:10px;}
-#sms5_preset .li_preview {float:left;width:100px}
+#sms5_preset .li_preview {float:left;width:0px}
 #sms5_preset .box_square {padding-right:7px;border-right:1px solid #e2d693}
 #sms5_preset .li_info {float:left;margin:0 0 0 10px;width:140px;line-height:1.5em}
 #sms5_preset .li_date {position:absolute;bottom:10px;left:30px;color:#86857d}

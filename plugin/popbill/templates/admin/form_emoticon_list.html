@@ -1,65 +1,18 @@
 {% extends "base.html" %}
 
 {% block title %}
-    sms 기본설정
+    이모티콘 관리
 {% endblock %}
+{% block head %}
+    <link rel="stylesheet" href="/plugin/popbill/static/css/sms_style.css">
 
+
+{% endblock %}
 {% block subtitle %}
-    sms 기본설정
+    이모티콘 관리
 {% endblock %}
 
 {% block content %}
-
-<?php
-
-$page_size = 12;
-$colspan = 2;
-
-auth_check_menu($auth, $sub_menu, "r");
-
-$token = get_token();
-
-$g5['title'] = "이모티콘 관리";
-
-if ($page < 1) $page = 1;
-
-$fg_no = isset($_REQUEST['fg_no']) ? (int) $_REQUEST['fg_no'] : 0;
-
-if (is_numeric($fg_no))
-    $sql_group = " and fg_no='$fg_no' ";
-else
-    $sql_group = "";
-
-$st = clean_xss_tags($st);
-$sv = clean_xss_tags($sv);
-
-if ($st == 'all') {
-    $sql_search = "and (fo_name like '%{$sv}%' or fo_content like '%{$sv}%')";
-} else if ($st == 'name') {
-    $sql_search = "and fo_name like '%{$sv}%'";
-} else if ($st == 'content') {
-    $sql_search = "and fo_content like '%{$sv}%'";
-} else {
-    $sql_search = '';
-}
-
-$total_res = sql_fetch("select count(*) as cnt from {$g5['sms5_form_table']} where 1 $sql_group $sql_search");
-$total_count = isset($total_res['cnt']) ? $total_res['cnt'] : 0;
-
-$total_page = (int)($total_count/$page_size) + ($total_count%$page_size==0 ? 0 : 1);
-$page_start = $page_size * ( $page - 1 );
-
-$vnum = $total_count - (($page-1) * $page_size);
-
-$group = array();
-$qry = sql_query("select * from {$g5['sms5_form_group_table']} order by fg_name");
-while ($res = sql_fetch_array($qry)) array_push($group, $res);
-
-$res = sql_fetch("select count(*) as cnt from {$g5['sms5_form_table']} where fg_no=0");
-$no_count = isset($res['cnt']) ? $res['cnt'] : 0;
-
-include_once(G5_ADMIN_PATH.'/admin.head.php');
-?>
 
 <script>
 
@@ -75,7 +28,7 @@ function book_all_checked(chk)
 function book_del(fo_no)
 {
     if (confirm("한번 삭제한 자료는 복구할 방법이 없습니다.\n\n그래도 삭제하시겠습니까?"))
-        location.href = "./form_update.php?w=d&fo_no=" + fo_no + "&page={{ request.state.page }}&fg_no=<?php echo $fg_no?>&st=<?php echo get_text($st); ?>&sv=<?php echo get_text($sv); ?>";
+        location.href = "./form_update.php?w=d&fo_no=" + fo_no + "&page={{ request.state.page }}&fg_no={{ fg_no }}&st={{ st }}&sv={{ sv }}";
 }
 
 function multi_update(sel)
@@ -118,36 +71,35 @@ function multi_update(sel)
 </script>
 
 <div class="local_ov01 local_ov">
-    <span class="btn_ov01"><span class="ov_txt">건수</span><span class="ov_num">{{ total_count }} 건</span></span> 
+    <span class="btn_ov01"><span class="ov_txt">건수</span><span class="ov_num">{{ total_count }} 건</span></span>
 </div>
 
 <div class="local_sch01 local_sch sms_preset_sch">
     <form>
     <label for="fg_no" class="sound_only">그룹명</label>
     <select name="fg_no" id="fg_no" onchange="location.href='{{request.url}}?fg_no='+this.value;">
-        <option value="" <?php echo $fg_no?'':'selected'?>> 전체 </option>
-        <option value="0" <?php echo $fg_no=='0'?'selected':''?>> 미분류 (<?php echo number_format($no_count)?>) </option>
-        <?php for($i=0; $i<count($group); $i++) {?>
-            <option value="<?php echo $group[$i]['fg_no']?>"
-                <?php echo ($fg_no==$group[$i]['fg_no'])?'selected':''?>> 
-                <?php echo $group[$i]['fg_name']?> (<?php echo number_format($group[$i]['fg_count'])?>) 
+        <option value="" {{ 'selected' if fg_no else '' }} > 전체 </option>
+        <option value="0" {{ 'selected' if fg_no == 0 else '' }}> 미분류 ({{ no_count }}) </option>
+        {% for group in emoticon_group %}
+            <option value="{{ group.fg_no }}" {{ 'selected' if fg_no == group.fg_no else "" }}>
+                {{ group.fg_name }} ( {{ number_format(group.fg_count) }} )
             </option>
-        <?php } ?>
+        {% endfor %}
     </select>
     </form>
 
     <form name="search_form" method="get" action="{{request.url}}">
-    <input type="hidden" name="fg_no" value="<?php echo $fg_no;?>">
+    <input type="hidden" name="fg_no" value="{{ fg_no }}">
     <label for="st" class="sound_only">검색대상</label>
     <select name="st" id="st">
         <option value="all"{{  get_selected('all', request.state.sfl) }}>제목 + 이모티콘</option>
         <option value="name"{{  get_selected('name', request.state.sfl) }}>제목</option>
         <option value="content"{{  get_selected('content', request.state.sfl) }}>이모티콘</option>
-        
-        
+
+
     </select>
     <label for="sv" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
-    <input type="text" name="sv" value="<?php echo get_text($sv) ;?>" id="sv" required class="frm_input required" >
+    <input type="text" name="sv" value="{{ sv }}" id="sv" required class="frm_input required" >
     <input type="submit" value="검색" class="btn_submit">
     </form>
 </div>
@@ -159,60 +111,45 @@ function multi_update(sel)
 
 
 <form name="emoticonlist" id="emoticonlist" method="post" action="./form_multi_update.php" onsubmit="return emoticonlist_submit(this);" >
-<input type="hidden" name="token" value="<?php echo $token; ?>">
-<input type="hidden" name="fg_no" value="<?php echo $fg_no; ?>">
+<input type="hidden" name="token" value="">
+<input type="hidden" name="fg_no" value="{{ fg_no }}">
 <input type="hidden" name="sw" value="">
 <input type="hidden" name="atype" value="del">
 <ul id="sms5_preset" class="sms5_box">
-    <?php
-    $count = 1;
-    $qry = sql_query("select * from {$g5['sms5_form_table']} where 1 $sql_group $sql_search order by fo_no desc limit $page_start, $page_size");
-    for($i=0;$res = sql_fetch_array($qry);$i++)
-    {
-        $tmp = sql_fetch("select fg_name from {$g5['sms5_form_group_table']} where fg_no='{$res['fg_no']}'");
-        if (!$tmp)
-            $group_name = '미분류';
-        else
-            $group_name = $tmp['fg_name'];
-
-        if ($i == 0) $li_i = 1;
-        else {
-            if ($li_i < 12) $li_i += 1;
-            else if ($li_i == 12) $li_i = 1;
-        }
-    ?>
-    <li class="li_<?php echo $li_i; ?> sms5_box">
+    {%for item in emoticon_forms %}
+    <li class="li_{{ form_li_tag_id }} sms5_box">
         <span class="box_ico"></span>
         <div class="li_chk">
-            <label for="fo_no_<?php echo $i; ?>" class="sound_only"><?php echo $group_name?>의 <?php echo cut_str($res['fo_name'],10)?></label>
-            <input type="checkbox" name="fo_no[]" value="<?php echo $res['fo_no']?>" id="fo_no_<?php echo $i; ?>">
+            <label for="fo_no_{{ loop.index0 }}" class="sound_only">{{ item.group_name }}의  {{ item['fo_name'] }}</label>
+            <input type="checkbox" name="fo_no[]" value="{{ item.fo_no }}" id="fo_no_{{ loop.index0 }}>">
         </div>
         <div class="li_preview">
-            <textarea readonly class="box_txt box_square"><?php echo html_purifier($res['fo_content']); ?></textarea>
+            <textarea readonly class="box_txt box_square">{{ item.fo_content }}</textarea>
         </div>
         <div class="li_info">
-            <span class="sound_only">그룹 </span><b><?php echo $group_name?></b><br>
-            <span class="sound_only">제목 </span><?php echo cut_str($res['fo_name'],10)?><br>
+            <span class="sound_only">그룹 </span><b>{{ item.group_name }}</b><br>
+            <span class="sound_only">제목 </span>{{ item.fo_name[:10] }}<br>
         </div>
         <div class="li_date">
-            <span class="sound_only">등록 </span><?php echo date('Y-m-d', strtotime($res['fo_datetime']))?>
+            <span class="sound_only">등록 </span>{{ item.fo_datetime }}
         </div>
         <div class="li_cmd">
-            <a href="./form_write.php?w=u&amp;fo_no=<?php echo $res['fo_no']?>&amp;page=<?php echo $page;?>&amp;fg_no=<?php echo $fg_no;?>&amp;st=<?php echo get_text($st);?>&amp;sv=<?php echo get_text($sv);?>">수정</a>
-            <a href="javascript:void(book_del('<?php echo $res['fo_no']?>'));">삭제</a>
-            <a href="./sms_write?fo_no=<?php echo $res['fo_no']?>">보내기</a>
+            <a href="./form_write.php?w=u&amp;fo_no={{ item.fo_no }}&amp;page={{ request.state.page }}&amp;fg_no={{ fg_no }}&amp;st={{ st }}&amp;sv={{ sv }}">수정</a>
+            <a href="javascript:void(book_del('{{ item.fo_no }}'));">삭제</a>
+            <a href="./sms_write?fo_no={{ item.fo_no }}">보내기</a>
         </div>
     </li>
-    <?php } ?>
+    {% endfor %}
 </ul>
 
 <div class="btn_fixed_top" >
     <input type="submit" name="act_button" value="선택이동" onclick="document.pressed=this.value" class="btn btn_02">
     <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn btn_02">
-    <a href="./form_write.php?page={{ request.state.page }}&amp;fg_no=<?php echo $fg_no?>" class="btn btn_01">이모티콘 추가</a>
+    <a href="./form_write.php?page={{ request.state.page }}&amp;fg_no={{ fg_no }}" class="btn btn_01">이모티콘 추가</a>
 </div>
 
 </form>
+{{ paging|safe }}
 <script>
 function emoticonlist_submit(f){
     if (!is_checked("fo_no[]")) {
@@ -248,9 +185,5 @@ function select_copy(sw, f) {
     f.submit();
 }
 </script>
-
-<?php
-echo get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, $_SERVER['SCRIPT_NAME']."?fg_no=$fg_no&amp;st=$st&amp;sv=$sv&amp;page=");
-
 
 {% endblock %}
