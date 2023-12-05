@@ -705,7 +705,8 @@ def common_search_query_params(
         sst: str = Query(default=""), 
         sod: str = Query(default=""), 
         sfl: str = Query(default=""), 
-        stx: str = Query(default=""), 
+        stx: str = Query(default=""),
+        sca: str = Query(default=""),
         current_page: str = Query(default="1", alias="page")
         ):
     '''
@@ -716,7 +717,7 @@ def common_search_query_params(
     except ValueError:
         # current_page가 정수로 변환할 수 없는 경우 기본값으로 1을 사용하도록 설정
         current_page = 1
-    return {"sst": sst, "sod": sod, "sfl": sfl, "stx": stx, "current_page": current_page}
+    return {"sst": sst, "sod": sod, "sfl": sfl, "stx": stx, "sca": sca, "current_page": current_page}
 
 
 def select_query(request: Request, table_model, search_params: dict, 
@@ -2203,6 +2204,34 @@ def filter_words(request: Request, contents: str) -> str:
             return word
 
     return ''
+
+
+def search_font(content, stx):
+    # 문자 앞에 \를 붙입니다.
+    src = ['/', '|']
+    dst = ['\\/', '\\|']
+
+    if not stx or not stx.strip() and stx != '0':
+        return content
+
+    # 검색어 전체를 공란으로 나눈다
+    search_keywords = stx.split()
+
+    # "(검색1|검색2)"와 같은 패턴을 만듭니다.
+    pattern = ''
+    bar = ''
+    for keyword in search_keywords:
+        if keyword.strip() == '':
+            continue
+        tmp_str = re.escape(keyword)
+        tmp_str = tmp_str.replace(src[0], dst[0]).replace(src[1], dst[1])
+        pattern += f'{bar}{tmp_str}(?![^<]*>)'
+        bar = "|"
+
+    # 지정된 검색 폰트의 색상, 배경색상으로 대체
+    replace = "<b class=\"sch_word\">\\1</b>"
+
+    return re.sub(f'({pattern})', replace, content, flags=re.IGNORECASE)
 
 
 def number_format(number: int) -> str:
