@@ -1,4 +1,6 @@
 # 게시판/게시글 함수 모음 (임시)
+import bleach
+
 from datetime import datetime, timedelta
 from fastapi import Request
 from sqlalchemy import and_, distinct, or_
@@ -1196,5 +1198,30 @@ def is_secret_write(write: WriteBaseModel = None) -> bool:
     """
     return "secret" in getattr(write, "wr_option", "")
 
-    
 
+def url_auto_link(text: str, request: Request, is_nofollow: bool = True) -> str:
+    """문자열 안에 포함된 URL을 링크로 변환한다.
+
+    Args:
+        text (str): 변환할 문자열.
+        request (Request): Request 객체.
+        is_nofollow: nofollow 속성 포함여부. Defaults to True.
+
+    Returns:
+        str: 변환된 문자열.
+    """
+    cf_link_target = getattr(request.state.config, "cf_link_target", "_blank")
+
+    def _nofollow(attrs, _):
+        if is_nofollow:
+            return bleach.callbacks.nofollow(attrs)
+        else:
+            return attrs
+
+    def _target(attrs, _):
+        attrs = bleach.callbacks.target_blank(attrs)
+        if (None, "target") in attrs:
+            attrs[(None, "target")] = cf_link_target
+        return attrs
+    
+    return bleach.linkify(text, callbacks=[_nofollow, _target], parse_email=True)
