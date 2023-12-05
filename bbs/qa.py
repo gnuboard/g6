@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, File, Form, Path, Query, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, query
 from typing import List
 
 from common.database import get_db
@@ -16,35 +16,97 @@ templates.env.filters["search_font"] = search_font
 FILE_DIRECTORY = "data/qa/"
 
 
+class QaConfigService:
+    """Q&A 설정 서비스 클래스"""
+    _instance = None
+    qa_config = None
+
+    def __new__(cls, request: Request) -> "QaConfigService":
+        if not cls._instance:
+            cls._instance = super(QaConfigService, cls).__new__(cls)
+        return cls._instance
+
+    def __init__(self, request: Request):
+        self.model = QaConfig
+        self.request = request
+        self.config = request.state.config
+        self.is_mobile = request.state.is_mobile
+        self.qa_config = self.get()
+
+    @property
+    def page_rows(self) -> int:
+        """Q&A 페이지당 출력할 행의 수를 반환.
+
+        Returns:
+            int: Q&A 페이지당 출력할 행의 수.
+        """
+        # 모바일 여부 확인
+        qa_page_rows = self.qa_config.qa_mobile_page_rows if self.is_mobile else self.qa_config.qa_page_rows
+        page_rows = self.config.cf_mobile_page_rows if self.is_mobile else self.config.cf_page_rows
+
+        return qa_page_rows if qa_page_rows != 0 else page_rows
+
+    def get(self):
+        """Q&A 설정 조회
+
+        Returns:
+            QaConfig: Q&A 설정
+        """
+        db = SessionLocal()
+        qa_config = db.query(self.model).order_by(self.model.id).first()
+        db.close()
+        if not qa_config:
+            raise AlertException("Q&A 설정이 존재하지 않습니다.", 404)
+
+        return qa_config
+
+    def get_category_list(self) -> list:
+        """Q&A 설정 카테고리 목록을 반환.
+
+        Returns:
+            list: Q&A 설정 카테고리 목록.
+        """
+        return self.qa_config.qa_category.split("|") if self.qa_config.qa_category else []
+
+    def cut_write_subject(self, subject, cut_length: int = 0) -> str:
+        """주어진 cut_length에 기반하여 subject 문자열을 자르고 필요한 경우 "..."을 추가합니다.
+
+        Args:
+            - subject: 자를 대상인 주제 문자열.
+            - cut_length: subject 문자열의 최대 길이. Default: 0
+
+        Returns:
+            - str : 수정된 subject 문자열.
+        """
+        cut_length = cut_length or (self.qa_config.qa_mobile_subject_len if self.is_mobile else self.qa_config.qa_subject_len)
+
+        if not cut_length:
+            return subject
+
+        return subject[:cut_length] + "..." if len(subject) > cut_length else subject
+
+
 @router.get("/qalist")
 def qa_list(
     request: Request,
     db: Session = Depends(get_db),
-    current_page: int = Query(default=1, alias="page"),
+    current_page: int = Query(default=1, ge=1, alias="page"),
     search_params: dict = Depends(common_search_query_params),
+    qa_config_service: QaConfigService = Depends()
 ):
     """
     Q&A 목록 보기
     """
-    member = request.state.login_member
-    if not member:
-        raise AlertException("로그인 후 이용해주세요.", 403)
+    member = ensure_member_login(request)
 
     # Q&A 설정 조회
-    qa_config_service = QaConfigService(request)
     qa_config = qa_config_service.get()
 
     # Q&A 목록 조회
     query = db.query(QaContent).filter_by(qa_type = 0).order_by(QaContent.qa_id.desc())
     if not request.state.is_super_admin:
         query = query.filter_by(mb_id=member.mb_id)
-
-    # 카테고리
-    if search_params["sca"]:
-        query = query.filter_by(qa_category = search_params["sca"])
-    # 검색어
-    if search_params["stx"] and search_params["sfl"] in ["qa_subject", "qa_content", "qa_name", "mb_id"]:
-        query = query.filter(getattr(QaContent, search_params["sfl"]).like(f"%{search_params['stx']}%"))
+    query = filter_query_by_search_params(query, search_params)
 
     # 페이징 변수
     records_per_page = qa_config_service.page_rows
@@ -76,20 +138,26 @@ def qa_form_write(
     request: Request,
     db: Session = Depends(get_db),
     qa_related: int = Query(None),
+    qa_config_service: QaConfigService = Depends()
 ):
     """
     Q&A 작성하기
     """
+    member = ensure_member_login(request)
+
     # Q&A 설정 조회
-    qa_config_service = QaConfigService(request)
     qa_config = qa_config_service.get()
+    content = qa_config.qa_insert_content
 
     # 추가질문 작성 시, 원본질문 조회
     related = None
     if qa_related:
-        related = db.query(QaContent).filter_by(qa_id=qa_related).first()
+        related = db.get(QaContent, qa_related)
         if not related:
             raise AlertException(f"{qa_related} : 연관된 Q&A아이디가 존재하지 않습니다.", 404)
+        # 이전 답변내용 추가
+        line_break = "<br>" if qa_config.qa_use_editor else "\n"
+        content = f"====== 이전 답변내용 ======={line_break}" + related.qa_content
 
     context = {
         "request": request,
@@ -97,6 +165,7 @@ def qa_form_write(
         "categories": qa_config_service.get_category_list(),
         "qa": None,
         "related": related,
+        "content": content,
     }
 
     return templates.TemplateResponse(f"{request.state.device}/qa/qa_form.html", context)
@@ -107,24 +176,29 @@ def qa_form_edit(
     request: Request,
     db: Session = Depends(get_db),
     qa_id: int = Path(...),
+    qa_config_service: QaConfigService = Depends()
 ):
     """
     Q&A 수정하기
     """
+    member = ensure_member_login(request)
+
     # Q&A 설정 조회
-    qa_config_service = QaConfigService(request)
     qa_config = qa_config_service.get()
 
     # Q&A 상세 조회
     qa = db.get(QaContent, qa_id)
     if not qa:
         raise AlertException(f"{qa_id} : Q&A 아이디가 존재하지 않습니다.", 404)
+    if not request.state.is_super_admin and member.mb_id != qa.mb_id:
+        raise AlertException("수정 권한이 없습니다.", 403)
 
     context = {
         "request": request,
         "qa_config": qa_config,
         "categories": qa_config_service.get_category_list(),
         "qa": qa,
+        "content": qa.qa_content
     }
 
     return templates.TemplateResponse(f"{request.state.device}/qa/qa_form.html", context)
@@ -143,26 +217,18 @@ def qa_write_update(
     file2: UploadFile = File(None),
     qa_file_del1: int = Form(None),
     qa_file_del2: int = Form(None),
+    qa_config_service: QaConfigService = Depends()
 ):
-    """1:1문의 설정 등록/수정 처리
-
-    Args:
-        token (str): 입력/수정/삭제 변조 방지 토큰.
-        form_data (QaConfigDataclass): 입력/수정 Form Data.
-
-    Raises:
-        AlertException: 토큰 유효성 검사
-
-    Returns:
-        RedirectResponse: 1:1문의 설정 등록/수정 후 폼으로 이동
+    """
+    1:1문의 설정 등록/수정 처리
     """
     config = request.state.config
+    member = ensure_member_login(request)
 
     if not check_token(request, token):
         raise AlertException("토큰이 유효하지 않습니다", 403)
 
     # Q&A 설정 조회
-    qa_config_service = QaConfigService(request)
     qa_config = qa_config_service.get()
 
     # Q&A 내용 검증
@@ -171,6 +237,13 @@ def qa_write_update(
     if subject_filter_word or content_filter_word:
         word = subject_filter_word if subject_filter_word else content_filter_word
         raise AlertException(f"제목/내용에 금지단어({word})가 포함되어 있습니다.", 400)
+    
+    # Q&A 업로드파일 크기 검증
+    if not request.state.is_super_admin:
+        if file1.size > 0 and file1.size > qa_config.qa_upload_size:
+            raise AlertException(f"첨부파일1의 최대 크기는 {number_format(qa_config.qa_upload_size)}byte입니다.", 400)
+        if file2.size > 0 and file2.size > qa_config.qa_upload_size:
+            raise AlertException(f"첨부파일2의 최대 크기는 {number_format(qa_config.qa_upload_size)}byte입니다.", 400)
 
     qa = db.get(QaContent, qa_id)
     # 수정
@@ -180,13 +253,16 @@ def qa_write_update(
         db.commit()
     # 등록
     else:
+        if not request.state.is_super_admin and member.mb_id != qa.mb_id:
+            raise AlertException("수정 권한이 없습니다.", 403)
+
         form_data.qa_related = qa_related
         form_data.qa_type = 1 if qa_parent else 0
         form_data.qa_parent = qa_parent if qa_parent else 0
-        form_data.mb_id = ''
-        form_data.qa_name = ''
+        form_data.mb_id = member.mb_id
+        form_data.qa_name = member.mb_nick
         form_data.qa_datetime = datetime.now()
-        form_data.qa_ip = ''
+        form_data.qa_ip = get_client_ip(request)
 
         qa = QaContent(**form_data.__dict__)
         db.add(qa)
@@ -194,7 +270,7 @@ def qa_write_update(
         # 답변글
         # TODO : 메일 발송 템플릿 적용필요
         if qa_parent:
-            parent = db.query(QaContent).get(qa_parent)
+            parent = db.get(QaContent, qa_parent)
             # 원본글의 답변여부를 1로 변경
             parent.qa_status = 1
             # 답변 알림메일 발송
@@ -214,30 +290,43 @@ def qa_write_update(
     # 파일 경로체크 및 생성
     make_directory(FILE_DIRECTORY)
     # 파일 삭제
-    delete_image(FILE_DIRECTORY, f"{qa.qa_source1}", qa_file_del1)
-    delete_image(FILE_DIRECTORY, f"{qa.qa_source2}", qa_file_del2)
+    filename1 = qa.qa_file1.split("/")[-1] if qa.qa_file1 else None
+    filename2 = qa.qa_file2.split("/")[-1] if qa.qa_file2 else None
+    delete_image(FILE_DIRECTORY, f"{filename1}", qa_file_del1)
+    delete_image(FILE_DIRECTORY, f"{filename2}", qa_file_del2)
+
     # 파일 및 데이터 저장
     if file1.size > 0:
         filename1 = os.urandom(16).hex() + "." + file1.filename.split(".")[-1]
         qa.qa_file1 = FILE_DIRECTORY + filename1
         qa.qa_source1 = file1.filename
         save_image(FILE_DIRECTORY, f"{filename1}", file1)
-    elif not qa.qa_source1:
+    elif qa_file_del1:
+        qa.qa_source1 = None
         qa.qa_file1 = None
     if file2.size > 0:
         filename2 = os.urandom(16).hex() + "." + file2.filename.split(".")[-1]
         qa.qa_file2 = FILE_DIRECTORY + filename2
         qa.qa_source2 = file2.filename
         save_image(FILE_DIRECTORY, f"{filename2}", file2)
-    elif not qa.qa_source2:
+    elif qa_file_del2:
+        qa.qa_source2 = None
         qa.qa_file2 = None
     db.commit()
+
+    # SMS 알림 옵션이 활성화 되어있을 경우
+    if qa_config.qa_use_sms:
+        # TODO: SMS 발송 기능 추가 필요
+        # 1. 답변글 등록 시, 질문 등록자에게 전송
+        # 2. 문의글 등록 시, 관리자에게 발송
+        pass
+
 
     if qa.qa_type == 1:
         return RedirectResponse(url=f"/bbs/qaview/{qa.qa_parent}", status_code=302)
     else:
         return RedirectResponse(url=f"/bbs/qaview/{qa.qa_id}", status_code=302)
-
+    
 
 @router.get("/qadelete/{qa_id}")
 def qa_delete(
@@ -249,15 +338,18 @@ def qa_delete(
     """
     Q&A 삭제하기
     """
+    member = ensure_member_login(request)
+
     if not check_token(request, token):
         raise AlertException("토큰이 유효하지 않습니다", 403)
-
-    # TODO: 권한 체크
 
     # Q&A 삭제
     qa = db.get(QaContent, qa_id)
     if not qa:
         raise AlertException(f"{qa_id} : Q&A 아이디가 존재하지 않습니다.", 404)
+    if not request.state.is_super_admin and member.mb_id != qa.mb_id:
+        raise AlertException("삭제 권한이 없습니다.", 403)
+
     db.delete(qa)
     db.commit()
 
@@ -293,12 +385,14 @@ def qa_view(
     db: Session = Depends(get_db),
     qa_id: int = Path(...),
     search_params: dict = Depends(common_search_query_params),
+    qa_config_service: QaConfigService = Depends()
 ):
     """
     Q&A 상세보기
     """
+    member = ensure_member_login(request)
+
     # Q&A 설정 조회
-    qa_config_service = QaConfigService(request)
     qa_config = qa_config_service.get()
 
     # Q&A 조회
@@ -313,16 +407,16 @@ def qa_view(
         answer.image, answer.file = set_file_list(request, answer)
 
     # 연관질문 목록 조회
-    related_list = db.query(QaContent).filter_by(qa_type=0, qa_related=qa_id).all()
+    related_query = db.query(QaContent).filter_by(qa_type=0, qa_related=qa_id)
+    if not request.state.is_super_admin:
+        related_query = related_query.filter_by(mb_id=member.mb_id)
+    related_list = related_query.order_by(QaContent.qa_id.desc()).all()
 
     # 이전글, 다음글 검색조건 추가
     query = db.query(QaContent)
-    # 카테고리
-    if search_params["sca"]:
-        query = query.filter_by(qa_category=search_params["sca"])
-    # 검색어
-    if search_params["stx"] and search_params["sfl"] in ["qa_subject", "qa_content", "qa_name", "mb_id"]:
-        query = query.filter(getattr(QaContent, search_params["sfl"]).like(f"%{search_params['stx']}%"))
+    if not request.state.is_super_admin:
+        query = query.filter_by(mb_id=member.mb_id)
+    query = filter_query_by_search_params(query, search_params)
 
     prev = query.filter(QaContent.qa_type == 0, QaContent.qa_id < qa_id).order_by(QaContent.qa_id.desc()).first()
     next = query.filter(QaContent.qa_type == 0, QaContent.qa_id > qa_id).order_by(QaContent.qa_id.asc()).first()
@@ -371,77 +465,21 @@ def set_file_list(request: Request, qa: QaContent = None):
     return image, file
 
 
-class QaConfigService:
-    """Q&A 설정 서비스 클래스"""
-    qa_config = None
+def ensure_member_login(request: Request, url: str = None):
+    member = request.state.login_member
+    if not member:
+        message = "로그인 후 이용해주세요."
+        status_code = 403
+        if url:
+            raise AlertException(message, status_code, url)
+        else:
+            raise AlertException(message, status_code)
+    return member
 
-    def __new__(cls, request: Request):
-        if not hasattr(cls, "_instance"):
-            cls._instance = super(QaConfigService, cls).__new__(cls)
-        return cls._instance
 
-    def __init__(self, request: Request):
-        self.model = QaConfig
-        self.request = request
-        self.config = request.state.config
-        self.is_mobile = request.state.is_mobile
-
-    @property
-    def page_rows(self) -> int:
-        """Q&A 페이지당 출력할 행의 수를 반환.
-
-        Returns:
-            int: Q&A 페이지당 출력할 행의 수.
-        """
-        # 모바일 여부 확인
-        qa_config = self.get()
-        qa_page_rows = qa_config.qa_mobile_page_rows if self.is_mobile else qa_config.qa_page_rows
-        page_rows = self.config.cf_mobile_page_rows if self.is_mobile else self.config.cf_page_rows
-
-        return qa_page_rows if qa_page_rows != 0 else page_rows
-
-    def get(self):
-        """Q&A 설정 조회
-
-        Returns:
-            QaConfig: Q&A 설정
-        """
-        # if self.qa_config:
-        #     return self.qa_config
-
-        db = SessionLocal()
-        qa_config = db.query(self.model).order_by(self.model.id).first()
-        db.close()
-        if not qa_config:
-            raise AlertException("Q&A 설정이 존재하지 않습니다.", 404)
-
-        # self.qa_config = qa_config
-
-        return qa_config
-
-    def get_category_list(self) -> list:
-        """Q&A 설정 카테고리 목록을 반환.
-
-        Returns:
-            list: Q&A 설정 카테고리 목록.
-        """
-        qa_config = self.get()
-        return qa_config.qa_category.split("|") if qa_config.qa_category else []
-
-    def cut_write_subject(self, subject, cut_length: int = 0) -> str:
-        """주어진 cut_length에 기반하여 subject 문자열을 자르고 필요한 경우 "..."을 추가합니다.
-
-        Args:
-            - subject: 자를 대상인 주제 문자열.
-            - cut_length: subject 문자열의 최대 길이. Default: 0
-
-        Returns:
-            - str : 수정된 subject 문자열.
-        """
-        qa_config = self.get()
-        cut_length = cut_length or (qa_config.qa_mobile_subject_len if self.is_mobile else qa_config.qa_subject_len)
-
-        if not cut_length:
-            return subject
-
-        return subject[:cut_length] + "..." if len(subject) > cut_length else subject
+def filter_query_by_search_params(query: query, search_params: dict) -> query:
+    if search_params["sca"]:
+        query = query.filter_by(qa_category=search_params["sca"])
+    if search_params["stx"] and search_params["sfl"] in ["qa_subject", "qa_content", "qa_name", "mb_id"]:
+        query = query.filter(getattr(QaContent, search_params["sfl"]).like(f"%{search_params['stx']}%"))
+    return query

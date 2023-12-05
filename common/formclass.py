@@ -449,7 +449,7 @@ class QaContentForm:
     """
     qa_email: str = Form(None)
     qa_hp: str = Form(None)
-    qa_category: str = Form(...)
+    qa_category: str = Form(None)
     qa_email_recv: bool = Form(None)
     qa_sms_recv: bool = Form(None)
     qa_html: int = Form(None)

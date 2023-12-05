@@ -1583,6 +1583,7 @@ class UserTemplates(Jinja2Templates):
 
             # 공통 env.global 설정
             self.env.globals["editor_path"] = editor_path
+            self.env.globals["editor_macro"] = editor_macro
             self.env.globals["getattr"] = getattr
             self.env.globals["get_selected"] = get_selected
             self.env.globals["get_member_icon"] = get_member_icon
