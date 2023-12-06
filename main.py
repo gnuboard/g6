@@ -7,7 +7,7 @@ from pydantic import TypeAdapter
 from lib.plugin.service import register_statics, import_plugin_admin, get_plugin_state_change_time, \
     read_plugin_state, import_plugin_by_states, import_plugin_router, delete_router_by_tagname, cache_plugin_state, \
     cache_plugin_menu
-from common.database import get_db
+from common.database import db_session
 from starlette.middleware.sessions import SessionMiddleware
 from lib.common import *
 
@@ -327,7 +327,7 @@ scheduler.start()
 
 
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request, db: Session = Depends(get_db)):
+def index(request: Request, db: db_session):
     """
     메인 페이지
     """

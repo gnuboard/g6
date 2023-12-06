@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, File, Form, Path, Request, UploadFile
 from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
-from common.database import get_db
+from common.database import db_session
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import FaqMaster, Faq
 import shutil
@@ -23,7 +23,7 @@ FAQ_MENU_KEY = "300700"
 
 
 @router.get("/faq_master_list")
-def faq_master_list(request: Request, db: Session = Depends(get_db)):
+def faq_master_list(request: Request, db: db_session):
     """FAQ관리 목록"""
     model = FaqMaster
     request.session["menu_key"] = FAQ_MENU_KEY
@@ -48,7 +48,7 @@ def faq_master_add_form(request: Request):
 @router.post("/faq_master_form_update")
 def faq_master_add(
         request: Request,
-        db: Session = Depends(get_db),
+        db: db_session,
         token: str = Form(...),
         fm_subject: str = Form(...),
         fm_head_html: str = Form(None),
@@ -93,7 +93,7 @@ def faq_master_add(
 
 
 @router.get("/faq_master_form/{fm_id}")
-def faq_master_update_form(fm_id: int, request: Request, db: Session = Depends(get_db)):
+def faq_master_update_form(fm_id: int, request: Request, db: db_session):
     """FAQ관리 수정 폼"""
     request.session["menu_key"] = FAQ_MENU_KEY
 
@@ -108,7 +108,7 @@ def faq_master_update_form(fm_id: int, request: Request, db: Session = Depends(g
 def faq_master_update(
         fm_id: int,
         request: Request,
-        db: Session = Depends(get_db),
+        db: db_session,
         token: str = Form(...),
         fm_subject: str = Form(...),
         fm_head_html: str = Form(None),
@@ -163,7 +163,7 @@ def faq_master_update(
 @router.delete("/faq_master_form_delete/{fm_id}")
 def faq_master_delete(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     fm_id: int = Path(...),
 ):
     """FAQ관리 삭제 처리"""
@@ -181,7 +181,7 @@ def faq_master_delete(
 
 
 @router.get("/faq_list/{fm_id}")
-def faq_list(fm_id: int, request: Request, db: Session = Depends(get_db)):
+def faq_list(fm_id: int, request: Request, db: db_session):
     """
     FAQ목록
     """
@@ -196,7 +196,7 @@ def faq_list(fm_id: int, request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/faq_form/{fm_id}")
-def faq_add_form(fm_id: int, request: Request, db: Session = Depends(get_db)):
+def faq_add_form(fm_id: int, request: Request, db: db_session):
     """FAQ항목 등록 폼"""
     request.session["menu_key"] = FAQ_MENU_KEY
 
@@ -210,7 +210,7 @@ def faq_add_form(fm_id: int, request: Request, db: Session = Depends(get_db)):
 @router.post("/faq_form_update/{fm_id}")
 def faq_add(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     token: str = Form(...),
     fm_id: int = Path(...),
     fa_order: str = Form(...),
@@ -235,7 +235,7 @@ def faq_add(
 
 
 @router.get("/faq_form/{fm_id}/{fa_id}")
-def faq_update_form(fa_id: int, request: Request, db: Session = Depends(get_db)):
+def faq_update_form(fa_id: int, request: Request, db: db_session):
     """FAQ항목 수정 폼"""
     request.session["menu_key"] = FAQ_MENU_KEY
 
@@ -250,7 +250,7 @@ def faq_update_form(fa_id: int, request: Request, db: Session = Depends(get_db))
 @router.post("/faq_form_update/{fm_id}/{fa_id}")
 def faq_update(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     token: str = Form(...),
     fm_id: int = Path(...),
     fa_id: int = Path(...),
@@ -276,7 +276,7 @@ def faq_update(
 @router.delete("/faq_form_delete/{fa_id}")
 async def faq_delete(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     fa_id: int = Path(...),
 ):
     """FAQ 항목 삭제 처리"""

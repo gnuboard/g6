@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.models import Content
 
 router = APIRouter()
@@ -10,7 +10,7 @@ templates = UserTemplates()
 
 
 @router.get("/content/{co_id}")
-def content_view(request: Request, co_id: str, db: Session = Depends(get_db)):
+def content_view(request: Request, co_id: str, db: db_session):
     '''
     컨텐츠 보기
     '''

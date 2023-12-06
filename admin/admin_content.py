@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, File, Form, Path, Query, Request, Upload
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from common.formclass import ContentForm
-from common.database import get_db
+from common.database import db_session
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import Content
 from lib.common import *
@@ -22,7 +22,7 @@ IMAGE_DIRECTORY = "data/content/"
 
 
 @router.get("/content_list")
-def content_list(request: Request, db: Session = Depends(get_db)):
+def content_list(request: Request, db: db_session):
     """
     내용관리 목록
     """
@@ -35,7 +35,7 @@ def content_list(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/content_form")
-def content_form_add(request: Request, db: Session = Depends(get_db)):
+def content_form_add(request: Request, db: db_session):
     """
     내용추가 폼
     """
@@ -45,7 +45,7 @@ def content_form_add(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/content_form/{co_id}")
-def content_form_edit(co_id: str, request: Request, db: Session = Depends(get_db)):
+def content_form_edit(co_id: str, request: Request, db: db_session):
     """
     내용 수정 폼
     """
@@ -61,7 +61,7 @@ def content_form_edit(co_id: str, request: Request, db: Session = Depends(get_db
 
 @router.post("/content_form_update")
 def content_form_update(request: Request,
-                        db: Session = Depends(get_db),
+                        db: db_session,
                         action: str = Form(...),
                         token: str = Form(...),
                         co_id: str = Form(...),
@@ -134,7 +134,7 @@ def content_form_update(request: Request,
 
 @router.get("/content_delete/{co_id}")
 def content_delete(request: Request, 
-                   db: Session = Depends(get_db),
+                   db: db_session,
                    token: str = Query(...),
                    co_id: str = Path(...)):
     """

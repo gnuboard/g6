@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.formclass import QaConfigForm
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import QaConfig
@@ -23,7 +23,7 @@ MENU_KEY = "300500"
 
 
 @router.get("/qa_config")
-def qa_config_form(request: Request, db: Session = Depends(get_db)):
+def qa_config_form(request: Request, db: db_session):
     """
     1:1문의 설정 폼
     """
@@ -37,7 +37,7 @@ def qa_config_form(request: Request, db: Session = Depends(get_db)):
 
 @router.post("/qa_config_update")
 def qa_config_update(request: Request,
-                        db: Session = Depends(get_db),
+                        db: db_session,
                         token: str = Form(...),
                         form_data: QaConfigForm = Depends()
                         ):

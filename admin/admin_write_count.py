@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import asc, desc, case, func, and_, or_, extract, text
 from sqlalchemy.sql.expression import func, extract
 from sqlalchemy.orm import Session
-from common.database import get_db, engine
+from common.database import db_session, engine
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import *
 from lib.common import *
@@ -32,7 +32,7 @@ templates.env.globals["editor_path"] = editor_path
 WRITE_COUNT_MENU_KEY = "300820"
 
 @router.get("/write_count")
-async def write_count(request: Request, db: Session = Depends(get_db), 
+async def write_count(request: Request, db: db_session, 
         bo_table: str = Query(None, alias="bo_table"),
         period: str = Query(None, alias="period"),
         graph: str = Query(None, alias="graph")

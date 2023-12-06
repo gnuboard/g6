@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request, Form
 from sqlalchemy.orm import Session
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.models import FaqMaster, Faq
 import re 
 
@@ -12,7 +12,7 @@ templates = UserTemplates()
 
 
 @router.get("/formmail/{mb_id}")
-def formmail(request: Request, db: Session = Depends(get_db),
+def formmail(request: Request, db: db_session,
              mb_id: str = None,
              name: str = None,
              email: str = None,):
@@ -72,7 +72,7 @@ def formmail(request: Request, db: Session = Depends(get_db),
 
 
 @router.post("/formmail_send")
-async def formmail_send(request: Request, db: Session = Depends(get_db),
+async def formmail_send(request: Request, db: db_session,
                   token: str = Form(None, alias="token"),
                   email: str = Form(..., alias="to"),
                   name: str = Form(None, alias="fnick"),

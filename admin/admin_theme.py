@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse
 from lib.common import *
 import os
 from PIL import Image
-from common.database import get_db
+from common.database import db_session
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import Config
 import re
@@ -124,7 +124,7 @@ templates.env.globals['serve_screenshot'] = serve_screenshot
 
 
 @router.get("/theme")
-async def theme(request: Request, db: Session = Depends(get_db)):
+async def theme(request: Request, db: db_session):
     '''
     테마관리
     '''
@@ -191,7 +191,7 @@ async def theme_preview(request: Request, theme: str):
 
 
 @router.post("/theme_update")
-async def theme_update(request: Request, theme: str = Form(...), db: Session = Depends(get_db)):
+async def theme_update(request: Request, db: db_session, theme: str = Form(...)):
     # Check if the user is an admin
     # if not is_admin():  # Define your own is_admin() function
     #     raise HTTPException(status_code=403, detail="Only the super admin can access this page.")

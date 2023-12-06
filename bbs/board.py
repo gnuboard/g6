@@ -10,7 +10,7 @@ from lib.pbkdf2 import create_hash
 
 from lib.board_lib import *
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.formclass import WriteForm, WriteCommentForm
 from common.models import AutoSave, Board, BoardGood, Group, GroupMember, Scrap
 
@@ -32,7 +32,7 @@ FILE_DIRECTORY = "data/file/"
 @router.get("/group/{gr_id}")
 def group_board_list(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     gr_id: str = Path(...)
 ):
     """
@@ -73,7 +73,7 @@ def group_board_list(
 @router.get("/{bo_table}")
 def list_post(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(..., title="게시판 아이디"),
     search_params: dict = Depends(common_search_query_params),
     spt: int = Query(None, title="검색단위"),
@@ -175,7 +175,7 @@ def list_post(
 @router.post("/list_delete/{bo_table}")
 def list_delete(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(...),
     token: str = Form(...),
     wr_ids: list = Form(..., alias="chk_wr_id[]"),
@@ -224,7 +224,7 @@ def list_delete(
 @router.post("/move/{bo_table}")
 async def move_post(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(...),
     sw: str = Form(...),
     wr_ids: list = Form(..., alias="chk_wr_id[]"),
@@ -270,7 +270,7 @@ async def move_post(
 @router.post("/move_update/")
 def move_update(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     token: str = Form(...),
     sw: str = Form(...),
     bo_table: str = Form(...),
@@ -386,7 +386,7 @@ def move_update(
 @router.get("/write/{bo_table}")
 def write_form_add(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(...),
     parent_id: int = Query(None)
 ):
@@ -451,7 +451,7 @@ def write_form_add(
 @router.get("/write/{bo_table}/{wr_id}")
 def write_form_edit(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(...),
     wr_id: int = Path(...)
 ):
@@ -536,7 +536,7 @@ def write_form_edit(
 @router.post("/write_update")
 async def write_update(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     token: str = Form(...),
     recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
     bo_table: str = Form(...),
@@ -754,7 +754,7 @@ async def write_update(
 @router.get("/{bo_table}/{wr_id}")
 def read_post(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(...),
     wr_id: int = Path(...)
 ):
@@ -969,7 +969,7 @@ def read_post(
 @router.get("/delete/{bo_table}/{wr_id}")
 def delete_post(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(...),
     wr_id: int = Path(...),
     token: str = Query(...)
@@ -1011,7 +1011,7 @@ def delete_post(
 @router.get("/{bo_table}/{wr_id}/download/{bf_no}")
 def download_file(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(...),
     wr_id: int = Path(...),
     bf_no: int = Path(...),
@@ -1019,10 +1019,10 @@ def download_file(
     """첨부파일 다운로드
 
     Args:
+        db (Session): DB 세션. Depends로 주입
         bo_table (str): 게시판 테이블명
         wr_id (int): 게시글 아이디
         bf_no (int): 파일 순번
-        db (Session, optional): DB 세션. Defaults to Depends(get_db).
 
     Raises:
         AlertException: 파일이 존재하지 않을 경우
@@ -1086,7 +1086,7 @@ def download_file(
 @router.post("/write_comment_update/")
 async def write_comment_update(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     token: str = Form(...),
     recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
     form: WriteCommentForm = Depends(),
@@ -1188,7 +1188,7 @@ async def write_comment_update(
 @router.get("/delete_comment/{bo_table}/{comment_id}")
 def delete_comment(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(...),
     comment_id: int = Path(...),
     token: str = Query(...),
@@ -1245,7 +1245,7 @@ def delete_comment(
 @router.get("/{bo_table}/{wr_id}/link/{no}")
 def link_url(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(...),
     wr_id: int = Path(...),
     no: int = Path(...)

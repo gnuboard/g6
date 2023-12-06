@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.models import Point
 
 router = APIRouter()
@@ -12,7 +12,7 @@ templates.env.filters["datetime_format"] = datetime_format
 
 
 @router.get("/point")
-def point_list(request: Request, db: Session = Depends(get_db),
+def point_list(request: Request, db: db_session,
     current_page: int = Query(default=1, alias="page")
 ):
     """

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Request, Form, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import asc, desc
-from common.database import get_db
+from common.database import db_session
 import common.models as models 
 from lib.common import *
 from common.formclass import GroupForm
@@ -20,7 +20,7 @@ templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 
 @router.get("/boardgroup_list")
-def boardgroup_list(request: Request, db: Session = Depends(get_db)):
+def boardgroup_list(request: Request, db: db_session):
     '''
     게시판그룹관리 목록
     '''
@@ -62,7 +62,7 @@ def boardgroup_list(request: Request, db: Session = Depends(get_db)):
 @router.post("/boardgroup_list_update")
 def boardgroup_list_update(
     request: Request, 
-    db: Session = Depends(get_db),
+    db: db_session,
     token: str = Form(...),
     checks: List[int]= Form(None, alias="chk[]"),
     gr_id: List[str] = Form(None, alias="gr_id[]"),
@@ -96,7 +96,7 @@ def boardgroup_list_update(
 @router.post("/boardgroup_list_delete")
 def boardgroup_list_delete(
     request: Request, 
-    db: Session = Depends(get_db),
+    db: db_session,
     token: str = Form(...),
     checks: List[int]= Form(None, alias="chk[]"),
     gr_id: List[str] = Form(None, alias="gr_id[]"),
@@ -118,7 +118,7 @@ def boardgroup_list_delete(
 
 
 @router.get("/boardgroup_form")
-def boardgroup_form(request: Request, db: Session = Depends(get_db)):
+def boardgroup_form(request: Request, db: db_session):
     token = hash_password(hash_password("")) # 토큰값을 아무도 알수 없게 만듬
     request.session["token"] = token   
     
@@ -126,7 +126,7 @@ def boardgroup_form(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/boardgroup_form/{gr_id}")
-def boardgroup_form(gr_id: str, request: Request, db: Session = Depends(get_db)):
+def boardgroup_form(gr_id: str, request: Request, db: db_session):
     group = db.query(models.Group).filter(models.Group.gr_id == gr_id).first()
     if not group:
         raise HTTPException(status_code=404, detail=f"{gr_id} Group is not found.")
@@ -137,7 +137,7 @@ def boardgroup_form(gr_id: str, request: Request, db: Session = Depends(get_db))
 
 
 @router.post("/boardgroup_form_update")  
-def boardgroup_form_update(request: Request, db: Session = Depends(get_db),
+def boardgroup_form_update(request: Request, db: db_session,
                         action: str = Form(...),
                         token : str = Form(...),
                         gr_id: str = Form(...),

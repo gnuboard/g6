@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
-from common.database import get_db, engine
+from common.database import db_session, engine
 import common.models as models 
 from lib.common import *
 from typing import List, Optional
@@ -26,7 +26,7 @@ templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 
 @router.get("/board_list")
-def board_list(request: Request, db: Session = Depends(get_db), search_params: dict = Depends(common_search_query_params)):
+def board_list(request: Request, db: db_session, search_params: dict = Depends(common_search_query_params)):
         # sst: str = Query(default=""), # sort field (정렬 필드)
         # sod: str = Query(default=""), # search order (검색 오름, 내림차순)
         # sfl: str = Query(default=""), # search field (검색 필드)
@@ -82,7 +82,7 @@ def board_list(request: Request, db: Session = Depends(get_db), search_params: d
 
 
 @router.post("/board_list_update")
-async def board_list_update(request: Request, db: Session = Depends(get_db),
+async def board_list_update(request: Request, db: db_session,
         token: str = Form(...),
         checks: Optional[List[int]] = Form(None, alias="chk[]"),
         gr_id: Optional[List[str]] = Form(None, alias="gr_id[]"),
@@ -143,7 +143,7 @@ async def board_list_update(request: Request, db: Session = Depends(get_db),
 @router.post("/board_list_delete")
 async def board_list_delete(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     token: str = Form(...),
     checks: List[int] = Form(None, alias="chk[]"),
     bo_table: List[str] = Form(None, alias="bo_table[]"),
@@ -186,7 +186,7 @@ async def board_list_delete(
 
 # 등록 폼
 @router.get("/board_form")
-def board_form(request: Request, db: Session = Depends(get_db)):    
+def board_form(request: Request, db: db_session):    
     config = request.state.config
     
     board = {
@@ -229,7 +229,7 @@ def board_form(request: Request, db: Session = Depends(get_db)):
 
 # 수정 폼
 @router.get("/board_form/{bo_table}")
-async def board_form(bo_table: str, request: Request, db: Session = Depends(get_db),
+async def board_form(bo_table: str, request: Request, db: db_session,
                sfl: Optional[str] = None, 
                stx: Optional[str] = None, ):
     
@@ -255,7 +255,7 @@ async def board_form(bo_table: str, request: Request, db: Session = Depends(get_
 # 등록, 수정 처리
 @router.post("/board_form_update")
 def board_form_update(request: Request, 
-                        db: Session = Depends(get_db),
+                        db: db_session,
                         sfl: str = Form(None),
                         stx: str = Form(None),
                         action: str = Form(...),
@@ -682,7 +682,7 @@ def board_form_update(request: Request,
 
 
 @router.get("/board_copy/{bo_table}")
-async def board_copy(request: Request, bo_table: str, db: Session = Depends(get_db)):
+async def board_copy(request: Request, bo_table: str, db: db_session):
     board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
@@ -691,7 +691,7 @@ async def board_copy(request: Request, bo_table: str, db: Session = Depends(get_
 
 
 @router.post("/board_copy_update")
-def board_copy_update(request: Request, db: Session = Depends(get_db),
+def board_copy_update(request: Request, db: db_session,
                       bo_table: Optional[str] = Form(...),
                       target_table: Optional[str] = Form(...),
                       target_subject: Optional[str] = Form(...),

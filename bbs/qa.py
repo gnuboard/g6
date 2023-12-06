@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.formclass import QaContentForm
 from common.models import QaConfig, QaContent
 
@@ -18,7 +18,7 @@ FILE_DIRECTORY = "data/qa/"
 
 @router.get("/qalist")
 def qa_list(request: Request,
-            db: Session = Depends(get_db),
+            db: db_session,
             current_page: int = Query(default=1, alias="page"), # 페이지
             ):
     '''
@@ -72,7 +72,7 @@ def qa_list(request: Request,
 
 @router.get("/qawrite")
 def qa_form_write(request: Request,
-             db: Session = Depends(get_db),
+             db: db_session,
              qa_related: int = None):
     '''
     Q&A 작성하기
@@ -104,7 +104,7 @@ def qa_form_write(request: Request,
 @router.get("/qawrite/{qa_id:int}")
 def qa_form_edit(qa_id: int,
             request: Request,
-            db: Session = Depends(get_db)):
+            db: db_session):
     '''
     Q&A 수정하기
     '''
@@ -130,8 +130,8 @@ def qa_form_edit(qa_id: int,
 
 @router.post("/qawrite_update")
 def qa_write_update(request: Request,
+                db: db_session,
                 token: str = Form(...),
-                db: Session = Depends(get_db),
                 form_data: QaContentForm = Depends(),
                 qa_id: int = Form(None),
                 qa_parent: str = Form(None),
@@ -237,9 +237,10 @@ def qa_write_update(request: Request,
 
 @router.get("/qadelete/{qa_id}")
 def qa_delete(request: Request,
+              db: db_session,
                 qa_id: int,
                 token: str = Query(...),
-                db: Session = Depends(get_db)):
+                ):
     '''
     Q&A 삭제하기
     '''
@@ -254,7 +255,7 @@ def qa_delete(request: Request,
 
 
 @router.post("/qadelete/list")
-async def qa_delete_list(request: Request, db: Session = Depends(get_db),
+async def qa_delete_list(request: Request, db: db_session,
                       token: Optional[str] = Form(...),
                       checks: List[int] = Form(..., alias="chk_qa_id[]")
                       ):
@@ -280,7 +281,7 @@ async def qa_delete_list(request: Request, db: Session = Depends(get_db),
 @router.get("/qaview/{qa_id}")
 def qa_view(qa_id: int,
             request: Request,
-            db: Session = Depends(get_db)):
+            db: db_session):
     '''
     Q&A 상세보기
     '''

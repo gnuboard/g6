@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.models import FaqMaster, Faq
 
 router = APIRouter()
@@ -10,7 +10,7 @@ templates = UserTemplates()
 
 @router.get("/faq")
 @router.get("/faq/{fm_id}")
-def faq_view(request: Request, fm_id: int = None, db: Session = Depends(get_db)):
+def faq_view(request: Request, db: db_session, fm_id: int = None):
     '''
     FAQ 보기
     '''

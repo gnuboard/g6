@@ -6,7 +6,7 @@ from lib.pbkdf2 import validate_password
 from sqlalchemy.orm import Session
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.models import Member, Memo
 
 router = APIRouter()
@@ -17,7 +17,7 @@ templates.env.filters["default_if_none"] = default_if_none
 @router.get("/password/{action}/{bo_table}/{wr_id}", name="password_page")
 def password(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     action: str = Path(...),
     bo_table: str = Path(...),
     wr_id: int = Path(...)
@@ -45,7 +45,7 @@ def password(
 @router.post("/password_check/{action}/{bo_table}/{wr_id}")
 async def password_check(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     action: str = Path(...),
     bo_table: str = Path(...),
     wr_id: int = Path(...),

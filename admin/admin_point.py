@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
-from common.database import get_db, engine
+from common.database import db_session, engine
 import common.models as models 
 from lib.common import *
 from typing import List, Optional
@@ -27,7 +27,7 @@ templates.env.globals["format"] = format
 
 
 @router.get("/point_list")
-def point_list(request: Request, db: Session = Depends(get_db), search_params: dict = Depends(common_search_query_params)):
+def point_list(request: Request, db: db_session, search_params: dict = Depends(common_search_query_params)):
         # sst: str = Query(default=""), # sort field (정렬 필드)
         # sod: str = Query(default=""), # search order (검색 오름, 내림차순)
         # sfl: str = Query(default=""), # search field (검색 필드)
@@ -96,7 +96,7 @@ def point_list(request: Request, db: Session = Depends(get_db), search_params: d
 
 
 @router.post("/point_update")
-async def point_update(request: Request, db: Session = Depends(get_db),
+async def point_update(request: Request, db: db_session,
         search_params: dict = Depends(common_search_query_params),
         token: Optional[str] = Form(...),
         mb_id: Optional[str] = Form(default=""),
@@ -131,7 +131,7 @@ async def point_update(request: Request, db: Session = Depends(get_db),
 
 
 @router.post("/point_list_delete")
-async def point_list_delete(request: Request, db: Session = Depends(get_db),
+async def point_list_delete(request: Request, db: db_session,
         search_params: dict = Depends(common_search_query_params),
         token: Optional[str] = Form(...),
         checks: Optional[List[int]] = Form(None, alias="chk[]"),

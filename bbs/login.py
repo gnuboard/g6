@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 
 from lib.pbkdf2 import validate_password
 
@@ -27,7 +27,7 @@ def login_form(request: Request,
 
 
 @router.post("/login")
-def login(request: Request, db: Session = Depends(get_db), 
+def login(request: Request, db: db_session, 
         mb_id: str = Form(...), 
         mb_password: str = Form(...),
         url: str = Form(default="/")
@@ -56,7 +56,7 @@ def login(request: Request, db: Session = Depends(get_db),
 
 
 @router.post("/login_check")
-def check_login(request: Request, db: Session = Depends(get_db), mb_id: str = Form(...), mb_password: str = Form(...)):
+def check_login(request: Request, db: db_session, mb_id: str = Form(...), mb_password: str = Form(...)):
     """
     outlogin 에서 로그인
     """

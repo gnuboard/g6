@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.formclass import NewwinForm
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import NewWin
@@ -20,7 +20,7 @@ MENU_KEY = "100310"
 
 
 @router.get("/newwin_list")
-def newwin_list(request: Request, db: Session = Depends(get_db)):
+def newwin_list(request: Request, db: db_session):
     """
     팝업 목록
     """
@@ -46,7 +46,7 @@ def newwin_form_add(request: Request):
 
 
 @router.get("/newwin_form/{nw_id}")
-def newwin_form_edit(request: Request, nw_id: int, db: Session = Depends(get_db)):
+def newwin_form_edit(request: Request, nw_id: int, db: db_session):
     """
     팝업 수정 폼
     """
@@ -58,7 +58,7 @@ def newwin_form_edit(request: Request, nw_id: int, db: Session = Depends(get_db)
 
 @router.post("/newwin_form_update")
 def newwin_form_update(request: Request,
-                        db: Session = Depends(get_db),
+                        db: db_session,
                         token: str = Form(...),
                         nw_id: int = Form(None),
                         form_data: NewwinForm = Depends()
@@ -91,7 +91,7 @@ def newwin_form_update(request: Request,
 @router.get("/newwin_delete/{nw_id}")
 def newwin_delete(nw_id: int, 
                    request: Request, 
-                   db: Session = Depends(get_db),
+                   db: db_session,
                    token: str = Query(...)):
     """
     팝업 삭제

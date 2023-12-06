@@ -3,7 +3,7 @@ from fastapi.params import Depends
 from starlette.responses import Response, JSONResponse
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.formclass import AutoSaveForm
 from common.models import AutoSave
 
@@ -11,7 +11,7 @@ router = APIRouter()
 
 
 @router.get("/autosave_list")
-def autosave_list(request: Request, db: Session = Depends(get_db)):
+def autosave_list(request: Request, db: db_session):
     """
     자동저장 목록을 보여준다.
     """
@@ -24,7 +24,7 @@ def autosave_list(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/autosave_load/{as_id}")
-def autosave_load(request: Request, as_id: int, db: Session = Depends(get_db)):
+def autosave_load(request: Request, as_id: int, db: db_session):
     """
     자동저장 내용을 불러온다.
     """
@@ -37,7 +37,7 @@ def autosave_load(request: Request, as_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/autosave")
-def autosave(request: Request, form_data: AutoSaveForm = Depends(), db: Session = Depends(get_db)):
+def autosave(request: Request, db: db_session, form_data: AutoSaveForm = Depends()):
     """
     글 임시저장
     """
@@ -64,7 +64,7 @@ def autosave(request: Request, form_data: AutoSaveForm = Depends(), db: Session 
 
 
 @router.delete("/autosave/{as_id}")
-def autosave(request: Request, as_id: int, db: Session = Depends(get_db)):
+def autosave(request: Request, as_id: int, db: db_session):
     """
     임시저장글 삭제
     """

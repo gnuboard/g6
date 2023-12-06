@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Form, Path
 from fastapi.responses import RedirectResponse
 
 from bbs.social import SocialAuthService
-from common.database import get_db
+from common.database import db_session
 from lib.common import *
 from lib.pbkdf2 import create_hash
 
@@ -29,7 +29,7 @@ def find_member_id_form(request: Request):
 @router.post("/id_lost")
 async def find_member_id(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     token: str = Form(...),
     mb_name: str = Form(...),
     mb_email: str = Form(...),
@@ -83,7 +83,7 @@ def find_member_password_form(request: Request):
 @router.post("/password_lost")
 async def find_member_password(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     token: str = Form(...),
     mb_id: str = Form(...),
     mb_email: str = Form(...),
@@ -137,7 +137,7 @@ async def find_member_password(
 @router.get("/password_reset/{mb_id}/{token}")
 def reset_password_form(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     mb_id: str = Path(...),
     token: str = Path(...)
 ):
@@ -170,7 +170,7 @@ def reset_password_form(
 @router.post("/password_reset/{mb_id}")
 async def reset_password(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     mb_id: str = Path(...),
     token: str = Form(...),
     mb_password: str = Form(..., min_length=4, max_length=20),

@@ -17,7 +17,7 @@ from lib.social import providers
 from lib.social.social import oauth, SocialProvider, get_social_profile, get_social_login_token
 from lib.common import AlertException, valid_email, hash_password, session_member_key, insert_point, \
     is_admin, default_if_none, UserTemplates, TEMPLATES_DIR, mailer
-from common.database import get_db, SessionLocal
+from common.database import db_session, SessionLocal
 from common.formclass import MemberForm
 
 from common.models import Config, MemberSocialProfiles, Member
@@ -90,7 +90,7 @@ async def social_login(request: Request):
 
 
 @router.get('/social/login/callback')
-async def authorize_social_login(request: Request, db: Session = Depends(get_db), ):
+async def authorize_social_login(request: Request, db: db_session, ):
     """
     소셜 로그인 인증 콜백
     """
@@ -189,8 +189,8 @@ async def get_social_register_form(request: Request):
 @router.post('/social/register')
 async def post_social_register(
         request: Request,
+        db: db_session,
         member_form: MemberForm = Depends(),
-        db: Session = Depends(get_db),
 ):
     """
     신규 소셜 회원등록

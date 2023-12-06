@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Form
 
 from bbs.social import SocialAuthService
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from main import templates
 
 router = APIRouter()
@@ -25,7 +25,7 @@ def member_leave_form(request: Request):
 
 
 @router.post("/member_leave")
-def member_leave(request: Request, db: Session = Depends(get_db), token: str = Form(...)):
+def member_leave(request: Request, db: db_session, token: str = Form(...)):
     """회원탈퇴
     """
     if not check_token(request, token):

@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.models import Poll, PollEtc
 
 router = APIRouter()
@@ -18,7 +18,7 @@ templates.env.add_extension('jinja2.ext.loopcontrols')
 
 
 @router.post("/poll_update/{po_id}")
-def poll_update(request: Request, po_id: int, token: str = Form(...), gb_poll: int = Form(...), db: Session = Depends(get_db)):
+def poll_update(request: Request, db: db_session, po_id: int, token: str = Form(...), gb_poll: int = Form(...)):
     """
     투표하기
     """
@@ -54,7 +54,7 @@ def poll_update(request: Request, po_id: int, token: str = Form(...), gb_poll: i
       
 
 @router.get("/poll_result/{po_id}")
-def poll_result(request: Request, po_id: int, db: Session = Depends(get_db)):
+def poll_result(request: Request, po_id: int, db: db_session):
     """
     투표 결과
     """
@@ -99,12 +99,13 @@ def poll_result(request: Request, po_id: int, db: Session = Depends(get_db)):
 
 @router.post("/poll_etc_update/{po_id}")
 async def poll_etc_update(request: Request,
+                    db: db_session,
                     po_id: int, 
                     token: str = Form(...),
                     recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
                     pc_name: str = Form(...),
                     pc_idea: str = Form(...),
-                    db: Session = Depends(get_db)):
+                    ):
     """
     기타의견 등록
     """
@@ -149,7 +150,7 @@ async def poll_etc_update(request: Request,
 @router.get("/poll_etc_delete/{pc_id}")
 def poll_etc_delete(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     pc_id: int = Path(...),
     token: str = Query(...)):
     """

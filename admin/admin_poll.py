@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.formclass import PollForm
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import Poll, PollEtc 
@@ -53,7 +53,7 @@ def poll_list(request: Request,
 @router.post("/poll_list_delete")
 def poll_list_delete(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     token: str = Form(None),
     checks: List[int] = Form(..., alias="chk[]")
 ):
@@ -84,7 +84,7 @@ def poll_form_add(request: Request):
 
 
 @router.get("/poll_form/{po_id}")
-def poll_form_edit(po_id: int, request: Request, db: Session = Depends(get_db)):
+def poll_form_edit(po_id: int, request: Request, db: db_session):
     """
     투표 수정 폼
     """
@@ -96,7 +96,7 @@ def poll_form_edit(po_id: int, request: Request, db: Session = Depends(get_db)):
 
 @router.post("/poll_form_update")
 def poll_form_update(request: Request,
-                        db: Session = Depends(get_db),
+                        db: db_session,
                         token: str = Form(...),
                         po_id: int = Form(None),
                         form_data: PollForm = Depends()

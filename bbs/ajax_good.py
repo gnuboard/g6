@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.models import Board, BoardGood
 
 router = APIRouter()
@@ -12,7 +12,7 @@ router = APIRouter()
 @router.post("/good/{bo_table}/{wr_id}/{type}")
 async def ajax_good(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     token: str = Form(...),
     bo_table: str = Path(...),
     wr_id: int = Path(...),

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from bbs.member_profile import validate_nickname, validate_userid, is_prohibit_email
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.formclass import MemberForm
 from common.models import Member
 from lib.pbkdf2 import create_hash
@@ -81,7 +81,7 @@ def get_register_form(request: Request):
 
 
 @router.post("/register_form", name='register_form_save')
-async def post_register_form(request: Request, db: Session = Depends(get_db),
+async def post_register_form(request: Request, db: db_session,
                              token: str = Form(..., alias="token"),
                              mb_id: str = Form(None),
                              mb_password: str = Form(None),
@@ -286,7 +286,7 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/register_result")
-def register_result(request: Request, db: Session = Depends(get_db)):
+def register_result(request: Request, db: db_session):
     register_mb_id = request.session.get("ss_mb_reg", "")
     if "ss_mb_reg" in request.session:
         request.session.pop("ss_mb_reg")
@@ -308,7 +308,7 @@ def register_result(request: Request, db: Session = Depends(get_db)):
 @router.get("/email_certify/{mb_id}")
 def email_certify(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     mb_id: str = Path(...),
     certify: str = Query(...),
 ):

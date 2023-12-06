@@ -4,7 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import Popular
 
@@ -20,7 +20,7 @@ RANK_MENU_KEY = "300400"
 
 
 @router.get("/popular_list", tags=["admin_popular_list"])
-def popular_list(request: Request, db: Session = Depends(get_db),
+def popular_list(request: Request, db: db_session,
                  search_params: dict = Depends(common_search_query_params)):
     '''
     인기검색어 목록
@@ -48,8 +48,8 @@ def popular_list(request: Request, db: Session = Depends(get_db),
 
 @router.post("/popular/delete", tags=["admin_popular_list"])
 def popular_delete(request: Request,
+                    db: db_session,
                     token: str = Form(None),
-                    db: Session = Depends(get_db),
                     checks: List[int] = Form(..., alias="chk[]")):
     '''
     인기검색어 목록 삭제
@@ -72,7 +72,7 @@ def popular_delete(request: Request,
 
 @router.get("/popular_rank", tags=["admin_popular_rank"])
 def popular_rank(request: Request,
-                db: Session = Depends(get_db),
+                db: db_session,
                 fr_date: str = Query(default=str(datetime.now().date())),
                 to_date: str = Query(default=str(datetime.now().date())),
                 current_page: int = Query(default=1, alias="page")

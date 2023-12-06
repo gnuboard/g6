@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from lib.board_lib import *
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.models import BoardNew, Board
 
 router = APIRouter()
@@ -14,7 +14,7 @@ templates = UserTemplates()
 @router.get("/new")
 def board_new_list(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     gr_id: str = Query(None),
     view: str = Query(None),
     mb_id: str = Query(None),
@@ -74,7 +74,7 @@ def board_new_list(
 @router.post("/new_delete")
 def new_delete(
         request: Request,
-        db: Session = Depends(get_db),
+        db: db_session,
         token: str = Form(...),
         bn_ids: list = Form(..., alias="chk_bn_id[]"),
     ):

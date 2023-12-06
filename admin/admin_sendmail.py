@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import asc, desc, and_, or_, func, extract
 from sqlalchemy.orm import Session
-from common.database import get_db, engine
+from common.database import db_session, engine
 import common.models as models 
 from lib.common import *
 from fastapi import FastAPI, HTTPException
@@ -34,7 +34,7 @@ templates.env.globals["domain_mail_host"] = domain_mail_host
 
 
 @router.get("/sendmail_test")
-async def visit_search(request: Request, db: Session = Depends(get_db),
+async def visit_search(request: Request, db: db_session,
         ):
     '''
     메일 테스트
@@ -50,7 +50,7 @@ async def visit_search(request: Request, db: Session = Depends(get_db),
 
 
 @router.post("/sendmail_test_result")
-async def sendmail_test_result(request: Request, db: Session = Depends(get_db),
+async def sendmail_test_result(request: Request, db: db_session,
         token: str = Form(..., alias="token"),
         to_email: str = Form(..., alias="email"),
         ):

@@ -3,10 +3,9 @@ import socket
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
 from typing import List
 
-from common.database import get_db
+from common.database import db_session
 from common.formclass import ConfigForm
 from common.models import Config
 from lib.common import *
@@ -57,7 +56,7 @@ def config_form(request: Request):
 @router.post("/config_form_update")
 def config_form_update(
         request: Request,
-        db: Session = Depends(get_db),
+        db: db_session,
         token: str = Form(None),
         social_list: List[str] = Form(None, alias="cf_social_servicelist[]"),
         form_data: ConfigForm = Depends(),

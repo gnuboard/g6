@@ -2,8 +2,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, File, Query, Request, Form, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy import asc, desc
-from sqlalchemy.orm import Session
-from common.database import get_db
+from common.database import db_session
 import common.models as models
 import datetime
 from lib.common import *
@@ -37,7 +36,7 @@ cache = {}
 @router.get("/member_list")
 async def member_list(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     search_params: dict = Depends(common_search_query_params),
 ):
     """
@@ -170,7 +169,7 @@ async def member_list(
 @router.post("/member_list_update")
 async def member_list_update(
         request: Request,
-        db: Session = Depends(get_db),
+        db: db_session,
         token: Optional[str] = Form(None),
         checks: Optional[List[int]] = Form(None, alias="chk[]"),
         mb_id: Optional[List[str]] = Form(None, alias="mb_id[]"),
@@ -209,7 +208,7 @@ async def member_list_update(
 @router.post("/member_list_delete")
 async def member_list_delete(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     token: str = Form(...),
     checks: List[int] = Form(None, alias="chk[]"),
     mb_id: List[str] = Form(None, alias="mb_id[]"),
@@ -291,7 +290,7 @@ async def member_list_delete(
 
 @router.get("/member_form")
 @router.get("/member_form/{mb_id}")
-def member_form(request: Request, db: Session = Depends(get_db),
+def member_form(request: Request, db: db_session,
                 mb_id: Optional[str] = None):
     """
     회원추가, 수정 폼
@@ -348,7 +347,7 @@ def get_member_image(mb_id):
 
 # 회원수정 폼
 # @router.get("/member_form/{mb_id}")
-# def member_form_edit(mb_id: str, request: Request, db: Session = Depends(get_db)):
+# def member_form_edit(mb_id: str, request: Request, db: db_session):
 #     """
 #     회원수정 폼
 #     """
@@ -371,7 +370,7 @@ def get_member_image(mb_id):
 @router.post("/member_form_update")
 async def member_form_update(
         request: Request,
-        db: Session = Depends(get_db),
+        db: db_session,
         token: str = Form(None),
         mb_id: str = Form(...),
         mb_password: str = Form(default=""),
@@ -507,7 +506,7 @@ def upload_member_icon(mb_id: str, mb_icon: UploadFile, del_mb_icon: int):
 
 
 @router.get("/check_member_id/{mb_id}")
-async def check_member_id(mb_id: str, request: Request, db: Session = Depends(get_db)):
+async def check_member_id(mb_id: str, request: Request, db: db_session):
     """
     회원아이디 중복체크
     """
@@ -519,7 +518,7 @@ async def check_member_id(mb_id: str, request: Request, db: Session = Depends(ge
     
 
 @router.get("/check_member_email/{mb_email}/{mb_id}")
-async def check_member_email(mb_email: str, mb_id: str, request: Request, db: Session = Depends(get_db)):
+async def check_member_email(mb_email: str, mb_id: str, request: Request, db: db_session):
     """
     회원이메일 중복체크
     """
@@ -531,7 +530,7 @@ async def check_member_email(mb_email: str, mb_id: str, request: Request, db: Se
 
 
 @router.get("/check_member_nick/{mb_nick}/{mb_id}")
-async def check_member_nick(mb_nick: str, mb_id: str, request: Request, db: Session = Depends(get_db)):
+async def check_member_nick(mb_nick: str, mb_id: str, request: Request, db: db_session):
     """
     회원닉네임 중복체크
     """

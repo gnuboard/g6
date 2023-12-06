@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException, Pat
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import asc, desc, and_, or_, func, extract
 from sqlalchemy.orm import Session
-from common.database import get_db, engine
+from common.database import db_session, engine
 import common.models as models 
 from lib.common import *
 from fastapi import FastAPI, HTTPException
@@ -39,7 +39,7 @@ templates.env.globals["editor_path"] = editor_path
 MAIL_MENU_KEY = "200300"
 
 @router.get("/mail_list")
-async def mail_list(request: Request, db: Session = Depends(get_db), search_params: dict = Depends(common_search_query_params)):
+async def mail_list(request: Request, db: db_session, search_params: dict = Depends(common_search_query_params)):
     '''
     회원메일발송 목록
     '''
@@ -72,7 +72,7 @@ async def mail_list(request: Request, db: Session = Depends(get_db), search_para
 
 
 # @router.get("/mail_form")                
-# async def mail_form(request: Request, db: Session = Depends(get_db),):
+# async def mail_form(request: Request, db: db_session,):
 #     '''
 #     회원메일발송 등록
 #     '''
@@ -89,7 +89,7 @@ async def mail_list(request: Request, db: Session = Depends(get_db), search_para
 
 @router.get("/mail_form") # 등록
 @router.get("/mail_form/{ma_id}") # 수정
-async def mail_form(request: Request, db: Session = Depends(get_db),
+async def mail_form(request: Request, db: db_session,
                     ma_id: int = None):
     '''
     회원메일발송 등록 및 수정
@@ -111,7 +111,7 @@ async def mail_form(request: Request, db: Session = Depends(get_db),
 
 
 @router.post("/mail_update")
-async def mail_form_update(request: Request, db: Session = Depends(get_db),
+async def mail_form_update(request: Request, db: db_session,
         token: str = Form(..., alias="token"),
         ma_id: int = Form(None, alias="ma_id"),
         ma_subject: str = Form(..., alias="ma_subject"),
@@ -146,7 +146,7 @@ async def mail_form_update(request: Request, db: Session = Depends(get_db),
 
 
 @router.post("/mail_delete")
-async def mail_delete(request: Request, db: Session = Depends(get_db),
+async def mail_delete(request: Request, db: db_session,
         token: str = Form(..., alias="token"),
         checks: List[int] = Form(..., alias="chk[]"),
         ma_id: List[int] = Form(..., alias="ma_id[]"),
@@ -167,7 +167,7 @@ async def mail_delete(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/mail_test/{ma_id}")
-async def mail_test(request: Request, db: Session = Depends(get_db),
+async def mail_test(request: Request, db: db_session,
         ma_id: int = Path(...),
         ):
     '''
@@ -221,7 +221,7 @@ async def mail_test(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/mail_select_form/{ma_id}")
-async def mail_select_form(request: Request, db: Session = Depends(get_db),
+async def mail_select_form(request: Request, db: db_session,
         ma_id: int = Path(...),
         mb_id1: int = Query(None),
         mb_level_from: str = Query(None),
@@ -295,7 +295,7 @@ async def mail_select_form(request: Request, db: Session = Depends(get_db),
 
 
 @router.post("/mail_select_list")
-async def mail_select_list(request: Request, db: Session = Depends(get_db),
+async def mail_select_list(request: Request, db: db_session,
         # token: str = Form(..., alias="token"),
         ma_id: int = Form(..., alias="ma_id"),
         mb_id1: int = Form(None, alias="mb_id1"),
@@ -363,7 +363,7 @@ async def mail_select_list(request: Request, db: Session = Depends(get_db),
 
 
 @router.post("/mail_select_result", response_class=HTMLResponse)
-async def mail_select_result(request: Request, db: Session = Depends(get_db),
+async def mail_select_result(request: Request, db: db_session,
         token: str = Form(..., alias="token"),
         ma_id: int = Form(..., alias="ma_id"),
         ):
@@ -385,7 +385,7 @@ async def mail_select_result(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/mail_select_send")
-async def mail_select_send(request: Request, db: Session = Depends(get_db),
+async def mail_select_send(request: Request, db: db_session,
         ma_id: int = Query(...),
         ):
     '''
@@ -448,7 +448,7 @@ async def mail_select_send(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/mail_preview/{ma_id}")
-async def mail_preview(request: Request, db: Session = Depends(get_db),
+async def mail_preview(request: Request, db: db_session,
         ma_id: int = Path(...),
         ):
     '''

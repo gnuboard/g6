@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Path, Request, Form
 from fastapi.responses import RedirectResponse
 from sqlalchemy import desc
 from sqlalchemy.orm import Session, aliased
-from common.database import get_db
+from common.database import db_session
 from common.models import Group, GroupMember, Member
 from lib.common import *
 from typing import List
@@ -17,7 +17,7 @@ templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_nam
 @router.get("/boardgroupmember_list/{gr_id}")
 def boardgroupmember_list(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     gr_id: str = Path(...),
     search_params: dict = Depends(common_search_query_params)
 ):
@@ -74,7 +74,7 @@ def boardgroupmember_list(
 @router.get("/boardgroupmember_form/{mb_id}")
 def board_form(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     mb_id: str = Path(...)
 ):
     """
@@ -108,7 +108,7 @@ def board_form(
 @router.post("/boardgroupmember_insert")
 async def boardgroupmember_insert(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     token: str = Form(...),
     mb_id: str = Form(...),
     gr_id: str = Form(...),
@@ -145,7 +145,7 @@ async def boardgroupmember_insert(
 @router.post("/boardgroupmember_delete")
 async def boardgroupmember_delete(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     token: str = Form(...),
     checks: List[int] = Form(None, alias="chk[]"),
     mb_id: str = Form(None),
