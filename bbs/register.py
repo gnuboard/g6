@@ -21,7 +21,7 @@ templates.env.globals["check_profile_open"] = check_profile_open
 
 
 @router.get("/register")
-def get_register(request: Request, response: Response):
+async def get_register(request: Request, response: Response):
     # 캐시 제어 헤더 설정 (캐시된 페이지를 보여주지 않고 새로운 페이지를 보여줌)
 
     response.headers["Cache-Control"] = "no-store"
@@ -34,7 +34,7 @@ def get_register(request: Request, response: Response):
 
 
 @router.post("/register")
-def post_register(request: Request, agree: str = Form(...), agree2: str = Form(...)):
+async def post_register(request: Request, agree: str = Form(...), agree2: str = Form(...)):
     if not agree:
         raise AlertException(status_code=400, detail="회원가입약관에 동의해 주세요.")
     if not agree2:
@@ -46,7 +46,7 @@ def post_register(request: Request, agree: str = Form(...), agree2: str = Form(.
 
 
 @router.get("/register_form", name='register_form')
-def get_register_form(request: Request):
+async def get_register_form(request: Request):
     # 약관에 동의를 하지 않았다면
     agree = request.session.get("ss_agree", None)
     agree2 = request.session.get("ss_agree2", None)
@@ -275,7 +275,7 @@ async def post_register_form(request: Request, db: db_session,
 
 
 @router.get("/register_result")
-def register_result(request: Request, db: db_session):
+async def register_result(request: Request, db: db_session):
     register_mb_id = request.session.get("ss_mb_reg", "")
     if "ss_mb_reg" in request.session:
         request.session.pop("ss_mb_reg")
@@ -295,7 +295,7 @@ def register_result(request: Request, db: db_session):
 
 
 @router.get("/email_certify/{mb_id}")
-def email_certify(
+async def email_certify(
     request: Request,
     db: db_session,
     mb_id: str = Path(...),

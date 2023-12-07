@@ -18,7 +18,7 @@ templates.env.add_extension('jinja2.ext.loopcontrols')
 
 
 @router.post("/poll_update/{po_id}", dependencies=[Depends(validate_token)])
-def poll_update(request: Request, db: db_session, po_id: int, gb_poll: int = Form(...)):
+async def poll_update(request: Request, db: db_session, po_id: int, gb_poll: int = Form(...)):
     """
     투표하기
     """
@@ -51,7 +51,7 @@ def poll_update(request: Request, db: db_session, po_id: int, gb_poll: int = For
       
 
 @router.get("/poll_result/{po_id}")
-def poll_result(request: Request, po_id: int, db: db_session):
+async def poll_result(request: Request, po_id: int, db: db_session):
     """
     투표 결과
     """
@@ -136,7 +136,7 @@ async def poll_etc_update(request: Request,
 
 
 @router.get("/poll_etc_delete/{pc_id}", dependencies=[Depends(validate_token)])
-def poll_etc_delete(
+async def poll_etc_delete(
     request: Request,
     db: db_session,
     pc_id: int = Path(...)

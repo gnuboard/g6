@@ -9,7 +9,7 @@ router = APIRouter()
 
 
 @router.get("/member_leave")
-def member_leave_form(request: Request):
+async def member_leave_form(request: Request):
     """
     회원탈퇴 폼을 보여준다.
     """
@@ -25,7 +25,7 @@ def member_leave_form(request: Request):
 
 
 @router.post("/member_leave", dependencies=[Depends(validate_token)])
-def member_leave(request: Request, db: db_session):
+async def member_leave(request: Request, db: db_session):
     """회원탈퇴
     """
 

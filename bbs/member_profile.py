@@ -20,7 +20,7 @@ templates.env.globals["check_profile_open"] = check_profile_open
 
 
 @router.get("/member_confirm")
-def check_member_form(request: Request, db: db_session):
+async def check_member_form(request: Request, db: db_session):
     member = request.state.login_member
     if not member:
         raise AlertException(status_code=404, detail="회원정보가 없습니다.")
@@ -37,7 +37,7 @@ def check_member_form(request: Request, db: db_session):
 
 
 @router.post("/member_confirm", name='member_password')
-def check_member(
+async def check_member(
         request: Request,
         mb_password: str = Form(...)
 ):
@@ -55,7 +55,7 @@ def check_member(
 
 
 @router.get("/member_profile/{mb_no}", name='member_profile')
-def member_profile(request: Request, db: db_session):
+async def member_profile(request: Request, db: db_session):
     mb_id = request.session.get("ss_mb_id", "")
     if not mb_id:
         raise AlertException(status_code=403, detail="로그인한 회원만 접근하실 수 있습니다.")

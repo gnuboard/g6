@@ -12,7 +12,7 @@ templates.env.filters["search_font"] = search_font
 
 
 @router.get("/search")
-def search(
+async def search(
     request: Request,
     db: db_session,
     gr_id: str = Query(None),

@@ -14,7 +14,7 @@ templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals['getattr'] = getattr
 
 @router.get("/login")
-def login_form(request: Request,
+async def login_form(request: Request,
                url: str = "/"):
     """
     로그인 폼을 보여준다.
@@ -27,7 +27,7 @@ def login_form(request: Request,
 
 
 @router.post("/login")
-def login(request: Request, db: db_session, 
+async def login(request: Request, db: db_session, 
         mb_id: str = Form(...), 
         mb_password: str = Form(...),
         url: str = Form(default="/")
@@ -56,7 +56,7 @@ def login(request: Request, db: db_session,
 
 
 @router.post("/login_check")
-def check_login(request: Request, db: db_session, mb_id: str = Form(...), mb_password: str = Form(...)):
+async def check_login(request: Request, db: db_session, mb_id: str = Form(...), mb_password: str = Form(...)):
     """
     outlogin 에서 로그인
     """
@@ -81,7 +81,7 @@ def check_login(request: Request, db: db_session, mb_id: str = Form(...), mb_pas
 
 
 @router.get("/logout")
-def logout(request: Request):
+async def logout(request: Request):
     """
     로그아웃, 세션을 초기화.
     """

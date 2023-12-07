@@ -10,7 +10,7 @@ templates = UserTemplates()
 
 
 @router.get("/content/{co_id}")
-def content_view(request: Request, co_id: str, db: db_session):
+async def content_view(request: Request, co_id: str, db: db_session):
     '''
     컨텐츠 보기
     '''

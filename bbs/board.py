@@ -30,7 +30,7 @@ FILE_DIRECTORY = "data/file/"
 
 
 @router.get("/group/{gr_id}")
-def group_board_list(
+async def group_board_list(
     request: Request,
     db: db_session,
     gr_id: str = Path(...)
@@ -71,7 +71,7 @@ def group_board_list(
 
 
 @router.get("/{bo_table}")
-def list_post(
+async def list_post(
     request: Request,
     db: db_session,
     bo_table: str = Path(..., title="게시판 아이디"),
@@ -173,7 +173,7 @@ def list_post(
 
 
 @router.post("/list_delete/{bo_table}", dependencies=[Depends(validate_token)])
-def list_delete(
+async def list_delete(
     request: Request,
     db: db_session,
     bo_table: str = Path(...),
@@ -264,7 +264,7 @@ async def move_post(
 
 
 @router.post("/move_update/", dependencies=[Depends(validate_token)])
-def move_update(
+async def move_update(
     request: Request,
     db: db_session,
     sw: str = Form(...),
@@ -376,7 +376,7 @@ def move_update(
 
 
 @router.get("/write/{bo_table}")
-def write_form_add(
+async def write_form_add(
     request: Request,
     db: db_session,
     bo_table: str = Path(...),
@@ -441,7 +441,7 @@ def write_form_add(
 
 
 @router.get("/write/{bo_table}/{wr_id}")
-def write_form_edit(
+async def write_form_edit(
     request: Request,
     db: db_session,
     bo_table: str = Path(...),
@@ -743,7 +743,7 @@ async def write_update(
 
 
 @router.get("/{bo_table}/{wr_id}")
-def read_post(
+async def read_post(
     request: Request,
     db: db_session,
     bo_table: str = Path(...),
@@ -958,7 +958,7 @@ def read_post(
 
 # 게시글 삭제
 @router.get("/delete/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
-def delete_post(
+async def delete_post(
     request: Request,
     db: db_session,
     bo_table: str = Path(...),
@@ -996,7 +996,7 @@ def delete_post(
 
 
 @router.get("/{bo_table}/{wr_id}/download/{bf_no}")
-def download_file(
+async def download_file(
     request: Request,
     db: db_session,
     bo_table: str = Path(...),
@@ -1170,7 +1170,7 @@ async def write_comment_update(
 
 
 @router.get("/delete_comment/{bo_table}/{comment_id}", dependencies=[Depends(validate_token)])
-def delete_comment(
+async def delete_comment(
     request: Request,
     db: db_session,
     bo_table: str = Path(...),
@@ -1223,7 +1223,7 @@ def delete_comment(
 
 
 @router.get("/{bo_table}/{wr_id}/link/{no}")
-def link_url(
+async def link_url(
     request: Request,
     db: db_session,
     bo_table: str = Path(...),

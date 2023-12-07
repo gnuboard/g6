@@ -12,7 +12,7 @@ templates = UserTemplates()
 
 
 @router.get("/formmail/{mb_id}")
-def formmail(request: Request, db: db_session,
+async def formmail(request: Request, db: db_session,
              mb_id: str = None,
              name: str = None,
              email: str = None,):

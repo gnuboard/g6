@@ -14,7 +14,7 @@ templates.env.filters["datetime_format"] = datetime_format
 
 
 @router.get("/scrap_popin/{bo_table}/{wr_id}")
-def scrap_form(request: Request, db: db_session,
+async def scrap_form(request: Request, db: db_session,
     bo_table: str = Path(...),
     wr_id: int = Path(...),
 ):
@@ -44,7 +44,7 @@ def scrap_form(request: Request, db: db_session,
     
 
 @router.post("/scrap_popin_update/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
-def scrap_form_update(request: Request, db: db_session,
+async def scrap_form_update(request: Request, db: db_session,
     bo_table: str = Path(...),
     wr_id: int = Path(...),
     wr_content: str = Form(None),
@@ -139,7 +139,7 @@ def scrap_form_update(request: Request, db: db_session,
 
 # TODO: 연관관계로 ORM 수정 => (쿼리요청 및 코드량 감소)
 @router.get("/scrap")
-def scrap_list(request: Request, db: db_session,
+async def scrap_list(request: Request, db: db_session,
     current_page: int = Query(default=1, alias="page")
 ):
     """
@@ -184,7 +184,7 @@ def scrap_list(request: Request, db: db_session,
 
 
 @router.get("/scrap_delete/{ms_id}", dependencies=[Depends(validate_token)])
-def scrap_delete(request: Request, db: db_session, 
+async def scrap_delete(request: Request, db: db_session, 
     ms_id: int = Path(...),
     page: int = Query(default=1)
 ):

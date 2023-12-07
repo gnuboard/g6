@@ -327,7 +327,7 @@ scheduler.start()
 
 
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request, db: db_session):
+async def index(request: Request, db: db_session):
     """
     메인 페이지
     """

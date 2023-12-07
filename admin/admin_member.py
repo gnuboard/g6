@@ -282,7 +282,7 @@ async def member_list_delete(
 
 @router.get("/member_form")
 @router.get("/member_form/{mb_id}")
-def member_form(request: Request, db: db_session,
+async def member_form(request: Request, db: db_session,
                 mb_id: Optional[str] = None):
     """
     회원추가, 수정 폼

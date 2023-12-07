@@ -23,7 +23,7 @@ MENU_KEY = "300500"
 
 
 @router.get("/qa_config")
-def qa_config_form(request: Request, db: db_session):
+async def qa_config_form(request: Request, db: db_session):
     """
     1:1문의 설정 폼
     """
@@ -36,7 +36,7 @@ def qa_config_form(request: Request, db: db_session):
 
 
 @router.post("/qa_config_update", dependencies=[Depends(validate_token)])
-def qa_config_update(request: Request,
+async def qa_config_update(request: Request,
                         db: db_session,
                         form_data: QaConfigForm = Depends()
                         ):

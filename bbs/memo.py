@@ -13,7 +13,7 @@ templates.env.globals["captcha_widget"] = captcha_widget
 
 
 @router.get("/memo")
-def memo_list(request: Request, db: db_session,
+async def memo_list(request: Request, db: db_session,
                 kind: str = Query(default="recv"),
                 current_page: int = Query(default=1, alias="page")):
     """
@@ -51,7 +51,7 @@ def memo_list(request: Request, db: db_session,
 
 
 @router.get("/memo_view/{me_id}")
-def memo_view(request: Request, db: db_session, me_id: int = Path(...)):
+async def memo_view(request: Request, db: db_session, me_id: int = Path(...)):
     """
     쪽지 상세
     """
@@ -113,7 +113,7 @@ def memo_view(request: Request, db: db_session, me_id: int = Path(...)):
 
 
 @router.get("/memo_form")
-def memo_form(request: Request, db: db_session,
+async def memo_form(request: Request, db: db_session,
     me_recv_mb_id : str = Query(default=None),
     me_id: int = Query(default=None)
 ):
@@ -204,7 +204,7 @@ async def memo_form_update(
 
 
 @router.get("/memo_delete/{me_id}", dependencies=[Depends(validate_token)])
-def memo_delete(
+async def memo_delete(
     request: Request,
     db: db_session, 
     me_id: int = Path(...),

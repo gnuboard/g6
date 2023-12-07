@@ -15,7 +15,7 @@ templates.env.globals["captcha_widget"] = captcha_widget
 
 
 @router.get("/id_lost")
-def find_member_id_form(request: Request):
+async def find_member_id_form(request: Request):
     """
     회원 ID 찾기 폼을 보여준다.
     """
@@ -60,7 +60,7 @@ async def find_member_id(
 
 
 @router.get("/password_lost")
-def find_member_password_form(request: Request):
+async def find_member_password_form(request: Request):
     """
     회원 비밀번호 찾기 폼을 보여준다.
     """
@@ -117,7 +117,7 @@ async def find_member_password(
 
 
 @router.get("/password_reset/{mb_id}/{token}")
-def reset_password_form(
+async def reset_password_form(
     request: Request,
     db: db_session,
     mb_id: str = Path(...),

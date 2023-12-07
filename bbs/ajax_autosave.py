@@ -11,7 +11,7 @@ router = APIRouter()
 
 
 @router.get("/autosave_list")
-def autosave_list(request: Request, db: db_session):
+async def autosave_list(request: Request, db: db_session):
     """
     자동저장 목록을 보여준다.
     """
@@ -24,7 +24,7 @@ def autosave_list(request: Request, db: db_session):
 
 
 @router.get("/autosave_load/{as_id}")
-def autosave_load(request: Request, as_id: int, db: db_session):
+async def autosave_load(request: Request, as_id: int, db: db_session):
     """
     자동저장 내용을 불러온다.
     """
@@ -37,7 +37,7 @@ def autosave_load(request: Request, as_id: int, db: db_session):
 
 
 @router.post("/autosave")
-def autosave(request: Request, db: db_session, form_data: AutoSaveForm = Depends()):
+async def autosave(request: Request, db: db_session, form_data: AutoSaveForm = Depends()):
     """
     글 임시저장
     """
@@ -64,7 +64,7 @@ def autosave(request: Request, db: db_session, form_data: AutoSaveForm = Depends
 
 
 @router.delete("/autosave/{as_id}")
-def autosave(request: Request, as_id: int, db: db_session):
+async def autosave(request: Request, as_id: int, db: db_session):
     """
     임시저장글 삭제
     """

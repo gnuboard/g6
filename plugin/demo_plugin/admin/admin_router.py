@@ -26,7 +26,7 @@ admin_router = APIRouter(tags=['demo_admin'])
 
 
 @admin_router.get("/test_demo_admin")
-def show(request: Request):
+async def show(request: Request):
     request.session["menu_key"] = module_name
     request.session["plugin_submenu_key"] = module_name + "1"
     return {"message": "Hello Admin Demo Plugin!",
@@ -37,7 +37,7 @@ def show(request: Request):
 
 
 @admin_router.get("/test_demo_admin_template")
-def show(request: Request):
+async def show(request: Request):
     request.session["menu_key"] = module_name
     request.session["plugin_submenu_key"] = module_name + "2"
 

@@ -12,7 +12,7 @@ templates.env.filters["datetime_format"] = datetime_format
 
 
 @router.get("/point")
-def point_list(request: Request, db: db_session,
+async def point_list(request: Request, db: db_session,
     current_page: int = Query(default=1, alias="page")
 ):
     """

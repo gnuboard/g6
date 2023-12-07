@@ -15,7 +15,7 @@ templates.env.filters["default_if_none"] = default_if_none
 
 
 @router.get("/password/{action}/{bo_table}/{wr_id}", name="password_page")
-def password(
+async def password(
     request: Request,
     db: db_session,
     action: str = Path(...),

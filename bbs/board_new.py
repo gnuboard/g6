@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
 
 from lib.board_lib import *
 from lib.common import *
@@ -12,7 +11,7 @@ templates = UserTemplates()
 
 
 @router.get("/new")
-def board_new_list(
+async def board_new_list(
     request: Request,
     db: db_session,
     gr_id: str = Query(None),
@@ -72,7 +71,7 @@ def board_new_list(
 
 
 @router.post("/new_delete", dependencies=[Depends(validate_token)])
-def new_delete(
+async def new_delete(
         request: Request,
         db: db_session,
         bn_ids: list = Form(..., alias="chk_bn_id[]"),

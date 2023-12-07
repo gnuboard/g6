@@ -38,7 +38,7 @@ def get_theme_dir():
 
 
 @router.get("/screenshot")
-def screenshot():
+async def screenshot():
     '''
     스크린샷
     '''

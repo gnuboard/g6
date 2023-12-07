@@ -14,7 +14,7 @@ UPLOAD_IMAGE_QUALITY = os.getenv("UPLOAD_IMAGE_QUALITY", 80)  # (0~100) default 
 
 
 @router.post("/upload")
-def image_upload(request: Request, upload: UploadFile = File(...)):
+async def image_upload(request: Request, upload: UploadFile = File(...)):
     """
     ckeditor4 업로드
     Args:

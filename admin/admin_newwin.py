@@ -20,7 +20,7 @@ MENU_KEY = "100310"
 
 
 @router.get("/newwin_list")
-def newwin_list(request: Request, db: db_session):
+async def newwin_list(request: Request, db: db_session):
     """
     팝업 목록
     """
@@ -36,7 +36,7 @@ def newwin_list(request: Request, db: db_session):
 
 
 @router.get("/newwin_form")
-def newwin_form_add(request: Request):
+async def newwin_form_add(request: Request):
     """
     팝업 등록 폼
     """
@@ -46,7 +46,7 @@ def newwin_form_add(request: Request):
 
 
 @router.get("/newwin_form/{nw_id}")
-def newwin_form_edit(request: Request, nw_id: int, db: db_session):
+async def newwin_form_edit(request: Request, nw_id: int, db: db_session):
     """
     팝업 수정 폼
     """
@@ -57,7 +57,7 @@ def newwin_form_edit(request: Request, nw_id: int, db: db_session):
     )
 
 @router.post("/newwin_form_update", dependencies=[Depends(validate_token)])
-def newwin_form_update(request: Request,
+async def newwin_form_update(request: Request,
                         db: db_session,
                         nw_id: int = Form(None),
                         form_data: NewwinForm = Depends()
@@ -85,7 +85,7 @@ def newwin_form_update(request: Request,
 
 
 @router.get("/newwin_delete/{nw_id}", dependencies=[Depends(validate_token)])
-def newwin_delete(nw_id: int, 
+async def newwin_delete(nw_id: int, 
                    request: Request, 
                    db: db_session
                    ):

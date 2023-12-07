@@ -27,7 +27,7 @@ templates.env.globals["format"] = format
 
 
 @router.get("/point_list")
-def point_list(request: Request, db: db_session, search_params: dict = Depends(common_search_query_params)):
+async def point_list(request: Request, db: db_session, search_params: dict = Depends(common_search_query_params)):
         # sst: str = Query(default=""), # sort field (정렬 필드)
         # sod: str = Query(default=""), # search order (검색 오름, 내림차순)
         # sfl: str = Query(default=""), # search field (검색 필드)

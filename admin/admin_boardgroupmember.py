@@ -15,7 +15,7 @@ templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_nam
 
 
 @router.get("/boardgroupmember_list/{gr_id}")
-def boardgroupmember_list(
+async def boardgroupmember_list(
     request: Request,
     db: db_session,
     gr_id: str = Path(...),
@@ -72,7 +72,7 @@ def boardgroupmember_list(
 
 
 @router.get("/boardgroupmember_form/{mb_id}")
-def board_form(
+async def board_form(
     request: Request,
     db: db_session,
     mb_id: str = Path(...)

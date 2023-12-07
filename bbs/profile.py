@@ -13,7 +13,7 @@ router = APIRouter()
 
 
 @router.get('/profile/{member_id}')
-def get_profile(request: Request, member_id: str, db: db_session):
+async def get_profile(request: Request, member_id: str, db: db_session):
     print(request.state.login_member)
     if not request.state.login_member:
         raise AlertException("회원만 이용하실 수 있습니다.", 403)

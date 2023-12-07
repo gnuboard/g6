@@ -10,7 +10,7 @@ templates = UserTemplates()
 
 @router.get("/faq")
 @router.get("/faq/{fm_id}")
-def faq_view(request: Request, db: db_session, fm_id: int = None):
+async def faq_view(request: Request, db: db_session, fm_id: int = None):
     '''
     FAQ 보기
     '''

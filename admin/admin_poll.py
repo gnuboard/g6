@@ -21,7 +21,7 @@ MENU_KEY = "200900"
 
 
 @router.get("/poll_list")
-def poll_list(request: Request,
+async def poll_list(request: Request,
                 search_params: dict = Depends(common_search_query_params)):
     """
     투표 목록
@@ -51,7 +51,7 @@ def poll_list(request: Request,
 
 
 @router.post("/poll_list_delete", dependencies=[Depends(validate_token)])
-def poll_list_delete(
+async def poll_list_delete(
     request: Request,
     db: db_session,
     checks: List[int] = Form(..., alias="chk[]")
@@ -70,7 +70,7 @@ def poll_list_delete(
 
 
 @router.get("/poll_form")
-def poll_form_add(request: Request):
+async def poll_form_add(request: Request):
     """
     투표 등록 폼
     """
@@ -80,7 +80,7 @@ def poll_form_add(request: Request):
 
 
 @router.get("/poll_form/{po_id}")
-def poll_form_edit(po_id: int, request: Request, db: db_session):
+async def poll_form_edit(po_id: int, request: Request, db: db_session):
     """
     투표 수정 폼
     """
@@ -91,7 +91,7 @@ def poll_form_edit(po_id: int, request: Request, db: db_session):
 
 
 @router.post("/poll_form_update", dependencies=[Depends(validate_token)])
-def poll_form_update(request: Request,
+async def poll_form_update(request: Request,
                         db: db_session,
                         po_id: int = Form(None),
                         form_data: PollForm = Depends()

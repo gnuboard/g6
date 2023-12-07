@@ -24,7 +24,7 @@ VISIT_MENU_KEY = "200800"
 
 
 @router.get("/visit_search", tags=["admin_visit_search"])
-def visit_search(request: Request, db: db_session,
+async def visit_search(request: Request, db: db_session,
                  sst: str = Query(default=""),  # sort field (정렬 필드)
                  sod: str = Query(default=""),  # search order (검색 오름, 내림차순)
                  sfl: str = Query(default=""),  # search field (검색 필드)
@@ -90,7 +90,7 @@ def visit_search(request: Request, db: db_session,
 
 
 @router.get("/visit_delete", tags=["admin_visit_delete"])
-def visit_delete(request: Request, db: db_session, ):
+async def visit_delete(request: Request, db: db_session, ):
     '''
     접속자로그 삭제
     '''
@@ -331,7 +331,7 @@ async def visit_browser(request: Request, db: db_session,
 
 
 @router.get("/visit_os", tags=["admin_visit_list"])
-def visit_os(request: Request, db: db_session,
+async def visit_os(request: Request, db: db_session,
              current_page: int = Query(default=1, alias="page"),  # 페이지
              from_date: str = Query(default="", alias="fr_date"),  # 시작일
              to_date: str = Query(default=""),  # 종료일
@@ -380,7 +380,7 @@ def visit_os(request: Request, db: db_session,
 
 
 @router.get("/visit_device")
-def visit_device(request: Request, db: db_session,
+async def visit_device(request: Request, db: db_session,
                  current_page: int = Query(default=1, alias="page"),  # 페이지
                  from_date: str = Query(default="", alias="fr_date"),  # 시작일
                  to_date: str = Query(default=""),  # 종료일
@@ -429,7 +429,7 @@ def visit_device(request: Request, db: db_session,
 
 
 @router.get("/visit_hour")
-def visit_device(request: Request, db: db_session,
+async def visit_device(request: Request, db: db_session,
                  current_page: int = Query(default=1, alias="page"),  # 페이지
                  from_date: str = Query(default="", alias="fr_date"),  # 시작일
                  to_date: str = Query(default=""),  # 종료일
@@ -478,7 +478,7 @@ def visit_device(request: Request, db: db_session,
 
 
 @router.get("/visit_weekday", tags=["admin_visit_list"])
-def visit_device(request: Request, db: db_session,
+async def visit_device(request: Request, db: db_session,
                  current_page: int = Query(default=1, alias="page"),  # 페이지
                  from_date: str = Query(default="", alias="fr_date"),  # 시작일
                  to_date: str = Query(default=""),  # 종료일
@@ -537,7 +537,7 @@ def visit_device(request: Request, db: db_session,
 
 
 @router.get("/visit_date", tags=["admin_visit_list"])
-def visit_date(request: Request, db: db_session,
+async def visit_date(request: Request, db: db_session,
                current_page: int = Query(default=1, alias="page"),  # 페이지
                from_date: str = Query(default="", alias="fr_date"),  # 시작일
                to_date: str = Query(default=""),  # 종료일
@@ -586,7 +586,7 @@ def visit_date(request: Request, db: db_session,
 
 
 @router.get("/visit_month", tags=["admin_visit_list"])
-def visit_month(request: Request, db: db_session,
+async def visit_month(request: Request, db: db_session,
                 current_page: int = Query(default=1, alias="page"),  # 페이지
                 from_date: str = Query(default="", alias="fr_date"),  # 시작일
                 to_date: str = Query(default=""),  # 종료일
@@ -635,7 +635,7 @@ def visit_month(request: Request, db: db_session,
 
 
 @router.get("/visit_year", tags=["admin_visit_list"])
-def visit_year(request: Request, db: db_session,
+async def visit_year(request: Request, db: db_session,
                current_page: int = Query(default=1, alias="page"),  # 페이지
                from_date: str = Query(default="", alias="fr_date"),  # 시작일
                to_date: str = Query(default=""),  # 종료일

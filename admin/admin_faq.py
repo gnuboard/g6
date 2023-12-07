@@ -23,7 +23,7 @@ FAQ_MENU_KEY = "300700"
 
 
 @router.get("/faq_master_list")
-def faq_master_list(request: Request, db: db_session):
+async def faq_master_list(request: Request, db: db_session):
     """FAQ관리 목록"""
     model = FaqMaster
     request.session["menu_key"] = FAQ_MENU_KEY
@@ -36,7 +36,7 @@ def faq_master_list(request: Request, db: db_session):
 
 
 @router.get("/faq_master_form")
-def faq_master_add_form(request: Request):
+async def faq_master_add_form(request: Request):
     """FAQ관리 등록 폼"""
     request.session["menu_key"] = FAQ_MENU_KEY
 
@@ -46,7 +46,7 @@ def faq_master_add_form(request: Request):
 
 
 @router.post("/faq_master_form_update", dependencies=[Depends(validate_token)])
-def faq_master_add(
+async def faq_master_add(
         request: Request,
         db: db_session,
         fm_subject: str = Form(...),
@@ -88,7 +88,7 @@ def faq_master_add(
 
 
 @router.get("/faq_master_form/{fm_id}")
-def faq_master_update_form(fm_id: int, request: Request, db: db_session):
+async def faq_master_update_form(fm_id: int, request: Request, db: db_session):
     """FAQ관리 수정 폼"""
     request.session["menu_key"] = FAQ_MENU_KEY
 
@@ -100,7 +100,7 @@ def faq_master_update_form(fm_id: int, request: Request, db: db_session):
 
 
 @router.post("/faq_master_form_update/{fm_id}", dependencies=[Depends(validate_token)])
-def faq_master_update(
+async def faq_master_update(
         fm_id: int,
         request: Request,
         db: db_session,
@@ -151,7 +151,7 @@ def faq_master_update(
 
 
 @router.delete("/faq_master_form_delete/{fm_id}")
-def faq_master_delete(
+async def faq_master_delete(
     request: Request,
     db: db_session,
     token: str = Query(...),
@@ -171,7 +171,7 @@ def faq_master_delete(
 
 
 @router.get("/faq_list/{fm_id}")
-def faq_list(fm_id: int, request: Request, db: db_session):
+async def faq_list(fm_id: int, request: Request, db: db_session):
     """
     FAQ목록
     """
@@ -186,7 +186,7 @@ def faq_list(fm_id: int, request: Request, db: db_session):
 
 
 @router.get("/faq_form/{fm_id}")
-def faq_add_form(fm_id: int, request: Request, db: db_session):
+async def faq_add_form(fm_id: int, request: Request, db: db_session):
     """FAQ항목 등록 폼"""
     request.session["menu_key"] = FAQ_MENU_KEY
 
@@ -198,7 +198,7 @@ def faq_add_form(fm_id: int, request: Request, db: db_session):
 
 
 @router.post("/faq_form_update/{fm_id}", dependencies=[Depends(validate_token)])
-def faq_add(
+async def faq_add(
     request: Request,
     db: db_session,
     fm_id: int = Path(...),
@@ -220,7 +220,7 @@ def faq_add(
 
 
 @router.get("/faq_form/{fm_id}/{fa_id}")
-def faq_update_form(fa_id: int, request: Request, db: db_session):
+async def faq_update_form(fa_id: int, request: Request, db: db_session):
     """FAQ항목 수정 폼"""
     request.session["menu_key"] = FAQ_MENU_KEY
 
@@ -233,7 +233,7 @@ def faq_update_form(fa_id: int, request: Request, db: db_session):
 
 
 @router.post("/faq_form_update/{fm_id}/{fa_id}", dependencies=[Depends(validate_token)])
-def faq_update(
+async def faq_update(
     request: Request,
     db: db_session,
     fm_id: int = Path(...),

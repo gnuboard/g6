@@ -28,7 +28,7 @@ CONFIG_MENU_KEY = "100100"
 
 
 @router.get("/config_form")
-def config_form(request: Request):
+async def config_form(request: Request):
     """
     기본환경설정 폼
     """
@@ -54,7 +54,7 @@ def config_form(request: Request):
 
 
 @router.post("/config_form_update", dependencies=[Depends(validate_token)])
-def config_form_update(
+async def config_form_update(
         request: Request,
         db: db_session,
         social_list: List[str] = Form(None, alias="cf_social_servicelist[]"),

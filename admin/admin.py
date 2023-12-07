@@ -65,7 +65,7 @@ router.include_router(admin_plugin_router,  prefix="", tags=["admin_plugin"])
 router.include_router(admin_cache_router,  prefix="", tags=["admin_cache"])
 
 @router.get("/")
-def base(request: Request, db: db_session):
+async def base(request: Request, db: db_session):
     '''
     관리자 메인
     '''

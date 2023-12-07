@@ -17,7 +17,7 @@ FILE_DIRECTORY = "data/qa/"
 
 
 @router.get("/qalist")
-def qa_list(request: Request,
+async def qa_list(request: Request,
             db: db_session,
             current_page: int = Query(default=1, alias="page"), # 페이지
             ):
@@ -71,7 +71,7 @@ def qa_list(request: Request,
 
 
 @router.get("/qawrite")
-def qa_form_write(request: Request,
+async def qa_form_write(request: Request,
              db: db_session,
              qa_related: int = None):
     '''
@@ -102,7 +102,7 @@ def qa_form_write(request: Request,
 
 # Q&A 수정하기
 @router.get("/qawrite/{qa_id:int}")
-def qa_form_edit(qa_id: int,
+async def qa_form_edit(qa_id: int,
             request: Request,
             db: db_session):
     '''
@@ -129,7 +129,7 @@ def qa_form_edit(qa_id: int,
 
 
 @router.post("/qawrite_update", dependencies=[Depends(validate_token)])
-def qa_write_update(request: Request,
+async def qa_write_update(request: Request,
                 db: db_session,
                 form_data: QaContentForm = Depends(),
                 qa_id: int = Form(None),
@@ -233,7 +233,7 @@ def qa_write_update(request: Request,
 
 
 @router.get("/qadelete/{qa_id}", dependencies=[Depends(validate_token)])
-def qa_delete(request: Request,
+async def qa_delete(request: Request,
               db: db_session,
                 qa_id: int,
                 ):
@@ -268,7 +268,7 @@ async def qa_delete_list(request: Request, db: db_session,
 
 
 @router.get("/qaview/{qa_id}")
-def qa_view(qa_id: int,
+async def qa_view(qa_id: int,
             request: Request,
             db: db_session):
     '''

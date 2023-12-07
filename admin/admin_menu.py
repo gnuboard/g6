@@ -19,7 +19,7 @@ MENU_KEY = "100290"
 
 
 @router.get("/menu_list")
-def menu_list(request: Request, db: db_session):
+async def menu_list(request: Request, db: db_session):
     """
     메뉴 목록
     """
@@ -40,7 +40,7 @@ def menu_list(request: Request, db: db_session):
 
 
 @router.get("/menu_form")
-def menu_form(request: Request, code: str = Query(None), new: str = Query(None)):
+async def menu_form(request: Request, code: str = Query(None), new: str = Query(None)):
     """
     메뉴 추가 팝업 페이지
     """
@@ -55,7 +55,7 @@ def menu_form(request: Request, code: str = Query(None), new: str = Query(None))
 
 
 @router.post("/menu_form_search", response_class=HTMLResponse)
-def menu_form_search(request: Request, db: db_session, type: str = Form(None)):
+async def menu_form_search(request: Request, db: db_session, type: str = Form(None)):
     """
     메뉴 추가 팝업 레이아웃
     """
@@ -79,7 +79,7 @@ def menu_form_search(request: Request, db: db_session, type: str = Form(None)):
 
 
 @router.post("/menu_list_update", dependencies=[Depends(validate_token)])
-def menu_list_update(
+async def menu_list_update(
     request: Request,
     db: db_session,
     parent_code: List[str] = Form(None, alias="code[]"),

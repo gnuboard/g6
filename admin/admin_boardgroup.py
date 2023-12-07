@@ -20,7 +20,7 @@ templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 
 @router.get("/boardgroup_list")
-def boardgroup_list(request: Request, db: db_session):
+async def boardgroup_list(request: Request, db: db_session):
     '''
     게시판그룹관리 목록
     '''
@@ -60,7 +60,7 @@ def boardgroup_list(request: Request, db: db_session):
 
 
 @router.post("/boardgroup_list_update", dependencies=[Depends(validate_token)])
-def boardgroup_list_update(
+async def boardgroup_list_update(
     request: Request, 
     db: db_session,
     checks: List[int]= Form(None, alias="chk[]"),
@@ -90,7 +90,7 @@ def boardgroup_list_update(
 
 
 @router.post("/boardgroup_list_delete", dependencies=[Depends(validate_token)])
-def boardgroup_list_delete(
+async def boardgroup_list_delete(
     request: Request, 
     db: db_session,
     checks: List[int]= Form(None, alias="chk[]"),
@@ -110,13 +110,13 @@ def boardgroup_list_delete(
 
 
 @router.get("/boardgroup_form")
-def boardgroup_form(request: Request):
+async def boardgroup_form(request: Request):
 
     return templates.TemplateResponse("boardgroup_form.html", {"request": request, "group": None})
 
 
 @router.get("/boardgroup_form/{gr_id}")
-def boardgroup_form(gr_id: str, request: Request, db: db_session):
+async def boardgroup_form(gr_id: str, request: Request, db: db_session):
     group = db.query(models.Group).filter(models.Group.gr_id == gr_id).first()
     if not group:
         raise HTTPException(status_code=404, detail=f"{gr_id} Group is not found.")
@@ -127,7 +127,7 @@ def boardgroup_form(gr_id: str, request: Request, db: db_session):
 
 
 @router.post("/boardgroup_form_update", dependencies=[Depends(validate_token)])
-def boardgroup_form_update(request: Request, db: db_session,
+async def boardgroup_form_update(request: Request, db: db_session,
                         action: str = Form(...),
                         gr_id: str = Form(...),
                         form_data: GroupForm = Depends(),

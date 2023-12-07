@@ -26,7 +26,7 @@ templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 
 @router.get("/board_list")
-def board_list(request: Request, db: db_session, search_params: dict = Depends(common_search_query_params)):
+async def board_list(request: Request, db: db_session, search_params: dict = Depends(common_search_query_params)):
         # sst: str = Query(default=""), # sort field (정렬 필드)
         # sod: str = Query(default=""), # search order (검색 오름, 내림차순)
         # sfl: str = Query(default=""), # search field (검색 필드)
@@ -178,7 +178,7 @@ async def board_list_delete(
 
 # 등록 폼
 @router.get("/board_form")
-def board_form(request: Request, db: db_session):    
+async def board_form(request: Request, db: db_session):    
     config = request.state.config
     
     board = {
@@ -241,7 +241,7 @@ async def board_form(bo_table: str, request: Request, db: db_session,
 
 # 등록, 수정 처리
 @router.post("/board_form_update", dependencies=[Depends(validate_token)])
-def board_form_update(request: Request, 
+async def board_form_update(request: Request, 
                         db: db_session,
                         sfl: str = Form(None),
                         stx: str = Form(None),
@@ -673,7 +673,7 @@ async def board_copy(request: Request, bo_table: str, db: db_session):
 
 
 @router.post("/board_copy_update")
-def board_copy_update(request: Request, db: db_session,
+async def board_copy_update(request: Request, db: db_session,
                       bo_table: Optional[str] = Form(...),
                       target_table: Optional[str] = Form(...),
                       target_subject: Optional[str] = Form(...),
