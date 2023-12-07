@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Depends, Request, Form
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
 
 from common.database import db_session
 from common.formclass import QaConfigForm

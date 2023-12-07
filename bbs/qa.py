@@ -224,9 +224,6 @@ async def qa_write_update(
     config = request.state.config
     member = ensure_member_login(request)
 
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     # Q&A 설정 조회
     qa_config = qa_config_service.get()
 
@@ -247,14 +244,14 @@ async def qa_write_update(
     qa = db.get(QaContent, qa_id)
     # 수정
     if qa:
+        if not request.state.is_super_admin and member.mb_id != qa.mb_id:
+            raise AlertException("수정 권한이 없습니다.", 403)
+        
         for field, value in form_data.__dict__.items():
             setattr(qa, field, value)
         db.commit()
     # 등록
     else:
-        if not request.state.is_super_admin and member.mb_id != qa.mb_id:
-            raise AlertException("수정 권한이 없습니다.", 403)
-
         form_data.qa_related = qa_related
         form_data.qa_type = 1 if qa_parent else 0
         form_data.qa_parent = qa_parent if qa_parent else 0
@@ -331,16 +328,12 @@ async def qa_write_update(
 async def qa_delete(
     request: Request,
     db: db_session,
-    token: str = Query(...),
     qa_id: int = Path(...),
 ):
     """
     Q&A 삭제하기
     """
     member = ensure_member_login(request)
-
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     # Q&A 삭제
     qa = db.get(QaContent, qa_id)
@@ -359,15 +352,11 @@ async def qa_delete(
 async def qa_delete_list(
     request: Request,
     db: db_session,
-    token: str = Form(...),
     checks: List[int] = Form(..., alias="chk_qa_id[]")
 ):
     """
     Q&A 목록 일괄삭제
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     if not request.state.is_super_admin:
         raise AlertException("최고관리자만 접근할 수 있습니다.", 403)
 
@@ -463,7 +452,7 @@ def set_file_list(request: Request, qa: QaContent = None):
 
     return image, file
 
-
+# TODO: 공용으로 사용하도록 수정 필요
 def ensure_member_login(request: Request, url: str = None):
     member = request.state.login_member
     if not member:
