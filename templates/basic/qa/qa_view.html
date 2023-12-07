@@ -1,12 +1,15 @@
 {% extends "base.html" %}
+{% import editor_macro(request) as editor %}
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', path="/css/basic/qa.css") }}">
+    <script rel="stylesheet" src="{{ url_for('static', path="viewimageresize.js") }}"></script>
+    {{ editor.head() }}
 {% endblock head %}
 
-{% block subtitle %}
-    {{ qa_config.qa_title }}
-{% endblock subtitle %}
+{% block title %}{{ qa_config.qa_title }}{% endblock title %}
+
+{% block subtitle %}{{ qa_config.qa_title }}{% endblock subtitle %}
 
 {% block content %}
     {% if qa_config.qa_content_head %}
@@ -42,17 +45,18 @@
                         </a>
                     </li>
                     <li>
-                        <a href="{{ url_for('qa_form_write') }}" class="btn_b01 btn" title="글쓰기">
+                        <a href="{{ url_for('qa_form_write') }}?{{ request.query_params }}" class="btn_b01 btn" title="글쓰기">
                             <i class="fa fa-pencil" aria-hidden="true"></i>
                             <span class="sound_only">글쓰기</span>
                         </a>
                     </li>
+                    {% if request.state.is_super_admin or qa.mb_id == request.state.login_member.mb_id %}
                     <li>
                         <button type="button" class="btn_more_opt btn_b01 btn" title="게시판 읽기 옵션">
                             <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
                             <span class="sound_only">게시판 읽기 옵션</span>
                         </button>
-                        <ul class="more_opt" style="display: none;">
+                        <ul class="more_opt">
                             <li>
                                 <a href="{{ url_for('qa_form_edit', qa_id=qa.qa_id) }}" class="btn_b01 btn" title="수정">
                                     수정
@@ -67,9 +71,11 @@
                             </li>
                         </ul>
                     </li>
+                    {% endif %}
                 </ul>
                 <script>
                     // 게시판 리스트 옵션
+                    $(".more_opt").hide();
                     $(".btn_more_opt").on("click", function() {
                         $(".more_opt").toggle();
                     })
@@ -83,7 +89,7 @@
             <div id="bo_v_img">
                 {% for image in qa.image %}
                     <a href="javascrip:;" target="_blank" class="view_image">
-                        <img src="/{{ image }}">
+                        <img src="/{{ image }}" max-width="{{ qa_config.qa_image_width }}">
                     </a>
                 {% endfor %}
             </div>
@@ -132,7 +138,7 @@
                     <div id="ans_datetime">
                         <i class="fa fa-clock-o" aria-hidden="true"></i> {{ answer.qa_datetime }}
                     </div>
-                    {# TODO: 관리자만 보이도록 수정 #}
+                    {% if request.state.is_super_admin %}
                     <div id="ans_add">
                         <button type="button" class="btn_more_add btn_more_opt btn_b01 btn" title="답변 옵션"><i class="fa fa-ellipsis-v" aria-hidden="true"></i><span class="sound_only">답변 옵션</span></button>
                         <ul class="more_add">
@@ -146,6 +152,7 @@
                             $(".more_add").toggle();
                         })
                     </script>
+                    {% endif %}
                 </header>
 
                 <div id="ans_con">
@@ -176,18 +183,15 @@
             <div class="bo_v_btn">
                 <a href="{{ url_for('qa_form_write') }}?qa_related={{ qa.qa_id }}" class="add_qa" title="추가질문">추가질문</a>  
             </div>
-        {% else %}
+        {% elif request.state.is_super_admin %}
             <section id="bo_v_ans_form">
                 <h2>답변등록</h2>
         
-                <form name="fanswer" method="post" action="{{ url_for('qa_write_update') }}" onsubmit="return fwrite_submit(this);" enctype="multipart/form-data" autocomplete="off">
-                    <input type="hidden" name="qa_parent" value="{{ qa.qa_id }}">
-                    <input type="hidden" name="sca" value="">
-                    <input type="hidden" name="stx" value="">
-                    <input type="hidden" name="page" value="">
+                <form name="fanswer" method="post" action="{{ url_for('qa_write_update') }}?{{ request.query_params }}" onsubmit="return fwrite_submit(this);" enctype="multipart/form-data" autocomplete="off">
                     <input type="hidden" name="token" value="">
-                    <input type="hidden" name="qa_html" value="1">
+                    <input type="hidden" name="qa_parent" value="{{ qa.qa_id }}">
                     <input type="hidden" name="qa_category" value="{{ qa.qa_category }}">
+                    <input type="hidden" name="qa_html" value="1">
 
                     <div class="form_01">
                         <ul>
@@ -197,7 +201,11 @@
                             </li>
                             <li class="qa_content_wrap smarteditor2">
                                 <label for="qa_content" class="sound_only">내용<strong>필수</strong></label>
-                                <textarea id="qa_content" name="qa_content" class="smarteditor2" maxlength="65536" style="width: 100%; height: 300px;"></textarea>
+                                {% if qa_config.qa_use_editor %}
+                                    {{ editor.body("qa_content", "") }}
+                                {% else %}
+                                    <textarea id="qa_content" name="qa_content" style="width: 100%; height: 300px;"></textarea>
+                                {% endif %}
                             </li>
                             <li class="bo_w_flie">
                                 <div class="file_wr">
@@ -236,8 +244,6 @@
                     function fwrite_submit(f)
                     {
                         f.token.value = generate_token();
-
-                        // document.getElementById("btn_submit").disabled = "disabled";
 
                         return true;
                     }
@@ -283,7 +289,6 @@
         {% endif %}
     </article>
     <!-- } 게시판 읽기 끝 -->
-    <script src="http://127.0.0.1/g5-update/js/viewimageresize.js"></script>
     <script>
     $(function() {
         $("a.view_image").click(function() {

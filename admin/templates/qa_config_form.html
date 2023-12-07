@@ -1,17 +1,20 @@
 {% extends "base.html" %}
-{% block title %}
-    1:1문의 설정
-{% endblock title %}
-{% block subtitle %}
-    1:1문의 설정
-{% endblock subtitle %}
+{% import editor_macro(request) as editor %}
+
+{% block head %}
+    {{ editor.head() }}
+{% endblock head %}
+
+{% block title %}1:1문의 설정{% endblock title %}
+
+{% block subtitle %}1:1문의 설정{% endblock subtitle %}
+
 {% block content %}
     <form name="fqaconfigform" id="fqaconfigform" action="{{ url_for('qa_config_update') }}" method="post" onsubmit="return fqaconfigform_submit(this);" autocomplete="off">
         <input type="hidden" id="token" name="token" value="" >
     
         <section id="anc_cf_qa_config">
             <h2 class="h2_frm">1:1문의 설정</h2>
-    
             <div class="tbl_frm01 tbl_wrap">
                 <table>
                     <caption>1:1문의 설정</caption>
@@ -34,6 +37,7 @@
                                 <input type="text" name="qa_category" value="{{ qa_config.qa_category }}" id="qa_category" required="" class="required frm_input" size="70">
                             </td>
                         </tr>
+                        <!--
                         <tr>
                             <th scope="row"><label for="qa_skin">스킨 디렉토리<strong class="sound_only">필수</strong></label></th>
                             <td>
@@ -54,6 +58,7 @@
                                 </select>
                             </td>
                         </tr>
+                        -->
                         <tr>
                             <th scope="row">이메일 입력</th>
                             <td>
@@ -152,33 +157,23 @@
                         </tr>
                         <tr>
                             <th scope="row"><label for="qa_content_head">상단 내용</label></th>
-                            <td>
-                                <textarea id="qa_content_head" name="qa_content_head" class="smarteditor2" maxlength="65536" style="width: 100%; height: 300px;">{{ qa_config.qa_content_head|default('', true) }}</textarea>
-                            </td>
+                            <td>{{ editor.body("qa_content_head", qa_config.qa_content_head) }}</td>
                         </tr>
                         <tr>
                             <th scope="row"><label for="qa_content_tail">하단 내용</label></th>
-                            <td>
-                                <textarea id="qa_content_tail" name="qa_content_tail" class="smarteditor2" maxlength="65536" style="width: 100%; height: 300px;">{{ qa_config.qa_content_tail|default('', true) }}</textarea>
-                            </td>
+                            <td>{{ editor.body("qa_content_tail", qa_config.qa_content_tail) }}</td>
                         </tr>
                         <tr>
                             <th scope="row"><label for="qa_mobile_content_head">모바일 상단 내용</label></th>
-                            <td>
-                                <textarea id="qa_mobile_content_head" name="qa_mobile_content_head" class="smarteditor2" maxlength="65536" style="width: 100%; height: 300px;">{{ qa_config.qa_mobile_content_head|default('', true) }}</textarea>
-                            </td>
+                            <td>{{ editor.body("qa_mobile_content_head", qa_config.qa_mobile_content_head) }}</td>
                         </tr>
                         <tr>
                             <th scope="row"><label for="qa_mobile_content_tail">모바일 하단 내용</label></th>
-                            <td>
-                                <textarea id="qa_mobile_content_tail" name="qa_mobile_content_tail" class="smarteditor2" maxlength="65536" style="width: 100%; height: 300px;">{{ qa_config.qa_mobile_content_tail|default('', true) }}</textarea>
-                            </td>
+                            <td>{{ editor.body("qa_mobile_content_tail", qa_config.qa_mobile_content_tail) }}</td>
                         </tr>
                         <tr>
                             <th scope="row"><label for="qa_insert_content">글쓰기 기본 내용</label></th>
-                            <td>
-                                <textarea id="qa_insert_content" name="qa_insert_content" rows="5">{{ qa_config.qa_insert_content|default('', true) }}</textarea>
-                            </td>
+                            <td>{{ editor.body("qa_insert_content", qa_config.qa_insert_content) }}</td>
                         </tr>
                         {% for i in range(1, 6) %}
                         <tr>
