@@ -104,6 +104,9 @@ def scrap_form_update(request: Request, db: db_session,
         db.add(comment)
         db.commit()
 
+        # 글 작성 시간 기록
+        set_write_delay(request)
+
         # 게시판&스크랩 글에 댓글 수 증가
         board.bo_count_comment += 1
         write.wr_comment += 1

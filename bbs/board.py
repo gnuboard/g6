@@ -626,6 +626,9 @@ async def write_update(
         board.bo_count_write = board.bo_count_write + 1  # 게시판 글 갯수 1 증가
         db.commit()
 
+        # 글 작성 시간 기록
+        set_write_delay(request)
+
         # 비밀글은 세션 생성
         if secret:
             request.session[f"ss_secret_{bo_table}_{write.wr_id}"] = True
@@ -1140,6 +1143,9 @@ async def write_comment_update(
         comment.wr_datetime = comment.wr_last = datetime.now()
         comment.wr_ip = request.client.host
         db.add(comment)
+
+        # 글 작성 시간 기록
+        set_write_delay(request)
 
         # 게시글에 댓글 수 증가
         write.wr_comment = write.wr_comment + 1
