@@ -45,11 +45,10 @@ def faq_master_add_form(request: Request):
     )
 
 
-@router.post("/faq_master_form_update")
+@router.post("/faq_master_form_update", dependencies=[Depends(validate_token)])
 def faq_master_add(
         request: Request,
         db: db_session,
-        token: str = Form(...),
         fm_subject: str = Form(...),
         fm_head_html: str = Form(None),
         fm_tail_html: str = Form(None),
@@ -60,10 +59,6 @@ def faq_master_add(
         fm_timg: UploadFile = File(...),
     ):
     """FAQ관리 등록 처리"""
-    # 토큰 검사
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     faq_master = FaqMaster(
         fm_subject=fm_subject
         , fm_head_html=fm_head_html
@@ -104,12 +99,11 @@ def faq_master_update_form(fm_id: int, request: Request, db: db_session):
     )
 
 
-@router.post("/faq_master_form_update/{fm_id}")
+@router.post("/faq_master_form_update/{fm_id}", dependencies=[Depends(validate_token)])
 def faq_master_update(
         fm_id: int,
         request: Request,
         db: db_session,
-        token: str = Form(...),
         fm_subject: str = Form(...),
         fm_head_html: str = Form(None),
         fm_tail_html: str = Form(None),
@@ -122,10 +116,6 @@ def faq_master_update(
         fm_timg_del: int = Form(None),
     ):
     """FAQ관리 수정 처리"""
-    # 토큰 검사
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     faq_master = db.query(FaqMaster).filter(FaqMaster.fm_id == fm_id).first()
 
     faq_master.fm_subject = fm_subject
@@ -164,12 +154,12 @@ def faq_master_update(
 def faq_master_delete(
     request: Request,
     db: db_session,
+    token: str = Query(...),
     fm_id: int = Path(...),
 ):
     """FAQ관리 삭제 처리"""
     # 토큰 검사
     # DELETE 요청일 경우, Body에 토큰이 없으므로 쿼리스트링에서 토큰을 얻는다.
-    token = request.query_params.get("token")
     if not check_token(request, token):
         return JSONResponse(status_code=403, content={"message": "토큰이 유효하지 않습니다."})
     
@@ -207,21 +197,16 @@ def faq_add_form(fm_id: int, request: Request, db: db_session):
     )
 
 
-@router.post("/faq_form_update/{fm_id}")
+@router.post("/faq_form_update/{fm_id}", dependencies=[Depends(validate_token)])
 def faq_add(
     request: Request,
     db: db_session,
-    token: str = Form(...),
     fm_id: int = Path(...),
     fa_order: str = Form(...),
     fa_subject: str = Form(...),
     fa_content: str = Form(...),
 ):
     """FAQ관리 등록 처리"""
-    # 토큰 검사
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     faq = Faq(
         fm_id=fm_id,
         fa_order=fa_order,
@@ -247,11 +232,10 @@ def faq_update_form(fa_id: int, request: Request, db: db_session):
     )
 
 
-@router.post("/faq_form_update/{fm_id}/{fa_id}")
+@router.post("/faq_form_update/{fm_id}/{fa_id}", dependencies=[Depends(validate_token)])
 def faq_update(
     request: Request,
     db: db_session,
-    token: str = Form(...),
     fm_id: int = Path(...),
     fa_id: int = Path(...),
     fa_order: str = Form(...),
@@ -259,12 +243,7 @@ def faq_update(
     fa_content: str = Form(...),
 ):
     """FAQ항목 수정 처리"""
-    # 토큰 검사
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     faq = db.query(Faq).filter(Faq.fa_id == fa_id).first()
-
     faq.fa_subject = fa_subject
     faq.fa_content = fa_content
     faq.fa_order = fa_order
@@ -277,12 +256,12 @@ def faq_update(
 async def faq_delete(
     request: Request,
     db: db_session,
+    token: str = Query(...),
     fa_id: int = Path(...),
 ):
     """FAQ 항목 삭제 처리"""
     # 토큰 검사
     # DELETE 요청일 경우, Body에 토큰이 없으므로 쿼리스트링에서 토큰을 얻는다.
-    token = request.query_params.get("token")
     if not check_token(request, token):
         return JSONResponse(status_code=403, content={"message": "토큰이 유효하지 않습니다."})
 

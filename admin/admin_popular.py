@@ -46,17 +46,13 @@ def popular_list(request: Request, db: db_session,
     return templates.TemplateResponse("popular_list.html", context)
 
 
-@router.post("/popular/delete", tags=["admin_popular_list"])
+@router.post("/popular/delete", dependencies=[Depends(validate_token)], tags=["admin_popular_list"])
 def popular_delete(request: Request,
                     db: db_session,
-                    token: str = Form(None),
                     checks: List[int] = Form(..., alias="chk[]")):
     '''
     인기검색어 목록 삭제
     '''
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     # in 조건을 사용해서 일괄 삭제
     db.query(Popular).filter(Popular.pp_id.in_(checks)).delete()
     db.commit()

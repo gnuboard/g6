@@ -81,9 +81,8 @@ def board_list(request: Request, db: db_session, search_params: dict = Depends(c
     return templates.TemplateResponse("board_list.html", context)
 
 
-@router.post("/board_list_update")
+@router.post("/board_list_update", dependencies=[Depends(validate_token)])
 async def board_list_update(request: Request, db: db_session,
-        token: str = Form(...),
         checks: Optional[List[int]] = Form(None, alias="chk[]"),
         gr_id: Optional[List[str]] = Form(None, alias="gr_id[]"),
         bo_table: Optional[List[str]] = Form(None, alias="bo_table[]"),
@@ -102,9 +101,6 @@ async def board_list_update(request: Request, db: db_session,
     """
     게시판관리 목록 일괄수정
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     query_string = generate_query_string(request)
         
     # 선택수정
@@ -140,20 +136,16 @@ async def board_list_update(request: Request, db: db_session,
     return RedirectResponse(f"/admin/board_list?{query_string}", status_code=303)
 
 
-@router.post("/board_list_delete")
+@router.post("/board_list_delete", dependencies=[Depends(validate_token)])
 async def board_list_delete(
     request: Request,
     db: db_session,
-    token: str = Form(...),
     checks: List[int] = Form(None, alias="chk[]"),
     bo_table: List[str] = Form(None, alias="bo_table[]"),
 ):
     """
     게시판관리 목록 일괄삭제
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     for i in checks:
         board = db.query(models.Board).filter(models.Board.bo_table == bo_table[i]).first()
         if board:
@@ -232,37 +224,30 @@ def board_form(request: Request, db: db_session):
 async def board_form(bo_table: str, request: Request, db: db_session,
                sfl: Optional[str] = None, 
                stx: Optional[str] = None, ):
-    
+
     board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
     if not board:
         # raise HTTPException(status_code=404, detail=f"{bo_table} Board is not found.")
         errors = [f"{bo_table} 게시판이 존재하지 않습니다."]
         return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
 
-    # 토큰값을 게시판아이디로 만들어 세션에 저장하고 수정시 넘어오는 토큰값을 비교하여 수정 상태임을 확인
-    token = hash_password(bo_table)
-    request.session["token"] = token
-    
     context = {
         "request": request,
         "board": board,
-        "token": token,
         "config": request.state.config,
     }
     return templates.TemplateResponse("board_form.html", context)
 
 
 # 등록, 수정 처리
-@router.post("/board_form_update")
+@router.post("/board_form_update", dependencies=[Depends(validate_token)])
 def board_form_update(request: Request, 
                         db: db_session,
                         sfl: str = Form(None),
                         stx: str = Form(None),
                         action: str = Form(...),
-                        token: str = Form(None),
                         bo_table: str = Form(...),
-                        form_data: BoardForm = Depends(), 
-                        
+                        form_data: BoardForm = Depends(),
                         chk_grp_device: str = Form(None),
                         chk_grp_category_list: str = Form(None),
                         chk_grp_admin: str = Form(None),
@@ -421,9 +406,6 @@ def board_form_update(request: Request,
                         chk_all_9: str = Form(None),
                         chk_all_10: str = Form(None),
                         ):
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     # 등록
     if action == "w":
         existing_board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()

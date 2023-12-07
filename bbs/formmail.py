@@ -71,9 +71,8 @@ def formmail(request: Request, db: db_session,
     return templates.TemplateResponse(f"bbs/formmail.html", context)
 
 
-@router.post("/formmail_send")
+@router.post("/formmail_send", dependencies=[Depends(validate_token)])
 async def formmail_send(request: Request, db: db_session,
-                  token: str = Form(None, alias="token"),
                   email: str = Form(..., alias="to"),
                   name: str = Form(None, alias="fnick"),
                   fmail: str = Form(..., alias="fmail"),
@@ -83,9 +82,6 @@ async def formmail_send(request: Request, db: db_session,
     '''
     폼메일 발송
     '''
-    if not check_token(request, token):
-        raise AlertException("잘못된 접근입니다.")
-
     enc = StringEncrypt()
     decrypted_to_email = enc.decrypt(email)
     # to_emails = decrypted_to_email.split(',') if ',' in decrypted_to_email else [decrypted_to_email]

@@ -140,11 +140,10 @@ def memo_form(request: Request, db: db_session,
     return templates.TemplateResponse(f"{request.state.device}/memo/memo_form.html", context)
 
 
-@router.post("/memo_form_update")
+@router.post("/memo_form_update", dependencies=[Depends(validate_token)])
 async def memo_form_update(
     request: Request,
     db: db_session,
-    token: str = Form(...),
     recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
     me_recv_mb_id : str = Form(...),
     me_memo: str = Form(...)
@@ -156,9 +155,6 @@ async def memo_form_update(
     member = request.state.login_member
     if not member:
         raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
-    
-    if not check_token(request, token):
-        raise AlertException(f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.", 403)
 
     captcha_cls = get_current_captcha_cls(config.cf_captcha)
     if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
@@ -212,18 +208,16 @@ async def memo_form_update(
     return RedirectResponse(url=f"/bbs/memo?kind=send", status_code=302)
 
 
-@router.get("/memo_delete/{me_id}")
-def memo_delete(request: Request, db: db_session, 
-                me_id: int = Path(...),
-                token:str = Query(...),
-                page:int = Query(default=1)
-                ):
+@router.get("/memo_delete/{me_id}", dependencies=[Depends(validate_token)])
+def memo_delete(
+    request: Request,
+    db: db_session, 
+    me_id: int = Path(...),
+    page:int = Query(default=1)
+):
     """
     쪽지 삭제
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
     member = request.state.login_member
     if not member:
         raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")

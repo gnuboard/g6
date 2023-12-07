@@ -42,21 +42,18 @@ def password(
     return templates.TemplateResponse(f"{request.state.device}/bbs/password.html", context)
 
 
-@router.post("/password_check/{action}/{bo_table}/{wr_id}")
+@router.post("/password_check/{action}/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
 async def password_check(
     request: Request,
     db: db_session,
     action: str = Path(...),
     bo_table: str = Path(...),
     wr_id: int = Path(...),
-    token: str = Form(...),
     wr_password: str = Form(...)
 ):
     """
     게시글/댓글 행동 시 비밀번호 확인
     """
-    if not check_token(request, token):
-        raise AlertException(f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.", 403)
     
     write_model = dynamic_create_write_table(bo_table)
     write = db.query(write_model).filter_by(wr_id=wr_id).first()

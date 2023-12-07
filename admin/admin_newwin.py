@@ -56,19 +56,15 @@ def newwin_form_edit(request: Request, nw_id: int, db: db_session):
         "newwin_form.html", {"request": request, "newwin": newwin}
     )
 
-@router.post("/newwin_form_update")
+@router.post("/newwin_form_update", dependencies=[Depends(validate_token)])
 def newwin_form_update(request: Request,
                         db: db_session,
-                        token: str = Form(...),
                         nw_id: int = Form(None),
                         form_data: NewwinForm = Depends()
                         ):
     """
     팝업 등록 및 수정 처리
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     # 등록
     if not nw_id:
         newwin = NewWin(**form_data.__dict__)
@@ -88,17 +84,14 @@ def newwin_form_update(request: Request,
     return RedirectResponse(url=f"/admin/newwin_form/{newwin.nw_id}", status_code=302)
 
 
-@router.get("/newwin_delete/{nw_id}")
+@router.get("/newwin_delete/{nw_id}", dependencies=[Depends(validate_token)])
 def newwin_delete(nw_id: int, 
                    request: Request, 
-                   db: db_session,
-                   token: str = Query(...)):
+                   db: db_session
+                   ):
     """
     팝업 삭제
-    """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
+    """    
     newwin = db.query(NewWin).get(nw_id)
     if not newwin:
         raise AlertException(status_code=404, detail=f"{nw_id}: 팝업이 존재하지 않습니다.")

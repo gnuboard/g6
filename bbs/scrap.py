@@ -43,19 +43,15 @@ def scrap_form(request: Request, db: db_session,
     return templates.TemplateResponse("bbs/scrap_popin.html", context)
     
 
-@router.post("/scrap_popin_update/{bo_table}/{wr_id}")
+@router.post("/scrap_popin_update/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
 def scrap_form_update(request: Request, db: db_session,
     bo_table: str = Path(...),
     wr_id: int = Path(...),
     wr_content: str = Form(None),
-    token: str = Form(...),
 ):
     """
     스크랩 등록
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     member = request.state.login_member
     if not member:
         raise AlertCloseException("로그인 후 이용 가능합니다.", 403)
@@ -184,10 +180,9 @@ def scrap_list(request: Request, db: db_session,
     return templates.TemplateResponse("bbs/scrap_list.html", context)
 
 
-@router.get("/scrap_delete/{ms_id}")
+@router.get("/scrap_delete/{ms_id}", dependencies=[Depends(validate_token)])
 def scrap_delete(request: Request, db: db_session, 
     ms_id: int = Path(...),
-    token: str = Query(...),
     page: int = Query(default=1)
 ):
     """
@@ -195,9 +190,6 @@ def scrap_delete(request: Request, db: db_session,
     """
     return_url = request.url_for('scrap_list').path + f"?page={page}"
 
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
     member = request.state.login_member
     if not member:
         raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")

@@ -59,11 +59,10 @@ def boardgroup_list(request: Request, db: db_session):
     return templates.TemplateResponse("boardgroup_list.html", {"request": request, "groups": group_data})
 
 
-@router.post("/boardgroup_list_update")
+@router.post("/boardgroup_list_update", dependencies=[Depends(validate_token)])
 def boardgroup_list_update(
     request: Request, 
     db: db_session,
-    token: str = Form(...),
     checks: List[int]= Form(None, alias="chk[]"),
     gr_id: List[str] = Form(None, alias="gr_id[]"),
     gr_subject: List[str] = Form(None, alias="gr_subject[]"),
@@ -73,9 +72,6 @@ def boardgroup_list_update(
     gr_device: List[str] = Form(None, alias="gr_device[]"),
 ):
     """게시판그룹 일괄 수정"""
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     # 선택수정
     for i in checks:
         group = db.query(models.Group).filter(models.Group.gr_id == gr_id[i]).first()
@@ -93,18 +89,14 @@ def boardgroup_list_update(
     return RedirectResponse(f"/admin/boardgroup_list?{query_string}", status_code=303)
 
 
-@router.post("/boardgroup_list_delete")
+@router.post("/boardgroup_list_delete", dependencies=[Depends(validate_token)])
 def boardgroup_list_delete(
     request: Request, 
     db: db_session,
-    token: str = Form(...),
     checks: List[int]= Form(None, alias="chk[]"),
     gr_id: List[str] = Form(None, alias="gr_id[]"),
 ):
     """게시판그룹 일괄 삭제"""
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     for i in checks:
         exists_board = db.query(models.Board).filter_by(gr_id = gr_id[i]).first()
         if not exists_board:
@@ -118,11 +110,9 @@ def boardgroup_list_delete(
 
 
 @router.get("/boardgroup_form")
-def boardgroup_form(request: Request, db: db_session):
-    token = hash_password(hash_password("")) # 토큰값을 아무도 알수 없게 만듬
-    request.session["token"] = token   
-    
-    return templates.TemplateResponse("boardgroup_form.html", {"request": request, "group": None, "token": token})
+def boardgroup_form(request: Request):
+
+    return templates.TemplateResponse("boardgroup_form.html", {"request": request, "group": None})
 
 
 @router.get("/boardgroup_form/{gr_id}")
@@ -136,16 +126,12 @@ def boardgroup_form(gr_id: str, request: Request, db: db_session):
     return templates.TemplateResponse("boardgroup_form.html", {"request": request, "group": group, "member_count": member_count })
 
 
-@router.post("/boardgroup_form_update")  
+@router.post("/boardgroup_form_update", dependencies=[Depends(validate_token)])
 def boardgroup_form_update(request: Request, db: db_session,
                         action: str = Form(...),
-                        token : str = Form(...),
                         gr_id: str = Form(...),
                         form_data: GroupForm = Depends(),
                         ):
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     if action == "w":
         existing_group = db.query(models.Group).filter(models.Group.gr_id == gr_id).first()
         if existing_group:

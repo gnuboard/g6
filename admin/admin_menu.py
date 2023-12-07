@@ -78,11 +78,10 @@ def menu_form_search(request: Request, db: db_session, type: str = Form(None)):
     )
 
 
-@router.post("/menu_list_update")
+@router.post("/menu_list_update", dependencies=[Depends(validate_token)])
 def menu_list_update(
     request: Request,
     db: db_session,
-    token: str = Form(...),
     parent_code: List[str] = Form(None, alias="code[]"),
     me_name: List[str] = Form(None, alias="me_name[]"),
     me_link: List[str] = Form(None, alias="me_link[]"),
@@ -94,9 +93,6 @@ def menu_list_update(
     """
     메뉴 수정
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     try:
         # 메뉴 전체 삭제
         db.query(Menu).delete()

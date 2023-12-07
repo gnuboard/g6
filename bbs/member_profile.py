@@ -89,9 +89,8 @@ def member_profile(request: Request, db: db_session):
     })
 
 
-@router.post("/member_profile/{mb_no}", name='member_profile_save')
+@router.post("/member_profile/{mb_no}", name='member_profile_save', dependencies=[Depends(validate_token)])
 async def member_profile_save(request: Request, db: db_session,
-                              token: str = Form(...),
                               mb_img: Optional[UploadFile] = File(None),
                               mb_icon: Optional[UploadFile] = File(None),
                               mb_password: str = Form(None),
@@ -103,8 +102,6 @@ async def member_profile_save(request: Request, db: db_session,
                               del_mb_icon: str = Form(None),
                               recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
                               ):
-    if not check_token(request, token):
-        raise AlertException("잘못된 접근입니다.")
 
     if not request.session.get("ss_profile_change", False):
         raise AlertException(status_code=403, detail="잘못된 접근입니다.", url=app.url_path_for("member_confirm"))

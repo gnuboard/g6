@@ -95,18 +95,14 @@ def point_list(request: Request, db: db_session, search_params: dict = Depends(c
     return templates.TemplateResponse("point_list.html", context)
 
 
-@router.post("/point_update")
+@router.post("/point_update", dependencies=[Depends(validate_token)])
 async def point_update(request: Request, db: db_session,
         search_params: dict = Depends(common_search_query_params),
-        token: Optional[str] = Form(...),
         mb_id: Optional[str] = Form(default=""),
         po_content: Optional[str] = Form(default=""),
         po_point: Optional[str] = Form(default="0"),
         po_expire_term: Optional[int] = Form(None),
-        ):
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
+        ):    
     try:
         # po_point 값을 정수로 변환합니다.
         po_point = int(po_point)
@@ -130,16 +126,12 @@ async def point_update(request: Request, db: db_session,
     return RedirectResponse(f"/admin/point_list?{query_string}", status_code=303)
 
 
-@router.post("/point_list_delete")
+@router.post("/point_list_delete", dependencies=[Depends(validate_token)])
 async def point_list_delete(request: Request, db: db_session,
         search_params: dict = Depends(common_search_query_params),
-        token: Optional[str] = Form(...),
         checks: Optional[List[int]] = Form(None, alias="chk[]"),
         po_id: Optional[List[int]] = Form(None, alias="po_id[]"),
         ):
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     query_string = generate_query_string(request)
 
     for i in checks:

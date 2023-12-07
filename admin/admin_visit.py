@@ -110,9 +110,8 @@ def visit_delete(request: Request, db: db_session, ):
                                       })
 
 
-@router.post("/visit_delete_update", tags=["admin_visit_delete"])
+@router.post("/visit_delete_update", dependencies=[Depends(validate_token)], tags=["admin_visit_delete"])
 async def visit_delete_update(request: Request, db: db_session,
-                              token: str = Form(None),
                               year: str = Form(default=""),  # 년도
                               month: str = Form(default=""),  # 월
                               method: str = Form(default=""),  # 방법
@@ -121,10 +120,6 @@ async def visit_delete_update(request: Request, db: db_session,
     '''
     접속자로그 레코드 삭제
     '''
-
-    if not check_token(request, token):
-        raise AlertException("잘못된 접근입니다.")
-
     member = request.state.login_member
     if not member:
         return templates.TemplateResponse("alert.html", {"request": request, "errors": ["로그인 후 이용해 주세요."]})

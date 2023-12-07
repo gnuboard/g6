@@ -128,10 +128,9 @@ def qa_form_edit(qa_id: int,
     return templates.TemplateResponse(f"{request.state.device}/qa/qa_form.html", context)
 
 
-@router.post("/qawrite_update")
+@router.post("/qawrite_update", dependencies=[Depends(validate_token)])
 def qa_write_update(request: Request,
                 db: db_session,
-                token: str = Form(...),
                 form_data: QaContentForm = Depends(),
                 qa_id: int = Form(None),
                 qa_parent: str = Form(None),
@@ -153,8 +152,6 @@ def qa_write_update(request: Request,
     Returns:
         RedirectResponse: 1:1문의 설정 등록/수정 후 폼으로 이동
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
     config = request.state.config
 
     # Q&A 설정 조회
@@ -235,18 +232,14 @@ def qa_write_update(request: Request,
         return RedirectResponse(url=f"/bbs/qaview/{qa.qa_id}", status_code=302)
 
 
-@router.get("/qadelete/{qa_id}")
+@router.get("/qadelete/{qa_id}", dependencies=[Depends(validate_token)])
 def qa_delete(request: Request,
               db: db_session,
                 qa_id: int,
-                token: str = Query(...),
                 ):
     '''
     Q&A 삭제하기
     '''
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     # Q&A 삭제
     db.query(QaContent).filter(QaContent.qa_id == qa_id).delete()
     db.commit()
@@ -254,9 +247,8 @@ def qa_delete(request: Request,
     return RedirectResponse(url=f"/bbs/qalist", status_code=302)
 
 
-@router.post("/qadelete/list")
+@router.post("/qadelete/list", dependencies=[Depends(validate_token)])
 async def qa_delete_list(request: Request, db: db_session,
-                      token: Optional[str] = Form(...),
                       checks: List[int] = Form(..., alias="chk_qa_id[]")
                       ):
     """Q&A 목록 삭제
@@ -264,10 +256,7 @@ async def qa_delete_list(request: Request, db: db_session,
     Args:
         token (str): 입력/수정/삭제 변조 방지 토큰.
         checks (List[int]): Q&A ID list. Defaults to Form(None, alias="chk_qa_id[]").
-    """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
+    """    
     for i in checks:
         qa = db.query(QaContent).filter(QaContent.qa_id == i).first()
         if qa:

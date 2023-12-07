@@ -80,9 +80,8 @@ def get_register_form(request: Request):
     )
 
 
-@router.post("/register_form", name='register_form_save')
+@router.post("/register_form", dependencies=[Depends(validate_token)], name='register_form_save')
 async def post_register_form(request: Request, db: db_session,
-                             token: str = Form(..., alias="token"),
                              mb_id: str = Form(None),
                              mb_password: str = Form(None),
                              mb_password_re: str = Form(None),
@@ -93,10 +92,6 @@ async def post_register_form(request: Request, db: db_session,
                              member_form: MemberForm = Depends(),
                              recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default="")
                              ):
-
-    if not check_token(request, token):
-        raise AlertException("잘못된 접근입니다.")
-    
     # 약관 동의 체크
     agree = request.session.get("ss_agree", "")
     agree2 = request.session.get("ss_agree", "")

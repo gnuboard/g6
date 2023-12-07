@@ -24,12 +24,10 @@ def member_leave_form(request: Request):
     })
 
 
-@router.post("/member_leave")
-def member_leave(request: Request, db: db_session, token: str = Form(...)):
+@router.post("/member_leave", dependencies=[Depends(validate_token)])
+def member_leave(request: Request, db: db_session):
     """회원탈퇴
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     member = request.state.login_member
     if not member:

@@ -172,20 +172,16 @@ def list_post(
     )
 
 
-@router.post("/list_delete/{bo_table}")
+@router.post("/list_delete/{bo_table}", dependencies=[Depends(validate_token)])
 def list_delete(
     request: Request,
     db: db_session,
     bo_table: str = Path(...),
-    token: str = Form(...),
     wr_ids: list = Form(..., alias="chk_wr_id[]"),
 ):
     """
     게시글을 일괄 삭제한다.
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     # 게시판 정보 조회
     board = db.get(Board, bo_table)
     if not board:
@@ -267,11 +263,10 @@ async def move_post(
     )
 
 
-@router.post("/move_update/")
+@router.post("/move_update/", dependencies=[Depends(validate_token)])
 def move_update(
     request: Request,
     db: db_session,
-    token: str = Form(...),
     sw: str = Form(...),
     bo_table: str = Form(...),
     wr_ids: str = Form(..., alias="wr_id_list"),
@@ -282,9 +277,6 @@ def move_update(
     """
     config = request.state.config
     act = "이동" if sw == "move" else "복사"
-
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     # 게시판 검증
     origin_board = db.get(Board, bo_table)
@@ -533,11 +525,10 @@ def write_form_edit(
     )
 
 
-@router.post("/write_update")
+@router.post("/write_update", dependencies=[Depends(validate_token)])
 async def write_update(
     request: Request,
     db: db_session,
-    token: str = Form(...),
     recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
     bo_table: str = Form(...),
     wr_id: int = Form(None),
@@ -555,9 +546,6 @@ async def write_update(
     """
     게시글을 Table 추가한다.
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
     config = request.state.config
     # 게시판 정보 조회
     board = db.get(Board, bo_table)
@@ -966,20 +954,16 @@ def read_post(
 
 
 # 게시글 삭제
-@router.get("/delete/{bo_table}/{wr_id}")
+@router.get("/delete/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
 def delete_post(
     request: Request,
     db: db_session,
     bo_table: str = Path(...),
     wr_id: int = Path(...),
-    token: str = Query(...)
 ):
     """
     게시글을 삭제한다.
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다.", 403)
-
     # 게시판 정보 조회
     board = db.get(Board, bo_table)
     board_config = BoardConfig(request, board)
@@ -1083,11 +1067,10 @@ def download_file(
     return FileResponse(board_file.bf_file, filename=board_file.bf_source)
 
 
-@router.post("/write_comment_update/")
+@router.post("/write_comment_update/", dependencies=[Depends(validate_token)])
 async def write_comment_update(
     request: Request,
     db: db_session,
-    token: str = Form(...),
     recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
     form: WriteCommentForm = Depends(),
 ):
@@ -1096,9 +1079,6 @@ async def write_comment_update(
     """
     config = request.state.config
     member = request.state.login_member
-
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다.", 403)
 
     # 게시판 정보 조회
     board = db.get(Board, form.bo_table)
@@ -1185,20 +1165,16 @@ async def write_comment_update(
     return RedirectResponse(f"/board/{form.bo_table}/{form.wr_id}", status_code=303)
 
 
-@router.get("/delete_comment/{bo_table}/{comment_id}")
+@router.get("/delete_comment/{bo_table}/{comment_id}", dependencies=[Depends(validate_token)])
 def delete_comment(
     request: Request,
     db: db_session,
     bo_table: str = Path(...),
     comment_id: int = Path(...),
-    token: str = Query(...),
 ):
     """
     댓글 삭제
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다.", 403)
-
     # 게시판 정보 조회
     board = db.get(Board, bo_table)
     if not board:

@@ -71,20 +71,15 @@ def board_new_list(
     return templates.TemplateResponse(f"{request.state.device}/new/basic/new_list.html", context)
 
 
-@router.post("/new_delete")
+@router.post("/new_delete", dependencies=[Depends(validate_token)])
 def new_delete(
         request: Request,
         db: db_session,
-        token: str = Form(...),
         bn_ids: list = Form(..., alias="chk_bn_id[]"),
     ):
     """
     게시글을 삭제한다.
-    """
-    # 토큰 검증    
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
+    """    
     # 새글 정보 조회
     board_news = db.query(BoardNew).filter(BoardNew.bn_id.in_(bn_ids)).all()
     for new in board_news:

@@ -35,10 +35,9 @@ def qa_config_form(request: Request, db: db_session):
     )
 
 
-@router.post("/qa_config_update")
+@router.post("/qa_config_update", dependencies=[Depends(validate_token)])
 def qa_config_update(request: Request,
                         db: db_session,
-                        token: str = Form(...),
                         form_data: QaConfigForm = Depends()
                         ):
     """1:1문의 설정 등록/수정 처리
@@ -53,9 +52,6 @@ def qa_config_update(request: Request,
     Returns:
         RedirectResponse: 1:1문의 설정 등록/수정 후 폼으로 이동
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     qa_config = db.query(QaConfig).first()
     if not qa_config:
         qa_config = QaConfig(**form_data.__dict__)

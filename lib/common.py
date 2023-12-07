@@ -10,7 +10,7 @@ import uuid
 from urllib.parse import urlencode
 import PIL
 import shutil
-from fastapi import Query, Request, HTTPException, UploadFile
+from fastapi import Depends, Form, Query, Request, HTTPException, UploadFile
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment
 from markupsafe import Markup, escape
@@ -37,6 +37,7 @@ from email.mime.multipart import MIMEMultipart
 from lib.captcha.recaptch_v2 import ReCaptchaV2
 from lib.captcha.recaptch_inv import ReCaptchaInvisible
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
+from typing_extensions import Annotated
 
 load_dotenv()
 
@@ -2298,3 +2299,27 @@ def register_theme_statics(app):
     url = f"/theme_static/{theme_name}"
     path = StaticFiles(directory=f"{TEMPLATES}/{theme_name}/static")
     app.mount(url, path, name=f"static_{theme_name}")  # tag
+
+
+"""
+의존성 주입 함수 목록
+"""
+async def get_variety_tokens(
+    token_form: Annotated[str, Form(alias="token")] = None,
+    token_query: Annotated[str, Query(alias="token")] = None
+):
+    """
+    요청 매개변수의 유형별 토큰을 수신, 하나의 토큰만 반환
+    - 반환 우선순위는 매개변수 순서대로
+    """
+    return token_form or token_query
+
+async def validate_token(
+    request: Request,
+    token: Annotated[str, Depends(get_variety_tokens)]
+):
+    """
+    토큰 유효성 검사
+    """
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)

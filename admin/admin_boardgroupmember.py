@@ -105,20 +105,16 @@ def board_form(
     return templates.TemplateResponse("boardgroupmember_form.html", context)
 
 
-@router.post("/boardgroupmember_insert")
+@router.post("/boardgroupmember_insert", dependencies=[Depends(validate_token)])
 async def boardgroupmember_insert(
     request: Request,
     db: db_session,
-    token: str = Form(...),
     mb_id: str = Form(...),
     gr_id: str = Form(...),
 ):
     """
     접근가능한 그룹회원 추가
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     exists_member = db.query(Member).filter_by(mb_id = mb_id).first()
     if not exists_member:
         raise AlertException(f"{mb_id} 회원이 존재하지 않습니다.", 404)
@@ -142,21 +138,17 @@ async def boardgroupmember_insert(
     return RedirectResponse(f"/admin/boardgroupmember_form/{mb_id}", status_code=303)
 
 
-@router.post("/boardgroupmember_delete")
+@router.post("/boardgroupmember_delete", dependencies=[Depends(validate_token)])
 async def boardgroupmember_delete(
     request: Request,
     db: db_session,
-    token: str = Form(...),
     checks: List[int] = Form(None, alias="chk[]"),
     mb_id: str = Form(None),
     gr_id: str = Form(None),
 ):
     """
     접근가능한 그룹회원 삭제
-    """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
+    """    
     db.query(GroupMember).filter(GroupMember.gm_id.in_(checks)).delete()
     db.commit()
 

@@ -50,19 +50,15 @@ def poll_list(request: Request,
     return templates.TemplateResponse("poll_list.html", context)
 
 
-@router.post("/poll_list_delete")
+@router.post("/poll_list_delete", dependencies=[Depends(validate_token)])
 def poll_list_delete(
     request: Request,
     db: db_session,
-    token: str = Form(None),
     checks: List[int] = Form(..., alias="chk[]")
 ):
     """
     투표 목록 삭제
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     # in 조건을 사용해서 일괄 삭제
     db.query(Poll).filter(Poll.po_id.in_(checks)).delete()
     db.query(PollEtc).filter(PollEtc.po_id.in_(checks)).delete()
@@ -94,19 +90,15 @@ def poll_form_edit(po_id: int, request: Request, db: db_session):
     )
 
 
-@router.post("/poll_form_update")
+@router.post("/poll_form_update", dependencies=[Depends(validate_token)])
 def poll_form_update(request: Request,
                         db: db_session,
-                        token: str = Form(...),
                         po_id: int = Form(None),
                         form_data: PollForm = Depends()
                         ):
     """
     투표등록 및 수정 처리
-    """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
+    """    
     poll = db.query(Poll).filter_by(po_id=po_id).first()
     # 투표 수정
     if poll:

@@ -53,20 +53,16 @@ def config_form(request: Request):
     )
 
 
-@router.post("/config_form_update")
+@router.post("/config_form_update", dependencies=[Depends(validate_token)])
 def config_form_update(
         request: Request,
         db: db_session,
-        token: str = Form(None),
         social_list: List[str] = Form(None, alias="cf_social_servicelist[]"),
         form_data: ConfigForm = Depends(),
 ):
     """
     기본환경설정 저장
     """
-    if not check_token(request, token):
-        raise AlertException("잘못된 접근입니다.")
-
     if not request.state.is_super_admin:
         raise AlertException("최고관리자만 접근 가능합니다.")
 

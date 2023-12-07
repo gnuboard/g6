@@ -59,11 +59,10 @@ def content_form_edit(co_id: str, request: Request, db: db_session):
     )
 
 
-@router.post("/content_form_update")
+@router.post("/content_form_update", dependencies=[Depends(validate_token)])
 def content_form_update(request: Request,
                         db: db_session,
                         action: str = Form(...),
-                        token: str = Form(...),
                         co_id: str = Form(...),
                         form_data: ContentForm = Depends(),
                         co_himg: UploadFile = File(None),
@@ -79,7 +78,6 @@ def content_form_update(request: Request,
     Args:
         request (Request): 
         db (Session, optional): 
-        token (str): 입력/수정/삭제 변조 방지 토큰.
         co_id (str): 내용 ID.
         form_data (ContentDataclass): 입력/수정 Form Data.
         co_himg (UploadFile, optional): 상단 이미지 첨부파일. Defaults to File(...).
@@ -95,9 +93,6 @@ def content_form_update(request: Request,
     Returns:
         RedirectResponse: 내용 등록/수정 후 상세 폼으로 이동
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     if action == "w":
         # ID 중복 검사
         exists_content = db.query(Content).filter(Content.co_id == co_id).first()
@@ -132,17 +127,13 @@ def content_form_update(request: Request,
     return RedirectResponse(url=request.url_for('content_form_edit', co_id=co_id), status_code=302)
 
 
-@router.get("/content_delete/{co_id}")
+@router.get("/content_delete/{co_id}", dependencies=[Depends(validate_token)])
 def content_delete(request: Request, 
                    db: db_session,
-                   token: str = Query(...),
                    co_id: str = Path(...)):
     """
     내용 삭제
-    """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
+    """    
     content = db.query(Content).filter(Content.co_id == co_id).first()
     if not content:
         raise AlertException(status_code=404, detail=f"{co_id}: 내용 아이디가 존재하지 않습니다.")

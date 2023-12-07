@@ -17,14 +17,11 @@ templates.env.globals["captcha_widget"] = captcha_widget
 templates.env.add_extension('jinja2.ext.loopcontrols')
 
 
-@router.post("/poll_update/{po_id}")
-def poll_update(request: Request, db: db_session, po_id: int, token: str = Form(...), gb_poll: int = Form(...)):
+@router.post("/poll_update/{po_id}", dependencies=[Depends(validate_token)])
+def poll_update(request: Request, db: db_session, po_id: int, gb_poll: int = Form(...)):
     """
     투표하기
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다.", 403)
-
     poll = db.query(Poll).get(po_id)
     member = request.state.login_member
     member_level = get_member_level(request)
@@ -97,11 +94,10 @@ def poll_result(request: Request, po_id: int, db: db_session):
     )
 
 
-@router.post("/poll_etc_update/{po_id}")
+@router.post("/poll_etc_update/{po_id}", dependencies=[Depends(validate_token)])
 async def poll_etc_update(request: Request,
                     db: db_session,
-                    po_id: int, 
-                    token: str = Form(...),
+                    po_id: int,
                     recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
                     pc_name: str = Form(...),
                     pc_idea: str = Form(...),
@@ -109,9 +105,6 @@ async def poll_etc_update(request: Request,
     """
     기타의견 등록
     """
-    if not check_token(request, token):
-        raise AlertException(f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.", 403)
-
     poll = db.query(Poll).get(po_id)
     config = request.state.config
     member = request.state.login_member
@@ -147,18 +140,15 @@ async def poll_etc_update(request: Request,
     return RedirectResponse(url=f"/bbs/poll_result/{po_id}", status_code=302)
 
 
-@router.get("/poll_etc_delete/{pc_id}")
+@router.get("/poll_etc_delete/{pc_id}", dependencies=[Depends(validate_token)])
 def poll_etc_delete(
     request: Request,
     db: db_session,
-    pc_id: int = Path(...),
-    token: str = Query(...)):
+    pc_id: int = Path(...)
+):
     """
     기타의견 삭제
-    """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
+    """    
     poll_etc = db.query(PollEtc).get(pc_id)
     po_id = poll_etc.po_id
     member = request.state.login_member
