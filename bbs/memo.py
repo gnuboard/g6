@@ -140,11 +140,10 @@ def memo_form(request: Request, db: db_session,
     return templates.TemplateResponse(f"{request.state.device}/memo/memo_form.html", context)
 
 
-@router.post("/memo_form_update", dependencies=[Depends(validate_token)])
+@router.post("/memo_form_update", dependencies=[Depends(validate_token), Depends(validate_captcha)])
 async def memo_form_update(
     request: Request,
     db: db_session,
-    recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
     me_recv_mb_id : str = Form(...),
     me_memo: str = Form(...)
 ):
@@ -155,10 +154,6 @@ async def memo_form_update(
     member = request.state.login_member
     if not member:
         raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
-
-    captcha_cls = get_current_captcha_cls(config.cf_captcha)
-    if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
-        raise AlertException("캡차가 올바르지 않습니다.", 400)
 
     # me_recv_mb_id 공백 제거
     mb_id_list = me_recv_mb_id.replace(" ", "").split(',')

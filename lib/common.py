@@ -2323,3 +2323,17 @@ async def validate_token(
     """
     if not check_token(request, token):
         raise AlertException("토큰이 유효하지 않습니다", 403)
+
+
+async def validate_captcha(
+    request: Request,
+    response: Annotated[str, Form(alias="g-recaptcha-response")] = None
+):
+    """
+    구글 reCAPTCHA 유효성 검사
+    """
+    config = request.state.config
+    captcha_cls = get_current_captcha_cls(config.cf_captcha)
+    # TODO: config.cf_recaptcha_secret_key 변수를 항상 전달할 필요가 있을까?
+    if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, response)):
+        raise AlertException("캡차가 올바르지 않습니다.", 400)

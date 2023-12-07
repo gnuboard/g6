@@ -94,11 +94,10 @@ def poll_result(request: Request, po_id: int, db: db_session):
     )
 
 
-@router.post("/poll_etc_update/{po_id}", dependencies=[Depends(validate_token)])
+@router.post("/poll_etc_update/{po_id}", dependencies=[Depends(validate_token), Depends(validate_captcha)])
 async def poll_etc_update(request: Request,
                     db: db_session,
                     po_id: int,
-                    recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
                     pc_name: str = Form(...),
                     pc_idea: str = Form(...),
                     ):
@@ -112,10 +111,6 @@ async def poll_etc_update(request: Request,
 
     if poll.po_level > member_level:
         raise AlertCloseException(f"권한 {poll.po_level} 이상의 회원만 기타의견을 등록할 수 있습니다.", 403)
-    
-    captcha_cls = get_current_captcha_cls(config.cf_captcha)
-    if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
-        raise AlertException("캡차가 올바르지 않습니다.", 400)
 
     po_etc = PollEtc(po_id=po_id, pc_name=pc_name, pc_idea=pc_idea, mb_id=(member.mb_id if member else ''))
     db.add(po_etc)

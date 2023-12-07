@@ -89,7 +89,7 @@ def member_profile(request: Request, db: db_session):
     })
 
 
-@router.post("/member_profile/{mb_no}", name='member_profile_save', dependencies=[Depends(validate_token)])
+@router.post("/member_profile/{mb_no}", name='member_profile_save', dependencies=[Depends(validate_token), Depends(validate_captcha)])
 async def member_profile_save(request: Request, db: db_session,
                               mb_img: Optional[UploadFile] = File(None),
                               mb_icon: Optional[UploadFile] = File(None),
@@ -100,16 +100,10 @@ async def member_profile_save(request: Request, db: db_session,
                               member_form: MemberForm = Depends(MemberForm),
                               del_mb_img: str = Form(None),
                               del_mb_icon: str = Form(None),
-                              recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
                               ):
 
     if not request.session.get("ss_profile_change", False):
         raise AlertException(status_code=403, detail="잘못된 접근입니다.", url=app.url_path_for("member_confirm"))
-
-    config = request.state.config
-    captcha = get_current_captcha_cls(config.cf_captcha)
-    if (captcha is not None) and (not await captcha.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
-        raise AlertException("캡차가 올바르지 않습니다.")
 
     mb_id = request.session.get("ss_mb_id", "")
     exists_member: Optional[Member] = db.query(Member).filter(Member.mb_id == mb_id).first()
