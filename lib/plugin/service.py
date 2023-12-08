@@ -178,9 +178,21 @@ def read_plugin_state() -> List[PluginState]:
         return []
 
     lock = FileLock(f"{PLUGIN_DIR}/plugin_states.json.lock", timeout=5)
+    plugin_state = []
     with lock:
         with open(PLUGIN_STATE_FILE_PATH, 'r', encoding="UTF-8") as file:
-            plugin_state = json.load(file)
+            # 파일내용 체크등 미리 읽으면 데이터가 사라지므로.
+            # json.load 를 바로 호출해야한다.
+            try:
+                plugin_state = json.load(file)
+            except Exception as e:
+                # plugin_states.json 파일이 json 포멧에 안맞을 경우 플러그인 로딩을 하지 못한다.
+                # 빈 파일은 허용되지 않는다. 에러메시지: 'Expecting value: line 1 column 1 (char 0)'
+                # json 포멧에 맞게 고치거나 plugin_states.json 파일을 지우고 플러그인을 관리자에서 새로 설정해야한다.
+                logging.critical("/plugin/plugin_states.json json validate error. not load any plugin!.")
+                logging.critical("It's not allow empty file. check json format. "
+                                 "or remove plugin_states.json file.")
+                logging.critical(e)
 
     plugin_state_list = []
 
