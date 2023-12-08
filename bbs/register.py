@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from bbs.member_profile import validate_nickname, validate_userid, is_prohibit_email
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.formclass import MemberForm
 from common.models import Member
 from lib.pbkdf2 import create_hash
@@ -21,7 +21,7 @@ templates.env.globals["check_profile_open"] = check_profile_open
 
 
 @router.get("/register")
-def get_register(request: Request, response: Response):
+async def get_register(request: Request, response: Response):
     # 캐시 제어 헤더 설정 (캐시된 페이지를 보여주지 않고 새로운 페이지를 보여줌)
 
     response.headers["Cache-Control"] = "no-store"
@@ -34,7 +34,7 @@ def get_register(request: Request, response: Response):
 
 
 @router.post("/register")
-def post_register(request: Request, agree: str = Form(...), agree2: str = Form(...)):
+async def post_register(request: Request, agree: str = Form(...), agree2: str = Form(...)):
     if not agree:
         raise AlertException(status_code=400, detail="회원가입약관에 동의해 주세요.")
     if not agree2:
@@ -46,7 +46,7 @@ def post_register(request: Request, agree: str = Form(...), agree2: str = Form(.
 
 
 @router.get("/register_form", name='register_form')
-def get_register_form(request: Request):
+async def get_register_form(request: Request):
     # 약관에 동의를 하지 않았다면
     agree = request.session.get("ss_agree", None)
     agree2 = request.session.get("ss_agree2", None)
@@ -80,9 +80,8 @@ def get_register_form(request: Request):
     )
 
 
-@router.post("/register_form", name='register_form_save')
-async def post_register_form(request: Request, db: Session = Depends(get_db),
-                             token: str = Form(..., alias="token"),
+@router.post("/register_form", dependencies=[Depends(validate_token), Depends(validate_captcha)], name='register_form_save')
+async def post_register_form(request: Request, db: db_session,
                              mb_id: str = Form(None),
                              mb_password: str = Form(None),
                              mb_password_re: str = Form(None),
@@ -90,13 +89,8 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
                              mb_img: Optional[UploadFile] = File(None),
                              mb_icon: Optional[UploadFile] = File(None),
                              mb_zip: Optional[str] = Form(default=""),
-                             member_form: MemberForm = Depends(),
-                             recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default="")
+                             member_form: MemberForm = Depends()
                              ):
-
-    if not check_token(request, token):
-        raise AlertException("잘못된 접근입니다.")
-    
     # 약관 동의 체크
     agree = request.session.get("ss_agree", "")
     agree2 = request.session.get("ss_agree", "")
@@ -104,11 +98,6 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
         return RedirectResponse(url="/bbs/register", status_code=302)
     if not agree2:
         return RedirectResponse(url="/bbs/register", status_code=302)
-
-    config = request.state.config
-    captcha = get_current_captcha_cls(config.cf_captcha)
-    if (captcha is not None) and (not await captcha.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
-        raise AlertException("캡차가 올바르지 않습니다.")
 
     # 유효성 검사
     exists_member = db.query(Member.mb_id, Member.mb_email).filter(Member.mb_id == mb_id).first()
@@ -286,7 +275,7 @@ async def post_register_form(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/register_result")
-def register_result(request: Request, db: Session = Depends(get_db)):
+async def register_result(request: Request, db: db_session):
     register_mb_id = request.session.get("ss_mb_reg", "")
     if "ss_mb_reg" in request.session:
         request.session.pop("ss_mb_reg")
@@ -306,9 +295,9 @@ def register_result(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/email_certify/{mb_id}")
-def email_certify(
+async def email_certify(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     mb_id: str = Path(...),
     certify: str = Query(...),
 ):

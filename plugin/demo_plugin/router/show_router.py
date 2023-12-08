@@ -12,12 +12,12 @@ templates = Jinja2Templates(directory=[TEMPLATES_DIR, PLUGIN_TEMPLATES_DIR])
 
 
 @show_router.get("/show")
-def show(request: Request):
+async def show(request: Request):
     return {"message": "Hello Plugin!"}
 
 
 @show_router.get("/show_template")
-def show(request: Request):
+async def show(request: Request):
     return templates.TemplateResponse(
         "user_demo.html",
         {

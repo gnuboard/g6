@@ -6,7 +6,7 @@ from lib.pbkdf2 import validate_password
 from sqlalchemy.orm import Session
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.models import Member, Memo
 
 router = APIRouter()
@@ -15,9 +15,9 @@ templates.env.filters["default_if_none"] = default_if_none
 
 
 @router.get("/password/{action}/{bo_table}/{wr_id}", name="password_page")
-def password(
+async def password(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     action: str = Path(...),
     bo_table: str = Path(...),
     wr_id: int = Path(...)
@@ -42,21 +42,18 @@ def password(
     return templates.TemplateResponse(f"{request.state.device}/bbs/password.html", context)
 
 
-@router.post("/password_check/{action}/{bo_table}/{wr_id}")
+@router.post("/password_check/{action}/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
 async def password_check(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     action: str = Path(...),
     bo_table: str = Path(...),
     wr_id: int = Path(...),
-    token: str = Form(...),
     wr_password: str = Form(...)
 ):
     """
     게시글/댓글 행동 시 비밀번호 확인
     """
-    if not check_token(request, token):
-        raise AlertException(f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.", 403)
     
     write_model = dynamic_create_write_table(bo_table)
     write = db.query(write_model).filter_by(wr_id=wr_id).first()

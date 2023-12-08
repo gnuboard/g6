@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Path, Request, Form
 from fastapi.responses import RedirectResponse
 from sqlalchemy import desc
 from sqlalchemy.orm import Session, aliased
-from common.database import get_db
+from common.database import db_session
 from common.models import Group, GroupMember, Member
 from lib.common import *
 from typing import List
@@ -15,9 +15,9 @@ templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_nam
 
 
 @router.get("/boardgroupmember_list/{gr_id}")
-def boardgroupmember_list(
+async def boardgroupmember_list(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     gr_id: str = Path(...),
     search_params: dict = Depends(common_search_query_params)
 ):
@@ -72,9 +72,9 @@ def boardgroupmember_list(
 
 
 @router.get("/boardgroupmember_form/{mb_id}")
-def board_form(
+async def board_form(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     mb_id: str = Path(...)
 ):
     """
@@ -105,20 +105,16 @@ def board_form(
     return templates.TemplateResponse("boardgroupmember_form.html", context)
 
 
-@router.post("/boardgroupmember_insert")
+@router.post("/boardgroupmember_insert", dependencies=[Depends(validate_token)])
 async def boardgroupmember_insert(
     request: Request,
-    db: Session = Depends(get_db),
-    token: str = Form(...),
+    db: db_session,
     mb_id: str = Form(...),
     gr_id: str = Form(...),
 ):
     """
     접근가능한 그룹회원 추가
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     exists_member = db.query(Member).filter_by(mb_id = mb_id).first()
     if not exists_member:
         raise AlertException(f"{mb_id} 회원이 존재하지 않습니다.", 404)
@@ -142,21 +138,17 @@ async def boardgroupmember_insert(
     return RedirectResponse(f"/admin/boardgroupmember_form/{mb_id}", status_code=303)
 
 
-@router.post("/boardgroupmember_delete")
+@router.post("/boardgroupmember_delete", dependencies=[Depends(validate_token)])
 async def boardgroupmember_delete(
     request: Request,
-    db: Session = Depends(get_db),
-    token: str = Form(...),
+    db: db_session,
     checks: List[int] = Form(None, alias="chk[]"),
     mb_id: str = Form(None),
     gr_id: str = Form(None),
 ):
     """
     접근가능한 그룹회원 삭제
-    """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
+    """    
     db.query(GroupMember).filter(GroupMember.gm_id.in_(checks)).delete()
     db.commit()
 

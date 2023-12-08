@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
-from common.database import get_db, engine
+from common.database import db_session, engine
 import common.models as models 
 from lib.common import *
 from typing import List, Optional
@@ -27,7 +27,7 @@ templates.env.globals["format"] = format
 
 
 @router.get("/point_list")
-def point_list(request: Request, db: Session = Depends(get_db), search_params: dict = Depends(common_search_query_params)):
+async def point_list(request: Request, db: db_session, search_params: dict = Depends(common_search_query_params)):
         # sst: str = Query(default=""), # sort field (정렬 필드)
         # sod: str = Query(default=""), # search order (검색 오름, 내림차순)
         # sfl: str = Query(default=""), # search field (검색 필드)
@@ -95,18 +95,14 @@ def point_list(request: Request, db: Session = Depends(get_db), search_params: d
     return templates.TemplateResponse("point_list.html", context)
 
 
-@router.post("/point_update")
-async def point_update(request: Request, db: Session = Depends(get_db),
+@router.post("/point_update", dependencies=[Depends(validate_token)])
+async def point_update(request: Request, db: db_session,
         search_params: dict = Depends(common_search_query_params),
-        token: Optional[str] = Form(...),
         mb_id: Optional[str] = Form(default=""),
         po_content: Optional[str] = Form(default=""),
         po_point: Optional[str] = Form(default="0"),
         po_expire_term: Optional[int] = Form(None),
-        ):
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
+        ):    
     try:
         # po_point 값을 정수로 변환합니다.
         po_point = int(po_point)
@@ -130,16 +126,12 @@ async def point_update(request: Request, db: Session = Depends(get_db),
     return RedirectResponse(f"/admin/point_list?{query_string}", status_code=303)
 
 
-@router.post("/point_list_delete")
-async def point_list_delete(request: Request, db: Session = Depends(get_db),
+@router.post("/point_list_delete", dependencies=[Depends(validate_token)])
+async def point_list_delete(request: Request, db: db_session,
         search_params: dict = Depends(common_search_query_params),
-        token: Optional[str] = Form(...),
         checks: Optional[List[int]] = Form(None, alias="chk[]"),
         po_id: Optional[List[int]] = Form(None, alias="po_id[]"),
         ):
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     query_string = generate_query_string(request)
 
     for i in checks:

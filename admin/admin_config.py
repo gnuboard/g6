@@ -3,10 +3,9 @@ import socket
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
 from typing import List
 
-from common.database import get_db
+from common.database import db_session
 from common.formclass import ConfigForm
 from common.models import Config
 from lib.common import *
@@ -29,7 +28,7 @@ CONFIG_MENU_KEY = "100100"
 
 
 @router.get("/config_form")
-def config_form(request: Request):
+async def config_form(request: Request):
     """
     기본환경설정 폼
     """
@@ -54,20 +53,16 @@ def config_form(request: Request):
     )
 
 
-@router.post("/config_form_update")
-def config_form_update(
+@router.post("/config_form_update", dependencies=[Depends(validate_token)])
+async def config_form_update(
         request: Request,
-        db: Session = Depends(get_db),
-        token: str = Form(None),
+        db: db_session,
         social_list: List[str] = Form(None, alias="cf_social_servicelist[]"),
         form_data: ConfigForm = Depends(),
 ):
     """
     기본환경설정 저장
     """
-    if not check_token(request, token):
-        raise AlertException("잘못된 접근입니다.")
-
     if not request.state.is_super_admin:
         raise AlertException("최고관리자만 접근 가능합니다.")
 

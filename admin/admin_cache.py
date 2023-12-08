@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException, Pat
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from sse_starlette import EventSourceResponse
-from common.database import get_db, engine
+from common.database import db_session, engine
 import common.models as models 
 from lib.common import *
 
@@ -17,7 +17,7 @@ templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_nam
 CACHE_MENU_KEY = "100900"
 
 @router.get("/cache_file_delete")
-async def cache_file_delete(request: Request, db: Session = Depends(get_db)):
+async def cache_file_delete(request: Request, db: db_session):
     '''
     캐시파일 일괄삭제
     '''
@@ -34,7 +34,7 @@ async def cache_file_delete(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/cache_file_deleting")
-async def cache_file_deleting(request: Request, db: Session = Depends(get_db)):
+async def cache_file_deleting(request: Request, db: db_session):
     '''
     캐시파일 일괄삭제 처리
     

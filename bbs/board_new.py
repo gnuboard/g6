@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
 
 from lib.board_lib import *
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.models import BoardNew, Board
 
 router = APIRouter()
@@ -12,9 +11,9 @@ templates = UserTemplates()
 
 
 @router.get("/new")
-def board_new_list(
+async def board_new_list(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     gr_id: str = Query(None),
     view: str = Query(None),
     mb_id: str = Query(None),
@@ -71,20 +70,15 @@ def board_new_list(
     return templates.TemplateResponse(f"{request.state.device}/new/basic/new_list.html", context)
 
 
-@router.post("/new_delete")
-def new_delete(
+@router.post("/new_delete", dependencies=[Depends(validate_token)])
+async def new_delete(
         request: Request,
-        db: Session = Depends(get_db),
-        token: str = Form(...),
+        db: db_session,
         bn_ids: list = Form(..., alias="chk_bn_id[]"),
     ):
     """
     게시글을 삭제한다.
-    """
-    # 토큰 검증    
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
+    """    
     # 새글 정보 조회
     board_news = db.query(BoardNew).filter(BoardNew.bn_id.in_(bn_ids)).all()
     for new in board_news:

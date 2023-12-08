@@ -2,14 +2,14 @@ from fastapi import APIRouter, Depends, Form
 
 from bbs.social import SocialAuthService
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from main import templates
 
 router = APIRouter()
 
 
 @router.get("/member_leave")
-def member_leave_form(request: Request):
+async def member_leave_form(request: Request):
     """
     회원탈퇴 폼을 보여준다.
     """
@@ -24,12 +24,10 @@ def member_leave_form(request: Request):
     })
 
 
-@router.post("/member_leave")
-def member_leave(request: Request, db: Session = Depends(get_db), token: str = Form(...)):
+@router.post("/member_leave", dependencies=[Depends(validate_token)])
+async def member_leave(request: Request, db: db_session):
     """회원탈퇴
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     member = request.state.login_member
     if not member:

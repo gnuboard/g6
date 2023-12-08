@@ -3,7 +3,7 @@ from fastapi import FastAPI, APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import MetaData, Table
 from sqlalchemy.orm import Session
-from common.database import SessionLocal, get_db, engine
+from common.database import db_session
 # from common.models import create_dynamic_create_write_table
 import common.models as models 
 from lib.common import *
@@ -65,7 +65,7 @@ router.include_router(admin_plugin_router,  prefix="", tags=["admin_plugin"])
 router.include_router(admin_cache_router,  prefix="", tags=["admin_cache"])
 
 @router.get("/")
-def base(request: Request, db: Session = Depends(get_db)):
+async def base(request: Request, db: db_session):
     '''
     관리자 메인
     '''

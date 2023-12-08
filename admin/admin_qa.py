@@ -1,8 +1,7 @@
-from fastapi import APIRouter, Depends, Request, Form
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
 
-from common.database import get_db
+from common.database import db_session
 from common.formclass import QaConfigForm
 from common.models import QaConfig
 from lib.common import *
@@ -21,7 +20,7 @@ QA_MENU_KEY = "300500"
 
 
 @router.get("/qa_config")
-def qa_config_form(request: Request, db: Session = Depends(get_db)):
+async def qa_config_form(request: Request, db: db_session):
     """
     1:1문의 설정 폼
     """
@@ -34,11 +33,10 @@ def qa_config_form(request: Request, db: Session = Depends(get_db)):
     )
 
 
-@router.post("/qa_config_update")
+@router.post("/qa_config_update", dependencies=[Depends(validate_token)])
 def qa_config_update(
     request: Request,
-    db: Session = Depends(get_db),
-    token: str = Form(...),
+    db: db_session,
     form_data: QaConfigForm = Depends()
 ):
     """1:1문의 설정 등록/수정 처리
@@ -53,9 +51,6 @@ def qa_config_update(
     Returns:
         RedirectResponse: 1:1문의 설정 등록/수정 후 폼으로 이동
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     qa_config = db.query(QaConfig).first()
     # 등록
     if not qa_config:

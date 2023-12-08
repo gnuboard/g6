@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
-from common.database import get_db, engine
+from common.database import db_session, engine
 import common.models as models 
 from lib.common import *
 from typing import List, Optional
@@ -26,7 +26,7 @@ templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 
 @router.get("/board_list")
-def board_list(request: Request, db: Session = Depends(get_db), search_params: dict = Depends(common_search_query_params)):
+async def board_list(request: Request, db: db_session, search_params: dict = Depends(common_search_query_params)):
         # sst: str = Query(default=""), # sort field (정렬 필드)
         # sod: str = Query(default=""), # search order (검색 오름, 내림차순)
         # sfl: str = Query(default=""), # search field (검색 필드)
@@ -81,9 +81,8 @@ def board_list(request: Request, db: Session = Depends(get_db), search_params: d
     return templates.TemplateResponse("board_list.html", context)
 
 
-@router.post("/board_list_update")
-async def board_list_update(request: Request, db: Session = Depends(get_db),
-        token: str = Form(...),
+@router.post("/board_list_update", dependencies=[Depends(validate_token)])
+async def board_list_update(request: Request, db: db_session,
         checks: Optional[List[int]] = Form(None, alias="chk[]"),
         gr_id: Optional[List[str]] = Form(None, alias="gr_id[]"),
         bo_table: Optional[List[str]] = Form(None, alias="bo_table[]"),
@@ -102,9 +101,6 @@ async def board_list_update(request: Request, db: Session = Depends(get_db),
     """
     게시판관리 목록 일괄수정
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     query_string = generate_query_string(request)
         
     # 선택수정
@@ -140,20 +136,16 @@ async def board_list_update(request: Request, db: Session = Depends(get_db),
     return RedirectResponse(f"/admin/board_list?{query_string}", status_code=303)
 
 
-@router.post("/board_list_delete")
+@router.post("/board_list_delete", dependencies=[Depends(validate_token)])
 async def board_list_delete(
     request: Request,
-    db: Session = Depends(get_db),
-    token: str = Form(...),
+    db: db_session,
     checks: List[int] = Form(None, alias="chk[]"),
     bo_table: List[str] = Form(None, alias="bo_table[]"),
 ):
     """
     게시판관리 목록 일괄삭제
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     for i in checks:
         board = db.query(models.Board).filter(models.Board.bo_table == bo_table[i]).first()
         if board:
@@ -186,7 +178,7 @@ async def board_list_delete(
 
 # 등록 폼
 @router.get("/board_form")
-def board_form(request: Request, db: Session = Depends(get_db)):    
+async def board_form(request: Request, db: db_session):    
     config = request.state.config
     
     board = {
@@ -229,40 +221,33 @@ def board_form(request: Request, db: Session = Depends(get_db)):
 
 # 수정 폼
 @router.get("/board_form/{bo_table}")
-async def board_form(bo_table: str, request: Request, db: Session = Depends(get_db),
+async def board_form(bo_table: str, request: Request, db: db_session,
                sfl: Optional[str] = None, 
                stx: Optional[str] = None, ):
-    
+
     board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
     if not board:
         # raise HTTPException(status_code=404, detail=f"{bo_table} Board is not found.")
         errors = [f"{bo_table} 게시판이 존재하지 않습니다."]
         return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
 
-    # 토큰값을 게시판아이디로 만들어 세션에 저장하고 수정시 넘어오는 토큰값을 비교하여 수정 상태임을 확인
-    token = hash_password(bo_table)
-    request.session["token"] = token
-    
     context = {
         "request": request,
         "board": board,
-        "token": token,
         "config": request.state.config,
     }
     return templates.TemplateResponse("board_form.html", context)
 
 
 # 등록, 수정 처리
-@router.post("/board_form_update")
-def board_form_update(request: Request, 
-                        db: Session = Depends(get_db),
+@router.post("/board_form_update", dependencies=[Depends(validate_token)])
+async def board_form_update(request: Request, 
+                        db: db_session,
                         sfl: str = Form(None),
                         stx: str = Form(None),
                         action: str = Form(...),
-                        token: str = Form(None),
                         bo_table: str = Form(...),
-                        form_data: BoardForm = Depends(), 
-                        
+                        form_data: BoardForm = Depends(),
                         chk_grp_device: str = Form(None),
                         chk_grp_category_list: str = Form(None),
                         chk_grp_admin: str = Form(None),
@@ -421,9 +406,6 @@ def board_form_update(request: Request,
                         chk_all_9: str = Form(None),
                         chk_all_10: str = Form(None),
                         ):
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     # 등록
     if action == "w":
         existing_board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
@@ -682,7 +664,7 @@ def board_form_update(request: Request,
 
 
 @router.get("/board_copy/{bo_table}")
-async def board_copy(request: Request, bo_table: str, db: Session = Depends(get_db)):
+async def board_copy(request: Request, bo_table: str, db: db_session):
     board = db.query(models.Board).filter(models.Board.bo_table == bo_table).first()
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
@@ -691,7 +673,7 @@ async def board_copy(request: Request, bo_table: str, db: Session = Depends(get_
 
 
 @router.post("/board_copy_update")
-def board_copy_update(request: Request, db: Session = Depends(get_db),
+async def board_copy_update(request: Request, db: db_session,
                       bo_table: Optional[str] = Form(...),
                       target_table: Optional[str] = Form(...),
                       target_subject: Optional[str] = Form(...),

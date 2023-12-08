@@ -2,8 +2,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, File, Query, Request, Form, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy import asc, desc
-from sqlalchemy.orm import Session
-from common.database import get_db
+from common.database import db_session
 import common.models as models
 import datetime
 from lib.common import *
@@ -37,7 +36,7 @@ cache = {}
 @router.get("/member_list")
 async def member_list(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     search_params: dict = Depends(common_search_query_params),
 ):
     """
@@ -167,11 +166,10 @@ async def member_list(
     return templates.TemplateResponse("member_list.html", context)
 
 
-@router.post("/member_list_update")
+@router.post("/member_list_update", dependencies=[Depends(validate_token)])
 async def member_list_update(
         request: Request,
-        db: Session = Depends(get_db),
-        token: Optional[str] = Form(None),
+        db: db_session,
         checks: Optional[List[int]] = Form(None, alias="chk[]"),
         mb_id: Optional[List[str]] = Form(None, alias="mb_id[]"),
         mb_open: Optional[List[int]] = Form(None, alias="mb_open[]"),
@@ -182,9 +180,6 @@ async def member_list_update(
         act_button: Optional[str] = Form(...),
         ):
     """회원관리 목록 일괄 수정"""
-    if not check_token(request, token):
-        raise AlertException(f"{token} 잘못된 접근입니다.")
-
     # 선택수정
     for i in checks:
         member = db.query(models.Member).filter(models.Member.mb_id == mb_id[i]).first()
@@ -206,18 +201,14 @@ async def member_list_update(
     return RedirectResponse(f"/admin/member_list?{query_string(request)}", status_code=303)
 
 
-@router.post("/member_list_delete")
+@router.post("/member_list_delete", dependencies=[Depends(validate_token)])
 async def member_list_delete(
     request: Request,
-    db: Session = Depends(get_db),
-    token: str = Form(...),
+    db: db_session,
     checks: List[int] = Form(None, alias="chk[]"),
     mb_id: List[str] = Form(None, alias="mb_id[]"),
 ):
     """회원관리 목록 일괄 삭제"""
-    if not check_token(request, token):
-        raise AlertException(f"{token} 잘못된 접근입니다.")
-
     for i in checks:
         # 관리자와 로그인된 본인은 삭제 불가
         if (request.state.config.cf_admin == mb_id[i]) or (request.state.login_member.mb_id == mb_id[i]):
@@ -291,7 +282,7 @@ async def member_list_delete(
 
 @router.get("/member_form")
 @router.get("/member_form/{mb_id}")
-def member_form(request: Request, db: Session = Depends(get_db),
+async def member_form(request: Request, db: db_session,
                 mb_id: Optional[str] = None):
     """
     회원추가, 수정 폼
@@ -348,7 +339,7 @@ def get_member_image(mb_id):
 
 # 회원수정 폼
 # @router.get("/member_form/{mb_id}")
-# def member_form_edit(mb_id: str, request: Request, db: Session = Depends(get_db)):
+# def member_form_edit(mb_id: str, request: Request, db: db_session):
 #     """
 #     회원수정 폼
 #     """
@@ -368,11 +359,10 @@ def get_member_image(mb_id):
 
 
 # DB등록 및 수정
-@router.post("/member_form_update")
+@router.post("/member_form_update", dependencies=[Depends(validate_token)])
 async def member_form_update(
         request: Request,
-        db: Session = Depends(get_db),
-        token: str = Form(None),
+        db: db_session,
         mb_id: str = Form(...),
         mb_password: str = Form(default=""),
         mb_certify_case: Optional[str] = Form(default=""),
@@ -384,11 +374,7 @@ async def member_form_update(
         del_mb_icon: int = Form(None),
         mb_img: UploadFile = File(None),
         del_mb_img: int = Form(None),
-    ):
-    
-    if not check_token(request, token):
-        raise AlertException(f"{token} 잘못된 접근입니다.")
-    
+    ):    
     error = auth_check_menu(request, request.session["menu_key"], "w")
     if error:
         raise AlertException(error)
@@ -507,7 +493,7 @@ def upload_member_icon(mb_id: str, mb_icon: UploadFile, del_mb_icon: int):
 
 
 @router.get("/check_member_id/{mb_id}")
-async def check_member_id(mb_id: str, request: Request, db: Session = Depends(get_db)):
+async def check_member_id(mb_id: str, request: Request, db: db_session):
     """
     회원아이디 중복체크
     """
@@ -519,7 +505,7 @@ async def check_member_id(mb_id: str, request: Request, db: Session = Depends(ge
     
 
 @router.get("/check_member_email/{mb_email}/{mb_id}")
-async def check_member_email(mb_email: str, mb_id: str, request: Request, db: Session = Depends(get_db)):
+async def check_member_email(mb_email: str, mb_id: str, request: Request, db: db_session):
     """
     회원이메일 중복체크
     """
@@ -531,7 +517,7 @@ async def check_member_email(mb_email: str, mb_id: str, request: Request, db: Se
 
 
 @router.get("/check_member_nick/{mb_nick}/{mb_id}")
-async def check_member_nick(mb_nick: str, mb_id: str, request: Request, db: Session = Depends(get_db)):
+async def check_member_nick(mb_nick: str, mb_id: str, request: Request, db: db_session):
     """
     회원닉네임 중복체크
     """

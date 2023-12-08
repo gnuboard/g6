@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.formclass import PollForm
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import Poll, PollEtc 
@@ -21,7 +21,7 @@ MENU_KEY = "200900"
 
 
 @router.get("/poll_list")
-def poll_list(request: Request,
+async def poll_list(request: Request,
                 search_params: dict = Depends(common_search_query_params)):
     """
     투표 목록
@@ -50,19 +50,15 @@ def poll_list(request: Request,
     return templates.TemplateResponse("poll_list.html", context)
 
 
-@router.post("/poll_list_delete")
-def poll_list_delete(
+@router.post("/poll_list_delete", dependencies=[Depends(validate_token)])
+async def poll_list_delete(
     request: Request,
-    db: Session = Depends(get_db),
-    token: str = Form(None),
+    db: db_session,
     checks: List[int] = Form(..., alias="chk[]")
 ):
     """
     투표 목록 삭제
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     # in 조건을 사용해서 일괄 삭제
     db.query(Poll).filter(Poll.po_id.in_(checks)).delete()
     db.query(PollEtc).filter(PollEtc.po_id.in_(checks)).delete()
@@ -74,7 +70,7 @@ def poll_list_delete(
 
 
 @router.get("/poll_form")
-def poll_form_add(request: Request):
+async def poll_form_add(request: Request):
     """
     투표 등록 폼
     """
@@ -84,7 +80,7 @@ def poll_form_add(request: Request):
 
 
 @router.get("/poll_form/{po_id}")
-def poll_form_edit(po_id: int, request: Request, db: Session = Depends(get_db)):
+async def poll_form_edit(po_id: int, request: Request, db: db_session):
     """
     투표 수정 폼
     """
@@ -94,19 +90,15 @@ def poll_form_edit(po_id: int, request: Request, db: Session = Depends(get_db)):
     )
 
 
-@router.post("/poll_form_update")
-def poll_form_update(request: Request,
-                        db: Session = Depends(get_db),
-                        token: str = Form(...),
+@router.post("/poll_form_update", dependencies=[Depends(validate_token)])
+async def poll_form_update(request: Request,
+                        db: db_session,
                         po_id: int = Form(None),
                         form_data: PollForm = Depends()
                         ):
     """
     투표등록 및 수정 처리
-    """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
+    """    
     poll = db.query(Poll).filter_by(po_id=po_id).first()
     # 투표 수정
     if poll:

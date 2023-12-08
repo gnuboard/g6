@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, File, Form, Path, Query, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session, query
+from sqlalchemy.orm import query
 from typing import List
 
-from common.database import get_db
+from common.database import db_session
 from common.formclass import QaContentForm
 from common.models import QaConfig, QaContent
 from lib.common import *
@@ -87,9 +87,9 @@ class QaConfigService:
 
 
 @router.get("/qalist")
-def qa_list(
+async def qa_list(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     current_page: int = Query(default=1, ge=1, alias="page"),
     search_params: dict = Depends(common_search_query_params),
     qa_config_service: QaConfigService = Depends()
@@ -134,9 +134,9 @@ def qa_list(
 
 
 @router.get("/qawrite")
-def qa_form_write(
+async def qa_form_write(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     qa_related: int = Query(None),
     qa_config_service: QaConfigService = Depends()
 ):
@@ -172,9 +172,9 @@ def qa_form_write(
 
 
 @router.get("/qawrite/{qa_id}")
-def qa_form_edit(
+async def qa_form_edit(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     qa_id: int = Path(...),
     qa_config_service: QaConfigService = Depends()
 ):
@@ -204,11 +204,10 @@ def qa_form_edit(
     return templates.TemplateResponse(f"{request.state.device}/qa/qa_form.html", context)
 
 
-@router.post("/qawrite_update")
-def qa_write_update(
+@router.post("/qawrite_update", dependencies=[Depends(validate_token)])
+async def qa_write_update(
     request: Request,
-    token: str = Form(...),
-    db: Session = Depends(get_db),
+    db: db_session,
     form_data: QaContentForm = Depends(),
     qa_id: int = Form(None),
     qa_parent: str = Form(None),
@@ -224,9 +223,6 @@ def qa_write_update(
     """
     config = request.state.config
     member = ensure_member_login(request)
-
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     # Q&A 설정 조회
     qa_config = qa_config_service.get()
@@ -248,14 +244,14 @@ def qa_write_update(
     qa = db.get(QaContent, qa_id)
     # 수정
     if qa:
+        if not request.state.is_super_admin and member.mb_id != qa.mb_id:
+            raise AlertException("수정 권한이 없습니다.", 403)
+        
         for field, value in form_data.__dict__.items():
             setattr(qa, field, value)
         db.commit()
     # 등록
     else:
-        if not request.state.is_super_admin and member.mb_id != qa.mb_id:
-            raise AlertException("수정 권한이 없습니다.", 403)
-
         form_data.qa_related = qa_related
         form_data.qa_type = 1 if qa_parent else 0
         form_data.qa_parent = qa_parent if qa_parent else 0
@@ -328,20 +324,16 @@ def qa_write_update(
         return RedirectResponse(url=f"/bbs/qaview/{qa.qa_id}", status_code=302)
     
 
-@router.get("/qadelete/{qa_id}")
-def qa_delete(
+@router.get("/qadelete/{qa_id}", dependencies=[Depends(validate_token)])
+async def qa_delete(
     request: Request,
-    db: Session = Depends(get_db),
-    token: str = Query(...),
+    db: db_session,
     qa_id: int = Path(...),
 ):
     """
     Q&A 삭제하기
     """
     member = ensure_member_login(request)
-
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     # Q&A 삭제
     qa = db.get(QaContent, qa_id)
@@ -356,19 +348,15 @@ def qa_delete(
     return RedirectResponse(f"/bbs/qalist?{request.query_params}", status_code=302)
 
 
-@router.post("/qadelete/list")
+@router.post("/qadelete/list", dependencies=[Depends(validate_token)])
 async def qa_delete_list(
     request: Request,
-    db: Session = Depends(get_db),
-    token: str = Form(...),
+    db: db_session,
     checks: List[int] = Form(..., alias="chk_qa_id[]")
 ):
     """
     Q&A 목록 일괄삭제
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     if not request.state.is_super_admin:
         raise AlertException("최고관리자만 접근할 수 있습니다.", 403)
 
@@ -380,9 +368,9 @@ async def qa_delete_list(
 
 
 @router.get("/qaview/{qa_id}")
-def qa_view(
+async def qa_view(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     qa_id: int = Path(...),
     search_params: dict = Depends(common_search_query_params),
     qa_config_service: QaConfigService = Depends()
@@ -464,7 +452,7 @@ def set_file_list(request: Request, qa: QaContent = None):
 
     return image, file
 
-
+# TODO: 공용으로 사용하도록 수정 필요
 def ensure_member_login(request: Request, url: str = None):
     member = request.state.login_member
     if not member:

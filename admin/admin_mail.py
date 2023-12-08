@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException, Pat
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import asc, desc, and_, or_, func, extract
 from sqlalchemy.orm import Session
-from common.database import get_db, engine
+from common.database import db_session, engine
 import common.models as models 
 from lib.common import *
 from fastapi import FastAPI, HTTPException
@@ -39,7 +39,7 @@ templates.env.globals["editor_path"] = editor_path
 MAIL_MENU_KEY = "200300"
 
 @router.get("/mail_list")
-async def mail_list(request: Request, db: Session = Depends(get_db), search_params: dict = Depends(common_search_query_params)):
+async def mail_list(request: Request, db: db_session, search_params: dict = Depends(common_search_query_params)):
     '''
     회원메일발송 목록
     '''
@@ -72,7 +72,7 @@ async def mail_list(request: Request, db: Session = Depends(get_db), search_para
 
 
 # @router.get("/mail_form")                
-# async def mail_form(request: Request, db: Session = Depends(get_db),):
+# async def mail_form(request: Request, db: db_session,):
 #     '''
 #     회원메일발송 등록
 #     '''
@@ -89,7 +89,7 @@ async def mail_list(request: Request, db: Session = Depends(get_db), search_para
 
 @router.get("/mail_form") # 등록
 @router.get("/mail_form/{ma_id}") # 수정
-async def mail_form(request: Request, db: Session = Depends(get_db),
+async def mail_form(request: Request, db: db_session,
                     ma_id: int = None):
     '''
     회원메일발송 등록 및 수정
@@ -110,19 +110,15 @@ async def mail_form(request: Request, db: Session = Depends(get_db),
     return templates.TemplateResponse("mail_form.html", context)
 
 
-@router.post("/mail_update")
-async def mail_form_update(request: Request, db: Session = Depends(get_db),
-        token: str = Form(..., alias="token"),
+@router.post("/mail_update", dependencies=[Depends(validate_token)])
+async def mail_form_update(request: Request, db: db_session,
         ma_id: int = Form(None, alias="ma_id"),
         ma_subject: str = Form(..., alias="ma_subject"),
         ma_content: str = Form(..., alias="ma_content"),
         ):
     '''
     회원메일발송 등록/수정
-    '''
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다.")
-    
+    '''    
     # 등록
     if not ma_id:
         mail = models.Mail()
@@ -145,18 +141,14 @@ async def mail_form_update(request: Request, db: Session = Depends(get_db),
     return RedirectResponse(f"/admin/mail_form/{ma_id}", status_code=303)
 
 
-@router.post("/mail_delete")
-async def mail_delete(request: Request, db: Session = Depends(get_db),
-        token: str = Form(..., alias="token"),
+@router.post("/mail_delete", dependencies=[Depends(validate_token)])
+async def mail_delete(request: Request, db: db_session,
         checks: List[int] = Form(..., alias="chk[]"),
         ma_id: List[int] = Form(..., alias="ma_id[]"),
         ):
     '''
     회원메일발송 삭제
-    '''
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다.")
-    
+    '''    
     for i in checks:
         exists_mail = db.query(models.Mail).filter(models.Mail.ma_id == ma_id[i]).first()
         if exists_mail:
@@ -167,7 +159,7 @@ async def mail_delete(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/mail_test/{ma_id}")
-async def mail_test(request: Request, db: Session = Depends(get_db),
+async def mail_test(request: Request, db: db_session,
         ma_id: int = Path(...),
         ):
     '''
@@ -221,7 +213,7 @@ async def mail_test(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/mail_select_form/{ma_id}")
-async def mail_select_form(request: Request, db: Session = Depends(get_db),
+async def mail_select_form(request: Request, db: db_session,
         ma_id: int = Path(...),
         mb_id1: int = Query(None),
         mb_level_from: str = Query(None),
@@ -295,8 +287,7 @@ async def mail_select_form(request: Request, db: Session = Depends(get_db),
 
 
 @router.post("/mail_select_list")
-async def mail_select_list(request: Request, db: Session = Depends(get_db),
-        # token: str = Form(..., alias="token"),
+async def mail_select_list(request: Request, db: db_session,
         ma_id: int = Form(..., alias="ma_id"),
         mb_id1: int = Form(None, alias="mb_id1"),
         mb_id1_from: str = Form(None, alias="mb_id1_from"),
@@ -362,9 +353,8 @@ async def mail_select_list(request: Request, db: Session = Depends(get_db),
     return templates.TemplateResponse("mail_select_list.html", extend)
 
 
-@router.post("/mail_select_result", response_class=HTMLResponse)
-async def mail_select_result(request: Request, db: Session = Depends(get_db),
-        token: str = Form(..., alias="token"),
+@router.post("/mail_select_result", dependencies=[Depends(validate_token)], response_class=HTMLResponse)
+async def mail_select_result(request: Request, db: db_session,
         ma_id: int = Form(..., alias="ma_id"),
         ):
     '''
@@ -372,10 +362,7 @@ async def mail_select_result(request: Request, db: Session = Depends(get_db),
     '''
     error = auth_check_menu(request, request.session.get("menu_key"), "w")
     if error:
-        raise AlertException(error)    
-    
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다.")
+        raise AlertException(error)
 
     context = {
         "request": request,
@@ -385,7 +372,7 @@ async def mail_select_result(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/mail_select_send")
-async def mail_select_send(request: Request, db: Session = Depends(get_db),
+async def mail_select_send(request: Request, db: db_session,
         ma_id: int = Query(...),
         ):
     '''
@@ -448,7 +435,7 @@ async def mail_select_send(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/mail_preview/{ma_id}")
-async def mail_preview(request: Request, db: Session = Depends(get_db),
+async def mail_preview(request: Request, db: db_session,
         ma_id: int = Path(...),
         ):
     '''

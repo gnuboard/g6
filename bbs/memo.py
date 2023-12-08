@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.models import Member, Memo
 
 router = APIRouter()
@@ -13,7 +13,7 @@ templates.env.globals["captcha_widget"] = captcha_widget
 
 
 @router.get("/memo")
-def memo_list(request: Request, db: Session = Depends(get_db),
+async def memo_list(request: Request, db: db_session,
                 kind: str = Query(default="recv"),
                 current_page: int = Query(default=1, alias="page")):
     """
@@ -51,7 +51,7 @@ def memo_list(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/memo_view/{me_id}")
-def memo_view(request: Request, db: Session = Depends(get_db), me_id: int = Path(...)):
+async def memo_view(request: Request, db: db_session, me_id: int = Path(...)):
     """
     쪽지 상세
     """
@@ -113,7 +113,7 @@ def memo_view(request: Request, db: Session = Depends(get_db), me_id: int = Path
 
 
 @router.get("/memo_form")
-def memo_form(request: Request, db: Session = Depends(get_db),
+async def memo_form(request: Request, db: db_session,
     me_recv_mb_id : str = Query(default=None),
     me_id: int = Query(default=None)
 ):
@@ -140,12 +140,10 @@ def memo_form(request: Request, db: Session = Depends(get_db),
     return templates.TemplateResponse(f"{request.state.device}/memo/memo_form.html", context)
 
 
-@router.post("/memo_form_update")
+@router.post("/memo_form_update", dependencies=[Depends(validate_token), Depends(validate_captcha)])
 async def memo_form_update(
     request: Request,
-    db: Session = Depends(get_db),
-    token: str = Form(...),
-    recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
+    db: db_session,
     me_recv_mb_id : str = Form(...),
     me_memo: str = Form(...)
 ):
@@ -156,13 +154,6 @@ async def memo_form_update(
     member = request.state.login_member
     if not member:
         raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
-    
-    if not check_token(request, token):
-        raise AlertException(f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.", 403)
-
-    captcha_cls = get_current_captcha_cls(config.cf_captcha)
-    if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
-        raise AlertException("캡차가 올바르지 않습니다.", 400)
 
     # me_recv_mb_id 공백 제거
     mb_id_list = me_recv_mb_id.replace(" ", "").split(',')
@@ -212,18 +203,16 @@ async def memo_form_update(
     return RedirectResponse(url=f"/bbs/memo?kind=send", status_code=302)
 
 
-@router.get("/memo_delete/{me_id}")
-def memo_delete(request: Request, db: Session = Depends(get_db), 
-                me_id: int = Path(...),
-                token:str = Query(...),
-                page:int = Query(default=1)
-                ):
+@router.get("/memo_delete/{me_id}", dependencies=[Depends(validate_token)])
+async def memo_delete(
+    request: Request,
+    db: db_session, 
+    me_id: int = Path(...),
+    page:int = Query(default=1)
+):
     """
     쪽지 삭제
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
     member = request.state.login_member
     if not member:
         raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")

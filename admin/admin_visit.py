@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Form
 from sqlalchemy.orm import Session
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from lib.pbkdf2 import validate_password
 
@@ -24,7 +24,7 @@ VISIT_MENU_KEY = "200800"
 
 
 @router.get("/visit_search", tags=["admin_visit_search"])
-def visit_search(request: Request, db: Session = Depends(get_db),
+async def visit_search(request: Request, db: db_session,
                  sst: str = Query(default=""),  # sort field (정렬 필드)
                  sod: str = Query(default=""),  # search order (검색 오름, 내림차순)
                  sfl: str = Query(default=""),  # search field (검색 필드)
@@ -90,7 +90,7 @@ def visit_search(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/visit_delete", tags=["admin_visit_delete"])
-def visit_delete(request: Request, db: Session = Depends(get_db), ):
+async def visit_delete(request: Request, db: db_session, ):
     '''
     접속자로그 삭제
     '''
@@ -110,9 +110,8 @@ def visit_delete(request: Request, db: Session = Depends(get_db), ):
                                       })
 
 
-@router.post("/visit_delete_update", tags=["admin_visit_delete"])
-async def visit_delete_update(request: Request, db: Session = Depends(get_db),
-                              token: str = Form(None),
+@router.post("/visit_delete_update", dependencies=[Depends(validate_token)], tags=["admin_visit_delete"])
+async def visit_delete_update(request: Request, db: db_session,
                               year: str = Form(default=""),  # 년도
                               month: str = Form(default=""),  # 월
                               method: str = Form(default=""),  # 방법
@@ -121,10 +120,6 @@ async def visit_delete_update(request: Request, db: Session = Depends(get_db),
     '''
     접속자로그 레코드 삭제
     '''
-
-    if not check_token(request, token):
-        raise AlertException("잘못된 접근입니다.")
-
     member = request.state.login_member
     if not member:
         return templates.TemplateResponse("alert.html", {"request": request, "errors": ["로그인 후 이용해 주세요."]})
@@ -174,7 +169,7 @@ async def visit_delete_update(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/visit_list", tags=["admin_visit_list"])
-async def visit_list(request: Request, db: Session = Depends(get_db),
+async def visit_list(request: Request, db: db_session,
                      current_page: int = Query(default=1, alias="page"),  # 페이지
                      from_date: str = Query(default="", alias="fr_date"),  # 시작일
                      to_date: str = Query(default=""),  # 종료일
@@ -226,7 +221,7 @@ async def visit_list(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/visit_domain", tags=["admin_visit_list"])
-async def visit_domain(request: Request, db: Session = Depends(get_db),
+async def visit_domain(request: Request, db: db_session,
                        current_page: int = Query(default=1, alias="page"),  # 페이지
                        from_date: str = Query(default="", alias="fr_date"),  # 시작일
                        to_date: str = Query(default=""),  # 종료일
@@ -287,7 +282,7 @@ async def visit_domain(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/visit_browser", tags=["admin_visit_list"])
-async def visit_browser(request: Request, db: Session = Depends(get_db),
+async def visit_browser(request: Request, db: db_session,
                         current_page: int = Query(default=1, alias="page"),  # 페이지
                         from_date: str = Query(default="", alias="fr_date"),  # 시작일
                         to_date: str = Query(default=""),  # 종료일
@@ -336,7 +331,7 @@ async def visit_browser(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/visit_os", tags=["admin_visit_list"])
-def visit_os(request: Request, db: Session = Depends(get_db),
+async def visit_os(request: Request, db: db_session,
              current_page: int = Query(default=1, alias="page"),  # 페이지
              from_date: str = Query(default="", alias="fr_date"),  # 시작일
              to_date: str = Query(default=""),  # 종료일
@@ -385,7 +380,7 @@ def visit_os(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/visit_device")
-def visit_device(request: Request, db: Session = Depends(get_db),
+async def visit_device(request: Request, db: db_session,
                  current_page: int = Query(default=1, alias="page"),  # 페이지
                  from_date: str = Query(default="", alias="fr_date"),  # 시작일
                  to_date: str = Query(default=""),  # 종료일
@@ -434,7 +429,7 @@ def visit_device(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/visit_hour")
-def visit_device(request: Request, db: Session = Depends(get_db),
+async def visit_device(request: Request, db: db_session,
                  current_page: int = Query(default=1, alias="page"),  # 페이지
                  from_date: str = Query(default="", alias="fr_date"),  # 시작일
                  to_date: str = Query(default=""),  # 종료일
@@ -483,7 +478,7 @@ def visit_device(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/visit_weekday", tags=["admin_visit_list"])
-def visit_device(request: Request, db: Session = Depends(get_db),
+async def visit_device(request: Request, db: db_session,
                  current_page: int = Query(default=1, alias="page"),  # 페이지
                  from_date: str = Query(default="", alias="fr_date"),  # 시작일
                  to_date: str = Query(default=""),  # 종료일
@@ -542,7 +537,7 @@ def visit_device(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/visit_date", tags=["admin_visit_list"])
-def visit_date(request: Request, db: Session = Depends(get_db),
+async def visit_date(request: Request, db: db_session,
                current_page: int = Query(default=1, alias="page"),  # 페이지
                from_date: str = Query(default="", alias="fr_date"),  # 시작일
                to_date: str = Query(default=""),  # 종료일
@@ -591,7 +586,7 @@ def visit_date(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/visit_month", tags=["admin_visit_list"])
-def visit_month(request: Request, db: Session = Depends(get_db),
+async def visit_month(request: Request, db: db_session,
                 current_page: int = Query(default=1, alias="page"),  # 페이지
                 from_date: str = Query(default="", alias="fr_date"),  # 시작일
                 to_date: str = Query(default=""),  # 종료일
@@ -640,7 +635,7 @@ def visit_month(request: Request, db: Session = Depends(get_db),
 
 
 @router.get("/visit_year", tags=["admin_visit_list"])
-def visit_year(request: Request, db: Session = Depends(get_db),
+async def visit_year(request: Request, db: db_session,
                current_page: int = Query(default=1, alias="page"),  # 페이지
                from_date: str = Query(default="", alias="fr_date"),  # 시작일
                to_date: str = Query(default=""),  # 종료일
