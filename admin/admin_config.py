@@ -11,7 +11,6 @@ from common.models import Config
 from lib.common import *
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 
-
 router = APIRouter()
 templates = AdminTemplates()
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
@@ -22,7 +21,6 @@ templates.env.globals["get_member_level_select"] = get_member_level_select
 templates.env.globals["option_array_checked"] = option_array_checked
 templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
-
 
 CONFIG_MENU_KEY = "100100"
 
@@ -41,24 +39,22 @@ async def config_form(request: Request):
     host_ip = socket.gethostbyname(host_name)
     client_ip = get_client_ip(request)
 
-    return templates.TemplateResponse(
-        "config_form.html",
-        {
-            "request": request,
-            "config": request.state.config,
-            "host_name": host_name,
-            "host_ip": host_ip,
-            "client_ip": client_ip,
-        },
-    )
+    context = {
+        "request": request,
+        "config": request.state.config,
+        "host_name": host_name,
+        "host_ip": host_ip,
+        "client_ip": client_ip,
+    }
+    return templates.TemplateResponse("config_form.html", context)
 
 
 @router.post("/config_form_update", dependencies=[Depends(validate_token)])
 async def config_form_update(
-        request: Request,
-        db: db_session,
-        social_list: List[str] = Form(None, alias="cf_social_servicelist[]"),
-        form_data: ConfigForm = Depends(),
+    request: Request,
+    db: db_session,
+    social_list: List[str] = Form(None, alias="cf_social_servicelist[]"),
+    form_data: ConfigForm = Depends(),
 ):
     """
     기본환경설정 저장
@@ -92,7 +88,7 @@ async def config_form_update(
     form_data.cf_social_servicelist = ','.join(social_list) if social_list else ""
 
     # 폼 데이터 반영 후 commit
-    config = db.query(Config).first()
+    config = db.scalars(select(Config)).one()
     for field, value in form_data.__dict__.items():
         setattr(config, field, value)
     db.commit()

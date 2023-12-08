@@ -1,18 +1,5 @@
-import json
-from fastapi import FastAPI, APIRouter, Request, Depends, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy import MetaData, Table
-from sqlalchemy.orm import Session
-from common.database import db_session
-# from common.models import create_dynamic_create_write_table
-import common.models as models 
+from fastapi import APIRouter, Request
 from lib.common import *
-from jinja2 import Environment, FileSystemLoader
-import random
-import os
-from typing import List, Optional
-import socket
-import hashlib
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 
 router = APIRouter()
@@ -42,32 +29,35 @@ from admin.admin_write_count import router as admin_write_count_router
 from admin.admin_plugin import router as admin_plugin_router
 from admin.admin_cache import router as admin_cache_router
 
-router.include_router(admin_config_router, prefix="", tags=["admin_config"])
-router.include_router(admin_member_router, prefix="", tags=["admin_member"])
-router.include_router(admin_board_router, prefix="", tags=["admin_board"])
-router.include_router(admin_boardgroup_router, prefix="", tags=["admin_boardgroup"])
-router.include_router(admin_boardgroupmember_router, prefix="", tags=["admin_boardgroupmember"])
-router.include_router(admin_content_router, prefix="", tags=["admin_content"])
-router.include_router(admin_faq_router, prefix="", tags=["admin_faq"])
-router.include_router(admin_theme_router, prefix="", tags=["admin_theme"])
-router.include_router(admin_visit_router, prefix="", tags=["admin_visit"])
-router.include_router(admin_qa_router, prefix="", tags=["admin_qa"])
-router.include_router(admin_sendmail_router, prefix="", tags=["admin_sendmail"])
-router.include_router(admin_menu_router, prefix="", tags=["admin_menu"])
-router.include_router(admin_point_router, prefix="", tags=["admin_point"])
-router.include_router(admin_auth_router, prefix="", tags=["admin_auth"])
-router.include_router(admin_popular_router,  prefix="", tags=["admin_popular"])
-router.include_router(admin_poll_router,  prefix="", tags=["admin_poll"])
-router.include_router(admin_mail_router,  prefix="", tags=["admin_mail"])
-router.include_router(admin_newwin_router,  prefix="", tags=["admin_newwin"])
-router.include_router(admin_write_count_router,  prefix="", tags=["admin_write_count"])
-router.include_router(admin_plugin_router,  prefix="", tags=["admin_plugin"])
-router.include_router(admin_cache_router,  prefix="", tags=["admin_cache"])
+router.include_router(admin_config_router, tags=["admin_config"])
+router.include_router(admin_member_router, tags=["admin_member"])
+router.include_router(admin_board_router, tags=["admin_board"])
+router.include_router(admin_boardgroup_router, tags=["admin_boardgroup"])
+router.include_router(admin_boardgroupmember_router, tags=["admin_boardgroupmember"])
+router.include_router(admin_content_router, tags=["admin_content"])
+router.include_router(admin_faq_router, tags=["admin_faq"])
+router.include_router(admin_theme_router, tags=["admin_theme"])
+router.include_router(admin_visit_router, tags=["admin_visit"])
+router.include_router(admin_qa_router, tags=["admin_qa"])
+router.include_router(admin_sendmail_router, tags=["admin_sendmail"])
+router.include_router(admin_menu_router, tags=["admin_menu"])
+router.include_router(admin_point_router, tags=["admin_point"])
+router.include_router(admin_auth_router, tags=["admin_auth"])
+router.include_router(admin_popular_router,  tags=["admin_popular"])
+router.include_router(admin_poll_router,  tags=["admin_poll"])
+router.include_router(admin_mail_router,  tags=["admin_mail"])
+router.include_router(admin_newwin_router,  tags=["admin_newwin"])
+router.include_router(admin_write_count_router,  tags=["admin_write_count"])
+router.include_router(admin_plugin_router,  tags=["admin_plugin"])
+router.include_router(admin_cache_router,  tags=["admin_cache"])
+
+MAIN_MENU_KEY = "100100"
+
 
 @router.get("/")
-async def base(request: Request, db: db_session):
-    '''
+async def base(request: Request):
+    """
     관리자 메인
-    '''
+    """
     request.session["menu_key"] = "100100"
     return templates.TemplateResponse("index.html", {"request": request})

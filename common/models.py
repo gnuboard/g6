@@ -242,6 +242,8 @@ class Member(Base):
     mb_9 = Column(String(255), nullable=False, default="")
     mb_10 = Column(String(255), nullable=False, default="")
 
+    auths: Mapped["Auth"] = relationship("Auth", back_populates="member")
+
 
 class Board(Base):
     """
@@ -736,9 +738,11 @@ class Auth(Base):
     #   `au_auth` set('r','w','d') NOT NULL DEFAULT ''
     __tablename__ = DB_TABLE_PREFIX + "auth"
 
-    mb_id = Column(String(20), primary_key=True, nullable=False, default="")
+    mb_id = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "member.mb_id"), primary_key=True, nullable=False, default="")
     au_menu = Column(String(20), primary_key=True, nullable=False, default="")
     au_auth = Column(String(255), nullable=False, default="")
+
+    member: Mapped["Member"] = relationship("Member", back_populates="auths")
 
 
 
