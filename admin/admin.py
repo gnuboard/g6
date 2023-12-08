@@ -13,12 +13,9 @@ import os
 from typing import List, Optional
 import socket
 import hashlib
-from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 
 router = APIRouter()
 templates = AdminTemplates()
-templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
-templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 
 from admin.admin_config import router as admin_config_router
 from admin.admin_member import router as admin_member_router

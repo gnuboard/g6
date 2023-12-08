@@ -8,15 +8,12 @@ import common.models as models
 from lib.common import *
 from typing import List, Optional
 from common.formclass import BoardForm
-from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 
 router = APIRouter()
 templates = AdminTemplates()
 templates.env.globals['getattr'] = getattr
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['option_selected'] = option_selected
-templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
-templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 templates.env.globals['get_skin_select'] = get_skin_select
 templates.env.globals['get_group_select'] = get_group_select
 templates.env.globals['get_editor_select'] = get_editor_select
