@@ -15,7 +15,7 @@ from fastapi.templating import Jinja2Templates
 from jinja2 import Environment
 from markupsafe import Markup, escape
 from passlib.context import CryptContext
-from sqlalchemy import Index, asc, desc, and_, or_, func, extract, literal, inspect
+from sqlalchemy import Index, asc, desc, and_, func, inspect, select, delete, between, exists, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
 from starlette.staticfiles import StaticFiles
@@ -602,23 +602,26 @@ def extract_browser(user_agent):
 from ua_parser import user_agent_parser    
     
 
-# 접속 레코드 기록 로직을 처리하는 함수
+# 
 def record_visit(request: Request):
-    vi_ip = request.client.host
-    
-    # 세션 생성
+    """접속 레코드 기록 함수
+    - 새로운 접속 레코드 생성
+    - 접속자 합계 테이블 갱신
+    - 기본설정 테이블에 방문자 수 기록
+
+    Args:
+        request (Request): FastAPI Request 객체
+    """
     db = SessionLocal()
+    vi_ip = get_real_client_ip(request)
 
     # 오늘의 접속이 이미 기록되어 있는지 확인
-    existing_visit = db.query(Visit).filter(Visit.vi_date == date.today(), Visit.vi_ip == vi_ip).first()
-
+    existing_visit = db.scalar(
+        exists(Visit.vi_id)
+        .where(Visit.vi_date==date.today(), Visit.vi_ip==vi_ip)
+        .select()
+    )
     if not existing_visit:
-        
-        #$tmp_row = sql_fetch(" select max(vi_id) as max_vi_id from {$g5['visit_table']} ");
-        tmp_row = db.query(func.max(Visit.vi_id).label("max_vi_id")).first()
-        max_vi_id = tmp_row.max_vi_id if tmp_row.max_vi_id else 0
-        max_vi_id = max_vi_id + 1
-        
         # 새로운 접속 레코드 생성
         referer = request.headers.get("referer", "")
         user_agent = request.headers.get("User-Agent", "")
@@ -626,9 +629,7 @@ def record_visit(request: Request):
         browser = ua.browser.family
         os = ua.os.family
         device = 'pc' if ua.is_pc else 'mobile' if ua.is_mobile else 'tablet' if ua.is_tablet else 'unknown'
-            
         visit = Visit(
-            vi_id=max_vi_id,
             vi_ip=vi_ip,
             vi_date=date.today(),
             vi_time=datetime.now().time(),
@@ -641,39 +642,22 @@ def record_visit(request: Request):
         db.add(visit)
         db.commit()
 
-        # VisitSum 테이블 업데이트
-        visit_count_today = db.query(func.count(Visit.vi_id)).filter(Visit.vi_date == date.today()).scalar()
-
-        visit_sum = db.query(VisitSum).filter(VisitSum.vs_date == date.today()).first()
-        if visit_sum:
-            visit_sum.vs_count = visit_count_today
-        else:
-            visit_sum = VisitSum(vs_date=date.today(), vs_count=visit_count_today)
-
-        db.add(visit_sum)
+        # 접속자 합계 테이블 갱신
+        visit_count_today = db.scalar(
+            select(func.count(Visit.vi_id))
+            .where(Visit.vi_date == date.today())
+        )
+        db.merge(VisitSum(vs_date=date.today(), vs_count=visit_count_today))
         db.commit()
 
         # 기본설정 테이블에 방문자 수 기록
+        today = db.scalar(select(VisitSum.vs_count).filter_by(vs_date=date.today())) or 0
+        yesterday = db.scalar(select(VisitSum.vs_count).where(VisitSum.vs_date == date.today() - timedelta(days=1))) or 0
+        max = db.scalar(func.max(VisitSum.vs_count)) or 0
+        total = db.scalar(func.sum(VisitSum.vs_count)) or 0
 
-        # VisitSum 테이블에서 오늘 방문자 수를 가져옴
-        vi_today = db.query(VisitSum.vs_count).filter(VisitSum.vs_date == date.today()).scalar()
-        vi_today = vi_today or 0
-
-        # VisitSum 테이블에서 어제 방문자 수를 가져옴
-        vi_yesterday = db.query(VisitSum.vs_count).filter(VisitSum.vs_date == date.today() - timedelta(days=1)).scalar()
-        vi_yesterday = vi_yesterday or 0
-
-        # VisitSum 테이블에서 최대 방문자 수를 가져옴
-        vi_max = db.query(func.max(VisitSum.vs_count)).scalar()
-        vi_max = vi_max or 0
-
-        # VisitSum 테이블에서 전체 방문자 수를 가져옴
-        vi_total = db.query(func.sum(VisitSum.vs_count)).scalar()
-        vi_total = vi_total or 0
-
-        cf_visit = f"오늘:{vi_today},어제:{vi_yesterday},최대:{vi_max},전체:{vi_total}"
-        config = db.query(Config).first()
-        config.cf_visit = cf_visit
+        config = db.scalars(select(Config)).first()
+        config.cf_visit = f"오늘:{today},어제:{yesterday},최대:{max},전체:{total}"
         db.commit()
 
     db.close()
@@ -828,6 +812,7 @@ def get_member_image(mb_id: str = None):
 
 # 포인트 부여    
 def insert_point(request: Request, mb_id: str, point: int, content: str = '', rel_table: str = '', rel_id: str = '', rel_action: str = '', expire: int = 0):
+    db = SessionLocal()
     config = request.state.config
     
     # 포인트를 사용하지 않는다면 종료
@@ -843,25 +828,24 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
         return 0
     
     # 회원정보가 없다면 종료
-    db = SessionLocal()
-    
-    member = db.query(Member).filter_by(mb_id=mb_id).first()
+    member = db.scalar(select(Member).filter_by(mb_id=mb_id))
     if not member:
         return 0
     
-    mb_point = get_point_sum(request, mb_id)
-
     
+
     if rel_table or rel_id or rel_action:
-        record_count = db.query(Point).filter(
-            and_(
+        existing_point = db.scalar(
+            exists(Point.po_id)
+            .where(
                 Point.mb_id == mb_id,
                 Point.po_rel_table == rel_table,
                 Point.po_rel_id == rel_id,
                 Point.po_rel_action == rel_action
             )
-        ).count()
-        if record_count:
+            .select()
+        )
+        if existing_point:
             return -1
         
     # 포인트 건별 생성
@@ -872,7 +856,8 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
             po_expire_date = (SERVER_TIME + timedelta(days=expire-1)).strftime('%Y-%m-%d')
         else:
             po_expire_date = (SERVER_TIME + timedelta(days=config.cf_point_term - 1)).strftime('%Y-%m-%d')
-            
+
+    mb_point = get_point_sum(request, mb_id)
     po_expired = 0
     if point < 0:
         po_expired = 1
@@ -895,9 +880,8 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
     db.add(new_point)
     db.commit()
     
-    # filter_by 는 filter 에 비해 기능이 제한적임    
-    db.query(Member).filter_by(mb_id=mb_id).update({Member.mb_point: po_mb_point})
-    # db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: po_mb_point})
+    query = update(Member).where(Member.mb_id == mb_id).values(mb_point=po_mb_point)
+    db.execute(query)
     db.commit()
     db.close()
 
@@ -1844,12 +1828,15 @@ def get_newwins(request: Request):
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     current_division = "comm" # comm, both, shop
-    newwins = db.query(NewWin).filter(
-        NewWin.nw_begin_time <= now,
-        NewWin.nw_end_time >= now,
-        NewWin.nw_device.in_(["both", request.state.device]),
-        NewWin.nw_division.in_(["both", current_division]),
-    ).order_by(NewWin.nw_id.asc()).all()
+    newwins = db.scalars(
+        select(NewWin).where(
+            between(now, NewWin.nw_begin_time, NewWin.nw_end_time),
+            NewWin.nw_device.in_(["both", request.state.device]),
+            NewWin.nw_division.in_(["both", current_division]),
+        ).order_by(NewWin.nw_id)
+    ).all()
+
+    db.close()
 
     # "hd_pops_" + nw_id 이름으로 선언된 쿠키가 있는지 확인하고 있다면 팝업을 제거
     newwins = [newwin for newwin in newwins if not request.cookies.get("hd_pops_" + str(newwin.nw_id))]
@@ -2067,40 +2054,55 @@ def cut_name(request: Request, name: str) -> str:
     return name[:config.cf_cut_name] if config.cf_cut_name else name
 
 
-def delete_old_data():
-    """설정일이 지난 데이터를 삭제
+def delete_old_records():
+    """
+    설정일이 지난 데이터를 삭제
     """
     try:
         db = SessionLocal()
-        config = db.query(Config).first()
+        config = db.scalars(select(Config).limit(1)).first()
+        today = datetime.now()
 
         # 방문자 기록 삭제
         if config.cf_visit_del > 0:
-            result = db.query(Visit).filter(Visit.vi_time < datetime.now() - timedelta(days=config.cf_visit_del)).delete()
-            print("방문자기록 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_visit_del), f"{result}건 삭제")
+            base_date = today - timedelta(days=config.cf_visit_del)
+            result = db.execute(
+                delete(Visit).where(func.concat(Visit.vi_date, " ", Visit.vi_time) < base_date)
+            )
+            print("방문자기록 삭제 기준일 : ", base_date, f"{result.rowcount}건 삭제")
 
         # 인기검색어 삭제
         if config.cf_popular_del > 0:
-            result = db.query(Popular).filter(Popular.pp_date < datetime.now() - timedelta(days=config.cf_popular_del)).delete()
-            print("인기검색어 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_popular_del), f"{result}건 삭제")
+            base_date = today - timedelta(days=config.cf_popular_del)
+            result = db.execute(
+                delete(Popular).where(Popular.pp_date < base_date)
+            )
+            print("인기검색어 삭제 기준일 : ", base_date, f"{result.rowcount}건 삭제")
             
         # 최근게시물 삭제
         if config.cf_new_del > 0:
-            result = db.query(BoardNew).filter(BoardNew.bn_datetime < datetime.now() - timedelta(days=config.cf_new_del)).delete()
-            print("최근게시물 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_new_del), f"{result}건 삭제")
+            base_date = today - timedelta(days=config.cf_new_del)
+            result = db.execute(
+                delete(BoardNew).where((BoardNew.bn_datetime != None) & (BoardNew.bn_datetime < base_date))
+            )
+            print("최근게시물 삭제 기준일 : ", base_date, f"{result.rowcount}건 삭제")
 
         # 쪽지 삭제
         if config.cf_memo_del > 0:
-            result = db.query(Memo).filter(Memo.me_send_datetime < datetime.now() - timedelta(days=config.cf_memo_del)).delete()
-            print("쪽지 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_memo_del), f"{result}건 삭제")
+            base_date = today - timedelta(days=config.cf_memo_del)
+            result = db.execute(
+                delete(Memo).where(Memo.me_send_datetime < base_date)
+            )
+            print("쪽지 삭제 기준일 : ", base_date, f"{result.rowcount}건 삭제")
 
         # 탈퇴회원 자동 삭제
         if config.cf_leave_day > 0:
             # TODO: 회원삭제 처리 추가
-            # result = db.query(Member).filter(Member.mb_leave_date < datetime.now() - timedelta(days=config.cf_leave_day)).delete()
+            # query = update(Member).where(Member.mb_leave_date < datetime.now() - timedelta(days=config.cf_leave_day))
+            # data = {}
+            # result = db.execute(query, data)
             # print("회원 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_leave_day), f"{result}건 삭제")
             pass
-
         db.commit()
     except Exception as e:
         print(e)

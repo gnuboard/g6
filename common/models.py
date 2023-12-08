@@ -1,8 +1,9 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime, Date, Time, Boolean, BIGINT, UniqueConstraint
+from typing import List
 
 # TINYINT 대신 Integer 사용하기 바랍니다.
 # from sqlalchemy.dialects.mysql import TINYINT
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import ArgumentError, InvalidRequestError
 from datetime import datetime, date
@@ -348,7 +349,8 @@ class Board(Base):
     # 종속관계
     # writes = relationship("Write", backref="board")
     # 연관관계
-    group = relationship("Group")
+    # group = relationship("Group")
+    group: Mapped["Group"] = relationship("Group", back_populates="boards")
 
 
 class WriteBaseModel(Base):
@@ -457,7 +459,8 @@ class Group(Base):
     gr_9 = Column(String(255), nullable=False, default="")
     gr_10 = Column(String(255), nullable=False, default="")
     # 종속관계
-    # boards = relationship("Board", backref="group")
+
+    boards: Mapped[List["Board"]] = relationship(back_populates="group")
     
 
 class GroupMember(Base):
