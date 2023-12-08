@@ -1041,14 +1041,13 @@ box-shadow: 2px 2px 3px 0px rgba(0,0,0,0.2);}
 #theme_list li:after{display:block;visibility:hidden;clear:both;content:""}
 #theme_list li .tmli_if{border: 1px solid #d1dee2;width:302px;}
 #theme_list li .tmli_if>img{width:300px;height:225px;}
-#theme_list li .tmli_if:hover>img{-ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";filter: alpha(opacity=50);-moz-opacity:0.5;-khtml-opacity: 0.5;opacity: 0.5;}
+#theme_list li .tmli_if:hover>img{filter: alpha(opacity=50);opacity: 0.5;}
 #theme_list li .tmli_tit{position:relative; border-top: 1px solid #d1dee2; background: #e5ecef;}
 #theme_list li .tmli_tit p{height:40px;line-height:40px;padding:0 10px 0;font-weight:bold;text-overflow: ellipsis; overflow: hidden; white-space: nowrap;}
 #theme_list li .tmli_tit button.tmli_dt{position:absolute;top:8px;right:10px;padding:5px;background:#111;color:#fff;display:none;border:none}
 #theme_list li .tmli_if:hover button.tmli_dt{display:block}
-#theme_list li .theme_sl{float:left;border:none;margin-top:5px;padding:0 5px;height:26px;background:#999;color:#fff}
+#theme_list li .theme_sl{float:left;border:none;margin-top:5px;padding:0 5px;height:26px;background:#999;color:#fff;margin-right:4px}
 #theme_list li .theme_sl:hover{background:#ff3061}
-#theme_list li .theme_deactive{margin-left:4px}
 #theme_list li .theme_sl_use{background:#ff3061;line-height:26px}
 #theme_list li .theme_pr{float:right;margin-top:5px;padding:0 5px;height:26px;line-height:24px; border: 1px solid #ccc; background: #fafafa; }
 #theme_list li .theme_detail{ float: right; margin-top: 5px; padding:0 5px;height:26px; border: 1px solid #ccc; background: #fafafa; margin-right:3px}
