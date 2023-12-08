@@ -1,6 +1,7 @@
 # 플러그인을 관리하는 메뉴
 # 플러그인을 활성/비활성하고 플러그인의 신규 플러그인을 등록한다.
 import logging
+
 from fastapi import APIRouter
 from fastapi import HTTPException
 from fastapi.params import Form
@@ -8,11 +9,9 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, FileResponse
 
 from admin.admin import templates
-from lib.plugin import service
-from lib.plugin.service import PLUGIN_DIR, get_all_plugin_info, PluginState, get_plugin_info
-from lib.plugin import service
 from lib.common import AlertException
-from fastapi import HTTPException
+from lib.plugin import service
+from lib.plugin.service import PLUGIN_DIR, get_all_plugin_info, PluginState
 
 logging.basicConfig(level=logging.INFO)
 router = APIRouter()
@@ -27,6 +26,10 @@ async def theme_detail(request: Request, module_name: str = Form(...)):
     info = service.get_plugin_info(module, PLUGIN_DIR)
     if not info:
         raise HTTPException(status_code=400, detail="The selected plugin is not installed.")
+
+    if not info.get('plugin_name', None):
+        # 플러그인의 readme.txt 파일의 양식 체크. 
+        raise HTTPException(status_code=400, detail="플러그인의 상세 정보가 없습니다.")
 
     return templates.TemplateResponse("theme_detail.html",
                                       {"request": request, "name": info['plugin_name'], "info": info})
@@ -115,4 +118,4 @@ async def show_screenshot(module_name: str):
     except Exception as e:
         logging.error(f"An error occurred while serving the file: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-    get_plugin_info()
+
