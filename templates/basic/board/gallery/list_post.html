@@ -181,6 +181,12 @@
         {{ paging|safe }}
         <!-- 페이지 -->
         <div class="bo_fx">
+            {% if prev_spt %}
+                <a href="{{ request.url.include_query_params(spt=prev_spt) }}" class="btn02">이전검색</a>
+            {% endif %}
+            {% if next_spt %}
+                <a href="{{ request.url.include_query_params(spt=next_spt) }}" class="btn02">다음검색</a>
+            {% endif %}
             <ul class="btn_bo_user">
                 {% if is_admin %}
                 <li>

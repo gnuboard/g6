@@ -10,7 +10,7 @@ import uuid
 from urllib.parse import urlencode
 import PIL
 import shutil
-from fastapi import Query, Request, HTTPException, UploadFile
+from fastapi import Depends, Form, Query, Request, HTTPException, UploadFile
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment
 from markupsafe import Markup, escape
@@ -37,6 +37,7 @@ from email.mime.multipart import MIMEMultipart
 from lib.captcha.recaptch_v2 import ReCaptchaV2
 from lib.captcha.recaptch_inv import ReCaptchaInvisible
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
+from typing_extensions import Annotated
 
 load_dotenv()
 
@@ -46,16 +47,17 @@ TEMPLATES = "templates"
 CAPTCHA_PATH = "lib/captcha/templates"
 EDITOR_PATH = "lib/editor/templates"
 
-# .env 파일이 없을 경우 경고 메시지 출력
-if not os.path.exists(".env"):
-    print("\033[93m" + "경고: .env 파일이 없습니다. 설치를 진행해 주세요." + "\033[0m")
-    #print("python3 install.py")
-    # exit()
-# 테이블이 데이터베이스에 존재하는지 확인
-elif not inspect(engine).has_table(DB_TABLE_PREFIX + "config"):
-    print("\033[93m" + "DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요." + "\033[0m")
-    #print("python3 install.py")
-    #exit()
+# .env, DB 테이블 존재 여부 체크
+# - 설치 과정일 경우에는 체크하지 않음.
+try:
+    if not os.environ.get("is_setup"):
+        if not os.path.exists(".env"):
+            raise Exception("\033[93m" + "경고: .env 파일이 없습니다. 설치를 진행해 주세요." + "\033[0m")
+        elif not inspect(engine).has_table(DB_TABLE_PREFIX + "config"):
+            raise Exception("\033[93m" + "DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요." + "\033[0m")
+except Exception as e:
+    exit(e)
+
 
 def get_theme_from_db(config=None):
     # main.py 에서 config 를 인수로 받아서 사용
@@ -399,7 +401,7 @@ def check_token(request: Request, token: str):
     return False
 
 
-def get_client_ip(request: Request):
+def get_client_ip(request: Request) -> str:
     '''
     클라이언트의 IP 주소를 반환하는 함수 (PHP의 $_SERVER['REMOTE_ADDR'])
     '''
@@ -407,10 +409,9 @@ def get_client_ip(request: Request):
     if x_forwarded_for:
         # X-Forwarded-For can be a comma-separated list of IPs.
         # The client's requested IP will be the first one.
-        client_ip = x_forwarded_for.split(",")[0]
+        return x_forwarded_for.split(",")[0]
     else:
-        client_ip = request.client.host
-    return {"client_ip": client_ip}
+        return request.client.host
 
 
 def make_directory(directory: str):
@@ -706,7 +707,8 @@ def common_search_query_params(
         sst: str = Query(default=""), 
         sod: str = Query(default=""), 
         sfl: str = Query(default=""), 
-        stx: str = Query(default=""), 
+        stx: str = Query(default=""),
+        sca: str = Query(default=""),
         current_page: str = Query(default="1", alias="page")
         ):
     '''
@@ -717,7 +719,7 @@ def common_search_query_params(
     except ValueError:
         # current_page가 정수로 변환할 수 없는 경우 기본값으로 1을 사용하도록 설정
         current_page = 1
-    return {"sst": sst, "sod": sod, "sfl": sfl, "stx": stx, "current_page": current_page}
+    return {"sst": sst, "sod": sod, "sfl": sfl, "stx": stx, "sca": sca, "current_page": current_page}
 
 
 def select_query(request: Request, table_model, search_params: dict, 
@@ -1195,7 +1197,7 @@ def insert_popular(request: Request, fields: str, word: str):
                     new_popular = Popular(
                         pp_word=word,
                         pp_date=today_date,
-                        pp_ip=get_client_ip(request)["client_ip"])
+                        pp_ip=get_client_ip(request))
                     db.add(new_popular)
                     db.commit()
     except Exception as e:
@@ -1318,7 +1320,7 @@ def get_unique_id(request) -> Optional[str]:
         Optional[str]: 고유 아이디, DB 오류시 None
     """
 
-    ip: str = get_client_ip(request)["client_ip"]
+    ip: str = get_client_ip(request)
 
     while True:
         current = datetime.now()
@@ -1583,6 +1585,7 @@ class UserTemplates(Jinja2Templates):
 
             # 공통 env.global 설정
             self.env.globals["editor_path"] = editor_path
+            self.env.globals["editor_macro"] = editor_macro
             self.env.globals["getattr"] = getattr
             self.env.globals["get_selected"] = get_selected
             self.env.globals["get_member_icon"] = get_member_icon
@@ -1648,6 +1651,7 @@ class AdminTemplates(Jinja2Templates):
 
             # 공통 env.global 설정
             self.env.globals["editor_path"] = editor_path
+            self.env.globals["editor_macro"] = editor_macro
             self.env.globals["getattr"] = getattr
             self.env.globals["get_selected"] = get_selected
             self.env.globals["get_member_icon"] = get_member_icon
@@ -2162,27 +2166,6 @@ def check_ip_list(request: Request, current_ip: str, ip_list: str, allow: bool) 
     return False
 
 
-def is_write_delay(request: Request) -> bool:
-    """특정 시간 간격 내에 다시 글을 작성할 수 있는지 확인하는 함수"""
-    if request.state.is_super_admin:
-        return True
-
-    delay_sec = int(request.state.config.cf_delay_sec)
-    current_time = datetime.now()
-    write_time = request.session.get("ss_write_time")
-
-    if delay_sec > 0:
-        time_interval = timedelta(seconds=delay_sec)
-        if write_time:
-            available_time = datetime.strptime(write_time, "%Y-%m-%d %H:%M:%S") + time_interval
-            if available_time > current_time:
-                return False
-
-        request.session["ss_write_time"] = current_time.strftime("%Y-%m-%d %H:%M:%S")
-
-    return True
-
-
 def filter_words(request: Request, contents: str) -> str:
     """글 내용에 필터링된 단어가 있는지 확인하는 함수
 
@@ -2203,6 +2186,34 @@ def filter_words(request: Request, contents: str) -> str:
             return word
 
     return ''
+
+
+def search_font(content, stx):
+    # 문자 앞에 \를 붙입니다.
+    src = ['/', '|']
+    dst = ['\\/', '\\|']
+
+    if not stx or not stx.strip() and stx != '0':
+        return content
+
+    # 검색어 전체를 공란으로 나눈다
+    search_keywords = stx.split()
+
+    # "(검색1|검색2)"와 같은 패턴을 만듭니다.
+    pattern = ''
+    bar = ''
+    for keyword in search_keywords:
+        if keyword.strip() == '':
+            continue
+        tmp_str = re.escape(keyword)
+        tmp_str = tmp_str.replace(src[0], dst[0]).replace(src[1], dst[1])
+        pattern += f'{bar}{tmp_str}(?![^<]*>)'
+        bar = "|"
+
+    # 지정된 검색 폰트의 색상, 배경색상으로 대체
+    replace = "<b class=\"sch_word\">\\1</b>"
+
+    return re.sub(f'({pattern})', replace, content, flags=re.IGNORECASE)
 
 
 def number_format(number: int) -> str:
@@ -2298,3 +2309,41 @@ def register_theme_statics(app):
     url = f"/theme_static/{theme_name}"
     path = StaticFiles(directory=f"{TEMPLATES}/{theme_name}/static")
     app.mount(url, path, name=f"static_{theme_name}")  # tag
+
+
+"""
+의존성 주입 함수 목록
+"""
+async def get_variety_tokens(
+    token_form: Annotated[str, Form(alias="token")] = None,
+    token_query: Annotated[str, Query(alias="token")] = None
+):
+    """
+    요청 매개변수의 유형별 토큰을 수신, 하나의 토큰만 반환
+    - 반환 우선순위는 매개변수 순서대로
+    """
+    return token_form or token_query
+
+async def validate_token(
+    request: Request,
+    token: Annotated[str, Depends(get_variety_tokens)]
+):
+    """
+    토큰 유효성 검사
+    """
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
+
+
+async def validate_captcha(
+    request: Request,
+    response: Annotated[str, Form(alias="g-recaptcha-response")] = None
+):
+    """
+    구글 reCAPTCHA 유효성 검사
+    """
+    config = request.state.config
+    captcha_cls = get_current_captcha_cls(config.cf_captcha)
+    # TODO: config.cf_recaptcha_secret_key 변수를 항상 전달할 필요가 있을까?
+    if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, response)):
+        raise AlertException("캡차가 올바르지 않습니다.", 400)

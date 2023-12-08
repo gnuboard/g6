@@ -1,8 +1,11 @@
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
-from sqlalchemy.pool import QueuePool
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
+from fastapi import Depends
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import QueuePool
+from typing_extensions import Annotated
+
 
 load_dotenv()
 DB_ENGINE = os.getenv("DB_ENGINE", "sqlite").lower()  # 소문자
@@ -32,9 +35,13 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, expire_on_commit=True)
 
 
-def get_db():
+# 데이터베이스 세션을 가져오는 의존성 함수
+async def get_db() -> Session:
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
+
+# Annotated를 사용하여 의존성 주입
+db_session = Annotated[Session, Depends(get_db)]

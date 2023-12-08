@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.models import Poll, PollEtc
 
 router = APIRouter()
@@ -17,14 +17,11 @@ templates.env.globals["captcha_widget"] = captcha_widget
 templates.env.add_extension('jinja2.ext.loopcontrols')
 
 
-@router.post("/poll_update/{po_id}")
-def poll_update(request: Request, po_id: int, token: str = Form(...), gb_poll: int = Form(...), db: Session = Depends(get_db)):
+@router.post("/poll_update/{po_id}", dependencies=[Depends(validate_token)])
+async def poll_update(request: Request, db: db_session, po_id: int, gb_poll: int = Form(...)):
     """
     투표하기
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다.", 403)
-
     poll = db.query(Poll).get(po_id)
     member = request.state.login_member
     member_level = get_member_level(request)
@@ -54,7 +51,7 @@ def poll_update(request: Request, po_id: int, token: str = Form(...), gb_poll: i
       
 
 @router.get("/poll_result/{po_id}")
-def poll_result(request: Request, po_id: int, db: Session = Depends(get_db)):
+async def poll_result(request: Request, po_id: int, db: db_session):
     """
     투표 결과
     """
@@ -97,20 +94,16 @@ def poll_result(request: Request, po_id: int, db: Session = Depends(get_db)):
     )
 
 
-@router.post("/poll_etc_update/{po_id}")
+@router.post("/poll_etc_update/{po_id}", dependencies=[Depends(validate_token), Depends(validate_captcha)])
 async def poll_etc_update(request: Request,
-                    po_id: int, 
-                    token: str = Form(...),
-                    recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
+                    db: db_session,
+                    po_id: int,
                     pc_name: str = Form(...),
                     pc_idea: str = Form(...),
-                    db: Session = Depends(get_db)):
+                    ):
     """
     기타의견 등록
     """
-    if not check_token(request, token):
-        raise AlertException(f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.", 403)
-
     poll = db.query(Poll).get(po_id)
     config = request.state.config
     member = request.state.login_member
@@ -118,10 +111,6 @@ async def poll_etc_update(request: Request,
 
     if poll.po_level > member_level:
         raise AlertCloseException(f"권한 {poll.po_level} 이상의 회원만 기타의견을 등록할 수 있습니다.", 403)
-    
-    captcha_cls = get_current_captcha_cls(config.cf_captcha)
-    if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
-        raise AlertException("캡차가 올바르지 않습니다.", 400)
 
     po_etc = PollEtc(po_id=po_id, pc_name=pc_name, pc_idea=pc_idea, mb_id=(member.mb_id if member else ''))
     db.add(po_etc)
@@ -146,18 +135,15 @@ async def poll_etc_update(request: Request,
     return RedirectResponse(url=f"/bbs/poll_result/{po_id}", status_code=302)
 
 
-@router.get("/poll_etc_delete/{pc_id}")
-def poll_etc_delete(
+@router.get("/poll_etc_delete/{pc_id}", dependencies=[Depends(validate_token)])
+async def poll_etc_delete(
     request: Request,
-    db: Session = Depends(get_db),
-    pc_id: int = Path(...),
-    token: str = Query(...)):
+    db: db_session,
+    pc_id: int = Path(...)
+):
     """
     기타의견 삭제
-    """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
+    """    
     poll_etc = db.query(PollEtc).get(pc_id)
     po_id = poll_etc.po_id
     member = request.state.login_member

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Form, Path
 from fastapi.responses import RedirectResponse
 
 from bbs.social import SocialAuthService
-from common.database import get_db
+from common.database import db_session
 from lib.common import *
 from lib.pbkdf2 import create_hash
 
@@ -15,7 +15,7 @@ templates.env.globals["captcha_widget"] = captcha_widget
 
 
 @router.get("/id_lost")
-def find_member_id_form(request: Request):
+async def find_member_id_form(request: Request):
     """
     회원 ID 찾기 폼을 보여준다.
     """
@@ -26,14 +26,12 @@ def find_member_id_form(request: Request):
     return templates.TemplateResponse("member/id_find_form.html", {"request": request})
 
 
-@router.post("/id_lost")
+@router.post("/id_lost", dependencies=[Depends(validate_token), Depends(validate_captcha)])
 async def find_member_id(
     request: Request,
-    db: Session = Depends(get_db),
-    token: str = Form(...),
+    db: db_session,
     mb_name: str = Form(...),
-    mb_email: str = Form(...),
-    recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default="")
+    mb_email: str = Form(...)
 ):
     """
     회원 ID 찾은 후 결과를 보여준다.
@@ -42,13 +40,6 @@ async def find_member_id(
     member = request.state.login_member
     if member:
         return RedirectResponse("/", status_code=303)
-    
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
-    captcha_cls = get_current_captcha_cls(config.cf_captcha)
-    if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
-        raise AlertException("캡차가 올바르지 않습니다.", 400)
 
     member = db.query(Member).filter(
         Member.mb_name == mb_name,
@@ -69,7 +60,7 @@ async def find_member_id(
 
 
 @router.get("/password_lost")
-def find_member_password_form(request: Request):
+async def find_member_password_form(request: Request):
     """
     회원 비밀번호 찾기 폼을 보여준다.
     """
@@ -80,14 +71,12 @@ def find_member_password_form(request: Request):
     return templates.TemplateResponse("member/password_find_form.html", {"request": request})
 
 
-@router.post("/password_lost")
+@router.post("/password_lost", dependencies=[Depends(validate_token), Depends(validate_captcha)])
 async def find_member_password(
     request: Request,
-    db: Session = Depends(get_db),
-    token: str = Form(...),
+    db: db_session,
     mb_id: str = Form(...),
     mb_email: str = Form(...),
-    recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default="")
 ):
     """
     회원정보를 찾은 후 비밀번호 재설정 링크 메일 발송
@@ -96,13 +85,6 @@ async def find_member_password(
     member = request.state.login_member
     if member:
         return RedirectResponse("/", status_code=303)
-
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
-    captcha_cls = get_current_captcha_cls(config.cf_captcha)
-    if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
-        raise AlertException("캡차가 올바르지 않습니다.", 400)
     
     member = db.query(Member).filter(
         Member.mb_id == mb_id,
@@ -135,9 +117,9 @@ async def find_member_password(
 
 
 @router.get("/password_reset/{mb_id}/{token}")
-def reset_password_form(
+async def reset_password_form(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     mb_id: str = Path(...),
     token: str = Path(...)
 ):
@@ -167,15 +149,13 @@ def reset_password_form(
     return templates.TemplateResponse("member/password_reset_form.html", {"request": request, "member": member})
 
 
-@router.post("/password_reset/{mb_id}")
+@router.post("/password_reset/{mb_id}", dependencies=[Depends(validate_token), Depends(validate_captcha)])
 async def reset_password(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     mb_id: str = Path(...),
-    token: str = Form(...),
     mb_password: str = Form(..., min_length=4, max_length=20),
     mb_password_confirm: str = Form(..., min_length=4, max_length=20),
-    recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default="")
 ):
     """
     비밀번호를 재설정한다.
@@ -184,13 +164,6 @@ async def reset_password(
     member = request.state.login_member
     if member:
         return RedirectResponse("/", status_code=303)
-
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
-    captcha_cls = get_current_captcha_cls(config.cf_captcha)
-    if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
-        raise AlertException("캡차가 올바르지 않습니다.", 400)
 
     member = db.query(Member).filter(
         Member.mb_id == mb_id, 

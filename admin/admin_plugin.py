@@ -33,7 +33,7 @@ async def theme_detail(request: Request, module_name: str = Form(...)):
 
 
 @router.get("/plugin_list")
-def show_plugins(request: Request):
+async def show_plugins(request: Request):
     """
     플러그인 목록
     """
@@ -52,7 +52,7 @@ def show_plugins(request: Request):
 
 
 @router.post("/plugin_update")
-def update_plugin_state(
+async def update_plugin_state(
         request: Request,
         type: str = Form(...),
         plugin_name: str = Form(...),
@@ -107,7 +107,7 @@ def update_plugin_state(
 
 
 @router.get("/plugin/screenshot/{module_name}")
-def show_screenshot(module_name: str):
+async def show_screenshot(module_name: str):
     try:
         file_path = f"{PLUGIN_DIR}/{module_name}/screenshot.png"
 

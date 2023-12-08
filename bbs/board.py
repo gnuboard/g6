@@ -2,6 +2,7 @@
 # 그누보드5 버전에서 게시판 테이블을 write 로 사용하여 테이블명을 바꾸지 못하는 관계로
 # 테이블명은 write 로, 글 한개에 대한 의미는 write 와 post 를 혼용하여 사용합니다.
 import datetime
+
 from fastapi import APIRouter, Depends, Request, File, Form, Path, Query
 from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import aliased, Session
@@ -9,7 +10,7 @@ from lib.pbkdf2 import create_hash
 
 from lib.board_lib import *
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.formclass import WriteForm, WriteCommentForm
 from common.models import AutoSave, Board, BoardGood, Group, GroupMember, Scrap
 
@@ -17,6 +18,7 @@ router = APIRouter()
 templates = UserTemplates()
 templates.env.filters["datetime_format"] = datetime_format
 templates.env.filters["set_image_width"] = set_image_width
+templates.env.filters["url_auto_link"] = url_auto_link
 templates.env.globals["editor_macro"] = editor_macro
 templates.env.globals["get_admin_type"] = get_admin_type
 templates.env.globals["get_unique_id"] = get_unique_id
@@ -28,9 +30,9 @@ FILE_DIRECTORY = "data/file/"
 
 
 @router.get("/group/{gr_id}")
-def group_board_list(
+async def group_board_list(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     gr_id: str = Path(...)
 ):
     """
@@ -69,16 +71,19 @@ def group_board_list(
 
 
 @router.get("/{bo_table}")
-def list_post(
+async def list_post(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(..., title="게시판 아이디"),
-    search_params: dict = Depends(common_search_query_params)
+    search_params: dict = Depends(common_search_query_params),
+    spt: int = Query(None, title="검색단위"),
 ):
     """
     지정된 게시판의 글 목록을 보여준다.
     """
     # 게시판 정보 조회
+    config = request.state.config
+
     board = db.get(Board, bo_table)
     board_config = BoardConfig(request, board)
     if not board:
@@ -120,10 +125,24 @@ def list_post(
     else:
         query = board_config.get_list_sort_query(model_write, query)
 
+    # 검색일 경우 검색단위 갯수 설정
+    prev_spt = None
+    next_spt = None
+    if (sca or (sfl and stx)):
+        search_part = int(config.cf_search_part) or 10000
+        min_spt = db.query(func.min(model_write.wr_num)).scalar() or 0
+        spt = int(request.query_params.get("spt", min_spt))
+        prev_spt = spt - search_part if spt > min_spt else None
+        next_spt = spt + search_part if spt + search_part < 0 else None
+
+        # wr_num 컬럼을 기준으로 검색단위를 구분합니다. (wr_num은 음수)
+        query = query.filter(model_write.wr_num.between(spt, spt + search_part))
+
     # 페이지 번호에 따른 offset 계산
     offset = (current_page - 1) * page_rows
     # 최종 쿼리 결과를 가져옵니다.
     writes = query.offset(offset).limit(page_rows).all()
+    # 전체 게시글 갯수 조회
     total_count = query.count()
 
     # 게시글 정보 수정
@@ -147,24 +166,22 @@ def list_post(
             "table_width": board_config.get_table_width,
             "gallery_width": board_config.gallery_width,
             "gallery_height": board_config.gallery_height,
+            "prev_spt": prev_spt,
+            "next_spt": next_spt,
         }
     )
 
 
-@router.post("/list_delete/{bo_table}")
-def list_delete(
+@router.post("/list_delete/{bo_table}", dependencies=[Depends(validate_token)])
+async def list_delete(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(...),
-    token: str = Form(...),
     wr_ids: list = Form(..., alias="chk_wr_id[]"),
 ):
     """
     게시글을 일괄 삭제한다.
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     # 게시판 정보 조회
     board = db.get(Board, bo_table)
     if not board:
@@ -203,7 +220,7 @@ def list_delete(
 @router.post("/move/{bo_table}")
 async def move_post(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(...),
     sw: str = Form(...),
     wr_ids: list = Form(..., alias="chk_wr_id[]"),
@@ -246,11 +263,10 @@ async def move_post(
     )
 
 
-@router.post("/move_update/")
-def move_update(
+@router.post("/move_update/", dependencies=[Depends(validate_token)])
+async def move_update(
     request: Request,
-    db: Session = Depends(get_db),
-    token: str = Form(...),
+    db: db_session,
     sw: str = Form(...),
     bo_table: str = Form(...),
     wr_ids: str = Form(..., alias="wr_id_list"),
@@ -261,9 +277,6 @@ def move_update(
     """
     config = request.state.config
     act = "이동" if sw == "move" else "복사"
-
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
 
     # 게시판 검증
     origin_board = db.get(Board, bo_table)
@@ -363,9 +376,9 @@ def move_update(
 
 
 @router.get("/write/{bo_table}")
-def write_form_add(
+async def write_form_add(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(...),
     parent_id: int = Query(None)
 ):
@@ -428,9 +441,9 @@ def write_form_add(
 
 
 @router.get("/write/{bo_table}/{wr_id}")
-def write_form_edit(
+async def write_form_edit(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(...),
     wr_id: int = Path(...)
 ):
@@ -512,12 +525,11 @@ def write_form_edit(
     )
 
 
-@router.post("/write_update")
+@router.post("/write_update", dependencies=[Depends(validate_token)])
 async def write_update(
     request: Request,
-    db: Session = Depends(get_db),
-    token: str = Form(...),
-    recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
+    db: db_session,
+    recaptcha_response: str = Form("", alias="g-recaptcha-response"),
     bo_table: str = Form(...),
     wr_id: int = Form(None),
     parent_id: int = Form(None),
@@ -534,9 +546,6 @@ async def write_update(
     """
     게시글을 Table 추가한다.
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
     config = request.state.config
     # 게시판 정보 조회
     board = db.get(Board, bo_table)
@@ -582,11 +591,11 @@ async def write_update(
         # 글쓰기 간격 검증
         if not is_write_delay(request):
             raise AlertException("너무 빠른 시간내에 게시글을 연속해서 올릴 수 없습니다.", 400)
+
         # Captcha 검증
         if board_config.use_captcha:
-            captcha_cls = get_current_captcha_cls(config.cf_captcha)
-            if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
-                raise AlertException("캡차가 올바르지 않습니다.", 400)
+            await validate_captcha(request, recaptcha_response)
+
         # 글 작성 권한 검증
         if parent_id:
             if not board_config.is_reply_level():
@@ -616,6 +625,9 @@ async def write_update(
         write.wr_parent = write.wr_id  # 부모아이디 설정
         board.bo_count_write = board.bo_count_write + 1  # 게시판 글 갯수 1 증가
         db.commit()
+
+        # 글 작성 시간 기록
+        set_write_delay(request)
 
         # 비밀글은 세션 생성
         if secret:
@@ -731,9 +743,9 @@ async def write_update(
 
 
 @router.get("/{bo_table}/{wr_id}")
-def read_post(
+async def read_post(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(...),
     wr_id: int = Path(...)
 ):
@@ -945,20 +957,16 @@ def read_post(
 
 
 # 게시글 삭제
-@router.get("/delete/{bo_table}/{wr_id}")
-def delete_post(
+@router.get("/delete/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
+async def delete_post(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(...),
     wr_id: int = Path(...),
-    token: str = Query(...)
 ):
     """
     게시글을 삭제한다.
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다.", 403)
-
     # 게시판 정보 조회
     board = db.get(Board, bo_table)
     board_config = BoardConfig(request, board)
@@ -988,9 +996,9 @@ def delete_post(
 
 
 @router.get("/{bo_table}/{wr_id}/download/{bf_no}")
-def download_file(
+async def download_file(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(...),
     wr_id: int = Path(...),
     bf_no: int = Path(...),
@@ -998,10 +1006,10 @@ def download_file(
     """첨부파일 다운로드
 
     Args:
+        db (Session): DB 세션. Depends로 주입
         bo_table (str): 게시판 테이블명
         wr_id (int): 게시글 아이디
         bf_no (int): 파일 순번
-        db (Session, optional): DB 세션. Defaults to Depends(get_db).
 
     Raises:
         AlertException: 파일이 존재하지 않을 경우
@@ -1062,12 +1070,11 @@ def download_file(
     return FileResponse(board_file.bf_file, filename=board_file.bf_source)
 
 
-@router.post("/write_comment_update/")
+@router.post("/write_comment_update/", dependencies=[Depends(validate_token)])
 async def write_comment_update(
     request: Request,
-    db: Session = Depends(get_db),
-    token: str = Form(...),
-    recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
+    db: db_session,
+    recaptcha_response: str = Form("", alias="g-recaptcha-response"),
     form: WriteCommentForm = Depends(),
 ):
     """
@@ -1075,9 +1082,6 @@ async def write_comment_update(
     """
     config = request.state.config
     member = request.state.login_member
-
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다.", 403)
 
     # 게시판 정보 조회
     board = db.get(Board, form.bo_table)
@@ -1101,11 +1105,9 @@ async def write_comment_update(
         if not is_write_delay(request):
             raise AlertException("너무 빠른 시간내에 댓글을 연속해서 올릴 수 없습니다.", 400)
 
-        # Captcha 검증
+        # 비회원은 Captcha 유효성 검사
         if not member:
-            captcha_cls = get_current_captcha_cls(config.cf_captcha)
-            if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
-                raise AlertException("캡차가 올바르지 않습니다.", 400)
+            await validate_captcha(request, recaptcha_response)
 
         if not board_config.is_comment_level():
             raise AlertException("댓글을 작성할 권한이 없습니다.", 403)
@@ -1142,6 +1144,9 @@ async def write_comment_update(
         comment.wr_ip = request.client.host
         db.add(comment)
 
+        # 글 작성 시간 기록
+        set_write_delay(request)
+
         # 게시글에 댓글 수 증가
         write.wr_comment = write.wr_comment + 1
         db.commit()
@@ -1164,20 +1169,16 @@ async def write_comment_update(
     return RedirectResponse(f"/board/{form.bo_table}/{form.wr_id}", status_code=303)
 
 
-@router.get("/delete_comment/{bo_table}/{comment_id}")
-def delete_comment(
+@router.get("/delete_comment/{bo_table}/{comment_id}", dependencies=[Depends(validate_token)])
+async def delete_comment(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(...),
     comment_id: int = Path(...),
-    token: str = Query(...),
 ):
     """
     댓글 삭제
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다.", 403)
-
     # 게시판 정보 조회
     board = db.get(Board, bo_table)
     if not board:
@@ -1222,9 +1223,9 @@ def delete_comment(
 
 
 @router.get("/{bo_table}/{wr_id}/link/{no}")
-def link_url(
+async def link_url(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     bo_table: str = Path(...),
     wr_id: int = Path(...),
     no: int = Path(...)

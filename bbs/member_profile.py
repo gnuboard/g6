@@ -4,7 +4,7 @@ from fastapi import APIRouter, Form, File, Depends
 from starlette.responses import RedirectResponse
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.formclass import MemberForm
 
 from common.models import Member, MemberSocialProfiles
@@ -20,7 +20,7 @@ templates.env.globals["check_profile_open"] = check_profile_open
 
 
 @router.get("/member_confirm")
-def check_member_form(request: Request, db: Session = Depends(get_db)):
+async def check_member_form(request: Request, db: db_session):
     member = request.state.login_member
     if not member:
         raise AlertException(status_code=404, detail="회원정보가 없습니다.")
@@ -37,7 +37,7 @@ def check_member_form(request: Request, db: Session = Depends(get_db)):
 
 
 @router.post("/member_confirm", name='member_password')
-def check_member(
+async def check_member(
         request: Request,
         mb_password: str = Form(...)
 ):
@@ -55,7 +55,7 @@ def check_member(
 
 
 @router.get("/member_profile/{mb_no}", name='member_profile')
-def member_profile(request: Request, db: Session = Depends(get_db)):
+async def member_profile(request: Request, db: db_session):
     mb_id = request.session.get("ss_mb_id", "")
     if not mb_id:
         raise AlertException(status_code=403, detail="로그인한 회원만 접근하실 수 있습니다.")
@@ -89,9 +89,8 @@ def member_profile(request: Request, db: Session = Depends(get_db)):
     })
 
 
-@router.post("/member_profile/{mb_no}", name='member_profile_save')
-async def member_profile_save(request: Request, db: Session = Depends(get_db),
-                              token: str = Form(...),
+@router.post("/member_profile/{mb_no}", name='member_profile_save', dependencies=[Depends(validate_token), Depends(validate_captcha)])
+async def member_profile_save(request: Request, db: db_session,
                               mb_img: Optional[UploadFile] = File(None),
                               mb_icon: Optional[UploadFile] = File(None),
                               mb_password: str = Form(None),
@@ -101,18 +100,10 @@ async def member_profile_save(request: Request, db: Session = Depends(get_db),
                               member_form: MemberForm = Depends(MemberForm),
                               del_mb_img: str = Form(None),
                               del_mb_icon: str = Form(None),
-                              recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
                               ):
-    if not check_token(request, token):
-        raise AlertException("잘못된 접근입니다.")
 
     if not request.session.get("ss_profile_change", False):
         raise AlertException(status_code=403, detail="잘못된 접근입니다.", url=app.url_path_for("member_confirm"))
-
-    config = request.state.config
-    captcha = get_current_captcha_cls(config.cf_captcha)
-    if (captcha is not None) and (not await captcha.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
-        raise AlertException("캡차가 올바르지 않습니다.")
 
     mb_id = request.session.get("ss_mb_id", "")
     exists_member: Optional[Member] = db.query(Member).filter(Member.mb_id == mb_id).first()

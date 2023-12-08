@@ -5,7 +5,7 @@ from sqlalchemy.orm import aliased, Session
 
 from lib.board_lib import *
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.models import Scrap
 
 router = APIRouter()
@@ -14,7 +14,7 @@ templates.env.filters["datetime_format"] = datetime_format
 
 
 @router.get("/scrap_popin/{bo_table}/{wr_id}")
-def scrap_form(request: Request, db: Session = Depends(get_db),
+async def scrap_form(request: Request, db: db_session,
     bo_table: str = Path(...),
     wr_id: int = Path(...),
 ):
@@ -43,19 +43,15 @@ def scrap_form(request: Request, db: Session = Depends(get_db),
     return templates.TemplateResponse("bbs/scrap_popin.html", context)
     
 
-@router.post("/scrap_popin_update/{bo_table}/{wr_id}")
-def scrap_form_update(request: Request, db: Session = Depends(get_db),
+@router.post("/scrap_popin_update/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
+async def scrap_form_update(request: Request, db: db_session,
     bo_table: str = Path(...),
     wr_id: int = Path(...),
     wr_content: str = Form(None),
-    token: str = Form(...),
 ):
     """
     스크랩 등록
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     member = request.state.login_member
     if not member:
         raise AlertCloseException("로그인 후 이용 가능합니다.", 403)
@@ -108,6 +104,9 @@ def scrap_form_update(request: Request, db: Session = Depends(get_db),
         db.add(comment)
         db.commit()
 
+        # 글 작성 시간 기록
+        set_write_delay(request)
+
         # 게시판&스크랩 글에 댓글 수 증가
         board.bo_count_comment += 1
         write.wr_comment += 1
@@ -140,7 +139,7 @@ def scrap_form_update(request: Request, db: Session = Depends(get_db),
 
 # TODO: 연관관계로 ORM 수정 => (쿼리요청 및 코드량 감소)
 @router.get("/scrap")
-def scrap_list(request: Request, db: Session = Depends(get_db),
+async def scrap_list(request: Request, db: db_session,
     current_page: int = Query(default=1, alias="page")
 ):
     """
@@ -184,10 +183,9 @@ def scrap_list(request: Request, db: Session = Depends(get_db),
     return templates.TemplateResponse("bbs/scrap_list.html", context)
 
 
-@router.get("/scrap_delete/{ms_id}")
-def scrap_delete(request: Request, db: Session = Depends(get_db), 
+@router.get("/scrap_delete/{ms_id}", dependencies=[Depends(validate_token)])
+async def scrap_delete(request: Request, db: db_session, 
     ms_id: int = Path(...),
-    token: str = Query(...),
     page: int = Query(default=1)
 ):
     """
@@ -195,9 +193,6 @@ def scrap_delete(request: Request, db: Session = Depends(get_db),
     """
     return_url = request.url_for('scrap_list').path + f"?page={page}"
 
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
     member = request.state.login_member
     if not member:
         raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
-from common.database import get_db, engine
+from common.database import db_session, engine
 import common.models as models
 from lib.common import *
 from typing import List, Optional
@@ -26,7 +26,7 @@ templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals["format"] = format
 
 @router.get("/auth_list")
-def auth_list(request: Request, db: Session = Depends(get_db), search_params: dict = Depends(common_search_query_params)):
+async def auth_list(request: Request, db: db_session, search_params: dict = Depends(common_search_query_params)):
         # sst: str = Query(default=""), # sort field (정렬 필드)
         # sod: str = Query(default=""), # search order (검색 오름, 내림차순)
         # sfl: str = Query(default=""), # search field (검색 필드)
@@ -113,19 +113,15 @@ def auth_list(request: Request, db: Session = Depends(get_db), search_params: di
     return templates.TemplateResponse("auth_list.html", context)
 
 
-@router.post("/auth_update")
-async def auth_update(request: Request, db: Session = Depends(get_db),
+@router.post("/auth_update", dependencies=[Depends(validate_token)])
+async def auth_update(request: Request, db: db_session,
         search_params: dict = Depends(common_search_query_params),
-        token: Optional[str] = Form(...),
         mb_id: Optional[str] = Form(default=""),
         au_menu: Optional[str] = Form(default=""),
         r: Optional[str] = Form(default=""),
         w: Optional[str] = Form(default=""),
         d: Optional[str] = Form(default=""),
         ):
-    
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다.")
     
     exists_member = db.query(models.Member).filter_by(mb_id=mb_id).first()
     if not exists_member:
@@ -154,18 +150,13 @@ async def auth_update(request: Request, db: Session = Depends(get_db),
     return RedirectResponse(f"/admin/auth_list?{query_string(request)}", status_code=303)
 
 
-@router.post("/auth_list_delete")
-async def auth_list_delete(request: Request, db: Session = Depends(get_db),
+@router.post("/auth_list_delete", dependencies=[Depends(validate_token)])
+async def auth_list_delete(request: Request, db: db_session,
         search_params: dict = Depends(common_search_query_params),
-        token: Optional[str] = Form(...),
         checks: List[int] = Form(..., alias="chk[]"),
         mb_id: List[str] = Form(..., alias="mb_id[]"),
         au_menu: List[str] = Form(..., alias="au_menu[]"),
         ):
-    
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다.")
-
     for i in checks:
         exists_auth = db.query(models.Auth).filter_by(mb_id=mb_id[i], au_menu=au_menu[i]).first()
         if exists_auth:

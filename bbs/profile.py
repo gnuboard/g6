@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 
 from lib.common import AlertException, is_none_datetime
-from common.database import get_db
+from common.database import db_session
 from main import templates
 from common.models import Member
 
@@ -13,7 +13,7 @@ router = APIRouter()
 
 
 @router.get('/profile/{member_id}')
-def get_profile(request: Request, member_id: str, db: Session = Depends(get_db)):
+async def get_profile(request: Request, member_id: str, db: db_session):
     print(request.state.login_member)
     if not request.state.login_member:
         raise AlertException("회원만 이용하실 수 있습니다.", 403)

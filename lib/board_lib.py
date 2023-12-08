@@ -1,4 +1,6 @@
 # 게시판/게시글 함수 모음 (임시)
+import bleach
+
 from datetime import datetime, timedelta
 from fastapi import Request
 from sqlalchemy import and_, distinct, or_
@@ -1157,34 +1159,6 @@ def delete_write(request: Request, bo_table: str, origin_write: WriteBaseModel) 
     return True
 
 
-def search_font(content, stx):
-    # 문자 앞에 \를 붙입니다.
-    src = ['/', '|']
-    dst = ['\\/', '\\|']
-
-    if not stx.strip() and stx != '0':
-        return content
-
-    # 검색어 전체를 공란으로 나눈다
-    search_keywords = stx.split()
-
-    # "(검색1|검색2)"와 같은 패턴을 만듭니다.
-    pattern = ''
-    bar = ''
-    for keyword in search_keywords:
-        if keyword.strip() == '':
-            continue
-        tmp_str = re.escape(keyword)
-        tmp_str = tmp_str.replace(src[0], dst[0]).replace(src[1], dst[1])
-        pattern += f'{bar}{tmp_str}(?![^<]*>)'
-        bar = "|"
-
-    # 지정된 검색 폰트의 색상, 배경색상으로 대체
-    replace = "<b class=\"sch_word\">\\1</b>"
-
-    return re.sub(f'({pattern})', replace, content, flags=re.IGNORECASE)
-
-
 def is_secret_write(write: WriteBaseModel = None) -> bool:
     """비밀글인지 확인한다.
 
@@ -1196,5 +1170,57 @@ def is_secret_write(write: WriteBaseModel = None) -> bool:
     """
     return "secret" in getattr(write, "wr_option", "")
 
-    
 
+def url_auto_link(text: str, request: Request, is_nofollow: bool = True) -> str:
+    """문자열 안에 포함된 URL을 링크로 변환한다.
+
+    Args:
+        text (str): 변환할 문자열.
+        request (Request): Request 객체.
+        is_nofollow: nofollow 속성 포함여부. Defaults to True.
+
+    Returns:
+        str: 변환된 문자열.
+    """
+    cf_link_target = getattr(request.state.config, "cf_link_target", "_blank")
+
+    def _nofollow(attrs, _):
+        if is_nofollow:
+            return bleach.callbacks.nofollow(attrs)
+        else:
+            return attrs
+
+    def _target(attrs, _):
+        attrs = bleach.callbacks.target_blank(attrs)
+        if (None, "target") in attrs:
+            attrs[(None, "target")] = cf_link_target
+        return attrs
+    
+    return bleach.linkify(text, callbacks=[_nofollow, _target], parse_email=True)
+
+
+def is_write_delay(request: Request) -> bool:
+    """특정 시간 간격 내에 다시 글을 작성할 수 있는지 확인하는 함수"""
+    if request.state.is_super_admin:
+        return True
+
+    delay_sec = int(request.state.config.cf_delay_sec)
+    current_time = datetime.now()
+    write_time = request.session.get("ss_write_time")
+
+    if delay_sec > 0:
+        time_interval = timedelta(seconds=delay_sec)
+        if write_time:
+            available_time = datetime.strptime(write_time, "%Y-%m-%d %H:%M:%S") + time_interval
+            if available_time > current_time:
+                return False
+
+    return True
+
+
+def set_write_delay(request: Request):
+    """글 작성 시간을 세션에 저장하는 함수"""
+    delay_sec = int(request.state.config.cf_delay_sec)
+
+    if not request.state.is_super_admin and delay_sec > 0:
+        request.session["ss_write_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

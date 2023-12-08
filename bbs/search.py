@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from lib.board_lib import *
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.models import Board, Group, GroupMember
 
 router = APIRouter()
@@ -12,9 +12,9 @@ templates.env.filters["search_font"] = search_font
 
 
 @router.get("/search")
-def search(
+async def search(
     request: Request,
-    db: Session = Depends(get_db),
+    db: db_session,
     gr_id: str = Query(None),
     sfl: str = Query("wr_subject||wr_content"),
     stx: str = Query(...),

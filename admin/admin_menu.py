@@ -7,7 +7,7 @@ from sqlalchemy.orm import aliased, Session
 from typing import List
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import Board, Content, Group, Menu
 
@@ -19,7 +19,7 @@ MENU_KEY = "100290"
 
 
 @router.get("/menu_list")
-def menu_list(request: Request, db: Session = Depends(get_db)):
+async def menu_list(request: Request, db: db_session):
     """
     메뉴 목록
     """
@@ -40,7 +40,7 @@ def menu_list(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/menu_form")
-def menu_form(request: Request, code: str = Query(None), new: str = Query(None)):
+async def menu_form(request: Request, code: str = Query(None), new: str = Query(None)):
     """
     메뉴 추가 팝업 페이지
     """
@@ -55,7 +55,7 @@ def menu_form(request: Request, code: str = Query(None), new: str = Query(None))
 
 
 @router.post("/menu_form_search", response_class=HTMLResponse)
-def menu_form_search(request: Request, db: Session = Depends(get_db), type: str = Form(None)):
+async def menu_form_search(request: Request, db: db_session, type: str = Form(None)):
     """
     메뉴 추가 팝업 레이아웃
     """
@@ -78,11 +78,10 @@ def menu_form_search(request: Request, db: Session = Depends(get_db), type: str 
     )
 
 
-@router.post("/menu_list_update")
-def menu_list_update(
+@router.post("/menu_list_update", dependencies=[Depends(validate_token)])
+async def menu_list_update(
     request: Request,
-    db: Session = Depends(get_db),
-    token: str = Form(...),
+    db: db_session,
     parent_code: List[str] = Form(None, alias="code[]"),
     me_name: List[str] = Form(None, alias="me_name[]"),
     me_link: List[str] = Form(None, alias="me_link[]"),
@@ -94,9 +93,6 @@ def menu_list_update(
     """
     메뉴 수정
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     try:
         # 메뉴 전체 삭제
         db.query(Menu).delete()

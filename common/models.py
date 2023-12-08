@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import ArgumentError, InvalidRequestError
 from datetime import datetime, date
-from common.database import engine, get_db, SessionLocal, DB_TABLE_PREFIX
+from common.database import DB_TABLE_PREFIX
 
 Base = declarative_base()
 
