@@ -1659,6 +1659,7 @@ class AdminTemplates(Jinja2Templates):
             self.env.filters["number_format"] = number_format
             self.env.globals["theme_asset"] = theme_asset
             self.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
+            self.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 
             # 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
             self.context_processors.append(self._default_admin_context)
@@ -1668,10 +1669,7 @@ class AdminTemplates(Jinja2Templates):
                 self.env.globals.update(**globals.__dict__)
 
     def _default_admin_context(self, request: Request):
-        context = {
-            "admin_menus": get_admin_menus(),
-            "admin_plugin_menus": get_admin_plugin_menus(),
-        }
+        context = {}
         return context
 
 

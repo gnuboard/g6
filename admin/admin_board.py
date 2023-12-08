@@ -8,7 +8,6 @@ import common.models as models
 from lib.common import *
 from typing import List, Optional
 from common.formclass import BoardForm
-from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 
 router = APIRouter()
 templates = AdminTemplates()
@@ -22,8 +21,6 @@ templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals["editor_path"] = editor_path
-templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
-templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 
 @router.get("/board_list")
 async def board_list(request: Request, db: db_session, search_params: dict = Depends(common_search_query_params)):

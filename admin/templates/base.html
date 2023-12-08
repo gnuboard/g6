@@ -85,7 +85,6 @@ var g5_admin_url = "/admin";
         <ul class="gnb_ul">
 
         {% macro render_admin_menu(menu_key, submenus, loop_index) %}
-        {% set request_menu_key = request.session.get('menu_key', '')[:3] %}
         <li class="gnb_li {{ 'on' if request_menu_key == menu_key else '' }}">
             <button type="button" class="btn_op menu-{{ menu_key }} menu-order-{{ loop_index }}" title="{{ submenus[0]['name'] }}">{{ submenus[0]['name'] }}</button>
             <div class="gnb_oparea_wr">
@@ -104,16 +103,18 @@ var g5_admin_url = "/admin";
         {% endmacro %}
         
         {# 관리자 메뉴 #}
+        {% set request_menu_key = request.session.get('menu_key', '')[:3] %}
+        {% if get_admin_menus %}
+            {% set admin_menus=get_admin_menus() %}
+        {% endif %}
+            
         {% for menu_key, submenus in admin_menus.items() %}
             {{ render_admin_menu(menu_key[4:], submenus, loop.index) }}
         {% endfor %}
 
         {# 플러그인 메뉴 #}
         {% set request_menu_key = request.session.get('menu_key', '') %}
-        {% if get_admin_plugin_menus %}
-            {% set plugin_menus=get_admin_plugin_menus() %}
-        {% endif %}
-            
+        {% set plugin_menus=get_admin_plugin_menus() %}
         {% for plugin in plugin_menus %}
             {% for menu_key, submenus in plugin.items() %}
                 {{ render_admin_menu(menu_key, submenus, loop.index) }}
@@ -312,7 +313,6 @@ var g5_admin_url = "/admin";
 </script>
 
 
-<!-- <div style='float:left; text-align:center;'>RUN TIME : 0.045850038528442<br></div> -->
 
 
 </body>
