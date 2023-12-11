@@ -1,77 +1,88 @@
 {% extends "base.html" %}
 
-{% block title %}
-    접속자검색
-{% endblock %}
-
-{% block subtitle %}접속자검색{% endblock %}
+{% block head %}
+    {% include "datepicker.html" %}
+{% endblock head %}
+{% block title %}접속자검색{% endblock title %}
+{% block subtitle %}접속자검색{% endblock subtitle %}
 
 {% block content %}
+    <div class="local_sch local_sch01">
+        <form name="fvisit" method="get" onsubmit="return fvisit_submit(this);" autocomplete="off">
+        <label for="sch_sort" class="sound_only">검색분류</label>
+        <select name="sfl" id="sch_sort" class="search_sort">
+            <option value="vi_ip" {{ get_selected('vi_ip', request.state.sfl if request.state.sfl else '' ) }}>IP</option>
+            <option value="vi_referer" {{ get_selected('vi_referer', request.state.sfl if request.state.sfl else '' ) }}>접속경로</option>
+            <option value="vi_date" {{ get_selected('vi_date', request.state.sfl if request.state.sfl else '' ) }}>날짜</option>
+        </select>
+        <label for="sch_word" class="sound_only">검색어</label>
+        <input type="text" name="stx" size="20" value="{{ request.state.stx if request.state.stx else '' }}" id="sch_word" class="frm_input">
+        <input type="submit" value="검색" class="btn_submit">
+        </form>
+    </div>
 
-<div class="local_sch local_sch01">
-    <form name="fvisit" method="get" onsubmit="return fvisit_submit(this);">
-    <label for="sch_sort" class="sound_only">검색분류</label>
-    <select name="sfl" id="sch_sort" class="search_sort">
-        <option value="vi_ip" {{ get_selected('vi_ip', request.state.sfl if request.state.sfl else '' )}}>IP</option>
-        <option value="vi_referer" {{ get_selected('vi_referer', request.state.sfl if request.state.sfl else '' )}}>접속경로</option>
-        <option value="vi_date" {{ get_selected('vi_date', request.state.sfl if request.state.sfl else '' )}}>날짜</option>
-    </select>
-    <label for="sch_word" class="sound_only">검색어</label>
-    <input type="text" name="stx" size="20" value="{{ request.state.stx if request.state.stx else '' }}" id="sch_word" class="frm_input">
-    <input type="submit" value="검색" class="btn_submit">
-    </form>
-</div>
+    <div class="tbl_wrap tbl_head01">
+        <table>
+            <thead>
+            <tr>
+                <th scope="col">IP</th>
+                <th scope="col">접속 경로</th>
+                <th scope="col">브라우저</th>
+                <th scope="col">OS</th>
+                <th scope="col">접속기기</th>
+                <th scope="col">일시</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for visit in visits %}
+                <tr class="bg{{ loop.cycle('0', '1') }}">
+                    <td class="td_id"><a href="?sfl=vi_ip&stx={{ visit.vi_ip }}">{{ visit.vi_ip }}</a></td>
+                    <td class="td_left">{{ visit.link|safe }}</td>
+                    <td class="td_idsmall td_category1">{{ visit.vi_browser }}</td>
+                    <td class="td_idsmall td_category3">{{ visit.vi_os }}</td>
+                    <td class="td_idsmall td_category2">{{ visit.vi_device }}</td>
+                    <td class="td_datetime"><a href="?sfl=vi_date&stx={{ visit.vi_date }}">{{ visit.vi_date }}</a> {{ visit.vi_time }}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6" class="empty_table">자료가 없습니다.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-<div class="tbl_wrap tbl_head01">
-    <table>
-    <thead>
-    <tr>
-        <th scope="col">IP</th>
-        <th scope="col">접속 경로</th>
-        <th scope="col">브라우저</th>
-        <th scope="col">OS</th>
-        <th scope="col">접속기기</th>
-        <th scope="col">일시</th>
-    </tr>
-    </thead>
-    <tbody>
-    {% for visit in visits %}
-    <tr class="bg{{ loop.index0 }}">
-        <td class="td_id"><a href="?sfl=vi_ip&stx={{ visit.ip }}">{{ visit.ip }}</a></td>
-        <td class="td_left">{{ visit.link|safe }}{{ visit.title }}{{ "</a>"|safe if visit.title else ""|safe }}</td>
-        <td class="td_idsmall td_category1">{{ visit.browser }}</td>
-        <td class="td_idsmall td_category3">{{ visit.os }}</td>
-        <td class="td_idsmall td_category2">{{ visit.device }}</td>
-        <td class="td_datetime"><a href="?sfl=vi_date&stx={{ visit.date }}">{{ visit.date }}</a> {{ visit.time }}</td>
-    </tr>
-    {% endfor %}
-    {% if visits|length == 0 %}
-    <tr><td colspan="6" class="empty_table">자료가 없습니다.</td></tr>
-    {% endif %}
-    </tbody>
-    </table>
-</div>
-<script>
-$(function(){
-    $("#sch_sort").change(function(){ // select #sch_sort의 옵션이 바뀔때
-        if($(this).val()=="vi_date"){ // 해당 value 값이 vi_date이면
-            $("#sch_word").datepicker({ changeMonth: true, changeYear: true, dateFormat: "yy-mm-dd", showButtonPanel: true, yearRange: "c-99:c+99", maxDate: "+0d" }); // datepicker 실행
-        }else{ // 아니라면
-            $("#sch_word").datepicker("destroy"); // datepicker 미실행
+    {{ paging|safe }}
+
+    <script>
+        $(function(){
+            $("#sch_sort").change(function() { // select #sch_sort의 옵션이 바뀔때
+                if ($(this).val() == "vi_date"){ // 해당 value 값이 vi_date이면
+                    $("#sch_word").datepicker({ 
+                        changeMonth: true,
+                        changeYear: true,
+                        dateFormat: "yy-mm-dd",
+                        showButtonPanel: true,
+                        yearRange: "c-99:c+99",
+                        maxDate: "+0d"
+                    });
+                } else { // 아니라면
+                    $("#sch_word").datepicker("destroy"); // datepicker 미실행
+                }
+            });
+
+            if ($("#sch_sort option:selected").val() == "vi_date") { // select #sch_sort 의 옵션중 selected 된것의 값이 vi_date라면
+                $("#sch_word").datepicker({
+                    changeMonth: true,
+                    changeYear: true,
+                    dateFormat: "yy-mm-dd",
+                    showButtonPanel: true,
+                    yearRange: "c-99:c+99",
+                    maxDate: "+0d"
+                });
+            }
+        });
+
+        function fvisit_submit(f) {
+            return true;
         }
-    });
-
-    if($("#sch_sort option:selected").val()=="vi_date"){ // select #sch_sort 의 옵션중 selected 된것의 값이 vi_date라면
-        $("#sch_word").datepicker({ changeMonth: true, changeYear: true, dateFormat: "yy-mm-dd", showButtonPanel: true, yearRange: "c-99:c+99", maxDate: "+0d" }); // datepicker 실행
-    }
-});
-
-function fvisit_submit(f)
-{
-    return true;
-}
-</script>
-
-{{ paging|safe }}
-
-{% endblock %}
+    </script>
+{% endblock content %}

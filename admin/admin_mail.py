@@ -10,6 +10,7 @@ from common.models import Group, Mail, Member
 
 router = APIRouter()
 templates = AdminTemplates()
+templates.env.globals["get_group_select"] = get_group_select
 
 MAIL_MENU_KEY = "200300"
 
