@@ -1,17 +1,13 @@
 {% extends "base.html" %}
 
 {% block head %}
-<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" async></script>
-{% endblock %}
+    <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" async></script>
+{% endblock head %}
 
-{% block title %}
-    회원관리
-{% endblock %}
+{% block title %}회원관리{% endblock title %}
+{% block subtitle %}회원 {{ '수정' if member else '추가' }}{% endblock subtitle %}
 
 {% block content %}
-
-<h1 id="container_title">회원 {{ '수정' if member else '추가' }}</h1>
-<div class="container_wr">
 <form name="fmember" id="fmember" action="/admin/member_form_update" onsubmit="return fmember_submit(this);" method="post" enctype="multipart/form-data" autocomplete="off">
 <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
 <input type="hidden" name="stx" value="{{ request.state.stx }}">
@@ -61,7 +57,7 @@
                     {{ get_member_level_select('mb_level', 2, 10, member.mb_level)|safe }}
                 </td>
                 <th scope="row">포인트</th>
-                <td><a href="/admin/point_list?sfl=mb_id&stx=" target="_blank">0</a> 점</td>
+                <td><a href="/admin/point_list?sfl=mb_id&stx={{ member.mb_id }}" target="_blank">{{ member.mb_point|number_format }}</a> 점</td>
             </tr>
             <tr>
                 <th scope="row"><label for="mb_email">E-mail<strong class="sound_only">필수</strong></label></th>
@@ -215,7 +211,6 @@
         <input type="submit" value="확인" class="btn_submit btn" accesskey='s'>
     </div>
 </form>
-</div>
 
 <script>
     function check_member_id(mb_id) {
@@ -331,5 +326,4 @@
         return true;
     }
 </script>
-
-{% endblock %}
+{% endblock content %}

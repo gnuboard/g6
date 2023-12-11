@@ -243,6 +243,7 @@ class Member(Base):
     mb_10 = Column(String(255), nullable=False, default="")
 
     auths: Mapped["Auth"] = relationship("Auth", back_populates="member")
+    groups: Mapped[List["GroupMember"]] = relationship(back_populates="member")
 
 
 class Board(Base):
@@ -463,21 +464,25 @@ class Group(Base):
     # 종속관계
 
     boards: Mapped[List["Board"]] = relationship(back_populates="group")
-    
+    members: Mapped[List["GroupMember"]] = relationship(back_populates="group")
+
 
 class GroupMember(Base):
     '''
     그룹회원 테이블
     '''    
     __tablename__ = DB_TABLE_PREFIX + "group_member"
-    
+
     gm_id = Column(Integer, primary_key=True, autoincrement=True)
-    gr_id = Column(String(10), nullable=False, default="")
-    mb_id = Column(String(20), nullable=False, default="")
+    gr_id = Column(String(10), ForeignKey(DB_TABLE_PREFIX + "group.gr_id"), nullable=False, default="")
+    mb_id = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "member.mb_id"), nullable=False, default="")
     gm_datetime = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
-    
-    gr_id_index = Index("gr_id", gr_id)    
-    mb_id_index = Index("mb_id", mb_id)    
+
+    gr_id_index = Index("gr_id", gr_id)
+    mb_id_index = Index("mb_id", mb_id)
+
+    member: Mapped["Member"] = relationship(back_populates="groups")
+    group: Mapped["Group"] = relationship(back_populates="members")
 
 
 class Content(Base):
