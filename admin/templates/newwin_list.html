@@ -1,11 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}
-    팝업레이어 관리
-{% endblock title %}
-{% block subtitle %}
-    팝업레이어 관리
-{% endblock subtitle %}
+{% block title %}팝업레이어 관리{% endblock title %}
+{% block subtitle %}팝업레이어 관리{% endblock subtitle %}
 
 {% block content %}
     <div class="local_ov01 local_ov">
@@ -52,10 +48,10 @@
                         <td class="td_datetime">{{ newwin.nw_begin_time }}</td>
                         <td class="td_datetime">{{ newwin.nw_end_time }}</td>
                         <td class="td_num">{{ newwin.nw_disable_hours }}</td>
-                        <td class="td_num">{{ newwin.nw_left }}</td>
-                        <td class="td_num">{{ newwin.nw_top }}</td>
-                        <td class="td_num">{{ newwin.nw_width }}</td>
-                        <td class="td_num">{{ newwin.nw_height }}</td>
+                        <td class="td_num">{{ newwin.nw_left|number_format }}</td>
+                        <td class="td_num">{{ newwin.nw_top|number_format }}</td>
+                        <td class="td_num">{{ newwin.nw_width|number_format }}</td>
+                        <td class="td_num">{{ newwin.nw_height|number_format }}</td>
                         <td class="td_mng td_mng_m">
                             <a href="{{ url_for('newwin_form_edit', nw_id=newwin.nw_id) }}" class="btn btn_03">
                                 <span class="sound_only">{{ newwin.nw_subject }} </span>수정
@@ -71,5 +67,4 @@
             </tbody>
         </table>
     </div>
-
 {% endblock content %}

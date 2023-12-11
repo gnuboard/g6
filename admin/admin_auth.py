@@ -6,11 +6,9 @@ from typing import List, Optional
 from common.database import db_session
 from common.models import Auth, Member
 from lib.common import *
-from lib.plugin.service import get_admin_plugin_menus
 
 router = APIRouter()
 templates = AdminTemplates()
-templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals['subject_sort_link'] = subject_sort_link
 
 AUTH_MENU_KEY = "100200"
@@ -26,24 +24,23 @@ async def auth_list(
     관리자페이지 권한 목록
     """
     request.session["menu_key"] = AUTH_MENU_KEY
-   
+
     result = select_query(
         request,
-        Auth, 
-        search_params, 
-        same_search_fields = ["mb_id"], 
-        default_sst = ["mb_id", "au_menu"],
-        default_sod = "",
+        Auth,
+        search_params,
+        same_search_fields=["mb_id"],
+        default_sst=["mb_id", "au_menu"],
+        default_sod="",
     )
-    
+
     for row in result['rows']:
         row.mb_nick = row.member.mb_nick
-    
+
     # JSON 파일에서 데이터 로드
     with open('admin/admin_menu_bbs.json', 'r', encoding='utf-8') as file:
         auth_menu = json.load(file)
-        # print(auth_menu)
-        
+
     # 사전의 각 키-값 쌍을 확인
     auth_options = []
     # 사전의 각 메뉴 항목을 순회
@@ -57,7 +54,7 @@ async def auth_list(
             if id_value and name_value and id_value[-3:] != '000':
                 # print(id_value, name_value)
                 auth_options.append(f'<option value="{id_value}">{id_value} {name_value}</option>')    
-                
+
     context = {
         "request": request,
         "config": request.state.config,
@@ -79,20 +76,27 @@ async def auth_update(
     w: Optional[str] = Form(default=""),
     d: Optional[str] = Form(default=""),
 ):
-
-    exists_member = db.query(Member).filter_by(mb_id=mb_id).first()
+    """
+    관리자페이지 권한 등록 및 수정
+    """
+    exists_member = db.scalar(select(Member).where(Member.mb_id == mb_id))
     if not exists_member:
         raise AlertException(f"{mb_id} : 회원이 존재하지 않습니다.")
-    
+
     auth_values = [val for val in [r, w, d] if val]  # r, w, d 중 값이 있는 것만 선택
     auth_string = ','.join(auth_values)  # 선택된 값들을 쉼표로 구분하여 문자열 생성
-    
-    exists_auth = db.query(Auth).filter_by(mb_id=mb_id, au_menu=au_menu).first()
+
+    exists_auth = db.scalar(select(Auth).filter_by(mb_id=mb_id, au_menu=au_menu))
     if exists_auth:
         # 수정
         db.query(Auth).filter_by(mb_id=mb_id, au_menu=au_menu).update({
             Auth.au_auth: auth_string
         })
+        db.execute(
+            update(Auth)
+            .where(Auth.mb_id == mb_id, Auth.au_menu == au_menu)
+            .values(au_auth=auth_string)
+        )
         db.commit()
     else:
         # 추가
@@ -108,16 +112,18 @@ async def auth_update(
 
 
 @router.post("/auth_list_delete", dependencies=[Depends(validate_token)])
-async def auth_list_delete(request: Request, db: db_session,
-        search_params: dict = Depends(common_search_query_params),
-        checks: List[int] = Form(..., alias="chk[]"),
-        mb_id: List[str] = Form(..., alias="mb_id[]"),
-        au_menu: List[str] = Form(..., alias="au_menu[]"),
-        ):
+async def auth_list_delete(
+    request: Request,
+    db: db_session,
+    checks: List[int] = Form(..., alias="chk[]"),
+    mb_id: List[str] = Form(..., alias="mb_id[]"),
+    au_menu: List[str] = Form(..., alias="au_menu[]"),
+):
+    """
+    관리자페이지 권한 삭제
+    """
     for i in checks:
-        exists_auth = db.query(Auth).filter_by(mb_id=mb_id[i], au_menu=au_menu[i]).first()
-        if exists_auth:
-            db.delete(exists_auth)
-            db.commit()
+        db.execute(delete(Auth).filter_by(mb_id=mb_id[i], au_menu=au_menu[i]))
+        db.commit()
 
     return RedirectResponse(f"/admin/auth_list?{request.query_params}", status_code=303)

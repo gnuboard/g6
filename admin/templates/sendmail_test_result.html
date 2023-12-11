@@ -1,37 +1,32 @@
 {% extends "base.html" %}
 
-{% block title %}
-    메일테스트 결과
-{% endblock %}
-
-{% block subtitle %}메일테스트 결과{% endblock %}
+{% block title %}메일테스트 결과{% endblock title %}
+{% block subtitle %}메일테스트 결과{% endblock subtitle %}
 
 {% block content %}
-
-<section>
-    <h2>결과 메시지</h2>
-    <div class="local_desc01 local_desc">
-        <p>다음 {{ real_emails|length }}개의 메일 주소로 테스트 메일 발송이 완료되었습니다.</p>
-    </div>
-    <ul>
-        {% if real_emails %}
-        {% for email in real_emails %}
-            <li>{{ email }}</li>
-        {% endfor %}
-        {% else %}
-            <li>테스트 메일 발송이 실패하였습니다.</li>
-        {% endif %}
-    </ul>
-    <div class="local_desc02 local_desc">
-        <p>해당 주소로 테스트 메일이 도착했는지 확인해 주십시오.<br>
-        만약, 테스트 메일이 오지 않는다면 더 다양한 계정의 메일 주소로 메일을 보내 보십시오.<br>
-        그래도 메일이 하나도 도착하지 않는다면 메일 서버의 오류일 가능성이 높으니, 웹 서버 관리자에게 문의하여 주십시오.<br>
-        도메인을 소유하고 있을시 SPF, DKIM 설정이 필요할 수 있습니다.<br>
-        </p>
-    </div>
-    <div>
-        <a href="/admin/sendmail_test" class="btn btn_02">메일테스트 다시하기</a>
-    </div>
-</section>
-
-{% endblock %}
+    <section>
+        <h2>결과 메시지</h2>
+        <div class="local_desc01 local_desc">
+            <p>다음 {{ real_emails|length }}개의 메일 주소로 테스트 메일 발송이 완료되었습니다.</p>
+        </div>
+        <ul>
+            {% if real_emails %}
+            {% for email in real_emails %}
+                <li>{{ email }}</li>
+            {% endfor %}
+            {% else %}
+                <li>테스트 메일 발송이 실패하였습니다.</li>
+            {% endif %}
+        </ul>
+        <div class="local_desc02 local_desc">
+            <p>해당 주소로 테스트 메일이 도착했는지 확인해 주십시오.<br>
+            만약, 테스트 메일이 오지 않는다면 더 다양한 계정의 메일 주소로 메일을 보내 보십시오.<br>
+            그래도 메일이 하나도 도착하지 않는다면 메일 서버의 오류일 가능성이 높으니, 웹 서버 관리자에게 문의하여 주십시오.<br>
+            도메인을 소유하고 있을시 SPF, DKIM 설정이 필요할 수 있습니다.<br>
+            </p>
+        </div>
+        <div>
+            <a href="/admin/sendmail_test" class="btn btn_02">메일테스트 다시하기</a>
+        </div>
+    </section>
+{% endblock content %}
