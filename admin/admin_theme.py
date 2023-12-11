@@ -11,6 +11,7 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 
 THEME_DIR = TEMPLATES  # Replace with actual theme directory
+THEME_MENU_KEY = "100280"  # Replace with actual menu key
 
 router = APIRouter()
 templates = AdminTemplates()
@@ -125,30 +126,31 @@ templates.env.globals['serve_screenshot'] = serve_screenshot
 
 @router.get("/theme")
 async def theme(request: Request, db: db_session):
-    '''
+    """
     테마관리
-    '''
-    request.session["menu_key"] = "100280"
+    """
+    request.session["menu_key"] = THEME_MENU_KEY
 
-    config = request.state.config
-    
+    config = db.scalars(select(Config)).one()
     themes = get_theme_dir()
-    if config.cf_theme and config.cf_theme in themes:
-        themes.insert(0, config.cf_theme)
-    themes = list(dict.fromkeys(themes))  # Remove duplicates
-    total_count = len(themes)    
-    
-    # 설정된 테마가 존재하지 않는다면 cf_theme 초기화
-    if config and config.cf_theme and config.cf_theme not in themes:
-        config.cf_theme = "basic"
+    current_theme = getattr(config, "cf_theme", None)
+
+    # 테마가 없거나 테마가 설치되어 있지 않으면 기본 테마로 변경
+    if current_theme not in themes:
+        config.cf_theme = current_theme = "basic"
         db.commit()
-    
+
+    # 테마가 있으면 테마를 목록 맨 앞으로 이동
+    if current_theme and current_theme in themes:
+        themes.remove(current_theme)
+        themes.insert(0, current_theme)
+
     context = {
         "request": request,
         "config": config,
         "themes": themes,
-        "total_count": total_count
-    }    
+        "total_count": len(themes)
+    }
     return templates.TemplateResponse("theme.html", context)
 
 
@@ -191,7 +193,11 @@ async def theme_preview(request: Request, theme: str):
 
 
 @router.post("/theme_update")
-async def theme_update(request: Request, db: db_session, theme: str = Form(...)):
+async def theme_update(
+    request: Request,
+    db: db_session,
+    theme: str = Form(...)
+):
     # Check if the user is an admin
     # if not is_admin():  # Define your own is_admin() function
     #     raise HTTPException(status_code=403, detail="Only the super admin can access this page.")
@@ -204,7 +210,7 @@ async def theme_update(request: Request, db: db_session, theme: str = Form(...))
     if theme not in theme_dir:
         return {"error": f"선택하신 {info['theme_name']} 테마가 설치되어 있지 않습니다."}
 
-    config = db.query(Config).first()
+    config = db.scalars(select(Config)).one()
     config.cf_theme = theme
     db.commit()
 
