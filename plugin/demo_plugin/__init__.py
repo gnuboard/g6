@@ -8,7 +8,6 @@ __all__ = [
 from .admin import register_admin_menu, register_admin_router
 from .user.router import register_user_router
 
-print('plugin/demo_plugin/__init__.py root-----------------------')
 
 def register_plugin():
     """플러그인 활성화시 실행
