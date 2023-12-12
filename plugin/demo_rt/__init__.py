@@ -1,3 +1,6 @@
+
+from .admin import register_admin_menu, register_admin
+from .user.router import register_user_router
 # 패키지 외부에서 접근 가능한 모듈 목록
 # "static" 폴더는 제외한다.
 __all__ = [
@@ -5,14 +8,18 @@ __all__ = [
     "user",
 ]
 
+print('rt plugin/__init__.py')
+print('--------- rt -------------------')
 
-from .admin import register_admin_menu, register_admin_router
-from .user.router import register_user_router
+
+
+print('plugin/demo_plugin/__init__.py root-----------------------')
 
 def register_plugin():
     """플러그인 활성화시 실행
     """
-    register_admin_router()
+    register_admin()
+    register_admin_menu()
     register_user_router()
     # register_event()
     # 그밖에 필요한 작업 추가하세요

@@ -3,20 +3,20 @@ from starlette.requests import Request
 from starlette.templating import Jinja2Templates
 
 from lib.common import TEMPLATES_DIR
-from ..plugin_info import module_name
+from ...plugin_info import module_name
 
-show_router = APIRouter()
+router = APIRouter()
 
 PLUGIN_TEMPLATES_DIR = f"plugin/{module_name}/templates"
 templates = Jinja2Templates(directory=[TEMPLATES_DIR, PLUGIN_TEMPLATES_DIR])
 
 
-@show_router.get("/show")
+@router.get("/show")
 def show(request: Request):
     return {"message": "Hello Plugin!"}
 
 
-@show_router.get("/show_template")
+@router.get("/show_template")
 def show(request: Request):
     return templates.TemplateResponse(
         "user_demo.html",

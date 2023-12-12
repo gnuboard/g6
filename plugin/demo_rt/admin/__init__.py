@@ -5,17 +5,15 @@ from main import app
 
 # 플러그인의 admin 라우터를 등록한다.
 # 관리자는 /admin 으로 시작해야 접근권한이 보호된다.
-
-def register_admin_router():
-    """관리자 등록
-    """
+def register_admin():
     app.include_router(admin_router, prefix="/admin", tags=[module_name])
 
 
-def register_admin_menu():
-    """관리자 메뉴 등록
-    """
+print('this is rt/admin/__init__.py')
+print('---rt...')
 
+
+def register_admin_menu():
     admin_menu = {
         f"{module_name}": [
             {
