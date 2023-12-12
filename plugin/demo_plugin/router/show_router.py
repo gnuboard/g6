@@ -3,7 +3,7 @@ from starlette.requests import Request
 from starlette.templating import Jinja2Templates
 
 from lib.common import TEMPLATES_DIR
-from ..__init__ import module_name
+from ..plugin_info import module_name
 
 show_router = APIRouter()
 

@@ -13,7 +13,7 @@ from lib.common import ADMIN_TEMPLATES_DIR, get_member_id_select, get_skin_selec
     get_member_level_select, option_array_checked, get_admin_menus, generate_token, get_client_ip, check_token, \
     AlertException
 
-from ..__init__ import module_name
+from ..plugin_info import module_name
 from ..models import Todo
 
 PLUGIN_TEMPLATES_DIR = f"plugin/{module_name}/templates"

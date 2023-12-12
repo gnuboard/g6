@@ -1,4 +1,4 @@
-from ..__init__ import module_name
+from ..plugin_info import module_name
 from plugin.demo_plugin.router.show_router import show_router
 from main import app
 

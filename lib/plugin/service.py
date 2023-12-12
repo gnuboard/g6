@@ -11,8 +11,14 @@ from starlette.staticfiles import StaticFiles
 from typing import List
 
 # 전역 캐시
+# 플러그인 관리자 메뉴를 저장하는 캐시
 cache_plugin_menu = cachetools.Cache(maxsize=1)
+
+# plugin_states.json 파일읽기를 줄이기 위한 캐시
 cache_plugin_state = cachetools.Cache(maxsize=1)
+
+# 서버실행중에 플러그인의 상태가 변경될때 기록하기 위한 캐시
+cache_plugin_state_tracks = cachetools.Cache(maxsize=1)
 
 # 플러그인 목록을 가져온다.
 # 가져온 목록을 import 한다.
@@ -110,7 +116,7 @@ def get_plugin_info(module_name, plugin_dir=PLUGIN_DIR):
                 from PIL import Image
                 img = Image.open(screenshot)
                 if img.format == "PNG":
-                    screenshot_url = (f"/admin/plugin/screenshot/{module_name}")
+                    screenshot_url = f"/admin/plugin/screenshot/{module_name}"
             except:
                 pass
         info['screenshot'] = screenshot_url
@@ -216,7 +222,7 @@ def write_plugin_state(plugin_states: List[PluginState]):
         with open(PLUGIN_STATE_FILE_PATH, 'w', encoding="UTF-8") as file:
             json.dump({}, file, indent=4, ensure_ascii=False)
 
-    if not plugin_states:
+    if not plugin_states:  # [] 빈 리스트
         return
     plugin_states_dict = [asdict(plugin) for plugin in plugin_states]
 
@@ -246,7 +252,7 @@ def import_plugin_by_states(plugin_states: List[PluginState], plugin_dir=PLUGIN_
     return plugin_list
 
 
-def import_plugin_admin(plugin_states, plugin_dir=PLUGIN_DIR):
+def import_plugin_admin(plugin_states, plugin_state_tracks, plugin_dir=PLUGIN_DIR):
     """
     플러그인의 관리자 메뉴를 등록한다.
     이미 import 되어있으면 플러그인의 router 모듈 __init__.py 를 다시 실행한다.
@@ -263,7 +269,10 @@ def import_plugin_admin(plugin_states, plugin_dir=PLUGIN_DIR):
             module = importlib.import_module(admin_module_name)
             if module:
                 # 활성화 -> 비활성화 -> 활성화시 삭제된 관리자 라우트를 등록하기 위함
-                importlib.reload(module)
+                if plugin_state_tracks.get(plugin.module_name, None):
+                    if (plugin_state_tracks[plugin.module_name]['last_state'] == False and 
+                            plugin_state_tracks[plugin.module_name]['is_disabled']):
+                        importlib.reload(module)
             menu = getattr(module, 'admin_menu', None)
             if menu:
                 admin_menus.append(menu)
@@ -282,10 +291,30 @@ def import_plugin_router(plugin_state, plugin_dir=PLUGIN_DIR):
     for plugin in plugin_state:
         if plugin.is_enable:
             router_module_name = f"{plugin_dir}.{plugin.module_name}.router"
+            importlib.import_module(router_module_name)
+
+
+def reload_plugin_router(plugin_state, plugin_state_tracks, plugin_dir=PLUGIN_DIR):
+    """
+    플러그인의 라우터를 다시 등록한다.
+    이미 import 되어있으면 플러그인의 router 모듈 __init__.py 를 다시 실행한다.
+
+    Args:
+        plugin_state (list): 플러그인 상태 목록
+        plugin_state_tracks (dict): 플러그인 상태 변경 내역
+        plugin_dir (str): 플러그인 폴더
+    """
+    for plugin in plugin_state:
+        if plugin.is_enable:
+            router_module_name = f"{plugin_dir}.{plugin.module_name}.router"
             module = importlib.import_module(router_module_name)
             if module:
-                # __init__ 실행 활성화 -> 비활성화 -> 활성화시 삭제된 라우터를 등록
-                importlib.reload(module)
+                # 플러그인이 이미 활성화 -> 비활성화 -> 다시 활성화 될때.
+                # 라우터모듈의 __init__ 을 실행하여 삭제된 라우터를 등록
+                if plugin_state_tracks.get(plugin.module_name, None):
+                    if (plugin_state_tracks[plugin.module_name]['last_state'] == False and
+                            plugin_state_tracks[plugin.module_name]['is_disabled']):
+                        importlib.reload(module)
 
 
 def register_statics(app, plugin_info: List[PluginState], plugin_dir=PLUGIN_DIR):
@@ -299,3 +328,42 @@ def register_statics(app, plugin_info: List[PluginState], plugin_dir=PLUGIN_DIR)
             )
         except Exception as e:
             logging.warning(f"register_statics: {e}")
+
+
+def update_plugin_excution_state(plugin_states, plugin_state_tracks):
+    """
+    플러그인의 실행상태 내역을 업데이트한다.
+    Args:
+        plugin_states (list): json 파일에서 읽어온 플러그인 상태 목록
+    """
+    for plugin in plugin_states:
+        if plugin.is_enable:
+            if not plugin_state_tracks.get(plugin.module_name, None):
+                plugin_state_tracks[plugin.module_name] = {'last_state': True, 'is_disabled': False}
+            else:
+                plugin_state_tracks[plugin.module_name]['last_state'] = True
+
+        if not plugin.is_enable:
+            # 활성화 -> 비활성화시 플러그인이 로딩된적 있음을 기록한다.
+            if plugin_state_tracks.get(plugin.module_name, None):
+                if plugin_state_tracks[plugin.module_name]['last_state']:
+                    plugin_state_tracks[plugin.module_name]['last_state'] = False
+                    plugin_state_tracks[plugin.module_name]['is_disabled'] = True
+
+    return plugin_state_tracks
+
+
+def init_plugin_state_track(plugin_states):
+    """
+    플러그인의 실행상태 내역을 초기화한다.
+    Args:
+        plugin_states (list): json 파일에서 읽어온 플러그인 상태 목록
+    """
+    plugin_state_tracks = {}
+    for plugin in plugin_states:
+        if plugin.is_enable:
+            plugin_state_tracks[plugin.module_name] = {'last_state': True, 'is_disabled': False}
+        else:
+            plugin_state_tracks[plugin.module_name] = {'last_state': False, 'is_disabled': False}
+
+    return plugin_state_tracks

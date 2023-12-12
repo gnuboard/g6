@@ -3,7 +3,7 @@ from sqlalchemy import inspect
 from common.database import engine, DB_TABLE_PREFIX
 from .. import models
 from ..admin.admin_router import admin_router
-from ..__init__ import module_name
+from ..plugin_info import module_name
 from main import app
 
 # install
@@ -35,3 +35,4 @@ admin_menu = {
         },
     ]
 }
+

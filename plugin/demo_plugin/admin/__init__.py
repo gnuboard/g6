@@ -1,5 +1,5 @@
 from ..admin.admin_router import admin_router
-from ..__init__ import module_name
+from ..plugin_info import module_name
 from main import app
 
 # 플러그인의 admin 라우터를 등록한다.
