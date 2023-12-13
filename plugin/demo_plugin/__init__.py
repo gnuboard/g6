@@ -1,12 +1,13 @@
 # 패키지 외부에서 접근 가능한 모듈 목록
-# "static" 폴더는 제외한다.
+# "static" 폴더는 제외.
+
 __all__ = [
     "admin",
     "user",
 ]
 
 from .admin import register_admin_menu, register_admin_router
-from .user.router import register_user_router
+from .user import register_user_router
 
 
 def register_plugin():
