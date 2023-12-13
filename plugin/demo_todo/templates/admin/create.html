@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block head %}
+
+{# /plugin/플러그인 모듈이름/static/css/admin.css #}
+{% endblock %}
+
+{% block title %}
+    할일
+{% endblock title %}
+{% block subtitle %}
+    할일
+{% endblock subtitle %}
+
+{% block content %}
+
+<form name="ftodo" action="{{ action_url }}" onsubmit="return frm_form_check(this);" method="post">
+    <input type="hidden" name="action" value="{{ 'update' if request.path_params.id else '' }}">
+    <input type="hidden" name="token" value="">
+
+
+    <div class="tbl_frm01 tbl_wrap">
+        <table>
+            <caption>목록</caption>
+            <colgroup>
+                <col class="grid_4">
+                <col>
+            </colgroup>
+            <tbody>
+            <tr>
+                <th scope="row"><label for="title">제목</label></th>
+                <td><input type="text" name="title" value="{{ todo.title }}" id="title" required
+                           class="frm_input required" size="90"></td>
+            </tr>
+            <tr>
+                <th scope="row">내용</th>
+                <td>
+                    <textarea id="content" name="content" maxlength="65536" style="width:100%;height:300px">{{ todo.content }}</textarea>
+                </td>
+            </tr>
+            {% if request.path_params.id %} {# 수정 #}
+            <tr>
+                <th scope="row">완료</th>
+                <td>
+                    <input type="checkbox" name="is_done" value="1" {{'checked' if todo.is_done else ''}}>
+                </td>
+            </tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="btn_fixed_top">
+        <a href="/admin/todo/todos" class="btn btn_02">목록</a>
+        <input type="submit" value="확인" class="btn btn_submit" accesskey="s">
+    </div>
+
+</form>
+
+<script>
+    function frm_form_check(f) {
+        error_msg = "";
+        error_field = "";
+
+        check_field(f.title, "제목을 입력하세요.");
+        check_field(f.content, "내용을 입력하세요.");
+
+        if (error_msg != "") {
+            alert(error_msg);
+            error_field.focus();
+            return false;
+        }
+
+        f.token.value = generate_token();
+
+        return true;
+    }
+</script>
+
+{% endblock %}

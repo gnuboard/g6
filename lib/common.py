@@ -36,7 +36,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from lib.captcha.recaptch_v2 import ReCaptchaV2
 from lib.captcha.recaptch_inv import ReCaptchaInvisible
-from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
+from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names, PLUGIN_DIR
 from typing_extensions import Annotated
 
 load_dotenv()
@@ -839,7 +839,7 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
             .where(
                 Point.mb_id == mb_id,
                 Point.po_rel_table == rel_table,
-                Point.po_rel_id == rel_id,
+                Point.po_rel_id == str(rel_id),
                 Point.po_rel_action == rel_action
             )
             .select()
@@ -873,7 +873,7 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
         po_expired=po_expired,
         po_expire_date=po_expire_date,
         po_rel_table=rel_table,
-        po_rel_id=rel_id,
+        po_rel_id=str(rel_id),
         po_rel_action=rel_action
     )
     db.add(new_point)
@@ -928,7 +928,7 @@ def get_point_sum(request: Request, mb_id: str) -> int:
                 po_expired=1,
                 po_expire_date=TIME_YMD,
                 po_rel_table='@expire',
-                po_rel_id=mb_id,
+                po_rel_id=str(mb_id),
                 po_rel_action='expire-' + str(uuid.uuid4()),
             )   
             db.add(new_point)
@@ -1012,7 +1012,7 @@ def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel
             .where(
                 Point.mb_id == mb_id,
                 Point.po_rel_table == rel_table,
-                Point.po_rel_id == rel_id,
+                Point.po_rel_id == str(rel_id),
                 Point.po_rel_action == rel_action
             )
         )
@@ -1026,7 +1026,7 @@ def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel
 
             db.execute(
                 delete(Point)
-                .where(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action)
+                .where(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == str(rel_id), Point.po_rel_action == rel_action)
             )
             db.commit()
 
@@ -1475,7 +1475,7 @@ def check_profile_open(open_date: Optional[date], config) -> bool:
     Returns:
         bool: 프로필 공개 가능 여부
     """
-    if not open_date:
+    if not open_date or is_none_datetime(open_date):
         return True
 
     else:
@@ -1492,7 +1492,6 @@ def get_next_profile_openable_date(open_date: Optional[date], config):
         datetime: 다음 프로필 공개 가능일
     """
     cf_open_modify = config.cf_open_modify
-    cf_open_modify = 3
     if cf_open_modify == 0:
         return ""
 
@@ -1500,9 +1499,7 @@ def get_next_profile_openable_date(open_date: Optional[date], config):
         calculated_date = datetime.strptime(open_date.strftime("%Y-%m-%d"), "%Y-%m-%d") + timedelta(days=cf_open_modify)
     else:
         calculated_date = datetime.now() + timedelta(days=cf_open_modify)
-    print('--------------------ewr')
-    print(calculated_date)
-    
+
     return calculated_date.strftime("%Y-%m-%d")
 
 
@@ -1682,7 +1679,7 @@ class UserTemplates(Jinja2Templates):
 
 class AdminTemplates(Jinja2Templates):
     _instance = None
-    default_directories = [ADMIN_TEMPLATES_DIR, EDITOR_PATH]
+    default_directories = [ADMIN_TEMPLATES_DIR, EDITOR_PATH, PLUGIN_DIR]
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
@@ -1711,6 +1708,7 @@ class AdminTemplates(Jinja2Templates):
             self.env.filters["number_format"] = number_format
             self.env.globals["theme_asset"] = theme_asset
             self.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
+            self.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 
             # 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
             self.context_processors.append(self._default_admin_context)
@@ -1720,10 +1718,7 @@ class AdminTemplates(Jinja2Templates):
                 self.env.globals.update(**globals.__dict__)
 
     def _default_admin_context(self, request: Request):
-        context = {
-            "admin_menus": get_admin_menus(),
-            "admin_plugin_menus": get_admin_plugin_menus(),
-        }
+        context = {}
         return context
 
 
@@ -1869,7 +1864,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
 
     #게시글 목록 조회
     Write = dynamic_create_write_table(bo_table)
-    writes = db.query(Write).filter(Write.wr_is_comment == False).order_by(Write.wr_num).limit(rows).all()
+    writes = db.query(Write).filter(Write.wr_is_comment == 0).order_by(Write.wr_num).limit(rows).all()
     for write in writes:
         write = get_list(request, write, board_config)
     

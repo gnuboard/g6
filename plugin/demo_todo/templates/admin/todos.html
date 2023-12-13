@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block head %}
+{# css, js 경로 /plugin/플러그인 모듈이름/static/파일경로 #}
+{% endblock %}
+
+{% block title %}
+{{ title }}
+{% endblock %}
+
+{% block subtitle %}
+{{ title }}
+{% endblock %}
+
+{% block content %}
+
+<h1 id="container_title">todo</h1>
+<div class="container_wr">
+    <div class="local_ov01 local_ov">
+        <span class="btn_ov01"><span class="ov_txt">전체</span><span class="ov_num">{{ todos|length }}</span></span>
+    </div>
+
+    <form method="post" name="ftodo_list" id="ftodo_list" action="/admin/todo/update"
+          onsubmit="return ftodo_list_submit(this);" autocomplete="off">
+        <input type="hidden" name="sst" value="{{ request.state.sst }}">
+        <input type="hidden" name="sod" value="{{ request.state.sod }}">
+        <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
+        <input type="hidden" name="stx" value="{{ request.state.stx }}">
+        <input type="hidden" name="page" value="{{ request.state.page }}">
+        <input type="hidden" name="token" value="">
+
+        <div class="tbl_head01 tbl_wrap">
+            <table>
+                <caption>todo 목록</caption>
+                <thead>
+                <tr>
+                    <th scope="col">
+                        <label for="chkall" class="sound_only">todo 전체</label>
+                        <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
+                    </th>
+                    <th scope="col"> id</th>
+                    <th scope="col">제목</th>
+                    <th scope="col">완료여부</th>
+                    <th scope="col">날짜</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for todo in todos %}
+                <tr class="bg{{ loop.cycle('0', '1') }}">
+                    <td class="td_chk">
+                        <label for="chk_{{ loop.index0 }}" class="sound_only">{{ todo.title }} todo</label>
+                        <input type="checkbox" name="chk[]" value="{{ todo.id }}" id="chk_{{ loop.index0 }}">
+                    </td>
+                    <td class="td_left">
+                        <a href="/admin/todo/todo/{{ todo.id }}">{{ todo.id }}</a>
+                    </td>
+                    <td class="td_left">
+                        <p>
+                            <a href="/admin/todo/todo/{{ todo.id }}">{{ todo.title }}</a>
+                        </p>
+                    </td>
+                    <td>
+                        {{ 'V' if todo.is_done else 'X' }}
+                    </td>
+                    <td class="td_mng td_input">
+                        {{ todo.created_at }}
+                    </td>
+
+                </tr>
+                {% endfor %}
+                {% if not todos %}
+                <tr>
+                    <td colspan="10">자료가 없습니다.</td>
+                </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="btn_fixed_top">
+            <input type="submit" name="act_button" onclick="document.pressed=this.value" value="선택삭제"
+                   class="btn btn_02">
+            <a href="/admin/todo/create" class="btn btn_01">추가</a>
+        </div>
+    </form>
+
+    <div class="local_desc01 local_desc">
+        <p>안내 사항</p>
+    </div>
+
+
+    <script>
+        function ftodo_list_submit(f) {
+            if (!is_checked("chk[]")) {
+                alert(document.pressed + " 하실 항목을 하나 이상 선택하세요.");
+                return false;
+            }
+
+            if (document.pressed == "선택삭제") {
+                if (!confirm("선택한 자료를 정말 삭제하시겠습니까?")) {
+                    return false;
+                }
+
+                f.action = "/admin/todo/delete";
+            }
+
+            f.token.value = generate_token();
+
+            return true;
+        }
+    </script>
+
+</div>
+
+{% endblock %}

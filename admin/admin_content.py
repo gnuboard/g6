@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, File, Form, Path, Query, Request, UploadFile
 from fastapi.responses import RedirectResponse
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from common.formclass import ContentForm
 from common.database import db_session
@@ -28,7 +29,7 @@ async def content_list(request: Request, db: db_session):
     """
     request.session["menu_key"] = MENU_KEY
 
-    contents = db.query(Content).all()
+    contents = db.scalars(select(Content)).all()
     return templates.TemplateResponse(
         "content_list.html", {"request": request, "contents": contents}
     )
@@ -49,7 +50,7 @@ async def content_form_edit(co_id: str, request: Request, db: db_session):
     """
     내용 수정 폼
     """
-    content = db.query(Content).filter(Content.co_id == co_id).first()
+    content = db.scalar(select(Content).where(Content.co_id == co_id))
     if not content:
         raise AlertException(status_code=404, detail=f"{co_id} : 내용 아이디가 존재하지 않습니다.")
 
@@ -95,7 +96,7 @@ async def content_form_update(request: Request,
     """
     if action == "w":
         # ID 중복 검사
-        exists_content = db.query(Content).filter(Content.co_id == co_id).first()
+        exists_content = db.scalar(select(Content).where(Content.co_id == co_id))
         if exists_content:
             raise AlertException(status_code=400, detail=f"{co_id} : 내용 아이디가 이미 존재합니다.")
         
@@ -134,7 +135,7 @@ async def content_delete(request: Request,
     """
     내용 삭제
     """    
-    content = db.query(Content).filter(Content.co_id == co_id).first()
+    content = db.scalar(select(Content).where(Content.co_id == co_id))
     if not content:
         raise AlertException(status_code=404, detail=f"{co_id}: 내용 아이디가 존재하지 않습니다.")
 
