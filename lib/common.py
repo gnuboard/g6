@@ -36,7 +36,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from lib.captcha.recaptch_v2 import ReCaptchaV2
 from lib.captcha.recaptch_inv import ReCaptchaInvisible
-from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
+from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names, PLUGIN_DIR
 from typing_extensions import Annotated
 
 load_dotenv()
@@ -1630,7 +1630,7 @@ class UserTemplates(Jinja2Templates):
 
 class AdminTemplates(Jinja2Templates):
     _instance = None
-    default_directories = [ADMIN_TEMPLATES_DIR, EDITOR_PATH]
+    default_directories = [ADMIN_TEMPLATES_DIR, EDITOR_PATH, PLUGIN_DIR]
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:

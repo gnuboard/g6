@@ -11,13 +11,11 @@ from starlette.staticfiles import StaticFiles
 from typing import List
 
 # 전역 캐시
+# 플러그인 관리자 메뉴를 저장하는 캐시
 cache_plugin_menu = cachetools.Cache(maxsize=1)
-cache_plugin_state = cachetools.Cache(maxsize=1)
 
-# 플러그인 목록을 가져온다.
-# 가져온 목록을 import 한다.
-# __init__.py 는 필수 __init__.py 가 있어야 파이썬 모듈로 인식한다.
-# 추가/활성/비활화한다.
+# plugin_states.json 파일읽기를 줄이기 위한 캐시
+cache_plugin_state = cachetools.Cache(maxsize=1)
 
 PLUGIN_DIR = 'plugin'
 PLUGIN_STATE_FILE_PATH = f'{PLUGIN_DIR}/plugin_states.json'
@@ -110,7 +108,7 @@ def get_plugin_info(module_name, plugin_dir=PLUGIN_DIR):
                 from PIL import Image
                 img = Image.open(screenshot)
                 if img.format == "PNG":
-                    screenshot_url = (f"/admin/plugin/screenshot/{module_name}")
+                    screenshot_url = f"/admin/plugin/screenshot/{module_name}"
             except:
                 pass
         info['screenshot'] = screenshot_url
@@ -216,7 +214,7 @@ def write_plugin_state(plugin_states: List[PluginState]):
         with open(PLUGIN_STATE_FILE_PATH, 'w', encoding="UTF-8") as file:
             json.dump({}, file, indent=4, ensure_ascii=False)
 
-    if not plugin_states:
+    if not plugin_states:  # [] 빈 리스트
         return
     plugin_states_dict = [asdict(plugin) for plugin in plugin_states]
 
@@ -246,7 +244,7 @@ def import_plugin_by_states(plugin_states: List[PluginState], plugin_dir=PLUGIN_
     return plugin_list
 
 
-def import_plugin_admin(plugin_states, plugin_dir=PLUGIN_DIR):
+def register_plugin_admin_menu(plugin_states, plugin_dir=PLUGIN_DIR):
     """
     플러그인의 관리자 메뉴를 등록한다.
     이미 import 되어있으면 플러그인의 router 모듈 __init__.py 를 다시 실행한다.
@@ -262,30 +260,52 @@ def import_plugin_admin(plugin_states, plugin_dir=PLUGIN_DIR):
             admin_module_name = f"{plugin_dir}.{plugin.module_name}.admin"
             module = importlib.import_module(admin_module_name)
             if module:
-                # 활성화 -> 비활성화 -> 활성화시 삭제된 관리자 라우트를 등록하기 위함
-                importlib.reload(module)
-            menu = getattr(module, 'admin_menu', None)
-            if menu:
-                admin_menus.append(menu)
+                get_menu_function = getattr(module, 'register_admin_menu', None)
+                if get_menu_function:
+                    admin_menus.append(get_menu_function())
     return admin_menus
 
 
-def import_plugin_router(plugin_state, plugin_dir=PLUGIN_DIR):
+def register_plugin(plugin_states, plugin_dir=PLUGIN_DIR):
     """
-    플러그인의 라우터를 등록한다.
+    플러그인의 관리자 메뉴를 등록한다.
     이미 import 되어있으면 플러그인의 router 모듈 __init__.py 를 다시 실행한다.
-
     Args:
-        plugin_state (list): 플러그인 상태 목록
+        plugin_states (list): 플러그인 상태 목록
         plugin_dir (str): 플러그인 폴더
+    Returns:
+        admin_menus (list): 관리자 메뉴 목록
     """
-    for plugin in plugin_state:
+    for plugin in plugin_states:
         if plugin.is_enable:
-            router_module_name = f"{plugin_dir}.{plugin.module_name}.router"
-            module = importlib.import_module(router_module_name)
+            module_name = f"{plugin_dir}.{plugin.module_name}"
+            module = importlib.import_module(module_name)
             if module:
-                # __init__ 실행 활성화 -> 비활성화 -> 활성화시 삭제된 라우터를 등록
-                importlib.reload(module)
+                register_function = getattr(module, 'register_plugin', None)
+                if register_function:
+                    register_function()
+                    logging.info(f"register_plugin: {module_name}")
+
+
+def unregister_plugin(plugin_states, plugin_dir=PLUGIN_DIR):
+    """
+    플러그인의 관리자 메뉴를 등록한다.
+    이미 import 되어있으면 플러그인의 router 모듈 __init__.py 를 다시 실행한다.
+    Args:
+        plugin_states (list): 플러그인 상태 목록
+        plugin_dir (str): 플러그인 폴더
+    Returns:
+        admin_menus (list): 관리자 메뉴 목록
+    """
+    for plugin in plugin_states:
+        if not plugin.is_enable:
+            module_name = f"{plugin_dir}.{plugin.module_name}"
+            module = importlib.import_module(module_name)
+            if module:
+                unregister_function = getattr(module, 'unregister_plugin', None)
+                if unregister_function:
+                    unregister_function()
+                    logging.info(f"unregister_plugin: {module_name}")
 
 
 def register_statics(app, plugin_info: List[PluginState], plugin_dir=PLUGIN_DIR):
