@@ -806,7 +806,7 @@ async def read_post(
             parent_write = db.query(model_write).filter_by(
                 wr_num=write.wr_num,
                 wr_reply="",
-                wr_is_comment=False
+                wr_is_comment=0
             ).first()
             if parent_write.mb_id == mb_id:
                 owner = True
@@ -900,7 +900,7 @@ async def read_post(
     # 댓글 목록 조회
     comments = db.query(model_write).filter_by(
         wr_parent=wr_id,
-        wr_is_comment=True
+        wr_is_comment=1
     ).order_by(model_write.wr_comment, model_write.wr_comment_reply).all()
 
     for comment in comments:
@@ -1125,7 +1125,7 @@ async def write_comment_update(
         else:
             comment.wr_comment = (db.query(func.max(write_model.wr_comment).label("max_wr_comment")).filter(
                 write_model.wr_parent == form.wr_id,
-                write_model.wr_is_comment == True
+                write_model.wr_is_comment == 1
             ).first().max_wr_comment or 0) + 1
 
         # 댓글 추가정보 등록
@@ -1133,7 +1133,7 @@ async def write_comment_update(
         comment.wr_option = form.wr_secret
         comment.wr_num = write.wr_num
         comment.wr_parent = form.wr_id
-        comment.wr_is_comment = True
+        comment.wr_is_comment = 1
         comment.wr_content = form.wr_content
         comment.mb_id = getattr(member, "mb_id", "")
         comment.wr_password = create_hash(form.wr_password) if form.wr_password else ""

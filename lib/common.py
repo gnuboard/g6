@@ -1815,7 +1815,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
 
     #게시글 목록 조회
     Write = dynamic_create_write_table(bo_table)
-    writes = db.query(Write).filter(Write.wr_is_comment == False).order_by(Write.wr_num).limit(rows).all()
+    writes = db.query(Write).filter(Write.wr_is_comment == 0).order_by(Write.wr_num).limit(rows).all()
     for write in writes:
         write = get_list(request, write, board_config)
     

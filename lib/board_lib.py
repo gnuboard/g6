@@ -395,7 +395,7 @@ class BoardConfig():
         write_model = dynamic_create_write_table(self.board.bo_table)
         comment_count = db.query(write_model).filter_by(
             wr_parent=wr_id,
-            wr_is_comment=True
+            wr_is_comment=1
         ).count()
 
         db.close()
@@ -801,7 +801,7 @@ def write_search_filter(
 
     # 댓글 검색
     if is_comment:
-        query = query.filter_by(wr_is_comment=True)
+        query = query.filter_by(wr_is_comment=1)
         # 원글만 조회해야하므로, wr_parent 목록을 가져와서 in조건으로 재필터링
         query = db.query(model).filter(model.wr_id.in_([row.wr_parent for row in query.all()]))
 
@@ -1095,7 +1095,7 @@ def delete_write(request: Request, bo_table: str, origin_write: WriteBaseModel) 
     query = db.query(write_model).filter(
         write_model.wr_reply.like(f"{origin_write.wr_reply}%"),
         write_model.wr_num == origin_write.wr_num,
-        write_model.wr_is_comment == False,
+        write_model.wr_is_comment == 0,
         write_model.wr_id != origin_write.wr_id
     )
     is_reply = db.query(literal(True)).filter(query.exists()).scalar()
