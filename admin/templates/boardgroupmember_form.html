@@ -1,105 +1,100 @@
 {% extends "base.html" %}
 
-{% block title %}
-    게시판그룹 회원 관리
-{% endblock %}
+{% block title %}접근가능 그룹{% endblock title %}
+{% block subtitle %}접근가능 그룹(ID : {{ member.mb_id }}){% endblock subtitle %}
 
 {% block content %}
+    <form name="fboardgroupmember_form" id="fboardgroupmember_form" action="/admin/boardgroupmember_insert" onsubmit="return boardgroupmember_form_check(this)" method="post">
+        <input type="hidden" name="mb_id" value="{{ member.mb_id }}" id="mb_id">
+        <input type="hidden" name="token" id="token" value="">
 
-<h1 id="container_title">게시판그룹 회원관리</h1>
+        <div class="local_ov01 local_ov">
+            <span class="btn_ov01"><span class="ov_txt"> 아이디</span><span class="ov_num">{{ member.mb_id }}</span></span>
+            <span class="btn_ov01"><span class="ov_txt"> 이름</span><span class="ov_num">{{ member.mb_name }}</span></span>
+            <span class="btn_ov01"><span class="ov_txt"> 닉네임</span><span class="ov_num">{{ member.mb_nick }}</span></span>
+        </div>
 
-<form name="fboardgroupmember_form" id="fboardgroupmember_form" action="/admin/boardgroupmember_insert" onsubmit="return boardgroupmember_form_check(this)" method="post">
-    <input type="hidden" name="mb_id" value="{{ member.mb_id }}" id="mb_id">
-    <input type="hidden" name="token" id="token" value="">
-
-    <div class="local_ov01 local_ov">
-        <span class="btn_ov01"><span class="ov_txt"> 아이디</span><span class="ov_num">{{ member.mb_id }}</span></span>
-        <span class="btn_ov01"><span class="ov_txt"> 이름</span><span class="ov_num">{{ member.mb_name }}</span></span>
-        <span class="btn_ov01"><span class="ov_txt"> 닉네임</span><span class="ov_num">{{ member.mb_nick }}</span></span>
-    </div>
-
-    <div class="local_cmd01 local_cmd">
-        <label for="gr_id">그룹지정</label>
-        <select name="gr_id" id="gr_id">
-            <option value="">접근가능 그룹을 선택하세요.</option>
-            {% for group in groups %}
-                <option value="{{ group.gr_id }}">{{ group.gr_subject }}</option>
-            {% endfor %}
-        </select>
-        <input type="submit" value="선택" class="btn_submit btn" accesskey="s">
-    </div>
-</form>
-
-<form name="fboardgroupmember" id="fboardgroupmember" action="/admin/boardgroupmember_delete" onsubmit="return fboardgroupmember_submit(this);" method="post">
-    <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
-    <input type="hidden" name="stx" value="{{ request.state.stx }}">
-    <input type="hidden" name="sst" value="{{ request.state.sst }}">
-    <input type="hidden" name="sod" value="{{ request.state.sod }}">
-    <input type="hidden" name="page" value="{{ request.state.page }}">
-    <input type="hidden" name="token" value="">
-    <input type="hidden" name="mb_id" value="{{ member.mb_id }}" id="mb_id">
-
-    <div class="tbl_head01 tbl_wrap">
-        <table>
-            <caption>게시판그룹 회원 목록</caption>
-            <thead>
-                <tr>
-                    <th scope="col">
-                        <label for="chkall" class="sound_only">접근가능그룹 전체</label>
-                        <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
-                    </th>
-                    <th scope="col">그룹아이디</th>
-                    <th scope="col">그룹</th>
-                    <th scope="col">처리일시</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for gm_row, gr_row in group_members %}
-                <tr>
-                    <td class="td_chk">
-                        <label for="chk_{{ loop.index0 }}" class="sound_only">{{ gr_row.gr_subject }} 그룹</label>
-                        <input type="checkbox" name="chk[]" value="{{ gm_row.gm_id }}" id="chk_{{ loop.index0 }}">
-                    </td>
-                    <td class="td_grid"><a href="/board/group/{{ gr_row.gr_id }}">{{ gr_row.gr_id }}</a></td>
-                    <td class="td_category">{{ gr_row.gr_subject }}</td>
-                    <td class="td_datetime">{{ gm_row.gm_datetime }}</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="4" class="empty_table">접근가능 그룹이 없습니다.</td>
-                </tr>
+        <div class="local_cmd01 local_cmd">
+            <label for="gr_id">그룹지정</label>
+            <select name="gr_id" id="gr_id">
+                <option value="">접근가능 그룹을 선택하세요.</option>
+                {% for group in groups %}
+                    <option value="{{ group.gr_id }}">{{ group.gr_subject }}</option>
                 {% endfor %}
-            </tbody>
-        </table>
-    </div>
+            </select>
+            <input type="submit" value="선택" class="btn_submit btn" accesskey="s">
+        </div>
+    </form>
 
-    <div class="btn_list01 btn_list">
-        <input type="submit" name="" value="선택삭제" class="btn btn_02">
-    </div>
-</form>
+    <form name="fboardgroupmember" id="fboardgroupmember" action="/admin/boardgroupmember_delete" onsubmit="return fboardgroupmember_submit(this);" method="post">
+        <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
+        <input type="hidden" name="stx" value="{{ request.state.stx }}">
+        <input type="hidden" name="sst" value="{{ request.state.sst }}">
+        <input type="hidden" name="sod" value="{{ request.state.sod }}">
+        <input type="hidden" name="page" value="{{ request.state.page }}">
+        <input type="hidden" name="token" value="">
+        <input type="hidden" name="mb_id" value="{{ member.mb_id }}" id="mb_id">
 
-<script>
-    function fboardgroupmember_submit(f) {
-        if (!is_checked("chk[]")) {
-            alert("선택삭제 하실 항목을 하나 이상 선택하세요.");
-            return false;
+        <div class="tbl_head01 tbl_wrap">
+            <table>
+                <caption>게시판그룹 회원 목록</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">
+                            <label for="chkall" class="sound_only">접근가능그룹 전체</label>
+                            <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
+                        </th>
+                        <th scope="col">그룹아이디</th>
+                        <th scope="col">그룹</th>
+                        <th scope="col">처리일시</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for group, group_member in allow_groups %}
+                    <tr>
+                        <td class="td_chk">
+                            <label for="chk_{{ loop.index0 }}" class="sound_only">{{ group.gr_subject }} 그룹</label>
+                            <input type="checkbox" name="chk[]" value="{{ group_member.gm_id }}" id="chk_{{ loop.index0 }}">
+                        </td>
+                        <td class="td_grid"><a href="/board/group/{{ group.gr_id }}">{{ group.gr_id }}</a></td>
+                        <td class="td_category">{{ group.gr_subject }}</td>
+                        <td class="td_datetime">{{ group_member.gm_datetime }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="empty_table">접근가능 그룹이 없습니다.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="btn_list01 btn_list">
+            <input type="submit" name="" value="선택삭제" class="btn btn_02">
+        </div>
+    </form>
+
+    <script>
+        function fboardgroupmember_submit(f) {
+            if (!is_checked("chk[]")) {
+                alert("선택삭제 하실 항목을 하나 이상 선택하세요.");
+                return false;
+            }
+
+            f.token.value = generate_token();
+
+            return true;
         }
 
-        f.token.value = generate_token();
+        function boardgroupmember_form_check(f) {
+            if (f.gr_id.value == '') {
+                alert('접근가능 그룹을 선택하세요.');
+                return false;
+            }
 
-        return true;
-    }
+            f.token.value = generate_token();
 
-    function boardgroupmember_form_check(f) {
-        if (f.gr_id.value == '') {
-            alert('접근가능 그룹을 선택하세요.');
-            return false;
+            return true;
         }
-
-        f.token.value = generate_token();
-
-        return true;
-    }
-</script>
-
-{% endblock %}
+    </script>
+{% endblock content %}

@@ -1,14 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}
-    {{ group.gr_subject }}(ID: {{ group.gr_id }}) 그룹 접근가능회원 목록
-{% endblock title %}
-{% block subtitle %}
-    {{ group.gr_subject }}(ID: {{ group.gr_id }}) 그룹 접근가능회원 목록
-{% endblock subtitle %}
+{% block title %}{{ group.gr_subject }}(ID: {{ group.gr_id }}) 그룹 접근가능회원 목록{% endblock title %}
+{% block subtitle %}{{ group.gr_subject }}(ID: {{ group.gr_id }}) 그룹 접근가능회원 목록{% endblock subtitle %}
 
 {% block content %}
-{% set sod_reverse="asc" if request.query_params.sod == "desc" else "desc" %}
+    {% set sod_reverse="asc" if request.query_params.sod == "desc" else "desc" %}
+
     <form name="fsearch" id="fsearch" class="local_sch01 local_sch" method="get">
         <label for="sfl" class="sound_only">검색대상</label>
         <select name="sfl" id="sfl">
@@ -44,18 +41,20 @@
                 {% for row in group_members %}
                     <tr class="bg{{ loop.cycle('0', '1') }}">
                         <td class="td_chk">
-                            <label for="chk_{{ loop.index0 }}" class="sound_only">{{ row.member.mb_nick }} 회원</label>
+                            <label for="chk_{{ loop.index0 }}" class="sound_only">{{ row.member_info.mb_nick }} 회원</label>
                             <input type="checkbox" name="chk[]" value="{{ row.gm_id }}" id="chk_{{ loop.index0 }}">
                         </td>
                         <td class="td_grid"><a href="/admin/boardgroupmember_form/{{ row.mb_id }}">{{ row.group_count|number_format }}</a></td>
                         <td class="td_mbid">{{ row.mb_id }}</td>
-                        <td class="td_mbname">{{ row.member.mb_nick }}</td>
+                        <td class="td_mbname">{{ row.member_info.mb_nick }}</td>
                         <td class="td_name sv_use">
-                            {{ row.member.mb_nick }}
+                            {{ row.member_info.mb_nick }}
                         </td>
-                        <td class="td_datetime">{{ row.member.mb_today_login }}</td>
+                        <td class="td_datetime">{{ row.member_info.mb_today_login }}</td>
                         <td class="td_datetime">{{ row.gm_datetime }}</td>
                     </tr>
+                {% else %}
+                    <td colspan="7" class="empty_table">자료가 없습니다.</td>
                 {% endfor %}
                 </tbody>
             </table>

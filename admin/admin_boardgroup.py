@@ -1,80 +1,64 @@
-from typing import List
-from fastapi import APIRouter, Depends, Request, Form, HTTPException
+from fastapi import APIRouter, Depends, Request, Form, Path
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
-from sqlalchemy import asc, desc
+from typing import List
+
 from common.database import db_session
-import common.models as models 
-from lib.common import *
+from common.models import Board, Group, GroupMember
 from common.formclass import GroupForm
-from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
+from lib.common import *
 
 router = APIRouter()
 templates = AdminTemplates()
-templates.env.globals['getattr'] = getattr
-templates.env.globals['get_selected'] = get_selected
-templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals['subject_sort_link'] = subject_sort_link
-templates.env.globals['number_format'] = number_format
-templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
-templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
+
+BOARDGROUP_MENU_KEY = "300200"
+
 
 @router.get("/boardgroup_list")
-async def boardgroup_list(request: Request, db: db_session):
-    '''
+async def boardgroup_list(
+    request: Request,
+    db: db_session,
+    search_params: dict = Depends(common_search_query_params)
+):
+    """
     게시판그룹관리 목록
-    '''
-    sst = request.state.sst if request.state.sst else ""
-    sod = request.state.sod
-    sfl = request.state.sfl
-    stx = request.state.stx
-    sca = request.state.sca
-    page = request.state.page
-    request.session["menu_key"] = "300200"
-    
-    query = db.query(models.Group)
-    if sst is not None and sst != "":
-        if sod == "desc":
-            query = query.order_by(desc(getattr(models.Group, sst)))
-        else:
-            query = query.order_by(asc(getattr(models.Group, sst)))
-    if sfl is not None and stx is not None:
-        if hasattr(models.Group, sfl):
-            query = query.filter(getattr(models.Group, sfl).like(f"%{stx}%"))
-    groups = query.all()
-    
-    # groups = db.query(models.Group).all()
-    group_data = []
+    """
+    request.session["menu_key"] = BOARDGROUP_MENU_KEY
 
-    for group in groups:
-        # 그룹 테이블에서 원하는 필드 값을 가져와서 딕셔너리에 저장
-        group_info = group.__dict__
-        group_info.update({
-            'board_count': db.query(models.Board).filter(models.Board.gr_id == group.gr_id).count(),
-            # 접근회원수는 나중에 별도로 체크해야함
-            'access_member_count': db.query(models.GroupMember).filter_by(gr_id = group.gr_id).count(),
-        })
-        group_data.append(group_info)
-        
-    return templates.TemplateResponse("boardgroup_list.html", {"request": request, "groups": group_data})
+    result = select_query(
+        request,
+        Group,
+        search_params,
+    )
+
+    for group in result['rows']:
+        group.board_count = len(group.boards)
+        group.access_member_count = len(group.members)
+
+    context = {
+        "request": request,
+        "groups": result['rows'],
+    }
+    return templates.TemplateResponse("boardgroup_list.html", context)
 
 
 @router.post("/boardgroup_list_update", dependencies=[Depends(validate_token)])
 async def boardgroup_list_update(
-    request: Request, 
+    request: Request,
     db: db_session,
-    checks: List[int]= Form(None, alias="chk[]"),
+    checks: List[int] = Form(None, alias="chk[]"),
     gr_id: List[str] = Form(None, alias="gr_id[]"),
     gr_subject: List[str] = Form(None, alias="gr_subject[]"),
     gr_admin: List[str] = Form(None, alias="gr_admin[]"),
-    gr_use_access: List[int]= Form(None, alias="gr_use_access[]"),
-    gr_order: List[int]= Form(None, alias="gr_order[]"),
+    gr_use_access: List[int] = Form(None, alias="gr_use_access[]"),
+    gr_order: List[int] = Form(None, alias="gr_order[]"),
     gr_device: List[str] = Form(None, alias="gr_device[]"),
 ):
-    """게시판그룹 일괄 수정"""
-    # 선택수정
+    """
+    게시판그룹 일괄 수정
+    """
     for i in checks:
-        group = db.query(models.Group).filter(models.Group.gr_id == gr_id[i]).first()
+        group = db.get(Group, gr_id[i])
         if group:
             group.gr_id = gr_id[i]
             group.gr_subject = gr_subject[i]
@@ -84,75 +68,97 @@ async def boardgroup_list_update(
             group.gr_device = gr_device[i]
             db.commit()
 
-    query_string = generate_query_string(request)            
-    
-    return RedirectResponse(f"/admin/boardgroup_list?{query_string}", status_code=303)
+    return RedirectResponse(f"/admin/boardgroup_list?{request.query_params}", status_code=303)
 
 
 @router.post("/boardgroup_list_delete", dependencies=[Depends(validate_token)])
 async def boardgroup_list_delete(
-    request: Request, 
+    request: Request,
     db: db_session,
-    checks: List[int]= Form(None, alias="chk[]"),
+    checks: List[int] = Form(None, alias="chk[]"),
     gr_id: List[str] = Form(None, alias="gr_id[]"),
 ):
-    """게시판그룹 일괄 삭제"""
+    """
+    게시판그룹 일괄 삭제
+    """
     for i in checks:
-        exists_board = db.query(models.Board).filter_by(gr_id = gr_id[i]).first()
+        exists_board = db.scalar(
+            exists(Board.bo_table)
+            .where(Board.gr_id == gr_id[i])
+            .select()
+        )
         if not exists_board:
-            db.query(models.Group).filter_by(gr_id = gr_id[i]).delete()
-            db.query(models.GroupMember).filter_by(gr_id = gr_id[i]).delete()
+            db.execute(delete(Group).where(Group.gr_id == gr_id[i]))
+            db.execute(delete(GroupMember).where(GroupMember.gr_id == gr_id[i]))
         else:
             raise AlertException(f"{gr_id[i]} 게시판그룹에 속한 게시판이 존재합니다. (삭제불가)", 403)
+
     db.commit()
-        
+
     return RedirectResponse(f"/admin/boardgroup_list?{request.query_params}", status_code=303)
 
 
 @router.get("/boardgroup_form")
 async def boardgroup_form(request: Request):
-
-    return templates.TemplateResponse("boardgroup_form.html", {"request": request, "group": None})
+    """
+    게시판그룹 등록 폼
+    """
+    context = {"request": request, "group": None}
+    return templates.TemplateResponse("boardgroup_form.html", context)
 
 
 @router.get("/boardgroup_form/{gr_id}")
-async def boardgroup_form(gr_id: str, request: Request, db: db_session):
-    group = db.query(models.Group).filter(models.Group.gr_id == gr_id).first()
+async def boardgroup_form(
+    request: Request,
+    db: db_session,
+    gr_id: str = Path(...)
+):
+    """
+    게시판그룹 수정 폼
+    """
+    group = db.get(Group, gr_id)
     if not group:
-        raise HTTPException(status_code=404, detail=f"{gr_id} Group is not found.")
+        raise AlertException(f"{gr_id} 게시판그룹이 존재하지 않습니다", 404)
 
-    member_count = db.query(models.GroupMember).filter_by(gr_id=gr_id).count()
-    
-    return templates.TemplateResponse("boardgroup_form.html", {"request": request, "group": group, "member_count": member_count })
+    context = {
+        "request": request,
+        "group": group,
+        "member_count": len(group.members)
+    }
+    return templates.TemplateResponse("boardgroup_form.html", context)
 
 
 @router.post("/boardgroup_form_update", dependencies=[Depends(validate_token)])
-async def boardgroup_form_update(request: Request, db: db_session,
-                        action: str = Form(...),
-                        gr_id: str = Form(...),
-                        form_data: GroupForm = Depends(),
-                        ):
+async def boardgroup_form_update(
+    request: Request,
+    db: db_session,
+    action: str = Form(...),
+    gr_id: str = Form(...),
+    form_data: GroupForm = Depends(),
+):
+    """
+    게시판그룹 등록/수정 처리
+    """
     if action == "w":
-        existing_group = db.query(models.Group).filter(models.Group.gr_id == gr_id).first()
+        existing_group = db.get(Group, gr_id)
         if existing_group:
-            errors = [f"{gr_id} 게시판그룹 아이디가 이미 존재합니다. (등록불가)"]
-            return templates.TemplateResponse("alert.html", {"request": request, "errors": errors})
-        
-        new_group = models.Group(gr_id=gr_id, **form_data.__dict__)
+            raise AlertException(f"{gr_id} 게시판그룹 아이디가 이미 존재합니다. (등록불가)", 400)
+
+        new_group = Group(gr_id=gr_id, **form_data.__dict__)
         db.add(new_group)
         db.commit()
-        
+
     elif action == "u":
-        existing_group = db.query(models.Group).filter(models.Group.gr_id == gr_id).first()
+        existing_group = db.get(Group, gr_id)
         if not existing_group:
-            return templates.TemplateResponse("alert.html", {"request": request, "errors": [f"{gr_id} 게시판그룹 아이디가 존재하지 않습니다. (수정불가)"]})
-        
+            raise AlertException(f"{gr_id} 게시판그룹 아이디가 존재하지 않습니다. (수정불가)", 400)
+
         # 폼 데이터 반영 후 commit
         for field, value in form_data.__dict__.items():
             setattr(existing_group, field, value)
         db.commit()
-        
+
     else:
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": ["잘못된 접근입니다."]})
-        
-    return RedirectResponse(url=f"/admin/boardgroup_form/{gr_id}", status_code=303)
+        raise AlertException("잘못된 접근입니다.", 400)
+
+    return RedirectResponse(url=f"/admin/boardgroup_form/{gr_id}?{request.query_params}", status_code=303)
