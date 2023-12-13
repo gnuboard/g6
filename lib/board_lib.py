@@ -216,6 +216,8 @@ class BoardConfig():
         Returns:
             list: 게시판 공지글 번호 목록.
         """
+        if not self.board.bo_notice:
+            return []
         return self.board.bo_notice.split(",")
 
     def get_list_sort_query(self, model: WriteBaseModel, query: SqlQuery) -> SqlQuery:
