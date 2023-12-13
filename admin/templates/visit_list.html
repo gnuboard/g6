@@ -1,13 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}
-    접속자집계
-{% endblock %}
-
-{% block subtitle %}접속자집계{% endblock %}
+{% block title %}접속자집계{% endblock title %}
+{% block subtitle %}접속자집계{% endblock subtitle %}
 
 {% block content %}
-
 {% include "visit_sub.html" %}
 
 <div class="tbl_head01 tbl_wrap">
@@ -25,7 +21,7 @@
     </thead>
     <tbody>
         {% for visit in visits %}
-        <tr class="bg{{ loop.index0 }}">
+        <tr class="bg{{ loop.cycle('0', '1') }}">
             <td class="td_category">{{ visit.vi_ip }}</td>
             <td>{{ visit.vi_referer }}</td>
             <td class="td_category td_category1">{{ visit.vi_browser }}</td>
@@ -40,4 +36,4 @@
 
 {{ paging|safe }}
 
-{% endblock %}
+{% endblock content %}

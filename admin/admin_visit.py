@@ -141,17 +141,20 @@ async def visit_delete_update(
         url="/admin/visit_delete"
     )
 
-# 현재 위치에서 이어서 작업 진행
+
 @router.get("/visit_list", tags=["admin_visit_list"])
-async def visit_list(request: Request, db: db_session,
-                     current_page: int = Query(default=1, alias="page"),  # 페이지
-                     from_date: str = Query(default="", alias="fr_date"),  # 시작일
-                     to_date: str = Query(default=""),  # 종료일
-                     ):
+async def visit_list(
+    request: Request,
+    db: db_session,
+    current_page: int = Query(default=1, alias="page"),  # 페이지
+    from_date: str = Query(default="", alias="fr_date"),  # 시작일
+    to_date: str = Query(default=""),  # 종료일
+):
     """
     접속자집계 목록
     """
     request.session["menu_key"] = VISIT_MENU_KEY
+    config = request.state.config
     request.state.time_ymd = datetime.now()
     if from_date:
         from_date = re.sub(r'[^0-9 :\-]', '', from_date)
@@ -170,18 +173,15 @@ async def visit_list(request: Request, db: db_session,
         to_date = from_date
 
     # 초기 쿼리 설정
-    query = db.query(Visit)
-    records_per_page = request.state.config.cf_page_rows
-    records_per_page = records_per_page if records_per_page else 10
+    query = select()
 
     # 페이지 번호에 따른 offset 계산
+    records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
-
-    # 최종 쿼리 결과를 가져옵니다.
-    visits = query.offset(offset).limit(records_per_page).all()
-
     # 전체 레코드 개수 계산
-    total_records = query.count()
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    # 최종 쿼리 결과를 가져옵니다.
+    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
     context = {
         "request": request,
@@ -195,30 +195,30 @@ async def visit_list(request: Request, db: db_session,
 
 
 @router.get("/visit_domain", tags=["admin_visit_list"])
-async def visit_domain(request: Request, db: db_session,
-                       current_page: int = Query(default=1, alias="page"),  # 페이지
-                       from_date: str = Query(default="", alias="fr_date"),  # 시작일
-                       to_date: str = Query(default=""),  # 종료일
-                       ):
+async def visit_domain(
+    request: Request,
+    db: db_session,
+    current_page: int = Query(default=1, alias="page"),  # 페이지
+    from_date: str = Query(default="", alias="fr_date"),  # 시작일
+    to_date: str = Query(default=""),  # 종료일
+):
     """
     도메인별 접속자집계 목록
     """
     request.session["menu_key"] = VISIT_MENU_KEY
+    config = request.state.config
     from_date, to_date = validate_time(from_date, to_date)
 
     # 초기 쿼리 설정
-    query = db.query(Visit).filter(and_(Visit.vi_date > from_date, Visit.vi_date < to_date))
-    records_per_page = request.state.config.cf_page_rows
-    records_per_page = records_per_page if records_per_page else 10
+    query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
 
     # 페이지 번호에 따른 offset 계산
+    records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
-
-    # 최종 쿼리 결과를 가져옵니다.
-    visits = query.offset(offset).limit(records_per_page).all()
-
     # 전체 레코드 개수 계산
-    total_records = query.count()
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    # 최종 쿼리 결과를 가져옵니다.
+    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
     site_url = f"{request.base_url.scheme}://{request.base_url.hostname}"
     if request.base_url.port:
@@ -256,36 +256,36 @@ async def visit_domain(request: Request, db: db_session,
 
 
 @router.get("/visit_browser", tags=["admin_visit_list"])
-async def visit_browser(request: Request, db: db_session,
-                        current_page: int = Query(default=1, alias="page"),  # 페이지
-                        from_date: str = Query(default="", alias="fr_date"),  # 시작일
-                        to_date: str = Query(default=""),  # 종료일
-                        ):
+async def visit_browser(
+    request: Request,
+    db: db_session,
+    current_page: int = Query(default=1, alias="page"),  # 페이지
+    from_date: str = Query(default="", alias="fr_date"),  # 시작일
+    to_date: str = Query(default=""),  # 종료일
+):
     """
     브라우저별 접속자집계 목록
     """
     request.session["menu_key"] = VISIT_MENU_KEY
+    config = request.state.config
     from_date, to_date = validate_time(from_date, to_date)
 
     # 초기 쿼리 설정
-    query = db.query(Visit).filter(and_(Visit.vi_date > from_date, Visit.vi_date < to_date))
-    records_per_page = request.state.config.cf_page_rows
-    records_per_page = records_per_page if records_per_page else 10
+    query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
 
     # 페이지 번호에 따른 offset 계산
+    records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
-
-    # 최종 쿼리 결과를 가져옵니다.
-    visits = query.offset(offset).limit(records_per_page).all()
-
     # 전체 레코드 개수 계산
-    total_records = query.count()
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    # 최종 쿼리 결과를 가져옵니다.
+    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
     # 브라우저별 접속자집계
     filtered_visits = []
     for visit in visits:
         filtered_visits.append({
-            "vi_browser": get_browser(visit.vi_agent),
+            "vi_browser": visit.vi_browser or get_browser(visit.vi_agent),
             "count": 1,
         })
 
@@ -305,36 +305,36 @@ async def visit_browser(request: Request, db: db_session,
 
 
 @router.get("/visit_os", tags=["admin_visit_list"])
-async def visit_os(request: Request, db: db_session,
-             current_page: int = Query(default=1, alias="page"),  # 페이지
-             from_date: str = Query(default="", alias="fr_date"),  # 시작일
-             to_date: str = Query(default=""),  # 종료일
-             ):
+async def visit_os(
+    request: Request,
+    db: db_session,
+    current_page: int = Query(default=1, alias="page"),  # 페이지
+    from_date: str = Query(default="", alias="fr_date"),  # 시작일
+    to_date: str = Query(default=""),  # 종료일
+):
     """
-    브라우저별 접속자집계 목록
+    OS별 접속자집계 목록
     """
     request.session["menu_key"] = VISIT_MENU_KEY
+    config = request.state.config
     from_date, to_date = validate_time(from_date, to_date)
 
     # 초기 쿼리 설정
-    query = db.query(Visit).filter(and_(Visit.vi_date > from_date, Visit.vi_date < to_date))
-    records_per_page = request.state.config.cf_page_rows
-    records_per_page = records_per_page if records_per_page else 10
+    query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
 
     # 페이지 번호에 따른 offset 계산
+    records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
-
-    # 최종 쿼리 결과를 가져옵니다.
-    visits = query.offset(offset).limit(records_per_page).all()
-
     # 전체 레코드 개수 계산
-    total_records = query.count()
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    # 최종 쿼리 결과를 가져옵니다.
+    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
-    # 브라우저별 접속자집계
+    # OS별 접속자집계
     filtered_visits = []
     for visit in visits:
         filtered_visits.append({
-            "vi_os": get_os(visit.vi_agent),
+            "vi_os": visit.vi_os or get_os(visit.vi_agent),
             "count": 1,
         })
 
@@ -354,32 +354,32 @@ async def visit_os(request: Request, db: db_session,
 
 
 @router.get("/visit_device")
-async def visit_device(request: Request, db: db_session,
-                 current_page: int = Query(default=1, alias="page"),  # 페이지
-                 from_date: str = Query(default="", alias="fr_date"),  # 시작일
-                 to_date: str = Query(default=""),  # 종료일
-                 ):
+async def visit_device(
+    request: Request,
+    db: db_session,
+    current_page: int = Query(default=1, alias="page"),  # 페이지
+    from_date: str = Query(default="", alias="fr_date"),  # 시작일
+    to_date: str = Query(default=""),  # 종료일
+):
     """
-    브라우저별 접속자집계 목록
+    접속기기별 접속자집계 목록
     """
     request.session["menu_key"] = VISIT_MENU_KEY
+    config = request.state.config
     from_date, to_date = validate_time(from_date, to_date)
 
     # 초기 쿼리 설정
-    query = db.query(Visit).filter(and_(Visit.vi_date > from_date, Visit.vi_date < to_date))
-    records_per_page = request.state.config.cf_page_rows
-    records_per_page = records_per_page if records_per_page else 10
+    query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
 
     # 페이지 번호에 따른 offset 계산
+    records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
-
-    # 최종 쿼리 결과를 가져옵니다.
-    visits = query.offset(offset).limit(records_per_page).all()
-
     # 전체 레코드 개수 계산
-    total_records = query.count()
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    # 최종 쿼리 결과를 가져옵니다.
+    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
-    # 브라우저별 접속자집계
+    # 접속기기별 접속자집계
     filtered_visits = []
     for visit in visits:
         filtered_visits.append({
@@ -398,37 +398,37 @@ async def visit_device(request: Request, db: db_session,
         "fr_date": from_date,
         "to_date": to_date,
     }
-
     return templates.TemplateResponse("visit_device.html", context)
 
 
 @router.get("/visit_hour")
-async def visit_device(request: Request, db: db_session,
-                 current_page: int = Query(default=1, alias="page"),  # 페이지
-                 from_date: str = Query(default="", alias="fr_date"),  # 시작일
-                 to_date: str = Query(default=""),  # 종료일
-                 ):
+async def visit_hour(
+    request: Request,
+    db: db_session,
+    current_page: int = Query(default=1, alias="page"),  # 페이지
+    from_date: str = Query(default="", alias="fr_date"),  # 시작일
+    to_date: str = Query(default=""),  # 종료일
+):
     """
-    시간 접속자집계 목록
+    시간별 접속자집계 목록
     """
     request.session["menu_key"] = VISIT_MENU_KEY
+    config = request.state.config
     from_date, to_date = validate_time(from_date, to_date)
 
     # 초기 쿼리 설정
-    query = db.query(Visit).filter(and_(Visit.vi_date > from_date, Visit.vi_date < to_date))
-    records_per_page = request.state.config.cf_page_rows
-    records_per_page = records_per_page if records_per_page else 10
+    query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
 
     # 페이지 번호에 따른 offset 계산
+    records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
-
-    # 최종 쿼리 결과를 가져옵니다.
-    visits = query.offset(offset).limit(records_per_page).all()
-
     # 전체 레코드 개수 계산
-    total_records = query.count()
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    # 최종 쿼리 결과를 가져옵니다.
+    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
-    # 브라우저별 접속자집계
+    # 시간별 접속자집계
+    # TODO: 모든 시간이 출력되야함 (현재는 접속자가 없는 시간은 출력되지 않음)
     filtered_visits = []
     for visit in visits:
         filtered_visits.append({
@@ -439,6 +439,9 @@ async def visit_device(request: Request, db: db_session,
     visits = count_by_field(filtered_visits, "visit_hour")
     visits = add_percent_field(visits)
 
+    # 키 정렬
+    visits = sorted(visits, key=lambda k: k['visit_hour'])
+
     context = {
         "request": request,
         "visits": visits,
@@ -447,37 +450,37 @@ async def visit_device(request: Request, db: db_session,
         "fr_date": from_date,
         "to_date": to_date,
     }
-
     return templates.TemplateResponse("visit_hour.html", context)
 
 
 @router.get("/visit_weekday", tags=["admin_visit_list"])
-async def visit_device(request: Request, db: db_session,
-                 current_page: int = Query(default=1, alias="page"),  # 페이지
-                 from_date: str = Query(default="", alias="fr_date"),  # 시작일
-                 to_date: str = Query(default=""),  # 종료일
-                 ):
+async def visit_weekday(
+    request: Request,
+    db: db_session,
+    current_page: int = Query(default=1, alias="page"),  # 페이지
+    from_date: str = Query(default="", alias="fr_date"),  # 시작일
+    to_date: str = Query(default=""),  # 종료일
+):
     """
-    요일 접속자집계 목록
+    요일별 접속자집계 목록
     """
     request.session["menu_key"] = VISIT_MENU_KEY
+    config = request.state.config
     from_date, to_date = validate_time(from_date, to_date)
 
     # 초기 쿼리 설정
-    query = db.query(Visit).filter(and_(Visit.vi_date > from_date, Visit.vi_date < to_date))
-    records_per_page = request.state.config.cf_page_rows
-    records_per_page = records_per_page if records_per_page else 10
+    query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
 
     # 페이지 번호에 따른 offset 계산
+    records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
-
-    # 최종 쿼리 결과를 가져옵니다.
-    visits = query.offset(offset).limit(records_per_page).all()
-
     # 전체 레코드 개수 계산
-    total_records = query.count()
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    # 최종 쿼리 결과를 가져옵니다.
+    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
     # 요일별 접속자집계
+    # TODO: 모든요일이 출력되야함 (현재는 접속자가 없는 요일은 출력되지 않음)
     korean_week_day = {
         "Mon": "월",
         "Tue": "화",
@@ -491,7 +494,7 @@ async def visit_device(request: Request, db: db_session,
     filtered_visits = []
     for visit in visits:
         filtered_visits.append({
-            "visit_weekday": korean_week_day[visit.vi_date.today().strftime("%a")],
+            "visit_weekday": korean_week_day[visit.vi_date.strftime("%a")],
             "count": 1,
         })
 
@@ -506,35 +509,34 @@ async def visit_device(request: Request, db: db_session,
         "fr_date": from_date,
         "to_date": to_date,
     }
-
     return templates.TemplateResponse("visit_weekday.html", context)
 
 
 @router.get("/visit_date", tags=["admin_visit_list"])
-async def visit_date(request: Request, db: db_session,
-               current_page: int = Query(default=1, alias="page"),  # 페이지
-               from_date: str = Query(default="", alias="fr_date"),  # 시작일
-               to_date: str = Query(default=""),  # 종료일
-               ):
+async def visit_date(
+    request: Request,
+    db: db_session,
+    current_page: int = Query(default=1, alias="page"),  # 페이지
+    from_date: str = Query(default="", alias="fr_date"),  # 시작일
+    to_date: str = Query(default=""),  # 종료일
+):
     """
     일별 접속자집계 목록
     """
     request.session["menu_key"] = VISIT_MENU_KEY
+    config = request.state.config
     from_date, to_date = validate_time(from_date, to_date)
 
     # 초기 쿼리 설정
-    query = db.query(Visit).filter(and_(Visit.vi_date > from_date, Visit.vi_date < to_date))
-    records_per_page = request.state.config.cf_page_rows
-    records_per_page = records_per_page if records_per_page else 10
+    query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
 
     # 페이지 번호에 따른 offset 계산
+    records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
-
-    # 최종 쿼리 결과를 가져옵니다.
-    visits = query.offset(offset).limit(records_per_page).all()
-
     # 전체 레코드 개수 계산
-    total_records = query.count()
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    # 최종 쿼리 결과를 가져옵니다.
+    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
     # 접속자집계
     filtered_visits = []
@@ -555,35 +557,34 @@ async def visit_date(request: Request, db: db_session,
         "fr_date": from_date,
         "to_date": to_date,
     }
-
     return templates.TemplateResponse("visit_date.html", context)
 
 
 @router.get("/visit_month", tags=["admin_visit_list"])
-async def visit_month(request: Request, db: db_session,
-                current_page: int = Query(default=1, alias="page"),  # 페이지
-                from_date: str = Query(default="", alias="fr_date"),  # 시작일
-                to_date: str = Query(default=""),  # 종료일
-                ):
+async def visit_month(
+    request: Request,
+    db: db_session,
+    current_page: int = Query(default=1, alias="page"),  # 페이지
+    from_date: str = Query(default="", alias="fr_date"),  # 시작일
+    to_date: str = Query(default=""),  # 종료일
+):
     """
     월별 접속자집계 목록
     """
     request.session["menu_key"] = VISIT_MENU_KEY
+    config = request.state.config
     from_date, to_date = validate_time(from_date, to_date)
 
     # 초기 쿼리 설정
-    query = db.query(Visit).filter(and_(Visit.vi_date > from_date, Visit.vi_date < to_date))
-    records_per_page = request.state.config.cf_page_rows
-    records_per_page = records_per_page if records_per_page else 10
+    query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
 
     # 페이지 번호에 따른 offset 계산
+    records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
-
-    # 최종 쿼리 결과를 가져옵니다.
-    visits = query.offset(offset).limit(records_per_page).all()
-
     # 전체 레코드 개수 계산
-    total_records = query.count()
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    # 최종 쿼리 결과를 가져옵니다.
+    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
     # 접속자집계
     filtered_visits = []
@@ -604,35 +605,34 @@ async def visit_month(request: Request, db: db_session,
         "fr_date": from_date,
         "to_date": to_date,
     }
-
     return templates.TemplateResponse("visit_month.html", context)
 
 
 @router.get("/visit_year", tags=["admin_visit_list"])
-async def visit_year(request: Request, db: db_session,
-               current_page: int = Query(default=1, alias="page"),  # 페이지
-               from_date: str = Query(default="", alias="fr_date"),  # 시작일
-               to_date: str = Query(default=""),  # 종료일
-               ):
+async def visit_year(
+    request: Request,
+    db: db_session,
+    current_page: int = Query(default=1, alias="page"),  # 페이지
+    from_date: str = Query(default="", alias="fr_date"),  # 시작일
+    to_date: str = Query(default=""),  # 종료일
+):
     """
-    월별 접속자집계 목록
+    연도별 접속자집계 목록
     """
     request.session["menu_key"] = VISIT_MENU_KEY
+    config = request.state.config
     from_date, to_date = validate_time(from_date, to_date)
 
     # 초기 쿼리 설정
-    query = db.query(Visit).filter(and_(Visit.vi_date > from_date, Visit.vi_date < to_date))
-    records_per_page = request.state.config.cf_page_rows
-    records_per_page = records_per_page if records_per_page else 10
+    query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
 
     # 페이지 번호에 따른 offset 계산
+    records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
-
-    # 최종 쿼리 결과를 가져옵니다.
-    visits = query.offset(offset).limit(records_per_page).all()
-
     # 전체 레코드 개수 계산
-    total_records = query.count()
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    # 최종 쿼리 결과를 가져옵니다.
+    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
     # 접속자집계
     filtered_visits = []
@@ -653,7 +653,6 @@ async def visit_year(request: Request, db: db_session,
         "fr_date": from_date,
         "to_date": to_date,
     }
-
     return templates.TemplateResponse("visit_year.html", context)
 
 
