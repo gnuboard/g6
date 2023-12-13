@@ -1,18 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}
-    투표 관리
-{% endblock title %}
-{% block subtitle %}
-    투표 관리
-{% endblock subtitle %}
+{% block title %}투표 관리{% endblock title %}
+{% block subtitle %}투표 관리{% endblock subtitle %}
 
 {% block content %}
     <div class="local_ov01 local_ov">
         <a href="{{ url_for('poll_list') }}" class="ov_listall">전체목록</a>
         <span class="btn_ov01">
             <span class="ov_txt">투표 수</span>
-            <span class="ov_num">{{ total_count }}개</span>
+            <span class="ov_num">{{ total_count|number_format }}개</span>
         </span>
     </div>
     
@@ -28,12 +24,7 @@
         </div>
     </form>
     
-    <form name="fpolllist" id="fpolllist" action="{{ url_for('poll_list_delete') }}" method="post" onsubmit="return fpolllist_submit(this);">
-        <input type="hidden" name="sst" value="{{ request.state.sst }}">
-        <input type="hidden" name="sod" value="{{ request.state.sod }}">
-        <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
-        <input type="hidden" name="stx" value="{{ request.state.stx }}">
-        <input type="hidden" name="page" value="{{ request.state.page }}">
+    <form name="fpolllist" id="fpolllist" action="{{ url_for('poll_list_delete') }}?{{ request.query_params }}" method="post" onsubmit="return fpolllist_submit(this);">
         <input type="hidden" name="token" value="">
         <div class="tbl_head01 tbl_wrap">
             <table>
@@ -63,7 +54,7 @@
                             <td class="td_num">{{ poll.po_id }}</td>
                             <td class="td_left">{{ poll.po_subject[:70] }}</td>
                             <td class="td_num">{{ poll.po_level }}</td>
-                            <td class="td_num">{{ poll.sum_po_cnt }}</td>
+                            <td class="td_num">{{ poll.sum_po_cnt|number_format }}</td>
                             <td class="td_etc">{{ "사용" if poll.po_etc else "미사용" }}</td>
                             <td class="td_use">{{ "사용" if poll.po_use else "미사용" }}</td>
                             <td class="td_mng td_mng_s">
