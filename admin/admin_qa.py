@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
+from sqlalchemy import select
 
 from common.database import db_session
 from common.formclass import QaConfigForm
@@ -26,7 +27,7 @@ async def qa_config_form(request: Request, db: db_session):
     """
     request.session["menu_key"] = QA_MENU_KEY
 
-    qa_config = db.query(QaConfig).first()
+    qa_config = db.scalar(select(QaConfig))
 
     return templates.TemplateResponse(
         "qa_config_form.html", {"request": request, "qa_config": qa_config}
@@ -51,7 +52,7 @@ def qa_config_update(
     Returns:
         RedirectResponse: 1:1문의 설정 등록/수정 후 폼으로 이동
     """
-    qa_config = db.query(QaConfig).first()
+    qa_config = db.scalar(select(QaConfig))
     # 등록
     if not qa_config:
         qa_config = QaConfig(**form_data.__dict__)
