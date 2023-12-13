@@ -266,21 +266,6 @@ def register_plugin_admin_menu(plugin_states, plugin_dir=PLUGIN_DIR):
     return admin_menus
 
 
-def import_plugin_router(plugin_state, plugin_dir=PLUGIN_DIR):
-    """
-    플러그인의 라우터를 등록한다.
-    이미 import 되어있으면 플러그인의 router 모듈 __init__.py 를 다시 실행한다.
-
-    Args:
-        plugin_state (list): 플러그인 상태 목록
-        plugin_dir (str): 플러그인 폴더
-    """
-    for plugin in plugin_state:
-        if plugin.is_enable:
-            router_module_name = f"{plugin_dir}.{plugin.module_name}.router"
-            importlib.import_module(router_module_name)
-
-
 def register_plugin(plugin_states, plugin_dir=PLUGIN_DIR):
     """
     플러그인의 관리자 메뉴를 등록한다.

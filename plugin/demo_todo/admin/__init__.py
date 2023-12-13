@@ -7,7 +7,7 @@ from ..plugin_info import module_name
 from main import app
 
 # install
-if not inspect(engine).has_table(DB_TABLE_PREFIX + "todo"):
+if not inspect(engine).has_table(DB_TABLE_PREFIX + "todos"):
     models.Base.metadata.create_all(bind=engine)
 
 # 플러그인의 admin 라우터를 등록한다.
