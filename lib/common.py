@@ -857,7 +857,7 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
             and_(
                 Point.mb_id == mb_id,
                 Point.po_rel_table == rel_table,
-                Point.po_rel_id == rel_id,
+                Point.po_rel_id == str(rel_id),
                 Point.po_rel_action == rel_action
             )
         ).count()
@@ -889,7 +889,7 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
         po_expired=po_expired,
         po_expire_date=po_expire_date,
         po_rel_table=rel_table,
-        po_rel_id=rel_id,
+        po_rel_id=str(rel_id),
         po_rel_action=rel_action
     )
     db.add(new_point)
@@ -939,7 +939,7 @@ def get_point_sum(request: Request, mb_id: str):
                 po_expired=1,
                 po_expire_date=TIME_YMD,
                 po_rel_table='@expire',
-                po_rel_id=mb_id,
+                po_rel_id=str(mb_id),
                 po_rel_action='expire-' + str(uuid.uuid4()),
             )   
             db.add(new_point)
@@ -1009,7 +1009,7 @@ def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel
     result = False
     if rel_table or rel_id or rel_action:
         # 포인트 내역정보    
-        row = db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action).first()
+        row = db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == str(rel_id), Point.po_rel_action == rel_action).first()
         if row:
             if row.po_point and row.po_point > 0:
                 abs_po_point = abs(row.po_point)
@@ -1018,7 +1018,7 @@ def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel
                 if row.po_use_point and row.po_use_point > 0:
                     insert_use_point(request, row.mb_id, row.po_use_point, row.po_id)
                     
-            db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action).delete(synchronize_session=False)
+            db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == str(rel_id), Point.po_rel_action == rel_action).delete(synchronize_session=False)
             db.commit()
 
             # po_mb_point에 반영
