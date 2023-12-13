@@ -244,6 +244,7 @@ class Member(Base):
 
     auths: Mapped["Auth"] = relationship("Auth", back_populates="member")
     groups: Mapped[List["GroupMember"]] = relationship(back_populates="member")
+    points: Mapped["Point"] = relationship("Point", back_populates="member")
 
 
 class Board(Base):
@@ -685,7 +686,7 @@ class Point(Base):
     __tablename__ = DB_TABLE_PREFIX + "point"
 
     po_id = Column(Integer, primary_key=True, autoincrement=True)
-    mb_id = Column(String(20), nullable=False, default="")
+    mb_id = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "member.mb_id"), nullable=False, default="")
     po_datetime = Column(DateTime, nullable=False, default=datetime.now())
     po_content = Column(String(255), nullable=False, default="")
     po_point = Column(Integer, nullable=False, default=0)
@@ -696,6 +697,8 @@ class Point(Base):
     po_rel_table = Column(String(20), nullable=False, default="")
     po_rel_id = Column(String(20), nullable=False, default="")
     po_rel_action = Column(String(100), nullable=False, default="")
+
+    member: Mapped["Member"] = relationship("Member", back_populates="points", lazy="joined")
 
 
 class Memo(Base):

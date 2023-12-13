@@ -776,10 +776,11 @@ def select_query(request: Request, table_model, search_params: dict,
     
 
 # 회원 레코드 얻기    
-# fields : 가져올 필드, 예) "mb_id, mb_name, mb_nick"
-def get_member(mb_id: str, fields: str = '*'):
+def get_member(mb_id: str): # , fields: str = '*' # fields : 가져올 필드, 예) "mb_id, mb_name, mb_nick"
     db = SessionLocal()
-    return db.query(Member).options(load_only(fields)).filter_by(mb_id=mb_id).first()
+    member = db.scalar(select(Member).filter_by(mb_id=mb_id))
+    db.close()
+    return member
 
 
 def get_member_icon(mb_id):
@@ -831,8 +832,6 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
     member = db.scalar(select(Member).filter_by(mb_id=mb_id))
     if not member:
         return 0
-    
-    
 
     if rel_table or rel_id or rel_action:
         existing_point = db.scalar(
@@ -889,21 +888,27 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
 
 
 # 소멸 포인트 얻기
-def get_expire_point(request: Request, mb_id: str):
+def get_expire_point(request: Request, mb_id: str) -> int:
     config = request.state.config
-    
-    if  config.cf_point_term <= 0:
+
+    if config.cf_point_term <= 0:
         return 0
-    
+
     db = SessionLocal()
-    
-    point_sum = db.query(func.sum(Point.po_point - Point.po_use_point)).filter_by(mb_id=mb_id, po_expired=False).filter(Point.po_expire_date < datetime.now()).scalar()
+    point_sum = db.scalar(
+        select(func.sum(Point.po_point - Point.po_use_point))
+        .where(
+            Point.mb_id == mb_id,
+            Point.po_expired == 0,
+            Point.po_expire_date < datetime.now()
+        )
+    )
     db.close()
-    return point_sum if point_sum else 0
+    return int(point_sum) if point_sum else 0
 
 
 # 포인트 내역 합계
-def get_point_sum(request: Request, mb_id: str):
+def get_point_sum(request: Request, mb_id: str) -> int:
     config = request.state.config
     
     db = SessionLocal()
@@ -911,7 +916,7 @@ def get_point_sum(request: Request, mb_id: str):
     if config.cf_point_term > 0:
         expire_point = get_expire_point(request, mb_id)
         if expire_point > 0:
-            mb = get_member(mb_id, 'mb_point')
+            member = get_member(mb_id)
             point = expire_point * (-1)
             new_point = Point(
                 mb_id=mb_id,
@@ -919,7 +924,7 @@ def get_point_sum(request: Request, mb_id: str):
                 po_content='포인트 소멸',
                 po_point=expire_point * (-1),
                 po_use_point=0,
-                po_mb_point=mb.mb_point + point,
+                po_mb_point=member.mb_point + point,
                 po_expired=1,
                 po_expire_date=TIME_YMD,
                 po_rel_table='@expire',
@@ -934,56 +939,64 @@ def get_point_sum(request: Request, mb_id: str):
                 # insert_use_point(mb_id, point)
                 pass
         
-        # 유효기간이 있을 때 기간이 지난 포인트 expired 체크    
-        db.query(Point).filter(
-            and_(
+        # 유효기간이 있을 때 기간이 지난 포인트 expired 체크
+        db.execute(
+            update(Point).values(po_expired=1)
+            .where(
                 Point.mb_id == mb_id,
                 Point.po_expired != 1,
                 Point.po_expire_date != '9999-12-31',
                 Point.po_expire_date < TIME_YMD
             )
-        ).update({Point.po_expired: 1})
+        )
         db.commit()            
             
     # 포인트합
-    point_sum = db.query(func.sum(Point.po_point)).filter_by(mb_id=mb_id).scalar()
+    point_sum = db.scalar(select(func.sum(Point.po_point)).filter_by(mb_id=mb_id))
     db.close()
-    return point_sum if point_sum else 0
+    return int(point_sum) if point_sum else 0
 
 
 # 사용포인트 입력
-def insert_use_point(mb_id: str, point: int, po_id: str = ""):
-    global config
-    
-    point1 = abs(point)
+def insert_use_point(request: Request, mb_id: str, point: int, po_id: str = ""):
+    config = request.state.config
     db = SessionLocal()
-    query = db.query(Point).filter_by(mb_id=mb_id, po_expired=False).order_by(Point.po_id.desc())
-    query = query(Point.po_id, Point.po_point, Point.po_use_point)\
-                .filter(
-                    and_(
-                        Point.mb_id == mb_id,
-                        Point.po_id != po_id,
-                        Point.po_expired == 0,
-                        Point.po_point > Point.po_use_point
-                    )
-                )
+    point1 = abs(point)
+
+    query = (
+        select(Point.po_id, Point.po_point, Point.po_use_point)
+        .where(
+            Point.mb_id == mb_id,
+            Point.po_id != po_id,
+            Point.po_expired == 0,
+            Point.po_point > Point.po_use_point
+        )
+    )
     if config.cf_point_term:
         query = query.order_by(Point.po_expire_date.asc(), Point.po_id.asc())
     else:
         query = query.order_by(Point.po_id.asc())
-    rows = query.all()
+    rows = db.scalars(query).all()
+
     for row in rows:
         point2 = row.po_point
         point3 = row.po_use_point
         
         if (point2 - point3) > point1:
-            db.query(Point).filter_by(po_id=row.po_id).update({"po_use_point": (Point.po_use_point + point1)})
+            db.execute(
+                update(Point).values(po_mb_point=Point.po_mb_point + point1)
+                .where(Point.po_id == row.po_id)
+            )
             db.commit()
         else:
             point4 = point2 - point3
-            db.query(Point).filter_by(po_id=row.po_id).update({"po_use_point": (Point.po_use_point + point4), "po_expired": 100})
+            db.execute(
+                update(Point).values(po_use_point=(Point.po_use_point + point4), po_expired=100)
+                .where(Point.po_id == row.po_id)
+            )
             db.commit()
             point1 = point1 - point4
+
     db.close()
 
 
@@ -991,9 +1004,18 @@ def insert_use_point(mb_id: str, point: int, po_id: str = ""):
 def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel_action: str):
     db = SessionLocal()
     result = False
+
     if rel_table or rel_id or rel_action:
         # 포인트 내역정보    
-        row = db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action).first()
+        row = db.scalar(
+            select(Point)
+            .where(
+                Point.mb_id == mb_id,
+                Point.po_rel_table == rel_table,
+                Point.po_rel_id == rel_id,
+                Point.po_rel_action == rel_action
+            )
+        )
         if row:
             if row.po_point and row.po_point > 0:
                 abs_po_point = abs(row.po_point)
@@ -1001,20 +1023,29 @@ def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel
             else:
                 if row.po_use_point and row.po_use_point > 0:
                     insert_use_point(request, row.mb_id, row.po_use_point, row.po_id)
-                    
-            db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action).delete(synchronize_session=False)
+
+            db.execute(
+                delete(Point)
+                .where(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action)
+            )
             db.commit()
 
             # po_mb_point에 반영
             if row.po_point:
-                db.query(Point).filter(Point.mb_id == mb_id, Point.po_id > row.po_id).update({Point.po_mb_point: Point.po_mb_point - row.po_point}, synchronize_session=False)
+                db.execute(
+                    update(Point).values(po_mb_point=Point.po_mb_point - row.po_point)
+                    .where(Point.mb_id == mb_id, Point.po_id > row.po_id)
+                )
                 db.commit()
-            
+
             # 포인트 내역의 합을 구하고    
             sum_point = get_point_sum(request, mb_id)
-            
+
             # 포인트 UPDATE
-            db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: sum_point}, synchronize_session=False)
+            db.execute(
+                update(Member).values(mb_point=sum_point)
+                .where(Member.mb_id == mb_id)
+            )
             result = db.commit()
     db.close()
 
@@ -1025,24 +1056,39 @@ def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel
 def delete_use_point(request: Request, mb_id: str, point: int):
     config = request.state.config
     db = SessionLocal()
-    
+
     point1 = abs(point)
-    rows = db.query(Point).filter(Point.mb_id == mb_id, Point.po_expired != 1, Point.po_use_point > 0).order_by(desc('po_expire_date', 'po_id') if config.cf_point_term else desc('po_id')).all()
+    query = select(Point).where(Point.mb_id == mb_id, Point.po_expired != 1, Point.po_use_point > 0)
+    if config.cf_point_term:
+        query = query.order_by(desc(Point.po_expire_date), desc(Point.po_id))
+    else:
+        query = query.order_by(desc(Point.po_id))
+    rows = db.scalars(query).all()
+
     for row in rows:
         point2 = row.po_use_point
         if row.po_expired == 100 and (row.po_expire_date == '9999-12-31' or row.po_expire_date >= TIME_YMD):
             po_expired = 0
         else:
             po_expired = row.po_expired
-        
+
         if point2 > point1:
-            db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: Point.po_use_point - point1, Point.po_expired: po_expired}, synchronize_session=False)
+            db.execute(
+                update(Point)
+                .values(po_use_point=Point.po_use_point - point1, po_expired=po_expired)
+                .where(Point.po_id == row.po_id)
+            )
             db.commit()
             break
         else:
-            db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: 0, Point.po_expired: po_expired}, synchronize_session=False)
+            db.execute(
+                update(Point)
+                .values(po_use_point=0, po_expired=po_expired)
+                .where(Point.po_id == row.po_id)
+            )
             db.commit()
             point1 = point1 - point2
+
     db.close()
 
 
@@ -1052,7 +1098,11 @@ def delete_expire_point(request: Request, mb_id: str, point: int):
     db = SessionLocal()
     
     point1 = abs(point)
-    rows = db.query(Point).filter(Point.mb_id == mb_id, Point.po_expired == 1, Point.po_point >= 0, Point.po_use_point > 0).order_by(desc(Point.po_expire_date), desc(Point.po_id)).all()
+    rows = db.scalars(
+        select(Point)
+        .where(Point.mb_id == mb_id, Point.po_expired == 1, Point.po_point >= 0, Point.po_use_point > 0)
+        .order_by(desc(Point.po_expire_date), desc(Point.po_id))
+    ).all()
     for row in rows:
         point2 = row.po_use_point
         po_expired = 0
@@ -1061,13 +1111,31 @@ def delete_expire_point(request: Request, mb_id: str, point: int):
             po_expire_date = (SERVER_TIME + timedelta(days=config.cf_point_term - 1)).strftime('%Y-%m-%d')
     
         if point2 > point1:
-            db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: Point.po_use_point - point1, Point.po_expired: po_expired, Point.po_expire_date: po_expire_date}, synchronize_session=False)
+            db.execute(
+                update(Point)
+                .values(
+                    po_use_point=Point.po_use_point - point1,
+                    po_expired=po_expired,
+                    po_expire_date=po_expire_date
+                )
+                .where(Point.po_id == row.po_id)
+            )
             db.commit()
             break
         else:
-            db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: 0, Point.po_expired: po_expired, Point.po_expire_date: po_expire_date}, synchronize_session=False)
+            db.execute(
+                update(Point)
+                .values(
+                    po_use_point=0,
+                    po_expired=po_expired,
+                    po_expire_date=po_expire_date
+                )
+                .where(Point.po_id == row.po_id)
+            )
             db.commit()
             point1 = point1 - point2
+
+    db.close()
 
 
 def domain_mail_host(request: Request, is_at: bool = True):

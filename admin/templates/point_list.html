@@ -1,145 +1,140 @@
 {% extends "base.html" %}
+{% import "/sideview/macros.html" as sideview %}
 
-{% block title %}
-    포인트관리
-{% endblock %}
+{% block title %}포인트관리{% endblock title %}
+{% block subtitle %}포인트관리{% endblock subtitle %}
 
 {% block content %}
-
-<h1 id="container_title">포인트관리</h1>
-<div class="container_wr">
-
 <div class="local_ov01 local_ov">
-<a href="/admin/point_list" class="ov_listall">전체목록</a>    
-<span class="btn_ov01"><span class="ov_txt">전체 </span><span class="ov_num"> {{ total_count }} 건 </span></span>
-&nbsp;<span class="btn_ov01"><span class="ov_txt">전체 합계</span><span class="ov_num">{{ "{:,}".format(sum_point) }}점 </span></span></div>
+    <a href="/admin/point_list" class="ov_listall">전체목록</a>    
+    <span class="btn_ov01"><span class="ov_txt">전체 </span><span class="ov_num"> {{ total_count|number_format }} 건 </span></span>
+    &nbsp;
+    <span class="btn_ov01">
+    {% if search_member %}
+        <span class="ov_txt"> {{ search_member.mb_id }} 님 포인트 합계</span>
+        <span class="ov_num">{{ search_member.mb_point|number_format }}점</span>
+    {% else %}
+        <span class="ov_txt">전체 합계</span>
+        <span class="ov_num">{{ sum_point|number_format }}점</span>
+    {% endif %}
+    </span>
+</div>
 
 <form name="fsearch" id="fsearch" class="local_sch01 local_sch" method="get">
-<label for="sfl" class="sound_only">검색대상</label>
-<select name="sfl" id="sfl">
-<option value="mb_id" {{ get_selected('mb_id', request.state.sfl if request.state.sfl else '' )}}>회원아이디</option>
-<option value="po_content" {{ get_selected('po_content', request.state.sfl if request.state.sfl else '' )}}>내용</option>
-</select>
-<label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
-<input type="text" name="stx" value="{{ request.state.stx if request.state.stx else '' }}" id="stx" required class="required frm_input">
-<input type="submit" class="btn_submit" value="검색">
+    <label for="sfl" class="sound_only">검색대상</label>
+    <select name="sfl" id="sfl">
+    <option value="mb_id" {{ get_selected('mb_id', request.state.sfl if request.state.sfl else '' ) }}>회원아이디</option>
+    <option value="po_content" {{ get_selected('po_content', request.state.sfl if request.state.sfl else '' ) }}>내용</option>
+    </select>
+    <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
+    <input type="text" name="stx" value="{{ request.state.stx if request.state.stx else '' }}" id="stx" required class="required frm_input">
+    <input type="submit" class="btn_submit" value="검색">
 </form>
 
-<form name="fpointlist" id="fpointlist" method="post" action="/admin/point_list_delete" onsubmit="return fpointlist_submit(this);">
-<input type="hidden" name="sst" value="{{ request.state.sst }}">
-<input type="hidden" name="sod" value="{{ request.state.sod }}">
-<input type="hidden" name="sfl" value="{{ request.state.sfl }}">
-<input type="hidden" name="stx" value="{{ request.state.stx }}">
-<input type="hidden" name="page" value="{{ request.state.page }}">
-<input type="hidden" name="token" value="">
+<form name="fpointlist" id="fpointlist" method="post" action="/admin/point_list_delete?{{ request.query_params }}" onsubmit="return fpointlist_submit(this);">
+    <input type="hidden" name="sst" value="{{ request.state.sst }}">
+    <input type="hidden" name="sod" value="{{ request.state.sod }}">
+    <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
+    <input type="hidden" name="stx" value="{{ request.state.stx }}">
+    <input type="hidden" name="page" value="{{ request.state.page }}">
+    <input type="hidden" name="token" value="">
 
-<div class="tbl_head01 tbl_wrap">
-<table>
-    <caption>포인트관리 목록</caption>
-    <thead>
-        <tr>
-            <th scope="col">
-                <label for="chkall" class="sound_only">포인트 내역 전체</label>
-                <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
-            </th>
-            <th scope="col">{{ subject_sort_link(request, 'mb_id')|safe }}회원아이디</a></th>
-            <th scope="col">이름</th>
-            <th scope="col">닉네임</th>
-            <th scope="col">포인트 내용</th>
-            <th scope="col">{{ subject_sort_link(request, 'po_point')|safe }}포인트</a></th>
-            <th scope="col">{{ subject_sort_link(request, 'po_datetime')|safe }}일시</a></th>
-            <th scope="col">{{ subject_sort_link(request, 'po_expire_date')|safe }}만료일</a></th>
-            <th scope="col">포인트합</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for point in points %}
-        {% set background_color = 'bg0' if loop.index0 % 2 == 0 else 'bg1' %}
-        <tr class="{{ background_color }} }}">
-            <td class="td_chk">
-                <input type="hidden" name="mb_id[]" value="admin" id="mb_id_{{ loop.index0 }}">
-                <input type="hidden" name="po_id[]" value="{{ point.po_id }}" id="po_id_{{ loop.index0 }}">
-                <label for="chk_{{ loop.index0 }}" class="sound_only">{{ point.po_content }}</label>
-                <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
-            </td>
-            <td class="td_left"><a href="?sfl=mb_id&stx={{ point.mb_id }}">{{ point.mb_id }}</a></td>
-            <td class="td_left">{{ point.mb_name }}</td>
-            <td class="td_left sv_use">{{ point.mb_nick }}</td>
-            <td class="td_left">{{ point.po_content }}</td>
-            <td class="td_num td_pt">{{ "{:,}".format(point.po_point) }}</td>
-            <td class="td_datetime">{{ point.po_datetime }}</td>
-            <td class="td_datetime2 {{ 'txt_expired' if point.po_expired else '' }}">
-                {% if point.po_expired %}
-                    만료{{ point.po_expire_date }}
-                {% else %}
-                    {{ '&nbsp;'|safe if point.po_expire_date|string() == '9999-12-31' else point.po_expire_date }}
-                {% endif %}
-            </td>
-            <td class="td_num td_pt">{{ "{:,}".format(point.po_mb_point) }}</td>
-        </tr>
-        {% endfor %}
-        {% if points|length == 0 %}
-        <tr><td colspan="9" class="empty_table">자료가 없습니다.</td></tr>
-        {% endif %}
-    </tbody>
-</table>
-</div>
+    <div class="tbl_head01 tbl_wrap">
+        <table>
+            <caption>포인트관리 목록</caption>
+            <thead>
+                <tr>
+                    <th scope="col">
+                        <label for="chkall" class="sound_only">포인트 내역 전체</label>
+                        <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
+                    </th>
+                    <th scope="col">{{ subject_sort_link(request, 'mb_id')|safe }}회원아이디</a></th>
+                    <th scope="col">이름</th>
+                    <th scope="col">닉네임</th>
+                    <th scope="col">포인트 내용</th>
+                    <th scope="col">{{ subject_sort_link(request, 'po_point')|safe }}포인트</a></th>
+                    <th scope="col">{{ subject_sort_link(request, 'po_datetime')|safe }}일시</a></th>
+                    <th scope="col">{{ subject_sort_link(request, 'po_expire_date')|safe }}만료일</a></th>
+                    <th scope="col">합계</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for point in points %}
+                {% set member=point.member %}
+                <tr class="bg{{ loop.cycle('0', '1') }}">
+                    <td class="td_chk">
+                        <input type="hidden" name="mb_id[]" value="admin" id="mb_id_{{ loop.index0 }}">
+                        <input type="hidden" name="po_id[]" value="{{ point.po_id }}" id="po_id_{{ loop.index0 }}">
+                        <label for="chk_{{ loop.index0 }}" class="sound_only">{{ point.po_content }}</label>
+                        <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
+                    </td>
+                    <td class="td_left"><a href="?sfl=mb_id&stx={{ point.mb_id }}">{{ point.mb_id }}</a></td>
+                    <td class="td_left">{{ member.mb_name }}</td>
+                    <td class="td_left sv_use">
+                        {{ sideview.get(request, member.mb_id, member.mb_name, member.wr_email, member.wr_homepage)|safe }}
+                    </td>
+                    <td class="td_left">{{ point.po_content }}</td>
+                    <td class="td_num td_pt">{{ point.po_point|number_format }}</td>
+                    <td class="td_datetime">{{ point.po_datetime }}</td>
+                    <td class="td_datetime2 {{ 'txt_expired' if point.po_expired else '' }}">
+                        {% if point.po_expired %}
+                            만료{{ point.po_expire_date }}
+                        {% else %}
+                            {{ '&nbsp;'|safe if point.po_expire_date|string() == '9999-12-31' else point.po_expire_date }}
+                        {% endif %}
+                    </td>
+                    <td class="td_num td_pt">{{ point.po_mb_point|number_format }}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="9" class="empty_table">자료가 없습니다.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-<div class="btn_fixed_top">
-<input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn btn_02">
-</div>
-
+    <div class="btn_fixed_top">
+        <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn btn_02">
+    </div>
 </form>
 
 {{ paging|safe }}
 
 <section id="point_mng">
-<h2 class="h2_frm">개별회원 포인트 증감 설정</h2>
-
-<form name="fpointlist2" method="post" id="fpointlist2" action="/admin/point_update" autocomplete="off" onsubmit="return fpoint_submit(this);">
-<input type="hidden" name="sst" value="{{ request.state.sst }}">
-<input type="hidden" name="sod" value="{{ request.state.sod }}">
-<input type="hidden" name="sfl" value="{{ request.state.sfl }}">
-<input type="hidden" name="stx" value="{{ request.state.stx }}">
-<input type="hidden" name="page" value="{{ request.state.page }}">
-<input type="hidden" name="token" value="">
-    
-<div class="tbl_frm01 tbl_wrap">
-    <table>
-        <colgroup>
-            <col class="grid_4">
-            <col>
-        </colgroup>
-        <tbody>
-            <tr>
-                <th scope="row"><label for="mb_id">회원아이디<strong class="sound_only">필수</strong></label></th>
-                <td><input type="text" name="mb_id" value="{{ request.state.stx if request.state.sfl == 'mb_id' else '' }}" id="mb_id" class="required frm_input" required></td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="po_content">포인트 내용<strong class="sound_only">필수</strong></label></th>
-                <td><input type="text" name="po_content" id="po_content" required class="required frm_input" size="80"></td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="po_point">포인트<strong class="sound_only">필수</strong></label></th>
-                <td><input type="text" name="po_point" id="po_point" required class="required frm_input" pattern="^[0-9]{1,7}$" title="1~7자리 이하로 숫자만 입력하세요."></td>
-            </tr>
-
-            {% if config.cf_point_term > 0 %}
-                <tr>
-                    <th scope="row"><label for="po_expire_term">포인트 유효기간</label></th>
-                    <td><input type="text" name="po_expire_term" value="{{ config.cf_point_term }}" id="po_expire_term" class="frm_input" size="5"> 일</td>
-                </tr>
-            {% endif %}
-        </tbody>
-    </table>
-</div>
-
-<div class="btn_confirm01 btn_confirm">
-    <input type="submit" value="확인" class="btn_submit btn">
-</div>
-
-</form>
-
+    <h2 class="h2_frm">개별회원 포인트 증감 설정</h2>
+    <form name="fpointlist2" method="post" id="fpointlist2" action="/admin/point_update?{{ request.query_params }}" autocomplete="off" onsubmit="return fpoint_submit(this);">
+        <input type="hidden" name="token" value="">
+        <div class="tbl_frm01 tbl_wrap">
+            <table>
+                <colgroup>
+                    <col class="grid_4">
+                    <col>
+                </colgroup>
+                <tbody>
+                    <tr>
+                        <th scope="row"><label for="mb_id">회원아이디<strong class="sound_only">필수</strong></label></th>
+                        <td><input type="text" name="mb_id" value="{{ request.state.stx if request.state.sfl == 'mb_id' else '' }}" id="mb_id" class="required frm_input" required></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="po_content">포인트 내용<strong class="sound_only">필수</strong></label></th>
+                        <td><input type="text" name="po_content" id="po_content" required class="required frm_input" size="80"></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="po_point">포인트<strong class="sound_only">필수</strong></label></th>
+                        <td><input type="text" name="po_point" id="po_point" required class="required frm_input" pattern="^(-?)[0-9]{1,7}$" title="1~7자리 이하로 숫자만 입력하세요."></td>
+                    </tr>
+                    {% if config.cf_point_term > 0 %}
+                        <tr>
+                            <th scope="row"><label for="po_expire_term">포인트 유효기간</label></th>
+                            <td><input type="text" name="po_expire_term" value="{{ config.cf_point_term }}" id="po_expire_term" class="frm_input" size="5"> 일</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        <div class="btn_confirm01 btn_confirm">
+            <input type="submit" value="확인" class="btn_submit btn">
+        </div>
+    </form>
 </section>
 
 <script>
