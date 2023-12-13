@@ -1,30 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}인기검색어 순위{% endblock title %}
-{% block subtitle %}인기검색어 순위{% endblock subtitle %}
 {% block head %}
     {% include "datepicker.html" %}
 {% endblock head %}
 
-{% block content %}
-    <script>
-        $(function() {
-            $("#fr_date, #to_date").datepicker({
-                changeMonth: true,
-                changeYear: true,
-                dateFormat: "yy-mm-dd",
-                showButtonPanel: true,
-                yearRange: "c-99:c+99",
-                maxDate: "+0d"
-            });
-        });
-    </script>
-    
+{% block title %}인기검색어 순위{% endblock title %}
+{% block subtitle %}인기검색어 순위{% endblock subtitle %}
+
+{% block content %}   
     <div class="local_ov01 local_ov">
         <a href="{{ url_for('popular_rank') }}" class="ov_listall">전체목록</a>
         <span class="btn_ov01">
             <span class="ov_txt">건수</span>
-            <span class="ov_num">&nbsp;{{ total_count }}개</span>
+            <span class="ov_num">&nbsp;{{ total_count|number_format }}개</span>
         </span>
     </div>
     
@@ -52,20 +40,32 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for rank in ranks %}
-                        <tr>
-                            <td class="td_num">{{ rank.ranking }}</td>
-                            <td class="td_left">{{ rank.pp_word }}</td>
-                            <td class="td_num">{{ rank.search_count }}</td>
-                        </tr>
-                    {% else %}
-                        <tr><td colspan="3" class="empty_table">자료가 없습니다.</td></tr>
-                    {% endfor %}
+                {% for rank in ranks %}
+                    <tr>
+                        <td class="td_num">{{ rank.ranking }}</td>
+                        <td class="td_left">{{ rank.pp_word }}</td>
+                        <td class="td_num">{{ rank.search_count|number_format }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="3" class="empty_table">자료가 없습니다.</td></tr>
+                {% endfor %}
                 </tbody>
             </table>
         </div>
     </form>
 
     {{ paging|safe }}
-   
+
+    <script>
+        $(function() {
+            $("#fr_date, #to_date").datepicker({
+                changeMonth: true,
+                changeYear: true,
+                dateFormat: "yy-mm-dd",
+                showButtonPanel: true,
+                yearRange: "c-0:c+99",
+                maxDate: "+0d"
+            });
+        });
+    </script>
 {% endblock content %}
