@@ -99,6 +99,8 @@ async def post_register_form(request: Request, db: db_session,
     if not agree2:
         return RedirectResponse(url="/bbs/register", status_code=302)
 
+    config = request.state.config
+
     # 유효성 검사
     exists_member = db.query(Member.mb_id, Member.mb_email).filter(Member.mb_id == mb_id).first()
     if exists_member:
