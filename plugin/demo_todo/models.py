@@ -1,6 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, Text
 from sqlalchemy.ext.declarative import declarative_base
-from pydantic import BaseModel
 from datetime import datetime
 
 from common.database import DB_TABLE_PREFIX

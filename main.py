@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import TypeAdapter
 
 from lib.plugin.service import register_statics, register_plugin_admin_menu, get_plugin_state_change_time, \
-    read_plugin_state, import_plugin_by_states, import_plugin_router, delete_router_by_tagname, cache_plugin_state, \
+    read_plugin_state, import_plugin_by_states, delete_router_by_tagname, cache_plugin_state, \
     cache_plugin_menu, register_plugin, unregister_plugin
 from common.database import db_session
 from starlette.middleware.sessions import SessionMiddleware
