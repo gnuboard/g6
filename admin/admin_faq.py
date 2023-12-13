@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, File, Form, Path, Request, UploadFile
 from fastapi.responses import JSONResponse, RedirectResponse
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from common.database import db_session
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
@@ -28,7 +29,7 @@ async def faq_master_list(request: Request, db: db_session):
     model = FaqMaster
     request.session["menu_key"] = FAQ_MENU_KEY
 
-    faq_masters = db.query(model).order_by(model.fm_order).all()
+    faq_masters = db.scalars(select(model).order_by(model.fm_order)).all()
 
     return templates.TemplateResponse(
         "faq_master_list.html", {"request": request, "faq_masters": faq_masters}
@@ -92,8 +93,7 @@ async def faq_master_update_form(fm_id: int, request: Request, db: db_session):
     """FAQ관리 수정 폼"""
     request.session["menu_key"] = FAQ_MENU_KEY
 
-    faq_master = db.query(FaqMaster).filter(FaqMaster.fm_id == fm_id).first()
-
+    faq_master = db.scalar(select(FaqMaster).where(FaqMaster.fm_id == fm_id))
     return templates.TemplateResponse(
         "faq_master_form.html", {"request": request, "faq_master": faq_master}
     )
@@ -116,7 +116,7 @@ async def faq_master_update(
         fm_timg_del: int = Form(None),
     ):
     """FAQ관리 수정 처리"""
-    faq_master = db.query(FaqMaster).filter(FaqMaster.fm_id == fm_id).first()
+    faq_master = db.scalar(select(FaqMaster).where(FaqMaster.fm_id == fm_id))
 
     faq_master.fm_subject = fm_subject
     faq_master.fm_head_html = fm_head_html
@@ -163,7 +163,7 @@ async def faq_master_delete(
     if not check_token(request, token):
         return JSONResponse(status_code=403, content={"message": "토큰이 유효하지 않습니다."})
     
-    faq_master = db.query(FaqMaster).filter(FaqMaster.fm_id == fm_id).first()
+    faq_master = db.scalar(select(FaqMaster).where(FaqMaster.fm_id == fm_id))
     db.delete(faq_master)
     db.commit()
 
@@ -177,7 +177,7 @@ async def faq_list(fm_id: int, request: Request, db: db_session):
     """
     request.session["menu_key"] = FAQ_MENU_KEY
 
-    faq_master = db.query(FaqMaster).filter(FaqMaster.fm_id == fm_id).first()
+    faq_master = db.scalar(select(FaqMaster).where(FaqMaster.fm_id == fm_id))
     faqs = sorted(faq_master.faqs, key=lambda x: x.fa_order)
 
     return templates.TemplateResponse(
@@ -190,7 +190,7 @@ async def faq_add_form(fm_id: int, request: Request, db: db_session):
     """FAQ항목 등록 폼"""
     request.session["menu_key"] = FAQ_MENU_KEY
 
-    faq_master = db.query(FaqMaster).filter(FaqMaster.fm_id == fm_id).first()
+    faq_master = db.scalar(select(FaqMaster).where(FaqMaster.fm_id == fm_id))
 
     return templates.TemplateResponse(
         "faq_form.html", {"request": request, "faq_master": faq_master, "faq": None}
@@ -224,7 +224,7 @@ async def faq_update_form(fa_id: int, request: Request, db: db_session):
     """FAQ항목 수정 폼"""
     request.session["menu_key"] = FAQ_MENU_KEY
 
-    faq = db.query(Faq).filter(Faq.fa_id == fa_id).first()
+    faq = db.scalar(select(Faq).where(Faq.fa_id == fa_id))
     faq_master = faq.faq_master
 
     return templates.TemplateResponse(
@@ -243,7 +243,7 @@ async def faq_update(
     fa_content: str = Form(...),
 ):
     """FAQ항목 수정 처리"""
-    faq = db.query(Faq).filter(Faq.fa_id == fa_id).first()
+    faq = db.scalar(select(Faq).where(Faq.fa_id == fa_id))
     faq.fa_subject = fa_subject
     faq.fa_content = fa_content
     faq.fa_order = fa_order
@@ -265,7 +265,7 @@ async def faq_delete(
     if not check_token(request, token):
         return JSONResponse(status_code=403, content={"message": "토큰이 유효하지 않습니다."})
 
-    faq = db.query(Faq).filter(Faq.fa_id == fa_id).first()
+    faq = db.scalar(select(Faq).where(Faq.fa_id == fa_id))
     db.delete(faq)
     db.commit()
 
