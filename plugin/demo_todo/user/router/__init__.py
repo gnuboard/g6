@@ -1,5 +1,5 @@
 from main import app
-from .show_router import router
+from .user_router import router
 from ...plugin_info import module_name, router_prefix
 
 
