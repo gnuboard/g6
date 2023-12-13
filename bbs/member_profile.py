@@ -110,6 +110,8 @@ async def member_profile_save(request: Request, db: db_session,
     if not exists_member:
         raise AlertException(status_code=403, detail="회원정보가 없습니다.")
 
+    config = request.state.config
+
     # 한국 우편번호 (postalcode)
     if mb_zip:
         member_form.mb_zip1 = mb_zip[:3]

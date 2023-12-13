@@ -1423,7 +1423,7 @@ def check_profile_open(open_date: Optional[date], config) -> bool:
     Returns:
         bool: 프로필 공개 가능 여부
     """
-    if not open_date:
+    if not open_date or is_none_datetime(open_date):
         return True
 
     else:
@@ -1440,7 +1440,6 @@ def get_next_profile_openable_date(open_date: Optional[date], config):
         datetime: 다음 프로필 공개 가능일
     """
     cf_open_modify = config.cf_open_modify
-    cf_open_modify = 3
     if cf_open_modify == 0:
         return ""
 
@@ -1448,9 +1447,7 @@ def get_next_profile_openable_date(open_date: Optional[date], config):
         calculated_date = datetime.strptime(open_date.strftime("%Y-%m-%d"), "%Y-%m-%d") + timedelta(days=cf_open_modify)
     else:
         calculated_date = datetime.now() + timedelta(days=cf_open_modify)
-    print('--------------------ewr')
-    print(calculated_date)
-    
+
     return calculated_date.strftime("%Y-%m-%d")
 
 
