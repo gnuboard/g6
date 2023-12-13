@@ -4,9 +4,9 @@ from fastapi import FastAPI, Depends, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import TypeAdapter
 
-from lib.plugin.service import register_statics, import_plugin_admin, get_plugin_state_change_time, \
+from lib.plugin.service import register_statics, register_plugin_admin_menu, get_plugin_state_change_time, \
     read_plugin_state, import_plugin_by_states, import_plugin_router, delete_router_by_tagname, cache_plugin_state, \
-    cache_plugin_menu
+    cache_plugin_menu, register_plugin, unregister_plugin
 from common.database import db_session
 from starlette.middleware.sessions import SessionMiddleware
 from lib.common import *
@@ -48,6 +48,7 @@ from bbs.social import router as social_router
 from bbs.password import router as password_router
 from bbs.search import router as search_router
 from lib.editor.ckeditor4 import router as editor_router
+
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
 app.include_router(login_router, prefix="/bbs", tags=["login"])
@@ -78,11 +79,13 @@ register_theme_statics(app)
 # 활성화된 플러그인만 로딩
 plugin_states = read_plugin_state()
 import_plugin_by_states(plugin_states)
+# import_plugin_router(plugin_states)
+register_plugin(plugin_states)
 register_statics(app, plugin_states)
-import_plugin_router(plugin_states)
 
 cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
-cache_plugin_menu.__setitem__('admin_menus', import_plugin_admin(plugin_states))
+cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(plugin_states))
+
 # 하위경로를 먼저 등록하고 상위경로를 등록
 # plugin/plugin_name/static 폴더 이후 등록
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -98,11 +101,9 @@ class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
 app.add_middleware(HTTPSRedirectMiddleware)
 
 
-
 # 요청마다 항상 실행되는 미들웨어
 @app.middleware("http")
 async def main_middleware(request: Request, call_next):
-
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 시작    
     # 요청의 경로를 얻습니다.
     path = request.url.path
@@ -151,12 +152,13 @@ async def main_middleware(request: Request, call_next):
         # 플러그인 상태변경시 캐시를 업데이트.
         # 업데이트 이후 관리자 메뉴, 라우터 재등록/삭제
         new_plugin_state = read_plugin_state()
-        import_plugin_router(new_plugin_state)
+        register_plugin(new_plugin_state)
+        unregister_plugin(new_plugin_state)
         for plugin in new_plugin_state:
             if not plugin.is_enable:
                 delete_router_by_tagname(app, plugin.module_name)
 
-        cache_plugin_menu.__setitem__('admin_menus', import_plugin_admin(new_plugin_state))
+        cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(new_plugin_state))
         cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
 
     # 로그인

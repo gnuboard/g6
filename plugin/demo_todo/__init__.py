@@ -5,9 +5,9 @@ __all__ = [
     "user",
 ]
 
+
 from .admin import register_admin_menu, register_admin_router
 from .user.router import register_user_router
-
 
 def register_plugin():
     """플러그인 활성화시 실행
