@@ -3,7 +3,7 @@ import bleach
 
 from datetime import datetime, timedelta
 from fastapi import Request
-from sqlalchemy import and_, distinct, or_, literal
+from sqlalchemy import and_, distinct, or_, literal, select
 from sqlalchemy.orm import Query as SqlQuery
 
 from lib.common import *
@@ -1078,8 +1078,8 @@ def delete_write(request: Request, bo_table: str, origin_write: WriteBaseModel) 
     member_id = getattr(member, "mb_id", None)
     member_level = get_member_level(request)
     member_admin_type = get_admin_type(request, member_id, group=group, board=board)
-
-    write_member = db.get(Member, origin_write.mb_id)
+    write_mbember_mb_no = db.scalar(select(Member.mb_no).where(Member.mb_id==origin_write.mb_id))
+    write_member = db.get(Member, write_mbember_mb_no)
     write_member_level = getattr(write_member, "mb_level", 1)
 
     # 권한 체크
