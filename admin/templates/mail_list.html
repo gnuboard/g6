@@ -1,15 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}회원메일발송{% endblock %}
-{% block subtitle %}회원메일발송{% endblock %}
-
+{% block title %}회원메일발송{% endblock title %}
+{% block subtitle %}회원메일발송{% endblock subtitle %}
 
 {% block content %}
-
 <div class="local_desc01 local_desc">
     <p>
         <b>테스트</b>는 등록된 최고관리자의 이메일로 테스트 메일을 발송합니다.<br>
-        현재 등록된 메일은 총 {{ total_count }}건입니다.<br>
+        현재 등록된 메일은 총 {{ total_count|number_format }}건입니다.<br>
         <strong>주의) 수신자가 동의하지 않은 대량 메일 발송에는 적합하지 않습니다. 수십건 단위로 발송해 주십시오.</strong>
     </p>
 </div>
@@ -32,7 +30,7 @@
             </thead>
             <tbody>
             {% for mail in mails %}
-                <tr class="{{ 'bg0' if loop.index0 % 2 == 0 else 'bg1' }}">
+                <tr class="bg{{ loop.cycle('0', '1') }}">
                     <td class="td_chk">
                         <label for="chk_{{ loop.index0 }}" class="sound_only">{{ mail.ma_subject }} 메일</label>
                         <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
@@ -45,13 +43,11 @@
                     <td class="td_send"><a href="/admin/mail_select_form/{{ mail.ma_id }}">보내기</a></td>
                     <td class="td_mng"><a href="/admin/mail_preview/{{ mail.ma_id }}" target="_blank" class="btn btn_03">미리보기</a></a></td>
                 </tr>
-            {% endfor %}
-
-            {% if not mails %}
+            {% else %}
                 <tr>
                     <td colspan="7" class="empty_table">자료가 없습니다.</td>
                 </tr>
-            {% endif %}
+            {% endfor %}
             </tbody>
         </table>
     </div>
@@ -77,10 +73,9 @@
                 return false;
             }
             return true;
-        } 
-        
+        }
+
         return false;
     }
 </script>
-
-{% endblock %}
+{% endblock content %}

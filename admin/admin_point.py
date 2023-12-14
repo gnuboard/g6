@@ -1,163 +1,135 @@
-import math
-from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy import asc, desc
-from sqlalchemy.orm import Session
-from common.database import db_session, engine
-import common.models as models 
+from fastapi import APIRouter, Depends, Request, Form
+from fastapi.responses import RedirectResponse
+from typing import List
+
+from common.database import db_session
+from common.models import Point, Member
 from lib.common import *
-from typing import List, Optional
-from common.formclass import BoardForm
-from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 
 router = APIRouter()
 templates = AdminTemplates()
-templates.env.globals['getattr'] = getattr
-templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
-templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
-templates.env.globals['get_selected'] = get_selected
-templates.env.globals['option_selected'] = option_selected
-templates.env.globals['get_skin_select'] = get_skin_select
-templates.env.globals['get_group_select'] = get_group_select
-templates.env.globals['get_editor_select'] = get_editor_select
-templates.env.globals['get_member_level_select'] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
-templates.env.globals['get_admin_menus'] = get_admin_menus
-templates.env.globals["format"] = format
+
+POINT_MENU_KEY = "200200"
 
 
 @router.get("/point_list")
-async def point_list(request: Request, db: db_session, search_params: dict = Depends(common_search_query_params)):
-        # sst: str = Query(default=""), # sort field (정렬 필드)
-        # sod: str = Query(default=""), # search order (검색 오름, 내림차순)
-        # sfl: str = Query(default=""), # search field (검색 필드)
-        # stx: str = Query(default=""), # search text (검색어)
-        # current_page: int = Query(default=1, alias="page"), # 페이지
-        # ):
-    '''
+async def point_list(
+    request: Request,
+    db: db_session,
+    search_params: dict = Depends(common_search_query_params)
+):
+    """
     포인트 목록
-    '''
-    request.session["menu_key"] = "200200"
-    
-    # # 초기 쿼리 설정
-    # query = db.query(models.Board)
-    # records_per_page = request.state.config.cf_page_rows
+    """
+    request.session["menu_key"] = POINT_MENU_KEY
 
-    # # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
-    # if sst is not None and sst != "":
-    #     if sod == "desc":
-    #         query = query.order_by(desc(getattr(models.Board, sst)))
-    #     else:
-    #         query = query.order_by(asc(getattr(models.Board, sst)))
-
-    # # sfl과 stx가 제공되면, 해당 열과 값으로 추가 필터링을 합니다.
-    # if sfl is not None and stx is not None:
-    #     if hasattr(models.Board, sfl):  # sfl이 models.Board에 존재하는지 확인
-    #         if sfl in ["gr_id", "bo_table"]:
-    #             query = query.filter(getattr(models.Board, sfl) == stx)
-    #         else:
-    #             query = query.filter(getattr(models.Board, sfl).like(f"%{stx}%"))
-            
-    # # 페이지 번호에 따른 offset 계산
-    # offset = (current_page - 1) * records_per_page
-
-    # # 최종 쿼리 결과를 가져옵니다.
-    # boards = query.offset(offset).limit(records_per_page).all()
-    # # 전체 레코드 개수 계산
-    # total_records = query.count()
-    # global config
-   
     result = select_query(
-                request,
-                models.Point, 
-                search_params, 
-                same_search_fields = ["mb_id"], 
-                default_sst = "po_id",
-                default_sod = "desc",
-            )
-    
-    for row in result['rows']:
-        mb = db.query(Member.mb_name, Member.mb_nick).filter_by(mb_id=row.mb_id).first()
-        if mb:
-            row.mb_name = mb.mb_name
-            row.mb_nick = mb.mb_nick
-    
-    sum_point = db.query(func.sum(Point.po_point)).scalar()
-   
+        request,
+        Point,
+        search_params,
+        same_search_fields=["mb_id"],
+        default_sst="po_id",
+        default_sod="desc",
+    )
+
+    # 회원아이디 검색시 회원정보 조회
+    search_member = None
+    if search_params['sfl'] == "mb_id" and search_params['stx']:
+        search_member = db.scalar(
+            select(Member)
+            .where(Member.mb_id == search_params['stx'])
+        )
+    # 전체 포인트 합계
+    sum_point = db.scalar(func.sum(Point.po_point))
+
     context = {
         "request": request,
         "config": request.state.config,
         "points": result['rows'],
         "total_count": result['total_count'],
-        "sum_point": sum_point,
+        "search_member": search_member,
+        "sum_point": int(sum_point),
         "paging": get_paging(request, search_params['current_page'], result['total_count']),
     }
     return templates.TemplateResponse("point_list.html", context)
 
 
 @router.post("/point_update", dependencies=[Depends(validate_token)])
-async def point_update(request: Request, db: db_session,
-        search_params: dict = Depends(common_search_query_params),
-        mb_id: Optional[str] = Form(default=""),
-        po_content: Optional[str] = Form(default=""),
-        po_point: Optional[str] = Form(default="0"),
-        po_expire_term: Optional[int] = Form(None),
-        ):    
+async def point_update(
+    request: Request,
+    db: db_session,
+    mb_id: str = Form(default=""),
+    po_content: str = Form(default=""),
+    po_point: str = Form(default="0"),
+    po_expire_term: int = Form(default=0),
+):
+    """
+    포인트 지급/차감
+    """
     try:
-        # po_point 값을 정수로 변환합니다.
         po_point = int(po_point)
     except ValueError:
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": [f"{po_point} : 포인트를 숫자(정수)로 입력하세요."]})
-    
-    query_string = generate_query_string(request)
-    
-    exist_member = db.query(Member).filter_by(mb_id=mb_id).first()
-    if not exist_member:
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": [f"{mb_id} : 회원이 존재하지 않습니다."], "goto_url": f"/admin/point_list?{query_string}"})
-    
-    if (po_point < 0) and ((po_point * -1) > exist_member.mb_point): 
-        return templates.TemplateResponse("alert.html", {"request": request, "errors": [f"{mb_id} : 포인트를 깍는 경우 현재 포인트보다 작으면 안됩니다."], "goto_url": f"/admin/point_list?{query_string}"})
-    
-    rel_action = exist_member.mb_id + '-' + str(uuid.uuid4())
-    expire = po_expire_term if po_expire_term else 0
-    
-    insert_point(request, mb_id, po_point, po_content, "@passive", mb_id, rel_action, expire)
+        raise AlertException(f"{po_point} : 포인트를 숫자(정수)로 입력하세요.", 400)
 
-    return RedirectResponse(f"/admin/point_list?{query_string}", status_code=303)
+    exist_member = db.scalar(select(Member).filter_by(mb_id=mb_id))
+    if not exist_member:
+        raise AlertException(f"{mb_id} : 회원이 존재하지 않습니다.", 400)
+
+    if (po_point < 0) and ((po_point * -1) > exist_member.mb_point):
+        raise AlertException(f"{mb_id} : 포인트를 깍는 경우 현재 포인트보다 작으면 안됩니다.", 400)
+
+    # 포인트 내역 저장
+    rel_action = exist_member.mb_id + '-' + str(uuid.uuid4())
+    insert_point(request, mb_id, po_point, po_content, "@passive", mb_id, rel_action, po_expire_term)
+
+    return RedirectResponse(f"/admin/point_list?{request.query_params}", status_code=303)
 
 
 @router.post("/point_list_delete", dependencies=[Depends(validate_token)])
-async def point_list_delete(request: Request, db: db_session,
-        search_params: dict = Depends(common_search_query_params),
-        checks: Optional[List[int]] = Form(None, alias="chk[]"),
-        po_id: Optional[List[int]] = Form(None, alias="po_id[]"),
-        ):
-    query_string = generate_query_string(request)
-
+async def point_list_delete(
+    request: Request,
+    db: db_session,
+    checks: List[int] = Form(None, alias="chk[]"),
+    po_id: List[int] = Form(None, alias="po_id[]"),
+):
+    """
+    포인트 내역 일괄 삭제
+    """
     for i in checks:
-        point = db.query(models.Point).filter(models.Point.po_id == po_id[i]).first()
-        if point:
-            if point.po_point < 0:
-                abs_po_point = abs(point.po_point)
-            
-                if point.po_rel_table == "@expire":
-                    delete_expire_point(request, point.mb_id, abs_po_point)
-                else:
-                    delete_use_point(request, point.mb_id, abs_po_point)
+        point = db.get(Point, po_id[i])
+        if not point:
+            continue
+
+        if point.po_point < 0:
+            abs_po_point = abs(point.po_point)
+
+            if point.po_rel_table == "@expire":
+                delete_expire_point(request, point.mb_id, abs_po_point)
+            else:
+                delete_use_point(request, point.mb_id, abs_po_point)
         elif point.po_use_point > 0:
             insert_use_point(request, point.mb_id, point.po_use_point, point.po_id)
-                
+            
         # 포인트 내역 삭제
         db.delete(point)
         db.commit()
-        
+
         # po_mb_point에 반영
-        db.query(Point).filter(Point.mb_id == point.mb_id, Point.po_id > point.po_id).update({Point.po_mb_point: Point.po_mb_point - point.po_point}, synchronize_session=False)
+        db.execute(
+            update(Point)
+            .values(po_mb_point=Point.po_mb_point - point.po_point)
+            .where(Point.mb_id == point.mb_id, Point.po_id > point.po_id)
+        )
         db.commit()
 
-        # 포인트 UPDATE        
+        # 포인트 UPDATE
         sum_point = get_point_sum(request, point.mb_id)
-        db.query(Member).filter(Member.mb_id == point.mb_id).update({Member.mb_point: sum_point}, synchronize_session=False)
+        db.execute(
+            update(Member)
+            .values(mb_point=sum_point)
+            .where(Member.mb_id == point.mb_id)
+        )
         db.commit()
-        
-    return RedirectResponse(f"/admin/point_list?{query_string}", status_code=303)
+
+    return RedirectResponse(f"/admin/point_list?{request.query_params}", status_code=303)

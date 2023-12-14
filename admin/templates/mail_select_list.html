@@ -1,15 +1,9 @@
 {% extends "base.html" %}
 
-{% block head %}
-    {% include editor_path(request) + '/head.html' %}
-{% endblock %}
-
-{% block title %}메일발송 대상 회원{% endblock %}
-
-{% block subtitle %}메일발송 대상 회원{% endblock %}
+{% block title %}메일발송 대상 회원{% endblock title %}
+{% block subtitle %}메일발송 대상 회원{% endblock subtitle %}
 
 {% block content %}
-
 <form method="post" name="fmailselectlist" action="/admin/mail_select_result" onsubmit="return fmailselectlist_submit(this);">
     <input type="hidden" name="token" value="">
     <input type="hidden" name="ma_id" value="{{ ma_id }}">
@@ -26,34 +20,18 @@
                 </tr>
             </thead>
             <tbody>
-                {#<?php
-                $sql = " select mb_id, mb_name, mb_nick, mb_email, mb_datetime $sql_common $sql_where order by mb_id ";
-                $result = sql_query($sql);
-                $i = 0;
-                $ma_list = "";
-                $cr = "";
-                while ($row = sql_fetch_array($result)) {
-                    $i++;
-                    $ma_list .= $cr . $row['mb_email'] . "||" . $row['mb_id'] . "||" . get_text($row['mb_name']) . "||" . $row['mb_nick'] . "||" . $row['mb_datetime'];
-                    $cr = "\n";
-
-                    $bg = 'bg' . ($i % 2);
-                    ?>#}
-                {% set ma_list = [] %}
-                {% for member in members %}
-                    {% set _ = ma_list.append(member.mb_email + '||' + member.mb_id + '||' + member.mb_name + '||' + member.mb_nick + '||' + member.mb_datetime.strftime("%Y-%m-%d %H:%M:%S")) %}
-                    <tr class="bg{{ 0 if loop.index0 % 2 else 1 }}">
-                        <td class="td_num">{{ loop.index }}</td>
-                        <td class="td_mbid">{{ member.mb_id }}</td>
-                        <td class="td_mbname">{{ member.mb_name }}</td>
-                        <td class="td_mbname">{{ member.mb_nick }}</td>
-                        <td>{{ member.mb_email }}</td>
-                    </tr>
-                {% endfor %}
-                {% set ma_list_str = ma_list|join('\n') %}
+            {% for member in members %}
+                <tr class="bg{{ loop.cycle('0', '1') }}">
+                    <td class="td_num">{{ loop.index }}</td>
+                    <td class="td_mbid">{{ member.mb_id }}</td>
+                    <td class="td_mbname">{{ member.mb_name }}</td>
+                    <td class="td_mbname">{{ member.mb_nick }}</td>
+                    <td>{{ member.mb_email }}</td>
+                </tr>
+            {% endfor %}
         </tbody>
         </table>
-        <textarea name="ma_list" style="display:none">{{ ma_list_str }}</textarea>
+        <textarea name="ma_list" style="display:none">{{ textarea_members_str }}</textarea>
     </div>
 
     <div class="btn_confirm01 btn_confirm">
@@ -74,6 +52,4 @@ function fmailselectlist_submit(f)
     return true;
 }    
 </script>
-
-
-{% endblock %}
+{% endblock content %}

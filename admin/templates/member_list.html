@@ -1,277 +1,211 @@
 {% extends "base.html" %}
+{% import "/sideview/macros.html" as sideview %}
 
-{% block title %}
-    회원관리
-{% endblock %}
+{% block title %}회원관리{% endblock title %}
+{% block subtitle %}회원관리{% endblock subtitle %}
 
 {% block content %}
-
-<h1 id="container_title">회원관리</h1>
-<div class="container_wr">
-
     <div class="local_ov01 local_ov">
-        <a href="/admin/member_list" class="ov_listall">전체목록</a>    <span class="btn_ov01"><span class="ov_txt">총회원수 </span><span class="ov_num"> {{ total_count }}명 </span></span>
-        <a href="?sst=mb_intercept_date&sod=desc" class="btn_ov01" data-tooltip-text="차단된 순으로 정렬합니다.&#xa;전체 데이터를 출력합니다."> <span class="ov_txt">차단 </span><span class="ov_num">0명</span></a>
-        <a href="?sst=mb_leave_date&sod=desc" class="btn_ov01" data-tooltip-text="탈퇴된 순으로 정렬합니다.&#xa;전체 데이터를 출력합니다."> <span class="ov_txt">탈퇴 </span><span class="ov_num">0명</span></a>
+        <a href="/admin/member_list" class="ov_listall">전체목록</a>
+        <span class="btn_ov01">
+            <span class="ov_txt">총회원수</span>
+            <span class="ov_num">{{ total_count|number_format }}명</span>
+        </span>
+        <a href="{{ request.url.include_query_params(sst="mb_intercept_date", sod="desc") }}" class="btn_ov01" 
+            data-tooltip-text="차단된 순으로 정렬합니다.&#xa;전체 데이터를 출력합니다.">
+            <span class="ov_txt">차단</span>
+            <span class="ov_num">{{ intercept_count|number_format }}명</span>
+        </a>
+        <a href="{{ request.url.include_query_params(sst="mb_leave_date", sod="desc") }}" class="btn_ov01"
+            data-tooltip-text="탈퇴된 순으로 정렬합니다.&#xa;전체 데이터를 출력합니다.">
+            <span class="ov_txt">탈퇴</span>
+            <span class="ov_num">{{ leave_count|number_format }}명</span>
+        </a>
     </div>
 
-<form id="fsearch" name="fsearch" class="local_sch01 local_sch" method="get">
+    <form id="fsearch" name="fsearch" class="local_sch01 local_sch" method="get">
+        <label for="sfl" class="sound_only">검색대상</label>
+        <select name="sfl" id="sfl">
+            <option value="mb_id" {{ get_selected('mb_id', request.state.sfl if request.state.sfl else '' ) }}>회원아이디</option>
+            <option value="mb_nick" {{ get_selected('mb_nick', request.state.sfl if request.state.sfl else '' ) }}>닉네임</option>
+            <option value="mb_name" {{ get_selected('mb_name', request.state.sfl if request.state.sfl else '' ) }}>이름</option>
+            <option value="mb_level" {{ get_selected('mb_level', request.state.sfl if request.state.sfl else '' ) }}>권한(Level)</option>
+            <option value="mb_email" {{ get_selected('mb_email', request.state.sfl if request.state.sfl else '' ) }}>E-Mail</option>
+            <option value="mb_tel" {{ get_selected('mb_tel', request.state.sfl if request.state.sfl else '' ) }}>전화번호</option>
+            <option value="mb_hp" {{ get_selected('mb_hp', request.state.sfl if request.state.sfl else '' ) }}>휴대폰번호</option>
+            <option value="mb_point" {{ get_selected('mb_point', request.state.sfl if request.state.sfl else '' ) }}>포인트</option>
+            <option value="mb_datetime" {{ get_selected('mb_datetime', request.state.sfl if request.state.sfl else '' ) }}>가입일시</option>
+            <option value="mb_ip" {{ get_selected('mb_ip', request.state.sfl if request.state.sfl else '' ) }}>IP주소</option>
+            <option value="mb_recommend" {{ get_selected('mb_recommend', request.state.sfl if request.state.sfl else '' ) }}>추천인</option>
+        </select>
+        <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
+        <input type="text" name="stx" value="{{ request.state.stx if request.state.stx else '' }}" id="stx" required class="required frm_input">
+        <input type="submit" class="btn_submit" value="검색">
+    </form>
 
-    <label for="sfl" class="sound_only">검색대상</label>
-    <select name="sfl" id="sfl">
-        <option value="mb_id" {{ get_selected('mb_id', request.state.sfl if request.state.sfl else '' )}}>회원아이디</option>
-        <option value="mb_nick" {{ get_selected('mb_nick', request.state.sfl if request.state.sfl else '' )}}>닉네임</option>
-        <option value="mb_name" {{ get_selected('mb_name', request.state.sfl if request.state.sfl else '' )}}>이름</option>
-        <option value="mb_level" {{ get_selected('mb_level', request.state.sfl if request.state.sfl else '' )}}>권한(Level)</option>
-        <option value="mb_email" {{ get_selected('mb_email', request.state.sfl if request.state.sfl else '' )}}>E-Mail</option>
-        <option value="mb_tel" {{ get_selected('mb_tel', request.state.sfl if request.state.sfl else '' )}}>전화번호</option>
-        <option value="mb_hp" {{ get_selected('mb_hp', request.state.sfl if request.state.sfl else '' )}}>휴대폰번호</option>
-        <option value="mb_point" {{ get_selected('mb_point', request.state.sfl if request.state.sfl else '' )}}>포인트</option>
-        <option value="mb_datetime" {{ get_selected('mb_datetime', request.state.sfl if request.state.sfl else '' )}}>가입일시</option>
-        <option value="mb_ip" {{ get_selected('mb_ip', request.state.sfl if request.state.sfl else '' )}}>IP주소</option>
-        <option value="mb_recommend" {{ get_selected('mb_recommend', request.state.sfl if request.state.sfl else '' )}}>추천인</option>
-    </select>
-    <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
-    <input type="text" name="stx" value="{{ request.state.stx if request.state.stx else '' }}" id="stx" required class="required frm_input">
-    <input type="submit" class="btn_submit" value="검색">
+    <div class="local_desc01 local_desc">
+        <p>
+            회원자료 삭제 시 다른 회원이 기존 회원아이디를 사용하지 못하도록 회원아이디, 이름, 닉네임은 삭제하지 않고 영구 보관합니다.
+        </p>
+    </div>
 
-</form>
+    <form name="fmemberlist" id="fmemberlist" action="/admin/member_list_update" onsubmit="return fmemberlist_submit(this);" method="post">
+        <input type="hidden" name="sst" value="{{ request.state.sst }}">
+        <input type="hidden" name="sod" value="{{ request.state.sod }}">
+        <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
+        <input type="hidden" name="stx" value="{{ request.state.stx }}">
+        <input type="hidden" name="page" value="{{ request.state.page }}">
+        <input type="hidden" name="token" value="">
 
-<div class="local_desc01 local_desc">
-    <p>
-        회원자료 삭제 시 다른 회원이 기존 회원아이디를 사용하지 못하도록 회원아이디, 이름, 닉네임은 삭제하지 않고 영구 보관합니다.
-    </p>
-</div>
-
-
-<form name="fmemberlist" id="fmemberlist" action="/admin/member_list_update" onsubmit="return fmemberlist_submit(this);" method="post">
-    <input type="hidden" name="sst" value="{{ request.state.sst }}">
-    <input type="hidden" name="sod" value="{{ request.state.sod }}">
-    <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
-    <input type="hidden" name="stx" value="{{ request.state.stx }}">
-    <input type="hidden" name="page" value="{{ request.state.page }}">
-    <input type="hidden" name="token" value="">
-
-    <div class="tbl_head01 tbl_wrap">
-        <table>
-            <caption>회원관리 목록</caption>
-            <thead>
-                <tr>
-                    <th scope="col" id="mb_list_chk" rowspan="2">
-                        <label for="chkall" class="sound_only">회원 전체</label>
-                        <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
-                    </th>
-                    <th scope="col" id="mb_list_id" colspan="2">{{ subject_sort_link(request, 'mb_id')|safe }}아이디</a></th>
-                    <th scope="col" id="mb_list_auth">상태</th>
-                    <th scope="col" id="mb_list_mailc">{{ subject_sort_link(request, 'mb_email_certify')|safe }}메일인증</a></th>
-                    <th scope="col" id="mb_list_cert">{{ subject_sort_link(request, 'mb_certify')|safe }}본인확인</a></th>
-                    <th scope="col" id="mb_list_adultc">{{ subject_sort_link(request, 'mb_adult')|safe }}성인인증</a></th>
-                    <th scope="col" id="mb_list_open" rowspan="2">{{ subject_sort_link(request, 'mb_open')|safe }}정보공개</a></th>
-                    <th scope="col" id="mb_list_mobile">휴대폰</th>
-                    <th scope="col" id="mb_list_lastcall">{{ subject_sort_link(request, 'mb_today_login')|safe }}최종접속</a></th>
-                    <th scope="col" id="mb_list_grp">접근그룹</th>
-                    <th scope="col" rowspan="2" id="mb_list_mng">관리</th>
-                </tr>
-                <tr>
-                    <th scope="col" id="mb_list_name">{{ subject_sort_link(request, 'mb_name')|safe }}이름</a></th>
-                    <th scope="col" id="mb_list_nick">{{ subject_sort_link(request, 'mb_nick')|safe }}별명</a></th>
-                    <th scope="col" id="mb_list_deny">{{ subject_sort_link(request, 'mb_level')|safe }}권한(Level)</a></th>
-                    <th scope="col" id="mb_list_mailr">{{ subject_sort_link(request, 'mb_mailling')|safe }}메일수신</a></th>
-                    <th scope="col" id="mb_list_sms">{{ subject_sort_link(request, 'mb_sms')|safe }}SMS수신</a></th>
-                    <th scope="col" id="mb_list_auth">{{ subject_sort_link(request, 'mb_intercept_date')|safe }}접근차단</a></th>
-                    <th scope="col" id="mb_list_tel">전화번호</th>
-                    <th scope="col" id="mb_list_join">{{ subject_sort_link(request, 'mb_datetime')|safe }}가입일</a></th>
-                    <th scope="col" id="mb_list_point">{{ subject_sort_link(request, 'mb_point')|safe }}포인트</a></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for member in members %}
-                    {% set background_color = 'bg0' if loop.index0 % 2 == 0 else 'bg1' %}
+        <div class="tbl_head01 tbl_wrap">
+            <table>
+                <caption>회원관리 목록</caption>
+                <thead>
+                    <tr>
+                        <th scope="col" id="mb_list_chk" rowspan="2">
+                            <label for="chkall" class="sound_only">회원 전체</label>
+                            <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
+                        </th>
+                        <th scope="col" id="mb_list_id" colspan="2">{{ subject_sort_link(request, 'mb_id')|safe }}아이디</a></th>
+                        <th scope="col" id="mb_list_auth">상태</th>
+                        <th scope="col" id="mb_list_mailc">{{ subject_sort_link(request, 'mb_email_certify')|safe }}메일인증</a></th>
+                        <th scope="col" id="mb_list_cert">{{ subject_sort_link(request, 'mb_certify')|safe }}본인확인</a></th>
+                        <th scope="col" id="mb_list_adultc">{{ subject_sort_link(request, 'mb_adult')|safe }}성인인증</a></th>
+                        <th scope="col" id="mb_list_open" rowspan="2">{{ subject_sort_link(request, 'mb_open')|safe }}정보공개</a></th>
+                        <th scope="col" id="mb_list_mobile">휴대폰</th>
+                        <th scope="col" id="mb_list_lastcall">{{ subject_sort_link(request, 'mb_today_login')|safe }}최종접속</a></th>
+                        <th scope="col" id="mb_list_grp">접근그룹</th>
+                        <th scope="col" rowspan="2" id="mb_list_mng">관리</th>
+                    </tr>
+                    <tr>
+                        <th scope="col" id="mb_list_name">{{ subject_sort_link(request, 'mb_name')|safe }}이름</a></th>
+                        <th scope="col" id="mb_list_nick">{{ subject_sort_link(request, 'mb_nick')|safe }}별명</a></th>
+                        <th scope="col" id="mb_list_deny">{{ subject_sort_link(request, 'mb_level')|safe }}권한(Level)</a></th>
+                        <th scope="col" id="mb_list_mailr">{{ subject_sort_link(request, 'mb_mailling')|safe }}메일수신</a></th>
+                        <th scope="col" id="mb_list_sms">{{ subject_sort_link(request, 'mb_sms')|safe }}SMS수신</a></th>
+                        <th scope="col" id="mb_list_auth">{{ subject_sort_link(request, 'mb_intercept_date')|safe }}접근차단</a></th>
+                        <th scope="col" id="mb_list_tel">전화번호</th>
+                        <th scope="col" id="mb_list_join">{{ subject_sort_link(request, 'mb_datetime')|safe }}가입일</a></th>
+                        <th scope="col" id="mb_list_point">{{ subject_sort_link(request, 'mb_point')|safe }}포인트</a></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in members %}
+                        {% set background_color = 'bg0' if loop.index0 % 2 == 0 else 'bg1' %}
+                        <tr class="{{ background_color }}">
+                        <td headers="mb_list_chk" class="td_chk" rowspan="2">
+                            <input type="hidden" name="mb_id[]" value="{{ member.mb_id }}" id="mb_id_{{ loop.index0 }}">
+                            <label for="chk_{{ loop.index0 }}" class="sound_only">{{ member.mb_name }}님</label>
+                            <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
+                        </td>
+                        <td headers="mb_list_id" colspan="2" class="td_name sv_use">{{ member.mb_id }}</td>
+                        <td headers="mb_list_auth" class="td_mbstat"><!-- 상태 -->
+                            {% if member.mb_leave_date %}
+                                <span class="mb_leave_msg" title="{{ member.mb_leave_date }}">탈퇴함</span>
+                            {% elif member.mb_intercept_date %}
+                                <span class="mb_intercept_msg" title="{{ member.mb_intercept_date }}">차단됨</span>
+                            {% else %}
+                                정상
+                            {% endif %}
+                        </td>
+                        <td headers="mb_list_mailc"><!-- 메일인증 -->
+                            {% if is_none_datetime(member.mb_email_certify) %}
+                                <span class="txt_false">No</span>
+                            {% else %}
+                                <span class="txt_true">Yes</span>
+                            {% endif %}
+                        </td>
+                        <td headers="mb_list_cert" class="td_mbcert"><!-- 본인확인 -->
+                            {% if member.mb_certify == '' %}미인증
+                            {% elif member.mb_certify == 'simple' %}간편인증
+                            {% elif member.mb_certify == 'hp' %}휴대폰
+                            {% elif member.mb_certify == 'ipin' %}아이핀
+                            {% endif %}
+                        </td>
+                        <td headers="mb_list_adultc">
+                            <label for="mb_adult_{{ loop.index0 }}" class="sound_only">성인인증</label>
+                            {% if member.mb_adult %}
+                                <span class="txt_true">Yes</span>
+                            {% else %}
+                                <span class="txt_false">No</span>
+                            {% endif %}
+                        </td>
+                        <td headers="mb_list_open" rowspan="2">
+                            <label for="mb_open_{{ loop.index0 }}" class="sound_only">정보공개</label>
+                            <input type="checkbox" name="mb_open[]" value="{{ loop.index0 }}" id="mb_open_{{ loop.index0 }}" {{ 'checked' if member.mb_open }}>
+                        </td>
+                        <td headers="mb_list_mobile" class="td_tel"><!-- 휴대폰번호 -->{{ member.mb_hp }}</td>
+                        <td headers="mb_list_lastcall" class="td_date"><!-- 최근접속일 -->{{ member.mb_today_login }}</td>
+                        <td headers="mb_list_grp" class="td_numsmall">
+                            <a href="/admin/boardgroupmember_form/{{ member.mb_id }}">{{ member.group_count|number_format }}</a>
+                        </td>
+                        <td headers="mb_list_mng" rowspan="2" class="td_mng td_mng_s">
+                            <a href="/admin/member_form/{{ member.mb_id }}?{{ query_string }}" class="btn btn_03">수정</a>
+                            <a href="/admin/boardgroupmember_form/{{ member.mb_id }}" class="btn btn_02">그룹</a></td>
+                    </tr>
                     <tr class="{{ background_color }}">
-                    <td headers="mb_list_chk" class="td_chk" rowspan="2">
-                        <input type="hidden" name="mb_id[]" value="{{ member.mb_id }}" id="mb_id_{{ loop.index0 }}">
-                        <label for="chk_{{ loop.index0 }}" class="sound_only">{{ member.mb_name }}님</label>
-                        <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
-                    </td>
-                    <td headers="mb_list_id" colspan="2" class="td_name sv_use">{{ member.mb_id }}</td>
-                    <td headers="mb_list_auth" class="td_mbstat"><!-- 상태 -->
-                        {% if member.mb_leave_date %}
-                            <span class="mb_leave_msg" title="{{ member.mb_leave_date }}">탈퇴함</span>
-                        {% elif member.mb_intercept_date %}
-                            <span class="mb_intercept_msg" title="{{ member.mb_intercept_date }}">차단됨</span>
-                        {% else %}
-                            정상
-                        {% endif %}
-                    </td>
-                    <td headers="mb_list_mailc"><!-- 메일인증 -->
-                        {% if is_none_datetime(member.mb_email_certify) %}
-                            <span class="txt_false">No</span>
-                        {% else %}
-                            <span class="txt_true">Yes</span>
-                        {% endif %}
-                    </td>
-                    <td headers="mb_list_cert" class="td_mbcert"><!-- 본인확인 -->
-                        {% if member.mb_certify == '' %}미인증
-                        {% elif member.mb_certify == 'simple' %}간편인증
-                        {% elif member.mb_certify == 'hp' %}휴대폰
-                        {% elif member.mb_certify == 'ipin' %}아이핀
-                        {% endif %}
-                    </td>
-                    <td headers="mb_list_adultc">
-                        <label for="mb_adult_{{ loop.index0 }}" class="sound_only">성인인증</label>
-                        {% if member.mb_adult %}
-                            <span class="txt_true">Yes</span>
-                        {% else %}
-                            <span class="txt_false">No</span>
-                        {% endif %}
-                    </td>
-                    <td headers="mb_list_open" rowspan="2">
-                        <label for="mb_open_{{ loop.index0 }}" class="sound_only">정보공개</label>
-                        <input type="checkbox" name="mb_open[]" value="{{ loop.index0 }}" id="mb_open_{{ loop.index0 }}" {{ 'checked' if member.mb_open }}>
-                    </td>
-                    <td headers="mb_list_mobile" class="td_tel"><!-- 휴대폰번호 -->{{ member.mb_hp }}</td>
-                    <td headers="mb_list_lastcall" class="td_date"><!-- 최근접속일 -->{{ member.mb_today_login.strftime("%y-%m-%d") }}</td>
-                    <td headers="mb_list_grp" class="td_numsmall">
-                        <a href="/admin/boardgroupmember_form/{{ member.mb_id }}">{{ member.groupmember_count }}</a>
-                    </td>
-                    <td headers="mb_list_mng" rowspan="2" class="td_mng td_mng_s">
-                        <a href="/admin/member_form/{{ member.mb_id }}?{{ query_string }}" class="btn btn_03">수정</a>
-                        <a href="/admin/boardgroupmember_form/{{ member.mb_id }}" class="btn btn_02">그룹</a></td>
-                </tr>
-                <tr class="{{ background_color }}">
-                    <td headers="mb_list_name" class="td_mbname">{{ member.mb_name }}</td>
-                    <td headers="mb_list_nick" class="td_name sv_use"><!-- 닉네임 -->
-                        {# {{ member.mb_nick|safe }} #}
-                        {{ member.nick_sideview|safe }}
-                    </td>
-                    <td headers="mb_list_auth" class="td_mbstat"><!-- 권한(level) -->
-                        {{ get_member_level_select('mb_level[]', 1, admin.mb_level if admin else 1, member.mb_level if member else 1)|safe }}
-                    </td>
-                    <td headers="mb_list_mailr">
-                        <label for="mb_mailling_0" class="sound_only">메일수신</label>
-                        <input type="checkbox" name="mb_mailling[]" value="{{ loop.index0 }}" id="mb_mailling_{{ loop.index0 }}" {{ 'checked' if member.mb_mailling }}>
-                    </td>
-                    <td headers="mb_list_sms">
-                        <label for="mb_sms_0" class="sound_only">SMS수신</label>
-                        <input type="checkbox" name="mb_sms[]"  value="{{ loop.index0 }}" id="mb_sms_{{ loop.index0 }}" {{ 'checked' if member.mb_sms }}>
-                    </td>
-                    <td headers="mb_list_deny"><!-- 접근차단 -->
-                        <input type="checkbox" name="mb_intercept_date[]"  value="{{ loop.index0 }}" id="mb_intercept_date_{{ loop.index0 }}" title="차단하기" {{ 'checked' if member.mb_intercept_date }}>
-                        <label for="mb_intercept_date_{{ loop.index0 }}" class="sound_only">접근차단</label>
-                    </td>
-                    <td headers="mb_list_tel" class="td_tel"><!-- 전화번호 -->{{ member.mb_tel }}</td>
-                    <td headers="mb_list_join" class="td_date"><!--회원가입일 -->{{ member.mb_datetime }}</td>
-                    <td headers="mb_list_point" class="td_num"><a href="/admin/point_list?sfl=mb_id&stx={{ member.mb_id }}">{{ member.mb_point }}</a></td>
-                </tr>
-                {% endfor %}
-                {% if members|length == 0 %}
-                <tr>
-                    <td colspan="12" class="empty_table">자료가 없습니다.</td>
-                </tr>
-                {% endif %}
-            </tbody>
-        </table>
-    </div>
+                        <td headers="mb_list_name" class="td_mbname">{{ member.mb_name }}</td>
+                        <td headers="mb_list_nick" class="td_name sv_use"><!-- 닉네임 -->
+                            {{ sideview.get(request, member.mb_id, member.mb_name, member.wr_email, member.wr_homepage)|safe }}
+                        </td>
+                        <td headers="mb_list_auth" class="td_mbstat"><!-- 권한(level) -->
+                            {{ get_member_level_select('mb_level[]', 1, admin.mb_level if admin else 1, member.mb_level if member else 1)|safe }}
+                        </td>
+                        <td headers="mb_list_mailr">
+                            <label for="mb_mailling_0" class="sound_only">메일수신</label>
+                            <input type="checkbox" name="mb_mailling[]" value="{{ loop.index0 }}" id="mb_mailling_{{ loop.index0 }}" {{ 'checked' if member.mb_mailling }}>
+                        </td>
+                        <td headers="mb_list_sms">
+                            <label for="mb_sms_0" class="sound_only">SMS수신</label>
+                            <input type="checkbox" name="mb_sms[]"  value="{{ loop.index0 }}" id="mb_sms_{{ loop.index0 }}" {{ 'checked' if member.mb_sms }}>
+                        </td>
+                        <td headers="mb_list_deny"><!-- 접근차단 -->
+                            <input type="checkbox" name="mb_intercept_date[]"  value="{{ loop.index0 }}" id="mb_intercept_date_{{ loop.index0 }}" title="차단하기" {{ 'checked' if member.mb_intercept_date }}>
+                            <label for="mb_intercept_date_{{ loop.index0 }}" class="sound_only">접근차단</label>
+                        </td>
+                        <td headers="mb_list_tel" class="td_tel"><!-- 전화번호 -->{{ member.mb_tel }}</td>
+                        <td headers="mb_list_join" class="td_date"><!--회원가입일 -->{{ member.mb_datetime }}</td>
+                        <td headers="mb_list_point" class="td_num">
+                            <a href="/admin/point_list?sfl=mb_id&stx={{ member.mb_id }}">{{ member.mb_point|number_format }}</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="12" class="empty_table">자료가 없습니다.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
-    <div class="btn_fixed_top">
-        <input type="submit" name="act_button" value="선택수정" onclick="document.pressed=this.value" class="btn btn_02">
-        <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn btn_02">
-        <a href="/admin/member_form" id="member_add" class="btn btn_01">회원추가</a>
-    </div>
-</form>
+        <div class="btn_fixed_top">
+            <input type="submit" name="act_button" value="선택수정" onclick="document.pressed=this.value" class="btn btn_02">
+            <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn btn_02">
+            <a href="/admin/member_form" id="member_add" class="btn btn_01">회원추가</a>
+        </div>
+    </form>
 
-{{ paging|safe }}
+    {{ paging|safe }}
 
-<script>
-function fmemberlist_submit(f) {
-    if (!is_checked("chk[]")) {
-        alert(document.pressed + " 하실 항목을 하나 이상 선택하세요.");
-        return false;
-    }
+    <script>
+        function fmemberlist_submit(f) {
+            if (!is_checked("chk[]")) {
+                alert(document.pressed + " 하실 항목을 하나 이상 선택하세요.");
+                return false;
+            }
 
-    if (document.pressed == "선택삭제") {
-        if (!confirm("선택한 자료를 정말 삭제하시겠습니까?")) {
-            return false;
+            if (document.pressed == "선택삭제") {
+                if (!confirm("선택한 자료를 정말 삭제하시겠습니까?")) {
+                    return false;
+                }
+
+                f.action = "/admin/member_list_delete";
+            }
+
+            f.token.value = generate_token();
+            f.action += "?{{ request.query_params|safe }}";
+
+            return true;
         }
-
-        f.action = "/admin/member_list_delete";
-    }
-
-    f.token.value = generate_token();
-    f.action += "?{{ request.query_params|safe }}";
-
-    return true;
-}
-
-{#
-// sideview 를 동적으로 생성하려 했으나 기존 PHP 코드와의 호환성을 위하여 기존 방식대로 처리하기로 함    
-$('div.dynamic_sideview').css('position', 'relative');
-
-$('body').on('click', 'div.sv_wrap', function(e) {
-    e.stopPropagation();  // 이 이벤트가 상위 요소로 전파되지 않도록 합니다.
-
-    var mb_id = $(this).data('memberid');
-    console.log(mb_id);
-
-    if (!mb_id) return;
-
-    var that = this;  // 원래의 this 값을 저장
-
-    $.get('/sideview/' + mb_id)
-        .done(function(data) {
-            // 기존의 dynamic_layer 제거
-            $('div.sv_on').remove();
-
-            var dynamic_layer = $('<div class="sv sv_on"></div>').html(data);
-            // 위치 조정
-            dynamic_layer.css({
-                'top': '-5px',
-                'left': '40px',  // 클릭한 요소의 오른쪽에 위치시키기 위해 left 값을 조정
-                'position': 'absolute'
-            });
-
-            // Insert the dynamic_layer into the .sv_on class
-            $(that).find('div.dynamic_sideview').html(dynamic_layer);
-        })
-        .fail(function() {
-            console.error('Error fetching data');
-        });
-});
-
-// 페이지의 다른 부분을 클릭하면 모든 sv_on 요소를 숨깁니다.
-$(document).on('click', function(e) {
-    if (!$(e.target).closest('div.sv_wrap').length) {
-        $('div.sv_on').remove();
-    }
-});
-
-// sv_on 클래스를 가진 div 요소 내부를 클릭했을 때 이벤트 전파를 막습니다.
-$('body').on('click', 'div.sv_on', function(e) {
-    e.stopPropagation();
-}); 
-#}
-
-$(document).ready(function() {
-    $('.clickable-text').on('click', function() {
-        let memberId = $(this).data('memberid');
-        
-        // 서버에 AJAX 요청
-        $.get('/get-member-info', { memberid: memberId }, function(data) {
-            // data는 서버로부터 받아온 정보를 포함하고 있습니다.
-            // 이 정보를 사용하여 레이어를 구성하고 표시합니다.
-            $('#info-layer').html(data).show();
-        });
-    });
-});
-</script>
-
-</div>
-
-
-<span class="clickable-text" data-memberid="admin">Admin</span>
-
-
-<!-- 레이어로 표시될 div -->
-<div id="info-layer" style="display: none; position: absolute; background-color: #fff; border: 1px solid #ccc; padding: 10px;"></div>
-
-{% endblock %}
+    </script>
+{% endblock content %}

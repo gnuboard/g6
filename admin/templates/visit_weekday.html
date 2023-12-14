@@ -1,13 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}
-    접속자집계
-{% endblock %}
-
-{% block subtitle %}접속자집계{% endblock %}
+{% block title %}요일별 접속자집계{% endblock title %}
+{% block subtitle %}요일별 접속자집계{% endblock subtitle %}
 
 {% block content %}
-
 {% include "visit_sub.html" %}
 
 <div class="tbl_head01 tbl_wrap">
@@ -15,7 +11,6 @@
     <caption>요일별 접속자집계 목록</caption>
     <thead>
     <tr>
-        <th scope="col">순위</th>
         <th scope="col">요일</th>
         <th scope="col">그래프</th>
         <th scope="col">접속자수</th>
@@ -24,29 +19,28 @@
     </thead>
     <tfoot>
     <tr>
-        <td colspan="3">합계</td>
-        <td><strong>{{total_records}}</strong></td>
+        <td colspan="2">합계</td>
+        <td><strong>{{ total_records|number_format }}</strong></td>
         <td>100%</td>
     </tr>
     </tfoot>
     <tbody>
         {% for visit in visits %}
-        <tr class="bg1">
-            <td class="td_num">{{loop.index}}</td>
-            <td class="td_category">{{visit.visit_weekday}}</td>
+        <tr class="bg{{ loop.cycle('0', '1') }}">
+            <td class="td_category">{{ visit.visit_weekday }}</td>
             <td>
                 <div class="visit_bar">
-                    <span style="width:{{visit.percent}}%"></span>
+                    <span style="width:{{ visit.percent }}%"></span>
                 </div>
             </td>
-            <td class="td_num_c3">{{visit.count}}</td>
-            <td class="td_num">{{visit.percent}}</td>
+            <td class="td_num_c3">{{ visit.count|number_format }}</td>
+            <td class="td_num">{{ visit.percent }}</td>
         </tr>
         {% endfor %}
-        </tbody>
+    </tbody>
     </table>
 </div>
 
 {{ paging|safe }}
 
-{% endblock %}
+{% endblock content %}

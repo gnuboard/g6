@@ -1,21 +1,22 @@
 import datetime
-from apscheduler.schedulers.background import BackgroundScheduler
-from fastapi import FastAPI, Depends, Request
-from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic import TypeAdapter
-
-from lib.plugin.service import register_statics, import_plugin_admin, get_plugin_state_change_time, \
-    read_plugin_state, import_plugin_by_states, import_plugin_router, delete_router_by_tagname, cache_plugin_state, \
-    cache_plugin_menu
-from common.database import db_session
-from starlette.middleware.sessions import SessionMiddleware
-from lib.common import *
-
-from user_agents import parse
-import common.models as models
 import secrets
 
+from apscheduler.schedulers.background import BackgroundScheduler
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, JSONResponse
+from pydantic import TypeAdapter
+from sqlalchemy import select
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.sessions import SessionMiddleware
+from user_agents import parse
+
+from common.database import db_session
+import common.models as models
+from lib.common import *
+from lib.plugin.service import register_statics, register_plugin_admin_menu, get_plugin_state_change_time, \
+    read_plugin_state, import_plugin_by_states, delete_router_by_tagname, cache_plugin_state, \
+    cache_plugin_menu, register_plugin, unregister_plugin
+
 
 # models.Base.metadata.create_all(bind=engine)
 APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
@@ -48,6 +49,7 @@ from bbs.social import router as social_router
 from bbs.password import router as password_router
 from bbs.search import router as search_router
 from lib.editor.ckeditor4 import router as editor_router
+
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
 app.include_router(login_router, prefix="/bbs", tags=["login"])
@@ -78,11 +80,13 @@ register_theme_statics(app)
 # 활성화된 플러그인만 로딩
 plugin_states = read_plugin_state()
 import_plugin_by_states(plugin_states)
+# import_plugin_router(plugin_states)
+register_plugin(plugin_states)
 register_statics(app, plugin_states)
-import_plugin_router(plugin_states)
 
 cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
-cache_plugin_menu.__setitem__('admin_menus', import_plugin_admin(plugin_states))
+cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(plugin_states))
+
 # 하위경로를 먼저 등록하고 상위경로를 등록
 # plugin/plugin_name/static 폴더 이후 등록
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -98,11 +102,9 @@ class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
 app.add_middleware(HTTPSRedirectMiddleware)
 
 
-
 # 요청마다 항상 실행되는 미들웨어
 @app.middleware("http")
 async def main_middleware(request: Request, call_next):
-
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 시작    
     # 요청의 경로를 얻습니다.
     path = request.url.path
@@ -113,7 +115,7 @@ async def main_middleware(request: Request, call_next):
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
 
     db: Session = SessionLocal()
-    config = db.query(models.Config).first()
+    config = db.scalars(select(models.Config)).first()
     request.state.config = config
 
     member = None
@@ -125,14 +127,14 @@ async def main_middleware(request: Request, call_next):
         # 관리자페이지 접근시
         if path.startswith("/admin"):
             if not ss_mb_id:
-                raise AlertException(status_code=302, detail="로그인이 필요합니다.", url="/bbs/login?url="+path)
+                raise AlertException("로그인이 필요합니다.", 302, url="/bbs/login?url=" + path)
             elif not is_admin(request):
                 method = request.method
                 admin_menu_id = get_current_admin_menu_id(request)
 
                 if admin_menu_id:
                     # 관리자 메뉴에 대한 권한 체크
-                    auth = db.query(models.Auth).filter_by(au_menu = admin_menu_id, mb_id = ss_mb_id).one_or_none()
+                    auth = db.scalar(select(models.Auth).filter_by(au_menu = admin_menu_id, mb_id = ss_mb_id))
                     au_auth = auth.au_auth if auth else ""
 
                     # 각 요청 별 권한 체크
@@ -151,17 +153,18 @@ async def main_middleware(request: Request, call_next):
         # 플러그인 상태변경시 캐시를 업데이트.
         # 업데이트 이후 관리자 메뉴, 라우터 재등록/삭제
         new_plugin_state = read_plugin_state()
-        import_plugin_router(new_plugin_state)
+        register_plugin(new_plugin_state)
+        unregister_plugin(new_plugin_state)
         for plugin in new_plugin_state:
             if not plugin.is_enable:
                 delete_router_by_tagname(app, plugin.module_name)
 
-        cache_plugin_menu.__setitem__('admin_menus', import_plugin_admin(new_plugin_state))
+        cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(new_plugin_state))
         cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
 
     # 로그인
     if ss_mb_id:
-        member = db.query(models.Member).filter(models.Member.mb_id == ss_mb_id).first()
+        member = db.scalar(select(models.Member).filter_by(mb_id = ss_mb_id))
         if member:
             ymd_str = datetime.now().strftime("%Y-%m-%d")
             if member.mb_intercept_date or member.mb_leave_date: # 차단 되었거나, 탈퇴한 회원이면 세션 초기화
@@ -185,7 +188,7 @@ async def main_middleware(request: Request, call_next):
         if cookie_mb_id:
             cookie_mb_id = re.sub("[^a-zA-Z0-9_]", "", cookie_mb_id)[:20] # 쿠키에 저장된 아이디에서 영문자,숫자,_ 20글자 얻는다.
         if cookie_mb_id and cookie_mb_id.lower() != config.cf_admin.lower(): # 최고관리자 아이디라면 자동로그인 금지
-            member = db.query(models.Member).filter(models.Member.mb_id == cookie_mb_id).first()
+            member = db.scalar(select(models.Member).filter_by(mb_id = cookie_mb_id))
             if member and not (member.mb_intercept_date or member.mb_leave_date): # 차단 했거나 탈퇴한 회원이 아니면
                 # 메일인증을 사용하고 메일인증한 시간이 있다면, 년도만 체크하여 시간이 있음을 확인
                 if config.cf_use_email_certify and not is_none_datetime(member.mb_email_certify):
@@ -316,12 +319,11 @@ async def alert_close_exception_handler(request: Request, exc: AlertCloseExcepti
 
 
 # 예약 작업을 관리할 스케줄러 생성
-scheduler = BackgroundScheduler(timezone='Asia/Seoul')
-# 매일 새벽 1시 스케줄러가 작동
 # https://apscheduler.readthedocs.io/en/3.x/modules/triggers/cron.html
-@scheduler.scheduled_job('cron', hour=1, id='remove_data_by_config')
+scheduler = BackgroundScheduler(timezone='Asia/Seoul')
+@scheduler.scheduled_job('cron', hour=10, id='remove_data_by_config')
 def job():
-    delete_old_data()
+    delete_old_records()
 # FastAPI 앱 시작 시 스케줄러 시작
 scheduler.start()
 
@@ -331,19 +333,23 @@ async def index(request: Request, db: db_session):
     """
     메인 페이지
     """
-    query_boards = db.query(models.Board).join(
-        models.Group, models.Board.gr_id == models.Group.gr_id
-    ).filter(models.Board.bo_device != 'mobile')
-    # 최고관리자는 모든 게시판을 볼 수 있음
+    # 게시판 목록 조회
+    query_boards = (
+        select(models.Board)
+        .join(models.Board.group)
+        .where(models.Board.bo_device != 'mobile')
+        .order_by(
+            models.Group.gr_order,
+            models.Board.bo_order
+        )
+    )
+    # 최고관리자가 아니라면 인증게시판 및 갤러리/공지사항 게시판은 제외
     if not request.state.is_super_admin:
-        query_boards = query_boards.filter(
+        query_boards = query_boards.where(
             models.Board.bo_use_cert == '',
             models.Board.bo_table.notin_(['notice', 'gallery'])
         )
-    boards = query_boards.order_by(
-        models.Group.gr_order,
-        models.Board.bo_order
-    ).all()
+    boards = db.scalars(query_boards).all()
 
     context = {
         "request": request,

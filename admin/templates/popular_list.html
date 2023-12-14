@@ -1,18 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}
-    인기검색어 관리
-{% endblock title %}
-{% block subtitle %}
-    인기검색어 관리
-{% endblock subtitle %}
+{% block title %}인기검색어 관리{% endblock title %}
+{% block subtitle %}인기검색어 관리{% endblock subtitle %}
 
 {% block content %}
     <div class="local_ov01 local_ov">
         <a href="{{ url_for('popular_list') }}" class="ov_listall">전체목록</a>
         <span class="btn_ov01">
             <span class="ov_txt">건수</span>
-            <span class="ov_num">{{ total_count }}개</span>
+            <span class="ov_num">{{ total_count|number_format }}개</span>
         </span>
     </div>
     
@@ -29,12 +25,7 @@
         </div>
     </form>
     
-    <form name="fpopularlist" id="fpopularlist" action="{{ url_for('popular_delete') }}" method="post" onsubmit="return fpopularlist_submit(this);">
-        <input type="hidden" name="sst" value="{{ request.state.sst }}">
-        <input type="hidden" name="sod" value="{{ request.state.sod }}">
-        <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
-        <input type="hidden" name="stx" value="{{ request.state.stx }}">
-        <input type="hidden" name="page" value="{{ request.state.page }}">
+    <form name="fpopularlist" id="fpopularlist" action="{{ url_for('popular_delete') }}?{{ request.query_params }}" method="post" onsubmit="return fpopularlist_submit(this);">
         <input type="hidden" name="token" value="">
     
         <div class="tbl_head01 tbl_wrap">
@@ -54,23 +45,23 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for keyword in keywords %}
-                        <tr class="bg{{ loop.cycle('0', '1') }}">
-                            <td class="td_chk">
-                                <label for="chk_{{ loop.index0 }}" class="sound_only">{{ keyword.pp_word|safe }}</label>
-                                <input type="checkbox" name="chk[]" value="{{ keyword.pp_id }}" id="chk_{{ loop.index0 }}">
-                            </td>
-                            <td class="td_left">
-                                <a href="{{ request.url.include_query_params(sfl='pp_word', stx=keyword.pp_word, page=1) }}">
-                                    {{ keyword.pp_word|safe }}
-                                </a>
-                            </td>
-                            <td>{{ keyword.pp_date }}</td>
-                            <td>{{ keyword.pp_ip }}</td>
-                        </tr>
-                    {% else %}
-                        <tr><td colspan="4" class="empty_table">자료가 없습니다.</td></tr>
-                    {% endfor %}
+                {% for keyword in keywords %}
+                    <tr class="bg{{ loop.cycle('0', '1') }}">
+                        <td class="td_chk">
+                            <label for="chk_{{ loop.index0 }}" class="sound_only">{{ keyword.pp_word|safe }}</label>
+                            <input type="checkbox" name="chk[]" value="{{ keyword.pp_id }}" id="chk_{{ loop.index0 }}">
+                        </td>
+                        <td class="td_left">
+                            <a href="{{ request.url.include_query_params(sfl='pp_word', stx=keyword.pp_word, page=1) }}">
+                                {{ keyword.pp_word|safe }}
+                            </a>
+                        </td>
+                        <td>{{ keyword.pp_date }}</td>
+                        <td>{{ keyword.pp_ip }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="4" class="empty_table">자료가 없습니다.</td></tr>
+                {% endfor %}
                 </tbody>
             </table>
         </div>

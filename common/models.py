@@ -1,8 +1,9 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime, Date, Time, Boolean, BIGINT, UniqueConstraint
+from typing import List
 
 # TINYINT 대신 Integer 사용하기 바랍니다.
 # from sqlalchemy.dialects.mysql import TINYINT
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import ArgumentError, InvalidRequestError
 from datetime import datetime, date
@@ -241,6 +242,10 @@ class Member(Base):
     mb_9 = Column(String(255), nullable=False, default="")
     mb_10 = Column(String(255), nullable=False, default="")
 
+    auths: Mapped["Auth"] = relationship("Auth", back_populates="member")
+    groups: Mapped[List["GroupMember"]] = relationship(back_populates="member")
+    points: Mapped["Point"] = relationship("Point", back_populates="member")
+
 
 class Board(Base):
     """
@@ -348,7 +353,8 @@ class Board(Base):
     # 종속관계
     # writes = relationship("Write", backref="board")
     # 연관관계
-    group = relationship("Group")
+    # group = relationship("Group")
+    group: Mapped["Group"] = relationship("Group", back_populates="boards")
 
 
 class WriteBaseModel(Base):
@@ -457,22 +463,27 @@ class Group(Base):
     gr_9 = Column(String(255), nullable=False, default="")
     gr_10 = Column(String(255), nullable=False, default="")
     # 종속관계
-    # boards = relationship("Board", backref="group")
-    
+
+    boards: Mapped[List["Board"]] = relationship(back_populates="group")
+    members: Mapped[List["GroupMember"]] = relationship(back_populates="group")
+
 
 class GroupMember(Base):
     '''
     그룹회원 테이블
     '''    
     __tablename__ = DB_TABLE_PREFIX + "group_member"
-    
+
     gm_id = Column(Integer, primary_key=True, autoincrement=True)
-    gr_id = Column(String(10), nullable=False, default="")
-    mb_id = Column(String(20), nullable=False, default="")
+    gr_id = Column(String(10), ForeignKey(DB_TABLE_PREFIX + "group.gr_id"), nullable=False, default="")
+    mb_id = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "member.mb_id"), nullable=False, default="")
     gm_datetime = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
-    
-    gr_id_index = Index("gr_id", gr_id)    
-    mb_id_index = Index("mb_id", mb_id)    
+
+    gr_id_index = Index("gr_id", gr_id)
+    mb_id_index = Index("mb_id", mb_id)
+
+    member: Mapped["Member"] = relationship(back_populates="groups")
+    group: Mapped["Group"] = relationship(back_populates="members")
 
 
 class Content(Base):
@@ -675,7 +686,7 @@ class Point(Base):
     __tablename__ = DB_TABLE_PREFIX + "point"
 
     po_id = Column(Integer, primary_key=True, autoincrement=True)
-    mb_id = Column(String(20), nullable=False, default="")
+    mb_id = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "member.mb_id"), nullable=False, default="")
     po_datetime = Column(DateTime, nullable=False, default=datetime.now())
     po_content = Column(String(255), nullable=False, default="")
     po_point = Column(Integer, nullable=False, default=0)
@@ -686,6 +697,8 @@ class Point(Base):
     po_rel_table = Column(String(20), nullable=False, default="")
     po_rel_id = Column(String(20), nullable=False, default="")
     po_rel_action = Column(String(100), nullable=False, default="")
+
+    member: Mapped["Member"] = relationship("Member", back_populates="points", lazy="joined")
 
 
 class Memo(Base):
@@ -733,9 +746,11 @@ class Auth(Base):
     #   `au_auth` set('r','w','d') NOT NULL DEFAULT ''
     __tablename__ = DB_TABLE_PREFIX + "auth"
 
-    mb_id = Column(String(20), primary_key=True, nullable=False, default="")
+    mb_id = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "member.mb_id"), primary_key=True, nullable=False, default="")
     au_menu = Column(String(20), primary_key=True, nullable=False, default="")
     au_auth = Column(String(255), nullable=False, default="")
+
+    member: Mapped["Member"] = relationship("Member", back_populates="auths")
 
 
 

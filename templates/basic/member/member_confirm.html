@@ -22,7 +22,7 @@
     </p>
     {% endif %}
 
-    <form name="fmemberconfirm" action="{{ url_for('member_password') }}"
+    <form name="fmemberconfirm" action="/bbs/member_confirm"
           onsubmit="return fmemberconfirm_submit(this)"
           method="post">
         <input type="hidden" name="mb_id" value="{{ member.mb_id }}">

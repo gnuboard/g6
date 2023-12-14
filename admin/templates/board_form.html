@@ -1,21 +1,17 @@
 {% extends "base.html" %}
+{% import editor_macro(request) as editor %}
+{% set action = '수정' if board else '생성' %}
 
 {% block head %}
-    {% include editor_path(request) + '/head.html' %}
-{% endblock %}
+    {{ editor.head() }}
+{% endblock head %}
 
-{% block title %}
-    게시판관리
-{% endblock %}
+{% block title %}게시판 {{ action }}{% endblock title %}
+{% block subtitle %}게시판 {{ action }}{% endblock subtitle %}
 
 {% block content %}
 <form method="post" name="fboardform" id="fboardform" action="/admin/board_form_update"  onsubmit="return fboardform_submit(this)" enctype="multipart/form-data" autocomplete="off">
 <input type="hidden" name="action" value="{{ 'u' if board.bo_table else 'w' }}">
-<input type="hidden" name="sfl" value="{{ request.state.sfl }}">
-<input type="hidden" name="stx" value="{{ request.state.stx }}">
-<input type="hidden" name="sst" value="{{ request.state.sst }}">
-<input type="hidden" name="sod" value="{{ request.state.sod }}">
-<input type="hidden" name="page" value="{{ request.state.page }}">
 <input type="hidden" name="token" value="">
 
 <section id="anc_bo_basic">
@@ -109,8 +105,6 @@
         </table>
     </div>
 </section>
-
-
 
 <section id="anc_bo_auth">
     <h2 class="h2_frm">게시판 권한 설정</h2>
@@ -256,8 +250,6 @@
         </table>
     </div>
 </section>
-
-
 
 <section id="anc_bo_function">
     <h2 class="h2_frm">게시판 기능 설정</h2>
@@ -668,7 +660,6 @@
     </div>
 </section>
 
-
 <section id="anc_bo_design">
     <h2 class="h2_frm">게시판 디자인/양식</h2>
     <ul class="anchor">
@@ -712,36 +703,10 @@
                 <label for="chk_all_mobile_skin">전체적용</label>
             </td>
         </tr>
-        {#<tr>
-            <th scope="row"><label for="bo_include_head">상단 파일 경로</label></th>
-            <td>
-                <input type="text" name="bo_include_head" value="{{ board.bo_include_head }}" id="bo_include_head" class="frm_input" size="50">
-            </td>
-            <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_include_head" id="chk_grp_include_head">
-                <label for="chk_grp_include_head">그룹적용</label>
-                <input type="checkbox" name="chk_all_include_head" id="chk_all_include_head">
-                <label for="chk_all_include_head">전체적용</label>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row"><label for="bo_include_tail">하단 파일 경로</label></th>
-            <td>
-                <input type="text" name="bo_include_tail" value="{{ board.bo_include_tail }}" id="bo_include_tail" class="frm_input" size="50">
-            </td>
-            <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_include_tail" id="chk_grp_include_tail">
-                <label for="chk_grp_include_tail">그룹적용</label>
-                <input type="checkbox" name="chk_all_include_tail" id="chk_all_include_tail">
-                <label for="chk_all_include_tail">전체적용</label>
-            </td>
-        </tr>#}
         <tr>
             <th scope="row"><label for="bo_content_head">상단 내용</label></th>
             <td>
-                {% with tag_name='bo_content_head', content=board.bo_content_head %}
-                    {% include editor_path(request) + '/body.html' %}
-                {% endwith %}
+                {{ editor.body("bo_content_head", board.bo_content_head) }}
             </td>
             <td class="td_grpset">
                 <input type="checkbox" name="chk_grp_content_head" id="chk_grp_content_head">
@@ -753,9 +718,7 @@
         <tr>
             <th scope="row"><label for="bo_content_tail">하단 내용</label></th>
             <td>
-                {% with tag_name='bo_content_tail', content=board.bo_content_tail %}
-                    {% include editor_path(request) + '/body.html' %}
-                {% endwith %}
+                {{ editor.body("bo_content_tail", board.bo_content_tail) }}
             </td>
             <td class="td_grpset">
                 <input type="checkbox" name="chk_grp_content_tail" id="chk_grp_content_tail">
@@ -767,9 +730,7 @@
         <tr>
             <th scope="row"><label for="bo_mobile_content_head">모바일 상단 내용</label></th>
             <td>
-                {% with tag_name='bo_mobile_content_head', content=board.bo_mobile_content_head %}
-                    {% include editor_path(request) + '/body.html' %}
-                {% endwith %}
+                {{ editor.body("bo_mobile_content_head", board.bo_mobile_content_head) }}
             </td>
             <td class="td_grpset">
                 <input type="checkbox" name="chk_grp_mobile_content_head" id="chk_grp_mobile_content_head">
@@ -781,9 +742,7 @@
         <tr>
             <th scope="row"><label for="bo_mobile_content_tail">모바일 하단 내용</label></th>
             <td>
-                {% with tag_name='bo_mobile_content_tail', content=board.bo_mobile_content_tail %}
-                    {% include editor_path(request) + '/body.html' %}
-                {% endwith %}
+                {{ editor.body("bo_mobile_content_tail", board.bo_mobile_content_tail) }}
             </td>
             <td class="td_grpset">
                 <input type="checkbox" name="chk_grp_mobile_content_tail" id="chk_grp_mobile_content_tail">
@@ -975,8 +934,8 @@
             <th scope="row"><label for="bo_reply_order">답변 달기</label></th>
             <td>
                 <select id="bo_reply_order" name="bo_reply_order">
-                    <option value="1" {{ 'selected' if board.bo_reply_order }}>나중에 쓴 답변 아래로 달기 (기본)
-                    <option value="0" {{ 'selected' if not board.bo_reply_order }}>나중에 쓴 답변 위로 달기
+                    <option value="1" {{ 'selected' if board.bo_reply_order }}>나중에 쓴 답변 아래로 달기 (기본)</option>
+                    <option value="0" {{ 'selected' if not board.bo_reply_order }}>나중에 쓴 답변 위로 달기</option>
                 </select>
             </td>
             <td class="td_grpset">
@@ -1018,13 +977,12 @@
                 <input type="checkbox" name="chk_all_sort_field" id="chk_all_sort_field">
                 <label for="chk_all_sort_field">전체적용</label>
             </td>
+        </tr>
         </tbody>
         </table>
     </div>
     <button type="button" class="get_theme_galc btn btn_02" >테마 이미지설정 가져오기</button>
-
 </section>
-
 
 <section id="anc_bo_point">
     <h2 class="h2_frm">게시판 포인트 설정</h2>
@@ -1146,7 +1104,6 @@
     </div>
 </section>
 
-
 <div class="btn_fixed_top">
     <a href="/admin/board_list" class="btn btn_02">목록</a>
     <input type="submit" value="확인" class="btn_submi btn btn_01" accesskey="s">
@@ -1210,61 +1167,13 @@ function set_point(f) {
     }
 }
 
-var captcha_chk = false;
-
-function use_captcha_check(){
-    $.ajax({
-        type: "POST",
-        url: g5_admin_url+"/ajax.use_captcha.php",
-        data: { admin_use_captcha: "1" },
-        cache: false,
-        async: false,
-        dataType: "json",
-        success: function(data) {
-        }
-    });
-}
-
-var bo_include_head = jQuery.trim(jQuery("#bo_include_head").val()),
-    bo_include_tail = jQuery.trim(jQuery("#bo_include_tail").val());
-
-function frm_check_file(){
-    var head = jQuery.trim(jQuery("#bo_include_head").val());
-    var tail = jQuery.trim(jQuery("#bo_include_tail").val());
-
-    if(bo_include_head !== head || bo_include_tail !== tail){
-        // 캡챠를 사용합니다.
-        jQuery("#admin_captcha_box").show();
-        captcha_chk = true;
-
-        use_captcha_check();
-
-        return false;
-    } else {
-        jQuery("#admin_captcha_box").hide();
-    }
-
-    return true;
-}
-
-jQuery(function($){
-    if( window.self !== window.top ){   // frame 또는 iframe을 사용할 경우 체크
-        $("#bo_include_head, #bo_include_tail").on("change paste keyup", function(e) {
-            frm_check_file();
-        });
-
-        use_captcha_check();
-    }
-});
-
 function fboardform_submit(f)
 {
-    {# <?php
+    {#
     if (!$w) {
         $js_array = get_bo_table_banned_word();
         echo "var banned_array = ". json_encode($js_array) . ";\n";
     }
-    ?>
 
     // 게시판명이 금지된 단어로 되어 있으면
     if( (typeof banned_array != 'undefined') && jQuery.inArray(f.bo_table.value, banned_array) !== -1 ){
@@ -1283,14 +1192,11 @@ function fboardform_submit(f)
         f.bo_count_delete.focus();
         return false;
     }
-
-    if( captcha_chk ) {
-        <?php echo isset($captcha_js) ? $captcha_js : ''; // 캡챠 사용시 자바스크립트에서 입력된 캡챠를 검사함  ?>
-    } #}
+    #}
 
     f.token.value = generate_token();
 
     return true;
 }
 </script>
-{% endblock %}
+{% endblock content %}

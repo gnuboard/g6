@@ -1,19 +1,13 @@
 {% extends "base.html" %}
 
-{% block head %}
-    {% include editor_path(request) + '/head.html' %}
-{% endblock %}
-
-{% block title %}회원메일발송 처리{% endblock %}
-
-{% block subtitle %}회원메일발송 처리{% endblock %}
+{% block title %}회원메일발송 처리{% endblock title %}
+{% block subtitle %}회원메일발송 처리{% endblock subtitle %}
 
 {% block content %}
-
 <div>
     <p>메일 발송중 ...</p>
     <p><font color="crimson"><strong>[끝]</strong></font> 이라는 단어가 나오기 전에는 중간에 중지하지 마세요.</p>
-    <p></p>
+    <p>&nbsp;</p>
 </div>
     
 <div id="status"></div>
@@ -29,5 +23,4 @@
         }
     }
 </script>
-
-{% endblock %}
+{% endblock content %}
