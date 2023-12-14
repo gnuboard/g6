@@ -1,28 +1,22 @@
 {% extends "base.html" %}
 
-{% block title %}
-{{ title }}
-{% endblock %}
+{% block title %}회원 비밀번호 확인{% endblock title %}
 
 {% block content %}
-
-<!-- 회원 비밀번호 확인 시작 { -->
 <div id="mb_confirm" class="mbskin">
-    <h1>{{ title }}</h1>
-    
-    {% if request.url ==  url_for('member_leave_form') %}
-    <p>
-        <strong>회원탈퇴를 하시려면 비밀번호를 한번 더 입력해주세요.</strong>
-    </p>
+    <h1>회원 비밀번호 확인</h1>
+    {% if request.url == url_for('member_leave_form') %}
+        <p>
+            <strong>회원탈퇴를 하시려면 비밀번호를 한번 더 입력해주세요.</strong>
+        </p>
     {% else %}
-    
-    <p>
-        <strong>비밀번호를 한번 더 입력해주세요.</strong>
-        회원님의 정보를 안전하게 보호하기 위해 비밀번호를 한번 더 확인합니다.
-    </p>
+        <p>
+            <strong>비밀번호를 한번 더 입력해주세요.</strong>
+            회원님의 정보를 안전하게 보호하기 위해 비밀번호를 한번 더 확인합니다.
+        </p>
     {% endif %}
 
-    <form name="fmemberconfirm" action="/bbs/member_confirm"
+    <form name="fmemberconfirm" action="{{ action_url }}"
           onsubmit="return fmemberconfirm_submit(this)"
           method="post">
         <input type="hidden" name="mb_id" value="{{ member.mb_id }}">
@@ -36,9 +30,7 @@
                    size="15" maxLength="20" placeholder="비밀번호">
             <input type="submit" value="확인" id="btn_submit" class="btn_submit">
         </fieldset>
-
     </form>
-
 </div>
 
 <script>
@@ -51,5 +43,4 @@
         return true;
     }
 </script>
-{% endblock %}
-<!-- } 회원 비밀번호 확인 끝 -->
+{% endblock content %}

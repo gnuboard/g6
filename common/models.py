@@ -245,6 +245,7 @@ class Member(Base):
     auths: Mapped["Auth"] = relationship("Auth", back_populates="member")
     groups: Mapped[List["GroupMember"]] = relationship(back_populates="member")
     points: Mapped["Point"] = relationship("Point", back_populates="member")
+    socials: Mapped["MemberSocialProfiles"] = relationship("MemberSocialProfiles", back_populates="member")
 
 
 class Board(Base):
@@ -916,7 +917,7 @@ class MemberSocialProfiles(Base):
     __tablename__ = DB_TABLE_PREFIX + "member_social_profiles"
 
     mp_id = Column(Integer, primary_key=True, autoincrement=True)
-    mb_id = Column(String(255), nullable=False, default="", comment="member.mb_id")
+    mb_id = Column(String(255), ForeignKey(DB_TABLE_PREFIX + "member.mb_id"), nullable=False, default="")
     provider = Column(String(50), nullable=False, default="")
     object_sha = Column(String(45), nullable=False, default="")
     identifier = Column(String(255), nullable=False, default="")
@@ -926,3 +927,5 @@ class MemberSocialProfiles(Base):
     description = Column(String(255), nullable=False, default="")
     mp_register_day = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
     mp_latest_day = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
+
+    member: Mapped["Member"] = relationship("Member", back_populates="socials")
