@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, Text
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
+
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
+from sqlalchemy.ext.declarative import declarative_base
 
 from common.database import DB_TABLE_PREFIX
 

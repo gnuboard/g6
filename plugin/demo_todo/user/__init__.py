@@ -1,6 +1,6 @@
 from main import app
 from .user_router import router
-from ..plugin_info import module_name, router_prefix
+from ..plugin_config import module_name, router_prefix
 
 
 def register_user_router():
