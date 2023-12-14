@@ -1163,12 +1163,22 @@ def domain_mail_host(request: Request, is_at: bool = True):
     return f"@{domain_host}" if is_at else domain_host
         
 
-def get_memo_not_read(mb_id: str):
-    '''
+def get_memo_not_read(mb_id: str) -> int:
+    """
     메모를 읽지 않은 개수를 반환하는 함수
-    '''
+    """
     db = SessionLocal()
-    return db.query(Memo).filter(Memo.me_recv_mb_id == mb_id, Memo.me_read_datetime == None, Memo.me_type == 'recv').count()
+    count = db.scalar(
+        select(func.count(Memo.me_id))
+        .where(
+            Memo.me_recv_mb_id == mb_id,
+            Memo.me_read_datetime == None,
+            Memo.me_type == 'recv'
+        )
+    )
+    db.close()
+
+    return count
 
 
 def editor_path(request:Request) -> str:

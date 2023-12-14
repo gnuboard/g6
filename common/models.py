@@ -242,10 +242,12 @@ class Member(Base):
     mb_9 = Column(String(255), nullable=False, default="")
     mb_10 = Column(String(255), nullable=False, default="")
 
-    auths: Mapped["Auth"] = relationship("Auth", back_populates="member")
+    auths: Mapped[List["Auth"]] = relationship("Auth", back_populates="member")
     groups: Mapped[List["GroupMember"]] = relationship(back_populates="member")
-    points: Mapped["Point"] = relationship("Point", back_populates="member")
-    socials: Mapped["MemberSocialProfiles"] = relationship("MemberSocialProfiles", back_populates="member")
+    points: Mapped[List["Point"]] = relationship("Point", back_populates="member")
+    socials: Mapped[List["MemberSocialProfiles"]] = relationship("MemberSocialProfiles", back_populates="member")
+    recv_memos: Mapped[List["Memo"]] = relationship("Memo", back_populates="recv_member", foreign_keys="Memo.me_recv_mb_id")
+    send_memos: Mapped[List["Memo"]] = relationship("Memo", back_populates="send_member", foreign_keys="Memo.me_send_mb_id")
 
 
 class Board(Base):
@@ -710,8 +712,8 @@ class Memo(Base):
     __tablename__ = DB_TABLE_PREFIX + "memo"
 
     me_id = Column(Integer, primary_key=True, autoincrement=True)
-    me_recv_mb_id = Column(String(20), nullable=False, default="")
-    me_send_mb_id = Column(String(20), nullable=False, default="")
+    me_recv_mb_id = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "member.mb_id"), nullable=False, default="")
+    me_send_mb_id = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "member.mb_id"), nullable=False, default="")
     me_send_datetime = Column(DateTime, nullable=False, default=datetime.now())
     me_read_datetime = Column(DateTime, nullable=True)
     me_memo = Column(Text, nullable=False)
@@ -720,8 +722,8 @@ class Memo(Base):
     me_send_ip = Column(String(100), nullable=False, default="")
 
     # 종속관계
-    # recv_member = relationship("Member", foreign_keys=[me_recv_mb_id])
-    # send_member = relationship("Member", foreign_keys=[me_send_mb_id])
+    recv_member: Mapped["Member"] = relationship("Member", back_populates="recv_memos", foreign_keys=[me_recv_mb_id])
+    send_member: Mapped["Member"] = relationship("Member", back_populates="send_memos", foreign_keys=[me_send_mb_id])
 
 
 class Popular(Base):
@@ -786,16 +788,20 @@ class Poll(Base):
     mb_ids = Column(Text, nullable=False, default='')
     po_use = Column(Integer, nullable=False, default=1)
 
+    etcs: Mapped[List["PollEtc"]] = relationship("PollEtc", back_populates="poll")
+
 
 class PollEtc(Base):
     __tablename__ = DB_TABLE_PREFIX + "poll_etc"
 
     pc_id = Column(Integer, primary_key=True, autoincrement=True)
-    po_id = Column(Integer, nullable=False, default=0)
+    po_id = Column(Integer, ForeignKey(DB_TABLE_PREFIX + "poll.po_id"), nullable=False, default=0)
     mb_id = Column(String(20), nullable=False, default='')
     pc_name = Column(String(255), nullable=False, default='')
     pc_idea = Column(String(255), nullable=False, default='')
     pc_datetime = Column(DateTime, nullable=False, default=datetime.now())
+
+    poll: Mapped["Poll"] = relationship("Poll", back_populates="etcs")
 
 class AutoSave(Base):
     __tablename__ = DB_TABLE_PREFIX + "autosave"
