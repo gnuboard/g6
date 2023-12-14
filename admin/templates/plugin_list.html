@@ -33,12 +33,12 @@
                 {{ plugin.btn_active|safe }}
                 {% if plugin.is_enable  == True %}
                 <span class="theme_sl theme_sl_use">사용중</span>
-                 <button type="button" class="theme_sl theme_deactive" 
+                 <button type="button" class="theme_sl plugin_disable" 
                          data-name="{{ plugin.plugin_name }}"
                          data-module_name="{{ plugin.module_name }}">사용안함
                  </button>
                 {% else %}
-                <button type="button" class="theme_sl theme_active" 
+                <button type="button" class="theme_sl plugin_enable" 
                         data-name="{{ plugin.plugin_name }}"
                         data-module_name="{{ plugin.module_name }}"
                         data-set_plugin="">플러그인 적용
@@ -57,9 +57,9 @@
 
 <script>
     $(function() {
-        $(".theme_active").on("click", function() {
-            var plugin_name  = $(this).data("name");
-            var module_name  = $(this).data("module_name");
+        $(".plugin_enable").on("click", function() {
+            const plugin_name  = $(this).data("name");
+            const module_name  = $(this).data("module_name");
     
             if(!confirm(name+" 플러그인을 적용하시겠습니까?"))
                 return false;
@@ -87,9 +87,9 @@
             });
         });
     
-        $(".theme_deactive").on("click", function() {
-            var plugin_name  = $(this).data("name");
-            var module_name  = $(this).data("module_name");
+        $(".plugin_disable").on("click", function() {
+            const plugin_name  = $(this).data("name");
+            const module_name  = $(this).data("module_name");
     
             if(!confirm(name+" 플러그인 사용설정을 해제하시겠습니까?"))
                 return false;
@@ -116,7 +116,7 @@
         });
     
         $(".theme_detail").on("click", function() {
-            var module_name = $(this).data("module_name");
+            const module_name = $(this).data("module_name");
     
             $("#theme_detail").remove();
     
@@ -131,6 +131,10 @@
                 async: false,
                 success: function(data) {
                     $("#theme_list").after(data);
+                },
+                error: function(data) {
+                    data = data.responseJSON;
+                    alert(data.detail );
                 }
             });
         });

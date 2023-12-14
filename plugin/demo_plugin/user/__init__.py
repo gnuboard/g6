@@ -1,5 +1,5 @@
 from main import app
-from ..plugin_info import module_name, router_prefix
+from ..plugin_config import module_name, router_prefix
 from ..user.user_router import router
 
 

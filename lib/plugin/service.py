@@ -309,7 +309,6 @@ def unregister_plugin(plugin_states, plugin_dir=PLUGIN_DIR):
 
 
 def register_statics(app, plugin_info: List[PluginState], plugin_dir=PLUGIN_DIR):
-    # 하위경로를 먼저 등록하고 상위경로를 등록해야 한다.
     for plugin in plugin_info:
         try:
             app.mount(

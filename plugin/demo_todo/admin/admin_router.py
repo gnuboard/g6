@@ -8,13 +8,12 @@ from starlette.templating import Jinja2Templates
 
 from admin.admin_config import get_admin_plugin_menus
 from common.database import get_db
-from lib.plugin.service import get_all_plugin_module_names, PLUGIN_DIR
 from lib.common import ADMIN_TEMPLATES_DIR, get_member_id_select, get_skin_select, get_editor_select, get_selected, \
     get_member_level_select, option_array_checked, get_admin_menus, generate_token, get_client_ip, check_token, \
     AlertException
-
-from ..plugin_info import module_name
+from lib.plugin.service import get_all_plugin_module_names, PLUGIN_DIR
 from ..models import Todo
+from ..plugin_config import module_name, admin_router_prefix
 
 PLUGIN_TEMPLATES_DIR = f"plugin/{module_name}/templates"
 templates = Jinja2Templates(directory=[PLUGIN_DIR, PLUGIN_TEMPLATES_DIR, ADMIN_TEMPLATES_DIR])
@@ -30,8 +29,8 @@ templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["generate_token"] = generate_token
 templates.env.globals["get_client_ip"] = get_client_ip
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
-admin_router = APIRouter(prefix='/todo', tags=['demo_admin'])
 
+admin_router = APIRouter(prefix=f'/{admin_router_prefix}', tags=['demo_admin'])
 
 @admin_router.get("/test_demo_admin")
 def show(request: Request):

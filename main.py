@@ -50,6 +50,19 @@ from bbs.password import router as password_router
 from bbs.search import router as search_router
 from lib.editor.ckeditor4 import router as editor_router
 
+register_theme_statics(app)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/data", StaticFiles(directory="data"), name="data")
+
+# 플러그인 라우터 우선 등록
+plugin_states = read_plugin_state()
+import_plugin_by_states(plugin_states)
+register_plugin(plugin_states)
+register_statics(app, plugin_states)
+
+cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
+cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(plugin_states))
+
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(board_router, prefix="/board", tags=["board"])
 app.include_router(login_router, prefix="/bbs", tags=["login"])
@@ -74,24 +87,6 @@ app.include_router(search_router, prefix="/bbs", tags=["search"])
 app.include_router(editor_router, prefix="/editor", tags=["editor"])
 # is_mobile = False
 # user_device = 'pc'
-
-register_theme_statics(app)
-
-# 활성화된 플러그인만 로딩
-plugin_states = read_plugin_state()
-import_plugin_by_states(plugin_states)
-# import_plugin_router(plugin_states)
-register_plugin(plugin_states)
-register_statics(app, plugin_states)
-
-cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
-cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(plugin_states))
-
-# 하위경로를 먼저 등록하고 상위경로를 등록
-# plugin/plugin_name/static 폴더 이후 등록
-app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/data", StaticFiles(directory="data"), name="data")
-
 
 class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
