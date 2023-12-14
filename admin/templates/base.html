@@ -116,9 +116,11 @@ var g5_admin_url = "/admin";
         {% set request_menu_key = request.session.get('menu_key', '') %}
         {% set plugin_menus=get_admin_plugin_menus() %}
         {% for plugin in plugin_menus %}
-            {% for menu_key, submenus in plugin.items() %}
-                {{ render_admin_menu(menu_key, submenus, loop.index) }}
-            {% endfor %}
+            {% if plugin %}
+                {% for menu_key, submenus in plugin.items() %}
+                    {{ render_admin_menu(menu_key, submenus, loop.index) }}
+                {% endfor %}
+            {% endif %}
         {% endfor %}
         </ul>
     </nav>
