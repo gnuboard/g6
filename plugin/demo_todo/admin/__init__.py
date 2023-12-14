@@ -22,5 +22,4 @@ def register_admin_menu():
     """관리자 메뉴 등록
     plugin_config.py 에서 관리자메뉴 설정
     """
-    admin_menu = getattr(plugin_config, "admin_menu", [])
-    return admin_menu
+    return getattr(plugin_config, "admin_menu", [])
