@@ -3,7 +3,7 @@ import bleach
 
 from datetime import datetime, timedelta
 from fastapi import Request
-from sqlalchemy import and_, distinct, or_
+from sqlalchemy import and_, distinct, or_, literal
 from sqlalchemy.orm import Query as SqlQuery
 
 from lib.common import *

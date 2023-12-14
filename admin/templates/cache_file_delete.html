@@ -1,31 +1,27 @@
 {% extends "base.html" %}
-
 {% set title = "캐시파일 일괄삭제" %}
 
-{% block title %}{{ title }}{% endblock %}
-
-{% block subtitle %}{{ title }}{% endblock %}
+{% block title %}{{ title }}{% endblock title %}
+{% block subtitle %}{{ title }}{% endblock subtitle %}
 
 {% block content %}
-
-<div>
-    <p>캐시파일 삭제중 ...</p>
-    <p>[끝] 이라는 단어가 나오기 전에는 중간에 중지하지 마세요.</p>
-    <p>&nbsp;</p>
-</div>
-    
-<div id="status"></div>
-
-<script>
-    const evtSource = new EventSource("/admin/cache_file_deleting");
-    evtSource.onmessage = function(event) {
-        const data = event.data.trim();  // 공백 제거
+    <div>
+        <p>캐시파일 삭제중 ...</p>
+        <p>[끝] 이라는 단어가 나오기 전에는 중간에 중지하지 마세요.</p>
+        <p>&nbsp;</p>
+    </div>
         
-        document.getElementById("status").innerHTML += data + "<br>"; // 메시지 출력
-        if (data.includes("[끝]")) {
-            evtSource.close(); // "[끝]" 메시지를 받으면 연결을 닫습니다.
-        }
-    }
-</script>
+    <div id="status"></div>
 
-{% endblock %}
+    <script>
+        const evtSource = new EventSource("/admin/cache_file_deleting");
+        evtSource.onmessage = function(event) {
+            const data = event.data.trim();  // 공백 제거
+            
+            document.getElementById("status").innerHTML += data + "<br>"; // 메시지 출력
+            if (data.includes("[끝]")) {
+                evtSource.close(); // "[끝]" 메시지를 받으면 연결을 닫습니다.
+            }
+        }
+    </script>
+{% endblock content %}

@@ -1,25 +1,18 @@
 {% extends "base.html" %}
+{% set action='생성' if not poll else '수정' %}
 
-{% block title %}
-    투표  {{ '입력 ' if not poll else '수정' }}
-{% endblock title %}
-{% block subtitle %}
-    투표  {{ '입력 ' if not poll else '수정' }}
-{% endblock subtitle %}
+{% block title %}투표 {{ action }}{% endblock title %}
+{% block subtitle %}투표 {{ action }}{% endblock subtitle %}
 
 {% block content %}
-    <form name="fpoll" id="fpoll" action="{{ url_for('poll_form_update') }}" method="post" enctype="multipart/form-data" onsubmit="return fpoll_submit(this);">
+    <form name="fpoll" id="fpoll" action="{{ url_for('poll_form_update') }}?{{ request.query_params }}" method="post"
+        enctype="multipart/form-data" onsubmit="return fpoll_submit(this);">
         <input type="hidden" name="po_id" value="{{ poll.po_id }}">
-        <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
-        <input type="hidden" name="stx" value="{{ request.state.stx }}">
-        <input type="hidden" name="sst" value="{{ request.state.sst }}">
-        <input type="hidden" name="sod" value="{{ request.state.sod }}">
-        <input type="hidden" name="page" value="{{ request.state.page }}">
         <input type="hidden" name="token" value="">
 
         <div class="tbl_frm01 tbl_wrap">
             <table>
-                <caption>투표 {{ '입력 ' if not poll else '수정' }}</caption>
+                <caption>투표 {{ action }}</caption>
                 <tbody>
                     <tr>
                         <th scope="row"><label for="po_subject">투표 제목<strong class="sound_only">필수</strong></label></th>

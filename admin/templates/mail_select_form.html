@@ -1,21 +1,18 @@
 {% extends "base.html" %}
 
-{% block head %}
-    {% include editor_path(request) + '/head.html' %}
-{% endblock %}
-
-{% block title %}회원메일발송 보내기{% endblock %}
-
-{% block subtitle %}회원메일발송 보내기{% endblock %}
+{% block title %}회원메일발송 보내기{% endblock title %}
+{% block subtitle %}회원메일발송 보내기{% endblock subtitle %}
 
 {% block content %}
 
 <div class="local_ov01 local_ov">
-    전체회원 <?php echo number_format($tot_cnt) ?>명 , 탈퇴대기회원 <?php echo number_format($finish_cnt) ?>명, 정상회원 <?php echo number_format($tot_cnt - $finish_cnt) ?>명 중 메일 발송 대상 선택
+    전체회원 {{ member_count|number_format }}명 , 탈퇴대기회원 {{ leave_count|number_format }}명,
+    정상회원 {{ (member_count - leave_count)|number_format }}명 중 메일 발송 대상 선택
 </div>
 
-<form name="frmsendmailselectform" method="post" action="/admin/mail_select_list" autocomplete="off">
+<form name="frmsendmailselectform" method="post" action="/admin/mail_select_list" onsubmit="return frmsendmailselectform_submit(this);" autocomplete="off">
     <input type="hidden" name="ma_id" value="{{ mail.ma_id }}">
+    <input type="hidden" name="token" value="">
 
     <div class="tbl_frm01 tbl_wrap">
         <table>
@@ -40,8 +37,8 @@
                     <th scope="row"><label for="mb_mailling">메일링</label></th>
                     <td>
                         <select name="mb_mailling" id="mb_mailling">
-                            <option value="1">수신동의한 회원만
-                            <option value="">전체
+                            <option value="1">수신동의한 회원만</option>
+                            <option value="">전체</option>
                         </select>
                     </td>
                 </tr>
@@ -49,28 +46,15 @@
                     <th scope="row">권한</th>
                     <td>
                         <label for="mb_level_from" class="sound_only">최소권한</label>
-                        <select name="mb_level_from" id="mb_level_from">
-                            {% for level in range(1, 11) %}
-                                <option value="{{ level }}">{{ level }}</option>
-                            {% endfor %}
-                        </select> 에서
+                        {{ get_member_level_select('mb_level_from', 1, 10, 1)|safe }} 에서
                         <label for="mb_level_to" class="sound_only">최대권한</label>
-                        <select name="mb_level_to" id="mb_level_to">
-                            {% for level in range(1, 11) %}
-                                <option value="{{ level }}" {{ 'selected' if level == 10 else '' }}>{{ level }}</option>
-                            {% endfor %}
-                        </select> 까지
+                        {{ get_member_level_select('mb_level_to', 1, 10, 10)|safe }} 까지
                     </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="gr_id">게시판그룹회원</label></th>
                     <td>
-                        <select name="gr_id" id="gr_id">
-                            <option value=''>전체</option>
-                            {% for group in groups %}
-                                <option value="{{ group.gr_id }}">{{ group.gr_subject }}</option>
-                            {% endfor %}
-                        </select>
+                        {{ get_group_select('gr_id')|safe }}
                     </td>
                 </tr>
             </tbody>
@@ -83,4 +67,16 @@
     </div>
 </form>
 
-{% endblock %}
+<script>
+    function frmsendmailselectform_submit(f) {
+        f.token.value = generate_token();
+        if (!f.token.value) {
+            alert('토큰 생성에 실패하였습니다.');
+            return false;
+        }
+
+        return true;
+    }
+</script>
+
+{% endblock content %}

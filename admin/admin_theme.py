@@ -1,21 +1,22 @@
-from fastapi import APIRouter, Depends, FastAPI, Form, HTTPException
-from fastapi.responses import FileResponse
-from lib.common import *
+import logging
 import os
-from PIL import Image
-from common.database import db_session
-from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
-from common.models import Config
 import re
-from pathlib import Path
-from sqlalchemy.orm import Session
 
-THEME_DIR = TEMPLATES  # Replace with actual theme directory
+from fastapi import APIRouter, Form, HTTPException
+from fastapi.responses import FileResponse
+from pathlib import Path
+from PIL import Image
+
+from common.database import db_session
+from common.models import Config
+from lib.common import *
 
 router = APIRouter()
 templates = AdminTemplates()
-templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
-templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
+
+THEME_DIR = TEMPLATES  # Replace with actual theme directory
+THEME_MENU_KEY = "100280"  # Replace with actual menu key
+
 
 def get_theme_dir():
     result_array = []
@@ -33,9 +34,6 @@ def get_theme_dir():
 
     return result_array
 
-# app = FastAPI()
-# app.mount("/templates", StaticFiles(directory="templates"), name="templates")
-
 
 @router.get("/screenshot")
 async def screenshot():
@@ -45,26 +43,25 @@ async def screenshot():
     return {"screenshot": "screenshot"}
 
 
-import logging
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 @router.get("/screenshot/{dir}")
 async def serve_screenshot(dir: str):
     try:
         file_path = Path(f"{TEMPLATES}/{dir}/screenshot.png")
-        
+
         if not file_path.exists():
             logger.error(f"File not found: {file_path}")
             raise HTTPException(status_code=404, detail="File not found")
-        
+
         return FileResponse(file_path)
     except Exception as e:
         logger.error(f"An error occurred while serving the file: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-    
-    
+
+
 def get_theme_info(dir):
     info = {}
     path = os.path.join(THEME_DIR, dir)
@@ -108,93 +105,107 @@ def get_theme_info(dir):
 
         if not info.get('theme_name'):
             info['theme_name'] = dir
-            
-        info['theme_dir'] = dir   
+
+        info['theme_dir'] = dir
 
     return info
 
 
 # # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
-# templates.env.globals['getattr'] = getattr
-# templates.env.globals['today'] = SERVER_TIME.strftime("%Y%m%d")
-# templates.env.globals['get_member_level_select'] = get_member_level_select
-templates.env.globals['get_admin_menus'] = get_admin_menus
 templates.env.globals['get_theme_info'] = get_theme_info
 templates.env.globals['serve_screenshot'] = serve_screenshot
 
 
 @router.get("/theme")
 async def theme(request: Request, db: db_session):
-    '''
+    """
     테마관리
-    '''
-    request.session["menu_key"] = "100280"
+    """
+    request.session["menu_key"] = THEME_MENU_KEY
 
-    config = request.state.config
-    
+    if not request.state.is_super_admin:
+        raise AlertException("최고관리자만 접근 가능합니다.", 403)
+
+    config = db.scalars(select(Config)).one()
     themes = get_theme_dir()
-    if config.cf_theme and config.cf_theme in themes:
-        themes.insert(0, config.cf_theme)
-    themes = list(dict.fromkeys(themes))  # Remove duplicates
-    total_count = len(themes)    
-    
-    # 설정된 테마가 존재하지 않는다면 cf_theme 초기화
-    if config and config.cf_theme and config.cf_theme not in themes:
-        config.cf_theme = "basic"
+    current_theme = getattr(config, "cf_theme", None)
+
+    # 테마가 없거나 테마가 설치되어 있지 않으면 기본 테마로 변경
+    if current_theme not in themes:
+        config.cf_theme = current_theme = "basic"
         db.commit()
-    
+
+    # 테마가 있으면 테마를 목록 맨 앞으로 이동
+    if current_theme and current_theme in themes:
+        themes.remove(current_theme)
+        themes.insert(0, current_theme)
+
     context = {
         "request": request,
         "config": config,
         "themes": themes,
-        "total_count": total_count
-    }    
+        "total_count": len(themes)
+    }
     return templates.TemplateResponse("theme.html", context)
 
 
 @router.post("/theme_detail")
-async def theme_detail(request: Request, theme: str = Form(...)):
-    # Check if the user is an admin
-    # if not is_admin():  # Define your own is_admin() function
-    #     raise HTTPException(status_code=403, detail="Only the super admin can access this page.")
-    # print(theme)
+async def theme_detail(
+    request: Request,
+    theme: str = Form(...)
+):
+    if not request.state.is_super_admin:
+        raise AlertException("최고관리자만 접근 가능합니다.", 403)
 
     theme = theme.strip()
     theme_dir = get_theme_dir()
 
     if theme not in theme_dir:
-        raise HTTPException(status_code=400, detail="The selected theme is not installed.")
+        raise AlertException("선택하신 테마가 설치되어 있지 않습니다.", 400)
 
     info = get_theme_info(theme)
-    name = info['theme_name']
 
-    return templates.TemplateResponse("theme_detail.html", {"request": request, "name": name, "info": info})
+    context = {
+        "request": request,
+        "name": info['theme_name'],
+        "info": info
+    }
+    return templates.TemplateResponse("theme_detail.html", context)
 
 
 # 테마 미리보기 미완성 (프로그램 실행시 테마를 미리 지정하므로 중간에 다른 테마의 미리보기를 하기가 어려움)
 @router.get("/theme_preview")
-async def theme_preview(request: Request, theme: str):
-    # Check if the user is an admin
-    # if not is_admin():  # Define your own is_admin() function
-    #     raise HTTPException(status_code=403, detail="Only the super admin can access this page.")
+async def theme_preview(
+    request: Request,
+    theme: str
+):
+    if not request.state.is_super_admin:
+        raise AlertException("최고관리자만 접근 가능합니다.", 403)
 
     theme = theme.strip()
     theme_dir = get_theme_dir()
 
     if theme not in theme_dir:
-        raise HTTPException(status_code=400, detail="The selected theme is not installed.")
+        raise AlertException("선택하신 테마가 설치되어 있지 않습니다.", 400)
 
     info = get_theme_info(theme)
-    name = info['theme_name']
 
-    return templates.TemplateResponse("theme_preview.html", {"request": request, "name": name, "info": info})
+    context = {
+        "request": request,
+        "name": info['theme_name'],
+        "info": info
+    }
+    return templates.TemplateResponse("theme_preview.html", context)
 
 
 @router.post("/theme_update")
-async def theme_update(request: Request, db: db_session, theme: str = Form(...)):
-    # Check if the user is an admin
-    # if not is_admin():  # Define your own is_admin() function
-    #     raise HTTPException(status_code=403, detail="Only the super admin can access this page.")
+async def theme_update(
+    request: Request,
+    db: db_session,
+    theme: str = Form(...)
+):
+    if not request.state.is_super_admin:
+        raise AlertException("최고관리자만 접근 가능합니다.", 403)
 
     theme = theme.strip()
     theme_dir = get_theme_dir()
@@ -204,11 +215,11 @@ async def theme_update(request: Request, db: db_session, theme: str = Form(...))
     if theme not in theme_dir:
         return {"error": f"선택하신 {info['theme_name']} 테마가 설치되어 있지 않습니다."}
 
-    config = db.query(Config).first()
+    config = db.scalars(select(Config)).one()
     config.cf_theme = theme
     db.commit()
 
-    from main import app # 순환참조 방지
+    from main import app  # 순환참조 방지
 
     # todo 미들웨어로 옮기기
     register_theme_statics(app)

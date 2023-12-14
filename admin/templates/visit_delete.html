@@ -1,13 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}
-    접속자검색
-{% endblock %}
-
-{% block subtitle %}접속자검색{% endblock %}
+{% block title %}접속자검색{% endblock title %}
+{% block subtitle %}접속자검색{% endblock subtitle %}
 
 {% block content %}
-
 <div class="local_ov01 local_ov">
     접속자 로그를 삭제할 년도와 방법을 선택해주십시오.
 </div>
@@ -19,15 +15,14 @@
         <select name="year" id="year">
             <option value="">년도선택</option>
             {% for year in range(min_year, now_year + 1) %}
-            <option value="{{ year }}">{{ year }}</option>
+                <option value="{{ year }}">{{ year }}</option>
             {% endfor %}
-            ?>
         </select> 년
         <label for="month" class="sound_only">월선택</label>
         <select name="month" id="month">
             <option value="">월선택</option>
             {% for month in range(1, 13) %}
-            <option value="{{ month }}">{{ month }}</option>
+                <option value="{{ month }}">{{ month }}</option>
             {% endfor %}
         </select> 월
         <label for="method" class="sound_only">삭제방법선택</label>
@@ -79,4 +74,4 @@ function form_submit(f)
 }
 </script>
 
-{% endblock %}
+{% endblock content %}

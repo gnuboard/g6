@@ -1,160 +1,132 @@
 {% extends "base.html" %}
 
-{% block title %}
-    게시판관리
-{% endblock %}
+{% block title %}게시판관리{% endblock title %}
+{% block subtitle %}게시판관리{% endblock subtitle %}
 
 {% block content %}
-
-<h1 id="container_title">게시판관리</h1>
-<div class="container_wr">
     <div class="local_ov01 local_ov">
         <a href="/admin/board_list" class="ov_listall">전체목록</a>    
-        <span class="btn_ov01"><span class="ov_txt">생성된 게시판수</span><span class="ov_num"> {{ total_count }}개</span></span>
+        <span class="btn_ov01"><span class="ov_txt">생성된 게시판수</span><span class="ov_num"> {{ total_count|number_format }}개</span></span>
     </div>
 
     <form name="fsearch" id="fsearch" class="local_sch01 local_sch" method="get">
-    <label for="sfl" class="sound_only">검색대상</label>
-    <select name="sfl" id="sfl">
-    <option value="bo_subject" {{ get_selected('bo_subject', request.state.sfl if request.state.sfl else '' )}}>제목</option>
-    <option value="bo_table" {{ get_selected('bo_table', request.state.sfl if request.state.sfl else '' )}}>TABLE</option>
-    <option value="gr_id" {{ get_selected('gr_id', request.state.sfl if request.state.sfl else '' )}}>그룹ID</option>
-    </select>
-    <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
-    <input type="text" name="stx" value="{{ request.state.stx if request.state.stx else '' }}" id="stx" required class="required frm_input">
-    <input type="submit" value="검색" class="btn_submit">
+        <label for="sfl" class="sound_only">검색대상</label>
+        <select name="sfl" id="sfl">
+        <option value="bo_subject" {{ get_selected('bo_subject', request.state.sfl if request.state.sfl else '' ) }}>제목</option>
+        <option value="bo_table" {{ get_selected('bo_table', request.state.sfl if request.state.sfl else '' ) }}>TABLE</option>
+        <option value="gr_id" {{ get_selected('gr_id', request.state.sfl if request.state.sfl else '' ) }}>그룹ID</option>
+        </select>
+        <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
+        <input type="text" name="stx" value="{{ request.state.stx if request.state.stx else '' }}" id="stx" required class="required frm_input">
+        <input type="submit" value="검색" class="btn_submit">   
     </form>
 
     <form name="fboardlist" id="fboardlist" action="/admin/board_list_update" onsubmit="return fboardlist_submit(this);" method="post">
-    <input type="hidden" name="sst" value="{{ request.state.sst }}">
-    <input type="hidden" name="sod" value="{{ request.state.sod }}">
-    <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
-    <input type="hidden" name="stx" value="{{ request.state.stx }}">
-    <input type="hidden" name="page" value="{{ request.state.page }}">
-    <input type="hidden" name="token" value="">
+        <input type="hidden" name="token" value="">
+        <div class="tbl_head01 tbl_wrap">
+            <table>
+                <caption>게시판관리 목록</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">
+                            <label for="chkall" class="sound_only">게시판 전체</label>
+                            <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
+                        </th>
+                        <th scope="col">{{ subject_sort_link(request, 'gr_id')|safe }}그룹</a></th>
+                        <th scope="col">{{ subject_sort_link(request, 'bo_table')|safe }}TABLE</a></th>
+                        <th scope="col">{{ subject_sort_link(request, 'bo_skin')|safe }}스킨</a></th>
+                        <th scope="col">{{ subject_sort_link(request, 'bo_mobile_skin')|safe }}모바일<br>스킨</a></th>
+                        <th scope="col">{{ subject_sort_link(request, 'bo_subject')|safe }}제목</a></th>
+                        <th scope="col">{{ subject_sort_link(request, 'bo_read_point')|safe }}읽기P<span class="sound_only">포인트</span></a></th>
+                        <th scope="col">{{ subject_sort_link(request, 'bo_write_point')|safe }}쓰기P<span class="sound_only">포인트</span></a></th>
+                        <th scope="col">{{ subject_sort_link(request, 'bo_comment_point')|safe }}댓글P<span class="sound_only">포인트</span></a></th>
+                        <th scope="col">{{ subject_sort_link(request, 'bo_download_point')|safe }}다운P<span class="sound_only">포인트</span></a></th>
+                        <th scope="col">{{ subject_sort_link(request, 'bo_use_sns')|safe }}SNS<br>사용</a></th>
+                        <th scope="col">{{ subject_sort_link(request, 'bo_use_search')|safe }}검색<br>사용</a></th>
+                        <th scope="col">{{ subject_sort_link(request, 'bo_order')|safe }}출력<br>순서</a></th>
+                        <th scope="col">{{ subject_sort_link(request, 'bo_device')|safe }}접속기기</a></th>
+                        <th scope="col">관리</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for board in boards %}
+                    <tr class="bg0">
+                        <td class="td_chk">
+                            <label for="chk_{{ loop.index0 }}" class="sound_only">{{ board.bo_subject }}</label>
+                            <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
+                        </td>
+                        <td>
+                            {{ get_group_select('gr_id[]', board.gr_id, 'required')|safe }}
+                        </td>
+                        <td>
+                            <input type="hidden" name="bo_table[]" value="{{ board.bo_table }}">
+                            <a href="/board/{{ board.bo_table }}">{{ board.bo_table }}</a>
+                        </td>
+                        <td>
+                            <label for="bo_skin[{{ loop.index0 }}]" class="sound_only">스킨</label>
+                            {{ get_skin_select('board', 'bo_skin[]', board.bo_skin, event='required', device='')|safe }}
+                        </td>
+                        <td>
+                            <label for="bo_mobile_skin[]" class="sound_only">모바일 스킨</label>
+                            {{ get_skin_select('board', 'bo_mobile_skin[]', board.bo_mobile_skin, event='required', device='mobile')|safe }}
+                        </td>
+                        <td>
+                            <label for="bo_subject_{{ loop.index0 }}" class="sound_only">게시판 제목<strong class="sound_only"> 필수</strong></label>
+                            <input type="text" name="bo_subject[]" value="{{ board.bo_subject }}" id="bo_subject_{{ loop.index0 }}" required class="required tbl_input bo_subject full_input" size="10">
+                        </td>
+                        <td class="td_numsmall">
+                            <label for="bo_read_point_{{ loop.index0 }}" class="sound_only">읽기 포인트</label>
+                            <input type="text" name="bo_read_point[]" value="{{ board.bo_read_point }}" id="bo_read_point_{{ loop.index0 }}" class="tbl_input" size="2">
+                        </td>
+                        <td class="td_numsmall">
+                            <label for="bo_write_point_{{ loop.index0 }}" class="sound_only">쓰기 포인트</label>
+                            <input type="text" name="bo_write_point[]" value="{{ board.bo_write_point }}" id="bo_write_point_{{ loop.index0 }}" class="tbl_input" size="2">
+                        </td>
+                        <td class="td_numsmall">
+                            <label for="bo_comment_point_{{ loop.index0 }}" class="sound_only">댓글 포인트</label>
+                            <input type="text" name="bo_comment_point[]" value="{{ board.bo_comment_point }}" id="bo_comment_point_{{ loop.index0 }}" class="tbl_input" size="2">
+                        </td>
+                        <td class="td_numsmall">
+                            <label for="bo_download_point_{{ loop.index0 }}" class="sound_only">다운<br>포인트</label>
+                            <input type="text" name="bo_download_point[]" value="{{ board.bo_download_point }}" id="bo_download_point_{{ loop.index0 }}" class="tbl_input" size="2">
+                        </td>
+                        <td class="td_numsmall">
+                            <label for="bo_use_sns_{{ loop.index0 }}" class="sound_only">SNS<br>사용</label>
+                            <input type="checkbox" name="bo_use_sns[]" value="{{ loop.index0 }}" id="bo_use_sns_{{ loop.index0 }}" {{ 'checked' if board.bo_use_sns }}>
+                        </td>
+                        <td class="td_numsmall">
+                            <label for="bo_use_search_{{ loop.index0 }}" class="sound_only">검색<br>사용</label>
+                            <input type="checkbox" name="bo_use_search[]" value="{{ loop.index0 }}" id="bo_use_search_{{ loop.index0 }}" {{ 'checked' if board.bo_use_search }}>
+                        </td>
+                        <td class="td_numsmall">
+                            <label for="bo_order_{{ loop.index0 }}" class="sound_only">출력<br>순서</label>
+                            <input type="text" name="bo_order[]" value="{{ board.bo_order }}" id="bo_order_{{ loop.index0 }}" class="tbl_input" size="2">
+                        </td>
+                        <td class="td_mngsmall">
+                            <label for="bo_device_{{ loop.index0 }}" class="sound_only">접속기기</label>
+                            <select id="bo_device_{{ loop.index0 }}" name="bo_device[]">
+                                <option value="both" {{ get_selected(board.bo_device, 'both') }}>모두</option>
+                                <option value="pc" {{ get_selected(board.bo_device, 'pc') }}>PC</option>
+                                <option value="mobile" {{ get_selected(board.bo_device, 'mobile') }}>모바일</option>
+                            </select>
+                        </td>
+                        <td class="td_mng td_mng_m">
+                            <a href="/admin/board_form/{{ board.bo_table }}?{{ request.query_params }}" class="btn btn_03">수정</a>                            
+                            <a href="/admin/board_copy/{{ board.bo_table }}" class="board_copy btn btn_02" target="win_board_copy">복사</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="15">자료가 없습니다.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
-    <div class="tbl_head01 tbl_wrap">
-        <table>
-            <caption>게시판관리 목록</caption>
-            <thead>
-                <tr>
-                    <th scope="col">
-                        <label for="chkall" class="sound_only">게시판 전체</label>
-                        <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
-                    </th>
-                    <th scope="col">{{ subject_sort_link(request, 'gr_id')|safe }}그룹</a></th>
-                    <th scope="col">{{ subject_sort_link(request, 'bo_table')|safe }}TABLE</a></th>
-                    <th scope="col">{{ subject_sort_link(request, 'bo_skin')|safe }}스킨</a></th>
-                    <th scope="col">{{ subject_sort_link(request, 'bo_mobile_skin')|safe }}모바일<br>스킨</a></th>
-                    <th scope="col">{{ subject_sort_link(request, 'bo_subject')|safe }}제목</a></th>
-                    <th scope="col">{{ subject_sort_link(request, 'bo_read_point')|safe }}읽기P<span class="sound_only">포인트</span></a></th>
-                    <th scope="col">{{ subject_sort_link(request, 'bo_write_point')|safe }}쓰기P<span class="sound_only">포인트</span></a></th>
-                    <th scope="col">{{ subject_sort_link(request, 'bo_comment_point')|safe }}댓글P<span class="sound_only">포인트</span></a></th>
-                    <th scope="col">{{ subject_sort_link(request, 'bo_download_point')|safe }}다운P<span class="sound_only">포인트</span></a></th>
-                    <th scope="col">{{ subject_sort_link(request, 'bo_use_sns')|safe }}SNS<br>사용</a></th>
-                    <th scope="col">{{ subject_sort_link(request, 'bo_use_search')|safe }}검색<br>사용</a></th>
-                    <th scope="col">{{ subject_sort_link(request, 'bo_order')|safe }}출력<br>순서</a></th>
-                    <th scope="col">{{ subject_sort_link(request, 'bo_device')|safe }}접속기기</a></th>
-                    <th scope="col">관리</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for board in boards %}
-                <tr class="bg0">
-                    <td class="td_chk">
-                        <label for="chk_{{ loop.index0 }}" class="sound_only">{{ board.bo_subject }}</label>
-                        <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
-                    </td>
-                    <td>
-                        {{ get_group_select('gr_id[]', board.gr_id, 'required')|safe }}
-
-                        <!-- <select id="gr_id[0]" name="gr_id[0]" >
-                        <option value="">선택</option>
-                        <option value="community" selected="selected">커뮤니티</option>
-                        </select> -->
-                    </td>
-                    <td>
-                        <input type="hidden" name="bo_table[]" value="{{ board.bo_table }}">
-                        <a href="/board/{{ board.bo_table }}">{{ board.bo_table }}</a>
-                    </td>
-                    <td>
-                        <label for="bo_skin[{{ loop.index0 }}]" class="sound_only">스킨</label>
-                        {{ get_skin_select('board', 'bo_skin[]', board.bo_skin, event='required', device='')|safe}}
-                        <!-- <select id="bo_skin_{{ loop.index0 }}" name="bo_skin[0]" >
-                        <option value="">선택</option><option value="theme/basic">(테마) basic</option>
-                        <option value="theme/gallery">(테마) gallery</option>
-                        <option value="basic" selected="selected">basic</option>
-                        <option value="gallery">gallery</option>
-                        </select> -->
-                    </td>
-                    <td>
-                        <label for="bo_mobile_skin[]" class="sound_only">모바일 스킨</label>
-                        {{ get_skin_select('board', 'bo_mobile_skin[]', board.bo_mobile_skin, event='required', device='mobile')|safe}}
-                        <!-- <select id="bo_mobile_skin_{{ loop.index0 }}" name="bo_mobile_skin[0]" >
-                        <option value="">선택</option><option value="theme/basic">(테마) basic</option>
-                        <option value="theme/gallery">(테마) gallery</option>
-                        <option value="basic" selected="selected">basic</option>
-                        <option value="gallery">gallery</option>
-                        </select> -->
-                    </td>
-                    <td>
-                        <label for="bo_subject_{{ loop.index0 }}" class="sound_only">게시판 제목<strong class="sound_only"> 필수</strong></label>
-                        <input type="text" name="bo_subject[]" value="{{ board.bo_subject }}" id="bo_subject_{{ loop.index0 }}" required class="required tbl_input bo_subject full_input" size="10">
-                    </td>
-                    <td class="td_numsmall">
-                        <label for="bo_read_point_{{ loop.index0 }}" class="sound_only">읽기 포인트</label>
-                        <input type="text" name="bo_read_point[]" value="{{ board.bo_read_point }}" id="bo_read_point_{{ loop.index0 }}" class="tbl_input" size="2">
-                    </td>
-                    <td class="td_numsmall">
-                        <label for="bo_write_point_{{ loop.index0 }}" class="sound_only">쓰기 포인트</label>
-                        <input type="text" name="bo_write_point[]" value="{{ board.bo_write_point }}" id="bo_write_point_{{ loop.index0 }}" class="tbl_input" size="2">
-                    </td>
-                    <td class="td_numsmall">
-                        <label for="bo_comment_point_{{ loop.index0 }}" class="sound_only">댓글 포인트</label>
-                        <input type="text" name="bo_comment_point[]" value="{{ board.bo_comment_point }}" id="bo_comment_point_{{ loop.index0 }}" class="tbl_input" size="2">
-                    </td>
-                    <td class="td_numsmall">
-                        <label for="bo_download_point_{{ loop.index0 }}" class="sound_only">다운<br>포인트</label>
-                        <input type="text" name="bo_download_point[]" value="{{ board.bo_download_point }}" id="bo_download_point_{{ loop.index0 }}" class="tbl_input" size="2">
-                    </td>
-                    <td class="td_numsmall">
-                        <label for="bo_use_sns_{{ loop.index0 }}" class="sound_only">SNS<br>사용</label>
-                        <input type="checkbox" name="bo_use_sns[]" value="{{ loop.index0 }}" id="bo_use_sns_{{ loop.index0 }}" {{ 'checked' if board.bo_use_sns }}>
-                    </td>
-                    <td class="td_numsmall">
-                        <label for="bo_use_search_{{ loop.index0 }}" class="sound_only">검색<br>사용</label>
-                        <input type="checkbox" name="bo_use_search[]" value="{{ loop.index0 }}" id="bo_use_search_{{ loop.index0 }}" {{ 'checked' if board.bo_use_search }}>
-                    </td>
-                    <td class="td_numsmall">
-                        <label for="bo_order_{{ loop.index0 }}" class="sound_only">출력<br>순서</label>
-                        <input type="text" name="bo_order[]" value="{{ board.bo_order }}" id="bo_order_{{ loop.index0 }}" class="tbl_input" size="2">
-                    </td>
-                    <td class="td_mngsmall">
-                        <label for="bo_device_{{ loop.index0 }}" class="sound_only">접속기기</label>
-                        <select id="bo_device_{{ loop.index0 }}" name="bo_device[]">
-                            <option value="both" {{ get_selected(board.bo_device, 'both') }}>모두</option>
-                            <option value="pc" {{ get_selected(board.bo_device, 'pc') }}>PC</option>
-                            <option value="mobile" {{ get_selected(board.bo_device, 'mobile') }}>모바일</option>
-                        </select>
-                    </td>
-                    <td class="td_mng td_mng_m">
-                        <a href="/admin/board_form/{{ board.bo_table }}?sfl={{ request.state.sfl }}&stx={{ request.state.stx }}" class="btn btn_03">수정</a>                            
-                        <a href="/admin/board_copy/{{ board.bo_table }}" class="board_copy btn btn_02" target="win_board_copy">복사</a>
-                    </td>
-                </tr>
-                {% endfor %}
-                {% if not boards %}
-                <tr><td colspan="15">자료가 없습니다.</td></tr>
-                {% endif %}
-            </tbody>
-        </table>
-    </div>
-
-    <div class="btn_fixed_top">
-        <input type="submit" name="act_button" value="선택수정" onclick="document.pressed=this.value" class="btn_02 btn">
-        <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn_02 btn">
-        <a href="/admin/board_form" id="bo_add" class="btn_01 btn">게시판 추가</a>
-    </div>
+        <div class="btn_fixed_top">
+            <input type="submit" name="act_button" value="선택수정" onclick="document.pressed=this.value" class="btn_02 btn">
+            <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn_02 btn">
+            <a href="/admin/board_form" id="bo_add" class="btn_01 btn">게시판 추가</a>
+        </div>
     </form>
 
     {{ paging|safe }}
@@ -187,6 +159,4 @@
         });
     });
     </script>
-</div>
-
-{% endblock %}
+{% endblock content %}

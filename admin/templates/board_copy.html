@@ -1,17 +1,15 @@
 {% extends "base_window.html" %}
 
-{% block title %}
-    게시판복사
-{% endblock %}
+{% block title %}게시판복사{% endblock title %}
+{% block subtitle %}게시판복사{% endblock subtitle %}
 
 {% block content %}
 
 <div class="new_win">
     <h1>게시판 복사</h1>
-
     <form name="fboardcopy" id="fboardcopy" action="/admin/board_copy_update" onsubmit="return fboardcopy_check(this);" method="post" autocomplete="off">
         <input type="hidden" name="bo_table" value="{{ board.bo_table }}" id="bo_table">
-        <input type="hidden" name="token" value="{{ token }}">
+        <input type="hidden" name="token" value="">
         <div class=" new_win_con">
             <div class="tbl_frm01 tbl_wrap">
                 <table>
@@ -66,8 +64,10 @@
             return false;
         }
 
+        f.token.value = generate_token();
+
         return true;
     }
 </script>
 
-{% endblock %}
+{% endblock content %}

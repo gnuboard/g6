@@ -1,99 +1,93 @@
 {% extends "base.html" %}
+{% set action='수정' if group else '생성' %}
 
-{% block title %}
-    게시판그룹 추가
-{% endblock %}
+{% block title %}게시판그룹 {{ action }}{% endblock title %}
+{% block subtitle %}게시판그룹 {{ action }}{% endblock subtitle %}
 
 {% block content %}
+<form  method="post" name="fboardgroup" id="fboardgroup" action="/admin/boardgroup_form_update?{{ request.query_params }}" onsubmit="return fboardgroup_check(this);" enctype="multipart/form-data" autocomplete="off">
+    <input type="hidden" name="action" value="{{ 'u' if group else 'w' }}">
+    <input type="hidden" name="gr_id" value="{{ group.gr_id if group else '' }}">
+    <input type="hidden" name="token" value="">
 
+    <div class="tbl_frm01 tbl_wrap">
+        <table>
+            <caption>게시판그룹 생성</caption>
+            <colgroup>
+                <col class="grid_4">
+                <col>
+            </colgroup>
+            <tbody>
+                <tr>
+                    <th scope="row"><label for="gr_id">그룹 ID<strong class="sound_only"> 필수</strong></label></th>
+                    <td>
+                        {% if group %}
+                            <input type="hidden" name="gr_id" value="{{ group.gr_id }}">
+                            <b>{{ group.gr_id }}</b>
+                        {% else %}
+                            <input type="text" name="gr_id" value="" id="gr_id" required class="required alnum_ frm_input" maxlength="10">
+                            영문자, 숫자, _ 만 가능 (공백없이)
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="gr_subject">그룹 제목<strong class="sound_only"> 필수</strong></label></th>
+                    <td>
+                        <input type="text" name="gr_subject" value="{{ group.gr_subject }}" id="gr_subject" required class="required frm_input" size="80">
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="gr_device">접속기기</label></th>
+                    <td>
+                        <span class="frm_info">PC 와 모바일 사용을 구분합니다.</span>                        
+                            <select id="gr_device" name="gr_device">
+                            <option value="both" {{ get_selected(group.gr_device, 'both')|safe }}>PC와 모바일에서 모두 사용</option>
+                            <option value="pc" {{ get_selected(group.gr_device, 'pc')|safe }}>PC 전용</option>
+                            <option value="mobile" {{ get_selected(group.gr_device, 'mobile')|safe }}>모바일 전용</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="gr_admin">그룹 관리자</label>                    </th>
+                    <td>
+                        <input type="text" id="gr_admin" name="gr_admin" class="frm_input" value="{{ group.gr_admin }}" maxlength="20">                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="gr_use_access">접근회원사용</label></th>
+                    <td>
+                        <span class="frm_info">사용에 체크하시면 이 그룹에 속한 게시판은 접근가능한 회원만 접근이 가능합니다.</span>
+                        <input type="checkbox" name="gr_use_access" value="1" id="gr_use_access" {{ 'checked' if group.gr_use_access }}>
+                        사용
+                    </td>
+                </tr>
+                {% if group %}
+                <tr>
+                    <th scope="row">접근회원수</th>
+                    <td>
+                        <a href="/admin/boardgroupmember_list/{{ group.gr_id }}">{{ member_count|int|number_format }}</a>                    
+                    </td>
+                </tr>
+                {% endif %}
+                {% for i in range(1, 11) %}
+                <tr>
+                    <th scope="row">여분필드{{ i }}</th>
+                    <td class="td_extra">
+                        <label for="gr_{{ i }}_subj">여분필드 {{ i }} 제목</label>
+                        <input type="text" name="gr_{{ i }}_subj" id="gr_{{ i }}_subj" value="{{ getattr(group, 'gr_' ~ i ~ '_subj', '') }}" class="frm_input">
+                        <label for="gr_1">여분필드 {{ i }} 내용</label>
+                        <input type="text" name="gr_{{ i }}" value="{{ getattr(group, 'gr_' ~ i, '') }}" id="gr_{{ i }}" class="frm_input">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-<h1 id="container_title">게시판그룹 추가</h1>
-<div class="container_wr">
-<form  method="post" name="fboardgroup" id="fboardgroup" action="/admin/boardgroup_form_update" onsubmit="return fboardgroup_check(this);" enctype="multipart/form-data" autocomplete="off">
-<input type="hidden" name="action" value="{{ 'u' if group.gr_id else 'w' }}">
-<input type="hidden" name="sfl" value="{{ request.state.sfl }}">
-<input type="hidden" name="stx" value="{{ request.state.stx }}">
-<input type="hidden" name="sst" value="{{ request.state.sst }}">
-<input type="hidden" name="sod" value="{{ request.state.sod }}">
-<input type="hidden" name="page" value="{{ request.state.page }}">
-<input type="hidden" name="token" value="">
-
-<div class="tbl_frm01 tbl_wrap">
-    <table>
-        <caption>게시판그룹 생성</caption>
-        <colgroup>
-            <col class="grid_4">
-            <col>
-        </colgroup>
-        <tbody>
-            <tr>
-                <th scope="row"><label for="gr_id">그룹 ID<strong class="sound_only"> 필수</strong></label></th>
-                <td>
-                    {% if group %}
-                        <input type="hidden" name="gr_id" value="{{ group.gr_id }}">
-                        <b>{{ group.gr_id }}</b>
-                    {% else %}
-                        <input type="text" name="gr_id" value="" id="gr_id" required class="required alnum_ frm_input" maxlength="10">
-                        영문자, 숫자, _ 만 가능 (공백없이)
-                    {% endif %}
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="gr_subject">그룹 제목<strong class="sound_only"> 필수</strong></label></th>
-                <td>
-                    <input type="text" name="gr_subject" value="{{ group.gr_subject }}" id="gr_subject" required class="required frm_input" size="80">
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="gr_device">접속기기</label></th>
-                <td>
-                    <span class="frm_info">PC 와 모바일 사용을 구분합니다.</span>                        
-                        <select id="gr_device" name="gr_device">
-                        <option value="both" {{ get_selected(group.gr_device, 'both')|safe }}>PC와 모바일에서 모두 사용</option>
-                        <option value="pc" {{ get_selected(group.gr_device, 'pc')|safe }}>PC 전용</option>
-                        <option value="mobile" {{ get_selected(group.gr_device, 'mobile')|safe }}>모바일 전용</option>
-                    </select>
-                </td>
-            </tr>
-            <tr>
-                <th scope="row">
-                    <label for="gr_admin">그룹 관리자</label>                    </th>
-                <td>
-                    <input type="text" id="gr_admin" name="gr_admin" class="frm_input" value="{{ group.gr_admin }}" maxlength="20">                    </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="gr_use_access">접근회원사용</label></th>
-                <td>
-                    <span class="frm_info">사용에 체크하시면 이 그룹에 속한 게시판은 접근가능한 회원만 접근이 가능합니다.</span>
-                    <input type="checkbox" name="gr_use_access" value="1" id="gr_use_access" {{ 'checked' if group.gr_use_access }}>
-                    사용
-                </td>
-            </tr>
-            <tr>
-                <th scope="row">접근회원수</th>
-                <td>
-                    <a href="/admin/boardgroupmember_list/{{ group.gr_id }}">{{ member_count|number_format }}</a>                    
-                </td>
-            </tr>
-            {% for i in range(1, 11) %}
-            <tr>
-                <th scope="row">여분필드{{ i }}</th>
-                <td class="td_extra">
-                    <label for="gr_{{ i }}_subj">여분필드 {{ i}} 제목</label>
-                    <input type="text" name="gr_{{ i }}_subj" id="gr_{{ i }}_subj" value="{{ getattr(group, 'gr_' ~ i ~ '_subj', '') }}" class="frm_input">
-                    <label for="gr_1">여분필드 {{ i }} 내용</label>
-                    <input type="text" name="gr_{{ i }}" value="{{ getattr(group, 'gr_' ~ i, '') }}" id="gr_{{ i }}" class="frm_input">
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<div class="btn_fixed_top">
-    <a href="/admin/boardgroup_list?sst=&amp;sod=&amp;sfl=&amp;stx=&amp;page=" class="btn btn_02">목록</a>
-    <input type="submit" class="btn_submit btn" accesskey="s" value="확인">
-</div>
+    <div class="btn_fixed_top">
+        <a href="/admin/boardgroup_list?{{ request.query_params }}" class="btn btn_02">목록</a>
+        <input type="submit" class="btn_submit btn" accesskey="s" value="확인">
+    </div>
 
 </form>
 
@@ -112,6 +106,4 @@
         return true;
     }
 </script>
-
-</div>
-{% endblock %}
+{% endblock content %}
