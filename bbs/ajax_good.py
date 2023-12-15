@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, Form, Path, Request
+from fastapi import APIRouter, Form, Path, Request
 from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
+from sqlalchemy import insert, select
 
 from lib.common import *
 from common.database import db_session
@@ -22,8 +22,8 @@ async def ajax_good(
     게시글 좋아요/싫어요 처리
     """
     result = {"status": "success", "message": "", "good": 0, "nogood": 0}
-    type_attr = f"wr_{type}"
-    type_attr_rev = "wr_good" if type == "nogood" else "wr_nogood"
+    type_attr = f"wr_{type}"  # 선택한 타입
+    type_attr_rev = "wr_good" if type == "nogood" else "wr_nogood"  # 반대 타입
     type_str = "추천" if type == "good" else "비추천"
 
     # 회원만 가능
@@ -36,17 +36,17 @@ async def ajax_good(
         return JSONResponse({"status": "fail", "message": "토큰이 유효하지 않습니다."}, 403)
 
     # 게시판 존재여부 확인
-    board = db.query(Board).filter(Board.bo_table == bo_table).first()
+    board = db.scalar(select(Board).where(Board.bo_table == bo_table))
     if not board:
         return JSONResponse({"status": "fail", "message": "존재하지 않는 게시판입니다."}, 404)
 
     # 게시판 추천/비추천 기능 사용여부 확인
     if not getattr(board, f"bo_use_{type}"):
         return JSONResponse({"status": "fail", "message": "이 게시판은 추천 기능을 사용하지 않습니다."}, 403)
-    
+
     # 게시글 존재여부 확인
     write_model = dynamic_create_write_table(bo_table)
-    write = db.query(write_model).filter(write_model.wr_id == wr_id).first()
+    write = db.scalar(select(write_model).where(write_model.wr_id == wr_id))
     if not write:
         return JSONResponse({"status": "fail", "message": "존재하지 않는 게시글입니다."}, 404)
 
@@ -55,21 +55,23 @@ async def ajax_good(
         return JSONResponse({"status": "fail", "message": f"자신의 글에는 {type_str}을 할 수 없습니다."}, 403)
 
     # 게시글의 추천/비추천 데이터 확인
-    good_data = db.query(BoardGood).filter(
+    good_query = select(BoardGood).where(
         BoardGood.bo_table == bo_table,
         BoardGood.wr_id == wr_id,
         BoardGood.mb_id == member.mb_id
-    ).first()
-
+    )
+    good_data = db.scalars(good_query).first()
     if good_data:
-        # 게시글의 bg_flag가 type과 같다면 삭제 + 게시글의 type 카운트 감소
+        # 추천/비추천의 bg_flag가 선택한 타입과 같다면,
+        # 데이터 삭제 + 게시글의 추천/비추천 카운트 감소
         if good_data.bg_flag == type:
             db.delete(good_data)
             setattr(write, type_attr, getattr(write, type_attr) - 1)
             db.commit()
             result["status"] = "cancel"
             result["message"] = f"{type_str}이 취소되었습니다."
-        # 존재하는데 다른 타입이라면 수정 + 게시글의 type 카운트 증가 + 다른 타입 카운트 감소
+        # 존재하는데 다른 타입이라면
+        # 데이터 수정 + 게시글의 추천/비추천 카운트 증가 + 반대 타입 카운트 감소
         else:
             good_data.bg_flag = type
             setattr(write, type_attr, getattr(write, type_attr) + 1)
@@ -77,14 +79,16 @@ async def ajax_good(
             db.commit()
             result["message"] = f"게시글을 {type_str} 했습니다."
     else:
-        # 존재하지 않으면 추가 + 게시글의 type 카운트 증가
-        new_record = BoardGood(
-            bo_table=bo_table,
-            wr_id=wr_id,
-            mb_id=member.mb_id,
-            bg_flag=type
+        # 존재하지 않으면
+        # 데이터 추가 + 게시글의 추천/비추천 카운트 증가
+        db.execute(
+            insert(BoardGood).values(
+                bo_table=bo_table,
+                wr_id=wr_id,
+                mb_id=member.mb_id,
+                bg_flag=type
+            )
         )
-        db.add(new_record)
         setattr(write, type_attr, getattr(write, type_attr) + 1)
         db.commit()
         result["message"] = f"게시글을 {type_str} 했습니다."
@@ -93,5 +97,5 @@ async def ajax_good(
     db.refresh(write)
     result["good"] = write.wr_good
     result["nogood"] = write.wr_nogood
-            
+
     return JSONResponse(result, 200)

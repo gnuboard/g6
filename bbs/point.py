@@ -1,18 +1,18 @@
-from fastapi import APIRouter, Depends, Request
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Request
 
-from lib.common import *
 from common.database import db_session
 from common.models import Point
+from lib.common import *
 
 router = APIRouter()
 templates = UserTemplates()
-# 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.filters["datetime_format"] = datetime_format
 
 
 @router.get("/point")
-async def point_list(request: Request, db: db_session,
+async def point_list(
+    request: Request,
+    db: db_session,
     current_page: int = Query(default=1, alias="page")
 ):
     """
@@ -22,15 +22,21 @@ async def point_list(request: Request, db: db_session,
     if not member:
         raise AlertCloseException("로그인 후 이용 가능합니다.", 403)
 
-    # 스크랩 목록 조회
-    query = db.query(Point).filter_by(mb_id = member.mb_id).order_by(desc(Point.po_id))
+    # 스크랩 목록 조회 쿼리
+    query = (
+        select()
+        .where(Point.mb_id == member.mb_id)
+        .order_by(desc(Point.po_id))
+    )
 
     # 페이징 처리
     records_per_page = request.state.config.cf_page_rows
-    total_records = query.count()
+    total_records = db.scalar(query.add_columns(func.count(Point.po_id)))
     offset = (current_page - 1) * records_per_page
-    points = query.offset(offset).limit(records_per_page).all()
-    
+    points = db.scalars(
+        query.add_columns(Point).offset(offset).limit(records_per_page)
+    ).all()
+
     sum_positive = 0
     sum_negative = 0
     for point in points:

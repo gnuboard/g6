@@ -89,9 +89,6 @@ async def auth_update(
     exists_auth = db.scalar(select(Auth).filter_by(mb_id=mb_id, au_menu=au_menu))
     if exists_auth:
         # 수정
-        db.query(Auth).filter_by(mb_id=mb_id, au_menu=au_menu).update({
-            Auth.au_auth: auth_string
-        })
         db.execute(
             update(Auth)
             .where(Auth.mb_id == mb_id, Auth.au_menu == au_menu)

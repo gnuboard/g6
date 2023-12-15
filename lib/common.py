@@ -783,21 +783,37 @@ def get_member(mb_id: str): # , fields: str = '*' # fields : 가져올 필드, �
     return member
 
 
-def get_member_icon(mb_id):
-    MEMBER_ICON_DIR = "data/member"
-    member_icon_dir = f"{MEMBER_ICON_DIR}/{mb_id[:2]}"
+def get_member_icon(mb_id: str = None) -> str:
+    """회원 아이콘 경로를 반환하는 함수
 
-    icon_file = os.path.join(member_icon_dir, f"{mb_id}.gif")
+    Args:
+        mb_id (str, optional): 회원아이디. Defaults to None.
 
-    if os.path.exists(icon_file):
-        icon_filemtime = os.path.getmtime(icon_file) # 캐시를 위해 파일수정시간을 추가
-        return f"{icon_file}?{icon_filemtime}"
+    Returns:
+        str: 회원 아이콘 경로
+    """
+    if mb_id:
+        MEMBER_ICON_DIR = "data/member"
+        member_icon_dir = f"{MEMBER_ICON_DIR}/{mb_id[:2]}"
+
+        icon_file = os.path.join(member_icon_dir, f"{mb_id}.gif")
+
+        if os.path.exists(icon_file):
+            icon_filemtime = os.path.getmtime(icon_file) # 캐시를 위해 파일수정시간을 추가
+            return f"{icon_file}?{icon_filemtime}"
 
     return "static/img/no_profile.gif"
 
 
-def get_member_image(mb_id: str = None):
-    
+def get_member_image(mb_id: str = None) -> str:
+    """회원 이미지 경로를 반환하는 함수
+
+    Args:
+        mb_id (str, optional): 회원아이디. Defaults to None.
+
+    Returns:
+        str: 회원 이미지 경로
+    """
     if mb_id:
         MEMBER_IMAGE_DIR = "data/member_image"
         member_image_dir = f"{MEMBER_IMAGE_DIR}/{mb_id[:2]}"
@@ -1147,12 +1163,22 @@ def domain_mail_host(request: Request, is_at: bool = True):
     return f"@{domain_host}" if is_at else domain_host
         
 
-def get_memo_not_read(mb_id: str):
-    '''
+def get_memo_not_read(mb_id: str) -> int:
+    """
     메모를 읽지 않은 개수를 반환하는 함수
-    '''
+    """
     db = SessionLocal()
-    return db.query(Memo).filter(Memo.me_recv_mb_id == mb_id, Memo.me_read_datetime == None, Memo.me_type == 'recv').count()
+    count = db.scalar(
+        select(func.count(Memo.me_id))
+        .where(
+            Memo.me_recv_mb_id == mb_id,
+            Memo.me_read_datetime == None,
+            Memo.me_type == 'recv'
+        )
+    )
+    db.close()
+
+    return count
 
 
 def editor_path(request:Request) -> str:

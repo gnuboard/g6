@@ -1,9 +1,7 @@
 {% extends "base_window.html" %}
 {% import "/sideview/macros.html" as sideview %}
 
-{% block title %}
-    내 쪽지함
-{% endblock title %}
+{% block title %}내 쪽지함{% endblock title %}
 
 {% block content %}
     <div id="memo_list" class="new_win">
@@ -15,7 +13,7 @@
                 {% else %}
                     전체 보낸쪽지 
                 {% endif %}
-                {{ total_records }}통
+                {{ total_records|number_format }}통
                 <br>
             </div>
         </h1>
@@ -25,26 +23,26 @@
                 <li class="{% if kind == "send" %}selected{% endif %}"><a href="{{ url_for('memo_list') }}?kind=send">보낸쪽지</a></li>
                 <li><a href="{{ url_for('memo_form') }}">쪽지쓰기</a></li>
             </ul>
-            
             <div class="memo_list">
                 <ul>
-                    {% for memo, target_id, target_nick in memos %}
+                    {% for memo in memos %}
                         {% set is_read=(True if memo.me_read_datetime else False) %}
+                        {% set target_member=memo.target_member %}
                         <li class="{% if is_read %}read{% endif %}">
                             <div class="memo_li profile_big_img">
-                                <img src="/{{ get_member_image(target_id) }}" alt="profile_image">
+                                <img src="/{{ get_member_image(target_member.mb_id) }}" alt="profile_image">
                                 {% if not is_read %}
                                     <span class="no_read">안 읽은 쪽지</span>
                                 {% endif %}
                             </div>
                             <div class="memo_li memo_name">
-                                {{ sideview.get(request, target_id, target_nick|default_if_none("[회원정보 없음]"))|safe }}
+                                {{ sideview.get(request, target_member.mb_id, target_member.mb_nick|default_if_none("[회원정보 없음]"))|safe }}
                                 <span class="memo_datetime">
                                     <i class="fa fa-clock-o" aria-hidden="true"></i>
                                     {{ memo.me_send_datetime }}
                                 </span>
                                 <div class="memo_preview">
-                                    <a href="{{ url_for('memo_view', me_id=memo.me_id) }}?kind={{ kind }}&page={{ page }}">
+                                    <a href="{{ url_for('memo_view', me_id=memo.me_id) }}?{{ request.query_params }}">
                                         {{ memo.me_memo|truncate(50, True, '...') }}
                                     </a>
                                 </div>
@@ -59,7 +57,7 @@
 
             <p class="win_desc">
                 <i class="fa fa-info-circle" aria-hidden="true"></i>
-                쪽지 보관일수는 최장 <strong>{{ request.state.config.cf_memo_del }}</strong>일 입니다.
+                쪽지 보관일수는 최장 <strong>{{ request.state.config.cf_memo_del|number_format }}</strong>일 입니다.
             </p>
     
             <div class="win_btn">
