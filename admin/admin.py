@@ -62,42 +62,9 @@ async def base(request: Request, db: db_session):
     """
     request.session["menu_key"] = "100100"
     
-    # $sql_common = " from {$g5['member_table']} ";
-
-    # $sql_search = " where (1) ";
-
-    # if ($is_admin != 'super') {
-    #     $sql_search .= " and mb_level <= '{$member['mb_level']}' ";
-    # }
-
-    # if (!$sst) {
-    #     $sst = "mb_datetime";
-    #     $sod = "desc";
-    # }
-
-    # $sql_order = " order by {$sst} {$sod} ";
-
-    # $sql = " select count(*) as cnt {$sql_common} {$sql_search} {$sql_order} ";
-    # $row = sql_fetch($sql);
-    # $total_count = $row['cnt'];
-
-    # // 탈퇴회원수
-    # $sql = " select count(*) as cnt {$sql_common} {$sql_search} and mb_leave_date <> '' {$sql_order} ";
-    # $row = sql_fetch($sql);
-    # $leave_count = $row['cnt'];
-
-    # // 차단회원수
-    # $sql = " select count(*) as cnt {$sql_common} {$sql_search} and mb_intercept_date <> '' {$sql_order} ";
-    # $row = sql_fetch($sql);
-    # $intercept_count = $row['cnt'];
-
-    # $sql = " select * {$sql_common} {$sql_search} {$sql_order} limit {$new_member_rows} ";
-    # $result = sql_query($sql);
-    
     # 신규 가입 회원
     query = select(Member).order_by(Member.mb_datetime.desc()).limit(5)
     result = db.execute(query).all()
-    print(result)
     
     new_members = []
     for row in result:
