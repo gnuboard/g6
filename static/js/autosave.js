@@ -41,7 +41,16 @@ function autosave() {
 }
 
 $(function () {
-
+    // 임시저장된 글 개수를 가져옴
+    $.ajax(g5_bbs_url + "/ajax/autosave_count", {
+        headers: {"Content-Type": "application/json;"},
+        type: "get",
+        success: function (result) {
+            const countNode = document.querySelector('#autosave_count');
+            countNode.textContent = parseInt(result.count);
+        }
+    });
+    
     if (g5_is_member) {
         setInterval(autosave, AUTOSAVE_INTERVAL * 1000);
     }

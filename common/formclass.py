@@ -390,11 +390,10 @@ class PollForm:
 
 @dataclass
 class AutoSaveForm:
-    mb_id: str = Form(default="")
     as_uid: Optional[int] = Form(default=0)
     as_subject: str = Form(default="")
     as_content: str = Form(default="")
-    as_datetime: Optional[datetime] = Form(default=None)
+    as_datetime: datetime = Form(default=datetime.now())
 
       
 @dataclass
