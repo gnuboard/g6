@@ -353,11 +353,9 @@ class Board(Base):
     bo_8 = Column(String(255), nullable=False, default="")
     bo_9 = Column(String(255), nullable=False, default="")
     bo_10 = Column(String(255), nullable=False, default="")
-    # 종속관계
-    # writes = relationship("Write", backref="board")
-    # 연관관계
-    # group = relationship("Group")
+
     group: Mapped["Group"] = relationship("Group", back_populates="boards")
+    board_news: Mapped[List["BoardNew"]] = relationship("BoardNew", back_populates="board")
 
 
 class WriteBaseModel(Base):
@@ -864,8 +862,7 @@ class BoardNew(Base):
     bn_datetime = Column(DateTime, nullable=False, default=datetime.now())
     mb_id = Column(String(20), nullable=False, default='')
 
-    # 연관관계
-    board = relationship("Board")
+    board: Mapped["Board"] = relationship("Board", back_populates="board_news")
 
 
 class Scrap(Base):

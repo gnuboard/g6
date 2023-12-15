@@ -1040,29 +1040,32 @@ def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel
                 if row.po_use_point and row.po_use_point > 0:
                     insert_use_point(request, row.mb_id, row.po_use_point, row.po_id)
 
-            db.execute(
+            delete_result = db.execute(
                 delete(Point)
                 .where(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == str(rel_id), Point.po_rel_action == rel_action)
             )
             db.commit()
 
-            # po_mb_point에 반영
-            if row.po_point:
+            if delete_result.rowcount > 0:
+                result = True
+
+                # po_mb_point에 반영
+                if row.po_point:
+                    db.execute(
+                        update(Point).values(po_mb_point=Point.po_mb_point - row.po_point)
+                        .where(Point.mb_id == mb_id, Point.po_id > row.po_id)
+                    )
+                    db.commit()
+
+                # 포인트 내역의 합을 구하고    
+                sum_point = get_point_sum(request, mb_id)
+
+                # 포인트 UPDATE
                 db.execute(
-                    update(Point).values(po_mb_point=Point.po_mb_point - row.po_point)
-                    .where(Point.mb_id == mb_id, Point.po_id > row.po_id)
+                    update(Member).values(mb_point=sum_point)
+                    .where(Member.mb_id == mb_id)
                 )
                 db.commit()
-
-            # 포인트 내역의 합을 구하고    
-            sum_point = get_point_sum(request, mb_id)
-
-            # 포인트 UPDATE
-            db.execute(
-                update(Member).values(mb_point=sum_point)
-                .where(Member.mb_id == mb_id)
-            )
-            result = db.commit()
     db.close()
 
     return result
