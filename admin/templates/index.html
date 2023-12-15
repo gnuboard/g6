@@ -7,4 +7,65 @@
 {% block content %}
     <h2>This is a admin index page</h2>
     <p>Welcome to the page of my admin.</p>
+
+    <section>
+        <h2>최근게시물</h2>
+
+        <div class="tbl_head01 tbl_wrap">
+            <table>
+                <caption>최근게시물</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">그룹</th>
+                        <th scope="col">게시판</th>
+                        <th scope="col">제목</th>
+                        <th scope="col">이름</th>
+                        <th scope="col">일시</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in new_rows %}
+                    <tr>
+                        <td class="td_category">
+                            <a href="/bbs/new?gr_id={{ row.gr_id }}">
+                                <!-- <?php echo cut_str($row['gr_subject'], 10) ?> -->
+                                {{ row.gr_subject|truncate(10) }}
+                            </a>
+                        </td>
+                        <td class="td_category">
+                            <a href="/board/{{ row.bo_table }}">
+                                <!-- <?php echo cut_str($row['bo_subject'], 20) ?> -->
+                                {{ row.bo_subject|truncate(20) }}
+                            </a>
+                        </td>
+                        <td>
+                            <a href="/board/{{ row.bo_table }}/{{ row.wr_id }}{{ comment_link }}">
+                                {{ comment }}
+                                <!-- <?php echo conv_subject($row2['wr_subject'], 100) ?> -->
+                                {{ row.wr_subject|truncate(100) }}
+                                </a>
+                            </td>
+                        <td class="td_mbname">
+                            <div>
+                                <!-- <?php echo $name ?> -->
+                                {{ row.wr_name }}
+                            </div>
+                        </td>
+                        <td class="td_datetime">
+                            <!-- <?php echo $datetime ?> -->
+                            {{ row.wr_datetime.strftime('%Y-%m-%d') }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="btn_list03 btn_list">
+            <a href="/bbs/new">최근게시물 더보기</a>
+        </div>
+    </section>
+
+
+
 {% endblock %}
