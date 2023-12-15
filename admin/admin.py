@@ -61,6 +61,14 @@ async def base(request: Request, db: db_session):
     관리자 메인
     """
     request.session["menu_key"] = "100100"
+
+    # 탈퇴 회원    
+    query = select(func.count(Member.mb_id)).where(Member.mb_leave_date != '')
+    leave_count = db.execute(query).scalar()
+    
+    # 차단 회원
+    query = select(func.count(Member.mb_id)).where(Member.mb_intercept_date != '')
+    intercept_count = db.execute(query).scalar()    
     
     # 신규 가입 회원
     query = select(Member).order_by(Member.mb_datetime.desc()).limit(5)
@@ -119,12 +127,30 @@ async def base(request: Request, db: db_session):
             "comment": comment,
             "comment_link": comment_link,
         })
-                
+        
+    # 최근 포인트 발생 내역
+    # query = select(Point).order_by(Point.po_id.desc()).limit(5)
+    # new_points = db.execute(query).all()
+    
+    # $sql2 = " select mb_id, mb_name, mb_nick, mb_email, mb_homepage, mb_point from {$g5['member_table']} where mb_id = '{$row['mb_id']}' ";
+    query = select(Point, Member)\
+        .join(Member, Point.mb_id == Member.mb_id)\
+        .order_by(Point.po_id.desc())\
+        .limit(5)
+    result = db.execute(query).all()
+    new_points = []
+    for point, member in result:
+        # 데이터를 합칩니다.
+        combined_data = {**point.__dict__, **member.__dict__}
+        new_points.append(combined_data)                
     
     context = {
         "request": request,
+        "leave_count": leave_count,
+        "intercept_count": intercept_count,
         "new_members": new_members,
         "new_writes": new_writes,
+        "new_points": new_points,
     }
     
     return templates.TemplateResponse("index.html", context)
