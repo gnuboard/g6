@@ -1,4 +1,8 @@
 from fastapi import APIRouter, Request
+
+from common.database import db_session
+from common.models import Board
+
 from lib.common import *
 
 router = APIRouter()
@@ -52,9 +56,57 @@ MAIN_MENU_KEY = "100100"
 
 
 @router.get("/")
-async def base(request: Request):
+async def base(request: Request, db: db_session):
     """
     관리자 메인
     """
     request.session["menu_key"] = "100100"
-    return templates.TemplateResponse("index.html", {"request": request})
+    
+    # 최근 게시물
+    query = select(BoardNew, Board.bo_subject, Group.gr_subject, Group.gr_id)\
+        .join(Board, BoardNew.bo_table == Board.bo_table)\
+        .join(Group, Board.gr_id == Group.gr_id)\
+        .order_by(BoardNew.bn_id.desc())\
+        .limit(5)
+    result = db.execute(query).all()
+    
+    new_rows = []
+    for row in result:
+        # print(dir(row[0]))
+        write_model = dynamic_create_write_table(row[0].bo_table)
+
+        comment = ""
+        comment_link = ""        
+        if row[0].wr_id == row[0].wr_parent:
+            query = select(write_model.wr_subject, write_model.wr_name, write_model.wr_datetime)\
+                .where(write_model.wr_id == row[0].wr_id)
+            write = db.execute(query).first()
+        else:
+            comment = "댓글. "
+            comment_link = "#c_" + row[0].wr_id
+            
+            query = select(write_model.wr_subject, write_model.wr_name, write_model.wr_datetime)\
+                .where(write_model.wr_id == row[0].wr_parent)
+            write = db.execute(query).first()
+            
+        new_rows.append({
+            "gr_id": row.gr_id,
+            "gr_subject": row.gr_subject,
+            "bo_table": row[0].bo_table,
+            "bo_subject": row.bo_subject,
+            "wr_id": row[0].wr_id,
+            "wr_parent": row[0].wr_parent,
+            "wr_subject": write.wr_subject,
+            "wr_name": write.wr_name,
+            "wr_datetime": write.wr_datetime,
+            "comment": comment,
+            "comment_link": comment_link,
+        })
+                
+    
+    context = {
+        "request": request,
+        "new_rows": new_rows,
+    }
+    
+    return templates.TemplateResponse("index.html", context)
