@@ -1,14 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}
-    회원정보 찾기
-{% endblock title %}
-{% block subtitle %}
-    회원정보 > 아이디 찾기
-{% endblock subtitle %}
+{% block title %}회원정보 찾기{% endblock title %}
+{% block subtitle %}회원정보 > 아이디 찾기{% endblock subtitle %}
 
 {% block content %}
-    <!-- 회원정보 찾기 시작 { -->
     <div id="find_info" class="new_win">
         <div class="new_win_con">
             <h3>아이디 찾기 결과</h3>
@@ -18,7 +13,6 @@
                     아이디 : <strong>{{ member_id }}</strong><br>
                     가입일시 : {{ register_date }}
                 </p>
-                
             </fieldset>
             <div class="win_btn">
                 <a href="{{ url_for('find_member_password') }}" class="btn_submit btn">비밀번호 찾기</a>

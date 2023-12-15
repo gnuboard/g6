@@ -1,13 +1,12 @@
 import secrets
 from fastapi import APIRouter, Form, File, Path, UploadFile, Depends
 from fastapi.responses import RedirectResponse, Response
-from sqlalchemy.orm import Session
 
 from bbs.member_profile import validate_nickname, validate_userid, is_prohibit_email
-from lib.common import *
 from common.database import db_session
 from common.formclass import MemberForm
 from common.models import Member
+from lib.common import *
 from lib.pbkdf2 import create_hash
 
 router = APIRouter()
@@ -15,13 +14,15 @@ router = APIRouter()
 templates = UserTemplates()
 templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
-templates.env.globals['getattr'] = getattr
 templates.env.globals["captcha_widget"] = captcha_widget
 templates.env.globals["check_profile_open"] = check_profile_open
 
 
 @router.get("/register")
-async def get_register(request: Request, response: Response):
+async def get_register(
+    request: Request,
+    response: Response
+):
     # 캐시 제어 헤더 설정 (캐시된 페이지를 보여주지 않고 새로운 페이지를 보여줌)
 
     response.headers["Cache-Control"] = "no-store"
@@ -30,11 +31,15 @@ async def get_register(request: Request, response: Response):
 
     request.session["ss_agree"] = ""
     request.session["ss_agree2"] = ""
-    return templates.TemplateResponse("bbs/register.html", {"request": request})
+    return templates.TemplateResponse(f"{request.state.device}/bbs/register.html", {"request": request})
 
 
 @router.post("/register")
-async def post_register(request: Request, agree: str = Form(...), agree2: str = Form(...)):
+async def post_register(
+    request: Request,
+    agree: str = Form(...),
+    agree2: str = Form(...)
+):
     if not agree:
         raise AlertException(status_code=400, detail="회원가입약관에 동의해 주세요.")
     if not agree2:
@@ -67,30 +72,31 @@ async def get_register_form(request: Request):
         "is_profile_open": check_profile_open(open_date=None, config=request.state.config),
         "next_profile_open_date": get_next_profile_openable_date(open_date=None, config=request.state.config),
     }
-
-    return templates.TemplateResponse(
-        "member/register_form.html",
-        context={
-            "is_register": True,
-            "request": request,
-            "member": member,
-            "form": form_context,
-            "config": request.state.config,
-        }
-    )
+    context = {
+        "is_register": True,
+        "request": request,
+        "member": member,
+        "form": form_context,
+        "config": request.state.config,
+    }
+    return templates.TemplateResponse(f"{request.state.device}/member/register_form.html", context)
 
 
-@router.post("/register_form", dependencies=[Depends(validate_token), Depends(validate_captcha)], name='register_form_save')
-async def post_register_form(request: Request, db: db_session,
-                             mb_id: str = Form(None),
-                             mb_password: str = Form(None),
-                             mb_password_re: str = Form(None),
-                             mb_certify_case: Optional[str] = Form(default=""),
-                             mb_img: Optional[UploadFile] = File(None),
-                             mb_icon: Optional[UploadFile] = File(None),
-                             mb_zip: Optional[str] = Form(default=""),
-                             member_form: MemberForm = Depends()
-                             ):
+@router.post("/register_form",
+             dependencies=[Depends(validate_token), Depends(validate_captcha)],
+             name='register_form_save')
+async def post_register_form(
+    request: Request,
+    db: db_session,
+    mb_id: str = Form(None),
+    mb_password: str = Form(None),
+    mb_password_re: str = Form(None),
+    mb_certify_case: str = Form(default=""),
+    mb_img: UploadFile = File(None),
+    mb_icon: UploadFile = File(None),
+    mb_zip: str = Form(default=""),
+    member_form: MemberForm = Depends()
+):
     # 약관 동의 체크
     agree = request.session.get("ss_agree", "")
     agree2 = request.session.get("ss_agree", "")
@@ -102,7 +108,7 @@ async def post_register_form(request: Request, db: db_session,
     config = request.state.config
 
     # 유효성 검사
-    exists_member = db.query(Member.mb_id, Member.mb_email).filter(Member.mb_id == mb_id).first()
+    exists_member = db.scalar(select(Member).where(Member.mb_id == mb_id))
     if exists_member:
         raise AlertException(status_code=400, detail="이미 존재하는 회원아이디 입니다.")
 
@@ -125,7 +131,10 @@ async def post_register_form(request: Request, db: db_session,
             raise AlertException(status_code=400, detail="이메일 양식이 올바르지 않습니다.")
 
         else:
-            exists_email = db.query(Member.mb_email).filter(Member.mb_email == member_form.mb_email).first()
+            exists_email = db.scalar(
+                exists(Member.mb_email)
+                .where(Member.mb_email == member_form.mb_email).select()
+            )
             if exists_email:
                 raise AlertException(status_code=400, detail="이미 존재하는 이메일 입니다.")
     # 이메일 검사
@@ -277,7 +286,10 @@ async def post_register_form(request: Request, db: db_session,
 
 
 @router.get("/register_result")
-async def register_result(request: Request, db: db_session):
+async def register_result(
+    request: Request,
+    db: db_session
+):
     register_mb_id = request.session.get("ss_mb_reg", "")
     if "ss_mb_reg" in request.session:
         request.session.pop("ss_mb_reg")
@@ -286,14 +298,16 @@ async def register_result(request: Request, db: db_session):
     if not register_mb_id:
         return RedirectResponse(url="/bbs/register", status_code=302)
 
-    member = db.query(Member).filter(Member.mb_id == register_mb_id).first()
+    member = db.scalar(select(Member).where(Member.mb_id == register_mb_id))
     if not member:
         # 가입실패
         return RedirectResponse(url="/bbs/register", status_code=302)
 
-    return templates.TemplateResponse("bbs/register_result.html", {
-        "request": request, "member": member,
-    })
+    context = {
+        "request": request,
+        "member": member,
+    }
+    return templates.TemplateResponse(f"{request.state.device}/bbs/register_result.html", context)
 
 
 @router.get("/email_certify/{mb_id}")
@@ -303,10 +317,9 @@ async def email_certify(
     mb_id: str = Path(...),
     certify: str = Query(...),
 ):
-    member = db.query(Member).filter(Member.mb_id == mb_id).first()
+    member = db.scalar(select(Member).where(Member.mb_id == mb_id))
     if not member:
         raise AlertException("존재하는 회원이 아닙니다.", 404, "/")
-    
     if member.mb_leave_date or member.mb_intercept_date:
         raise AlertException("탈퇴한 회원이거나 차단된 회원입니다.", 403, "/")
     elif member.mb_email_certify != datetime(1, 1, 1, 0, 0, 0):

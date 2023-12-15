@@ -1,32 +1,26 @@
 import hashlib
 import logging
 import secrets
-import sys
 import zlib
 from datetime import datetime
 from typing import List, Optional
 from urllib.parse import parse_qs
-
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
 from bbs.member_profile import validate_nickname, validate_userid
-from lib.social import providers
-from lib.social.social import oauth, SocialProvider, get_social_profile, get_social_login_token
-from lib.common import AlertException, valid_email, hash_password, session_member_key, insert_point, \
-    is_admin, default_if_none, UserTemplates, TEMPLATES_DIR, mailer
 from common.database import db_session, SessionLocal
 from common.formclass import MemberForm
-
 from common.models import Config, MemberSocialProfiles, Member
+from lib.common import *
+from lib.social import providers
+from lib.social.social import oauth, SocialProvider, get_social_profile, get_social_login_token
 
 router = APIRouter()
 templates = UserTemplates()
 templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
-templates.env.globals['getattr'] = getattr
 
 log = logging.getLogger("authlib")
 logging.basicConfig()
@@ -90,7 +84,10 @@ async def social_login(request: Request):
 
 
 @router.get('/social/login/callback')
-async def authorize_social_login(request: Request, db: db_session, ):
+async def authorize_social_login(
+    request: Request,
+    db: db_session
+):
     """
     소셜 로그인 인증 콜백
     """
@@ -178,7 +175,7 @@ async def get_social_register_form(request: Request):
         "action_url": request.url_for('post_social_register'),
         "is_exists_email": is_exists_email,
     }
-    return templates.TemplateResponse("social/social_register_member.html", {
+    return templates.TemplateResponse(f"{request.state.device}/social/social_register_member.html", {
         "request": request,
         "config": config,
         "form": form_context,
@@ -188,9 +185,9 @@ async def get_social_register_form(request: Request):
 
 @router.post('/social/register')
 async def post_social_register(
-        request: Request,
-        db: db_session,
-        member_form: MemberForm = Depends(),
+    request: Request,
+    db: db_session,
+    member_form: MemberForm = Depends(),
 ):
     """
     신규 소셜 회원등록
@@ -222,8 +219,7 @@ async def post_social_register(
                              url=request.url_for('login').__str__())
 
     gnu_social_id = SocialAuthService.g5_convert_social_id(identifier, provider_name)
-    exists_social_member = db.query(Member.mb_id, Member.mb_email).filter(Member.mb_id == gnu_social_id).first()
-
+    exists_social_member = db.scalar(select(Member).where(Member.mb_id == gnu_social_id))
     # 유효성 검증
     if exists_social_member:
         raise AlertException(status_code=400, detail="이미 소셜로그인으로 가입된 회원아이디 입니다.",
@@ -236,7 +232,10 @@ async def post_social_register(
     if not valid_email(member_form.mb_email):
         raise AlertException(status_code=400, detail="이메일 양식이 올바르지 않습니다.")
 
-    exists_email = db.query(Member.mb_email).filter(Member.mb_email == member_form.mb_email).first()
+    exists_email = db.scalar(
+        exists(Member.mb_email)
+        .where(Member.mb_email == member_form.mb_email).select()
+    )
     if exists_email:
         raise AlertException(status_code=400, detail="이미 존재하는 이메일 입니다.")
 
@@ -328,11 +327,13 @@ class SocialAuthService:
             g5 user_id
         """
         with SessionLocal() as db:
-            result = db.query(MemberSocialProfiles.mb_id).filter(
-                MemberSocialProfiles.provider == provider,
-                MemberSocialProfiles.identifier == identifier
-            ).first()
-
+            result = db.scalar(
+                select(MemberSocialProfiles)
+                .where(
+                    MemberSocialProfiles.provider == provider,
+                    MemberSocialProfiles.identifier == identifier
+                )
+            )
         if result:
             return result
 
@@ -349,11 +350,13 @@ class SocialAuthService:
             True or False
         """
         with SessionLocal() as db:
-            result = db.query(MemberSocialProfiles).filter(
-                MemberSocialProfiles.provider == provider,
-                MemberSocialProfiles.identifier == identifier
-            ).first()
-
+            result = db.scalar(
+                exists(MemberSocialProfiles.mp_id)
+                .where(
+                    MemberSocialProfiles.provider == provider,
+                    MemberSocialProfiles.identifier == identifier
+                ).select()
+            )
         if result:
             return True
 
@@ -369,8 +372,12 @@ class SocialAuthService:
             True or False
         """
         with SessionLocal() as db:
-            result = db.query(MemberSocialProfiles.mb_id).filter(Member.mb_id == member_id).first()
-
+            result = db.scalar(
+                exists(MemberSocialProfiles.mb_id)
+                .where(
+                    MemberSocialProfiles.mb_id == member_id
+                ).select()
+            )
         if result:
             return True
 
@@ -399,4 +406,8 @@ class SocialAuthService:
         소셜계정 연결해제
         """
         with SessionLocal() as db:
-            db.query(MemberSocialProfiles.mb_id).filter(MemberSocialProfiles.mb_id == member_id).delete()
+            db.execute(
+                delete(MemberSocialProfiles)
+                .where(MemberSocialProfiles.mb_id == member_id)
+            )
+            db.commit()

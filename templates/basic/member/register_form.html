@@ -1,17 +1,14 @@
 {% extends "base.html" %}
+{% set title = "회원정보 수정" if member.mb_id else "회원가입" %}
 
 {% block head %}
     <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" async></script>
-{% endblock %}
+{% endblock head %}
 
-{% block title %}
-    회원가입
-{% endblock %}
+{% block title %}{{ title }}{% endblock title %}
+{% block subtitle %}{{ title }}{% endblock subtitle %}
 
 {% block content %}
-
-<h1 id="container_title">회원가입</h1>
-
 <div class="register">
     <form id="fregisterform" name="fregisterform" action="{{ form.action_url }}"
           onsubmit="return fregisterform_submit(this)" method="post" enctype="multipart/form-data" autocomplete="off">
@@ -19,7 +16,6 @@
         <input type="hidden" name="agree" value="{{ True if form.agree is defined else '' }}">
         <input type="hidden" name="agree2" value="{{ True if form.agree2 is defined else '' }}">
         <input type="hidden" name="token" value="">
-
 <!--        <input type="hidden" name="cert_type" value="">-->
 <!--        <input type="hidden" name="cert_no" value="">-->
         <input type="hidden" name="mb_sex" value="">
@@ -63,8 +59,6 @@
             <div class="tbl_frm01 tbl_wrap register_form_inner">
                 <h2>개인정보 입력</h2>
                 <ul>
-                    <li>
-                    </li>
                     <li>
                         <label for="reg_mb_name">이름 (필수)</label>
                         <input type="text" id="reg_mb_name" name="mb_name"
@@ -469,4 +463,4 @@
 </script>
 
 
-{% endblock %}
+{% endblock content %}
