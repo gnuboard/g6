@@ -18,7 +18,7 @@
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
 <section id="bo_w">
     <!-- 게시물 작성/수정 시작 { -->
-    <form name="fwrite" id="fwrite" action="/board/write_update?{{ request.query_params }}" method="post" enctype="multipart/form-data" onsubmit="return fwrite_submit(this);" autocomplete="off" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
+    <form name="fwrite" id="fwrite" action="/board/write_update" method="post" enctype="multipart/form-data" onsubmit="return fwrite_submit(this);" autocomplete="off" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
         <input type="hidden" name="uid" value="{{ get_unique_id(request) }}">
         <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
         <input type="hidden" name="wr_id" value="{{ write.wr_id }}">
@@ -160,7 +160,7 @@
         <!-- Captcha End -->
 
         <div class="btn_confirm write_div">
-            <a href="{{ url_for('list_post', bo_table=board.bo_table) }}?{{ request.query_params }}" class="btn_cancel btn">취소</a>
+            <a href="{{ url_for('list_post', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_cancel btn">취소</a>
             <button type="submit" id="btn_submit" accesskey="s" class="btn_submit btn">작성완료</button>
         </div>
         </form>
@@ -194,7 +194,6 @@
 
         function fwrite_submit(f)
         {
-            /*
             if (document.getElementById("char_count")) {
                 if (char_min > 0 || char_max > 0) {
                     var cnt = parseInt(check_byte("wr_content", "char_count"));
@@ -208,7 +207,7 @@
                     }
                 }
             }
-            */
+
             // captcha 사용시
             if (typeof check_captcha === "function") {
                 if (!check_captcha(f)) {
@@ -217,6 +216,7 @@
             }
 
             f.token.value = generate_token();
+            f.action += "?{{ request.query_params|safe }}"
 
             // document.getElementById("btn_submit").disabled = "disabled";
 
