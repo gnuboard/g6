@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 
 from common.database import db_session
-from common.models import Board
+from common.models import Board, Member, GroupMember
 
 from lib.common import *
 
@@ -62,6 +62,56 @@ async def base(request: Request, db: db_session):
     """
     request.session["menu_key"] = "100100"
     
+    # $sql_common = " from {$g5['member_table']} ";
+
+    # $sql_search = " where (1) ";
+
+    # if ($is_admin != 'super') {
+    #     $sql_search .= " and mb_level <= '{$member['mb_level']}' ";
+    # }
+
+    # if (!$sst) {
+    #     $sst = "mb_datetime";
+    #     $sod = "desc";
+    # }
+
+    # $sql_order = " order by {$sst} {$sod} ";
+
+    # $sql = " select count(*) as cnt {$sql_common} {$sql_search} {$sql_order} ";
+    # $row = sql_fetch($sql);
+    # $total_count = $row['cnt'];
+
+    # // 탈퇴회원수
+    # $sql = " select count(*) as cnt {$sql_common} {$sql_search} and mb_leave_date <> '' {$sql_order} ";
+    # $row = sql_fetch($sql);
+    # $leave_count = $row['cnt'];
+
+    # // 차단회원수
+    # $sql = " select count(*) as cnt {$sql_common} {$sql_search} and mb_intercept_date <> '' {$sql_order} ";
+    # $row = sql_fetch($sql);
+    # $intercept_count = $row['cnt'];
+
+    # $sql = " select * {$sql_common} {$sql_search} {$sql_order} limit {$new_member_rows} ";
+    # $result = sql_query($sql);
+    
+    # 신규 가입 회원
+    query = select(Member).order_by(Member.mb_datetime.desc()).limit(5)
+    result = db.execute(query).all()
+    print(result)
+    
+    new_members = []
+    for row in result:
+
+        query2 = select(func.count(GroupMember.mb_id)).where(GroupMember.mb_id == row[0].mb_id)
+        result2 = db.execute(query2).scalar()  # 행의 수를 반환
+        group = ""
+        if result2 > 0:
+            group = f'<a href="/admin/boardgroupmember_form.php?mb_id={ row[0].mb_id }">{ result2 }</a>'
+            
+        member_data = {c.name: getattr(row[0], c.name) for c in Member.__table__.columns}
+        member_data["group"] = group
+        new_members.append(member_data)
+    
     # 최근 게시물
     query = select(BoardNew, Board.bo_subject, Group.gr_subject, Group.gr_id)\
         .join(Board, BoardNew.bo_table == Board.bo_table)\
@@ -70,7 +120,7 @@ async def base(request: Request, db: db_session):
         .limit(5)
     result = db.execute(query).all()
     
-    new_rows = []
+    new_writes = []
     for row in result:
         # print(dir(row[0]))
         write_model = dynamic_create_write_table(row[0].bo_table)
@@ -89,7 +139,7 @@ async def base(request: Request, db: db_session):
                 .where(write_model.wr_id == row[0].wr_parent)
             write = db.execute(query).first()
             
-        new_rows.append({
+        new_writes.append({
             "gr_id": row.gr_id,
             "gr_subject": row.gr_subject,
             "bo_table": row[0].bo_table,
@@ -106,7 +156,8 @@ async def base(request: Request, db: db_session):
     
     context = {
         "request": request,
-        "new_rows": new_rows,
+        "new_members": new_members,
+        "new_writes": new_writes,
     }
     
     return templates.TemplateResponse("index.html", context)
