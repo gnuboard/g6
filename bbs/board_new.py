@@ -52,9 +52,10 @@ async def board_new_list(
             # 댓글/게시글 구분
             if write.wr_is_comment:
                 new.subject = "[댓글] " + write.wr_content[:100]
-                new.add_link = f"#c_{write.wr_id}"
+                new.link = f"/board/{new.bo_table}/{new.wr_parent}#c_{write.wr_id}"
             else:
                 new.subject = write.wr_subject
+                new.link = f"/board/{new.bo_table}/{new.wr_id}"
 
             # 작성자
             new.name = cut_name(request, write.wr_name)

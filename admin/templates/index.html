@@ -1,10 +1,156 @@
 {% extends "base.html" %}
+{% import "/sideview/macros.html" as sideview %}
 
 {% block title %}
     관리자메인
 {% endblock %}
 
 {% block content %}
-    <h2>This is a admin index page</h2>
-    <p>Welcome to the page of my admin.</p>
+<section>
+    <h2>신규가입회원 <?php echo $new_member_rows ?>건 목록</h2>
+    <div class="local_desc02 local_desc">
+        총회원수 {{ new_members|length }}명 중 차단 {{ intercept_count|number_format }}명, 탈퇴 : {{ leave_count|number_format }}명
+    </div>
+
+    <div class="tbl_head01 tbl_wrap">
+        <table>
+            <caption>신규가입회원</caption>
+            <thead>
+                <tr>
+                    <th scope="col">회원아이디</th>
+                    <th scope="col">이름</th>
+                    <th scope="col">닉네임</th>
+                    <th scope="col">권한</th>
+                    <th scope="col">포인트</th>
+                    <th scope="col">수신</th>
+                    <th scope="col">공개</th>
+                    <th scope="col">인증</th>
+                    <th scope="col">차단</th>
+                    <th scope="col">그룹</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in new_members %}
+                <tr>
+                    <td class="td_mbid">{{ row.mb_id }}</td>
+                    <td class="td_mbname">{{ row.mb_name }}</td>
+                    <td class="td_mbname sv_use">
+                        <div>{{ sideview.get(request, row.mb_id, row.mb_nick, row.wr_email, row.wr_homepage)|safe }}</div>
+                    </td>
+                    <td class="td_num">{{ row.mb_level }}</td>
+                    <td><a href="/admin/point_list?sfl=mb_id&stx={{ row.mb_id }}">{{ row.mb_point|number_format }}</a></td>
+                    <td class="td_boolean">{{ '예' if row.mb_mailling else '아니오' }}</td>
+                    <td class="td_boolean">{{ '예' if row.mb_open else '아니오' }}</td>
+                    <td class="td_boolean">{{ '예' if row.mb_email_certify.year > 2000 else '아니오' }}</td>
+                    <td class="td_boolean">{{ '예' if row.mb_intercept_date else '아니오' }}</td>
+                    <td class="td_category">{{ row.group|safe }}</td>
+                </tr>
+                {% endfor %}
+                {% if new_members|length == 0 %}
+                <tr>
+                    <td colspan="10" class="empty_table">자료가 없습니다.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="btn_list03 btn_list">
+        <a href="/admin/member_list">회원 전체보기</a>
+    </div>
+
+</section>
+
+
+<section>
+    <h2>최근게시물</h2>
+
+    <div class="tbl_head01 tbl_wrap">
+        <table>
+            <caption>최근게시물</caption>
+            <thead>
+                <tr>
+                    <th scope="col">그룹</th>
+                    <th scope="col">게시판</th>
+                    <th scope="col">제목</th>
+                    <th scope="col">이름</th>
+                    <th scope="col">일시</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in new_writes %}
+                <tr>
+                    <td class="td_category">
+                        <a href="/bbs/new?gr_id={{ row.gr_id }}">{{ row.gr_subject|truncate(10) }}</a>
+                    </td>
+                    <td class="td_category">
+                        <a href="/board/{{ row.bo_table }}">{{ row.bo_subject|truncate(20) }}</a>
+                    </td>
+                    <td>
+                        <a href="/board/{{ row.bo_table }}/{{ row.wr_id }}{{ comment_link }}">{{ comment }}{{ row.wr_subject|truncate(100) }}</a>
+                    </td>
+                    <td class="td_mbname">
+                        <div>{{ row.wr_name }}</div>
+                    </td>
+                    <td class="td_datetime">
+                        {{ row.wr_datetime.strftime('%Y-%m-%d') }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="btn_list03 btn_list">
+        <a href="/bbs/new">최근게시물 더보기</a>
+    </div>
+</section>
+
+<section>
+    <h2>최근 포인트 발생내역</h2>
+    <div class="local_desc02 local_desc">
+        전체 {{ new_points|length }}건
+    </div>
+
+    <div class="tbl_head01 tbl_wrap">
+        <table>
+            <caption>최근 포인트 발생내역</caption>
+            <thead>
+                <tr>
+                    <th scope="col">회원아이디</th>
+                    <th scope="col">이름</th>
+                    <th scope="col">닉네임</th>
+                    <th scope="col">일시</th>
+                    <th scope="col">포인트 내용</th>
+                    <th scope="col">포인트</th>
+                    <th scope="col">포인트합</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in new_points %}
+                <tr>
+                    <td class="td_mbid"><a href="/admin/point_list?sfl=mb_id&stx={{ row.mb_id }}">{{ row.mb_id }}</a></td>
+                    <td class="td_mbname">{{ row.mb_name }}</td>
+                    <td class="td_name sv_use">
+                        <div>{{ sideview.get(request, row.mb_id, row.mb_nick, row.wr_email, row.wr_homepage)|safe }}</div>
+                    </td>
+                    <td class="td_datetime">{{ row.po_datetime.strftime('%Y-%m-%d') }}</td>
+                    <td><a href=""></a>{{ row.po_content }}</a></td>
+                    <td class="td_numbig">{{ row.po_point|number_format }}</td>
+                    <td class="td_numbig">{{ row.po_mb_point|number_format }}</td>
+                </tr>
+                {% endfor %}
+                {% if new_points|length == 0 %}
+                <tr>
+                    <td colspan="7" class="empty_table">자료가 없습니다.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="btn_list03 btn_list">
+        <a href="/admin/point_list">포인트내역 전체보기</a>
+    </div>
+</section>
 {% endblock %}

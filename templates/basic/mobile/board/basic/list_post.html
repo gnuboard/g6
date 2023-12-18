@@ -60,7 +60,7 @@
                 </li>
                 {% if is_write %}
                 <li>
-                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table) }}" class="btn_b01 btn" title="글쓰기">
+                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_b01 btn" title="글쓰기">
                         <i class="fa fa-pencil" aria-hidden="true"></i>
                         <span class="sound_only">글쓰기</span>
                     </a>
@@ -138,7 +138,7 @@
                             {% if "secret" in write.wr_option %}
                                 <i class="fa fa-lock" aria-hidden="true"></i>
                             {% endif %}
-                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?{{ request.query_params }}">
+                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}">
                                 {{ write.subject }}
                             </a>
                             {% if write.icon_new %}<span class="new_icon">N<span class="sound_only">새글</span></span>{% endif %}
@@ -203,7 +203,7 @@
                                 {% if "secret" in write.wr_option %}
                                     <i class="fa fa-lock" aria-hidden="true"></i>
                                 {% endif %}
-                                <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?{{ request.query_params }}">{{ write.wr_subject }}</a>
+                                <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}">{{ write.wr_subject }}</a>
                                 {% if write.icon_new %}<span class="new_icon">N<span class="sound_only">새글</span></span>{% endif %}
                                 {% if write.icon_hot %}<i class="fa fa-heart" aria-hidden="true"></i>{% endif %}
                                 {% if write.icon_file %}<i class="fa fa-download" aria-hidden="true"></i>{% endif %}
@@ -260,7 +260,7 @@
                 {% endif %}
                 {% if is_write %}
                 <li>
-                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table) }}" class="btn_b01 btn" title="글쓰기">
+                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_b01 btn" title="글쓰기">
                         <i class="fa fa-pencil" aria-hidden="true"></i><span class="sound_only">글쓰기</span>
                     </a>
                 </li>
@@ -353,7 +353,7 @@
                 return false;
     
             f.removeAttribute("target");
-            f.action = "{{ url_for('list_delete', bo_table=board.bo_table) }}?{{ request.query_params }}";
+            f.action = "{{ url_for('list_delete', bo_table=board.bo_table)|set_query_params(request)|safe }}";
         }
 
         f.token.value = generate_token();

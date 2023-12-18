@@ -888,35 +888,40 @@ def generate_reply_character(board: Board, write):
     # 마지막 문자열 1개 자르기
     if not write.wr_is_comment:
         origin_reply = write.wr_reply
-        query = db.query(func.right(write_model.wr_reply, 1).label("reply")).filter(
-            write_model.wr_num == write.wr_num,
-            func.length(write_model.wr_reply) == (len(origin_reply) + 1)
+        query = (
+            select(func.substr(write_model.wr_reply, -1).label("reply"))
+            .where(
+                write_model.wr_num == write.wr_num,
+                func.length(write_model.wr_reply) == (len(origin_reply) + 1)
+            )
         )
         if origin_reply:
-            query = query.filter(write_model.wr_reply.like(f"{origin_reply}%"))
+            query = query.where(write_model.wr_reply.like(f"{origin_reply}%"))
     else:
         origin_reply = write.wr_comment_reply
-        query = db.query(func.right(write_model.wr_comment_reply, 1).label("reply")).filter(
-            write_model.wr_parent == write.wr_parent,
-            write_model.wr_comment == write.wr_comment,
-            func.length(write_model.wr_comment_reply) == (len(origin_reply) + 1)
+        query = (
+            select(func.substr(write_model.wr_comment_reply, -1).label("reply"))
+            .where(
+                write_model.wr_parent == write.wr_parent,
+                write_model.wr_comment == write.wr_comment,
+                func.length(write_model.wr_comment_reply) == (len(origin_reply) + 1)
+            )
         )
         if origin_reply:
-            query = query.filter(write_model.wr_comment_reply.like(f"{origin_reply}%"))
+            query = query.where(write_model.wr_comment_reply.like(f"{origin_reply}%"))
 
     # 정방향이면 최대값, 역방향이면 최소값
     if board.bo_reply_order:
-        result = query.order_by(desc("reply")).first()
+        last_reply_char = db.scalar(query.order_by(desc("reply")))
         char_begin = "A"
         char_end = "Z"
         char_increase = 1
     else:
-        result = query.order_by(asc("reply")).first()
+        last_reply_char = db.scalar(query.order_by(asc("reply")))
         char_begin = "Z"
         char_end = "A"
         char_increase = -1
 
-    last_reply_char = result.reply if result else None
     if last_reply_char == char_end:  # A~Z은 26 입니다.
         raise AlertException("더 이상 답변하실 수 없습니다. 답변은 26개 까지만 가능합니다.")
 
@@ -1100,12 +1105,13 @@ def delete_write(request: Request, bo_table: str, origin_write: WriteBaseModel) 
     write_member_level = getattr(write_member, "mb_level", 1)
 
     # 권한 체크
-    if member_admin_type and member_admin_type != "super" and write_member_level > member_level:
-        raise AlertException("자신보다 높은 권한의 게시글은 삭제할 수 없습니다.", 403)
-    elif origin_write.mb_id and not is_owner(origin_write, member_id):
-        raise AlertException("자신의 게시글만 삭제할 수 있습니다.", 403)
-    elif not origin_write.mb_id and not request.session.get(f"ss_delete_{bo_table}_{origin_write.wr_id}"):
-        raise AlertException("비회원 글을 삭제할 권한이 없습니다.", 403, f"/bbs/password/delete/{bo_table}/{origin_write.wr_id}?{request.query_params}")
+    if member_admin_type != "super":
+        if member_admin_type and write_member_level > member_level:
+            raise AlertException("자신보다 높은 권한의 게시글은 삭제할 수 없습니다.", 403)
+        elif origin_write.mb_id and not is_owner(origin_write, member_id):
+            raise AlertException("자신의 게시글만 삭제할 수 있습니다.", 403)
+        elif not origin_write.mb_id and not request.session.get(f"ss_delete_{bo_table}_{origin_write.wr_id}"):
+            raise AlertException("비회원 글을 삭제할 권한이 없습니다.", 403, f"/bbs/password/delete/{bo_table}/{origin_write.wr_id}?{request.query_params}")
     
     # 답변글이 있을 때 삭제 불가
     write_model = dynamic_create_write_table(bo_table)

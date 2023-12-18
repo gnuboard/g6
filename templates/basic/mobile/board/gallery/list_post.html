@@ -63,7 +63,7 @@
                 </li>
                 {% if is_write %}
                 <li>
-                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table) }}" class="btn_b01 btn" title="글쓰기">
+                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_b01 btn" title="글쓰기">
                         <i class="fa fa-pencil" aria-hidden="true"></i>
                         <span class="sound_only">글쓰기</span>
                     </a>
@@ -121,7 +121,7 @@
                     </div>
                     <div class="gall_con">
                         <div class="gall_img" style="{% if gallery_height > 0 %}height:{{ gallery_height }}px;max-height:{{ gallery_height }}px{% endif %}">
-                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?{{ request.query_params }}">
+                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}">
                                 {% if write.wr_id|string in board.bo_notice %}
                                     <span class="is_notice" style="{{ line_height_style }}">공지</span>
                                 {% else %}
@@ -139,7 +139,7 @@
                                 <a href="{{ request.url.replace_query_params(sca=write.ca_name) }}" class="bo_cate_link">{{ write.ca_name }}</a>
                             {% endif %}
 
-                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?{{ request.query_params }}" class="bo_tit">
+                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}" class="bo_tit">
                                 {% if write.wr_reply %}
                                     <img src="{{ url_for('static', path="/img/icon_reply.gif") }}" class="icon_reply" alt="답변글">
                                 {% endif %}
@@ -204,8 +204,9 @@
                 {% endif %}
                 {% if is_write %}
                 <li>
-                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table) }}" class="btn_b01 btn" title="글쓰기">
-                        <i class="fa fa-pencil" aria-hidden="true"></i><span class="sound_only">글쓰기</span>
+                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_b01 btn" title="글쓰기">
+                        <i class="fa fa-pencil" aria-hidden="true"></i>
+                        <span class="sound_only">글쓰기</span>
                     </a>
                 </li>
                 {% endif %}
@@ -297,7 +298,7 @@
                 return false;
     
             f.removeAttribute("target");
-            f.action = "{{ url_for('list_delete', bo_table=board.bo_table) }}?{{ request.query_params }}";
+            f.action = "{{ url_for('list_delete', bo_table=board.bo_table)|set_query_params(request)|safe }}";
         }
 
         f.token.value = generate_token();
