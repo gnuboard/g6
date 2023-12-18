@@ -3,7 +3,7 @@ from typing import List
 
 # TINYINT 대신 Integer 사용하기 바랍니다.
 # from sqlalchemy.dialects.mysql import TINYINT
-from sqlalchemy.orm import Mapped, relationship
+from sqlalchemy.orm import DynamicMapped, Mapped, relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import ArgumentError, InvalidRequestError
 from datetime import datetime, date
@@ -248,6 +248,7 @@ class Member(Base):
     socials: Mapped[List["MemberSocialProfiles"]] = relationship("MemberSocialProfiles", back_populates="member")
     recv_memos: Mapped[List["Memo"]] = relationship("Memo", back_populates="recv_member", foreign_keys="Memo.me_recv_mb_id")
     send_memos: Mapped[List["Memo"]] = relationship("Memo", back_populates="send_member", foreign_keys="Memo.me_send_mb_id")
+    scraps: DynamicMapped["Scrap"] = relationship("Scrap", back_populates="member", lazy="dynamic")
 
 
 class Board(Base):
@@ -356,6 +357,7 @@ class Board(Base):
 
     group: Mapped["Group"] = relationship("Group", back_populates="boards")
     board_news: Mapped[List["BoardNew"]] = relationship("BoardNew", back_populates="board")
+    scraps: Mapped[List["Scrap"]] = relationship("Scrap", back_populates="board")
 
 
 class WriteBaseModel(Base):
@@ -872,10 +874,13 @@ class Scrap(Base):
     __tablename__ = DB_TABLE_PREFIX + 'scrap'
 
     ms_id = Column(Integer, primary_key=True, autoincrement=True)
-    mb_id = Column(String(20), nullable=False, default='')
-    bo_table = Column(String(20), nullable=False, default='')
+    mb_id = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "member.mb_id"), nullable=False, default='')
+    bo_table = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "board.bo_table"), nullable=False, default='')
     wr_id = Column(Integer, nullable=False, default=0)
     ms_datetime = Column(DateTime, nullable=False, default=datetime.now())
+
+    board: Mapped["Board"] = relationship("Board", back_populates="scraps")
+    member: Mapped["Member"] = relationship("Member", back_populates="scraps")
 
 
 class BoardGood(Base):

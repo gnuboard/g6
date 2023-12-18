@@ -15,7 +15,7 @@ from fastapi.templating import Jinja2Templates
 from jinja2 import Environment
 from markupsafe import Markup, escape
 from passlib.context import CryptContext
-from sqlalchemy import Index, asc, desc, and_, func, inspect, select, delete, between, exists, update
+from sqlalchemy import Index, asc, desc, and_, func, insert, inspect, select, delete, between, exists, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
 from starlette.staticfiles import StaticFiles
@@ -1951,13 +1951,15 @@ def insert_board_new(bo_table: str, write: object):
     최신글 테이블 등록 함수
     """
     db = SessionLocal()
-
-    new = BoardNew()
-    new.bo_table = bo_table
-    new.wr_id = write.wr_id
-    new.wr_parent = write.wr_parent
-    new.mb_id = write.mb_id
-    db.add(new)
+    db.execute(
+        insert(BoardNew)
+        .values(
+            bo_table=bo_table,
+            wr_id=write.wr_id,
+            wr_parent=write.wr_parent,
+            mb_id=write.mb_id,
+        )
+    )
     db.commit()
 
 
