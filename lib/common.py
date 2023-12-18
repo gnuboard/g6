@@ -1946,7 +1946,7 @@ def datetime_format(date: datetime, format="%Y-%m-%d %H:%M:%S"):
     return date.strftime(format)
 
 
-def insert_board_new(bo_table: str, write: object):
+def insert_board_new(bo_table: str, write: WriteBaseModel):
     """
     최신글 테이블 등록 함수
     """

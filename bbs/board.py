@@ -1166,6 +1166,9 @@ async def write_comment_update(
         write.wr_comment = write.wr_comment + 1
         db.commit()
 
+        # 새글 추가
+        insert_board_new(form.bo_table, comment)
+
         # 메일 발송
         if board_config.use_email:
             send_write_mail(request, board, comment, write)
