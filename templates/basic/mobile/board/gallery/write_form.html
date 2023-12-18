@@ -1,143 +1,228 @@
 {% extends "base.html" %}
+{% import editor_macro(request) as editor %}
+
+{% block head %}
+    {{ editor.head() }}
+{% endblock head %}
 
 {% block title %}
-    게시물 목록
-{% endblock %}
+    {{ board.subject }} 글쓰기
+{% endblock title %}
+{% block subtitle %}
+    {{ board.subject }} 글쓰기
+{% endblock subtitle %}
 
 {% block content %}
+{% set login_member=request.state.login_member %}
+{% set is_admin=get_admin_type(request, login_member.mb_id, group=board.group, board=board) %}
+{% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
+<section id="bo_w">
+    <!-- 게시물 작성/수정 시작 { -->
+    <form name="fwrite" id="fwrite" action="/board/write_update" method="post" enctype="multipart/form-data" onsubmit="return fwrite_submit(this);" autocomplete="off" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
+        <input type="hidden" name="uid" value="{{ get_unique_id(request) }}">
+        <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
+        <input type="hidden" name="wr_id" value="{{ write.wr_id }}">
+        <input type="hidden" name="parent_id" value="{{ request.query_params.parent_id }}">
+        <input type="hidden" name="token" value="">
+        
+        {% if categories %}
+            <div class="bo_w_select write_div">
+                <label for="ca_name" class="sound_only">분류<strong>필수</strong></label>
+                <select name="ca_name" id="ca_name" required="">
+                    <option value="">분류를 선택하세요</option>
+                    {% for category in categories %}
+                        <option value="{{ category }}" {{ get_selected(write.ca_name, category) }}>{{ category }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        {% endif %}
+                
+        {% if not login_member or (is_admin and write and write.mb_id != login_member.mb_id) %}
+        <div class="bo_w_info write_div">
+            <label for="wr_name" class="sound_only">이름<strong>필수</strong></label>
+            <input type="text" name="wr_name" value="{{ write.wr_name if write else login_member.mb_name }}" id="wr_name" required class="frm_input half_input required" maxlength="20" placeholder="이름">
+            <label for="wr_password" class="sound_only">비밀번호<strong>필수</strong></label>
+            <input type="password" name="wr_password" id="wr_password" {{ "required" if write else "" }} class="frm_input half_input {{ "required" if write else "" }}" maxlength="20" placeholder="비밀번호">
+            <label for="wr_email" class="sound_only">이메일</label>
+            <input type="email" name="wr_email" value="{{ write.wr_email if write else login_member.mb_email }}" id="wr_email" class="frm_input half_input" maxlength="100" placeholder="이메일">
+            <label for="wr_homepage" class="sound_only">홈페이지</label>
+            <input type="text" name="wr_homepage" value="{{ write.wr_homepage if write else login_member.mb_homepage }}" id="wr_homepage" class="frm_input half_input" placeholder="홈페이지">
+        </div>
+        {% endif %}
 
-<!-- 게시물 작성/수정 시작 { -->
-    <form name="fwrite" id="fwrite" action="/board/write_update/" method="post" enctype="multipart/form-data" autocomplete="off" style="width:100%">
-    <input type="hidden" name="uid" value="2023091209132301">
-    <input type="hidden" name="w" value="">
-    <input type="hidden" name="bo_table" value="free">
-    <input type="hidden" name="wr_id" value="0">
-    <input type="hidden" name="sca" value="">
-    <input type="hidden" name="sfl" value="">
-    <input type="hidden" name="stx" value="">
-    <input type="hidden" name="spt" value="">
-    <input type="hidden" name="sst" value="">
-    <input type="hidden" name="sod" value="">
-    <input type="hidden" name="page" value="">
-    
-    
-    <div class="bo_w_info write_div">
-	    	
-	    	
-	    	    
-	
-	    	</div>
-	
         <div class="write_div">
-        <span class="sound_only">옵션</span>
-        <ul class="bo_v_option">
-        
-<li class="chk_box"><input type="checkbox" id="notice" name="notice"  class="selec_chk" value="1" >
-<label for="notice"><span></span>공지</label></li>
-<li class="chk_box"><input type="checkbox" id="html" name="html" onclick="html_auto_br(this);" class="selec_chk" value="" >
-<label for="html"><span></span>html</label></li>        </ul>
-    </div>
+            <span class="sound_only">옵션</span>
+            <ul class="bo_v_option">
+            {% if is_notice %}
+                <li class="chk_box">
+                    <input type="checkbox" id="notice" name="notice" class="selec_chk" value="1" {{ notice_checked }}>
+                    <label for="notice"><span>&nbsp;</span>공지</label>
+                </li>
+            {% endif %}
+            {% if is_html %}
+                <li class="chk_box">
+                    {% if not board.bo_use_dhtml_editor %}
+                    <input type="checkbox" id="html" name="html" onclick="html_auto_br(this);" class="selec_chk" value="{{ html_value }}" {{ html_checked }}>
+                    <label for="html"><span>&nbsp;</span>html</label>
+                    {% else %}
+                    <input type="hidden" name="html" value="html1">
+                    {% endif %}
+                </li>
+            {% endif %}
+            {% if is_secret %}
+                {% if is_admin or is_secret == 1 %}
+                    <li class="chk_box">
+                        <input type="checkbox" id="secret" name="secret"  class="selec_chk" value="secret" {{ secret_checked }}>
+                        <label for="secret"><span>&nbsp;</span>비밀글</label>
+                    </li>
+                {% else %}
+                    <input type="hidden" name="secret" value="secret">
+                {% endif %}
+            {% endif %}
+            {% if is_mail %}
+                <li class="chk_box">
+                    <input type="checkbox" id="mail" name="mail"  class="selec_chk" value="mail" {{ recv_email_checked }}>
+                    <label for="mail"><span>&nbsp;</span>답변메일받기</label>
+                </li>
+            {% endif %}
+            </ul>
+        </div>
     
-    <div class="bo_w_tit write_div">
-        <label for="wr_subject" class="sound_only">제목<strong>필수</strong></label>
-        
-        <div id="autosave_wrapper" class="write_div">
-            <input type="text" name="wr_subject" value="" id="wr_subject" required class="frm_input full_input required" size="50" maxlength="255" placeholder="제목">
-                        <script src="/static/js/autosave.js"></script>
-                        <button type="button" id="btn_autosave" class="btn_frmline">임시 저장된 글 (<span id="autosave_count">0</span>)</button>
-            <div id="autosave_pop">
-                <strong>임시 저장된 글 목록</strong>
-                <ul></ul>
-                <div><button type="button" class="autosave_close">닫기</button></div>
+        <div class="bo_w_tit write_div">
+            <label for="wr_subject" class="sound_only">제목<strong>필수</strong></label>
+            
+            <div id="autosave_wrapper" class="write_div">
+                <input type="text" name="wr_subject" value="{{ write.wr_subject }}" id="wr_subject" required class="frm_input full_input required" size="50" maxlength="255" placeholder="제목">
+                {% if login_member %}
+                <script src="/static/js/autosave.js"></script>
+                <button type="button" id="btn_autosave" class="btn_frmline">임시 저장된 글 
+                    (<span id="autosave_count">0</span>)
+                </button>
+                <div id="autosave_pop">
+                    <strong>임시 저장된 글 목록</strong>
+                    <ul>&nbsp;</ul>
+                    <div><button type="button" class="autosave_close">닫기</button></div>
+                </div>
+                {% endif %}
             </div>
         </div>
-        
-    </div>
 
-    <div class="write_div">
-        <label for="wr_content" class="sound_only">내용<strong>필수</strong></label>
-        <div class="wr_content ">
-                        <span class="sound_only">웹에디터 시작</span>
-<textarea id="wr_content" name="wr_content" class="" maxlength="65536" style="width:100%;height:300px"></textarea>
-<span class="sound_only">웹 에디터 끝</span>                    </div>
-        
-    </div>
-
-        <div class="bo_w_link write_div">
-        <label for="wr_link1"><i class="fa fa-link" aria-hidden="true"></i><span class="sound_only"> 링크  #1</span></label>
-        <input type="text" name="wr_link1" value="" id="wr_link1" class="frm_input full_input" size="50">
-    </div>
-        <div class="bo_w_link write_div">
-        <label for="wr_link2"><i class="fa fa-link" aria-hidden="true"></i><span class="sound_only"> 링크  #2</span></label>
-        <input type="text" name="wr_link2" value="" id="wr_link2" class="frm_input full_input" size="50">
-    </div>
-    
-        <div class="bo_w_flie write_div">
-        <div class="file_wr write_div">
-            <label for="bf_file_1" class="lb_icon"><i class="fa fa-folder-open" aria-hidden="true"></i><span class="sound_only"> 파일 #1</span></label>
-            <input type="file" name="bf_file[]" id="bf_file_1" title="파일첨부 1 : 용량 1,048,576 바이트 이하만 업로드 가능" class="frm_file ">
+        <!-- TODO: editor.body 영역 HTML 수정 필요 -->
+        <div class="write_div">
+            <label for="wr_content" class="sound_only">내용<strong>필수</strong></label>
+            <div class="wr_content">
+                {% if write_min and write_max %}
+                <p id="char_count_desc">이 게시판은 최소 <strong>{{ write_min }}</strong>글자 이상, 최대 <strong>{{ write_max }}</strong>글자 이하까지 글을 쓰실 수 있습니다.</p>
+                {% endif %}
+                {% if write_min and write_max %}
+                <div id="char_count_wrap"><span id="char_count"></span>글자</div>
+                {% endif %}
+            </div>
         </div>
+
+        {{ editor.body("wr_content", write.wr_content) }}
+        {% if is_link %}
+            {% for i in range(1, 3) %}
+                <div class="bo_w_link write_div">
+                    <label for="wr_link{{ i }}"><i class="fa fa-link" aria-hidden="true"></i><span class="sound_only"> 링크 #{{ i }}</span></label>
+                    <input type="text" name="wr_link{{ i }}" value="{{ getattr(write, "wr_link" ~ i, "") }}" id="wr_link{{ i }}" class="frm_input full_input" size="50">
+                </div>
+            {% endfor %}
+        {% endif %}
         
-                
-    </div>
-        <div class="bo_w_flie write_div">
-        <div class="file_wr write_div">
-            <label for="bf_file_2" class="lb_icon"><i class="fa fa-folder-open" aria-hidden="true"></i><span class="sound_only"> 파일 #2</span></label>
-            <input type="file" name="bf_file[]" id="bf_file_2" title="파일첨부 2 : 용량 1,048,576 바이트 이하만 업로드 가능" class="frm_file ">
+        {% if is_file %}
+            {% for file in files %}
+            {% set i = loop.index %}
+                <div class="bo_w_flie write_div">
+                    <div class="file_wr write_div">
+                        <label for="bf_file_{{ i }}" class="lb_icon">
+                            <i class="fa fa-folder-open" aria-hidden="true"></i><span class="sound_only"> 파일 #{{ i }}</span>
+                        </label>
+                        <input type="file" name="bf_file[]" id="bf_file_{{ i }}" title="파일첨부{{ i }} : 용량 {{ board.bo_upload_size }} 바이트 이하만 업로드 가능" class="frm_file">
+                    </div>
+                    {% if is_file_content %}
+                        <input type="text" name="bf_content[]" value="{{ file.bf_content|default("", true) }}" title="파일 설명을 입력해주세요." class="full_input frm_input" size="50" placeholder="파일 설명을 입력해주세요.">
+                    {% endif %}
+                    {% if file.bf_no != None %}
+                    <span class="file_del">
+                        <input type="checkbox" id="bf_file_del{{ i }}" name="bf_file_del[]" value="{{ file.bf_no }}">
+                        <label for="bf_file_del{{ i }}">{{ file.bf_source }} ({{ file.bf_filesize|filesizeformat }}) 파일 삭제</label>
+                    </span>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Captcha Start -->
+        {% if is_use_captcha %}
+            {% include captcha_widget(request) ignore missing %}
+        {% endif %}
+        <!-- Captcha End -->
+
+        <div class="btn_confirm write_div">
+            <a href="{{ url_for('list_post', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_cancel btn">취소</a>
+            <button type="submit" id="btn_submit" accesskey="s" class="btn_submit btn">작성완료</button>
         </div>
-        
-                
-    </div>
-    
+        </form>
 
-    
-    <div class="btn_confirm write_div">
-        <a href="http://49.247.41.166/gnuboard5/bbs/board.php?bo_table=free" class="btn_cancel btn">취소</a>
-        <button type="submit" id="btn_submit" accesskey="s" class="btn_submit btn">작성완료</button>
-    </div>
-    </form>
-
-    <script>
-        function html_auto_br(obj)
-    {
-        if (obj.checked) {
-            result = confirm("자동 줄바꿈을 하시겠습니까?\n\n자동 줄바꿈은 게시물 내용중 줄바뀐 곳을<br>태그로 변환하는 기능입니다.");
-            if (result)
-                obj.value = "html2";
-            else
-                obj.value = "html1";
-        }
-        else
-            obj.value = "";
-    }
-
-    function fwrite_submit(f)
-    {
-        var wr_content_editor = document.getElementById('wr_content');
-        if (!wr_content_editor.value) { alert("내용을 입력해 주십시오."); wr_content_editor.focus(); return false; }
-
-        if (document.getElementById("char_count")) {
-            if (char_min > 0 || char_max > 0) {
-                var cnt = parseInt(check_byte("wr_content", "char_count"));
-                if (char_min > 0 && char_min > cnt) {
-                    alert("내용은 "+char_min+"글자 이상 쓰셔야 합니다.");
-                    return false;
+        <script>
+            {% if write_min and write_max %}
+                // 글자수 제한
+                var char_min = parseInt({{ write_min }}); // 최소
+                var char_max = parseInt({{ write_max }}); // 최대
+                check_byte("wr_content", "char_count");
+            
+                $(function() {
+                    $("#wr_content").on("keyup", function() {
+                        check_byte("wr_content", "char_count");
+                    });
+                });
+            {% endif %}
+            function html_auto_br(obj)
+            {
+                if (obj.checked) {
+                    result = confirm("자동 줄바꿈을 하시겠습니까?\n\n자동 줄바꿈은 게시물 내용중 줄바뀐 곳을<br>태그로 변환하는 기능입니다.");
+                    if (result) {
+                        obj.value = "html2";
+                    } else{
+                        obj.value = "html1";
+                    }
+                } else {
+                    obj.value = "";
                 }
-                else if (char_max > 0 && char_max < cnt) {
-                    alert("내용은 "+char_max+"글자 이하로 쓰셔야 합니다.");
+            }
+
+        function fwrite_submit(f)
+        {
+            if (document.getElementById("char_count")) {
+                if (char_min > 0 || char_max > 0) {
+                    var cnt = parseInt(check_byte("wr_content", "char_count"));
+                    if (char_min > 0 && char_min > cnt) {
+                        alert("내용은 "+char_min+"글자 이상 쓰셔야 합니다.");
+                        return false;
+                    }
+                    else if (char_max > 0 && char_max < cnt) {
+                        alert("내용은 "+char_max+"글자 이하로 쓰셔야 합니다.");
+                        return false;
+                    }
+                }
+            }
+
+            // captcha 사용시
+            if (typeof check_captcha === "function") {
+                if (!check_captcha(f)) {
                     return false;
                 }
             }
+
+            f.token.value = generate_token();
+            f.action += "?{{ request.query_params|safe }}"
+
+            // document.getElementById("btn_submit").disabled = "disabled";
+
+            return true;
         }
-
-        if (!chk_captcha()) return false;
-
-        // document.getElementById("btn_submit").disabled = "disabled";
-
-        return true;
-    }
-    </script>
+        </script>
+    <!-- } 게시물 작성/수정 끝 -->
 </section>
-<!-- } 게시물 작성/수정 끝 -->
-
-{% endblock %}
+{% endblock content %}

@@ -1088,12 +1088,13 @@ def delete_write(request: Request, bo_table: str, origin_write: WriteBaseModel) 
     write_member_level = getattr(write_member, "mb_level", 1)
 
     # 권한 체크
-    if member_admin_type and member_admin_type != "super" and write_member_level > member_level:
-        raise AlertException("자신보다 높은 권한의 게시글은 삭제할 수 없습니다.", 403)
-    elif origin_write.mb_id and not is_owner(origin_write, member_id):
-        raise AlertException("자신의 게시글만 삭제할 수 있습니다.", 403)
-    elif not origin_write.mb_id and not request.session.get(f"ss_delete_{bo_table}_{origin_write.wr_id}"):
-        raise AlertException("비회원 글을 삭제할 권한이 없습니다.", 403, f"/bbs/password/delete/{bo_table}/{origin_write.wr_id}?{request.query_params}")
+    if member_admin_type != "super":
+        if member_admin_type and write_member_level > member_level:
+            raise AlertException("자신보다 높은 권한의 게시글은 삭제할 수 없습니다.", 403)
+        elif origin_write.mb_id and not is_owner(origin_write, member_id):
+            raise AlertException("자신의 게시글만 삭제할 수 있습니다.", 403)
+        elif not origin_write.mb_id and not request.session.get(f"ss_delete_{bo_table}_{origin_write.wr_id}"):
+            raise AlertException("비회원 글을 삭제할 권한이 없습니다.", 403, f"/bbs/password/delete/{bo_table}/{origin_write.wr_id}?{request.query_params}")
     
     # 답변글이 있을 때 삭제 불가
     write_model = dynamic_create_write_table(bo_table)

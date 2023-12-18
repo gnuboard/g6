@@ -18,6 +18,7 @@ from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, and_, func, inspect, select, delete, between, exists, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
+from starlette.datastructures import URL
 from starlette.staticfiles import StaticFiles
 
 from common.models import Auth, Config, Member, Memo, Board, BoardFile, BoardNew, Group, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
@@ -1659,6 +1660,8 @@ class UserTemplates(Jinja2Templates):
             super().__init__(directory=self.default_directories, context_processors=context_processors)
 
             # 공통 env.global 설정
+            self.env.filters["number_format"] = number_format
+            self.env.filters["set_query_params"] = set_query_params
             self.env.globals["editor_path"] = editor_path
             self.env.globals["editor_macro"] = editor_macro
             self.env.globals["getattr"] = getattr
@@ -1666,7 +1669,6 @@ class UserTemplates(Jinja2Templates):
             self.env.globals["get_member_icon"] = get_member_icon
             self.env.globals["generate_token"] = generate_token
             self.env.globals["get_member_image"] = get_member_image
-            self.env.filters["number_format"] = number_format
             self.env.globals["theme_asset"] = theme_asset
 
             self.context_processors.append(self._default_context)
@@ -1725,13 +1727,14 @@ class AdminTemplates(Jinja2Templates):
             super().__init__(directory=self.default_directories, context_processors=context_processors)
 
             # 공통 env.global 설정
+            self.env.filters["number_format"] = number_format
+            self.env.filters["set_query_params"] = set_query_params
             self.env.globals["editor_path"] = editor_path
             self.env.globals["editor_macro"] = editor_macro
             self.env.globals["getattr"] = getattr
             self.env.globals["get_selected"] = get_selected
             self.env.globals["get_member_icon"] = get_member_icon
             self.env.globals["get_member_image"] = get_member_image
-            self.env.filters["number_format"] = number_format
             self.env.globals["theme_asset"] = theme_asset
             self.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
             self.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
@@ -2400,6 +2403,26 @@ def register_theme_statics(app):
     url = f"/theme_static/{theme_name}"
     path = StaticFiles(directory=f"{TEMPLATES}/{theme_name}/static")
     app.mount(url, path, name=f"static_{theme_name}")  # tag
+
+
+def set_query_params(url: URL, request: Request, **params: dict) -> URL:
+    """url에 query string을 추가하는 템플릿 필터
+
+    Args:
+        url (str): URL
+        request (Request): FastAPI Request 객체
+        **params (dict): 추가할 query string
+
+    Returns:
+        str: query string이 추가된 URL
+    """
+    query_params = request.query_params
+    if query_params or params:
+        if isinstance(url, str):
+            url = URL(url)
+        url = url.replace_query_params(**query_params, **params)
+
+    return url
 
 
 """

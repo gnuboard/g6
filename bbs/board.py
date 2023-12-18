@@ -214,7 +214,9 @@ async def list_delete(
 
     # TODO: 게시글 삭제시 같이 삭제해야할 것들 추가
 
-    return RedirectResponse(f"/board/{bo_table}?{request.query_params}", status_code=303)
+    query_string = "?" + request.query_params.__str__() if request.query_params else ""
+
+    return RedirectResponse(f"/board/{bo_table}{query_string}", status_code=303)
 
 
 @router.post("/move/{bo_table}")
@@ -477,7 +479,9 @@ async def write_form_edit(
         # 익명 글
         if not write.mb_id:
             if not request.session.get(f"ss_edit_{bo_table}_{wr_id}"):
-                return RedirectResponse(f"/bbs/password/update/{bo_table}/{write.wr_id}?{request.query_params}", status_code=303)
+                query_string = "?" + request.query_params.__str__() if request.query_params else ""
+
+                return RedirectResponse(f"/bbs/password/update/{bo_table}/{write.wr_id}{query_string}", status_code=303)
         # 회원 글
         elif write.mb_id and not is_owner(write, mb_id):
             raise AlertException("본인 글만 수정할 수 있습니다.", 403)
@@ -727,7 +731,14 @@ async def write_update(
     # 최신글 캐시 삭제
     G6FileCache().delete_prefix(f'latest-{bo_table}')
 
-    redirect_url = f"/board/{bo_table}/{write.wr_id}?{request.query_params}"
+    query_string = ""
+    if request.query_params:
+        query_params = dict(request.query_params)
+        query_params.pop("parent_id", None)
+        if len(query_params) > 0:
+            query_string = "&".join([f"{key}={value}" for key, value in query_params.items()])
+            query_string = "?" + query_string.replace("&amp;", "&")
+    redirect_url = f"/board/{bo_table}/{write.wr_id}{query_string}"
 
     # exclude_file이 존재하면 파일 업로드 실패 메시지 출력
     if exclude_file:
@@ -811,7 +822,9 @@ async def read_post(
             if parent_write.mb_id == mb_id:
                 owner = True
         if not owner:
-            return RedirectResponse(f"/bbs/password/view/{bo_table}/{write.wr_id}?{request.query_params}", status_code=303)
+            query_string = "?" + request.query_params.__str__() if request.query_params else ""
+
+            return RedirectResponse(f"/bbs/password/view/{bo_table}/{write.wr_id}{query_string}", status_code=303)
         request.session[session_secret_name] = True
 
     # 게시글 정보 설정
@@ -984,15 +997,17 @@ async def delete_post(
 
     # request.query_params에서 token 제거
     # POST 요청이면 없어도 될 듯..
+    query_string = ""
     query_params = dict(request.query_params)
     query_params.pop("token", None)
-    query_params = "&".join([f"{key}={value}" for key, value in query_params.items()])
-    query_params = query_params.replace("&amp;", "&")
+    if len(query_params) > 0:
+        query_string = "&".join([f"{key}={value}" for key, value in query_params.items()])
+        query_string = "?" + query_string.replace("&amp;", "&")
 
     # 게시글 삭제 처리
     delete_write(request, bo_table, write)
 
-    return RedirectResponse(f"/board/{bo_table}?{query_params}", status_code=303)
+    return RedirectResponse(f"/board/{bo_table}{query_string}", status_code=303)
 
 
 @router.get("/{bo_table}/{wr_id}/download/{bf_no}")
@@ -1166,7 +1181,9 @@ async def write_comment_update(
         comment.wr_last = datetime.now()
         db.commit()
 
-    return RedirectResponse(f"/board/{form.bo_table}/{form.wr_id}", status_code=303)
+    query_string = "?" + request.query_params.__str__() if request.query_params else ""
+
+    return RedirectResponse(f"/board/{form.bo_table}/{form.wr_id}{query_string}", status_code=303)
 
 
 @router.get("/delete_comment/{bo_table}/{comment_id}", dependencies=[Depends(validate_token)])
@@ -1196,17 +1213,19 @@ async def delete_comment(
 
     # request.query_params에서 token 제거
     # POST 요청이면 없어도 될 듯..
+    query_string = ""
     query_params = dict(request.query_params)
     query_params.pop("token", None)
-    query_params = "&".join([f"{key}={value}" for key, value in query_params.items()])
-    query_params = query_params.replace("&amp;", "&")
+    if len(query_params) > 0:
+        query_string = "&".join([f"{key}={value}" for key, value in query_params.items()])
+        query_string = "?" + query_string.replace("&amp;", "&")
 
     # 게시글 삭제 권한 검증
     if not admin_type:
         # 익명 댓글
         if not comment.mb_id:
             if not request.session.get(f"ss_delete_comment_{bo_table}_{comment_id}"):
-                raise AlertException("삭제할 권한이 없습니다.", 403, f"/bbs/password/comment-delete/{bo_table}/{comment_id}?{query_params}")
+                raise AlertException("삭제할 권한이 없습니다.", 403, f"/bbs/password/comment-delete/{bo_table}/{comment_id}{query_string}")
         # 회원 댓글
         elif comment.mb_id and not is_owner(write, mb_id):
             raise AlertException("본인 댓글만 삭제할 수 있습니다.", 403)
@@ -1219,7 +1238,7 @@ async def delete_comment(
     write.wr_comment = write.wr_comment - 1
     db.commit()
 
-    return RedirectResponse(f"/board/{bo_table}/{write.wr_id}?{query_params}", status_code=303)
+    return RedirectResponse(f"/board/{bo_table}/{write.wr_id}{query_string}", status_code=303)
 
 
 @router.get("/{bo_table}/{wr_id}/link/{no}")
