@@ -53,7 +53,7 @@ async def group_board_list(
         raise AlertException(f"{group.gr_subject} 그룹은 모바일에서만 접근할 수 있습니다.", 400, url="/")
     
     # 그룹별 게시판 목록 조회
-    query_boards = db.query(Board).filter(
+    query_boards = select(Board).filter(
         Board.gr_id == gr_id,
         Board.bo_list_level <= member_level,
         Board.bo_device != 'mobile'
@@ -63,7 +63,8 @@ async def group_board_list(
     if not admin_type:
         query_boards = query_boards.filter_by(bo_use_cert='')
 
-    boards = query_boards.order_by(Board.bo_order).all()
+    query_boards = query_boards.order_by(Board.bo_order)
+    boards = db.scalars(query_boards)
     return templates.TemplateResponse(
         f"{request.state.device}/board/group.html",
         {"request": request, "group": group, "boards": boards, "latest": latest}
@@ -108,10 +109,10 @@ async def list_post(
     notice_writes = []
     if current_page == 1:
         notice_ids = board_config.get_notice_list()
-        notice_query = db.query(model_write).filter(model_write.wr_id.in_(notice_ids))
+        notice_query = select(model_write).filter(model_write.wr_id.in_(notice_ids))
         if sca:
             notice_query = notice_query.filter(model_write.ca_name == sca)
-        notice_writes = [get_list(request, write, board_config) for write in notice_query.all()]
+        notice_writes = [get_list(request, write, board_config) for write in db.scalars(notice_query).all()]
 
     # 게시글 목록 조회
     query = write_search_filter(request, model_write, sca, sfl, stx)
@@ -130,7 +131,7 @@ async def list_post(
     next_spt = None
     if (sca or (sfl and stx)):
         search_part = int(config.cf_search_part) or 10000
-        min_spt = db.query(func.min(model_write.wr_num)).scalar() or 0
+        min_spt = db.scalar(func.min(model_write.wr_num)) or 0
         spt = int(request.query_params.get("spt", min_spt))
         prev_spt = spt - search_part if spt > min_spt else None
         next_spt = spt + search_part if spt + search_part < 0 else None
@@ -141,10 +142,9 @@ async def list_post(
     # 페이지 번호에 따른 offset 계산
     offset = (current_page - 1) * page_rows
     # 최종 쿼리 결과를 가져옵니다.
-    writes = query.offset(offset).limit(page_rows).all()
+    writes = db.scalars(query.offset(offset).limit(page_rows)).all()
     # 전체 게시글 갯수 조회
-    total_count = query.count()
-
+    total_count = db.scalar(select(func.count()).select_from(query))
     # 게시글 정보 수정
     for write in writes:
         write.num = total_count - offset - (writes.index(write))
@@ -196,7 +196,7 @@ async def list_delete(
 
     # 게시글 조회
     model_write = dynamic_create_write_table(bo_table)
-    writes = db.query(model_write).filter(model_write.wr_id.in_(wr_ids)).all()
+    writes = db.scalars(select(model_write).filter(model_write.wr_id.in_(wr_ids)))
     for write in writes:
         db.delete(write)
         # 원글 포인트 삭제
@@ -243,13 +243,13 @@ async def move_post(
     # 게시판 목록 조회
     br = aliased(Board)
     gr = aliased(Group)
-    query = db.query(br.bo_table, br.bo_subject, gr.gr_subject).outerjoin(gr, gr.gr_id == br.gr_id)
+    query = select(br.bo_table, br.bo_subject, gr.gr_subject).outerjoin(gr, gr.gr_id == br.gr_id)
     # 관리자가 속한 게시판 목록만 조회
     if admin_type == "group":
         query = query.filter(gr.gr_admin == mb_id)
     elif admin_type == "board":
         query = query.filter(br.bo_admin == mb_id)
-    results = query.order_by(br.gr_id, br.bo_order, br.bo_table).all()
+    results = db.execute(query.order_by(br.gr_id, br.bo_order, br.bo_table)).all()
 
     return templates.TemplateResponse(
         f"{request.state.device}/board/move.html", {
@@ -292,7 +292,7 @@ async def move_update(
 
     # 입력받은 정보를 토대로 게시글을 복사한다.
     model_write = dynamic_create_write_table(bo_table)
-    origin_writes = db.query(model_write).filter(model_write.wr_id.in_(wr_ids.split(','))).all()
+    origin_writes = db.scalars(select(model_write).where(model_write.wr_id.in_(wr_ids.split(',')))).all()
 
     # 게시글 복사/이동 작업 반복
     for target_bo_table in target_bo_tables:
@@ -336,21 +336,33 @@ async def move_update(
 
             if sw == "move":
                 # 최신글 이동
-                db.query(BoardNew).filter_by(
-                    bo_table=origin_board.bo_table, wr_id=origin_write.wr_id
-                ).update({"bo_table": target_bo_table, "wr_id": target_write.wr_id, "wr_parent": target_write.wr_id})
+                db.execute(
+                    update(BoardNew).values(
+                        bo_table=target_bo_table, wr_id=target_write.wr_id, wr_parent=target_write.wr_id
+                    ).where(
+                        BoardNew.bo_table==origin_board.bo_table, BoardNew.wr_id==origin_write.wr_id
+                    )
+                )
 
                 # 게시글
                 if not origin_write.wr_is_comment:
                     # 추천데이터 이동
-                    db.query(BoardGood).filter_by(
-                        bo_table=origin_board.bo_table, wr_id=origin_write.wr_id
-                    ).update({"bo_table": target_bo_table, "wr_id": target_write.wr_id})
+                    db.execute(
+                        update(BoardGood).values(
+                            bo_table=target_bo_table, wr_id=target_write.wr_id
+                        ).where(
+                            BoardGood.bo_table==origin_board.bo_table, BoardGood.wr_id==origin_write.wr_id
+                        )
+                    )
 
                     # 스크랩 이동
-                    db.query(Scrap).filter_by(
-                        bo_table=bo_table, wr_id=origin_write.wr_id
-                    ).update({"bo_table": target_bo_table, "wr_id": target_write.wr_id})
+                    db.execute(
+                        update(Scrap).values(
+                            bo_table=target_bo_table, wr_id=target_write.wr_id
+                        ).where(
+                            Scrap.bo_table==bo_table, Scrap.wr_id==origin_write.wr_id
+                        )
+                    )
 
                 # 기존 데이터 삭제
                 db.delete(origin_write)
