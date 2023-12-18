@@ -53,7 +53,7 @@ class QaConfigService:
             QaConfig: Q&A 설정
         """
         db = SessionLocal()
-        qa_config = db.query(self.model).order_by(self.model.id).first()
+        qa_config = db.scalar(select(self.model).order_by(self.model.id))
         db.close()
         if not qa_config:
             raise AlertException("Q&A 설정이 존재하지 않습니다.", 404)
@@ -103,18 +103,18 @@ async def qa_list(
     qa_config = qa_config_service.get()
 
     # Q&A 목록 조회
-    query = db.query(QaContent).filter_by(qa_type = 0).order_by(QaContent.qa_id.desc())
+    query = select(QaContent).where(QaContent.qa_type==0).order_by(QaContent.qa_id.desc())
     if not request.state.is_super_admin:
-        query = query.filter_by(mb_id=member.mb_id)
+        query = query.where(QaContent.mb_id==member.mb_id)
     query = filter_query_by_search_params(query, search_params)
 
     # 페이징 변수
     records_per_page = qa_config_service.page_rows
-    total_count = query.count()
+    total_count = db.scalar(select(func.count()).select_from(query))
     offset = (current_page - 1) * records_per_page
 
     # Q&A 목록 조회 & 페이징
-    qa_list = query.offset(offset).limit(records_per_page).all()
+    qa_list = db.scalars(query.offset(offset).limit(records_per_page)).all()
     for qa in qa_list:
         qa.num = total_count - offset - (qa_list.index(qa))
         qa.subject = qa_config_service.cut_write_subject(qa.qa_subject)
@@ -361,7 +361,7 @@ async def qa_delete_list(
         raise AlertException("최고관리자만 접근할 수 있습니다.", 403)
 
     # Q&A 삭제
-    db.query(QaContent).filter(QaContent.qa_id.in_(checks)).delete()
+    db.execute(delete(QaContent).where(QaContent.qa_id.in_(checks)))
     db.commit()
 
     return RedirectResponse(f"/bbs/qalist?{request.query_params}", status_code=303)
@@ -390,24 +390,24 @@ async def qa_view(
     qa.image, qa.file = set_file_list(request, qa)
 
     # Q&A 답변글 조회
-    answer = db.query(QaContent).filter_by(qa_type=1, qa_parent=qa_id).first()
+    answer = db.scalar(select(QaContent).where(QaContent.qa_type==1, QaContent.qa_parent==qa_id))
     if answer:
         answer.image, answer.file = set_file_list(request, answer)
 
     # 연관질문 목록 조회
-    related_query = db.query(QaContent).filter_by(qa_type=0, qa_related=qa_id)
+    related_query = select(QaContent).where(QaContent.qa_type==0, QaContent.qa_related==qa_id)
     if not request.state.is_super_admin:
-        related_query = related_query.filter_by(mb_id=member.mb_id)
-    related_list = related_query.order_by(QaContent.qa_id.desc()).all()
+        related_query = related_query.where(QaContent.mb_id==member.mb_id)
+    related_list = db.scalars(related_query.order_by(QaContent.qa_id.desc())).all()
 
     # 이전글, 다음글 검색조건 추가
-    query = db.query(QaContent)
+    query = select(QaContent)
     if not request.state.is_super_admin:
-        query = query.filter_by(mb_id=member.mb_id)
+        query = query.where(QaContent.mb_id==member.mb_id)
     query = filter_query_by_search_params(query, search_params)
 
-    prev = query.filter(QaContent.qa_type == 0, QaContent.qa_id < qa_id).order_by(QaContent.qa_id.desc()).first()
-    next = query.filter(QaContent.qa_type == 0, QaContent.qa_id > qa_id).order_by(QaContent.qa_id.asc()).first()
+    prev = db.scalar(query.where(QaContent.qa_type==0, QaContent.qa_id<qa_id).order_by(QaContent.qa_id.desc()))
+    next = db.scalar(query.where(QaContent.qa_type==0, QaContent.qa_id>qa_id).order_by(QaContent.qa_id.asc()))
 
     context = {
         "request": request,
