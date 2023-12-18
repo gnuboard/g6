@@ -1,11 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}
-    {{ group.gr_subject }}
-{% endblock title %}
-{% block subtitle %}
-    {{ group.gr_subject }}
-{% endblock subtitle %}
+{% block title %}{{ group.gr_subject }}{% endblock title %}
+{% block subtitle %}{{ group.gr_subject }}{% endblock subtitle %}
 
 {% block content %}
     <div class="latest_wr">

@@ -374,9 +374,8 @@ class SocialAuthService:
         with SessionLocal() as db:
             result = db.scalar(
                 exists(MemberSocialProfiles.mb_id)
-                .where(
-                    MemberSocialProfiles.mb_id == member_id
-                ).select()
+                .where(MemberSocialProfiles.mb_id == member_id)
+                .select()
             )
         if result:
             return True

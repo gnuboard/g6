@@ -6,12 +6,9 @@
 {% block head %}
     <script src="{{ url_for('static', path="js/viewimageresize.js") }}"></script>
 {% endblock head %}
-{% block title %}
-    {{ write.wr_subject|truncate(20, False, '...', 0) }} > {{ board.subject }}
-{% endblock title %}
-{% block subtitle %}
-    {{ board.subject }}
-{% endblock subtitle %}
+
+{% block title %}{{ write.wr_subject|truncate(20, False, '...', 0) }} > {{ board.subject }}{% endblock title %}
+{% block subtitle %}{{ board.subject }}{% endblock subtitle %}
 
 {% block content %}
 {% set board_config=board_config(request, board) %}
@@ -48,8 +45,8 @@
                         {% endif %}
                     </strong>
                     <br>
-                    <span class="sound_only">댓글</span><strong><a href="#bo_vc"> <i class="fa fa-commenting-o" aria-hidden="true"></i> {{ write.wr_comment }}건</a></strong>
-                    <span class="sound_only">조회</span><strong><i class="fa fa-eye" aria-hidden="true"></i> {{ write.wr_hit }}회</strong>
+                    <span class="sound_only">댓글</span><strong><a href="#bo_vc"> <i class="fa fa-commenting-o" aria-hidden="true"></i> {{ write.wr_comment|number_format }}건</a></strong>
+                    <span class="sound_only">조회</span><strong><i class="fa fa-eye" aria-hidden="true"></i> {{ write.wr_hit|number_format }}회</strong>
                     <strong class="if_date"><span class="sound_only">작성일</span><i class="fa fa-clock-o" aria-hidden="true"></i> {{ write.wr_datetime }}</strong>
                 </div>
             </div>
@@ -185,7 +182,7 @@
         {% for file in files %}
             <li>
                 <i class="fa fa-folder-open" aria-hidden="true"></i>
-                <a href="/board/{{ board.bo_table }}/{{ write.wr_id }}/download/{{ file.bf_no }}" class="view_file_download"> 
+                <a href="/board/{{ board.bo_table }}/{{ write.wr_id }}/download/{{ file.bf_no }}" class="view_file_download">
                     <strong>{{ file.bf_source }}</strong>  ({{ file.bf_filesize|filesizeformat }})
                 </a>
                 <br>
@@ -208,7 +205,7 @@
                     <strong>{{ link.url|truncate(70, False, '...', 0) }}</strong>
                 </a>
                 <br>
-                <span class="bo_v_link_cnt">{{ link.hit }}회 연결</span>
+                <span class="bo_v_link_cnt">{{ link.hit|number_format }}회 연결</span>
             </li>
             {% endfor %}
         </ul>
@@ -247,7 +244,7 @@
         var char_max = parseInt({{ board.bo_comment_max }}); // 최대
     </script>
     <button type="button" class="cmt_btn">
-        <span class="total"><b>댓글</b> {{ comments|count }}</span>
+        <span class="total"><b>댓글</b> {{ comments|count|number_format }}</span>
         <span class="cmt_more"></span>
     </button>
     <!-- 댓글 시작 { -->
@@ -259,7 +256,7 @@
             <div class="pf_img"><img src="/{{ get_member_image(comment.mb_id) }}" alt="profile_image"></div>
             <div class="cm_wrap">
                 <header>
-                    <h2>{{ comment.name }}님의  댓글</h2>
+                    <h2>{{ comment.name }}님의 댓글</h2>
                     {% if board.bo_use_sideview %}
                         {{ sideview.get(request, comment.mb_id, comment.name, comment.wr_email, comment.wr_homepage)|safe }}
                     {% else %}
