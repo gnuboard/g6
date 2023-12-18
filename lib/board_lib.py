@@ -766,7 +766,7 @@ def write_search_filter(
     fields = []
     is_comment = False
 
-    query = db.query(model)
+    query = select(model)
     # 분류
     if category:
         query = query.filter_by(ca_name=category)
@@ -803,8 +803,7 @@ def write_search_filter(
     if is_comment:
         query = query.filter_by(wr_is_comment=1)
         # 원글만 조회해야하므로, wr_parent 목록을 가져와서 in조건으로 재필터링
-        query = db.query(model).filter(model.wr_id.in_([row.wr_parent for row in query.all()]))
-
+        query = select(model).where(model.wr_id.in_([row.wr_parent for row in db.scalars(query).all()]))
     return query
 
 
