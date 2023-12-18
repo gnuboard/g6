@@ -3,7 +3,7 @@ import bleach
 
 from datetime import datetime, timedelta
 from fastapi import Request
-from sqlalchemy import and_, distinct, or_, literal, select
+from sqlalchemy import and_, distinct, or_, literal, select, Select
 from sqlalchemy.orm import Query as SqlQuery
 
 from lib.common import *
@@ -220,7 +220,7 @@ class BoardConfig():
             return []
         return self.board.bo_notice.split(",")
 
-    def get_list_sort_query(self, model: WriteBaseModel, query: SqlQuery) -> SqlQuery:
+    def get_list_sort_query(self, model: WriteBaseModel, query: Select[tuple]) -> Select[tuple]:
         """게시글 목록의 정렬을 포함한 query를 반환.
 
         Args:
@@ -747,7 +747,7 @@ def write_search_filter(
         category: str = None,
         search_field: str = None,
         keyword: str = None,
-        operator: str = "or") -> SqlQuery:
+        operator: str = "or") -> Select[tuple]:
     """게시판 검색 필터를 적용합니다.
     - 그누보드5의 get_sql_search와 동일한 기능을 합니다.
 
@@ -766,7 +766,8 @@ def write_search_filter(
     fields = []
     is_comment = False
 
-    query = db.query(model)
+    # query = db.query(model)
+    query = select()
     # 분류
     if category:
         query = query.filter_by(ca_name=category)
@@ -795,15 +796,15 @@ def write_search_filter(
 
     # 분리된 단어 별 검색필터에 or 또는 and를 적용
     if operator == "and":
-        query = query.filter(and_(*word_filters))
+        query = query.where(and_(*word_filters))
     else:
-        query = query.filter(or_(*word_filters))
+        query = query.where(or_(*word_filters))
 
     # 댓글 검색
     if is_comment:
         query = query.filter_by(wr_is_comment=1)
         # 원글만 조회해야하므로, wr_parent 목록을 가져와서 in조건으로 재필터링
-        query = db.query(model).filter(model.wr_id.in_([row.wr_parent for row in query.all()]))
+        query = select().where(model.wr_id.in_([row.wr_parent for row in db.scalars(query).all]))
 
     return query
 

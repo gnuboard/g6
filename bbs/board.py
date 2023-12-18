@@ -115,7 +115,7 @@ async def list_post(
 
     # 게시글 목록 조회
     query = write_search_filter(request, model_write, sca, sfl, stx)
-    query = query.filter_by(wr_is_comment=0)
+    query = query.where(model_write.wr_is_comment==0)
     # 정렬
     if sst and hasattr(model_write, sst):
         if sod == "desc":
@@ -130,20 +130,20 @@ async def list_post(
     next_spt = None
     if (sca or (sfl and stx)):
         search_part = int(config.cf_search_part) or 10000
-        min_spt = db.query(func.min(model_write.wr_num)).scalar() or 0
+        min_spt = db.scalar(select(func.min(model_write.wr_num))) or 0
         spt = int(request.query_params.get("spt", min_spt))
         prev_spt = spt - search_part if spt > min_spt else None
         next_spt = spt + search_part if spt + search_part < 0 else None
 
         # wr_num 컬럼을 기준으로 검색단위를 구분합니다. (wr_num은 음수)
-        query = query.filter(model_write.wr_num.between(spt, spt + search_part))
+        query = query.where(model_write.wr_num.between(spt, spt + search_part))
 
     # 페이지 번호에 따른 offset 계산
     offset = (current_page - 1) * page_rows
     # 최종 쿼리 결과를 가져옵니다.
-    writes = query.offset(offset).limit(page_rows).all()
+    writes = db.scalars(query.add_columns(model_write).offset(offset).limit(page_rows)).all()
     # 전체 게시글 갯수 조회
-    total_count = query.count()
+    total_count = db.scalar(query.add_columns(func.count()))
 
     # 게시글 정보 수정
     for write in writes:

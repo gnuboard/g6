@@ -1,16 +1,13 @@
 {% extends "base.html" %}
 {% import "/sideview/macros.html" as sideview %}
+{% set query_params=request.query_params %}
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', path='/css/basic/search.css') }}">
 {% endblock head %}
 
-{% block title %}
-    전체검색 결과
-{% endblock title %}
-{% block subtitle %}
-    전체검색 결과
-{% endblock subtitle %}
+{% block title %}전체검색 결과{% endblock title %}
+{% block subtitle %}전체검색 결과{% endblock subtitle %}
 
 {% block content %}
 <form name="fsearch" onsubmit="return fsearch_submit(this);" method="get">
@@ -20,7 +17,7 @@
         <select id="gr_id" name="gr_id" class="select">
             <option value="">전체 분류</option>
             {% for group in groups %}
-                <option value="{{ group.gr_id }}" {{ get_selected(request.query_params.gr_id, group.gr_id) }}>
+                <option value="{{ group.gr_id }}" {{ get_selected(query_params.gr_id, group.gr_id) }}>
                     {{ group.gr_subject }}
                 </option>
             {% endfor %}
@@ -28,34 +25,33 @@
 
         <label class="sound_only" for="sfl">검색조건</label>
         <select id="sfl" name="sfl">
-            <option value="wr_subject||wr_content" {{ get_selected(request.query_params.sfl, "wr_subject||wr_content") }})>제목+내용</option>
-            <option value="wr_subject" {{ get_selected(request.query_params.sfl, "wr_subject") }}>제목</option>
-            <option value="wr_content" {{ get_selected(request.query_params.sfl, "wr_content") }}>내용</option>
-            <option value="wr_name" {{ get_selected(request.query_params.sfl, "wr_name") }}>작성자</option>
+            <option value="wr_subject||wr_content" {{ get_selected(query_params.sfl, "wr_subject||wr_content") }})>제목+내용</option>
+            <option value="wr_subject" {{ get_selected(query_params.sfl, "wr_subject") }}>제목</option>
+            <option value="wr_content" {{ get_selected(query_params.sfl, "wr_content") }}>내용</option>
+            <option value="wr_name" {{ get_selected(query_params.sfl, "wr_name") }}>작성자</option>
         </select>
 
         <label class="sound_only" for="stx">검색어<strong class="sound_only"> 필수</strong></label>
         <span class="sch_wr">
-            <input type="text" id="stx" name="stx" class="frm_input" value="{{ request.query_params.stx }}" size="40" required>
+            <input type="text" id="stx" name="stx" class="frm_input" value="{{ query_params.stx }}" size="40" required>
             <button type="submit" class="btn_submit">
                 <i class="fa fa-search" aria-hidden="true"></i> 검색
             </button>
         </span>
 
         <div class="switch_field">
-            <input type="radio" id="sop_and" name="sop" value="and" {{ 'checked' if request.query_params.sop == "and" or not request.query_params.sop }}>
+            <input type="radio" id="sop_and" name="sop" value="and" {{ 'checked' if query_params.sop == "and" or not query_params.sop }}>
             <label for="sop_and">AND</label>
-            <input type="radio" id="sop_or" name="sop" value="or" {{ 'checked' if request.query_params.sop == "or" }}>
+            <input type="radio" id="sop_or" name="sop" value="or" {{ 'checked' if query_params.sop == "or" }}>
             <label for="sop_or">OR</label>
         </div>
     </fieldset>
 </form>
 
-
 <div id="sch_result">
     <section id="sch_res_ov">
         <h2>
-            <strong>'{{ request.query_params.stx }}'</strong> 전체검색 결과
+            <strong>'{{ query_params.stx }}'</strong> 전체검색 결과
         </h2>
         <ul>
             <li>게시판 {{ boards|length }}개</li>
@@ -64,7 +60,7 @@
     </section>
     {% if total_search_count > 0 %}
         <ul id="sch_res_board">
-            <li><a href="{{ request.url.include_query_params(onetable="") }}" {% if not onetable %}class="sch_on"{% endif %}>통합검색</a></li>
+            <li><a href="{{ request.url.include_query_params(onetable='') }}" {% if not onetable %}class="sch_on"{% endif %}>통합검색</a></li>
             {% for board in boards %}
                 <li>
                     <a href="{{ request.url.include_query_params(onetable=board.bo_table) }}" {% if onetable == board.bo_table %}class="sch_on"{% endif %}>
@@ -78,10 +74,10 @@
             <div class="search_board_result">
             {% for board in boards if not onetable or onetable == board.bo_table %}
                 <h2>
-                    <a href="/board/{{ board.bo_table }}?{{ request.query_params }}">
+                    <a href="/board/{{ board.bo_table }}?{{ query_params }}">
                         {{ board.subject }} 검색결과 ({{ board.search_count }})
                     </a>
-                    <a href="/board/{{ board.bo_table }}?{{ request.query_params }}" class="sch_more">더보기</a>
+                    <a href="/board/{{ board.bo_table }}?{{ query_params }}" class="sch_more">더보기</a>
                 </h2>
                 <ul>
                 {% for write in board.writes %}
@@ -91,14 +87,14 @@
                                 {% if write.wr_is_comment %}
                                 <span class="cmt_def"><i class="fa fa-commenting-o" aria-hidden="true"></i><span class="sound_only">댓글</span></span>
                                 {% endif %}
-                                {{ write.subject|truncate(100, False, '...', 0)|search_font(request.query_params.stx)|safe }}
+                                {{ write.subject|truncate(100, False, '...', 0)|search_font(query_params.stx)|safe }}
                             </a>
                             <a href="{{ write.href }}" target="_blank" class="pop_a">
                                 <i class="fa fa-window-restore" aria-hidden="true"></i>
                                 <span class="sound_only">새창</span>
                             </a>
                         </div>
-                        <p>{{ write.wr_content|striptags|truncate(100, False, '...', 0)|search_font(request.query_params.stx)|safe }}</p>
+                        <p>{{ write.wr_content|striptags|truncate(100, False, '...', 0)|search_font(query_params.stx)|safe }}</p>
                         <div class="sch_info">
                             {% if board.bo_use_sideview %}
                                 {{ sideview.get(request, write.mb_id, write.name, write.email, write.wr_homepage)|safe }}
@@ -148,6 +144,4 @@
         return true;
     }
 </script>
-
-
 {% endblock content %}
