@@ -137,7 +137,8 @@ async def list_post(
     next_spt = None
     if (sca or (sfl and stx)):
         search_part = int(config.cf_search_part) or 10000
-        min_spt = db.scalar(select(func.min(model_write.wr_num))) or 0
+        min_spt = db.scalar(
+            select(func.coalesce(func.min(model_write.wr_num), 0)))
         spt = int(request.query_params.get("spt", min_spt))
         prev_spt = spt - search_part if spt > min_spt else None
         next_spt = spt + search_part if spt + search_part < 0 else None

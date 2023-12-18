@@ -782,13 +782,14 @@ def write_search_filter(
     query = select()
     # 분류
     if category:
-        query = query.filter_by(ca_name=category)
+        query = query.where(model.ca_name == category)
 
     # 검색 필드 및 단어 설정
     # 검색어를 단어로 분리하여 operator에 따라 필터를 생성
     word_filters = []
     words = keyword.split(" ")
     if search_field:
+        # search_field는 {필드명},{코멘트여부} 형식으로 전달됨 (0:댓글, 1:게시글)
         tmp = search_field.split(",")
         fields = tmp[0].split("||")
         is_comment = (tmp[1] == "0") if len(tmp) > 1 else False
@@ -814,10 +815,10 @@ def write_search_filter(
 
     # 댓글 검색
     if is_comment:
-        query = query.filter_by(wr_is_comment=1)
+        query = query.where(model.wr_is_comment == 1)
         # 원글만 조회해야하므로, wr_parent 목록을 가져와서 in조건으로 재필터링
-        query = select().where(
-            model.wr_id.in_([row.wr_parent for row in db.scalars(query).all]))
+        parents = db.scalars(query.add_columns(model)).all()
+        query = select().where(model.wr_id.in_([row.wr_parent for row in parents]))
 
     return query
 
