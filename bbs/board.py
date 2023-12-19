@@ -395,7 +395,7 @@ async def move_update(
     return templates.TemplateResponse("alert_close.html", context)
 
 
-@router.get("/write/{bo_table}")
+@router.get("/write/{bo_table}", dependencies=[Depends(check_group_access)])
 async def write_form_add(
     request: Request,
     db: db_session,
@@ -424,6 +424,8 @@ async def write_form_add(
     else:
         if not board_config.is_write_level():
             raise AlertException("글을 작성할 권한이 없습니다.", 403)
+
+    # TODO: 포인트 검증
 
     # 게시판 제목 설정
     board.subject = board_config.subject
@@ -459,7 +461,7 @@ async def write_form_add(
         f"{request.state.device}/board/{board.bo_skin}/write_form.html", context)
 
 
-@router.get("/write/{bo_table}/{wr_id}")
+@router.get("/write/{bo_table}/{wr_id}", dependencies=[Depends(check_group_access)])
 async def write_form_edit(
     request: Request,
     db: db_session,
@@ -545,12 +547,14 @@ async def write_form_edit(
         f"{request.state.device}/board/{board.bo_skin}/write_form.html", context)
 
 
-@router.post("/write_update", dependencies=[Depends(validate_token)])
+@router.post(
+        "/write_update/{bo_table}",
+        dependencies=[Depends(validate_token), Depends(check_group_access)])
 async def write_update(
     request: Request,
     db: db_session,
     recaptcha_response: str = Form("", alias="g-recaptcha-response"),
-    bo_table: str = Form(...),
+    bo_table: str = Path(...),
     wr_id: int = Form(None),
     parent_id: int = Form(None),
     uid: str = Form(None),
@@ -627,6 +631,8 @@ async def write_update(
             if not board_config.is_write_level():
                 raise AlertException("글을 작성할 권한이 없습니다.", 403)
             parent_write = None
+
+        # TODO: 포인트 검증
 
         form_data.wr_password = create_hash(form_data.wr_password) if form_data.wr_password else ""
         form_data.wr_name = board_config.set_wr_name(member, form_data.wr_name)
@@ -773,7 +779,7 @@ async def write_update(
     return RedirectResponse(redirect_url, status_code=303)
 
 
-@router.get("/{bo_table}/{wr_id}")
+@router.get("/{bo_table}/{wr_id}", dependencies=[Depends(check_group_access)])
 async def read_post(
     request: Request,
     db: db_session,
@@ -806,18 +812,6 @@ async def read_post(
     write = db.get(write_model, wr_id)
     if not write:
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
-
-    # 그룹 접근 사용
-    if group.gr_use_access:
-        if not member:
-            raise AlertException(f"비회원은 이 게시판에 접근할 권한이 없습니다.\\n\\n회원이시라면 로그인 후 이용해 보십시오.", 403)
-        if not (admin_type == "super" or admin_type == "group"):
-            exists_group_member = db.scalar(
-                exists(GroupMember)
-                .where(GroupMember.gr_id == group.gr_id, GroupMember.mb_id == mb_id).select()
-            )
-            if not exists_group_member:
-                raise AlertException("접근 권한이 없으므로 글읽기가 불가합니다.\\n\\n궁금하신 사항은 관리자에게 문의 바랍니다.", 403, "/")
 
     # 읽기 권한 검증
     if not board_config.is_read_level():
@@ -1046,7 +1040,7 @@ async def delete_post(
     return RedirectResponse(f"/board/{bo_table}{query_string}", status_code=303)
 
 
-@router.get("/{bo_table}/{wr_id}/download/{bf_no}")
+@router.get("/{bo_table}/{wr_id}/download/{bf_no}", dependencies=[Depends(check_group_access)])
 async def download_file(
     request: Request,
     db: db_session,
@@ -1121,7 +1115,9 @@ async def download_file(
     return FileResponse(board_file.bf_file, filename=board_file.bf_source)
 
 
-@router.post("/write_comment_update/", dependencies=[Depends(validate_token)])
+@router.post(
+        "/write_comment_update/",
+        dependencies=[Depends(validate_token), Depends(check_group_access)])
 async def write_comment_update(
     request: Request,
     db: db_session,
@@ -1149,6 +1145,8 @@ async def write_comment_update(
     filter_word = filter_words(request, form.wr_content)
     if filter_word:
         raise AlertException(f"내용에 금지단어({filter_word})가 포함되어 있습니다.", 400)
+
+    # TODO: 포인트 검증
 
     if form.w == "c":
         # 글쓰기 간격 검증
@@ -1205,6 +1203,8 @@ async def write_comment_update(
 
         # 새글 추가
         insert_board_new(form.bo_table, comment)
+
+        # TODO: 댓글 포인트 처리
 
         # 메일 발송
         if board_config.use_email:
