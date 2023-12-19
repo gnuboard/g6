@@ -120,9 +120,9 @@ async def board_list_delete(
             # 좋아요 기록 삭제
             db.execute(delete(BoardGood).where(BoardGood.bo_table == board.bo_table))
             # 게시판 테이블 삭제
-            Write = dynamic_create_write_table(table_name=board.bo_table, create_table=False)
+            write_model = dynamic_create_write_table(table_name=board.bo_table, create_table=False)
             # FIXME: 게시판 생성 직후 삭제시 database locked 에러 발생
-            Write.__table__.drop(engine)
+            write_model.__table__.drop(engine)
             # 최신글 캐시 삭제
             G6FileCache().delete_prefix(f'latest-{board.bo_table}')
 
@@ -673,16 +673,16 @@ async def board_copy_update(
     db.commit()
 
     # 새로운 게시판 테이블 생성
-    source_write = dynamic_create_write_table(table_name=bo_table, create_table=False)
-    target_write = dynamic_create_write_table(table_name=target_table, create_table=True)
+    source_write_model = dynamic_create_write_table(table_name=bo_table, create_table=False)
+    target_write_model = dynamic_create_write_table(table_name=target_table, create_table=True)
     # 복사 유형을 '구조와 데이터' 선택시 테이블의 레코드 모두 복사
     if copy_case == 'schema_data_both':
-        writes = db.scalars(select(source_write)).all()
+        writes = db.scalars(select(source_write_model)).all()
         for write in writes:
             copy_data = {key: value for key, value in write.__dict__.items() if not key.startswith('_')}
             print(copy_data)
             # write 객체로 target_write 테이블에 레코드 추가
-            db.execute(target_write.__table__.insert(), copy_data)
+            db.execute(target_write_model.__table__.insert(), copy_data)
             db.commit()
 
     content = """

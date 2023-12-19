@@ -109,28 +109,28 @@ async def list_post(
     page_rows = board_config.page_rows
 
     # 게시판 테이블 모델 생성
-    model_write = dynamic_create_write_table(bo_table)
+    write_model = dynamic_create_write_table(bo_table)
 
     # 공지 게시글 목록 조회
     notice_writes = []
     if current_page == 1:
         notice_ids = board_config.get_notice_list()
-        notice_query = select(model_write).where(model_write.wr_id.in_(notice_ids))
+        notice_query = select(write_model).where(write_model.wr_id.in_(notice_ids))
         if sca:
-            notice_query = notice_query.where(model_write.ca_name == sca)
+            notice_query = notice_query.where(write_model.ca_name == sca)
         notice_writes = [get_list(request, write, board_config) for write in db.scalars(notice_query).all()]
 
     # 게시글 목록 조회
-    query = write_search_filter(request, model_write, sca, sfl, stx)
-    query = query.where(model_write.wr_is_comment == 0)
+    query = write_search_filter(request, write_model, sca, sfl, stx)
+    query = query.where(write_model.wr_is_comment == 0)
     # 정렬
-    if sst and hasattr(model_write, sst):
+    if sst and hasattr(write_model, sst):
         if sod == "desc":
             query = query.order_by(desc(sst))
         else:
             query = query.order_by(asc(sst))
     else:
-        query = board_config.get_list_sort_query(model_write, query)
+        query = board_config.get_list_sort_query(write_model, query)
 
     # 검색일 경우 검색단위 갯수 설정
     prev_spt = None
@@ -138,19 +138,19 @@ async def list_post(
     if (sca or (sfl and stx)):
         search_part = int(config.cf_search_part) or 10000
         min_spt = db.scalar(
-            select(func.coalesce(func.min(model_write.wr_num), 0)))
+            select(func.coalesce(func.min(write_model.wr_num), 0)))
         spt = int(request.query_params.get("spt", min_spt))
         prev_spt = spt - search_part if spt > min_spt else None
         next_spt = spt + search_part if spt + search_part < 0 else None
 
         # wr_num 컬럼을 기준으로 검색단위를 구분합니다. (wr_num은 음수)
-        query = query.where(model_write.wr_num.between(spt, spt + search_part))
+        query = query.where(write_model.wr_num.between(spt, spt + search_part))
 
     # 페이지 번호에 따른 offset 계산
     offset = (current_page - 1) * page_rows
     # 최종 쿼리 결과를 가져옵니다.
     writes = db.scalars(
-        query.add_columns(model_write)
+        query.add_columns(write_model)
         .offset(offset).limit(page_rows)
     ).all()
     # 전체 게시글 갯수 조회
@@ -205,10 +205,10 @@ async def list_delete(
         raise AlertException("게시판 관리자 이상 접근이 가능합니다.", 403)
 
     # 게시글 조회
-    model_write = dynamic_create_write_table(bo_table)
+    write_model = dynamic_create_write_table(bo_table)
     writes = db.scalars(
-        select(model_write)
-        .where(model_write.wr_id.in_(wr_ids))
+        select(write_model)
+        .where(write_model.wr_id.in_(wr_ids))
     ).all()
     for write in writes:
         db.delete(write)
@@ -303,17 +303,17 @@ async def move_update(
         raise AlertException("게시판 관리자 이상 접근이 가능합니다.", 403)
 
     # 입력받은 정보를 토대로 게시글을 복사한다.
-    model_write = dynamic_create_write_table(bo_table)
+    write_model = dynamic_create_write_table(bo_table)
     origin_writes = db.scalars(
-        select(model_write)
-        .where(model_write.wr_id.in_(wr_ids.split(',')))
+        select(write_model)
+        .where(write_model.wr_id.in_(wr_ids.split(',')))
     ).all()
 
     # 게시글 복사/이동 작업 반복
     for target_bo_table in target_bo_tables:
         for origin_write in origin_writes:
-            TargetWrite = dynamic_create_write_table(target_bo_table)
-            target_write = TargetWrite()
+            target_write_model = dynamic_create_write_table(target_bo_table)
+            target_write = target_write_model()
 
             # 복사/이동 로그 기록
             if not origin_write.wr_is_comment and config.cf_use_copy_log:
@@ -418,8 +418,8 @@ async def write_form_add(
             raise AlertException("답변글을 작성할 권한이 없습니다.", 403)
 
         # 답글 생성가능여부 검증
-        model_write = dynamic_create_write_table(bo_table)
-        parent_write = db.get(model_write, parent_id)
+        write_model = dynamic_create_write_table(bo_table)
+        parent_write = db.get(write_model, parent_id)
         generate_reply_character(board, parent_write)
     else:
         if not board_config.is_write_level():
@@ -476,8 +476,8 @@ async def write_form_edit(
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
 
     # 게시글 조회
-    model_write = dynamic_create_write_table(bo_table)
-    write = db.get(model_write, wr_id)
+    write_model = dynamic_create_write_table(bo_table)
+    write = db.get(write_model, wr_id)
     if not write:
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
 
@@ -594,7 +594,7 @@ async def write_update(
         raise AlertException(f"제목/내용에 금지단어({word})가 포함되어 있습니다.", 400)
 
     # 게시글 테이블 정보 조회
-    model_write = dynamic_create_write_table(bo_table)
+    write_model = dynamic_create_write_table(bo_table)
     # 옵션 설정
     options = [opt for opt in [html, secret, mail] if opt]
     form_data.wr_option = ",".join(map(str, options))
@@ -605,8 +605,8 @@ async def write_update(
         form_data.wr_link2 = ""
 
     exists_write = db.scalar(
-        exists(model_write)
-        .where(model_write.wr_id == wr_id).select()
+        exists(write_model)
+        .where(write_model.wr_id == wr_id).select()
     )
     # 글 등록
     if not exists_write:
@@ -622,7 +622,7 @@ async def write_update(
         if parent_id:
             if not board_config.is_reply_level():
                 raise AlertException("답변글을 작성할 권한이 없습니다.", 403)
-            parent_write = db.get(model_write, parent_id)
+            parent_write = db.get(write_model, parent_id)
         else:
             if not board_config.is_write_level():
                 raise AlertException("글을 작성할 권한이 없습니다.", 403)
@@ -633,7 +633,7 @@ async def write_update(
         form_data.wr_email = getattr(member, "mb_email", form_data.wr_email)
         form_data.wr_homepage = getattr(member, "mb_homepage", form_data.wr_homepage)
 
-        write = model_write(
+        write = write_model(
             wr_num=parent_write.wr_num if parent_write else get_next_num(bo_table),
             wr_reply=generate_reply_character(board, parent_write) if parent_write else "",
             wr_datetime=datetime.now(),
@@ -674,7 +674,7 @@ async def write_update(
             raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_modify}건 이상 존재하므로 수정 할 수 없습니다.", 403)
     
         # 게시글 정보 조회 및 수정
-        write = db.get(model_write, wr_id)
+        write = db.get(write_model, wr_id)
         if not write:
             raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
 
@@ -687,7 +687,7 @@ async def write_update(
         # 분류 수정 시 댓글/답글도 같이 수정
         if form_data.ca_name:
             db.execute(
-                update(model_write).where(model_write.wr_parent == wr_id)
+                update(write_model).where(write_model.wr_parent == wr_id)
                 .values(ca_name=form_data.ca_name)
             )
             db.commit()
@@ -802,8 +802,8 @@ async def read_post(
     admin_type = get_admin_type(request, mb_id, group=group, board=board)
 
     # 게시글 정보 조회
-    model_write = dynamic_create_write_table(bo_table)
-    write = db.get(model_write, wr_id)
+    write_model = dynamic_create_write_table(bo_table)
+    write = db.get(write_model, wr_id)
     if not write:
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
 
@@ -833,7 +833,7 @@ async def read_post(
         owner = False
         if write.wr_reply and mb_id:
             parent_write = db.scalar(
-                select(model_write).filter_by(
+                select(write_model).filter_by(
                     wr_num=write.wr_num,
                     wr_reply="",
                     wr_is_comment=0
@@ -905,34 +905,34 @@ async def read_post(
     sfl = request.query_params.get("sfl")
     stx = request.query_params.get("stx")
     if not board.bo_use_list_view:
-        query = select(model_write).where(model_write.wr_is_comment == 0)
+        query = select(write_model).where(write_model.wr_is_comment == 0)
         if sca:
-            query = query.where(model_write.ca_name == sca)
-        if sfl and stx and hasattr(model_write, sfl):
-            query = query.where(getattr(model_write, sfl).like(f"%{stx}%"))
+            query = query.where(write_model.ca_name == sca)
+        if sfl and stx and hasattr(write_model, sfl):
+            query = query.where(getattr(write_model, sfl).like(f"%{stx}%"))
          # 같은 wr_num 내에서 이전글 조회
         prev = db.scalar(
             query.where(
-                model_write.wr_num == write.wr_num,
-                model_write.wr_reply < write.wr_reply,
-            ).order_by(desc(model_write.wr_reply))
+                write_model.wr_num == write.wr_num,
+                write_model.wr_reply < write.wr_reply,
+            ).order_by(desc(write_model.wr_reply))
         )
         if not prev:
             prev = db.scalar(
-                query.where(model_write.wr_num < write.wr_num)
-                .order_by(desc(model_write.wr_num))
+                query.where(write_model.wr_num < write.wr_num)
+                .order_by(desc(write_model.wr_num))
             )
         # 같은 wr_num 내에서 다음글 조회
         next = db.scalar(
             query.where(
-                model_write.wr_num == write.wr_num,
-                model_write.wr_reply > write.wr_reply,
-            ).order_by(asc(model_write.wr_reply))
+                write_model.wr_num == write.wr_num,
+                write_model.wr_reply > write.wr_reply,
+            ).order_by(asc(write_model.wr_reply))
         )
         if not next:
             next = db.scalar(
-                query.where(model_write.wr_num > write.wr_num)
-                .order_by(asc(model_write.wr_num))
+                query.where(write_model.wr_num > write.wr_num)
+                .order_by(asc(write_model.wr_num))
             )
 
     # 파일정보 조회
@@ -948,10 +948,10 @@ async def read_post(
 
     # 댓글 목록 조회
     comments = db.scalars(
-        select(model_write).filter_by(
+        select(write_model).filter_by(
             wr_parent=wr_id,
             wr_is_comment=1
-        ).order_by(model_write.wr_comment, model_write.wr_comment_reply)
+        ).order_by(write_model.wr_comment, write_model.wr_comment_reply)
     ).all()
 
     for comment in comments:
@@ -1026,8 +1026,8 @@ async def delete_post(
         raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_delete}건 이상 존재하므로 삭제 할 수 없습니다.", 403)
 
     # 게시글 조회
-    model_write = dynamic_create_write_table(bo_table)
-    write = db.get(model_write, wr_id)
+    write_model = dynamic_create_write_table(bo_table)
+    write = db.get(write_model, wr_id)
     if not write:
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
 
@@ -1281,7 +1281,7 @@ async def delete_comment(
     )
     db.commit()
 
-    return RedirectResponse(f"/board/{bo_table}/{write.wr_id}{query_string}", status_code=303)
+    return RedirectResponse(f"/board/{bo_table}/{comment.wr_parent}{query_string}", status_code=303)
 
 
 @router.get("/{bo_table}/{wr_id}/link/{no}")
@@ -1301,8 +1301,8 @@ async def link_url(
         raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
 
     # 게시글 조회
-    model_write = dynamic_create_write_table(bo_table)
-    write = db.get(model_write, wr_id)
+    write_model = dynamic_create_write_table(bo_table)
+    write = db.get(write_model, wr_id)
     if not write:
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
 
