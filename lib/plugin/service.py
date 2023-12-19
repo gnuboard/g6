@@ -54,7 +54,7 @@ def get_all_plugin_info(plugin_dir):
                 plugin['is_enable'] = state.is_enable
                 break
             else:
-                plugin['is_enable'] = "False"
+                plugin['is_enable'] = False
         all_plugin_info.append(plugin)
     return all_plugin_info
 
