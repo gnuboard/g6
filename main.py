@@ -144,7 +144,8 @@ async def main_middleware(request: Request, call_next):
     except AlertException as e:
         return await alert_exception_handler(request, e)
 
-    if cache_plugin_state.__getitem__('change_time') != get_plugin_state_change_time():
+    plugin_state_change_time = get_plugin_state_change_time()
+    if cache_plugin_state.__getitem__('change_time') != plugin_state_change_time:
         # 플러그인 상태변경시 캐시를 업데이트.
         # 업데이트 이후 관리자 메뉴, 라우터 재등록/삭제
         new_plugin_state = read_plugin_state()
@@ -155,7 +156,7 @@ async def main_middleware(request: Request, call_next):
                 delete_router_by_tagname(app, plugin.module_name)
 
         cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(new_plugin_state))
-        cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
+        cache_plugin_state.__setitem__('change_time', plugin_state_change_time)
 
     # 로그인
     if ss_mb_id:
