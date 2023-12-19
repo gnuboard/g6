@@ -50,6 +50,8 @@ async def member_list(
             "mb_datetime",
             "mb_recommend",
         ],
+        default_sst="mb_datetime",
+        default_sod="desc"
     )
 
     # 회원정보 추가 설정

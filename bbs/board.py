@@ -804,7 +804,7 @@ async def read_post(
     # 게시글 정보 조회
     write_model = dynamic_create_write_table(bo_table)
     write = db.get(write_model, wr_id)
-    if not write:
+    if not write or write.wr_is_comment:
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
 
     # 그룹 접근 사용
