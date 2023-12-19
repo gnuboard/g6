@@ -69,7 +69,7 @@ async def search(
         write_model = dynamic_create_write_table(board.bo_table)
         query = write_search_filter(request, write_model, search_field=sfl, keyword=stx, operator=sop)
         query = board_config.get_list_sort_query(write_model, query)
-        board.search_count = db.scalar(query.add_columns(func.count()))
+        board.search_count = db.scalar(query.add_columns(func.count()).order_by(None))
 
         if board.search_count > 0:
             board.writes = db.scalars(query.add_columns(write_model).limit(5)).all()

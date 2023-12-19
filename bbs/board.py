@@ -154,7 +154,7 @@ async def list_post(
         .offset(offset).limit(page_rows)
     ).all()
     # 전체 게시글 갯수 조회
-    total_count = db.scalar(query.add_columns(func.count()))
+    total_count = db.scalar(query.add_columns(func.count()).order_by(None))
 
     # 게시글 정보 수정
     for write in writes:

@@ -50,7 +50,7 @@ async def visit_search(
     # 페이지 번호에 따른 offset 계산
     offset = (current_page - 1) * records_per_page
     # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
     # 최종 쿼리 결과를 가져옵니다.
     visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
@@ -179,7 +179,7 @@ async def visit_list(
     records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
     # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
     # 최종 쿼리 결과를 가져옵니다.
     visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
@@ -216,7 +216,7 @@ async def visit_domain(
     records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
     # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
     # 최종 쿼리 결과를 가져옵니다.
     visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
@@ -277,7 +277,7 @@ async def visit_browser(
     records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
     # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
     # 최종 쿼리 결과를 가져옵니다.
     visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
@@ -326,7 +326,7 @@ async def visit_os(
     records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
     # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
     # 최종 쿼리 결과를 가져옵니다.
     visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
@@ -375,7 +375,7 @@ async def visit_device(
     records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
     # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
     # 최종 쿼리 결과를 가져옵니다.
     visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
@@ -423,7 +423,7 @@ async def visit_hour(
     records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
     # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
     # 최종 쿼리 결과를 가져옵니다.
     visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
@@ -475,7 +475,7 @@ async def visit_weekday(
     records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
     # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
     # 최종 쿼리 결과를 가져옵니다.
     visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
@@ -534,7 +534,7 @@ async def visit_date(
     records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
     # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
     # 최종 쿼리 결과를 가져옵니다.
     visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
@@ -582,7 +582,7 @@ async def visit_month(
     records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
     # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
     # 최종 쿼리 결과를 가져옵니다.
     visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 
@@ -630,7 +630,7 @@ async def visit_year(
     records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
     # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
     # 최종 쿼리 결과를 가져옵니다.
     visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
 

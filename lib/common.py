@@ -774,7 +774,7 @@ def select_query(request: Request, table_model, search_params: dict,
     # 최종 쿼리 결과를 가져옵니다.
     rows = db.scalars(query.add_columns(table_model).offset(offset).limit(records_per_page)).all()
     # 전체 레코드 개수 계산
-    total_count = db.scalar(query.add_columns(func.count()).select_from(table_model))
+    total_count = db.scalar(query.add_columns(func.count()).select_from(table_model).order_by(None))
     return {
         "rows": rows,
         "total_count": total_count,
