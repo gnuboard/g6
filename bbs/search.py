@@ -39,7 +39,7 @@ async def search(
     boards_query = (
         select(Board)
         .where(
-            Board.bo_use_search == True,
+            Board.bo_use_search == 1,
             Board.bo_list_level <= member_level,
         )
         .order_by(Board.bo_order, Board.gr_id, Board.bo_table)
