@@ -4,7 +4,6 @@ import bleach
 from datetime import datetime, timedelta
 from fastapi import Request
 from sqlalchemy import and_, or_, select, Select
-from sqlalchemy.orm import Query as SqlQuery
 
 from common.database import SessionLocal
 from common.models import Board, BoardNew, Scrap, WriteBaseModel

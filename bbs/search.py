@@ -66,19 +66,19 @@ async def search(
                 continue
 
         # 게시판 별 검색 Query 설정
-        model_write = dynamic_create_write_table(board.bo_table)
-        query = write_search_filter(request, model_write, search_field=sfl, keyword=stx, operator=sop)
-        query = board_config.get_list_sort_query(model_write, query)
+        write_model = dynamic_create_write_table(board.bo_table)
+        query = write_search_filter(request, write_model, search_field=sfl, keyword=stx, operator=sop)
+        query = board_config.get_list_sort_query(write_model, query)
         board.search_count = db.scalar(query.add_columns(func.count()))
 
         if board.search_count > 0:
-            board.writes = db.scalars(query.add_columns(model_write).limit(5)).all()
+            board.writes = db.scalars(query.add_columns(write_model).limit(5)).all()
             total_search_count += board.search_count
             for write in board.writes:
                 write = get_list(request, write, board_config)
                 if write.wr_is_comment:
                     word = "댓글"
-                    parent_write = db.get(model_write, write.wr_parent)
+                    parent_write = db.get(write_model, write.wr_parent)
                     write.subject = parent_write.wr_subject
                     write.href = f"/board/{board.bo_table}/{parent_write.wr_id}?{request.query_params}#c_{write.wr_id}"
                 else:

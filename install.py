@@ -336,11 +336,11 @@ def board_setup():
                 db.rollback()
                 print(f"게시판 {bo_subject}({bo_table}) 에러: {e}")
                 print(new_board.__dict__)
-                
+
         # 게시판 테이블 생성
-        models.Write = dynamic_create_write_table(bo_table, True)
-        
-        
+        dynamic_create_write_table(bo_table, True)
+
+
 def make_directory():        
     data_directory_path = "data"
     print(f"디렉토리 : {data_directory_path} 디렉토리 생성을 시작합니다.")

@@ -120,7 +120,7 @@ def verify_password(plain_password, hashed_passwd):
 _created_models = {}
 
 # 동적 게시판 모델 생성
-def dynamic_create_write_table(table_name: str, create_table: bool = False):
+def dynamic_create_write_table(table_name: str, create_table: bool = False) -> WriteBaseModel:
     '''
     WriteBaseModel 로 부터 게시판 테이블 구조를 복사하여 동적 모델로 생성하는 함수
     인수의 table_name 에서는 DB_TABLE_PREFIX + 'write_' 를 제외한 테이블 이름만 입력받는다.

@@ -27,8 +27,8 @@ async def scrap_form(
     if not member:
         raise AlertCloseException("로그인 후 이용 가능합니다.", 403)
     
-    models_write = dynamic_create_write_table(bo_table)
-    write = db.get(models_write, wr_id)
+    write_model = dynamic_create_write_table(bo_table)
+    write = db.get(write_model, wr_id)
     if not write:
         raise AlertCloseException("존재하지 않는 글 입니다.", 404)
 
@@ -68,8 +68,8 @@ async def scrap_form_update(
     if not board:
         raise AlertCloseException("존재하지 않는 게시판 입니다.", 404)
     
-    models_write = dynamic_create_write_table(bo_table)
-    write = db.get(models_write, wr_id)
+    write_model = dynamic_create_write_table(bo_table)
+    write = db.get(write_model, wr_id)
     if not write:
         raise AlertCloseException("존재하지 않는 글 입니다.", 404)
     
@@ -88,12 +88,12 @@ async def scrap_form_update(
             raise AlertException("너무 빠른 시간내에 게시글을 연속해서 올릴 수 없습니다.", 400)
 
         max_comment = db.scalar(
-            select(func.max(models_write.wr_comment).label('max_comment'))
-            .where(models_write.wr_parent == wr_id, models_write.wr_is_comment == 1)
+            select(func.max(write_model.wr_comment).label('max_comment'))
+            .where(write_model.wr_parent == wr_id, write_model.wr_is_comment == 1)
         )
         # TODO: 게시글/댓글을 등록하는 공용함수를 만들어서 사용하도록 수정
-        models_comment = dynamic_create_write_table(bo_table)
-        comment = models_comment(
+        comment_model = dynamic_create_write_table(bo_table)
+        comment = comment_model(
             mb_id=member.mb_id,
             wr_content=wr_content,
             ca_name=write.ca_name,
