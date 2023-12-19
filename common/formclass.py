@@ -342,7 +342,6 @@ class WriteForm:
 @dataclass
 class WriteCommentForm:
     w: str = Form(...)
-    bo_table: str = Form(...)
     wr_id: int = Form(...)
     wr_content: str = Form(...)
     wr_name: str = Form(None)

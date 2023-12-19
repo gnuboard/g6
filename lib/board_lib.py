@@ -321,6 +321,22 @@ class BoardConfig():
         """
         return str(wr_id) in self.board.bo_notice.split(",")
 
+    def is_read_point(self, write: WriteBaseModel) -> bool:
+        """글 읽기 포인트 체크"""
+        return self._can_action_by_point(self.board.bo_read_point, write)
+
+    def is_write_point(self) -> bool:
+        """글 쓰기 포인트 체크"""
+        return self._can_action_by_point(self.board.bo_write_point)
+
+    def is_comment_point(self) -> bool:
+        """댓글 쓰기 포인트 체크"""
+        return self._can_action_by_point(self.board.bo_comment_point)
+
+    def is_download_point(self, write: WriteBaseModel) -> bool:
+        """다운로드 포인트 체크"""
+        return self._can_action_by_point(self.board.bo_download_point, write)
+
     def is_modify_by_comment(self, wr_id: int) -> bool:
         """댓글 수에 따라 게시글 수정이 가능한지"""
         return self._can_action_by_comment_count(wr_id, self.board.bo_count_modify)
@@ -407,6 +423,30 @@ class BoardConfig():
             return False
         else:
             return True
+
+    def _can_action_by_point(self, point: int, write: WriteBaseModel = None) -> bool:
+        """포인트에 따라 행동 가능 여부를 판단한다.
+
+        Args:
+            point (int): 증감할 포인트
+
+        Returns:
+            bool: 행동 가능 여부
+        """
+        member_point = getattr(self.login_member, "mb_point", 0)
+
+        # 관리자 or 포인트가 0 이상이면 통과
+        if self.login_member_admin_type or point >= 0:
+            return True
+        # 게시글 작성자 or 게시글 작성자 IP와 현재 접속 IP가 같으면 통과
+        elif write:
+            if (is_owner(write, self.login_member_id)
+                or (not self.login_member_id
+                    and self.board.bo_read_level == 1
+                    and write.wr_ip == self.request.client.host)):
+                return True
+
+        return (member_point + point) >= 0
 
     def _get_write_text_limit(self, limit: int) -> int:
         """게시글/댓글 작성 제한 글 수를 반환.

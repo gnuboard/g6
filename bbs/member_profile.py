@@ -42,7 +42,7 @@ async def check_member_form(request: Request, db: db_session):
     context = {
         "request": request,
         "member": member,
-        "action_url": request.url_for("check_member")
+        "action_url": request.url_for("member_password")
     }
     return templates.TemplateResponse(
         f"{request.state.device}/member/member_confirm.html", context

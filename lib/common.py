@@ -833,8 +833,23 @@ def get_member_image(mb_id: str = None) -> str:
     return "static/img/no_profile.gif"
     
 
-# 포인트 부여    
-def insert_point(request: Request, mb_id: str, point: int, content: str = '', rel_table: str = '', rel_id: str = '', rel_action: str = '', expire: int = 0):
+
+def insert_point(request: Request, mb_id: str, point: int, content: str = '', rel_table: str = '', rel_id: str = '', rel_action: str = '', expire: int = 0) -> int:
+    """포인트 증감 처리
+
+    Args:
+        request (Request): FastAPI Request 객체
+        mb_id (str): 회원아이디
+        point (int): 증감 포인트
+        content (str, optional): 포인트 내용. Defaults to ''.
+        rel_table (str, optional): 포인트 관련 테이블. Defaults to ''.
+        rel_id (str, optional): 포인트 관련 테이블의 ID. Defaults to ''.
+        rel_action (str, optional): 포인트 관련 테이블의 활동. Defaults to ''.
+        expire (int, optional): 포인트 유효기간. Defaults to 0.
+
+    Returns:
+        int: 성공시 1, 실패시 0
+    """
     db = SessionLocal()
     config = request.state.config
     
