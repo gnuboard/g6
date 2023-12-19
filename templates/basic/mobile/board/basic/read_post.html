@@ -57,20 +57,20 @@
             <div id="bo_v_top">
                 <ul class="btn_bo_user bo_v_com">
                     <li>
-                        <a href="{{ url_for('list_post', bo_table=board.bo_table) }}?{{ request.query_params }}" class="btn_b01 btn" title="목록">
+                        <a href="{{ url_for('list_post', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_b01 btn" title="목록">
                             <i class="fa fa-list" aria-hidden="true"></i><span class="sound_only">목록</span>
                         </a>
                     </li>
                     {% if is_reply %}
                     <li>
-                        <a href="{{ url_for('write_form_add', bo_table=board.bo_table) }}?parent_id={{ write.wr_id }}" class="btn_b01 btn" title="답변">
+                        <a href="{{ url_for('write_form_add', bo_table=board.bo_table)|set_query_params(request, parent_id=write.wr_id) }}" class="btn_b01 btn" title="답변">
                             <i class="fa fa-reply" aria-hidden="true"></i><span class="sound_only">답변</span>
                         </a>
                     </li>
                     {% endif %}
                     {% if is_write %}
                     <li>
-                        <a href="{{ url_for('write_form_add', bo_table=board.bo_table) }}" class="btn_b01 btn" title="글쓰기">
+                        <a href="{{ url_for('write_form_add', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_b01 btn" title="글쓰기">
                             <i class="fa fa-pencil" aria-hidden="true"></i><span class="sound_only">글쓰기</span>
                         </a>
                     </li>
@@ -82,12 +82,12 @@
                         </button>
                         <ul class="more_opt is_view_btn" style="display: none;">
                             <li>
-                                <a href="{{ url_for('write_form_edit', bo_table=board.bo_table, wr_id=write.wr_id) }}?{{ request.query_params }}">
+                                <a href="{{ url_for('write_form_edit', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}">
                                     수정<i class="fa fa-pencil-square-o" aria-hidden="true"></i>
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ url_for('delete_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?{{ request.query_params }}" onclick="del(this.href); return false;">
+                                <a href="{{ url_for('delete_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}" onclick="del(this.href); return false;">
                                     삭제<i class="fa fa-trash-o" aria-hidden="true"></i>
                                 </a>
                             </li>
@@ -147,7 +147,7 @@
             <!-- 파일 출력 END -->
 
             <!-- 본문 내용 시작 { -->
-            <div id="bo_v_con">{{ write.wr_content|set_image_width(board_config.image_width)|safe }}</div>
+            <div id="bo_v_con">{{ write.wr_content|set_image_width(board_config.image_width)|url_auto_link(request)|safe }}</div>
             <!-- } 본문 내용 끝 -->
             <!-- 서명 START -->
             {{ board_config.get_member_signature(write.mb_id) }}
@@ -222,7 +222,7 @@
             <span class="nb_tit">
                 <i class="fa fa-chevron-up" aria-hidden="true"></i> 이전글
             </span>
-            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=prev.wr_id ) }}?{{ request.query_params }}">
+            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=prev.wr_id )|set_query_params(request) }}">
                 {{ prev.wr_subject }}
             </a>
             <span class="nb_date">{{ prev.wr_datetime }}</span>
@@ -233,7 +233,7 @@
             <span class="nb_tit">
                 <i class="fa fa-chevron-down" aria-hidden="true"></i> 다음글
             </span>
-            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=next.wr_id ) }}?{{ request.query_params }}">
+            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=next.wr_id )|set_query_params(request) }}">
                 {{ next.wr_subject }}
             </a>
             <span class="nb_date">{{ next.wr_datetime }}</span>
@@ -341,7 +341,7 @@
         <!-- 댓글 쓰기 시작 { -->
         <aside id="bo_vc_w" class="bo_vc_w">
             <h2>댓글쓰기</h2>
-            <form name="fviewcomment" id="fviewcomment" action="{{ url_for('write_comment_update') }}" onsubmit="return fviewcomment_submit(this);" method="post" autocomplete="off">
+            <form name="fviewcomment" id="fviewcomment" action="{{ url_for('write_comment_update')|set_query_params(request) }}" onsubmit="return fviewcomment_submit(this);" method="post" autocomplete="off">
                 <input type="hidden" name="w" id="w" value="c">
                 <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
                 <input type="hidden" name="wr_id" value="{{ write.wr_id }}">
@@ -405,7 +405,18 @@
         <script>
         var save_before = '';
         var save_html = document.getElementById('bo_vc_w').innerHTML;
-
+        /*
+        function good_and_write()
+        {
+            var f = document.fviewcomment;
+            if (fviewcomment_submit(f)) {
+                f.is_good.value = 1;
+                f.submit();
+            } else {
+                f.is_good.value = 0;
+            }
+        }
+        */
         function fviewcomment_submit(f)
         {
             // 양쪽 공백 없애기
@@ -464,7 +475,7 @@
                 }
             }
 
-            document.getElementById("btn_submit").disabled = "disabled";
+            // document.getElementById("btn_submit").disabled = "disabled";
 
             return true;
         }
@@ -522,7 +533,7 @@
         function comment_delete(href) {
             if (confirm("이 댓글을 삭제하시겠습니까?")) {
                 token = generate_token();
-                location.href = href + "?token=" + token
+                location.href = href + "?token=" + token + "&{{ request.query_params }}";
                 return true;
             }
             return false;

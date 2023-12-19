@@ -1,14 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}
-    회원가입결과
-{% endblock %}
+{% block title %}회원가입결과{% endblock title %}
+{% block subtitle %}회원가입결과{% endblock subtitle %}
 
 {% block content %}
-
-    {% block subtitle %}회원가입결과{% endblock %}
-
-<!-- 회원가입결과 시작 { -->
 <div id="reg_result" class="register">
     <p class="reg_result_p">
     	<i class="fa fa-gift" aria-hidden="true"></i><br>
@@ -35,5 +30,4 @@
 <div class="btn_confirm_reg">
 	<a href="/" class="reg_btn_submit">메인으로</a>
 </div>
-
-{% endblock %}
+{% endblock content %}

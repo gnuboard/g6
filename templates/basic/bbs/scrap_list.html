@@ -1,22 +1,18 @@
 {% extends "base_window.html" %}
 
-{% block title %}
-    {{ request.state.login_member.mb_nick }}님의 스크랩
-{% endblock title %}
+{% block title %}{{ request.state.login_member.mb_nick }}님의 스크랩{% endblock title %}
 
 {% block content %}
     <div id="scrap" class="new_win">
-        <h1 id="win_title">최고관리자님의 스크랩</h1>
+        <h1 id="win_title">{{ request.state.login_member.mb_nick }}님의 스크랩</h1>
         <ul>
-            {% for result in results %}
-            {% set scrap = result[0] %}
-            {% set board = result[1] %}
+            {% for scrap in scraps %}
             <li>
                 <a href="{{ url_for('read_post', bo_table=scrap.bo_table, wr_id=scrap.wr_id) }}" class="scrap_tit" target="_blank" onclick="open_parent_href(this.href); return false;">
                     {{ scrap.subject|truncate(100, False, '...', 0) }}
                 </a>
                 <a href="{{ url_for('list_post', bo_table=scrap.bo_table) }}" class="scrap_cate" target="_blank" onclick="open_parent_href(this.href); return false;">
-                    {{ board.bo_subject }}
+                    {{ scrap.bo_subject }}
                 </a>
                 <span class="scrap_datetime">
                     <i class="fa fa-clock-o" aria-hidden="true"></i>

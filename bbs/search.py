@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Depends, Request, Query
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Request, Query
 
-from lib.board_lib import *
-from lib.common import *
 from common.database import db_session
 from common.models import Board, Group, GroupMember
+from lib.board_lib import *
+from lib.common import *
 
 router = APIRouter()
 templates = UserTemplates()
@@ -27,20 +26,28 @@ async def search(
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
     member_level = get_member_level(request)
+    total_search_count = 0
 
     # 게시판 그룹 목록
-    groups = db.query(Group).order_by(Group.gr_id).all()
+    groups = db.scalars(
+        select(Group)
+        .order_by(Group.gr_id)
+    ).all()
 
-    total_search_count = 0
     # 게시판 목록
     remove_boards = []
-    boards_query = db.query(Board).filter(
-        Board.bo_use_search == True,
-        Board.bo_list_level <= member_level,
-    ).order_by(Board.bo_order, Board.gr_id, Board.bo_table)
+    boards_query = (
+        select(Board)
+        .where(
+            Board.bo_use_search == True,
+            Board.bo_list_level <= member_level,
+        )
+        .order_by(Board.bo_order, Board.gr_id, Board.bo_table)
+    )
     if gr_id:
-        boards_query = boards_query.filter(Board.gr_id == gr_id)
-    boards = boards_query.all()
+        boards_query = boards_query.where(Board.gr_id == gr_id)
+    boards = db.scalars(boards_query).all()
+
     for board in boards:
         board_config = BoardConfig(request, board)
         board.subject = board_config.subject
@@ -48,28 +55,30 @@ async def search(
         group = board.group
         if group.gr_use_access and not request.state.is_super_admin:
             is_group_admin = (group.gr_admin == mb_id)
-            group_member = db.query(GroupMember).filter(
-                GroupMember.gr_id == group.gr_id,
-                GroupMember.mb_id == mb_id
-            ).one_or_none()
+            group_member = db.scalar(
+                select(GroupMember).where(
+                    GroupMember.gr_id == group.gr_id,
+                    GroupMember.mb_id == mb_id
+                )
+            )
             if not (is_group_admin or group_member):
                 remove_boards.append(board)
                 continue
 
         # 게시판 별 검색 Query 설정
-        model_write = dynamic_create_write_table(board.bo_table)
-        query = write_search_filter(request, model_write, search_field=sfl, keyword=stx, operator=sop)
-        query = board_config.get_list_sort_query(model_write, query)
-        board.search_count = query.count()
+        write_model = dynamic_create_write_table(board.bo_table)
+        query = write_search_filter(request, write_model, search_field=sfl, keyword=stx, operator=sop)
+        query = board_config.get_list_sort_query(write_model, query)
+        board.search_count = db.scalar(query.add_columns(func.count()))
 
         if board.search_count > 0:
-            board.writes = query.limit(5).all()
+            board.writes = db.scalars(query.add_columns(write_model).limit(5)).all()
             total_search_count += board.search_count
             for write in board.writes:
                 write = get_list(request, write, board_config)
                 if write.wr_is_comment:
                     word = "댓글"
-                    parent_write = db.get(model_write, write.wr_parent)
+                    parent_write = db.get(write_model, write.wr_parent)
                     write.subject = parent_write.wr_subject
                     write.href = f"/board/{board.bo_table}/{parent_write.wr_id}?{request.query_params}#c_{write.wr_id}"
                 else:
@@ -87,7 +96,11 @@ async def search(
     for board in remove_boards:
         boards.remove(board)
 
-    return templates.TemplateResponse(
-        f"{request.state.device}/bbs/search.html",
-        {"request": request, "onetable": onetable, "total_search_count": total_search_count, "groups": groups, "boards": boards}
-    )
+    context = {
+        "request": request,
+        "onetable": onetable,
+        "total_search_count": total_search_count,
+        "groups": groups,
+        "boards": boards,
+    }
+    return templates.TemplateResponse(f"{request.state.device}/bbs/search.html", context)

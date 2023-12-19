@@ -7,12 +7,8 @@
     <link rel="stylesheet" href="{{ url_for('static', path='/css/gallery/board.css') }}">
 {% endblock head %}
 
-{% block title %}
-    {{ board.bo_subject }} {{ current_page }} 페이지
-{% endblock title %}
-{% block subtitle %}
-    {{ board.bo_subject }}
-{% endblock subtitle %}
+{% block title %}{{ board.subject }} {{ current_page }} 페이지{% endblock title %}
+{% block subtitle %}{{ board.subject }}{% endblock subtitle %}
 
 {% block content %}
 {% set is_admin=get_admin_type(request, request.state.login_member.mb_id, group=board.group, board=board) %}
@@ -50,8 +46,8 @@
         <!-- 게시판 페이지 정보 및 버튼 시작 { -->
         <div id="bo_btn_top">
             <div id="bo_list_total">
-                <span>Total {{ total_count }}건</span>
-                {{ current_page }} 페이지
+                <span>Total {{ total_count|number_format }}건</span>
+                {{ current_page|number_format }} 페이지
             </div>
 
             <ul class="btn_bo_user">
@@ -63,7 +59,7 @@
                 </li>
                 {% if is_write %}
                 <li>
-                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table) }}" class="btn_b01 btn" title="글쓰기">
+                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_b01 btn" title="글쓰기">
                         <i class="fa fa-pencil" aria-hidden="true"></i>
                         <span class="sound_only">글쓰기</span>
                     </a>
@@ -121,7 +117,7 @@
                     </div>
                     <div class="gall_con">
                         <div class="gall_img" style="{% if gallery_height > 0 %}height:{{ gallery_height }}px;max-height:{{ gallery_height }}px{% endif %}">
-                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?{{ request.query_params }}">
+                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}">
                                 {% if write.wr_id|string in board.bo_notice %}
                                     <span class="is_notice" style="{{ line_height_style }}">공지</span>
                                 {% else %}
@@ -139,7 +135,7 @@
                                 <a href="{{ request.url.replace_query_params(sca=write.ca_name) }}" class="bo_cate_link">{{ write.ca_name }}</a>
                             {% endif %}
 
-                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id) }}?{{ request.query_params }}" class="bo_tit">
+                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}" class="bo_tit">
                                 {% if write.wr_reply %}
                                     <img src="{{ url_for('static', path="/img/icon_reply.gif") }}" class="icon_reply" alt="답변글">
                                 {% endif %}
@@ -162,14 +158,14 @@
                                 </span>
                             {% endif %}
                             <span class="gall_date"><span class="sound_only">작성일 </span><i class="fa fa-clock-o" aria-hidden="true"></i> {{ write.wr_datetime|datetime_format('%y-%m-%d') }}</span>
-                            <span class="gall_view"><span class="sound_only">조회 </span><i class="fa fa-eye" aria-hidden="true"></i> {{ write.wr_hit }}</span>
+                            <span class="gall_view"><span class="sound_only">조회 </span><i class="fa fa-eye" aria-hidden="true"></i> {{ write.wr_hit|number_format }}</span>
                         </div>
                         <div class="gall_option">
                             {% if board.bo_use_good %}
-                            <span class="sound_only">추천</span><strong><i class="fa fa-thumbs-o-up" aria-hidden="true"></i> {{ write.wr_good }}</strong>
+                            <span class="sound_only">추천</span><strong><i class="fa fa-thumbs-o-up" aria-hidden="true"></i> {{ write.wr_good|number_format }}</strong>
                             {% endif %}
                             {% if board.bo_use_nogood %}
-                            <span class="sound_only">비추천</span><strong><i class="fa fa-thumbs-o-down" aria-hidden="true"></i> {{ write.wr_nogood }}</strong>
+                            <span class="sound_only">비추천</span><strong><i class="fa fa-thumbs-o-down" aria-hidden="true"></i> {{ write.wr_nogood|number_format }}</strong>
                             {% endif %}
                         </div>
                     </div>
@@ -204,7 +200,7 @@
                 {% endif %}
                 {% if is_write %}
                 <li>
-                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table) }}" class="btn_b01 btn" title="글쓰기">
+                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_b01 btn" title="글쓰기">
                         <i class="fa fa-pencil" aria-hidden="true"></i><span class="sound_only">글쓰기</span>
                     </a>
                 </li>
@@ -222,11 +218,11 @@
                 <input type="hidden" name="sop" value="{{ request.query_params.sop }}">
                 <label for="sfl" class="sound_only">검색대상</label>
                 <select name="sfl" id="sfl">
-                    <option value="wr_subject" {{ get_selected(request.query_params.sfl, "wr_subject") }}>제목</option>
-                    <option value="wr_content" {{ get_selected(request.query_params.sfl, "wr_content") }}>내용</option>
-                    <option value="wr_subject||wr_content" {{ get_selected(request.query_params.sfl, "wr_subject||wr_content") }}>제목+내용</option>
-                    <option value="wr_name,1" {{ get_selected(request.query_params.sfl, "wr_name,1") }}>글쓴이</option>
-                    <option value="wr_name,0" {{ get_selected(request.query_params.sfl, "wr_name,0") }}>글쓴이(코)</option>
+                    <option value="wr_subject" {{ get_selected(request.query_params.sfl, "wr_subject")|safe }}>제목</option>
+                    <option value="wr_content" {{ get_selected(request.query_params.sfl, "wr_content")|safe }}>내용</option>
+                    <option value="wr_subject||wr_content" {{ get_selected(request.query_params.sfl, "wr_subject||wr_content")|safe }}>제목+내용</option>
+                    <option value="wr_name,1" {{ get_selected(request.query_params.sfl, "wr_name,1")|safe }}>글쓴이</option>
+                    <option value="wr_name,0" {{ get_selected(request.query_params.sfl, "wr_name,0")|safe }}>글쓴이(코)</option>
                 </select>
                 <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
                 <div class="sch_bar">
@@ -297,7 +293,7 @@
                 return false;
     
             f.removeAttribute("target");
-            f.action = "{{ url_for('list_delete', bo_table=board.bo_table) }}?{{ request.query_params }}";
+            f.action = "{{ url_for('list_delete', bo_table=board.bo_table)|set_query_params(request)|safe }}";
         }
 
         f.token.value = generate_token();
@@ -312,7 +308,7 @@
     
         f.sw.value = sw;
         f.target = "move";
-        f.action = "{{ url_for('move_post', bo_table=board.bo_table) }}";
+        f.action = "{{ url_for('move_post', bo_table=board.bo_table)|safe }}";
         f.submit();
     }
     

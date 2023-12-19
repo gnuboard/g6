@@ -1,15 +1,12 @@
 {% extends "base.html" %}
+{% set query_params=request.query_params %}
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', path="/css/basic/new.css") }}">
 {% endblock head %}
 
-{% block title %}
-    새글
-{% endblock title %}
-{% block subtitle %}
-    새글
-{% endblock subtitle %}
+{% block title %}새글{% endblock title %}
+{% block subtitle %}새글{% endblock subtitle %}
 
 {% block content %}
 <!-- 전체게시물 검색 시작 { -->
@@ -17,19 +14,16 @@
     <legend>상세검색</legend>
     <form name="fnew" method="get">
         <label for="gr_id" class="sound_only">그룹</label>
-        <select name="gr_id" id="gr_id">
-            <option value="">전체그룹</option>
-            <option value="community" {{ get_selected(request.query_params.gr_id, "community") }}>커뮤니티</option>
-            <option value="question" {{ get_selected(request.query_params.gr_id, "question") }}>질문게시판</option>
-        </select>
+        {{ get_group_select('gr_id', query_params.gr_id)|safe }}
+
         <label for="view" class="sound_only">검색대상</label>
         <select name="view" id="view">
             <option value="">전체게시물</option>
-            <option value="write" {{ get_selected(request.query_params.view, "write") }}>원글만</option>
-            <option value="comment" {{ get_selected(request.query_params.view, "comment") }}>코멘트만</option>
+            <option value="write" {{ get_selected(query_params.view, "write") }}>원글만</option>
+            <option value="comment" {{ get_selected(query_params.view, "comment") }}>코멘트만</option>
         </select>
         <label for="mb_id" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
-        <input type="text" name="mb_id" value="{{ request.query_params.mb_id }}" id="mb_id" required="" class="frm_input" size="40">
+        <input type="text" name="mb_id" value="{{ query_params.mb_id }}" id="mb_id" class="frm_input" size="40">
         <button type="submit" class="btn_submit">
             <i class="fa fa-search" aria-hidden="true"></i> 검색
         </button>
@@ -40,15 +34,11 @@
 
 <!-- 전체게시물 목록 시작 { -->
 <form name="fnewlist" id="fnewlist" method="post" action="#" onsubmit="return fnew_submit(this);">
-    <input type="hidden" name="view" value="{{ request.query_params.view }}">
-    <input type="hidden" name="sfl" value="{{ request.query_params.sfl }}">
-    <input type="hidden" name="stx" value="{{ request.query_params.stx }}">
-    <input type="hidden" name="page" value="{{ request.query_params.page }}">
+    <input type="hidden" name="view" value="{{ query_params.view }}">
     <input type="hidden" name="token" value="">
-    <input type="hidden" name="pressed" value="">
 
     <div class="admin_new_btn">
-        <button type="submit" onclick="document.pressed=this.title" title="선택삭제" class="btn_b01 btn">
+        <button type="submit" title="선택삭제" class="btn_b01 btn">
             <i class="fa fa-trash-o" aria-hidden="true"></i>
             <span class="sound_only">선택삭제</span>
         </button>
@@ -72,7 +62,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for board_new, board in board_news %}
+                {% for board_new in board_news %}
                 <tr>
                     <td class="td_chk chk_box">
                         <input type="checkbox" name="chk_bn_id[]" value="{{ board_new.bn_id }}" id="chk_bn_id_{{ loop.index }}" class="selec_chk">
@@ -82,13 +72,13 @@
                         </label>
                     </td>
                     <td class="td_group">
-                        <a href="/bbs/new?gr_id={{ board.gr_id }}">{{ board.group.gr_subject }}</a>
+                        <a href="/bbs/new?gr_id={{ board_new.board.gr_id }}">{{ board_new.board.group.gr_subject }}</a>
                     </td>
                     <td class="td_board">
-                        <a href="/board/{{ board_new.bo_table }}">{{ board.bo_subject }}</a>
+                        <a href="/board/{{ board_new.bo_table }}">{{ board_new.board.bo_subject }}</a>
                     </td>
                     <td>
-                        <a href="/board/{{ board_new.bo_table }}/{{ board_new.wr_id }}{{ board_new.add_link }}" class="new_tit">{{ board_new.subject }}</a>
+                        <a href="{{ board_new.link }}" class="new_tit">{{ board_new.subject }}</a>
                     </td>
                     <td class="td_name">{{ board_new.name }}</td>
                     <td class="td_date">{{ board_new.datetime }}</td>
@@ -101,7 +91,7 @@
     {{ paging|safe }}
 
     <div class="admin_new_btn">
-        <button type="submit" onclick="document.pressed=this.title" title="선택삭제" class="btn_b01 btn">
+        <button type="submit" title="선택삭제" class="btn_b01 btn">
             <i class="fa fa-trash-o" aria-hidden="true"></i>
             <span class="sound_only">선택삭제</span>
         </button>
@@ -117,8 +107,6 @@
 
     function fnew_submit(f)
     {
-        f.pressed.value = document.pressed;
-
         var cnt = 0;
         for (var i =0; i < f.length; i++) {
             if (f.elements[i].name == "chk_bn_id[]" && f.elements[i].checked)
@@ -135,7 +123,7 @@
         }
 
         f.token.value = generate_token();
-        f.action = "./new_delete";
+        f.action = "./new_delete?{{ query_params|safe }}";
 
         return true;
     }

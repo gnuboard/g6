@@ -23,7 +23,9 @@ async def find_member_id_form(request: Request):
     if member:
         return RedirectResponse("/", status_code=303)
 
-    return templates.TemplateResponse("member/id_find_form.html", {"request": request})
+    return templates.TemplateResponse(
+        f"{request.state.device}/member/id_find_form.html", {"request": request}
+    )
 
 
 @router.post("/id_lost", dependencies=[Depends(validate_token), Depends(validate_captcha)])
@@ -41,22 +43,27 @@ async def find_member_id(
     if member:
         return RedirectResponse("/", status_code=303)
 
-    member = db.query(Member).filter(
-        Member.mb_name == mb_name,
-        Member.mb_email == mb_email,
-        Member.mb_id != config.cf_admin # 최고관리자는 제외
-    ).first()
+    member = db.scalar(
+        select(Member).where(
+            Member.mb_name == mb_name,
+            Member.mb_email == mb_email,
+            Member.mb_id != config.cf_admin  # 최고관리자는 제외
+        )
+    )
     if not member:
         raise AlertException("입력하신 정보와 일치하는 회원이 없습니다.", 400)
-    
+
     if SocialAuthService.check_exists_by_member_id(member.mb_id):
         raise AlertException("소셜로그인으로 가입하신 회원은 아이디를 찾을 수 없습니다.", 400)
 
-    return templates.TemplateResponse("member/id_find_result.html", {
+    context = {
         "request": request,
         "member_id": hide_member_id(member.mb_id),
         "register_date": member.mb_datetime.strftime("%Y-%m-%d %H:%M:%S")
-    })
+    }
+    return templates.TemplateResponse(
+        f"{request.state.device}/member/id_find_result.html", context
+    )
 
 
 @router.get("/password_lost")
@@ -68,7 +75,9 @@ async def find_member_password_form(request: Request):
     if member:
         return RedirectResponse("/", status_code=303)
 
-    return templates.TemplateResponse("member/password_find_form.html", {"request": request})
+    return templates.TemplateResponse(
+        f"{request.state.device}/member/password_find_form.html", {"request": request}
+    )
 
 
 @router.post("/password_lost", dependencies=[Depends(validate_token), Depends(validate_captcha)])
@@ -85,15 +94,17 @@ async def find_member_password(
     member = request.state.login_member
     if member:
         return RedirectResponse("/", status_code=303)
-    
-    member = db.query(Member).filter(
-        Member.mb_id == mb_id,
-        Member.mb_email == mb_email,
-        Member.mb_id != config.cf_admin # 최고관리자는 제외
-    ).first()
+
+    member = db.scalar(
+        select(Member).where(
+            Member.mb_id == mb_id,
+            Member.mb_email == mb_email,
+            Member.mb_id != config.cf_admin  # 최고관리자는 제외
+        )
+    )
     if not member:
         raise AlertException("입력하신 정보와 일치하는 회원이 없습니다.", 400)
-    
+
     if SocialAuthService.check_exists_by_member_id(member.mb_id):
         raise AlertException("소셜로그인으로 가입하신 회원은 비밀번호를 찾을 수 없습니다.", 400)
 
@@ -131,22 +142,27 @@ async def reset_password_form(
     if member:
         return RedirectResponse("/", status_code=303)
 
-    member = db.query(Member).filter(
-        Member.mb_id == mb_id, 
-        Member.mb_lost_certify == token,
-        Member.mb_id != config.cf_admin
-    ).first()
+    member = db.scalar(
+        select(Member).where(
+            Member.mb_id == mb_id,
+            Member.mb_lost_certify == token,
+            Member.mb_id != config.cf_admin  # 최고관리자는 제외
+        )
+    )
     if not member:
         raise AlertException("유효하지 않은 요청입니다.", 403)
 
     if SocialAuthService.check_exists_by_member_id(member.mb_id):
         raise AlertException("소셜로그인으로 가입하신 회원은 비밀번호를 재설정할 수 없습니다.", 400)
-    
+
     # 비밀번호 재설정 링크를 재사용 할 수 없도록 초기화
     member.mb_lost_certify = ""
     db.commit()
 
-    return templates.TemplateResponse("member/password_reset_form.html", {"request": request, "member": member})
+    context = {"request": request, "member": member}
+    return templates.TemplateResponse(
+        f"{request.state.device}/member/password_reset_form.html", context
+    )
 
 
 @router.post("/password_reset/{mb_id}", dependencies=[Depends(validate_token), Depends(validate_captcha)])
@@ -165,19 +181,21 @@ async def reset_password(
     if member:
         return RedirectResponse("/", status_code=303)
 
-    member = db.query(Member).filter(
-        Member.mb_id == mb_id, 
-        Member.mb_id != config.cf_admin # 최고관리자는 제외
-    ).first()
+    member = db.scalar(
+        select(Member).where(
+            Member.mb_id == mb_id,
+            Member.mb_id != config.cf_admin  # 최고관리자는 제외
+        )
+    )
     if not member:
         raise AlertException("유효하지 않은 요청입니다.", 403)
 
     if SocialAuthService.check_exists_by_member_id(member.mb_id):
         raise AlertException("소셜로그인으로 가입하신 회원은 비밀번호를 재설정할 수 없습니다.", 400)
-    
+
     if mb_password != mb_password_confirm:
         raise AlertException("비밀번호가 일치하지 않습니다.", 400)
-    
+
     # 비밀번호 변경
     member.mb_password = create_hash(mb_password)
     db.commit()

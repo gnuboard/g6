@@ -390,11 +390,10 @@ class PollForm:
 
 @dataclass
 class AutoSaveForm:
-    mb_id: str = Form(default="")
     as_uid: Optional[int] = Form(default=0)
     as_subject: str = Form(default="")
     as_content: str = Form(default="")
-    as_datetime: Optional[datetime] = Form(default=None)
+    as_datetime: datetime = Form(default=datetime.now())
 
       
 @dataclass
@@ -450,8 +449,8 @@ class QaContentForm:
     qa_email: str = Form(None)
     qa_hp: str = Form(None)
     qa_category: str = Form(None)
-    qa_email_recv: bool = Form(None)
-    qa_sms_recv: bool = Form(None)
+    qa_email_recv: int = Form(None)
+    qa_sms_recv: int = Form(None)
     qa_html: int = Form(None)
     qa_subject: str = Form(...)
     qa_content: str = Form(...)

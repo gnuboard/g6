@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Form, Path, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy import literal
-from sqlalchemy.orm import aliased, Session
+from sqlalchemy.orm import aliased
 
 from lib.board_lib import *
 from lib.common import *
@@ -14,7 +14,9 @@ templates.env.filters["datetime_format"] = datetime_format
 
 
 @router.get("/scrap_popin/{bo_table}/{wr_id}")
-async def scrap_form(request: Request, db: db_session,
+async def scrap_form(
+    request: Request,
+    db: db_session,
     bo_table: str = Path(...),
     wr_id: int = Path(...),
 ):
@@ -25,13 +27,16 @@ async def scrap_form(request: Request, db: db_session,
     if not member:
         raise AlertCloseException("로그인 후 이용 가능합니다.", 403)
     
-    models_write = dynamic_create_write_table(bo_table)
-    write = db.query(models_write).filter(models_write.wr_id == wr_id).first()
+    write_model = dynamic_create_write_table(bo_table)
+    write = db.get(write_model, wr_id)
     if not write:
         raise AlertCloseException("존재하지 않는 글 입니다.", 404)
-    
-    query = db.query(Scrap).filter(Scrap.mb_id == member.mb_id, Scrap.bo_table == bo_table, Scrap.wr_id == wr_id)
-    exists_scrap = db.query(literal(True)).filter(query.exists()).scalar()
+
+    exists_scrap = db.scalar(
+        exists(Scrap)
+        .where(Scrap.mb_id == member.mb_id, Scrap.bo_table == bo_table, Scrap.wr_id == wr_id)
+        .select()
+    )
     if exists_scrap:
         raise AlertException("이미 스크랩하신 글 입니다.", 302, request.url_for('scrap_list'))
     
@@ -44,7 +49,9 @@ async def scrap_form(request: Request, db: db_session,
     
 
 @router.post("/scrap_popin_update/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
-async def scrap_form_update(request: Request, db: db_session,
+async def scrap_form_update(
+    request: Request,
+    db: db_session,
     bo_table: str = Path(...),
     wr_id: int = Path(...),
     wr_content: str = Form(None),
@@ -52,22 +59,25 @@ async def scrap_form_update(request: Request, db: db_session,
     """
     스크랩 등록
     """
-    member = request.state.login_member
+    member: Member = request.state.login_member
     if not member:
         raise AlertCloseException("로그인 후 이용 가능합니다.", 403)
     
-    board = db.query(Board).filter(Board.bo_table == bo_table).first()
+    board = db.get(Board, bo_table)
     board_config = BoardConfig(request, board)
     if not board:
         raise AlertCloseException("존재하지 않는 게시판 입니다.", 404)
     
-    models_write = dynamic_create_write_table(bo_table)
-    write = db.query(models_write).filter(models_write.wr_id == wr_id).first()
+    write_model = dynamic_create_write_table(bo_table)
+    write = db.get(write_model, wr_id)
     if not write:
         raise AlertCloseException("존재하지 않는 글 입니다.", 404)
     
-    query = db.query(Scrap).filter(Scrap.mb_id == member.mb_id, Scrap.bo_table == bo_table, Scrap.wr_id == wr_id)
-    exists_scrap = db.query(literal(True)).filter(query.exists()).scalar()
+    exists_scrap = db.scalar(
+        exists(Scrap)
+        .where(Scrap.mb_id == member.mb_id, Scrap.bo_table == bo_table, Scrap.wr_id == wr_id)
+        .select()
+    )
     if exists_scrap:
         raise AlertException("이미 스크랩하신 글 입니다.", 302, request.url_for('scrap_list'))
     
@@ -77,14 +87,13 @@ async def scrap_form_update(request: Request, db: db_session,
         if not is_write_delay(request):
             raise AlertException("너무 빠른 시간내에 게시글을 연속해서 올릴 수 없습니다.", 400)
 
-        max_comment = db.query(func.max(models_write.wr_comment).label('max_comment')).filter(
-            models_write.wr_parent == wr_id,
-            models_write.wr_is_comment == 1
-        ).first()
-
+        max_comment = db.scalar(
+            select(func.max(write_model.wr_comment).label('max_comment'))
+            .where(write_model.wr_parent == wr_id, write_model.wr_is_comment == 1)
+        )
         # TODO: 게시글/댓글을 등록하는 공용함수를 만들어서 사용하도록 수정
-        models_comment = dynamic_create_write_table(bo_table)
-        comment = models_comment(
+        comment_model = dynamic_create_write_table(bo_table)
+        comment = comment_model(
             mb_id=member.mb_id,
             wr_content=wr_content,
             ca_name=write.ca_name,
@@ -92,7 +101,7 @@ async def scrap_form_update(request: Request, db: db_session,
             wr_num=write.wr_num,
             wr_reply="",
             wr_parent=wr_id,
-            wr_comment=max_comment.max_comment + 1 if max_comment.max_comment else 1,
+            wr_comment=max_comment + 1 if max_comment else 1,
             wr_is_comment=1,
             wr_name=board_config.set_wr_name(member),
             wr_password=member.mb_password,
@@ -127,8 +136,11 @@ async def scrap_form_update(request: Request, db: db_session,
     )
     db.add(scrap)
     # 회원 테이블 스크랩 카운트 증가
-    member_object = db.query(Member).filter(Member.mb_id == member.mb_id).first()
-    member_object.mb_scrap_cnt = get_scrap_totals(member.mb_id) + 1
+    db.execute(
+        update(Member)
+        .where(Member.mb_id == member.mb_id)
+        .values(mb_scrap_cnt=get_scrap_totals(member.mb_id) + 1)
+    )
     db.commit()
 
     # 최신글 캐시 삭제
@@ -137,45 +149,43 @@ async def scrap_form_update(request: Request, db: db_session,
     return RedirectResponse(request.url_for('scrap_list'), 302)
 
 
-# TODO: 연관관계로 ORM 수정 => (쿼리요청 및 코드량 감소)
 @router.get("/scrap")
-async def scrap_list(request: Request, db: db_session,
+async def scrap_list(
+    request: Request,
+    db: db_session,
     current_page: int = Query(default=1, alias="page")
 ):
     """
     스크랩 목록
     """
-    member = request.state.login_member
-    if not member:
+    login_member = request.state.login_member
+    if not login_member:
         raise AlertCloseException("로그인 후 이용 가능합니다.", 403)
+    member = db.scalar(select(Member).where(Member.mb_id == login_member.mb_id))
 
     # 스크랩 목록 조회
-    scrap = aliased(Scrap)
-    board = aliased(Board)
-    query = db.query(scrap, board).outerjoin(
-        board, scrap.bo_table == board.bo_table
-    ).filter(scrap.mb_id == member.mb_id).order_by(desc(scrap.ms_id))
+    query = member.scraps.order_by(desc(Scrap.ms_id))
 
     # 페이징 처리
     records_per_page = request.state.config.cf_page_rows
     total_records = query.count()
     offset = (current_page - 1) * records_per_page
-    results = query.offset(offset).limit(records_per_page).all()
+    scraps: List["Scrap"] = db.scalars(
+        query.offset(offset).limit(records_per_page)
+    ).all()
     
-    for result in results:
-        scrap = result[0]
-        bo_subject = result[1]
+    for scrap in scraps:
         # 스크랩 정보
-        scrap.num = total_records - offset - (results.index(result))
-        scrap.bo_subject = bo_subject or "[게시판 없음]"
+        scrap.num = total_records - offset - (scraps.index(scrap))
+        scrap.bo_subject = scrap.board.bo_subject or "[게시판 없음]"
         # 게시글 정보
         write_model = dynamic_create_write_table(scrap.bo_table)
-        write = db.query(write_model).filter_by(wr_id = scrap.wr_id).first()
+        write = db.get(write_model, scrap.wr_id)
         scrap.subject = write.wr_subject or write.wr_content[:100] if write else "[글 없음]"
 
     context = {
         "request": request,
-        "results": results,
+        "scraps": scraps,
         "total_records": total_records,
         "page": current_page,
         "paging": get_paging(request, current_page, total_records),
@@ -184,31 +194,40 @@ async def scrap_list(request: Request, db: db_session,
 
 
 @router.get("/scrap_delete/{ms_id}", dependencies=[Depends(validate_token)])
-async def scrap_delete(request: Request, db: db_session, 
-    ms_id: int = Path(...),
-    page: int = Query(default=1)
+async def scrap_delete(
+    request: Request,
+    db: db_session, 
+    ms_id: int = Path(...)
 ):
     """
     스크랩 삭제
     """
-    return_url = request.url_for('scrap_list').path + f"?page={page}"
-
-    member = request.state.login_member
+    member: Member = request.state.login_member
     if not member:
         raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
     
-    scrap = db.query(Scrap).get(ms_id)
+    scrap = db.get(Scrap, ms_id)
     if not scrap:
-        raise AlertException("스크랩이 존재하지 않습니다.", 404, return_url)
+        raise AlertException("스크랩이 존재하지 않습니다.", 404)
     if scrap.mb_id != member.mb_id:
-        raise AlertException("본인의 스크랩만 삭제 가능합니다.", 403, return_url)
+        raise AlertException("본인의 스크랩만 삭제 가능합니다.", 403)
 
     # 스크랩 삭제
     db.delete(scrap)
     # 회원 테이블 스크랩 카운트 감소
-    member_object = db.query(Member).filter(Member.mb_id == member.mb_id).first()
-    member_object.mb_scrap_cnt = get_scrap_totals(member.mb_id) - 1
+    db.execute(
+        update(Member)
+        .where(Member.mb_id == member.mb_id)
+        .values(mb_scrap_cnt=get_scrap_totals(member.mb_id) - 1)
+    )
     db.commit()
+
+    query_params = dict(request.query_params)
+    query_params.pop("token", None)
+    query_params = "&".join([f"{key}={value}" for key, value in query_params.items()])
+    query_params = query_params.replace("&amp;", "&")
+    query_string = "?" + query_params if query_params else ""
+    return_url = request.url_for('scrap_list').path + query_string
 
     return RedirectResponse(url=return_url, status_code=302)
 
@@ -223,4 +242,10 @@ def get_scrap_totals(mb_id: str) -> int:
         int: 스크랩 수
     """
     db = SessionLocal()
-    return db.query(Scrap).filter(Scrap.mb_id == mb_id).count()
+    count = db.scalar(
+        select(func.count(Scrap.ms_id))
+        .where(Scrap.mb_id == mb_id)
+    )
+    db.close()
+
+    return count

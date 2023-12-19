@@ -2,24 +2,19 @@
 {% import "/sideview/macros.html" as sideview %}
 
 {% block head %}
-<link rel="stylesheet" href="/static/css/basic/style.css">
+    <link rel="stylesheet" href="/static/css/basic/style.css">
+{% endblock head %}
 
-{% endblock %}
-
-{% block title %}
-{{ title }}
-{% endblock %}
+{% block title %}{{ member.mb_nick }}의 자기소개{% endblock title %}
 
 {% block content %}
-
 <div id="profile" class="new_win">
     <h1 id="win_title">{{ member.mb_nick }}님의 프로필</h1>
     <div class="profile_name">
         <span class="my_profile_img">
-            <img src="{{ get_member_image(member.mb_id) }}">
+            <img src="/{{ get_member_image(member.mb_id) }}">
         </span>
-        {{ sideview.get(request, member.mb_id, member.name, member.wr_email, member.wr_homepage)|safe }}
-
+        {{ sideview.get(request, member.mb_id, member.mb_name, member.mb_email, member.mb_homepage)|safe }}
     </div>
     <div class="tbl_head02 tbl_wrap new_win_con">
         <table>
@@ -28,7 +23,7 @@
                 <th scope="row"><i class="fa fa-star-o" aria-hidden="true"></i> 회원권한</th>
                 <td>{{ member.mb_level }}</td>
                 <th scope="row"><i class="fa fa-database" aria-hidden="true"></i> 포인트</th>
-                <td>{{ member.mb_point }} <?php echo number_format($mb['mb_point']) ?></td>
+                <td>{{ member.mb_point|number_format }}</td>
             </tr>
             <tr>
                 <th scope="row"><i class="fa fa-clock-o" aria-hidden="true"></i> 회원가입일</th>
@@ -68,4 +63,4 @@
         <button type="button" onclick="window.close();" class="btn_close">창닫기</button>
     </div>
 </div>
-{% endblock %}
+{% endblock content %}

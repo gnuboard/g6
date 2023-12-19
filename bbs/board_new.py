@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 
-from lib.board_lib import *
-from lib.common import *
 from common.database import db_session
 from common.models import BoardNew, Board
+from lib.board_lib import *
+from lib.common import *
 
 router = APIRouter()
 templates = UserTemplates()
+templates.env.globals["get_group_select"] = get_group_select
 
 
 @router.get("/new")
@@ -23,37 +24,38 @@ async def board_new_list(
     최신 게시글 목록
     """
     config = request.state.config
-    query = db.query(BoardNew, Board).outerjoin(Board, BoardNew.bo_table == Board.bo_table).order_by(BoardNew.bn_id.desc())
+    query = select().join(BoardNew.board).order_by(BoardNew.bn_id.desc())
     # 검색조건
     if gr_id:
-        query = query.filter(Board.gr_id == gr_id)
+        query = query.where(Board.gr_id == gr_id)
     if mb_id:
-        query = query.filter(BoardNew.mb_id == mb_id)
+        query = query.where(BoardNew.mb_id == mb_id)
     if view == "write":
-        query = query.filter(BoardNew.wr_parent == BoardNew.wr_id)
+        query = query.where(BoardNew.wr_parent == BoardNew.wr_id)
     elif view == "comment":
-        query = query.filter(BoardNew.wr_parent != BoardNew.wr_id)
+        query = query.where(BoardNew.wr_parent != BoardNew.wr_id)
 
     # 페이지 번호에 따른 offset 계산
     page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_new_rows
     offset = (current_page - 1) * page_rows
     # 최종 쿼리 결과를 가져옵니다.
-    board_news = query.offset(offset).limit(page_rows).all()
-    total_count = query.count()
+    board_news = db.scalars(query.add_columns(BoardNew).offset(offset).limit(page_rows)).all()
+    total_count = db.scalar(query.add_columns(func.count(BoardNew.bn_id)))
 
     # 결과 데이터 설정
-    for new, board in board_news:
-        new.num = total_count - offset - (board_news.index((new, board)))
+    for new in board_news:
+        new.num = total_count - offset - (board_news.index((new)))
         # 게시글 정보 조회
         write_model = dynamic_create_write_table(new.bo_table)
-        write = db.query(write_model).filter(write_model.wr_id == new.wr_id).first()
+        write = db.get(write_model, new.wr_id)
         if write:
             # 댓글/게시글 구분
             if write.wr_is_comment:
                 new.subject = "[댓글] " + write.wr_content[:100]
-                new.add_link = f"#c_{write.wr_id}"
+                new.link = f"/board/{new.bo_table}/{new.wr_parent}#c_{write.wr_id}"
             else:
                 new.subject = write.wr_subject
+                new.link = f"/board/{new.bo_table}/{new.wr_id}"
 
             # 작성자
             new.name = cut_name(request, write.wr_name)
@@ -65,27 +67,27 @@ async def board_new_list(
         "total_count": total_count,
         "board_news": board_news,
         "current_page": current_page,
-        "paging": get_paging(request, current_page, total_count)
+        "paging": get_paging(request, current_page, total_count, page_rows)
     }
     return templates.TemplateResponse(f"{request.state.device}/new/basic/new_list.html", context)
 
 
 @router.post("/new_delete", dependencies=[Depends(validate_token)])
 async def new_delete(
-        request: Request,
-        db: db_session,
-        bn_ids: list = Form(..., alias="chk_bn_id[]"),
-    ):
+    request: Request,
+    db: db_session,
+    bn_ids: list = Form(..., alias="chk_bn_id[]"),
+):
     """
     게시글을 삭제한다.
-    """    
+    """
     # 새글 정보 조회
-    board_news = db.query(BoardNew).filter(BoardNew.bn_id.in_(bn_ids)).all()
+    board_news = db.scalars(select(BoardNew).where(BoardNew.bn_id.in_(bn_ids))).all()
     for new in board_news:
-        board = db.query(Board).filter(Board.bo_table == new.bo_table).first()
+        board = db.get(Board, new.bo_table)
         write_model = dynamic_create_write_table(new.bo_table)
-        write = db.query(write_model).filter(write_model.wr_id == new.wr_id).first()
-        
+        write = db.get(write_model, new.wr_id)
+
         if write:
             if write.wr_is_comment == 0:
                 # 게시글 삭제
@@ -93,18 +95,16 @@ async def new_delete(
                 db.delete(write)
 
                 # 원글 포인트 삭제
-                # TODO: 포인트 오류로 인한 주석처리
-                # if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
-                #     insert_point(request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
+                if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
+                    insert_point(request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
             else:
                 # 댓글 삭제
                 # TODO: 댓글 삭제 공용함수 추가
                 db.delete(write)
 
                 # 댓글 포인트 삭제
-                # TODO: 포인트 오류로 인한 주석처리
-                # if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "댓글"):
-                #     insert_point(request, write.mb_id, board.bo_comment_point * (-1), f"{board.bo_subject} {write.wr_parent}-{write.wr_id} 댓글 삭제")
+                if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "댓글"):
+                    insert_point(request, write.mb_id, board.bo_comment_point * (-1), f"{board.bo_subject} {write.wr_parent}-{write.wr_id} 댓글 삭제")
         db.delete(new)
 
         # 파일 삭제
@@ -114,8 +114,10 @@ async def new_delete(
         G6FileCache().delete_prefix(f'latest-{new.bo_table}')
 
     db.commit()
-    
-    return RedirectResponse(f"/bbs/new", status_code=303)
+
+    query_string = "?" + request.query_params.__str__() if request.query_params else ""
+
+    return RedirectResponse(f"/bbs/new{query_string}", status_code=303)
 
 
 def format_datetime(wr_datetime: datetime):

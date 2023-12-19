@@ -1,21 +1,21 @@
-from fastapi import APIRouter, Form, Depends
+from fastapi import APIRouter, Form
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
 
 from lib.common import *
-from common.database import db_session
-
 from lib.pbkdf2 import validate_password
+from common.database import db_session
 
 router = APIRouter()
 templates = UserTemplates()
 templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
-templates.env.globals['getattr'] = getattr
+
 
 @router.get("/login")
-async def login_form(request: Request,
-               url: str = "/"):
+async def login_form(
+    request: Request,
+    url: str = "/"
+):
     """
     로그인 폼을 보여준다.
     """
@@ -27,17 +27,19 @@ async def login_form(request: Request,
 
 
 @router.post("/login")
-async def login(request: Request, db: db_session, 
-        mb_id: str = Form(...), 
-        mb_password: str = Form(...),
-        url: str = Form(default="/")
-    ):
+async def login(
+    request: Request,
+    db: db_session,
+    mb_id: str = Form(...),
+    mb_password: str = Form(...),
+    url: str = Form(default="/")
+):
     """
     로그인 폼화면에서 로그인
     """
     config = request.state.config
 
-    member = db.query(Member).filter(Member.mb_id == mb_id).first()
+    member = db.scalar(select(Member).where(Member.mb_id == mb_id))
     if not member:
         raise AlertException(status_code=404, detail="회원정보가 존재하지 않습니다.")
     elif not validate_password(password=mb_password, hash=member.mb_password):
@@ -56,13 +58,18 @@ async def login(request: Request, db: db_session,
 
 
 @router.post("/login_check")
-async def check_login(request: Request, db: db_session, mb_id: str = Form(...), mb_password: str = Form(...)):
+async def check_login(
+    request: Request,
+    db: db_session,
+    mb_id: str = Form(...),
+    mb_password: str = Form(...)
+):
     """
     outlogin 에서 로그인
     """
     config = request.state.config
 
-    member = db.query(Member).filter(Member.mb_id == mb_id).first()
+    member = db.scalar(select(Member).where(Member.mb_id == mb_id))
     if not member:
         raise AlertException(status_code=404, detail="회원정보가 존재하지 않습니다.")
     elif not validate_password(password=mb_password, hash=member.mb_password):

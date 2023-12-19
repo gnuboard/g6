@@ -1,9 +1,11 @@
 # Path: lib/social/social.py
 import pkgutil
 import importlib
-from lib.social.social import register_social_provider
+from sqlalchemy import select
+
 from common.database import SessionLocal
 from common.models import Config
+from lib.social.social import register_social_provider
 
 # Package.
 package_name = 'lib.social.providers'
@@ -23,5 +25,5 @@ __all__ = [
 ]
 
 with SessionLocal() as db:
-    config = db.query(Config).first()
+    config = db.scalar(select(Config))
     register_social_provider(config)

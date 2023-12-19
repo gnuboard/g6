@@ -1,16 +1,13 @@
 {% extends "base_window.html" %}
 
-{% block title %}
-    설문조사 결과
-{% endblock title %}
+{% block title %}설문조사 결과{% endblock title %}
 
 {% block content %}
-    <!-- 설문조사 결과 시작 { -->
     <div id="poll_result" class="new_win">
         <h1 id="win_title">설문조사 결과</h1>
         <div class="new_win_con2">
             <!-- 설문조사 결과 그래프 시작 { -->
-            <span class="poll_all">전체 {{ total_count }}표</span>
+            <span class="poll_all">전체 {{ total_count|number_format }}표</span>
             <section id="poll_result_list">
                 <h2>{{ poll.po_subject }} 결과</h2>
                 <ol>
@@ -23,7 +20,7 @@
                                 <span style="width:{{ rate }}%"></span>
                             </div>
                             <div class="poll_numerical">
-                                <strong class="poll_cnt">{{ item.count }} 표</strong>
+                                <strong class="poll_cnt">{{ item.count|number_format }} 표</strong>
                                 <span class="poll_percent">{{ rate }} %</span>
                             </div>
                         </li>
