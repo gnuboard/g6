@@ -893,7 +893,7 @@ def generate_reply_character(board: Board, write):
             select(func.substr(write_model.wr_reply, -1).label("reply"))
             .where(
                 write_model.wr_num == write.wr_num,
-                func.length(write_model.wr_reply) == (len(origin_reply) + 1)
+                func.char_length(write_model.wr_reply) == (len(origin_reply) + 1)
             )
         )
         if origin_reply:
@@ -905,7 +905,7 @@ def generate_reply_character(board: Board, write):
             .where(
                 write_model.wr_parent == write.wr_parent,
                 write_model.wr_comment == write.wr_comment,
-                func.length(write_model.wr_comment_reply) == (len(origin_reply) + 1)
+                func.char_length(write_model.wr_comment_reply) == (len(origin_reply) + 1)
             )
         )
         if origin_reply:
