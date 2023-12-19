@@ -15,7 +15,7 @@ from fastapi.templating import Jinja2Templates
 from jinja2 import Environment
 from markupsafe import Markup, escape
 from passlib.context import CryptContext
-from sqlalchemy import Index, asc, desc, and_, func, inspect, select, delete, between, exists, update
+from sqlalchemy import Index, asc, desc, and_, func, insert, inspect, select, delete, between, exists, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
 from starlette.datastructures import URL
@@ -64,7 +64,7 @@ def get_theme_from_db(config=None):
     # main.py 에서 config 를 인수로 받아서 사용
     if not config:
         db: Session = SessionLocal()
-        config = db.query(Config).first()
+        config = db.scalar(select(Config))
     theme = config.cf_theme if config and config.cf_theme else "basic"
     theme_path = f"{TEMPLATES}/{theme}"
     
@@ -214,12 +214,14 @@ def get_editor_select(id, selected):
 # 회원아이디를 SELECT 형식으로 얻음
 def get_member_id_select(id, level, selected, event=''):
     db = SessionLocal()
-    # 테이블에서 지정된 필드만 가져 오는 경우 load_only(Member.field1, Member.field2) 함수를 사용 
-    members = db.query(Member).options(load_only(Member.mb_id)).filter(Member.mb_level >= level).all()
+    mb_ids = db.scalars(
+        select(Member.mb_id)
+        .where(Member.mb_level >= level)
+    ).all()
     html_code = []
     html_code.append(f'<select id="{id}" name="{id}" {event}><option value="">선택하세요</option>')
-    for member in members:
-        html_code.append(f'<option value="{member.mb_id}" {"selected" if member.mb_id == selected else ""}>{member.mb_id}</option>')
+    for mb_id in mb_ids:
+        html_code.append(f'<option value="{mb_id}" {"selected" if mb_id == selected else ""}>{mb_id}</option>')
     html_code.append('</select>')
     return ''.join(html_code)
 
@@ -252,7 +254,10 @@ def option_array_checked(option, arr=[]):
 
 def get_group_select(id, selected='', event=''):
     db = SessionLocal()
-    groups = db.query(Group).order_by(Group.gr_id).all()
+    groups = db.scalars(
+        select(Group)
+        .order_by(Group.gr_order, Group.gr_id)
+    ).all()
     str = f'<select id="{id}" name="{id}" {event}>\n'
     for i, group in enumerate(groups):
         if i == 0:
@@ -719,7 +724,7 @@ def select_query(request: Request, table_model, search_params: dict,
     records_per_page = config.cf_page_rows
 
     db = SessionLocal()
-    query = db.query(table_model)
+    query = select()
     
     # # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
     # if search_params['sst'] is not None and search_params['sst'] != "":
@@ -734,10 +739,10 @@ def select_query(request: Request, table_model, search_params: dict,
 
     # 'sst' 매개변수가 제공되지 않거나 빈 문자열인 경우, default_sst를 사용합니다.
     sst = search_params.get('sst', default_sst) or default_sst
-    
     # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
+    sod = search_params.get('sod', default_sod) or default_sod
+
     if sst:
-        sod = search_params.get('sod', default_sod) or default_sod
         # sst 가 배열인 경우, 여러 열을 기준으로 정렬을 추가합니다.
         if isinstance(sst, list):
             for sort_attribute in sst:
@@ -758,21 +763,21 @@ def select_query(request: Request, table_model, search_params: dict,
         if hasattr(table_model, search_params['sfl']):  # sfl이 Table에 존재하는지 확인
             # if search_params['sfl'] in ["mb_level"]:
             if search_params['sfl'] in same_search_fields:
-                query = query.filter(getattr(table_model, search_params['sfl']) == search_params['stx'])
+                query = query.where(getattr(table_model, search_params['sfl']) == search_params['stx'])
             elif search_params['sfl'] in prefix_search_fields:
-                query = query.filter(getattr(table_model, search_params['sfl']).like(f"{search_params['stx']}%"))
+                query = query.where(getattr(table_model, search_params['sfl']).like(f"{search_params['stx']}%"))
             else:
-                query = query.filter(getattr(table_model, search_params['sfl']).like(f"%{search_params['stx']}%"))
+                query = query.where(getattr(table_model, search_params['sfl']).like(f"%{search_params['stx']}%"))
 
     # 페이지 번호에 따른 offset 계산
     offset = (search_params['current_page'] - 1) * records_per_page
     # 최종 쿼리 결과를 가져옵니다.
-    rows = query.offset(offset).limit(records_per_page).all()
-    # # 전체 레코드 개수 계산
-    # # total_count = query.count()
+    rows = db.scalars(query.add_columns(table_model).offset(offset).limit(records_per_page)).all()
+    # 전체 레코드 개수 계산
+    total_count = db.scalar(query.add_columns(func.count()).select_from(table_model))
     return {
         "rows": rows,
-        "total_count": query.count(),
+        "total_count": total_count,
     }
     
 
@@ -1041,29 +1046,32 @@ def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel
                 if row.po_use_point and row.po_use_point > 0:
                     insert_use_point(request, row.mb_id, row.po_use_point, row.po_id)
 
-            db.execute(
+            delete_result = db.execute(
                 delete(Point)
                 .where(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == str(rel_id), Point.po_rel_action == rel_action)
             )
             db.commit()
 
-            # po_mb_point에 반영
-            if row.po_point:
+            if delete_result.rowcount > 0:
+                result = True
+
+                # po_mb_point에 반영
+                if row.po_point:
+                    db.execute(
+                        update(Point).values(po_mb_point=Point.po_mb_point - row.po_point)
+                        .where(Point.mb_id == mb_id, Point.po_id > row.po_id)
+                    )
+                    db.commit()
+
+                # 포인트 내역의 합을 구하고    
+                sum_point = get_point_sum(request, mb_id)
+
+                # 포인트 UPDATE
                 db.execute(
-                    update(Point).values(po_mb_point=Point.po_mb_point - row.po_point)
-                    .where(Point.mb_id == mb_id, Point.po_id > row.po_id)
+                    update(Member).values(mb_point=sum_point)
+                    .where(Member.mb_id == mb_id)
                 )
                 db.commit()
-
-            # 포인트 내역의 합을 구하고    
-            sum_point = get_point_sum(request, mb_id)
-
-            # 포인트 UPDATE
-            db.execute(
-                update(Member).values(mb_point=sum_point)
-                .where(Member.mb_id == mb_id)
-            )
-            result = db.commit()
     db.close()
 
     return result
@@ -1237,14 +1245,17 @@ def get_populars(limit: int = 7, day: int = 3):
     today = datetime.now()
     before = today - timedelta(days=day)
     # 현재 날짜와 day일 전 날짜 사이의 인기검색어를 조회한다.
-    populars = db.query(
-            Popular.pp_word,
-            func.count(Popular.pp_word).label('count'),
-        ).filter(
-        Popular.pp_word != '',
-        Popular.pp_date >= before,
-        Popular.pp_date <= today
-    ).group_by(Popular.pp_word).order_by(desc('count'), Popular.pp_word).limit(limit).all()
+    populars = db.execute(
+        select(Popular.pp_word, func.count(Popular.pp_word).label('count'))
+        .where(
+            Popular.pp_word != '',
+            Popular.pp_date >= before,
+            Popular.pp_date <= today
+        )
+        .group_by(Popular.pp_word)
+        .order_by(desc('count'), Popular.pp_word)
+        .limit(limit)
+    ).all()
     db.close()
 
     popular_cache.update({"populars": populars})
@@ -1266,18 +1277,18 @@ def insert_popular(request: Request, fields: str, word: str):
         if not "mb_id" in fields:
             with SessionLocal() as db:
                 # 현재 날짜의 인기검색어를 조회한다.
-                popular = db.query(Popular).filter_by(
-                    pp_word = word,
-                    pp_date = today_date
-                ).first()
-
+                exists_popular = db.scalar(
+                    exists(Popular)
+                    .where(Popular.pp_word == word, Popular.pp_date == today_date)
+                    .select()
+                )
                 # 인기검색어가 없으면 새로 등록한다.
-                if not popular:
-                    new_popular = Popular(
+                if not exists_popular:
+                    popular = Popular(
                         pp_word=word,
                         pp_date=today_date,
                         pp_ip=get_client_ip(request))
-                    db.add(new_popular)
+                    db.add(popular)
                     db.commit()
     except Exception as e:
         print(f"인기검색어 입력 오류: {e}")
@@ -1306,7 +1317,11 @@ def get_recent_poll():
         return lfu_cache.get("poll")
 
     db = SessionLocal()
-    poll = db.query(Poll).filter(Poll.po_use == 1).order_by(Poll.po_id.desc()).first()
+    poll = db.scalar(
+        select(Poll)
+        .where(Poll.po_use == 1)
+        .order_by(Poll.po_id.desc())
+    )
     db.close()
 
     lfu_cache.update({"poll": poll})
@@ -1326,16 +1341,22 @@ def get_menus():
     db = SessionLocal()
     menus = []
     # 부모메뉴 조회
-    parent_menus = db.query(Menu).filter(func.length(Menu.me_code) == 2).order_by(Menu.me_order).all()
-    
+    parent_menus = db.scalars(
+        select(Menu)
+        .where(func.char_length(Menu.me_code) == 2)
+        .order_by(Menu.me_order)
+    ).all()
+
     for menu in parent_menus:
         parent_code = menu.me_code
 
         # 자식 메뉴 조회
-        child_menus = db.query(Menu).filter(
-            func.length(Menu.me_code) == 4,
-            func.substring(Menu.me_code, 1, 2) == parent_code
-        ).order_by(Menu.me_order).all()
+        child_menus = db.scalars(
+            select(Menu).where(
+                func.char_length(Menu.me_code) == 4,
+                func.substr(Menu.me_code, 1, 2) == parent_code
+            ).order_by(Menu.me_order)
+        ).all()
 
         menu.sub = child_menus
         menus.append(menu)
@@ -1355,9 +1376,9 @@ def get_member_level(request: Request):
 
 
 def auth_check_menu(request: Request, menu_key: str, attribute: str):
-    '''
+    """
     관리권한 체크
-    '''    
+    """    
     # 최고관리자이면 처리 안함
     if request.state.is_super_admin:
         return ""
@@ -1368,7 +1389,10 @@ def auth_check_menu(request: Request, menu_key: str, attribute: str):
     if not exists_member:
         return "로그인 후 이용해 주세요."
 
-    exists_auth = db.query(Auth).filter_by(mb_id=exists_member.mb_id, au_menu=menu_key).first()
+    exists_auth = db.scalar(
+        select(Auth)
+        .where(Auth.mb_id == exists_member.mb_id, Auth.au_menu == menu_key)
+    )
     if not exists_auth:
         return "이 메뉴에는 접근 권한이 없습니다.\n\n접근 권한은 최고관리자만 부여할 수 있습니다."
 
@@ -1892,8 +1916,13 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     board.subject = board_config.subject
 
     #게시글 목록 조회
-    Write = dynamic_create_write_table(bo_table)
-    writes = db.query(Write).filter(Write.wr_is_comment == 0).order_by(Write.wr_num).limit(rows).all()
+    write_model = dynamic_create_write_table(bo_table)
+    writes = db.scalars(
+        select(write_model)
+        .where(write_model.wr_is_comment == 0)
+        .order_by(write_model.wr_num)
+        .limit(rows)
+    ).all()
     for write in writes:
         write = get_list(request, write, board_config)
     
@@ -1951,13 +1980,15 @@ def insert_board_new(bo_table: str, write: WriteBaseModel):
     최신글 테이블 등록 함수
     """
     db = SessionLocal()
-
-    new = BoardNew()
-    new.bo_table = bo_table
-    new.wr_id = write.wr_id
-    new.wr_parent = write.wr_parent
-    new.mb_id = write.mb_id
-    db.add(new)
+    db.execute(
+        insert(BoardNew)
+        .values(
+            bo_table=bo_table,
+            wr_id=write.wr_id,
+            wr_parent=write.wr_parent,
+            mb_id=write.mb_id,
+        )
+    )
     db.commit()
 
 

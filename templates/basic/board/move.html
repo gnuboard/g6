@@ -1,106 +1,102 @@
 {% extends "base_window.html" %}
 
-{% block title %}
-    게시물 {{ act }}
-{% endblock title %}
+{% block title %}게시물 {{ act }}{% endblock title %}
 
 {% block content %}
-<div id="copymove" class="new_win">
-    <h1 id="win_title">게시물 {{ act }}</h1>
-    <form name="fboardmoveall" method="post" action="{{ url_for('move_update') }}" onsubmit="return fboardmoveall_submit(this);">
-        <input type="hidden" name="sw" value="{{ sw }}">
-        <input type="hidden" name="act" value="{{ act }}">
-        <input type="hidden" name="bo_table" value="{{ current_board.bo_table }}">
-        <input type="hidden" name="wr_id_list" value="{{ wr_ids }}">
-        <input type="hidden" name="url" value="{{ request.headers.get("referer", "") }}">
-        <input type="hidden" name="token" value="">
+    <div id="copymove" class="new_win">
+        <h1 id="win_title">게시물 {{ act }}</h1>
+        <form name="fboardmoveall" method="post" action="{{ url_for('move_update') }}" onsubmit="return fboardmoveall_submit(this);">
+            <input type="hidden" name="sw" value="{{ sw }}">
+            <input type="hidden" name="act" value="{{ act }}">
+            <input type="hidden" name="bo_table" value="{{ current_board.bo_table }}">
+            <input type="hidden" name="wr_id_list" value="{{ wr_ids }}">
+            <input type="hidden" name="url" value="{{ request.headers.get("referer", "") }}">
+            <input type="hidden" name="token" value="">
 
-        <div class="tbl_head01 tbl_wrap">
-            <table>
-                <caption>복사할 게시판을 한개 이상 선택하여 주십시오.</caption>
-                <thead>
-                <tr>
-                    <th scope="col">
-                        <label for="chkall" class="sound_only">현재 페이지 게시판 전체</label>
-                        <input type="checkbox" id="chkall" onclick="if (this.checked) all_checked(true); else all_checked(false);">
-                    </th>
-                    <th scope="col">게시판</th>
-                </tr>
-                </thead>
-                <tbody>
-                    {% for result in results %}
-                    {% set bo_table = result[0] %}
-                    {% set bo_subject = result[1] %}
-                    {% set gr_subject = result[2] %}
-                    <tr class="{% if bo_table == current_board.bo_table %}copymove_currentbg{% endif %}">
-                        <td class="td_chk">
-                            <label for="chk{{ loop.index }}" class="sound_only">free</label>
-                            <input type="checkbox" value="{{ bo_table }}" id="chk{{ loop.index }}" name="chk_bo_table[]">
-                        </td>
-                        <td>
-                            <label for="chk{{ loop.index }}">
-                                {{ gr_subject }} &gt; {{ bo_subject }} ({{ bo_table }})
-                                {% if bo_table == current_board.bo_table %}
-                                    <span class="copymove_current">현재<span class="sound_only">게시판</span></span>
-                                {% endif %}
-                            </label>
-                        </td>
+            <div class="tbl_head01 tbl_wrap">
+                <table>
+                    <caption>복사할 게시판을 한개 이상 선택하여 주십시오.</caption>
+                    <thead>
+                    <tr>
+                        <th scope="col">
+                            <label for="chkall" class="sound_only">현재 페이지 게시판 전체</label>
+                            <input type="checkbox" id="chkall" onclick="if (this.checked) all_checked(true); else all_checked(false);">
+                        </th>
+                        <th scope="col">게시판</th>
                     </tr>
+                    </thead>
+                    <tbody>
+                    {% for board in boards %}
+                        {% set bo_table = board.bo_table %}
+                        <tr class="{% if bo_table == current_board.bo_table %}copymove_currentbg{% endif %}">
+                            <td class="td_chk">
+                                <label for="chk{{ loop.index }}" class="sound_only">{{ bo_table }}</label>
+                                <input type="checkbox" value="{{ bo_table }}" id="chk{{ loop.index }}" name="chk_bo_table[]">
+                            </td>
+                            <td>
+                                <label for="chk{{ loop.index }}">
+                                    {{ board.group.gr_subject }} &gt; {{ board.bo_subject }} ({{ bo_table }})
+                                    {% if bo_table == current_board.bo_table %}
+                                        <span class="copymove_current">현재<span class="sound_only">게시판</span></span>
+                                    {% endif %}
+                                </label>
+                            </td>
+                        </tr>
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                    </tbody>
+                </table>
+            </div>
 
-        <div class="win_btn">
-            <input type="submit" value="{{ act }}" id="btn_submit" class="btn_submit">
-            <button type="button" class="btn_cancel btn_close">창닫기</button>
-        </div>
-    </form>
-</div>
+            <div class="win_btn">
+                <input type="submit" value="{{ act }}" id="btn_submit" class="btn_submit">
+                <button type="button" class="btn_cancel btn_close">창닫기</button>
+            </div>
+        </form>
+    </div>
 
-<script>
-    $(function() {
-        $(".win_btn button").click(function() {
-            window.close();
+    <script>
+        $(function() {
+            $(".win_btn button").click(function() {
+                window.close();
+            });
         });
-    });
-    
-    function all_checked(sw) {
-        var f = document.fboardmoveall;
-        for (var i=0; i < f.length; i++) {
-            if (f.elements[i].name == "chk_bo_table[]")
-                f.elements[i].checked = sw;
+        
+        function all_checked(sw) {
+            var f = document.fboardmoveall;
+            for (var i=0; i < f.length; i++) {
+                if (f.elements[i].name == "chk_bo_table[]")
+                    f.elements[i].checked = sw;
+            }
         }
-    }
-    
-    function fboardmoveall_submit(f)
-    {
-        var check = false;
-        if (typeof(f.elements['chk_bo_table[]']) != 'undefined') {
-            if (typeof(f.elements['chk_bo_table[]'].length) == 'undefined') {
-                if (f.elements['chk_bo_table[]'].checked)
-                    check = true;
-            } else {
-                for (i=0; i < f.elements['chk_bo_table[]'].length; i++) {
-                    if (f.elements['chk_bo_table[]'][i].checked) {
+        
+        function fboardmoveall_submit(f)
+        {
+            var check = false;
+            if (typeof(f.elements['chk_bo_table[]']) != 'undefined') {
+                if (typeof(f.elements['chk_bo_table[]'].length) == 'undefined') {
+                    if (f.elements['chk_bo_table[]'].checked)
                         check = true;
-                        break;
+                } else {
+                    for (i=0; i < f.elements['chk_bo_table[]'].length; i++) {
+                        if (f.elements['chk_bo_table[]'][i].checked) {
+                            check = true;
+                            break;
+                        }
                     }
                 }
             }
-        }
-    
-        if (!check) {
-            alert('게시물을 ' + f.act.value + '할 게시판을 한개 이상 선택해 주십시오.');
-            return false;
-        }
+        
+            if (!check) {
+                alert('게시물을 ' + f.act.value + '할 게시판을 한개 이상 선택해 주십시오.');
+                return false;
+            }
 
-        f.token.value = generate_token();
-    
-        document.getElementById('btn_submit').disabled = true;
-    
-        f.action = "{{ url_for('move_update') }}";
-        return true;
-    }
-</script>
+            f.token.value = generate_token();
+        
+            document.getElementById('btn_submit').disabled = true;
+        
+            f.action = "{{ url_for('move_update') }}";
+            return true;
+        }
+    </script>
 {% endblock content %}

@@ -122,7 +122,9 @@ async def authorize_social_login(
     if social_profile:
         config = request.state.config
         # 이미 가입된 회원이라면 로그인
-        member = db.query(Member).filter(Member.mb_id == social_profile.mb_id).first()
+        member = db.scalar(
+            select(Member).where(Member.mb_id == social_profile.mb_id)
+        )
         if not member:
             raise AlertException(
                 status_code=400, detail="유효하지 않은 요청입니다.",
@@ -374,9 +376,8 @@ class SocialAuthService:
         with SessionLocal() as db:
             result = db.scalar(
                 exists(MemberSocialProfiles.mb_id)
-                .where(
-                    MemberSocialProfiles.mb_id == member_id
-                ).select()
+                .where(MemberSocialProfiles.mb_id == member_id)
+                .select()
             )
         if result:
             return True

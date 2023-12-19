@@ -17,11 +17,12 @@ if os.path.exists(env_path):
 import re
 import getpass
 from datetime import datetime
-from sqlalchemy.exc import SQLAlchemyError, OperationalError
-from sqlalchemy import text, MetaData
-from lib.common import dynamic_create_write_table, read_version
-from common.database import engine, SessionLocal, DB_TABLE_PREFIX
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import exists
+
+from common.database import engine, SessionLocal
 import common.models as models
+from lib.common import dynamic_create_write_table, read_version
 from lib.pbkdf2 import create_hash
 
 VERSION = read_version()
@@ -49,7 +50,10 @@ default_bo_table = {
 def config_setup(admin_id, admin_email):
     print(f"환경설정 : 기본값 등록을 시작합니다.")
     
-    exists_config = db.query(models.Config).filter_by(cf_id=1).first()
+    exists_config = db.scalar(
+        exists(models.Config)
+        .where(models.Config.cf_id == 1).select()
+    )
     if not exists_config:
         new_config = models.Config(
             cf_id=1,
@@ -137,7 +141,10 @@ def admin_member_setup(admin_id, admin_password, admin_email):
     #     print(f"관리자 : {admin_id} 관리자 아이디가 이미 등록되어 있어 관리자를 새로 등록하지 않습니다.")
     #     return
 
-    exists_admin_member = db.query(models.Member).filter_by(mb_id=admin_id).first()
+    exists_admin_member = db.scalar(
+        exists(models.Member)
+        .where(models.Member.mb_id == admin_id).select()
+    )
     if not exists_admin_member:
         new_admin_member = models.Member(
             mb_id=admin_id,
@@ -196,7 +203,10 @@ def content_setup():
     ]
     
     for content in content_default:
-        exists_content = db.query(models.Content).filter_by(co_id=content['co_id']).first()
+        exists_content = db.scalar(
+            exists(models.Content)
+            .where(models.Content.co_id == content['co_id']).select()
+        )
         if exists_content is None:
             new_content = models.Content(
                 co_id=content['co_id'],
@@ -221,7 +231,10 @@ def content_setup():
 def faq_master_setup():
     print(f"FAQ Master : 기본값 등록을 시작합니다.")
     
-    exists_faq_master = db.query(models.FaqMaster).filter_by(fm_id=1).first()
+    exists_faq_master = db.scalar(
+        exists(models.FaqMaster)
+        .where(models.FaqMaster.fm_id == 1).select()
+    )
     if exists_faq_master is None:
         new_faq_master = models.FaqMaster(
             fm_id=1, 
@@ -241,7 +254,10 @@ def faq_master_setup():
 def board_group_setup():
     print(f"게시판 그룹 : 기본값 등록을 시작합니다.")
     
-    exists_board_group = db.query(models.Group).filter_by(gr_id=default_gr_id).first()
+    exists_board_group = db.scalar(
+        exists(models.Group)
+        .where(models.Group.gr_id == default_gr_id).select()
+    )
     if exists_board_group is None:
         new_board_group = models.Group(gr_id=default_gr_id, gr_subject='커뮤니티')
         try:
@@ -260,7 +276,10 @@ def board_setup():
 
     for bo_table, bo_subject in default_bo_table.items():
         bo_skin = 'basic' if bo_table != 'gallery' else 'gallery'
-        exists_board = db.query(models.Board).filter_by(bo_table=bo_table).first()
+        exists_board = db.scalar(
+            exists(models.Board)
+            .where(models.Board.bo_table == bo_table).select()
+        )
         if exists_board is None:
             new_board = models.Board(
                 bo_table=bo_table,
