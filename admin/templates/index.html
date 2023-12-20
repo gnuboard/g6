@@ -1,15 +1,13 @@
 {% extends "base.html" %}
 {% import "/sideview/macros.html" as sideview %}
 
-{% block title %}
-    관리자메인
-{% endblock %}
+{% block title %}관리자메인{% endblock title %}
 
 {% block content %}
 <section>
-    <h2>신규가입회원 <?php echo $new_member_rows ?>건 목록</h2>
+    <h2>신규가입회원 {{ new_member_rows }}건 목록</h2>
     <div class="local_desc02 local_desc">
-        총회원수 {{ new_members|length }}명 중 차단 {{ intercept_count|number_format }}명, 탈퇴 : {{ leave_count|number_format }}명
+        총회원수 {{ total_member_count|number_format }}명 중 차단 {{ intercept_count|number_format }}명, 탈퇴 : {{ leave_count|number_format }}명
     </div>
 
     <div class="tbl_head01 tbl_wrap">
@@ -30,27 +28,31 @@
                 </tr>
             </thead>
             <tbody>
-                {% for row in new_members %}
+            {% for member in new_members %}
+                {% set group_count = member.groups|length %}
                 <tr>
-                    <td class="td_mbid">{{ row.mb_id }}</td>
-                    <td class="td_mbname">{{ row.mb_name }}</td>
+                    <td class="td_mbid">{{ member.mb_id }}</td>
+                    <td class="td_mbname">{{ member.mb_name }}</td>
                     <td class="td_mbname sv_use">
-                        <div>{{ sideview.get(request, row.mb_id, row.mb_nick, row.wr_email, row.wr_homepage)|safe }}</div>
+                        <div>{{ sideview.get(request, member.mb_id, member.mb_nick, member.wr_email, member.wr_homepage)|safe }}</div>
                     </td>
-                    <td class="td_num">{{ row.mb_level }}</td>
-                    <td><a href="/admin/point_list?sfl=mb_id&stx={{ row.mb_id }}">{{ row.mb_point|number_format }}</a></td>
-                    <td class="td_boolean">{{ '예' if row.mb_mailling else '아니오' }}</td>
-                    <td class="td_boolean">{{ '예' if row.mb_open else '아니오' }}</td>
-                    <td class="td_boolean">{{ '예' if row.mb_email_certify.year > 2000 else '아니오' }}</td>
-                    <td class="td_boolean">{{ '예' if row.mb_intercept_date else '아니오' }}</td>
-                    <td class="td_category">{{ row.group|safe }}</td>
+                    <td class="td_num">{{ member.mb_level }}</td>
+                    <td><a href="/admin/point_list?sfl=mb_id&stx={{ member.mb_id }}">{{ member.mb_point|number_format }}</a></td>
+                    <td class="td_boolean">{{ '예' if member.mb_mailling else '아니오' }}</td>
+                    <td class="td_boolean">{{ '예' if member.mb_open else '아니오' }}</td>
+                    <td class="td_boolean">{{ '예' if member.mb_email_certify.year > 2000 else '아니오' }}</td>
+                    <td class="td_boolean">{{ '예' if member.mb_intercept_date else '아니오' }}</td>
+                    <td class="td_category">
+                        {% if group_count > 0 %}
+                            <a href="/admin/boardgroupmember_form/{{ member.mb_id }}">{{ group_count|number_format }}</a>
+                        {% endif %}
+                    </td>
                 </tr>
-                {% endfor %}
-                {% if new_members|length == 0 %}
+            {% else %}
                 <tr>
                     <td colspan="10" class="empty_table">자료가 없습니다.</td>
                 </tr>
-                {% endif %}
+            {% endfor %}
             </tbody>
         </table>
     </div>
@@ -87,13 +89,17 @@
                         <a href="/board/{{ row.bo_table }}">{{ row.bo_subject|truncate(20) }}</a>
                     </td>
                     <td>
-                        <a href="/board/{{ row.bo_table }}/{{ row.wr_id }}{{ comment_link }}">{{ comment }}{{ row.wr_subject|truncate(100) }}</a>
+                        <a href="{{ row.link }}">{{ row.subject|striptags|truncate(100) }}</a>
                     </td>
                     <td class="td_mbname">
-                        <div>{{ row.wr_name }}</div>
+                        <div>
+                            {% if row.write %}
+                            {{ sideview.get(request, row.mb_id, row.name, row.write.wr_email, row.write.wr_homepage)|safe }}
+                            {% endif %}
+                        </div>
                     </td>
                     <td class="td_datetime">
-                        {{ row.wr_datetime.strftime('%Y-%m-%d') }}
+                        {{ row.datetime }}
                     </td>
                 </tr>
                 {% endfor %}
@@ -109,7 +115,7 @@
 <section>
     <h2>최근 포인트 발생내역</h2>
     <div class="local_desc02 local_desc">
-        전체 {{ new_points|length }}건
+        전체 {{ total_point_count|number_format }}건 중 {{ new_point_rows }}건 목록
     </div>
 
     <div class="tbl_head01 tbl_wrap">
@@ -127,24 +133,23 @@
                 </tr>
             </thead>
             <tbody>
-                {% for row in new_points %}
+            {% for row in new_points %}
                 <tr>
                     <td class="td_mbid"><a href="/admin/point_list?sfl=mb_id&stx={{ row.mb_id }}">{{ row.mb_id }}</a></td>
-                    <td class="td_mbname">{{ row.mb_name }}</td>
+                    <td class="td_mbname">{{ row.member.mb_name }}</td>
                     <td class="td_name sv_use">
-                        <div>{{ sideview.get(request, row.mb_id, row.mb_nick, row.wr_email, row.wr_homepage)|safe }}</div>
+                        <div>{{ sideview.get(request, row.member.mb_id, row.member.mb_nick, row.member.wr_email, row.member.wr_homepage)|safe }}</div>
                     </td>
                     <td class="td_datetime">{{ row.po_datetime.strftime('%Y-%m-%d') }}</td>
-                    <td><a href=""></a>{{ row.po_content }}</a></td>
+                    <td><a href="{{ row.link }}">{{ row.po_content }}</a></td>
                     <td class="td_numbig">{{ row.po_point|number_format }}</td>
                     <td class="td_numbig">{{ row.po_mb_point|number_format }}</td>
                 </tr>
-                {% endfor %}
-                {% if new_points|length == 0 %}
+            {% else %}
                 <tr>
                     <td colspan="7" class="empty_table">자료가 없습니다.</td>
                 </tr>
-                {% endif %}
+            {% endfor %}
             </tbody>
         </table>
     </div>
@@ -153,4 +158,4 @@
         <a href="/admin/point_list">포인트내역 전체보기</a>
     </div>
 </section>
-{% endblock %}
+{% endblock content %}
