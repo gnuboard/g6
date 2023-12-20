@@ -10,7 +10,7 @@ import uuid
 from urllib.parse import urlencode
 import PIL
 import shutil
-from fastapi import Depends, Form, Query, Request, HTTPException, UploadFile
+from fastapi import Depends, Form, Path, Query, Request, HTTPException, UploadFile
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment
 from markupsafe import Markup, escape
@@ -21,7 +21,7 @@ from sqlalchemy.orm import load_only, Session
 from starlette.datastructures import URL
 from starlette.staticfiles import StaticFiles
 
-from common.models import Auth, Config, Member, Memo, Board, BoardFile, BoardNew, Group, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
+from common.models import Auth, Config, Member, Memo, Board, BoardFile, BoardNew, Group, GroupMember, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
 from common.models import WriteBaseModel
 from common.database import SessionLocal, engine, DB_TABLE_PREFIX
 from datetime import datetime, timedelta, date, time
@@ -833,8 +833,23 @@ def get_member_image(mb_id: str = None) -> str:
     return "static/img/no_profile.gif"
     
 
-# 포인트 부여    
-def insert_point(request: Request, mb_id: str, point: int, content: str = '', rel_table: str = '', rel_id: str = '', rel_action: str = '', expire: int = 0):
+
+def insert_point(request: Request, mb_id: str, point: int, content: str = '', rel_table: str = '', rel_id: str = '', rel_action: str = '', expire: int = 0) -> int:
+    """포인트 증감 처리
+
+    Args:
+        request (Request): FastAPI Request 객체
+        mb_id (str): 회원아이디
+        point (int): 증감 포인트
+        content (str, optional): 포인트 내용. Defaults to ''.
+        rel_table (str, optional): 포인트 관련 테이블. Defaults to ''.
+        rel_id (str, optional): 포인트 관련 테이블의 ID. Defaults to ''.
+        rel_action (str, optional): 포인트 관련 테이블의 활동. Defaults to ''.
+        expire (int, optional): 포인트 유효기간. Defaults to 0.
+
+    Returns:
+        int: 성공시 1, 실패시 0
+    """
     db = SessionLocal()
     config = request.state.config
     
@@ -1489,7 +1504,9 @@ def is_admin(request: Request):
 
 # TODO: 그누보드5의 is_admin 함수
 # 이미 is_admin 함수가 존재하므로 함수 이름을 변경함 
-def get_admin_type(request: Request, mb_id: str = None, group: Group = None, board: Board = None) -> str:
+def get_admin_type(
+        request: Request, mb_id: str = None,
+        group: Group = None, board: Board = None) -> Union[str, None]:
     """게시판 관리자 여부 확인 후 관리자 타입 반환
 
     Args:
@@ -2492,3 +2509,42 @@ async def validate_captcha(
     # TODO: config.cf_recaptcha_secret_key 변수를 항상 전달할 필요가 있을까?
     if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, response)):
         raise AlertException("캡차가 올바르지 않습니다.", 400)
+
+
+def check_group_access(
+        request: Request,
+        bo_table: Annotated[str, Path(...)]):
+    """그룹 접근권한 체크
+
+    Args:
+        request (Request): FastAPI Request 객체
+        bo_table (Annotated[str, Path): 게시판 코드
+
+    Raises:
+        AlertException: 로그인이 안된 경우
+        AlertException: 회원이면서 그룹 접근권한이 없는 경우
+    """
+    
+    with SessionLocal() as db:
+        board = db.get(Board, bo_table)
+        group = board.group
+        member = request.state.login_member
+
+        # 그룹 접근 사용할때만 체크
+        if group.gr_use_access:
+            if not member:
+                raise AlertException(
+                    f"비회원은 이 게시판에 접근할 권한이 없습니다.\
+                    \\n\\n회원이시라면 로그인 후 이용해 보십시오.", 403)
+
+            # 최고관리자 또는 그룹관리자는 접근권한 체크 안함
+            if not get_admin_type(request, member.mb_id, group=group):
+                exists_group_member = db.scalar(
+                    exists(GroupMember)
+                    .where(GroupMember.gr_id == group.gr_id, GroupMember.mb_id == member.mb_id).select()
+                )
+                if not exists_group_member:
+                    raise AlertException(
+                        f"`{board.bo_subject}` 게시판에 대한 접근 권한이 없습니다.\
+                        \\n\\n궁금하신 사항은 관리자에게 문의 바랍니다.", 403)
+                

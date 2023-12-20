@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse, RedirectResponse
 
 from common.database import db_session
 from common.formclass import WriteForm, WriteCommentForm
-from common.models import AutoSave, Board, BoardGood, Group, GroupMember, Scrap
+from common.models import AutoSave, Board, BoardGood, Group, Scrap
 from lib.board_lib import *
 from lib.common import *
 from lib.pbkdf2 import create_hash
@@ -395,7 +395,7 @@ async def move_update(
     return templates.TemplateResponse("alert_close.html", context)
 
 
-@router.get("/write/{bo_table}")
+@router.get("/write/{bo_table}", dependencies=[Depends(check_group_access)])
 async def write_form_add(
     request: Request,
     db: db_session,
@@ -424,6 +424,8 @@ async def write_form_add(
     else:
         if not board_config.is_write_level():
             raise AlertException("글을 작성할 권한이 없습니다.", 403)
+
+    # TODO: 포인트 검증
 
     # 게시판 제목 설정
     board.subject = board_config.subject
@@ -459,7 +461,7 @@ async def write_form_add(
         f"{request.state.device}/board/{board.bo_skin}/write_form.html", context)
 
 
-@router.get("/write/{bo_table}/{wr_id}")
+@router.get("/write/{bo_table}/{wr_id}", dependencies=[Depends(check_group_access)])
 async def write_form_edit(
     request: Request,
     db: db_session,
@@ -545,12 +547,14 @@ async def write_form_edit(
         f"{request.state.device}/board/{board.bo_skin}/write_form.html", context)
 
 
-@router.post("/write_update", dependencies=[Depends(validate_token)])
+@router.post(
+        "/write_update/{bo_table}",
+        dependencies=[Depends(validate_token), Depends(check_group_access)])
 async def write_update(
     request: Request,
     db: db_session,
     recaptcha_response: str = Form("", alias="g-recaptcha-response"),
-    bo_table: str = Form(...),
+    bo_table: str = Path(...),
     wr_id: int = Form(None),
     parent_id: int = Form(None),
     uid: str = Form(None),
@@ -627,6 +631,12 @@ async def write_update(
             if not board_config.is_write_level():
                 raise AlertException("글을 작성할 권한이 없습니다.", 403)
             parent_write = None
+
+        # 포인트 검사
+        if config.cf_use_point:
+            write_point = board.bo_write_point
+            if not board_config.is_write_point():
+                raise AlertException(f"글 작성에 필요한 포인트({number_format(abs(write_point))})가 부족합니다.", 403)                
 
         form_data.wr_password = create_hash(form_data.wr_password) if form_data.wr_password else ""
         form_data.wr_name = board_config.set_wr_name(member, form_data.wr_name)
@@ -773,7 +783,7 @@ async def write_update(
     return RedirectResponse(redirect_url, status_code=303)
 
 
-@router.get("/{bo_table}/{wr_id}")
+@router.get("/{bo_table}/{wr_id}", dependencies=[Depends(check_group_access)])
 async def read_post(
     request: Request,
     db: db_session,
@@ -806,18 +816,6 @@ async def read_post(
     write = db.get(write_model, wr_id)
     if not write:
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
-
-    # 그룹 접근 사용
-    if group.gr_use_access:
-        if not member:
-            raise AlertException(f"비회원은 이 게시판에 접근할 권한이 없습니다.\\n\\n회원이시라면 로그인 후 이용해 보십시오.", 403)
-        if not (admin_type == "super" or admin_type == "group"):
-            exists_group_member = db.scalar(
-                exists(GroupMember)
-                .where(GroupMember.gr_id == group.gr_id, GroupMember.mb_id == mb_id).select()
-            )
-            if not exists_group_member:
-                raise AlertException("접근 권한이 없으므로 글읽기가 불가합니다.\\n\\n궁금하신 사항은 관리자에게 문의 바랍니다.", 403, "/")
 
     # 읽기 권한 검증
     if not board_config.is_read_level():
@@ -856,24 +854,17 @@ async def read_post(
     # 한번 읽은 게시글은 세션만료까지 조회수, 포인트 처리를 하지 않는다.
     session_name = f"ss_view_{bo_table}_{wr_id}"
     if not request.session.get(session_name):
+        # 포인트 검사
+        if config.cf_use_point:
+            read_point = board.bo_read_point
+            if not board_config.is_read_point(write):
+                raise AlertException(f"게시글 읽기에 필요한 포인트({number_format(abs(read_point))})가 부족합니다.", 403)
+            else:
+                insert_point(request, member.mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table, write.wr_id, "읽기")
+
         # 조회수 증가
         write.wr_hit = write.wr_hit + 1
         db.commit()
-
-        # 포인트 검사 및 소진
-        read_point = board.bo_read_point
-        if config.cf_use_point and read_point != 0:
-            # 관리자이거나 자신의 글이면 통과
-            if not (admin_type
-                    or is_owner(write, mb_id)
-                    or (not member and board.bo_read_level == 1 and write.wr_ip == request.client.host)):
-                # 포인트 검사 및 소진
-                mb_point = getattr(member, "mb_point", 0)
-                if mb_point + read_point < 0:
-                    raise AlertException(f"게시글을 읽기 위해 {abs(read_point)} 포인트가 필요합니다.", 403)
-                else:
-                    # 포인트 소진 처리
-                    insert_point(request, member.mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table, write.wr_id, "읽기")
 
         request.session[session_name] = True
 
@@ -1046,7 +1037,7 @@ async def delete_post(
     return RedirectResponse(f"/board/{bo_table}{query_string}", status_code=303)
 
 
-@router.get("/{bo_table}/{wr_id}/download/{bf_no}")
+@router.get("/{bo_table}/{wr_id}/download/{bf_no}", dependencies=[Depends(check_group_access)])
 async def download_file(
     request: Request,
     db: db_session,
@@ -1068,6 +1059,8 @@ async def download_file(
     Returns:
         FileResponse: 파일 다운로드
     """
+    config = request.state.config
+
     # 게시판/게시글 정보 조회
     board = db.get(Board, bo_table)
     board_config = BoardConfig(request, board)
@@ -1091,21 +1084,15 @@ async def download_file(
     # 회원 정보
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
-    admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
 
     # 게시물당 포인트가 한번만 차감되도록 세션 설정
     session_name = f"ss_down_{bo_table}_{wr_id}"
     if not request.session.get(session_name):
-        # 관리자이거나 자신의 글이면 통과하는 함수
-        if not (admin_type
-                or is_owner(write, mb_id)
-                or (not member and board.bo_download_level == 1 and write.wr_ip == request.client.host)
-                ):
-            # 포인트 검사 및 소진
+        # 포인트 검사
+        if config.cf_use_point:
             download_point = board.bo_download_point
-            mb_point = member.mb_point if member else 0
-            if mb_point + download_point < 0:
-                raise AlertException(f"파일을 다운로드하기 위해 {abs(download_point)} 포인트가 필요합니다.", 403)
+            if not board_config.is_download_point(write):
+                raise AlertException(f"파일 다운로드에 필요한 포인트({number_format(abs(download_point))})가 부족합니다.", 403)
             else:
                 insert_point(request, mb_id, download_point, f"{board.bo_subject} {write.wr_id} 파일 다운로드", board.bo_table, write.wr_id, "다운로드")
 
@@ -1121,26 +1108,31 @@ async def download_file(
     return FileResponse(board_file.bf_file, filename=board_file.bf_source)
 
 
-@router.post("/write_comment_update/", dependencies=[Depends(validate_token)])
+@router.post(
+        "/write_comment_update/{bo_table}",
+        dependencies=[Depends(validate_token), Depends(check_group_access)])
 async def write_comment_update(
     request: Request,
     db: db_session,
-    recaptcha_response: str = Form("", alias="g-recaptcha-response"),
+    bo_table: str = Path(...),
     form: WriteCommentForm = Depends(),
+    recaptcha_response: str = Form("", alias="g-recaptcha-response"),
 ):
     """
     댓글 등록
     """
+    config = request.state.config
     member = request.state.login_member
+    mb_id = getattr(member, "mb_id", None)
 
     # 게시판 정보 조회
-    board = db.get(Board, form.bo_table)
+    board = db.get(Board, bo_table)
     board_config = BoardConfig(request, board)
     if not board:
-        raise AlertException(f"{form.bo_table} : 존재하지 않는 게시판입니다.", 404)
+        raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
 
     # 게시글 정보 조회
-    write_model = dynamic_create_write_table(form.bo_table)
+    write_model = dynamic_create_write_table(bo_table)
     write = db.get(write_model, form.wr_id)
     if not write:
         raise AlertException(f"{form.wr_id} : 존재하지 않는 게시글입니다.", 404)
@@ -1159,8 +1151,15 @@ async def write_comment_update(
         if not member:
             await validate_captcha(request, recaptcha_response)
 
+        # 댓글 작성 권한 검증
         if not board_config.is_comment_level():
             raise AlertException("댓글을 작성할 권한이 없습니다.", 403)
+        
+        # 포인트 검사
+        comment_point = board.bo_comment_point
+        if config.cf_use_point:
+            if not board_config.is_comment_point():
+                raise AlertException(f"댓글 작성에 필요한 포인트({number_format(abs(comment_point))})가 부족합니다.", 403)
 
         # 댓글 객체 생성
         comment = write_model()
@@ -1204,7 +1203,11 @@ async def write_comment_update(
         db.commit()
 
         # 새글 추가
-        insert_board_new(form.bo_table, comment)
+        insert_board_new(bo_table, comment)
+
+        # 포인트 처리
+        if member:
+            insert_point(request, mb_id, comment_point, f"{board.bo_subject} {comment.wr_parent}-{comment.wr_id} 댓글쓰기", board.bo_table, comment.wr_id, "댓글")
 
         # 메일 발송
         if board_config.use_email:
@@ -1223,7 +1226,7 @@ async def write_comment_update(
 
     query_string = "?" + request.query_params.__str__() if request.query_params else ""
 
-    return RedirectResponse(f"/board/{form.bo_table}/{form.wr_id}{query_string}", status_code=303)
+    return RedirectResponse(f"/board/{bo_table}/{form.wr_id}{query_string}", status_code=303)
 
 
 @router.get("/delete_comment/{bo_table}/{comment_id}", dependencies=[Depends(validate_token)])

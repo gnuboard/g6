@@ -341,7 +341,9 @@
         <!-- 댓글 쓰기 시작 { -->
         <aside id="bo_vc_w" class="bo_vc_w">
             <h2>댓글쓰기</h2>
-            <form name="fviewcomment" id="fviewcomment" action="{{ url_for('write_comment_update')|set_query_params(request) }}" onsubmit="return fviewcomment_submit(this);" method="post" autocomplete="off">
+            <form name="fviewcomment" id="fviewcomment" method="post" autocomplete="off"
+                action="{{ url_for('write_comment_update', bo_table=board.bo_table)|set_query_params(request) }}" 
+                onsubmit="return fviewcomment_submit(this);">
                 <input type="hidden" name="w" id="w" value="c">
                 <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
                 <input type="hidden" name="wr_id" value="{{ write.wr_id }}">
