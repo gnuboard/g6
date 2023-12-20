@@ -31,7 +31,7 @@ async def point_list(
 
     # 페이징 처리
     records_per_page = request.state.config.cf_page_rows
-    total_records = db.scalar(query.add_columns(func.count(Point.po_id)))
+    total_records = db.scalar(query.add_columns(func.count(Point.po_id)).order_by(None))
     offset = (current_page - 1) * records_per_page
     points = db.scalars(
         query.add_columns(Point).offset(offset).limit(records_per_page)

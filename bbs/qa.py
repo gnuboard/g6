@@ -103,18 +103,18 @@ async def qa_list(
     qa_config = qa_config_service.get()
 
     # Q&A 목록 조회
-    query = select(QaContent).where(QaContent.qa_type==0).order_by(QaContent.qa_id.desc())
+    query = select().where(QaContent.qa_type==0).order_by(QaContent.qa_id.desc())
     if not request.state.is_super_admin:
         query = query.where(QaContent.mb_id==member.mb_id)
     query = filter_query_by_search_params(query, search_params)
 
     # 페이징 변수
     records_per_page = qa_config_service.page_rows
-    total_count = db.scalar(select(func.count()).select_from(query))
+    total_count = db.scalar(query.add_columns(func.count()).order_by(None))
     offset = (current_page - 1) * records_per_page
 
     # Q&A 목록 조회 & 페이징
-    qa_list = db.scalars(query.offset(offset).limit(records_per_page)).all()
+    qa_list = db.scalars(query.add_columns(QaContent).offset(offset).limit(records_per_page)).all()
     for qa in qa_list:
         qa.num = total_count - offset - (qa_list.index(qa))
         qa.subject = qa_config_service.cut_write_subject(qa.qa_subject)
@@ -467,7 +467,7 @@ def ensure_member_login(request: Request, url: str = None):
 
 def filter_query_by_search_params(query: query, search_params: dict) -> query:
     if search_params["sca"]:
-        query = query.filter_by(qa_category=search_params["sca"])
+        query = query.where(QaContent.qa_category==search_params["sca"])
     if search_params["stx"] and search_params["sfl"] in ["qa_subject", "qa_content", "qa_name", "mb_id"]:
-        query = query.filter(getattr(QaContent, search_params["sfl"]).like(f"%{search_params['stx']}%"))
+        query = query.where(getattr(QaContent, search_params["sfl"]).like(f"%{search_params['stx']}%"))
     return query

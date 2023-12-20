@@ -40,7 +40,7 @@ async def board_new_list(
     offset = (current_page - 1) * page_rows
     # 최종 쿼리 결과를 가져옵니다.
     board_news = db.scalars(query.add_columns(BoardNew).offset(offset).limit(page_rows)).all()
-    total_count = db.scalar(query.add_columns(func.count(BoardNew.bn_id)))
+    total_count = db.scalar(query.add_columns(func.count(BoardNew.bn_id)).order_by(None))
 
     # 결과 데이터 설정
     for new in board_news:

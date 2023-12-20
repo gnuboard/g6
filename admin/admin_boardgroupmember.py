@@ -53,7 +53,7 @@ async def boardgroupmember_list(
     # 페이지 번호에 따른 offset 계산
     offset = (current_page - 1) * records_per_page
     # 전체 레코드 개수 계산
-    total_count = db.scalar(query.add_columns(func.count(GroupMember.gm_id)))
+    total_count = db.scalar(query.add_columns(func.count(GroupMember.gm_id)).order_by(None))
     # 최종 쿼리 결과를 가져옵니다.
     group_members = db.scalars(
         query.add_columns(GroupMember).offset(offset).limit(records_per_page)

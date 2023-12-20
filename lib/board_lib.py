@@ -548,7 +548,7 @@ class BoardFileManager():
         config_count = int(self.board.bo_upload_count) or 0
         if self.wr_id:
             query = select().where(self.model.bo_table == self.bo_table, self.model.wr_id == self.wr_id)
-            uploaded_count = self.db.scalar(query.add_columns(func.count()).select_from(self.model))
+            uploaded_count = self.db.scalar(query.add_columns(func.count()).select_from(self.model).order_by(None))
             uploaded_files = self.db.scalars(query.add_columns(self.model)).all()
             # 파일 카운트는 업로드된 파일 수와 설정된 값 중 큰 수로 설정한다.
             upload_count = (uploaded_count if uploaded_count > config_count else config_count) - uploaded_count

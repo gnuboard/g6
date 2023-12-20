@@ -101,7 +101,7 @@ async def popular_rank(
     )
 
     # 페이징 처리
-    total_count = db.scalar(query.add_columns(func.count(inline_view.columns.pp_word)))
+    total_count = db.scalar(query.add_columns(func.count(inline_view.columns.pp_word)).order_by(None))
     offset = (current_page - 1) * records_per_page
     ranks = db.execute(
         query.add_columns(
