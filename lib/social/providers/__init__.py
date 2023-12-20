@@ -29,4 +29,4 @@ with SessionLocal() as db:
         config = db.scalar(select(Config))
         register_social_provider(config)
     except Exception as e:
-        print(e, "소셜로그인 설정 오류")
+        print("소셜로그인 설정 오류")

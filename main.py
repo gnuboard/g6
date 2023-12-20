@@ -28,6 +28,7 @@ templates.env.filters["default_if_none"] = default_if_none
 templates.env.filters["datetime_format"] = datetime_format
 
 from admin.admin import router as admin_router
+from install.router import router as install_router
 from bbs.board import router as board_router
 from bbs.login import router as login_router
 from bbs.register import router as register_router
@@ -64,6 +65,7 @@ cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
 cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(plugin_states))
 
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
+app.include_router(install_router, prefix="/install", tags=["install"])
 app.include_router(board_router, prefix="/board", tags=["board"])
 app.include_router(login_router, prefix="/bbs", tags=["login"])
 app.include_router(register_router, prefix="/bbs", tags=["register"])
@@ -109,8 +111,23 @@ async def main_middleware(request: Request, call_next):
         return response
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
 
+    # 데이터베이스 설치여부 체크
+    try:
+        # 설치 페이지가 아니라면
+        if not path.startswith("/install"):
+            if not os.path.exists(".env"):
+                raise AlertException(".env 파일이 없습니다. 설치를 진행해 주세요.", 400, "/install")
+            elif not inspect(engine).has_table(DB_TABLE_PREFIX + "config"):
+                raise AlertException("DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요.", 400, "/install")
+        # 설치 페이지라면 Middleware를 건너뛴다
+        else:
+            return await call_next(request)
+
+    except AlertException as e:
+        return await alert_exception_handler(request, e)
+
     db: Session = SessionLocal()
-    config = db.scalars(select(models.Config)).first()
+    config = db.scalar(select(Config))
     request.state.config = config
 
     member = None
@@ -118,6 +135,7 @@ async def main_middleware(request: Request, call_next):
     is_autologin = False
     ss_mb_id = request.session.get("ss_mb_id", "")
 
+    # TODO: admin 라우터로 이동 및 의존성 주입으로 변경
     try:
         # 관리자페이지 접근시
         if path.startswith("/admin"):
@@ -294,7 +312,9 @@ async def alert_exception_handler(request: Request, exc: AlertException):
     Returns:
         _TemplateResponse: 경고창 템플릿
     """
-    return templates.TemplateResponse(
+    # 
+    template = Jinja2Templates(directory=[TEMPLATES_DIR])
+    return template.TemplateResponse(
         "alert.html", {"request": request, "errors": exc.detail, "url": exc.url}, status_code=exc.status_code
     )
 
@@ -309,7 +329,8 @@ async def alert_close_exception_handler(request: Request, exc: AlertCloseExcepti
     Returns:
         _TemplateResponse: 경고창 & 윈도우창 닫기 템플릿
     """
-    return templates.TemplateResponse(
+    template = Jinja2Templates(directory=[TEMPLATES_DIR])
+    return template.TemplateResponse(
         "alert_close.html", {"request": request, "errors": exc.detail}, status_code=exc.status_code
     )
 

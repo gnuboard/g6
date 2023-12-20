@@ -2373,11 +2373,21 @@ def number_format(number: int) -> str:
 
 
 def read_version():
-    """루트 디렉토의 version.txt 파일을 읽어서 버전을 반환하는 함수
+    """루트 디렉토리의 version.txt 파일을 읽어서 버전을 반환하는 함수
     Returns:
         str: 버전
     """
     with open("version.txt", "r", encoding="UTF-8") as file:
+        return file.read().strip()
+
+
+def read_license():
+    """루트 디렉토리의 LICENSE.txt 파일을 읽어서 라이센스 내용 반환
+
+    Returns:
+        str: 라이센스 내용
+    """
+    with open("LICENSE.txt", "r", encoding="UTF-8") as file:
         return file.read().strip()
 
 
