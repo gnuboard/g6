@@ -15,6 +15,7 @@ from fastapi.templating import Jinja2Templates
 from jinja2 import Environment
 from markupsafe import Markup, escape
 from passlib.context import CryptContext
+from pydantic import TypeAdapter
 from sqlalchemy import Index, asc, desc, and_, func, insert, inspect, select, delete, between, exists, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
@@ -50,36 +51,36 @@ EDITOR_PATH = "lib/editor/templates"
 
 # .env, DB 테이블 존재 여부 체크
 # - 설치 과정일 경우에는 체크하지 않음.
-try:
-    if not os.environ.get("is_setup"):
-        if not os.path.exists(".env"):
-            raise Exception("\033[93m" + "경고: .env 파일이 없습니다. 설치를 진행해 주세요." + "\033[0m")
-        elif not inspect(engine).has_table(DB_TABLE_PREFIX + "config"):
-            raise Exception("\033[93m" + "DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요." + "\033[0m")
-except Exception as e:
-    exit(e)
+# try:
+#     if not os.environ.get("is_setup"):
+#         if not os.path.exists(".env"):
+#             raise Exception("\033[93m" + "경고: .env 파일이 없습니다. 설치를 진행해 주세요." + "\033[0m")
+#         elif not inspect(engine).has_table(DB_TABLE_PREFIX + "config"):
+#             raise Exception("\033[93m" + "DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요." + "\033[0m")
+# except Exception as e:
+#     exit(e)
 
+def get_theme_from_db() -> str:
+    """DB에 설정된 테마의 경로를 반환
 
-def get_theme_from_db(config=None):
-    # main.py 에서 config 를 인수로 받아서 사용
-    if not config:
-        db: Session = SessionLocal()
-        config = db.scalar(select(Config))
-    theme = config.cf_theme if config and config.cf_theme else "basic"
-    theme_path = f"{TEMPLATES}/{theme}"
-    
-    # Check if the directory exists
-    if not os.path.exists(theme_path):
-        theme_path = f"{TEMPLATES}/basic"
-    
-    return theme_path
+    Returns:
+        str: 테마 경로
+    """
+    default_theme = "basic"
+    try:
+        with SessionLocal() as db:
+            theme = db.scalar(select(Config.cf_theme)) or default_theme
+            theme_path = f"{TEMPLATES}/{theme}"
+            
+            # DB에 설정된 테마가 경로에 존재하는지 확인
+            if not os.path.exists(theme_path):
+                theme_path = f"{TEMPLATES}/{default_theme}"
 
-# python setup.py 를 실행하는 것이 아니라면
-if os.environ.get("is_setup") != "true":
-    TEMPLATES_DIR = get_theme_from_db()
-else :
-    TEMPLATES_DIR = TEMPLATES + "/basic"
+            return theme_path
+    except Exception:
+        return f"{TEMPLATES}/{default_theme}"
 
+TEMPLATES_DIR = get_theme_from_db()
 ADMIN_TEMPLATES_DIR = "admin/templates"
 
 # 나중에 삭제할 코드
@@ -96,9 +97,7 @@ TIME_YMD = TIME_YMDHIS[:10]
 # # mobile 을 사용하지 않을 경우 False 로 설정
 # USE_MOBILE = True
 
-
-is_response = os.getenv("IS_RESPONSIVE", default="true")
-IS_RESPONSIVE = is_response.lower() == "true"
+IS_RESPONSIVE = TypeAdapter(bool).validate_python(os.getenv("IS_RESPONSIVE", True))
 
 def hash_password(password: str):
     '''
@@ -2200,7 +2199,7 @@ def delete_old_records():
     """
     try:
         db = SessionLocal()
-        config = db.scalars(select(Config).limit(1)).first()
+        config = db.scalar(select(Config))
         today = datetime.now()
 
         # 방문자 기록 삭제
