@@ -1220,7 +1220,7 @@ async def write_comment_update(
             raise AlertException(f"{form.comment_id} : 존재하지 않는 댓글입니다.", 404)
 
         comment.wr_content = form.wr_content
-        comment.wr_option = form.wr_secret
+        comment.wr_option = form.wr_secret or "html1"
         comment.wr_last = datetime.now()
         db.commit()
 
