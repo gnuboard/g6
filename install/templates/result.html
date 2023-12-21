@@ -4,6 +4,11 @@
     <div class="ins_inner">
         <h2>{{ version }} 설치가 시작되었습니다.</h2>
         <ol>
+            <!--
+            <li>전체 테이블 생성 완료</li>
+            <li>DB설정 완료</li>
+            <li>데이터 디렉토리 생성 완료</li>
+            -->
         </ol>
         <p>축하합니다. {{ version }} 설치가 완료되었습니다.</p>
     </div>
@@ -19,4 +24,18 @@
             <a href="{{ url_for('index') }}">새로운 그누보드6으로 이동</a>
         </div>
     </div>
+
+    <script>
+        /*
+        const evtSource = new EventSource("/admin/cache_file_deleting");
+        evtSource.onmessage = function(event) {
+            const data = event.data.trim();  // 공백 제거
+            
+            document.getElementById("status").innerHTML += data + "<br>"; // 메시지 출력
+            if (data.includes("[끝]")) {
+                evtSource.close(); // "[끝]" 메시지를 받으면 연결을 닫습니다.
+            }
+        }
+        */
+    </script>
 {% endblock content %}

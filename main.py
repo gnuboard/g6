@@ -115,7 +115,7 @@ async def main_middleware(request: Request, call_next):
     try:
         # 설치 페이지가 아니라면
         if not path.startswith("/install"):
-            if not os.path.exists(".env"):
+            if not os.path.exists(ENV_PATH):
                 raise AlertException(".env 파일이 없습니다. 설치를 진행해 주세요.", 400, "/install")
             elif not inspect(engine).has_table(DB_TABLE_PREFIX + "config"):
                 raise AlertException("DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요.", 400, "/install")

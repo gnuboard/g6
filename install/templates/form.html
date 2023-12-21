@@ -99,11 +99,13 @@
 
         const errorMessages = {
             invalidCharacter: '에 유효하지 않는 문자가 있습니다. 다른 문자로 대체해 주세요.',
-            invalidAdminId: '는 4~19자의 문자열로 첫자는 영문자 그리고 영문+숫자의 조합으로 만들수 있습니다.',
+            validAdminId: '는 4~19자의 문자열로 첫자는 영문자 그리고 영문+숫자의 조합으로 만들수 있습니다.',
+            validEmail: '은 유요한 이메일 주소가 아닙니다. 다시 확인해 주세요.',
         }
         const regexes = {
             invalidCharacter: /\)\;\(passthru|eval|pcntl_exec|exec|system|popen|fopen|fsockopen|file|file_get_contents|readfile|unlink|include|include_once|require|require_once\)\s?\(\$_(get|post|request)\s?\[.*?\]\s?\)/gi,
-            invalidAdminId: /^[a-z]+[a-z0-9]{3,19}$/i,
+            validAdminId: /^[a-z]+[a-z0-9]{3,19}$/i,
+            validEmail: /^[a-z0-9_+.-]+@([a-z0-9-]+\.)+[a-z]{2,4}$/i,
         }
 
         function showAlert(message, focusElement) {
@@ -128,7 +130,10 @@
             if (errorMessageKey == "invalidCharacter" && regex.test(value)) {
                 return showAlert(`${title}${errorMessage}`, f[name]);
             }
-            if (errorMessageKey == "invalidAdminId" && !regex.test(value)) {
+            if (errorMessageKey == "validAdminId" && !regex.test(value)) {
+                return showAlert(`${title}${errorMessage}`, f[name]);
+            }
+            if (errorMessageKey == "validEmail" && !regex.test(value)) {
                 return showAlert(`${title}${errorMessage}`, f[name]);
             }
             return true;
@@ -139,10 +144,10 @@
             || !checkField(f.db_password, "invalidCharacter")
             || !checkField(f.db_name, "invalidCharacter")
             || !checkField(f.db_table_prefix, "invalidCharacter")
-            || !checkField(f.admin_id, "invalidAdminId")
+            || !checkField(f.admin_id, "validAdminId")
             || !checkField(f.admin_password, "empty")
             || !checkField(f.admin_name, "emtpy")
-            || !checkField(f.admin_email, "emtpy")
+            || !checkField(f.admin_email, "validEmail")
         ) {
             return false;
         }

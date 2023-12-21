@@ -19,6 +19,7 @@ from pydantic import TypeAdapter
 from sqlalchemy import Index, asc, desc, and_, func, insert, inspect, select, delete, between, exists, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
+from sqlalchemy.engine import Engine
 from starlette.datastructures import URL
 from starlette.staticfiles import StaticFiles
 
@@ -45,6 +46,7 @@ load_dotenv()
 
 
 # 전역변수 선언(global variables)
+ENV_PATH = ".env"
 TEMPLATES = "templates"
 CAPTCHA_PATH = "lib/captcha/templates"
 EDITOR_PATH = "lib/editor/templates"
@@ -119,10 +121,16 @@ def verify_password(plain_password, hashed_passwd):
 _created_models = {}
 
 # 동적 게시판 모델 생성
-def dynamic_create_write_table(table_name: str, create_table: bool = False) -> WriteBaseModel:
+def dynamic_create_write_table(
+        table_name: str,
+        create_table: bool = False,
+        table_prefix: str = DB_TABLE_PREFIX,
+        db_engine: Engine = engine
+        
+    ) -> WriteBaseModel:
     '''
     WriteBaseModel 로 부터 게시판 테이블 구조를 복사하여 동적 모델로 생성하는 함수
-    인수의 table_name 에서는 DB_TABLE_PREFIX + 'write_' 를 제외한 테이블 이름만 입력받는다.
+    인수의 table_name 에서는 table_prefix + 'write_' 를 제외한 테이블 이름만 입력받는다.
     Create Dynamic Write Table Model from WriteBaseModel
     '''
     # 이미 생성된 모델 반환
@@ -137,7 +145,7 @@ def dynamic_create_write_table(table_name: str, create_table: bool = False) -> W
         class_name, 
         (WriteBaseModel,), 
         {   
-            "__tablename__": DB_TABLE_PREFIX + 'write_' + table_name,
+            "__tablename__": table_prefix + 'write_' + table_name,
             "__table_args__": (
                 Index(f'idx_wr_num_reply_{table_name}', 'wr_num', 'wr_reply'),
                 Index(f'idex_wr_is_comment_{table_name}', 'wr_is_comment'),
@@ -146,7 +154,7 @@ def dynamic_create_write_table(table_name: str, create_table: bool = False) -> W
     )
     # 게시판 추가시 한번만 테이블 생성
     if (create_table):
-        DynamicModel.__table__.create(bind=engine, checkfirst=True)
+        DynamicModel.__table__.create(bind=db_engine, checkfirst=True)
     # 생성된 모델 캐싱
     _created_models[table_name] = DynamicModel
     return DynamicModel

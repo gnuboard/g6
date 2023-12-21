@@ -4,7 +4,7 @@
 
 {% block content %}
     <script>
-        alert("{% for error in errors %}{{ error }}{% endfor %}");
+        alert("{% for error in errors %}{{ error|safe }}{% endfor %}");
         {% if url %}
             document.location.href = "{{ url }}";
         {% else %}
