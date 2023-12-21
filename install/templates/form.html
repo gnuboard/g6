@@ -152,6 +152,12 @@
             return false;
         }
 
+        f.token.value = generate_token();
+        if (f.token.value == "") {
+            alert("토큰값이 없습니다.");
+            return false;
+        }
+
         return true;
     }
     </script>

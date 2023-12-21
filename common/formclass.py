@@ -500,3 +500,5 @@ class InstallFrom:
     admin_password: str = Form(...)
     admin_name: str = Form(...)
     admin_email: str = Form(...)
+
+    reinstall: int = Form(None)

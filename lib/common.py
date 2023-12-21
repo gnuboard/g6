@@ -124,9 +124,6 @@ _created_models = {}
 def dynamic_create_write_table(
         table_name: str,
         create_table: bool = False,
-        table_prefix: str = DB_TABLE_PREFIX,
-        db_engine: Engine = engine
-        
     ) -> WriteBaseModel:
     '''
     WriteBaseModel 로 부터 게시판 테이블 구조를 복사하여 동적 모델로 생성하는 함수
@@ -145,7 +142,7 @@ def dynamic_create_write_table(
         class_name, 
         (WriteBaseModel,), 
         {   
-            "__tablename__": table_prefix + 'write_' + table_name,
+            "__tablename__": DB_TABLE_PREFIX + 'write_' + table_name,
             "__table_args__": (
                 Index(f'idx_wr_num_reply_{table_name}', 'wr_num', 'wr_reply'),
                 Index(f'idex_wr_is_comment_{table_name}', 'wr_is_comment'),
@@ -154,7 +151,7 @@ def dynamic_create_write_table(
     )
     # 게시판 추가시 한번만 테이블 생성
     if (create_table):
-        DynamicModel.__table__.create(bind=db_engine, checkfirst=True)
+        DynamicModel.__table__.create(bind=engine, checkfirst=True)
     # 생성된 모델 캐싱
     _created_models[table_name] = DynamicModel
     return DynamicModel

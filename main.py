@@ -105,8 +105,11 @@ async def main_middleware(request: Request, call_next):
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 시작    
     # 요청의 경로를 얻습니다.
     path = request.url.path
+    # 토큰을 생성하는 요청의 경우에도 미들웨어를 건너뛰어야 합니다.
     # 경로가 정적 파일에 대한 것이 아닌지 확인합니다 (css, js, 이미지 등).
-    if path.startswith('/static') or path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.webp')):
+    if (path.startswith('/generate_token')
+            or path.startswith('/static') 
+            or path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.webp'))):
         response = await call_next(request)
         return response
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
