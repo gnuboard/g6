@@ -25,5 +25,8 @@ __all__ = [
 ]
 
 with SessionLocal() as db:
-    config = db.scalar(select(Config))
-    register_social_provider(config)
+    try:
+        config = db.scalar(select(Config))
+        register_social_provider(config)
+    except Exception as e:
+        print("소셜로그인 설정 오류")

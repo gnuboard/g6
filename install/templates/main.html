@@ -1,0 +1,16 @@
+{% extends "_layout.html" %}
+
+{% block content %}
+    <div class="container">
+        <h1 class="ins tall_uncnf">{{ app_name }}을 먼저 설치해주십시오</h1>
+        
+        <div class="ins_inner">
+            <p>
+                내용이 들어갑니다
+            </p>
+            <div class="inner_btn">
+                <a href="{{ url_for('install_license') }}" class="btn">{{ app_name }} 설치 시작하기</a>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

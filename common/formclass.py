@@ -485,3 +485,20 @@ class SocialProfile:
     photourl: str
     displayname: str
     disciption: str
+
+@dataclass
+class InstallFrom:
+    db_engine: str = Form(...)
+    db_host: str = Form(...)
+    db_port: int = Form(...)
+    db_user: str = Form(...)
+    db_password: str = Form(...)
+    db_name: str = Form(...)
+    db_table_prefix: str = Form(...)
+
+    admin_id: str = Form(...)
+    admin_password: str = Form(...)
+    admin_name: str = Form(...)
+    admin_email: str = Form(...)
+
+    reinstall: int = Form(None)

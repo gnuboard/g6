@@ -2,9 +2,6 @@
 import os
 import sys
 
-# setup.py 에서 get_theme_from_db() 를 실행하지 않기 위해 환경변수를 설정합니다.
-os.environ["is_setup"] = "true"
-
 # '.env' 파일의 경로를 설정합니다. 현재 작업 디렉토리에 있다고 가정합니다.
 env_path = os.path.join(os.getcwd(), '.env')
 

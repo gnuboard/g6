@@ -8,7 +8,7 @@ from typing_extensions import Annotated
 
 
 load_dotenv()
-DB_ENGINE = os.getenv("DB_ENGINE", "sqlite").lower()  # 소문자
+DB_ENGINE = os.getenv("DB_ENGINE", "").lower()  # 소문자
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
 DB_USER = os.getenv("DB_USER")
@@ -20,9 +20,11 @@ if DB_ENGINE == "mysql":
     DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 elif DB_ENGINE == "postgresql":
     DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-else:
+elif DB_ENGINE == "sqlite":
     DATABASE_URL = f"sqlite:///sqlite3.db"
-
+else:
+    # .env파일이 없을 경우, 설치를 위해 임시로 메모리 DB 사용
+    DATABASE_URL = "sqlite://"
 
 engine = create_engine(
     DATABASE_URL,

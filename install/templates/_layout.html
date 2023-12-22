@@ -1,0 +1,38 @@
+{% set app_name="그누보드6" %}
+<!doctype html>
+<html lang="ko">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+        <title>설치하기 | 그누보드6</title>
+        <link rel="icon" href="{{ url_for('static', path='favicon.ico') }}" type="image/x-icon">
+        <link rel="stylesheet" href="{{ url_for('static', path='/css/install.css') }}">
+        <script src="{{ url_for('static', path='/js/jquery-1.12.4.min.js') }}"></script>
+        <script src="{{ url_for('static', path='/js/common.js') }}"></script>
+    </head>
+    <body>
+        <div id="ins_bar">
+            <span id="bar_img">GNUBOARD6</span>
+            <span id="bar_txt">INSTALLATION</span>
+        </div>
+        <!-- 
+        <h1>프로그램이 이미 설치되어 있습니다.</h1> 
+        <div class="ins_inner">
+            <p>프로그램이 이미 설치되어 있습니다.<br />새로 설치하시려면 다음 파일을 삭제 하신 후 새로고침 하십시오.</p>
+            <ul>
+                <li>.env</li>
+            </ul>
+        </div>
+        -->
+        <!-- contents -->
+        <div id="contents">
+            {% block content %}
+            {% endblock content %}
+        </div>
+        <!-- footer -->
+        <div id="ins_ft">
+            <strong>GNUBOARD6</strong>
+            <p>GPL! OPEN SOURCE GNUBOARD</p>
+        </div>
+    </body>
+</html>

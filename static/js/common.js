@@ -780,7 +780,7 @@ function generate_token() {
             }
         },
         error: function(xhr, status, error) {
-            console.error(error);
+            console.log(error);
         }
     });
     return token;
