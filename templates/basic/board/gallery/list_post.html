@@ -102,7 +102,7 @@
             {% set line_height_style="line-height:" ~ gallery_height ~ "px" if gallery_height > 0 else "" %}
             {% for write in writes %}
             <!-- TODO: 열람 중일 경우 class에 gall_now 추가 -->
-            <li class="gall_li col-gn-{{ board.bo_gallery_cols|default(1) }} {% if (loop.index0 % board.bo_gallery_cols == 0) %}box_clear{% endif %}">
+            <li class="gall_li col-gn-{{ board.bo_gallery_cols|default(1) }} {% if (board.bo_gallery_cols == 0 or loop.index0 % board.bo_gallery_cols == 0) %}box_clear{% endif %}">
                 <div class="gall_box">
                     <div class="gall_chk chk_box">
                         <input type="checkbox" name="chk_wr_id[]" value="{{ write.wr_id }}" id="chk_wr_id_{{ loop.index }}" class="selec_chk">
