@@ -3,7 +3,7 @@ import pkgutil
 import importlib
 from sqlalchemy import select
 
-from common.database import SessionLocal
+from common.database import DBConnect
 from common.models import Config
 from lib.social.social import register_social_provider
 
@@ -24,9 +24,9 @@ __all__ = [
     "twitter",
 ]
 
-with SessionLocal() as db:
+with DBConnect().sessionLocal() as db:
     try:
         config = db.scalar(select(Config))
         register_social_provider(config)
     except Exception as e:
-        print("소셜로그인 설정 오류")
+        print("소셜로그인 설정을 불러올 수 없습니다. " + str(e.args[0]) )

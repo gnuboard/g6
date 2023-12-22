@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Path
 from starlette.responses import JSONResponse
 
-from common.database import db_session
+from common.database import DBConnect, db_session
 from common.formclass import AutoSaveForm
 from common.models import AutoSave
 from lib.common import *
@@ -120,7 +120,7 @@ def get_autosave_count(mb_id: str):
     """
     자동저장글 개수를 반환한다.
     """
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     count = db.scalar(
         select(func.count(AutoSave.as_id))
         .where(AutoSave.mb_id == mb_id)

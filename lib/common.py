@@ -19,13 +19,12 @@ from pydantic import TypeAdapter
 from sqlalchemy import Index, asc, desc, and_, func, insert, inspect, select, delete, between, exists, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
-from sqlalchemy.engine import Engine
 from starlette.datastructures import URL
 from starlette.staticfiles import StaticFiles
 
 from common.models import Auth, Config, Member, Memo, Board, BoardFile, BoardNew, Group, GroupMember, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
 from common.models import WriteBaseModel
-from common.database import SessionLocal, engine, DB_TABLE_PREFIX
+from common.database import DBConnect
 from datetime import datetime, timedelta, date, time
 import json
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -44,23 +43,11 @@ from typing_extensions import Annotated
 
 load_dotenv()
 
-
 # 전역변수 선언(global variables)
 ENV_PATH = ".env"
 TEMPLATES = "templates"
 CAPTCHA_PATH = "lib/captcha/templates"
 EDITOR_PATH = "lib/editor/templates"
-
-# .env, DB 테이블 존재 여부 체크
-# - 설치 과정일 경우에는 체크하지 않음.
-# try:
-#     if not os.environ.get("is_setup"):
-#         if not os.path.exists(".env"):
-#             raise Exception("\033[93m" + "경고: .env 파일이 없습니다. 설치를 진행해 주세요." + "\033[0m")
-#         elif not inspect(engine).has_table(DB_TABLE_PREFIX + "config"):
-#             raise Exception("\033[93m" + "DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요." + "\033[0m")
-# except Exception as e:
-#     exit(e)
 
 def get_theme_from_db() -> str:
     """DB에 설정된 테마의 경로를 반환
@@ -70,7 +57,7 @@ def get_theme_from_db() -> str:
     """
     default_theme = "basic"
     try:
-        with SessionLocal() as db:
+        with DBConnect().sessionLocal() as db:
             theme = db.scalar(select(Config.cf_theme)) or default_theme
             theme_path = f"{TEMPLATES}/{theme}"
             
@@ -138,11 +125,12 @@ def dynamic_create_write_table(
         table_name = str(table_name)
     
     class_name = "Write" + table_name.capitalize()
+    db_connect = DBConnect()
     DynamicModel = type(
         class_name, 
         (WriteBaseModel,), 
         {   
-            "__tablename__": DB_TABLE_PREFIX + 'write_' + table_name,
+            "__tablename__": db_connect.table_prefix + 'write_' + table_name,
             "__table_args__": (
                 Index(f'idx_wr_num_reply_{table_name}', 'wr_num', 'wr_reply'),
                 Index(f'idex_wr_is_comment_{table_name}', 'wr_is_comment'),
@@ -151,7 +139,7 @@ def dynamic_create_write_table(
     )
     # 게시판 추가시 한번만 테이블 생성
     if (create_table):
-        DynamicModel.__table__.create(bind=engine, checkfirst=True)
+        DynamicModel.__table__.create(bind=db_connect.engine, checkfirst=True)
     # 생성된 모델 캐싱
     _created_models[table_name] = DynamicModel
     return DynamicModel
@@ -217,7 +205,7 @@ def get_editor_select(id, selected):
 
 # 회원아이디를 SELECT 형식으로 얻음
 def get_member_id_select(id, level, selected, event=''):
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     mb_ids = db.scalars(
         select(Member.mb_id)
         .where(Member.mb_level >= level)
@@ -257,7 +245,7 @@ def option_array_checked(option, arr=[]):
 
 
 def get_group_select(id, selected='', event=''):
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     groups = db.scalars(
         select(Group)
         .order_by(Group.gr_order, Group.gr_id)
@@ -622,7 +610,7 @@ def record_visit(request: Request):
     Args:
         request (Request): FastAPI Request 객체
     """
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     vi_ip = get_real_client_ip(request)
 
     # 오늘의 접속이 이미 기록되어 있는지 확인
@@ -727,7 +715,7 @@ def select_query(request: Request, table_model, search_params: dict,
     
     records_per_page = config.cf_page_rows
 
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     query = select()
     
     # # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
@@ -787,7 +775,7 @@ def select_query(request: Request, table_model, search_params: dict,
 
 # 회원 레코드 얻기    
 def get_member(mb_id: str): # , fields: str = '*' # fields : 가져올 필드, 예) "mb_id, mb_name, mb_nick"
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     member = db.scalar(select(Member).filter_by(mb_id=mb_id))
     db.close()
     return member
@@ -854,7 +842,7 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
     Returns:
         int: 성공시 1, 실패시 0
     """
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     config = request.state.config
     
     # 포인트를 사용하지 않는다면 종료
@@ -935,7 +923,7 @@ def get_expire_point(request: Request, mb_id: str) -> int:
     if config.cf_point_term <= 0:
         return 0
 
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     point_sum = db.scalar(
         select(func.sum(Point.po_point - Point.po_use_point))
         .where(
@@ -952,7 +940,7 @@ def get_expire_point(request: Request, mb_id: str) -> int:
 def get_point_sum(request: Request, mb_id: str) -> int:
     config = request.state.config
     
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     
     if config.cf_point_term > 0:
         expire_point = get_expire_point(request, mb_id)
@@ -1001,7 +989,7 @@ def get_point_sum(request: Request, mb_id: str) -> int:
 # 사용포인트 입력
 def insert_use_point(request: Request, mb_id: str, point: int, po_id: str = ""):
     config = request.state.config
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     point1 = abs(point)
 
     query = (
@@ -1043,7 +1031,7 @@ def insert_use_point(request: Request, mb_id: str, point: int, po_id: str = ""):
 
 # 포인트 삭제
 def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel_action: str):
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     result = False
 
     if rel_table or rel_id or rel_action:
@@ -1099,7 +1087,7 @@ def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel
 # 사용포인트 삭제
 def delete_use_point(request: Request, mb_id: str, point: int):
     config = request.state.config
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
 
     point1 = abs(point)
     query = select(Point).where(Point.mb_id == mb_id, Point.po_expired != 1, Point.po_use_point > 0)
@@ -1139,7 +1127,7 @@ def delete_use_point(request: Request, mb_id: str, point: int):
 # 소멸포인트 삭제
 def delete_expire_point(request: Request, mb_id: str, point: int):
     config = request.state.config
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     
     point1 = abs(point)
     rows = db.scalars(
@@ -1195,7 +1183,7 @@ def get_memo_not_read(mb_id: str) -> int:
     """
     메모를 읽지 않은 개수를 반환하는 함수
     """
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     count = db.scalar(
         select(func.count(Memo.me_id))
         .where(
@@ -1259,7 +1247,7 @@ def get_populars(limit: int = 7, day: int = 3):
     if popular_cache.get("populars"):
         return popular_cache.get("populars")
 
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     # 현재 날짜와 day일 전 날짜를 구한다.
     today = datetime.now()
     before = today - timedelta(days=day)
@@ -1294,7 +1282,7 @@ def insert_popular(request: Request, fields: str, word: str):
         today_date = datetime.now().strftime("%Y-%m-%d")
         # 회원아이디로 검색은 제외
         if not "mb_id" in fields:
-            with SessionLocal() as db:
+            with DBConnect().sessionLocal() as db:
                 # 현재 날짜의 인기검색어를 조회한다.
                 exists_popular = db.scalar(
                     exists(Popular)
@@ -1335,7 +1323,7 @@ def get_recent_poll():
     if lfu_cache.get("poll"):
         return lfu_cache.get("poll")
 
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     poll = db.scalar(
         select(Poll)
         .where(Poll.po_use == 1)
@@ -1357,7 +1345,7 @@ def get_menus():
     if lfu_cache.get("menus"):
         return lfu_cache.get("menus")
 
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     menus = []
     # 부모메뉴 조회
     parent_menus = db.scalars(
@@ -1402,7 +1390,7 @@ def auth_check_menu(request: Request, menu_key: str, attribute: str):
     if request.state.is_super_admin:
         return ""
 
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
 
     exists_member = request.state.login_member
     if not exists_member:
@@ -1449,7 +1437,7 @@ def get_unique_id(request) -> Optional[str]:
         ten_milli_sec = str(current.microsecond)[:2].zfill(2)
         key = f"{current.strftime('%Y%m%d%H%M%S')}{ten_milli_sec}"
 
-        with SessionLocal() as session:
+        with DBConnect().sessionLocal() as session:
             try:
                 session.add(UniqId(uq_id=key, uq_ip=ip))
                 session.commit()
@@ -1930,7 +1918,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     if os.path.exists(cache_file):
         return g6_file_cache.get(cache_file)
     
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     # 게시판 설정
     board = db.get(Board, bo_table)
     board_config = BoardConfig(request, board)
@@ -1966,7 +1954,7 @@ def get_newwins(request: Request):
     """
     레이어 팝업 목록 조회
     """
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     current_division = "comm" # comm, both, shop
@@ -2000,7 +1988,7 @@ def insert_board_new(bo_table: str, write: WriteBaseModel):
     """
     최신글 테이블 등록 함수
     """
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     db.execute(
         insert(BoardNew)
         .values(
@@ -2203,7 +2191,7 @@ def delete_old_records():
     설정일이 지난 데이터를 삭제
     """
     try:
-        db = SessionLocal()
+        db = DBConnect().sessionLocal()
         config = db.scalar(select(Config))
         today = datetime.now()
 
@@ -2524,6 +2512,11 @@ async def validate_captcha(
     if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, response)):
         raise AlertException("캡차가 올바르지 않습니다.", 400)
 
+async def validate_install():
+    """설치 여부 검사"""
+    if os.path.exists(ENV_PATH):
+        raise AlertException("이미 설치가 완료되었습니다.\\n재설치하시려면 .env파일을 삭제 후 다시 시도해주세요.", 400, "/")
+
 
 def check_group_access(
         request: Request,
@@ -2539,7 +2532,7 @@ def check_group_access(
         AlertException: 회원이면서 그룹 접근권한이 없는 경우
     """
     
-    with SessionLocal() as db:
+    with DBConnect().sessionLocal() as db:
         board = db.get(Board, bo_table)
         group = board.group
         member = request.state.login_member

@@ -3,7 +3,7 @@ from main import app
 from fastapi import APIRouter, Form, File, Depends, Path
 from starlette.responses import RedirectResponse
 
-from common.database import db_session
+from common.database import DBConnect, db_session
 from common.formclass import MemberForm
 from common.models import Member, MemberSocialProfiles
 from lib.common import *
@@ -303,7 +303,7 @@ def validate_nickname(mb_nick: str, prohibit_id: str) -> Dict[str, str]:
         message["msg"] = "닉네임을 입력해주세요."
         return message
 
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     result = db.scalar(select(Member).filter(Member.mb_nick == mb_nick))
     if result:
         message["msg"] = "해당 닉네임이 존재합니다."

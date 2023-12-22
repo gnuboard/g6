@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Request, Form, Path
 from fastapi.responses import HTMLResponse, RedirectResponse
 from typing import List
 
-from common.database import db_session, engine
+from common.database import DBConnect, db_session
 from common.models import Board, BoardNew, Scrap, BoardFile, BoardGood
 from common.formclass import BoardForm
 from lib.common import *
@@ -122,7 +122,7 @@ async def board_list_delete(
             # 게시판 테이블 삭제
             write_model = dynamic_create_write_table(table_name=board.bo_table, create_table=False)
             # FIXME: 게시판 생성 직후 삭제시 database locked 에러 발생
-            write_model.__table__.drop(engine)
+            write_model.__table__.drop(DBConnect().engine)
             # 최신글 캐시 삭제
             G6FileCache().delete_prefix(f'latest-{board.bo_table}')
 

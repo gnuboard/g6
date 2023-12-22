@@ -6,11 +6,12 @@ from datetime import datetime
 from typing import List, Optional
 from urllib.parse import parse_qs
 from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session, sessionmaker
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
 from bbs.member_profile import validate_nickname, validate_userid
-from common.database import db_session, SessionLocal
+from common.database import DBConnect, db_session
 from common.formclass import MemberForm
 from common.models import Config, MemberSocialProfiles, Member
 from lib.common import *
@@ -25,6 +26,8 @@ templates.env.filters["default_if_none"] = default_if_none
 log = logging.getLogger("authlib")
 logging.basicConfig()
 log.setLevel(logging.DEBUG)
+
+SessionLocal = DBConnect().sessionLocal
 
 
 @router.get('/social/login')

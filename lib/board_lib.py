@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from fastapi import Request
 from sqlalchemy import and_, or_, select, Select
 
-from common.database import SessionLocal
+from common.database import DBConnect
 from common.models import Board, BoardNew, Scrap, WriteBaseModel
 from lib.common import *
 
@@ -203,7 +203,7 @@ class BoardConfig():
             str: 회원 서명
         """
         try:
-            db = SessionLocal()
+            db = DBConnect().sessionLocal()
 
             if self.board.bo_use_signature and mb_id:
                 member = db.scalar(
@@ -411,7 +411,7 @@ class BoardConfig():
         if self.login_member_admin_type:
             return True
 
-        db = SessionLocal()
+        db = DBConnect().sessionLocal()
 
         write_model = dynamic_create_write_table(self.board.bo_table)
         comment_count = db.scalar(
@@ -470,7 +470,7 @@ class BoardFileManager():
         self.board = board
         self.bo_table = board.bo_table
         self.wr_id = wr_id
-        self.db = SessionLocal()
+        self.db = DBConnect().sessionLocal()
 
     def is_exist(self, bo_table: str = None, wr_id: int = None):
         """게시글에 파일이 있는지 확인
@@ -814,7 +814,7 @@ def write_search_filter(
     Returns:
         Select: 필터가 적용된 쿼리.
     """
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     fields = []
     is_comment = False
 
@@ -867,7 +867,7 @@ def get_next_num(bo_table: str) -> int:
     게시판의 다음글 번호를 얻는다.
     """
     try:
-        db = SessionLocal()
+        db = DBConnect().sessionLocal()
 
         write_model = dynamic_create_write_table(bo_table)
         min_wr_num = db.scalar(select(func.coalesce(func.min(write_model.wr_num), 0)))
@@ -922,7 +922,7 @@ def generate_reply_character(board: Board, write):
     Returns:
         str: A~Z의 연속된 문자열(Ex: A, B, AA, AB, ABA ..)
     """
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     write_model = dynamic_create_write_table(board.bo_table)
 
     # 마지막 문자열 1개 자르기
@@ -999,7 +999,7 @@ def send_write_mail(request: Request, board: Board, write: WriteBaseModel, origi
         write (WriteBaseModel): 작성된 게시글/답글/댓글 object
         origin_write (WriteBaseModel, optional): 원본 게시글/답글 object. Defaults to None.
     """
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     config = request.state.config
     templates = UserTemplates()
 
@@ -1131,7 +1131,7 @@ def delete_write(request: Request, bo_table: str, origin_write: WriteBaseModel) 
     Returns:
         bool: 결과
     """
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     board = db.get(Board, bo_table)
     board_config = BoardConfig(request, board)
     group = board.group
