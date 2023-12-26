@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import query
 from typing import List
 
-from common.database import db_session
+from common.database import DBConnect, db_session
 from common.formclass import QaContentForm
 from common.models import QaConfig, QaContent
 from lib.common import *
@@ -52,7 +52,7 @@ class QaConfigService:
         Returns:
             QaConfig: Q&A 설정
         """
-        db = SessionLocal()
+        db = DBConnect().sessionLocal()
         qa_config = db.scalar(select(self.model).order_by(self.model.id))
         db.close()
         if not qa_config:

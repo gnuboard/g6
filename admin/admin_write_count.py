@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import asc, desc, case, func, and_, or_, extract, text, select
 from sqlalchemy.sql.expression import func, extract
 from sqlalchemy.orm import Session
-from common.database import db_session, engine
+from common.database import db_session
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import *
 from lib.common import *

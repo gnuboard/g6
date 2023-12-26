@@ -10,15 +10,14 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from user_agents import parse
 
-from common.database import db_session
+from common.database import DBConnect, db_session
 import common.models as models
 from lib.common import *
 from lib.plugin.service import register_statics, register_plugin_admin_menu, get_plugin_state_change_time, \
     read_plugin_state, import_plugin_by_states, delete_router_by_tagname, cache_plugin_state, \
     cache_plugin_menu, register_plugin, unregister_plugin
 
-
-# models.Base.metadata.create_all(bind=engine)
+load_dotenv()
 APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
 app = FastAPI(debug=APP_IS_DEBUG)
 
@@ -115,21 +114,22 @@ async def main_middleware(request: Request, call_next):
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
 
     # 데이터베이스 설치여부 체크
+    db_connect = DBConnect()
     try:
         # 설치 페이지가 아니라면
         if not path.startswith("/install"):
             if not os.path.exists(ENV_PATH):
                 raise AlertException(".env 파일이 없습니다. 설치를 진행해 주세요.", 400, "/install")
-            elif not inspect(engine).has_table(DB_TABLE_PREFIX + "config"):
+
+            if not inspect(db_connect.engine).has_table(db_connect.table_prefix + "config"):
                 raise AlertException("DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요.", 400, "/install")
-        # 설치 페이지라면 Middleware를 건너뛴다
         else:
             return await call_next(request)
 
     except AlertException as e:
         return await alert_exception_handler(request, e)
 
-    db: Session = SessionLocal()
+    db = db_connect.sessionLocal()
     config = db.scalar(select(Config))
     request.state.config = config
 

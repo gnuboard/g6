@@ -1,7 +1,7 @@
 from dotenv import set_key
 from fastapi import APIRouter, Depends, Request
+from fastapi.responses import RedirectResponse
 from sqlalchemy import create_engine
-from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
@@ -9,6 +9,7 @@ from sse_starlette.sse import EventSourceResponse
 
 import common.models as models
 from .default_values import *
+from common.database import DBConnect, DBSetting
 from common.formclass import InstallFrom
 from lib.common import *
 from lib.pbkdf2 import create_hash
@@ -23,13 +24,15 @@ templates.env.globals["version"] = default_version
 form_cache = cachetools.TTLCache(maxsize=1, ttl=60)
 
 
-@router.get("/", name="install_main")
+@router.get("/", name="install_main", dependencies=[Depends(validate_install)])
 async def main(request: Request):
+    """설치 메인 페이지"""
     return templates.TemplateResponse("main.html", {"request": request})
 
 
-@router.get("/license", name="install_license")
+@router.get("/license", name="install_license", dependencies=[Depends(validate_install)])
 async def license(request: Request):
+    """라이선스 동의 페이지"""
     context = {
         "request": request,
         "license": read_license(),
@@ -37,22 +40,33 @@ async def license(request: Request):
     return templates.TemplateResponse("license.html", context)
 
 
-@router.post("/form", name="install_form")
+@router.get("/form", dependencies=[Depends(validate_install)])
 async def form(request: Request):
+    """설치 폼 Redirect"""
+    return RedirectResponse(url=request.url_for("install_license"))
+
+
+@router.post("/form", name="install_form", dependencies=[Depends(validate_install)])
+async def form(request: Request):
+    """설치 폼 페이지"""
+    
     context = {
         "request": request,
     }
     return templates.TemplateResponse("form.html", context)
 
 
-@router.post("/", name="install", dependencies=[Depends(validate_token)])
+@router.post("/",
+             name="install",
+             dependencies=[Depends(validate_token), Depends(validate_install)])
 async def install(
     request: Request,
     form: InstallFrom = Depends(),
 ):
     try:
-        # example.env 파일을 .env 파일로 복사
-        shutil.copyfile("example.env", ENV_PATH)
+        # example.env 파일이 있는 경우 .env 파일로 복사
+        if os.path.exists("example.env"):
+            shutil.copyfile("example.env", ENV_PATH)
 
         # .env 파일에 데이터베이스 정보 추가
         set_key(ENV_PATH, "DB_ENGINE", form.db_engine)
@@ -63,52 +77,35 @@ async def install(
         set_key(ENV_PATH, "DB_NAME", form.db_name)
         set_key(ENV_PATH, "DB_TABLE_PREFIX", form.db_table_prefix)
 
-        # 데이터베이스 연결 테스트
-        url = f"{form.db_user}:{form.db_password}@{form.db_host}:{form.db_port}/{form.db_name}"
-        supported_engines = {
-            "mysql": f"mysql+pymysql://{url}",
-            "postgresql": f"postgresql://{url}",
-            "sqlite": "sqlite:///sqlite3.db"
-        }
-        database_url = supported_engines.get(form.db_engine.lower())
-        if not database_url:
+        # 데이터베이스 연결 설정
+        db_setting = DBSetting()
+        if not db_setting.supported_engines.get(form.db_engine.lower()):
             raise Exception("지원가능한 데이터베이스 엔진을 선택해주세요.")
 
         new_engine = create_engine(
-            database_url,
+            db_setting.url,
             poolclass=QueuePool,
             pool_size=20,
             max_overflow=40,
             pool_timeout=60
         )
+        # 데이터베이스 연결 테스트
         connect = new_engine.connect()
         connect.close()
-
         session = sessionmaker(autocommit=False, autoflush=False,
                                bind=new_engine, expire_on_commit=True)
 
-        # database.py의 변수 변경
-        global DB_TABLE_PREFIX, DB_ENGINE, DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
-        global engine, SessionLocal
-        global form_data
+        # 새로운 데이터베이스 연결 추가
+        db_connect = DBConnect()
+        db_connect.engine = new_engine
+        db_connect.sessionLocal = session
 
-        DB_ENGINE = form.db_engine
-        DB_HOST = form.db_host
-        DB_PORT = form.db_port
-        DB_USER = form.db_user
-        DB_PASSWORD = form.db_password
-        DB_NAME = form.db_name
-        DB_TABLE_PREFIX = form.db_table_prefix
-        engine = new_engine
-        SessionLocal = session
-
-        # 다음 설치단계에서 데이터 저장을 위한 임시 저장
         form_cache.update({"form": form})
 
         return templates.TemplateResponse("result.html", {"request": request})
 
-    except FileNotFoundError as e:
-        raise AlertException(f"설치가 실패했습니다. '{e.filename}' 파일을 찾을 수 없습니다.\\n{e}")
+    # except FileNotFoundError as e:
+    #     raise AlertException(f"설치가 실패했습니다. '{e.filename}' 파일을 찾을 수 없습니다.\\n{e}")
 
     except OperationalError as e:
         os.remove(ENV_PATH)
@@ -124,21 +121,21 @@ async def install(
 async def install_process(request: Request):
     
     async def install_event():
-        global engine, SessionLocal
         yield "설치를 시작합니다. 페이지를 닫지 말고 잠시만 기다려주세요."
+        db_connect = DBConnect()
+        engine = db_connect.engine
+        SessionLocal = db_connect.sessionLocal
 
         try:
             form: InstallFrom = form_cache.get("form")
-
+            
             if form.reinstall:
-                # 기존 데이터베이스 테이블 삭제
                 models.Base.metadata.drop_all(bind=engine)
                 yield "기존 데이터베이스 테이블 삭제 완료"
 
             models.Base.metadata.create_all(bind=engine)
             yield "데이터베이스 테이블 생성 완료"
 
-            # 그누보드6 기본값 입력
             with SessionLocal() as db:
                 config_setup(db, form.admin_id, form.admin_email)
                 admin_member_setup(db, form.admin_id, form.admin_password, form.admin_email)
@@ -149,7 +146,10 @@ async def install_process(request: Request):
                 db.commit()
                 yield "그누보드6 기본 데이터 입력 완료"
 
-            # 디렉토리 생성
+            for board in default_boards:
+                dynamic_create_write_table(board['bo_table'], create_table=True)
+            yield "게시판 테이블 생성 완료"
+
             make_directory()
             yield "데이터 경로 생성 완료"
 
@@ -236,14 +236,11 @@ def board_setup(db: Session):
             .where(models.Board.bo_table == board['bo_table']).select()
         )
         if not exists_board:
-            db.execute(
-                insert(models.Board).values(**board, **default_board_data)
-            )
-
-        # 게시판 테이블 생성
-        dynamic_create_write_table(board['bo_table'], create_table=True)
+            query = insert(models.Board).values(**board, **default_board_data)
+            db.execute(query)
 
 
 def make_directory():
+    """데이터 경로 생성"""
     if not os.path.exists(default_data_directory):
         os.makedirs(default_data_directory)

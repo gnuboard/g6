@@ -860,7 +860,7 @@ async def read_post(
             if not board_config.is_read_point(write):
                 raise AlertException(f"게시글 읽기에 필요한 포인트({number_format(abs(read_point))})가 부족합니다.", 403)
             else:
-                insert_point(request, member.mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table, write.wr_id, "읽기")
+                insert_point(request, mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table, write.wr_id, "읽기")
 
         # 조회수 증가
         write.wr_hit = write.wr_hit + 1

@@ -1,18 +1,16 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime, Date, Time, Boolean, BIGINT, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime, Date, Time, Boolean, BIGINT, UniqueConstraint
 from typing import List
 
 # TINYINT 대신 Integer 사용하기 바랍니다.
 # from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import DynamicMapped, Mapped, relationship
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.exc import ArgumentError, InvalidRequestError
 from datetime import datetime, date
-from common.database import DB_TABLE_PREFIX
+from common.database import DBConnect
 
 Base = declarative_base()
 
-if not DB_TABLE_PREFIX:
-    DB_TABLE_PREFIX = "g6_"
+DB_TABLE_PREFIX = DBConnect().table_prefix or "g6_"
 
 
 class Config(Base):

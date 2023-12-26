@@ -95,8 +95,30 @@
         </div>
     </form>
     <script>
-    function frm_install_submit(f) {
+    // 데이터베이스 변경 시 입력 폼 표시 여부
+    document.getElementById('db_engine').addEventListener('change', (e) => {
+        const db_host = document.getElementById('db_host');
+        const db_port = document.getElementById('db_port');
+        const db_user = document.getElementById('db_user');
+        const db_password = document.getElementById('db_password');
+        const db_name = document.getElementById('db_name');
 
+        if (e.target.value == 'sqlite') {
+            db_host.parentNode.parentNode.style.display = 'none';
+            db_port.parentNode.parentNode.style.display = 'none';
+            db_user.parentNode.parentNode.style.display = 'none';
+            db_password.parentNode.parentNode.style.display = 'none';
+            db_name.parentNode.parentNode.style.display = 'none';
+        } else {
+            db_host.parentNode.parentNode.style.display = '';
+            db_port.parentNode.parentNode.style.display = '';
+            db_user.parentNode.parentNode.style.display = '';
+            db_password.parentNode.parentNode.style.display = '';
+            db_name.parentNode.parentNode.style.display = '';
+        }
+    });
+
+    function frm_install_submit(f) {
         const errorMessages = {
             invalidCharacter: '에 유효하지 않는 문자가 있습니다. 다른 문자로 대체해 주세요.',
             validAdminId: '는 4~19자의 문자열로 첫자는 영문자 그리고 영문+숫자의 조합으로 만들수 있습니다.',
@@ -138,12 +160,17 @@
             }
             return true;
         }
+        if (f.db_engine.value != 'sqlite') {
+            if (!checkField(f.db_host, "invalidCharacter")
+                || !checkField(f.db_user, "invalidCharacter")
+                || !checkField(f.db_password, "invalidCharacter")
+                || !checkField(f.db_name, "invalidCharacter")
+            ) {
+                return false;
+            }
+        }
 
-        if (!checkField(f.db_host, "invalidCharacter")
-            || !checkField(f.db_user, "invalidCharacter")
-            || !checkField(f.db_password, "invalidCharacter")
-            || !checkField(f.db_name, "invalidCharacter")
-            || !checkField(f.db_table_prefix, "invalidCharacter")
+        if (!checkField(f.db_table_prefix, "invalidCharacter")
             || !checkField(f.admin_id, "validAdminId")
             || !checkField(f.admin_password, "empty")
             || !checkField(f.admin_name, "emtpy")

@@ -489,11 +489,11 @@ class SocialProfile:
 @dataclass
 class InstallFrom:
     db_engine: str = Form(...)
-    db_host: str = Form(...)
-    db_port: int = Form(...)
-    db_user: str = Form(...)
-    db_password: str = Form(...)
-    db_name: str = Form(...)
+    db_host: str = Form("")
+    db_port: int = Form(0)
+    db_user: str = Form("")
+    db_password: str = Form("")
+    db_name: str = Form("")
     db_table_prefix: str = Form(...)
 
     admin_id: str = Form(...)

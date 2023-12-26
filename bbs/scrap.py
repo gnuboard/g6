@@ -1,11 +1,9 @@
 from fastapi import APIRouter, Depends, Form, Path, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy import literal
-from sqlalchemy.orm import aliased
 
 from lib.board_lib import *
 from lib.common import *
-from common.database import db_session
+from common.database import DBConnect, db_session
 from common.models import Scrap
 
 router = APIRouter()
@@ -241,7 +239,7 @@ def get_scrap_totals(mb_id: str) -> int:
     Returns:
         int: 스크랩 수
     """
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     count = db.scalar(
         select(func.count(Scrap.ms_id))
         .where(Scrap.mb_id == mb_id)
