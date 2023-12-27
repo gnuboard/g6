@@ -71,7 +71,7 @@
     function frmsendmailselectform_submit(f) {
         f.token.value = generate_token();
         if (!f.token.value) {
-            alert('토큰 생성에 실패하였습니다.');
+            alert("토큰 생성에 실패하였습니다.");
             return false;
         }
 

@@ -354,8 +354,8 @@ async def index(request: Request, db: db_session):
 
 @app.post("/generate_token")
 async def generate_token(request: Request):
-    token = secrets.token_hex(16)  # 16바이트 토큰 생성
-    request.session["ss_token"] = token  # 세션에 토큰 저장
+
+    token = create_session_token(request)
 
     return JSONResponse(content={"success": True, "token": token})
 

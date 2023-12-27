@@ -775,7 +775,7 @@ function generate_token() {
             if (response.success) {
                 token = response.token;
             } else {
-                alert('토큰 생성에 실패하였습니다.');
+                alert("토큰 생성에 실패하였습니다.");
                 token = '';
             }
         },

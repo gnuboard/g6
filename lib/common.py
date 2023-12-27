@@ -3,6 +3,7 @@ import logging
 import os
 import random
 import re
+import secrets
 import typing
 from time import sleep
 from typing import Any, Dict, List, Optional, Union
@@ -1301,16 +1302,15 @@ def insert_popular(request: Request, fields: str, word: str):
         print(f"인기검색어 입력 오류: {e}")
 
 
-def generate_token(request: Request, action: str = ''):
-    '''
+def create_session_token(request: Request):
+    """
     토큰 생성 함수
 
     Returns:
         str: 생성된 토큰
-    '''
-    # token = str(uuid.uuid4())  # 임의의 유일한 키 생성
-    token = hash_password(action)
-    request.session["ss_token"] = token
+    """
+    token = secrets.token_hex(16)  # 16바이트 토큰 생성
+    request.session["ss_token"] = token  # 세션에 토큰 저장
     return token
 
 
@@ -1700,7 +1700,6 @@ class UserTemplates(Jinja2Templates):
             self.env.globals["getattr"] = getattr
             self.env.globals["get_selected"] = get_selected
             self.env.globals["get_member_icon"] = get_member_icon
-            self.env.globals["generate_token"] = generate_token
             self.env.globals["get_member_image"] = get_member_image
             self.env.globals["theme_asset"] = theme_asset
 
