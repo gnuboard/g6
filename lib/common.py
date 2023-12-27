@@ -2488,6 +2488,7 @@ async def get_variety_tokens(
     """
     return token_form or token_query
 
+
 async def validate_token(
     request: Request,
     token: Annotated[str, Depends(get_variety_tokens)]
@@ -2512,13 +2513,14 @@ async def validate_captcha(
     if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, response)):
         raise AlertException("캡차가 올바르지 않습니다.", 400)
 
+
 async def validate_install():
     """설치 여부 검사"""
     if os.path.exists(ENV_PATH):
         raise AlertException("이미 설치가 완료되었습니다.\\n재설치하시려면 .env파일을 삭제 후 다시 시도해주세요.", 400, "/")
 
 
-def check_group_access(
+async def check_group_access(
         request: Request,
         bo_table: Annotated[str, Path(...)]):
     """그룹 접근권한 체크
@@ -2554,4 +2556,42 @@ def check_group_access(
                     raise AlertException(
                         f"`{board.bo_subject}` 게시판에 대한 접근 권한이 없습니다.\
                         \\n\\n궁금하신 사항은 관리자에게 문의 바랍니다.", 403)
-                
+
+
+async def check_admin_access(request: Request):
+    """
+    관리자페이지 접근권한 체크
+    """
+    db = DBConnect().sessionLocal()
+    path = request.url.path
+    ss_mb_id = request.session.get("ss_mb_id", "")
+
+    # 관리자페이지 접근 권한 체크
+    if not ss_mb_id:
+        raise AlertException("로그인이 필요합니다.", 302, url="/bbs/login?url=" + path)
+    elif not is_admin(request):
+        method = request.method
+        admin_menu_id = get_current_admin_menu_id(request)
+
+        # 관리자 메뉴에 대한 권한 체크
+        if admin_menu_id:
+            au_auth = db.scalar(
+                select(Auth.au_auth)
+                .where(Auth.mb_id==ss_mb_id, Auth.au_menu==admin_menu_id)
+            ) or ""
+            # 각 요청 별 권한 체크
+            # delete 요청은 GET 요청으로 처리되므로, 요청에 "delete"를 포함하는지 확인하여 처리
+            if ("delete" in path and not "d" in au_auth):
+                raise AlertException("삭제 권한이 없습니다.", 302, url="/")
+            elif (method == "POST" and not "w" in au_auth):
+                raise AlertException("수정 권한이 없습니다.", 302, url="/")
+            elif (method == "GET" and not "r" in au_auth):
+                raise AlertException("읽기 권한이 없습니다.", 302, url="/")
+        # 관리자메인은 메뉴ID가 없으므로, 다른 메뉴의 권한이 있는지 확인
+        else:
+            exists_auth = db.scalar(
+                exists(Auth)
+                .where(Auth.mb_id==ss_mb_id).select()
+            )
+            if not exists_auth:
+                raise AlertException("최고관리자 또는 관리권한이 있는 회원만 접근 가능합니다.", 302, url="/")
