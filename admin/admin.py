@@ -4,7 +4,7 @@ from common.database import db_session
 from common.models import Member
 from lib.common import *
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(check_admin_access)])
 templates = AdminTemplates()
 
 from admin.admin_config import router as admin_config_router
@@ -43,15 +43,15 @@ router.include_router(admin_sendmail_router, tags=["admin_sendmail"])
 router.include_router(admin_menu_router, tags=["admin_menu"])
 router.include_router(admin_point_router, tags=["admin_point"])
 router.include_router(admin_auth_router, tags=["admin_auth"])
-router.include_router(admin_popular_router,  tags=["admin_popular"])
-router.include_router(admin_poll_router,  tags=["admin_poll"])
-router.include_router(admin_mail_router,  tags=["admin_mail"])
-router.include_router(admin_newwin_router,  tags=["admin_newwin"])
-router.include_router(admin_write_count_router,  tags=["admin_write_count"])
-router.include_router(admin_plugin_router,  tags=["admin_plugin"])
-router.include_router(admin_cache_router,  tags=["admin_cache"])
+router.include_router(admin_popular_router, tags=["admin_popular"])
+router.include_router(admin_poll_router, tags=["admin_poll"])
+router.include_router(admin_mail_router, tags=["admin_mail"])
+router.include_router(admin_newwin_router, tags=["admin_newwin"])
+router.include_router(admin_write_count_router, tags=["admin_write_count"])
+router.include_router(admin_plugin_router, tags=["admin_plugin"])
+router.include_router(admin_cache_router, tags=["admin_cache"])
 
-MAIN_MENU_KEY = "100100"
+MAIN_MENU_KEY = "100000"
 
 
 @router.get("/")

@@ -138,33 +138,6 @@ async def main_middleware(request: Request, call_next):
     is_autologin = False
     ss_mb_id = request.session.get("ss_mb_id", "")
 
-    # TODO: admin 라우터로 이동 및 의존성 주입으로 변경
-    try:
-        # 관리자페이지 접근시
-        if path.startswith("/admin"):
-            if not ss_mb_id:
-                raise AlertException("로그인이 필요합니다.", 302, url="/bbs/login?url=" + path)
-            elif not is_admin(request):
-                method = request.method
-                admin_menu_id = get_current_admin_menu_id(request)
-
-                if admin_menu_id:
-                    # 관리자 메뉴에 대한 권한 체크
-                    auth = db.scalar(select(models.Auth).filter_by(au_menu = admin_menu_id, mb_id = ss_mb_id))
-                    au_auth = auth.au_auth if auth else ""
-
-                    # 각 요청 별 권한 체크
-                    # delete 요청은 GET 요청으로 처리되므로, 요청에 "delete"를 포함하는지 확인하여 처리
-                    if "delete" in path and not "d" in au_auth:
-                        raise AlertException("삭제 권한이 없습니다.", 302, url="/")
-                    elif (method == "POST" and not "w" in au_auth):
-                        raise AlertException("수정 권한이 없습니다.", 302, url="/")
-                    elif (method == "GET" and not "r" in au_auth):
-                        raise AlertException("읽기 권한이 없습니다.", 302, url="/")
-
-    except AlertException as e:
-        return await alert_exception_handler(request, e)
-
     plugin_state_change_time = get_plugin_state_change_time()
     if cache_plugin_state.__getitem__('change_time') != plugin_state_change_time:
         # 플러그인 상태변경시 캐시를 업데이트.
