@@ -10,6 +10,10 @@ from filelock import FileLock
 from starlette.staticfiles import StaticFiles
 from typing import List
 
+PLUGIN_DIR = 'plugin'
+PLUGIN_STATE_FILE = 'plugin_states.json'
+PLUGIN_STATE_FILE_PATH = f'{PLUGIN_DIR}/{PLUGIN_STATE_FILE}'
+
 # 전역 캐시
 # 플러그인 관리자 메뉴를 저장하는 캐시
 cache_plugin_menu = cachetools.Cache(maxsize=1)
@@ -17,20 +21,17 @@ cache_plugin_menu = cachetools.Cache(maxsize=1)
 # plugin_states.json 파일읽기를 줄이기 위한 캐시
 cache_plugin_state = cachetools.Cache(maxsize=1)
 
-PLUGIN_DIR = 'plugin'
-PLUGIN_STATE_FILE_PATH = f'{PLUGIN_DIR}/plugin_states.json'
-
 
 @dataclass
 class PluginState:
     plugin_name: str  # 관리자 정보 표시 이름
     module_name: str  # 플러그인의 모듈이름
-    is_enable: field(default=False)  # on/off 상태
+    is_enable: field(default=False)  # bool on/off 상태
 
 
-def get_all_plugin_info(plugin_dir):
+def get_all_plugin_info(plugin_dir=PLUGIN_DIR):
     """
-    플러그인 폴더 내부의 모든 패키지들의 정보를 가져온다. (비활성화 포함)
+    PLUGIN_DIR 폴더 내부의 모든 패키지들 정보를 가져온다. (비활성화된 플러그인 포함)
     Args:
         plugin_dir (str): 플러그인 폴더
     Returns:
@@ -152,7 +153,7 @@ def get_admin_plugin_menus():
     return cache_plugin_menu.get('admin_menus')
 
 
-def delete_router_by_tagname(app, tagname):
+def delete_router_by_tagname(app, tagname: str):
     """태그 이름으로 등록된 라우터 삭제
     Args:
         app (FastAPI): FastAPI 인스턴스
@@ -166,7 +167,7 @@ def delete_router_by_tagname(app, tagname):
 
 def read_plugin_state() -> List[PluginState]:
     """
-    플러그인 활성 상태를 plugin_states.json 에서 읽어온다.
+    플러그인 활성 상태를 plugin_states.json 에서 읽는다.
     Returns:
         plugin_state (list): PluginState 목록 반환
     Examples:
@@ -175,12 +176,12 @@ def read_plugin_state() -> List[PluginState]:
     if not os.path.isfile(PLUGIN_STATE_FILE_PATH):
         return []
 
-    lock = FileLock(f"{PLUGIN_DIR}/plugin_states.json.lock", timeout=5)
+    lock = FileLock(f"{PLUGIN_DIR}/{PLUGIN_STATE_FILE}.lock", timeout=5)
     plugin_state = []
     with lock:
         with open(PLUGIN_STATE_FILE_PATH, 'r', encoding="UTF-8") as file:
             # 파일내용 체크등 미리 읽으면 데이터가 사라지므로.
-            # json.load 를 바로 호출해야한다.
+            # json.load() 를 바로 호출해야한다.
             try:
                 plugin_state = json.load(file)
             except Exception as e:
@@ -189,7 +190,7 @@ def read_plugin_state() -> List[PluginState]:
                 # json 포멧에 맞게 고치거나 plugin_states.json 파일을 지우고 플러그인을 관리자에서 새로 설정해야한다.
                 logging.critical("/plugin/plugin_states.json json validate error. not load any plugin!.")
                 logging.critical("It's not allow empty file. check json format. "
-                                 "or remove plugin_states.json file.")
+                                 f"or remove {PLUGIN_STATE_FILE} file.")
                 logging.critical(e)
 
     plugin_state_list = []
@@ -218,7 +219,7 @@ def write_plugin_state(plugin_states: List[PluginState]):
         return
     plugin_states_dict = [asdict(plugin) for plugin in plugin_states]
 
-    lock = FileLock(f"{PLUGIN_DIR}/plugin_states.json.lock", timeout=5)
+    lock = FileLock(f"{PLUGIN_DIR}/{PLUGIN_STATE_FILE}.lock", timeout=5)
     with lock:
         with open(PLUGIN_STATE_FILE_PATH, 'w', encoding="UTF-8") as file:
             json.dump(plugin_states_dict, file, indent=4, ensure_ascii=False)
@@ -233,7 +234,7 @@ def import_plugin_by_states(plugin_states: List[PluginState], plugin_dir=PLUGIN_
     Returns:
         plugin_list (list): 플러그인 목록
     Examples:
-        main, 서버시작(프로세스 시작), 관리자 메뉴에서 사용
+        main, 그누보드 시작 (프로세스 시작)
     """
     plugin_list = []
     for plugin in plugin_states:
@@ -247,7 +248,6 @@ def import_plugin_by_states(plugin_states: List[PluginState], plugin_dir=PLUGIN_
 def register_plugin_admin_menu(plugin_states, plugin_dir=PLUGIN_DIR):
     """
     플러그인의 관리자 메뉴를 등록한다.
-    이미 import 되어있으면 플러그인의 router 모듈 __init__.py 를 다시 실행한다.
     Args:
         plugin_states (list): 플러그인 상태 목록
         plugin_dir (str): 플러그인 폴더
@@ -269,7 +269,6 @@ def register_plugin_admin_menu(plugin_states, plugin_dir=PLUGIN_DIR):
 def register_plugin(plugin_states, plugin_dir=PLUGIN_DIR):
     """
     플러그인의 관리자 메뉴를 등록한다.
-    이미 import 되어있으면 플러그인의 router 모듈 __init__.py 를 다시 실행한다.
     Args:
         plugin_states (list): 플러그인 상태 목록
         plugin_dir (str): 플러그인 폴더
@@ -289,8 +288,7 @@ def register_plugin(plugin_states, plugin_dir=PLUGIN_DIR):
 
 def unregister_plugin(plugin_states, plugin_dir=PLUGIN_DIR):
     """
-    플러그인의 관리자 메뉴를 등록한다.
-    이미 import 되어있으면 플러그인의 router 모듈 __init__.py 를 다시 실행한다.
+    등록된 플러그인을 해제한다. unregister_plugin() 을 실행.
     Args:
         plugin_states (list): 플러그인 상태 목록
         plugin_dir (str): 플러그인 폴더
@@ -309,6 +307,13 @@ def unregister_plugin(plugin_states, plugin_dir=PLUGIN_DIR):
 
 
 def register_statics(app, plugin_info: List[PluginState], plugin_dir=PLUGIN_DIR):
+    """
+    플러그인의 static 을 등록한다.
+    Args:
+        app: FastAPI()
+        plugin_info: 등록할 플러그인 정보
+        plugin_dir: 플러그인이 모여 있는 폴더
+    """
     for plugin in plugin_info:
         try:
             app.mount(
