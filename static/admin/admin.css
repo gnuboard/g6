@@ -432,7 +432,8 @@ tfoot th {}
     .dark-mode .anchor .active a {background: #272E3D !important;color: #fff !important;}
     .toggle-switch::after {display: none;}
     .scroll_top {right: 10px;}
-    .btn_fixed_top {right: 70px;}
+    .btn_fixed_top {right: 70px;top: auto;bottom: 10px;}
+    .container_title.top {position: relative;top: auto;}
 }
 
 @media (max-width: 500px) {

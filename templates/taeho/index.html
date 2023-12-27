@@ -14,9 +14,9 @@
         {{ latest(request, 'pic_list', 'free', 4, 23)|safe }}
         {{ latest(request, 'pic_list', 'qa', 4, 23)|safe }}
     </div>
-    <div class="latest_wr">
+    <div class="latest_wr boards">
         {% for board in boards %}
-        <div style="float:left; {{ loop.cycle("", "margin-left:2%", "margin-left:2%") }}" class="lt_wr">
+        <div style="{{ loop.cycle("", "margin-left:2%", "margin-left:2%") }}" class="lt_wr">
             {{ latest(request, 'basic', board.bo_table, 6, 24)|safe }}
         </div>
         {% endfor %}
