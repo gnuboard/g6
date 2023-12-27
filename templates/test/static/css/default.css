@@ -22,16 +22,12 @@ pre {overflow-x:scroll;font-size:1.1em}
 a {color:#000;text-decoration:none}
 
 *, :after, :before {
-  -webkit-box-sizing:border-box;
-  -moz-box-sizing:border-box;
   box-sizing:border-box;
 }
 
 input[type=text],input[type=password], textarea {
--webkit-transition:all 0.30s ease-in-out;
--moz-transition:all 0.30s ease-in-out;
 -ms-transition:all 0.30s ease-in-out;
--o-transition:all 0.30s ease-in-out;
+transition:all 0.30s ease-in-out;
 outline:none;
 }
 
@@ -445,8 +441,6 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 
 /* cheditor 이슈 */
 .cheditor-popup-window *, .cheditor-popup-window :after, .cheditor-popup-window :before {
--webkit-box-sizing:content-box;
--moz-box-sizing:content-box;
 box-sizing:content-box;
 }
 

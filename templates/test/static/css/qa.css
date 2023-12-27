@@ -127,7 +127,6 @@ box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075)}
 
 #autosave_wrapper {position:relative}
 #autosave_pop {display:none;z-index:10;position:absolute;top:24px;right:117px;padding:8px;width:350px;height:auto !important;height:180px;max-height:180px;border:1px solid #565656;background:#fff;overflow-y:scroll}
-html.no-overflowscrolling #autosave_pop {height:auto;max-height:10000px !important} /* overflow 미지원 기기 대응 */
 #autosave_pop strong {position:absolute;font-size:0;line-height:0;overflow:hidden}
 #autosave_pop div {text-align:right}
 #autosave_pop button {margin:0;padding:0;border:0;background:transparent}
