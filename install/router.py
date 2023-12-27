@@ -128,7 +128,7 @@ async def install_process(request: Request):
 
         try:
             form: InstallFrom = form_cache.get("form")
-            
+
             if form.reinstall:
                 models.Base.metadata.drop_all(bind=engine)
                 yield "기존 데이터베이스 테이블 삭제 완료"
@@ -150,7 +150,7 @@ async def install_process(request: Request):
                 dynamic_create_write_table(board['bo_table'], create_table=True)
             yield "게시판 테이블 생성 완료"
 
-            make_directory()
+            setup_data_directory()
             yield "데이터 경로 생성 완료"
 
             yield f"[success] 축하합니다. {default_version} 설치가 완료되었습니다."
@@ -240,7 +240,13 @@ def board_setup(db: Session):
             db.execute(query)
 
 
-def make_directory():
-    """데이터 경로 생성"""
+def setup_data_directory():
+    """데이터 경로 초기화"""
+    # 데이터 경로 생성
     if not os.path.exists(default_data_directory):
         os.makedirs(default_data_directory)
+    # 캐시 디렉토리 비우기
+    if os.path.exists(default_cache_directory):
+        shutil.rmtree(default_cache_directory)
+    # 캐시 디렉토리 생성
+    os.makedirs(default_cache_directory)
