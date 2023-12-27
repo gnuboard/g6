@@ -1,6 +1,6 @@
 from sqlalchemy import inspect
 
-from common.database import engine, DB_TABLE_PREFIX
+from common.database import DBConnect
 from main import app
 from .. import models
 from ..admin.admin_router import admin_router
@@ -8,8 +8,8 @@ from ..plugin_config import module_name
 from plugin.demo_todo import plugin_config
 
 # install
-if not inspect(engine).has_table(DB_TABLE_PREFIX + "todos"):
-    models.Base.metadata.create_all(bind=engine)
+if not inspect(DBConnect().engine).has_table(DBConnect().table_prefix + "todos"):
+    models.Base.metadata.create_all(bind=DBConnect().engine)
 
 
 # 플러그인의 admin 라우터를 등록한다.
