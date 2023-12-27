@@ -405,7 +405,6 @@ async def visit_device(
 async def visit_hour(
     request: Request,
     db: db_session,
-    current_page: int = Query(default=1, alias="page"),  # 페이지
     from_date: str = Query(default="", alias="fr_date"),  # 시작일
     to_date: str = Query(default=""),  # 종료일
 ):
@@ -413,40 +412,36 @@ async def visit_hour(
     시간별 접속자집계 목록
     """
     request.session["menu_key"] = VISIT_MENU_KEY
-    config = request.state.config
+    dialect = db.bind.dialect.name
     from_date, to_date = validate_time(from_date, to_date)
 
-    # 초기 쿼리 설정
     query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
-
-    # 페이지 번호에 따른 offset 계산
-    records_per_page = getattr(config, "cf_page_rows", 10)
-    offset = (current_page - 1) * records_per_page
-    # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
-    # 최종 쿼리 결과를 가져옵니다.
-    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
-
+    # 합계
+    total_count = db.scalar(query.add_columns(func.count(Visit.vi_id)))
     # 시간별 접속자집계
-    # TODO: 모든 시간이 출력되야함 (현재는 접속자가 없는 시간은 출력되지 않음)
-    filtered_visits = []
-    for visit in visits:
-        filtered_visits.append({
-            "visit_hour": visit.vi_time.strftime("%H"),
-            "count": 1,
-        })
+    # TODO: postgresql는 테스트가 안되어 있음
+    if dialect == 'mysql':
+        query = query.add_columns(func.hour(Visit.vi_time).label('hour'))
+    elif dialect == 'postgresql':
+        query = query.add_columns(func.to_char(Visit.vi_time, 'HH24').label('hour'))
+    elif dialect == 'sqlite':
+        query = query.add_columns(func.strftime('%H', Visit.vi_time).label('hour'))
+    query_result = db.execute(
+        query.add_columns(Visit.vi_time, func.count().label('hour_count'))
+        .group_by('hour')
+    ).all()
 
-    visits = count_by_field(filtered_visits, "visit_hour")
-    visits = add_percent_field(visits)
+    # 00 ~ 23 시간별 접속자집계
+    visits = {f"{hour:02d}": {"count": 0, "rate": 0} for hour in range(24)}
 
-    # 키 정렬
-    visits = sorted(visits, key=lambda k: k['visit_hour'])
+    for result in query_result:
+        visits[result.hour]["count"] = result.hour_count
+        visits[result.hour]["rate"] = round(result.hour_count / total_count * 100, 2)
 
     context = {
         "request": request,
         "visits": visits,
-        "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records),
+        "total_records": total_count,
         "fr_date": from_date,
         "to_date": to_date,
     }
@@ -457,7 +452,6 @@ async def visit_hour(
 async def visit_weekday(
     request: Request,
     db: db_session,
-    current_page: int = Query(default=1, alias="page"),  # 페이지
     from_date: str = Query(default="", alias="fr_date"),  # 시작일
     to_date: str = Query(default=""),  # 종료일
 ):
@@ -465,23 +459,27 @@ async def visit_weekday(
     요일별 접속자집계 목록
     """
     request.session["menu_key"] = VISIT_MENU_KEY
-    config = request.state.config
+    dialect = db.bind.dialect.name
     from_date, to_date = validate_time(from_date, to_date)
 
-    # 초기 쿼리 설정
     query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
-
-    # 페이지 번호에 따른 offset 계산
-    records_per_page = getattr(config, "cf_page_rows", 10)
-    offset = (current_page - 1) * records_per_page
-    # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
-    # 최종 쿼리 결과를 가져옵니다.
-    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
+    # 합계
+    total_count = db.scalar(query.add_columns(func.count(Visit.vi_id)))
+    # 요일별 접속자집계
+    # TODO: postgresql는 테스트가 안되어 있음
+    if dialect == 'mysql':
+        query = query.add_columns(func.dayofweek(Visit.vi_date).label('dow'))
+    elif dialect == 'postgresql':
+        query = query.add_columns(func.to_char(Visit.vi_date, 'D').label('dow'))
+    elif dialect == 'sqlite':
+        query = query.add_columns(func.strftime('%w', Visit.vi_date).label('dow'))
+    query_result = db.execute(
+        query.add_columns(Visit.vi_date, func.count().label('dow_count'))
+        .group_by('dow')
+    ).all()
 
     # 요일별 접속자집계
-    # TODO: 모든요일이 출력되야함 (현재는 접속자가 없는 요일은 출력되지 않음)
-    korean_week_day = {
+    day_of_week = {
         "Mon": "월",
         "Tue": "화",
         "Wed": "수",
@@ -490,22 +488,19 @@ async def visit_weekday(
         "Sat": "토",
         "Sun": "일",
     }
-    # todo 다국어 적용시 삭제
-    filtered_visits = []
-    for visit in visits:
-        filtered_visits.append({
-            "visit_weekday": korean_week_day[visit.vi_date.strftime("%a")],
-            "count": 1,
-        })
+    visits = {value: {"count": 0, "rate": 0} for value in day_of_week.values()}
 
-    visits = count_by_field(filtered_visits, "visit_weekday")
-    visits = add_percent_field(visits)
+    for result in query_result:
+        # 데이터베이스 별로 요일(day of week)을 출력하는 기준이 다르기 때문에
+        # 요일을 python 기준으로 다시한번 변경한다.
+        dow = day_of_week[result.vi_date.strftime("%a")]
+        visits[dow]["count"] = result.dow_count
+        visits[dow]["rate"] = round(result.dow_count / total_count * 100, 2)
 
     context = {
         "request": request,
         "visits": visits,
-        "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records),
+        "total_records": total_count,
         "fr_date": from_date,
         "to_date": to_date,
     }
