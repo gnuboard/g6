@@ -2001,13 +2001,14 @@ def insert_board_new(bo_table: str, write: WriteBaseModel):
     db.commit()
 
 
-def get_current_captcha_cls(captcha_name: str):
+def get_current_captcha_cls(config: Config):
     """캡챠 클래스를 반환하는 함수
     Args:
-        captcha_name (str) : config cf_captcha에 저장된 캡차클래스이름
+        config (Config) : config 모델
     Returns:
         Optional[class]: 캡차 클래스 or None
     """
+    captcha_name = getattr(config, "cf_captcha", "")
     if captcha_name == "recaptcha":
         return ReCaptchaV2
     elif captcha_name == "recaptcha_inv":
@@ -2023,7 +2024,7 @@ def captcha_widget(request):
     Returns:
         str: 캡차 템플릿 or ''
     """
-    cls = get_current_captcha_cls(captcha_name=request.state.config.cf_captcha)
+    cls = get_current_captcha_cls(request.state.config)
     if cls:
         return cls.TEMPLATE_NAME
 
@@ -2508,9 +2509,9 @@ async def validate_captcha(
     구글 reCAPTCHA 유효성 검사
     """
     config = request.state.config
-    captcha_cls = get_current_captcha_cls(config.cf_captcha)
-    # TODO: config.cf_recaptcha_secret_key 변수를 항상 전달할 필요가 있을까?
-    if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, response)):
+    captcha_cls = get_current_captcha_cls(config)
+    captcha = captcha_cls(config)
+    if captcha and (not await captcha.verify(response)):
         raise AlertException("캡차가 올바르지 않습니다.", 400)
 
 

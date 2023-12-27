@@ -146,7 +146,7 @@ async def memo_form(
         target = db.scalar(select(Member).filter(Member.mb_id==me_recv_mb_id))
     
     # 답장할 쪽지의 정보 조회
-    memo = db.get(Memo, me_id)
+    memo = db.get(Memo, me_id) if me_id else None
 
     context = {
         "request": request,
