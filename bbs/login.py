@@ -32,6 +32,7 @@ async def login(
     db: db_session,
     mb_id: str = Form(...),
     mb_password: str = Form(...),
+    auto_login: bool = Form(default=False),
     url: str = Form(default="/")
 ):
     """
@@ -49,20 +50,28 @@ async def login(
     elif config.cf_use_email_certify and member.mb_email_certify == datetime(1, 1, 1, 0, 0, 0):
         raise AlertException(f"{member.mb_email} 메일로 메일인증을 받으셔야 로그인 가능합니다.", 404)
 
+    ss_mb_key = session_member_key(request, member)
     # 로그인 성공시 세션에 저장
     request.session["ss_mb_id"] = member.mb_id
     # XSS 공격에 대응하기 위하여 회원의 고유키를 생성해 놓는다.
-    request.session["ss_mb_key"] = session_member_key(request, member)
+    request.session["ss_mb_key"] = ss_mb_key
 
-    return RedirectResponse(url=url, status_code=302)
+    # 자동로그인
+    response = RedirectResponse(url=url, status_code=302)
+    # 최고관리자는 보안상 자동로그인 기능을 사용하지 않는다.
+    if auto_login and not is_admin(request):
+        response.set_cookie(key="ck_auto", value=ss_mb_key, max_age=60 * 60 * 24 * 30)
+        response.set_cookie(key="ck_mb_id", value=member.mb_id, max_age=60 * 60 * 24 * 30)
 
+    return response
 
 @router.post("/login_check")
 async def check_login(
     request: Request,
     db: db_session,
     mb_id: str = Form(...),
-    mb_password: str = Form(...)
+    mb_password: str = Form(...),
+    auto_login: bool = Form(default=False)
 ):
     """
     outlogin 에서 로그인
@@ -79,18 +88,32 @@ async def check_login(
     elif config.cf_use_email_certify and member.mb_email_certify == datetime(1, 1, 1, 0, 0, 0):
         raise AlertException(f"{member.mb_email} 메일로 메일인증을 받으셔야 로그인 가능합니다.", 404)
 
+    ss_mb_key = session_member_key(request, member)
     # 로그인 성공시 세션에 저장
     request.session["ss_mb_id"] = member.mb_id
     # XSS 공격에 대응하기 위하여 회원의 고유키를 생성해 놓는다.
-    request.session["ss_mb_key"] = session_member_key(request, member)
+    request.session["ss_mb_key"] = ss_mb_key
 
-    return RedirectResponse(url="/", status_code=302)
+    # 자동로그인
+    response = RedirectResponse(url="/", status_code=302)
+    # 최고관리자는 보안상 자동로그인 기능을 사용하지 않는다.
+    if auto_login and not is_admin(request):
+        response.set_cookie(key="ck_auto", value=ss_mb_key, max_age=60 * 60 * 24 * 30)
+        response.set_cookie(key="ck_mb_id", value=member.mb_id, max_age=60 * 60 * 24 * 30)
+
+    return response
 
 
 @router.get("/logout")
 async def logout(request: Request):
     """
-    로그아웃, 세션을 초기화.
+    로그아웃
+    - 세션/자동로그인 쿠키를 초기화.
     """
     request.session.clear()
-    return RedirectResponse(url="/", status_code=302)
+
+    response = RedirectResponse(url="/", status_code=302)
+    response.delete_cookie(key="ck_auto")
+    response.delete_cookie(key="ck_mb_id")
+
+    return response
