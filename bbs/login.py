@@ -71,7 +71,8 @@ async def check_login(
     db: db_session,
     mb_id: str = Form(...),
     mb_password: str = Form(...),
-    auto_login: bool = Form(default=False)
+    auto_login: bool = Form(default=False),
+    url: str = Form(default="/")
 ):
     """
     outlogin 에서 로그인
@@ -95,7 +96,7 @@ async def check_login(
     request.session["ss_mb_key"] = ss_mb_key
 
     # 자동로그인
-    response = RedirectResponse(url="/", status_code=302)
+    response = RedirectResponse(url=url, status_code=302)
     # 최고관리자는 보안상 자동로그인 기능을 사용하지 않는다.
     if auto_login and not is_admin(request):
         response.set_cookie(key="ck_auto", value=ss_mb_key, max_age=60 * 60 * 24 * 30)

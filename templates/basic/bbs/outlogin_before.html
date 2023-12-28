@@ -9,7 +9,7 @@
     <form name="foutlogin" action="/bbs/login_check" onsubmit="return fhead_submit(this);" method="post" autocomplete="off">
     <fieldset>
         <div class="ol_wr">
-            <input type="hidden" name="url" value="%2Fbbs%2Fregister_form.php">
+            <input type="hidden" name="url" value="{{ request.url }}">
             <label for="ol_id" id="ol_idlabel" class="sound_only">회원아이디<strong>필수</strong></label>
             <input type="text" id="ol_id" name="mb_id" required maxlength="20" placeholder="아이디">
             <label for="ol_pw" id="ol_pwlabel" class="sound_only">비밀번호<strong>필수</strong></label>
