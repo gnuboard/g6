@@ -59,7 +59,7 @@
                         <th scope="row"><label for="nw_begin_time">시작일시<strong class="sound_only"> 필수</strong></label></th>
                         <td>
                             <input type="text" name="nw_begin_time" value="{{ newwin.nw_begin_time }}" id="nw_begin_time" required="" class="frm_input required" size="21" maxlength="19">
-                            <input type="checkbox" name="nw_begin_chk" value="{{ today }}" id="nw_begin_chk" onclick="if (this.checked == true) this.form.nw_begin_time.value=this.form.nw_begin_chk.value; else this.form.nw_begin_time.value = this.form.nw_begin_time.defaultValue;">
+                            <input type="checkbox" name="nw_begin_chk" value="{{ start_day }}" id="nw_begin_chk" onclick="if (this.checked == true) this.form.nw_begin_time.value=this.form.nw_begin_chk.value; else this.form.nw_begin_time.value = this.form.nw_begin_time.defaultValue;">
                             <label for="nw_begin_chk">시작일시를 오늘로</label>
                         </td>
                     </tr>
