@@ -150,19 +150,13 @@ async def faq_master_update(
     return RedirectResponse(f"/admin/faq_master_form/{faq_master.fm_id}", status_code=303)
 
 
-@router.delete("/faq_master_form_delete/{fm_id}")
+@router.delete("/faq_master_form_delete/{fm_id}", dependencies=[Depends(validate_token)])
 async def faq_master_delete(
     request: Request,
     db: db_session,
-    token: str = Query(...),
     fm_id: int = Path(...),
 ):
     """FAQ관리 삭제 처리"""
-    # 토큰 검사
-    # DELETE 요청일 경우, Body에 토큰이 없으므로 쿼리스트링에서 토큰을 얻는다.
-    if not check_token(request, token):
-        return JSONResponse(status_code=403, content={"message": "토큰이 유효하지 않습니다."})
-    
     faq_master = db.scalar(select(FaqMaster).where(FaqMaster.fm_id == fm_id))
     db.delete(faq_master)
     db.commit()
@@ -252,19 +246,13 @@ async def faq_update(
     return RedirectResponse(f"/admin/faq_form/{fm_id}/{faq.fa_id}", status_code=303)
 
 
-@router.delete("/faq_form_delete/{fa_id}")
+@router.delete("/faq_form_delete/{fa_id}", dependencies=[Depends(validate_token)])
 async def faq_delete(
     request: Request,
     db: db_session,
-    token: str = Query(...),
     fa_id: int = Path(...),
 ):
     """FAQ 항목 삭제 처리"""
-    # 토큰 검사
-    # DELETE 요청일 경우, Body에 토큰이 없으므로 쿼리스트링에서 토큰을 얻는다.
-    if not check_token(request, token):
-        return JSONResponse(status_code=403, content={"message": "토큰이 유효하지 않습니다."})
-
     faq = db.scalar(select(Faq).where(Faq.fa_id == fa_id))
     db.delete(faq)
     db.commit()

@@ -3,6 +3,7 @@ import logging
 import os
 import random
 import re
+import secrets
 import typing
 from time import sleep
 from typing import Any, Dict, List, Optional, Union
@@ -1301,16 +1302,15 @@ def insert_popular(request: Request, fields: str, word: str):
         print(f"인기검색어 입력 오류: {e}")
 
 
-def generate_token(request: Request, action: str = ''):
-    '''
+def create_session_token(request: Request):
+    """
     토큰 생성 함수
 
     Returns:
         str: 생성된 토큰
-    '''
-    # token = str(uuid.uuid4())  # 임의의 유일한 키 생성
-    token = hash_password(action)
-    request.session["ss_token"] = token
+    """
+    token = secrets.token_hex(16)  # 16바이트 토큰 생성
+    request.session["ss_token"] = token  # 세션에 토큰 저장
     return token
 
 
@@ -1702,7 +1702,6 @@ class UserTemplates(Jinja2Templates):
             self.env.globals["getattr"] = getattr
             self.env.globals["get_selected"] = get_selected
             self.env.globals["get_member_icon"] = get_member_icon
-            self.env.globals["generate_token"] = generate_token
             self.env.globals["get_member_image"] = get_member_image
             self.env.globals["theme_asset"] = theme_asset
 
@@ -1786,7 +1785,7 @@ class AdminTemplates(Jinja2Templates):
         return context
 
 
-class G6FileCache():
+class FileCache():
     """파일 캐시 클래스
     """
     cache_dir = os.path.join("data", "cache")
@@ -1912,13 +1911,13 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     if not skin_dir:
         skin_dir = 'basic'
 
-    g6_file_cache = G6FileCache()
-    cache_filename = f"latest-{bo_table}-{skin_dir}-{rows}-{subject_len}-{g6_file_cache.get_cache_secret_key()}.html"
-    cache_file = os.path.join(g6_file_cache.cache_dir, cache_filename)
+    file_cache = FileCache()
+    cache_filename = f"latest-{bo_table}-{skin_dir}-{rows}-{subject_len}-{file_cache.get_cache_secret_key()}.html"
+    cache_file = os.path.join(file_cache.cache_dir, cache_filename)
 
     # 캐시된 파일이 있으면 파일을 읽어서 반환
     if os.path.exists(cache_file):
-        return g6_file_cache.get(cache_file)
+        return file_cache.get(cache_file)
     
     db = DBConnect().sessionLocal()
     # 게시판 설정
@@ -1947,7 +1946,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     temp_decode = temp.body.decode("utf-8")
 
     # 캐시 파일 생성
-    g6_file_cache.create(temp_decode, cache_file)
+    file_cache.create(temp_decode, cache_file)
 
     return temp_decode
 
@@ -2003,13 +2002,14 @@ def insert_board_new(bo_table: str, write: WriteBaseModel):
     db.commit()
 
 
-def get_current_captcha_cls(captcha_name: str):
+def get_current_captcha_cls(config: Config):
     """캡챠 클래스를 반환하는 함수
     Args:
-        captcha_name (str) : config cf_captcha에 저장된 캡차클래스이름
+        config (Config) : config 모델
     Returns:
         Optional[class]: 캡차 클래스 or None
     """
+    captcha_name = getattr(config, "cf_captcha", "")
     if captcha_name == "recaptcha":
         return ReCaptchaV2
     elif captcha_name == "recaptcha_inv":
@@ -2025,7 +2025,7 @@ def captcha_widget(request):
     Returns:
         str: 캡차 템플릿 or ''
     """
-    cls = get_current_captcha_cls(captcha_name=request.state.config.cf_captcha)
+    cls = get_current_captcha_cls(request.state.config)
     if cls:
         return cls.TEMPLATE_NAME
 
@@ -2510,9 +2510,9 @@ async def validate_captcha(
     구글 reCAPTCHA 유효성 검사
     """
     config = request.state.config
-    captcha_cls = get_current_captcha_cls(config.cf_captcha)
-    # TODO: config.cf_recaptcha_secret_key 변수를 항상 전달할 필요가 있을까?
-    if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, response)):
+    captcha_cls = get_current_captcha_cls(config)
+    captcha = captcha_cls(config)
+    if captcha and (not await captcha.verify(response)):
         raise AlertException("캡차가 올바르지 않습니다.", 400)
 
 

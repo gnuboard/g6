@@ -223,7 +223,7 @@ async def list_delete(
     db.commit()
 
     # 최신글 캐시 삭제
-    G6FileCache().delete_prefix(f'latest-{bo_table}')
+    FileCache().delete_prefix(f'latest-{bo_table}')
 
     # TODO: 게시글 삭제시 같이 삭제해야할 것들 추가
 
@@ -310,6 +310,7 @@ async def move_update(
     ).all()
 
     # 게시글 복사/이동 작업 반복
+    file_cache = FileCache()
     for target_bo_table in target_bo_tables:
         for origin_write in origin_writes:
             target_write_model = dynamic_create_write_table(target_bo_table)
@@ -383,10 +384,10 @@ async def move_update(
                     file_manager.copy_board_files(FILE_DIRECTORY, target_bo_table, target_write.wr_id)
 
         # 최신글 캐시 삭제
-        G6FileCache().delete_prefix(f'latest-{target_bo_table}')
+        file_cache.delete_prefix(f'latest-{target_bo_table}')
 
     # 원본 게시판 최신글 캐시 삭제
-    G6FileCache().delete_prefix(f'latest-{bo_table}')
+    file_cache.delete_prefix(f'latest-{bo_table}')
 
     context = {
         "request": request,
@@ -759,7 +760,7 @@ async def write_update(
         db.commit()
 
     # 최신글 캐시 삭제
-    G6FileCache().delete_prefix(f'latest-{bo_table}')
+    FileCache().delete_prefix(f'latest-{bo_table}')
 
     query_string = ""
     if request.query_params:

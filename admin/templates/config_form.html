@@ -20,7 +20,7 @@
         <li><a href="#anc_cf_mail">기본메일환경</a></li>
         <li><a href="#anc_cf_article_mail">글작성메일</a></li>
         <li><a href="#anc_cf_join_mail">가입메일</a></li>
-        <li><a href="#anc_cf_vote_mail">투표메일</a></li>
+        <li><a href="#anc_cf_poll_mail">투표메일</a></li>
         <li><a href="#anc_cf_sns">SNS</a></li>
         <li><a href="#anc_cf_lay">레이아웃 추가설정</a></li>
         <li><a href="#anc_cf_sms">SMS</a></li>
@@ -676,7 +676,7 @@
     </div>
 </section>
 
-<section id="anc_cf_vote_mail">
+<section id="anc_cf_poll_mail">
     <h2 class="h2_frm">투표 기타의견 작성 시 메일 설정</h2>
     {{ pg_anchor }}
     <div class="tbl_frm01 tbl_wrap">
@@ -1029,7 +1029,7 @@
         }
 
         // 토큰 생성은 폼 체크의 가장 마지막에서 한다.
-        f.token.value = generate_token(f);
+        f.token.value = generate_token();
 
         return true;
     }

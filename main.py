@@ -87,8 +87,7 @@ app.include_router(social_router, prefix="/bbs", tags=["social"])
 app.include_router(password_router, prefix="/bbs", tags=["password"])
 app.include_router(search_router, prefix="/bbs", tags=["search"])
 app.include_router(editor_router, prefix="/editor", tags=["editor"])
-# is_mobile = False
-# user_device = 'pc'
+
 
 class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -223,7 +222,7 @@ async def main_middleware(request: Request, call_next):
         request.state.is_mobile = True
 
     if not IS_RESPONSIVE:  # 적응형
-        # 반영형이 아니라면 모바일 접속은 mobile 로, 그 외 접속은 pc 로 간주
+        # 반응형이 아니라면 모바일 접속은 mobile 로, 그 외 접속은 desktop 으로 간주
         if request.state.is_mobile:
             request.state.device = "mobile"
 
@@ -336,7 +335,7 @@ async def index(request: Request, db: db_session):
 
 @app.post("/generate_token")
 async def generate_token(request: Request):
-    token = secrets.token_hex(16)  # 16바이트 토큰 생성
-    request.session["ss_token"] = token  # 세션에 토큰 저장
+
+    token = create_session_token(request)
 
     return JSONResponse(content={"success": True, "token": token})
