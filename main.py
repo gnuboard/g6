@@ -86,8 +86,7 @@ app.include_router(social_router, prefix="/bbs", tags=["social"])
 app.include_router(password_router, prefix="/bbs", tags=["password"])
 app.include_router(search_router, prefix="/bbs", tags=["search"])
 app.include_router(editor_router, prefix="/editor", tags=["editor"])
-# is_mobile = False
-# user_device = 'pc'
+
 
 class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -223,21 +222,9 @@ async def main_middleware(request: Request, call_next):
         request.state.is_mobile = True
 
     if not IS_RESPONSIVE: # 적응형
-        # 반영형이 아니라면 모바일 접속은 mobile 로, 그 외 접속은 pc 로 간주
+        # 반응형이 아니라면 모바일 접속은 mobile 로, 그 외 접속은 desktop 으로 간주
         if request.state.is_mobile:
             request.state.device = "mobile"
-
-    # if 'SET_DEVICE' in globals():
-    #     if SET_DEVICE == 'mobile':
-    #         request.state.is_mobile = True
-    #         request.state.device = 'mobile'
-    # else:
-    #     user_agent = request.headers.get("User-Agent", "")
-    #     ua = parse(user_agent)
-    #     if 'USE_MOBILE' in globals() and USE_MOBILE:
-    #         if ua.is_mobile or ua.is_tablet: # 모바일과 태블릿에서 접속하면 모바일로 간주
-    #             request.state.is_mobile = True
-    #             request.state.device = 'mobile'
                 
     # 로그인한 회원 정보
     request.state.login_member = member
@@ -246,12 +233,6 @@ async def main_middleware(request: Request, call_next):
     request.state.editor = config.cf_editor
     request.state.use_editor = True if config.cf_editor else False
 
-    # request.state.context = {
-    #     # "request": request,
-    #     # "config": config,
-    #     # "member": member,
-    #     # "outlogin": outlogin.body.decode("utf-8"),
-    # }
     response = await call_next(request)
 
     if is_autologin:
