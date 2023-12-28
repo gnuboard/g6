@@ -9,7 +9,7 @@ from starlette.templating import Jinja2Templates
 from admin.admin_config import get_admin_plugin_menus
 from common.database import get_db
 from lib.common import ADMIN_TEMPLATES_DIR, get_member_id_select, get_skin_select, get_editor_select, get_selected, \
-    get_member_level_select, option_array_checked, get_admin_menus, generate_token, get_client_ip, check_token, \
+    get_member_level_select, option_array_checked, get_admin_menus, get_client_ip, validate_token,\
     AlertException
 from lib.plugin.service import get_all_plugin_module_names, PLUGIN_DIR
 from ..models import Todo
@@ -26,7 +26,6 @@ templates.env.globals["get_member_level_select"] = get_member_level_select
 templates.env.globals["option_array_checked"] = option_array_checked
 templates.env.globals["get_admin_menus"] = get_admin_menus
 templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
-templates.env.globals["generate_token"] = generate_token
 templates.env.globals["get_client_ip"] = get_client_ip
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 
@@ -86,15 +85,11 @@ def create_form(request: Request):
         })
 
 
-@admin_router.post("/create")
+@admin_router.post("/create", dependencies=[Depends(validate_token)])
 def create(request: Request,
            title: str = Form(...),
            content: str = Form(...),
-           token: str = Form(...),
            db: Session = Depends(get_db)):
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     todo = Todo(
         title=title,
         content=content
@@ -136,13 +131,10 @@ def update(request: Request,
     return RedirectResponse("/admin/todo/todos", status_code=200)
 
 
-@admin_router.post("/delete")
+@admin_router.post("/delete", dependencies=[Depends(validate_token)])
 def update(request: Request,
-           token: str = Form(...),
            ids: list = Form(..., alias='chk[]'),
            db: Session = Depends(get_db)):
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
     db.query(Todo).filter(Todo.id.in_(ids)).delete()
     db.commit()
     return RedirectResponse(f"/admin/todo/todos", status_code=302)

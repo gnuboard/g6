@@ -25,22 +25,20 @@
     </tr>
     </tfoot>
     <tbody>
-        {% for visit in visits %}
+        {% for dow, visit in visits.items() %}
         <tr class="bg{{ loop.cycle('0', '1') }}">
-            <td class="td_category">{{ visit.visit_weekday }}</td>
+            <td class="td_category">{{ dow }}</td>
             <td>
                 <div class="visit_bar">
-                    <span style="width:{{ visit.percent }}%"></span>
+                    <span style="width:{{ visit.rate }}%"></span>
                 </div>
             </td>
             <td class="td_num_c3">{{ visit.count|number_format }}</td>
-            <td class="td_num">{{ visit.percent }}</td>
+            <td class="td_num">{{ visit.rate }}%</td>
         </tr>
         {% endfor %}
     </tbody>
     </table>
 </div>
-
-{{ paging|safe }}
 
 {% endblock content %}

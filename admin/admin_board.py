@@ -91,7 +91,7 @@ async def board_list_update(
             db.commit()
 
             # 최신글 캐시 삭제
-            G6FileCache().delete_prefix(f'latest-{board.bo_table}')
+            FileCache().delete_prefix(f'latest-{board.bo_table}')
 
     return RedirectResponse(f"/admin/board_list?{request.query_params}", status_code=302)
 
@@ -124,7 +124,7 @@ async def board_list_delete(
             # FIXME: 게시판 생성 직후 삭제시 database locked 에러 발생
             write_model.__table__.drop(DBConnect().engine)
             # 최신글 캐시 삭제
-            G6FileCache().delete_prefix(f'latest-{board.bo_table}')
+            FileCache().delete_prefix(f'latest-{board.bo_table}')
 
             db.commit()
 
@@ -620,7 +620,7 @@ async def board_form_update(
             db.commit()
 
     # 최신글 캐시 삭제
-    G6FileCache().delete_prefix(f'latest-{bo_table}')
+    FileCache().delete_prefix(f'latest-{bo_table}')
 
     return RedirectResponse(f"/admin/board_form/{bo_table}?{request.query_params}", status_code=303)
 
