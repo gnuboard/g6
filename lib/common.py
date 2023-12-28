@@ -1783,7 +1783,7 @@ class AdminTemplates(Jinja2Templates):
         return context
 
 
-class G6FileCache():
+class FileCache():
     """파일 캐시 클래스
     """
     cache_dir = os.path.join("data", "cache")
@@ -1909,13 +1909,13 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     if not skin_dir:
         skin_dir = 'basic'
 
-    g6_file_cache = G6FileCache()
-    cache_filename = f"latest-{bo_table}-{skin_dir}-{rows}-{subject_len}-{g6_file_cache.get_cache_secret_key()}.html"
-    cache_file = os.path.join(g6_file_cache.cache_dir, cache_filename)
+    file_cache = FileCache()
+    cache_filename = f"latest-{bo_table}-{skin_dir}-{rows}-{subject_len}-{file_cache.get_cache_secret_key()}.html"
+    cache_file = os.path.join(file_cache.cache_dir, cache_filename)
 
     # 캐시된 파일이 있으면 파일을 읽어서 반환
     if os.path.exists(cache_file):
-        return g6_file_cache.get(cache_file)
+        return file_cache.get(cache_file)
     
     db = DBConnect().sessionLocal()
     # 게시판 설정
@@ -1944,7 +1944,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     temp_decode = temp.body.decode("utf-8")
 
     # 캐시 파일 생성
-    g6_file_cache.create(temp_decode, cache_file)
+    file_cache.create(temp_decode, cache_file)
 
     return temp_decode
 
