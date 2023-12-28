@@ -50,6 +50,9 @@ from bbs.password import router as password_router
 from bbs.search import router as search_router
 from lib.editor.ckeditor4 import router as editor_router
 
+# git clone으로 소스를 받은 경우에는 data디렉토리가 없으므로 생성해야 함
+if not os.path.exists("data"):
+    os.mkdir("data")
 register_theme_statics(app)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
