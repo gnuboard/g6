@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
-<title>{% block title %}관리자 base{% endblock %} | 그누보드5</title>
+<title>{% block title %}관리자 base{% endblock title %} | 그누보드5</title>
 <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 <link rel="stylesheet" href="/static/admin/admin.css">
 <link rel="stylesheet" href="/static/admin/font-awesome.min.css">
     
 <script>
 // 자바스크립트에서 사용하는 전역변수 선언
-var g5_url       = "{{request.base_url}}";
-var g5_bbs_url   = "{{request.base_url}}bbs";
+var g5_url       = "{{ request.base_url }}";
+var g5_bbs_url   = "{{ request.base_url }}bbs";
 var g5_is_member = "1";
 var g5_is_admin  = "super";
 var g5_is_mobile = "";
@@ -22,14 +22,14 @@ var g5_cookie_domain = "";
 var g5_shop_url = "/shop";
 var g5_admin_url = "/admin";
 </script>
-<script src="/static/js/jquery-1.12.4.min.js"></script>
-<script src="/static/js/jquery-migrate-1.4.1.min.js"></script>
+<script src="/static/js/jquery-3.7.1.min.js"></script>
+<script src="/static/js/jquery-migrate-3.4.0.min.js"></script>
 <script src="/static/js/jquery.menu.js"></script>
 <script src="/static/js/common.js"></script>
 
 <script src="/static/js/placeholders.min.js"></script>
 {% block head %}
-{% endblock %}
+{% endblock head %}
 {% include "plugin_menu_header.html" %}
 
 </head>
@@ -172,7 +172,8 @@ var g5_admin_url = "/admin";
     <div id="container" class="">
         <h1 id="container_title">{% block subtitle %}관리자메인{% endblock subtitle %}</h1>
         <div class="container_wr">
-            {% block content %}{% endblock %}
+            {% block content %}
+            {% endblock content %}
         </div>
         <footer id="ft">
             <p>

@@ -6,7 +6,7 @@
 {% if request.state.config %}
     {{ request.state.config.cf_add_meta|safe }}
 {% endif %}
-<title>{% block title %}그누보드{% endblock %}</title>
+<title>{% block title %}그누보드{% endblock title %}</title>
 <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 <link rel="stylesheet" href="/static/css/default.css">
 <link rel="stylesheet" href="/static/js/font-awesome/css/font-awesome.min.css">
@@ -24,8 +24,8 @@
 <link rel="stylesheet" href="/static/js/owlcarousel/owl.carousel.min.css">
 <script>
 // 자바스크립트에서 사용하는 전역변수 선언
-var g5_url       = "{{request.base_url}}";
-var g5_bbs_url   = "{{request.base_url}}bbs";
+var g5_url       = "{{ request.base_url }}";
+var g5_bbs_url   = "{{ request.base_url }}bbs";
 var g5_is_member = "1";
 var g5_is_admin  = "super";
 var g5_is_mobile = "";
@@ -33,10 +33,10 @@ var g5_bo_table  = "";
 var g5_sca       = "";
 var g5_editor    = "";
 var g5_cookie_domain = "";
-var g5_shop_url = "{{request.base_url}}shop";
+var g5_shop_url = "{{ request.base_url }}shop";
 </script>
-<script src="/static/js/jquery-1.12.4.min.js"></script>
-<script src="/static/js/jquery-migrate-1.4.1.min.js"></script>
+<script src="/static/js/jquery-3.7.1.min.js"></script>
+<script src="/static/js/jquery-migrate-3.4.0.min.js"></script>
 <script src="/static/js/jquery.menu.js"></script>
 <script src="/static/js/common.js"></script>
 <script src="/static/js/wrest.js"></script>
