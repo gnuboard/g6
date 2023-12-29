@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% import editor_macro(request) as editor %}
 
-{% block title %}
-    내용관리
-{% endblock title %}
-{% block subtitle %}
-    내용관리
-{% endblock subtitle %}
+{% block head %}
+    {{ editor.head() }}
+{% endblock head %}
+
+{% block title %}내용관리{% endblock title %}
+{% block subtitle %}내용관리{% endblock subtitle %}
 
 {% block content %}
 
@@ -35,34 +36,15 @@
                 </tr>
                 <tr>
                     <th scope="row">내용</th>
-                    <td><span class="sound_only">웹에디터 시작</span><script>document.write("<div class='cke_sc'><button type='button' class='btn_cke_sc'>단축키 일람</button></div>");</script>
-<script src="http://g5.gnupy.com/plugin/editor/smarteditor2/js/service/HuskyEZCreator.js"></script>
-<script>var g5_editor_url = "http://g5.gnupy.com/plugin/editor/smarteditor2", oEditors = [], ed_nonce = "Veh27DTOVG|1696477250|dcc25abd51f7777ecd6bdd2d1c3ba121045d694b";</script>
-<script src="http://g5.gnupy.com/plugin/editor/smarteditor2/config.js"></script>
-<script>
-        $(function(){
-            $(".btn_cke_sc").click(function(){
-                if ($(this).next("div.cke_sc_def").length) {
-                    $(this).next("div.cke_sc_def").remove();
-                    $(this).text("단축키 일람");
-                } else {
-                    $(this).after("<div class='cke_sc_def' />").next("div.cke_sc_def").load("http://g5.gnupy.com/plugin/editor/smarteditor2/shortcut.html");
-                    $(this).text("단축키 일람 닫기");
-                }
-            });
-            $(document).on("click", ".btn_cke_sc_close", function(){
-                $(this).parent("div.cke_sc_def").remove();
-            });
-        });
-</script>
-<textarea id="co_content" name="co_content" class="smarteditor2" maxlength="65536" style="width:100%;height:300px">{{ content.co_content }}</textarea>
-<span class="sound_only">웹 에디터 끝</span></td>
+                    <td>
+                        {{ editor.body("co_content", content.co_content) }}
+                    </td>
                 </tr>
                 <tr>
                     <th scope="row">모바일 내용</th>
-                    <td><span class="sound_only">웹에디터 시작</span><script>document.write("<div class='cke_sc'><button type='button' class='btn_cke_sc'>단축키 일람</button></div>");</script>
-<textarea id="co_mobile_content" name="co_mobile_content" class="smarteditor2" maxlength="65536" style="width:100%;height:300px">{{ content.co_mobile_content }}</textarea>
-<span class="sound_only">웹 에디터 끝</span></td>
+                    <td>
+                        {{ editor.body("co_mobile_content", content.co_mobile_content) }}
+                    </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="co_skin">스킨 디렉토리<strong class="sound_only">필수</strong></label></th>

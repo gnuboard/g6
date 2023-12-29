@@ -214,7 +214,10 @@ var g5_admin_url = "/admin";
         
         // 현재 페이지 메뉴 활성화
         const current_menu = "{{ request.session.get('menu_key', '') }}"
-        document.querySelector(`li[data-menu="${current_menu}"] > a`).classList.add('on');
+        current_menu_element = document.querySelector(`li[data-menu="${current_menu}"] > a`)
+        if (current_menu_element) {
+            current_menu_element.classList.add('on');
+        }
         
         var hide_menu = false;
         var mouse_event = false;
