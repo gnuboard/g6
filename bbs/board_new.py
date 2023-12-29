@@ -111,7 +111,7 @@ async def new_delete(
         BoardFileManager(board, write.wr_id).delete_board_files()
 
         # 최신글 캐시 삭제
-        G6FileCache().delete_prefix(f'latest-{new.bo_table}')
+        FileCache().delete_prefix(f'latest-{new.bo_table}')
 
     db.commit()
 

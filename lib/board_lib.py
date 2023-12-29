@@ -1222,7 +1222,7 @@ def delete_write(request: Request, bo_table: str, origin_write: WriteBaseModel) 
     db.commit()
 
     # 최신글 캐시 삭제
-    G6FileCache().delete_prefix(f'latest-{bo_table}')
+    FileCache().delete_prefix(f'latest-{bo_table}')
 
     return True
 

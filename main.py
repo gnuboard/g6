@@ -2,7 +2,7 @@ import datetime
 import secrets
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import TypeAdapter
 from sqlalchemy import select
@@ -13,6 +13,7 @@ from user_agents import parse
 from common.database import DBConnect, db_session
 import common.models as models
 from lib.common import *
+from lib.member_lib import MemberService
 from lib.plugin.service import register_statics, register_plugin_admin_menu, get_plugin_state_change_time, \
     read_plugin_state, import_plugin_by_states, delete_router_by_tagname, cache_plugin_state, \
     cache_plugin_menu, register_plugin, unregister_plugin
@@ -50,6 +51,9 @@ from bbs.password import router as password_router
 from bbs.search import router as search_router
 from lib.editor.ckeditor4 import router as editor_router
 
+# git clone으로 소스를 받은 경우에는 data디렉토리가 없으므로 생성해야 함
+if not os.path.exists("data"):
+    os.mkdir("data")
 register_theme_statics(app)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
@@ -86,8 +90,7 @@ app.include_router(social_router, prefix="/bbs", tags=["social"])
 app.include_router(password_router, prefix="/bbs", tags=["password"])
 app.include_router(search_router, prefix="/bbs", tags=["search"])
 app.include_router(editor_router, prefix="/editor", tags=["editor"])
-# is_mobile = False
-# user_device = 'pc'
+
 
 class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -98,25 +101,22 @@ class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
 app.add_middleware(HTTPSRedirectMiddleware)
 
 
-# 요청마다 항상 실행되는 미들웨어
 @app.middleware("http")
 async def main_middleware(request: Request, call_next):
-    ### 미들웨어가 여러번 실행되는 것을 막는 코드 시작    
-    # 요청의 경로를 얻습니다.
+    """요청마다 항상 실행되는 미들웨어"""
+    # 미들웨어가 여러번 실행되는 것을 막는 코드
     path = request.url.path
     # 토큰을 생성하는 요청의 경우에도 미들웨어를 건너뛰어야 합니다.
     # 경로가 정적 파일에 대한 것이 아닌지 확인합니다 (css, js, 이미지 등).
     if (path.startswith('/generate_token')
-            or path.startswith('/static') 
+            or path.startswith('/static')
             or path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.webp'))):
         response = await call_next(request)
         return response
-    ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
 
     # 데이터베이스 설치여부 체크
     db_connect = DBConnect()
     try:
-        # 설치 페이지가 아니라면
         if not path.startswith("/install"):
             if not os.path.exists(ENV_PATH):
                 raise AlertException(".env 파일이 없습니다. 설치를 진행해 주세요.", 400, "/install")
@@ -129,15 +129,12 @@ async def main_middleware(request: Request, call_next):
     except AlertException as e:
         return await alert_exception_handler(request, e)
 
+    # 기본환경설정 조회
     db = db_connect.sessionLocal()
     config = db.scalar(select(Config))
     request.state.config = config
 
-    member = None
-    is_super_admin = False
-    is_autologin = False
-    ss_mb_id = request.session.get("ss_mb_id", "")
-
+    # 플러그인 설정
     plugin_state_change_time = get_plugin_state_change_time()
     if cache_plugin_state.__getitem__('change_time') != plugin_state_change_time:
         # 플러그인 상태변경시 캐시를 업데이트.
@@ -152,44 +149,49 @@ async def main_middleware(request: Request, call_next):
         cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(new_plugin_state))
         cache_plugin_state.__setitem__('change_time', plugin_state_change_time)
 
-    # 로그인
-    if ss_mb_id:
-        member = db.scalar(select(models.Member).filter_by(mb_id = ss_mb_id))
-        if member:
-            ymd_str = datetime.now().strftime("%Y-%m-%d")
-            if member.mb_intercept_date or member.mb_leave_date: # 차단 되었거나, 탈퇴한 회원이면 세션 초기화
-                request.session["ss_mb_id"] = ""
-                member = None
-            elif member.mb_today_login.strftime("%Y-%m-%d") != datetime.now().strftime("%Y-%m-%d"):  # 오늘 처음 로그인 이라면
-                # 첫 로그인 포인트 지급
-                insert_point(request, member.mb_id, config.cf_login_point, ymd_str + " 첫로그인", "@login", member.mb_id, ymd_str)
-                # 오늘의 로그인이 될 수도 있으며 마지막 로그인일 수도 있음
-                # 해당 회원의 접근일시와 IP 를 저장
-                member.mb_today_login = datetime.now()
-                member.mb_login_ip = request.client.host
-                db.commit()
+    member = None
+    is_autologin = False
+    ss_mb_key = None
+    session_mb_id = request.session.get("ss_mb_id", "")
+    cookie_mb_id = request.cookies.get("ck_mb_id", "")
 
-            # 최고관리자인지 확인
-            if member and config.cf_admin == member.mb_id:
-                is_super_admin = True
+    # 로그인 세션
+    if session_mb_id:
+        member = MemberService.create_by_id(db, session_mb_id)
+        # 차단 되었거나, 탈퇴한 회원이면 세션 초기화
+        if member.is_intercept_or_leave():
+            request.session.clear()
+            member = None
     # 자동로그인
-    else:
-        cookie_mb_id = request.cookies.get("ck_mb_id", "")
-        if cookie_mb_id:
-            cookie_mb_id = re.sub("[^a-zA-Z0-9_]", "", cookie_mb_id)[:20] # 쿠키에 저장된 아이디에서 영문자,숫자,_ 20글자 얻는다.
-        if cookie_mb_id and cookie_mb_id.lower() != config.cf_admin.lower(): # 최고관리자 아이디라면 자동로그인 금지
-            member = db.scalar(select(models.Member).filter_by(mb_id = cookie_mb_id))
-            if member and not (member.mb_intercept_date or member.mb_leave_date): # 차단 했거나 탈퇴한 회원이 아니면
-                # 메일인증을 사용하고 메일인증한 시간이 있다면, 년도만 체크하여 시간이 있음을 확인
-                if config.cf_use_email_certify and not is_none_datetime(member.mb_email_certify):
-                    ss_mb_key  = session_member_key(request, member)
-                    # 쿠키에 저장된 키와 여러가지 정보를 조합하여 만든 키가 일치한다면 로그인으로 간주
-                    if request.cookies.get("ck_auto") == ss_mb_key:
-                        request.session["ss_mb_id"] = cookie_mb_id
-                        is_autologin = True
+    elif cookie_mb_id:
+        mb_id = re.sub("[^a-zA-Z0-9_]", "", cookie_mb_id)[:20]
+        member = MemberService.create_by_id(db, mb_id)
+        # 최고관리자는 보안상 자동로그인 기능을 사용하지 않는다.
+        if (not is_admin(request, mb_id)
+                and member.is_email_certify(bool(config.cf_use_email_certify))
+                and not member.is_intercept_or_leave()):
+            # 쿠키에 저장된 키와 여러가지 정보를 조합하여 만든 키가 일치한다면 로그인으로 간주
+            ss_mb_key = session_member_key(request, member)
+            if request.cookies.get("ck_auto") == ss_mb_key:
+                request.session["ss_mb_id"] = cookie_mb_id
+                is_autologin = True
+
+    if member:
+        # 오늘 처음 로그인 이라면 포인트 지급 및 로그인 정보 업데이트
+        ymd_str = datetime.now().strftime("%Y-%m-%d")
+        if member.mb_today_login.strftime("%Y-%m-%d") != ymd_str:
+            insert_point(request, member.mb_id, config.cf_login_point, ymd_str + " 첫로그인", "@login", member.mb_id, ymd_str)
+
+            member.mb_today_login = datetime.now()
+            member.mb_login_ip = request.client.host
+            db.commit()
+
+    # 로그인한 회원 정보
+    request.state.login_member = member
+    # 최고관리자 여부
+    request.state.is_super_admin = is_admin(request, getattr(member, "mb_id", None))
 
     db.close()
-    request.state.is_super_admin = is_super_admin
 
     # 접근가능/차단 IP 체크
     current_ip = request.client.host
@@ -197,7 +199,7 @@ async def main_middleware(request: Request, call_next):
         return HTMLResponse("<meta charset=utf-8>접근이 허용되지 않은 IP 입니다.")
     if is_intercept_ip(request, current_ip):
         return HTMLResponse("<meta charset=utf-8>접근이 차단된 IP 입니다.")
-    
+
     if request.method == "GET":
         request.state.sst = request.query_params.get("sst") if request.query_params.get("sst") else ""
         request.state.sod = request.query_params.get("sod") if request.query_params.get("sod") else ""
@@ -212,51 +214,32 @@ async def main_middleware(request: Request, call_next):
         request.state.stx = request._form.get("stx") if request._form and request._form.get("stx") else ""
         request.state.sca = request._form.get("sca") if request._form and request._form.get("sca") else ""
         request.state.page = request._form.get("page") if request._form and request._form.get("page") else ""
-        
+
     # pc, mobile 구분
     request.state.is_mobile = False
-    request.state.device = "" # pc 의 기본값은 "" 이고, mobile 은 "mobile" 로 설정
-    
+    request.state.device = ""  # pc 의 기본값은 "" 이고, mobile 은 "mobile" 로 설정
+
     user_agent = request.headers.get("User-Agent", "")
     ua = parse(user_agent)
-    if ua.is_mobile or ua.is_tablet: # 모바일과 태블릿에서 접속하면 모바일로 간주
+    if ua.is_mobile or ua.is_tablet:  # 모바일과 태블릿에서 접속하면 모바일로 간주
         request.state.is_mobile = True
 
-    if not IS_RESPONSIVE: # 적응형
-        # 반영형이 아니라면 모바일 접속은 mobile 로, 그 외 접속은 pc 로 간주
+    if not IS_RESPONSIVE:  # 적응형
+        # 반응형이 아니라면 모바일 접속은 mobile 로, 그 외 접속은 desktop 으로 간주
         if request.state.is_mobile:
             request.state.device = "mobile"
-
-    # if 'SET_DEVICE' in globals():
-    #     if SET_DEVICE == 'mobile':
-    #         request.state.is_mobile = True
-    #         request.state.device = 'mobile'
-    # else:
-    #     user_agent = request.headers.get("User-Agent", "")
-    #     ua = parse(user_agent)
-    #     if 'USE_MOBILE' in globals() and USE_MOBILE:
-    #         if ua.is_mobile or ua.is_tablet: # 모바일과 태블릿에서 접속하면 모바일로 간주
-    #             request.state.is_mobile = True
-    #             request.state.device = 'mobile'
-                
-    # 로그인한 회원 정보
-    request.state.login_member = member
 
     # 에디터 전역변수
     request.state.editor = config.cf_editor
     request.state.use_editor = True if config.cf_editor else False
 
-    # request.state.context = {
-    #     # "request": request,
-    #     # "config": config,
-    #     # "member": member,
-    #     # "outlogin": outlogin.body.decode("utf-8"),
-    # }
-    response = await call_next(request)
+    response: Response = await call_next(request)
 
-    if is_autologin:
-        # 자동로그인 쿠키를 설정
-        response.set_cookie(key="ss_mb_id", value=request.session["ss_mb_id"], max_age=86400 * 30)  # 30 일 동안 유지
+    # 자동로그인 쿠키 재설정
+    # is_autologin과 세션을 확인해서 로그아웃 처리 이후 쿠키가 재설정되는 것을 방지
+    if is_autologin and request.session.get("ss_mb_id"):
+        response.set_cookie(key="ck_mb_id", value=cookie_mb_id, max_age=60 * 60 * 24 * 30)
+        response.set_cookie(key="ck_auto", value=ss_mb_key, max_age=60 * 60 * 24 * 30)
 
     # 접속자 기록
     vi_ip = request.client.host
@@ -266,15 +249,16 @@ async def main_middleware(request: Request, call_next):
         response.set_cookie('ck_visit_ip', vi_ip, max_age=86400)  # 쿠키를 하루 동안 유지
         # 접속 레코드 기록
         record_visit(request)
-        
-    # print("After request")
 
     return response
 
-# 아래 app.add_middleware(...) 코드는 반드시 common 함수의 아래에 위치해야 함. 
+# 아래 app.add_middleware(...) 코드는 반드시 common 함수의 아래에 위치해야 함.
 # 안 그러면 아래와 같은 오류를 맛볼수 있음 ㅠㅠ
 # AssertionError: SessionMiddleware must be installed to access request.session
-app.add_middleware(SessionMiddleware, secret_key="secret", session_cookie="session", max_age=3600 * 3)
+app.add_middleware(SessionMiddleware,
+                   secret_key=os.getenv("SESSION_SECRET_KEY", "secret"),
+                   session_cookie=os.getenv("SESSION_COOKIE_NAME", "session"),
+                   max_age=60 * 60 * 3)
 
 
 @app.exception_handler(AlertException)
@@ -288,11 +272,11 @@ async def alert_exception_handler(request: Request, exc: AlertException):
     Returns:
         _TemplateResponse: 경고창 템플릿
     """
-    # 
     template = Jinja2Templates(directory=[TEMPLATES_DIR])
     return template.TemplateResponse(
         "alert.html", {"request": request, "errors": exc.detail, "url": exc.url}, status_code=exc.status_code
     )
+
 
 @app.exception_handler(AlertCloseException)
 async def alert_close_exception_handler(request: Request, exc: AlertCloseException):
@@ -354,8 +338,7 @@ async def index(request: Request, db: db_session):
 
 @app.post("/generate_token")
 async def generate_token(request: Request):
-    token = secrets.token_hex(16)  # 16바이트 토큰 생성
-    request.session["ss_token"] = token  # 세션에 토큰 저장
+
+    token = create_session_token(request)
 
     return JSONResponse(content={"success": True, "token": token})
-

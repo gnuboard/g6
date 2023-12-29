@@ -35,19 +35,6 @@ jQuery(function($){
 </div>
 </form>
 
-<ul class="anchor">
-    <li><a href="./visit_list?fr_date={{ fr_date }}&to_date={{ to_date }}">접속자</a></li>
-    <li><a href="./visit_domain?fr_date={{ fr_date }}&to_date={{ to_date }}">도메인</a></li>
-    <li><a href="./visit_browser?fr_date={{ fr_date }}&to_date={{ to_date }}">브라우저</a></li>
-    <li><a href="./visit_os?fr_date={{ fr_date }}&to_date={{ to_date }}">운영체제</a></li>
-    <li><a href="./visit_device?fr_date={{ fr_date }}&to_date={{ to_date }}">접속기기</a></li>
-    <li><a href="./visit_hour?fr_date={{ fr_date }}&to_date={{ to_date }}">시간</a></li>
-    <li><a href="./visit_weekday?fr_date={{ fr_date }}&to_date={{ to_date }}">요일</a></li>
-    <li><a href="./visit_date?fr_date={{ fr_date }}&to_date={{ to_date }}">일</a></li>
-    <li><a href="./visit_month?fr_date={{ fr_date }}&to_date={{ to_date }}">월</a></li>
-    <li><a href="./visit_year?fr_date={{ fr_date }}&to_date={{ to_date }}">년</a></li>
-</ul>
-
 <script>
     $(function(){
         $("#fr_date, #to_date").datepicker({ changeMonth: true, changeYear: true, dateFormat: "yy-mm-dd", showButtonPanel: true, yearRange: "c-99:c+99", maxDate: "+0d" });
@@ -60,3 +47,16 @@ jQuery(function($){
         f.submit();
     }
 </script>
+
+<ul class="anchor">
+    <li><a href="./visit_list?fr_date={{ fr_date }}&to_date={{ to_date }}">접속자</a></li>
+    <li><a href="./visit_domain?fr_date={{ fr_date }}&to_date={{ to_date }}">도메인</a></li>
+    <li><a href="./visit_browser?fr_date={{ fr_date }}&to_date={{ to_date }}">브라우저</a></li>
+    <li><a href="./visit_os?fr_date={{ fr_date }}&to_date={{ to_date }}">운영체제</a></li>
+    <li><a href="./visit_device?fr_date={{ fr_date }}&to_date={{ to_date }}">접속기기</a></li>
+    <li><a href="./visit_hour?fr_date={{ fr_date }}&to_date={{ to_date }}">시간</a></li>
+    <li><a href="./visit_weekday?fr_date={{ fr_date }}&to_date={{ to_date }}">요일</a></li>
+    <li><a href="./visit_date?fr_date={{ fr_date }}&to_date={{ to_date }}">일</a></li>
+    <li><a href="./visit_month?fr_date={{ fr_date }}&to_date={{ to_date }}">월</a></li>
+    <li><a href="./visit_year?fr_date={{ fr_date }}&to_date={{ to_date }}">년</a></li>
+</ul>

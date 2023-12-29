@@ -14,7 +14,7 @@ from lib.pbkdf2 import create_hash
 router = APIRouter()
 templates = AdminTemplates()
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
-templates.env.globals["today"] = SERVER_TIME.strftime("%Y%m%d")
+templates.env.globals["today"] = datetime.now().strftime("%Y%m%d")
 templates.env.globals["get_member_level_select"] = get_member_level_select
 templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals["is_none_datetime"] = is_none_datetime

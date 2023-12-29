@@ -142,7 +142,7 @@ async def scrap_form_update(
     db.commit()
 
     # 최신글 캐시 삭제
-    G6FileCache().delete_prefix(f'latest-{bo_table}')
+    FileCache().delete_prefix(f'latest-{bo_table}')
     
     return RedirectResponse(request.url_for('scrap_list'), 302)
 

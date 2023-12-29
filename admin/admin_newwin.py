@@ -8,7 +8,7 @@ from lib.common import *
 
 router = APIRouter()
 templates = AdminTemplates()
-templates.env.globals["today"] = datetime.now().strftime("%Y-%m-%d 00:00:00")
+templates.env.globals["start_day"] = datetime.now().strftime("%Y-%m-%d 00:00:00")
 templates.env.globals["after_7days"] = (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d 23:59:59")
 
 NEWWIN_MENU_KEY = "100310"

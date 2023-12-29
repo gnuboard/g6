@@ -4,7 +4,7 @@ from starlette.templating import Jinja2Templates
 
 from admin.admin_config import get_admin_plugin_menus
 from lib.common import ADMIN_TEMPLATES_DIR, get_member_id_select, get_skin_select, get_editor_select, get_selected, \
-    get_member_level_select, option_array_checked, get_admin_menus, generate_token, get_client_ip
+    get_member_level_select, option_array_checked, get_admin_menus, get_client_ip
 from lib.plugin.service import get_all_plugin_module_names, PLUGIN_DIR
 from ..plugin_config import module_name, admin_router_prefix
 
@@ -20,7 +20,6 @@ templates.env.globals["get_member_level_select"] = get_member_level_select
 templates.env.globals["option_array_checked"] = option_array_checked
 templates.env.globals["get_admin_menus"] = get_admin_menus
 templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
-templates.env.globals["generate_token"] = generate_token
 templates.env.globals["get_client_ip"] = get_client_ip
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 

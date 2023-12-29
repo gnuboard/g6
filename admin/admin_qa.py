@@ -46,9 +46,6 @@ def qa_config_update(
         token (str): 입력/수정/삭제 변조 방지 토큰.
         form_data (QaConfigForm): 입력/수정 Form Data.
 
-    Raises:
-        AlertException: 토큰 유효성 검사
-
     Returns:
         RedirectResponse: 1:1문의 설정 등록/수정 후 폼으로 이동
     """
