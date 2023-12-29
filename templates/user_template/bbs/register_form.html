@@ -14,13 +14,13 @@
 		</ul>
 	{% endif %}
 
-	{% block subtitle %}회원가입{% endblock %}
+	{% block subtitle %}회원가입{% endblock subtitle %}
 	<!-- 회원정보 입력/수정 시작 { -->
 	
 	<div class="register">
 		<form id="fregisterform" name="fregisterform" action="/bbs/register_form" onsubmit="return fregisterform_submit(this);" method="post" enctype="multipart/form-data" autocomplete="off">
 		<input type="hidden" name="w" value="">
-		<input type="hidden" name="url" value="%2Fbbs%2Fregister_form.php">
+		<input type="hidden" name="url" value="{{ request.url }}">
 		<input type="hidden" name="agree" value="{{ register.agree if register is defined else '' }}">
 		<input type="hidden" name="agree2" value="{{ register.agree2 if register2 is defined else '' }}">
 		<input type="hidden" name="cert_type" value="">
