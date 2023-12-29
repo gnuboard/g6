@@ -18,8 +18,16 @@ from lib.plugin.service import register_statics, register_plugin_admin_menu, get
     read_plugin_state, import_plugin_by_states, delete_router_by_tagname, cache_plugin_state, \
     cache_plugin_menu, register_plugin, unregister_plugin
 
+# .env 파일로부터 환경 변수를 로드합니다. 
+# 이 함수는 해당 파일 내의 키-값 쌍을 환경 변수로 로드하는 데 사용됩니다.
 load_dotenv()
+
+# 'APP_IS_DEBUG' 환경 변수를 가져와서 boolean 타입으로 변환합니다.
+# 이 환경 변수가 설정되어 있지 않은 경우, 기본값으로 False를 사용합니다.
+# TypeAdapter는 값을 특정 타입으로 변환하는 데 사용되는 유틸리티 클래스입니다.
 APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
+
+# APP_IS_DEBUG 값이 True일 경우, 디버그 모드가 활성화됩니다.
 app = FastAPI(debug=APP_IS_DEBUG)
 
 templates = UserTemplates()
@@ -92,12 +100,16 @@ app.include_router(search_router, prefix="/bbs", tags=["search"])
 app.include_router(editor_router, prefix="/editor", tags=["editor"])
 
 
+# 이 클래스는 BaseHTTPMiddleware를 상속받아, 
+# HTTP 요청을 HTTPS로 리디렉션하는 미들웨어로 사용됩니다.
 class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         if request.headers.get("X-Forwarded-Proto") != "https":
             request.scope["scheme"] = "https"
         return await call_next(request)
 
+# 애플리케이션 인스턴스에 이 미들웨어를 추가합니다.
+# 이로써 모든 들어오는 요청은 HTTPSRedirectMiddleware를 거치게 됩니다.
 app.add_middleware(HTTPSRedirectMiddleware)
 
 
@@ -201,6 +213,7 @@ async def main_middleware(request: Request, call_next):
         return HTMLResponse("<meta charset=utf-8>접근이 차단된 IP 입니다.")
 
     if request.method == "GET":
+        # 쿼리 파라미터에서 값을 가져와서 request의 상태에 저장합니다. 값이 없으면 빈 문자열을 저장합니다.
         request.state.sst = request.query_params.get("sst") if request.query_params.get("sst") else ""
         request.state.sod = request.query_params.get("sod") if request.query_params.get("sod") else ""
         request.state.sfl = request.query_params.get("sfl") if request.query_params.get("sfl") else ""
@@ -208,6 +221,7 @@ async def main_middleware(request: Request, call_next):
         request.state.sca = request.query_params.get("sca") if request.query_params.get("sca") else ""
         request.state.page = request.query_params.get("page") if request.query_params.get("page") else ""
     else:
+        # 폼 데이터에서 값을 가져와서 request의 상태에 저장합니다. 값이 없으면 빈 문자열을 저장합니다.
         request.state.sst = request._form.get("sst") if request._form and request._form.get("sst") else ""
         request.state.sod = request._form.get("sod") if request._form and request._form.get("sod") else ""
         request.state.sfl = request._form.get("sfl") if request._form and request._form.get("sfl") else ""
@@ -252,8 +266,8 @@ async def main_middleware(request: Request, call_next):
 
     return response
 
-# 아래 app.add_middleware(...) 코드는 반드시 common 함수의 아래에 위치해야 함.
-# 안 그러면 아래와 같은 오류를 맛볼수 있음 ㅠㅠ
+# 아래 app.add_middleware(...) 코드는 반드시 common 함수의 아래에 위치해야 합니다.
+# 그렇지 않으면 아래와 같은 오류를 만날 수 있습니다.
 # AssertionError: SessionMiddleware must be installed to access request.session
 app.add_middleware(SessionMiddleware,
                    secret_key=os.getenv("SESSION_SECRET_KEY", "secret"),
