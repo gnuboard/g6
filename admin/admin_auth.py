@@ -10,6 +10,7 @@ from lib.common import *
 router = APIRouter()
 templates = AdminTemplates()
 templates.env.globals['subject_sort_link'] = subject_sort_link
+templates.env.globals['captcha_widget'] = captcha_widget
 
 AUTH_MENU_KEY = "100200"
 
@@ -66,7 +67,7 @@ async def auth_list(
     return templates.TemplateResponse("auth_list.html", context)
 
 
-@router.post("/auth_update", dependencies=[Depends(validate_token)])
+@router.post("/auth_update", dependencies=[Depends(validate_token), Depends(validate_captcha)])
 async def auth_update(
     request: Request,
     db: db_session,

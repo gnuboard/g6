@@ -105,10 +105,12 @@ async def new_delete(
                 # 댓글 포인트 삭제
                 if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "댓글"):
                     insert_point(request, write.mb_id, board.bo_comment_point * (-1), f"{board.bo_subject} {write.wr_parent}-{write.wr_id} 댓글 삭제")
-        db.delete(new)
 
-        # 파일 삭제
-        BoardFileManager(board, write.wr_id).delete_board_files()
+            # 파일 삭제
+            BoardFileManager(board, write.wr_id).delete_board_files()
+
+        # 새글 삭제
+        db.delete(new)
 
         # 최신글 캐시 삭제
         FileCache().delete_prefix(f'latest-{new.bo_table}')

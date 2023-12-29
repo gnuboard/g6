@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% block title %}관리권한설정{% endblock title %}
-
 {% block subtitle %}관리권한설정{% endblock subtitle %}
 
 {% block content %}
@@ -117,6 +116,9 @@
                         <tr>
                             <th scope="row">자동등록방지</th>
                             <td>
+                                <fieldset id="captcha" class="captcha">
+                                    {% include captcha_widget(request) ignore missing %}
+                                </fieldset>
                             </td>
                         </tr>
                     </tbody>
@@ -132,8 +134,12 @@
 
     <script>
         function fauth_add_submit(f) {
-
-            // $captcha_js; // 캡챠 사용시 자바스크립트에서 입력된 캡챠를 검사함
+            // captcha 사용시
+            if (typeof check_captcha === "function") {
+                if (!check_captcha(f)) {
+                    return false;
+                }
+            }
 
             f.token.value = generate_token();
 
