@@ -4,10 +4,6 @@
 /* 기본박스 */
 .mbskin {position:relative;margin:100px auto 0;width:360px;text-align:center}
 .mbskin:after {right:10px;left:auto;
-  -webkit-transform:skew(8deg) rotate(3deg);
-    -moz-transform:skew(8deg) rotate(3deg);
-    -ms-transform:skew(8deg) rotate(3deg);
-     -o-transform:skew(8deg) rotate(3deg);
       transform:skew(8deg) rotate(3deg)}
 .mbskin .mbskin_box{border:1px solid #dde7e9;background:#fff}
 .mbskin .frm_input {width:100%}

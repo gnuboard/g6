@@ -23,22 +23,15 @@ ul,li,dl,dt,dd {padding:0;margin:0}
 ul {list-style:none}
 
 *, :after, :before {
-    -webkit-box-sizing:border-box;
-    -moz-box-sizing:border-box;
     box-sizing:border-box;
 }
 
 input[type=text],input[type=password], textarea {
-    -webkit-transition:all 0.30s ease-in-out;
-    -moz-transition:all 0.30s ease-in-out;
-    -ms-transition:all 0.30s ease-in-out;
-    -o-transition:all 0.30s ease-in-out;
+    transition:all 0.30s ease-in-out;
     outline:none;
 }
  
 input[type=text]:focus,input[type=password]:focus, textarea:focus,select:focus {
-    -webkit-box-shadow:0 0 5px #9ed4ff;
-    -moz-box-shadow:0 0 5px #9ed4ff;
     box-shadow:0 0 5px #9ed4ff;
     border:1px solid #558ab7 !important;
 }
@@ -46,7 +39,6 @@ input[type=text]:focus,input[type=password]:focus, textarea:focus,select:focus {
 /*safari*/
 input, textarea {
   -webkit-appearance: none;
-  -webkit-border-radius: 0;
 }
 input[type=checkbox] {-webkit-appearance: checkbox}
 input[type=radio] {-webkit-appearance: radio}
@@ -84,8 +76,6 @@ input[type=radio] {-webkit-appearance: radio}
 /*카테고리*/
 .menu {display:none;position:fixed;top:0;height:100%;z-index:99999;-webkit-backface-visibility:hidden;width:100%;background:#efefef}
 .menu .menu_wr{width:100%;height:100%;overflow-y:auto;background:#eee;position:relative;z-index:199919;
- -webkit-box-shadow: 0 0 5px rgba(55,55,5,0.4);
-    -moz-box-shadow: 0 0 5px rgba(55,55,5,0.4);
          box-shadow: 0 0 5px rgba(55,55,5,0.4);}
 .menu .menu_close {position:absolute;top:50%;right:0px;width:40px;height:40px;background:none;color:#fff;font-size:20px;margin-top:-20px;border:0;z-index:199999}
 
@@ -110,8 +100,6 @@ input[type=radio] {-webkit-appearance: radio}
 /* 중간 레이아웃 */
 #container {padding:0 0 10px}
 #container_title {margin:0;font-size:1.5em;text-align:left;font-weight:bold;border-bottom:1px solid #e7e7e7;background:#fff;padding:15px;font-size:1.25em;line-height:20px;text-overflow: ellipsis;overflow: hidden;white-space: nowrap;
--webkit-box-shadow: 0 0 5px #eee;
--moz-box-shadow: 0 0 5px #eee;
 box-shadow:0 0 5px #eee}
 .fixed #container_title{position:fixed;top:0;left:0;width:100%;z-index:999}
 #container.fixed {padding-top:60px;}
@@ -203,8 +191,6 @@ box-shadow:0 0 5px #eee}
 #m_sod_bsk_tot .sod_bsk_cnt{font-weight:bold;margin-top:5px;line-height:25px;background:#212a37}
 #m_sod_bsk_tot .sod_bsk_cnt strong{color:#3a8afd;font-size:1.25em}
 #sod_bsk_act {position:fixed;bottom:0;left:0;width:100%;background:#fff;z-index:90;border-top:1px solid #000; padding:10px 10px 10px 50%;
--webkit-box-shadow:  0 0 9px rgba(0,0,0,0.2);
--moz-box-shadow:  0 0 9px rgba(0,0,0,0.2);
 box-shadow: 0 0 6px rgba(0,0,0,0.2);}
 #sod_bsk_act .btn_submit{height:45px;font-size:1.167em;font-weight:bold;width:100%;border-radius:3px}
 #sod_bsk_act .total{position:absolute;top:0;left:0;width:50%;padding:10px;text-align:left;color:#717171;line-height:20px;}
@@ -251,22 +237,16 @@ box-shadow: 0 0 6px rgba(0,0,0,0.2);}
 .sod_frm_point .max_point_box em{font-style:normal !important}
 .sod_frm_point div strong{float:left;color:#666;font-weight:normal}
 .sod_frm_point #od_temp_point{height:30px;border:1px solid #d0d3db;text-align:right;background:#fff;border-radius:3px;
--webkit-box-shadow:inset 1px 1px 5px rgba(0,0,0,0.1);
--moz-box-shadow:inset 1px 1px 5px rgba(0,0,0,0.1);
 box-shadow:inset 1px 1px 5px rgba(0,0,0,0.1);}
 
 #settle_bank{background:#fff;border:1px solid #e3e5e8;padding:10px;clear:both;line-height:30px}
 #settle_bank:after {display:block;visibility:hidden;clear:both;content:''}
 #settle_bank select{height:30px;margin:0 0 5px;width:100%;border:1px solid #d0d3db}
 #settle_bank #od_deposit_name{height:30px;border:1px solid #d0d3db;text-align:center; border-radius:3px;float:right;
--webkit-box-shadow:inset 1px 1px 5px rgba(0,0,0,0.1);
--moz-box-shadow:inset 1px 1px 5px rgba(0,0,0,0.1);
 box-shadow:inset 1px 1px 5px rgba(0,0,0,0.1);}
 #settle_bank label{float:left;line-height:30px}
 #sod_frm_pt_info{border-top:0}
 .od_coupon{position:absolute;top:0;left:0;background:#fff;width:100%;z-index:99;border-radius:0 0 3px 3px;
--webkit-box-shadow:1px 1px 5px rgba(0,0,0,0.4);
--moz-box-shadow: 1px 1px 5px rgba(0,0,0,0.4);
 box-shadow: 1px 1px 5px rgba(0,0,0,0.4);}
 .od_coupon h3{height:45px;line-height:45px;font-size:1.167em;background:#333;color:#fff;padding:0 15px;text-align:left}
 .od_coupon .tbl_head02{}
@@ -289,7 +269,7 @@ box-shadow: 1px 1px 5px rgba(0,0,0,0.4);}
 
 .sod_frm_mobile .sod_list .li_name{border-bottom:1px solid #dcdcdc;line-height:1.3em;padding:10px 10px;font-size:1.083em}
 #sod_frm.sod_frm_mobile .odf_list .frm_input{width:100% !important}
-#sod_frm.sod_frm_mobile input[type="radio"],#sod_frm.sod_frm_mobile input[type="checkbox"]{width:auto;-webkit-appearance:radio;-webkit-border-radius:initial}
+#sod_frm.sod_frm_mobile input[type="radio"],#sod_frm.sod_frm_mobile input[type="checkbox"]{width:auto;-webkit-appearance:radio;}
 #sod_frm.sod_frm_mobile #od_memo{min-height:50px}
 #sod_frm .od_prd_list{margin:10px;background:#fff;padding:15px}
 .od_prd_list .td_chk{border-left:0;}
@@ -313,8 +293,6 @@ box-shadow: 1px 1px 5px rgba(0,0,0,0.4);}
 .odf_list .btn_addsch{position:absolute;top:5px;right:5px;border-radius:3px;height:30px;}
 .odf_list .add_num{position:relative;display:block;}
 .odf_list  textarea{border: 1px solid #ccc;background: #fff;color: #000;vertical-align: middle;border-radius: 3px;padding: 5px;width:100%;height:70px;
--webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
--moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
 box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
 }
 
@@ -605,8 +583,6 @@ a.btn_admin {display:inline-block;background:#e8180c;color:#fff;text-decoration:
 a.btn_admin:focus, a.btn_admin:hover {}
 
 .is_community .btn_top {position:relative;height:50px;margin:0;padding:10px 15px;line-height:30px;background:#fff;color:#333;text-align:right;
--webkit-box-shadow:0 0 10px rgba(181, 181, 181, 0.4);
--moz-box-shadow:0 0 10px rgba(181, 181, 181, 0.4);
 box-shadow:0 0 10px rgba(181, 181, 181, 0.4);
 }
 .is_community a.btn_admin {display:inline-block;color:#d13f4a;font-size:1.4em;background:transparent;text-decoration:none;vertical-align:middle}
@@ -671,8 +647,6 @@ box-shadow:0 0 10px rgba(181, 181, 181, 0.4);
 /* 기본리스트 */
 .list_01 {padding:0 10px}
 .list_01 li {background:#fff;border-radius:3px;margin:10px 0;padding:10px 15px;
--webkit-box-shadow: 0 1px 4px #cbd1df;
--moz-box-shadow: 0 1px 4px #cbd1df;
 box-shadow:0 1px 4px #cbd1df;}
 
 /* 기본폼 */
@@ -733,8 +707,7 @@ box-shadow:0 1px 4px #cbd1df;}
 
 /* 새창 기본 스타일 */
 .new_win {}
-.new_win #win_title {font-size:1.3em;min-height:50px;line-height:30px;padding:10px 20px;background:#fff;color:#000;-webkit-box-shadow:0 1px 10px rgba(0,0,0,.1);
--moz-box-shadow:0 1px 10px rgba(0,0,0,.1);
+.new_win #win_title {font-size:1.3em;min-height:50px;line-height:30px;padding:10px 20px;background:#fff;color:#000;
 box-shadow:0 1px 10px rgba(0,0,0,.1)}
 .new_win #win_title .sv {font-size:0.75em;line-height:1.2em}
 .new_win_con {margin:10px}
@@ -743,8 +716,6 @@ box-shadow:0 1px 10px rgba(0,0,0,.1)}
 .new_win .win_ul li {display:inline-block}
 .new_win .win_ul li a {display:block;line-height:24px;padding:0 10px}
 .new_win .win_ul li .selected {background:#4162ff;color:#fff;border-radius:13px;
--webkit-box-shadow:0 0 5px rgba(65,98,255,0.8);
--moz-box-shadow:0 0 5px rgba(65,98,255,0.8);
 box-shadow:0 0 8px rgba(65,98,255,0.8)}
 
 .new_win .win_desc {margin:5px 0;font-size:0.92em;color:#4162ff}
@@ -920,7 +891,7 @@ box-shadow:0 0 8px rgba(65,98,255,0.8)}
 #forderform .od_pay_buttons_el{margin-top:20px;border:1px solid #e3e5e8;background:#fff;padding:10px}
 #forderform .od_pay_buttons_el h3{font-size:1.167em;margin:0px 0 5px}
 #forderform #sod_frm_pt{border-top:1px solid #e3e5e8}
-#sod_frm_taker td input[type="radio"], #sod_frm_taker td input[type="checkbox"]{width:auto;-webkit-appearance:radio;-webkit-border-radius:initial}
+#sod_frm_taker td input[type="radio"], #sod_frm_taker td input[type="checkbox"]{width:auto;-webkit-appearance:radio;}
 #sod_frm_taker label {display:inline-block;font-weight:normal;margin-right:1em}
 
 #sod_frm  #sod_bsk_tot{margin:10px;}

@@ -143,7 +143,6 @@ For licensing, see LICENSE.md or http://ckeditor.com/license
 .cke_browser_ios .cke_contents
 {
     overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
 }
 
 .cke_resizer
