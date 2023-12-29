@@ -64,9 +64,9 @@ def get_theme_info(dir):
         screenshot_url = ''
         if os.path.isfile(screenshot):
             try:
-                img = Image.open(screenshot)
-                if img.format == "PNG":
-                    screenshot_url = f"/admin/screenshot/{dir}"
+                with Image.open(screenshot) as img:
+                    if img.format == "PNG":
+                        screenshot_url = f"/admin/screenshot/{dir}"
             except:
                 pass
 
