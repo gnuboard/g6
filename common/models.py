@@ -3,8 +3,7 @@ from typing import List
 
 # TINYINT 대신 Integer 사용하기 바랍니다.
 # from sqlalchemy.dialects.mysql import TINYINT
-from sqlalchemy.orm import DynamicMapped, Mapped, relationship
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import DynamicMapped, Mapped, relationship, declarative_base
 from datetime import datetime, date
 from common.database import DBConnect
 
