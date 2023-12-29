@@ -64,11 +64,11 @@
                         </td>
                         <td>
                             <label for="bo_skin[{{ loop.index0 }}]" class="sound_only">스킨</label>
-                            {{ get_skin_select('board', 'bo_skin[]', board.bo_skin, event='required', device='')|safe }}
+                            {{ get_skin_select('board', 'bo_skin[]', board.bo_skin, attribute='required')|safe }}
                         </td>
                         <td>
                             <label for="bo_mobile_skin[]" class="sound_only">모바일 스킨</label>
-                            {{ get_skin_select('board', 'bo_mobile_skin[]', board.bo_mobile_skin, event='required', device='mobile')|safe }}
+                            {{ get_skin_select('board', 'bo_mobile_skin[]', board.bo_mobile_skin, device='mobile')|safe }}
                         </td>
                         <td>
                             <label for="bo_subject_{{ loop.index0 }}" class="sound_only">게시판 제목<strong class="sound_only"> 필수</strong></label>

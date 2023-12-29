@@ -49,13 +49,13 @@
                 <tr>
                     <th scope="row"><label for="co_skin">스킨 디렉토리<strong class="sound_only">필수</strong></label></th>
                     <td>
-                        {{ get_skin_select('content', 'co_skin', content.co_skin, event='', device='')|safe }}
+                        {{ get_skin_select('content', 'co_skin', content.co_skin)|safe }}
                     </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="co_mobile_skin">모바일스킨 디렉토리<strong class="sound_only">필수</strong></label></th>
                     <td>
-                        {{ get_skin_select('content', 'co_mobile_skin', content.co_mobile_skin, event='', device='mobile')|safe }}
+                        {{ get_skin_select('content', 'co_mobile_skin', content.co_mobile_skin, device='mobile')|safe }}
                     </td>
                 </tr>
                 <!--
