@@ -435,8 +435,8 @@ async def visit_hour(
     visits = {f"{hour:02d}": {"count": 0, "rate": 0} for hour in range(24)}
 
     for result in query_result:
-        visits[result.hour]["count"] = result.hour_count
-        visits[result.hour]["rate"] = round(result.hour_count / total_count * 100, 2)
+        visits[f"{result.hour:02d}"]["count"] = result.hour_count
+        visits[f"{result.hour:02d}"]["rate"] = round(result.hour_count / total_count * 100, 2)
 
     context = {
         "request": request,

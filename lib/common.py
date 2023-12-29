@@ -1741,7 +1741,7 @@ class UserTemplates(Jinja2Templates):
 
 class AdminTemplates(Jinja2Templates):
     _instance = None
-    default_directories = [ADMIN_TEMPLATES_DIR, EDITOR_PATH, PLUGIN_DIR]
+    default_directories = [ADMIN_TEMPLATES_DIR, CAPTCHA_PATH, EDITOR_PATH, PLUGIN_DIR]
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
@@ -2511,9 +2511,10 @@ async def validate_captcha(
     """
     config = request.state.config
     captcha_cls = get_current_captcha_cls(config)
-    captcha = captcha_cls(config)
-    if captcha and (not await captcha.verify(response)):
-        raise AlertException("캡차가 올바르지 않습니다.", 400)
+    if captcha_cls:
+        captcha = captcha_cls(config)
+        if captcha and (not await captcha.verify(response)):
+            raise AlertException("캡차가 올바르지 않습니다.", 400)
 
 
 async def validate_install():
