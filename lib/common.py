@@ -1480,19 +1480,21 @@ class AlertCloseException(HTTPException):
         super().__init__(status_code=status_code, detail=detail, headers=headers) 
 
 
-def is_admin(request: Request):
+def is_admin(request: Request, mb_id: str = None):
     """관리자 여부 확인
     """
-    config = request.state.config
-    if config.cf_admin.strip() == "":
+    config: Config = request.state.config
+    cf_admin = str(config.cf_admin).lower().strip()
+
+    if not cf_admin:
         return False
 
-    mb_id = request.session.get("ss_mb_id", "")
-    if mb_id:
-        if mb_id.strip() == config.cf_admin.strip():
-            return True
+    mb_id = mb_id or request.session.get("ss_mb_id", "")
+    if mb_id and mb_id.lower().strip() == cf_admin:
+        return True
 
     return False
+
 
 # TODO: 그누보드5의 is_admin 함수
 # 이미 is_admin 함수가 존재하므로 함수 이름을 변경함 
