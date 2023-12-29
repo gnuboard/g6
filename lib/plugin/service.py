@@ -107,9 +107,9 @@ def get_plugin_info(module_name, plugin_dir=PLUGIN_DIR):
         if os.path.isfile(screenshot):
             try:
                 from PIL import Image
-                img = Image.open(screenshot)
-                if img.format == "PNG":
-                    screenshot_url = f"/admin/plugin/screenshot/{module_name}"
+                with Image.open(screenshot) as img:
+                    if img.format == "PNG":
+                        screenshot_url = f"/admin/plugin/screenshot/{module_name}"
             except:
                 pass
         info['screenshot'] = screenshot_url
