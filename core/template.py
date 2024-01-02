@@ -37,6 +37,7 @@ def get_theme_from_db() -> str:
 TEMPLATES = "templates"
 TEMPLATES_DIR = get_theme_from_db()  # 사용자 템플릿 경로
 ADMIN_TEMPLATES_DIR = "admin/templates"  # 관리자 템플릿 경로
+IS_RESPONSIVE = TypeAdapter(bool).validate_python(os.getenv("IS_RESPONSIVE", True)) # 반응형 템플릿 여부
 
 
 class UserTemplates(Jinja2Templates):
@@ -80,7 +81,7 @@ class UserTemplates(Jinja2Templates):
             if globals:
                 self.env.globals.update(**globals.__dict__)
 
-    def _default_context(self):
+    def _default_context(self, request: Request):
         context = {
             "menus": get_menus(),
             "poll": get_recent_poll(),

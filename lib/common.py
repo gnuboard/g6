@@ -48,16 +48,6 @@ SERVER_TIME = datetime.now()
 TIME_YMDHIS = SERVER_TIME.strftime("%Y-%m-%d %H:%M:%S")
 TIME_YMD = TIME_YMDHIS[:10]
 
-# 나중에 삭제할 코드
-# # pc 설정 시 모바일 기기에서도 PC화면 보여짐
-# # mobile 설정 시 PC에서도 모바일화면 보여짐
-# # both 설정 시 접속 기기에 따른 화면 보여짐 (pc에서 접속하면 pc화면을, mobile과 tablet에서 접속하면 mobile 화면)
-# SET_DEVICE = 'both'
-
-# # mobile 을 사용하지 않을 경우 False 로 설정
-# USE_MOBILE = True
-
-IS_RESPONSIVE = TypeAdapter(bool).validate_python(os.getenv("IS_RESPONSIVE", True))
 
 def hash_password(password: str):
     '''
