@@ -1,9 +1,11 @@
 # Path: lib/social/social.py
 import pkgutil
 import importlib
-from lib.social.social import register_social_provider
-from common.database import SessionLocal
+from sqlalchemy import select
+
+from common.database import DBConnect
 from common.models import Config
+from lib.social.social import register_social_provider
 
 # Package.
 package_name = 'lib.social.providers'
@@ -22,6 +24,9 @@ __all__ = [
     "twitter",
 ]
 
-with SessionLocal() as db:
-    config = db.query(Config).first()
-    register_social_provider(config)
+with DBConnect().sessionLocal() as db:
+    try:
+        config = db.scalar(select(Config))
+        register_social_provider(config)
+    except Exception as e:
+        print("소셜로그인 설정을 불러올 수 없습니다. " + str(e.args[0]) )

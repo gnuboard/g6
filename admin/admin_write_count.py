@@ -1,11 +1,10 @@
 import math
 from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException, Path
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
-from sqlalchemy import asc, desc, case, func, and_, or_, extract, text
+from sqlalchemy import asc, desc, case, func, and_, or_, extract, text, select
 from sqlalchemy.sql.expression import func, extract
 from sqlalchemy.orm import Session
-from common.database import get_db, engine
+from common.database import db_session
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import *
 from lib.common import *
@@ -15,7 +14,7 @@ import pandas as pd
 from collections import defaultdict
 
 router = APIRouter()
-templates = Jinja2Templates(directory=[ADMIN_TEMPLATES_DIR, EDITOR_PATH])
+templates = AdminTemplates()
 templates.env.globals['getattr'] = getattr
 templates.env.globals['get_selected'] = get_selected
 templates.env.globals['option_selected'] = option_selected
@@ -33,7 +32,7 @@ templates.env.globals["editor_path"] = editor_path
 WRITE_COUNT_MENU_KEY = "300820"
 
 @router.get("/write_count")
-async def write_count(request: Request, db: Session = Depends(get_db), 
+async def write_count(request: Request, db: db_session, 
         bo_table: str = Query(None, alias="bo_table"),
         period: str = Query(None, alias="period"),
         graph: str = Query(None, alias="graph")
@@ -82,7 +81,7 @@ async def write_count(request: Request, db: Session = Depends(get_db),
         from_date = datetime.now() - timedelta(days=period_array[period][1])
         to_date = yesterday
     
-    bo_table_array = db.query(Board.bo_table, Board.bo_subject).order_by(Board.bo_count_write.desc()).all()
+    bo_table_array = db.execute(select(Board.bo_table, Board.bo_subject).order_by(Board.bo_count_write.desc())).all()
 
     # Determine the current dialect
     dialect = db.bind.dialect.name
@@ -99,15 +98,17 @@ async def write_count(request: Request, db: Session = Depends(get_db),
         else:
             # 여기에 다른 방언에 대한 코드를 추가하세요
             hours_expr = func.substr(BoardNew.bn_datetime, 12, 2)  # 이는 일반적인 경우에 대한 예입니다.
-        
-        result = db.query(
-            hours_expr.label(x_label), 
-            func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
-            func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
-        ).filter(
-            BoardNew.bn_datetime.between(from_date, to_date),
-            or_(BoardNew.bo_table == bo_table, bo_table == '')
-        ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime).all()        
+
+        result = db.execute(
+            select(
+                hours_expr.label(x_label), 
+                func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
+                func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
+            ).filter(
+                BoardNew.bn_datetime.between(from_date, to_date),
+                or_(BoardNew.bo_table == bo_table, bo_table == '')
+            ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime)
+        ).all()
 
         for row in result:
             x_data.append(f"['{row.hours[:8]}',{row.write_count}]")
@@ -126,14 +127,16 @@ async def write_count(request: Request, db: Session = Depends(get_db),
         else:
             raise Exception(f"Unsupported dialect: {dialect}")
                                     
-        result = db.query(
-            date_expr.label(x_label), 
-            func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
-            func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
-        ).filter(
-            BoardNew.bn_datetime.between(from_date, to_date),
-            or_(BoardNew.bo_table == bo_table, bo_table == '')
-        ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime).all()
+        result = db.execute(
+            select(
+                date_expr.label(x_label), 
+                func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
+                func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
+            ).filter(
+                BoardNew.bn_datetime.between(from_date, to_date),
+                or_(BoardNew.bo_table == bo_table, bo_table == '')
+            ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime)
+        ).all()
         
         for row in result:
             x_data.append(f"['{row.days[5:10]}',{row.write_count}]")
@@ -155,14 +158,16 @@ async def write_count(request: Request, db: Session = Depends(get_db),
         else:
             raise Exception(f"Unsupported dialect: {dialect}")
 
-        result = db.query(
-            concat_expr.label(x_label), 
-            func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
-            func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
-        ).filter(
-            BoardNew.bn_datetime.between(from_date, to_date),
-            or_(BoardNew.bo_table == bo_table, bo_table == '')
-        ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime).all()
+        result = db.execute(
+            select(
+                concat_expr.label(x_label), 
+                func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
+                func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
+            ).filter(
+                BoardNew.bn_datetime.between(from_date, to_date),
+                or_(BoardNew.bo_table == bo_table, bo_table == '')
+            ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime)
+        ).all()
         
         for row in result:
             lyear, lweek = row.weeks.split('-')
@@ -183,14 +188,16 @@ async def write_count(request: Request, db: Session = Depends(get_db),
         else:
             raise Exception(f"Unsupported dialect: {dialect}")
 
-        result = db.query(
-            month_expr.label(x_label), 
-            func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
-            func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
-        ).filter(
-            BoardNew.bn_datetime.between(from_date, to_date),
-            or_(BoardNew.bo_table == bo_table, bo_table == '')
-        ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime).all()
+        result = db.execute(
+            select(
+                month_expr.label(x_label), 
+                func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
+                func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
+            ).filter(
+                BoardNew.bn_datetime.between(from_date, to_date),
+                or_(BoardNew.bo_table == bo_table, bo_table == '')
+            ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime)
+        ).all()
 
         for row in result:
             x_data.append(f"['{row.months[2:7]}',{row.write_count}]")
@@ -209,14 +216,16 @@ async def write_count(request: Request, db: Session = Depends(get_db),
         else:
             raise Exception(f"Unsupported dialect: {dialect}")
 
-        result = db.query(
-            year_expr.label('year'),
-            func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
-            func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
-        ).filter(
-            BoardNew.bn_datetime.between(from_date, to_date),
-            or_(BoardNew.bo_table == bo_table, bo_table == '')
-        ).group_by('year', BoardNew.bn_datetime).order_by(BoardNew.bn_datetime).all()
+        result = db.execute(
+            select(
+                year_expr.label('year'), 
+                func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
+                func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
+            ).filter(
+                BoardNew.bn_datetime.between(from_date, to_date),
+                or_(BoardNew.bo_table == bo_table, bo_table == '')
+            ).group_by('year', BoardNew.bn_datetime).order_by(BoardNew.bn_datetime)
+        ).all()
 
         for row in result:
             x_data.append(f"['{row.years[:4]}',{row.write_count}]")

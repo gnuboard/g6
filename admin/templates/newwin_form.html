@@ -1,15 +1,13 @@
 {% extends "base.html" %}
+{% import editor_macro(request) as editor %}
 {% set action_text='수정' if newwin else '입력' %}
+
 {% block head %}
     {% include "datepicker.html" %}
-    {% include editor_path(request) + '/head.html' %}
+    {{ editor.head() }}
 {% endblock head %}
-{% block title %}
-    팝업레이어 {{ action_text }}
-{% endblock title %}
-{% block subtitle %}
-    팝업레이어 {{ action_text }}
-{% endblock subtitle %}
+{% block title %}팝업레이어 {{ action_text }}{% endblock title %}
+{% block subtitle %}팝업레이어 {{ action_text }}{% endblock subtitle %}
 
 {% block content %}
     <form name="frmnewwin" action="{{ url_for('newwin_form_update') }}" onsubmit="return frmnewwin_check(this);" method="post" autocomplete="off">
@@ -105,11 +103,7 @@
                     </tr>
                     <tr>
                         <th scope="row"><label for="nw_content">내용</label></th>
-                        <td>
-                            {% with tag_name="nw_content", content=newwin.nw_content %}
-                                {% include editor_path(request) + '/body.html' %}
-                            {% endwith %}
-                        </td>
+                        <td>{{ editor.body("nw_content", newwin.nw_content) }}</td>
                     </tr>
                 </tbody>
             </table>

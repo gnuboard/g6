@@ -1,21 +1,20 @@
 {% extends "base_window.html" %}
+{% set login_member = request.state.login_member %}
 
-{% block title %}
-    {{ request.state.login_member.mb_nick }}님의 포인트 내역
-{% endblock title %}
+{% block title %}{{ login_member.mb_nick }}님의 포인트 내역{% endblock title %}
 
 {% block content %}
 <div id="point" class="new_win">
-    <h1 id="win_title">{{ request.state.login_member.mb_nick }}님의 포인트 내역</h1>
+    <h1 id="win_title">{{ login_member.mb_nick }}님의 포인트 내역</h1>
     <div class="new_win_con2">
         <ul class="point_all">
             <li class="full_li">
                 보유포인트
-                <span>{{ request.state.login_member.mb_point }}</span>
+                <span>{{ login_member.mb_point|number_format }}</span>
             </li>
         </ul>
         <ul class="point_list">
-            {% for point in points %}
+        {% for point in points %}
             <li class="{% if not point.is_positive %}point_use{% endif %}">
                 <div class="point_top">
                     <span class="point_tit">{{ point.po_content }}</span>
@@ -23,31 +22,31 @@
                         {% if point.is_positive -%}
                             +
                         {%- endif -%}
-                        {{ point.po_point }}
+                        {{ point.po_point|number_format }}
                     </span>
                 </div>
                 <span class="point_date1">
                     <i class="fa fa-clock-o" aria-hidden="true"></i>
                     {{ point.po_datetime }}
                 </span>
-                <span class="point_date {% if point.po_expired %}txt_expired{% endif %}">
+                <span class="point_date {% if point.po_expired %}txt_expired{% endif %}" style="margin-left:5px;">
                 {%- if point.is_positive -%}
                     {%- if point.po_expired -%}
                         만료 {{ point.po_expire_date|datetime_format("%Y-%m-%d") }}
                     {%- elif point.po_expire_date|datetime_format("%Y-%m-%d")  == "9999-12-31" -%}
                         &nbsp;
                     {%- else -%}
-                        {{ point.po_expire_date|datetime_format }}
+                        | 만료 예정 : {{ point.po_expire_date|datetime_format("%Y-%m-%d") }}
                     {%- endif -%}
                 {%- endif -%}
                 </span>
             </li>
-            {% endfor %}
+        {% endfor %}
             
             <li class="point_status">
                 소계
-                <span>+{{ sum_positive }}</span>
-                <span>{{ sum_negative }}</span>
+                <span>+{{ sum_positive|number_format }}</span>
+                <span>{{ sum_negative|number_format }}</span>
             </li>
         </ul>
     </div>

@@ -2,19 +2,19 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.models import Content
 
 router = APIRouter()
-templates = MyTemplates(directory=TEMPLATES_DIR)
+templates = UserTemplates()
 
 
 @router.get("/content/{co_id}")
-def content_view(request: Request, co_id: str, db: Session = Depends(get_db)):
+async def content_view(request: Request, co_id: str, db: db_session):
     '''
     컨텐츠 보기
     '''
-    content = db.query(Content).get(co_id)
+    content = db.scalar(select(Content).where(Content.co_id==co_id))
     if not content:
         raise AlertException(status_code=404, detail=f"{co_id} : 내용 아이디가 존재하지 않습니다.")
     

@@ -1,43 +1,47 @@
 from fastapi import APIRouter, Depends, Form, Path, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
+from sqlalchemy import insert
 
-from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.models import Member, Memo
+from lib.common import *
 
 router = APIRouter()
-templates = MyTemplates(directory=[CAPTCHA_PATH, TEMPLATES_DIR])
+templates = UserTemplates()
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals["captcha_widget"] = captcha_widget
 
 
 @router.get("/memo")
-def memo_list(request: Request, db: Session = Depends(get_db),
-                kind: str = Query(default="recv"),
-                current_page: int = Query(default=1, alias="page")):
+async def memo_list(
+    request: Request,
+    db: db_session,
+    kind: str = Query(default="recv"),
+    current_page: int = Query(default=1, alias="page")
+):
     """
     쪽지 목록
     """
     member = request.state.login_member
     if not member:
-        raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
+        raise AlertCloseException("로그인 후 이용 가능합니다.", 403)
 
-    model = Memo
-    join_model = Member
-    target_column = model.me_send_mb_id if kind == "recv" else model.me_recv_mb_id
-    mb_column = model.me_recv_mb_id if kind == "recv" else model.me_send_mb_id
-    query = db.query(model, join_model.mb_id, join_model.mb_nick).outerjoin(join_model, join_model.mb_id==target_column).filter(
-        mb_column == member.mb_id,
-        model.me_type == kind
-    ).order_by(model.me_id.desc())
+    mb_column = Memo.me_recv_mb_id if kind == "recv" else Memo.me_send_mb_id
+    query = (
+        select()
+        .where(mb_column == member.mb_id, Memo.me_type == kind)
+        .order_by(Memo.me_id.desc())
+    )
 
     # 페이징 처리
     records_per_page = request.state.config.cf_page_rows
-    total_records = query.count()
+    total_records = db.scalar(query.add_columns(func.count()).select_from(Memo).order_by(None))
     offset = (current_page - 1) * records_per_page
-    memos = query.offset(offset).limit(records_per_page).all()
-    
+    memos = db.scalars(query.add_columns(Memo).offset(offset).limit(records_per_page)).all()
+
+    for memo in memos:
+        memo.target_member = memo.send_member if kind == "recv" else memo.recv_member
+
     context = {
         "request": request,
         "kind": kind,
@@ -46,21 +50,24 @@ def memo_list(request: Request, db: Session = Depends(get_db),
         "page": current_page,
         "paging": get_paging(request, current_page, total_records),
     }
-    
     return templates.TemplateResponse(f"{request.state.device}/memo/memo_list.html", context)
 
 
 @router.get("/memo_view/{me_id}")
-def memo_view(request: Request, db: Session = Depends(get_db), me_id: int = Path(...)):
+async def memo_view(
+    request: Request,
+    db: db_session,
+    me_id: int = Path(...)
+):
     """
     쪽지 상세
     """
-    member = request.state.login_member
-    if not member:
+    login_member = request.state.login_member
+    if not login_member:
         raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
-    
+
     # 본인 쪽지 조회
-    memo = db.query(Memo).get(me_id)
+    memo = db.get(Memo, me_id)
     if not memo:
         raise AlertException(status_code=404, detail="쪽지가 존재하지 않습니다.", url="/bbs/memo")
     
@@ -69,36 +76,43 @@ def memo_view(request: Request, db: Session = Depends(get_db), me_id: int = Path
     memo_mb_id = memo.me_recv_mb_id if kind == "recv" else memo.me_send_mb_id
     memo_mb_column = Memo.me_recv_mb_id if kind == "recv" else Memo.me_send_mb_id
 
-    if not memo_mb_id == member.mb_id:
+    if not memo_mb_id == login_member.mb_id:
         raise AlertException(status_code=403, detail="본인의 쪽지만 조회 가능합니다.", url="/bbs/memo")
 
     # 상대방 정보 조회
-    target = db.query(Member).filter(Member.mb_id==target_mb_id).first()
+    target = db.scalar(select(Member).where(Member.mb_id == target_mb_id))
 
     # 이전,다음 쪽지 조회
-    prev_memo = db.query(Memo).filter(
-        Memo.me_id < me_id,
-        Memo.me_type == kind,
-        memo_mb_column == member.mb_id
-    ).order_by(Memo.me_id.desc()).first()
-    next_memo = db.query(Memo).filter(
-        Memo.me_id > me_id,
-        Memo.me_type == kind,
-        memo_mb_column == member.mb_id
-    ).order_by(Memo.me_id.asc()).first()
+    prev_memo = db.scalars(
+        select(Memo).where(
+            Memo.me_id < me_id,
+            Memo.me_type == kind,
+            memo_mb_column == login_member.mb_id
+        ).order_by(Memo.me_id.desc())
+    ).first()
+    next_memo = db.scalars(
+        select(Memo).where(
+            Memo.me_id > me_id,
+            Memo.me_type == kind,
+            memo_mb_column == login_member.mb_id
+        ).order_by(Memo.me_id.asc())
+    ).first()
 
+    # 받은 쪽지 읽음처리
     if kind == "recv" and memo.me_read_datetime is None:
-        # 받은 쪽지 읽음처리
         now = datetime.now()
         memo.me_read_datetime = now
-        send_memo = db.query(Memo).filter(Memo.me_id==memo.me_send_id).first()
+        send_memo = db.scalar(select(Memo).where(Memo.me_id==memo.me_send_id))
         if send_memo:
             send_memo.me_read_datetime = now
         db.commit()
 
         # 안읽은쪽지 갯수 갱신
-        db_member = db.query(Member).filter(Member.mb_id==member.mb_id).first()
-        db_member.mb_memo_cnt = get_memo_not_read(member.mb_id)
+        db.execute(
+            update(Member)
+            .values(mb_memo_cnt=get_memo_not_read(login_member.mb_id))
+            .where(Member.mb_id == login_member.mb_id)
+        )
         db.commit()
 
     context = {
@@ -113,8 +127,10 @@ def memo_view(request: Request, db: Session = Depends(get_db), me_id: int = Path
 
 
 @router.get("/memo_form")
-def memo_form(request: Request, db: Session = Depends(get_db),
-    me_recv_mb_id : str = Query(default=None),
+async def memo_form(
+    request: Request,
+    db: db_session,
+    me_recv_mb_id: str = Query(default=None),
     me_id: int = Query(default=None)
 ):
     """
@@ -127,10 +143,10 @@ def memo_form(request: Request, db: Session = Depends(get_db),
     # 쪽지를 전송할 회원 정보 조회
     target = None
     if me_recv_mb_id:
-        target = db.query(Member).filter(Member.mb_id==me_recv_mb_id).first()
+        target = db.scalar(select(Member).filter(Member.mb_id==me_recv_mb_id))
     
     # 답장할 쪽지의 정보 조회
-    memo = db.query(Memo).get(me_id) if me_id else None 
+    memo = db.get(Memo, me_id)
 
     context = {
         "request": request,
@@ -140,13 +156,11 @@ def memo_form(request: Request, db: Session = Depends(get_db),
     return templates.TemplateResponse(f"{request.state.device}/memo/memo_form.html", context)
 
 
-@router.post("/memo_form_update")
+@router.post("/memo_form_update", dependencies=[Depends(validate_token), Depends(validate_captcha)])
 async def memo_form_update(
     request: Request,
-    db: Session = Depends(get_db),
-    token: str = Form(...),
-    recaptcha_response: Optional[str] = Form(alias="g-recaptcha-response", default=""),
-    me_recv_mb_id : str = Form(...),
+    db: db_session,
+    me_recv_mb_id: str = Form(...),
     me_memo: str = Form(...)
 ):
     """
@@ -156,13 +170,6 @@ async def memo_form_update(
     member = request.state.login_member
     if not member:
         raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
-    
-    if not check_token(request, token):
-        raise AlertException(f"{token} : 토큰이 유효하지 않습니다. 새로고침후 다시 시도해 주세요.", 403)
-
-    captcha_cls = get_current_captcha_cls(config.cf_captcha)
-    if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, recaptcha_response)):
-        raise AlertException("캡차가 올바르지 않습니다.", 400)
 
     # me_recv_mb_id 공백 제거
     mb_id_list = me_recv_mb_id.replace(" ", "").split(',')
@@ -170,8 +177,8 @@ async def memo_form_update(
     error_list = []
     for mb_id in mb_id_list:
         # 쪽지를 전송할 회원 정보 조회
-        target = db.query(Member).filter(Member.mb_id==mb_id).first()
-        if target and target.mb_open and not(target.mb_leave_date or target.mb_intercept_date):
+        target = db.scalar(select(Member).filter(Member.mb_id == mb_id))
+        if target and target.mb_open and not (target.mb_leave_date or target.mb_intercept_date):
             target_list.append(target)
         else:
             error_list.append(mb_id)
@@ -212,23 +219,21 @@ async def memo_form_update(
     return RedirectResponse(url=f"/bbs/memo?kind=send", status_code=302)
 
 
-@router.get("/memo_delete/{me_id}")
-def memo_delete(request: Request, db: Session = Depends(get_db), 
-                me_id: int = Path(...),
-                token:str = Query(...),
-                page:int = Query(default=1)
-                ):
+@router.get("/memo_delete/{me_id}", dependencies=[Depends(validate_token)])
+async def memo_delete(
+    request: Request,
+    db: db_session,
+    me_id: int = Path(...),
+    page: int = Query(default=1)
+):
     """
     쪽지 삭제
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
     member = request.state.login_member
     if not member:
         raise AlertCloseException(status_code=403, detail="로그인 후 이용 가능합니다.")
-    
-    memo = db.query(Memo).get(me_id)
+
+    memo = db.get(Memo, me_id)
     if not memo:
         raise AlertException(status_code=403, detail="쪽지가 존재하지 않습니다.", url="/bbs/memo")
     
@@ -239,10 +244,12 @@ def memo_delete(request: Request, db: Session = Depends(get_db),
     
     # 실시간 알림 삭제(업데이트)
     if memo.me_read_datetime is None:
-        target_member = db.query(Member).filter(
-            Member.mb_id==memo.me_recv_mb_id,
-            Member.mb_memo_call==memo.me_send_mb_id
-        ).first()
+        target_member = db.scalar(
+            select(Member).where(
+                Member.mb_id == memo.me_recv_mb_id,
+                Member.mb_memo_call == memo.me_send_mb_id
+            )
+        )
         if target_member:
             target_member.mb_memo_call = ''
             db.commit()
@@ -251,7 +258,7 @@ def memo_delete(request: Request, db: Session = Depends(get_db),
     db.commit()
 
     # 안읽은쪽지 갯수 갱신
-    db_member = db.query(Member).filter(Member.mb_id==member.mb_id).first()
+    db_member = db.scalar(select(Member).filter(Member.mb_id == member.mb_id))
     db_member.mb_memo_cnt = get_memo_not_read(member.mb_id)
     db.commit()
 

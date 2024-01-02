@@ -119,7 +119,7 @@
                     max_code = me_code;
             });
     
-            var url = "{{ url_for('menu_form') }}" + "?code=" + max_code + "&new=new";
+            var url = "{{ url_for('menu_form') }}" + "?code=" + max_code + "&action=new";
             window.open(url, "add_menu", "left=100,top=100,width=550,height=650,scrollbars=yes,resizable=yes");
             return false;
         }

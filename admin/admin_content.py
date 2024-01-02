@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends, File, Form, Path, Query, Request, UploadFile
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from common.formclass import ContentForm
-from common.database import get_db
+from common.database import db_session
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import Content
 from lib.common import *
 
 router = APIRouter()
-templates = Jinja2Templates(directory=ADMIN_TEMPLATES_DIR)
+templates = AdminTemplates()
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.globals["now"] = now
 templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
@@ -23,20 +23,20 @@ IMAGE_DIRECTORY = "data/content/"
 
 
 @router.get("/content_list")
-def content_list(request: Request, db: Session = Depends(get_db)):
+async def content_list(request: Request, db: db_session):
     """
     내용관리 목록
     """
     request.session["menu_key"] = MENU_KEY
 
-    contents = db.query(Content).all()
+    contents = db.scalars(select(Content)).all()
     return templates.TemplateResponse(
         "content_list.html", {"request": request, "contents": contents}
     )
 
 
 @router.get("/content_form")
-def content_form_add(request: Request, db: Session = Depends(get_db)):
+async def content_form_add(request: Request, db: db_session):
     """
     내용추가 폼
     """
@@ -46,11 +46,11 @@ def content_form_add(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/content_form/{co_id}")
-def content_form_edit(co_id: str, request: Request, db: Session = Depends(get_db)):
+async def content_form_edit(co_id: str, request: Request, db: db_session):
     """
     내용 수정 폼
     """
-    content = db.query(Content).filter(Content.co_id == co_id).first()
+    content = db.scalar(select(Content).where(Content.co_id == co_id))
     if not content:
         raise AlertException(status_code=404, detail=f"{co_id} : 내용 아이디가 존재하지 않습니다.")
 
@@ -60,11 +60,10 @@ def content_form_edit(co_id: str, request: Request, db: Session = Depends(get_db
     )
 
 
-@router.post("/content_form_update")
-def content_form_update(request: Request,
-                        db: Session = Depends(get_db),
+@router.post("/content_form_update", dependencies=[Depends(validate_token)])
+async def content_form_update(request: Request,
+                        db: db_session,
                         action: str = Form(...),
-                        token: str = Form(...),
                         co_id: str = Form(...),
                         form_data: ContentForm = Depends(),
                         co_himg: UploadFile = File(None),
@@ -80,7 +79,6 @@ def content_form_update(request: Request,
     Args:
         request (Request): 
         db (Session, optional): 
-        token (str): 입력/수정/삭제 변조 방지 토큰.
         co_id (str): 내용 ID.
         form_data (ContentDataclass): 입력/수정 Form Data.
         co_himg (UploadFile, optional): 상단 이미지 첨부파일. Defaults to File(...).
@@ -96,12 +94,9 @@ def content_form_update(request: Request,
     Returns:
         RedirectResponse: 내용 등록/수정 후 상세 폼으로 이동
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     if action == "w":
         # ID 중복 검사
-        exists_content = db.query(Content).filter(Content.co_id == co_id).first()
+        exists_content = db.scalar(select(Content).where(Content.co_id == co_id))
         if exists_content:
             raise AlertException(status_code=400, detail=f"{co_id} : 내용 아이디가 이미 존재합니다.")
         
@@ -133,18 +128,14 @@ def content_form_update(request: Request,
     return RedirectResponse(url=request.url_for('content_form_edit', co_id=co_id), status_code=302)
 
 
-@router.get("/content_delete/{co_id}")
-def content_delete(request: Request, 
-                   db: Session = Depends(get_db),
-                   token: str = Query(...),
+@router.get("/content_delete/{co_id}", dependencies=[Depends(validate_token)])
+async def content_delete(request: Request, 
+                   db: db_session,
                    co_id: str = Path(...)):
     """
     내용 삭제
-    """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
-    content = db.query(Content).filter(Content.co_id == co_id).first()
+    """    
+    content = db.scalar(select(Content).where(Content.co_id == co_id))
     if not content:
         raise AlertException(status_code=404, detail=f"{co_id}: 내용 아이디가 존재하지 않습니다.")
 

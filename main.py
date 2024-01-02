@@ -1,32 +1,33 @@
 import datetime
-from apscheduler.schedulers.background import BackgroundScheduler
-from fastapi import FastAPI, Depends, Request
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from pydantic import TypeAdapter
-
-from lib.plugin.service import register_statics, import_plugin_admin, get_plugin_state_change_time, \
-    read_plugin_state, import_plugin_by_states, import_plugin_router, delete_router_by_tagname
-from common.database import get_db
-from starlette.middleware.sessions import SessionMiddleware
-from lib.common import *
-
-from user_agents import parse
-import common.models as models
 import secrets
 
+from apscheduler.schedulers.background import BackgroundScheduler
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, JSONResponse
+from pydantic import TypeAdapter
+from sqlalchemy import select
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.sessions import SessionMiddleware
+from user_agents import parse
 
-# models.Base.metadata.create_all(bind=engine)
+from common.database import DBConnect, db_session
+import common.models as models
+from lib.common import *
+from lib.plugin.service import register_statics, register_plugin_admin_menu, get_plugin_state_change_time, \
+    read_plugin_state, import_plugin_by_states, delete_router_by_tagname, cache_plugin_state, \
+    cache_plugin_menu, register_plugin, unregister_plugin
+
+load_dotenv()
 APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
 app = FastAPI(debug=APP_IS_DEBUG)
 
-templates = MyTemplates(directory=[TEMPLATES_DIR])
+templates = UserTemplates()
 templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.filters["datetime_format"] = datetime_format
 
 from admin.admin import router as admin_router
+from install.router import router as install_router
 from bbs.board import router as board_router
 from bbs.login import router as login_router
 from bbs.register import router as register_router
@@ -43,17 +44,34 @@ from bbs.board_new import router as board_new_router
 from bbs.ajax_good import router as good_router
 from bbs.ajax_autosave import router as autosave_router
 from bbs.member_leave import router as member_leave_router
+from bbs.member_find import router as member_find_router
 from bbs.social import router as social_router
 from bbs.password import router as password_router
 from bbs.search import router as search_router
 from lib.editor.ckeditor4 import router as editor_router
+
+register_theme_statics(app)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/data", StaticFiles(directory="data"), name="data")
+
+# 플러그인 라우터 우선 등록
+plugin_states = read_plugin_state()
+import_plugin_by_states(plugin_states)
+register_plugin(plugin_states)
+register_statics(app, plugin_states)
+
+cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
+cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(plugin_states))
+
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
+app.include_router(install_router, prefix="/install", tags=["install"])
 app.include_router(board_router, prefix="/board", tags=["board"])
 app.include_router(login_router, prefix="/bbs", tags=["login"])
 app.include_router(register_router, prefix="/bbs", tags=["register"])
 app.include_router(user_profile_router, prefix="/bbs", tags=["profile"])
 app.include_router(profile_router, prefix="/bbs", tags=["profile"])
 app.include_router(member_leave_router, prefix="/bbs", tags=["member_leave"])
+app.include_router(member_find_router, prefix="/bbs", tags=["member_find"])
 app.include_router(content_router, prefix="/bbs", tags=["content"])
 app.include_router(faq_router, prefix="/bbs", tags=["faq"])
 app.include_router(qa_router, prefix="/bbs", tags=["qa"])
@@ -71,24 +89,6 @@ app.include_router(editor_router, prefix="/editor", tags=["editor"])
 # is_mobile = False
 # user_device = 'pc'
 
-# 전역 캐시
-cache_plugin_menu = cachetools.Cache(maxsize=1)
-cache_plugin_state = cachetools.Cache(maxsize=1)
-
-# 활성화된 플러그인만 로딩
-plugin_states = read_plugin_state()
-import_plugin_by_states(plugin_states)
-register_statics(app, plugin_states)
-import_plugin_router(plugin_states)
-
-cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
-cache_plugin_menu.__setitem__('admin_menus', import_plugin_admin(plugin_states))
-# 하위경로를 먼저 등록하고 상위경로를 등록
-# plugin/plugin_name/static 폴더 이후 등록
-app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/data", StaticFiles(directory="data"), name="data")
-
-
 class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         if request.headers.get("X-Forwarded-Proto") != "https":
@@ -98,53 +98,90 @@ class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
 app.add_middleware(HTTPSRedirectMiddleware)
 
 
-
 # 요청마다 항상 실행되는 미들웨어
 @app.middleware("http")
 async def main_middleware(request: Request, call_next):
-
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 시작    
     # 요청의 경로를 얻습니다.
     path = request.url.path
+    # 토큰을 생성하는 요청의 경우에도 미들웨어를 건너뛰어야 합니다.
     # 경로가 정적 파일에 대한 것이 아닌지 확인합니다 (css, js, 이미지 등).
-    if (path.startswith('/static') or path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.webp'))):
+    if (path.startswith('/generate_token')
+            or path.startswith('/static') 
+            or path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.webp'))):
         response = await call_next(request)
         return response
     ### 미들웨어가 여러번 실행되는 것을 막는 코드 끝
-    
+
+    # 데이터베이스 설치여부 체크
+    db_connect = DBConnect()
     try:
-        if path.startswith("/admin"):
-            # 관리자 페이지는 로그인이 필요합니다.
-            if not request.session.get("ss_mb_id"):
-                raise AlertException(status_code=302, detail="로그인이 필요합니다.", url="/bbs/login?url="+path)
+        # 설치 페이지가 아니라면
+        if not path.startswith("/install"):
+            if not os.path.exists(ENV_PATH):
+                raise AlertException(".env 파일이 없습니다. 설치를 진행해 주세요.", 400, "/install")
+
+            if not inspect(db_connect.engine).has_table(db_connect.table_prefix + "config"):
+                raise AlertException("DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요.", 400, "/install")
+        else:
+            return await call_next(request)
+
     except AlertException as e:
-        # 예외처리 실행
         return await alert_exception_handler(request, e)
 
-    if cache_plugin_state.__getitem__('change_time') != get_plugin_state_change_time():
+    db = db_connect.sessionLocal()
+    config = db.scalar(select(Config))
+    request.state.config = config
+
+    member = None
+    is_super_admin = False
+    is_autologin = False
+    ss_mb_id = request.session.get("ss_mb_id", "")
+
+    # TODO: admin 라우터로 이동 및 의존성 주입으로 변경
+    try:
+        # 관리자페이지 접근시
+        if path.startswith("/admin"):
+            if not ss_mb_id:
+                raise AlertException("로그인이 필요합니다.", 302, url="/bbs/login?url=" + path)
+            elif not is_admin(request):
+                method = request.method
+                admin_menu_id = get_current_admin_menu_id(request)
+
+                if admin_menu_id:
+                    # 관리자 메뉴에 대한 권한 체크
+                    auth = db.scalar(select(models.Auth).filter_by(au_menu = admin_menu_id, mb_id = ss_mb_id))
+                    au_auth = auth.au_auth if auth else ""
+
+                    # 각 요청 별 권한 체크
+                    # delete 요청은 GET 요청으로 처리되므로, 요청에 "delete"를 포함하는지 확인하여 처리
+                    if "delete" in path and not "d" in au_auth:
+                        raise AlertException("삭제 권한이 없습니다.", 302, url="/")
+                    elif (method == "POST" and not "w" in au_auth):
+                        raise AlertException("수정 권한이 없습니다.", 302, url="/")
+                    elif (method == "GET" and not "r" in au_auth):
+                        raise AlertException("읽기 권한이 없습니다.", 302, url="/")
+
+    except AlertException as e:
+        return await alert_exception_handler(request, e)
+
+    plugin_state_change_time = get_plugin_state_change_time()
+    if cache_plugin_state.__getitem__('change_time') != plugin_state_change_time:
         # 플러그인 상태변경시 캐시를 업데이트.
         # 업데이트 이후 관리자 메뉴, 라우터 재등록/삭제
         new_plugin_state = read_plugin_state()
-        import_plugin_router(new_plugin_state)
+        register_plugin(new_plugin_state)
+        unregister_plugin(new_plugin_state)
         for plugin in new_plugin_state:
             if not plugin.is_enable:
                 delete_router_by_tagname(app, plugin.module_name)
 
-        cache_plugin_menu.__setitem__('admin_menus', import_plugin_admin(new_plugin_state))
-        cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
+        cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(new_plugin_state))
+        cache_plugin_state.__setitem__('change_time', plugin_state_change_time)
 
-    member = None
-
-    db: Session = SessionLocal()
-    config = db.query(models.Config).first()
-    request.state.config = config
-
-    is_super_admin = False
-    is_autologin = False
-    ss_mb_id = request.session.get("ss_mb_id", "")
     # 로그인
     if ss_mb_id:
-        member = db.query(models.Member).filter(models.Member.mb_id == ss_mb_id).first()
+        member = db.scalar(select(models.Member).filter_by(mb_id = ss_mb_id))
         if member:
             ymd_str = datetime.now().strftime("%Y-%m-%d")
             if member.mb_intercept_date or member.mb_leave_date: # 차단 되었거나, 탈퇴한 회원이면 세션 초기화
@@ -168,7 +205,7 @@ async def main_middleware(request: Request, call_next):
         if cookie_mb_id:
             cookie_mb_id = re.sub("[^a-zA-Z0-9_]", "", cookie_mb_id)[:20] # 쿠키에 저장된 아이디에서 영문자,숫자,_ 20글자 얻는다.
         if cookie_mb_id and cookie_mb_id.lower() != config.cf_admin.lower(): # 최고관리자 아이디라면 자동로그인 금지
-            member = db.query(models.Member).filter(models.Member.mb_id == cookie_mb_id).first()
+            member = db.scalar(select(models.Member).filter_by(mb_id = cookie_mb_id))
             if member and not (member.mb_intercept_date or member.mb_leave_date): # 차단 했거나 탈퇴한 회원이 아니면
                 # 메일인증을 사용하고 메일인증한 시간이 있다면, 년도만 체크하여 시간이 있음을 확인
                 if config.cf_use_email_certify and not is_none_datetime(member.mb_email_certify):
@@ -235,13 +272,13 @@ async def main_middleware(request: Request, call_next):
     # 에디터 전역변수
     request.state.editor = config.cf_editor
     request.state.use_editor = True if config.cf_editor else False
-                
+
     # request.state.context = {
     #     # "request": request,
     #     # "config": config,
     #     # "member": member,
     #     # "outlogin": outlogin.body.decode("utf-8"),
-    # }      
+    # }
     response = await call_next(request)
 
     if is_autologin:
@@ -278,7 +315,9 @@ async def alert_exception_handler(request: Request, exc: AlertException):
     Returns:
         _TemplateResponse: 경고창 템플릿
     """
-    return templates.TemplateResponse(
+    # 
+    template = Jinja2Templates(directory=[TEMPLATES_DIR])
+    return template.TemplateResponse(
         "alert.html", {"request": request, "errors": exc.detail, "url": exc.url}, status_code=exc.status_code
     )
 
@@ -293,40 +332,44 @@ async def alert_close_exception_handler(request: Request, exc: AlertCloseExcepti
     Returns:
         _TemplateResponse: 경고창 & 윈도우창 닫기 템플릿
     """
-    return templates.TemplateResponse(
+    template = Jinja2Templates(directory=[TEMPLATES_DIR])
+    return template.TemplateResponse(
         "alert_close.html", {"request": request, "errors": exc.detail}, status_code=exc.status_code
     )
 
 
 # 예약 작업을 관리할 스케줄러 생성
-scheduler = BackgroundScheduler(timezone='Asia/Seoul')
-# 매일 새벽 1시 스케줄러가 작동
 # https://apscheduler.readthedocs.io/en/3.x/modules/triggers/cron.html
-@scheduler.scheduled_job('cron', hour=1, id='remove_data_by_config')
+scheduler = BackgroundScheduler(timezone='Asia/Seoul')
+@scheduler.scheduled_job('cron', hour=10, id='remove_data_by_config')
 def job():
-    delete_old_data()
+    delete_old_records()
 # FastAPI 앱 시작 시 스케줄러 시작
 scheduler.start()
 
 
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request, db: Session = Depends(get_db)):
+async def index(request: Request, db: db_session):
     """
     메인 페이지
     """
-    query_boards = db.query(models.Board).join(
-        models.Group, models.Board.gr_id == models.Group.gr_id
-    ).filter(models.Board.bo_device != 'mobile')
-    # 최고관리자는 모든 게시판을 볼 수 있음
+    # 게시판 목록 조회
+    query_boards = (
+        select(models.Board)
+        .join(models.Board.group)
+        .where(models.Board.bo_device != 'mobile')
+        .order_by(
+            models.Group.gr_order,
+            models.Board.bo_order
+        )
+    )
+    # 최고관리자가 아니라면 인증게시판 및 갤러리/공지사항 게시판은 제외
     if not request.state.is_super_admin:
-        query_boards = query_boards.filter(
+        query_boards = query_boards.where(
             models.Board.bo_use_cert == '',
             models.Board.bo_table.notin_(['notice', 'gallery'])
         )
-    boards = query_boards.order_by(
-        models.Group.gr_order,
-        models.Board.bo_order
-    ).all()
+    boards = db.scalars(query_boards).all()
 
     context = {
         "request": request,

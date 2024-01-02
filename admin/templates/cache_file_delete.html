@@ -1,10 +1,8 @@
 {% extends "base.html" %}
-
 {% set title = "캐시파일 일괄삭제" %}
 
-{% block title %}{{ title }}{% endblock %}
-
-{% block subtitle %}{{ title }}{% endblock %}
+{% block title %}{{ title }}{% endblock title %}
+{% block subtitle %}{{ title }}{% endblock subtitle %}
 
 {% block content %}
 <div class="cache_wrap">
@@ -17,16 +15,15 @@
 </div>
 
 
-<script>
-    const evtSource = new EventSource("/admin/cache_file_deleting");
-    evtSource.onmessage = function(event) {
-        const data = event.data.trim();  // 공백 제거
-        
-        document.getElementById("status").innerHTML += data + "<br>"; // 메시지 출력
-        if (data.includes("[끝]")) {
-            evtSource.close(); // "[끝]" 메시지를 받으면 연결을 닫습니다.
+    <script>
+        const evtSource = new EventSource("/admin/cache_file_deleting");
+        evtSource.onmessage = function(event) {
+            const data = event.data.trim();  // 공백 제거
+            
+            document.getElementById("status").innerHTML += data + "<br>"; // 메시지 출력
+            if (data.includes("[끝]")) {
+                evtSource.close(); // "[끝]" 메시지를 받으면 연결을 닫습니다.
+            }
         }
-    }
-</script>
-
-{% endblock %}
+    </script>
+{% endblock content %}

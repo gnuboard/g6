@@ -250,33 +250,36 @@ var g5_admin_url = "/admin";
         }, 400);
     })
 
-       // 다크모드 설정
-       if (localStorage.getItem('darkMode') === 'enabled') {
-            $('body').addClass('dark-mode');
-            $('#darkmode_btn').addClass('dark-mode');
-            $('#dark-mode-toggle').prop('checked', true);
-        }
+</script>
+<script>
+  // 다크모드 설정
+  const $checkbox = document.querySelector('#dark-mode-toggle');
 
-        $('#dark-mode-toggle').change(function() {
-            if (this.checked) {
-                enableDarkMode();
-            } else {
-                disableDarkMode();
-            }
-        });
+  const isUserColorTheme = localStorage.getItem('color-theme');
+  const isOsColorTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 
-        function enableDarkMode() {
-            $('body').addClass('dark-mode');
-            $('.toggle-switch').removeClass('light-mode').addClass('dark-mode');
-            localStorage.setItem('darkMode', 'enabled');
-        }
+  const getUserTheme = () => (isUserColorTheme ? isUserColorTheme : isOsColorTheme);
 
-        function disableDarkMode() {
-            $('body').removeClass('dark-mode');
-            $('.toggle-switch').removeClass('dark-mode').addClass('light-mode');
-            localStorage.setItem('darkMode', 'disabled');
-        }
+  document.addEventListener('DOMContentLoaded', function () {
+  const initialTheme = getUserTheme();
+    if (initialTheme === 'dark') {
+      localStorage.setItem('color-theme', 'dark');
+      document.documentElement.setAttribute('color-theme', 'dark');
+    } else {
+      localStorage.setItem('color-theme', 'light');
+      document.documentElement.setAttribute('color-theme', 'light');
+    }
+  }); 
 
+  $checkbox.addEventListener('click', e => {
+    if (e.target.checked) {
+      localStorage.setItem('color-theme', 'dark');
+      document.documentElement.setAttribute('color-theme', 'dark');
+    } else {
+      localStorage.setItem('color-theme', 'light');
+      document.documentElement.setAttribute('color-theme', 'light');
+    }
+  });
 </script>
 
 
@@ -302,11 +305,8 @@ var g5_admin_url = "/admin";
 
         
         // 현재 페이지 메뉴 활성화
-        const currentlink = window.location.pathname
-        const currentLinks = document.querySelector('#gnb').querySelectorAll('a[href="'+ currentlink +'"]')
-        if (currentLinks.length > 0) {
-            currentLinks[0].className += ' on';
-        }
+        const current_menu = "{{ request.session.get('menu_key', '') }}"
+        document.querySelector(`li[data-menu="${current_menu}"] > a`).classList.add('on');
         
         var hide_menu = false;
         var mouse_event = false;
@@ -408,7 +408,6 @@ var g5_admin_url = "/admin";
 </script>
 
 
-<!-- <div style='float:left; text-align:center;'>RUN TIME : 0.045850038528442<br></div> -->
 
 
 </body>

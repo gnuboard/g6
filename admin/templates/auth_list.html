@@ -1,182 +1,160 @@
 {% extends "base.html" %}
 
-{% block title %}
-    관리권한설정
-{% endblock %}
+{% block title %}관리권한설정{% endblock title %}
+
+{% block subtitle %}관리권한설정{% endblock subtitle %}
 
 {% block content %}
+    {% set query_params = request.query_params %}
 
-<div class="local_ov01 local_ov">
-    <a href="/admin/auth_list" class="ov_listall btn_ov02">전체목록</a>
-    <span class="btn_ov01"><span class="ov_txt">설정된 관리권한</span><span class="ov_num"> {{ total_count }} 건</span></span>
-</div>
+    <div class="local_ov01 local_ov">
+        <a href="/admin/auth_list" class="ov_listall btn_ov02">전체목록</a>
+        <span class="btn_ov01"><span class="ov_txt">설정된 관리권한</span><span class="ov_num"> {{ total_count|number_format }} 건</span></span>
+    </div>
 
-<form name="fsearch" id="fsearch" class="local_sch01 local_sch" method="get">
-    <input type="hidden" name="sfl" value="a.mb_id" id="sfl">
-    <label for="stx" class="sound_only">회원아이디<strong class="sound_only"> 필수</strong></label>
-    <input type="text" name="stx" value="{{ request.state.stx }}" id="stx" required class="required frm_input">
-    <input type="submit" value="검색" id="fsearch_submit" class="btn_submit">
-</form>
+    <form name="fsearch" id="fsearch" class="local_sch01 local_sch" method="get">
+        <input type="hidden" name="sfl" value="mb_id" id="sfl">
+        <label for="stx" class="sound_only">회원아이디<strong class="sound_only"> 필수</strong></label>
+        <input type="text" name="stx" value="{{ query_params.get("stx", "") }}" id="stx" required class="required frm_input">
+        <input type="submit" value="검색" id="fsearch_submit" class="btn_submit">
+    </form>
 
-<form name="fauthlist" id="fauthlist" method="post" action="/admin/auth_list_delete" onsubmit="return fauthlist_submit(this);">
-    <input type="hidden" name="sst" value="{{ request.state.sst }}">
-    <input type="hidden" name="sod" value="{{ request.state.sod }}">
-    <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
-    <input type="hidden" name="stx" value="{{ request.state.stx }}">
-    <input type="hidden" name="page" value="{{ request.state.page }}">
-    <input type="hidden" name="token" value="">
-    
-    <div class="tbl_head01 tbl_wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th scope="col">
-                        <label for="chkall" class="sound_only">현재 페이지 회원 전체</label>
-                        <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
-                    </th>
-                    <th scope="col">{{ subject_sort_link(request, 'mb_id')|safe }}회원아이디</a></th>
-                    <th scope="col">닉네임</th>
-                    <th scope="col">메뉴</th>
-                    <th scope="col">권한</th>
-                </tr>
-            </thead>
-            <tbody>
+    <form name="fauthlist" id="fauthlist" method="post" action="/admin/auth_list_delete?{{ query_params }}" onsubmit="return fauthlist_submit(this);">
+        <input type="hidden" name="token" value="">
+        <div class="tbl_head01 tbl_wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">
+                            <label for="chkall" class="sound_only">현재 페이지 회원 전체</label>
+                            <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
+                        </th>
+                        <th scope="col">{{ subject_sort_link(request, 'mb_id')|safe }}회원아이디</th>
+                        <th scope="col">닉네임</th>
+                        <th scope="col">메뉴</th>
+                        <th scope="col">권한</th>
+                    </tr>
+                </thead>
+                <tbody>
                 {% for row in rows %}                
-                <tr class="{{ 'bg0' if loop.index0 % 2 == 0 else 'bg1' }}">
+                    <tr class="bg{{ loop.cycle('0', '1') }}">
                     <td class="td_chk">
                         <input type="hidden" name="au_menu[]" value="{{ row.au_menu }}">
                         <input type="hidden" name="mb_id[]" value="{{ row.mb_id }}">
                         <label for="chk_{{ loop.index0 }}" class="sound_only">{{ row.mb_nick }}님 권한</label>
                         <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
                     </td>
-                    <td class="td_mbid"><a href="?sfl=mb_id&stx={{ row.mb_id }}">{{ row.mb_id }}</a></td>
-                    <td class="td_auth_mbnick">{{ row.mb_nick }}</td>
-                    <td class="td_menu">
-                        {{ row.au_menu }}
-                        <?php echo $auth_menu[$row['au_menu']] ?>
+                    <td class="td_mbid">
+                        <a href="{{ request.url.include_query_params(sfl="mb_id", stx=row.mb_id) }}">{{ row.mb_id }}</a>
                     </td>
+                    <td class="td_auth_mbnick">{{ row.mb_nick }}</td>
+                    <td class="td_menu">{{ row.au_menu }}</td>
                     <td class="td_auth">{{ row.au_auth }}</td>
                 </tr>
+                {% else %}
+                    <tr><td colspan="5" class="empty_table">자료가 없습니다.</td></tr>
                 {% endfor %}
-                {% if rows|length == 0 %}
-                <tr><td colspan="5" class="empty_table">자료가 없습니다.</td></tr>
-                {% endif %}
-            </tbody>
-        </table>
-    </div>
-
-    <div class="btn_fixed_top">
-        <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn btn_02">
-    </div>
-        
-
-    <!-- <div class="btn_list01 btn_list">
-        <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn btn_02">
-    </div> -->
-
-    {% if request.state.stx %}
-    <script>document.fsearch.sfl.value = "{{ request.state.sfl }}";</script>
-    {% endif %}
-</form>
-
-{{ paging|safe }}
-
-<form name="fauthlist2" id="fauthlist2" action="/admin/auth_update" method="post" autocomplete="off" onsubmit="return fauth_add_submit(this);">
-    <input type="hidden" name="sst" value="{{ request.state.sst }}">
-    <input type="hidden" name="sod" value="{{ request.state.sod }}">
-    <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
-    <input type="hidden" name="stx" value="{{ request.state.stx }}">
-    <input type="hidden" name="page" value="{{ request.state.page }}">
-    <input type="hidden" name="token" value="">
-
-    <section id="add_admin">
-        <h2 class="h2_frm">관리권한 추가</h2>
-
-        <div class="local_desc01 local_desc">
-            <p>
-                다음 양식에서 회원에게 관리권한을 부여하실 수 있습니다.<br>
-                권한 <strong>r</strong>은 읽기권한, <strong>w</strong>는 쓰기권한, <strong>d</strong>는 삭제권한입니다.
-            </p>
-        </div>
-
-        <div class="tbl_frm01 tbl_wrap">
-            <table>
-                <colgroup>
-                    <col class="grid_4">
-                    <col>
-                </colgroup>
-                <tbody>
-                    <tr>
-                        <th scope="row"><label for="mb_id">회원아이디<strong class="sound_only">필수</strong></label></th>
-                        <td>
-                            <strong id="msg_mb_id" class="msg_sound_only"></strong>
-                            <input type="text" name="mb_id" value="{{ request.state.stx }}" id="mb_id" required class="required frm_input">
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><label for="au_menu">접근가능메뉴<strong class="sound_only">필수</strong></label></th>
-                        <td>
-                            <select id="au_menu" name="au_menu" required class="required">
-                                <option value=''>선택하세요</option>
-                                {% for option in auth_options %}
-                                    {{ option|safe }}
-                                {% endfor %}
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">권한지정</th>
-                        <td>
-                            <input type="checkbox" name="r" value="r" id="r" checked>
-                            <label for="r">r (읽기)</label>
-                            <input type="checkbox" name="w" value="w" id="w">
-                            <label for="w">w (쓰기)</label>
-                            <input type="checkbox" name="d" value="d" id="d">
-                            <label for="d">d (삭제)</label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">자동등록방지</th>
-                        <td>
-                        </td>
-                    </tr>
                 </tbody>
             </table>
         </div>
 
-        <div class="btn_confirm01 btn_confirm">
-            <input type="submit" value="추가" class="btn_submit btn">
+        <div class="btn_fixed_top">
+            <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn btn_02">
         </div>
-    </section>
+    </form>
 
-</form>
+    {{ paging|safe }}
 
-<script>
-    function fauth_add_submit(f) {
+    <form name="fauthlist2" id="fauthlist2" action="/admin/auth_update?{{ query_params }}" method="post" autocomplete="off" onsubmit="return fauth_add_submit(this);">
+        <input type="hidden" name="token" value="">
 
-        // $captcha_js; // 캡챠 사용시 자바스크립트에서 입력된 캡챠를 검사함
+        <section id="add_admin">
+            <h2 class="h2_frm">관리권한 추가</h2>
 
-        f.token.value = generate_token();
+            <div class="local_desc01 local_desc">
+                <p>
+                    다음 양식에서 회원에게 관리권한을 부여하실 수 있습니다.<br>
+                    권한 <strong>r</strong>은 읽기권한, <strong>w</strong>는 쓰기권한, <strong>d</strong>는 삭제권한입니다.
+                </p>
+            </div>
 
-        return true;
-    }
+            <div class="tbl_frm01 tbl_wrap">
+                <table>
+                    <colgroup>
+                        <col class="grid_4">
+                        <col>
+                    </colgroup>
+                    <tbody>
+                        <tr>
+                            <th scope="row"><label for="mb_id">회원아이디<strong class="sound_only">필수</strong></label></th>
+                            <td>
+                                <strong id="msg_mb_id" class="msg_sound_only"></strong>
+                                <input type="text" name="mb_id" value="{{ request.state.stx }}" id="mb_id" required class="required frm_input">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="au_menu">접근가능메뉴<strong class="sound_only">필수</strong></label></th>
+                            <td>
+                                <select id="au_menu" name="au_menu" required class="required">
+                                    <option value=''>선택하세요</option>
+                                    {% for option in auth_options %}
+                                        {{ option|safe }}
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">권한지정</th>
+                            <td>
+                                <input type="checkbox" name="r" value="r" id="r" checked>
+                                <label for="r">r (읽기)</label>
+                                <input type="checkbox" name="w" value="w" id="w">
+                                <label for="w">w (쓰기)</label>
+                                <input type="checkbox" name="d" value="d" id="d">
+                                <label for="d">d (삭제)</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">자동등록방지</th>
+                            <td>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-    function fauthlist_submit(f) {
-        if (!is_checked("chk[]")) {
-            alert(document.pressed + " 하실 항목을 하나 이상 선택하세요.");
-            return false;
+            <div class="btn_confirm01 btn_confirm">
+                <input type="submit" value="추가" class="btn_submit btn">
+            </div>
+        </section>
+
+    </form>
+
+    <script>
+        function fauth_add_submit(f) {
+
+            // $captcha_js; // 캡챠 사용시 자바스크립트에서 입력된 캡챠를 검사함
+
+            f.token.value = generate_token();
+
+            return true;
         }
 
-        if (document.pressed == "선택삭제") {
-            if (!confirm("선택한 자료를 정말 삭제하시겠습니까?")) {
+        function fauthlist_submit(f) {
+            if (!is_checked("chk[]")) {
+                alert(document.pressed + " 하실 항목을 하나 이상 선택하세요.");
                 return false;
             }
+
+            if (document.pressed == "선택삭제") {
+                if (!confirm("선택한 자료를 정말 삭제하시겠습니까?")) {
+                    return false;
+                }
+            }
+
+            f.token.value = generate_token();
+
+            return true;
         }
-
-        f.token.value = generate_token();
-
-        return true;
-    }
-</script>
-
-{% endblock %}
+    </script>
+{% endblock content %}

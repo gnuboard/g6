@@ -3,25 +3,28 @@ import logging
 import os
 import random
 import re
+import typing
 from time import sleep
 from typing import Any, Dict, List, Optional, Union
 import uuid
 from urllib.parse import urlencode
 import PIL
 import shutil
-from fastapi import Query, Request, HTTPException, UploadFile
+from fastapi import Depends, Form, Path, Query, Request, HTTPException, UploadFile
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment
 from markupsafe import Markup, escape
 from passlib.context import CryptContext
-from sqlalchemy import Index, asc, desc, and_, or_, func, extract, literal, inspect
+from pydantic import TypeAdapter
+from sqlalchemy import Index, asc, desc, and_, func, insert, inspect, select, delete, between, exists, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import load_only, Session
+from starlette.datastructures import URL
 from starlette.staticfiles import StaticFiles
 
-from common.models import Auth, Config, Member, Memo, Board, BoardFile, BoardNew, Group, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
+from common.models import Auth, Config, Member, Memo, Board, BoardFile, BoardNew, Group, GroupMember, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
 from common.models import WriteBaseModel
-from common.database import SessionLocal, engine, DB_TABLE_PREFIX
+from common.database import DBConnect
 from datetime import datetime, timedelta, date, time
 import json
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -35,45 +38,38 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from lib.captcha.recaptch_v2 import ReCaptchaV2
 from lib.captcha.recaptch_inv import ReCaptchaInvisible
-from lib.plugin.service import get_admin_plugin_menus
+from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names, PLUGIN_DIR
+from typing_extensions import Annotated
 
 load_dotenv()
 
-
 # 전역변수 선언(global variables)
+ENV_PATH = ".env"
 TEMPLATES = "templates"
 CAPTCHA_PATH = "lib/captcha/templates"
 EDITOR_PATH = "lib/editor/templates"
 
-# .env 파일이 없을 경우 경고 메시지 출력
-if not os.path.exists(".env"):
-    print("\033[93m" + "경고: .env 파일이 없습니다. 설치를 진행해 주세요." + "\033[0m")
-    #print("python3 install.py")
-    # exit()
-# 테이블이 데이터베이스에 존재하는지 확인
-elif not inspect(engine).has_table(DB_TABLE_PREFIX + "config"):
-    print("\033[93m" + "DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요." + "\033[0m")
-    #print("python3 install.py")
-    #exit()
+def get_theme_from_db() -> str:
+    """DB에 설정된 테마의 경로를 반환
 
-def get_theme_from_db(config=None):
-    # main.py 에서 config 를 인수로 받아서 사용
-    if not config:
-        db: Session = SessionLocal()
-        config = db.query(Config).first()
-    theme = config.cf_theme if config and config.cf_theme else "basic"
-    theme_path = f"{TEMPLATES}/{theme}"
-    
-    # Check if the directory exists
-    if not os.path.exists(theme_path):
-        theme_path = f"{TEMPLATES}/basic"
-    
-    return theme_path
+    Returns:
+        str: 테마 경로
+    """
+    default_theme = "basic"
+    try:
+        with DBConnect().sessionLocal() as db:
+            theme = db.scalar(select(Config.cf_theme)) or default_theme
+            theme_path = f"{TEMPLATES}/{theme}"
+            
+            # DB에 설정된 테마가 경로에 존재하는지 확인
+            if not os.path.exists(theme_path):
+                theme_path = f"{TEMPLATES}/{default_theme}"
 
-# python setup.py 를 실행하는 것이 아니라면
-if os.environ.get("is_setup") != "true":
-    TEMPLATES_DIR = get_theme_from_db()
-    
+            return theme_path
+    except Exception:
+        return f"{TEMPLATES}/{default_theme}"
+
+TEMPLATES_DIR = get_theme_from_db()
 ADMIN_TEMPLATES_DIR = "admin/templates"
 
 # 나중에 삭제할 코드
@@ -90,9 +86,7 @@ TIME_YMD = TIME_YMDHIS[:10]
 # # mobile 을 사용하지 않을 경우 False 로 설정
 # USE_MOBILE = True
 
-
-is_response = os.getenv("IS_RESPONSIVE", default="true")
-IS_RESPONSIVE = is_response.lower() == "true"
+IS_RESPONSIVE = TypeAdapter(bool).validate_python(os.getenv("IS_RESPONSIVE", True))
 
 def hash_password(password: str):
     '''
@@ -114,10 +108,13 @@ def verify_password(plain_password, hashed_passwd):
 _created_models = {}
 
 # 동적 게시판 모델 생성
-def dynamic_create_write_table(table_name: str, create_table: bool = False):
+def dynamic_create_write_table(
+        table_name: str,
+        create_table: bool = False,
+    ) -> WriteBaseModel:
     '''
     WriteBaseModel 로 부터 게시판 테이블 구조를 복사하여 동적 모델로 생성하는 함수
-    인수의 table_name 에서는 DB_TABLE_PREFIX + 'write_' 를 제외한 테이블 이름만 입력받는다.
+    인수의 table_name 에서는 table_prefix + 'write_' 를 제외한 테이블 이름만 입력받는다.
     Create Dynamic Write Table Model from WriteBaseModel
     '''
     # 이미 생성된 모델 반환
@@ -128,11 +125,12 @@ def dynamic_create_write_table(table_name: str, create_table: bool = False):
         table_name = str(table_name)
     
     class_name = "Write" + table_name.capitalize()
+    db_connect = DBConnect()
     DynamicModel = type(
         class_name, 
         (WriteBaseModel,), 
         {   
-            "__tablename__": DB_TABLE_PREFIX + 'write_' + table_name,
+            "__tablename__": db_connect.table_prefix + 'write_' + table_name,
             "__table_args__": (
                 Index(f'idx_wr_num_reply_{table_name}', 'wr_num', 'wr_reply'),
                 Index(f'idex_wr_is_comment_{table_name}', 'wr_is_comment'),
@@ -141,7 +139,7 @@ def dynamic_create_write_table(table_name: str, create_table: bool = False):
     )
     # 게시판 추가시 한번만 테이블 생성
     if (create_table):
-        DynamicModel.__table__.create(bind=engine, checkfirst=True)
+        DynamicModel.__table__.create(bind=db_connect.engine, checkfirst=True)
     # 생성된 모델 캐싱
     _created_models[table_name] = DynamicModel
     return DynamicModel
@@ -207,13 +205,15 @@ def get_editor_select(id, selected):
 
 # 회원아이디를 SELECT 형식으로 얻음
 def get_member_id_select(id, level, selected, event=''):
-    db = SessionLocal()
-    # 테이블에서 지정된 필드만 가져 오는 경우 load_only(Member.field1, Member.field2) 함수를 사용 
-    members = db.query(Member).options(load_only(Member.mb_id)).filter(Member.mb_level >= level).all()
+    db = DBConnect().sessionLocal()
+    mb_ids = db.scalars(
+        select(Member.mb_id)
+        .where(Member.mb_level >= level)
+    ).all()
     html_code = []
     html_code.append(f'<select id="{id}" name="{id}" {event}><option value="">선택하세요</option>')
-    for member in members:
-        html_code.append(f'<option value="{member.mb_id}" {"selected" if member.mb_id == selected else ""}>{member.mb_id}</option>')
+    for mb_id in mb_ids:
+        html_code.append(f'<option value="{mb_id}" {"selected" if mb_id == selected else ""}>{mb_id}</option>')
     html_code.append('</select>')
     return ''.join(html_code)
 
@@ -245,8 +245,11 @@ def option_array_checked(option, arr=[]):
 
 
 def get_group_select(id, selected='', event=''):
-    db = SessionLocal()
-    groups = db.query(Group).order_by(Group.gr_id).all()
+    db = DBConnect().sessionLocal()
+    groups = db.scalars(
+        select(Group)
+        .order_by(Group.gr_order, Group.gr_id)
+    ).all()
     str = f'<select id="{id}" name="{id}" {event}>\n'
     for i, group in enumerate(groups):
         if i == 0:
@@ -396,7 +399,7 @@ def check_token(request: Request, token: str):
     return False
 
 
-def get_client_ip(request: Request):
+def get_client_ip(request: Request) -> str:
     '''
     클라이언트의 IP 주소를 반환하는 함수 (PHP의 $_SERVER['REMOTE_ADDR'])
     '''
@@ -404,10 +407,9 @@ def get_client_ip(request: Request):
     if x_forwarded_for:
         # X-Forwarded-For can be a comma-separated list of IPs.
         # The client's requested IP will be the first one.
-        client_ip = x_forwarded_for.split(",")[0]
+        return x_forwarded_for.split(",")[0]
     else:
-        client_ip = request.client.host
-    return {"client_ip": client_ip}
+        return request.client.host
 
 
 def make_directory(directory: str):
@@ -598,23 +600,26 @@ def extract_browser(user_agent):
 from ua_parser import user_agent_parser    
     
 
-# 접속 레코드 기록 로직을 처리하는 함수
+# 
 def record_visit(request: Request):
-    vi_ip = request.client.host
-    
-    # 세션 생성
-    db = SessionLocal()
+    """접속 레코드 기록 함수
+    - 새로운 접속 레코드 생성
+    - 접속자 합계 테이블 갱신
+    - 기본설정 테이블에 방문자 수 기록
+
+    Args:
+        request (Request): FastAPI Request 객체
+    """
+    db = DBConnect().sessionLocal()
+    vi_ip = get_real_client_ip(request)
 
     # 오늘의 접속이 이미 기록되어 있는지 확인
-    existing_visit = db.query(Visit).filter(Visit.vi_date == date.today(), Visit.vi_ip == vi_ip).first()
-
+    existing_visit = db.scalar(
+        exists(Visit.vi_id)
+        .where(Visit.vi_date==date.today(), Visit.vi_ip==vi_ip)
+        .select()
+    )
     if not existing_visit:
-        
-        #$tmp_row = sql_fetch(" select max(vi_id) as max_vi_id from {$g5['visit_table']} ");
-        tmp_row = db.query(func.max(Visit.vi_id).label("max_vi_id")).first()
-        max_vi_id = tmp_row.max_vi_id if tmp_row.max_vi_id else 0
-        max_vi_id = max_vi_id + 1
-        
         # 새로운 접속 레코드 생성
         referer = request.headers.get("referer", "")
         user_agent = request.headers.get("User-Agent", "")
@@ -622,9 +627,7 @@ def record_visit(request: Request):
         browser = ua.browser.family
         os = ua.os.family
         device = 'pc' if ua.is_pc else 'mobile' if ua.is_mobile else 'tablet' if ua.is_tablet else 'unknown'
-            
         visit = Visit(
-            vi_id=max_vi_id,
             vi_ip=vi_ip,
             vi_date=date.today(),
             vi_time=datetime.now().time(),
@@ -637,39 +640,22 @@ def record_visit(request: Request):
         db.add(visit)
         db.commit()
 
-        # VisitSum 테이블 업데이트
-        visit_count_today = db.query(func.count(Visit.vi_id)).filter(Visit.vi_date == date.today()).scalar()
-
-        visit_sum = db.query(VisitSum).filter(VisitSum.vs_date == date.today()).first()
-        if visit_sum:
-            visit_sum.vs_count = visit_count_today
-        else:
-            visit_sum = VisitSum(vs_date=date.today(), vs_count=visit_count_today)
-
-        db.add(visit_sum)
+        # 접속자 합계 테이블 갱신
+        visit_count_today = db.scalar(
+            select(func.count(Visit.vi_id))
+            .where(Visit.vi_date == date.today())
+        )
+        db.merge(VisitSum(vs_date=date.today(), vs_count=visit_count_today))
         db.commit()
 
         # 기본설정 테이블에 방문자 수 기록
+        today = db.scalar(select(VisitSum.vs_count).filter_by(vs_date=date.today())) or 0
+        yesterday = db.scalar(select(VisitSum.vs_count).where(VisitSum.vs_date == date.today() - timedelta(days=1))) or 0
+        max = db.scalar(func.max(VisitSum.vs_count)) or 0
+        total = db.scalar(func.sum(VisitSum.vs_count)) or 0
 
-        # VisitSum 테이블에서 오늘 방문자 수를 가져옴
-        vi_today = db.query(VisitSum.vs_count).filter(VisitSum.vs_date == date.today()).scalar()
-        vi_today = vi_today or 0
-
-        # VisitSum 테이블에서 어제 방문자 수를 가져옴
-        vi_yesterday = db.query(VisitSum.vs_count).filter(VisitSum.vs_date == date.today() - timedelta(days=1)).scalar()
-        vi_yesterday = vi_yesterday or 0
-
-        # VisitSum 테이블에서 최대 방문자 수를 가져옴
-        vi_max = db.query(func.max(VisitSum.vs_count)).scalar()
-        vi_max = vi_max or 0
-
-        # VisitSum 테이블에서 전체 방문자 수를 가져옴
-        vi_total = db.query(func.sum(VisitSum.vs_count)).scalar()
-        vi_total = vi_total or 0
-
-        cf_visit = f"오늘:{vi_today},어제:{vi_yesterday},최대:{vi_max},전체:{vi_total}"
-        config = db.query(Config).first()
-        config.cf_visit = cf_visit
+        config = db.scalars(select(Config)).first()
+        config.cf_visit = f"오늘:{today},어제:{yesterday},최대:{max},전체:{total}"
         db.commit()
 
     db.close()
@@ -692,7 +678,7 @@ def visit(request: Request):
         "max": int(max),
         "total": int(total)
     }
-    templates = MyTemplates(directory=TEMPLATES_DIR)
+    templates = UserTemplates()
     visit_template = templates.TemplateResponse(f"visit/basic.html", context)
 
     return visit_template.body.decode("utf-8")
@@ -703,7 +689,8 @@ def common_search_query_params(
         sst: str = Query(default=""), 
         sod: str = Query(default=""), 
         sfl: str = Query(default=""), 
-        stx: str = Query(default=""), 
+        stx: str = Query(default=""),
+        sca: str = Query(default=""),
         current_page: str = Query(default="1", alias="page")
         ):
     '''
@@ -714,7 +701,7 @@ def common_search_query_params(
     except ValueError:
         # current_page가 정수로 변환할 수 없는 경우 기본값으로 1을 사용하도록 설정
         current_page = 1
-    return {"sst": sst, "sod": sod, "sfl": sfl, "stx": stx, "current_page": current_page}
+    return {"sst": sst, "sod": sod, "sfl": sfl, "stx": stx, "sca": sca, "current_page": current_page}
 
 
 def select_query(request: Request, table_model, search_params: dict, 
@@ -728,8 +715,8 @@ def select_query(request: Request, table_model, search_params: dict,
     
     records_per_page = config.cf_page_rows
 
-    db = SessionLocal()
-    query = db.query(table_model)
+    db = DBConnect().sessionLocal()
+    query = select()
     
     # # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
     # if search_params['sst'] is not None and search_params['sst'] != "":
@@ -744,10 +731,10 @@ def select_query(request: Request, table_model, search_params: dict,
 
     # 'sst' 매개변수가 제공되지 않거나 빈 문자열인 경우, default_sst를 사용합니다.
     sst = search_params.get('sst', default_sst) or default_sst
-    
     # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
+    sod = search_params.get('sod', default_sod) or default_sod
+
     if sst:
-        sod = search_params.get('sod', default_sod) or default_sod
         # sst 가 배열인 경우, 여러 열을 기준으로 정렬을 추가합니다.
         if isinstance(sst, list):
             for sort_attribute in sst:
@@ -768,46 +755,63 @@ def select_query(request: Request, table_model, search_params: dict,
         if hasattr(table_model, search_params['sfl']):  # sfl이 Table에 존재하는지 확인
             # if search_params['sfl'] in ["mb_level"]:
             if search_params['sfl'] in same_search_fields:
-                query = query.filter(getattr(table_model, search_params['sfl']) == search_params['stx'])
+                query = query.where(getattr(table_model, search_params['sfl']) == search_params['stx'])
             elif search_params['sfl'] in prefix_search_fields:
-                query = query.filter(getattr(table_model, search_params['sfl']).like(f"{search_params['stx']}%"))
+                query = query.where(getattr(table_model, search_params['sfl']).like(f"{search_params['stx']}%"))
             else:
-                query = query.filter(getattr(table_model, search_params['sfl']).like(f"%{search_params['stx']}%"))
+                query = query.where(getattr(table_model, search_params['sfl']).like(f"%{search_params['stx']}%"))
 
     # 페이지 번호에 따른 offset 계산
     offset = (search_params['current_page'] - 1) * records_per_page
     # 최종 쿼리 결과를 가져옵니다.
-    rows = query.offset(offset).limit(records_per_page).all()
-    # # 전체 레코드 개수 계산
-    # # total_count = query.count()
+    rows = db.scalars(query.add_columns(table_model).offset(offset).limit(records_per_page)).all()
+    # 전체 레코드 개수 계산
+    total_count = db.scalar(query.add_columns(func.count()).select_from(table_model).order_by(None))
     return {
         "rows": rows,
-        "total_count": query.count(),
+        "total_count": total_count,
     }
     
 
 # 회원 레코드 얻기    
-# fields : 가져올 필드, 예) "mb_id, mb_name, mb_nick"
-def get_member(mb_id: str, fields: str = '*'):
-    db = SessionLocal()
-    return db.query(Member).options(load_only(fields)).filter_by(mb_id=mb_id).first()
+def get_member(mb_id: str): # , fields: str = '*' # fields : 가져올 필드, 예) "mb_id, mb_name, mb_nick"
+    db = DBConnect().sessionLocal()
+    member = db.scalar(select(Member).filter_by(mb_id=mb_id))
+    db.close()
+    return member
 
 
-def get_member_icon(mb_id):
-    MEMBER_ICON_DIR = "data/member"
-    member_icon_dir = f"{MEMBER_ICON_DIR}/{mb_id[:2]}"
+def get_member_icon(mb_id: str = None) -> str:
+    """회원 아이콘 경로를 반환하는 함수
 
-    icon_file = os.path.join(member_icon_dir, f"{mb_id}.gif")
+    Args:
+        mb_id (str, optional): 회원아이디. Defaults to None.
 
-    if os.path.exists(icon_file):
-        icon_filemtime = os.path.getmtime(icon_file) # 캐시를 위해 파일수정시간을 추가
-        return f"{icon_file}?{icon_filemtime}"
+    Returns:
+        str: 회원 아이콘 경로
+    """
+    if mb_id:
+        MEMBER_ICON_DIR = "data/member"
+        member_icon_dir = f"{MEMBER_ICON_DIR}/{mb_id[:2]}"
+
+        icon_file = os.path.join(member_icon_dir, f"{mb_id}.gif")
+
+        if os.path.exists(icon_file):
+            icon_filemtime = os.path.getmtime(icon_file) # 캐시를 위해 파일수정시간을 추가
+            return f"{icon_file}?{icon_filemtime}"
 
     return "static/img/no_profile.gif"
 
 
-def get_member_image(mb_id: str = None):
-    
+def get_member_image(mb_id: str = None) -> str:
+    """회원 이미지 경로를 반환하는 함수
+
+    Args:
+        mb_id (str, optional): 회원아이디. Defaults to None.
+
+    Returns:
+        str: 회원 이미지 경로
+    """
     if mb_id:
         MEMBER_IMAGE_DIR = "data/member_image"
         member_image_dir = f"{MEMBER_IMAGE_DIR}/{mb_id[:2]}"
@@ -821,8 +825,24 @@ def get_member_image(mb_id: str = None):
     return "static/img/no_profile.gif"
     
 
-# 포인트 부여    
-def insert_point(request: Request, mb_id: str, point: int, content: str = '', rel_table: str = '', rel_id: str = '', rel_action: str = '', expire: int = 0):
+
+def insert_point(request: Request, mb_id: str, point: int, content: str = '', rel_table: str = '', rel_id: str = '', rel_action: str = '', expire: int = 0) -> int:
+    """포인트 증감 처리
+
+    Args:
+        request (Request): FastAPI Request 객체
+        mb_id (str): 회원아이디
+        point (int): 증감 포인트
+        content (str, optional): 포인트 내용. Defaults to ''.
+        rel_table (str, optional): 포인트 관련 테이블. Defaults to ''.
+        rel_id (str, optional): 포인트 관련 테이블의 ID. Defaults to ''.
+        rel_action (str, optional): 포인트 관련 테이블의 활동. Defaults to ''.
+        expire (int, optional): 포인트 유효기간. Defaults to 0.
+
+    Returns:
+        int: 성공시 1, 실패시 0
+    """
+    db = DBConnect().sessionLocal()
     config = request.state.config
     
     # 포인트를 사용하지 않는다면 종료
@@ -838,25 +858,22 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
         return 0
     
     # 회원정보가 없다면 종료
-    db = SessionLocal()
-    
-    member = db.query(Member).filter_by(mb_id=mb_id).first()
+    member = db.scalar(select(Member).filter_by(mb_id=mb_id))
     if not member:
         return 0
-    
-    mb_point = get_point_sum(request, mb_id)
 
-    
     if rel_table or rel_id or rel_action:
-        record_count = db.query(Point).filter(
-            and_(
+        existing_point = db.scalar(
+            exists(Point.po_id)
+            .where(
                 Point.mb_id == mb_id,
                 Point.po_rel_table == rel_table,
-                Point.po_rel_id == rel_id,
+                Point.po_rel_id == str(rel_id),
                 Point.po_rel_action == rel_action
             )
-        ).count()
-        if record_count:
+            .select()
+        )
+        if existing_point:
             return -1
         
     # 포인트 건별 생성
@@ -867,7 +884,8 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
             po_expire_date = (SERVER_TIME + timedelta(days=expire-1)).strftime('%Y-%m-%d')
         else:
             po_expire_date = (SERVER_TIME + timedelta(days=config.cf_point_term - 1)).strftime('%Y-%m-%d')
-            
+
+    mb_point = get_point_sum(request, mb_id)
     po_expired = 0
     if point < 0:
         po_expired = 1
@@ -884,15 +902,14 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
         po_expired=po_expired,
         po_expire_date=po_expire_date,
         po_rel_table=rel_table,
-        po_rel_id=rel_id,
+        po_rel_id=str(rel_id),
         po_rel_action=rel_action
     )
     db.add(new_point)
     db.commit()
     
-    # filter_by 는 filter 에 비해 기능이 제한적임    
-    db.query(Member).filter_by(mb_id=mb_id).update({Member.mb_point: po_mb_point})
-    # db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: po_mb_point})
+    query = update(Member).where(Member.mb_id == mb_id).values(mb_point=po_mb_point)
+    db.execute(query)
     db.commit()
     db.close()
 
@@ -900,29 +917,35 @@ def insert_point(request: Request, mb_id: str, point: int, content: str = '', re
 
 
 # 소멸 포인트 얻기
-def get_expire_point(request: Request, mb_id: str):
+def get_expire_point(request: Request, mb_id: str) -> int:
     config = request.state.config
-    
-    if  config.cf_point_term <= 0:
+
+    if config.cf_point_term <= 0:
         return 0
-    
-    db = SessionLocal()
-    
-    point_sum = db.query(func.sum(Point.po_point - Point.po_use_point)).filter_by(mb_id=mb_id, po_expired=False).filter(Point.po_expire_date < datetime.now()).scalar()
+
+    db = DBConnect().sessionLocal()
+    point_sum = db.scalar(
+        select(func.sum(Point.po_point - Point.po_use_point))
+        .where(
+            Point.mb_id == mb_id,
+            Point.po_expired == 0,
+            Point.po_expire_date < datetime.now()
+        )
+    )
     db.close()
-    return point_sum if point_sum else 0
+    return int(point_sum) if point_sum else 0
 
 
 # 포인트 내역 합계
-def get_point_sum(request: Request, mb_id: str):
+def get_point_sum(request: Request, mb_id: str) -> int:
     config = request.state.config
     
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     
     if config.cf_point_term > 0:
         expire_point = get_expire_point(request, mb_id)
         if expire_point > 0:
-            mb = get_member(mb_id, 'mb_point')
+            member = get_member(mb_id)
             point = expire_point * (-1)
             new_point = Point(
                 mb_id=mb_id,
@@ -930,11 +953,11 @@ def get_point_sum(request: Request, mb_id: str):
                 po_content='포인트 소멸',
                 po_point=expire_point * (-1),
                 po_use_point=0,
-                po_mb_point=mb.mb_point + point,
+                po_mb_point=member.mb_point + point,
                 po_expired=1,
                 po_expire_date=TIME_YMD,
                 po_rel_table='@expire',
-                po_rel_id=mb_id,
+                po_rel_id=str(mb_id),
                 po_rel_action='expire-' + str(uuid.uuid4()),
             )   
             db.add(new_point)
@@ -945,66 +968,83 @@ def get_point_sum(request: Request, mb_id: str):
                 # insert_use_point(mb_id, point)
                 pass
         
-        # 유효기간이 있을 때 기간이 지난 포인트 expired 체크    
-        db.query(Point).filter(
-            and_(
+        # 유효기간이 있을 때 기간이 지난 포인트 expired 체크
+        db.execute(
+            update(Point).values(po_expired=1)
+            .where(
                 Point.mb_id == mb_id,
                 Point.po_expired != 1,
                 Point.po_expire_date != '9999-12-31',
                 Point.po_expire_date < TIME_YMD
             )
-        ).update({Point.po_expired: 1})
+        )
         db.commit()            
             
     # 포인트합
-    point_sum = db.query(func.sum(Point.po_point)).filter_by(mb_id=mb_id).scalar()
+    point_sum = db.scalar(select(func.sum(Point.po_point)).filter_by(mb_id=mb_id))
     db.close()
-    return point_sum if point_sum else 0
+    return int(point_sum) if point_sum else 0
 
 
 # 사용포인트 입력
-def insert_use_point(mb_id: str, point: int, po_id: str = ""):
-    global config
-    
+def insert_use_point(request: Request, mb_id: str, point: int, po_id: str = ""):
+    config = request.state.config
+    db = DBConnect().sessionLocal()
     point1 = abs(point)
-    db = SessionLocal()
-    query = db.query(Point).filter_by(mb_id=mb_id, po_expired=False).order_by(Point.po_id.desc())
-    query = query(Point.po_id, Point.po_point, Point.po_use_point)\
-                .filter(
-                    and_(
-                        Point.mb_id == mb_id,
-                        Point.po_id != po_id,
-                        Point.po_expired == 0,
-                        Point.po_point > Point.po_use_point
-                    )
-                )
+
+    query = (
+        select(Point.po_id, Point.po_point, Point.po_use_point)
+        .where(
+            Point.mb_id == mb_id,
+            Point.po_id != po_id,
+            Point.po_expired == 0,
+            Point.po_point > Point.po_use_point
+        )
+    )
     if config.cf_point_term:
         query = query.order_by(Point.po_expire_date.asc(), Point.po_id.asc())
     else:
         query = query.order_by(Point.po_id.asc())
-    rows = query.all()
+    rows = db.scalars(query).all()
+
     for row in rows:
         point2 = row.po_point
         point3 = row.po_use_point
         
         if (point2 - point3) > point1:
-            db.query(Point).filter_by(po_id=row.po_id).update({"po_use_point": (Point.po_use_point + point1)})
+            db.execute(
+                update(Point).values(po_mb_point=Point.po_mb_point + point1)
+                .where(Point.po_id == row.po_id)
+            )
             db.commit()
         else:
             point4 = point2 - point3
-            db.query(Point).filter_by(po_id=row.po_id).update({"po_use_point": (Point.po_use_point + point4), "po_expired": 100})
+            db.execute(
+                update(Point).values(po_use_point=(Point.po_use_point + point4), po_expired=100)
+                .where(Point.po_id == row.po_id)
+            )
             db.commit()
             point1 = point1 - point4
+
     db.close()
 
 
 # 포인트 삭제
 def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel_action: str):
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     result = False
+
     if rel_table or rel_id or rel_action:
         # 포인트 내역정보    
-        row = db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action).first()
+        row = db.scalar(
+            select(Point)
+            .where(
+                Point.mb_id == mb_id,
+                Point.po_rel_table == rel_table,
+                Point.po_rel_id == str(rel_id),
+                Point.po_rel_action == rel_action
+            )
+        )
         if row:
             if row.po_point and row.po_point > 0:
                 abs_po_point = abs(row.po_point)
@@ -1012,21 +1052,33 @@ def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel
             else:
                 if row.po_use_point and row.po_use_point > 0:
                     insert_use_point(request, row.mb_id, row.po_use_point, row.po_id)
-                    
-            db.query(Point).filter(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == rel_id, Point.po_rel_action == rel_action).delete(synchronize_session=False)
+
+            delete_result = db.execute(
+                delete(Point)
+                .where(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == str(rel_id), Point.po_rel_action == rel_action)
+            )
             db.commit()
 
-            # po_mb_point에 반영
-            if row.po_point:
-                db.query(Point).filter(Point.mb_id == mb_id, Point.po_id > row.po_id).update({Point.po_mb_point: Point.po_mb_point - row.po_point}, synchronize_session=False)
+            if delete_result.rowcount > 0:
+                result = True
+
+                # po_mb_point에 반영
+                if row.po_point:
+                    db.execute(
+                        update(Point).values(po_mb_point=Point.po_mb_point - row.po_point)
+                        .where(Point.mb_id == mb_id, Point.po_id > row.po_id)
+                    )
+                    db.commit()
+
+                # 포인트 내역의 합을 구하고    
+                sum_point = get_point_sum(request, mb_id)
+
+                # 포인트 UPDATE
+                db.execute(
+                    update(Member).values(mb_point=sum_point)
+                    .where(Member.mb_id == mb_id)
+                )
                 db.commit()
-            
-            # 포인트 내역의 합을 구하고    
-            sum_point = get_point_sum(request, mb_id)
-            
-            # 포인트 UPDATE
-            db.query(Member).filter(Member.mb_id == mb_id).update({Member.mb_point: sum_point}, synchronize_session=False)
-            result = db.commit()
     db.close()
 
     return result
@@ -1035,35 +1087,54 @@ def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel
 # 사용포인트 삭제
 def delete_use_point(request: Request, mb_id: str, point: int):
     config = request.state.config
-    db = SessionLocal()
-    
+    db = DBConnect().sessionLocal()
+
     point1 = abs(point)
-    rows = db.query(Point).filter(Point.mb_id == mb_id, Point.po_expired != 1, Point.po_use_point > 0).order_by(desc('po_expire_date', 'po_id') if config.cf_point_term else desc('po_id')).all()
+    query = select(Point).where(Point.mb_id == mb_id, Point.po_expired != 1, Point.po_use_point > 0)
+    if config.cf_point_term:
+        query = query.order_by(desc(Point.po_expire_date), desc(Point.po_id))
+    else:
+        query = query.order_by(desc(Point.po_id))
+    rows = db.scalars(query).all()
+
     for row in rows:
         point2 = row.po_use_point
         if row.po_expired == 100 and (row.po_expire_date == '9999-12-31' or row.po_expire_date >= TIME_YMD):
             po_expired = 0
         else:
             po_expired = row.po_expired
-        
+
         if point2 > point1:
-            db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: Point.po_use_point - point1, Point.po_expired: po_expired}, synchronize_session=False)
+            db.execute(
+                update(Point)
+                .values(po_use_point=Point.po_use_point - point1, po_expired=po_expired)
+                .where(Point.po_id == row.po_id)
+            )
             db.commit()
             break
         else:
-            db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: 0, Point.po_expired: po_expired}, synchronize_session=False)
+            db.execute(
+                update(Point)
+                .values(po_use_point=0, po_expired=po_expired)
+                .where(Point.po_id == row.po_id)
+            )
             db.commit()
             point1 = point1 - point2
+
     db.close()
 
 
 # 소멸포인트 삭제
 def delete_expire_point(request: Request, mb_id: str, point: int):
     config = request.state.config
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     
     point1 = abs(point)
-    rows = db.query(Point).filter(Point.mb_id == mb_id, Point.po_expired == 1, Point.po_point >= 0, Point.po_use_point > 0).order_by(desc(Point.po_expire_date), desc(Point.po_id)).all()
+    rows = db.scalars(
+        select(Point)
+        .where(Point.mb_id == mb_id, Point.po_expired == 1, Point.po_point >= 0, Point.po_use_point > 0)
+        .order_by(desc(Point.po_expire_date), desc(Point.po_id))
+    ).all()
     for row in rows:
         point2 = row.po_use_point
         po_expired = 0
@@ -1072,13 +1143,31 @@ def delete_expire_point(request: Request, mb_id: str, point: int):
             po_expire_date = (SERVER_TIME + timedelta(days=config.cf_point_term - 1)).strftime('%Y-%m-%d')
     
         if point2 > point1:
-            db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: Point.po_use_point - point1, Point.po_expired: po_expired, Point.po_expire_date: po_expire_date}, synchronize_session=False)
+            db.execute(
+                update(Point)
+                .values(
+                    po_use_point=Point.po_use_point - point1,
+                    po_expired=po_expired,
+                    po_expire_date=po_expire_date
+                )
+                .where(Point.po_id == row.po_id)
+            )
             db.commit()
             break
         else:
-            db.query(Point).filter(Point.po_id == row.po_id).update({Point.po_use_point: 0, Point.po_expired: po_expired, Point.po_expire_date: po_expire_date}, synchronize_session=False)
+            db.execute(
+                update(Point)
+                .values(
+                    po_use_point=0,
+                    po_expired=po_expired,
+                    po_expire_date=po_expire_date
+                )
+                .where(Point.po_id == row.po_id)
+            )
             db.commit()
             point1 = point1 - point2
+
+    db.close()
 
 
 def domain_mail_host(request: Request, is_at: bool = True):
@@ -1090,12 +1179,22 @@ def domain_mail_host(request: Request, is_at: bool = True):
     return f"@{domain_host}" if is_at else domain_host
         
 
-def get_memo_not_read(mb_id: str):
-    '''
+def get_memo_not_read(mb_id: str) -> int:
+    """
     메모를 읽지 않은 개수를 반환하는 함수
-    '''
-    db = SessionLocal()
-    return db.query(Memo).filter(Memo.me_recv_mb_id == mb_id, Memo.me_read_datetime == None, Memo.me_type == 'recv').count()
+    """
+    db = DBConnect().sessionLocal()
+    count = db.scalar(
+        select(func.count(Memo.me_id))
+        .where(
+            Memo.me_recv_mb_id == mb_id,
+            Memo.me_read_datetime == None,
+            Memo.me_type == 'recv'
+        )
+    )
+    db.close()
+
+    return count
 
 
 def editor_path(request:Request) -> str:
@@ -1148,19 +1247,22 @@ def get_populars(limit: int = 7, day: int = 3):
     if popular_cache.get("populars"):
         return popular_cache.get("populars")
 
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     # 현재 날짜와 day일 전 날짜를 구한다.
     today = datetime.now()
     before = today - timedelta(days=day)
     # 현재 날짜와 day일 전 날짜 사이의 인기검색어를 조회한다.
-    populars = db.query(
-            Popular.pp_word,
-            func.count(Popular.pp_word).label('count'),
-        ).filter(
-        Popular.pp_word != '',
-        Popular.pp_date >= before,
-        Popular.pp_date <= today
-    ).group_by(Popular.pp_word).order_by(desc('count'), Popular.pp_word).limit(limit).all()
+    populars = db.execute(
+        select(Popular.pp_word, func.count(Popular.pp_word).label('count'))
+        .where(
+            Popular.pp_word != '',
+            Popular.pp_date >= before,
+            Popular.pp_date <= today
+        )
+        .group_by(Popular.pp_word)
+        .order_by(desc('count'), Popular.pp_word)
+        .limit(limit)
+    ).all()
     db.close()
 
     popular_cache.update({"populars": populars})
@@ -1180,20 +1282,20 @@ def insert_popular(request: Request, fields: str, word: str):
         today_date = datetime.now().strftime("%Y-%m-%d")
         # 회원아이디로 검색은 제외
         if not "mb_id" in fields:
-            with SessionLocal() as db:
+            with DBConnect().sessionLocal() as db:
                 # 현재 날짜의 인기검색어를 조회한다.
-                popular = db.query(Popular).filter_by(
-                    pp_word = word,
-                    pp_date = today_date
-                ).first()
-
+                exists_popular = db.scalar(
+                    exists(Popular)
+                    .where(Popular.pp_word == word, Popular.pp_date == today_date)
+                    .select()
+                )
                 # 인기검색어가 없으면 새로 등록한다.
-                if not popular:
-                    new_popular = Popular(
+                if not exists_popular:
+                    popular = Popular(
                         pp_word=word,
                         pp_date=today_date,
-                        pp_ip=get_client_ip(request)["client_ip"])
-                    db.add(new_popular)
+                        pp_ip=get_client_ip(request))
+                    db.add(popular)
                     db.commit()
     except Exception as e:
         print(f"인기검색어 입력 오류: {e}")
@@ -1221,8 +1323,12 @@ def get_recent_poll():
     if lfu_cache.get("poll"):
         return lfu_cache.get("poll")
 
-    db = SessionLocal()
-    poll = db.query(Poll).filter(Poll.po_use == 1).order_by(Poll.po_id.desc()).first()
+    db = DBConnect().sessionLocal()
+    poll = db.scalar(
+        select(Poll)
+        .where(Poll.po_use == 1)
+        .order_by(Poll.po_id.desc())
+    )
     db.close()
 
     lfu_cache.update({"poll": poll})
@@ -1239,19 +1345,25 @@ def get_menus():
     if lfu_cache.get("menus"):
         return lfu_cache.get("menus")
 
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     menus = []
     # 부모메뉴 조회
-    parent_menus = db.query(Menu).filter(func.length(Menu.me_code) == 2).order_by(Menu.me_order).all()
-    
+    parent_menus = db.scalars(
+        select(Menu)
+        .where(func.char_length(Menu.me_code) == 2)
+        .order_by(Menu.me_order)
+    ).all()
+
     for menu in parent_menus:
         parent_code = menu.me_code
 
         # 자식 메뉴 조회
-        child_menus = db.query(Menu).filter(
-            func.length(Menu.me_code) == 4,
-            func.substring(Menu.me_code, 1, 2) == parent_code
-        ).order_by(Menu.me_order).all()
+        child_menus = db.scalars(
+            select(Menu).where(
+                func.char_length(Menu.me_code) == 4,
+                func.substr(Menu.me_code, 1, 2) == parent_code
+            ).order_by(Menu.me_order)
+        ).all()
 
         menu.sub = child_menus
         menus.append(menu)
@@ -1271,20 +1383,23 @@ def get_member_level(request: Request):
 
 
 def auth_check_menu(request: Request, menu_key: str, attribute: str):
-    '''
+    """
     관리권한 체크
-    '''    
+    """    
     # 최고관리자이면 처리 안함
     if request.state.is_super_admin:
         return ""
 
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
 
     exists_member = request.state.login_member
     if not exists_member:
         return "로그인 후 이용해 주세요."
 
-    exists_auth = db.query(Auth).filter_by(mb_id=exists_member.mb_id, au_menu=menu_key).first()
+    exists_auth = db.scalar(
+        select(Auth)
+        .where(Auth.mb_id == exists_member.mb_id, Auth.au_menu == menu_key)
+    )
     if not exists_auth:
         return "이 메뉴에는 접근 권한이 없습니다.\n\n접근 권한은 최고관리자만 부여할 수 있습니다."
 
@@ -1315,14 +1430,14 @@ def get_unique_id(request) -> Optional[str]:
         Optional[str]: 고유 아이디, DB 오류시 None
     """
 
-    ip: str = get_client_ip(request)["client_ip"]
+    ip: str = get_client_ip(request)
 
     while True:
         current = datetime.now()
         ten_milli_sec = str(current.microsecond)[:2].zfill(2)
         key = f"{current.strftime('%Y%m%d%H%M%S')}{ten_milli_sec}"
 
-        with SessionLocal() as session:
+        with DBConnect().sessionLocal() as session:
             try:
                 session.add(UniqId(uq_id=key, uq_ip=ip))
                 session.commit()
@@ -1381,7 +1496,9 @@ def is_admin(request: Request):
 
 # TODO: 그누보드5의 is_admin 함수
 # 이미 is_admin 함수가 존재하므로 함수 이름을 변경함 
-def get_admin_type(request: Request, mb_id: str = None, group: Group = None, board: Board = None) -> str:
+def get_admin_type(
+        request: Request, mb_id: str = None,
+        group: Group = None, board: Board = None) -> Union[str, None]:
     """게시판 관리자 여부 확인 후 관리자 타입 반환
 
     Args:
@@ -1418,7 +1535,7 @@ def check_profile_open(open_date: Optional[date], config) -> bool:
     Returns:
         bool: 프로필 공개 가능 여부
     """
-    if not open_date:
+    if not open_date or is_none_datetime(open_date):
         return True
 
     else:
@@ -1435,7 +1552,6 @@ def get_next_profile_openable_date(open_date: Optional[date], config):
         datetime: 다음 프로필 공개 가능일
     """
     cf_open_modify = config.cf_open_modify
-    cf_open_modify = 3
     if cf_open_modify == 0:
         return ""
 
@@ -1443,9 +1559,7 @@ def get_next_profile_openable_date(open_date: Optional[date], config):
         calculated_date = datetime.strptime(open_date.strftime("%Y-%m-%d"), "%Y-%m-%d") + timedelta(days=cf_open_modify)
     else:
         calculated_date = datetime.now() + timedelta(days=cf_open_modify)
-    print('--------------------ewr')
-    print(calculated_date)
-    
+
     return calculated_date.strftime("%Y-%m-%d")
 
 
@@ -1559,37 +1673,42 @@ class UserTemplates(Jinja2Templates):
     """
     Jinja2Template 설정 클래스
     """
-
     _instance = None
+    default_directories = [TEMPLATES_DIR, EDITOR_PATH, CAPTCHA_PATH]
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             cls._instance = super(UserTemplates, cls).__new__(cls)
+            cls._instance._initialized = False  # Initialization flag added
         return cls._instance
 
     def __init__(self,
-                 directory: Union[str, os.PathLike],
                  context_processors: dict = None,
                  globals: dict = None,
-                 env: Environment = None,
+                 env: Environment = None
                  ):
-        super().__init__(directory=directory, context_processors=context_processors)
-        # 공통 env.global 설정
-        self.env.globals["editor_path"] = editor_path
-        self.env.globals["getattr"] = getattr
-        self.env.globals["get_selected"] = get_selected
-        self.env.globals["get_member_icon"] = get_member_icon
-        self.env.globals["get_member_image"] = get_member_image
-        self.env.filters["number_format"] = number_format
-        self.env.globals["theme_asset"] = theme_asset
+        if not getattr(self, '_initialized', False):
+            self._initialized = True
 
-        # 사용자 템플릿, 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
-        if TEMPLATES_DIR in directory:
+            super().__init__(directory=self.default_directories, context_processors=context_processors)
+
+            # 공통 env.global 설정
+            self.env.filters["number_format"] = number_format
+            self.env.filters["set_query_params"] = set_query_params
+            self.env.globals["editor_path"] = editor_path
+            self.env.globals["editor_macro"] = editor_macro
+            self.env.globals["getattr"] = getattr
+            self.env.globals["get_selected"] = get_selected
+            self.env.globals["get_member_icon"] = get_member_icon
+            self.env.globals["generate_token"] = generate_token
+            self.env.globals["get_member_image"] = get_member_image
+            self.env.globals["theme_asset"] = theme_asset
+
             self.context_processors.append(self._default_context)
 
-        # 추가 env.global 설정
-        if globals:
-            self.env.globals.update(**globals.__dict__)
+            # 추가 env.global 설정
+            if globals:
+                self.env.globals.update(**globals.__dict__)
 
     def _default_context(self, request: Request):
         context = {
@@ -1601,94 +1720,69 @@ class UserTemplates(Jinja2Templates):
         }
         return context
 
+    # temp debug
+    def TemplateResponse(
+            self,
+            name: str,
+            context: dict,
+            status_code: int = 200,
+            headers: typing.Optional[typing.Mapping[str, str]] = None,
+            media_type: typing.Optional[str] = None,
+            background=None):
+
+        logger = logging.getLogger("uvicorn.error")
+        logger.warning("------template---------")
+        logger.info(name)
+        logger.info(self.env.loader.searchpath)
+
+        return super().TemplateResponse(name, context, status_code, headers, media_type, background)
+
 
 class AdminTemplates(Jinja2Templates):
-    """
-    Jinja2Template 설정 클래스
-    """
     _instance = None
+    default_directories = [ADMIN_TEMPLATES_DIR, EDITOR_PATH, PLUGIN_DIR]
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             cls._instance = super(AdminTemplates, cls).__new__(cls)
+            cls._instance._initialized = False  # Initialization flag added
         return cls._instance
 
     def __init__(self,
-                 directory: Union[str, os.PathLike],
                  context_processors: dict = None,
                  globals: dict = None,
                  env: Environment = None
                  ):
-        super().__init__(directory=directory, context_processors=context_processors)
-        # 공통 env.global 설정
-        self.env.globals["editor_path"] = editor_path
-        self.env.globals["getattr"] = getattr
-        self.env.globals["get_selected"] = get_selected
-        self.env.globals["get_member_icon"] = get_member_icon
-        self.env.globals["get_member_image"] = get_member_image
-        self.env.filters["number_format"] = number_format
-        self.env.globals["theme_asset"] = theme_asset
+        if not getattr(self, '_initialized', False):
+            self._initialized = True
 
-        # 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
-        self.context_processors.append(self._default_admin_context)
 
-        # 추가 env.global 설정
-        if globals:
-            self.env.globals.update(**globals.__dict__)
+            super().__init__(directory=self.default_directories, context_processors=context_processors)
 
-    def _default_admin_context(self, request: Request):
-        context = {
-            "admin_menus": get_admin_menus(),
-            "admin_plugin_menus": get_admin_plugin_menus(),
-        }
-        return context
+            # 공통 env.global 설정
+            self.env.filters["number_format"] = number_format
+            self.env.filters["set_query_params"] = set_query_params
+            self.env.globals["editor_path"] = editor_path
+            self.env.globals["editor_macro"] = editor_macro
+            self.env.globals["getattr"] = getattr
+            self.env.globals["get_selected"] = get_selected
+            self.env.globals["get_member_icon"] = get_member_icon
+            self.env.globals["get_member_image"] = get_member_image
+            self.env.globals["theme_asset"] = theme_asset
+            self.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
+            self.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 
-class MyTemplates(Jinja2Templates):
-    """
-    Jinja2Template 설정 클래스
-    """
-    def __init__(self,
-                 directory: Union[str, os.PathLike],
-                 context_processors: dict = None,
-                 globals: dict = None,
-                 env: Environment = None
-                 ):
-        super().__init__(directory=directory, context_processors=context_processors)
-        # 공통 env.global 설정
-        self.env.globals["editor_path"] = editor_path
-        self.env.globals["getattr"] = getattr
-        self.env.globals["get_selected"] = get_selected
-        self.env.globals["get_member_icon"] = get_member_icon
-        self.env.globals["get_member_image"] = get_member_image
-        self.env.filters["number_format"] = number_format
-        self.env.globals["theme_asset"] = theme_asset
-
-        # 사용자 템플릿, 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
-        if TEMPLATES_DIR in directory:
-            self.context_processors.append(self._default_context)
-        elif ADMIN_TEMPLATES_DIR in directory:
+            # 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
             self.context_processors.append(self._default_admin_context)
 
-        # 추가 env.global 설정
-        if globals:
-            self.env.globals.update(**globals.__dict__)
+            # 추가 env.global 설정
+            if globals:
+                self.env.globals.update(**globals.__dict__)
 
-    def _default_context(self, request: Request):
-        context = {
-            "menus" : get_menus(),
-            "poll" : get_recent_poll(),
-            "populars" : get_populars(),
-            "latest": latest,
-            "visit": visit,
-        }
-        return context
-    
     def _default_admin_context(self, request: Request):
-        context = {
-            "admin_menus": get_admin_menus()
-        }
+        context = {}
         return context
-    
+
 
 class G6FileCache():
     """파일 캐시 클래스
@@ -1810,7 +1904,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     # Lazy import
     from lib.board_lib import BoardConfig, get_list, get_list_thumbnail
 
-    templates = MyTemplates(directory=TEMPLATES_DIR)
+    templates = UserTemplates()
     templates.env.globals["get_list_thumbnail"] = get_list_thumbnail
 
     if not skin_dir:
@@ -1824,15 +1918,20 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     if os.path.exists(cache_file):
         return g6_file_cache.get(cache_file)
     
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
     # 게시판 설정
     board = db.get(Board, bo_table)
     board_config = BoardConfig(request, board)
     board.subject = board_config.subject
 
     #게시글 목록 조회
-    Write = dynamic_create_write_table(bo_table)
-    writes = db.query(Write).filter(Write.wr_is_comment == False).order_by(Write.wr_num).limit(rows).all()
+    write_model = dynamic_create_write_table(bo_table)
+    writes = db.scalars(
+        select(write_model)
+        .where(write_model.wr_is_comment == 0)
+        .order_by(write_model.wr_num)
+        .limit(rows)
+    ).all()
     for write in writes:
         write = get_list(request, write, board_config)
     
@@ -1855,16 +1954,19 @@ def get_newwins(request: Request):
     """
     레이어 팝업 목록 조회
     """
-    db = SessionLocal()
+    db = DBConnect().sessionLocal()
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     current_division = "comm" # comm, both, shop
-    newwins = db.query(NewWin).filter(
-        NewWin.nw_begin_time <= now,
-        NewWin.nw_end_time >= now,
-        NewWin.nw_device.in_(["both", request.state.device]),
-        NewWin.nw_division.in_(["both", current_division]),
-    ).order_by(NewWin.nw_id.asc()).all()
+    newwins = db.scalars(
+        select(NewWin).where(
+            between(now, NewWin.nw_begin_time, NewWin.nw_end_time),
+            NewWin.nw_device.in_(["both", request.state.device]),
+            NewWin.nw_division.in_(["both", current_division]),
+        ).order_by(NewWin.nw_id)
+    ).all()
+
+    db.close()
 
     # "hd_pops_" + nw_id 이름으로 선언된 쿠키가 있는지 확인하고 있다면 팝업을 제거
     newwins = [newwin for newwin in newwins if not request.cookies.get("hd_pops_" + str(newwin.nw_id))]
@@ -1882,18 +1984,20 @@ def datetime_format(date: datetime, format="%Y-%m-%d %H:%M:%S"):
     return date.strftime(format)
 
 
-def insert_board_new(bo_table: str, write: object):
+def insert_board_new(bo_table: str, write: WriteBaseModel):
     """
     최신글 테이블 등록 함수
     """
-    db = SessionLocal()
-
-    new = BoardNew()
-    new.bo_table = bo_table
-    new.wr_id = write.wr_id
-    new.wr_parent = write.wr_parent
-    new.mb_id = write.mb_id
-    db.add(new)
+    db = DBConnect().sessionLocal()
+    db.execute(
+        insert(BoardNew)
+        .values(
+            bo_table=bo_table,
+            wr_id=write.wr_id,
+            wr_parent=write.wr_parent,
+            mb_id=write.mb_id,
+        )
+    )
     db.commit()
 
 
@@ -2082,40 +2186,55 @@ def cut_name(request: Request, name: str) -> str:
     return name[:config.cf_cut_name] if config.cf_cut_name else name
 
 
-def delete_old_data():
-    """설정일이 지난 데이터를 삭제
+def delete_old_records():
+    """
+    설정일이 지난 데이터를 삭제
     """
     try:
-        db = SessionLocal()
-        config = db.query(Config).first()
+        db = DBConnect().sessionLocal()
+        config = db.scalar(select(Config))
+        today = datetime.now()
 
         # 방문자 기록 삭제
         if config.cf_visit_del > 0:
-            result = db.query(Visit).filter(Visit.vi_time < datetime.now() - timedelta(days=config.cf_visit_del)).delete()
-            print("방문자기록 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_visit_del), f"{result}건 삭제")
+            base_date = today - timedelta(days=config.cf_visit_del)
+            result = db.execute(
+                delete(Visit).where(func.concat(Visit.vi_date, " ", Visit.vi_time) < base_date)
+            )
+            print("방문자기록 삭제 기준일 : ", base_date, f"{result.rowcount}건 삭제")
 
         # 인기검색어 삭제
         if config.cf_popular_del > 0:
-            result = db.query(Popular).filter(Popular.pp_date < datetime.now() - timedelta(days=config.cf_popular_del)).delete()
-            print("인기검색어 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_popular_del), f"{result}건 삭제")
+            base_date = today - timedelta(days=config.cf_popular_del)
+            result = db.execute(
+                delete(Popular).where(Popular.pp_date < base_date)
+            )
+            print("인기검색어 삭제 기준일 : ", base_date, f"{result.rowcount}건 삭제")
             
         # 최근게시물 삭제
         if config.cf_new_del > 0:
-            result = db.query(BoardNew).filter(BoardNew.bn_datetime < datetime.now() - timedelta(days=config.cf_new_del)).delete()
-            print("최근게시물 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_new_del), f"{result}건 삭제")
+            base_date = today - timedelta(days=config.cf_new_del)
+            result = db.execute(
+                delete(BoardNew).where((BoardNew.bn_datetime != None) & (BoardNew.bn_datetime < base_date))
+            )
+            print("최근게시물 삭제 기준일 : ", base_date, f"{result.rowcount}건 삭제")
 
         # 쪽지 삭제
         if config.cf_memo_del > 0:
-            result = db.query(Memo).filter(Memo.me_send_datetime < datetime.now() - timedelta(days=config.cf_memo_del)).delete()
-            print("쪽지 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_memo_del), f"{result}건 삭제")
+            base_date = today - timedelta(days=config.cf_memo_del)
+            result = db.execute(
+                delete(Memo).where(Memo.me_send_datetime < base_date)
+            )
+            print("쪽지 삭제 기준일 : ", base_date, f"{result.rowcount}건 삭제")
 
         # 탈퇴회원 자동 삭제
         if config.cf_leave_day > 0:
             # TODO: 회원삭제 처리 추가
-            # result = db.query(Member).filter(Member.mb_leave_date < datetime.now() - timedelta(days=config.cf_leave_day)).delete()
+            # query = update(Member).where(Member.mb_leave_date < datetime.now() - timedelta(days=config.cf_leave_day))
+            # data = {}
+            # result = db.execute(query, data)
             # print("회원 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_leave_day), f"{result}건 삭제")
             pass
-
         db.commit()
     except Exception as e:
         print(e)
@@ -2181,27 +2300,6 @@ def check_ip_list(request: Request, current_ip: str, ip_list: str, allow: bool) 
     return False
 
 
-def is_write_delay(request: Request) -> bool:
-    """특정 시간 간격 내에 다시 글을 작성할 수 있는지 확인하는 함수"""
-    if request.state.is_super_admin:
-        return True
-
-    delay_sec = int(request.state.config.cf_delay_sec)
-    current_time = datetime.now()
-    write_time = request.session.get("ss_write_time")
-
-    if delay_sec > 0:
-        time_interval = timedelta(seconds=delay_sec)
-        if write_time:
-            available_time = datetime.strptime(write_time, "%Y-%m-%d %H:%M:%S") + time_interval
-            if available_time > current_time:
-                return False
-
-        request.session["ss_write_time"] = current_time.strftime("%Y-%m-%d %H:%M:%S")
-
-    return True
-
-
 def filter_words(request: Request, contents: str) -> str:
     """글 내용에 필터링된 단어가 있는지 확인하는 함수
 
@@ -2224,6 +2322,34 @@ def filter_words(request: Request, contents: str) -> str:
     return ''
 
 
+def search_font(content, stx):
+    # 문자 앞에 \를 붙입니다.
+    src = ['/', '|']
+    dst = ['\\/', '\\|']
+
+    if not stx or not stx.strip() and stx != '0':
+        return content
+
+    # 검색어 전체를 공란으로 나눈다
+    search_keywords = stx.split()
+
+    # "(검색1|검색2)"와 같은 패턴을 만듭니다.
+    pattern = ''
+    bar = ''
+    for keyword in search_keywords:
+        if keyword.strip() == '':
+            continue
+        tmp_str = re.escape(keyword)
+        tmp_str = tmp_str.replace(src[0], dst[0]).replace(src[1], dst[1])
+        pattern += f'{bar}{tmp_str}(?![^<]*>)'
+        bar = "|"
+
+    # 지정된 검색 폰트의 색상, 배경색상으로 대체
+    replace = "<b class=\"sch_word\">\\1</b>"
+
+    return re.sub(f'({pattern})', replace, content, flags=re.IGNORECASE)
+
+
 def number_format(number: int) -> str:
     """숫자를 천단위로 구분하여 반환하는 템플릿 필터
 
@@ -2240,14 +2366,58 @@ def number_format(number: int) -> str:
 
 
 def read_version():
-    """루트 디렉토의 version.txt 파일을 읽어서 버전을 반환하는 함수
+    """루트 디렉토리의 version.txt 파일을 읽어서 버전을 반환하는 함수
     Returns:
         str: 버전
     """
-    with open("version.txt", "r") as file:
+    with open("version.txt", "r", encoding="UTF-8") as file:
         return file.read().strip()
 
 
+def read_license():
+    """루트 디렉토리의 LICENSE.txt 파일을 읽어서 라이센스 내용 반환
+
+    Returns:
+        str: 라이센스 내용
+    """
+    with open("LICENSE.txt", "r", encoding="UTF-8") as file:
+        return file.read().strip()
+
+
+def get_current_admin_menu_id(request: Request) -> Optional[str]:
+    """현재 경로의 관리자 메뉴 아이디를 반환하는 함수
+
+    Args:
+        request (Request): FastAPI Request 객체
+
+    Returns:
+        Optional[str]: 관리자 메뉴 아이디
+    """
+    try:
+        admin_menu = get_admin_menus()
+
+        path = request.url.path
+        routes = request.app.routes
+
+        for route in routes:
+            # 현재 경로가 router 형식에 맞다면
+            if route.path_regex.match(path):
+                tags = route.tags
+                # 라우터의 태그와 일치하는 메뉴 아이디를 반환
+                for tag in tags:
+                    for menu_items in admin_menu.values():
+                        item = next((item for item in menu_items if item.get("tag", "") == tag), None)
+                        if item:
+                            return item.get("id")
+                break
+
+        raise Exception("관리자 메뉴 아이디를 찾을 수 없습니다.")
+
+    except Exception as e:
+        print(e)
+        return None
+    
+    
 def theme_asset(asset_path: str):
     """
     현재 템플릿의 asset url을 반환하는 헬퍼 함수
@@ -2274,6 +2444,114 @@ def register_theme_statics(app):
     # 실제 경로 /theme/{{theme_name}}/static/ 을 등록
     theme_path = get_theme_from_db()
     theme_name = theme_path.replace(TEMPLATES + '/', "")
-    app.mount(f"/theme_static/{theme_name}/",
-              StaticFiles(directory=f"{theme_path}/static"),  # real path
-              name=f"static/{theme_name}")  # tag 이름
+
+    if not os.path.isdir(f"{TEMPLATES}/{theme_name}/static"):
+        logger = logging.getLogger("uvicorn.error")
+        logger.warning("template has not static directory")
+        return
+
+    url = f"/theme_static/{theme_name}"
+    path = StaticFiles(directory=f"{TEMPLATES}/{theme_name}/static")
+    app.mount(url, path, name=f"static_{theme_name}")  # tag
+
+
+def set_query_params(url: URL, request: Request, **params: dict) -> URL:
+    """url에 query string을 추가하는 템플릿 필터
+
+    Args:
+        url (str): URL
+        request (Request): FastAPI Request 객체
+        **params (dict): 추가할 query string
+
+    Returns:
+        str: query string이 추가된 URL
+    """
+    query_params = request.query_params
+    if query_params or params:
+        if isinstance(url, str):
+            url = URL(url)
+        url = url.replace_query_params(**query_params, **params)
+
+    return url
+
+
+"""
+의존성 주입 함수 목록
+"""
+async def get_variety_tokens(
+    token_form: Annotated[str, Form(alias="token")] = None,
+    token_query: Annotated[str, Query(alias="token")] = None
+):
+    """
+    요청 매개변수의 유형별 토큰을 수신, 하나의 토큰만 반환
+    - 반환 우선순위는 매개변수 순서대로
+    """
+    return token_form or token_query
+
+async def validate_token(
+    request: Request,
+    token: Annotated[str, Depends(get_variety_tokens)]
+):
+    """
+    토큰 유효성 검사
+    """
+    if not check_token(request, token):
+        raise AlertException("토큰이 유효하지 않습니다", 403)
+
+
+async def validate_captcha(
+    request: Request,
+    response: Annotated[str, Form(alias="g-recaptcha-response")] = None
+):
+    """
+    구글 reCAPTCHA 유효성 검사
+    """
+    config = request.state.config
+    captcha_cls = get_current_captcha_cls(config.cf_captcha)
+    # TODO: config.cf_recaptcha_secret_key 변수를 항상 전달할 필요가 있을까?
+    if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, response)):
+        raise AlertException("캡차가 올바르지 않습니다.", 400)
+
+async def validate_install():
+    """설치 여부 검사"""
+    if os.path.exists(ENV_PATH):
+        raise AlertException("이미 설치가 완료되었습니다.\\n재설치하시려면 .env파일을 삭제 후 다시 시도해주세요.", 400, "/")
+
+
+def check_group_access(
+        request: Request,
+        bo_table: Annotated[str, Path(...)]):
+    """그룹 접근권한 체크
+
+    Args:
+        request (Request): FastAPI Request 객체
+        bo_table (Annotated[str, Path): 게시판 코드
+
+    Raises:
+        AlertException: 로그인이 안된 경우
+        AlertException: 회원이면서 그룹 접근권한이 없는 경우
+    """
+    
+    with DBConnect().sessionLocal() as db:
+        board = db.get(Board, bo_table)
+        group = board.group
+        member = request.state.login_member
+
+        # 그룹 접근 사용할때만 체크
+        if group.gr_use_access:
+            if not member:
+                raise AlertException(
+                    f"비회원은 이 게시판에 접근할 권한이 없습니다.\
+                    \\n\\n회원이시라면 로그인 후 이용해 보십시오.", 403)
+
+            # 최고관리자 또는 그룹관리자는 접근권한 체크 안함
+            if not get_admin_type(request, member.mb_id, group=group):
+                exists_group_member = db.scalar(
+                    exists(GroupMember)
+                    .where(GroupMember.gr_id == group.gr_id, GroupMember.mb_id == member.mb_id).select()
+                )
+                if not exists_group_member:
+                    raise AlertException(
+                        f"`{board.bo_subject}` 게시판에 대한 접근 권한이 없습니다.\
+                        \\n\\n궁금하신 사항은 관리자에게 문의 바랍니다.", 403)
+                

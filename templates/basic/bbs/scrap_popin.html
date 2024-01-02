@@ -1,43 +1,41 @@
 {% extends "base_window.html" %}
 
-{% block title %}
-    {{ write.wr_subject|truncate(20, False, '...', 0) }} > 스크랩하기
-{% endblock title %}
+{% block title %}{{ write.wr_subject|truncate(20, False, '...', 0) }} > 스크랩하기{% endblock title %}
 
 {% block content %}
-<script>
-    if (window.name != 'win_scrap') {
-        alert('올바른 방법으로 사용해 주십시오.');
-        window.close();
-    }
-</script>
-<div id="scrap_do" class="new_win">
-    <h1 id="win_title">스크랩하기</h1>
-    <form name="f_scrap_popin" action="{{ url_for('scrap_form_update', bo_table=bo_table, wr_id=write.wr_id) }}" method="post" onsubmit="return fscrappopin_submit(this);">
-        <input type="hidden" name="token" value="">
-        <div class="new_win_con">
-            <h2 class="sound_only">제목 확인 및 댓글 쓰기</h2>
-            <ul>
-                <li class="scrap_tit">
-                    <span class="sound_only">제목</span>
-                    {{ write.wr_subject }}
-                </li>
-                <li>
-                    <label for="wr_content">댓글작성</label>
-                    <textarea name="wr_content" id="wr_content"></textarea>
-                </li>
-            </ul>
-        </div>
-        <p class="win_desc">스크랩을 하시면서 감사 혹은 격려의 댓글을 남기실 수 있습니다.</p>
-        <div class="win_btn">
-            <button type="submit" class="btn_submit">스크랩 확인</button>
-        </div>
-    </form>
-</div>
-<script>
-    function fscrappopin_submit(f) {
-        f.token.value = generate_token();
-        return true;
-    }
-</script>
+    <script>
+        if (window.name != 'win_scrap') {
+            alert('올바른 방법으로 사용해 주십시오.');
+            window.close();
+        }
+    </script>
+    <div id="scrap_do" class="new_win">
+        <h1 id="win_title">스크랩하기</h1>
+        <form name="f_scrap_popin" action="{{ url_for('scrap_form_update', bo_table=bo_table, wr_id=write.wr_id) }}" method="post" onsubmit="return fscrappopin_submit(this);">
+            <input type="hidden" name="token" value="">
+            <div class="new_win_con">
+                <h2 class="sound_only">제목 확인 및 댓글 쓰기</h2>
+                <ul>
+                    <li class="scrap_tit">
+                        <span class="sound_only">제목</span>
+                        {{ write.wr_subject }}
+                    </li>
+                    <li>
+                        <label for="wr_content">댓글작성</label>
+                        <textarea name="wr_content" id="wr_content"></textarea>
+                    </li>
+                </ul>
+            </div>
+            <p class="win_desc">스크랩을 하시면서 감사 혹은 격려의 댓글을 남기실 수 있습니다.</p>
+            <div class="win_btn">
+                <button type="submit" class="btn_submit">스크랩 확인</button>
+            </div>
+        </form>
+    </div>
+    <script>
+        function fscrappopin_submit(f) {
+            f.token.value = generate_token();
+            return true;
+        }
+    </script>
 {% endblock content %}

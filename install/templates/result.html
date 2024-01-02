@@ -1,0 +1,59 @@
+{% extends "_layout.html" %}
+
+{% block content %}
+    <div class="ins_inner">
+        <h2>{{ version }} 설치가 시작되었습니다.</h2>
+        <ol id="install_status">
+            <!--
+            <li>전체 테이블 생성 완료</li>
+            <li>DB설정 완료</li>
+            <li>데이터 디렉토리 생성 완료</li>
+            -->
+        </ol>
+        <h2 id="install_result"></h2>
+    </div>
+    <div class="ins_inner" id="install_success">
+        <h2>환경설정 변경은 다음의 과정을 따르십시오.</h2>
+        <ol>
+            <li>메인화면으로 이동</li>
+            <li>관리자 로그인</li>
+            <li>관리자 모드 접속</li>
+            <li>환경설정 메뉴의 기본환경설정 페이지로 이동</li>
+        </ol>
+        <div class="inner_btn">
+            <a href="{{ url_for('index') }}">새로운 그누보드6으로 이동</a>
+        </div>
+    </div>
+
+    <div class="ins_inner" id="install_fail">
+        <h2>설치가 실패했습니다. 다시 시도해주세요</h2>
+        <div class="inner_btn">
+            <a href="javascript:history.back();">뒤로가기</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("install_success").style.display = "none";
+        document.getElementById("install_fail").style.display = "none";
+
+        setTimeout(() => {
+            token = generate_token();
+            const evtSource = new EventSource("/install/process?token=" + token);
+            evtSource.onmessage = function(event) {
+                const data = event.data.trim();  // 공백 제거
+
+                if (data.includes("[success]")) {
+                    document.getElementById("install_result").innerHTML = data;
+                    document.getElementById("install_success").style.display = "block";
+                    evtSource.close();
+                } else if (data.includes("[error]")) {
+                    document.getElementById("install_result").innerHTML = data;
+                    document.getElementById("install_fail").style.display = "block";
+                    evtSource.close();
+                } else {
+                    document.getElementById("install_status").innerHTML += "<li>" + data + "</li>"; // 메시지 출력
+                }
+            }
+        }, 1000);
+    </script>
+{% endblock content %}

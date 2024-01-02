@@ -521,8 +521,8 @@ box-sizing:content-box;
   .hd_opener {display: block;width: 50px;height: 50px;font-size: 2.2em;margin-left: auto;margin-right: 8px;}
   .hd_opener i {color: #fff;}
   .hd_sch_wr {display: none;position: absolute;bottom: -64px;left: 0;width: 100%;height: 60px;z-index: 9999;}
-  #hd_sch #sch_stx {height: 60px;background: #00000080;}
-  #hd_sch #sch_submit {height: 60px;background: #00000080;}
+  #hd_sch #sch_stx {height: 60px;background: #383838;}
+  #hd_sch #sch_submit {height: 60px;background: #383838;}
   .hd_sch_wr.active {display: block;}
   .latest_wr.boards {flex-direction: column;}
   .lt_wr {width: 100%;}

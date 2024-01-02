@@ -1,32 +1,40 @@
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
 
-from lib.common import *
-from common.database import get_db
+from common.database import db_session
 from common.formclass import NewwinForm
-from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 from common.models import NewWin
+from lib.common import *
 
 router = APIRouter()
-templates = MyTemplates(directory=[ADMIN_TEMPLATES_DIR, EDITOR_PATH])
-templates.env.globals['get_member_level_select'] = get_member_level_select
+templates = AdminTemplates()
 templates.env.globals["today"] = datetime.now().strftime("%Y-%m-%d 00:00:00")
 templates.env.globals["after_7days"] = (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d 23:59:59")
-templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
-templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 
-MENU_KEY = "100310"
+NEWWIN_MENU_KEY = "100310"
+
+
+def get_newwin(db: db_session, nw_id: int):
+    """
+    팝업 정보조회 의존성 주입 함수
+    """
+    newwin = db.get(NewWin, nw_id)
+    if not newwin:
+        raise AlertException(f"{nw_id} : 팝업이 존재하지 않습니다.", 404)
+
+    return newwin
 
 
 @router.get("/newwin_list")
-def newwin_list(request: Request, db: Session = Depends(get_db)):
+async def newwin_list(request: Request, db: db_session):
     """
     팝업 목록
     """
-    request.session["menu_key"] = MENU_KEY
+    request.session["menu_key"] = NEWWIN_MENU_KEY
 
-    newwins = db.query(NewWin).order_by(NewWin.nw_id.desc()).all()
+    newwins = db.scalars(
+        select(NewWin).order_by(NewWin.nw_id.desc())
+    ).all()
 
     context = {
         "request": request,
@@ -36,39 +44,36 @@ def newwin_list(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/newwin_form")
-def newwin_form_add(request: Request):
+async def newwin_form_add(request: Request):
     """
     팝업 등록 폼
     """
-    return templates.TemplateResponse(
-        "newwin_form.html", {"request": request, "newwin": None}
-    )
+    context = {"request": request, "newwin": None}
+    return templates.TemplateResponse("newwin_form.html", context)
 
 
 @router.get("/newwin_form/{nw_id}")
-def newwin_form_edit(request: Request, nw_id: int, db: Session = Depends(get_db)):
+async def newwin_form_edit(
+    request: Request,
+    newwin: NewWin = Depends(get_newwin)
+):
     """
     팝업 수정 폼
     """
-    newwin = db.query(NewWin).get(nw_id)
+    context = {"request": request, "newwin": newwin}
+    return templates.TemplateResponse("newwin_form.html", context)
 
-    return templates.TemplateResponse(
-        "newwin_form.html", {"request": request, "newwin": newwin}
-    )
 
-@router.post("/newwin_form_update")
-def newwin_form_update(request: Request,
-                        db: Session = Depends(get_db),
-                        token: str = Form(...),
-                        nw_id: int = Form(None),
-                        form_data: NewwinForm = Depends()
-                        ):
+@router.post("/newwin_form_update", dependencies=[Depends(validate_token)])
+async def newwin_form_update(
+    request: Request,
+    db: db_session,
+    nw_id: int = Form(None),
+    form_data: NewwinForm = Depends()
+):
     """
     팝업 등록 및 수정 처리
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-
     # 등록
     if not nw_id:
         newwin = NewWin(**form_data.__dict__)
@@ -76,11 +81,7 @@ def newwin_form_update(request: Request,
         db.commit()
     # 수정
     else:
-        newwin = db.query(NewWin).get(nw_id)
-        if not newwin:
-            raise AlertException(status_code=404, detail=f"{nw_id} : 팝업이 존재하지 않습니다.")
-
-        # 데이터 수정 후 commit
+        newwin = get_newwin(db, nw_id)
         for field, value in form_data.__dict__.items():
             setattr(newwin, field, value)
         db.commit()
@@ -88,21 +89,15 @@ def newwin_form_update(request: Request,
     return RedirectResponse(url=f"/admin/newwin_form/{newwin.nw_id}", status_code=302)
 
 
-@router.get("/newwin_delete/{nw_id}")
-def newwin_delete(nw_id: int, 
-                   request: Request, 
-                   db: Session = Depends(get_db),
-                   token: str = Query(...)):
+@router.get("/newwin_delete/{nw_id}", dependencies=[Depends(validate_token)])
+async def newwin_delete(
+    request: Request,
+    db: db_session,
+    newwin: NewWin = Depends(get_newwin)
+):
     """
     팝업 삭제
     """
-    if not check_token(request, token):
-        raise AlertException("토큰이 유효하지 않습니다", 403)
-    
-    newwin = db.query(NewWin).get(nw_id)
-    if not newwin:
-        raise AlertException(status_code=404, detail=f"{nw_id}: 팝업이 존재하지 않습니다.")
-
     # 팝업 삭제
     db.delete(newwin)
     db.commit()

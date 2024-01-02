@@ -334,7 +334,7 @@ class WriteForm:
     wr_password: str = Form(None)
     wr_subject: str = Form(...)
     wr_content: str = Form(...)
-    wr_is_comment: bool = False
+    wr_is_comment: int = 0
     wr_link1: str = Form(None)
     wr_link2: str = Form(None)
 
@@ -342,7 +342,6 @@ class WriteForm:
 @dataclass
 class WriteCommentForm:
     w: str = Form(...)
-    bo_table: str = Form(...)
     wr_id: int = Form(...)
     wr_content: str = Form(...)
     wr_name: str = Form(None)
@@ -390,11 +389,10 @@ class PollForm:
 
 @dataclass
 class AutoSaveForm:
-    mb_id: str = Form(default="")
     as_uid: Optional[int] = Form(default=0)
     as_subject: str = Form(default="")
     as_content: str = Form(default="")
-    as_datetime: Optional[datetime] = Form(default=None)
+    as_datetime: datetime = Form(default=datetime.now())
 
       
 @dataclass
@@ -449,9 +447,9 @@ class QaContentForm:
     """
     qa_email: str = Form(None)
     qa_hp: str = Form(None)
-    qa_category: str = Form(...)
-    qa_email_recv: bool = Form(None)
-    qa_sms_recv: bool = Form(None)
+    qa_category: str = Form(None)
+    qa_email_recv: int = Form(None)
+    qa_sms_recv: int = Form(None)
     qa_html: int = Form(None)
     qa_subject: str = Form(...)
     qa_content: str = Form(...)
@@ -487,3 +485,20 @@ class SocialProfile:
     photourl: str
     displayname: str
     disciption: str
+
+@dataclass
+class InstallFrom:
+    db_engine: str = Form(...)
+    db_host: str = Form("")
+    db_port: int = Form(0)
+    db_user: str = Form("")
+    db_password: str = Form("")
+    db_name: str = Form("")
+    db_table_prefix: str = Form(...)
+
+    admin_id: str = Form(...)
+    admin_password: str = Form(...)
+    admin_name: str = Form(...)
+    admin_email: str = Form(...)
+
+    reinstall: int = Form(None)

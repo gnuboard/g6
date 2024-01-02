@@ -1,0 +1,191 @@
+{% extends "_layout.html" %}
+
+{% block content %}
+    <form id="frm_install" method="post" action="{{ url_for('install') }}" autocomplete="off" onsubmit="return frm_install_submit(this);">
+        <input type="hidden" name="token" value="">
+        <div class="ins_inner">
+            <table class="ins_frm">
+                <caption>데이터베이스 정보입력</caption>
+                <colgroup>
+                    <col style="width:150px">
+                    <col>
+                </colgroup>
+                <tbody>
+                    <tr>
+                        <th scope="row"><label for="db_engine">Engine</label></th>
+                        <td>
+                            <select id="db_engine" name="db_engine" title="데이터베이스 엔진">
+                                <option value="mysql">MySQL</option>
+                                <option value="postgresql">PostgreSQL</option>
+                                <option value="sqlite">SQLite</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="db_host">Host</label></th>
+                        <td><input type="text" id="db_host" name="db_host" value="localhost" title="데이터베이스 Host"></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="db_port">Port</label></th>
+                        <td><input type="text" id="db_port" name="db_port" value="3306" title="데이터베이스 Port"></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="db_user">User</label></th>
+                        <td><input type="text" id="db_user" name="db_user" title="데이터베이스 User"></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="db_password">Password</label></th>
+                        <td><input type="text" id="db_password" name="db_password" title="데이터베이스 비밀번호"></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="db_name">Database Name</label></th>
+                        <td>
+                            <input type="text" id="db_name" name="db_name" title="데이터베이스 이름">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="db_table_prefix">TABLE명 접두사</label></th>
+                        <td>
+                            <input type="text" id="db_table_prefix" name="db_table_prefix"  value="g6_" title="TABLE 접두사">
+                            <span>TABLE명 접두사는 영문자, 숫자, _ 만 입력 가능합니다.</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="">{{ version }} 재설치</label></th>
+                        <td>
+                            <input type="checkbox" id="g6_install" name="g6_install" value="1"> 재설치
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        
+            <table class="ins_frm">
+                <caption>최고관리자 정보입력</caption>
+                <colgroup>
+                    <col style="width:150px">
+                    <col>
+                </colgroup>
+                <tbody>
+                    <tr>
+                        <th scope="row"><label for="admin_id">ID</label></th>
+                        <td><input type="text" id="admin_id" name="admin_id" value="admin" title="최고관리자 ID"></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="admin_password">비밀번호</label></th>
+                        <td><input type="text" id="admin_password" name="admin_password" value="" title="최고관리자 비밀번호"></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="admin_name">이름</label></th>
+                        <td><input type="text" id="admin_name" name="admin_name" value="최고관리자" title="최고관리자 이름"></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="admin_email">E-mail</label></th>
+                        <td><input type="text" id="admin_email" name="admin_email" value="admin@domain.com"title="최고관리자 이메일"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p>
+                <strong class="st_strong">주의! 이미 {{ version }}가 존재한다면 DB 자료가 망실되므로 주의하십시오.</strong>
+                <br>주의사항을 이해했으며, 그누보드 설치를 계속 진행하시려면 다음을 누르십시오.
+            </p>
+        
+            <div class="inner_btn">
+                <input type="submit" value="다음">
+            </div>
+        </div>
+    </form>
+    <script>
+    // 데이터베이스 변경 시 입력 폼 표시 여부
+    document.getElementById('db_engine').addEventListener('change', (e) => {
+        const db_host = document.getElementById('db_host');
+        const db_port = document.getElementById('db_port');
+        const db_user = document.getElementById('db_user');
+        const db_password = document.getElementById('db_password');
+        const db_name = document.getElementById('db_name');
+
+        if (e.target.value == 'sqlite') {
+            db_host.parentNode.parentNode.style.display = 'none';
+            db_port.parentNode.parentNode.style.display = 'none';
+            db_user.parentNode.parentNode.style.display = 'none';
+            db_password.parentNode.parentNode.style.display = 'none';
+            db_name.parentNode.parentNode.style.display = 'none';
+        } else {
+            db_host.parentNode.parentNode.style.display = '';
+            db_port.parentNode.parentNode.style.display = '';
+            db_user.parentNode.parentNode.style.display = '';
+            db_password.parentNode.parentNode.style.display = '';
+            db_name.parentNode.parentNode.style.display = '';
+        }
+    });
+
+    function frm_install_submit(f) {
+        const errorMessages = {
+            invalidCharacter: '에 유효하지 않는 문자가 있습니다. 다른 문자로 대체해 주세요.',
+            validAdminId: '는 4~19자의 문자열로 첫자는 영문자 그리고 영문+숫자의 조합으로 만들수 있습니다.',
+            validEmail: '은 유요한 이메일 주소가 아닙니다. 다시 확인해 주세요.',
+        }
+        const regexes = {
+            invalidCharacter: /\)\;\(passthru|eval|pcntl_exec|exec|system|popen|fopen|fsockopen|file|file_get_contents|readfile|unlink|include|include_once|require|require_once\)\s?\(\$_(get|post|request)\s?\[.*?\]\s?\)/gi,
+            validAdminId: /^[a-z]+[a-z0-9]{3,19}$/i,
+            validEmail: /^[a-z0-9_+.-]+@([a-z0-9-]+\.)+[a-z]{2,4}$/i,
+        }
+
+        function showAlert(message, focusElement) {
+            alert(message);
+            if (focusElement) {
+                focusElement.focus();
+            }
+            return false;
+        }
+    
+        function checkField(field, errorMessageKey = "") {
+            const errorMessage = errorMessages[errorMessageKey];
+            const regex = regexes[errorMessageKey];
+
+            let value = field.value;
+            let title = field.title;
+            let name = field.name;
+
+            if (value === '') {
+                return showAlert(`${title}을(를) 입력해 주세요.`, f[name]);
+            }
+            if (errorMessageKey == "invalidCharacter" && regex.test(value)) {
+                return showAlert(`${title}${errorMessage}`, f[name]);
+            }
+            if (errorMessageKey == "validAdminId" && !regex.test(value)) {
+                return showAlert(`${title}${errorMessage}`, f[name]);
+            }
+            if (errorMessageKey == "validEmail" && !regex.test(value)) {
+                return showAlert(`${title}${errorMessage}`, f[name]);
+            }
+            return true;
+        }
+        if (f.db_engine.value != 'sqlite') {
+            if (!checkField(f.db_host, "invalidCharacter")
+                || !checkField(f.db_user, "invalidCharacter")
+                || !checkField(f.db_password, "invalidCharacter")
+                || !checkField(f.db_name, "invalidCharacter")
+            ) {
+                return false;
+            }
+        }
+
+        if (!checkField(f.db_table_prefix, "invalidCharacter")
+            || !checkField(f.admin_id, "validAdminId")
+            || !checkField(f.admin_password, "empty")
+            || !checkField(f.admin_name, "emtpy")
+            || !checkField(f.admin_email, "validEmail")
+        ) {
+            return false;
+        }
+
+        f.token.value = generate_token();
+        if (f.token.value == "") {
+            alert("토큰값이 없습니다.");
+            return false;
+        }
+
+        return true;
+    }
+    </script>
+{% endblock content %}
