@@ -4,6 +4,7 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment
+from pydantic import TypeAdapter
 from sqlalchemy import select
 from starlette.staticfiles import StaticFiles
 

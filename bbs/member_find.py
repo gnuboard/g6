@@ -6,6 +6,7 @@ from fastapi.responses import RedirectResponse
 
 from bbs.social import SocialAuthService
 from core.database import db_session
+from core.exception import AlertException
 from core.template import UserTemplates
 from lib.common import *
 from lib.pbkdf2 import create_hash

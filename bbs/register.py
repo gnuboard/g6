@@ -5,6 +5,7 @@ from fastapi.responses import RedirectResponse, Response
 
 from bbs.member_profile import validate_nickname, validate_userid, is_prohibit_email
 from core.database import db_session
+from core.exception import AlertException
 from core.formclass import MemberForm
 from core.models import Member
 from core.template import UserTemplates

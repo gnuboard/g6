@@ -12,6 +12,7 @@ from sse_starlette.sse import EventSourceResponse
 import core.models as models
 from .default_values import *
 from core.database import DBConnect, DBSetting
+from core.exception import AlertException
 from core.formclass import InstallFrom
 from lib.common import *
 from lib.pbkdf2 import create_hash

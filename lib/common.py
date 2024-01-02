@@ -13,16 +13,15 @@ from datetime import datetime, timedelta, date
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from time import sleep
-from typing import Any, Dict, List, Optional, Union
+from typing import List, Optional, Union
 from urllib.parse import urlencode
 
 from cachetools import LFUCache, TTLCache
 from dotenv import load_dotenv
-from fastapi import Depends, Form, Path, Query, Request, HTTPException, UploadFile
+from fastapi import Depends, Form, Path, Query, Request, UploadFile
 from markupsafe import Markup, escape
 from PIL import Image, ImageOps, UnidentifiedImageError
 from passlib.context import CryptContext
-from pydantic import TypeAdapter
 from sqlalchemy import Index, asc, desc, func, insert, select, delete, between, exists, update
 from sqlalchemy.exc import IntegrityError
 from starlette.datastructures import URL
@@ -1428,34 +1427,6 @@ def get_unique_id(request) -> Optional[str]:
                 return None
 
 
-class AlertException(HTTPException):
-    """스크립트 경고창 출력을 위한 예외 클래스
-        - HTTPExceptiond에서 페이지 이동을 위한 url 매개변수를 추가적으로 받는다.
-
-    Args:
-        HTTPException (HTTPException): HTTP 예외 클래스
-    """
-    def __init__(self, detail: str = None, status_code: int = 200, url: str = None):
-        self.status_code = status_code
-        self.detail = detail
-        self.url = url
-
-
-class AlertCloseException(HTTPException):
-    """스크립트 경고창 출력 및 윈도우 창 닫기를 위한 예외 클래스
-
-    Args:
-        HTTPException (HTTPException): HTTP 예외 클래스
-    """
-    def __init__(
-        self,
-        detail: Any = None,
-        status_code: int = 200,
-        headers: Optional[Dict[str, str]] = None,
-    ) -> None:
-        super().__init__(status_code=status_code, detail=detail, headers=headers) 
-
-
 def is_admin(request: Request, mb_id: str = None):
     """관리자 여부 확인
     """
@@ -2323,6 +2294,9 @@ async def validate_token(
     """
     토큰 유효성 검사
     """
+    # Lazy import
+    from core.exception import AlertException
+
     if not check_token(request, token):
         raise AlertException("토큰이 유효하지 않습니다", 403)
 
@@ -2334,6 +2308,9 @@ async def validate_captcha(
     """
     구글 reCAPTCHA 유효성 검사
     """
+    # Lazy import
+    from core.exception import AlertException
+
     config = request.state.config
     captcha_cls = get_current_captcha_cls(config)
     if captcha_cls:
@@ -2344,6 +2321,9 @@ async def validate_captcha(
 
 async def validate_install():
     """설치 여부 검사"""
+    # Lazy import
+    from core.exception import AlertException
+
     if os.path.exists(ENV_PATH):
         raise AlertException("이미 설치가 완료되었습니다.\\n재설치하시려면 .env파일을 삭제 후 다시 시도해주세요.", 400, "/")
 
@@ -2361,7 +2341,9 @@ async def check_group_access(
         AlertException: 로그인이 안된 경우
         AlertException: 회원이면서 그룹 접근권한이 없는 경우
     """
-    
+    # Lazy import
+    from core.exception import AlertException
+
     with DBConnect().sessionLocal() as db:
         board = db.get(Board, bo_table)
         group = board.group
@@ -2390,6 +2372,9 @@ async def check_admin_access(request: Request):
     """
     관리자페이지 접근권한 체크
     """
+    # Lazy import
+    from core.exception import AlertException
+
     db = DBConnect().sessionLocal()
     path = request.url.path
     ss_mb_id = request.session.get("ss_mb_id", "")

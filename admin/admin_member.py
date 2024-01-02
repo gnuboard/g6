@@ -7,6 +7,7 @@ from fastapi.responses import RedirectResponse
 
 from bbs.social import SocialAuthService
 from core.database import db_session
+from core.exception import AlertException
 from core.formclass import MemberForm
 from core.models import Member, Point, GroupMember, Memo, Scrap, Auth, Group, Board
 from core.template import AdminTemplates

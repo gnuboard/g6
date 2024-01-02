@@ -1,8 +1,10 @@
+from typing import Dict
+
 from fastapi import APIRouter, Form, File, Depends, Path
 from starlette.responses import RedirectResponse
 
-
 from core.database import DBConnect, db_session
+from core.exception import AlertException
 from core.formclass import MemberForm
 from core.models import Member, MemberSocialProfiles
 from core.template import UserTemplates

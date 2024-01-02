@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse
 from typing import List, Optional
 
 from core.database import db_session
+from core.exception import AlertException
 from core.models import Auth, Member
 from core.template import AdminTemplates
 from lib.common import *

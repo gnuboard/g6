@@ -6,6 +6,7 @@ from sqlalchemy import or_
 from sse_starlette.sse import EventSourceResponse
 
 from core.database import db_session
+from core.exception import AlertException
 from core.models import Group, Mail, Member
 from core.template import AdminTemplates
 from lib.common import *

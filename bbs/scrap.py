@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Form, Path, Request
 from fastapi.responses import RedirectResponse
 
 from core.database import DBConnect, db_session
+from core.exception import AlertCloseException, AlertException
 from core.models import Scrap
 from core.template import UserTemplates
 from lib.board_lib import *

@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 
 from core.database import db_session
+from core.exception import AlertException
 from core.formclass import ContentForm
 from core.models import Content
 from core.template import AdminTemplates

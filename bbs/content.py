@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request
 
 from core.database import db_session
+from core.exception import AlertException
 from core.models import Content
 from core.template import UserTemplates
 from lib.common import *

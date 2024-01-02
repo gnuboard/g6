@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from fastapi.responses import FileResponse
 
 from core.database import db_session
+from core.exception import AlertException
 from core.template import TEMPLATES, AdminTemplates, UserTemplates, register_theme_statics
 from lib.common import *
 

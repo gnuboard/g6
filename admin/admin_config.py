@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 
 from core.database import db_session
+from core.exception import AlertException
 from core.formclass import ConfigForm
 from core.models import Config
 from core.template import AdminTemplates

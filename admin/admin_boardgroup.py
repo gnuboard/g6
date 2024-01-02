@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse
 from typing import List
 
 from core.database import db_session
+from core.exception import AlertException
 from core.models import Board, Group, GroupMember
 from core.formclass import GroupForm
 from core.template import AdminTemplates

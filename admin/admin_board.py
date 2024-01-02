@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from typing import List
 
 from core.database import DBConnect, db_session
+from core.exception import AlertException
 from core.models import Board, BoardNew, Scrap, BoardFile, BoardGood
 from core.formclass import BoardForm
 from core.template import AdminTemplates

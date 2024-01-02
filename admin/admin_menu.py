@@ -7,6 +7,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import func
 
 from core.database import db_session
+from core.exception import AlertException
 from core.models import Board, Content, Group, Menu
 from core.template import AdminTemplates
 from lib.common import *

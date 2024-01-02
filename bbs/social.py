@@ -12,6 +12,7 @@ from starlette.responses import RedirectResponse
 
 from bbs.member_profile import validate_nickname, validate_userid
 from core.database import DBConnect, db_session
+from core.exception import AlertException
 from core.formclass import MemberForm
 from core.models import Config, MemberSocialProfiles, Member
 from core.template import UserTemplates

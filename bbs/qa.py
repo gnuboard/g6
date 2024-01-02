@@ -4,6 +4,7 @@ from sqlalchemy.orm import query
 from typing import List
 
 from core.database import DBConnect, db_session
+from core.exception import AlertException
 from core.formclass import QaContentForm
 from core.models import QaConfig, QaContent
 from core.template import UserTemplates
