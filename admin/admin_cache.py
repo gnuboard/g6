@@ -2,7 +2,7 @@ import asyncio
 from fastapi import APIRouter, Request
 from sse_starlette import EventSourceResponse
 
-from common.database import db_session
+from core.database import db_session
 from lib.common import *
 
 router = APIRouter()

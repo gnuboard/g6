@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, Path
 from starlette.responses import JSONResponse
 
-from common.database import DBConnect, db_session
-from common.formclass import AutoSaveForm
-from common.models import AutoSave
+from core.database import DBConnect, db_session
+from core.formclass import AutoSaveForm
+from core.models import AutoSave
 from lib.common import *
 
 router = APIRouter()

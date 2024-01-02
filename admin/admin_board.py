@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, Request, Form, Path
 from fastapi.responses import HTMLResponse, RedirectResponse
 from typing import List
 
-from common.database import DBConnect, db_session
-from common.models import Board, BoardNew, Scrap, BoardFile, BoardGood
-from common.formclass import BoardForm
+from core.database import DBConnect, db_session
+from core.models import Board, BoardNew, Scrap, BoardFile, BoardGood
+from core.formclass import BoardForm
 from lib.common import *
 
 router = APIRouter()

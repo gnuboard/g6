@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-import common.models as models
+import core.models as models
 from lib.common import is_none_datetime
 
 

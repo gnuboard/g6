@@ -2,8 +2,8 @@ import secrets
 from fastapi import APIRouter, Depends, Form, Path, Request
 from fastapi.responses import RedirectResponse
 
-from common.database import db_session
-from common.models import Member
+from core.database import db_session
+from core.models import Member
 from lib.common import *
 from lib.pbkdf2 import validate_password
 

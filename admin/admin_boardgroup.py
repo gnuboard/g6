@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, Request, Form, Path
 from fastapi.responses import RedirectResponse
 from typing import List
 
-from common.database import db_session
-from common.models import Board, Group, GroupMember
-from common.formclass import GroupForm
+from core.database import db_session
+from core.models import Board, Group, GroupMember
+from core.formclass import GroupForm
 from lib.common import *
 
 router = APIRouter()

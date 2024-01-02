@@ -1,7 +1,7 @@
 import re
 from fastapi import APIRouter, Depends, Request, Form, Path
 
-from common.database import db_session
+from core.database import db_session
 from lib.common import *
 
 router = APIRouter()

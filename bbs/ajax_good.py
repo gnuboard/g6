@@ -3,8 +3,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import insert, select
 
 from lib.common import *
-from common.database import db_session
-from common.models import Board, BoardGood
+from core.database import db_session
+from core.models import Board, BoardGood
 
 router = APIRouter()
 

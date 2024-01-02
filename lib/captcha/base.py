@@ -1,6 +1,6 @@
 import abc
 
-from common.models import Config
+from core.models import Config
 
 
 class CaptchaBase(metaclass=abc.ABCMeta):

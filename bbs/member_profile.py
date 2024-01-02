@@ -3,9 +3,9 @@ from main import app
 from fastapi import APIRouter, Form, File, Depends, Path
 from starlette.responses import RedirectResponse
 
-from common.database import DBConnect, db_session
-from common.formclass import MemberForm
-from common.models import Member, MemberSocialProfiles
+from core.database import DBConnect, db_session
+from core.formclass import MemberForm
+from core.models import Member, MemberSocialProfiles
 from lib.common import *
 from lib.pbkdf2 import validate_password, create_hash
 

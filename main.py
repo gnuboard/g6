@@ -10,8 +10,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from user_agents import parse
 
-from common.database import DBConnect, db_session
-import common.models as models
+from core.database import DBConnect, db_session
+import core.models as models
 from lib.common import *
 from lib.member_lib import MemberService
 from lib.plugin.service import register_statics, register_plugin_admin_menu, get_plugin_state_change_time, \

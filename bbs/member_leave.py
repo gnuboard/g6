@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from bbs.social import SocialAuthService
-from common.database import db_session
+from core.database import db_session
 from lib.common import *
 from lib.pbkdf2 import validate_password
 from main import templates

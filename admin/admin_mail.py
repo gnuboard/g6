@@ -5,8 +5,8 @@ from sse_starlette.sse import EventSourceResponse
 from sqlalchemy import or_
 
 from lib.common import *
-from common.database import db_session
-from common.models import Group, Mail, Member
+from core.database import db_session
+from core.models import Group, Mail, Member
 
 router = APIRouter()
 templates = AdminTemplates()

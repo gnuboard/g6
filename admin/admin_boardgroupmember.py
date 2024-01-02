@@ -4,8 +4,8 @@ from sqlalchemy import desc
 from sqlalchemy.orm import aliased
 from typing import List
 
-from common.database import db_session
-from common.models import Group, GroupMember, Member
+from core.database import db_session
+from core.models import Group, GroupMember, Member
 from lib.common import *
 
 router = APIRouter()

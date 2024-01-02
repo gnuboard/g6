@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from typing import List
 
-from common.database import db_session
-from common.formclass import ConfigForm
-from common.models import Config
+from core.database import db_session
+from core.formclass import ConfigForm
+from core.models import Config
 from lib.common import *
 
 router = APIRouter()

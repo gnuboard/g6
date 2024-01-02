@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 
-from common.database import db_session
-from common.models import Point
+from core.database import db_session
+from core.models import Point
 from lib.common import *
 
 router = APIRouter()

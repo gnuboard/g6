@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Form, Path
 from fastapi.responses import RedirectResponse
 
 from bbs.social import SocialAuthService
-from common.database import db_session
+from core.database import db_session
 from lib.common import *
 from lib.pbkdf2 import create_hash
 

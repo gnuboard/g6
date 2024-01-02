@@ -7,7 +7,7 @@ from starlette.responses import RedirectResponse
 from starlette.templating import Jinja2Templates
 
 from admin.admin_config import get_admin_plugin_menus
-from common.database import get_db
+from core.database import get_db
 from lib.common import ADMIN_TEMPLATES_DIR, get_member_id_select, get_skin_select, get_editor_select, get_selected, \
     get_member_level_select, option_array_checked, get_admin_menus, get_client_ip, validate_token,\
     AlertException

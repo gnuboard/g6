@@ -21,8 +21,8 @@ from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import exists
 
-from common.database import engine, SessionLocal
-import common.models as models
+from core.database import engine, SessionLocal
+import core.models as models
 from lib.common import dynamic_create_write_table, read_version
 from lib.pbkdf2 import create_hash
 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Query
 
-from common.database import db_session
-from common.models import Board, Group, GroupMember
+from core.database import db_session
+from core.models import Board, Group, GroupMember
 from lib.board_lib import *
 from lib.common import *
 

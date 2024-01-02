@@ -7,10 +7,10 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
 from sse_starlette.sse import EventSourceResponse
 
-import common.models as models
+import core.models as models
 from .default_values import *
-from common.database import DBConnect, DBSetting
-from common.formclass import InstallFrom
+from core.database import DBConnect, DBSetting
+from core.formclass import InstallFrom
 from lib.common import *
 from lib.pbkdf2 import create_hash
 

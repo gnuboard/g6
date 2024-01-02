@@ -3,9 +3,9 @@ from fastapi import APIRouter, Form, File, Path, UploadFile, Depends
 from fastapi.responses import RedirectResponse, Response
 
 from bbs.member_profile import validate_nickname, validate_userid, is_prohibit_email
-from common.database import db_session
-from common.formclass import MemberForm
-from common.models import Member
+from core.database import db_session
+from core.formclass import MemberForm
+from core.models import Member
 from lib.common import *
 from lib.pbkdf2 import create_hash
 

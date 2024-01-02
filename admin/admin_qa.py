@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 
-from common.database import db_session
-from common.formclass import QaConfigForm
-from common.models import QaConfig
+from core.database import db_session
+from core.formclass import QaConfigForm
+from core.models import QaConfig
 from lib.common import *
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 

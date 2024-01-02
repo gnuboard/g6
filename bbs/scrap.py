@@ -3,8 +3,8 @@ from fastapi.responses import RedirectResponse
 
 from lib.board_lib import *
 from lib.common import *
-from common.database import DBConnect, db_session
-from common.models import Scrap
+from core.database import DBConnect, db_session
+from core.models import Scrap
 
 router = APIRouter()
 templates = UserTemplates()

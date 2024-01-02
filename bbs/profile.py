@@ -3,8 +3,8 @@ from fastapi import APIRouter, Path
 from starlette.requests import Request
 from sqlalchemy import select
 
-from common.database import db_session
-from common.models import Member
+from core.database import db_session
+from core.models import Member
 from lib.common import AlertException, is_none_datetime
 from main import templates
 

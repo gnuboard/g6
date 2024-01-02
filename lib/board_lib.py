@@ -5,8 +5,8 @@ from datetime import datetime, timedelta
 from fastapi import Request
 from sqlalchemy import and_, or_, select, Select
 
-from common.database import DBConnect
-from common.models import Board, BoardNew, Scrap, WriteBaseModel
+from core.database import DBConnect
+from core.models import Board, BoardNew, Scrap, WriteBaseModel
 from lib.common import *
 
 

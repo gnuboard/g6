@@ -3,8 +3,8 @@ import pkgutil
 import importlib
 from sqlalchemy import select
 
-from common.database import DBConnect
-from common.models import Config
+from core.database import DBConnect
+from core.models import Config
 from lib.social.social import register_social_provider
 
 # Package.

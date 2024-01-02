@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, Form, Path, Request
 from fastapi.responses import RedirectResponse
 
-from common.database import db_session
-from common.formclass import PollForm
-from common.models import Poll, PollEtc
+from core.database import db_session
+from core.formclass import PollForm
+from core.models import Poll, PollEtc
 from lib.common import *
 
 router = APIRouter()

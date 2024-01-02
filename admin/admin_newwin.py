@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 
-from common.database import db_session
-from common.formclass import NewwinForm
-from common.models import NewWin
+from core.database import db_session
+from core.formclass import NewwinForm
+from core.models import NewWin
 from lib.common import *
 
 router = APIRouter()

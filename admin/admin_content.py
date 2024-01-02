@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, File, Form, Path, Query, Request, Upload
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from common.formclass import ContentForm
-from common.database import db_session
+from core.formclass import ContentForm
+from core.database import db_session
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
-from common.models import Content
+from core.models import Content
 from lib.common import *
 
 router = APIRouter()

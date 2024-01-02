@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi.responses import FileResponse
 
-from common.database import db_session
+from core.database import db_session
 from lib.common import *
 
 router = APIRouter()

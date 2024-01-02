@@ -6,8 +6,8 @@ from starlette.requests import Request
 
 from lib.social import providers
 from lib.common import AlertException
-from common.formclass import SocialProfile
-from common.models import Config
+from core.formclass import SocialProfile
+from core.models import Config
 
 oauth = OAuth()
 

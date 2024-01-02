@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import aliased
 
-from common.database import db_session
-from common.models import Popular
+from core.database import db_session
+from core.models import Popular
 from lib.common import *
 
 router = APIRouter()

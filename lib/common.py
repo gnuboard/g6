@@ -23,9 +23,9 @@ from sqlalchemy.orm import load_only, Session
 from starlette.datastructures import URL
 from starlette.staticfiles import StaticFiles
 
-from common.models import Auth, Config, Member, Memo, Board, BoardFile, BoardNew, Group, GroupMember, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
-from common.models import WriteBaseModel
-from common.database import DBConnect
+from core.models import Auth, Config, Member, Memo, Board, BoardFile, BoardNew, Group, GroupMember, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
+from core.models import WriteBaseModel
+from core.database import DBConnect
 from datetime import datetime, timedelta, date, time
 import json
 from PIL import Image, ImageOps, UnidentifiedImageError

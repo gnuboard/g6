@@ -3,9 +3,9 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import query
 from typing import List
 
-from common.database import DBConnect, db_session
-from common.formclass import QaContentForm
-from common.models import QaConfig, QaContent
+from core.database import DBConnect, db_session
+from core.formclass import QaContentForm
+from core.models import QaConfig, QaContent
 from lib.common import *
 
 

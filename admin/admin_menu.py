@@ -5,8 +5,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import func
 from typing import List
 
-from common.database import db_session
-from common.models import Board, Content, Group, Menu
+from core.database import db_session
+from core.models import Board, Content, Group, Menu
 from lib.common import *
 from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
 

@@ -6,9 +6,9 @@ import datetime
 from fastapi import APIRouter, Depends, Request, File, Form, Path, Query
 from fastapi.responses import FileResponse, RedirectResponse
 
-from common.database import db_session
-from common.formclass import WriteForm, WriteCommentForm
-from common.models import AutoSave, Board, BoardGood, Group, Scrap
+from core.database import db_session
+from core.formclass import WriteForm, WriteCommentForm
+from core.models import AutoSave, Board, BoardGood, Group, Scrap
 from lib.board_lib import *
 from lib.common import *
 from lib.pbkdf2 import create_hash

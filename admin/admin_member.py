@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends, File, Form, Path, Query, Request
 from fastapi.responses import RedirectResponse
 
 from bbs.social import SocialAuthService
-from common.database import db_session
-from common.formclass import MemberForm
-from common.models import Member, Point, GroupMember, Memo, Scrap, Auth, Group, Board
+from core.database import db_session
+from core.formclass import MemberForm
+from core.models import Member, Point, GroupMember, Memo, Scrap, Auth, Group, Board
 from lib.common import *
 from lib.pbkdf2 import create_hash
 
