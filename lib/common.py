@@ -171,19 +171,36 @@ def get_member_level_select(id: str, start: int, end: int, selected: int, event=
     html_code.append('</select>')
     return ''.join(html_code)
 
-    
-# skin_gubun(new, search, connect, faq 등) 에 따른 스킨을 SELECT 형식으로 얻음
-def get_skin_select(skin_gubun, id, selected, event='', device=''):
+
+def get_skin_select(skin_gubun: str, id: str, selected: str,
+                    attribute: str = "", device: str = "") -> str:
+    """skin_gubun(new, search, connect, faq 등)에 따른 스킨을
+    SELECT 형식으로 얻음
+
+    Args:
+        skin_gubun (str): 테마 내부의 폴더명(기능)
+        id (str): select 태그의 id 속성값
+        selected (str): 기본적으로 선택되어야 할 스킨명
+        attribute (str, optional): select 태그의 추가 속성값. Defaults to "".
+        device (str, optional): 디바이스별 폴더명(mobile). Defaults to "".
+            PC는 추가 경로 없음 (ex: /template/{theme}/board/{skin_gubun})
+
+    Returns:
+        str: select 태그의 HTML 코드
+    """
     skin_path = TEMPLATES_DIR + f"/{device}/{skin_gubun}"
 
     html_code = []
-    html_code.append(f'<select id="{id}" name="{id}" {event}>')
-    html_code.append(f'<option value="">선택</option>')
-    for skin in os.listdir(skin_path):
-        # print(f"{skin_path}/{skin}")
+    html_code.append(f'<select id="{id}" name="{id}" {attribute}>')
+    html_code.append('<option value="">선택</option>')
+
+    for skin in os.listdir(skin_path) if os.path.isdir(skin_path) else []:
         if os.path.isdir(f"{skin_path}/{skin}"):
-            html_code.append(f'<option value="{skin}" {"selected" if skin == selected else ""}>{skin}</option>')
+            attr = "selected" if skin == selected else ""
+            html_code.append(f'<option value="{skin}" {attr}>{skin}</option>')
+
     html_code.append('</select>')
+
     return ''.join(html_code)
 
 
