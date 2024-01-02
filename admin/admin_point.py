@@ -4,11 +4,11 @@ from typing import List
 
 from core.database import db_session
 from core.models import Point, Member
+from core.template import AdminTemplates
 from lib.common import *
 
 router = APIRouter()
 templates = AdminTemplates()
-templates.env.globals['subject_sort_link'] = subject_sort_link
 
 POINT_MENU_KEY = "200200"
 

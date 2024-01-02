@@ -4,6 +4,7 @@ from sqlalchemy.orm import aliased
 
 from core.database import db_session
 from core.models import Popular
+from core.template import AdminTemplates
 from lib.common import *
 
 router = APIRouter()

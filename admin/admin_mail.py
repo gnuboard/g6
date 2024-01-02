@@ -1,12 +1,14 @@
 import asyncio
+
 from fastapi import APIRouter, Depends, Query, Request, Form, Path
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sse_starlette.sse import EventSourceResponse
 from sqlalchemy import or_
+from sse_starlette.sse import EventSourceResponse
 
-from lib.common import *
 from core.database import db_session
 from core.models import Group, Mail, Member
+from core.template import AdminTemplates
+from lib.common import *
 
 router = APIRouter()
 templates = AdminTemplates()

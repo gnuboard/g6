@@ -6,8 +6,8 @@ from typing import List
 from core.database import DBConnect, db_session
 from core.formclass import QaContentForm
 from core.models import QaConfig, QaContent
+from core.template import UserTemplates
 from lib.common import *
-
 
 router = APIRouter()
 templates = UserTemplates()

@@ -2,11 +2,11 @@ from fastapi import APIRouter, Request
 
 from core.database import db_session
 from core.models import Point
+from core.template import UserTemplates
 from lib.common import *
 
 router = APIRouter()
 templates = UserTemplates()
-templates.env.filters["datetime_format"] = datetime_format
 
 
 @router.get("/point")

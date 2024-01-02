@@ -1,14 +1,14 @@
-from main import app
-
 from fastapi import APIRouter, Form, File, Depends, Path
 from starlette.responses import RedirectResponse
+
 
 from core.database import DBConnect, db_session
 from core.formclass import MemberForm
 from core.models import Member, MemberSocialProfiles
+from core.template import UserTemplates
 from lib.common import *
 from lib.pbkdf2 import validate_password, create_hash
-
+from main import app
 
 router = APIRouter()
 templates = UserTemplates()

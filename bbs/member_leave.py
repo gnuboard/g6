@@ -2,11 +2,12 @@ from fastapi import APIRouter, Depends
 
 from bbs.social import SocialAuthService
 from core.database import db_session
+from core.template import UserTemplates
 from lib.common import *
 from lib.pbkdf2 import validate_password
-from main import templates
 
 router = APIRouter()
+templates = UserTemplates()
 
 
 @router.get("/member_leave")

@@ -1,4 +1,5 @@
 import secrets
+
 from fastapi import APIRouter, Form, File, Path, UploadFile, Depends
 from fastapi.responses import RedirectResponse, Response
 
@@ -6,14 +7,14 @@ from bbs.member_profile import validate_nickname, validate_userid, is_prohibit_e
 from core.database import db_session
 from core.formclass import MemberForm
 from core.models import Member
+from core.template import UserTemplates
 from lib.common import *
 from lib.pbkdf2 import create_hash
 
 router = APIRouter()
-
 templates = UserTemplates()
-templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
+templates.env.globals["is_admin"] = is_admin
 templates.env.globals["captcha_widget"] = captcha_widget
 templates.env.globals["check_profile_open"] = check_profile_open
 

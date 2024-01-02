@@ -4,6 +4,7 @@ from fastapi.responses import RedirectResponse
 from core.database import db_session
 from core.formclass import PollForm
 from core.models import Poll, PollEtc
+from core.template import AdminTemplates
 from lib.common import *
 
 router = APIRouter()

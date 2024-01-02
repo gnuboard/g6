@@ -1,21 +1,18 @@
-from fastapi import APIRouter, Depends, File, Form, Path, Query, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Path, Request, UploadFile
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
-from sqlalchemy.orm import Session
-from core.formclass import ContentForm
+
 from core.database import db_session
-from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
+from core.formclass import ContentForm
 from core.models import Content
+from core.template import AdminTemplates
 from lib.common import *
 
 router = APIRouter()
 templates = AdminTemplates()
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.globals["now"] = now
-templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
-templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 templates.env.globals["get_skin_select"] = get_skin_select
-templates.env.globals["get_admin_menus"] = get_admin_menus
 templates.env.globals["get_head_tail_img"] = get_head_tail_img
 
 MENU_KEY = "300600"

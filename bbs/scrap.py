@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, Form, Path, Request
 from fastapi.responses import RedirectResponse
 
-from lib.board_lib import *
-from lib.common import *
 from core.database import DBConnect, db_session
 from core.models import Scrap
+from core.template import UserTemplates
+from lib.board_lib import *
+from lib.common import *
 
 router = APIRouter()
 templates = UserTemplates()

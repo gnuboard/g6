@@ -1,17 +1,19 @@
 import datetime
-import secrets
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import TypeAdapter
-from sqlalchemy import select
+from sqlalchemy import select, inspect
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.staticfiles import StaticFiles
 from user_agents import parse
 
-from core.database import DBConnect, db_session
 import core.models as models
+from core.database import DBConnect, db_session
+from core.template import TEMPLATES_DIR, UserTemplates, register_theme_statics
 from lib.common import *
 from lib.member_lib import MemberService
 from lib.plugin.service import register_statics, register_plugin_admin_menu, get_plugin_state_change_time, \
@@ -33,7 +35,6 @@ app = FastAPI(debug=APP_IS_DEBUG)
 templates = UserTemplates()
 templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
-templates.env.filters["datetime_format"] = datetime_format
 
 from admin.admin import router as admin_router
 from install.router import router as install_router

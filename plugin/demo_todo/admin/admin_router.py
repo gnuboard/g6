@@ -6,12 +6,11 @@ from starlette.requests import Request
 from starlette.responses import RedirectResponse
 from starlette.templating import Jinja2Templates
 
-from admin.admin_config import get_admin_plugin_menus
-from core.database import get_db
-from lib.common import ADMIN_TEMPLATES_DIR, get_member_id_select, get_skin_select, get_editor_select, get_selected, \
-    get_member_level_select, option_array_checked, get_admin_menus, get_client_ip, validate_token,\
-    AlertException
-from lib.plugin.service import get_all_plugin_module_names, PLUGIN_DIR
+from core.database import db_session
+from core.template import ADMIN_TEMPLATES_DIR
+from lib.common import get_member_id_select, get_skin_select, get_editor_select, get_selected, \
+    get_member_level_select, option_array_checked, get_admin_menus, get_client_ip, validate_token
+from lib.plugin.service import PLUGIN_DIR, get_admin_plugin_menus, get_all_plugin_module_names
 from ..models import Todo
 from ..plugin_config import module_name, admin_router_prefix
 
@@ -43,7 +42,7 @@ def show(request: Request):
 
 
 @admin_router.get("/todo/{id}")
-def show_todo(request: Request, id: int, db: Session = Depends(get_db)):
+def show_todo(request: Request, id: int, db: Session = db_session):
     request.session["menu_key"] = module_name
 
     todo = db.query(Todo).filter(Todo.id == id).scalar()
@@ -56,7 +55,7 @@ def show_todo(request: Request, id: int, db: Session = Depends(get_db)):
 
 @admin_router.get("/todos")
 def show_todo_list(request: Request,
-                   db: Session = Depends(get_db)):
+                   db: Session = db_session):
     request.session["menu_key"] = module_name
 
     todos = db.query(Todo).all()
@@ -89,7 +88,7 @@ def create_form(request: Request):
 def create(request: Request,
            title: str = Form(...),
            content: str = Form(...),
-           db: Session = Depends(get_db)):
+           db: Session = db_session):
     todo = Todo(
         title=title,
         content=content
@@ -101,7 +100,7 @@ def create(request: Request,
 
 @admin_router.get("/update/{id}")
 def update(request: Request,
-           db: Session = Depends(get_db)):
+           db: Session = db_session):
     id = request.path_params.get('id')
     todo = db.query(Todo).filter(Todo.id == id).scalar()
 
@@ -117,7 +116,7 @@ def update(request: Request,
            title: str = Form(...),
            content: str = Form(...),
            is_done: Optional[int] = Form(default=False),
-           db: Session = Depends(get_db)):
+           db: Session = db_session):
     id = request.path_params.get('id')
     db.query(Todo).filter(Todo.id == id).update({
         "title": title,
@@ -134,7 +133,7 @@ def update(request: Request,
 @admin_router.post("/delete", dependencies=[Depends(validate_token)])
 def update(request: Request,
            ids: list = Form(..., alias='chk[]'),
-           db: Session = Depends(get_db)):
+           db: Session = db_session):
     db.query(Todo).filter(Todo.id.in_(ids)).delete()
     db.commit()
     return RedirectResponse(f"/admin/todo/todos", status_code=302)

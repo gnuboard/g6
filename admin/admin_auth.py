@@ -1,15 +1,14 @@
-
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from typing import List, Optional
 
 from core.database import db_session
 from core.models import Auth, Member
+from core.template import AdminTemplates
 from lib.common import *
 
 router = APIRouter()
 templates = AdminTemplates()
-templates.env.globals['subject_sort_link'] = subject_sort_link
 templates.env.globals['captcha_widget'] = captcha_widget
 
 AUTH_MENU_KEY = "100200"

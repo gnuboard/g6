@@ -1,35 +1,26 @@
-import math
-from fastapi import APIRouter, Depends, Query, Request, Form, HTTPException, Path
-from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy import asc, desc, case, func, and_, or_, extract, text, select
-from sqlalchemy.sql.expression import func, extract
-from sqlalchemy.orm import Session
-from core.database import db_session
-from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
-from core.models import *
-from lib.common import *
-import matplotlib.pyplot as plt
+from collections import defaultdict
+
 import plotly.express as px
 import pandas as pd
-from collections import defaultdict
+from fastapi import APIRouter, Query, Request
+from sqlalchemy import case, func, or_, select
+from sqlalchemy.sql.expression import func
+
+from core.database import db_session
+from core.models import *
+from core.template import AdminTemplates
+from lib.common import *
 
 router = APIRouter()
 templates = AdminTemplates()
-templates.env.globals['getattr'] = getattr
-templates.env.globals['get_selected'] = get_selected
-templates.env.globals['option_selected'] = option_selected
 templates.env.globals['get_skin_select'] = get_skin_select
 templates.env.globals['get_group_select'] = get_group_select
 templates.env.globals['get_editor_select'] = get_editor_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
-templates.env.globals['subject_sort_link'] = subject_sort_link
-templates.env.globals['get_admin_menus'] = get_admin_menus
-templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
-templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 templates.env.globals["domain_mail_host"] = domain_mail_host
-templates.env.globals["editor_path"] = editor_path
 
 WRITE_COUNT_MENU_KEY = "300820"
+
 
 @router.get("/write_count")
 async def write_count(request: Request, db: db_session, 

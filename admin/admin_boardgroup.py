@@ -5,11 +5,11 @@ from typing import List
 from core.database import db_session
 from core.models import Board, Group, GroupMember
 from core.formclass import GroupForm
+from core.template import AdminTemplates
 from lib.common import *
 
 router = APIRouter()
 templates = AdminTemplates()
-templates.env.globals['subject_sort_link'] = subject_sort_link
 
 BOARDGROUP_MENU_KEY = "300200"
 

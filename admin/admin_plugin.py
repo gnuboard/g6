@@ -10,8 +10,7 @@ from starlette.responses import JSONResponse, FileResponse
 
 from admin.admin import templates
 from lib.common import AlertException
-from lib.plugin import service
-from lib.plugin.service import PLUGIN_DIR, get_all_plugin_info, PluginState
+from lib.plugin.service import PLUGIN_DIR, PluginState, read_plugin_state, write_plugin_state, get_plugin_info, get_all_plugin_info
 
 logging.basicConfig(level=logging.INFO)
 router = APIRouter()
@@ -23,7 +22,7 @@ async def theme_detail(request: Request, module_name: str = Form(...)):
         return AlertException(status_code=400, detail="관리자만 접근 가능합니다.")
 
     module = module_name.strip()
-    info = service.get_plugin_info(module, PLUGIN_DIR)
+    info = get_plugin_info(module, PLUGIN_DIR)
     if not info:
         raise HTTPException(status_code=400, detail="The selected plugin is not installed.")
 
@@ -89,7 +88,7 @@ async def update_plugin_state(
     plugin_state = [plugin_state]
 
     # update plugin state
-    exist_plugins = service.read_plugin_state()
+    exist_plugins = read_plugin_state()
     if exist_plugins:
         for exist_plugin in exist_plugins:
             if exist_plugin.module_name == module_name:
@@ -100,7 +99,7 @@ async def update_plugin_state(
         plugin_state = exist_plugins
 
     try:
-        service.write_plugin_state(plugin_state)
+        write_plugin_state(plugin_state)
     except Exception as e:
 
         logging.error(e)

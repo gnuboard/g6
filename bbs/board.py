@@ -9,13 +9,13 @@ from fastapi.responses import FileResponse, RedirectResponse
 from core.database import db_session
 from core.formclass import WriteForm, WriteCommentForm
 from core.models import AutoSave, Board, BoardGood, Group, Scrap
+from core.template import UserTemplates
 from lib.board_lib import *
 from lib.common import *
 from lib.pbkdf2 import create_hash
 
 router = APIRouter()
 templates = UserTemplates()
-templates.env.filters["datetime_format"] = datetime_format
 templates.env.filters["set_image_width"] = set_image_width
 templates.env.filters["url_auto_link"] = url_auto_link
 templates.env.globals["get_admin_type"] = get_admin_type

@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Form
 from fastapi.responses import RedirectResponse
 
+from core.database import db_session
+from core.template import UserTemplates
 from lib.common import *
 from lib.pbkdf2 import validate_password
-from core.database import db_session
 
 router = APIRouter()
 templates = UserTemplates()

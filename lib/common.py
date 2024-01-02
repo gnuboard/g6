@@ -1,77 +1,47 @@
+import base64
 import hashlib
+import json
 import logging
 import os
 import random
 import re
 import secrets
-import typing
-from time import sleep
-from typing import Any, Dict, List, Optional, Union
-import uuid
-from urllib.parse import urlencode
-import PIL
 import shutil
-from fastapi import Depends, Form, Path, Query, Request, HTTPException, UploadFile
-from fastapi.templating import Jinja2Templates
-from jinja2 import Environment
-from markupsafe import Markup, escape
-from passlib.context import CryptContext
-from pydantic import TypeAdapter
-from sqlalchemy import Index, asc, desc, and_, func, insert, inspect, select, delete, between, exists, update
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import load_only, Session
-from starlette.datastructures import URL
-from starlette.staticfiles import StaticFiles
-
-from core.models import Auth, Config, Member, Memo, Board, BoardFile, BoardNew, Group, GroupMember, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
-from core.models import WriteBaseModel
-from core.database import DBConnect
-from datetime import datetime, timedelta, date, time
-import json
-from PIL import Image, ImageOps, UnidentifiedImageError
-from user_agents import parse
-import base64
-from dotenv import load_dotenv
 import smtplib
-import threading
-import cachetools
+import uuid
+from datetime import datetime, timedelta, date
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from time import sleep
+from typing import Any, Dict, List, Optional, Union
+from urllib.parse import urlencode
+
+from cachetools import LFUCache, TTLCache
+from dotenv import load_dotenv
+from fastapi import Depends, Form, Path, Query, Request, HTTPException, UploadFile
+from markupsafe import Markup, escape
+from PIL import Image, ImageOps, UnidentifiedImageError
+from passlib.context import CryptContext
+from pydantic import TypeAdapter
+from sqlalchemy import Index, asc, desc, func, insert, select, delete, between, exists, update
+from sqlalchemy.exc import IntegrityError
+from starlette.datastructures import URL
+from typing_extensions import Annotated
+from user_agents import parse
+
+from core.database import DBConnect
+from core.models import Auth, Config, Member, Memo, Board, BoardNew, Group, GroupMember, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
+from core.models import WriteBaseModel
 from lib.captcha.recaptch_v2 import ReCaptchaV2
 from lib.captcha.recaptch_inv import ReCaptchaInvisible
-from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names, PLUGIN_DIR
-from typing_extensions import Annotated
+
 
 load_dotenv()
 
 # 전역변수 선언(global variables)
 ENV_PATH = ".env"
-TEMPLATES = "templates"
 CAPTCHA_PATH = "lib/captcha/templates"
 EDITOR_PATH = "lib/editor/templates"
-
-def get_theme_from_db() -> str:
-    """DB에 설정된 테마의 경로를 반환
-
-    Returns:
-        str: 테마 경로
-    """
-    default_theme = "basic"
-    try:
-        with DBConnect().sessionLocal() as db:
-            theme = db.scalar(select(Config.cf_theme)) or default_theme
-            theme_path = f"{TEMPLATES}/{theme}"
-            
-            # DB에 설정된 테마가 경로에 존재하는지 확인
-            if not os.path.exists(theme_path):
-                theme_path = f"{TEMPLATES}/{default_theme}"
-
-            return theme_path
-    except Exception:
-        return f"{TEMPLATES}/{default_theme}"
-
-TEMPLATES_DIR = get_theme_from_db()
-ADMIN_TEMPLATES_DIR = "admin/templates"
 
 # 나중에 삭제할 코드
 SERVER_TIME = datetime.now()
@@ -188,6 +158,9 @@ def get_skin_select(skin_gubun: str, id: str, selected: str,
     Returns:
         str: select 태그의 HTML 코드
     """
+    # Lazy import
+    from core.template import TEMPLATES_DIR
+
     skin_path = TEMPLATES_DIR + f"/{device}/{skin_gubun}"
 
     html_code = []
@@ -384,7 +357,7 @@ def get_head_tail_img(dir: str, filename: str):
                 width = img_file.width
                 if width > 750:
                     width = 750
-        except PIL.UnidentifiedImageError:
+        except UnidentifiedImageError:
             # 이미지를 열 수 없을 때의 처리
             img_exists = False
             print(f"Error: Cannot identify image file '{img_path}'")
@@ -614,11 +587,8 @@ def extract_browser(user_agent):
         return "Mozilla/5.0"
     else:
         return "Unknown"
-    
-from ua_parser import user_agent_parser    
-    
 
-# 
+
 def record_visit(request: Request):
     """접속 레코드 기록 함수
     - 새로운 접속 레코드 생성
@@ -681,6 +651,9 @@ def record_visit(request: Request):
 
 def visit(request: Request):
     """방문자 수 출력"""
+    # Lazy import
+    from core.template import UserTemplates
+
     cf_visit = request.state.config.cf_visit
 
     visit_list = re.findall("오늘:(.*),어제:(.*),최대:(.*),전체:(.*)", cf_visit)
@@ -1215,24 +1188,8 @@ def get_memo_not_read(mb_id: str) -> int:
     return count
 
 
-def editor_path(request:Request) -> str:
-    """지정한 에디터 경로를 반환하는 함수
-    미지정시 그누보드 환경설정값 사용
-    request.state.editor: 에디터이름
-    request.state.use_editor: 에디터 사용여부 False 이면 'textarea' 반환
-    """
-    if not request.state.use_editor:
-        return "textarea"
-
-    editor_name = request.state.editor
-    if not editor_name:
-        return "textarea"
-
-    return editor_name
-
-
 def editor_macro(request: Request) -> str:
-    """지정한 에디터 경로의 macros.html 파일을 반환하는 함수
+    """설정한 에디터의 macros.html 파일경로를 반환하는 함수
     - 미지정시 그누보드 환경설정값 사용
     - request.state.editor: 에디터이름
     - request.state.use_editor: 에디터 사용여부 False 이면 'textarea'로 설정
@@ -1250,7 +1207,7 @@ def nl2br(value) -> str:
     return escape(value).replace('\n', Markup('<br>\n'))
 
 
-popular_cache = cachetools.TTLCache(maxsize=10, ttl=300)
+popular_cache = TTLCache(maxsize=10, ttl=300)
 
 def get_populars(limit: int = 7, day: int = 3):
     """인기검색어 조회
@@ -1331,7 +1288,7 @@ def create_session_token(request: Request):
     return token
 
 
-lfu_cache = cachetools.LFUCache(maxsize=128)
+lfu_cache = LFUCache(maxsize=128)
 
 def get_recent_poll():
     """
@@ -1687,121 +1644,6 @@ class StringEncrypt:
 # decrypted_text = enc.decrypt(encrypted_text)
 # print(decrypted_text)
 
-
-class UserTemplates(Jinja2Templates):
-    """
-    Jinja2Template 설정 클래스
-    """
-    _instance = None
-    default_directories = [TEMPLATES_DIR, EDITOR_PATH, CAPTCHA_PATH]
-
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super(UserTemplates, cls).__new__(cls)
-            cls._instance._initialized = False  # Initialization flag added
-        return cls._instance
-
-    def __init__(self,
-                 context_processors: dict = None,
-                 globals: dict = None,
-                 env: Environment = None
-                 ):
-        if not getattr(self, '_initialized', False):
-            self._initialized = True
-
-            super().__init__(directory=self.default_directories, context_processors=context_processors)
-
-            # 공통 env.global 설정
-            self.env.filters["number_format"] = number_format
-            self.env.filters["set_query_params"] = set_query_params
-            self.env.globals["editor_path"] = editor_path
-            self.env.globals["editor_macro"] = editor_macro
-            self.env.globals["getattr"] = getattr
-            self.env.globals["get_selected"] = get_selected
-            self.env.globals["get_member_icon"] = get_member_icon
-            self.env.globals["get_member_image"] = get_member_image
-            self.env.globals["theme_asset"] = theme_asset
-
-            self.context_processors.append(self._default_context)
-
-            # 추가 env.global 설정
-            if globals:
-                self.env.globals.update(**globals.__dict__)
-
-    def _default_context(self, request: Request):
-        context = {
-            "menus": get_menus(),
-            "poll": get_recent_poll(),
-            "populars": get_populars(),
-            "latest": latest,
-            "visit": visit,
-        }
-        return context
-
-    # temp debug
-    def TemplateResponse(
-            self,
-            name: str,
-            context: dict,
-            status_code: int = 200,
-            headers: typing.Optional[typing.Mapping[str, str]] = None,
-            media_type: typing.Optional[str] = None,
-            background=None):
-
-        logger = logging.getLogger("uvicorn.error")
-        logger.warning("------template---------")
-        logger.info(name)
-        logger.info(self.env.loader.searchpath)
-
-        return super().TemplateResponse(name, context, status_code, headers, media_type, background)
-
-
-class AdminTemplates(Jinja2Templates):
-    _instance = None
-    default_directories = [ADMIN_TEMPLATES_DIR, CAPTCHA_PATH, EDITOR_PATH, PLUGIN_DIR]
-
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super(AdminTemplates, cls).__new__(cls)
-            cls._instance._initialized = False  # Initialization flag added
-        return cls._instance
-
-    def __init__(self,
-                 context_processors: dict = None,
-                 globals: dict = None,
-                 env: Environment = None
-                 ):
-        if not getattr(self, '_initialized', False):
-            self._initialized = True
-
-
-            super().__init__(directory=self.default_directories, context_processors=context_processors)
-
-            # 공통 env.global 설정
-            self.env.filters["number_format"] = number_format
-            self.env.filters["set_query_params"] = set_query_params
-            self.env.globals["editor_path"] = editor_path
-            self.env.globals["editor_macro"] = editor_macro
-            self.env.globals["getattr"] = getattr
-            self.env.globals["get_selected"] = get_selected
-            self.env.globals["get_member_icon"] = get_member_icon
-            self.env.globals["get_member_image"] = get_member_image
-            self.env.globals["theme_asset"] = theme_asset
-            self.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
-            self.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
-
-            # 관리자 템플릿에 따라 기본 컨텍스트와 env.global 변수를 다르게 설정
-            self.context_processors.append(self._default_admin_context)
-
-            # 추가 env.global 설정
-            if globals:
-                self.env.globals.update(**globals.__dict__)
-
-    def _default_admin_context(self, request: Request):
-        context = {}
-        return context
-
-
 class FileCache():
     """파일 캐시 클래스
     """
@@ -1920,6 +1762,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
         str: 최신글 HTML
     """
     # Lazy import
+    from core.template import UserTemplates
     from lib.board_lib import BoardConfig, get_list, get_list_thumbnail
 
     templates = UserTemplates()
@@ -2435,43 +2278,6 @@ def get_current_admin_menu_id(request: Request) -> Optional[str]:
     except Exception as e:
         print(e)
         return None
-    
-    
-def theme_asset(asset_path: str):
-    """
-    현재 템플릿의 asset url을 반환하는 헬퍼 함수
-    Args:
-        asset_path (str): 플러그인 모듈 이름
-    Returns:
-        asset_url (str): asset url
-    """
-
-    theme_path = get_theme_from_db()
-    theme_name = theme_path.replace(TEMPLATES + '/', "")
-
-    return f"/theme_static/{theme_name}/{asset_path}"
-
-
-def register_theme_statics(app):
-    """
-    현재 테마의 static 디렉토리를 등록하는 함수
-    Args:
-        app (FastAPI): FastAPI 객체
-    """
-    # 테마의 static 디렉토리를 등록
-    # url 경로 /theme_static/{{theme_name}}/css, js, img 등 static 생략
-    # 실제 경로 /theme/{{theme_name}}/static/ 을 등록
-    theme_path = get_theme_from_db()
-    theme_name = theme_path.replace(TEMPLATES + '/', "")
-
-    if not os.path.isdir(f"{TEMPLATES}/{theme_name}/static"):
-        logger = logging.getLogger("uvicorn.error")
-        logger.warning("template has not static directory")
-        return
-
-    url = f"/theme_static/{theme_name}"
-    path = StaticFiles(directory=f"{TEMPLATES}/{theme_name}/static")
-    app.mount(url, path, name=f"static_{theme_name}")  # tag
 
 
 def set_query_params(url: URL, request: Request, **params: dict) -> URL:

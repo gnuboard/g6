@@ -5,16 +5,15 @@ from typing import List
 from core.database import DBConnect, db_session
 from core.models import Board, BoardNew, Scrap, BoardFile, BoardGood
 from core.formclass import BoardForm
+from core.template import AdminTemplates
 from lib.common import *
 
 router = APIRouter()
 templates = AdminTemplates()
-templates.env.globals['option_selected'] = option_selected
 templates.env.globals['get_skin_select'] = get_skin_select
 templates.env.globals['get_group_select'] = get_group_select
 templates.env.globals['get_editor_select'] = get_editor_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
-templates.env.globals['subject_sort_link'] = subject_sort_link
 
 BOARD_MENU_KEY = "300100"
 

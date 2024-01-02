@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import List, Optional
 from urllib.parse import parse_qs
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session, sessionmaker
+
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
@@ -14,6 +14,7 @@ from bbs.member_profile import validate_nickname, validate_userid
 from core.database import DBConnect, db_session
 from core.formclass import MemberForm
 from core.models import Config, MemberSocialProfiles, Member
+from core.template import UserTemplates
 from lib.common import *
 from lib.social import providers
 from lib.social.social import oauth, SocialProvider, get_social_profile, get_social_login_token
