@@ -16,7 +16,7 @@ from core.database import DBConnect, db_session
 from core.template import TEMPLATES_DIR, UserTemplates, register_theme_statics
 from lib.common import *
 from lib.member_lib import MemberService
-from lib.plugin.service import register_statics, register_plugin_admin_menu, get_plugin_state_change_time, \
+from core.plugin import register_statics, register_plugin_admin_menu, get_plugin_state_change_time, \
     read_plugin_state, import_plugin_by_states, delete_router_by_tagname, cache_plugin_state, \
     cache_plugin_menu, register_plugin, unregister_plugin
 
@@ -63,6 +63,8 @@ from lib.editor.ckeditor4 import router as editor_router
 # git clone으로 소스를 받은 경우에는 data디렉토리가 없으므로 생성해야 함
 if not os.path.exists("data"):
     os.mkdir("data")
+
+# templates/{theme}/static, static, data 디렉토리에 있는 파일을 정적 파일로 등록합니다.
 register_theme_statics(app)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")

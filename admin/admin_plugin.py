@@ -9,8 +9,9 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, FileResponse
 
 from admin.admin import templates
+from core.plugin import PLUGIN_DIR, PluginState,\
+    get_plugin_info, get_all_plugin_info, read_plugin_state, write_plugin_state
 from lib.common import AlertException
-from lib.plugin.service import PLUGIN_DIR, PluginState, read_plugin_state, write_plugin_state, get_plugin_info, get_all_plugin_info
 
 logging.basicConfig(level=logging.INFO)
 router = APIRouter()

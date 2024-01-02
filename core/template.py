@@ -9,8 +9,9 @@ from starlette.staticfiles import StaticFiles
 
 from core.database import DBConnect
 from core.models import Config
+from core.plugin import PLUGIN_DIR,\
+    get_admin_plugin_menus, get_all_plugin_module_names
 from lib.common import *
-from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names, PLUGIN_DIR
 
 
 def get_theme_from_db() -> str:

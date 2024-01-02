@@ -177,20 +177,32 @@ def get_skin_select(skin_gubun: str, id: str, selected: str,
     return ''.join(html_code)
 
 
-# DHTML 에디터를 SELECT 형식으로 얻음
-def get_editor_select(id, selected):
+def get_editor_select(id: str, selected: str) -> str:
+    """DHTML 에디터를 SELECT 형식으로 얻음
+
+    Args:
+        id (str): select 태그의 id 속성값
+        selected (str): 기본적으로 선택되어야 할 에디터명
+
+    Returns:
+        str: select 태그의 HTML 코드
+    """
     html_code = []
     html_code.append(f'<select id="{id}" name="{id}">')
+
     if id == 'bo_select_editor':
         html_code.append(f'<option value="" {"selected" if selected == "" else ""}>기본환경설정의 에디터 사용</option>')
     else:
         html_code.append(f'<option value="">사용안함</option>')
+
     for editor in os.listdir("static/plugin/editor"):
         if editor == 'textarea':
             continue
         if os.path.isdir(f"static/plugin/editor/{editor}"):
             html_code.append(f'<option value="{editor}" {"selected" if editor == selected else ""}>{editor}</option>')
+
     html_code.append('</select>')
+
     return ''.join(html_code)
 
 
