@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 
-from common.database import db_session
-from common.models import Member
+from core.database import db_session
+from core.models import Member
+from core.template import AdminTemplates
 from lib.common import *
+from lib.dependencies import check_admin_access
 
 router = APIRouter(dependencies=[Depends(check_admin_access)])
 templates = AdminTemplates()

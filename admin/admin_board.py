@@ -2,19 +2,21 @@ from fastapi import APIRouter, Depends, Request, Form, Path
 from fastapi.responses import HTMLResponse, RedirectResponse
 from typing import List
 
-from common.database import DBConnect, db_session
-from common.models import Board, BoardNew, Scrap, BoardFile, BoardGood
-from common.formclass import BoardForm
+from core.database import DBConnect, db_session
+from core.exception import AlertException
+from core.models import Board, BoardNew, Scrap, BoardFile, BoardGood
+from core.formclass import BoardForm
+from core.template import AdminTemplates
 from lib.common import *
+from lib.dependencies import common_search_query_params, validate_token
+    
 
 router = APIRouter()
 templates = AdminTemplates()
-templates.env.globals['option_selected'] = option_selected
 templates.env.globals['get_skin_select'] = get_skin_select
 templates.env.globals['get_group_select'] = get_group_select
 templates.env.globals['get_editor_select'] = get_editor_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
-templates.env.globals['subject_sort_link'] = subject_sort_link
 
 BOARD_MENU_KEY = "300100"
 

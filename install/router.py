@@ -1,17 +1,21 @@
+from cachetools import TTLCache
 from dotenv import set_key
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
 from sse_starlette.sse import EventSourceResponse
 
-import common.models as models
+import core.models as models
 from .default_values import *
-from common.database import DBConnect, DBSetting
-from common.formclass import InstallFrom
+from core.database import DBConnect, DBSetting
+from core.exception import AlertException
+from core.formclass import InstallFrom
 from lib.common import *
+from lib.dependencies import validate_install, validate_token
 from lib.pbkdf2 import create_hash
 
 INSTALL_TEMPLATES = "install/templates"
@@ -21,7 +25,7 @@ router = APIRouter()
 templates = Jinja2Templates(directory=INSTALL_TEMPLATES)
 templates.env.globals["version"] = default_version
 
-form_cache = cachetools.TTLCache(maxsize=1, ttl=60)
+form_cache = TTLCache(maxsize=1, ttl=60)
 
 
 @router.get("/", name="install_main", dependencies=[Depends(validate_install)])

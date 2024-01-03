@@ -2,9 +2,12 @@ from fastapi import APIRouter, Depends, Form, Path, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy import insert, select
 
-from common.database import db_session
-from common.models import Poll, PollEtc
+from core.database import db_session
+from core.exception import AlertCloseException, AlertException
+from core.models import Poll, PollEtc
+from core.template import UserTemplates
 from lib.common import *
+from lib.dependencies import validate_token, validate_captcha
 
 router = APIRouter()
 templates = UserTemplates()

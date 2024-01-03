@@ -4,10 +4,10 @@ from typing import Optional, Tuple
 from authlib.integrations.starlette_client import OAuth
 from starlette.requests import Request
 
+from core.exception import AlertException
+from core.formclass import SocialProfile
+from core.models import Config
 from lib.social import providers
-from lib.common import AlertException
-from common.formclass import SocialProfile
-from common.models import Config
 
 oauth = OAuth()
 

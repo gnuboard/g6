@@ -3,11 +3,13 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import query
 from typing import List
 
-from common.database import DBConnect, db_session
-from common.formclass import QaContentForm
-from common.models import QaConfig, QaContent
+from core.database import DBConnect, db_session
+from core.exception import AlertException
+from core.formclass import QaContentForm
+from core.models import QaConfig, QaContent
+from core.template import UserTemplates
 from lib.common import *
-
+from lib.dependencies import common_search_query_params, validate_token
 
 router = APIRouter()
 templates = UserTemplates()

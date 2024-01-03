@@ -1,21 +1,17 @@
+import shutil
+
 from fastapi import APIRouter, Depends, File, Form, Path, Request, UploadFile
 from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy import select
-from sqlalchemy.orm import Session
-from common.database import db_session
-from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
-from common.models import FaqMaster, Faq
-import shutil
 
+from core.database import db_session
+from core.models import FaqMaster, Faq
+from core.template import AdminTemplates
 from lib.common import *
-
+from lib.dependencies import validate_token
 
 router = APIRouter()
 templates = AdminTemplates()
-# 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
-templates.env.globals["get_admin_menus"] = get_admin_menus
-templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
-templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 templates.env.globals["get_head_tail_img"] = get_head_tail_img
 templates.env.globals["now"] = now
 

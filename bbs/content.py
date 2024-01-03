@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, Request
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Request
 
+from core.database import db_session
+from core.exception import AlertException
+from core.models import Content
+from core.template import UserTemplates
 from lib.common import *
-from common.database import db_session
-from common.models import Content
 
 router = APIRouter()
 templates = UserTemplates()
