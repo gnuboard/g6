@@ -15,6 +15,7 @@ from core.database import DBConnect, DBSetting
 from core.exception import AlertException
 from core.formclass import InstallFrom
 from lib.common import *
+from lib.dependencies import validate_install, validate_token
 from lib.pbkdf2 import create_hash
 
 INSTALL_TEMPLATES = "install/templates"

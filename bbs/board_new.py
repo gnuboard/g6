@@ -6,6 +6,7 @@ from core.models import BoardNew, Board
 from core.template import UserTemplates
 from lib.board_lib import *
 from lib.common import *
+from lib.dependencies import validate_token
 
 router = APIRouter()
 templates = UserTemplates()

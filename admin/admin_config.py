@@ -11,6 +11,7 @@ from core.formclass import ConfigForm
 from core.models import Config
 from core.template import AdminTemplates
 from lib.common import *
+from lib.dependencies import validate_token
 
 router = APIRouter()
 templates = AdminTemplates()

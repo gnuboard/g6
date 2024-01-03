@@ -9,6 +9,7 @@ from core.formclass import MemberForm
 from core.models import Member, MemberSocialProfiles
 from core.template import UserTemplates
 from lib.common import *
+from lib.dependencies import validate_token, validate_captcha
 from lib.pbkdf2 import validate_password, create_hash
 from main import app
 

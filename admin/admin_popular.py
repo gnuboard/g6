@@ -6,6 +6,7 @@ from core.database import db_session
 from core.models import Popular
 from core.template import AdminTemplates
 from lib.common import *
+from lib.dependencies import common_search_query_params, validate_token
 
 router = APIRouter()
 templates = AdminTemplates()

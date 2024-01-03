@@ -8,6 +8,7 @@ from core.formclass import ContentForm
 from core.models import Content
 from core.template import AdminTemplates
 from lib.common import *
+from lib.dependencies import validate_token
 
 router = APIRouter()
 templates = AdminTemplates()

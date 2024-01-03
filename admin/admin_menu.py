@@ -11,6 +11,7 @@ from core.exception import AlertException
 from core.models import Board, Content, Group, Menu
 from core.template import AdminTemplates
 from lib.common import *
+from lib.dependencies import validate_token
 
 router = APIRouter()
 templates = AdminTemplates()

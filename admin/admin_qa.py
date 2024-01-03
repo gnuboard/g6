@@ -7,6 +7,7 @@ from core.formclass import QaConfigForm
 from core.models import QaConfig
 from core.template import AdminTemplates
 from lib.common import *
+from lib.dependencies import validate_token
 
 router = APIRouter()
 templates = AdminTemplates()

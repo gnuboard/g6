@@ -10,6 +10,7 @@ from core.formclass import MemberForm
 from core.models import Member
 from core.template import UserTemplates
 from lib.common import *
+from lib.dependencies import validate_token, validate_captcha
 from lib.pbkdf2 import create_hash
 
 router = APIRouter()

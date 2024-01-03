@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends, HTTPException, Path
 from starlette.responses import JSONResponse
 
 from core.database import DBConnect, db_session

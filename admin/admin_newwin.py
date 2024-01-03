@@ -7,6 +7,7 @@ from core.formclass import NewwinForm
 from core.models import NewWin
 from core.template import AdminTemplates
 from lib.common import *
+from lib.dependencies import validate_token
 
 router = APIRouter()
 templates = AdminTemplates()

@@ -6,6 +6,7 @@ from core.exception import AlertCloseException, AlertException
 from core.models import Member, Memo
 from core.template import UserTemplates
 from lib.common import *
+from lib.dependencies import validate_token, validate_captcha
 
 router = APIRouter()
 templates = UserTemplates()

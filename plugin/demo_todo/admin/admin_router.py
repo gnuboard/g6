@@ -10,7 +10,8 @@ from core.database import db_session
 from core.plugin import get_admin_plugin_menus, get_all_plugin_module_names
 from core.template import ADMIN_TEMPLATES_DIR
 from lib.common import get_member_id_select, get_skin_select, get_editor_select, get_selected, \
-    get_member_level_select, option_array_checked, get_admin_menus, get_client_ip, validate_token
+    get_member_level_select, option_array_checked, get_admin_menus, get_client_ip
+from lib.dependencies import validate_token
 from ..models import Todo
 from ..plugin_config import module_name, admin_router_prefix
 

@@ -6,6 +6,7 @@ from core.exception import AlertException
 from core.models import Member
 from core.template import UserTemplates
 from lib.common import *
+from lib.dependencies import validate_token
 from lib.pbkdf2 import validate_password
 
 router = APIRouter()
