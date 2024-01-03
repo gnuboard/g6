@@ -20,22 +20,15 @@ pre {overflow-x:scroll;font-size:1.1em}
 a {color:#000;text-decoration:none}
 
 *, :after, :before {
--webkit-box-sizing:border-box;
--moz-box-sizing:border-box;
 box-sizing:border-box;
 }
 
 input[type=text],input[type=password], textarea {
--webkit-transition:all 0.30s ease-in-out;
--moz-transition:all 0.30s ease-in-out;
--ms-transition:all 0.30s ease-in-out;
--o-transition:all 0.30s ease-in-out;
+transition:all 0.30s ease-in-out;
 outline:none;
 }
  
 input[type=text]:focus,input[type=password]:focus, textarea:focus,select:focus {
--webkit-box-shadow:0 0 5px #9ed4ff;
--moz-box-shadow:0 0 5px #9ed4ff;
 box-shadow:0 0 5px #9ed4ff;
 border:1px solid #558ab7 !important;
 }
@@ -113,8 +106,7 @@ border:1px solid #558ab7 !important;
 
 
 /*사이드 메뉴*/
-#side_menu {height:100%;position:fixed;top:0;right:0;background:#fff;border-left:1px solid #e5e7ea;z-index:120;padding-left:50px;-webkit-box-shadow:0 1px 5px #d6d6d6;
--moz-box-shadow:0 1px 5px #d6d6d6;
+#side_menu {height:100%;position:fixed;top:0;right:0;background:#fff;border-left:1px solid #e5e7ea;z-index:120;padding-left:50px;
 box-shadow:0 1px 5px #d6d6d6}
 
 #quick {position:absolute;top:50%;left:0;width:50px;margin-top:-157.5px}
@@ -144,8 +136,7 @@ box-shadow:0 1px 5px #d6d6d6}
 .qk_con_wr .side_tnb li a {display:block;line-height:28px;color:#465168;padding:5px 0}
 .qk_con_wr .side_tnb li:hover a {color:#3a8afd}
 
-#category {display:none;position:absolute;border:1px solid #c5d6da;width:100%;background:#fff;z-index:1000;-webkit-box-shadow:0 2px 5px rgba(0,0,0,0.2);
--moz-box-shadow:0 2px 5px rgba(0,0,0,0.2);
+#category {display:none;position:absolute;border:1px solid #c5d6da;width:100%;background:#fff;z-index:1000;
 box-shadow:0 2px 5px rgba(0,0,0,0.2)}
 #category h2 {font-size:1.3em;padding:15px 20px;border-bottom:1px solid #e7eeef}
 #category ul:after {display:block;visibility:hidden;clear:both;content:""}
@@ -307,9 +298,6 @@ box-shadow:0 2px 5px rgba(0,0,0,0.2)}
 
 /* 버튼 */
 a.btn,.btn {line-height:35px;height:35px;padding:0 10px;text-align:center;font-weight:bold;border:0;font-size:1.4em;
--webkit-transition:background-color 0.3s ease-out;
--moz-transition:background-color 0.3s ease-out;
--o-transition:background-color 0.3s ease-out;
 transition:background-color 0.3s ease-out}
 
 a.btn01 {display:inline-block;padding:7px;border:1px solid #bababa;border-radius:3px;background:#fff;color:#717171;text-decoration:none;vertical-align:middle}
@@ -397,8 +385,6 @@ a.btn_admin,.btn_admin {display:inline-block;color:#d13f4a;text-decoration:none;
 .tbl_frm01 textarea,
 .form_01 textarea,
 .frm_input {border:1px solid #d0d3db;background:#fff;color:#000;vertical-align:middle;border-radius:3px;padding:5px;
--webkit-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
--moz-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
 box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075)}
 .tbl_frm01 textarea {padding:2px 2px 3px}
 .frm_input {height:45px}
@@ -483,8 +469,7 @@ box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075)}
 /* 새창 기본 스타일 */
 .new_win {position:relative;background:#fff}
 .new_win .tbl_wrap {margin:0 20px}
-.new_win #win_title {font-size:1.3em;height:50px;line-height:30px;padding:10px 20px;background:#fff;color:#000;-webkit-box-shadow:0 1px 10px rgba(0,0,0,.1);
--moz-box-shadow:0 1px 10px rgba(0,0,0,.1);
+.new_win #win_title {font-size:1.3em;height:50px;line-height:30px;padding:10px 20px;background:#fff;color:#000;
 box-shadow:0 1px 10px rgba(0,0,0,.1)}
 .new_win #win_title .sv {font-size:0.75em;line-height:1.2em}
 .new_win .win_ul {margin-bottom:15px;padding:0 20px}
@@ -720,8 +705,6 @@ margin-top:-150px;border:1px solid #dde7e9;border-radius:3px;background:#fff;ove
 #sod_list #cp_frm {z-index:10000;position:absolute;top:50%;left:50%;width:540px;height:auto !important;height:500px;max-height:500px;margin-left:-270px;margin-top:-150px;border:1px solid #dde7e9;border-radius:3px;background:#fff;overflow-y:auto;overflow-x:inherit}
 
 .od_coupon h3{border-bottom: 1px solid #cdcdcd;padding: 0 20px;line-height: 50px;margin: 0 0 15px;font-size: 1.25em;text-align:left;
--webkit-box-shadow: 1px 2px 2px #eee;
--moz-box-shadow: 1px 2px 2px #eee;
 box-shadow: 1px 2px 2px #eee;}
 .od_coupon .btn_close {position: absolute;top: 0;right: 0;width: 50px;height: 50px;border: 0;background: none;border-left: 1px solid #cdcdcd;font-size: 1.25em;}
 .od_coupon .btn_close:hover{background:#f3f3f3}
@@ -931,7 +914,7 @@ box-shadow: 1px 2px 2px #eee;}
 .display_setup_message {margin:0 0 10px;padding:15px;border:1px solid #fccdff;background:#ffeef9}
 .display_setup_message strong {display:block;margin:0 0 10px}
 
-#sod_frm_taker td input[type="radio"], #sod_frm_taker td input[type="checkbox"]{width:auto;-webkit-appearance:radio;-webkit-border-radius:initial}
+#sod_frm_taker td input[type="radio"], #sod_frm_taker td input[type="checkbox"]{width:auto;-webkit-appearance:radio;}
 #sod_frm_taker label {display:inline-block;font-weight:normal;margin-right:1em}
 #sod_frm_same {margin:0 0 10px}
 
@@ -1167,14 +1150,14 @@ box-shadow: 1px 2px 2px #eee;}
 .sod_frm_mobile .sod_frm_point div span:after{display:block;visibility:hidden;clear:both;content:''}
 .sod_frm_mobile .sod_frm_point .max_point_box em{font-style:normal!important}
 .sod_frm_mobile .sod_frm_point div strong{float:left;color:#666;font-weight:400}
-.sod_frm_mobile .sod_frm_point #od_temp_point{height:30px;border:1px solid #d0d3db;text-align:right;background:#fff;border-radius:3px;-webkit-box-shadow:inset 1px 1px 5px rgba(0,0,0,0.1);-moz-box-shadow:inset 1px 1px 5px rgba(0,0,0,0.1);box-shadow:inset 1px 1px 5px rgba(0,0,0,0.1)}
+.sod_frm_mobile .sod_frm_point #od_temp_point{height:30px;border:1px solid #d0d3db;text-align:right;background:#fff;border-radius:3px;box-shadow:inset 1px 1px 5px rgba(0,0,0,0.1)}
 .sod_frm_mobile #settle_bank{background:#fff;border:1px solid #e3e5e8;padding:10px;clear:both;line-height:30px}
 .sod_frm_mobile #settle_bank:after{display:block;visibility:hidden;clear:both;content:''}
 .sod_frm_mobile #settle_bank select{height:30px;margin:0 0 5px;width:100%;border:1px solid #d0d3db}
-.sod_frm_mobile #settle_bank #od_deposit_name{height:30px;border:1px solid #d0d3db;text-align:center;border-radius:3px;float:right;-webkit-box-shadow:inset 1px 1px 5px rgba(0,0,0,0.1);-moz-box-shadow:inset 1px 1px 5px rgba(0,0,0,0.1);box-shadow:inset 1px 1px 5px rgba(0,0,0,0.1)}
+.sod_frm_mobile #settle_bank #od_deposit_name{height:30px;border:1px solid #d0d3db;text-align:center;border-radius:3px;float:right;box-shadow:inset 1px 1px 5px rgba(0,0,0,0.1)}
 .sod_frm_mobile #settle_bank label{float:left;line-height:30px}
 .sod_frm_mobile #sod_frm_pt_info{border-top:0}
-.sod_frm_mobile .od_coupon{position:absolute;top:0;left:0;background:#fff;width:100%;z-index:99;border-radius:0 0 3px 3px;-webkit-box-shadow:1px 1px 5px rgba(0,0,0,0.4);-moz-box-shadow:1px 1px 5px rgba(0,0,0,0.4);box-shadow:1px 1px 5px rgba(0,0,0,0.4)}
+.sod_frm_mobile .od_coupon{position:absolute;top:0;left:0;background:#fff;width:100%;z-index:99;border-radius:0 0 3px 3px;box-shadow:1px 1px 5px rgba(0,0,0,0.4)}
 .sod_frm_mobile .od_coupon h3{height:45px;line-height:45px;font-size:1.167em;background:#333;color:#fff;padding:0 15px;text-align:left}
 .sod_frm_mobile .od_coupon .tbl_head02 .btn_frmline{background:#3b67c2;color:#fff;border:0;padding:0 5px;line-height:25px}
 .sod_frm_mobile .od_coupon .tbl_head02 td{text-align:left}
@@ -1192,7 +1175,7 @@ box-shadow: 1px 2px 2px #eee;}
 .sod_frm_mobile #od_pay_sl h3{font-size:1.25em}
 .sod_frm_mobile .sod_list .li_name{border-bottom:1px solid #dcdcdc;line-height:1.3em;padding:10px;font-size:1.083em}
 #sod_frm.sod_frm_mobile .odf_list .frm_input{width:100%!important}
-#sod_frm.sod_frm_mobile input[type="radio"],.sod_frm_mobile #sod_frm.sod_frm_mobile input[type="checkbox"]{width:auto;-webkit-appearance:radio;-webkit-border-radius:initial}
+#sod_frm.sod_frm_mobile input[type="radio"],.sod_frm_mobile #sod_frm.sod_frm_mobile input[type="checkbox"]{width:auto;-webkit-appearance:radio;}
 #sod_frm.sod_frm_mobile #od_memo{min-height:50px}
 .sod_frm_mobile .od_prd_list{margin:10px;background:#fff;padding:15px}
 .sod_frm_mobile .od_prd_list .td_chk{border-left:0}
@@ -1213,7 +1196,7 @@ box-shadow: 1px 2px 2px #eee;}
 .sod_frm_mobile .odf_list .ad_default{display:inline-block;margin:0}
 .sod_frm_mobile .odf_list .btn_addsch{position:absolute;top:5px;right:5px;border-radius:3px;height:30px}
 .sod_frm_mobile .odf_list .add_num{position:relative;display:block}
-.sod_frm_mobile .odf_list textarea{border:1px solid #ccc;background:#fff;color:#000;vertical-align:middle;border-radius:3px;padding:5px;width:100%;height:70px;-webkit-box-shadow:inset 0 1px 1px rgba(0,0,0,.075);-moz-box-shadow:inset 0 1px 1px rgba(0,0,0,.075);box-shadow:inset 0 1px 1px rgba(0,0,0,.075)}
+.sod_frm_mobile .odf_list textarea{border:1px solid #ccc;background:#fff;color:#000;vertical-align:middle;border-radius:3px;padding:5px;width:100%;height:70px;box-shadow:inset 0 1px 1px rgba(0,0,0,.075)}
 .sod_frm_mobile .sod_ta_wr{background:#fff;margin-bottom:1em}
 .sod_frm_mobile .btn_confirm{margin:0 0 10px}
 .sod_frm_mobile .btn_submit{width:100%;height:45px;font-size:1.167em;font-weight:700;margin:5px 0;border-radius:4px}

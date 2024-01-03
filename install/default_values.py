@@ -2,6 +2,7 @@
 - 입력받아야 하는 값들은 추가적으로 선언 후 사용합니다.
    - 최고관리자 아이디, 비밀번호, 이메일 등...
 """
+import os
 from datetime import datetime
 
 from lib.common import read_version
@@ -9,6 +10,7 @@ from lib.common import read_version
 
 default_version = read_version()
 default_data_directory = 'data'
+default_cache_directory = os.path.join(default_data_directory, 'cache')
 default_gr_id = 'community'
 default_read_point = -1
 default_write_point = 5

@@ -1,21 +1,14 @@
-import logging
-import os
-import re
-
-from fastapi import APIRouter, Form, HTTPException
+from fastapi import APIRouter
 from fastapi.responses import FileResponse
-from pathlib import Path
-from PIL import Image
 
 from common.database import db_session
-from common.models import Config
 from lib.common import *
 
 router = APIRouter()
 templates = AdminTemplates()
 
-THEME_DIR = TEMPLATES  # Replace with actual theme directory
-THEME_MENU_KEY = "100280"  # Replace with actual menu key
+THEME_DIR = TEMPLATES  # 테마 디렉토리
+THEME_MENU_KEY = "100280"  # 관리자 메뉴키
 
 
 def get_theme_dir():
@@ -37,9 +30,9 @@ def get_theme_dir():
 
 @router.get("/screenshot")
 async def screenshot():
-    '''
+    """
     스크린샷
-    '''
+    """
     return {"screenshot": "screenshot"}
 
 
@@ -50,9 +43,9 @@ logger = logging.getLogger(__name__)
 @router.get("/screenshot/{dir}")
 async def serve_screenshot(dir: str):
     try:
-        file_path = Path(f"{TEMPLATES}/{dir}/screenshot.png")
+        file_path = f"{TEMPLATES}/{dir}/screenshot.png"
 
-        if not file_path.exists():
+        if not os.path.exists(file_path):
             logger.error(f"File not found: {file_path}")
             raise HTTPException(status_code=404, detail="File not found")
 
@@ -71,11 +64,9 @@ def get_theme_info(dir):
         screenshot_url = ''
         if os.path.isfile(screenshot):
             try:
-                img = Image.open(screenshot)
-                if img.format == "PNG":
-                    # screenshot_url = screenshot.replace("/")  # Replace with actual URL replacement
-                    # screenshot_url = f"/{TEMPLATES}/{dir}/screenshot.png"
-                    screenshot_url = f"/admin/screenshot/{dir}"
+                with Image.open(screenshot) as img:
+                    if img.format == "PNG":
+                        screenshot_url = f"/admin/screenshot/{dir}"
             except:
                 pass
 
@@ -111,7 +102,7 @@ def get_theme_info(dir):
     return info
 
 
-# # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
+# 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.globals['get_theme_info'] = get_theme_info
 templates.env.globals['serve_screenshot'] = serve_screenshot
 
@@ -172,7 +163,7 @@ async def theme_detail(
     }
     return templates.TemplateResponse("theme_detail.html", context)
 
-
+# todo
 # 테마 미리보기 미완성 (프로그램 실행시 테마를 미리 지정하므로 중간에 다른 테마의 미리보기를 하기가 어려움)
 @router.get("/theme_preview")
 async def theme_preview(

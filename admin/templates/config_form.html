@@ -681,7 +681,7 @@
     </div>
 </section>
 
-<section id="anc_cf_vote_mail">
+<section id="anc_cf_poll_mail">
     <h2 class="h2_frm">투표 기타의견 작성 시 메일 설정</h2>
 
     <div class="tbl_frm01 tbl_wrap">
@@ -1034,7 +1034,7 @@
         }
 
         // 토큰 생성은 폼 체크의 가장 마지막에서 한다.
-        f.token.value = generate_token(f);
+        f.token.value = generate_token();
 
         return true;
     }

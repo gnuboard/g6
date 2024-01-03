@@ -3,6 +3,7 @@ import logging
 import os
 import random
 import re
+import secrets
 import typing
 from time import sleep
 from typing import Any, Dict, List, Optional, Union
@@ -170,19 +171,36 @@ def get_member_level_select(id: str, start: int, end: int, selected: int, event=
     html_code.append('</select>')
     return ''.join(html_code)
 
-    
-# skin_gubun(new, search, connect, faq 등) 에 따른 스킨을 SELECT 형식으로 얻음
-def get_skin_select(skin_gubun, id, selected, event='', device=''):
+
+def get_skin_select(skin_gubun: str, id: str, selected: str,
+                    attribute: str = "", device: str = "") -> str:
+    """skin_gubun(new, search, connect, faq 등)에 따른 스킨을
+    SELECT 형식으로 얻음
+
+    Args:
+        skin_gubun (str): 테마 내부의 폴더명(기능)
+        id (str): select 태그의 id 속성값
+        selected (str): 기본적으로 선택되어야 할 스킨명
+        attribute (str, optional): select 태그의 추가 속성값. Defaults to "".
+        device (str, optional): 디바이스별 폴더명(mobile). Defaults to "".
+            PC는 추가 경로 없음 (ex: /template/{theme}/board/{skin_gubun})
+
+    Returns:
+        str: select 태그의 HTML 코드
+    """
     skin_path = TEMPLATES_DIR + f"/{device}/{skin_gubun}"
 
     html_code = []
-    html_code.append(f'<select id="{id}" name="{id}" {event}>')
-    html_code.append(f'<option value="">선택</option>')
-    for skin in os.listdir(skin_path):
-        # print(f"{skin_path}/{skin}")
+    html_code.append(f'<select id="{id}" name="{id}" {attribute}>')
+    html_code.append('<option value="">선택</option>')
+
+    for skin in os.listdir(skin_path) if os.path.isdir(skin_path) else []:
         if os.path.isdir(f"{skin_path}/{skin}"):
-            html_code.append(f'<option value="{skin}" {"selected" if skin == selected else ""}>{skin}</option>')
+            attr = "selected" if skin == selected else ""
+            html_code.append(f'<option value="{skin}" {attr}>{skin}</option>')
+
     html_code.append('</select>')
+
     return ''.join(html_code)
 
 
@@ -1301,16 +1319,15 @@ def insert_popular(request: Request, fields: str, word: str):
         print(f"인기검색어 입력 오류: {e}")
 
 
-def generate_token(request: Request, action: str = ''):
-    '''
+def create_session_token(request: Request):
+    """
     토큰 생성 함수
 
     Returns:
         str: 생성된 토큰
-    '''
-    # token = str(uuid.uuid4())  # 임의의 유일한 키 생성
-    token = hash_password(action)
-    request.session["ss_token"] = token
+    """
+    token = secrets.token_hex(16)  # 16바이트 토큰 생성
+    request.session["ss_token"] = token  # 세션에 토큰 저장
     return token
 
 
@@ -1480,19 +1497,21 @@ class AlertCloseException(HTTPException):
         super().__init__(status_code=status_code, detail=detail, headers=headers) 
 
 
-def is_admin(request: Request):
+def is_admin(request: Request, mb_id: str = None):
     """관리자 여부 확인
     """
-    config = request.state.config
-    if config.cf_admin.strip() == "":
+    config: Config = request.state.config
+    cf_admin = str(config.cf_admin).lower().strip()
+
+    if not cf_admin:
         return False
 
-    mb_id = request.session.get("ss_mb_id", "")
-    if mb_id:
-        if mb_id.strip() == config.cf_admin.strip():
-            return True
+    mb_id = mb_id or request.session.get("ss_mb_id", "")
+    if mb_id and mb_id.lower().strip() == cf_admin:
+        return True
 
     return False
+
 
 # TODO: 그누보드5의 is_admin 함수
 # 이미 is_admin 함수가 존재하므로 함수 이름을 변경함 
@@ -1700,7 +1719,6 @@ class UserTemplates(Jinja2Templates):
             self.env.globals["getattr"] = getattr
             self.env.globals["get_selected"] = get_selected
             self.env.globals["get_member_icon"] = get_member_icon
-            self.env.globals["generate_token"] = generate_token
             self.env.globals["get_member_image"] = get_member_image
             self.env.globals["theme_asset"] = theme_asset
 
@@ -1740,7 +1758,7 @@ class UserTemplates(Jinja2Templates):
 
 class AdminTemplates(Jinja2Templates):
     _instance = None
-    default_directories = [ADMIN_TEMPLATES_DIR, EDITOR_PATH, PLUGIN_DIR]
+    default_directories = [ADMIN_TEMPLATES_DIR, CAPTCHA_PATH, EDITOR_PATH, PLUGIN_DIR]
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
@@ -1784,7 +1802,7 @@ class AdminTemplates(Jinja2Templates):
         return context
 
 
-class G6FileCache():
+class FileCache():
     """파일 캐시 클래스
     """
     cache_dir = os.path.join("data", "cache")
@@ -1910,13 +1928,13 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     if not skin_dir:
         skin_dir = 'basic'
 
-    g6_file_cache = G6FileCache()
-    cache_filename = f"latest-{bo_table}-{skin_dir}-{rows}-{subject_len}-{g6_file_cache.get_cache_secret_key()}.html"
-    cache_file = os.path.join(g6_file_cache.cache_dir, cache_filename)
+    file_cache = FileCache()
+    cache_filename = f"latest-{bo_table}-{skin_dir}-{rows}-{subject_len}-{file_cache.get_cache_secret_key()}.html"
+    cache_file = os.path.join(file_cache.cache_dir, cache_filename)
 
     # 캐시된 파일이 있으면 파일을 읽어서 반환
     if os.path.exists(cache_file):
-        return g6_file_cache.get(cache_file)
+        return file_cache.get(cache_file)
     
     db = DBConnect().sessionLocal()
     # 게시판 설정
@@ -1945,7 +1963,7 @@ def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     temp_decode = temp.body.decode("utf-8")
 
     # 캐시 파일 생성
-    g6_file_cache.create(temp_decode, cache_file)
+    file_cache.create(temp_decode, cache_file)
 
     return temp_decode
 
@@ -2001,13 +2019,14 @@ def insert_board_new(bo_table: str, write: WriteBaseModel):
     db.commit()
 
 
-def get_current_captcha_cls(captcha_name: str):
+def get_current_captcha_cls(config: Config):
     """캡챠 클래스를 반환하는 함수
     Args:
-        captcha_name (str) : config cf_captcha에 저장된 캡차클래스이름
+        config (Config) : config 모델
     Returns:
         Optional[class]: 캡차 클래스 or None
     """
+    captcha_name = getattr(config, "cf_captcha", "")
     if captcha_name == "recaptcha":
         return ReCaptchaV2
     elif captcha_name == "recaptcha_inv":
@@ -2023,7 +2042,7 @@ def captcha_widget(request):
     Returns:
         str: 캡차 템플릿 or ''
     """
-    cls = get_current_captcha_cls(captcha_name=request.state.config.cf_captcha)
+    cls = get_current_captcha_cls(request.state.config)
     if cls:
         return cls.TEMPLATE_NAME
 
@@ -2488,6 +2507,7 @@ async def get_variety_tokens(
     """
     return token_form or token_query
 
+
 async def validate_token(
     request: Request,
     token: Annotated[str, Depends(get_variety_tokens)]
@@ -2507,10 +2527,12 @@ async def validate_captcha(
     구글 reCAPTCHA 유효성 검사
     """
     config = request.state.config
-    captcha_cls = get_current_captcha_cls(config.cf_captcha)
-    # TODO: config.cf_recaptcha_secret_key 변수를 항상 전달할 필요가 있을까?
-    if captcha_cls and (not await captcha_cls.verify(config.cf_recaptcha_secret_key, response)):
-        raise AlertException("캡차가 올바르지 않습니다.", 400)
+    captcha_cls = get_current_captcha_cls(config)
+    if captcha_cls:
+        captcha = captcha_cls(config)
+        if captcha and (not await captcha.verify(response)):
+            raise AlertException("캡차가 올바르지 않습니다.", 400)
+
 
 async def validate_install():
     """설치 여부 검사"""
@@ -2518,7 +2540,7 @@ async def validate_install():
         raise AlertException("이미 설치가 완료되었습니다.\\n재설치하시려면 .env파일을 삭제 후 다시 시도해주세요.", 400, "/")
 
 
-def check_group_access(
+async def check_group_access(
         request: Request,
         bo_table: Annotated[str, Path(...)]):
     """그룹 접근권한 체크
@@ -2554,4 +2576,42 @@ def check_group_access(
                     raise AlertException(
                         f"`{board.bo_subject}` 게시판에 대한 접근 권한이 없습니다.\
                         \\n\\n궁금하신 사항은 관리자에게 문의 바랍니다.", 403)
-                
+
+
+async def check_admin_access(request: Request):
+    """
+    관리자페이지 접근권한 체크
+    """
+    db = DBConnect().sessionLocal()
+    path = request.url.path
+    ss_mb_id = request.session.get("ss_mb_id", "")
+
+    # 관리자페이지 접근 권한 체크
+    if not ss_mb_id:
+        raise AlertException("로그인이 필요합니다.", 302, url="/bbs/login?url=" + path)
+    elif not is_admin(request):
+        method = request.method
+        admin_menu_id = get_current_admin_menu_id(request)
+
+        # 관리자 메뉴에 대한 권한 체크
+        if admin_menu_id:
+            au_auth = db.scalar(
+                select(Auth.au_auth)
+                .where(Auth.mb_id==ss_mb_id, Auth.au_menu==admin_menu_id)
+            ) or ""
+            # 각 요청 별 권한 체크
+            # delete 요청은 GET 요청으로 처리되므로, 요청에 "delete"를 포함하는지 확인하여 처리
+            if ("delete" in path and not "d" in au_auth):
+                raise AlertException("삭제 권한이 없습니다.", 302, url="/")
+            elif (method == "POST" and not "w" in au_auth):
+                raise AlertException("수정 권한이 없습니다.", 302, url="/")
+            elif (method == "GET" and not "r" in au_auth):
+                raise AlertException("읽기 권한이 없습니다.", 302, url="/")
+        # 관리자메인은 메뉴ID가 없으므로, 다른 메뉴의 권한이 있는지 확인
+        else:
+            exists_auth = db.scalar(
+                exists(Auth)
+                .where(Auth.mb_id==ss_mb_id).select()
+            )
+            if not exists_auth:
+                raise AlertException("최고관리자 또는 관리권한이 있는 회원만 접근 가능합니다.", 302, url="/")

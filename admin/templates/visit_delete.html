@@ -68,7 +68,7 @@ function form_submit(f)
         msg += "의";
     msg += " 자료를 삭제하시겠습니까?";
 
-    f.token.value = generate_token(f);
+    f.token.value = generate_token();
 
     return confirm(msg);
 }

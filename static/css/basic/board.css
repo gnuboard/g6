@@ -88,16 +88,14 @@
 #bo_list .bo_tit .fa-link {display:inline-block;width:16px;line-height:16px;font-size:0.833em;color:#b451fd;background:#edd3fd;text-align:center;border-radius:2px;margin-left:5px;vertical-align:middle}
 
 .bo_sch_wrap {display:none;width:100%;height:100%;position:fixed;top:0;left:0;z-index:999}
-.bo_sch {position:absolute;top:50%;left:50%;background:#fff;text-align:left;width:330px;max-height:300px;margin-left:-125px;margin-top:-180px;overflow-y:auto;border-radius:5px;-webkit-box-shadow:1px 1px 18px rgba(0,0,0,0.2);-moz-box-shadow:1px 1px 18px rgba(0,0,0,0.2);box-shadow:1px 1px 18px rgba(0,0,0,0.2);border:1px solid #dde7e9;background:#fff;border-radius:3px}
+.bo_sch {position:absolute;top:50%;left:50%;background:#fff;text-align:left;width:330px;max-height:300px;margin-left:-125px;margin-top:-180px;overflow-y:auto;border-radius:5px;box-shadow:1px 1px 18px rgba(0,0,0,0.2);border:1px solid #dde7e9;background:#fff;border-radius:3px}
 .bo_sch:after {display:block;visibility:hidden;clear:both;content:""}
 .bo_sch h3 {padding:15px;border-bottom:1px solid #e8e8e8}
 .bo_sch legend {background:red}
 .bo_sch form {padding:15px;display:block}
-.bo_sch select {border:0;width:100%;height:40px;border:1px solid #d0d3db;border-radius:2px;-webkit-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
--moz-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
+.bo_sch select {border:0;width:100%;height:40px;border:1px solid #d0d3db;border-radius:2px;
 box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075)}
-.bo_sch .sch_bar {display:inline-block;width:100%;clear:both;margin-top:15px;border:1px solid #d0d3db;border-radius:2px;-webkit-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
--moz-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
+.bo_sch .sch_bar {display:inline-block;width:100%;clear:both;margin-top:15px;border:1px solid #d0d3db;border-radius:2px;
 box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075)}
 .bo_sch .sch_input {width:250px;height:38px;border:0;padding:0;background-color:transparent;float:left}
 .bo_sch .sch_btn {height:38px;float:right;color:#656565;background:none;border:0;width:40px;font-size:15px}
@@ -111,12 +109,9 @@ box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075)}
 
 #autosave_wrapper {position:relative}
 #autosave_pop {display:none;z-index:10;position:absolute !important;top:34px;right:0;width:350px;height:auto !important;height:180px;max-height:180px;border:1px solid #565656;background:#fff;
--webkit-box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2);
--moz-box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2);
 box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 #autosave_pop:before {content:"";position:absolute;top:-8px;right:45px;width:0;height:0;border-style:solid;border-width:0 6px 8px 6px;border-color:transparent transparent #000 transparent}
 #autosave_pop:after {content:"";position:absolute;top:-7px;right:45px;width:0;height:0;border-style:solid;border-width:0 6px 8px 6px;border-color:transparent transparent #fff transparent}
-html.no-overflowscrolling #autosave_pop {height:auto;max-height:10000px !important} /* overflow 미지원 기기 대응 */
 #autosave_pop strong {position:absolute;font-size:0;line-height:0;overflow:hidden}
 #autosave_pop div {text-align:center;margin:0 !important}
 #autosave_pop button {margin:0;padding:0;border:0}
@@ -160,8 +155,6 @@ html.no-overflowscrolling #autosave_pop {height:auto;max-height:10000px !importa
 #bo_v_file h2 {position:absolute;font-size:0;line-height:0;overflow:hidden}
 #bo_v_file ul {margin:0;list-style:none}
 #bo_v_file li {padding:15px;position:relative;margin:10px 0;border:1px solid #dfdfdf;border-radius:5px;
--webkit-box-shadow:1px 1px 5px 0px hsl(232, 36%, 96%);
--moz-box-shadow:1px 1px 5px 0px hsl(232, 36%, 96%);
 box-shadow:1px 1px 5px 0px hsl(232, 36%, 96%)}
 #bo_v_file li i {float:left;color:#b2b2b2;font-size:2.35em;margin-right:20px}
 #bo_v_file a {float:left;display:block;text-decoration:none;word-wrap:break-word;color:#000}
@@ -176,8 +169,6 @@ box-shadow:1px 1px 5px 0px hsl(232, 36%, 96%)}
 #bo_v_link h2 {position:absolute;font-size:0;line-height:0;overflow:hidden}
 #bo_v_file ul {margin:0;list-style:none}
 #bo_v_link li {padding:15px;position:relative;margin:10px 0;border:1px solid #dfdfdf;border-radius:5px;
--webkit-box-shadow:1px 1px 5px 0px hsl(232, 36%, 96%);
--moz-box-shadow:1px 1px 5px 0px hsl(232, 36%, 96%);
 box-shadow:1px 1px 5px 0px hsl(232, 36%, 96%)}
 #bo_v_link li i {float:left;color:#b2b2b2;font-size:2.35em;margin-right:20px}
 #bo_v_link a {float:left;display:block;text-decoration:none;word-wrap:break-word;color:#000}
@@ -288,8 +279,6 @@ box-shadow:1px 1px 5px 0px hsl(232, 36%, 96%)}
 .bo_vc_w h2 {position:absolute;font-size:0;line-height:0;overflow:hidden}
 .bo_vc_w #char_cnt {display:block;margin:0 0 5px}
 .bo_vc_w textarea {border:1px solid #ccc;background:#fff;color:#000;vertical-align:middle;border-radius:3px;padding:5px;width:100%;height:120px;
--webkit-box-shadow:inset 0 1px 2px rgba(0, 0, 0, 0.1);
--moz-box-shadow:inset 0 1px 2px rgba(0, 0, 0, 0.1);
 box-shadow:inset 0 1px 2px rgba(0, 0, 0, 0.1)}
 #wr_secret {}
 .bo_vc_w_info {margin:10px 0;float:left}

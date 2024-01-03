@@ -13,7 +13,7 @@
 .sns-icon {display:inline-block;vertical-align:middle;text-decoration:none}
 .sns-icon:hover {text-decoration:none}
 .sns-icon .ico {display:block;vertical-align:middle}
-/*.sns-icon .txt {position:absolute;line-height:0;font-size:0;vertical-align:middle;overflow:hidden}*/
+
 .sns-icon .txt i {font-style:normal}
 
 #fregisterform .form_01 .reg-form {margin-bottom:20px}

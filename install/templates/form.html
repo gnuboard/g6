@@ -53,7 +53,7 @@
                     <tr>
                         <th scope="row"><label for="">{{ version }} 재설치</label></th>
                         <td>
-                            <input type="checkbox" id="g6_install" name="g6_install" value="1"> 재설치
+                            <input type="checkbox" id="reinstall" name="reinstall" value="1"> 재설치
                         </td>
                     </tr>
                 </tbody>
@@ -181,7 +181,7 @@
 
         f.token.value = generate_token();
         if (f.token.value == "") {
-            alert("토큰값이 없습니다.");
+            alert("토큰 생성에 실패하였습니다.");
             return false;
         }
 
