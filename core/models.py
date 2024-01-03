@@ -5,7 +5,7 @@ from typing import List
 # from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import DynamicMapped, Mapped, relationship, declarative_base
 from datetime import datetime, date
-from common.database import DBConnect
+from core.database import DBConnect
 
 Base = declarative_base()
 

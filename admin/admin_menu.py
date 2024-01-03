@@ -1,19 +1,20 @@
 
+from typing import List
+
 import bleach
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import func
-from typing import List
 
-from common.database import db_session
-from common.models import Board, Content, Group, Menu
+from core.database import db_session
+from core.exception import AlertException
+from core.models import Board, Content, Group, Menu
+from core.template import AdminTemplates
 from lib.common import *
-from lib.plugin.service import get_admin_plugin_menus, get_all_plugin_module_names
+from lib.dependencies import validate_token
 
 router = APIRouter()
-admin_templates = AdminTemplates()
-admin_templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
-admin_templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
+templates = AdminTemplates()
 
 MENU_KEY = "100290"
 
@@ -35,7 +36,7 @@ async def menu_list(request: Request, db: db_session):
             menu.subclass = False
 
     context = {"request": request, "menus": menus}
-    return admin_templates.TemplateResponse("menu_list.html", context)
+    return templates.TemplateResponse("menu_list.html", context)
 
 
 @router.get("/menu_form")
@@ -57,7 +58,7 @@ async def menu_form(
         "code": code,
         "action": action
     }
-    return admin_templates.TemplateResponse("menu_form.html", context)
+    return templates.TemplateResponse("menu_form.html", context)
 
 
 @router.post("/menu_form_search", response_class=HTMLResponse)
@@ -94,7 +95,7 @@ async def menu_form_search(
         "type": type,
         "datas": datas
     }
-    return admin_templates.TemplateResponse(f"menu_search_{type}.html", context)
+    return templates.TemplateResponse(f"menu_search_{type}.html", context)
 
 
 @router.post("/menu_list_update", dependencies=[Depends(validate_token)])

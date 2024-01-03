@@ -1,13 +1,12 @@
 {% extends "base.html" %}
-{% block title %}
-    FAQ 관리
-{% endblock title %}
-{% block subtitle %}
-    FAQ {{ '입력 ' if not faq_master else '수정' }} 관리
-{% endblock subtitle %}
+{% set action='입력' if not faq_master else '수정' %}
+{% set form_action=url_for("faq_master_add") if not faq_master else url_for("faq_master_update", fm_id=faq_master.fm_id) %}
+
+{% block title %}FAQ 관리{% endblock title %}
+{% block subtitle %}FAQ {{ action }} 관리{% endblock subtitle %}
+
 {% block content %}
 <div class="container_wr">
-    {% set form_action=url_for("faq_master_add") if not faq_master else url_for("faq_master_update", fm_id=faq_master.fm_id) %}
     <form name="frmfaqmasterform"
               action="{{ form_action }}"
               method="post"
@@ -16,7 +15,7 @@
             <input type="hidden" name="token" value="">
             <div class="tbl_frm01 tbl_wrap">
                 <table>
-                    <caption>FAQ 입력 관리</caption>
+                    <caption>FAQ {{ action }} 관리</caption>
                     <colgroup>
                         <col class="grid_4">
                         <col>
@@ -50,7 +49,7 @@
                                     <input type="checkbox" name="fm_himg_del" value="1" id="fm_himg_del"> 
                                     <label for="fm_himg_del">삭제</label>
                                     <div class="head_tail_img">
-                                        <img src="{{ img_data.img_url }}?{{ now() }}" width="{{ img_data.width }}" alt="">
+                                        <img src="{{ img_data.img_url }}?{{ today }}" width="{{ img_data.width }}" alt="">
                                     </div>
                                 {% endif %}
                             </td>
@@ -66,7 +65,7 @@
                                     <input type="checkbox" name="fm_timg_del" value="1" id="fm_timg_del"> 
                                     <label for="fm_timg_del">삭제</label>
                                     <div class="head_tail_img">
-                                        <img src="{{ img_data.img_url }}?{{ now() }}" width="{{ img_data.width }}" alt="">
+                                        <img src="{{ img_data.img_url }}?{{ today }}" width="{{ img_data.width }}" alt="">
                                     </div>
                                 {% endif %}
                             </td>

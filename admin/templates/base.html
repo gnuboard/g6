@@ -71,10 +71,7 @@
         
         {# 관리자 메뉴 #}
         {% set request_menu_key = request.session.get('menu_key', '')[:3] %}
-        {% if get_admin_menus %}
-            {% set admin_menus=get_admin_menus() %}
-        {% endif %}
-            
+
         {% for menu_key, submenus in admin_menus.items() %}
             {{ render_admin_menu(menu_key[4:], submenus, loop.index) }}
         {% endfor %}

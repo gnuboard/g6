@@ -2,8 +2,8 @@ from datetime import datetime
 
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
 
-from common.database import DBConnect
-from common.models import Base
+from core.database import DBConnect
+from core.models import Base
 
 
 class Todo(Base):
