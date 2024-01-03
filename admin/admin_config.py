@@ -1,14 +1,17 @@
 import re
 import socket
+from typing import List
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
-from typing import List
 
-from common.database import db_session
-from common.formclass import ConfigForm
-from common.models import Config
+from core.database import db_session
+from core.exception import AlertException
+from core.formclass import ConfigForm
+from core.models import Config
+from core.template import AdminTemplates
 from lib.common import *
+from lib.dependencies import validate_token
 
 router = APIRouter()
 templates = AdminTemplates()
@@ -17,7 +20,6 @@ templates.env.globals["get_member_id_select"] = get_member_id_select
 templates.env.globals["get_skin_select"] = get_skin_select
 templates.env.globals["get_editor_select"] = get_editor_select
 templates.env.globals["get_member_level_select"] = get_member_level_select
-templates.env.globals["option_array_checked"] = option_array_checked
 
 CONFIG_MENU_KEY = "100100"
 

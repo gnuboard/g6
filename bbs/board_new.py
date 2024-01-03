@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 
-from common.database import db_session
-from common.models import BoardNew, Board
+from core.database import db_session
+from core.models import BoardNew, Board
+from core.template import UserTemplates
 from lib.board_lib import *
 from lib.common import *
+from lib.dependencies import validate_token
 
 router = APIRouter()
 templates = UserTemplates()

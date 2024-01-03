@@ -1,6 +1,6 @@
 from sqlalchemy import inspect
 
-from common.database import DBConnect
+from core.database import DBConnect
 from main import app
 from .. import models
 from ..admin.admin_router import admin_router

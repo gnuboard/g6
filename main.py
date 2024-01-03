@@ -1,22 +1,24 @@
 import datetime
-import secrets
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import TypeAdapter
-from sqlalchemy import select
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.middleware.sessions import SessionMiddleware
-from user_agents import parse
+from sqlalchemy import select, inspect
+from starlette.staticfiles import StaticFiles
 
-from common.database import DBConnect, db_session
-import common.models as models
+import core.models as models
+from core.database import DBConnect, db_session
+from core.exception import AlertException, regist_core_exception_handler,\
+    template_response
+from core.middleware import should_run_middleware, regist_core_middleware
+from core.plugin import register_plugin, register_plugin_admin_menu,\
+    get_plugin_state_change_time, read_plugin_state, import_plugin_by_states,\
+    cache_plugin_state, cache_plugin_menu, register_statics
+from core.template import TEMPLATES_DIR, UserTemplates, register_theme_statics
+
 from lib.common import *
 from lib.member_lib import MemberService
-from lib.plugin.service import register_statics, register_plugin_admin_menu, get_plugin_state_change_time, \
-    read_plugin_state, import_plugin_by_states, delete_router_by_tagname, cache_plugin_state, \
-    cache_plugin_menu, register_plugin, unregister_plugin
 
 # .env 파일로부터 환경 변수를 로드합니다. 
 # 이 함수는 해당 파일 내의 키-값 쌍을 환경 변수로 로드하는 데 사용됩니다.
@@ -33,7 +35,6 @@ app = FastAPI(debug=APP_IS_DEBUG)
 templates = UserTemplates()
 templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
-templates.env.filters["datetime_format"] = datetime_format
 
 from admin.admin import router as admin_router
 from install.router import router as install_router
@@ -62,6 +63,8 @@ from lib.editor.ckeditor4 import router as editor_router
 # git clone으로 소스를 받은 경우에는 data디렉토리가 없으므로 생성해야 함
 if not os.path.exists("data"):
     os.mkdir("data")
+
+# templates/{theme}/static, static, data 디렉토리에 있는 파일을 정적 파일로 등록합니다.
 register_theme_statics(app)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
@@ -100,35 +103,18 @@ app.include_router(search_router, prefix="/bbs", tags=["search"])
 app.include_router(editor_router, prefix="/editor", tags=["editor"])
 
 
-# 이 클래스는 BaseHTTPMiddleware를 상속받아, 
-# HTTP 요청을 HTTPS로 리디렉션하는 미들웨어로 사용됩니다.
-class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        if request.headers.get("X-Forwarded-Proto") != "https":
-            request.scope["scheme"] = "https"
-        return await call_next(request)
-
-# 애플리케이션 인스턴스에 이 미들웨어를 추가합니다.
-# 이로써 모든 들어오는 요청은 HTTPSRedirectMiddleware를 거치게 됩니다.
-app.add_middleware(HTTPSRedirectMiddleware)
-
-
 @app.middleware("http")
 async def main_middleware(request: Request, call_next):
     """요청마다 항상 실행되는 미들웨어"""
-    # 미들웨어가 여러번 실행되는 것을 막는 코드
-    path = request.url.path
-    # 토큰을 생성하는 요청의 경우에도 미들웨어를 건너뛰어야 합니다.
-    # 경로가 정적 파일에 대한 것이 아닌지 확인합니다 (css, js, 이미지 등).
-    if (path.startswith('/generate_token')
-            or path.startswith('/static')
-            or path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.webp'))):
-        response = await call_next(request)
-        return response
+    
+    if not await should_run_middleware(request):
+        return await call_next(request)
 
     # 데이터베이스 설치여부 체크
     db_connect = DBConnect()
+    db = db_connect.sessionLocal()
     try:
+        path = request.url.path
         if not path.startswith("/install"):
             if not os.path.exists(ENV_PATH):
                 raise AlertException(".env 파일이 없습니다. 설치를 진행해 주세요.", 400, "/install")
@@ -139,27 +125,19 @@ async def main_middleware(request: Request, call_next):
             return await call_next(request)
 
     except AlertException as e:
-        return await alert_exception_handler(request, e)
+        context = {"request": request, "errors": e.detail, "url": e.url}
+        return template_response("alert.html", context, e.status_code)
 
-    # 기본환경설정 조회
-    db = db_connect.sessionLocal()
+    # 기본환경설정 조회 및 설정
     config = db.scalar(select(Config))
     request.state.config = config
 
-    # 플러그인 설정
-    plugin_state_change_time = get_plugin_state_change_time()
-    if cache_plugin_state.__getitem__('change_time') != plugin_state_change_time:
-        # 플러그인 상태변경시 캐시를 업데이트.
-        # 업데이트 이후 관리자 메뉴, 라우터 재등록/삭제
-        new_plugin_state = read_plugin_state()
-        register_plugin(new_plugin_state)
-        unregister_plugin(new_plugin_state)
-        for plugin in new_plugin_state:
-            if not plugin.is_enable:
-                delete_router_by_tagname(app, plugin.module_name)
+    # 에디터 전역변수
+    request.state.editor = config.cf_editor
+    request.state.use_editor = True if config.cf_editor else False
 
-        cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(new_plugin_state))
-        cache_plugin_state.__setitem__('change_time', plugin_state_change_time)
+    # 쿠키도메인 전역변수
+    request.state.cookie_domain = os.getenv("COOKIE_DOMAIN", "")
 
     member = None
     is_autologin = False
@@ -167,14 +145,13 @@ async def main_middleware(request: Request, call_next):
     session_mb_id = request.session.get("ss_mb_id", "")
     cookie_mb_id = request.cookies.get("ck_mb_id", "")
 
-    # 로그인 세션
+    # 로그인 세션 유지 중이라면
     if session_mb_id:
         member = MemberService.create_by_id(db, session_mb_id)
-        # 차단 되었거나, 탈퇴한 회원이면 세션 초기화
         if member.is_intercept_or_leave():
             request.session.clear()
             member = None
-    # 자동로그인
+    # 자동 로그인 쿠키가 있다면
     elif cookie_mb_id:
         mb_id = re.sub("[^a-zA-Z0-9_]", "", cookie_mb_id)[:20]
         member = MemberService.create_by_id(db, mb_id)
@@ -206,6 +183,7 @@ async def main_middleware(request: Request, call_next):
     db.close()
 
     # 접근가능/차단 IP 체크
+    # - IP 체크 기능을 사용할 때 is_super_admin 여부를 확인하기 때문에 로그인 코드 이후에 실행
     current_ip = request.client.host
     if not is_possible_ip(request, current_ip):
         return HTMLResponse("<meta charset=utf-8>접근이 허용되지 않은 IP 입니다.")
@@ -229,84 +207,37 @@ async def main_middleware(request: Request, call_next):
         request.state.sca = request._form.get("sca") if request._form and request._form.get("sca") else ""
         request.state.page = request._form.get("page") if request._form and request._form.get("page") else ""
 
-    # pc, mobile 구분
-    request.state.is_mobile = False
-    request.state.device = ""  # pc 의 기본값은 "" 이고, mobile 은 "mobile" 로 설정
-
-    user_agent = request.headers.get("User-Agent", "")
-    ua = parse(user_agent)
-    if ua.is_mobile or ua.is_tablet:  # 모바일과 태블릿에서 접속하면 모바일로 간주
-        request.state.is_mobile = True
-
-    if not IS_RESPONSIVE:  # 적응형
-        # 반응형이 아니라면 모바일 접속은 mobile 로, 그 외 접속은 desktop 으로 간주
-        if request.state.is_mobile:
-            request.state.device = "mobile"
-
-    # 에디터 전역변수
-    request.state.editor = config.cf_editor
-    request.state.use_editor = True if config.cf_editor else False
-
+    # 응답 객체 설정
     response: Response = await call_next(request)
+
+    age_1day = 60 * 60 * 24
+    cookie_domain = request.state.cookie_domain
 
     # 자동로그인 쿠키 재설정
     # is_autologin과 세션을 확인해서 로그아웃 처리 이후 쿠키가 재설정되는 것을 방지
     if is_autologin and request.session.get("ss_mb_id"):
-        response.set_cookie(key="ck_mb_id", value=cookie_mb_id, max_age=60 * 60 * 24 * 30)
-        response.set_cookie(key="ck_auto", value=ss_mb_key, max_age=60 * 60 * 24 * 30)
-
+        response.set_cookie(key="ck_mb_id", value=cookie_mb_id,
+                            max_age=age_1day * 30, domain=cookie_domain)
+        response.set_cookie(key="ck_auto", value=ss_mb_key,
+                            max_age=age_1day * 30, domain=cookie_domain)
     # 접속자 기록
     vi_ip = request.client.host
     ck_visit_ip = request.cookies.get('ck_visit_ip', None)
     if ck_visit_ip != vi_ip:
-        # 접속을 추적하는 쿠키 설정 및 접속 레코드 기록
-        response.set_cookie('ck_visit_ip', vi_ip, max_age=86400)  # 쿠키를 하루 동안 유지
-        # 접속 레코드 기록
+        response.set_cookie(key="ck_visit_ip", value=vi_ip,
+                            max_age=age_1day, domain=cookie_domain)
         record_visit(request)
 
     return response
 
-# 아래 app.add_middleware(...) 코드는 반드시 common 함수의 아래에 위치해야 합니다.
+# 기본 실행할 미들웨어를 추가하는 함수
+# 함수는 반드시 main_middleware 함수의 아래에 위치해야 합니다.
 # 그렇지 않으면 아래와 같은 오류를 만날 수 있습니다.
 # AssertionError: SessionMiddleware must be installed to access request.session
-app.add_middleware(SessionMiddleware,
-                   secret_key=os.getenv("SESSION_SECRET_KEY", "secret"),
-                   session_cookie=os.getenv("SESSION_COOKIE_NAME", "session"),
-                   max_age=60 * 60 * 3)
+regist_core_middleware(app)
 
-
-@app.exception_handler(AlertException)
-async def alert_exception_handler(request: Request, exc: AlertException):
-    """AlertException 예외처리 등록
-
-    Args:
-        request (Request): request 객체
-        exc (AlertException): 예외 객체
-
-    Returns:
-        _TemplateResponse: 경고창 템플릿
-    """
-    template = Jinja2Templates(directory=[TEMPLATES_DIR])
-    return template.TemplateResponse(
-        "alert.html", {"request": request, "errors": exc.detail, "url": exc.url}, status_code=exc.status_code
-    )
-
-
-@app.exception_handler(AlertCloseException)
-async def alert_close_exception_handler(request: Request, exc: AlertCloseException):
-    """AlertCloseException 예외처리 등록
-
-    Args:
-        request (Request): request 객체
-        exc (AlertCloseException): 예외 객체
-
-    Returns:
-        _TemplateResponse: 경고창 & 윈도우창 닫기 템플릿
-    """
-    template = Jinja2Templates(directory=[TEMPLATES_DIR])
-    return template.TemplateResponse(
-        "alert_close.html", {"request": request, "errors": exc.detail}, status_code=exc.status_code
-    )
+# 기본 예외처리 핸들러를 등록하는 함수
+regist_core_exception_handler(app)
 
 
 # 예약 작업을 관리할 스케줄러 생성

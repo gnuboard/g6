@@ -156,7 +156,7 @@ def get_admin_plugin_menus():
 def delete_router_by_tagname(app, tagname: str):
     """태그 이름으로 등록된 라우터 삭제
     Args:
-        app (FastAPI): FastAPI 인스턴스
+        app (FastAPI): FastAPI 객체
         tagname (str): 태그 이름
     """
     filtered_routes = [route_obj for route_obj in app.routes if

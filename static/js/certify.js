@@ -67,7 +67,7 @@ function certify_win_open(type, url, event) {
     else if(type == 'lg-hp')
     {
 
-        if( g5_is_mobile )
+        if( g6_is_mobile )
         {
             var $frm = $(event.target.form),
                 lgu_cert = "lgu_cert";
