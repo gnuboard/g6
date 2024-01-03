@@ -431,7 +431,7 @@ async def visit_hour(
         query = query.add_columns(func.strftime('%H', Visit.vi_time).label('hour'))
     query_result = db.execute(
         query.add_columns(Visit.vi_time, func.count().label('hour_count'))
-        .group_by('hour')
+        .group_by(Visit.vi_time, 'hour')
     ).all()
 
     # 00 ~ 23 시간별 접속자집계
@@ -478,7 +478,7 @@ async def visit_weekday(
         query = query.add_columns(func.strftime('%w', Visit.vi_date).label('dow'))
     query_result = db.execute(
         query.add_columns(Visit.vi_date, func.count().label('dow_count'))
-        .group_by('dow')
+        .group_by(Visit.vi_date, 'dow')
     ).all()
 
     # 요일별 접속자집계
