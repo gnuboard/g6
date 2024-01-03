@@ -6,28 +6,33 @@
 
 {% block content %}
 
+{{ pg_anchor }}
+{% set pg_anchor %}    
+<ul class="anchor">
+    <li><a href="#anc_cf_basic">기본환경</a></li>
+    <li><a href="#anc_cf_board">게시판기본</a></li>
+    <li><a href="#anc_cf_join">회원가입</a></li>
+    <li><a href="#anc_cf_cert">본인확인</a></li>
+    <!-- <li><a href="#anc_cf_url">짧은주소</a></li> -->
+    <li><a href="#anc_cf_mail">기본메일환경</a></li>
+    <li><a href="#anc_cf_article_mail">글작성메일</a></li>
+    <li><a href="#anc_cf_join_mail">가입메일</a></li>
+    <li><a href="#anc_cf_vote_mail">투표메일</a></li>
+    <li><a href="#anc_cf_sns">SNS</a></li>
+    <li><a href="#anc_cf_lay">레이아웃 추가설정</a></li>
+    <li><a href="#anc_cf_sms">SMS</a></li>
+    <li><a href="#anc_cf_extra">여분필드</a></li>
+</ul>
+{% endset %}
+
+{{ pg_anchor }}
 <form name="fconfigform" method="post" action="/admin/config_form_update" onsubmit="return fconfigform_submit(this);" enctype="application/x-www-form-urlencoded" autocomplete="off">
 <input type="hidden" name="token" value="">
 
 <section id="anc_cf_basic">
     <h2 class="h2_frm">홈페이지 기본환경 설정</h2>
-    {% set pg_anchor %}    
-    <ul class="anchor">
-        <li><a href="#anc_cf_basic">기본환경</a></li>
-        <li><a href="#anc_cf_board">게시판기본</a></li>
-        <li><a href="#anc_cf_join">회원가입</a></li>
-        <li><a href="#anc_cf_cert">본인확인</a></li>
-        <li><a href="#anc_cf_mail">기본메일환경</a></li>
-        <li><a href="#anc_cf_article_mail">글작성메일</a></li>
-        <li><a href="#anc_cf_join_mail">가입메일</a></li>
-        <li><a href="#anc_cf_poll_mail">투표메일</a></li>
-        <li><a href="#anc_cf_sns">SNS</a></li>
-        <li><a href="#anc_cf_lay">레이아웃 추가설정</a></li>
-        <li><a href="#anc_cf_sms">SMS</a></li>
-        <li><a href="#anc_cf_extra">여분필드</a></li>
-    </ul>
-    {% endset %}
-    {{ pg_anchor }}
+   
+
     <div class="tbl_frm01 tbl_wrap">
         <table>
             <caption>홈페이지 기본환경 설정</caption>
@@ -224,7 +229,7 @@
 
 <section id="anc_cf_board">
     <h2 class="h2_frm">게시판 기본 설정</h2>
-    {{ pg_anchor }}
+
     <div class="local_desc02 local_desc">
         <p>각 게시판 관리에서 개별적으로 설정 가능합니다.</p>
     </div>
@@ -304,7 +309,7 @@
 
 <section id="anc_cf_join">
     <h2 class="h2_frm">회원가입 설정</h2>
-    {{ pg_anchor }}
+ 
     <div class="local_desc02 local_desc">
         <p>회원가입 시, 가입설정 및 입력 받을 정보 등을 설정할 수 있습니다.</p>
     </div>
@@ -439,7 +444,7 @@
 
 <section id="anc_cf_cert">
     <h2 class="h2_frm">본인확인 설정</h2>
-    {{ pg_anchor }}
+
     <div class="local_desc02 local_desc">
         <p>
             회원가입 시 본인확인 수단을 설정합니다.<br>
@@ -558,7 +563,7 @@
 
 <section id="anc_cf_mail">
     <h2 class="h2_frm">기본 메일 환경 설정</h2>
-    {{ pg_anchor }}
+
     <div class="tbl_frm01 tbl_wrap">
         <table>
             <caption>기본 메일 환경 설정</caption>
@@ -597,7 +602,7 @@
 
 <section id="anc_cf_article_mail">
     <h2 class="h2_frm">게시판 글 작성 시 메일 설정</h2>
-    {{ pg_anchor }}
+ 
     <div class="tbl_frm01 tbl_wrap">
         <table>
             <caption>게시판 글 작성 시 메일 설정</caption>
@@ -648,7 +653,7 @@
 
 <section id="anc_cf_join_mail">
     <h2 class="h2_frm">회원가입 시 메일 설정</h2>
-    {{ pg_anchor }}
+
     <div class="tbl_frm01 tbl_wrap">
         <table>
             <caption>회원가입 시 메일 설정</caption>
@@ -678,7 +683,7 @@
 
 <section id="anc_cf_poll_mail">
     <h2 class="h2_frm">투표 기타의견 작성 시 메일 설정</h2>
-    {{ pg_anchor }}
+
     <div class="tbl_frm01 tbl_wrap">
         <table>
             <caption>투표 기타의견 작성 시 메일 설정</caption>
@@ -701,7 +706,7 @@
 
 <section id="anc_cf_sns">
     <h2 class="h2_frm">소셜네트워크서비스(SNS : Social Network Service)</h2>
-    {{ pg_anchor }}
+    
     <div class="tbl_frm01 tbl_wrap">
         <table>
             <caption>소셜네트워크서비스 설정</caption>
@@ -858,7 +863,7 @@
 
 <section id="anc_cf_lay">
     <h2 class="h2_frm">레이아웃 추가설정</h2>
-    {{ pg_anchor }}
+
     <div class="local_desc02 local_desc">
         <p>기본 설정된 파일 경로 및 script, css 를 추가하거나 변경할 수 있습니다.</p>
     </div>
@@ -885,7 +890,7 @@
 
 <section id="anc_cf_sms">
     <h2 class="h2_frm">SMS</h2>
-    {{ pg_anchor }}
+   
     <div class="tbl_frm01 tbl_wrap">
         <table>
             <caption>SMS 설정</caption>
@@ -955,7 +960,7 @@
 
 <section id="anc_cf_extra">
     <h2 class="h2_frm">여분필드 기본 설정</h2>
-    {{ pg_anchor }}
+   
     <div class="local_desc02 local_desc">
         <p>각 게시판 관리에서 개별적으로 설정 가능합니다.</p>
     </div>
@@ -1033,6 +1038,42 @@
 
         return true;
     }
+</script>
+
+<script>
+window.addEventListener("scroll", () => {
+    const sections = document.querySelectorAll("section");
+    const gnbItems = document.querySelectorAll(".anchor li");
+    
+    let currentActiveSectionIndex = -1;
+
+    sections.forEach((section, index) => {
+        const top = window.scrollY; //현재 Y값
+        const sectionTop = section.offsetTop - 142; // 섹션 상단의 Y값 - Gnb메뉴 높이 값
+        const sectionHeight = section.offsetHeight; // 섹션 높이
+
+        if (top >= sectionTop && top < sectionTop + sectionHeight) {
+            currentActiveSectionIndex = index;
+        }
+    });
+
+    gnbItems.forEach((gnbItem, index) => {
+        if (index === currentActiveSectionIndex) {
+            gnbItem.classList.add("active");
+            // location.hash = sectionId
+        } else {
+            gnbItem.classList.remove("active");
+        }
+    });
+});
+
+const gnbItemAnchors = document.querySelectorAll(".anchor li a");
+
+gnbItemAnchors.forEach((gnbItemAnchor) => {
+    gnbItemAnchor.addEventListener('click', function() {
+        location.hash = gnbItemAnchor.getAttribute( 'href' )
+    })
+})
 </script>
 
 {% endblock content %}
