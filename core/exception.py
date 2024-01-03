@@ -2,9 +2,10 @@
 from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.templating import Jinja2Templates
 from starlette.templating import _TemplateResponse
 
-from core.template import UserTemplates
+from core.template import TEMPLATES_DIR, theme_asset
 
 
 class AlertException(HTTPException):
@@ -69,5 +70,10 @@ def template_response(
     Returns:
         _TemplateResponse: 템플릿 응답 객체
     """
-    template = UserTemplates()
+    # 새로운 템플릿 응답 객체를 생성합니다.
+    # core/template.py 클래스(UserTemplates, AdminTemplates)는
+    # 기본적으로 컨텍스트 설정시 데이터베이스를 조회하게 되는데,
+    # 처음 설치 시에는 데이터베이스가 없기 때문에 오류가 발생합니다.
+    template = Jinja2Templates(directory=TEMPLATES_DIR)
+    template.env.globals["theme_asset"] = theme_asset
     return template.TemplateResponse(template_html, context, status_code)
