@@ -62,8 +62,12 @@ async def login(
     response = RedirectResponse(url=url, status_code=302)
     # 최고관리자는 보안상 자동로그인 기능을 사용하지 않는다.
     if auto_login and not is_admin(request):
-        response.set_cookie(key="ck_auto", value=ss_mb_key, max_age=60 * 60 * 24 * 30)
-        response.set_cookie(key="ck_mb_id", value=member.mb_id, max_age=60 * 60 * 24 * 30)
+        age_1day = 60 * 60 * 24
+        cookie_domain = request.state.cookie_domain
+        response.set_cookie(key="ck_mb_id", value=member.mb_id,
+                            max_age=age_1day * 30, domain=cookie_domain)
+        response.set_cookie(key="ck_auto", value=ss_mb_key,
+                            max_age=age_1day * 30, domain=cookie_domain)
 
     return response
 
@@ -101,8 +105,12 @@ async def check_login(
     response = RedirectResponse(url=url, status_code=302)
     # 최고관리자는 보안상 자동로그인 기능을 사용하지 않는다.
     if auto_login and not is_admin(request):
-        response.set_cookie(key="ck_auto", value=ss_mb_key, max_age=60 * 60 * 24 * 30)
-        response.set_cookie(key="ck_mb_id", value=member.mb_id, max_age=60 * 60 * 24 * 30)
+        age_1day = 60 * 60 * 24
+        cookie_domain = request.state.cookie_domain
+        response.set_cookie(key="ck_mb_id", value=member.mb_id,
+                            max_age=age_1day * 30, domain=cookie_domain)
+        response.set_cookie(key="ck_auto", value=ss_mb_key,
+                            max_age=age_1day * 30, domain=cookie_domain)
 
     return response
 

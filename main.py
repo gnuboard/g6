@@ -210,17 +210,22 @@ async def main_middleware(request: Request, call_next):
     # 응답 객체 설정
     response: Response = await call_next(request)
 
+    age_1day = 60 * 60 * 24
+    cookie_domain = request.state.cookie_domain
+
     # 자동로그인 쿠키 재설정
     # is_autologin과 세션을 확인해서 로그아웃 처리 이후 쿠키가 재설정되는 것을 방지
     if is_autologin and request.session.get("ss_mb_id"):
-        response.set_cookie(key="ck_mb_id", value=cookie_mb_id, max_age=60 * 60 * 24 * 30)
-        response.set_cookie(key="ck_auto", value=ss_mb_key, max_age=60 * 60 * 24 * 30)
-
+        response.set_cookie(key="ck_mb_id", value=cookie_mb_id,
+                            max_age=age_1day * 30, domain=cookie_domain)
+        response.set_cookie(key="ck_auto", value=ss_mb_key,
+                            max_age=age_1day * 30, domain=cookie_domain)
     # 접속자 기록
     vi_ip = request.client.host
     ck_visit_ip = request.cookies.get('ck_visit_ip', None)
     if ck_visit_ip != vi_ip:
-        response.set_cookie('ck_visit_ip', vi_ip, max_age=60 * 60 * 24)  # 1일
+        response.set_cookie(key="ck_visit_ip", value=vi_ip,
+                            max_age=age_1day, domain=cookie_domain)
         record_visit(request)
 
     return response
