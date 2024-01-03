@@ -4,7 +4,7 @@
  */
 
 //  모바일 체크
-if(typeof(g5_is_mobile) == "undefined") g5_is_mobile = false;
+if(typeof(g6_is_mobile) == "undefined") g6_is_mobile = false;
 
 var ck_cachequeryMentions = [],
     ck_itemsMentions = null,
@@ -32,7 +32,7 @@ function dataFeed( opts, callback ) {
                 $.each( json_data, function( key, value ){
                     
                     var match = srcRegex.exec(value.img),
-                        srcValue = g5_url + "/img/common/icon-chat-m.png";
+                        srcValue = g6_url + "/img/common/icon-chat-m.png";
                     if (match && match[1]) {
                         srcValue = match[1];
                     }
@@ -75,7 +75,7 @@ CKEDITOR.editorConfig = function( config ) {
 	];
 
 	// 미노출 기능버튼
-	if(g5_is_mobile) {
+	if(g6_is_mobile) {
 		//--- 모바일 ---//
 		config.removeButtons = 'Print,Cut,Copy,Paste,Subscript,Superscript,Anchor,Unlink,ShowBlocks,Undo,Redo,Smiley,Font,Italic,Underline,Strike,BGColor';
 
@@ -100,7 +100,7 @@ CKEDITOR.editorConfig = function( config ) {
     }];
 
 	/* 이미지 업로드 관련 소스 */
-	let up_url = g5_url + "editor/ckeditor4/upload?type=Images";
+	let up_url = g6_url + "editor/ckeditor4/upload?type=Images";
 
 	// 에디터 구분
 	if(typeof(editor_id) != "undefined" && editor_id != "") {

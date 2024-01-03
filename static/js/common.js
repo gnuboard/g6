@@ -319,7 +319,7 @@ var win_memo = function(href) {
  * 쪽지 창
  **/
 var check_goto_new = function(href, event) {
-    if( !(typeof g5_is_mobile != "undefined" && g5_is_mobile) ){
+    if( !(typeof g6_is_mobile != "undefined" && g6_is_mobile) ){
         if (window.opener && window.opener.document && window.opener.document.getElementById) {
             event.preventDefault ? event.preventDefault() : (event.returnValue = false);
             window.open(href);
@@ -454,7 +454,7 @@ var win_zip = function(frm_name, frm_zip, frm_addr1, frm_addr2, frm_addr3, frm_j
                 onresize : function(size) {
                     element_wrap.style.height = size.height + "px";
                 },
-                maxSuggestItems : g5_is_mobile ? 6 : 10,
+                maxSuggestItems : g6_is_mobile ? 6 : 10,
                 width : '100%',
                 height : '100%'
             }).embed(element_wrap);
@@ -491,7 +491,7 @@ var win_zip = function(frm_name, frm_zip, frm_addr1, frm_addr2, frm_addr3, frm_j
                     // iframe을 넣은 element를 안보이게 한다.
                     element_layer.style.display = 'none';
                 },
-                maxSuggestItems : g5_is_mobile ? 6 : 10,
+                maxSuggestItems : g6_is_mobile ? 6 : 10,
                 width : '100%',
                 height : '100%'
             }).embed(element_layer);
@@ -550,8 +550,8 @@ function font_resize(id, rmv_class, add_class, othis)
 	if((typeof rmv_class !== "undefined" && rmv_class) || (typeof add_class !== "undefined" && add_class)){
 		$el.removeClass(rmv_class).addClass(add_class);
 
-		set_cookie("ck_font_resize_rmv_class", rmv_class, 1, g5_cookie_domain);
-		set_cookie("ck_font_resize_add_class", add_class, 1, g5_cookie_domain);
+		set_cookie("ck_font_resize_rmv_class", rmv_class, 1, g6_cookie_domain);
+		set_cookie("ck_font_resize_add_class", add_class, 1, g6_cookie_domain);
 	}
 
     if(typeof othis !== "undefined"){
@@ -568,7 +568,7 @@ function set_comment_token(f)
         $(f).prepend('<input type="hidden" name="token" value="">');
 
     $.ajax({
-        url: g5_bbs_url+"/ajax.comment_token.php",
+        url: g6_bbs_url+"/ajax.comment_token.php",
         type: "GET",
         dataType: "json",
         async: false,
@@ -715,7 +715,7 @@ function get_write_token(bo_table)
 
     $.ajax({
         type: "POST",
-        url: g5_bbs_url+"/write_token.php",
+        url: g6_bbs_url+"/write_token.php",
         data: { bo_table: bo_table },
         cache: false,
         async: false,

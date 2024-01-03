@@ -136,6 +136,9 @@ async def main_middleware(request: Request, call_next):
     request.state.editor = config.cf_editor
     request.state.use_editor = True if config.cf_editor else False
 
+    # 쿠키도메인 전역변수
+    request.state.cookie_domain = os.getenv("COOKIE_DOMAIN", "")
+
     member = None
     is_autologin = False
     ss_mb_key = None

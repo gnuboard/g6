@@ -4,36 +4,34 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
 <title>{% block title %}관리자 base{% endblock title %} | 그누보드5</title>
+<link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 <link rel="stylesheet" href="/static/admin/admin.css">
 <link rel="stylesheet" href="/static/admin/font-awesome.min.css">
 <script>
 // 자바스크립트에서 사용하는 전역변수 선언
-var g5_url       = "";
-var g5_bbs_url   = "/bbs";
-var g5_is_member = "1";
-var g5_is_admin  = "super";
-var g5_is_mobile = "";
+var g6_url       = "{{ request.base_url }}";
+var g6_bbs_url   = "{{ request.base_url }}bbs";
+var g6_is_member = "{{ 1 if request.state.login_member else '' }}";
+var g6_is_mobile = "{{ 1 if request.state.is_mobile else '' }}";
 var g5_bo_table  = "";
 var g5_sca       = "";
-var g5_editor    = "";
-var g5_cookie_domain = "";
-var g5_shop_url = "/shop";
-var g5_admin_url = "/admin";
+var g6_editor    = "{{ request.state.editor }}";
+var g6_cookie_domain = "{{ request.state.cookie_domain }}";
+var g6_shop_url = "{{ request.base_url }}shop";
 </script>
 <script src="/static/js/jquery-3.7.1.min.js"></script>
 <script src="/static/js/jquery-migrate-3.4.0.min.js"></script>
 <script src="/static/js/jquery.menu.js"></script>
 <script src="/static/js/common.js"></script>
-<script src="/static/js/wrest.js"></script>
 <script src="/static/js/placeholders.min.js"></script>
-{% block head %}
-{% endblock head %}
+{% block head -%}
+{% endblock head -%}
+{% include "plugin_menu_header.html" %}
 </head>
 <body>
-<div id="hd_login_msg">최고관리자 최고관리자님 로그인 중<a href="/bbs/logout">로그아웃</a></div>
-
-{% block content %}
-{% endblock content %}
-
+{% block body_html %}
+    {% block content %}
+    {% endblock content %}
+{% endblock body_html %}
 </body>
 </html>
