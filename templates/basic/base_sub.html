@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
-{% if request.state.config.cf_add_meta -%}
+{% if request.state.config and request.state.config.cf_add_meta -%}
     {{ request.state.config.cf_add_meta|safe -}}
 {% endif -%}
 <title>{% block title %}그누보드{% endblock title %}</title>
