@@ -22,7 +22,7 @@ from fastapi import Depends, Form, Path, Query, Request, UploadFile
 from markupsafe import Markup, escape
 from PIL import Image, ImageOps, UnidentifiedImageError
 from passlib.context import CryptContext
-from sqlalchemy import Index, asc, desc, func, insert, select, delete, between, exists, update
+from sqlalchemy import Index, asc, desc, func, insert, inspect, select, delete, between, exists, update
 from sqlalchemy.exc import IntegrityError
 from starlette.datastructures import URL
 from typing_extensions import Annotated
@@ -2323,8 +2323,12 @@ async def validate_install():
     """설치 여부 검사"""
     # Lazy import
     from core.exception import AlertException
+    db_connect = DBConnect()
+    engine = db_connect.engine
+    prefix = db_connect.table_prefix
 
-    if os.path.exists(ENV_PATH):
+    if (os.path.exists(ENV_PATH) 
+        and inspect(engine).has_table(prefix + "config")):
         raise AlertException("이미 설치가 완료되었습니다.\\n재설치하시려면 .env파일을 삭제 후 다시 시도해주세요.", 400, "/")
 
 

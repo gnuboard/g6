@@ -3,17 +3,18 @@ import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
 from pydantic import TypeAdapter
 from sqlalchemy import select, inspect
 from starlette.staticfiles import StaticFiles
 
 import core.models as models
 from core.database import DBConnect, db_session
-from core.exception import AlertCloseException, AlertException
+from core.exception import AlertException, regist_core_exception_handler,\
+    template_response
 from core.middleware import should_run_middleware, regist_core_middleware
-from core.plugin import register_statics, register_plugin_admin_menu, get_plugin_state_change_time,\
-    read_plugin_state, import_plugin_by_states, cache_plugin_state, cache_plugin_menu, register_plugin
+from core.plugin import register_plugin, register_plugin_admin_menu,\
+    get_plugin_state_change_time, read_plugin_state, import_plugin_by_states,\
+    cache_plugin_state, cache_plugin_menu, register_statics
 from core.template import TEMPLATES_DIR, UserTemplates, register_theme_statics
 
 from lib.common import *
@@ -124,7 +125,8 @@ async def main_middleware(request: Request, call_next):
             return await call_next(request)
 
     except AlertException as e:
-        return await alert_exception_handler(request, e)
+        context = {"request": request, "errors": e.detail, "url": e.url}
+        return template_response("alert.html", context, e.status_code)
 
     # 기본환경설정 조회 및 설정
     config = db.scalar(select(Config))
@@ -226,39 +228,8 @@ async def main_middleware(request: Request, call_next):
 # AssertionError: SessionMiddleware must be installed to access request.session
 regist_core_middleware(app)
 
-
-@app.exception_handler(AlertException)
-async def alert_exception_handler(request: Request, exc: AlertException):
-    """AlertException 예외처리 등록
-
-    Args:
-        request (Request): request 객체
-        exc (AlertException): 예외 객체
-
-    Returns:
-        _TemplateResponse: 경고창 템플릿
-    """
-    template = Jinja2Templates(directory=[TEMPLATES_DIR])
-    return template.TemplateResponse(
-        "alert.html", {"request": request, "errors": exc.detail, "url": exc.url}, status_code=exc.status_code
-    )
-
-
-@app.exception_handler(AlertCloseException)
-async def alert_close_exception_handler(request: Request, exc: AlertCloseException):
-    """AlertCloseException 예외처리 등록
-
-    Args:
-        request (Request): request 객체
-        exc (AlertCloseException): 예외 객체
-
-    Returns:
-        _TemplateResponse: 경고창 & 윈도우창 닫기 템플릿
-    """
-    template = Jinja2Templates(directory=[TEMPLATES_DIR])
-    return template.TemplateResponse(
-        "alert_close.html", {"request": request, "errors": exc.detail}, status_code=exc.status_code
-    )
+# 기본 예외처리 핸들러를 등록하는 함수
+regist_core_exception_handler(app)
 
 
 # 예약 작업을 관리할 스케줄러 생성

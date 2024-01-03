@@ -11,14 +11,11 @@ from core.plugin import register_plugin_admin_menu, get_plugin_state_change_time
 from core.template import IS_RESPONSIVE
 
 
-def regist_core_middleware(app: FastAPI):
-    """애플리케이션 인스턴스에 아래 미들웨어를 추가합니다.
+def regist_core_middleware(app: FastAPI) -> None:
+    """애플리케이션에 아래 미들웨어를 추가합니다.
 
     미들웨어의 실행 순서는 코드의 역순으로 실행됩니다.
     - main.py의 main_middleware()보다 먼저 실행됩니다.
-
-    Args:
-        app (FastAPI): FastAPI 인스턴스
     """
     # 세션 미들웨어를 추가합니다.
     # .env 파일의 설정을 통해 secret_key, session_cookie를 설정할 수 있습니다.
