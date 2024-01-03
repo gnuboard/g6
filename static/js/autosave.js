@@ -23,7 +23,7 @@ function autosave() {
             formData.append('as_uid', this.uid.value);
 
             $.ajax({
-                url: g5_bbs_url + "/ajax/autosave",
+                url: g6_bbs_url + "/ajax/autosave",
                 data: formData,
                 type: "POST",
                 processData: false,
@@ -42,7 +42,7 @@ function autosave() {
 
 $(function () {
     // 임시저장된 글 개수를 가져옴
-    $.ajax(g5_bbs_url + "/ajax/autosave_count", {
+    $.ajax(g6_bbs_url + "/ajax/autosave_count", {
         headers: {"Content-Type": "application/json;"},
         type: "get",
         success: function (result) {
@@ -51,14 +51,14 @@ $(function () {
         }
     });
     
-    if (g5_is_member) {
+    if (g6_is_member) {
         setInterval(autosave, AUTOSAVE_INTERVAL * 1000);
     }
     const autosavePop = $("#autosave_pop");
     // 임시저장된 글목록을 가져옴
     $("#btn_autosave").click(function () {
         if (autosavePop.is(":hidden")) {
-            $.ajax(g5_bbs_url + "/ajax/autosave_list", {
+            $.ajax(g6_bbs_url + "/ajax/autosave_list", {
                 headers: {
                     "Content-Type": "application/json;"
                 },
@@ -93,7 +93,7 @@ $(function () {
     $(document).on("click", ".autosave_load", function () {
         const $li = $(this).parents("li");
         const as_id = $li.data("as_id");
-        $.ajax(g5_bbs_url + "/ajax/autosave_load/" + as_id, {
+        $.ajax(g6_bbs_url + "/ajax/autosave_load/" + as_id, {
             success: function (data) {
                 const subject = data.as_subject;
                 const content = data.as_content;
@@ -109,7 +109,7 @@ $(function () {
     $(document).on("click", ".autosave_del", function () {
         const $li = $(this).parents("li");
         const as_id = $li.data("as_id");
-        $.ajax(g5_bbs_url + "/ajax/autosave/" + as_id, {
+        $.ajax(g6_bbs_url + "/ajax/autosave/" + as_id, {
             headers: {
                 "Content-Type": "application/json;"
             },

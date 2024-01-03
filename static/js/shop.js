@@ -56,7 +56,7 @@ $(function() {
             idx = $("select.it_option").index($(this)),
             val = $(this).val(),
             it_id = $("input[name='it_id[]']").val(),
-            post_url = (typeof g5_shop_url !== "undefined") ? g5_shop_url+"/itemoption.php" : "./itemoption.php",
+            post_url = (typeof g6_shop_url !== "undefined") ? g6_shop_url+"/itemoption.php" : "./itemoption.php",
             $this = $(this),
             op_0_title = $this.find("option:eq(0)").text();
 

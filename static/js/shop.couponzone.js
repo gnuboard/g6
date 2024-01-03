@@ -1,6 +1,6 @@
 $(function() {
     $("button.coupon_download").on("click", function() {
-        if(g5_is_member != "1") {
+        if(g6_is_member != "1") {
             alert("회원 로그인 후 이용해 주십시오.");
             return false;
         }
@@ -18,7 +18,7 @@ $(function() {
         $.ajax({
             type: "GET",
             data: { cz_id: cz_id },
-            url: g5_url+"/shop/ajax.coupondownload.php",
+            url: g6_url+"/shop/ajax.coupondownload.php",
             cache: false,
             async: true,
             dataType: "json",
