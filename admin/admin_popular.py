@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import aliased
 
@@ -7,6 +7,7 @@ from core.models import Popular
 from core.template import AdminTemplates
 from lib.common import *
 from lib.dependencies import common_search_query_params, validate_token
+from lib.template_functions import get_paging
 
 router = APIRouter()
 templates = AdminTemplates()

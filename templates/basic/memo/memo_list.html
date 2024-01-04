@@ -36,7 +36,7 @@
                                 {% endif %}
                             </div>
                             <div class="memo_li memo_name">
-                                {{ sideview.get(request, target_member.mb_id, target_member.mb_nick|default_if_none("[회원정보 없음]"))|safe }}
+                                {{ sideview.get(request, target_member.mb_id, getattr(target_member, "mb_nick", "[회원정보 없음]"))|safe }}
                                 <span class="memo_datetime">
                                     <i class="fa fa-clock-o" aria-hidden="true"></i>
                                     {{ memo.me_send_datetime }}

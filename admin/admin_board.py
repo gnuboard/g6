@@ -9,13 +9,16 @@ from core.formclass import BoardForm
 from core.template import AdminTemplates
 from lib.common import *
 from lib.dependencies import common_search_query_params, validate_token
-    
+from lib.template_functions import (
+    get_editor_select, get_group_select, 
+    get_member_level_select, get_paging, get_skin_select, 
+)
 
 router = APIRouter()
 templates = AdminTemplates()
-templates.env.globals['get_skin_select'] = get_skin_select
-templates.env.globals['get_group_select'] = get_group_select
 templates.env.globals['get_editor_select'] = get_editor_select
+templates.env.globals['get_group_select'] = get_group_select
+templates.env.globals['get_skin_select'] = get_skin_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
 
 BOARD_MENU_KEY = "300100"

@@ -13,7 +13,9 @@ from core.models import Member, Point, GroupMember, Memo, Scrap, Auth, Group, Bo
 from core.template import AdminTemplates
 from lib.common import *
 from lib.dependencies import common_search_query_params, validate_token
+from lib.member_lib import get_member_icon, get_member_image
 from lib.pbkdf2 import create_hash
+from lib.template_functions import get_member_level_select, get_paging
 
 
 router = APIRouter()
@@ -221,37 +223,6 @@ async def member_form(
 
     context = {"request": request, "member": exists_member}
     return templates.TemplateResponse("member_form.html", context)
-
-
-def get_member_icon(mb_id):
-    member_icon_dir = f"{MEMBER_ICON_DIR}/{mb_id[:2]}"
-
-    mb_dir = mb_id[:2]
-    icon_file = os.path.join(member_icon_dir, f"{mb_id}.gif")
-
-    if os.path.exists(icon_file):
-        # icon_url = icon_file.replace(G5_DATA_PATH, G5_DATA_URL)
-        icon_filemtime = os.path.getmtime(icon_file)  # 캐시를 위해 파일수정시간을 추가
-        return f"{icon_file}?{icon_filemtime}"
-    # , f'<input type="checkbox" id="del_mb_icon" name="del_mb_icon" value="1">삭제'
-
-    # return None
-    return "static/img/no_profile.gif"
-
-
-def get_member_image(mb_id):
-    member_image_dir = f"{MEMBER_IMAGE_DIR}/{mb_id[:2]}"
-
-    mb_dir = mb_id[:2]
-    image_file = os.path.join(member_image_dir, f"{mb_id}.gif")
-
-    if os.path.exists(image_file):
-        # icon_url = icon_file.replace(G5_DATA_PATH, G5_DATA_URL)
-        image_filemtime = os.path.getmtime(image_file)  # 캐시를 위해 파일수정시간을 추가
-        return f"{image_file}?{image_filemtime}"
-    # , f'<input type="checkbox" id="del_mb_icon" name="del_mb_icon" value="1">삭제'
-
-    return None
 
 
 # 회원수정 폼

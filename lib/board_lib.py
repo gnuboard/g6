@@ -11,6 +11,8 @@ from core.exception import AlertException
 from core.models import Board, BoardFile, BoardNew, Scrap, WriteBaseModel
 from core.template import UserTemplates
 from lib.common import *
+from lib.member_lib import get_admin_type, get_member_level
+from lib.point import delete_point, insert_point
 
 
 class BoardConfig():

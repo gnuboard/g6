@@ -10,6 +10,11 @@ from core.database import db_session
 from core.models import *
 from core.template import AdminTemplates
 from lib.common import *
+from lib.template_functions import (
+    get_editor_select, get_group_select,
+    get_member_level_select, get_skin_select
+)
+
 
 router = APIRouter()
 templates = AdminTemplates()

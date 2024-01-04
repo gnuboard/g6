@@ -50,7 +50,6 @@ def regist_core_middleware(app: FastAPI) -> None:
 
         # 모바일 여부 설정
         request.state.is_mobile = False
-        
         user_agent = request.headers.get("User-Agent", "")
         ua = parse(user_agent)
         # 모바일과 태블릿에서 접속하면 모바일로 간주

@@ -10,6 +10,8 @@ from core.models import QaConfig, QaContent
 from core.template import UserTemplates
 from lib.common import *
 from lib.dependencies import common_search_query_params, validate_token
+from lib.template_filters import number_format, search_font
+from lib.template_functions import get_paging
 
 router = APIRouter()
 templates = UserTemplates()

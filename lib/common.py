@@ -8,7 +8,6 @@ import re
 import secrets
 import shutil
 import smtplib
-import uuid
 from datetime import datetime, timedelta, date
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -18,18 +17,19 @@ from urllib.parse import urlencode
 
 from cachetools import LFUCache, TTLCache
 from dotenv import load_dotenv
-from fastapi import Query, Request, UploadFile
+from fastapi import Request, UploadFile
 from markupsafe import Markup, escape
 from PIL import Image, ImageOps, UnidentifiedImageError
 from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, func, insert, select, delete, between, exists, update
 from sqlalchemy.exc import IntegrityError
-from starlette.datastructures import URL
 from user_agents import parse
 
 from core.database import DBConnect
-from core.models import Auth, Config, Member, Memo, Board, BoardNew, Group, GroupMember, Menu, NewWin, Point, Poll, Popular, Visit, VisitSum, UniqId
-from core.models import WriteBaseModel
+from core.models import (
+    Auth, Board, BoardNew, Config, Group, GroupMember, Member, Memo,
+    Menu, NewWin, Poll, Popular, UniqId, Visit, VisitSum, WriteBaseModel
+)
 from lib.captcha.recaptch_v2 import ReCaptchaV2
 from lib.captcha.recaptch_inv import ReCaptchaInvisible
 
@@ -120,212 +120,6 @@ def session_member_key(request: Request, member: Member):
     return ss_mb_key
 
 
-# 회원레벨을 SELECT 형식으로 얻음
-def get_member_level_select(id: str, start: int, end: int, selected: int, event=''):
-    html_code = []
-    html_code.append(f'<select id="{id}" name="{id}" {event}>')
-    for i in range(start, end+1):
-        html_code.append(f'<option value="{i}" {"selected" if i == selected else ""}>{i}</option>')
-    html_code.append('</select>')
-    return ''.join(html_code)
-
-
-def get_skin_select(skin_gubun: str, id: str, selected: str,
-                    attribute: str = "", device: str = "") -> str:
-    """skin_gubun(new, search, connect, faq 등)에 따른 스킨을
-    SELECT 형식으로 얻음
-
-    Args:
-        skin_gubun (str): 테마 내부의 폴더명(기능)
-        id (str): select 태그의 id 속성값
-        selected (str): 기본적으로 선택되어야 할 스킨명
-        attribute (str, optional): select 태그의 추가 속성값. Defaults to "".
-        device (str, optional): 디바이스별 폴더명(mobile). Defaults to "".
-            PC는 추가 경로 없음 (ex: /template/{theme}/board/{skin_gubun})
-
-    Returns:
-        str: select 태그의 HTML 코드
-    """
-    # Lazy import
-    from core.template import TEMPLATES_DIR
-
-    skin_path = TEMPLATES_DIR + f"/{device}/{skin_gubun}"
-
-    html_code = []
-    html_code.append(f'<select id="{id}" name="{id}" {attribute}>')
-    html_code.append('<option value="">선택</option>')
-
-    for skin in os.listdir(skin_path) if os.path.isdir(skin_path) else []:
-        if os.path.isdir(f"{skin_path}/{skin}"):
-            attr = "selected" if skin == selected else ""
-            html_code.append(f'<option value="{skin}" {attr}>{skin}</option>')
-
-    html_code.append('</select>')
-
-    return ''.join(html_code)
-
-
-def get_editor_select(id: str, selected: str) -> str:
-    """DHTML 에디터를 SELECT 형식으로 얻음
-
-    Args:
-        id (str): select 태그의 id 속성값
-        selected (str): 기본적으로 선택되어야 할 에디터명
-
-    Returns:
-        str: select 태그의 HTML 코드
-    """
-    html_code = []
-    html_code.append(f'<select id="{id}" name="{id}">')
-
-    if id == 'bo_select_editor':
-        html_code.append(f'<option value="" {"selected" if selected == "" else ""}>기본환경설정의 에디터 사용</option>')
-    else:
-        html_code.append(f'<option value="">사용안함</option>')
-
-    for editor in os.listdir("static/plugin/editor"):
-        if editor == 'textarea':
-            continue
-        if os.path.isdir(f"static/plugin/editor/{editor}"):
-            html_code.append(f'<option value="{editor}" {"selected" if editor == selected else ""}>{editor}</option>')
-
-    html_code.append('</select>')
-
-    return ''.join(html_code)
-
-
-# 회원아이디를 SELECT 형식으로 얻음
-def get_member_id_select(id, level, selected, event=''):
-    db = DBConnect().sessionLocal()
-    mb_ids = db.scalars(
-        select(Member.mb_id)
-        .where(Member.mb_level >= level)
-    ).all()
-    html_code = []
-    html_code.append(f'<select id="{id}" name="{id}" {event}><option value="">선택하세요</option>')
-    for mb_id in mb_ids:
-        html_code.append(f'<option value="{mb_id}" {"selected" if mb_id == selected else ""}>{mb_id}</option>')
-    html_code.append('</select>')
-    return ''.join(html_code)
-
-
-# 필드에 저장된 값과 기본 값을 비교하여 selected 를 반환
-# def get_selected(field_value, value):
-#     if field_value is None or value is None or field_value == '' or value == '':
-#         return ''
-#     if isinstance(value, int) or (isinstance(value, str) and value.isdigit()):
-#         return ' selected="selected"' if (int(field_value) == int(value)) else ''
-#     return ' selected="selected"' if (field_value == value) else ''
-
-def get_selected(field_value, value):
-    if field_value is None or value is None or field_value == '' or value == '':
-        return ''
-    if ((isinstance(field_value, str) and field_value.isdigit()) and (
-            isinstance(value, int) or (isinstance(value, str) and value.isdigit()))):
-        return ' selected="selected"' if int(field_value) == int(value) else ''
-    return ' selected="selected"' if field_value == value else ''
-
-
-def option_array_checked(option, arr=[]):
-    checked = ''
-    if not isinstance(arr, list):
-        arr = arr.split(',')
-    if arr and option in arr:
-        checked = 'checked="checked"'
-    return checked
-
-
-def get_group_select(id, selected='', event=''):
-    db = DBConnect().sessionLocal()
-    groups = db.scalars(
-        select(Group)
-        .order_by(Group.gr_order, Group.gr_id)
-    ).all()
-    str = f'<select id="{id}" name="{id}" {event}>\n'
-    for i, group in enumerate(groups):
-        if i == 0:
-            str += '<option value="">선택</option>'
-        str += option_selected(group.gr_id, selected, group.gr_subject)
-    str += '</select>'
-    return str
-
-
-def option_selected(value, selected, text=''):
-    if not text:
-        text = value
-    if value == selected:
-        return f'<option value="{value}" selected="selected">{text}</option>\n'
-    else:
-        return f'<option value="{value}">{text}</option>\n'
-    
-
-
-
-def subject_sort_link(request: Request, column: str, query_string: str ='', flag: str ='asc'):
-    # 현재 상태에서 sst, sod, sfl, stx, sca, page 값을 가져온다.
-    sst = request.state.sst if request.state.sst is not None else ""
-    sod = request.state.sod if request.state.sod is not None else ""
-    sfl = request.state.sfl if request.state.sfl is not None else ""
-    stx = request.state.stx if request.state.stx is not None else ""
-    sca = request.state.sca if request.state.sca is not None else ""
-    page = request.state.page if request.state.page is not None else "" 
-    
-    # q1에는 column 값을 추가한다.
-    q1 = f"sst={column}"
-
-    if flag == 'asc':
-        # flag가 'asc'인 경우, q2에 'sod=asc'를 할당한다.
-        q2 = 'sod=asc'
-        if sst == column:
-            if sod == 'asc':
-                # 현재 상태에서 sst와 col이 같고 sod가 'asc'인 경우, q2를 'sod=desc'로 변경한다.
-                q2 = 'sod=desc'
-    else:
-        # flag가 'asc'가 아닌 경우, q2에 'sod=desc'를 할당한다.
-        q2 = 'sod=desc'
-        if sst == column:
-            if sod == 'desc':
-                # 현재 상태에서 sst와 col이 같고 sod가 'desc'인 경우, q2를 'sod=asc'로 변경한다.
-                q2 = 'sod=asc'
-
-    # query_string, q1, q2를 arr_query 리스트에 추가한다.
-    arr_query = []
-    arr_query.append(query_string)
-    arr_query.append(q1)
-    arr_query.append(q2)
-
-    # sfl, stx, sca, page 값이 None이 아닌 경우, 각각의 값을 arr_query에 추가한다.
-    if sfl is not None:
-        arr_query.append(f'sfl={sfl}')
-    if stx is not None:
-        arr_query.append(f'stx={stx}')
-    if sca is not None:
-        arr_query.append(f'sca={sca}')
-    if page is not None:
-        arr_query.append(f'page={page}')
-
-    # arr_query의 첫 번째 요소를 제외한 나머지 요소를 '&'로 연결하여 qstr에 할당한다.
-    qstr = '&'.join(arr_query[1:]) if arr_query else ''
-    # qstr을 '&'로 분리하여 pairs 리스트에 저장한다.
-    pairs = qstr.split('&')
-
-    # params 딕셔너리를 생성한다.
-    params = {}
-
-    # pairs 리스트의 각 요소를 '='로 분리하여 key와 value로 나누고, value가 빈 문자열이 아닌 경우 params에 추가한다.
-    for pair in pairs:
-        if '=' in pair:
-            key, value = pair.split('=')
-            if value != '':
-                params[key] = value
-
-    # qstr을 쿼리 문자열로 사용하여 링크를 생성하고 반환한다.
-    return f'<a href="?{qstr}">'
-
-# 함수 테스트
-# print(subject_sort_link('title', query_string='type=list', flag='asc', sst='title', sod='asc', sfl='category', stx='example', page=2))
-
-
 def get_admin_menus():
     '''
     1, 2단계로 구분된 관리자 메뉴 json 파일이 있으면 load 하여 반환하는 함수
@@ -367,12 +161,6 @@ def get_head_tail_img(dir: str, filename: str):
         "img_url": os.path.join('/data', dir, filename) if img_exists else None,
         "width": width
     }
-    
-def now():
-    '''
-    현재 시간을 반환하는 함수
-    '''
-    return datetime.now().timestamp()
 
 
 def check_token(request: Request, token: str):
@@ -502,80 +290,6 @@ def get_from_list(lst, index, default=0):
         return 1 if index in lst else default
     except (TypeError, IndexError):
         return default
-
-
-# 그누보드5 get_paging() 함수와 다른점
-# 1. 인수에서 write_pages 삭제
-# 2. 인수에서 total_page 대신 total_count 를 사용함
-
-# current_page : 현재 페이지
-# total_count : 전체 레코드 수
-# add_url : 페이지 링크의 추가 URL
-def get_paging(request: Request, current_page, total_count, page_rows = 0, add_url=""):
-    config = request.state.config
-    url_prefix = request.url
-    
-    try:
-        current_page = int(current_page)
-    except ValueError:
-        # current_page가 정수로 변환할 수 없는 경우 기본값으로 1을 사용하도록 설정
-        current_page = 1
-    total_count = int(total_count)
-
-    # 한 페이지당 라인수
-    if not page_rows:
-        page_rows = config.cf_mobile_page_rows if request.state.is_mobile and config.cf_mobile_page_rows else config.cf_page_rows
-    # 페이지 표시수
-    page_count = config.cf_mobile_pages if request.state.is_mobile and config.cf_mobile_pages else config.cf_write_pages
-    
-    # 올바른 total_pages 계산 (올림처리)
-    total_pages = (total_count + page_rows - 1) // page_rows
-    
-    # print(page_rows, page_count, total_pages)
-    
-    # 페이지 링크 목록 초기화
-    page_links = []
-    
-    start_page = ((current_page - 1) // page_count) * page_count + 1
-    end_page = start_page + page_count - 1
-
-    # # 중앙 페이지 계산
-    middle = page_count // 2
-    start_page = max(1, current_page - middle)
-    end_page = min(total_pages, start_page + page_count - 1)
-    
-    # 처음 페이지 링크 생성
-    if current_page > 1:
-        start_url = f"{url_prefix.include_query_params(page=1)}{add_url}"
-        page_links.append(f'<a href="{start_url}" class="pg_page pg_start" title="처음 페이지">처음</a>')
-
-    # 이전 페이지 구간 링크 생성
-    if start_page > 1:
-        prev_page = max(current_page - page_count, 1) 
-        prev_url = f"{url_prefix.include_query_params(page=prev_page)}{add_url}"
-        page_links.append(f'<a href="{prev_url}" class="pg_page pg_prev" title="이전 구간">이전</a>')
-
-    # 페이지 링크 생성
-    for page in range(start_page, end_page + 1):
-        page_url = f"{url_prefix.include_query_params(page=page)}{add_url}"
-        if page == current_page:
-            page_links.append(f'<a href="{page_url}"><strong class="pg_current" title="현재 {page} 페이지">{page}</strong></a>')
-        else:
-            page_links.append(f'<a href="{page_url}" class="pg_page" title="{page} 페이지">{page}</a>')
-
-    # 다음 페이지 구간 링크 생성
-    if total_pages > end_page:
-        next_page = min(current_page + page_count, total_pages)
-        next_url = f"{url_prefix.include_query_params(page=next_page)}{add_url}"
-        page_links.append(f'<a href="{next_url}" class="pg_page pg_next" title="다음 구간">다음</a>')
-    
-    # 마지막 페이지 링크 생성        
-    if current_page < total_pages:
-        end_url = f"{url_prefix.include_query_params(page=total_pages)}{add_url}"
-        page_links.append(f'<a href="{end_url}" class="pg_page pg_end" title="마지막 페이지">마지막</a>')
-
-    # 페이지 링크 목록을 문자열로 변환하여 반환
-    return '<nav class="pg_wrap"><span class="pg">' + ''.join(page_links) + '</span></nav>'
 
 
 def extract_browser(user_agent):
@@ -742,403 +456,6 @@ def select_query(request: Request, table_model, search_params: dict,
         "rows": rows,
         "total_count": total_count,
     }
-    
-
-# 회원 레코드 얻기    
-def get_member(mb_id: str): # , fields: str = '*' # fields : 가져올 필드, 예) "mb_id, mb_name, mb_nick"
-    db = DBConnect().sessionLocal()
-    member = db.scalar(select(Member).filter_by(mb_id=mb_id))
-    db.close()
-    return member
-
-
-def get_member_icon(mb_id: str = None) -> str:
-    """회원 아이콘 경로를 반환하는 함수
-
-    Args:
-        mb_id (str, optional): 회원아이디. Defaults to None.
-
-    Returns:
-        str: 회원 아이콘 경로
-    """
-    if mb_id:
-        MEMBER_ICON_DIR = "data/member"
-        member_icon_dir = f"{MEMBER_ICON_DIR}/{mb_id[:2]}"
-
-        icon_file = os.path.join(member_icon_dir, f"{mb_id}.gif")
-
-        if os.path.exists(icon_file):
-            icon_filemtime = os.path.getmtime(icon_file) # 캐시를 위해 파일수정시간을 추가
-            return f"{icon_file}?{icon_filemtime}"
-
-    return "static/img/no_profile.gif"
-
-
-def get_member_image(mb_id: str = None) -> str:
-    """회원 이미지 경로를 반환하는 함수
-
-    Args:
-        mb_id (str, optional): 회원아이디. Defaults to None.
-
-    Returns:
-        str: 회원 이미지 경로
-    """
-    if mb_id:
-        MEMBER_IMAGE_DIR = "data/member_image"
-        member_image_dir = f"{MEMBER_IMAGE_DIR}/{mb_id[:2]}"
-
-        image_file = os.path.join(member_image_dir, f"{mb_id}.gif")
-
-        if os.path.exists(image_file):
-            image_filemtime = os.path.getmtime(image_file) # 캐시를 위해 파일수정시간을 추가
-            return f"{image_file}?{image_filemtime}"
-
-    return "static/img/no_profile.gif"
-    
-
-
-def insert_point(request: Request, mb_id: str, point: int, content: str = '', rel_table: str = '', rel_id: str = '', rel_action: str = '', expire: int = 0) -> int:
-    """포인트 증감 처리
-
-    Args:
-        request (Request): FastAPI Request 객체
-        mb_id (str): 회원아이디
-        point (int): 증감 포인트
-        content (str, optional): 포인트 내용. Defaults to ''.
-        rel_table (str, optional): 포인트 관련 테이블. Defaults to ''.
-        rel_id (str, optional): 포인트 관련 테이블의 ID. Defaults to ''.
-        rel_action (str, optional): 포인트 관련 테이블의 활동. Defaults to ''.
-        expire (int, optional): 포인트 유효기간. Defaults to 0.
-
-    Returns:
-        int: 성공시 1, 실패시 0
-    """
-    db = DBConnect().sessionLocal()
-    config = request.state.config
-    
-    # 포인트를 사용하지 않는다면 종료
-    if not config.cf_use_point:
-        return 0
-    
-    # 포인트가 없다면 업데이트를 할 필요가 없으므로 종료
-    if point == 0:
-        return 0
-    
-    # 회원아이디가 없다면 종료
-    if mb_id == '':
-        return 0
-    
-    # 회원정보가 없다면 종료
-    member = db.scalar(select(Member).filter_by(mb_id=mb_id))
-    if not member:
-        return 0
-
-    if rel_table or rel_id or rel_action:
-        existing_point = db.scalar(
-            exists(Point.po_id)
-            .where(
-                Point.mb_id == mb_id,
-                Point.po_rel_table == rel_table,
-                Point.po_rel_id == str(rel_id),
-                Point.po_rel_action == rel_action
-            )
-            .select()
-        )
-        if existing_point:
-            return -1
-        
-    # 포인트 건별 생성
-    # po_expire_date = '9999-12-31'
-    po_expire_date = datetime.strptime('9999-12-31', '%Y-%m-%d')
-    if config.cf_point_term > 0:
-        if expire > 0:
-            po_expire_date = (SERVER_TIME + timedelta(days=expire-1)).strftime('%Y-%m-%d')
-        else:
-            po_expire_date = (SERVER_TIME + timedelta(days=config.cf_point_term - 1)).strftime('%Y-%m-%d')
-
-    mb_point = get_point_sum(request, mb_id)
-    po_expired = 0
-    if point < 0:
-        po_expired = 1
-        po_expire_date = TIME_YMD
-    po_mb_point = mb_point + point
-    
-    new_point = Point(
-        mb_id=mb_id,
-        po_datetime=datetime.now(),
-        po_content=content,
-        po_point=point,
-        po_use_point=0,
-        po_mb_point=po_mb_point,
-        po_expired=po_expired,
-        po_expire_date=po_expire_date,
-        po_rel_table=rel_table,
-        po_rel_id=str(rel_id),
-        po_rel_action=rel_action
-    )
-    db.add(new_point)
-    db.commit()
-    
-    query = update(Member).where(Member.mb_id == mb_id).values(mb_point=po_mb_point)
-    db.execute(query)
-    db.commit()
-    db.close()
-
-    return 1
-
-
-# 소멸 포인트 얻기
-def get_expire_point(request: Request, mb_id: str) -> int:
-    config = request.state.config
-
-    if config.cf_point_term <= 0:
-        return 0
-
-    db = DBConnect().sessionLocal()
-    point_sum = db.scalar(
-        select(func.sum(Point.po_point - Point.po_use_point))
-        .where(
-            Point.mb_id == mb_id,
-            Point.po_expired == 0,
-            Point.po_expire_date < datetime.now()
-        )
-    )
-    db.close()
-    return int(point_sum) if point_sum else 0
-
-
-# 포인트 내역 합계
-def get_point_sum(request: Request, mb_id: str) -> int:
-    config = request.state.config
-    
-    db = DBConnect().sessionLocal()
-    
-    if config.cf_point_term > 0:
-        expire_point = get_expire_point(request, mb_id)
-        if expire_point > 0:
-            member = get_member(mb_id)
-            point = expire_point * (-1)
-            new_point = Point(
-                mb_id=mb_id,
-                po_datetime=TIME_YMDHIS,
-                po_content='포인트 소멸',
-                po_point=expire_point * (-1),
-                po_use_point=0,
-                po_mb_point=member.mb_point + point,
-                po_expired=1,
-                po_expire_date=TIME_YMD,
-                po_rel_table='@expire',
-                po_rel_id=str(mb_id),
-                po_rel_action='expire-' + str(uuid.uuid4()),
-            )   
-            db.add(new_point)
-            db.commit()
-            
-            # 포인트를 사용한 경우 포인트 내역에 사용금액 기록
-            if point < 0:
-                # insert_use_point(mb_id, point)
-                pass
-        
-        # 유효기간이 있을 때 기간이 지난 포인트 expired 체크
-        db.execute(
-            update(Point).values(po_expired=1)
-            .where(
-                Point.mb_id == mb_id,
-                Point.po_expired != 1,
-                Point.po_expire_date != '9999-12-31',
-                Point.po_expire_date < TIME_YMD
-            )
-        )
-        db.commit()            
-            
-    # 포인트합
-    point_sum = db.scalar(select(func.sum(Point.po_point)).filter_by(mb_id=mb_id))
-    db.close()
-    return int(point_sum) if point_sum else 0
-
-
-# 사용포인트 입력
-def insert_use_point(request: Request, mb_id: str, point: int, po_id: str = ""):
-    config = request.state.config
-    db = DBConnect().sessionLocal()
-    point1 = abs(point)
-
-    query = (
-        select(Point.po_id, Point.po_point, Point.po_use_point)
-        .where(
-            Point.mb_id == mb_id,
-            Point.po_id != po_id,
-            Point.po_expired == 0,
-            Point.po_point > Point.po_use_point
-        )
-    )
-    if config.cf_point_term:
-        query = query.order_by(Point.po_expire_date.asc(), Point.po_id.asc())
-    else:
-        query = query.order_by(Point.po_id.asc())
-    rows = db.scalars(query).all()
-
-    for row in rows:
-        point2 = row.po_point
-        point3 = row.po_use_point
-        
-        if (point2 - point3) > point1:
-            db.execute(
-                update(Point).values(po_mb_point=Point.po_mb_point + point1)
-                .where(Point.po_id == row.po_id)
-            )
-            db.commit()
-        else:
-            point4 = point2 - point3
-            db.execute(
-                update(Point).values(po_use_point=(Point.po_use_point + point4), po_expired=100)
-                .where(Point.po_id == row.po_id)
-            )
-            db.commit()
-            point1 = point1 - point4
-
-    db.close()
-
-
-# 포인트 삭제
-def delete_point(request: Request, mb_id: str, rel_table: str, rel_id : str, rel_action: str):
-    db = DBConnect().sessionLocal()
-    result = False
-
-    if rel_table or rel_id or rel_action:
-        # 포인트 내역정보    
-        row = db.scalar(
-            select(Point)
-            .where(
-                Point.mb_id == mb_id,
-                Point.po_rel_table == rel_table,
-                Point.po_rel_id == str(rel_id),
-                Point.po_rel_action == rel_action
-            )
-        )
-        if row:
-            if row.po_point and row.po_point > 0:
-                abs_po_point = abs(row.po_point)
-                delete_use_point(request, row.mb_id, abs_po_point)
-            else:
-                if row.po_use_point and row.po_use_point > 0:
-                    insert_use_point(request, row.mb_id, row.po_use_point, row.po_id)
-
-            delete_result = db.execute(
-                delete(Point)
-                .where(Point.mb_id == mb_id, Point.po_rel_table == rel_table, Point.po_rel_id == str(rel_id), Point.po_rel_action == rel_action)
-            )
-            db.commit()
-
-            if delete_result.rowcount > 0:
-                result = True
-
-                # po_mb_point에 반영
-                if row.po_point:
-                    db.execute(
-                        update(Point).values(po_mb_point=Point.po_mb_point - row.po_point)
-                        .where(Point.mb_id == mb_id, Point.po_id > row.po_id)
-                    )
-                    db.commit()
-
-                # 포인트 내역의 합을 구하고    
-                sum_point = get_point_sum(request, mb_id)
-
-                # 포인트 UPDATE
-                db.execute(
-                    update(Member).values(mb_point=sum_point)
-                    .where(Member.mb_id == mb_id)
-                )
-                db.commit()
-    db.close()
-
-    return result
-
-
-# 사용포인트 삭제
-def delete_use_point(request: Request, mb_id: str, point: int):
-    config = request.state.config
-    db = DBConnect().sessionLocal()
-
-    point1 = abs(point)
-    query = select(Point).where(Point.mb_id == mb_id, Point.po_expired != 1, Point.po_use_point > 0)
-    if config.cf_point_term:
-        query = query.order_by(desc(Point.po_expire_date), desc(Point.po_id))
-    else:
-        query = query.order_by(desc(Point.po_id))
-    rows = db.scalars(query).all()
-
-    for row in rows:
-        point2 = row.po_use_point
-        if row.po_expired == 100 and (row.po_expire_date == '9999-12-31' or row.po_expire_date >= TIME_YMD):
-            po_expired = 0
-        else:
-            po_expired = row.po_expired
-
-        if point2 > point1:
-            db.execute(
-                update(Point)
-                .values(po_use_point=Point.po_use_point - point1, po_expired=po_expired)
-                .where(Point.po_id == row.po_id)
-            )
-            db.commit()
-            break
-        else:
-            db.execute(
-                update(Point)
-                .values(po_use_point=0, po_expired=po_expired)
-                .where(Point.po_id == row.po_id)
-            )
-            db.commit()
-            point1 = point1 - point2
-
-    db.close()
-
-
-# 소멸포인트 삭제
-def delete_expire_point(request: Request, mb_id: str, point: int):
-    config = request.state.config
-    db = DBConnect().sessionLocal()
-    
-    point1 = abs(point)
-    rows = db.scalars(
-        select(Point)
-        .where(Point.mb_id == mb_id, Point.po_expired == 1, Point.po_point >= 0, Point.po_use_point > 0)
-        .order_by(desc(Point.po_expire_date), desc(Point.po_id))
-    ).all()
-    for row in rows:
-        point2 = row.po_use_point
-        po_expired = 0
-        po_expire_date = '9999-12-31'
-        if config.cf_point_term > 0:
-            po_expire_date = (SERVER_TIME + timedelta(days=config.cf_point_term - 1)).strftime('%Y-%m-%d')
-    
-        if point2 > point1:
-            db.execute(
-                update(Point)
-                .values(
-                    po_use_point=Point.po_use_point - point1,
-                    po_expired=po_expired,
-                    po_expire_date=po_expire_date
-                )
-                .where(Point.po_id == row.po_id)
-            )
-            db.commit()
-            break
-        else:
-            db.execute(
-                update(Point)
-                .values(
-                    po_use_point=0,
-                    po_expired=po_expired,
-                    po_expire_date=po_expire_date
-                )
-                .where(Point.po_id == row.po_id)
-            )
-            db.commit()
-            point1 = point1 - point2
-
-    db.close()
 
 
 def domain_mail_host(request: Request, is_at: bool = True):
@@ -1166,19 +483,6 @@ def get_memo_not_read(mb_id: str) -> int:
     db.close()
 
     return count
-
-
-def editor_macro(request: Request) -> str:
-    """설정한 에디터의 macros.html 파일경로를 반환하는 함수
-    - 미지정시 그누보드 환경설정값 사용
-    - request.state.editor: 에디터이름
-    - request.state.use_editor: 에디터 사용여부 False 이면 'textarea'로 설정
-    """
-    editor_name = request.state.editor
-    if not request.state.use_editor or not editor_name:
-        editor_name = "textarea"
-
-    return editor_name + "/macros.html"
 
 
 def nl2br(value) -> str:
@@ -1327,15 +631,6 @@ def get_menus():
     return menus
 
 
-def get_member_level(request: Request):
-    """
-    request에서 회원 레벨 정보를 가져오는 함수
-    """
-    member = request.state.login_member
-
-    return member.mb_level if member else 1
-
-
 def auth_check_menu(request: Request, menu_key: str, attribute: str):
     """
     관리권한 체크
@@ -1406,55 +701,6 @@ def get_unique_id(request) -> Optional[str]:
                 return None
 
 
-def is_admin(request: Request, mb_id: str = None):
-    """관리자 여부 확인
-    """
-    config: Config = request.state.config
-    cf_admin = str(config.cf_admin).lower().strip()
-
-    if not cf_admin:
-        return False
-
-    mb_id = mb_id or request.session.get("ss_mb_id", "")
-    if mb_id and mb_id.lower().strip() == cf_admin:
-        return True
-
-    return False
-
-
-# TODO: 그누보드5의 is_admin 함수
-# 이미 is_admin 함수가 존재하므로 함수 이름을 변경함 
-def get_admin_type(
-        request: Request, mb_id: str = None,
-        group: Group = None, board: Board = None) -> Union[str, None]:
-    """게시판 관리자 여부 확인 후 관리자 타입 반환
-
-    Args:
-        request (Request): FastAPI Request 객체
-        mb_id (str, optional): 회원 아이디. Defaults to None.
-        group (Group, optional): 게시판 그룹 정보. Defaults to None.
-        board (Board, optional): 게시판 정보. Defaults to None.
-
-    Returns:
-        str: 관리자 타입. super, group, board, None
-    """
-    if not mb_id:
-        return None
-    
-    config = request.state.config
-    group = board.group if board else None
-
-    is_authority = None
-    if config.cf_admin == mb_id:
-        is_authority = "super"
-    elif group and group.gr_admin == mb_id:
-        is_authority = "group"
-    elif board and board.bo_admin == mb_id:
-        is_authority = "board"
-    
-    return is_authority
-
-
 def check_profile_open(open_date: Optional[date], config) -> bool:
     """변경일이 지나서 프로필 공개가능 여부를 반환
     Args:
@@ -1489,13 +735,6 @@ def get_next_profile_openable_date(open_date: Optional[date], config):
         calculated_date = datetime.now() + timedelta(days=cf_open_modify)
 
     return calculated_date.strftime("%Y-%m-%d")
-
-
-def default_if_none(value, arg):
-    """If value is None"""
-    if value is None:
-        return arg
-    return value
 
 
 def valid_email(email: str):
@@ -1785,16 +1024,6 @@ def get_newwins(request: Request):
     newwins = [newwin for newwin in newwins if not request.cookies.get("hd_pops_" + str(newwin.nw_id))]
 
     return newwins
-
-
-def datetime_format(date: datetime, format="%Y-%m-%d %H:%M:%S"):
-    """
-    날짜 포맷팅
-    """
-    if not date:
-        return ""
-
-    return date.strftime(format)
 
 
 def insert_board_new(bo_table: str, write: WriteBaseModel):
@@ -2136,49 +1365,6 @@ def filter_words(request: Request, contents: str) -> str:
     return ''
 
 
-def search_font(content, stx):
-    # 문자 앞에 \를 붙입니다.
-    src = ['/', '|']
-    dst = ['\\/', '\\|']
-
-    if not stx or not stx.strip() and stx != '0':
-        return content
-
-    # 검색어 전체를 공란으로 나눈다
-    search_keywords = stx.split()
-
-    # "(검색1|검색2)"와 같은 패턴을 만듭니다.
-    pattern = ''
-    bar = ''
-    for keyword in search_keywords:
-        if keyword.strip() == '':
-            continue
-        tmp_str = re.escape(keyword)
-        tmp_str = tmp_str.replace(src[0], dst[0]).replace(src[1], dst[1])
-        pattern += f'{bar}{tmp_str}(?![^<]*>)'
-        bar = "|"
-
-    # 지정된 검색 폰트의 색상, 배경색상으로 대체
-    replace = "<b class=\"sch_word\">\\1</b>"
-
-    return re.sub(f'({pattern})', replace, content, flags=re.IGNORECASE)
-
-
-def number_format(number: int) -> str:
-    """숫자를 천단위로 구분하여 반환하는 템플릿 필터
-
-    Args:
-        number (int): 숫자
-
-    Returns:
-        str: 천단위로 구분된 숫자
-    """
-    if isinstance(number, int):
-        return "{:,}".format(number)
-    else:
-        return "Invalid input. Please provide an integer."
-
-
 def read_version():
     """루트 디렉토리의 version.txt 파일을 읽어서 버전을 반환하는 함수
     Returns:
@@ -2230,23 +1416,3 @@ def get_current_admin_menu_id(request: Request) -> Optional[str]:
     except Exception as e:
         print(e)
         return None
-
-
-def set_query_params(url: URL, request: Request, **params: dict) -> URL:
-    """url에 query string을 추가하는 템플릿 필터
-
-    Args:
-        url (str): URL
-        request (Request): FastAPI Request 객체
-        **params (dict): 추가할 query string
-
-    Returns:
-        str: query string이 추가된 URL
-    """
-    query_params = request.query_params
-    if query_params or params:
-        if isinstance(url, str):
-            url = URL(url)
-        url = url.replace_query_params(**query_params, **params)
-
-    return url

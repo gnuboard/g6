@@ -13,9 +13,14 @@ from core.models import AutoSave, Board, BoardGood, Group, Scrap
 from core.template import UserTemplates
 from lib.board_lib import *
 from lib.common import *
-from lib.dependencies import check_group_access, common_search_query_params,\
+from lib.dependencies import (
+    check_group_access, common_search_query_params,
     validate_captcha, validate_token
+)
 from lib.pbkdf2 import create_hash
+from lib.point import delete_point, insert_point
+from lib.template_filters import datetime_format, number_format
+from lib.template_functions import get_paging
 
 router = APIRouter()
 templates = UserTemplates()

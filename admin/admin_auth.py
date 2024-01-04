@@ -9,6 +9,7 @@ from core.template import AdminTemplates
 from lib.dependencies import common_search_query_params,\
     validate_token, validate_captcha
 from lib.common import *
+from lib.template_functions import get_paging
 
 router = APIRouter()
 templates = AdminTemplates()
