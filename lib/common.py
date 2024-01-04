@@ -517,15 +517,17 @@ def insert_popular(request: Request, fields: str, word: str):
         word (str): 인기검색어
     """
     try:
-        today_date = datetime.now().strftime("%Y-%m-%d")
+        today_date = datetime.now()
         # 회원아이디로 검색은 제외
         if not "mb_id" in fields:
             with DBConnect().sessionLocal() as db:
                 # 현재 날짜의 인기검색어를 조회한다.
                 exists_popular = db.scalar(
                     exists(Popular)
-                    .where(Popular.pp_word == word, Popular.pp_date == today_date)
-                    .select()
+                    .where(
+                        Popular.pp_word == word,
+                        Popular.pp_date == today_date.strftime("%Y-%m-%d")
+                    ).select()
                 )
                 # 인기검색어가 없으면 새로 등록한다.
                 if not exists_popular:

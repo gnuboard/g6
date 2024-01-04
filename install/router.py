@@ -3,7 +3,7 @@ from dotenv import set_key
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, exists, insert
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool

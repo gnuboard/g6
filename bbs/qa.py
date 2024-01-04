@@ -245,9 +245,12 @@ async def qa_write_update(
         if file2.size > 0 and file2.size > qa_config.qa_upload_size:
             raise AlertException(f"첨부파일2의 최대 크기는 {number_format(qa_config.qa_upload_size)}byte입니다.", 400)
 
-    qa = db.get(QaContent, qa_id)
     # 수정
-    if qa:
+    if qa_id:
+        qa = db.get(QaContent, qa_id)
+        if not qa:
+            raise AlertException(f"{qa_id} : Q&A 아이디가 존재하지 않습니다.", 404)
+
         if not request.state.is_super_admin and member.mb_id != qa.mb_id:
             raise AlertException("수정 권한이 없습니다.", 403)
         
