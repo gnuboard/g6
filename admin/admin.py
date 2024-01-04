@@ -30,6 +30,7 @@ from admin.admin_mail import router as admin_mail_router
 from admin.admin_write_count import router as admin_write_count_router
 from admin.admin_plugin import router as admin_plugin_router
 from admin.admin_cache import router as admin_cache_router
+from admin.admin_service import router as admin_service_router
 
 router.include_router(admin_config_router, tags=["admin_config"])
 router.include_router(admin_member_router, tags=["admin_member"])
@@ -52,6 +53,7 @@ router.include_router(admin_newwin_router, tags=["admin_newwin"])
 router.include_router(admin_write_count_router, tags=["admin_write_count"])
 router.include_router(admin_plugin_router, tags=["admin_plugin"])
 router.include_router(admin_cache_router, tags=["admin_cache"])
+router.include_router(admin_service_router, tags=["admin_service"])
 
 MAIN_MENU_KEY = "100000"
 

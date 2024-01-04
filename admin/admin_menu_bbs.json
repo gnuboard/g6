@@ -42,34 +42,10 @@
             "tag": "admin_newwin"
         },
         {
-            "id": "100800",
-            "name": "세션파일 일괄삭제",
-            "url": "session_file_delete",
-            "tag": ""
-        },
-        {
             "id": "100900",
             "name": "캐시파일 일괄삭제",
             "url": "cache_file_delete",
             "tag": "admin_cache"
-        },
-        {
-            "id": "100910",
-            "name": "캡챠파일 일괄삭제",
-            "url": "captcha_file_delete",
-            "tag": ""
-        },
-        {
-            "id": "100920",
-            "name": "썸네일파일 일괄삭제",
-            "url": "thumbnail_file_delete",
-            "tag": ""
-        },
-        {
-            "id": "100410",
-            "name": "DB업그레이드",
-            "url": "dbupgrade",
-            "tag": ""
         },
         {
             "id": "100400",
