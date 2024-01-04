@@ -243,8 +243,10 @@ async def write_count(request: Request, db: db_session,
     })
     
     # x_label에 따라 날짜/시간 형식 변경
-    if x_label == "hours":
-        df[x_label] = pd.to_datetime(df[x_label]).dt.strftime('%H:%M %p')
+    if df[x_label].empty:
+        pass
+    elif x_label == "hours":
+        df[x_label] = datetime.strptime(f"{df[x_label].iloc[0]}:00", "%H:%M").strftime('%H:%M %p')
     elif x_label == "days":
         df[x_label] = pd.to_datetime(df[x_label]).dt.strftime('%y-%m-%d')
     elif x_label == "weeks":
