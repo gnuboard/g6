@@ -21,14 +21,14 @@ from fastapi import Request, UploadFile
 from markupsafe import Markup, escape
 from PIL import Image, ImageOps, UnidentifiedImageError
 from passlib.context import CryptContext
-from sqlalchemy import Index, asc, desc, func, insert, select, delete, between, exists, update
+from sqlalchemy import Index, asc, desc, func, select, delete, between, exists
 from sqlalchemy.exc import IntegrityError
 from user_agents import parse
 
 from core.database import DBConnect
 from core.models import (
-    Auth, Board, BoardNew, Config, Group, GroupMember, Member, Memo,
-    Menu, NewWin, Poll, Popular, UniqId, Visit, VisitSum, WriteBaseModel
+    Auth, BoardNew, Config, Member, Memo, Menu, NewWin, Poll, Popular,
+    UniqId, Visit, VisitSum, WriteBaseModel
 )
 from lib.captcha.recaptch_v2 import ReCaptchaV2
 from lib.captcha.recaptch_inv import ReCaptchaInvisible
@@ -939,69 +939,6 @@ def is_none_datetime(input_date: Union[date, str]) -> bool:
     return False
 
 
-def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
-    """최신글 목록 HTML 출력
-
-    Args:
-        request (Request): _description_
-        skin_dir (str, optional): 스킨 경로. Defaults to ''.
-        bo_table (str, optional): 게시판 코드. Defaults to ''.
-        rows (int, optional): 노출 게시글 수. Defaults to 10.
-        subject_len (int, optional): 제목길이 제한. Defaults to 40.
-
-    Returns:
-        str: 최신글 HTML
-    """
-    # Lazy import
-    from core.template import UserTemplates
-    from lib.board_lib import BoardConfig, get_list, get_list_thumbnail
-
-    templates = UserTemplates()
-    templates.env.globals["get_list_thumbnail"] = get_list_thumbnail
-
-    if not skin_dir:
-        skin_dir = 'basic'
-
-    file_cache = FileCache()
-    cache_filename = f"latest-{bo_table}-{skin_dir}-{rows}-{subject_len}-{file_cache.get_cache_secret_key()}.html"
-    cache_file = os.path.join(file_cache.cache_dir, cache_filename)
-
-    # 캐시된 파일이 있으면 파일을 읽어서 반환
-    if os.path.exists(cache_file):
-        return file_cache.get(cache_file)
-    
-    db = DBConnect().sessionLocal()
-    # 게시판 설정
-    board = db.get(Board, bo_table)
-    board_config = BoardConfig(request, board)
-    board.subject = board_config.subject
-
-    #게시글 목록 조회
-    write_model = dynamic_create_write_table(bo_table)
-    writes = db.scalars(
-        select(write_model)
-        .where(write_model.wr_is_comment == 0)
-        .order_by(write_model.wr_num)
-        .limit(rows)
-    ).all()
-    for write in writes:
-        write = get_list(request, write, board_config)
-    
-    context = {
-        "request": request,
-        "board": board,
-        "writes": writes,
-        "bo_table": bo_table,
-    }
-    temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
-    temp_decode = temp.body.decode("utf-8")
-
-    # 캐시 파일 생성
-    file_cache.create(temp_decode, cache_file)
-
-    return temp_decode
-
-
 def get_newwins(request: Request):
     """
     레이어 팝업 목록 조회
@@ -1024,23 +961,6 @@ def get_newwins(request: Request):
     newwins = [newwin for newwin in newwins if not request.cookies.get("hd_pops_" + str(newwin.nw_id))]
 
     return newwins
-
-
-def insert_board_new(bo_table: str, write: WriteBaseModel):
-    """
-    최신글 테이블 등록 함수
-    """
-    db = DBConnect().sessionLocal()
-    db.execute(
-        insert(BoardNew)
-        .values(
-            bo_table=bo_table,
-            wr_id=write.wr_id,
-            wr_parent=write.wr_parent,
-            mb_id=write.mb_id,
-        )
-    )
-    db.commit()
 
 
 def get_current_captcha_cls(config: Config):

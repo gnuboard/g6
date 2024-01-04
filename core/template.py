@@ -120,6 +120,9 @@ class UserTemplates(Jinja2Templates):
                 self.env.globals.update(**globals.__dict__)
 
     def _default_context(self, request: Request):
+        # Lazy import
+        from lib.board_lib import latest
+
         context = {
             "menus": get_menus(),
             "poll": get_recent_poll(),
