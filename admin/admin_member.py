@@ -140,7 +140,7 @@ async def member_list_delete(
             # 이미 삭제된 회원은 제외
             # if re.match(r"^[0-9]{8}.*삭제함", member.mb_memo):
             #     continue
-
+            delete_time = datetime.now().strftime("%Y%m%d")
             # member 의 경우 레코드를 삭제하는게 아니라 mb_id 를 남기고 모두 제거
             member.mb_password = ""
             member.mb_level = 1
@@ -158,7 +158,7 @@ async def member_list_delete(
             member.mb_birth = ""
             member.mb_sex = ""
             member.mb_signature = ""
-            member.mb_memo = (f"{SERVER_TIME.strftime('%Y%m%d')} 삭제함\n{member.mb_memo}")
+            member.mb_memo = (f"{delete_time} 삭제함\n{member.mb_memo}")
             member.mb_certify = ""
             member.mb_adult = 0
             member.mb_dupinfo = ""
@@ -283,7 +283,8 @@ async def member_form_update(
             new_member.mb_password = create_hash(mb_password)
         else:
             # 비밀번호가 없다면 현재시간으로 해시값을 만든후 다시 해시 (알수없게 만드는게 목적)
-            new_member.mb_password = create_hash(create_hash(TIME_YMDHIS))
+            time_ymdhis = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            new_member.mb_password = create_hash(create_hash(time_ymdhis))
 
         db.add(new_member)
         db.commit()

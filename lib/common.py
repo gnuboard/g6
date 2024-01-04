@@ -40,11 +40,6 @@ ENV_PATH = ".env"
 CAPTCHA_PATH = "lib/captcha/templates"
 EDITOR_PATH = "lib/editor/templates"
 
-# 나중에 삭제할 코드
-SERVER_TIME = datetime.now()
-TIME_YMDHIS = SERVER_TIME.strftime("%Y-%m-%d %H:%M:%S")
-TIME_YMD = SERVER_TIME
-
 
 def hash_password(password: str):
     '''
