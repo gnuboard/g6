@@ -26,9 +26,10 @@ async def find_member_id_form(request: Request):
     if member:
         return RedirectResponse("/", status_code=303)
 
-    return templates.TemplateResponse(
-        f"{request.state.device}/member/id_find_form.html", {"request": request}
-    )
+    context = {
+        "request": request
+    }
+    return templates.TemplateResponse("/member/id_find_form.html", context)
 
 
 @router.post("/id_lost", dependencies=[Depends(validate_token), Depends(validate_captcha)])
@@ -64,9 +65,7 @@ async def find_member_id(
         "member_id": hide_member_id(member.mb_id),
         "register_date": member.mb_datetime.strftime("%Y-%m-%d %H:%M:%S")
     }
-    return templates.TemplateResponse(
-        f"{request.state.device}/member/id_find_result.html", context
-    )
+    return templates.TemplateResponse(f"/member/id_find_result.html", context)
 
 
 @router.get("/password_lost")
@@ -78,9 +77,11 @@ async def find_member_password_form(request: Request):
     if member:
         return RedirectResponse("/", status_code=303)
 
+    context = {
+        "request": request,
+    }
     return templates.TemplateResponse(
-        f"{request.state.device}/member/password_find_form.html", {"request": request}
-    )
+        f"/member/password_find_form.html", context)
 
 
 @router.post("/password_lost", dependencies=[Depends(validate_token), Depends(validate_captcha)])
@@ -162,10 +163,12 @@ async def reset_password_form(
     member.mb_lost_certify = ""
     db.commit()
 
-    context = {"request": request, "member": member}
+    context = {
+        "request": request,
+        "member": member
+    }
     return templates.TemplateResponse(
-        f"{request.state.device}/member/password_reset_form.html", context
-    )
+        "/member/password_reset_form.html", context)
 
 
 @router.post("/password_reset/{mb_id}", dependencies=[Depends(validate_token), Depends(validate_captcha)])

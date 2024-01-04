@@ -26,9 +26,7 @@ async def member_leave_form(request: Request):
         "member": member,
         "action_url": request.url_for("member_leave")
     }
-    return templates.TemplateResponse(
-        f"{request.state.device}/member/member_confirm.html", context
-    )
+    return templates.TemplateResponse("/member/member_confirm.html", context)
 
 
 @router.post("/member_leave", dependencies=[Depends(validate_token)])

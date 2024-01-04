@@ -71,7 +71,7 @@ async def board_new_list(
         "current_page": current_page,
         "paging": get_paging(request, current_page, total_count, page_rows)
     }
-    return templates.TemplateResponse(f"{request.state.device}/new/basic/new_list.html", context)
+    return templates.TemplateResponse("/new/basic/new_list.html", context)
 
 
 @router.post("/new_delete", dependencies=[Depends(validate_token)])

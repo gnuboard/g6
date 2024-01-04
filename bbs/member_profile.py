@@ -47,9 +47,7 @@ async def check_member_form(request: Request, db: db_session):
         "member": member,
         "action_url": request.url_for("member_password")
     }
-    return templates.TemplateResponse(
-        f"{request.state.device}/member/member_confirm.html", context
-    )
+    return templates.TemplateResponse("/member/member_confirm.html", context)
 
 
 @router.post("/member_confirm", name='member_password')
@@ -98,14 +96,13 @@ async def member_profile(
         "is_profile_open": check_profile_open(open_date=member.mb_open_date, config=request.state.config)
     }
 
-    return templates.TemplateResponse(
-        f"{request.state.device}/member/register_form.html", {
-            "config": request.state.config,
-            "request": request,
-            "member": member,
-            "form": form_context,
-        }
-    )
+    context = {
+        "config": request.state.config,
+        "request": request,
+        "member": member,
+        "form": form_context,
+    }
+    return templates.TemplateResponse("/member/register_form.html", context)
 
 
 @router.post("/member_profile/{mb_no}", name='member_profile_save', dependencies=[Depends(validate_token), Depends(validate_captcha)])

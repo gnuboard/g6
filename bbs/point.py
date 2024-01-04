@@ -59,4 +59,4 @@ async def point_list(
         "page": current_page,
         "paging": get_paging(request, current_page, total_records),
     }
-    return templates.TemplateResponse(f"{request.state.device}/bbs/point_list.html", context)
+    return templates.TemplateResponse("/bbs/point_list.html", context)
