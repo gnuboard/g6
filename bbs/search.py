@@ -104,4 +104,4 @@ async def search(
         "groups": groups,
         "boards": boards,
     }
-    return templates.TemplateResponse(f"{request.state.device}/bbs/search.html", context)
+    return templates.TemplateResponse("/bbs/search.html", context)

@@ -1,12 +1,16 @@
 import logging
 import os
+import typing
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
-from jinja2 import Environment
+from jinja2 import Environment, FileSystemLoader
 from pydantic import TypeAdapter
 from sqlalchemy import select
+from starlette.background import BackgroundTask
 from starlette.staticfiles import StaticFiles
+from starlette.templating import _TemplateResponse
 
 from core.database import DBConnect
 from core.models import Config
@@ -15,13 +19,15 @@ from core.plugin import PLUGIN_DIR,\
 from lib.common import *
 
 
-def get_theme_from_db() -> str:
-    """DB에 설정된 테마의 경로를 반환
+def get_theme_path() -> str:
+    """설정에 따른 테마의 경로를 반환
+    - DB에 설정된 테마가 경로에 존재하지 않을 경우 기본 테마를 반환
 
     Returns:
         str: 테마 경로
     """
     default_theme = "basic"
+    default_theme_path = f"{TEMPLATES}/{default_theme}"
     try:
         with DBConnect().sessionLocal() as db:
             theme = db.scalar(select(Config.cf_theme)) or default_theme
@@ -29,16 +35,38 @@ def get_theme_from_db() -> str:
             
             # DB에 설정된 테마가 경로에 존재하는지 확인
             if not os.path.exists(theme_path):
-                theme_path = f"{TEMPLATES}/{default_theme}"
+                return default_theme_path
 
             return theme_path
     except Exception:
-        return f"{TEMPLATES}/{default_theme}"
+        return default_theme_path
+
 
 TEMPLATES = "templates"
-TEMPLATES_DIR = get_theme_from_db()  # 사용자 템플릿 경로
+TEMPLATES_DIR = get_theme_path()  # 사용자 템플릿 경로
 ADMIN_TEMPLATES_DIR = "admin/templates"  # 관리자 템플릿 경로
-IS_RESPONSIVE = TypeAdapter(bool).validate_python(os.getenv("IS_RESPONSIVE", True)) # 반응형 템플릿 여부
+
+
+class TemplateService():
+    """템플릿 서비스 클래스
+    - TODO: 반응형/적응형 변수 외의 다른 부분도 클래스화 해야한다.
+    """
+    _is_responsive: bool = None  # 반응형 템플릿 여부
+
+    @classmethod
+    def get_responsive(cls) -> bool:
+        if cls._is_responsive is None:
+            cls.set_responsive()
+
+        return cls._is_responsive
+    
+    @classmethod
+    def set_responsive(cls) -> None:
+        load_dotenv()
+        cls._is_responsive = (
+            TypeAdapter(bool)
+            .validate_python(os.getenv("IS_RESPONSIVE", True))
+        )
 
 
 class UserTemplates(Jinja2Templates):
@@ -48,6 +76,7 @@ class UserTemplates(Jinja2Templates):
     - 싱글톤 패턴으로 구현
     """
     _instance = None
+    _is_mobile: bool = False
     default_directories = [TEMPLATES_DIR, EDITOR_PATH, CAPTCHA_PATH]
 
     def __new__(cls, *args, **kwargs):
@@ -59,8 +88,7 @@ class UserTemplates(Jinja2Templates):
     def __init__(self,
                  context_processors: dict = None,
                  globals: dict = None,
-                 env: Environment = None
-                 ):
+                 env: Environment = None):
         if not getattr(self, '_initialized', False):
             self._initialized = True
             super().__init__(directory=self.default_directories, context_processors=context_processors)
@@ -92,22 +120,37 @@ class UserTemplates(Jinja2Templates):
         }
         return context
 
-    # temp debug
-    # def TemplateResponse(
-    #         self,
-    #         name: str,
-    #         context: dict,
-    #         status_code: int = 200,
-    #         headers: typing.Optional[typing.Mapping[str, str]] = None,
-    #         media_type: typing.Optional[str] = None,
-    #         background=None):
+    def TemplateResponse(
+        self,
+        name: str,
+        context: dict,
+        status_code: int = 200,
+        headers: typing.Optional[typing.Mapping[str, str]] = None,
+        media_type: typing.Optional[str] = None,
+        background: typing.Optional[BackgroundTask] = None,
+    ) -> _TemplateResponse:
+        """Jinja2Templates TemplateResponse Override
+        
+        적응형&모바일 접근일 경우 모바일 템플릿을 우선으로 검색하도록 경로를 재설정한다.
+        - mobile 템플릿이 존재하지 않을 경우 기본 템플릿을 자동으로 사용한다.
+        - 클래스 변수(_is_mobile)를 통해 이전 요청과 비교하여 변경되었을 경우에만 경로를 재설정한다.
+        - 해당 로직은 생성자에서 처리하지 못한다.
+        """
+        request = context.get("request")
+        is_mobile: bool = getattr(request.state, "is_mobile", False)
+        if (not TemplateService.get_responsive()
+                and self._is_mobile != is_mobile):
+            # 경로 우선순위 변경
+            if is_mobile:
+                self.default_directories.insert(0, f"{TEMPLATES_DIR}/mobile")
+            else:
+                self.default_directories.remove(f"{TEMPLATES_DIR}/mobile")
 
-    #     logger = logging.getLogger("uvicorn.error")
-    #     logger.warning("------template---------")
-    #     logger.info(name)
-    #     logger.info(self.env.loader.searchpath)
+            # 템플릿 로더 재설정
+            self.env.loader = FileSystemLoader(self.default_directories)
+            self._is_mobile = is_mobile
 
-    #     return super().TemplateResponse(name, context, status_code, headers, media_type, background)
+        return super().TemplateResponse(name, context, status_code, headers, media_type, background)
 
 
 class AdminTemplates(Jinja2Templates):

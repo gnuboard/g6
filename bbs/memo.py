@@ -52,7 +52,7 @@ async def memo_list(
         "page": current_page,
         "paging": get_paging(request, current_page, total_records),
     }
-    return templates.TemplateResponse(f"{request.state.device}/memo/memo_list.html", context)
+    return templates.TemplateResponse("/memo/memo_list.html", context)
 
 
 @router.get("/memo_view/{me_id}")
@@ -125,7 +125,7 @@ async def memo_view(
         "prev_memo": prev_memo,
         "next_memo": next_memo,
     }
-    return templates.TemplateResponse(f"{request.state.device}/memo/memo_view.html", context)
+    return templates.TemplateResponse("/memo/memo_view.html", context)
 
 
 @router.get("/memo_form")
@@ -155,7 +155,7 @@ async def memo_form(
         "target": target,
         "memo": memo,
     }
-    return templates.TemplateResponse(f"{request.state.device}/memo/memo_form.html", context)
+    return templates.TemplateResponse("/memo/memo_form.html", context)
 
 
 @router.post("/memo_form_update", dependencies=[Depends(validate_token), Depends(validate_captcha)])

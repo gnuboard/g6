@@ -34,7 +34,11 @@ async def get_register(
 
     request.session["ss_agree"] = ""
     request.session["ss_agree2"] = ""
-    return templates.TemplateResponse(f"{request.state.device}/bbs/register.html", {"request": request})
+
+    context = {
+        "request": request
+    }
+    return templates.TemplateResponse("/bbs/register.html", context)
 
 
 @router.post("/register")
@@ -82,7 +86,7 @@ async def get_register_form(request: Request):
         "form": form_context,
         "config": request.state.config,
     }
-    return templates.TemplateResponse(f"{request.state.device}/member/register_form.html", context)
+    return templates.TemplateResponse("/member/register_form.html", context)
 
 
 @router.post("/register_form",
@@ -310,7 +314,7 @@ async def register_result(
         "request": request,
         "member": member,
     }
-    return templates.TemplateResponse(f"{request.state.device}/bbs/register_result.html", context)
+    return templates.TemplateResponse("/bbs/register_result.html", context)
 
 
 @router.get("/email_certify/{mb_id}")

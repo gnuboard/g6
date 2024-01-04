@@ -8,7 +8,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from core.plugin import register_plugin_admin_menu, get_plugin_state_change_time,\
     read_plugin_state, cache_plugin_state, cache_plugin_menu, register_plugin,\
     unregister_plugin, delete_router_by_tagname
-from core.template import IS_RESPONSIVE
+from core.template import TemplateService
 
 
 def regist_core_middleware(app: FastAPI) -> None:
@@ -50,20 +50,18 @@ def regist_core_middleware(app: FastAPI) -> None:
 
         # 모바일 여부 설정
         request.state.is_mobile = False
+        
         user_agent = request.headers.get("User-Agent", "")
         ua = parse(user_agent)
         # 모바일과 태블릿에서 접속하면 모바일로 간주
-        if ua.is_mobile or ua.is_tablet:  
+        if ua.is_mobile or ua.is_tablet:
             request.state.is_mobile = True
 
-        # 디바이스별 템플릿 경로의 기본값을 설정합니다.
-        # PC일 경우: "",
-        # MOBILE일 경우: "mobile"
-        request.state.device = ""
-        if not IS_RESPONSIVE:
-            # 반응형이 아니라면 모바일 접속은 mobile로, 그 외 접속은 PC로 간주
-            if request.state.is_mobile:
-                request.state.device = "mobile"
+        # 디바이스 기본값을 설정합니다.
+        # 반응형이 아니라면 모바일 접속은 mobile로, 그 외 접속은 PC로 간주합니다.
+        request.state.device = "pc"
+        if not TemplateService.get_responsive() and request.state.is_mobile:
+            request.state.device = "mobile"
 
         return await call_next(request)
 

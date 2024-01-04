@@ -106,7 +106,7 @@ async def poll_result(
         "etcs": etcs,
         "other_list": other_list
     }
-    return templates.TemplateResponse(f"{request.state.device}/bbs/poll_result.html", context)
+    return templates.TemplateResponse("/bbs/poll_result.html", context)
 
 
 @router.post("/poll_etc_update/{po_id}", dependencies=[Depends(validate_token)])

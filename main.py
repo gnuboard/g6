@@ -15,7 +15,7 @@ from core.middleware import should_run_middleware, regist_core_middleware
 from core.plugin import register_plugin, register_plugin_admin_menu,\
     get_plugin_state_change_time, read_plugin_state, import_plugin_by_states,\
     cache_plugin_state, cache_plugin_menu, register_statics
-from core.template import TEMPLATES_DIR, UserTemplates, register_theme_statics
+from core.template import UserTemplates, register_theme_statics
 
 from lib.common import *
 from lib.member_lib import MemberService
@@ -278,7 +278,7 @@ async def index(request: Request, db: db_session):
         "newwins": get_newwins(request),
         "boards": boards,
     }
-    return templates.TemplateResponse(f"{request.state.device}/index.html", context)
+    return templates.TemplateResponse("/index.html", context)
 
 
 @app.post("/generate_token")

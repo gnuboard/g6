@@ -670,7 +670,7 @@ def visit(request: Request):
         "total": int(total)
     }
     templates = UserTemplates()
-    visit_template = templates.TemplateResponse(f"visit/basic.html", context)
+    visit_template = templates.TemplateResponse("visit/basic.html", context)
 
     return visit_template.body.decode("utf-8")
 
