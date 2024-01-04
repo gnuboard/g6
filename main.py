@@ -26,6 +26,7 @@ from lib.common import *
 from lib.member_lib import is_admin, MemberService
 from lib.point import insert_point
 from lib.template_filters import default_if_none
+from lib.token import create_session_token
 
 # .env 파일로부터 환경 변수를 로드합니다. 
 # 이 함수는 해당 파일 내의 키-값 쌍을 환경 변수로 로드하는 데 사용됩니다.

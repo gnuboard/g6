@@ -5,7 +5,6 @@ import logging
 import os
 import random
 import re
-import secrets
 import shutil
 import smtplib
 from datetime import datetime, timedelta, date
@@ -161,21 +160,6 @@ def get_head_tail_img(dir: str, filename: str):
         "img_url": os.path.join('/data', dir, filename) if img_exists else None,
         "width": width
     }
-
-
-def check_token(request: Request, token: str):
-    '''
-    세션과 인수로 넘어온 토큰확인 함수
-    '''
-    if token is None:
-        return False
-    
-    token = token.strip()
-    if token and token == request.session.get("ss_token"):
-        # 세션 삭제
-        request.session["ss_token"] = ""
-        return True
-    return False
 
 
 def get_client_ip(request: Request) -> str:
@@ -558,18 +542,6 @@ def insert_popular(request: Request, fields: str, word: str):
                     db.commit()
     except Exception as e:
         print(f"인기검색어 입력 오류: {e}")
-
-
-def create_session_token(request: Request):
-    """
-    토큰 생성 함수
-
-    Returns:
-        str: 생성된 토큰
-    """
-    token = secrets.token_hex(16)  # 16바이트 토큰 생성
-    request.session["ss_token"] = token  # 세션에 토큰 저장
-    return token
 
 
 lfu_cache = LFUCache(maxsize=128)

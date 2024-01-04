@@ -9,6 +9,7 @@ from lib.common import *
 from lib.dependencies import validate_token
 from lib.pbkdf2 import validate_password
 from lib.template_filters import default_if_none
+from lib.token import create_session_token
 
 router = APIRouter()
 templates = UserTemplates()

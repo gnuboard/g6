@@ -8,10 +8,10 @@ from core.database import DBConnect
 from core.exception import AlertException
 from core.models import Auth, Board, GroupMember
 from lib.common import (
-    ENV_PATH, check_token,
-    get_current_admin_menu_id, get_current_captcha_cls
+    ENV_PATH, get_current_admin_menu_id, get_current_captcha_cls
 )
 from lib.member_lib import get_admin_type, is_admin
+from lib.token import check_token
 
 async def get_variety_tokens(
     token_form: Annotated[str, Form(alias="token")] = None,
