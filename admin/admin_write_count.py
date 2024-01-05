@@ -247,10 +247,8 @@ async def write_count(request: Request, db: db_session,
     })
     
     # x_label에 따라 날짜/시간 형식 변경
-    if df[x_label].empty:
-        pass
-    elif x_label == "hours":
-        df[x_label] = datetime.strptime(f"{df[x_label].iloc[0]}:00", "%H:%M").strftime('%H:%M %p')
+    if x_label == "hours":
+        df[x_label] = pd.to_datetime(df[x_label].astype(str), format='%H').dt.strftime('%H:%M %p')
     elif x_label == "days":
         df[x_label] = pd.to_datetime(df[x_label]).dt.strftime('%y-%m-%d')
     elif x_label == "weeks":
@@ -264,7 +262,7 @@ async def write_count(request: Request, db: db_session,
     elif x_label == "months":
         df[x_label] = pd.to_datetime(df[x_label]).dt.strftime('%b, %Y')
     elif x_label == "years":
-        df[x_label] = pd.to_datetime(df[x_label]).dt.strftime('%Y')
+        df[x_label] = pd.to_datetime(df[x_label].astype(str), format= '%Y').dt.strftime('%Y')
         
     if not (graph == 'bar' or graph == 'line' or graph == 'scatter'):
         graph = 'bar'
