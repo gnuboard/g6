@@ -6,7 +6,7 @@
         <h2><span class="sound_only">회원</span>로그인</h2>
         <a href="/bbs/register" class="join">회원가입</a>
     </div>
-    <form name="foutlogin" action="/bbs/login_check" onsubmit="return fhead_submit(this);" method="post" autocomplete="off">
+    <form name="foutlogin" action="/bbs/login" onsubmit="return fhead_submit(this);" method="post" autocomplete="off">
     <fieldset>
         <div class="ol_wr">
             <input type="hidden" name="url" value="{{ request.url }}">
