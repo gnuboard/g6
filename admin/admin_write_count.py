@@ -25,9 +25,9 @@ WRITE_COUNT_MENU_KEY = "300820"
 
 @router.get("/write_count")
 async def write_count(request: Request, db: db_session, 
-        bo_table: str = Query(None, alias="bo_table"),
-        period: str = Query(None, alias="period"),
-        graph: str = Query(None, alias="graph")
+        bo_table: str = Query("", alias="bo_table"),
+        period: str = Query("오늘", alias="period"),
+        graph: str = Query("bar", alias="graph")
         ):
     '''
     글, 댓글 현황 그래프
@@ -48,14 +48,8 @@ async def write_count(request: Request, db: db_session,
         '5년전': ['년', 365*5],
         '10년전': ['년', 365*10],
     }
-    is_period = False
-    for key, value in period_array.items():
-        if key == period:
-            is_period = True
-            break
-    if not is_period:
-        period = '오늘'
-    day = period_array[period][0]
+    day_info = period_array.get(period)
+    day = day_info[0]
 
     today = datetime.now().date()
     today_min_time = datetime.combine(today, datetime.min.time())
@@ -73,7 +67,7 @@ async def write_count(request: Request, db: db_session,
         from_date = today_min_time + timedelta(days=1)
         to_date = today_max_time + timedelta(days=1)
     else:
-        from_date = today_min_time - timedelta(days=period_array[period][1])
+        from_date = today_min_time - timedelta(days=day_info[1])
         to_date = yesterday_max_time
     
     bo_table_array = db.execute(select(Board.bo_table, Board.bo_subject).order_by(Board.bo_count_write.desc())).all()
