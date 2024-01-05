@@ -121,14 +121,14 @@ class UserTemplates(Jinja2Templates):
 
     def _default_context(self, request: Request):
         # Lazy import
-        from lib.board_lib import latest
+        from lib.board_lib import render_latest_posts
 
         context = {
             "menus": get_menus(),
             "poll": get_recent_poll(),
             "populars": get_populars(),
-            "latest": latest,
-            "visit": visit,
+            "render_latest_posts": render_latest_posts,
+            "render_visit_statistics": render_visit_statistics,
         }
         return context
 

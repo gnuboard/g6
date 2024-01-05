@@ -119,7 +119,7 @@ async def member_list_update(
             member.mb_level = mb_level[i]
             db.commit()
 
-    return RedirectResponse(f"/admin/member_list?{query_string(request)}", status_code=303)
+    return RedirectResponse(f"/admin/member_list?{generate_query_string(request)}", status_code=303)
 
 
 @router.post("/member_list_delete", dependencies=[Depends(validate_token)])

@@ -28,13 +28,13 @@
 <script src="/static/js/wrest.js"></script>
 <script>
 // 자바스크립트에서 사용하는 전역변수 선언
-var g6_url       = "{{ request.base_url }}";
-var g6_bbs_url   = "{{ request.base_url }}bbs";
-var g6_is_member = "{{ 1 if request.state.login_member else '' }}";
-var g6_is_mobile = "{{ 1 if request.state.is_mobile else '' }}";
-var g6_editor    = "{{ request.state.editor }}";
-var g6_cookie_domain = "{{ request.state.cookie_domain }}";
-var g6_shop_url = "{{ request.base_url }}shop";
+const g6_url       = "{{ request.base_url }}";
+const g6_bbs_url   = "{{ request.base_url }}bbs";
+const g6_is_member = "{{ 1 if request.state.login_member else '' }}";
+const g6_is_mobile = "{{ 1 if request.state.is_mobile else '' }}";
+const g6_editor    = "{{ request.state.editor }}";
+const g6_cookie_domain = "{{ request.state.cookie_domain }}";
+const g6_shop_url = "{{ request.base_url }}shop";
 </script>
 {% block head -%}
 {% endblock head -%}

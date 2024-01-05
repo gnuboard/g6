@@ -97,20 +97,12 @@ def dynamic_create_write_table(
     _created_models[table_name] = DynamicModel
     return DynamicModel
 
-def get_real_client_ip(request: Request):
-    '''
-    클라이언트의 IP 주소를 반환하는 함수
-    '''
-    if 'X-Forwarded-For' in request.headers:
-        return request.headers.getlist("X-Forwarded-For")[0].split(',')[0]
-    return request.client.host
-
 
 def session_member_key(request: Request, member: Member):
     '''
     세션에 저장할 회원의 고유키를 생성하여 반환하는 함수
     '''
-    ss_mb_key = hashlib.md5((member.mb_datetime.strftime(format="%Y-%m-%d %H:%M:%S") + get_real_client_ip(request) + request.headers.get('User-Agent')).encode()).hexdigest()
+    ss_mb_key = hashlib.md5((member.mb_datetime.strftime(format="%Y-%m-%d %H:%M:%S") + get_client_ip(request) + request.headers.get('User-Agent')).encode()).hexdigest()
     return ss_mb_key
 
 
@@ -232,35 +224,8 @@ def generate_query_string(request: Request):
     search_fields = {k: v for k, v in search_fields.items() if v is not None}
 
     return urlencode(search_fields)    
-            
 
-def query_string(request: Request):
-    search_fields = {}
-    if request.method == "GET":
-        search_fields = {
-            'sst': request.query_params.get("sst"),
-            'sod': request.query_params.get("sod"),
-            'sfl': request.query_params.get("sfl"),
-            'stx': request.query_params.get("stx"),
-            'sca': request.query_params.get("sca"),
-            # 'page': request.query_params.get("page")
-        }
-    else:
-        search_fields = {
-            'sst': request._form.get("sst") if request._form else "",
-            'sod': request._form.get("sod") if request._form else "",
-            'sfl': request._form.get("sfl") if request._form else "",
-            'stx': request._form.get("stx") if request._form else "",
-            'sca': request._form.get("sca") if request._form else "",
-            # 'page': request._form.get("page") if request._form else ""
-        }    
-        
-    # None 값을 제거
-    search_fields = {k: v for k, v in search_fields.items() if v is not None}
 
-    return urlencode(search_fields)    
-
-        
 # 파이썬의 내장함수인 list 와 이름이 충돌하지 않도록 변수명을 lst 로 변경함
 def get_from_list(lst, index, default=0):
     if lst is None:
@@ -292,7 +257,7 @@ def record_visit(request: Request):
         request (Request): FastAPI Request 객체
     """
     db = DBConnect().sessionLocal()
-    vi_ip = get_real_client_ip(request)
+    vi_ip = get_client_ip(request)
 
     # 오늘의 접속이 이미 기록되어 있는지 확인
     existing_visit = db.scalar(
@@ -342,7 +307,7 @@ def record_visit(request: Request):
     db.close()
 
 
-def visit(request: Request):
+def render_visit_statistics(request: Request):
     """방문자 수 출력"""
     # Lazy import
     from core.template import UserTemplates

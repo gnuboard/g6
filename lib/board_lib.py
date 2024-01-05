@@ -978,19 +978,19 @@ def generate_reply_character(board: Board, write):
     return origin_reply + reply_char
 
 
-def is_owner(object: object, mb_id: str = None):
+def is_owner(mb_id_object: object, mb_id: str = None):
     """ 게시글/댓글 작성자인지 확인한다.
 
     Args:
-        object (object): mb_id 속성을 가진 객체
+        mb_id_object (object): mb_id 속성을 가진 객체
         mb_id (str, optional): 회원 아이디. Defaults to None.
 
     Returns:
         _type_: _description_
     """
-    object_mb_id = getattr(object, "mb_id", None)
-    if object_mb_id:
-        return object_mb_id == mb_id
+    attr_mb_id = getattr(mb_id_object, "mb_id", None)
+    if attr_mb_id:
+        return attr_mb_id == mb_id
     else:
         return False
 
@@ -1320,7 +1320,7 @@ def insert_board_new(bo_table: str, write: WriteBaseModel) -> None:
     db.close()
 
 
-def latest(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
+def render_latest_posts(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
     """최신글 목록 HTML 출력
 
     Args:

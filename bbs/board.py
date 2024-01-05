@@ -82,7 +82,7 @@ async def group_board_list(
         "request": request,
         "group": group,
         "boards": boards,
-        "latest": latest
+        "render_latest_posts": render_latest_posts
     }
     return templates.TemplateResponse("/board/group.html", context)
 
