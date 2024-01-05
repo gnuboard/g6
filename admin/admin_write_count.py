@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
 from fastapi import APIRouter, Query, Request
 from sqlalchemy import case, func, or_, select
@@ -268,23 +269,38 @@ async def write_count(request: Request, db: db_session,
         graph = 'bar'
     
     # 그래프 생성 함수를 매핑합니다.
-    graph_mapping = {
-        'bar': px.bar,
-        'line': px.line,
-        'scatter': px.scatter,
-    }
+    if not df[x_label].empty:
+        graph_mapping = {
+            'bar': px.bar,
+            'line': px.line,
+            'scatter': px.scatter,
+        }
+
+        # 그래프 생성
+        #fig = px.bar(...)
         
-    # 그래프 생성
-    #fig = px.bar(...)
-    fig = graph_mapping[graph](df, x=x_label, y=['write_count', 'comment_count'], 
-                labels={'value': 'Count', 'x': x_label, 'variable': 'Type'},
-                title=f'글수(write_count), 댓글수(comment_count)')
-    # 라인 굵기 변경
-    # fig.update_traces(line=dict(width=100)) 
-    
-    # df = px.data.iris()  # 예제 데이터셋 로드
-    # fig = px.scatter(df, x="sepal_width", y="sepal_length", color="species", 
-    #                  size='petal_length', hover_data=['petal_width'])    
+        fig = graph_mapping[graph](df, x=x_label, y=['write_count', 'comment_count'], 
+                    labels={'value': 'Count', 'x': x_label, 'variable': 'Type'},
+                    title=f'글수(write_count), 댓글수(comment_count)')
+        # 라인 굵기 변경
+        # fig.update_traces(line=dict(width=100)) 
+        
+        # df = px.data.iris()  # 예제 데이터셋 로드
+        # fig = px.scatter(df, x="sepal_width", y="sepal_length", color="species", 
+        #                  size='petal_length', hover_data=['petal_width'])   
+    else:
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=[0.5], y=[0.5],
+            text=['그래프를 만들 데이터가 없습니다'],
+            mode='text',
+        ))
+        fig.update_layout(
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            font=dict(size=20),
+            height=300,
+        )
     graph_html = fig.to_html()
     
     context = {
