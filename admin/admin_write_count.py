@@ -57,20 +57,23 @@ async def write_count(request: Request, db: db_session,
     day = period_array[period][0]
 
     today = datetime.now().date()
-    yesterday = today - timedelta(days=1)
+    today_min_time = datetime.combine(today, datetime.min.time())
+    today_max_time = datetime.combine(today, datetime.max.time())
+    yesterday_min_time = today_min_time - timedelta(days=1)
+    yesterday_max_time = today_max_time - timedelta(days=1)
         
     if period == '오늘':
-        from_date = today
-        to_date = from_date
+        from_date = today_min_time
+        to_date = today_max_time
     elif period == '어제':
-        from_date = yesterday
-        to_date = from_date
+        from_date = yesterday_min_time
+        to_date = yesterday_max_time
     elif period == '내일':
-        from_date = datetime.now() + timedelta(days=2)
-        to_date = from_date
+        from_date = today_min_time + timedelta(days=1)
+        to_date = today_max_time + timedelta(days=1)
     else:
-        from_date = datetime.now() - timedelta(days=period_array[period][1])
-        to_date = yesterday
+        from_date = today_min_time - timedelta(days=period_array[period][1])
+        to_date = yesterday_max_time
     
     bo_table_array = db.execute(select(Board.bo_table, Board.bo_subject).order_by(Board.bo_count_write.desc())).all()
 
@@ -80,7 +83,6 @@ async def write_count(request: Request, db: db_session,
     x_data = []
     y_data = []
     x_label = ""
-    bn_datetime_date = func.substr(BoardNew.bn_datetime, 1, 10)
     
     if day == '시간':
         
@@ -97,7 +99,7 @@ async def write_count(request: Request, db: db_session,
                 func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
                 func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
             ).filter(
-                bn_datetime_date.between(from_date, to_date),
+                BoardNew.bn_datetime.between(from_date, to_date),
                 or_(BoardNew.bo_table == bo_table, bo_table == '')
             ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime)
         ).all()
@@ -125,7 +127,7 @@ async def write_count(request: Request, db: db_session,
                 func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
                 func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
             ).filter(
-                bn_datetime_date.between(from_date, to_date),
+                BoardNew.bn_datetime.between(from_date, to_date),
                 or_(BoardNew.bo_table == bo_table, bo_table == '')
             ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime)
         ).all()
@@ -156,7 +158,7 @@ async def write_count(request: Request, db: db_session,
                 func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
                 func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
             ).filter(
-                bn_datetime_date.between(from_date, to_date),
+                BoardNew.bn_datetime.between(from_date, to_date),
                 or_(BoardNew.bo_table == bo_table, bo_table == '')
             ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime)
         ).all()
@@ -186,7 +188,7 @@ async def write_count(request: Request, db: db_session,
                 func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
                 func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
             ).filter(
-                bn_datetime_date.between(from_date, to_date),
+                BoardNew.bn_datetime.between(from_date, to_date),
                 or_(BoardNew.bo_table == bo_table, bo_table == '')
             ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime)
         ).all()
@@ -214,7 +216,7 @@ async def write_count(request: Request, db: db_session,
                 func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
                 func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
             ).filter(
-                bn_datetime_date.between(from_date, to_date),
+                BoardNew.bn_datetime.between(from_date, to_date),
                 or_(BoardNew.bo_table == bo_table, bo_table == '')
             ).group_by('year', BoardNew.bn_datetime).order_by(BoardNew.bn_datetime)
         ).all()
