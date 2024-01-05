@@ -212,18 +212,19 @@ async def write_count(request: Request, db: db_session,
 
         result = db.execute(
             select(
-                year_expr.label('year'), 
+                year_expr.label(x_label), 
                 func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
                 func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
             ).filter(
                 BoardNew.bn_datetime.between(from_date, to_date),
                 or_(BoardNew.bo_table == bo_table, bo_table == '')
-            ).group_by('year', BoardNew.bn_datetime).order_by(BoardNew.bn_datetime)
+            ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime)
         ).all()
 
         for row in result:
-            x_data.append(f"['{row.years[:4]}',{row.write_count}]")
-            y_data.append(f"['{row.years[:4]}',{row.comment_count}]")
+            year = str(row.years)[:4]
+            x_data.append(f"['{year}',{row.write_count}]")
+            y_data.append(f"['{year}',{row.comment_count}]")
 
     
     # 날짜별로 글과 댓글을 합침
