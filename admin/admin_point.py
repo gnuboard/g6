@@ -93,7 +93,9 @@ async def point_update(
     rel_action = exist_member.mb_id + '-' + str(uuid.uuid4())
     insert_point(request, mb_id, po_point, po_content, "@passive", mb_id, rel_action, po_expire_term)
 
-    return RedirectResponse(f"/admin/point_list?{request.query_params}", status_code=303)
+    url = "/admin/point_list"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 @router.post("/point_list_delete", dependencies=[Depends(validate_token)])
@@ -142,4 +144,6 @@ async def point_list_delete(
         )
         db.commit()
 
-    return RedirectResponse(f"/admin/point_list?{request.query_params}", status_code=303)
+    url = "/admin/point_list"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)

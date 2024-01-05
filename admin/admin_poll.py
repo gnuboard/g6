@@ -63,7 +63,9 @@ async def poll_list_delete(
     db.execute(delete(PollEtc).where(PollEtc.po_id.in_(checks)))
     db.commit()
 
-    return RedirectResponse(f"/admin/poll_list?{request.query_params}", status_code=303)
+    url = "/admin/poll_list"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 @router.get("/poll_form")
@@ -115,4 +117,6 @@ async def poll_form_update(
         # 기존캐시 삭제
         lfu_cache.update({"poll": None})
 
-    return RedirectResponse(url=f"/admin/poll_form/{poll.po_id}?{request.query_params}", status_code=302)
+    url = f"/admin/poll_form/{poll.po_id}"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 302)

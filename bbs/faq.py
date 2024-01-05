@@ -29,8 +29,9 @@ async def faq_view(request: Request, db: db_session, fm_id: int = None):
     # faq_master에 속한 faq 목록
     query = select(Faq).where(Faq.fa_id.in_([faq.fa_id for faq in faq_master.faqs]))
     # 제목과 내용 중 검색어가 있으면 검색한다.
-    if request.state.stx:
-        query = query.where(Faq.fa_subject.like(f"%{request.state.stx}%") | Faq.fa_content.like(f"%{request.state.stx}%"))
+    stx = request.query_params.get("stx", None)
+    if stx:
+        query = query.where(Faq.fa_subject.like(f"%{stx}%") | Faq.fa_content.like(f"%{stx}%"))
     faqs = db.scalars(query.order_by(Faq.fa_order.asc())).all()
 
     # 상단/하단 이미지가 있으면 이미지를 출력하고 없으면 내용의 첫번째 이미지를 출력한다.

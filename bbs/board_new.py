@@ -121,9 +121,9 @@ async def new_delete(
 
     db.commit()
 
-    query_string = "?" + request.query_params.__str__() if request.query_params else ""
-
-    return RedirectResponse(f"/bbs/new{query_string}", status_code=303)
+    url = "/bbs/new"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 def format_datetime(wr_datetime: datetime):

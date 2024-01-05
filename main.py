@@ -183,12 +183,12 @@ async def main_middleware(request: Request, call_next):
             member.mb_login_ip = request.client.host
             db.commit()
 
+    db.close()
+
     # 로그인한 회원 정보
     request.state.login_member = member
     # 최고관리자 여부
     request.state.is_super_admin = is_admin(request, getattr(member, "mb_id", None))
-
-    db.close()
 
     # 접근가능/차단 IP 체크
     # - IP 체크 기능을 사용할 때 is_super_admin 여부를 확인하기 때문에 로그인 코드 이후에 실행
@@ -197,23 +197,6 @@ async def main_middleware(request: Request, call_next):
         return HTMLResponse("<meta charset=utf-8>접근이 허용되지 않은 IP 입니다.")
     if is_intercept_ip(request, current_ip):
         return HTMLResponse("<meta charset=utf-8>접근이 차단된 IP 입니다.")
-
-    if request.method == "GET":
-        # 쿼리 파라미터에서 값을 가져와서 request의 상태에 저장합니다. 값이 없으면 빈 문자열을 저장합니다.
-        request.state.sst = request.query_params.get("sst") if request.query_params.get("sst") else ""
-        request.state.sod = request.query_params.get("sod") if request.query_params.get("sod") else ""
-        request.state.sfl = request.query_params.get("sfl") if request.query_params.get("sfl") else ""
-        request.state.stx = request.query_params.get("stx") if request.query_params.get("stx") else ""
-        request.state.sca = request.query_params.get("sca") if request.query_params.get("sca") else ""
-        request.state.page = request.query_params.get("page") if request.query_params.get("page") else ""
-    else:
-        # 폼 데이터에서 값을 가져와서 request의 상태에 저장합니다. 값이 없으면 빈 문자열을 저장합니다.
-        request.state.sst = request._form.get("sst") if request._form and request._form.get("sst") else ""
-        request.state.sod = request._form.get("sod") if request._form and request._form.get("sod") else ""
-        request.state.sfl = request._form.get("sfl") if request._form and request._form.get("sfl") else ""
-        request.state.stx = request._form.get("stx") if request._form and request._form.get("stx") else ""
-        request.state.sca = request._form.get("sca") if request._form and request._form.get("sca") else ""
-        request.state.page = request._form.get("page") if request._form and request._form.get("page") else ""
 
     # 응답 객체 설정
     response: Response = await call_next(request)

@@ -334,12 +334,12 @@ def subject_sort_link(request: Request,
     Returns:
         str: 정렬 링크
     """
-    sst = request.state.sst if request.state.sst is not None else ""
-    sod = request.state.sod if request.state.sod is not None else ""
-    sfl = request.state.sfl if request.state.sfl is not None else ""
-    stx = request.state.stx if request.state.stx is not None else ""
-    sca = request.state.sca if request.state.sca is not None else ""
-    page = request.state.page if request.state.page is not None else ""
+    sst = request.query_params.get("sst", "")
+    sod = request.query_params.get("sod", "")
+    sfl = request.query_params.get("sfl", "")
+    stx = request.query_params.get("stx", "")
+    sca = request.query_params.get("sca", "")
+    page = request.query_params.get("page", "")
 
     # q1에는 column 값을 추가한다.
     q1 = f"sst={column}"

@@ -352,7 +352,9 @@ async def qa_delete(
     db.delete(qa)
     db.commit()
 
-    return RedirectResponse(f"/bbs/qalist?{request.query_params}", status_code=302)
+    url = "/bbs/qalist"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 302)
 
 
 @router.post("/qadelete/list", dependencies=[Depends(validate_token)])
@@ -371,7 +373,9 @@ async def qa_delete_list(
     db.execute(delete(QaContent).where(QaContent.qa_id.in_(checks)))
     db.commit()
 
-    return RedirectResponse(f"/bbs/qalist?{request.query_params}", status_code=303)
+    url = "/bbs/qalist"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 @router.get("/qaview/{qa_id}")

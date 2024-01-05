@@ -95,13 +95,13 @@ async def member_list(
 async def member_list_update(
     request: Request,
     db: db_session,
-    checks: Optional[List[int]] = Form(None, alias="chk[]"),
-    mb_id: Optional[List[str]] = Form(None, alias="mb_id[]"),
-    mb_open: Optional[List[int]] = Form(None, alias="mb_open[]"),
-    mb_mailling: Optional[List[int]] = Form(None, alias="mb_mailling[]"),
-    mb_sms: Optional[List[int]] = Form(None, alias="mb_sms[]"),
-    mb_intercept_date: Optional[List[int]] = Form(None, alias="mb_intercept_date[]"),
-    mb_level: Optional[List[str]] = Form(None, alias="mb_level[]"),
+    checks: List[int] = Form(None, alias="chk[]"),
+    mb_id: List[str] = Form(None, alias="mb_id[]"),
+    mb_open: List[int] = Form(None, alias="mb_open[]"),
+    mb_mailling: List[int] = Form(None, alias="mb_mailling[]"),
+    mb_sms: List[int] = Form(None, alias="mb_sms[]"),
+    mb_intercept_date: List[int] = Form(None, alias="mb_intercept_date[]"),
+    mb_level: List[str] = Form(None, alias="mb_level[]"),
 ):
     """회원관리 목록 일괄 수정"""
     for i in checks:
@@ -119,7 +119,9 @@ async def member_list_update(
             member.mb_level = mb_level[i]
             db.commit()
 
-    return RedirectResponse(f"/admin/member_list?{generate_query_string(request)}", status_code=303)
+    query_params = request.query_params
+    url = "/admin/member_list"
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 @router.post("/member_list_delete", dependencies=[Depends(validate_token)])
@@ -198,7 +200,9 @@ async def member_list_delete(
 
             db.commit()
 
-    return RedirectResponse(f"/admin/member_list?{request.query_params}", status_code=303)
+    url = "/admin/member_list"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 @router.get("/member_form")
@@ -319,7 +323,9 @@ async def member_form_update(
     upload_member_icon(mb_id, mb_icon, del_mb_icon)
     upload_member_image(mb_id, mb_img, del_mb_img)
 
-    return RedirectResponse(url=f"/admin/member_form/{mb_id}", status_code=302)
+    url = f"/admin/member_form/{mb_id}"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 302)
 
 
 @router.get("/check_member_id/{mb_id}")

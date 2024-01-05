@@ -70,7 +70,9 @@ async def boardgroup_list_update(
             group.gr_device = gr_device[i]
             db.commit()
 
-    return RedirectResponse(f"/admin/boardgroup_list?{request.query_params}", status_code=303)
+    url = "/admin/boardgroup_list"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 @router.post("/boardgroup_list_delete", dependencies=[Depends(validate_token)])
@@ -97,7 +99,9 @@ async def boardgroup_list_delete(
 
     db.commit()
 
-    return RedirectResponse(f"/admin/boardgroup_list?{request.query_params}", status_code=303)
+    url = "/admin/boardgroup_list"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 @router.get("/boardgroup_form")
@@ -163,4 +167,6 @@ async def boardgroup_form_update(
     else:
         raise AlertException("잘못된 접근입니다.", 400)
 
-    return RedirectResponse(url=f"/admin/boardgroup_form/{gr_id}?{request.query_params}", status_code=303)
+    url = f"/admin/boardgroup_form/{gr_id}"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)

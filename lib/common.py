@@ -11,7 +11,7 @@ from datetime import datetime, timedelta, date
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from time import sleep
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 from urllib.parse import urlencode
 
 from cachetools import LFUCache, TTLCache
@@ -22,6 +22,7 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 from passlib.context import CryptContext
 from sqlalchemy import Index, asc, desc, func, select, delete, between, exists
 from sqlalchemy.exc import IntegrityError
+from starlette.datastructures import URL
 from user_agents import parse
 
 from core.database import DBConnect
@@ -197,33 +198,6 @@ def save_image(directory: str, filename: str, file: UploadFile):
     if file and file.filename:
         with open(f"{directory}/{filename}", "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-            
-
-def generate_query_string(request: Request):
-    search_fields = {}
-    if request.method == "GET":
-        search_fields = {
-            'sst': request.query_params.get("sst"),
-            'sod': request.query_params.get("sod"),
-            'sfl': request.query_params.get("sfl"),
-            'stx': request.query_params.get("stx"),
-            'sca': request.query_params.get("sca"),
-            # 'page': request.query_params.get("page")
-        }
-    else:
-        search_fields = {
-            'sst': request._form.get("sst") if request._form else "",
-            'sod': request._form.get("sod") if request._form else "",
-            'sfl': request._form.get("sfl") if request._form else "",
-            'stx': request._form.get("stx") if request._form else "",
-            'sca': request._form.get("sca") if request._form else "",
-            # 'page': request._form.get("page") if request._form else ""
-        }    
-        
-    # None 값을 제거
-    search_fields = {k: v for k, v in search_fields.items() if v is not None}
-
-    return urlencode(search_fields)    
 
 
 # 파이썬의 내장함수인 list 와 이름이 충돌하지 않도록 변수명을 lst 로 변경함
@@ -1270,3 +1244,40 @@ def get_current_admin_menu_id(request: Request) -> Optional[str]:
     except Exception as e:
         print(e)
         return None
+
+
+def remove_query_params(request: Request, keys: Union[str, list]) -> dict:
+    """쿼리 파라미터에서 특정 키를 제거합니다.
+
+    Args:
+        request (Request): FastAPI Request 객체
+        keys (Union[str, list]): 제거할 키
+
+    Returns:
+        dict: 쿼리 파라미터
+    """
+    query_params_dict = dict(request.query_params)
+
+    if isinstance(keys, str):
+        keys = [keys]
+
+    for key in keys:
+        query_params_dict.pop(key, None)
+
+    return query_params_dict
+
+
+def set_url_query_params(url: Union[str, URL], query_params: Any) -> str:
+    """쿼리 파라미터가 포함된 URL을 반환합니다.
+
+    Args:
+        url (URL): URL 객체
+        query_params (Any): 쿼리 파라미터
+
+    Returns:
+        URL: 쿼리 파라미터가 포함된 URL
+    """
+    if isinstance(url, str):
+        url = URL(url)
+
+    return url.replace_query_params(**query_params).__str__()

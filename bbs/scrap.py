@@ -227,14 +227,9 @@ async def scrap_delete(
     )
     db.commit()
 
-    query_params = dict(request.query_params)
-    query_params.pop("token", None)
-    query_params = "&".join([f"{key}={value}" for key, value in query_params.items()])
-    query_params = query_params.replace("&amp;", "&")
-    query_string = "?" + query_params if query_params else ""
-    return_url = request.url_for('scrap_list').path + query_string
-
-    return RedirectResponse(url=return_url, status_code=302)
+    url = request.url_for('scrap_list').path
+    query_params = remove_query_params(request, "token")
+    return RedirectResponse(set_url_query_params(url, query_params), 302)
 
 
 def get_scrap_totals(mb_id: str) -> int:

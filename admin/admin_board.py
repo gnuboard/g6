@@ -98,7 +98,9 @@ async def board_list_update(
             # 최신글 캐시 삭제
             FileCache().delete_prefix(f'latest-{board.bo_table}')
 
-    return RedirectResponse(f"/admin/board_list?{request.query_params}", status_code=302)
+    url = "/admin/board_list"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 302)
 
 
 @router.post("/board_list_delete", dependencies=[Depends(validate_token)])
@@ -133,7 +135,9 @@ async def board_list_delete(
 
             db.commit()
 
-    return RedirectResponse(f"/admin/board_list?{request.query_params}", status_code=303)
+    url = "/admin/board_list"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 @router.get("/board_form")
@@ -627,7 +631,9 @@ async def board_form_update(
     # 최신글 캐시 삭제
     FileCache().delete_prefix(f'latest-{bo_table}')
 
-    return RedirectResponse(f"/admin/board_form/{bo_table}?{request.query_params}", status_code=303)
+    url = f"/admin/board_form/{bo_table}"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 @router.get("/board_copy/{bo_table}")

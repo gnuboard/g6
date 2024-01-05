@@ -1156,7 +1156,9 @@ def delete_write(request: Request, bo_table: str, origin_write: WriteBaseModel) 
         elif origin_write.mb_id and not is_owner(origin_write, member_id):
             raise AlertException("자신의 게시글만 삭제할 수 있습니다.", 403)
         elif not origin_write.mb_id and not request.session.get(f"ss_delete_{bo_table}_{origin_write.wr_id}"):
-            raise AlertException("비회원 글을 삭제할 권한이 없습니다.", 403, f"/bbs/password/delete/{bo_table}/{origin_write.wr_id}?{request.query_params}")
+            url = f"/bbs/password/delete/{bo_table}/{origin_write.wr_id}"
+            query_params = request.query_params
+            raise AlertException("비회원 글을 삭제할 권한이 없습니다.", 403, set_url_query_params(url, query_params))
     
     # 답변글이 있을 때 삭제 불가
     write_model = dynamic_create_write_table(bo_table)

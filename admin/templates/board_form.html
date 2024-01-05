@@ -40,7 +40,7 @@
                     <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
                     <b>{{ board.bo_table }}</b>
                     <a href="/board/{{ board.bo_table }}" class="btn_frmline">게시판 바로가기</a>
-                    <a href="/admin/board_list?{{ query_string }}" class="btn_frmline">목록으로</a>
+                    <a href={{ "/admin/board_list"|set_query_params(request) }} class="btn_frmline">목록으로</a>
                 {% else %}
                     <input type="text" name="bo_table" value="" id="bo_table" required  class="frm_input  required alnum_" maxlength="20">
                     영문자, 숫자, _ 만 가능 (공백없이 20자 이내)

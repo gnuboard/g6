@@ -532,7 +532,7 @@
         function comment_delete(href) {
             if (confirm("이 댓글을 삭제하시겠습니까?")) {
                 token = generate_token();
-                location.href = href + "?token=" + token + "&{{ request.query_params }}";
+                location.href = href + "?token=" + token + "&{{ request.query_params|safe }}";
                 return true;
             }
             return false;

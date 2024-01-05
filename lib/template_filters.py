@@ -2,6 +2,7 @@
 # ============================================================================
 import re
 from datetime import datetime
+from typing import Union
 
 from fastapi import Request
 from starlette.datastructures import URL
@@ -74,7 +75,7 @@ def search_font(content: str, stx: str) -> str:
     return re.sub(f'({pattern})', replace, content, flags=re.IGNORECASE)
 
 
-def set_query_params(url: URL, request: Request, **params: dict) -> URL:
+def set_query_params(url: Union[URL, str], request: Request, **params: dict) -> URL:
     """url에 query string을 추가
 
     Args:
@@ -85,10 +86,12 @@ def set_query_params(url: URL, request: Request, **params: dict) -> URL:
     Returns:
         str: query string이 추가된 URL
     """
+    # 현재 query string
     query_params = request.query_params
     if query_params or params:
         if isinstance(url, str):
             url = URL(url)
+        # 현재 query string을 유지하면서 추가할 query string을 추가
         url = url.replace_query_params(**query_params, **params)
 
     return url

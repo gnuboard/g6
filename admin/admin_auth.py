@@ -112,7 +112,9 @@ async def auth_update(
         db.add(auth)
         db.commit()
 
-    return RedirectResponse(f"/admin/auth_list?{request.query_params}", status_code=303)
+    url = "/admin/auth_list"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 @router.post("/auth_list_delete", dependencies=[Depends(validate_token)])
@@ -130,4 +132,6 @@ async def auth_list_delete(
         db.execute(delete(Auth).filter_by(mb_id=mb_id[i], au_menu=au_menu[i]))
         db.commit()
 
-    return RedirectResponse(f"/admin/auth_list?{request.query_params}", status_code=303)
+    url = "/admin/auth_list"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)

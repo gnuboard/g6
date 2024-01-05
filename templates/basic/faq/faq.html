@@ -1,8 +1,11 @@
 {% extends "base.html" %}
+
 {% block head %}
-    <link rel="stylesheet" href="/static/css/basic/faq.css">
-{% endblock head%}
+    <link rel="stylesheet" href="{{ theme_asset('css/faq.css') }}">
+{% endblock head %}
+
 {% block content %}
+    {% set stx = request.query_params.get("stx", "") %}
 
     <div id="container">
         <h2 id="container_title">
@@ -23,7 +26,7 @@
             <form name="faq_search_form" method="get">
                 <span class="sch_tit">FAQ 검색</span>
                 <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
-                <input type="text" name="stx" value="{{ request.state.stx|default('', true) }}" required="" id="stx" class="frm_input" size="15" maxlength="15">
+                <input type="text" name="stx" value="{{ stx }}" required="" id="stx" class="frm_input" size="15" maxlength="15">
                 <button type="submit" value="검색" class="btn_submit">
                     <i class="fa fa-search" aria-hidden="true"></i>
                     검색
