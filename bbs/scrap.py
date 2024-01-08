@@ -1,3 +1,5 @@
+from typing_extensions import Annotated
+
 from fastapi import APIRouter, Depends, Form, Path, Query, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy import desc, exists, func, select, update
@@ -8,7 +10,7 @@ from core.models import Scrap
 from core.template import UserTemplates
 from lib.board_lib import *
 from lib.common import *
-from lib.dependencies import validate_token
+from lib.dependencies import get_board, get_write, validate_token
 from lib.point import insert_point
 from lib.template_filters import datetime_format
 from lib.template_functions import get_paging
@@ -22,6 +24,8 @@ templates.env.filters["datetime_format"] = datetime_format
 async def scrap_form(
     request: Request,
     db: db_session,
+    board: Annotated[Board, Depends(get_board)],
+    write: Annotated[WriteBaseModel, Depends(get_write)],
     bo_table: str = Path(...),
     wr_id: int = Path(...),
 ):
@@ -32,15 +36,12 @@ async def scrap_form(
     if not member:
         raise AlertCloseException("로그인 후 이용 가능합니다.", 403)
     
-    write_model = dynamic_create_write_table(bo_table)
-    write = db.get(write_model, wr_id)
-    if not write:
-        raise AlertCloseException("존재하지 않는 글 입니다.", 404)
-
     exists_scrap = db.scalar(
-        exists(Scrap)
-        .where(Scrap.mb_id == member.mb_id, Scrap.bo_table == bo_table, Scrap.wr_id == wr_id)
-        .select()
+        exists(Scrap).where(
+            Scrap.mb_id == member.mb_id,
+            Scrap.bo_table == bo_table,
+            Scrap.wr_id == wr_id
+        ).select()
     )
     if exists_scrap:
         raise AlertException("이미 스크랩하신 글 입니다.", 302, request.url_for('scrap_list'))
@@ -57,6 +58,8 @@ async def scrap_form(
 async def scrap_form_update(
     request: Request,
     db: db_session,
+    board: Annotated[Board, Depends(get_board)],
+    write: Annotated[WriteBaseModel, Depends(get_write)],
     bo_table: str = Path(...),
     wr_id: int = Path(...),
     wr_content: str = Form(None),
@@ -64,24 +67,19 @@ async def scrap_form_update(
     """
     스크랩 등록
     """
+    board_config = BoardConfig(request, board)
+    write_model = dynamic_create_write_table(bo_table)
+
     member: Member = request.state.login_member
     if not member:
         raise AlertCloseException("로그인 후 이용 가능합니다.", 403)
     
-    board = db.get(Board, bo_table)
-    board_config = BoardConfig(request, board)
-    if not board:
-        raise AlertCloseException("존재하지 않는 게시판 입니다.", 404)
-    
-    write_model = dynamic_create_write_table(bo_table)
-    write = db.get(write_model, wr_id)
-    if not write:
-        raise AlertCloseException("존재하지 않는 글 입니다.", 404)
-    
     exists_scrap = db.scalar(
-        exists(Scrap)
-        .where(Scrap.mb_id == member.mb_id, Scrap.bo_table == bo_table, Scrap.wr_id == wr_id)
-        .select()
+        exists(Scrap).where(
+            Scrap.mb_id == member.mb_id,
+            Scrap.bo_table == bo_table,
+            Scrap.wr_id == wr_id
+        ).select()
     )
     if exists_scrap:
         raise AlertException("이미 스크랩하신 글 입니다.", 302, request.url_for('scrap_list'))
@@ -201,7 +199,7 @@ async def scrap_list(
 @router.get("/scrap_delete/{ms_id}", dependencies=[Depends(validate_token)])
 async def scrap_delete(
     request: Request,
-    db: db_session, 
+    db: db_session,
     ms_id: int = Path(...)
 ):
     """

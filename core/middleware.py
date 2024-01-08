@@ -5,9 +5,11 @@ from fastapi import FastAPI, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-from core.plugin import register_plugin_admin_menu, get_plugin_state_change_time,\
-    read_plugin_state, cache_plugin_state, cache_plugin_menu, register_plugin,\
+from core.plugin import (
+    register_plugin_admin_menu, get_plugin_state_change_time,
+    read_plugin_state, cache_plugin_state, cache_plugin_menu, register_plugin,
     unregister_plugin, delete_router_by_tagname
+)
 from core.template import TemplateService
 
 

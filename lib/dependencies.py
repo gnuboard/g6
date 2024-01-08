@@ -4,14 +4,16 @@ from typing_extensions import Annotated
 from fastapi import Depends, Form, Path, Query, Request
 from sqlalchemy import exists, inspect, select
 
-from core.database import DBConnect
+from core.database import DBConnect, db_session
 from core.exception import AlertException
 from core.models import Auth, Board, GroupMember
 from lib.common import (
-    ENV_PATH, get_current_admin_menu_id, get_current_captcha_cls
+    dynamic_create_write_table, ENV_PATH, get_current_admin_menu_id,
+    get_current_captcha_cls,
 )
 from lib.member_lib import get_admin_type, is_admin
 from lib.token import check_token
+
 
 async def get_variety_tokens(
     token_form: Annotated[str, Form(alias="token")] = None,
@@ -141,3 +143,22 @@ def common_search_query_params(
         # current_page가 정수로 변환할 수 없는 경우 기본값으로 1을 사용하도록 설정
         current_page = 1
     return {"sst": sst, "sod": sod, "sfl": sfl, "stx": stx, "sca": sca, "current_page": current_page}
+
+
+def get_board(db: db_session, bo_table: Annotated[str, Path(...)]):
+    """게시판 존재 여부 검사 & 반환"""
+    board = db.get(Board, bo_table)
+    if not board:
+        raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
+
+    return board
+
+
+def get_write(db: db_session, bo_table: Annotated[str, Path(...)], wr_id: Annotated[int, Path(...)]):
+    """게시글 존재 여부 검사 & 반환"""
+    write_model = dynamic_create_write_table(bo_table)
+    write = db.get(write_model, wr_id)
+    if not write:
+        raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
+
+    return write
