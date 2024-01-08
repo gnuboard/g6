@@ -4,7 +4,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, Path, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import TypeAdapter
-from sqlalchemy import select, inspect
+from sqlalchemy import select, insert, inspect
 from starlette.staticfiles import StaticFiles
 
 import core.models as models
@@ -21,14 +21,13 @@ from core.plugin import (
     register_plugin_admin_menu, register_statics
 )
 from core.template import UserTemplates, register_theme_statics
-
 from lib.common import *
 from lib.member_lib import is_admin, MemberService
 from lib.point import insert_point
 from lib.template_filters import default_if_none
 from lib.token import create_session_token
 
-# .env 파일로부터 환경 변수를 로드합니다. 
+# .env 파일로부터 환경 변수를 로드합니다.
 # 이 함수는 해당 파일 내의 키-값 쌍을 환경 변수로 로드하는 데 사용됩니다.
 load_dotenv()
 
@@ -66,6 +65,7 @@ from bbs.member_find import router as member_find_router
 from bbs.social import router as social_router
 from bbs.password import router as password_router
 from bbs.search import router as search_router
+from bbs.current_connect import router as current_connect_router
 from lib.editor.ckeditor4 import router as editor_router
 
 # git clone으로 소스를 받은 경우에는 data디렉토리가 없으므로 생성해야 함
@@ -108,22 +108,24 @@ app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
 app.include_router(social_router, prefix="/bbs", tags=["social"])
 app.include_router(password_router, prefix="/bbs", tags=["password"])
 app.include_router(search_router, prefix="/bbs", tags=["search"])
+app.include_router(current_connect_router, prefix="/bbs", tags=["current_connect"])
 app.include_router(editor_router, prefix="/editor", tags=["editor"])
 
 
 @app.middleware("http")
 async def main_middleware(request: Request, call_next):
     """요청마다 항상 실행되는 미들웨어"""
-    
+
     if not await should_run_middleware(request):
         return await call_next(request)
 
     # 데이터베이스 설치여부 체크
     db_connect = DBConnect()
     db = db_connect.sessionLocal()
+    url_path = request.url.path
+
     try:
-        path = request.url.path
-        if not path.startswith("/install"):
+        if not url_path.startswith("/install"):
             if not os.path.exists(ENV_PATH):
                 raise AlertException(".env 파일이 없습니다. 설치를 진행해 주세요.", 400, "/install")
 
@@ -152,6 +154,7 @@ async def main_middleware(request: Request, call_next):
     ss_mb_key = None
     session_mb_id = request.session.get("ss_mb_id", "")
     cookie_mb_id = request.cookies.get("ck_mb_id", "")
+    current_ip = get_client_ip(request)
 
     # 로그인 세션 유지 중이라면
     if session_mb_id:
@@ -183,8 +186,6 @@ async def main_middleware(request: Request, call_next):
             member.mb_login_ip = request.client.host
             db.commit()
 
-    db.close()
-
     # 로그인한 회원 정보
     request.state.login_member = member
     # 최고관리자 여부
@@ -192,7 +193,6 @@ async def main_middleware(request: Request, call_next):
 
     # 접근가능/차단 IP 체크
     # - IP 체크 기능을 사용할 때 is_super_admin 여부를 확인하기 때문에 로그인 코드 이후에 실행
-    current_ip = request.client.host
     if not is_possible_ip(request, current_ip):
         return HTMLResponse("<meta charset=utf-8>접근이 허용되지 않은 IP 입니다.")
     if is_intercept_ip(request, current_ip):
@@ -212,12 +212,40 @@ async def main_middleware(request: Request, call_next):
         response.set_cookie(key="ck_auto", value=ss_mb_key,
                             max_age=age_1day * 30, domain=cookie_domain)
     # 접속자 기록
-    vi_ip = request.client.host
     ck_visit_ip = request.cookies.get('ck_visit_ip', None)
-    if ck_visit_ip != vi_ip:
-        response.set_cookie(key="ck_visit_ip", value=vi_ip,
+    if ck_visit_ip != current_ip:
+        response.set_cookie(key="ck_visit_ip", value=current_ip,
                             max_age=age_1day, domain=cookie_domain)
         record_visit(request)
+
+    # 현재 접속자 데이터 갱신
+    if (not request.state.is_super_admin
+            and not url_path.startswith("/admin")):
+        current_login = db.scalar(
+            select(models.Login)
+            .where(models.Login.lo_ip == current_ip)
+        )
+        if current_login:
+            current_login.lo_location = url_path
+            current_login.mb_id = getattr(member, "mb_id", "")
+            current_login.lo_datetime = datetime.now()
+            current_login.lo_url = url_path
+        else:
+            db.execute(
+                insert(models.Login).values(
+                    lo_location=url_path,
+                    mb_id=getattr(member, "mb_id", ""),
+                    lo_datetime=datetime.now(),
+                    lo_url=url_path)
+            )
+        db.commit()
+
+    # 현재 로그인한 이력 삭제
+    config_time = timedelta(minutes=int(config.cf_login_minutes))
+    db.execute(delete(models.Login)
+               .where(models.Login.lo_datetime < datetime.now() - config_time))
+
+    db.close()
 
     return response
 
