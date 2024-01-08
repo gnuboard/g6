@@ -85,6 +85,7 @@ async def write_count(request: Request, db: db_session,
     x_data = []
     y_data = []
     x_label = ""
+    bn_datetime_date = func.substr(BoardNew.bn_datetime, 1, 10)
     
     if day == '시간':
         
@@ -101,7 +102,7 @@ async def write_count(request: Request, db: db_session,
                 func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
                 func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
             ).filter(
-                BoardNew.bn_datetime.between(from_date, to_date),
+                bn_datetime_date.between(from_date, to_date),
                 or_(BoardNew.bo_table == bo_table, bo_table == '')
             ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime)
         ).all()
@@ -129,7 +130,7 @@ async def write_count(request: Request, db: db_session,
                 func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
                 func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
             ).filter(
-                BoardNew.bn_datetime.between(from_date, to_date),
+                bn_datetime_date.between(from_date, to_date),
                 or_(BoardNew.bo_table == bo_table, bo_table == '')
             ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime)
         ).all()
@@ -160,7 +161,7 @@ async def write_count(request: Request, db: db_session,
                 func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
                 func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
             ).filter(
-                BoardNew.bn_datetime.between(from_date, to_date),
+                bn_datetime_date.between(from_date, to_date),
                 or_(BoardNew.bo_table == bo_table, bo_table == '')
             ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime)
         ).all()
@@ -170,7 +171,7 @@ async def write_count(request: Request, db: db_session,
             date = (datetime.strptime(f"{lyear}W{str(lweek).zfill(2)}", "%YW%W") + timedelta(days=1)).strftime("%y-%m-%d")
             x_data.append(f"['{date}',{row.write_count}]")
             y_data.append(f"['{date}',{row.comment_count}]")
-            
+
     elif day == '월':
         
         x_label = 'months'
@@ -190,7 +191,7 @@ async def write_count(request: Request, db: db_session,
                 func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
                 func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
             ).filter(
-                BoardNew.bn_datetime.between(from_date, to_date),
+                bn_datetime_date.between(from_date, to_date),
                 or_(BoardNew.bo_table == bo_table, bo_table == '')
             ).group_by(x_label, BoardNew.bn_datetime).order_by(BoardNew.bn_datetime)
         ).all()
@@ -198,7 +199,7 @@ async def write_count(request: Request, db: db_session,
         for row in result:
             x_data.append(f"['{row.months[2:7]}',{row.write_count}]")
             y_data.append(f"['{row.months[2:7]}',{row.comment_count}]")
-            
+
     elif day == '년':
         
         x_label = 'years'
@@ -218,7 +219,7 @@ async def write_count(request: Request, db: db_session,
                 func.sum(case((BoardNew.wr_id == BoardNew.wr_parent, 1), else_=0)).label('write_count'),
                 func.sum(case((BoardNew.wr_id != BoardNew.wr_parent, 1), else_=0)).label('comment_count')
             ).filter(
-                BoardNew.bn_datetime.between(from_date, to_date),
+                bn_datetime_date.between(from_date, to_date),
                 or_(BoardNew.bo_table == bo_table, bo_table == '')
             ).group_by('year', BoardNew.bn_datetime).order_by(BoardNew.bn_datetime)
         ).all()
@@ -248,8 +249,10 @@ async def write_count(request: Request, db: db_session,
     })
     
     # x_label에 따라 날짜/시간 형식 변경
-    if x_label == "hours":
-        df[x_label] = pd.to_datetime(df[x_label]).dt.strftime('%H:%M %p')
+    if df[x_label].empty:
+        pass
+    elif x_label == "hours":
+        df[x_label] = datetime.strptime(f"{df[x_label].iloc[0]}:00", "%H:%M").strftime('%H:%M %p')
     elif x_label == "days":
         df[x_label] = pd.to_datetime(df[x_label]).dt.strftime('%y-%m-%d')
     elif x_label == "weeks":
