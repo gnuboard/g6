@@ -9,7 +9,7 @@
     <form name="foutlogin" action="/bbs/login_check" onsubmit="return fhead_submit(this);" method="post" autocomplete="off">
     <fieldset>
         <div class="ol_wr">
-            <input type="hidden" name="url" value="%2Fbbs%2Fregister_form.php">
+            <input type="hidden" name="url" value="{{ request.url }}">
             <label for="ol_id" id="ol_idlabel" class="sound_only">회원아이디<strong>필수</strong></label>
             <input type="text" id="ol_id" name="mb_id" required maxlength="20" placeholder="아이디">
             <label for="ol_pw" id="ol_pwlabel" class="sound_only">비밀번호<strong>필수</strong></label>
@@ -18,11 +18,12 @@
         </div>
         <div class="ol_auto_wr"> 
             <div id="ol_auto" class="chk_box">
-                <input type="checkbox" name="auto_login" value="1" id="auto_login" class="selec_chk">
+                <input type="checkbox" name="auto_login" id="auto_login" class="selec_chk">
                 <label for="auto_login" id="auto_login_label"><span></span>자동로그인</label>
             </div>
             <div id="ol_svc">
-                <a href="/bbs/password_lost">ID/PW 찾기</a>
+                <a href="/bbs/id_lost">ID 찾기</a> / 
+                <a href="/bbs/password_lost">PW 찾기</a>
             </div>
         </div>
         
@@ -30,24 +31,27 @@
     </form>
 </section>
 
-    {% include "social/social_login.html" %}
+{% include "social/social_login.html" %}
 
 
 <script>
-jQuery(function($) {
+document.addEventListener('DOMContentLoaded', function() {
 
-    var $omi = $('#ol_id'),
-        $omp = $('#ol_pw'),
-        $omi_label = $('#ol_idlabel'),
-        $omp_label = $('#ol_pwlabel');
+    const omi = document.querySelector('#ol_id'),
+        omp = document.querySelector('#ol_pw'),
+        omi_label = document.querySelector('#ol_idlabel'),
+        omp_label = document.querySelector('#ol_pwlabel');
 
-    $omi_label.addClass('ol_idlabel');
-    $omp_label.addClass('ol_pwlabel');
-
-    $("#auto_login").click(function(){
-        if ($(this).is(":checked")) {
-            if(!confirm("자동로그인을 사용하시면 다음부터 회원아이디와 비밀번호를 입력하실 필요가 없습니다.\n\n공공장소에서는 개인정보가 유출될 수 있으니 사용을 자제하여 주십시오.\n\n자동로그인을 사용하시겠습니까?"))
-                return false;
+    omp_label.classList.add('ol_pwlabel');
+    omi_label.classList.add('ol_idlabel');
+    
+    const autoLogin = document.querySelector('#auto_login');
+    autoLogin.addEventListener('click', function() {
+        if (this.checked) {
+        const confirm_result  = confirm("자동로그인을 사용하시면 다음부터 회원아이디와 비밀번호를 입력하실 필요가 없습니다.\n\n공공장소에서는 개인정보가 유출될 수 있으니 사용을 자제하여 주십시오.\n\n자동로그인을 사용하시겠습니까?")
+            if (!confirm_result) {
+                return this.checked = false;
+            }
         }
     });
 });
@@ -59,5 +63,6 @@ function fhead_submit(f)
     }
     return false;
 }
+
 </script>
 <!-- } 로그인 전 아웃로그인 끝 -->

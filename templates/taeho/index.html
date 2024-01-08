@@ -7,16 +7,16 @@
 {% block content %}
     <h2 class="sound_only">최신글</h2>
     <div class="latest_top_wr">
-        {{ latest(request, 'main_list', 'notice', 4, 23)|safe }}
+        {{ latest(request, 'pic_list', 'free', 4, 23)|safe }}
+        {{ latest(request, 'pic_list', 'qa', 4, 23)|safe }}
+        {{ latest(request, 'pic_list', 'notice', 4, 23)|safe }}
     </div>
     <div class="latest_wr">
         {{ latest(request, 'pic_block', 'gallery', 4, 23)|safe }}
-        {{ latest(request, 'pic_list', 'free', 4, 23)|safe }}
-        {{ latest(request, 'pic_list', 'qa', 4, 23)|safe }}
     </div>
-    <div class="latest_wr boards">
+    <div class="latest_wr">
         {% for board in boards %}
-        <div style="{{ loop.cycle("", "margin-left:2%", "margin-left:2%") }}" class="lt_wr">
+        <div style="float:left; {{ loop.cycle("", "margin-left:2%", "margin-left:2%") }}" class="lt_wr">
             {{ latest(request, 'basic', board.bo_table, 6, 24)|safe }}
         </div>
         {% endfor %}

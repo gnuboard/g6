@@ -12,7 +12,7 @@
         <li>
             <a href="/bbs/point" target="_blank" id="ol_after_pt" class="win_point">
                 <i class="fa fa-database" aria-hidden="true"></i>포인트
-                <strong>{{ member.mb_point if member is defined else '' }}</strong>
+                <strong>{{ member.mb_point|number_format if member else '' }}</strong>
             </a>
         </li>
         <li>

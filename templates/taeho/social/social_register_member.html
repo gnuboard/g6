@@ -1,23 +1,21 @@
 {% extends "base.html" %}
 
-{% block title %}
-회원가입약관
-{% endblock %}
 {% block head %}
-<link rel="stylesheet" href="/static/js/remodal/remodal.css">
-<link rel="stylesheet" href="/static/js/remodal/remodal-default-theme.css">
-<link rel="stylesheet" href="/static/css/basic/social.css">
-<script src="/static/js/remodal/remodal.js"></script>
-<script src="/static/js/jquery.register_form.js"></script>
+    <link rel="stylesheet" href="/static/js/remodal/remodal.css">
+    <link rel="stylesheet" href="/static/js/remodal/remodal-default-theme.css">
+    <link rel="stylesheet" href="/static/css/basic/social.css">
+    <script src="/static/js/remodal/remodal.js"></script>
+    <script src="/static/js/jquery.register_form.js"></script>
 
-{% if (config.cf_cert_use and (config.cf_cert_simple or config.cf_cert_ipin or config.cf_cert_hp)) %}
-<script src="/static/js/certify.js"></script>
-{% endif %}
+    {% if (config.cf_cert_use and (config.cf_cert_simple or config.cf_cert_ipin or config.cf_cert_hp)) %}
+    <script src="/static/js/certify.js"></script>
+    {% endif %}
+{% endblock head %}
 
-{% endblock %}
+{% block title %}회원가입약관{% endblock title %}
+{% block subtitle %}회원가입약관{% endblock subtitle %}
+
 {% block content %}
-
-<!-- 회원가입약관 동의 시작 { -->
 <div class="social_register">
 
     <form name="fregisterform" id="fregisterform" action="{{ form.action_url }}"
@@ -91,9 +89,9 @@
             {% endif %}
         {% endif %}
         {% if config.cf_use_hp or (config.cf_cert_use and (config.cf_cert_hp or config.cf_cert_simple)) %}
-        <input type="hidden" name="mb_hp" value="{{user_phone}}" id="reg_mb_hp">
+        <input type="hidden" name="mb_hp" value="{{ user_phone }}" id="reg_mb_hp">
         {% if config.cf_cert_use and (config.cf_cert_hp or config.cf_cert_simple) %}
-        <input type="hidden" name="old_mb_hp" value="{{user_phone}}">
+        <input type="hidden" name="old_mb_hp" value="{{ user_phone }}">
         {% endif %}
         {% endif %}
 
@@ -162,7 +160,7 @@
                                 <span class="sound_only">설명보기</span>
                             </button>
                             <span class="tooltip">
-                                    {% if is_register%}
+                                    {% if is_register %}
                                         "E-mail 로 발송된 내용을 확인한 후 인증하셔야 회원가입이 완료됩니다."
                                     {% else %}
                                         "E-mail 주소를 변경하시면 다시 인증하셔야 합니다."
@@ -215,7 +213,7 @@
         <span class="txt">닫기</span>
     </button>
     <div class="connect-fg">
-        <form method="post" action="{{ url_for('login')}}" onsubmit="return flogin_submit(this);">
+        <form method="post" action="{{ url_for('login') }}" onsubmit="return flogin_submit(this);">
             <input type="hidden" id="provider" name="provider" value="{{ provider_name }}">
             <!--            <input type="hidden" id="action" name="action" value="social_account_linking">-->
 
@@ -333,4 +331,4 @@
 </script>
 
 <!-- } 회원정보 입력/수정 끝 -->
-{% endblock %}
+{% endblock content %}

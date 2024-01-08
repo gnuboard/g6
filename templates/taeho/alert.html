@@ -1,16 +1,14 @@
-{% extends "base_window.html" %}
+{% extends "base_sub.html" %}
 
-{% block title %}
-    경고창
-{% endblock %}
+{% block title %}경고창{% endblock title %}
 
 {% block content %}
     <script>
-        alert("{% for error in errors %}{{ error }}{% endfor %}");
+        alert("{% for error in errors %}{{ error|safe }}{% endfor %}");
         {% if url %}
             document.location.href = "{{ url }}";
         {% else %}
             history.back();
         {% endif %}
     </script>
-{% endblock %}
+{% endblock content %}

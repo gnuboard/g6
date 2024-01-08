@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+{% if request.state.config.cf_add_meta %}
+    {{ request.state.config.cf_add_meta|safe }}
+{% endif %}
+<title>로그인 | 그누보드5</title>
+<link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+<link rel="stylesheet" href="/static/css/default.css">
+<link rel="stylesheet" href="/static/js/font-awesome/css/font-awesome.min.css">
+<link rel="stylesheet" href="/static/css/basic/member.css">
+<script>
+// 자바스크립트에서 사용하는 전역변수 선언
+var g6_url       = "{{ request.base_url }}";
+var g6_bbs_url   = "{{ request.base_url }}bbs";
+var g6_is_member = "";
+var g5_is_admin  = "";
+var g6_is_mobile = "";
+var g5_bo_table  = "";
+var g5_sca       = "";
+var g6_editor    = "";
+var g6_cookie_domain = "";
+var g6_shop_url = "{{ request.base_url }}shop";
+</script>
+<script src="/static/js/jquery-3.7.1.min.js"></script>
+<script src="/static/js/jquery-migrate-3.4.0.min.js"></script>
+<script src="/static/js/jquery.menu.js"></script>
+<script src="/static/js/common.js"></script>
+<script src="/static/js/wrest.js"></script>
+<script src="/static/js/placeholders.min.js"></script>
+{% if request.state.config %}
+    {{ request.state.config.cf_add_script|safe }}
+{% endif %}
+</head>
+<body>
+
+{% if errors %}
+    <ul>
+        {% for error in errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% block content %}
+{% endblock content %}
+</body>
+</html>

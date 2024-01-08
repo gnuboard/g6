@@ -1,9 +1,7 @@
-{% extends "base_window.html" %}
+{% extends "base_sub.html" %}
 {% import "/sideview/macros.html" as sideview %}
 
-{% block title %}
-    내 쪽지함
-{% endblock title %}
+{% block title %}내 쪽지함{% endblock title %}
 
 {% block content %}
     <div id="memo_view" class="new_win">
@@ -47,7 +45,7 @@
                                 </a>
                             </li>
                             <li class="memo_op_btn del_btn">
-                                <a href="{{ url_for('memo_delete', me_id=memo.me_id) }}?{{ request.query_params }}&token={{ generate_token(request, 'delete') }}" onclick="del(this.href); return false;" class="memo_del btn_b01 btn">
+                                <a href="{{ url_for('memo_delete', me_id=memo.me_id) }}?{{ request.query_params }}" onclick="del(this.href); return false;" class="memo_del btn_b01 btn">
                                     <i class="fa fa-trash-o" aria-hidden="true"></i>
                                     <span class="sound_only">삭제</span>
                                 </a>

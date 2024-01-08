@@ -1,32 +1,21 @@
 {% extends "base.html" %}
+{% set title = "회원정보 수정" if member.mb_id else "회원가입" %}
 
 {% block head %}
     <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" async></script>
-{% endblock %}
+{% endblock head %}
 
-{% block title %}
-    회원가입
-{% endblock %}
+{% block title %}{{ title }}{% endblock title %}
+{% block subtitle %}{{ title }}{% endblock subtitle %}
 
 {% block content %}
-<div class="register_wrap input_form">
-{% if errors %}
-<ul class="errors">
-    {% for error in errors %}
-    <li>{{ error }}</li>
-    {% endfor %}
-</ul>
-{% endif %}
-<h1 id="container_title">회원가입</h1>
-
 <div class="register">
-    <form id="fregisterform" name="fregisterform" action="/bbs/register_form"
+    <form id="fregisterform" name="fregisterform" action="{{ form.action_url }}"
           onsubmit="return fregisterform_submit(this)" method="post" enctype="multipart/form-data" autocomplete="off">
         <input type="hidden" name="is_register" value="{{ is_register }}"/>
         <input type="hidden" name="agree" value="{{ True if form.agree is defined else '' }}">
         <input type="hidden" name="agree2" value="{{ True if form.agree2 is defined else '' }}">
         <input type="hidden" name="token" value="">
-        
 <!--        <input type="hidden" name="cert_type" value="">-->
 <!--        <input type="hidden" name="cert_no" value="">-->
         <input type="hidden" name="mb_sex" value="">
@@ -36,30 +25,33 @@
                 <h2>사이트 이용정보 입력</h2>
                 <ul>
                     <li>
-                        <input type="text" name="mb_id" value="{{ member.mb_id|default_if_none('') }}"
-                        id="reg_mb_id" required class="frm_input full_input required "
-                        maxlength="20">
-                        <label for="reg_mb_id" class="text_input">
+                        <label for="reg_mb_id">
                             아이디 (필수)
                             <button type="button" class="tooltip_icon">
                                 <i class="fa fa-question-circle-o" aria-hidden="true"></i>
                                 <span class="sound_only">설명보기</span>
-                                <span class="tooltip">영문자, 숫자, _ 만 입력 가능. 최소 3자이상 입력하세요.</span>
                             </button>
+                            <span class="tooltip">영문자, 숫자, _ 만 입력 가능. 최소 3자이상 입력하세요.</span>
                         </label>
+                        <input type="text" name="mb_id" value="{{ member.mb_id|default_if_none('') }}"
+                               id="reg_mb_id" required class="frm_input full_input required " minlength="3"
+                               maxlength="20" placeholder="아이디">
                         <span id="msg_mb_id"></span>
                     </li>
-                    <li class="left_input margin_input">
+                    <li class="half_input left_input margin_input">
+                        <label for="reg_mb_password">비밀번호 (필수)</label>
                         <input type="password" name="mb_password" id="reg_mb_password"
-                        {{ "required" if is_register else None }}
-                        class="frm_input full_input {% if is_register %} required {% endif %}" maxlength="20">
-                        <label for="reg_mb_password" class="text_input">비밀번호 (필수)</label>
+                               {{ "required" if is_register else None }}
+                                class="frm_input full_input {% if is_register %} required {% endif %}" minlength="3" maxlength="20" placeholder="비밀번호">
                     </li>
-                    <li class="left_input">
-                      <input type="password" name="mb_password_re" id="reg_mb_password_re"
-                        {{ "required" if is_register else None }}
-                        class="frm_input full_input {% if is_register %} required {% endif %}" maxlength="20">
-                        <label for="reg_mb_password_re" class="text_input">비밀번호 확인 (필수)</label>
+                    <li class="half_input left_input">
+                        <label for="reg_mb_password_re">비밀번호 확인 (필수)</label>
+                        <input type="password" name="mb_password_re" id="reg_mb_password_re"
+                               {% if is_register %} 'required' {% endif %}
+    
+                        class="frm_input full_input
+                        {% if is_register %} required {% endif %}
+                        " minlength="3" maxlength="20" placeholder="비밀번호 확인">
                     </li>
                 </ul>
             </div>
@@ -68,34 +60,30 @@
                 <h2>개인정보 입력</h2>
                 <ul>
                     <li>
+                        <label for="reg_mb_name">이름 (필수)</label>
                         <input type="text" id="reg_mb_name" name="mb_name"
-                        value="{{ member.mb_name|default_if_none('') }}" 
-                        required 
-                        {{ form.name_readonly }}
-                        class="frm_input full_input required " size="10">
-                        <label for="reg_mb_name" class="text_input">이름 (필수)</label>
+                               value="{{ member.mb_name|default_if_none('') }}" 
+                               required 
+                               {{ form.name_readonly }}
+                               class="frm_input full_input required " size="10" placeholder="이름">
                     </li>
                     <li>
-                        <input type="text" name="mb_nick" value="{{ member.mb_nick|default_if_none('') }}"
-                               id="reg_mb_nick" required class="frm_input required nospace full_input" size="10"
-                               maxlength="20">
-                        <label for="reg_mb_nick" class="text_input">
+                        <label for="reg_mb_nick">
                             닉네임 (필수)
                             <button type="button" class="tooltip_icon">
                                 <i class="fa fa-question-circle-o" aria-hidden="true"></i>
                                 <span class="sound_only">설명보기</span>
-                                <span class="tooltip">공백없이 한글,영문,숫자만 입력 가능 (한글2자, 영문4자 이상)<br> 닉네임을 바꾸시면 앞으로 60일 이내에는 변경 할 수 없습니다.</span>
                             </button>
-                  
+                            <span class="tooltip">공백없이 한글,영문,숫자만 입력 가능 (한글2자, 영문4자 이상)<br> 닉네임을 바꾸시면 앞으로 60일 이내에는 변경 할 수 없습니다.</span>
                         </label>
+
+                        <input type="text" name="mb_nick" value="{{ member.mb_nick|default_if_none('') }}"
+                               id="reg_mb_nick" required class="frm_input required nospace full_input" size="10"
+                               maxlength="20" placeholder="닉네임">
                         <span id="msg_mb_nick"></span>
                     </li>
                     <li>
-                        <input type="hidden" name="old_email" value="">
-                        <input type="text" name="mb_email" value="{{ member.mb_email|default_if_none('') }}"
-                               id="reg_mb_email" required class="frm_input email full_input required" size="70"
-                               maxlength="100">
-                        <label for="reg_mb_email" class="text_input">E-mail (필수)</label>
+                        <label for="reg_mb_email">E-mail (필수)</label>
                         {% if config.cf_use_email_certify %}
                             {% if is_register %}
                                 <span class="frm_info">E-mail 로 발송된 내용을 확인한 후 인증하셔야 회원가입이 완료됩니다.</span>
@@ -103,6 +91,10 @@
                                 <span class="frm_info">E-mail 주소를 변경하시면 다시 인증하셔야 합니다.</span>
                             {% endif %}
                         {% endif %}
+                        <input type="hidden" name="old_email" value="">
+                        <input type="text" name="mb_email" value="{{ member.mb_email|default_if_none('') }}"
+                               id="reg_mb_email" required class="frm_input email full_input required" size="70"
+                               maxlength="100" placeholder="E-mail">
                     </li>
 
                     {% if config.cf_use_homepage %}
@@ -219,12 +211,9 @@
                     <li class="reg_mb_img_file">
                         <label for="reg_mb_img" class="frm_label">
                             회원이미지
-                            <button type="button" class="tooltip_icon">
-                              <i class="fa fa-question-circle-o" aria-hidden="true"></i>
-                              <span class="sound_only">설명보기</span>
-                              <span class="tooltip">이미지 크기는 가로 {{ config.cf_user_img_width }} 픽셀, 세로 {{ config.cf_user_img_height }}픽셀로 리사이즈 됩니다.<br>
-                                gif, jpg, png파일만 가능하며 용량 {{ config.cf_user_img_size }}바이트 이하만 등록됩니다.</span>
-                            </button>
+                            <button type="button" class="tooltip_icon"><i class="fa fa-question-circle-o" aria-hidden="true"></i><span class="sound_only">설명보기</span></button>
+                            <span class="tooltip">이미지 크기는 가로 {{ config.cf_user_img_width }} 픽셀, 세로 {{ config.cf_user_img_height }}픽셀로 리사이즈 됩니다.<br>
+                            gif, jpg, png파일만 가능하며 용량 {{ config.cf_user_img_size }}바이트 이하만 등록됩니다.</span>
                         </label>
                         <input type="file" name="mb_img" accept="image/*" id="id_mb_img">
                         
@@ -237,11 +226,9 @@
                     <li class="reg_mb_icon_file">
                         <label for="reg_mb_icon_file" class="frm_label">
                             회원아이콘
-                            <button type="button" class="tooltip_icon"><i class="fa fa-question-circle-o" aria-hidden="true"></i>
-                              <span class="sound_only">설명보기</span>
-                              <span class="tooltip">이미지 크기는 가로 {{ config.cf_user_icon_width }} 픽셀, 세로 {{ config.cf_user_icon_height }}픽셀로 리사이즈 됩니다.<br>
-                                gif, jpg, png파일만 가능하며 용량 {{ config.cf_user_icon_size }}바이트 이하만 등록됩니다.</span>
-                            </button>
+                            <button type="button" class="tooltip_icon"><i class="fa fa-question-circle-o" aria-hidden="true"></i><span class="sound_only">설명보기</span></button>
+                            <span class="tooltip">이미지 크기는 가로 {{ config.cf_user_icon_width }} 픽셀, 세로 {{ config.cf_user_icon_height }}픽셀로 리사이즈 됩니다.<br>
+                            gif, jpg, png파일만 가능하며 용량 {{ config.cf_user_icon_size }}바이트 이하만 등록됩니다.</span>
                         </label>
                         <input type="file" name="mb_icon" accept="image/*" id="id_mb_icon">
                         {% if not is_register and form.mb_icon_url %}
@@ -335,7 +322,6 @@
             <button type="submit" id="btn_submit" class="btn_submit" accesskey="s">{% if is_register %}회원가입{% else %}정보수정{% endif %}</button>
         </div>
     </form>
-</div>
 </div>
 <script>
     "use strict";
@@ -453,7 +439,7 @@
             }
 
             // 토큰 생성은 폼 체크의 가장 마지막에서 한다.
-            f.token.value = generate_token(f);
+            f.token.value = generate_token();
             
             return true;
         
@@ -477,4 +463,4 @@
 </script>
 
 
-{% endblock %}
+{% endblock content %}
