@@ -934,3 +934,15 @@ class MemberSocialProfiles(Base):
     mp_latest_day = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
 
     member: Mapped["Member"] = relationship("Member", back_populates="socials")
+
+
+class Login(Base):
+    """현재 로그인 및 접속자 테이블"""
+    __tablename__ = DB_TABLE_PREFIX + "login"
+
+    ol_id = Column(Integer, primary_key=True, autoincrement=True)  # 새로 추가된 기본키
+    lo_ip = Column(String(100), nullable=False, default='')
+    mb_id = Column(String(20), nullable=False, default='')
+    lo_datetime = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
+    lo_location = Column(Text, nullable=False)
+    lo_url = Column(Text, nullable=False)
