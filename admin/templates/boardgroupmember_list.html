@@ -4,12 +4,13 @@
 {% block subtitle %}{{ group.gr_subject }}(ID: {{ group.gr_id }}) 그룹 접근가능회원 목록{% endblock subtitle %}
 
 {% block content %}
+    {% set sfl = request.query_params.get("sfl", "") %}
     {% set sod_reverse="asc" if request.query_params.sod == "desc" else "desc" %}
 
     <form name="fsearch" id="fsearch" class="local_sch01 local_sch" method="get">
         <label for="sfl" class="sound_only">검색대상</label>
         <select name="sfl" id="sfl">
-            <option value="mb_id" {{ get_selected(request.state.sfl, 'mb_id')|safe }}>회원아이디</option>
+            <option value="mb_id" {{ get_selected('mb_id', sfl)|safe }}>회원아이디</option>
         </select>
         <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
         <input type="text" name="stx" value="{{ request.query_params.get("stx", "") }}" id="stx" class="frm_input">
@@ -17,8 +18,8 @@
     </form>
     
     <form name="fboardgroupmember" id="fboardgroupmember" action="/admin/boardgroupmember_delete" onsubmit="return fboardgroupmember_submit(this);" method="post">
-        <input type="hidden" name="gr_id" value="{{ group.gr_id }}">
         <input type="hidden" name="token" value="">
+        <input type="hidden" name="gr_id" value="{{ group.gr_id }}">
     
         <div class="tbl_head01 tbl_wrap">
             <table>

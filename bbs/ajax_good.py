@@ -2,9 +2,10 @@ from fastapi import APIRouter, Form, Path, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy import insert, select
 
-from lib.common import *
 from core.database import db_session
 from core.models import Board, BoardGood
+from lib.common import *
+from lib.token import check_token
 
 router = APIRouter()
 

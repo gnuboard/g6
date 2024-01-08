@@ -3,7 +3,7 @@ import bleach
 
 from datetime import datetime, timedelta
 from fastapi import Request
-from sqlalchemy import and_, or_, select, Select
+from sqlalchemy import and_, insert, or_, Select, select
 from sqlalchemy.orm import Session
 
 from core.database import DBConnect
@@ -11,6 +11,8 @@ from core.exception import AlertException
 from core.models import Board, BoardFile, BoardNew, Scrap, WriteBaseModel
 from core.template import UserTemplates
 from lib.common import *
+from lib.member_lib import get_admin_type, get_member_level
+from lib.point import delete_point, insert_point
 
 
 class BoardConfig():
@@ -976,19 +978,19 @@ def generate_reply_character(board: Board, write):
     return origin_reply + reply_char
 
 
-def is_owner(object: object, mb_id: str = None):
+def is_owner(mb_id_object: object, mb_id: str = None):
     """ 게시글/댓글 작성자인지 확인한다.
 
     Args:
-        object (object): mb_id 속성을 가진 객체
+        mb_id_object (object): mb_id 속성을 가진 객체
         mb_id (str, optional): 회원 아이디. Defaults to None.
 
     Returns:
         _type_: _description_
     """
-    object_mb_id = getattr(object, "mb_id", None)
-    if object_mb_id:
-        return object_mb_id == mb_id
+    attr_mb_id = getattr(mb_id_object, "mb_id", None)
+    if attr_mb_id:
+        return attr_mb_id == mb_id
     else:
         return False
 
@@ -1154,7 +1156,9 @@ def delete_write(request: Request, bo_table: str, origin_write: WriteBaseModel) 
         elif origin_write.mb_id and not is_owner(origin_write, member_id):
             raise AlertException("자신의 게시글만 삭제할 수 있습니다.", 403)
         elif not origin_write.mb_id and not request.session.get(f"ss_delete_{bo_table}_{origin_write.wr_id}"):
-            raise AlertException("비회원 글을 삭제할 권한이 없습니다.", 403, f"/bbs/password/delete/{bo_table}/{origin_write.wr_id}?{request.query_params}")
+            url = f"/bbs/password/delete/{bo_table}/{origin_write.wr_id}"
+            query_params = request.query_params
+            raise AlertException("비회원 글을 삭제할 권한이 없습니다.", 403, set_url_query_params(url, query_params))
     
     # 답변글이 있을 때 삭제 불가
     write_model = dynamic_create_write_table(bo_table)
@@ -1295,3 +1299,83 @@ def set_write_delay(request: Request):
 
     if not request.state.is_super_admin and delay_sec > 0:
         request.session["ss_write_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+
+def insert_board_new(bo_table: str, write: WriteBaseModel) -> None:
+    """최신글 테이블 등록 함수
+
+    Args:
+        bo_table (str): 게시판 코드
+        write (WriteBaseModel): 게시글 모델
+    """
+    db = DBConnect().sessionLocal()
+    db.execute(
+        insert(BoardNew)
+        .values(
+            bo_table=bo_table,
+            wr_id=write.wr_id,
+            wr_parent=write.wr_parent,
+            mb_id=write.mb_id,
+        )
+    )
+    db.commit()
+    db.close()
+
+
+def render_latest_posts(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
+    """최신글 목록 HTML 출력
+
+    Args:
+        request (Request): _description_
+        skin_dir (str, optional): 스킨 경로. Defaults to ''.
+        bo_table (str, optional): 게시판 코드. Defaults to ''.
+        rows (int, optional): 노출 게시글 수. Defaults to 10.
+        subject_len (int, optional): 제목길이 제한. Defaults to 40.
+
+    Returns:
+        str: 최신글 HTML
+    """
+    templates = UserTemplates()
+    templates.env.globals["get_list_thumbnail"] = get_list_thumbnail
+
+    if not skin_dir:
+        skin_dir = 'basic'
+
+    file_cache = FileCache()
+    cache_filename = f"latest-{bo_table}-{skin_dir}-{rows}-{subject_len}-{file_cache.get_cache_secret_key()}.html"
+    cache_file = os.path.join(file_cache.cache_dir, cache_filename)
+
+    # 캐시된 파일이 있으면 파일을 읽어서 반환
+    if os.path.exists(cache_file):
+        return file_cache.get(cache_file)
+    
+    db = DBConnect().sessionLocal()
+    # 게시판 설정
+    board = db.get(Board, bo_table)
+    board_config = BoardConfig(request, board)
+    board.subject = board_config.subject
+
+    #게시글 목록 조회
+    write_model = dynamic_create_write_table(bo_table)
+    writes = db.scalars(
+        select(write_model)
+        .where(write_model.wr_is_comment == 0)
+        .order_by(write_model.wr_num)
+        .limit(rows)
+    ).all()
+    for write in writes:
+        write = get_list(request, write, board_config)
+    
+    context = {
+        "request": request,
+        "board": board,
+        "writes": writes,
+        "bo_table": bo_table,
+    }
+    temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
+    temp_decode = temp.body.decode("utf-8")
+
+    # 캐시 파일 생성
+    file_cache.create(temp_decode, cache_file)
+
+    return temp_decode

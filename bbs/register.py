@@ -1,9 +1,11 @@
 import secrets
 
-from fastapi import APIRouter, Form, File, Path, UploadFile, Depends
+from fastapi import APIRouter, Depends, Form, File, Path, Query, UploadFile
 from fastapi.responses import RedirectResponse, Response
 
-from bbs.member_profile import validate_nickname, validate_userid, is_prohibit_email
+from bbs.member_profile import (
+    is_prohibit_email, validate_nickname, validate_userid
+)
 from core.database import db_session
 from core.exception import AlertException
 from core.formclass import MemberForm
@@ -11,7 +13,10 @@ from core.models import Member
 from core.template import UserTemplates
 from lib.common import *
 from lib.dependencies import validate_token, validate_captcha
+from lib.member_lib import is_admin
 from lib.pbkdf2 import create_hash
+from lib.point import insert_point
+from lib.template_filters import default_if_none
 
 router = APIRouter()
 templates = UserTemplates()

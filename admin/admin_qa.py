@@ -8,10 +8,11 @@ from core.models import QaConfig
 from core.template import AdminTemplates
 from lib.common import *
 from lib.dependencies import validate_token
+from lib.template_functions import get_skin_select
+
 
 router = APIRouter()
 templates = AdminTemplates()
-# 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
 templates.env.globals["get_skin_select"] = get_skin_select
 
 QA_MENU_KEY = "300500"

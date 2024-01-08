@@ -9,6 +9,7 @@ from core.models import Group, GroupMember, Member
 from core.template import AdminTemplates
 from lib.common import *
 from lib.dependencies import common_search_query_params, validate_token
+from lib.template_functions import get_paging
 
 router = APIRouter()
 templates = AdminTemplates()
@@ -156,6 +157,8 @@ async def boardgroupmember_delete(
     db.commit()
 
     if mb_id:
-        return RedirectResponse(f"/admin/boardgroupmember_form/{mb_id}?{request.query_params}", status_code=303)
+        url = f"/admin/boardgroupmember_form/{mb_id}"
     else:
-        return RedirectResponse(f"/admin/boardgroupmember_list/{gr_id}?{request.query_params}", status_code=303)
+        url = f"/admin/boardgroupmember_list/{gr_id}"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)

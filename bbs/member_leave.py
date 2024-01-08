@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Form, Request
+from sqlalchemy import update
 
 from bbs.social import SocialAuthService
 from core.database import db_session

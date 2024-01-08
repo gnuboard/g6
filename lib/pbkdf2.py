@@ -10,25 +10,6 @@ PBKDF2_COMPAT_ITERATIONS = 12000
 PBKDF2_COMPAT_SALT_BYTES = 24
 PBKDF2_COMPAT_HASH_BYTES = 24
 
-def pbkdf2_default(algo, password, salt, count, key_length):
-    # Sanity check
-    if count <= 0 or key_length <= 0:
-        raise ValueError("PBKDF2 ERROR: Invalid parameters.")
-
-    # Use built-in function if available
-    if algo:
-        algo = algo.lower()
-        if algo in hashlib.algorithms_available:
-            dk = hashlib.pbkdf2_hmac(algo, password.encode(), salt.encode(), count, dklen=key_length)
-            return dk
-        elif algo == 'sha1':
-            # Fallback function should be implemented here if necessary
-            pass
-        else:
-            raise ValueError("PBKDF2 ERROR: Hash algorithm not supported.")
-    else:
-        # Fallback function should be implemented here if necessary
-        pass
 
 def create_hash(password, force_compat=False):
     salt = base64.b64encode(os.urandom(PBKDF2_COMPAT_SALT_BYTES)).decode('utf-8')

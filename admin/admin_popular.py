@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import aliased
 
@@ -7,6 +7,7 @@ from core.models import Popular
 from core.template import AdminTemplates
 from lib.common import *
 from lib.dependencies import common_search_query_params, validate_token
+from lib.template_functions import get_paging
 
 router = APIRouter()
 templates = AdminTemplates()
@@ -61,7 +62,9 @@ async def popular_delete(
     # 기존 캐시 삭제
     popular_cache.update({"populars": None})
 
-    return RedirectResponse(f"/admin/popular_list?{request.query_params}", status_code=303)
+    url = "/admin/popular_list"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 @router.get("/popular_rank", tags=["admin_popular_rank"])

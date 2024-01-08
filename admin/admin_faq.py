@@ -13,8 +13,6 @@ from lib.dependencies import validate_token
 router = APIRouter()
 templates = AdminTemplates()
 templates.env.globals["get_head_tail_img"] = get_head_tail_img
-templates.env.globals["now"] = now
-
 
 FAQ_MENU_KEY = "300700"
 

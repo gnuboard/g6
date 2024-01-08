@@ -158,13 +158,13 @@
 				개인정보관리책임자 :  정보책임자명<br>
 			</p>
 	    </div>
-        {% if latest %}
-            {{ latest(request, 'notice', 'notice', 4, 13)|safe }}
+        {% if render_latest_posts %}
+            {{ render_latest_posts(request, 'notice', 'notice', 4, 13)|safe }}
         {% endif %}
 
         <!-- 접속자집계 시작 { -->
-        {% if visit %}
-            {{ visit(request)|safe }}
+        {% if render_visit_statistics %}
+            {{ render_visit_statistics(request)|safe }}
         {% endif %}
         <!-- } 접속자집계 끝 -->
     </div>

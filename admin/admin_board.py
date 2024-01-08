@@ -9,13 +9,16 @@ from core.formclass import BoardForm
 from core.template import AdminTemplates
 from lib.common import *
 from lib.dependencies import common_search_query_params, validate_token
-    
+from lib.template_functions import (
+    get_editor_select, get_group_select, 
+    get_member_level_select, get_paging, get_skin_select, 
+)
 
 router = APIRouter()
 templates = AdminTemplates()
-templates.env.globals['get_skin_select'] = get_skin_select
-templates.env.globals['get_group_select'] = get_group_select
 templates.env.globals['get_editor_select'] = get_editor_select
+templates.env.globals['get_group_select'] = get_group_select
+templates.env.globals['get_skin_select'] = get_skin_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
 
 BOARD_MENU_KEY = "300100"
@@ -95,7 +98,9 @@ async def board_list_update(
             # 최신글 캐시 삭제
             FileCache().delete_prefix(f'latest-{board.bo_table}')
 
-    return RedirectResponse(f"/admin/board_list?{request.query_params}", status_code=302)
+    url = "/admin/board_list"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 302)
 
 
 @router.post("/board_list_delete", dependencies=[Depends(validate_token)])
@@ -130,7 +135,9 @@ async def board_list_delete(
 
             db.commit()
 
-    return RedirectResponse(f"/admin/board_list?{request.query_params}", status_code=303)
+    url = "/admin/board_list"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 @router.get("/board_form")
@@ -202,168 +209,11 @@ async def board_form(
 async def board_form_update(
     request: Request,
     db: db_session,
-    sfl: str = Form(None),
-    stx: str = Form(None),
     action: str = Form(...),
     bo_table: str = Form(...),
     form_data: BoardForm = Depends(),
-    chk_grp_device: str = Form(None),
-    chk_grp_category_list: str = Form(None),
-    chk_grp_admin: str = Form(None),
-    chk_grp_list_level: str = Form(None),
-    chk_grp_read_level: str = Form(None),
-    chk_grp_write_level: str = Form(None),
-    chk_grp_reply_level: str = Form(None),
-    chk_grp_comment_level: str = Form(None),
-    chk_grp_link_level: str = Form(None),
-    chk_grp_upload_level: str = Form(None),
-    chk_grp_download_level: str = Form(None),
-    chk_grp_html_level: str = Form(None),
-    chk_grp_count_modify: str = Form(None),
-    chk_grp_count_delete: str = Form(None),
-    chk_grp_use_sideview: str = Form(None),
-    chk_grp_use_secret: str = Form(None),
-    chk_grp_use_dhtml_editor: str = Form(None),
-    chk_grp_select_editor: str = Form(None),
-    chk_grp_use_rss_view: str = Form(None),
-    chk_grp_use_good: str = Form(None),
-    chk_grp_use_nogood: str = Form(None),
-    chk_grp_use_name: str = Form(None),
-    chk_grp_use_signature: str = Form(None),
-    chk_grp_use_ip_view: str = Form(None),
-    chk_grp_use_list_content: str = Form(None),
-    chk_grp_use_list_file: str = Form(None),
-    chk_grp_use_list_view: str = Form(None),
-    chk_grp_use_email: str = Form(None),
-    chk_grp_use_cert: str = Form(None),
-    chk_grp_upload_count: str = Form(None),
-    chk_grp_upload_size: str = Form(None),
-    chk_grp_use_file_content: str = Form(None),
-    chk_grp_write_min: str = Form(None),
-    chk_grp_write_max: str = Form(None),
-    chk_grp_comment_min: str = Form(None),
-    chk_grp_comment_max: str = Form(None),
-    chk_grp_use_sns: str = Form(None),
-    chk_grp_use_search: str = Form(None),
-    chk_grp_order: str = Form(None),
-    chk_grp_use_captcha: str = Form(None),
-    chk_grp_skin: str = Form(None),
-    chk_grp_mobile_skin: str = Form(None),
-    chk_grp_include_head: str = Form(None),
-    chk_grp_include_tail: str = Form(None),
-    chk_grp_content_head: str = Form(None),
-    chk_grp_content_tail: str = Form(None),
-    chk_grp_mobile_content_head: str = Form(None),
-    chk_grp_mobile_content_tail: str = Form(None),
-    chk_grp_insert_content: str = Form(None),
-    chk_grp_subject_len: str = Form(None),
-    chk_grp_mobile_subject_len: str = Form(None),
-    chk_grp_page_rows: str = Form(None),
-    chk_grp_mobile_page_rows: str = Form(None),
-    chk_grp_gallery_cols: str = Form(None),
-    chk_grp_gallery_width: str = Form(None),
-    chk_grp_gallery_height: str = Form(None),
-    chk_grp_mobile_gallery_width: str = Form(None),
-    chk_grp_mobile_gallery_height: str = Form(None),
-    chk_grp_table_width: str = Form(None),
-    chk_grp_image_width: str = Form(None),
-    chk_grp_new: str = Form(None),
-    chk_grp_hot: str = Form(None),
-    chk_grp_reply_order: str = Form(None),
-    chk_grp_sort_field: str = Form(None),
-    chk_grp_read_point: str = Form(None),
-    chk_grp_write_point: str = Form(None),
-    chk_grp_comment_point: str = Form(None),
-    chk_grp_download_point: str = Form(None),
-    chk_grp_1: str = Form(None),
-    chk_grp_2: str = Form(None),
-    chk_grp_3: str = Form(None),
-    chk_grp_4: str = Form(None),
-    chk_grp_5: str = Form(None),
-    chk_grp_6: str = Form(None),
-    chk_grp_7: str = Form(None),
-    chk_grp_8: str = Form(None),
-    chk_grp_9: str = Form(None),
-    chk_grp_10: str = Form(None),
-
-    chk_all_device: str = Form(None),
-    chk_all_category_list: str = Form(None),
-    chk_all_admin: str = Form(None),
-    chk_all_list_level: str = Form(None),
-    chk_all_read_level: str = Form(None),
-    chk_all_write_level: str = Form(None),
-    chk_all_reply_level: str = Form(None),
-    chk_all_comment_level: str = Form(None),
-    chk_all_link_level: str = Form(None),
-    chk_all_upload_level: str = Form(None),
-    chk_all_download_level: str = Form(None),
-    chk_all_html_level: str = Form(None),
-    chk_all_count_modify: str = Form(None),
-    chk_all_count_delete: str = Form(None),
-    chk_all_use_sideview: str = Form(None),
-    chk_all_use_secret: str = Form(None),
-    chk_all_use_dhtml_editor: str = Form(None),
-    chk_all_select_editor: str = Form(None),
-    chk_all_use_rss_view: str = Form(None),
-    chk_all_use_good: str = Form(None),
-    chk_all_use_nogood: str = Form(None),
-    chk_all_use_name: str = Form(None),
-    chk_all_use_signature: str = Form(None),
-    chk_all_use_ip_view: str = Form(None),
-    chk_all_use_list_content: str = Form(None),
-    chk_all_use_list_file: str = Form(None),
-    chk_all_use_list_view: str = Form(None),
-    chk_all_use_email: str = Form(None),
-    chk_all_use_cert: str = Form(None),
-    chk_all_upload_count: str = Form(None),
-    chk_all_upload_size: str = Form(None),
-    chk_all_use_file_content: str = Form(None),
-    chk_all_write_min: str = Form(None),
-    chk_all_write_max: str = Form(None),
-    chk_all_comment_min: str = Form(None),
-    chk_all_comment_max: str = Form(None),
-    chk_all_use_sns: str = Form(None),
-    chk_all_use_search: str = Form(None),
-    chk_all_order: str = Form(None),
-    chk_all_use_captcha: str = Form(None),
-    chk_all_skin: str = Form(None),
-    chk_all_mobile_skin: str = Form(None),
-    chk_all_include_head: str = Form(None),
-    chk_all_include_tail: str = Form(None),
-    chk_all_content_head: str = Form(None),
-    chk_all_content_tail: str = Form(None),
-    chk_all_mobile_content_head: str = Form(None),
-    chk_all_mobile_content_tail: str = Form(None),
-    chk_all_insert_content: str = Form(None),
-    chk_all_subject_len: str = Form(None),
-    chk_all_mobile_subject_len: str = Form(None),
-    chk_all_page_rows: str = Form(None),
-    chk_all_mobile_page_rows: str = Form(None),
-    chk_all_gallery_cols: str = Form(None),
-    chk_all_gallery_width: str = Form(None),
-    chk_all_gallery_height: str = Form(None),
-    chk_all_mobile_gallery_width: str = Form(None),
-    chk_all_mobile_gallery_height: str = Form(None),
-    chk_all_table_width: str = Form(None),
-    chk_all_image_width: str = Form(None),
-    chk_all_new: str = Form(None),
-    chk_all_hot: str = Form(None),
-    chk_all_reply_order: str = Form(None),
-    chk_all_sort_field: str = Form(None),
-    chk_all_read_point: str = Form(None),
-    chk_all_write_point: str = Form(None),
-    chk_all_comment_point: str = Form(None),
-    chk_all_download_point: str = Form(None),
-    chk_all_1: str = Form(None),
-    chk_all_2: str = Form(None),
-    chk_all_3: str = Form(None),
-    chk_all_4: str = Form(None),
-    chk_all_5: str = Form(None),
-    chk_all_6: str = Form(None),
-    chk_all_7: str = Form(None),
-    chk_all_8: str = Form(None),
-    chk_all_9: str = Form(None),
-    chk_all_10: str = Form(None),
+    chk_grp: List[str] = Form([], alias="chk_grp[]"),
+    chk_all: List[str] = Form([], alias="chk_all[]"),
 ):
     """
     게시판 설정 등록, 수정 처리
@@ -396,235 +246,30 @@ async def board_form_update(
     else:
         raise AlertException("잘못된 접근입니다.", 400)
 
-    # 그룹적용
-    chk_grp = {}
-    if chk_grp_device: chk_grp['bo_device'] = form_data.bo_device
-    if chk_grp_category_list: 
-        chk_grp['bo_category_list'] = form_data.bo_category_list
-        chk_grp['bo_use_category'] = form_data.bo_use_category
-    if chk_grp_admin: chk_grp['bo_admin'] = form_data.bo_admin
-    if chk_grp_list_level: chk_grp['bo_list_level'] = form_data.bo_list_level
-    if chk_grp_read_level: chk_grp['bo_read_level'] = form_data.bo_read_level
-    if chk_grp_write_level: chk_grp['bo_write_level'] = form_data.bo_write_level
-    if chk_grp_reply_level: chk_grp['bo_reply_level'] = form_data.bo_reply_level
-    if chk_grp_comment_level: chk_grp['bo_comment_level'] = form_data.bo_comment_level
-    if chk_grp_link_level: chk_grp['bo_link_level'] = form_data.bo_link_level
-    if chk_grp_upload_level: chk_grp['bo_upload_level'] = form_data.bo_upload_level
-    if chk_grp_download_level: chk_grp['bo_download_level'] = form_data.bo_download_level
-    if chk_grp_html_level: chk_grp['bo_html_level'] = form_data.bo_html_level
-    if chk_grp_count_modify: chk_grp['bo_count_modify'] = form_data.bo_count_modify
-    if chk_grp_count_delete: chk_grp['bo_count_delete'] = form_data.bo_count_delete
-    if chk_grp_use_sideview: chk_grp['bo_use_sideview'] = form_data.bo_use_sideview
-    if chk_grp_use_secret: chk_grp['bo_use_secret'] = form_data.bo_use_secret
-    if chk_grp_use_dhtml_editor: chk_grp['bo_use_dhtml_editor'] = form_data.bo_use_dhtml_editor
-    if chk_grp_select_editor: chk_grp['bo_select_editor'] = form_data.bo_select_editor
-    if chk_grp_use_rss_view: chk_grp['bo_use_rss_view'] = form_data.bo_use_rss_view
-    if chk_grp_use_good: chk_grp['bo_use_good'] = form_data.bo_use_good
-    if chk_grp_use_nogood: chk_grp['bo_use_nogood'] = form_data.bo_use_nogood
-    if chk_grp_use_name: chk_grp['bo_use_name'] = form_data.bo_use_name
-    if chk_grp_use_signature: chk_grp['bo_use_signature'] = form_data.bo_use_signature
-    if chk_grp_use_ip_view: chk_grp['bo_use_ip_view'] = form_data.bo_use_ip_view
-    if chk_grp_use_list_content: chk_grp['bo_use_list_content'] = form_data.bo_use_list_content
-    if chk_grp_use_list_file: chk_grp['bo_use_list_file'] = form_data.bo_use_list_file
-    if chk_grp_use_list_view: chk_grp['bo_use_list_view'] = form_data.bo_use_list_view
-    if chk_grp_use_email: chk_grp['bo_use_email'] = form_data.bo_use_email
-    if chk_grp_use_cert: chk_grp['bo_use_cert'] = form_data.bo_use_cert
-    if chk_grp_upload_count: chk_grp['bo_upload_count'] = form_data.bo_upload_count
-    if chk_grp_upload_size: chk_grp['bo_upload_size'] = form_data.bo_upload_size
-    if chk_grp_use_file_content: chk_grp['bo_use_file_content'] = form_data.bo_use_file_content
-    if chk_grp_write_min: chk_grp['bo_write_min'] = form_data.bo_write_min
-    if chk_grp_write_max: chk_grp['bo_write_max'] = form_data.bo_write_max
-    if chk_grp_comment_min: chk_grp['bo_comment_min'] = form_data.bo_comment_min
-    if chk_grp_comment_max: chk_grp['bo_comment_max'] = form_data.bo_comment_max
-    if chk_grp_use_sns: chk_grp['bo_use_sns'] = form_data.bo_use_sns
-    if chk_grp_use_search: chk_grp['bo_use_search'] = form_data.bo_use_search
-    if chk_grp_order: chk_grp['bo_order'] = form_data.bo_order
-    if chk_grp_use_captcha: chk_grp['bo_use_captcha'] = form_data.bo_use_captcha
-    if chk_grp_skin: chk_grp['bo_skin'] = form_data.bo_skin
-    if chk_grp_mobile_skin: chk_grp['bo_mobile_skin'] = form_data.bo_mobile_skin
-    if chk_grp_include_head: chk_grp['bo_include_head'] = form_data.bo_include_head
-    if chk_grp_include_tail: chk_grp['bo_include_tail'] = form_data.bo_include_tail
-    if chk_grp_content_head: chk_grp['bo_content_head'] = form_data.bo_content_head
-    if chk_grp_content_tail: chk_grp['bo_content_tail'] = form_data.bo_content_tail
-    if chk_grp_mobile_content_head: chk_grp['bo_mobile_content_head'] = form_data.bo_mobile_content_head
-    if chk_grp_mobile_content_tail: chk_grp['bo_mobile_content_tail'] = form_data.bo_mobile_content_tail
-    if chk_grp_insert_content: chk_grp['bo_insert_content'] = form_data.bo_insert_content
-    if chk_grp_subject_len: chk_grp['bo_subject_len'] = form_data.bo_subject_len
-    if chk_grp_mobile_subject_len: chk_grp['bo_mobile_subject_len'] = form_data.bo_mobile_subject_len
-    if chk_grp_page_rows: chk_grp['bo_page_rows'] = form_data.bo_page_rows
-    if chk_grp_mobile_page_rows: chk_grp['bo_mobile_page_rows'] = form_data.bo_mobile_page_rows
-    if chk_grp_gallery_cols: chk_grp['bo_gallery_cols'] = form_data.bo_gallery_cols
-    if chk_grp_gallery_width: chk_grp['bo_gallery_width'] = form_data.bo_gallery_width
-    if chk_grp_gallery_height: chk_grp['bo_gallery_height'] = form_data.bo_gallery_height
-    if chk_grp_mobile_gallery_width: chk_grp['bo_mobile_gallery_width'] = form_data.bo_mobile_gallery_width
-    if chk_grp_mobile_gallery_height: chk_grp['bo_mobile_gallery_height'] = form_data.bo_mobile_gallery_height
-    if chk_grp_table_width: chk_grp['bo_table_width'] = form_data.bo_table_width
-    if chk_grp_image_width: chk_grp['bo_image_width'] = form_data.bo_image_width
-    if chk_grp_new: chk_grp['bo_new'] = form_data.bo_new
-    if chk_grp_hot: chk_grp['bo_hot'] = form_data.bo_hot
-    if chk_grp_reply_order: chk_grp['bo_reply_order'] = form_data.bo_reply_order
-    if chk_grp_sort_field: chk_grp['bo_sort_field'] = form_data.bo_sort_field
-    if chk_grp_read_point: chk_grp['bo_read_point'] = form_data.bo_read_point
-    if chk_grp_write_point: chk_grp['bo_write_point'] = form_data.bo_write_point
-    if chk_grp_comment_point: chk_grp['bo_comment_point'] = form_data.bo_comment_point
-    if chk_grp_download_point: chk_grp['bo_download_point'] = form_data.bo_download_point
-    if chk_grp_1: 
-        chk_grp['bo_1_subj'] = form_data.bo_1_subj
-        chk_grp['bo_1'] = form_data.bo_1
-    if chk_grp_2:
-        chk_grp['bo_2_subj'] = form_data.bo_2_subj
-        chk_grp['bo_2'] = form_data.bo_2
-    if chk_grp_3:
-        chk_grp['bo_3_subj'] = form_data.bo_3_subj
-        chk_grp['bo_3'] = form_data.bo_3
-    if chk_grp_4:
-        chk_grp['bo_4_subj'] = form_data.bo_4_subj
-        chk_grp['bo_4'] = form_data.bo_4
-    if chk_grp_5:
-        chk_grp['bo_5_subj'] = form_data.bo_5_subj
-        chk_grp['bo_5'] = form_data.bo_5
-    if chk_grp_6:
-        chk_grp['bo_6_subj'] = form_data.bo_6_subj
-        chk_grp['bo_6'] = form_data.bo_6
-    if chk_grp_7:
-        chk_grp['bo_7_subj'] = form_data.bo_7_subj
-        chk_grp['bo_7'] = form_data.bo_7
-    if chk_grp_8:
-        chk_grp['bo_8_subj'] = form_data.bo_8_subj
-        chk_grp['bo_8'] = form_data.bo_8
-    if chk_grp_9:
-        chk_grp['bo_9_subj'] = form_data.bo_9_subj
-        chk_grp['bo_9'] = form_data.bo_9
-    if chk_grp_10:
-        chk_grp['bo_10_subj'] = form_data.bo_10_subj
-        chk_grp['bo_10'] = form_data.bo_10
-
-    # 전체적용
-    chk_all = {}
-    if chk_all_device:
-        chk_all['bo_device'] = form_data.bo_device
-    if chk_all_category_list:
-        chk_all['bo_category_list'] = form_data.bo_category_list
-        chk_all['bo_use_category'] = form_data.bo_use_category
-    if chk_all_admin: chk_all['bo_admin'] = form_data.bo_admin
-    if chk_all_list_level: chk_all['bo_list_level'] = form_data.bo_list_level
-    if chk_all_read_level: chk_all['bo_read_level'] = form_data.bo_read_level
-    if chk_all_write_level: chk_all['bo_write_level'] = form_data.bo_write_level
-    if chk_all_reply_level: chk_all['bo_reply_level'] = form_data.bo_reply_level
-    if chk_all_comment_level: chk_all['bo_comment_level'] = form_data.bo_comment_level
-    if chk_all_link_level: chk_all['bo_link_level'] = form_data.bo_link_level
-    if chk_all_upload_level: chk_all['bo_upload_level'] = form_data.bo_upload_level
-    if chk_all_download_level: chk_all['bo_download_level'] = form_data.bo_download_level
-    if chk_all_html_level: chk_all['bo_html_level'] = form_data.bo_html_level
-    if chk_all_count_modify: chk_all['bo_count_modify'] = form_data.bo_count_modify
-    if chk_all_count_delete: chk_all['bo_count_delete'] = form_data.bo_count_delete
-    if chk_all_use_sideview: chk_all['bo_use_sideview'] = form_data.bo_use_sideview
-    if chk_all_use_secret: chk_all['bo_use_secret'] = form_data.bo_use_secret
-    if chk_all_use_dhtml_editor: chk_all['bo_use_dhtml_editor'] = form_data.bo_use_dhtml_editor
-    if chk_all_select_editor: chk_all['bo_select_editor'] = form_data.bo_select_editor
-    if chk_all_use_rss_view: chk_all['bo_use_rss_view'] = form_data.bo_use_rss_view
-    if chk_all_use_good: chk_all['bo_use_good'] = form_data.bo_use_good
-    if chk_all_use_nogood: chk_all['bo_use_nogood'] = form_data.bo_use_nogood
-    if chk_all_use_name: chk_all['bo_use_name'] = form_data.bo_use_name
-    if chk_all_use_signature: chk_all['bo_use_signature'] = form_data.bo_use_signature
-    if chk_all_use_ip_view: chk_all['bo_use_ip_view'] = form_data.bo_use_ip_view
-    if chk_all_use_list_content: chk_all['bo_use_list_content'] = form_data.bo_use_list_content
-    if chk_all_use_list_file: chk_all['bo_use_list_file'] = form_data.bo_use_list_file
-    if chk_all_use_list_view: chk_all['bo_use_list_view'] = form_data.bo_use_list_view
-    if chk_all_use_email: chk_all['bo_use_email'] = form_data.bo_use_email
-    if chk_all_use_cert: chk_all['bo_use_cert'] = form_data.bo_use_cert
-    if chk_all_upload_count: chk_all['bo_upload_count'] = form_data.bo_upload_count
-    if chk_all_upload_size: chk_all['bo_upload_size'] = form_data.bo_upload_size
-    if chk_all_use_file_content: chk_all['bo_use_file_content'] = form_data.bo_use_file_content
-    if chk_all_write_min: chk_all['bo_write_min'] = form_data.bo_write_min
-    if chk_all_write_max: chk_all['bo_write_max'] = form_data.bo_write_max
-    if chk_all_comment_min: chk_all['bo_comment_min'] = form_data.bo_comment_min
-    if chk_all_comment_max: chk_all['bo_comment_max'] = form_data.bo_comment_max
-    if chk_all_use_sns: chk_all['bo_use_sns'] = form_data.bo_use_sns
-    if chk_all_use_search: chk_all['bo_use_search'] = form_data.bo_use_search
-    if chk_all_order: chk_all['bo_order'] = form_data.bo_order
-    if chk_all_use_captcha: chk_all['bo_use_captcha'] = form_data.bo_use_captcha
-    if chk_all_skin: chk_all['bo_skin'] = form_data.bo_skin
-    if chk_all_mobile_skin: chk_all['bo_mobile_skin'] = form_data.bo_mobile_skin
-    if chk_all_include_head: chk_all['bo_include_head'] = form_data.bo_include_head
-    if chk_all_include_tail: chk_all['bo_include_tail'] = form_data.bo_include_tail
-    if chk_all_content_head: chk_all['bo_content_head'] = form_data.bo_content_head
-    if chk_all_content_tail: chk_all['bo_content_tail'] = form_data.bo_content_tail
-    if chk_all_mobile_content_head: chk_all['bo_mobile_content_head'] = form_data.bo_mobile_content_head
-    if chk_all_mobile_content_tail: chk_all['bo_mobile_content_tail'] = form_data.bo_mobile_content_tail
-    if chk_all_insert_content: chk_all['bo_insert_content'] = form_data.bo_insert_content
-    if chk_all_subject_len: chk_all['bo_subject_len'] = form_data.bo_subject_len
-    if chk_all_mobile_subject_len: chk_all['bo_mobile_subject_len'] = form_data.bo_mobile_subject_len
-    if chk_all_page_rows: chk_all['bo_page_rows'] = form_data.bo_page_rows
-    if chk_all_mobile_page_rows: chk_all['bo_mobile_page_rows'] = form_data.bo_mobile_page_rows
-    if chk_all_gallery_cols: chk_all['bo_gallery_cols'] = form_data.bo_gallery_cols
-    if chk_all_gallery_width: chk_all['bo_gallery_width'] = form_data.bo_gallery_width
-    if chk_all_gallery_height: chk_all['bo_gallery_height'] = form_data.bo_gallery_height
-    if chk_all_mobile_gallery_width: chk_all['bo_mobile_gallery_width'] = form_data.bo_mobile_gallery_width
-    if chk_all_mobile_gallery_height: chk_all['bo_mobile_gallery_height'] = form_data.bo_mobile_gallery_height
-    if chk_all_table_width: chk_all['bo_table_width'] = form_data.bo_table_width
-    if chk_all_image_width: chk_all['bo_image_width'] = form_data.bo_image_width
-    if chk_all_new: chk_all['bo_new'] = form_data.bo_new
-    if chk_all_hot: chk_all['bo_hot'] = form_data.bo_hot
-    if chk_all_reply_order: chk_all['bo_reply_order'] = form_data.bo_reply_order
-    if chk_all_sort_field: chk_all['bo_sort_field'] = form_data.bo_sort_field
-    if chk_all_read_point: chk_all['bo_read_point'] = form_data.bo_read_point
-    if chk_all_write_point: chk_all['bo_write_point'] = form_data.bo_write_point
-    if chk_all_comment_point: chk_all['bo_comment_point'] = form_data.bo_comment_point
-    if chk_all_download_point: chk_all['bo_download_point'] = form_data.bo_download_point
-    if chk_all_1: 
-        chk_all['bo_1_subj'] = form_data.bo_1_subj
-        chk_all['bo_1'] = form_data.bo_1
-    if chk_all_2:
-        chk_all['bo_2_subj'] = form_data.bo_2_subj
-        chk_all['bo_2'] = form_data.bo_2
-    if chk_all_3:
-        chk_all['bo_3_subj'] = form_data.bo_3_subj
-        chk_all['bo_3'] = form_data.bo_3
-    if chk_all_4:
-        chk_all['bo_4_subj'] = form_data.bo_4_subj
-        chk_all['bo_4'] = form_data.bo_4
-    if chk_all_5:
-        chk_all['bo_5_subj'] = form_data.bo_5_subj
-        chk_all['bo_5'] = form_data.bo_5
-    if chk_all_6:
-        chk_all['bo_6_subj'] = form_data.bo_6_subj
-        chk_all['bo_6'] = form_data.bo_6
-    if chk_all_7:
-        chk_all['bo_7_subj'] = form_data.bo_7_subj
-        chk_all['bo_7'] = form_data.bo_7
-    if chk_all_8:
-        chk_all['bo_8_subj'] = form_data.bo_8_subj
-        chk_all['bo_8'] = form_data.bo_8
-    if chk_all_9:
-        chk_all['bo_9_subj'] = form_data.bo_9_subj
-        chk_all['bo_9'] = form_data.bo_9
-    if chk_all_10:
-        chk_all['bo_10_subj'] = form_data.bo_10_subj
-        chk_all['bo_10'] = form_data.bo_10
-
     # 그룹적용 체크한 항목이 있다면
-    if (chk_grp):
+    if chk_grp:
         boards = db.scalars(
             select(Board).where(Board.gr_id == form_data.gr_id)
         )
         for board in boards:
-            for key, value in chk_grp.items():
-                setattr(board, key, value)
+            for field in chk_grp:
+                setattr(board, field, getattr(form_data, field))
             db.commit()
 
     # 전체적용 체크한 항목이 있다면
-    if (chk_all):
+    if chk_all:
         boards = db.scalars(select(Board)).all()
         for board in boards:
-            for key, value in chk_all.items():
-                setattr(board, key, value)
+            for field in chk_all:
+                setattr(board, field, getattr(form_data, field))
             db.commit()
 
     # 최신글 캐시 삭제
     FileCache().delete_prefix(f'latest-{bo_table}')
 
-    return RedirectResponse(f"/admin/board_form/{bo_table}?{request.query_params}", status_code=303)
+    url = f"/admin/board_form/{bo_table}"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 @router.get("/board_copy/{bo_table}")

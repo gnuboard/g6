@@ -1,14 +1,18 @@
+from typing import List, Optional
+
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
-from typing import List, Optional
+from sqlalchemy import select, update
 
 from core.database import db_session
 from core.exception import AlertException
 from core.models import Auth, Member
 from core.template import AdminTemplates
-from lib.dependencies import common_search_query_params,\
-    validate_token, validate_captcha
+from lib.dependencies import (
+    common_search_query_params, validate_token, validate_captcha
+)
 from lib.common import *
+from lib.template_functions import get_paging
 
 router = APIRouter()
 templates = AdminTemplates()
@@ -108,7 +112,9 @@ async def auth_update(
         db.add(auth)
         db.commit()
 
-    return RedirectResponse(f"/admin/auth_list?{request.query_params}", status_code=303)
+    url = "/admin/auth_list"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 @router.post("/auth_list_delete", dependencies=[Depends(validate_token)])
@@ -126,4 +132,6 @@ async def auth_list_delete(
         db.execute(delete(Auth).filter_by(mb_id=mb_id[i], au_menu=au_menu[i]))
         db.commit()
 
-    return RedirectResponse(f"/admin/auth_list?{request.query_params}", status_code=303)
+    url = "/admin/auth_list"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)

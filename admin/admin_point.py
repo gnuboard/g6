@@ -1,6 +1,9 @@
+import uuid
+from typing import List
+
 from fastapi import APIRouter, Depends, Request, Form
 from fastapi.responses import RedirectResponse
-from typing import List
+from sqlalchemy import select, update, func
 
 from core.database import db_session
 from core.exception import AlertException
@@ -8,6 +11,11 @@ from core.models import Point, Member
 from core.template import AdminTemplates
 from lib.common import *
 from lib.dependencies import common_search_query_params, validate_token
+from lib.point import (
+    delete_expire_point, delete_use_point, get_point_sum,
+    insert_point, insert_use_point
+)
+from lib.template_functions import get_paging
 
 router = APIRouter()
 templates = AdminTemplates()
@@ -85,7 +93,9 @@ async def point_update(
     rel_action = exist_member.mb_id + '-' + str(uuid.uuid4())
     insert_point(request, mb_id, po_point, po_content, "@passive", mb_id, rel_action, po_expire_term)
 
-    return RedirectResponse(f"/admin/point_list?{request.query_params}", status_code=303)
+    url = "/admin/point_list"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 @router.post("/point_list_delete", dependencies=[Depends(validate_token)])
@@ -134,4 +144,6 @@ async def point_list_delete(
         )
         db.commit()
 
-    return RedirectResponse(f"/admin/point_list?{request.query_params}", status_code=303)
+    url = "/admin/point_list"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)

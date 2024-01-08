@@ -8,6 +8,8 @@ from core.models import Poll, PollEtc
 from core.template import UserTemplates
 from lib.common import *
 from lib.dependencies import validate_token, validate_captcha
+from lib.member_lib import get_member_level
+from lib.point import insert_point
 
 router = APIRouter()
 templates = UserTemplates()

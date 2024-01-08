@@ -9,11 +9,6 @@
 
 {% block content %}
 <form name="fmember" id="fmember" action="/admin/member_form_update" onsubmit="return fmember_submit(this);" method="post" enctype="multipart/form-data" autocomplete="off">
-<input type="hidden" name="sfl" value="{{ request.state.sfl }}">
-<input type="hidden" name="stx" value="{{ request.state.stx }}">
-<input type="hidden" name="sst" value="{{ request.state.sst }}">
-<input type="hidden" name="sod" value="{{ request.state.sod }}">
-<input type="hidden" name="page" value="{{ request.state.page }}">
 <input type="hidden" name="token" value="">
 
 <div class="tbl_frm01 tbl_wrap">
@@ -322,6 +317,7 @@
         }
 
         f.token.value = generate_token();
+        f.action += "?{{ request.query_params|safe }}";
 
         return true;
     }

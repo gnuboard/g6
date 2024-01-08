@@ -3,7 +3,9 @@ from fastapi.responses import FileResponse
 
 from core.database import db_session
 from core.exception import AlertException
-from core.template import TEMPLATES, AdminTemplates, UserTemplates, register_theme_statics
+from core.template import (
+    AdminTemplates, UserTemplates, register_theme_statics, TEMPLATES
+)
 from lib.common import *
 
 router = APIRouter()
@@ -22,7 +24,9 @@ def get_theme_dir():
             continue
 
         theme_path = os.path.join(dirname, file)
-        if os.path.isdir(theme_path) and all(os.path.isfile(os.path.join(theme_path, fname)) for fname in ['readme.txt', 'screenshot.png', 'index.html']):
+        file_list = ['readme.txt', 'screenshot.png', 'index.html']
+        if (os.path.isdir(theme_path)
+                and all(os.path.isfile(os.path.join(theme_path, fname)) for fname in file_list)):
             result_array.append(file)
 
     result_array.sort()  # Using Python's default sort which is similar to natsort for strings
