@@ -14,6 +14,7 @@ from .default_values import *
 from core.database import DBConnect, DBSetting
 from core.exception import AlertException
 from core.formclass import InstallFrom
+from core.template import TemplateService
 from lib.common import *
 from lib.dependencies import validate_install, validate_token
 from lib.pbkdf2 import create_hash
@@ -80,6 +81,12 @@ async def install(
         set_key(ENV_PATH, "DB_PASSWORD", form.db_password)
         set_key(ENV_PATH, "DB_NAME", form.db_name)
         set_key(ENV_PATH, "DB_TABLE_PREFIX", form.db_table_prefix)
+        
+        # .env 파일에 쿠키 도메인 추가
+        set_key(ENV_PATH, "COOKIE_DOMAIN", "")
+
+        # .env 설정 반영 (반응형 사용여부)
+        TemplateService.set_responsive()
 
         # 데이터베이스 연결 설정
         db_setting = DBSetting()

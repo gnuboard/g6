@@ -144,7 +144,7 @@ a.gnb_2da:hover {color:#fff;background:#e7664d;
 transition:all 0.3s ease-out}
 
 .gnb_1dli_air .gnb_2da {}
-.gnb_1dli_on .gnb_2da {}
+.gnb_1dli_on .gnb_2da {} 
 .gnb_2da:focus, .gnb_2da:hover {color:#fff}
 .gnb_1dli_over .gnb_2dul {max-height: 110px;left:0;}
 .gnb_1dli_over2 .gnb_2dul {display:block;right:0}
@@ -295,7 +295,7 @@ button.btn_frmline {font-size:1em}
 a.btn_b01,.btn_b01 {display:inline-block;color:#bababa;text-decoration:none;vertical-align:middle;border:0;background:transparent}
 .btn_b01:hover, .btn_b01:hover {color:#000}
 a.btn_b02,.btn_b02 {display:inline-block;background:#253dbe;padding:0 10px;color:#fff;text-decoration:none;border:0;vertical-align:middle}
-a.btn_b02:hover, .btn_b02:hover {background:#0025eb}
+a.btn_b02:hover, .btn_b02:hover {background:#e7664d}
 a.btn_b03, .btn_b03 {display:inline-block;background:#fff;border:1px solid #b9bdd3;color:#646982;text-decoration:none;vertical-align:middle}
 a.btn_b03:hover, .btn_b03:hover {background:#ebedf6}
 a.btn_b04, .btn_b04 {display:inline-block;background:#fff;border:1px solid #ccc;color:#707070;text-decoration:none;vertical-align:middle}
@@ -508,7 +508,7 @@ box-sizing:content-box;
   #ft_wr .ft_cnt:last-child {margin-bottom: 0px;}
   #ft_wr .ft_cnt_wrap {flex-direction: column;}
   #ft_wr .ft_cnt_wrap .ft_cnt {width: 100%;}
-  .hd_opener {display: block;width: 50px;height: 50px;font-size: 2.2em;margin-left: auto;margin-right: 8px;}
+  .hd_opener {display: block;width: 50px;height: 50px;font-size: 2.2em;margin-left: auto;margin-right: 8px;background: transparent;border: none;}
   .hd_opener i {color: #fff;}
   .hd_sch_wr {display: none;position: absolute;bottom: -64px;left: 0;width: 100%;height: 60px;z-index: 9999;}
   #hd_sch #sch_stx {height: 60px;background: #383838;}

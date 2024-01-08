@@ -182,7 +182,7 @@ async def get_social_register_form(request: Request):
         "action_url": request.url_for('post_social_register'),
         "is_exists_email": is_exists_email,
     }
-    return templates.TemplateResponse(f"{request.state.device}/social/social_register_member.html", {
+    return templates.TemplateResponse("/social/social_register_member.html", {
         "request": request,
         "config": config,
         "form": form_context,

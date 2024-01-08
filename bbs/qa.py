@@ -132,7 +132,7 @@ async def qa_list(
         "paging": get_paging(request, current_page, total_count, qa_config_service.page_rows),
     }
 
-    return templates.TemplateResponse(f"{request.state.device}/qa/qa_list.html", context)
+    return templates.TemplateResponse("/qa/qa_list.html", context)
 
 
 @router.get("/qawrite")
@@ -170,7 +170,7 @@ async def qa_form_write(
         "content": content,
     }
 
-    return templates.TemplateResponse(f"{request.state.device}/qa/qa_form.html", context)
+    return templates.TemplateResponse("/qa/qa_form.html", context)
 
 
 @router.get("/qawrite/{qa_id}")
@@ -203,7 +203,7 @@ async def qa_form_edit(
         "content": qa.qa_content
     }
 
-    return templates.TemplateResponse(f"{request.state.device}/qa/qa_form.html", context)
+    return templates.TemplateResponse("/qa/qa_form.html", context)
 
 
 @router.post("/qawrite_update", dependencies=[Depends(validate_token)])
@@ -421,7 +421,7 @@ async def qa_view(
         "next": next
     }
 
-    return templates.TemplateResponse(f"{request.state.device}/qa/qa_view.html", context)
+    return templates.TemplateResponse("/qa/qa_view.html", context)
 
 
 def set_file_list(request: Request, qa: QaContent = None):

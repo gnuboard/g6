@@ -44,7 +44,7 @@ EDITOR_PATH = "lib/editor/templates"
 # 나중에 삭제할 코드
 SERVER_TIME = datetime.now()
 TIME_YMDHIS = SERVER_TIME.strftime("%Y-%m-%d %H:%M:%S")
-TIME_YMD = TIME_YMDHIS[:10]
+TIME_YMD = SERVER_TIME
 
 
 def hash_password(password: str):
@@ -670,7 +670,7 @@ def visit(request: Request):
         "total": int(total)
     }
     templates = UserTemplates()
-    visit_template = templates.TemplateResponse(f"visit/basic.html", context)
+    visit_template = templates.TemplateResponse("visit/basic.html", context)
 
     return visit_template.body.decode("utf-8")
 
