@@ -91,6 +91,7 @@ async def should_run_middleware(request: Request) -> bool:
     if (path.startswith('/generate_token')
             or path.startswith('/device/change')
             or path.startswith('/static')
+            or path.startswith('/data')
             or path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.webp'))):
         return False
 
