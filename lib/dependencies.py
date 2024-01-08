@@ -6,7 +6,7 @@ from sqlalchemy import exists, inspect, select
 
 from core.database import DBConnect, db_session
 from core.exception import AlertException
-from core.models import Auth, Board, GroupMember
+from core.models import Auth, Board, GroupMember, Member
 from lib.common import (
     dynamic_create_write_table, ENV_PATH, get_current_admin_menu_id,
     get_current_captcha_cls,
@@ -154,7 +154,9 @@ def get_board(db: db_session, bo_table: Annotated[str, Path(...)]):
     return board
 
 
-def get_write(db: db_session, bo_table: Annotated[str, Path(...)], wr_id: Annotated[int, Path(...)]):
+def get_write(db: db_session, 
+              bo_table: Annotated[str, Path(...)],
+              wr_id: Annotated[int, Path(...)]):
     """게시글 존재 여부 검사 & 반환"""
     write_model = dynamic_create_write_table(bo_table)
     write = db.get(write_model, wr_id)
@@ -162,3 +164,23 @@ def get_write(db: db_session, bo_table: Annotated[str, Path(...)], wr_id: Annota
         raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
 
     return write
+
+
+def get_member(db: db_session, mb_id: str = Path(...)):
+    """회원 존재 여부 검사 & 반환"""
+    member = db.scalar(select(Member).where(Member.mb_id == mb_id))
+    if not member:
+        raise AlertException(f"{mb_id} : 존재하지 않는 회원입니다.", 404)
+
+    return member
+
+
+def get_login_member(request: Request):
+    """로그인 여부 검사 & 반환"""
+    member: Member = request.state.login_member
+    if not member:
+        path = request.url.path
+        url = request.url_for("login_form").replace_query_params(url=path)
+        raise AlertException(f"로그인 후 이용 가능합니다.", 403, url=url)
+
+    return member

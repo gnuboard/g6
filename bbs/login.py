@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Form
+from fastapi import APIRouter, Form, Query
 from fastapi.responses import RedirectResponse
 
 from core.database import db_session
@@ -18,7 +18,7 @@ templates.env.filters["default_if_none"] = default_if_none
 @router.get("/login")
 async def login_form(
     request: Request,
-    url: str = "/"
+    url: str = Query(default="/")
 ):
     """
     로그인 폼을 보여준다.
