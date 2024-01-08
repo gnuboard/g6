@@ -138,7 +138,14 @@
             <a href="{{ url_for('content_view', co_id='company') }}">회사소개</a>
             <a href="{{ url_for('content_view', co_id='privacy') }}">개인정보처리방침</a>
             <a href="{{ url_for('content_view', co_id='provision') }}">서비스이용약관</a>
-            <a href="/?device=mobile">모바일버전</a>
+
+            {% if not request.state.is_responsive %}
+                {% if request.state.is_mobile %}
+                    <a href="{{ url_for('device_change', device='pc') }}">PC버전</a>
+                {% else %}
+                    <a href="{{ url_for('device_change', device='mobile') }}">모바일버전</a>
+                {% endif %}
+            {% endif %}
         </div>
         <div id="ft_company" class="ft_cnt">
         	<h2>사이트 정보</h2>
@@ -151,13 +158,13 @@
 				개인정보관리책임자 :  정보책임자명<br>
 			</p>
 	    </div>
-        {% if latest %}
-            {{ latest(request, 'notice', 'notice', 4, 13)|safe }}
+        {% if render_latest_posts %}
+            {{ render_latest_posts(request, 'notice', 'notice', 4, 13)|safe }}
         {% endif %}
 
         <!-- 접속자집계 시작 { -->
-        {% if visit %}
-            {{ visit(request)|safe }}
+        {% if render_visit_statistics %}
+            {{ render_visit_statistics(request)|safe }}
         {% endif %}
         <!-- } 접속자집계 끝 -->
     </div>

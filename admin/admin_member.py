@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, Path, Request
 from fastapi.responses import RedirectResponse
+from sqlalchemy import delete, func, select, update
 
 from bbs.social import SocialAuthService
 from core.database import db_session
@@ -13,7 +14,9 @@ from core.models import Member, Point, GroupMember, Memo, Scrap, Auth, Group, Bo
 from core.template import AdminTemplates
 from lib.common import *
 from lib.dependencies import common_search_query_params, validate_token
+from lib.member_lib import get_member_icon, get_member_image
 from lib.pbkdf2 import create_hash
+from lib.template_functions import get_member_level_select, get_paging
 
 
 router = APIRouter()
@@ -92,13 +95,13 @@ async def member_list(
 async def member_list_update(
     request: Request,
     db: db_session,
-    checks: Optional[List[int]] = Form(None, alias="chk[]"),
-    mb_id: Optional[List[str]] = Form(None, alias="mb_id[]"),
-    mb_open: Optional[List[int]] = Form(None, alias="mb_open[]"),
-    mb_mailling: Optional[List[int]] = Form(None, alias="mb_mailling[]"),
-    mb_sms: Optional[List[int]] = Form(None, alias="mb_sms[]"),
-    mb_intercept_date: Optional[List[int]] = Form(None, alias="mb_intercept_date[]"),
-    mb_level: Optional[List[str]] = Form(None, alias="mb_level[]"),
+    checks: List[int] = Form(None, alias="chk[]"),
+    mb_id: List[str] = Form(None, alias="mb_id[]"),
+    mb_open: List[int] = Form(None, alias="mb_open[]"),
+    mb_mailling: List[int] = Form(None, alias="mb_mailling[]"),
+    mb_sms: List[int] = Form(None, alias="mb_sms[]"),
+    mb_intercept_date: List[int] = Form(None, alias="mb_intercept_date[]"),
+    mb_level: List[str] = Form(None, alias="mb_level[]"),
 ):
     """회원관리 목록 일괄 수정"""
     for i in checks:
@@ -116,7 +119,9 @@ async def member_list_update(
             member.mb_level = mb_level[i]
             db.commit()
 
-    return RedirectResponse(f"/admin/member_list?{query_string(request)}", status_code=303)
+    query_params = request.query_params
+    url = "/admin/member_list"
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 @router.post("/member_list_delete", dependencies=[Depends(validate_token)])
@@ -138,7 +143,7 @@ async def member_list_delete(
             # 이미 삭제된 회원은 제외
             # if re.match(r"^[0-9]{8}.*삭제함", member.mb_memo):
             #     continue
-
+            delete_time = datetime.now().strftime("%Y%m%d")
             # member 의 경우 레코드를 삭제하는게 아니라 mb_id 를 남기고 모두 제거
             member.mb_password = ""
             member.mb_level = 1
@@ -156,7 +161,7 @@ async def member_list_delete(
             member.mb_birth = ""
             member.mb_sex = ""
             member.mb_signature = ""
-            member.mb_memo = (f"{SERVER_TIME.strftime('%Y%m%d')} 삭제함\n{member.mb_memo}")
+            member.mb_memo = (f"{delete_time} 삭제함\n{member.mb_memo}")
             member.mb_certify = ""
             member.mb_adult = 0
             member.mb_dupinfo = ""
@@ -195,7 +200,9 @@ async def member_list_delete(
 
             db.commit()
 
-    return RedirectResponse(f"/admin/member_list?{request.query_params}", status_code=303)
+    url = "/admin/member_list"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 @router.get("/member_form")
@@ -221,37 +228,6 @@ async def member_form(
 
     context = {"request": request, "member": exists_member}
     return templates.TemplateResponse("member_form.html", context)
-
-
-def get_member_icon(mb_id):
-    member_icon_dir = f"{MEMBER_ICON_DIR}/{mb_id[:2]}"
-
-    mb_dir = mb_id[:2]
-    icon_file = os.path.join(member_icon_dir, f"{mb_id}.gif")
-
-    if os.path.exists(icon_file):
-        # icon_url = icon_file.replace(G5_DATA_PATH, G5_DATA_URL)
-        icon_filemtime = os.path.getmtime(icon_file)  # 캐시를 위해 파일수정시간을 추가
-        return f"{icon_file}?{icon_filemtime}"
-    # , f'<input type="checkbox" id="del_mb_icon" name="del_mb_icon" value="1">삭제'
-
-    # return None
-    return "static/img/no_profile.gif"
-
-
-def get_member_image(mb_id):
-    member_image_dir = f"{MEMBER_IMAGE_DIR}/{mb_id[:2]}"
-
-    mb_dir = mb_id[:2]
-    image_file = os.path.join(member_image_dir, f"{mb_id}.gif")
-
-    if os.path.exists(image_file):
-        # icon_url = icon_file.replace(G5_DATA_PATH, G5_DATA_URL)
-        image_filemtime = os.path.getmtime(image_file)  # 캐시를 위해 파일수정시간을 추가
-        return f"{image_file}?{image_filemtime}"
-    # , f'<input type="checkbox" id="del_mb_icon" name="del_mb_icon" value="1">삭제'
-
-    return None
 
 
 # 회원수정 폼
@@ -312,7 +288,8 @@ async def member_form_update(
             new_member.mb_password = create_hash(mb_password)
         else:
             # 비밀번호가 없다면 현재시간으로 해시값을 만든후 다시 해시 (알수없게 만드는게 목적)
-            new_member.mb_password = create_hash(create_hash(TIME_YMDHIS))
+            time_ymdhis = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            new_member.mb_password = create_hash(create_hash(time_ymdhis))
 
         db.add(new_member)
         db.commit()
@@ -346,7 +323,9 @@ async def member_form_update(
     upload_member_icon(mb_id, mb_icon, del_mb_icon)
     upload_member_image(mb_id, mb_img, del_mb_img)
 
-    return RedirectResponse(url=f"/admin/member_form/{mb_id}", status_code=302)
+    url = f"/admin/member_form/{mb_id}"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 302)
 
 
 @router.get("/check_member_id/{mb_id}")

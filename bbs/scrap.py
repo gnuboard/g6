@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, Form, Path, Request
+from fastapi import APIRouter, Depends, Form, Path, Query, Request
 from fastapi.responses import RedirectResponse
+from sqlalchemy import desc, exists, func, select, update
 
 from core.database import DBConnect, db_session
 from core.exception import AlertCloseException, AlertException
@@ -8,6 +9,9 @@ from core.template import UserTemplates
 from lib.board_lib import *
 from lib.common import *
 from lib.dependencies import validate_token
+from lib.point import insert_point
+from lib.template_filters import datetime_format
+from lib.template_functions import get_paging
 
 router = APIRouter()
 templates = UserTemplates()
@@ -223,14 +227,9 @@ async def scrap_delete(
     )
     db.commit()
 
-    query_params = dict(request.query_params)
-    query_params.pop("token", None)
-    query_params = "&".join([f"{key}={value}" for key, value in query_params.items()])
-    query_params = query_params.replace("&amp;", "&")
-    query_string = "?" + query_params if query_params else ""
-    return_url = request.url_for('scrap_list').path + query_string
-
-    return RedirectResponse(url=return_url, status_code=302)
+    url = request.url_for('scrap_list').path
+    query_params = remove_query_params(request, "token")
+    return RedirectResponse(set_url_query_params(url, query_params), 302)
 
 
 def get_scrap_totals(mb_id: str) -> int:

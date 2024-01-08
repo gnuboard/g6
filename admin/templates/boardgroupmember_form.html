@@ -27,11 +27,6 @@
     </form>
 
     <form name="fboardgroupmember" id="fboardgroupmember" action="/admin/boardgroupmember_delete" onsubmit="return fboardgroupmember_submit(this);" method="post">
-        <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
-        <input type="hidden" name="stx" value="{{ request.state.stx }}">
-        <input type="hidden" name="sst" value="{{ request.state.sst }}">
-        <input type="hidden" name="sod" value="{{ request.state.sod }}">
-        <input type="hidden" name="page" value="{{ request.state.page }}">
         <input type="hidden" name="token" value="">
         <input type="hidden" name="mb_id" value="{{ member.mb_id }}" id="mb_id">
 
@@ -93,6 +88,7 @@
             }
 
             f.token.value = generate_token();
+            f.action += "?{{ request.query_params|safe }}";
 
             return true;
         }

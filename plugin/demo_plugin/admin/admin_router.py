@@ -3,9 +3,12 @@ from starlette.requests import Request
 from starlette.templating import Jinja2Templates
 
 from core.template import ADMIN_TEMPLATES_DIR
-from lib.common import get_member_id_select, get_skin_select, get_editor_select, get_selected, \
-    get_member_level_select, option_array_checked, get_admin_menus, get_client_ip
 from core.plugin import get_admin_plugin_menus, get_all_plugin_module_names
+from lib.common import get_admin_menus, get_client_ip
+from lib.template_functions import (
+    get_editor_select, get_member_id_select, get_member_level_select,
+    get_selected, get_skin_select, option_array_checked
+)
 from ..plugin_config import module_name, admin_router_prefix
 
 PLUGIN_TEMPLATES_DIR = f"plugin/{module_name}/templates"

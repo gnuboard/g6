@@ -14,6 +14,7 @@
 <input type="hidden" name="action" value="{{ 'u' if board.bo_table else 'w' }}">
 <input type="hidden" name="token" value="">
 
+
 <section id="anc_bo_basic">
     <h2 class="h2_frm">게시판 기본 설정</h2>
     <ul class="anchor">
@@ -40,7 +41,7 @@
                     <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
                     <b>{{ board.bo_table }}</b>
                     <a href="/board/{{ board.bo_table }}" class="btn_frmline">게시판 바로가기</a>
-                    <a href="/admin/board_list?{{ query_string }}" class="btn_frmline">목록으로</a>
+                    <a href={{ "/admin/board_list"|set_query_params(request) }} class="btn_frmline">목록으로</a>
                 {% else %}
                     <input type="text" name="bo_table" value="" id="bo_table" required  class="frm_input  required alnum_" maxlength="20">
                     영문자, 숫자, _ 만 가능 (공백없이 20자 이내)
@@ -80,9 +81,9 @@
                 </select>
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_device" id="chk_grp_device">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_device" value="bo_device">
                 <label for="chk_grp_device">그룹적용</label>
-                <input type="checkbox" name="chk_all_device" id="chk_all_device">
+                <input type="checkbox" name="chk_all[]" id="chk_all_device" value="bo_device">
                 <label for="chk_all_device">전체적용</label>
             </td>
         </tr>
@@ -95,9 +96,9 @@
                 <label for="bo_use_category">사용</label>
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_category_list" id="chk_grp_category_list">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_category_list" value="bo_category_list">
                 <label for="chk_grp_category_list">그룹적용</label>
-                <input type="checkbox" name="chk_all_category_list" id="chk_all_category_list">
+                <input type="checkbox" name="chk_all[]" id="chk_all_category_list" value="bo_category_list">
                 <label for="chk_all_category_list">전체적용</label>
             </td>
         </tr>
@@ -131,9 +132,9 @@
                 <input type="text" name="bo_admin" value="{{ board.bo_admin }}" id="bo_admin" class="frm_input" maxlength="20">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_admin" id="chk_grp_admin">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_admin" value="bo_admin">
                 <label for="chk_grp_admin">그룹적용</label>
-                <input type="checkbox" name="chk_all_admin" id="chk_all_admin">
+                <input type="checkbox" name="chk_all[]" id="chk_all_admin" value="bo_admin">
                 <label for="chk_all_admin">전체적용</label>
             </td>
         </tr>
@@ -144,9 +145,9 @@
                 {{ get_member_level_select('bo_list_level', 1, 10, board.bo_list_level)|safe }}
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_list_level" id="chk_grp_list_level">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_list_level" value="bo_list_level">
                 <label for="chk_grp_list_level">그룹적용</label>
-                <input type="checkbox" name="chk_all_list_level" id="chk_all_list_level">
+                <input type="checkbox" name="chk_all[]" id="chk_all_list_level" value="bo_list_level">
                 <label for="chk_all_list_level">전체적용</label>
             </td>
         </tr>
@@ -156,9 +157,9 @@
                 {{ get_member_level_select('bo_read_level', 1, 10, board.bo_read_level)|safe }}
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_read_level" id="chk_grp_read_level">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_read_level" value="bo_read_level">
                 <label for="chk_grp_read_level">그룹적용</label>
-                <input type="checkbox" name="chk_all_read_level" id="chk_all_read_level">
+                <input type="checkbox" name="chk_all[]" id="chk_all_read_level" value="bo_read_level">
                 <label for="chk_all_read_level">전체적용</label>
             </td>
         </tr>
@@ -168,9 +169,9 @@
                 {{ get_member_level_select('bo_write_level', 1, 10, board.bo_write_level)|safe }}
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_write_level" id="chk_grp_write_level">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_write_level" value="bo_write_level">
                 <label for="chk_grp_write_level">그룹적용</label>
-                <input type="checkbox" name="chk_all_write_level" id="chk_all_write_level">
+                <input type="checkbox" name="chk_all[]" id="chk_all_write_level" value="bo_write_level">
                 <label for="chk_all_write_level">전체적용</label>
             </td>
         </tr>
@@ -180,9 +181,9 @@
                 {{ get_member_level_select('bo_reply_level', 1, 10, board.bo_reply_level)|safe }}
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_reply_level" id="chk_grp_reply_level">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_reply_level" value="bo_reply_level">
                 <label for="chk_grp_reply_level">그룹적용</label>
-                <input type="checkbox" name="chk_all_reply_level" id="chk_all_reply_level">
+                <input type="checkbox" name="chk_all[]" id="chk_all_reply_level" value="bo_reply_level">
                 <label for="chk_all_reply_level">전체적용</label>
             </td>
         </tr>
@@ -192,9 +193,9 @@
                 {{ get_member_level_select('bo_comment_level', 1, 10, board.bo_comment_level)|safe }}
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_comment_level" id="chk_grp_comment_level">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_comment_level" value="bo_comment_level">
                 <label for="chk_grp_comment_level">그룹적용</label>
-                <input type="checkbox" name="chk_all_comment_level" id="chk_all_comment_level">
+                <input type="checkbox" name="chk_all[]" id="chk_all_comment_level" value="bo_comment_level">
                 <label for="chk_all_comment_level">전체적용</label>
             </td>
         </tr>
@@ -204,9 +205,9 @@
                 {{ get_member_level_select('bo_link_level', 1, 10, board.bo_link_level)|safe }}
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_link_level" id="chk_grp_link_level">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_link_level" value="bo_link_level">
                 <label for="chk_grp_link_level">그룹적용</label>
-                <input type="checkbox" name="chk_all_link_level" id="chk_all_link_level">
+                <input type="checkbox" name="chk_all[]" id="chk_all_link_level" value="bo_link_level">
                 <label for="chk_all_link_level">전체적용</label>
             </td>
         </tr>
@@ -216,9 +217,9 @@
                 {{ get_member_level_select('bo_upload_level', 1, 10, board.bo_upload_level)|safe }}
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_upload_level" id="chk_grp_upload_level">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_upload_level" value="bo_upload_level">
                 <label for="chk_grp_upload_level">그룹적용</label>
-                <input type="checkbox" name="chk_all_upload_level" id="chk_all_upload_level">
+                <input type="checkbox" name="chk_all[]" id="chk_all_upload_level" value="bo_upload_level">
                 <label for="chk_all_upload_level">전체적용</label>
             </td>
         </tr>
@@ -228,9 +229,9 @@
                 {{ get_member_level_select('bo_download_level', 1, 10, board.bo_download_level)|safe }}
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_download_level" id="chk_grp_download_level">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_download_level" value="bo_download_level">
                 <label for="chk_grp_download_level">그룹적용</label>
-                <input type="checkbox" name="chk_all_download_level" id="chk_all_download_level">
+                <input type="checkbox" name="chk_all[]" id="chk_all_download_level" value="bo_download_level">
                 <label for="chk_all_download_level">전체적용</label>
             </td>
         </tr>
@@ -240,9 +241,9 @@
                 {{ get_member_level_select('bo_html_level', 1, 10, board.bo_html_level)|safe }}
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_html_level" id="chk_grp_html_level">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_html_level" value="bo_html_level">
                 <label for="chk_grp_html_level">그룹적용</label>
-                <input type="checkbox" name="chk_all_html_level" id="chk_all_html_level">
+                <input type="checkbox" name="chk_all[]" id="chk_all_html_level" value="bo_html_level">
                 <label for="chk_all_html_level">전체적용</label>
             </td>
         </tr>
@@ -277,9 +278,9 @@
                  댓글 <input type="text" name="bo_count_modify" value="{{ board.bo_count_modify }}" id="bo_count_modify" required class="required numeric frm_input" size="3">개 이상 달리면 수정불가
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_count_modify" id="chk_grp_count_modify">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_count_modify" value="bo_count_modify">
                 <label for="chk_grp_count_modify">그룹적용</label>
-                <input type="checkbox" name="chk_all_count_modify" id="chk_all_count_modify">
+                <input type="checkbox" name="chk_all[]" id="chk_all_count_modify" value="bo_count_modify">
                 <label for="chk_all_count_modify">전체적용</label>
             </td>
         </tr>
@@ -289,9 +290,9 @@
                 댓글 <input type="text" name="bo_count_delete" value="{{ board.bo_count_delete }}" id="bo_count_delete" required class="required numeric frm_input" size="3">개 이상 달리면 삭제불가
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_count_delete" id="chk_grp_count_delete">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_count_delete" value="bo_count_delete">
                 <label for="chk_grp_count_delete">그룹적용</label>
-                <input type="checkbox" name="chk_all_count_delete" id="chk_all_count_delete">
+                <input type="checkbox" name="chk_all[]" id="chk_all_count_delete" value="bo_count_delete">
                 <label for="chk_all_count_delete">전체적용</label>
             </td>
         </tr>
@@ -302,9 +303,9 @@
                 사용 (글쓴이 클릭시 나오는 레이어 메뉴)
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_use_sideview" id="chk_grp_use_sideview">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_use_sideview" value="bo_use_sideview">
                 <label for="chk_grp_use_sideview">그룹적용</label>
-                <input type="checkbox" name="chk_all_use_sideview" id="chk_all_use_sideview">
+                <input type="checkbox" name="chk_all[]" id="chk_all_use_sideview" value="bo_use_sideview">
                 <label for="chk_all_use_sideview">전체적용</label>
             </td>
         </tr>
@@ -325,9 +326,9 @@
                 </select>
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_use_secret" id="chk_grp_use_secret">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_use_secret" value="bo_use_secret">
                 <label for="chk_grp_use_secret">그룹적용</label>
-                <input type="checkbox" name="chk_all_use_secret" id="chk_all_use_secret">
+                <input type="checkbox" name="chk_all[]" id="chk_all_use_secret" value="bo_use_secret">
                 <label for="chk_all_use_secret">전체적용</label>
             </td>
         </tr>
@@ -339,9 +340,9 @@
                 사용
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_use_dhtml_editor" id="chk_grp_use_dhtml_editor">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_use_dhtml_editor" value="bo_use_dhtml_editor">
                 <label for="chk_grp_use_dhtml_editor">그룹적용</label>
-                <input type="checkbox" name="chk_all_use_dhtml_editor" id="chk_all_use_dhtml_editor">
+                <input type="checkbox" name="chk_all[]" id="chk_all_use_dhtml_editor" value="bo_use_dhtml_editor">
                 <label for="chk_all_use_dhtml_editor">전체적용</label>
             </td>
         </tr>
@@ -352,9 +353,9 @@
                 {{ get_editor_select('bo_select_editor', board.bo_select_editor)|safe }}
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_select_editor" id="chk_grp_select_editor">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_select_editor" value="bo_select_editor">
                 <label for="chk_grp_select_editor">그룹적용</label>
-                <input type="checkbox" name="chk_all_select_editor" id="chk_all_select_editor">
+                <input type="checkbox" name="chk_all[]" id="chk_all_select_editor" value="bo_select_editor">
                 <label for="chk_all_select_editor">전체적용</label>
             </td>
         </tr>
@@ -366,9 +367,9 @@
                 사용
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_use_rss_view" id="chk_grp_use_rss_view">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_use_rss_view" value="bo_use_rss_view">
                 <label for="chk_grp_use_rss_view">그룹적용</label>
-                <input type="checkbox" name="chk_all_use_rss_view" id="chk_all_use_rss_view">
+                <input type="checkbox" name="chk_all[]" id="chk_all_use_rss_view" value="bo_use_rss_view">
                 <label for="chk_all_use_rss_view">전체적용</label>
             </td>
         </tr>
@@ -379,9 +380,9 @@
                 사용
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_use_good" id="chk_grp_use_good">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_use_good" value="bo_use_good">
                 <label for="chk_grp_use_good">그룹적용</label>
-                <input type="checkbox" name="chk_all_use_good" id="chk_all_use_good">
+                <input type="checkbox" name="chk_all[]" id="chk_all_use_good" value="bo_use_good">
                 <label for="chk_all_use_good">전체적용</label>
             </td>
         </tr>
@@ -392,9 +393,9 @@
                 사용
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_use_nogood" id="chk_grp_use_nogood">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_use_nogood" value="bo_use_nogood">
                 <label for="chk_grp_use_nogood">그룹적용</label>
-                <input type="checkbox" name="chk_all_use_nogood" id="chk_all_use_nogood">
+                <input type="checkbox" name="chk_all[]" id="chk_all_use_nogood" value="bo_use_nogood">
                 <label for="chk_all_use_nogood">전체적용</label>
             </td>
         </tr>
@@ -405,10 +406,9 @@
                 사용
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_use_name" id="chk_grp_use_name">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_use_name" value="bo_use_name">
                 <label for="chk_grp_use_name">그룹적용</label>
-
-                <input type="checkbox" name="chk_all_use_name" id="chk_all_use_name">
+                <input type="checkbox" name="chk_all[]" id="chk_all_use_name" value="bo_use_name">
                 <label for="chk_all_use_name">전체적용</label>
             </td>
         </tr>
@@ -419,9 +419,9 @@
                 사용
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_use_signature" id="chk_grp_use_signature">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_use_signature" value="bo_use_signature">
                 <label for="chk_grp_use_signature">그룹적용</label>
-                <input type="checkbox" name="chk_all_use_signature" id="chk_all_use_signature">
+                <input type="checkbox" name="chk_all[]" id="chk_all_use_signature" value="bo_use_signature">
                 <label for="chk_all_use_signature">전체적용</label>
             </td>
         </tr>
@@ -432,9 +432,9 @@
                 사용
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_use_ip_view" id="chk_grp_use_ip_view">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_use_ip_view" value="bo_use_ip_view">
                 <label for="chk_grp_use_ip_view">그룹적용</label>
-                <input type="checkbox" name="chk_all_use_ip_view" id="chk_all_use_ip_view">
+                <input type="checkbox" name="chk_all[]" id="chk_all_use_ip_view" value="bo_use_ip_view">
                 <label for="chk_all_use_ip_view">전체적용</label>
             </td>
         </tr>
@@ -446,9 +446,9 @@
                 사용 (사용시 속도가 느려질 수 있습니다.)
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_use_list_content" id="chk_grp_use_list_content">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_use_list_content" value="bo_use_list_content">
                 <label for="chk_grp_use_list_content">그룹적용</label>
-                <input type="checkbox" name="chk_all_use_list_content" id="chk_all_use_list_content">
+                <input type="checkbox" name="chk_all[]" id="chk_all_use_list_content" value="bo_use_list_content">
                 <label for="chk_all_use_list_content">전체적용</label>
             </td>
         </tr>
@@ -460,9 +460,9 @@
                 사용 (사용시 속도가 느려질 수 있습니다.)
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_use_list_file" id="chk_grp_use_list_file">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_use_list_file" value="bo_use_list_file">
                 <label for="chk_grp_use_list_file">그룹적용</label>
-                <input type="checkbox" name="chk_all_use_list_file" id="chk_all_use_list_file">
+                <input type="checkbox" name="chk_all[]" id="chk_all_use_list_file" value="bo_use_list_file">
                 <label for="chk_all_use_list_file">전체적용</label>
             </td>
         </tr>
@@ -473,9 +473,9 @@
                 사용
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_use_list_view" id="chk_grp_use_list_view">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_use_list_view" value="bo_use_list_view">
                 <label for="chk_grp_use_list_view">그룹적용</label>
-                <input type="checkbox" name="chk_all_use_list_view" id="chk_all_use_list_view">
+                <input type="checkbox" name="chk_all[]" id="chk_all_use_list_view" value="bo_use_list_view">
                 <label for="chk_all_use_list_view">전체적용</label>
             </td>
         </tr>
@@ -486,9 +486,9 @@
                 사용
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_use_email" id="chk_grp_use_email">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_use_email" value="bo_use_email">
                 <label for="chk_grp_use_email">그룹적용</label>
-                <input type="checkbox" name="chk_all_use_email" id="chk_all_use_email">
+                <input type="checkbox" name="chk_all[]" id="chk_all_use_email" value="bo_use_email">
                 <label for="chk_all_use_email">전체적용</label>
             </td>
         </tr>
@@ -505,9 +505,9 @@
                 </select>
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_use_cert" id="chk_grp_use_cert">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_use_cert" value="bo_use_cert">
                 <label for="chk_grp_use_cert">그룹적용</label>
-                <input type="checkbox" name="chk_all_use_cert" id="chk_all_use_cert">
+                <input type="checkbox" name="chk_all[]" id="chk_all_use_cert" value="bo_use_cert">
                 <label for="chk_all_use_cert">전체적용</label>
             </td>
         </tr>
@@ -518,9 +518,9 @@
                 <input type="text" name="bo_upload_count" value="{{ board.bo_upload_count }}" id="bo_upload_count" required class="required numeric frm_input" size="4">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_upload_count" id="chk_grp_upload_count">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_upload_count" value="bo_upload_count">
                 <label for="chk_grp_upload_count">그룹적용</label>
-                <input type="checkbox" name="chk_all_upload_count" id="chk_all_upload_count">
+                <input type="checkbox" name="chk_all[]" id="chk_all_upload_count" value="bo_upload_count">
                 <label for="chk_all_upload_count">전체적용</label>
             </td>
         </tr>
@@ -531,9 +531,9 @@
                 업로드 파일 한개당 <input type="text" name="bo_upload_size" value="{{ board.bo_upload_size }}" id="bo_upload_size" required class="required numeric frm_input"  size="10"> bytes 이하
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_upload_size" id="chk_grp_upload_size">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_upload_size" value="bo_upload_size">
                 <label for="chk_grp_upload_size">그룹적용</label>
-                <input type="checkbox" name="chk_all_upload_size" id="chk_all_upload_size">
+                <input type="checkbox" name="chk_all[]" id="chk_all_upload_size" value="bo_upload_size">
                 <label for="chk_all_upload_size">전체적용</label>
             </td>
         </tr>
@@ -543,9 +543,9 @@
                 <input type="checkbox" name="bo_use_file_content" value="1" id="bo_use_file_content" {{ 'checked' if board.bo_use_file_content }}>사용
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_use_file_content" id="chk_grp_use_file_content">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_use_file_content" value="bo_use_file_content">
                 <label for="chk_grp_use_file_content">그룹적용</label>
-                <input type="checkbox" name="chk_all_use_file_content" id="chk_all_use_file_content">
+                <input type="checkbox" name="chk_all[]" id="chk_all_use_file_content" value="bo_use_file_content">
                 <label for="chk_all_use_file_content">전체적용</label>
             </td>
         </tr>
@@ -556,9 +556,9 @@
                 <input type="text" name="bo_write_min" value="{{ board.bo_write_min }}" id="bo_write_min" class="numeric frm_input" size="4">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_write_min" id="chk_grp_write_min">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_write_min" value="bo_write_min">
                 <label for="chk_grp_write_min">그룹적용</label>
-                <input type="checkbox" name="chk_all_write_min" id="chk_all_write_min">
+                <input type="checkbox" name="chk_all[]" id="chk_all_write_min" value="bo_write_min">
                 <label for="chk_all_write_min">전체적용</label>
             </td>
         </tr>
@@ -569,9 +569,9 @@
                 <input type="text" name="bo_write_max" value="{{ board.bo_write_max }}" id="bo_write_max" class="numeric frm_input" size="4">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_write_max" id="chk_grp_write_max">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_write_max" value="bo_write_max">
                 <label for="chk_grp_write_max">그룹적용</label>
-                <input type="checkbox" name="chk_all_write_max" id="chk_all_write_max">
+                <input type="checkbox" name="chk_all[]" id="chk_all_write_max" value="bo_write_max">
                 <label for="chk_all_write_max">전체적용</label>
             </td>
         </tr>
@@ -582,9 +582,9 @@
                 <input type="text" name="bo_comment_min" value="{{ board.bo_comment_min }}" id="bo_comment_min" class="numeric frm_input" size="4">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_comment_min" id="chk_grp_comment_min">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_comment_min" value="bo_comment_min">
                 <label for="chk_grp_comment_min">그룹적용</label>
-                <input type="checkbox" name="chk_all_comment_min" id="chk_all_comment_min">
+                <input type="checkbox" name="chk_all[]" id="chk_all_comment_min" value="bo_comment_min">
                 <label for="chk_all_comment_min">전체적용</label>
             </td>
         </tr>
@@ -595,9 +595,9 @@
                 <input type="text" name="bo_comment_max" value="{{ board.bo_comment_max }}" id="bo_comment_max" class="numeric frm_input" size="4">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_comment_max" id="chk_grp_comment_max">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_comment_max" value="bo_comment_max">
                 <label for="chk_grp_comment_max">그룹적용</label>
-                <input type="checkbox" name="chk_all_comment_max" id="chk_all_comment_max">
+                <input type="checkbox" name="chk_all[]" id="chk_all_comment_max" value="bo_comment_max">
                 <label for="chk_all_comment_max">전체적용</label>
             </td>
         </tr>
@@ -609,9 +609,9 @@
                 <input type="checkbox" name="bo_use_sns" value="1" id="bo_use_sns" {{ 'checked' if board.bo_use_sns }}> 사용
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_use_sns" id="chk_grp_use_sns">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_use_sns" value="bo_use_sns">
                 <label for="chk_grp_use_sns">그룹적용</label>
-                <input type="checkbox" name="chk_all_use_sns" id="chk_all_use_sns">
+                <input type="checkbox" name="chk_all[]" id="chk_all_use_sns" value="bo_use_sns">
                 <label for="chk_all_use_sns">전체적용</label>
             </td>
         </tr>
@@ -622,9 +622,9 @@
                 사용
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_use_search" id="chk_grp_use_search">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_use_search" value="bo_use_search">
                 <label for="chk_grp_use_search">그룹적용</label>
-                <input type="checkbox" name="chk_all_use_search" id="chk_all_use_search">
+                <input type="checkbox" name="chk_all[]" id="chk_all_use_search" value="bo_use_search">
                 <label for="chk_all_use_search">전체적용</label>
             </td>
         </tr>
@@ -635,9 +635,9 @@
                 <input type="text" name="bo_order" value="{{ board.bo_order }}" id="bo_order" class="frm_input" size="4">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_order" id="chk_grp_order">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_order" value="bo_order">
                 <label for="chk_grp_order">그룹적용</label>
-                <input type="checkbox" name="chk_all_order" id="chk_all_order">
+                <input type="checkbox" name="chk_all[]" id="chk_all_order" value="bo_order">
                 <label for="chk_all_order">전체적용</label>
             </td>
         </tr>
@@ -649,9 +649,9 @@
                 <input type="checkbox" name="bo_use_captcha" value="1" id="bo_use_captcha" {{ 'checked' if board.bo_use_captcha }}> 사용
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_use_captcha" id="chk_grp_use_captcha">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_use_captcha" value="bo_use_captcha">
                 <label for="chk_grp_use_captcha">그룹적용</label>
-                <input type="checkbox" name="chk_all_use_captcha" id="chk_all_use_captcha">
+                <input type="checkbox" name="chk_all[]" id="chk_all_use_captcha" value="bo_use_captcha">
                 <label for="chk_all_use_captcha">전체적용</label>
             </td>
         </tr>
@@ -685,9 +685,9 @@
                 {{ get_skin_select('board', 'bo_skin', board.bo_skin, attribute='required')|safe }}
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_skin" id="chk_grp_skin">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_skin" value="bo_skin">
                 <label for="chk_grp_skin">그룹적용</label>
-                <input type="checkbox" name="chk_all_skin" id="chk_all_skin">
+                <input type="checkbox" name="chk_all[]" id="chk_all_skin" value="bo_skin">
                 <label for="chk_all_skin">전체적용</label>
             </td>
         </tr>
@@ -697,9 +697,9 @@
                 {{ get_skin_select('board', 'bo_mobile_skin', board.bo_mobile_skin, device='mobile')|safe }}
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_mobile_skin" id="chk_grp_mobile_skin">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_mobile_skin" value="bo_mobile_skin">
                 <label for="chk_grp_mobile_skin">그룹적용</label>
-                <input type="checkbox" name="chk_all_mobile_skin" id="chk_all_mobile_skin">
+                <input type="checkbox" name="chk_all[]" id="chk_all_mobile_skin" value="bo_mobile_skin">
                 <label for="chk_all_mobile_skin">전체적용</label>
             </td>
         </tr>
@@ -709,9 +709,9 @@
                 {{ editor.body("bo_content_head", board.bo_content_head) }}
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_content_head" id="chk_grp_content_head">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_content_head" value="bo_content_head">
                 <label for="chk_grp_content_head">그룹적용</label>
-                <input type="checkbox" name="chk_all_content_head" id="chk_all_content_head">
+                <input type="checkbox" name="chk_all[]" id="chk_all_content_head" value="bo_content_head">
                 <label for="chk_all_content_head">전체적용</label>
             </td>
         </tr>
@@ -721,9 +721,9 @@
                 {{ editor.body("bo_content_tail", board.bo_content_tail) }}
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_content_tail" id="chk_grp_content_tail">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_content_tail" value="bo_content_tail">
                 <label for="chk_grp_content_tail">그룹적용</label>
-                <input type="checkbox" name="chk_all_content_tail" id="chk_all_content_tail">
+                <input type="checkbox" name="chk_all[]" id="chk_all_content_tail" value="bo_content_tail">
                 <label for="chk_all_content_tail">전체적용</label>
             </td>
         </tr>
@@ -733,9 +733,9 @@
                 {{ editor.body("bo_mobile_content_head", board.bo_mobile_content_head) }}
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_mobile_content_head" id="chk_grp_mobile_content_head">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_mobile_content_head" value="bo_mobile_content_head">
                 <label for="chk_grp_mobile_content_head">그룹적용</label>
-                <input type="checkbox" name="chk_all_mobile_content_head" id="chk_all_mobile_content_head">
+                <input type="checkbox" name="chk_all[]" id="chk_all_mobile_content_head" value="bo_mobile_content_head">
                 <label for="chk_all_mobile_content_head">전체적용</label>
             </td>
         </tr>
@@ -745,9 +745,9 @@
                 {{ editor.body("bo_mobile_content_tail", board.bo_mobile_content_tail) }}
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_mobile_content_tail" id="chk_grp_mobile_content_tail">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_mobile_content_tail" value="bo_mobile_content_tail">
                 <label for="chk_grp_mobile_content_tail">그룹적용</label>
-                <input type="checkbox" name="chk_all_mobile_content_tail" id="chk_all_mobile_content_tail">
+                <input type="checkbox" name="chk_all[]" id="chk_all_mobile_content_tail" value="bo_mobile_content_tail">
                 <label for="chk_all_mobile_content_tail">전체적용</label>
             </td>
         </tr>
@@ -757,9 +757,9 @@
                 <textarea id="bo_insert_content" name="bo_insert_content" rows="5">{{ board.bo_insert_content }}</textarea>
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_insert_content" id="chk_grp_insert_content">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_insert_content" value="bo_insert_content">
                 <label for="chk_grp_insert_content">그룹적용</label>
-                <input type="checkbox" name="chk_all_insert_content" id="chk_all_insert_content">
+                <input type="checkbox" name="chk_all[]" id="chk_all_insert_content" value="bo_insert_content">
                 <label for="chk_all_insert_content">전체적용</label>
             </td>
         </tr>
@@ -770,9 +770,9 @@
                 <input type="text" name="bo_subject_len" value="{{ board.bo_subject_len }}" id="bo_subject_len" required class="required numeric frm_input" size="4">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_subject_len" id="chk_grp_subject_len">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_subject_len" value="bo_subject_len">
                 <label for="chk_grp_subject_len">그룹적용</label>
-                <input type="checkbox" name="chk_all_subject_len" id="chk_all_subject_len">
+                <input type="checkbox" name="chk_all[]" id="chk_all_subject_len" value="bo_subject_len">
                 <label for="chk_all_subject_len">전체적용</label>
             </td>
         </tr>
@@ -783,9 +783,9 @@
                 <input type="text" name="bo_mobile_subject_len" value="{{ board.bo_mobile_subject_len }}" id="bo_mobile_subject_len" required class="required numeric frm_input" size="4">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_mobile_subject_len" id="chk_grp_mobile_subject_len">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_" value="bo_mobile_subject_len">
                 <label for="chk_grp_mobile_subject_len">그룹적용</label>
-                <input type="checkbox" name="chk_all_mobile_subject_len" id="chk_all_mobile_subject_len">
+                <input type="checkbox" name="chk_all[]" id="chk_all_" value="bo_mobile_subject_len">
                 <label for="chk_all_mobile_subject_len">전체적용</label>
             </td>
         </tr>
@@ -795,9 +795,9 @@
                 <input type="text" name="bo_page_rows" value="{{ board.bo_page_rows }}" id="bo_page_rows" required class="required numeric frm_input" size="4">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_page_rows" id="chk_grp_page_rows">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_page_rows" value="bo_page_rows">
                 <label for="chk_grp_page_rows">그룹적용</label>
-                <input type="checkbox" name="chk_all_page_rows" id="chk_all_page_rows">
+                <input type="checkbox" name="chk_all[]" id="chk_all_page_rows" value="bo_page_rows">
                 <label for="chk_all_page_rows">전체적용</label>
             </td>
         </tr>
@@ -807,9 +807,9 @@
                 <input type="text" name="bo_mobile_page_rows" value="{{ board.bo_mobile_page_rows }}" id="bo_mobile_page_rows" required class="required numeric frm_input" size="4">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_mobile_page_rows" id="chk_grp_mobile_page_rows">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_mobile_page_rows" value="bo_mobile_page_rows">
                 <label for="chk_grp_mobile_page_rows">그룹적용</label>
-                <input type="checkbox" name="chk_all_mobile_page_rows" id="chk_all_mobile_page_rows">
+                <input type="checkbox" name="chk_all[]" id="chk_all_mobile_page_rows" value="bo_mobile_page_rows">
                 <label for="chk_all_mobile_page_rows">전체적용</label>
             </td>
         </tr>
@@ -820,9 +820,9 @@
                 <input type="text" name="bo_gallery_cols" value="{{ board.bo_gallery_cols }}" id="bo_gallery_cols" required class="required numeric frm_input" size="4">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_gallery_cols" id="chk_grp_gallery_cols">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_gallery_cols" value="bo_gallery_cols">
                 <label for="chk_grp_gallery_cols">그룹적용</label>
-                <input type="checkbox" name="chk_all_gallery_cols" id="chk_all_gallery_cols">
+                <input type="checkbox" name="chk_all[]" id="chk_all_gallery_cols" value="bo_gallery_cols">
                 <label for="chk_all_gallery_cols">전체적용</label>
             </td>
         </tr>
@@ -833,9 +833,9 @@
                 <input type="text" name="bo_gallery_width" value="{{ board.bo_gallery_width }}" id="bo_gallery_width" required class="required numeric frm_input" size="4">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_gallery_width" id="chk_grp_gallery_width">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_gallery_width" value="bo_gallery_width">
                 <label for="chk_grp_gallery_width">그룹적용</label>
-                <input type="checkbox" name="chk_all_gallery_width" id="chk_all_gallery_width">
+                <input type="checkbox" name="chk_all[]" id="chk_all_gallery_width" value="bo_gallery_width">
                 <label for="chk_all_gallery_width">전체적용</label>
             </td>
         </tr>
@@ -846,9 +846,9 @@
                 <input type="text" name="bo_gallery_height" value="{{ board.bo_gallery_height }}" id="bo_gallery_height" required class="required numeric frm_input" size="4">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_gallery_height" id="chk_grp_gallery_height">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_gallery_height" value="bo_gallery_height">
                 <label for="chk_grp_gallery_height">그룹적용</label>
-                <input type="checkbox" name="chk_all_gallery_height" id="chk_all_gallery_height">
+                <input type="checkbox" name="chk_all[]" id="chk_all_gallery_height" value="bo_gallery_height">
                 <label for="chk_all_gallery_height">전체적용</label>
             </td>
         </tr>
@@ -859,9 +859,9 @@
                 <input type="text" name="bo_mobile_gallery_width" value="{{ board.bo_mobile_gallery_width }}" id="bo_mobile_gallery_width" required class="required numeric frm_input" size="4">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_mobile_gallery_width" id="chk_grp_mobile_gallery_width">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_mobile_gallery_width" value="bo_mobile_gallery_width">
                 <label for="chk_grp_mobile_gallery_width">그룹적용</label>
-                <input type="checkbox" name="chk_all_mobile_gallery_width" id="chk_all_mobile_gallery_width">
+                <input type="checkbox" name="chk_all[]" id="chk_all_mobile_gallery_width" value="bo_mobile_gallery_width">
                 <label for="chk_all_mobile_gallery_width">전체적용</label>
             </td>
         </tr>
@@ -872,9 +872,9 @@
                 <input type="text" name="bo_mobile_gallery_height" value="{{ board.bo_mobile_gallery_height }}" id="bo_mobile_gallery_height" required class="required numeric frm_input" size="4">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_mobile_gallery_height" id="chk_grp_mobile_gallery_height">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_mobile_gallery_height" value="bo_mobile_gallery_height">
                 <label for="chk_grp_mobile_gallery_height">그룹적용</label>
-                <input type="checkbox" name="chk_all_mobile_gallery_height" id="chk_all_mobile_gallery_height">
+                <input type="checkbox" name="chk_all[]" id="chk_all_mobile_gallery_height" value="bo_mobile_gallery_height">
                 <label for="chk_all_mobile_gallery_height">전체적용</label>
             </td>
         </tr>
@@ -885,9 +885,9 @@
                 <input type="text" name="bo_table_width" value="{{ board.bo_table_width }}" id="bo_table_width" required class="required numeric frm_input" size="4">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_table_width" id="chk_grp_table_width">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_table_width" value="bo_table_width">
                 <label for="chk_grp_table_width">그룹적용</label>
-                <input type="checkbox" name="chk_all_table_width" id="chk_all_table_width">
+                <input type="checkbox" name="chk_all[]" id="chk_all_table_width" value="bo_table_width">
                 <label for="chk_all_table_width">전체적용</label>
             </td>
         </tr>
@@ -898,9 +898,9 @@
                 <input type="text" name="bo_image_width" value="{{ board.bo_image_width }}" id="bo_image_width" required class="required numeric frm_input" size="4"> 픽셀
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_image_width" id="chk_grp_image_width">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_image_width" value="bo_image_width">
                 <label for="chk_grp_image_width">그룹적용</label>
-                <input type="checkbox" name="chk_all_image_width" id="chk_all_image_width">
+                <input type="checkbox" name="chk_all[]" id="chk_all_image_width" value="bo_image_width">
                 <label for="chk_all_image_width">전체적용</label>
             </td>
         </tr>
@@ -911,9 +911,9 @@
                 <input type="text" name="bo_new" value="{{ board.bo_new }}" id="bo_new" required class="required numeric frm_input" size="4">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_new" id="chk_grp_new">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_new" value="bo_new">
                 <label for="chk_grp_new">그룹적용</label>
-                <input type="checkbox" name="chk_all_new" id="chk_all_new">
+                <input type="checkbox" name="chk_all[]" id="chk_all_new" value="bo_new">
                 <label for="chk_all_new">전체적용</label>
             </td>
         </tr>
@@ -924,9 +924,9 @@
                 <input type="text" name="bo_hot" value="{{ board.bo_hot }}" id="bo_hot" required class="required numeric frm_input" size="4">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_hot" id="chk_grp_hot">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_hot" value="bo_hot">
                 <label for="chk_grp_hot">그룹적용</label>
-                <input type="checkbox" name="chk_all_hot" id="chk_all_hot">
+                <input type="checkbox" name="chk_all[]" id="chk_all_hot" value="bo_hot">
                 <label for="chk_all_hot">전체적용</label>
             </td>
         </tr>
@@ -939,9 +939,9 @@
                 </select>
             </td>
             <td class="td_grpset">
-                <input type="checkbox" id="chk_grp_reply_order" name="chk_grp_reply_order" value="1">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_reply_order" value="bo_reply_order">
                 <label for="chk_grp_reply_order">그룹적용</label>
-                <input type="checkbox" id="chk_all_reply_order" name="chk_all_reply_order" value="1">
+                <input type="checkbox" name="chk_all[]" id="chk_all_reply_order" value="bo_reply_order">
                 <label for="chk_all_reply_order">전체적용</label>
             </td>
         </tr>
@@ -972,9 +972,9 @@
                 </select>
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_sort_field" id="chk_grp_sort_field">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_sort_field" value="bo_sort_field">
                 <label for="chk_grp_sort_field">그룹적용</label>
-                <input type="checkbox" name="chk_all_sort_field" id="chk_all_sort_field">
+                <input type="checkbox" name="chk_all[]" id="chk_all_sort_field" value="bo_sort_field">
                 <label for="chk_all_sort_field">전체적용</label>
             </td>
         </tr>
@@ -1016,9 +1016,9 @@
                 <input type="text" name="bo_read_point" value="{{ board.bo_read_point }}" id="bo_read_point" required class="required frm_input" size="5">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_read_point" id="chk_grp_read_point">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_read_point" value="bo_read_point">
                 <label for="chk_grp_read_point">그룹적용</label>
-                <input type="checkbox" name="chk_all_read_point" id="chk_all_read_point">
+                <input type="checkbox" name="chk_all[]" id="chk_all_read_point" value="bo_read_point">
                 <label for="chk_all_read_point">전체적용</label>
             </td>
         </tr>
@@ -1028,9 +1028,9 @@
                 <input type="text" name="bo_write_point" value="{{ board.bo_write_point }}" id="bo_write_point" required class="required frm_input" size="5">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_write_point" id="chk_grp_write_point">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_write_point" value="bo_write_point">
                 <label for="chk_grp_write_point">그룹적용</label>
-                <input type="checkbox" name="chk_all_write_point" id="chk_all_write_point">
+                <input type="checkbox" name="chk_all[]" id="chk_all_write_point" value="bo_write_point">
                 <label for="chk_all_write_point">전체적용</label>
             </td>
         </tr>
@@ -1040,9 +1040,9 @@
                 <input type="text" name="bo_comment_point" value="{{ board.bo_comment_point }}" id="bo_comment_point" required class="required frm_input" size="5">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_comment_point" id="chk_grp_comment_point">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_comment_point" value="bo_comment_point">
                 <label for="chk_grp_comment_point">그룹적용</label>
-                <input type="checkbox" name="chk_all_comment_point" id="chk_all_comment_point">
+                <input type="checkbox" name="chk_all[]" id="chk_all_comment_point" value="bo_comment_point">
                 <label for="chk_all_comment_point">전체적용</label>
             </td>
         </tr>
@@ -1052,10 +1052,11 @@
                 <input type="text" name="bo_download_point" value="{{ board.bo_download_point }}" id="bo_download_point" required class="required frm_input" size="5">
             </td>
             <td class="td_grpset">
-                <input type="checkbox" name="chk_grp_download_point" id="chk_grp_download_point">
+                <input type="checkbox" name="chk_grp[]" id="chk_grp_download_point" value="bo_download_point">
                 <label for="chk_grp_download_point">그룹적용</label>
-                <input type="checkbox" name="chk_all_download_point" id="chk_all_download_point">
+                <input type="checkbox" name="chk_all[]" id="chk_all_download_point" value="bo_download_point">
                 <label for="chk_all_download_point">전체적용</label>
+
             </td>
         </tr>
         </tbody>
@@ -1092,9 +1093,9 @@
                     <input type="text" name="bo_{{ i }}" id="bo_{{ i }}" value="{{ getattr(board, 'bo_' ~ i, '') }}" class="frm_input extra-value-input">
                 </td>
                 <td class="td_grpset">
-                    <input type="checkbox" name="chk_grp_{{ i }}" id="chk_grp_{{ i }}">
+                    <input type="checkbox" name="chk_grp[]" id="chk_grp_{{ i }}" value="bo_{{ i }}">
                     <label for="chk_grp_{{ i }}">그룹적용</label>
-                    <input type="checkbox" name="chk_all_{{ i }}" id="chk_all_{{ i }}">
+                    <input type="checkbox" name="chk_all[]" id="chk_all_{{ i }}" value="bo_{{ i }}">
                     <label for="chk_all_{{ i }}">전체적용</label>
                 </td>
             </tr>

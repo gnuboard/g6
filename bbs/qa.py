@@ -10,6 +10,8 @@ from core.models import QaConfig, QaContent
 from core.template import UserTemplates
 from lib.common import *
 from lib.dependencies import common_search_query_params, validate_token
+from lib.template_filters import number_format, search_font
+from lib.template_functions import get_paging
 
 router = APIRouter()
 templates = UserTemplates()
@@ -243,9 +245,12 @@ async def qa_write_update(
         if file2.size > 0 and file2.size > qa_config.qa_upload_size:
             raise AlertException(f"첨부파일2의 최대 크기는 {number_format(qa_config.qa_upload_size)}byte입니다.", 400)
 
-    qa = db.get(QaContent, qa_id)
     # 수정
-    if qa:
+    if qa_id:
+        qa = db.get(QaContent, qa_id)
+        if not qa:
+            raise AlertException(f"{qa_id} : Q&A 아이디가 존재하지 않습니다.", 404)
+
         if not request.state.is_super_admin and member.mb_id != qa.mb_id:
             raise AlertException("수정 권한이 없습니다.", 403)
         
@@ -347,7 +352,9 @@ async def qa_delete(
     db.delete(qa)
     db.commit()
 
-    return RedirectResponse(f"/bbs/qalist?{request.query_params}", status_code=302)
+    url = "/bbs/qalist"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 302)
 
 
 @router.post("/qadelete/list", dependencies=[Depends(validate_token)])
@@ -366,7 +373,9 @@ async def qa_delete_list(
     db.execute(delete(QaContent).where(QaContent.qa_id.in_(checks)))
     db.commit()
 
-    return RedirectResponse(f"/bbs/qalist?{request.query_params}", status_code=303)
+    url = "/bbs/qalist"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 @router.get("/qaview/{qa_id}")

@@ -4,6 +4,9 @@
 {% block subtitle %}인기검색어 관리{% endblock subtitle %}
 
 {% block content %}
+    {% set sfl = request.query_params.get("sfl", "") %}
+    {% set stx = request.query_params.get("stx", "") %}
+
     <div class="local_ov01 local_ov">
         <a href="{{ url_for('popular_list') }}" class="ov_listall">전체목록</a>
         <span class="btn_ov01">
@@ -16,16 +19,16 @@
         <div class="sch_last">
             <label for="sfl" class="sound_only">검색대상</label>
             <select name="sfl" id="sfl">
-                <option value="pp_word" {{ get_selected(request.state.sfl, 'pp_word') }}>검색어</option>
-                <option value="pp_date" {{ get_selected(request.state.sfl, 'pp_date') }}>등록일</option>
+                <option value="pp_word" {{ get_selected('pp_word', sfl) }}>검색어</option>
+                <option value="pp_date" {{ get_selected('pp_date', sfl) }}>등록일</option>
             </select>
             <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
-            <input type="text" name="stx" value="{{ request.state.stx }}" id="stx" required="" class="required frm_input">
+            <input type="text" name="stx" value="{{ stx }}" id="stx" required="" class="required frm_input">
             <input type="submit" value="검색" class="btn_submit">
         </div>
     </form>
     
-    <form name="fpopularlist" id="fpopularlist" action="{{ url_for('popular_delete') }}?{{ request.query_params }}" method="post" onsubmit="return fpopularlist_submit(this);">
+    <form name="fpopularlist" id="fpopularlist" action="{{ url_for('popular_delete') }}" method="post" onsubmit="return fpopularlist_submit(this);">
         <input type="hidden" name="token" value="">
     
         <div class="tbl_head01 tbl_wrap">
@@ -38,7 +41,7 @@
                             <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                         </th>
                         <th scope="col">
-                            <a href="{{ request.url.include_query_params(sst='pp_word', sod=('asc' if request.state.sod == 'desc' else 'desc')) }}">검색어</a>
+                            {{ subject_sort_link(request, 'pp_word')|safe }}검색어</a>
                         </th>
                         <th scope="col">등록일</th>
                         <th scope="col">등록IP</th>
@@ -82,6 +85,7 @@
 
             if (confirm("한번 삭제한 자료는 복구할 방법이 없습니다.\n\n정말 삭제하시겠습니까?")) {
                 f.token.value = generate_token();
+                f.action += "?{{ request.query_params|safe }}";
                 return true;
             } else {
                 return false;

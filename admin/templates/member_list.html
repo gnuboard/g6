@@ -5,6 +5,9 @@
 {% block subtitle %}회원관리{% endblock subtitle %}
 
 {% block content %}
+    {% set sfl = request.query_params.get("sfl", "") %}
+    {% set stx = request.query_params.get("stx", "") %}
+
     <div class="local_ov01 local_ov">
         <a href="/admin/member_list" class="ov_listall">전체목록</a>
         <span class="btn_ov01">
@@ -26,20 +29,20 @@
     <form id="fsearch" name="fsearch" class="local_sch01 local_sch" method="get">
         <label for="sfl" class="sound_only">검색대상</label>
         <select name="sfl" id="sfl">
-            <option value="mb_id" {{ get_selected('mb_id', request.state.sfl if request.state.sfl else '' ) }}>회원아이디</option>
-            <option value="mb_nick" {{ get_selected('mb_nick', request.state.sfl if request.state.sfl else '' ) }}>닉네임</option>
-            <option value="mb_name" {{ get_selected('mb_name', request.state.sfl if request.state.sfl else '' ) }}>이름</option>
-            <option value="mb_level" {{ get_selected('mb_level', request.state.sfl if request.state.sfl else '' ) }}>권한(Level)</option>
-            <option value="mb_email" {{ get_selected('mb_email', request.state.sfl if request.state.sfl else '' ) }}>E-Mail</option>
-            <option value="mb_tel" {{ get_selected('mb_tel', request.state.sfl if request.state.sfl else '' ) }}>전화번호</option>
-            <option value="mb_hp" {{ get_selected('mb_hp', request.state.sfl if request.state.sfl else '' ) }}>휴대폰번호</option>
-            <option value="mb_point" {{ get_selected('mb_point', request.state.sfl if request.state.sfl else '' ) }}>포인트</option>
-            <option value="mb_datetime" {{ get_selected('mb_datetime', request.state.sfl if request.state.sfl else '' ) }}>가입일시</option>
-            <option value="mb_ip" {{ get_selected('mb_ip', request.state.sfl if request.state.sfl else '' ) }}>IP주소</option>
-            <option value="mb_recommend" {{ get_selected('mb_recommend', request.state.sfl if request.state.sfl else '' ) }}>추천인</option>
+            <option value="mb_id" {{ get_selected('mb_id', sfl) }}>회원아이디</option>
+            <option value="mb_nick" {{ get_selected('mb_nick', sfl) }}>닉네임</option>
+            <option value="mb_name" {{ get_selected('mb_name', sfl) }}>이름</option>
+            <option value="mb_level" {{ get_selected('mb_level', sfl) }}>권한(Level)</option>
+            <option value="mb_email" {{ get_selected('mb_email', sfl) }}>E-Mail</option>
+            <option value="mb_tel" {{ get_selected('mb_tel', sfl) }}>전화번호</option>
+            <option value="mb_hp" {{ get_selected('mb_hp', sfl) }}>휴대폰번호</option>
+            <option value="mb_point" {{ get_selected('mb_point', sfl) }}>포인트</option>
+            <option value="mb_datetime" {{ get_selected('mb_datetime', sfl) }}>가입일시</option>
+            <option value="mb_ip" {{ get_selected('mb_ip', sfl) }}>IP주소</option>
+            <option value="mb_recommend" {{ get_selected('mb_recommend', sfl) }}>추천인</option>
         </select>
         <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
-        <input type="text" name="stx" value="{{ request.state.stx if request.state.stx else '' }}" id="stx" required class="required frm_input">
+        <input type="text" name="stx" value="{{ stx }}" id="stx" required class="required frm_input">
         <input type="submit" class="btn_submit" value="검색">
     </form>
 
@@ -50,11 +53,6 @@
     </div>
 
     <form name="fmemberlist" id="fmemberlist" action="/admin/member_list_update" onsubmit="return fmemberlist_submit(this);" method="post">
-        <input type="hidden" name="sst" value="{{ request.state.sst }}">
-        <input type="hidden" name="sod" value="{{ request.state.sod }}">
-        <input type="hidden" name="sfl" value="{{ request.state.sfl }}">
-        <input type="hidden" name="stx" value="{{ request.state.stx }}">
-        <input type="hidden" name="page" value="{{ request.state.page }}">
         <input type="hidden" name="token" value="">
 
         <div class="tbl_head01 tbl_wrap">
@@ -140,7 +138,7 @@
                             <a href="/admin/boardgroupmember_form/{{ member.mb_id }}">{{ member.group_count|number_format }}</a>
                         </td>
                         <td headers="mb_list_mng" rowspan="2" class="td_mng td_mng_s">
-                            <a href="/admin/member_form/{{ member.mb_id }}?{{ query_string }}" class="btn btn_03">수정</a>
+                            <a href={{ "/admin/member_form/" ~ member.mb_id|set_query_params(request) }} class="btn btn_03">수정</a>
                             <a href="/admin/boardgroupmember_form/{{ member.mb_id }}" class="btn btn_02">그룹</a></td>
                     </tr>
                     <tr class="{{ background_color }}">

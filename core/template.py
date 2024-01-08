@@ -14,9 +14,18 @@ from starlette.templating import _TemplateResponse
 
 from core.database import DBConnect
 from core.models import Config
-from core.plugin import PLUGIN_DIR,\
-    get_admin_plugin_menus, get_all_plugin_module_names
+from core.plugin import (
+    get_admin_plugin_menus, get_all_plugin_module_names, PLUGIN_DIR
+)
 from lib.common import *
+from lib.member_lib import get_member_icon, get_member_image
+from lib.template_filters import (
+    datetime_format, number_format, set_query_params
+)
+from lib.template_functions import (
+    editor_macro, get_selected, option_selected,
+    option_array_checked, subject_sort_link
+)
 
 
 def get_theme_path() -> str:
@@ -111,12 +120,15 @@ class UserTemplates(Jinja2Templates):
                 self.env.globals.update(**globals.__dict__)
 
     def _default_context(self, request: Request):
+        # Lazy import
+        from lib.board_lib import render_latest_posts
+
         context = {
             "menus": get_menus(),
             "poll": get_recent_poll(),
             "populars": get_populars(),
-            "latest": latest,
-            "visit": visit,
+            "render_latest_posts": render_latest_posts,
+            "render_visit_statistics": render_visit_statistics,
         }
         return context
 

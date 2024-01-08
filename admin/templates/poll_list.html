@@ -4,6 +4,9 @@
 {% block subtitle %}투표 관리{% endblock subtitle %}
 
 {% block content %}
+    {% set sfl = request.query_params.get("sfl", "") %}
+    {% set stx = request.query_params.get("stx", "") %}
+
     <div class="local_ov01 local_ov">
         <a href="{{ url_for('poll_list') }}" class="ov_listall">전체목록</a>
         <span class="btn_ov01">
@@ -16,15 +19,15 @@
         <div class="sch_last">
             <label for="sfl" class="sound_only">검색대상</label>
             <select name="sfl" id="sfl">
-                <option value="po_subject" {{ get_selected(request.state.sfl, 'po_subject') }}>제목</option>
+                <option value="po_subject" {{ get_selected('po_subject', sfl) }}>제목</option>
             </select>
             <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
-            <input type="text" name="stx" value="{{ request.state.stx }}" id="stx" required="" class="required frm_input">
+            <input type="text" name="stx" value="{{ stx }}" id="stx" required="" class="required frm_input">
             <input type="submit" value="검색" class="btn_submit">
         </div>
     </form>
     
-    <form name="fpolllist" id="fpolllist" action="{{ url_for('poll_list_delete') }}?{{ request.query_params }}" method="post" onsubmit="return fpolllist_submit(this);">
+    <form name="fpolllist" id="fpolllist" action="{{ url_for('poll_list_delete')|set_query_params(request) }}" method="post" onsubmit="return fpolllist_submit(this);">
         <input type="hidden" name="token" value="">
         <div class="tbl_head01 tbl_wrap">
             <table>

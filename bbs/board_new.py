@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import RedirectResponse
 
 from core.database import db_session
@@ -7,6 +7,8 @@ from core.template import UserTemplates
 from lib.board_lib import *
 from lib.common import *
 from lib.dependencies import validate_token
+from lib.point import delete_point, insert_point
+from lib.template_functions import get_group_select, get_paging
 
 router = APIRouter()
 templates = UserTemplates()
@@ -119,9 +121,9 @@ async def new_delete(
 
     db.commit()
 
-    query_string = "?" + request.query_params.__str__() if request.query_params else ""
-
-    return RedirectResponse(f"/bbs/new{query_string}", status_code=303)
+    url = "/bbs/new"
+    query_params = request.query_params
+    return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
 def format_datetime(wr_datetime: datetime):

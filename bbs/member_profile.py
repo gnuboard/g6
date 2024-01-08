@@ -1,7 +1,9 @@
 from typing import Dict
 
 from fastapi import APIRouter, Form, File, Depends, Path
+from sqlalchemy import select, update
 from starlette.responses import RedirectResponse
+
 
 from core.database import DBConnect, db_session
 from core.exception import AlertException
@@ -10,7 +12,9 @@ from core.models import Member, MemberSocialProfiles
 from core.template import UserTemplates
 from lib.common import *
 from lib.dependencies import validate_token, validate_captcha
+from lib.member_lib import get_member_icon, get_member_image, is_admin
 from lib.pbkdf2 import validate_password, create_hash
+from lib.template_filters import default_if_none
 from main import app
 
 router = APIRouter()

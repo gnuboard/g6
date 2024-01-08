@@ -17,14 +17,14 @@
         </span>
         
         {% if plugin_list %}
-        <ul id="theme_list">
+        <ul id="plugin_list">
             {% for plugin in plugin_list %}
             <li>
                 <div class="tmli_if">
                     {% if plugin.screenshot %}
                     <img src="{{ plugin.screenshot }}" alt="{{ plugin.plugin_name }}">
                     {% else %}
-                    <img src="/static/admin/img/theme_img.jpg" alt="">
+                    <img src="/static/admin/img/plugin_img.jpg" alt="">
                     {% endif %}
                     <div class="tmli_tit">
                         <p>{{ plugin.plugin_name }}</p>
@@ -32,24 +32,24 @@
                 </div>
                 {{ plugin.btn_active|safe }}
                 {% if plugin.is_enable  == True %}
-                <span class="theme_sl theme_sl_use">사용중</span>
-                 <button type="button" class="theme_sl plugin_disable" 
+                <span class="plugin_sl plugin_sl_use">사용중</span>
+                 <button type="button" class="plugin_sl plugin_disable" 
                          data-name="{{ plugin.plugin_name }}"
                          data-module_name="{{ plugin.module_name }}">사용안함
                  </button>
                 {% else %}
-                <button type="button" class="theme_sl plugin_enable" 
+                <button type="button" class="plugin_sl plugin_enable" 
                         data-name="{{ plugin.plugin_name }}"
                         data-module_name="{{ plugin.module_name }}"
                         data-set_plugin="">플러그인 적용
                 </button>
                 {% endif %}
-                <button type="button" class="tmli_dt theme_detail" data-module_name="{{ plugin.module_name }}">상세보기</button>
+                <button type="button" class="tmli_dt plugin_detail" data-module_name="{{ plugin.module_name }}">상세보기</button>
             </li>
             {% endfor %}
         </ul>
         {% else %}
-        <p class="no_theme">설치된 플러그인이 없습니다.</p>
+        <p class="no_plugin">설치된 플러그인이 없습니다.</p>
         {% endif %}
 
     </div>
@@ -115,10 +115,10 @@
             });
         });
     
-        $(".theme_detail").on("click", function() {
+        $(".plugin_detail").on("click", function() {
             const module_name = $(this).data("module_name");
     
-            $("#theme_detail").remove();
+            $("#plugin_detail").remove();
     
             $.ajax({
                 type: "POST",
@@ -130,7 +130,7 @@
                 cache: false,
                 async: false,
                 success: function(data) {
-                    $("#theme_list").after(data);
+                    $("#plugin_list").after(data);
                 },
                 error: function(data) {
                     data = data.responseJSON;

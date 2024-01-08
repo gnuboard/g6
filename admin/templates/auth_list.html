@@ -5,6 +5,7 @@
 
 {% block content %}
     {% set query_params = request.query_params %}
+    {% set stx = request.query_params.get("stx", "") %}
 
     <div class="local_ov01 local_ov">
         <a href="/admin/auth_list" class="ov_listall btn_ov02">전체목록</a>
@@ -14,11 +15,11 @@
     <form name="fsearch" id="fsearch" class="local_sch01 local_sch" method="get">
         <input type="hidden" name="sfl" value="mb_id" id="sfl">
         <label for="stx" class="sound_only">회원아이디<strong class="sound_only"> 필수</strong></label>
-        <input type="text" name="stx" value="{{ query_params.get("stx", "") }}" id="stx" required class="required frm_input">
+        <input type="text" name="stx" value="{{ stx }}" id="stx" required class="required frm_input">
         <input type="submit" value="검색" id="fsearch_submit" class="btn_submit">
     </form>
 
-    <form name="fauthlist" id="fauthlist" method="post" action="/admin/auth_list_delete?{{ query_params }}" onsubmit="return fauthlist_submit(this);">
+    <form name="fauthlist" id="fauthlist" method="post" action="/admin/auth_list_delete?{{ query_params|safe }}" onsubmit="return fauthlist_submit(this);">
         <input type="hidden" name="token" value="">
         <div class="tbl_head01 tbl_wrap">
             <table>
@@ -64,7 +65,7 @@
 
     {{ paging|safe }}
 
-    <form name="fauthlist2" id="fauthlist2" action="/admin/auth_update?{{ query_params }}" method="post" autocomplete="off" onsubmit="return fauth_add_submit(this);">
+    <form name="fauthlist2" id="fauthlist2" action="/admin/auth_update?{{ query_params|safe }}" method="post" autocomplete="off" onsubmit="return fauth_add_submit(this);">
         <input type="hidden" name="token" value="">
 
         <section id="add_admin">
@@ -88,7 +89,7 @@
                             <th scope="row"><label for="mb_id">회원아이디<strong class="sound_only">필수</strong></label></th>
                             <td>
                                 <strong id="msg_mb_id" class="msg_sound_only"></strong>
-                                <input type="text" name="mb_id" value="{{ request.state.stx }}" id="mb_id" required class="required frm_input">
+                                <input type="text" name="mb_id" value="{{ stx }}" id="mb_id" required class="required frm_input">
                             </td>
                         </tr>
                         <tr>
@@ -142,6 +143,7 @@
             }
 
             f.token.value = generate_token();
+            
 
             return true;
         }

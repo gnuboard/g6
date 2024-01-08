@@ -5,6 +5,8 @@ from core.models import Board, Group, GroupMember
 from core.template import UserTemplates
 from lib.board_lib import *
 from lib.common import *
+from lib.member_lib import get_member_level
+from lib.template_filters import search_font
 
 router = APIRouter()
 templates = UserTemplates()

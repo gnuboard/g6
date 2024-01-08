@@ -12,6 +12,10 @@ from core.models import Config
 from core.template import AdminTemplates
 from lib.common import *
 from lib.dependencies import validate_token
+from lib.template_functions import (
+    get_editor_select, get_member_level_select, get_skin_select,
+    get_member_id_select, 
+)
 
 router = APIRouter()
 templates = AdminTemplates()
