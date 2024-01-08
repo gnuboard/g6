@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block head %}
+
+{# css, js 경로 /plugin/플러그인 모듈이름/static/파일경로 #}
+
+{% endblock %}
+
+{% block title %}
+할일
+{% endblock title %}
+{% block subtitle %}
+할일
+{% endblock subtitle %}
+
+{% block content %}
+
+
+<div class="tbl_frm01 tbl_wrap">
+    <table>
+        <caption>목록</caption>
+        <colgroup>
+            <col class="grid_4">
+            <col>
+        </colgroup>
+        <tbody>
+        <tr>
+            <th scope="row">제목</th>
+            <td>{{ todo.title }}</td>
+        </tr>
+        <tr>
+            <th scope="row">내용</th>
+            <td>
+                {{ todo.content }}
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">완료</th>
+            <td>
+                {{ 'V' if todo.is_done else 'X' }}
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">등록 시간</th>
+            <td>
+                {{ todo.created_at }}
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<form name="ftodo" action="/admin/todo/update/{{ todo.id }}" onsubmit="return frm_form_check(this);" method="get">
+    <input type="hidden" name="token" value="">
+    <div class="btn_fixed_top">
+        <a href="/admin/todo/todos" class="btn btn_02">목록</a>
+        <input type="submit" value="수정" class="btn btn_submit" accesskey="s">
+    </div>
+</form>
+
+<script>
+    function frm_form_check(f) {
+        error_msg = "";
+        error_field = "";
+
+        check_field(f.title, "제목을 입력하세요.");
+        check_field(f.content, "내용을 입력하세요.");
+
+        if (error_msg != "") {
+            alert(error_msg);
+            error_field.focus();
+            return false;
+        }
+
+        f.token.value = generate_token();
+
+        return true;
+    }
+</script>
+
+{% endblock %}
