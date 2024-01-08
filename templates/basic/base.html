@@ -138,7 +138,14 @@
             <a href="{{ url_for('content_view', co_id='company') }}">회사소개</a>
             <a href="{{ url_for('content_view', co_id='privacy') }}">개인정보처리방침</a>
             <a href="{{ url_for('content_view', co_id='provision') }}">서비스이용약관</a>
-            <a href="/?device=mobile">모바일버전</a>
+
+            {% if not request.state.is_responsive %}
+                {% if request.state.is_mobile %}
+                    <a href="{{ url_for('device_change', device='pc') }}">PC버전</a>
+                {% else %}
+                    <a href="{{ url_for('device_change', device='mobile') }}">모바일버전</a>
+                {% endif %}
+            {% endif %}
         </div>
         <div id="ft_company" class="ft_cnt">
         	<h2>사이트 정보</h2>

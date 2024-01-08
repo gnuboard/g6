@@ -17,16 +17,6 @@ def regist_core_middleware(app: FastAPI) -> None:
     미들웨어의 실행 순서는 코드의 역순으로 실행됩니다.
     - main.py의 main_middleware()보다 먼저 실행됩니다.
     """
-    # 세션 미들웨어를 추가합니다.
-    # .env 파일의 설정을 통해 secret_key, session_cookie를 설정할 수 있습니다.
-    app.add_middleware(SessionMiddleware,
-                   secret_key=os.getenv("SESSION_SECRET_KEY", "secret"),
-                   session_cookie=os.getenv("SESSION_COOKIE_NAME", "session"),
-                   max_age=60 * 60 * 3)
-
-    # 모든 들어오는 요청을 HTTPS로 리디렉션하는 미들웨어를 추가합니다.
-    app.add_middleware(HTTPSRedirectMiddleware)
-
     # 기본으로 실행되는 core 미들웨어를 추가합니다.
     @app.middleware("http")
     async def core_middleware(request: Request, call_next):
@@ -48,21 +38,38 @@ def regist_core_middleware(app: FastAPI) -> None:
             cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(new_plugin_state))
             cache_plugin_state.__setitem__('change_time', plugin_state_change_time)
 
+        # 적응형 여부 설정
+        request.state.is_responsive = TemplateService.get_responsive()
+
         # 모바일 여부 설정
         request.state.is_mobile = False
-        user_agent = request.headers.get("User-Agent", "")
-        ua = parse(user_agent)
-        # 모바일과 태블릿에서 접속하면 모바일로 간주
-        if ua.is_mobile or ua.is_tablet:
-            request.state.is_mobile = True
+        # 사용자의 PC/모바일 버전 설정이 있는지 세션에서 확인합니다.
+        if not request.session.get("is_mobile"):
+            # User-Agent 헤더를 통해 모바일 여부를 판단합니다.
+            # 모바일과 태블릿에서 접속하면 모바일로 간주
+            user_agent = parse(request.headers.get("User-Agent", ""))
+            if user_agent.is_mobile or user_agent.is_tablet:
+                request.state.is_mobile = True
+        else:
+            request.state.is_mobile = request.session.get("is_mobile", False)
 
-        # 디바이스 기본값을 설정합니다.
+        # 디바이스 기본값 설정
         # 반응형이 아니라면 모바일 접속은 mobile로, 그 외 접속은 PC로 간주합니다.
         request.state.device = "pc"
-        if not TemplateService.get_responsive() and request.state.is_mobile:
+        if not request.state.is_responsive and request.state.is_mobile:
             request.state.device = "mobile"
 
         return await call_next(request)
+
+    # 세션 미들웨어를 추가합니다.
+    # .env 파일의 설정을 통해 secret_key, session_cookie를 설정할 수 있습니다.
+    app.add_middleware(SessionMiddleware,
+                   secret_key=os.getenv("SESSION_SECRET_KEY", "secret"),
+                   session_cookie=os.getenv("SESSION_COOKIE_NAME", "session"),
+                   max_age=60 * 60 * 3)
+
+    # 모든 들어오는 요청을 HTTPS로 리디렉션하는 미들웨어를 추가합니다.
+    app.add_middleware(HTTPSRedirectMiddleware)
 
 
 async def should_run_middleware(request: Request) -> bool:
@@ -78,9 +85,9 @@ async def should_run_middleware(request: Request) -> bool:
     Returns:
         bool: 미들웨어를 실행할지 여부
     """
-
     path = request.url.path
     if (path.startswith('/generate_token')
+            or path.startswith('/device/change')
             or path.startswith('/static')
             or path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.webp'))):
         return False

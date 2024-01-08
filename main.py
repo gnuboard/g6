@@ -1,8 +1,8 @@
 import datetime
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from fastapi import FastAPI, Request, Response
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, Path, Request, Response
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import TypeAdapter
 from sqlalchemy import select, inspect
 from starlette.staticfiles import StaticFiles
@@ -273,8 +273,42 @@ async def index(request: Request, db: db_session):
 
 
 @app.post("/generate_token")
-async def generate_token(request: Request):
+async def generate_token(request: Request) -> JSONResponse:
+    """세션 토큰 생성 후 반환
 
+    Args:
+        request (Request): FastAPI의 Request 객체
+
+    Returns:
+        JSONResponse: 성공 여부와 토큰을 포함한 JSON 응답
+    """
     token = create_session_token(request)
 
     return JSONResponse(content={"success": True, "token": token})
+
+
+@app.get("/device/change/{device}")
+async def device_change(
+    request: Request,
+    device: str = Path(...)
+) -> RedirectResponse:
+    """접속환경(디바이스) 변경
+    - PC/모바일 버전을 강제로 변경합니다.
+
+    Args:
+        request (Request): FastAPI의 Request 객체
+        device (str, optional): 변경할 디바이스. Defaults to Path(...).
+
+    Returns:
+        RedirectResponse: 이전 페이지로 리디렉션
+    """
+    if device not in ["pc", "mobile"]:
+        raise AlertException("잘못된 접근입니다.", 400, "/")
+
+    if device == "pc":
+        request.session["is_mobile"] = False
+    else:
+        request.session["is_mobile"] = True
+
+    referer = request.headers.get("Referer", "/")
+    return RedirectResponse(referer, status_code=303)
