@@ -18,14 +18,17 @@
 	            <li><a href="{{ url_for('faq_view') }}">FAQ</a></li>
 	            <li><a href="{{ url_for('qa_list') }}">Q&A</a></li>
 	            <li><a href="/bbs/new">새글</a></li>
-	            <li><a href="/bbs/current_connect" class="visit">접속자<strong class="visit-num">0</strong></a></li>
+	            <li><a href="/bbs/current_connect" class="visit">
+                    접속자<strong class="visit-num">{{ current_login_count[0] }}</strong></a>
+                    <!-- current_login_count[0]은 회원 수 -->
+                </li>
 	        </ul>
 		</div>
     </div>
     <div id="hd_wrapper">
 
         <div id="logo">
-            <a href="/"><img src="/static/img/logo.png" alt="그누보드5"></a>
+            <a href="/"><img src="/static/img/logo.png" alt="그누보드6"></a>
         </div>
     
         <div class="hd_sch_wr">
@@ -168,7 +171,7 @@
         {% endif %}
         <!-- } 접속자집계 끝 -->
     </div>
-    <!-- <div id="ft_catch"><img src="http://g5.pypot.com/img/ft_logo.png" alt="그누보드5"></div> -->
+    <!-- <div id="ft_catch"><img src="http://g5.pypot.com/img/ft_logo.png" alt="그누보드6"></div> -->
     <div id="ft_copy">Copyright &copy; <b>소유하신 도메인.</b> All rights reserved.</div>
 
     <button type="button" id="top_btn">
