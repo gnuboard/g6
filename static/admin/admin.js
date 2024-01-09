@@ -111,34 +111,6 @@ function delete_confirm3(element)
     return false;
 }
 
-function get_ajax_token()
-{
-    var token = "",
-        admin_csrf_token_key = (typeof g5_admin_csrf_token_key !== "undefined") ? g5_admin_csrf_token_key : "";
-
-    $.ajax({
-        type: "POST",
-        url: "/admin/ajax_token/",
-        data : {admin_csrf_token_key:admin_csrf_token_key},
-        cache: false,
-        async: false,
-        dataType: "json",
-        success: function(data) {
-            if(data.error) {
-                alert(data.error);
-                if(data.url)
-                    document.location.href = data.url;
-
-                return false;
-            }
-
-            token = data.token;
-        }
-    });
-
-    return token;
-}
-
 $(function() {
     $(document).on("click", "form input:submit, form button:submit", function() {
         // var f = this.form;
