@@ -112,7 +112,7 @@ def get_member_level(request: Request) -> int:
     return int(member.mb_level) if member else 1
 
 
-# TODO: 그누보드5의 is_admin 함수
+# TODO: 그누보드6의 is_admin 함수
 # 이미 is_admin 함수가 존재하므로 함수 이름을 변경함
 def get_admin_type(
         request: Request, mb_id: str = None,

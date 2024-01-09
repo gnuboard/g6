@@ -331,7 +331,7 @@ class SocialAuthService:
     @classmethod
     def get_profile_by_member_id(cls, identifier, provider) -> Optional[str]:
         """
-        소셜 서비스 아이디로 그누보드5 회원 아이디를 가져옴
+        소셜 서비스 아이디로 그누보드6 회원 아이디를 가져옴
         Args:
             identifier (str) : 소셜서비스 사용자 식별 id
             provider (str) : 소셜 제공자
@@ -397,7 +397,7 @@ class SocialAuthService:
     @classmethod
     def g5_convert_social_id(cls, identifier, provider: str):
         """
-        그누보드5 소셜 id 생성 함수 get_social_convert_id
+        그누보드6 소셜 id 생성 함수 get_social_convert_id
         provider + uid로 부터 고유 해시값생성
         Args:
             identifier (str) : 소셜서비스 사용자 식별 id

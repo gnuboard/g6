@@ -1203,12 +1203,12 @@ def read_version():
 
 
 def read_license():
-    """루트 디렉토리의 LICENSE.txt 파일을 읽어서 라이센스 내용 반환
+    """루트 디렉토리의 LICENSE 텍스트 파일을 읽어서 라이센스 내용 반환
 
     Returns:
         str: 라이센스 내용
     """
-    with open("LICENSE.txt", "r", encoding="UTF-8") as file:
+    with open("LICENSE", "r", encoding="UTF-8") as file:
         return file.read().strip()
 
 

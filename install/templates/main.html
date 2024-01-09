@@ -2,15 +2,34 @@
 
 {% block content %}
     <div class="container">
-        <h1 class="ins tall_uncnf">{{ app_name }}을 먼저 설치해주십시오</h1>
+        <h1 class="install_uncnf">{{ app_name }} 안내</h1>
         
         <div class="ins_inner">
-            <p>
-                내용이 들어갑니다
-            </p>
+            <h2>설치안내</h2>
+            <ul>
+                <li>{{ version}} 버전</li>
+                <li>Python 버전 : {{ python_version }}</li>
+                <li>FastAPI 버전 : {{ fastapi_version }}</li>
+                <li>
+                    루트 디렉토리에 .env 파일이 존재하지 않으므로 설치를 시작합니다.<br>
+                    만약, .env 파일을 실수로 삭제하셨다면 설치를 멈추시고 example.env를 참고하여 .env 파일을 생성하십시오.
+                </li>
+            </ul>
             <div class="inner_btn">
-                <a href="{{ url_for('install_license') }}" class="btn">{{ app_name }} 설치 시작하기</a>
+                <a href="{{ url_for('install_license') }}" class="btn">설치하기</a>
             </div>
+            <p>&nbsp;</p>
+
+            <h2>참고사이트</h2>
+            <ul>
+                <li>그누보드 : <a href="http://gnuboard.com" target="_blank">gnuboard.com</a></li>
+                <li>Python 언어 : <a href="https://www.python.org/" target="_blank">www.python.org</a></li>
+                <li>FastAPI 웹프레임워크 : <a href="https://fastapi.tiangolo.com/" target="_blank">fastapi.tiangolo.com</a></li>
+                <li>Jinja 템플릿엔진 : <a href="https://palletsprojects.com/p/jinja/" target="_blank">palletsprojects.com/p/jinja/</a></li>
+                <li>SQLAlchemy SQL 툴킷 : <a href="https://www.sqlalchemy.org/" target="_blank">www.sqlalchemy.org/</a></li>
+                <li>dataclasses 데이터 클래스 : <a href="https://docs.python.org/ko/3/library/dataclasses.html" target="_blank">docs.python.org/ko/3/library/dataclasses.html</a></li>
+                <li>Pydantic 데이터 검증 라이브러리 : <a href="https://docs.pydantic.dev/latest/" target="_blank">docs.pydantic.dev/latest/</a></li>
+            </ul>
         </div>
     </div>
 {% endblock content %}

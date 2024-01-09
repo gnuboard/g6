@@ -4,7 +4,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=Edge">
-        <title>설치하기 | 그누보드6</title>
+        <title>설치하기 | {{ app_name }}</title>
         <link rel="icon" href="{{ url_for('static', path='favicon.ico') }}" type="image/x-icon">
         <link rel="stylesheet" href="{{ url_for('static', path='/css/install.css') }}">
         <script src="{{ url_for('static', path='/js/jquery-3.7.1.min.js') }}"></script>
@@ -12,8 +12,8 @@
     </head>
     <body>
         <div id="ins_bar">
-            <span id="bar_img">GNUBOARD6</span>
-            <span id="bar_txt">INSTALLATION</span>
+            <span id="bar_img">{{ version }}</span>
+            <span id="bar_txt">설치</span>
         </div>
         <!-- 
         <h1>프로그램이 이미 설치되어 있습니다.</h1> 
@@ -30,9 +30,9 @@
             {% endblock content %}
         </div>
         <!-- footer -->
-        <div id="ins_ft">
-            <strong>GNUBOARD6</strong>
-            <p>GPL! OPEN SOURCE GNUBOARD</p>
-        </div>
+        <!-- <div id="ins_ft">
+            <strong>{{ version }}</strong>
+            <p>OPEN SOURCE GNUBOARD</p>
+        </div> -->
     </body>
 </html>

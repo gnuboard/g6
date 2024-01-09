@@ -398,7 +398,7 @@ class AutoSaveForm:
 @dataclass
 class QaConfigForm:
     """1:1문의 설정 폼 데이터
-        - 그누보드5에서 사라지는 기능(변수)
+        - 그누보드6에서 사라지는 기능(변수)
             1. 상단 파일 경로 (qa_include_head)
             2. 하단 파일 경로 (qa_include_tail)
     """
