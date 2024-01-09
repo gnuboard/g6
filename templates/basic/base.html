@@ -18,7 +18,10 @@
 	            <li><a href="{{ url_for('faq_view') }}">FAQ</a></li>
 	            <li><a href="{{ url_for('qa_list') }}">Q&A</a></li>
 	            <li><a href="/bbs/new">새글</a></li>
-	            <li><a href="/bbs/current_connect" class="visit">접속자<strong class="visit-num">0</strong></a></li>
+	            <li><a href="/bbs/current_connect" class="visit">
+                    접속자<strong class="visit-num">{{ current_login_count[0] }}</strong></a>
+                    <!-- current_login_count[0]은 회원 수 -->
+                </li>
 	        </ul>
 		</div>
     </div>
