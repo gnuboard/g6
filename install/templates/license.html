@@ -1,11 +1,13 @@
 {% extends "_layout.html" %}
 
 {% block content %}
+    <h1 class="install_uncnf">라이센스 안내</h1>
+
     <form action="{{ url_for('install_form') }}" method="post" onsubmit="return frm_submit(this);">
         <div class="ins_inner">
             <p>
-                <strong class="st_strong">라이센스(License) 내용을 반드시 확인하십시오.</strong>
-                <br>라이센스에 동의하시는 경우에만 설치가 진행됩니다.
+                <strong class="st_strong">{{ app_name }} 버전의 라이센스(License)를 확인하세요.</strong>
+                <br>라이센스에 동의하시는 경우에만 설치할 수 있습니다.
             </p>
             <div class="ins_ta ins_license">
                 <textarea name="textarea" id="ins_license" readonly>
