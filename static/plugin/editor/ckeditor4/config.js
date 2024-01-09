@@ -6,52 +6,6 @@
 //  모바일 체크
 if(typeof(g6_is_mobile) == "undefined") g6_is_mobile = false;
 
-var ck_cachequeryMentions = [],
-    ck_itemsMentions = null,
-    ck_extraPlugins = 'uploadwidget,uploadimage,editorplaceholder,mentions';
-
-function dataFeed( opts, callback ) {
-    var data = [];
-
-    if (opts.marker == "@" && opts.query) {
-        
-        var thisVal = opts.query,
-            srcRegex = /<img.*?src=["'](.*?)["']/;
-        
-        ck_itemsMentions = ck_cachequeryMentions[thisVal];
-
-        if(typeof ck_itemsMentions == "object"){
-            callback(ck_itemsMentions);
-        } else {
-            var data_url = g5_plugin_url+"/mention/q.php";
-
-            $.getJSON( data_url ,{
-                s: thisVal
-            }, function(json_data) {
-
-                $.each( json_data, function( key, value ){
-                    
-                    var match = srcRegex.exec(value.img),
-                        srcValue = g6_url + "/img/common/icon-chat-m.png";
-                    if (match && match[1]) {
-                        srcValue = match[1];
-                    }
-                    var subdata = {
-                        id: key + 1,
-                        mb_nick: value.mb_nick,
-                        img_src: srcValue
-                    }
-
-                    data.push(subdata);
-                });
-                ck_cachequeryMentions[thisVal] = data;
-                callback(data);
-            });
-        }
-    } else {
-        callback( data );
-    }
-}
 
 CKEDITOR.editorConfig = function( config ) {
 	// 에디터 높이 설정
@@ -86,18 +40,6 @@ CKEDITOR.editorConfig = function( config ) {
 		//--- PC ---//
 		config.removeButtons = 'Print,Cut,Copy,Paste,Subscript,Superscript,Anchor,Unlink,ShowBlocks,Undo,Redo,Smiley';
 	}
-
-    config.mentions = [{
-        feed: dataFeed,
-        caseSensitive: true,
-        itemTemplate: '<li data-id="{id}">' +
-                '<img class="photo" src="{img_src}" widht="20" height="20" />' +
-                '<strong class="username">{mb_nick}</strong>' +
-            '</li>',
-        outputTemplate: '<span class="atwho-inserted">@{mb_nick}</span><span>&nbsp;</span>',
-        minChars: 1,
-        // pattern: /(?:^|\s)@([가-힣ㄱ-ㅎA-Za-zÀ-ÿ0-9_'.+-]*)$|(?:^|\s)@([^\x00-\xff]*)$/gi
-    }];
 
 	/* 이미지 업로드 관련 소스 */
 	let up_url = g6_url + "editor/ckeditor4/upload?type=Images";
@@ -138,7 +80,8 @@ CKEDITOR.editorConfig = function( config ) {
 	});
 
 	// 사용할 플러그인 추가
-	// config.extraPlugins = 'uploadwidget,uploadimage,emoji,autogrow,editorplaceholder,mentions';
+    let ck_extraPlugins = 'uploadwidget,uploadimage,editorplaceholder';
+
     config.extraPlugins = ck_extraPlugins;
 
 	// 본문내용 불러들일때 속성유지

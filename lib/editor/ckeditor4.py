@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, File
 from pydantic import TypeAdapter
 from starlette.responses import JSONResponse
