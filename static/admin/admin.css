@@ -173,7 +173,7 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0;color: var(--fontColor);}
 #container_wr{padding:25px;min-height:500px;}
 .container_title.top{position: sticky;top: 71px;line-height:50px;font-size:1.5em;z-index:99;margin: 0px 40px;padding-top: 20px;background: var(--containerBg);color: var(--containerColor);border-bottom: var(--containerBorder);width: calc(100% - 80px);}
 .container_title.top::after {display: block;content: "";position: absolute;left: 0px;bottom: -2px;width: 30px;height: 3px;background: #ffd343;}
-.container_wr.top{padding:20px 40px;min-height: calc(100vh - 150px);margin-bottom: 24px;width: 100%;}
+.container_wr.top{padding:60px 40px 20px;min-height: calc(100vh - 150px);margin-bottom: 24px;width: 100%;}
 
 
 /* 화면낭독기 사용자용 */
@@ -458,7 +458,7 @@ tfoot th {}
 .tbl_frm01 textarea {height:150px}
 .tbl_frm01 #captcha {margin:0;padding:0;border:0;background:transparent}
 .tbl_frm01 #captcha input {margin-left:5px;text-align:center}
-.h2_frm{text-align:left;color:var(--h2Color);font-size:1.4em;font-weight:bold;margin:0px 0 10px;padding-top: 132px;}
+.h2_frm{text-align:left;color:var(--h2Color);font-size:1.4em;font-weight:bold;margin:0px 0 10px;padding-top: 40px;}
 
 @media (max-width: 1100px) {
     #tnb {flex-direction: column;justify-content: center;}
@@ -1240,10 +1240,10 @@ box-shadow: 1px 2px 5px rgba(92, 92, 92, 0.5);z-index:1000}
 #plugin_list li{margin:10px 10px 10px 0;float:left}
 
 #plugin_list li:after{display:block;visibility:hidden;clear:both;content:""}
-#plugin_list li .tmli_if{border: 1px solid #d1dee2;width:302px;}
+#plugin_list li .tmli_if{border: var(--themeBorder);width:302px;}
 #plugin_list li .tmli_if>img{width:300px;height:225px;}
 #plugin_list li .tmli_if:hover>img{filter: alpha(opacity=50);opacity: 0.5;}
-#plugin_list li .tmli_tit{position:relative; border-top: 1px solid #d1dee2; background: #e5ecef;}
+#plugin_list li .tmli_tit{position:relative; border-top: var(--themeBorder); background: var(--themeBg);color: var(--fontColor);}
 #plugin_list li .tmli_tit p{height:40px;line-height:40px;padding:0 10px 0;font-weight:bold;text-overflow: ellipsis; overflow: hidden; white-space: nowrap;}
 #plugin_list li .tmli_tit button.tmli_dt{position:absolute;top:8px;right:10px;padding:5px;background:#111;color:#fff;display:none;border:none}
 #plugin_list li .tmli_if:hover button.tmli_dt{display:block}
