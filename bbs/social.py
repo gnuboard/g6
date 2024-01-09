@@ -127,7 +127,7 @@ async def authorize_social_login(
                              url=request.url_for('login').__str__())
 
     # 가입된 소셜 서비스 아이디가 존재하는지 확인
-    gnu_social_id = SocialAuthService.g5_convert_social_id(identifier, provider_name)
+    gnu_social_id = SocialAuthService.g6_convert_social_id(identifier, provider_name)
     social_profile = SocialAuthService.get_profile_by_member_id(gnu_social_id, provider_name)
     if social_profile:
         config = request.state.config
@@ -230,7 +230,7 @@ async def post_social_register(
         raise AlertException(status_code=400, detail="유효하지 않은 요청입니다. 관리자에게 문의하십시오.",
                              url=request.url_for('login').__str__())
 
-    gnu_social_id = SocialAuthService.g5_convert_social_id(identifier, provider_name)
+    gnu_social_id = SocialAuthService.g6_convert_social_id(identifier, provider_name)
     exists_social_member = db.scalar(select(Member).where(Member.mb_id == gnu_social_id))
     # 유효성 검증
     if exists_social_member:
@@ -395,7 +395,7 @@ class SocialAuthService:
         return False
 
     @classmethod
-    def g5_convert_social_id(cls, identifier, provider: str):
+    def g6_convert_social_id(cls, identifier, provider: str):
         """
         그누보드5 소셜 id 생성 함수 get_social_convert_id
         provider + uid로 부터 고유 해시값생성
