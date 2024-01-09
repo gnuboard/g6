@@ -269,8 +269,8 @@ async def mail_select_list(
         group_members = db.get(Group, gr_id).members
         if not group_members:
             raise AlertException("선택하신 게시판 그룹회원이 한명도 없습니다.")
-
-        query = query.where(Member.mb_id.in_(group_members))
+        group_member_ids = [member.mb_id for member in group_members]
+        query = query.where(Member.mb_id.in_(group_member_ids))
 
     # 탈퇴, 차단하지 않은 회원만 선택합니다.
     # 1년 1월 1일의 datetime 객체를 생성합니다.
