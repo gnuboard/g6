@@ -110,24 +110,3 @@ function delete_confirm3(element)
     }
     return false;
 }
-
-$(function() {
-    $(document).on("click", "form input:submit, form button:submit", function() {
-        // var f = this.form;
-        // var token = get_ajax_token();
-
-        // if(!token) {
-        //     alert("토큰 정보가 올바르지 않습니다.");
-        //     return false;
-        // }
-
-        // var $f = $(f);
-
-        // if(typeof f.token === "undefined")
-        //     $f.prepend('<input type="hidden" name="token" value="">');
-
-        // $f.find("input[name=token]").val(token);
-
-        return true;
-    });
-});
