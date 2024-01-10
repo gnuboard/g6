@@ -6,17 +6,14 @@
 {% block head %}
     <script src="{{ url_for('static', path="js/viewimageresize.js") }}"></script>
 {% endblock head %}
-{% block title %}
-    {{ write.wr_subject|truncate(20, False, '...', 0) }} > {{ board.subject }}
-{% endblock title %}
-{% block subtitle %}
-    {{ board.subject }}
-{% endblock subtitle %}
+
+{% block title %}{{ write.wr_subject|truncate(20, False, '...', 0) }} > {{ board.subject }}{% endblock title %}
+{% block subtitle %}{{ board.subject }}{% endblock subtitle %}
 
 {% block content %}
 {% set board_config=board_config(request, board) %}
 {% set login_member=request.state.login_member %}
-{% set is_admin=get_admin_type(request, login_member.mb_id, group=board.group, board=board) %}
+{% set is_admin=get_admin_type(request, login_member.mb_id, board=board) %}
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
     <!-- 게시물 읽기 시작 { -->
     <article id="bo_v" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">

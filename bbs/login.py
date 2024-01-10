@@ -5,14 +5,11 @@ from core.database import db_session
 from core.exception import AlertException
 from core.template import UserTemplates
 from lib.common import *
-from lib.member_lib import is_admin
+from lib.member_lib import is_super_admin
 from lib.pbkdf2 import validate_password
-from lib.template_filters import default_if_none
 
 router = APIRouter()
 templates = UserTemplates()
-templates.env.globals["is_admin"] = is_admin
-templates.env.filters["default_if_none"] = default_if_none
 
 
 @router.get("/login")
@@ -63,7 +60,7 @@ async def login(
     # 자동로그인
     response = RedirectResponse(url=url, status_code=302)
     # 최고관리자는 보안상 자동로그인 기능을 사용하지 않는다.
-    if auto_login and not is_admin(request):
+    if auto_login and not is_super_admin(request):
         age_1day = 60 * 60 * 24
         cookie_domain = request.state.cookie_domain
         response.set_cookie(key="ck_mb_id", value=member.mb_id,

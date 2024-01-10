@@ -11,7 +11,7 @@ from lib.common import (
     dynamic_create_write_table, ENV_PATH, get_current_admin_menu_id,
     get_current_captcha_cls,
 )
-from lib.member_lib import get_admin_type, is_admin
+from lib.member_lib import get_admin_type
 from lib.token import check_token
 
 
@@ -47,6 +47,12 @@ async def validate_captcha(
         captcha = captcha_cls(config)
         if captcha and (not await captcha.verify(response)):
             raise AlertException("캡차가 올바르지 않습니다.", 400)
+
+
+async def validate_super_admin(request: Request):
+    """최고관리자 여부 검사"""
+    if not request.state.is_super_admin:
+        raise AlertException("최고관리자만 접근 가능합니다.", 403)
 
 
 async def validate_install():
@@ -100,7 +106,7 @@ async def check_admin_access(request: Request):
     # 관리자페이지 접근 권한 체크
     if not ss_mb_id:
         raise AlertException("로그인이 필요합니다.", 302, url="/bbs/login?url=" + path)
-    elif not is_admin(request):
+    elif not request.state.is_super_admin:
         method = request.method
         admin_menu_id = get_current_admin_menu_id(request)
 

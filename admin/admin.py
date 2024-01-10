@@ -5,7 +5,7 @@ from core.models import Member, Point
 from core.template import AdminTemplates
 from lib.common import *
 from lib.dependencies import check_admin_access
-from lib.member_lib import get_member_level, is_admin
+from lib.member_lib import get_member_level
 
 router = APIRouter(dependencies=[Depends(check_admin_access)])
 templates = AdminTemplates()
@@ -73,7 +73,7 @@ async def base(request: Request, db: db_session):
 
     # 신규가입회원 내역
     query = select()
-    if not is_admin(request):
+    if not request.state.is_super_admin:
         query = query.where(Member.mb_level <= member_level)
 
     # 전체 회원

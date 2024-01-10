@@ -14,7 +14,6 @@ from core.models import Member
 from core.template import UserTemplates
 from lib.common import *
 from lib.dependencies import get_member, validate_token, validate_captcha
-from lib.member_lib import is_admin
 from lib.pbkdf2 import create_hash
 from lib.point import insert_point
 from lib.template_filters import default_if_none
@@ -22,7 +21,6 @@ from lib.template_filters import default_if_none
 router = APIRouter()
 templates = UserTemplates()
 templates.env.filters["default_if_none"] = default_if_none
-templates.env.globals["is_admin"] = is_admin
 templates.env.globals["captcha_widget"] = captcha_widget
 templates.env.globals["check_profile_open"] = check_profile_open
 

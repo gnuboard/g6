@@ -12,7 +12,8 @@ from core.models import QaConfig, QaContent
 from core.template import UserTemplates
 from lib.common import *
 from lib.dependencies import (
-    common_search_query_params, get_login_member, validate_token
+    common_search_query_params, get_login_member,
+    validate_super_admin, validate_token
 )
 from lib.template_filters import number_format, search_font
 from lib.template_functions import get_paging
@@ -356,7 +357,8 @@ async def qa_delete(
     return RedirectResponse(set_url_query_params(url, query_params), 302)
 
 
-@router.post("/qadelete/list", dependencies=[Depends(validate_token)])
+@router.post("/qadelete/list",
+             dependencies=[Depends(validate_token), Depends(validate_super_admin)])
 async def qa_delete_list(
     request: Request,
     db: db_session,

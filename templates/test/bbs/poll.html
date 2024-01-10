@@ -6,10 +6,12 @@
         <section id="poll">
             <header>
                 <h2>설문조사</h2>
+                {% if request.state.is_super_admin %}
                 <a href="{{ url_for('poll_form_edit', po_id=poll.po_id) }}" class="btn_admin" title="설문관리">
                     <i class="fa fa-cog fa-spin fa-fw"></i>
                     <span class="sound_only">설문관리</span>
                 </a>
+                {% endif %}
                 <a href="{{ url_for('poll_result', po_id=poll.po_id) }}" target="_blank" onclick="poll_result(this.href); return false;" class="btn_result">결과보기</a>
             </header>
             <div class="poll_con">

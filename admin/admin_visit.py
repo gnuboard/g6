@@ -5,8 +5,7 @@ from core.database import db_session
 from core.exception import AlertException
 from core.template import AdminTemplates
 from lib.common import *
-from lib.dependencies import validate_token
-from lib.member_lib import is_admin
+from lib.dependencies import validate_super_admin, validate_token
 from lib.pbkdf2 import validate_password
 from lib.template_functions import get_paging
 
@@ -93,7 +92,9 @@ async def visit_delete(request: Request, db: db_session):
     return templates.TemplateResponse("visit_delete.html", context)
 
 
-@router.post("/visit_delete_update", dependencies=[Depends(validate_token)], tags=["admin_visit_delete"])
+@router.post("/visit_delete_update",
+             dependencies=[Depends(validate_token), Depends(validate_super_admin)],
+             tags=["admin_visit_delete"])
 async def visit_delete_update(
     request: Request,
     db: db_session,
@@ -106,9 +107,6 @@ async def visit_delete_update(
     접속자로그 레코드 삭제
     """
     member = request.state.login_member
-
-    if not is_admin(request):
-        raise AlertException("최고관리자만 접근할 수 있습니다.")
 
     if not validate_password(admin_password, member.mb_password):
         raise AlertException("관리자 비밀번호가 일치하지 않습니다.")

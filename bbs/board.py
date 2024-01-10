@@ -206,7 +206,7 @@ async def list_delete(
     # 게시판 관리자 검증
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
-    admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
+    admin_type = get_admin_type(request, mb_id, board=board)
     if not admin_type:
         raise AlertException("게시판 관리자 이상 접근이 가능합니다.", 403)
 
@@ -254,7 +254,7 @@ async def move_post(
     # 게시판 관리자 검증
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
-    admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
+    admin_type = get_admin_type(request, mb_id, board=board)
     if not admin_type:
         raise AlertException("게시판 관리자 이상 접근이 가능합니다.", 403)
 
@@ -297,7 +297,7 @@ async def move_update(
     # 게시판관리자 검증
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
-    admin_type = get_admin_type(request, mb_id, group=origin_board.group, board=origin_board)
+    admin_type = get_admin_type(request, mb_id, board=origin_board)
     if not admin_type:
         raise AlertException("게시판 관리자 이상 접근이 가능합니다.", 403)
 
@@ -434,7 +434,7 @@ async def write_form_add(
     # 게시판 관리자 확인
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
-    admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
+    admin_type = get_admin_type(request, mb_id, board=board)
 
     context = {
         "request": request,
@@ -476,7 +476,7 @@ async def write_form_edit(
     # 게시판 관리자 확인
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
-    admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
+    admin_type = get_admin_type(request, mb_id, board=board)
 
     # 게시판 수정 권한
     if not board_config.is_write_level():
@@ -568,7 +568,7 @@ async def write_update(
     # 게시판 관리자 확인
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
-    admin_type = get_admin_type(request, mb_id, group=board.group, board=board)
+    admin_type = get_admin_type(request, mb_id, board=board)
 
     # 비밀글 사용여부 체크
     if not admin_type:
@@ -780,7 +780,6 @@ async def read_post(
     board_config = BoardConfig(request, board)
     
     # 게시판 설정
-    group = board.group
     board.subject = board_config.subject
     write_model = dynamic_create_write_table(bo_table)
 
@@ -788,7 +787,7 @@ async def read_post(
     member: Member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
     member_level = get_member_level(request)
-    admin_type = get_admin_type(request, mb_id, group=group, board=board)
+    admin_type = get_admin_type(request, mb_id, board=board)
 
     # 댓글은 개별조회 할 수 없도록 예외처리
     if write.wr_is_comment:
@@ -1195,7 +1194,7 @@ async def delete_comment(
     # 게시판관리자 검증
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
-    admin_type = get_admin_type(request, mb_id, board=board, group=board.group)
+    admin_type = get_admin_type(request, mb_id, board=board)
 
     # request.query_params에서 token 제거
     query_params = remove_query_params(request, "token")

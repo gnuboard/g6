@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Form, HTTPException
+from fastapi import APIRouter, Depends, Form, HTTPException
 from fastapi.responses import FileResponse
 
 from core.database import db_session
@@ -7,6 +7,7 @@ from core.template import (
     AdminTemplates, UserTemplates, register_theme_statics, TEMPLATES
 )
 from lib.common import *
+from lib.dependencies import validate_super_admin
 
 router = APIRouter()
 templates = AdminTemplates()
@@ -113,15 +114,12 @@ templates.env.globals['get_theme_info'] = get_theme_info
 templates.env.globals['serve_screenshot'] = serve_screenshot
 
 
-@router.get("/theme")
+@router.get("/theme", dependencies=[Depends(validate_super_admin)])
 async def theme(request: Request, db: db_session):
     """
     테마관리
     """
     request.session["menu_key"] = THEME_MENU_KEY
-
-    if not request.state.is_super_admin:
-        raise AlertException("최고관리자만 접근 가능합니다.", 403)
 
     config = db.scalars(select(Config)).one()
     themes = get_theme_dir()
@@ -146,14 +144,11 @@ async def theme(request: Request, db: db_session):
     return templates.TemplateResponse("theme.html", context)
 
 
-@router.post("/theme_detail")
+@router.post("/theme_detail", dependencies=[Depends(validate_super_admin)])
 async def theme_detail(
     request: Request,
     theme: str = Form(...)
 ):
-    if not request.state.is_super_admin:
-        raise AlertException("최고관리자만 접근 가능합니다.", 403)
-
     theme = theme.strip()
     theme_dir = get_theme_dir()
 
@@ -171,14 +166,11 @@ async def theme_detail(
 
 # todo
 # 테마 미리보기 미완성 (프로그램 실행시 테마를 미리 지정하므로 중간에 다른 테마의 미리보기를 하기가 어려움)
-@router.get("/theme_preview")
+@router.get("/theme_preview", dependencies=[Depends(validate_super_admin)])
 async def theme_preview(
     request: Request,
     theme: str
 ):
-    if not request.state.is_super_admin:
-        raise AlertException("최고관리자만 접근 가능합니다.", 403)
-
     theme = theme.strip()
     theme_dir = get_theme_dir()
 
@@ -195,15 +187,12 @@ async def theme_preview(
     return templates.TemplateResponse("theme_preview.html", context)
 
 
-@router.post("/theme_update")
+@router.post("/theme_update", dependencies=[Depends(validate_super_admin)])
 async def theme_update(
     request: Request,
     db: db_session,
     theme: str = Form(...)
 ):
-    if not request.state.is_super_admin:
-        raise AlertException("최고관리자만 접근 가능합니다.", 403)
-
     theme = theme.strip()
     theme_dir = get_theme_dir()
 

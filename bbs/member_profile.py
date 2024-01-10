@@ -15,14 +15,13 @@ from lib.common import *
 from lib.dependencies import (
     get_login_member, validate_token, validate_captcha
 )
-from lib.member_lib import get_member_icon, get_member_image, is_admin
+from lib.member_lib import get_member_icon, get_member_image
 from lib.pbkdf2 import validate_password, create_hash
 from lib.template_filters import default_if_none
 from main import app
 
 router = APIRouter()
 templates = UserTemplates()
-templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals["captcha_widget"] = captcha_widget
 templates.env.globals["check_profile_open"] = check_profile_open

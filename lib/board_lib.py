@@ -28,7 +28,7 @@ class BoardConfig():
         self.login_member = request.state.login_member
         self.login_member_id = getattr(self.login_member, "mb_id", None)
         self.login_member_level = get_member_level(request)
-        self.login_member_admin_type = get_admin_type(self.request, self.login_member_id, group=group, board=self.board)
+        self.login_member_admin_type = get_admin_type(self.request, self.login_member_id, board=self.board)
 
     @classmethod
     def create_by_table(cls, request: Request, db: Session, bo_table: str):
@@ -1144,7 +1144,7 @@ def delete_write(request: Request, bo_table: str, origin_write: WriteBaseModel) 
     member = request.state.login_member
     member_id = getattr(member, "mb_id", None)
     member_level = get_member_level(request)
-    member_admin_type = get_admin_type(request, member_id, group=group, board=board)
+    member_admin_type = get_admin_type(request, member_id, board=board)
     write_member_mb_no = db.scalar(select(Member.mb_no).where(Member.mb_id == origin_write.mb_id))
     write_member = db.get(Member, write_member_mb_no)
     write_member_level = getattr(write_member, "mb_level", 1)

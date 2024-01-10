@@ -2,26 +2,25 @@
 # 플러그인을 활성/비활성하고 플러그인의 신규 플러그인을 등록한다.
 import logging
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi import HTTPException
 from fastapi.params import Form
 from starlette.requests import Request
 from starlette.responses import JSONResponse, FileResponse
 
 from admin.admin import templates
-from core.exception import AlertException
-from core.plugin import PLUGIN_DIR, PluginState,\
-    get_plugin_info, get_all_plugin_info, read_plugin_state, write_plugin_state
+from core.plugin import (
+    get_plugin_info, get_all_plugin_info, PLUGIN_DIR,
+    PluginState, read_plugin_state, write_plugin_state
+)
+from lib.dependencies import validate_super_admin
 
 logging.basicConfig(level=logging.INFO)
 router = APIRouter()
 
 
-@router.post("/plugin_detail")
+@router.post("/plugin_detail", dependencies=[Depends(validate_super_admin)])
 async def theme_detail(request: Request, module_name: str = Form(...)):
-    if not request.state.is_super_admin:
-        return AlertException(status_code=400, detail="관리자만 접근 가능합니다.")
-
     module = module_name.strip()
     info = get_plugin_info(module, PLUGIN_DIR)
     if not info:
@@ -35,14 +34,11 @@ async def theme_detail(request: Request, module_name: str = Form(...)):
                                       {"request": request, "name": info['plugin_name'], "info": info})
 
 
-@router.get("/plugin_list")
+@router.get("/plugin_list", dependencies=[Depends(validate_super_admin)])
 async def show_plugins(request: Request):
     """
     플러그인 목록
     """
-    if not request.state.is_super_admin:
-        return AlertException(status_code=400, detail="관리자만 접근 가능합니다.")
-
     request.session["menu_key"] = "100420"
     info = get_all_plugin_info(PLUGIN_DIR)
     context = {
