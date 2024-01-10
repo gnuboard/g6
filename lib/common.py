@@ -20,14 +20,14 @@ from fastapi import Request, UploadFile
 from markupsafe import Markup, escape
 from PIL import Image, ImageOps, UnidentifiedImageError
 from passlib.context import CryptContext
-from sqlalchemy import Index, asc, desc, func, select, delete, between, exists
+from sqlalchemy import Index, asc, case, desc, func, select, delete, between, exists
 from sqlalchemy.exc import IntegrityError
 from starlette.datastructures import URL
 from user_agents import parse
 
 from core.database import DBConnect
 from core.models import (
-    Auth, BoardNew, Config, Member, Memo, Menu, NewWin, Poll, Popular,
+    Auth, BoardNew, Config, Login, Member, Memo, Menu, NewWin, Poll, Popular,
     UniqId, Visit, VisitSum, WriteBaseModel
 )
 from lib.captcha.recaptch_v2 import ReCaptchaV2
@@ -1203,12 +1203,12 @@ def read_version():
 
 
 def read_license():
-    """루트 디렉토리의 LICENSE.txt 파일을 읽어서 라이센스 내용 반환
+    """루트 디렉토리의 LICENSE 텍스트 파일을 읽어서 라이센스 내용 반환
 
     Returns:
         str: 라이센스 내용
     """
-    with open("LICENSE.txt", "r", encoding="UTF-8") as file:
+    with open("LICENSE", "r", encoding="UTF-8") as file:
         return file.read().strip()
 
 
@@ -1281,3 +1281,24 @@ def set_url_query_params(url: Union[str, URL], query_params: Any) -> str:
         url = URL(url)
 
     return url.replace_query_params(**query_params).__str__()
+
+
+def get_current_login_count(request: Request) -> tuple:
+    """현재 접속자수를 반환하는 함수"""
+    config = request.state.config
+
+    with DBConnect().sessionLocal() as db:
+        result = db.execute(
+            select(
+                func.count(Login.mb_id).label("login"),
+                func.sum(case(
+                    (Login.mb_id != "", 1),
+                    else_=0
+                )).label("member"),
+            ).where(
+                Login.mb_id != config.cf_admin,
+                Login.lo_ip != ""
+            )
+        ).first()
+        return result.login, result.member
+

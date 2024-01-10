@@ -398,9 +398,9 @@ class AutoSaveForm:
 @dataclass
 class QaConfigForm:
     """1:1문의 설정 폼 데이터
-        - 그누보드5에서 사라지는 기능(변수)
-            1. 상단 파일 경로 (qa_include_head)
-            2. 하단 파일 경로 (qa_include_tail)
+    - 더이상 사용하지 않는 기능 (변수)
+        1. 상단 파일 경로 (qa_include_head)
+        2. 하단 파일 경로 (qa_include_tail)
     """
     qa_title: str = Form(...)
     qa_category: str = Form(None)
@@ -475,9 +475,7 @@ class NewwinForm:
 
 @dataclass
 class SocialProfile:
-    """
-    그누보드 소셜 프로필 폼 데이터
-    """
+    """소셜 프로필 폼 데이터"""
     mb_id: str
     provider: str
     identifier: str

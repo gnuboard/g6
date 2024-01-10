@@ -488,7 +488,7 @@ class GroupMember(Base):
 
 class Content(Base):
     """
-    g5_content 테이블
+    내용 테이블
     """
 
     __tablename__ = DB_TABLE_PREFIX + "content"
@@ -662,22 +662,6 @@ class Menu(Base):
     me_mobile_use = Column(Integer, nullable=False, default=0)
 
 
-# CREATE TABLE `g5_point` (
-#   `po_id` int NOT NULL,
-#   `mb_id` varchar(20) NOT NULL DEFAULT '',
-#   `po_datetime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-#   `po_content` varchar(255) NOT NULL DEFAULT '',
-#   `po_point` int NOT NULL DEFAULT '0',
-#   `po_use_point` int NOT NULL DEFAULT '0',
-#   `po_expired` tinyint NOT NULL DEFAULT '0',
-#   `po_expire_date` date NOT NULL DEFAULT '0000-00-00',
-#   `po_mb_point` int NOT NULL DEFAULT '0',
-#   `po_rel_table` varchar(20) NOT NULL DEFAULT '',
-#   `po_rel_id` varchar(20) NOT NULL DEFAULT '',
-#   `po_rel_action` varchar(100) NOT NULL DEFAULT ''
-# ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
-
-
 class Point(Base):
     """
     포인트 테이블
@@ -740,10 +724,6 @@ class Popular(Base):
 
 
 class Auth(Base):
-    # CREATE TABLE `g5_auth` (
-    #   `mb_id` varchar(20) NOT NULL DEFAULT '',
-    #   `au_menu` varchar(20) NOT NULL DEFAULT '',
-    #   `au_auth` set('r','w','d') NOT NULL DEFAULT ''
     __tablename__ = DB_TABLE_PREFIX + "auth"
 
     mb_id = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "member.mb_id"), primary_key=True, nullable=False, default="")
@@ -934,3 +914,15 @@ class MemberSocialProfiles(Base):
     mp_latest_day = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
 
     member: Mapped["Member"] = relationship("Member", back_populates="socials")
+
+
+class Login(Base):
+    """현재 로그인 및 접속자 테이블"""
+    __tablename__ = DB_TABLE_PREFIX + "login"
+
+    ol_id = Column(Integer, primary_key=True, autoincrement=True)  # 새로 추가된 기본키
+    lo_ip = Column(String(100), nullable=False, default='')
+    mb_id = Column(String(20), nullable=False, default='')
+    lo_datetime = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
+    lo_location = Column(Text, nullable=False)
+    lo_url = Column(Text, nullable=False)

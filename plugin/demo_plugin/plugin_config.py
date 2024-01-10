@@ -10,7 +10,7 @@ admin_router_prefix = router_prefix
 admin_menu = {
         f"{module_name}": [
             {
-                "name": "플러그인 데모",
+                "name": "플러그인 todo",
                 "url": "",
                 "tag": "",
             },

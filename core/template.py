@@ -124,6 +124,7 @@ class UserTemplates(Jinja2Templates):
         from lib.board_lib import render_latest_posts
 
         context = {
+            "current_login_count": get_current_login_count(request),
             "menus": get_menus(),
             "poll": get_recent_poll(),
             "populars": get_populars(),
@@ -214,7 +215,8 @@ class AdminTemplates(Jinja2Templates):
 
     def _default_admin_context(self, request: Request):
         context = {
-            "admin_menus": get_admin_menus()
+            "admin_menus": get_admin_menus(),
+            "version": read_version()
         }
         return context
 
@@ -229,8 +231,8 @@ def theme_asset(asset_path: str) -> str:
     Returns:
         asset_url (str): asset url
     """
-
-    theme_path = TEMPLATES_DIR
+    # 바뀐테마 등록
+    theme_path = get_theme_path()
     theme_name = theme_path.replace(TEMPLATES + '/', "")
 
     return f"/theme_static/{theme_name}/{asset_path}"
@@ -239,13 +241,12 @@ def theme_asset(asset_path: str) -> str:
 def register_theme_statics(app: FastAPI) -> None:
     """
     현재 테마의 static 디렉토리를 등록하는 함수
-
     Args:
         app (FastAPI): FastAPI 객체
     """
     # url 경로 /theme_static/{{theme_name}}/css, js, img 등 static 생략
     # 실제 경로 /theme/{{theme_name}}/static/ 을 등록
-    theme_path = TEMPLATES_DIR
+    theme_path = get_theme_path() # 바뀐테마 등록
     theme_name = theme_path.replace(TEMPLATES + '/', "")
 
     if not os.path.isdir(f"{TEMPLATES}/{theme_name}/static"):

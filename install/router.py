@@ -1,6 +1,8 @@
+import sys
 from cachetools import TTLCache
 from dotenv import set_key
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Form, Request
+import fastapi
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import create_engine, exists, insert
@@ -32,7 +34,16 @@ form_cache = TTLCache(maxsize=1, ttl=60)
 @router.get("/", name="install_main", dependencies=[Depends(validate_install)])
 async def main(request: Request):
     """설치 메인 페이지"""
-    return templates.TemplateResponse("main.html", {"request": request})
+    # 파이썬 버전
+    python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    # fastapi 버전
+    fastapi_version = f"{fastapi.__version__}"
+    context = {
+        "request": request,
+        "python_version": python_version,
+        "fastapi_version": fastapi_version,
+    }
+    return templates.TemplateResponse("main.html", context)
 
 
 @router.get("/license", name="install_license", dependencies=[Depends(validate_install)])
@@ -52,9 +63,12 @@ async def form(request: Request):
 
 
 @router.post("/form", name="install_form", dependencies=[Depends(validate_install)])
-async def form(request: Request):
+async def form(request: Request, 
+    agree: str = Form(None),
+):
     """설치 폼 페이지"""
-    
+    if agree != "동의함":
+        raise AlertException("라이선스에 동의하셔야 설치 가능합니다.", 400)
     context = {
         "request": request,
     }
@@ -132,7 +146,7 @@ async def install(
 async def install_process(request: Request):
     
     async def install_event():
-        yield "설치를 시작합니다. 페이지를 닫지 말고 잠시만 기다려주세요."
+        yield "설치를 시작합니다. 브라우저 창을 닫지 말고 잠시만 기다려주세요."
         db_connect = DBConnect()
         engine = db_connect.engine
         SessionLocal = db_connect.sessionLocal
@@ -155,7 +169,7 @@ async def install_process(request: Request):
                 board_group_setup(db)
                 board_setup(db)
                 db.commit()
-                yield "그누보드6 기본 데이터 입력 완료"
+                yield "기본설정 정보 입력 완료"
 
             for board in default_boards:
                 dynamic_create_write_table(board['bo_table'], create_table=True)

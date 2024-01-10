@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+<title>로그인 | {{ request.state.title }}</title>
+<link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+<link rel="stylesheet" href="/static/css/default.css">
+<link rel="stylesheet" href="/static/js/font-awesome/css/font-awesome.min.css">
+<link rel="stylesheet" href="/static/css/basic/member.css">
+<script>
+// 자바스크립트에서 사용하는 전역변수 선언
+var g5_url       = "{{request.base_url}};
+var g5_bbs_url   = "{{request.base_url}}bbs";
+var g5_is_member = "";
+var g5_is_admin  = "";
+var g5_is_mobile = "";
+var g5_bo_table  = "";
+var g5_sca       = "";
+var g5_editor    = "";
+var g5_cookie_domain = "";
+var g5_shop_url = "{{request.base_url}}shop";
+</script>
+<script src="/static/js/jquery-1.12.4.min.js?ver=2304171"></script>
+<script src="/static/js/jquery-migrate-1.4.1.min.js?ver=2304171"></script>
+<script src="/static/js/jquery.menu.js?ver=2304171"></script>
+<script src="/static/js/common.js?ver=2304171"></script>
+<script src="/static/js/wrest.js?ver=2304171"></script>
+<script src="/static/js/placeholders.min.js?ver=2304171"></script>
+</head>
+<body>
+
+{% if errors %}
+<ul>
+    {% for error in errors %}
+    <li>{{ error }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+
+{% block content %}    
+
+{% endblock %}
+</body>
+</html>

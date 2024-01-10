@@ -2,7 +2,7 @@
 
 {% block content %}
     <div class="ins_inner">
-        <h2>{{ version }} 설치가 시작되었습니다.</h2>
+        <h2>{{ default_version }} 버전 설치를 시작합니다.</h2>
         <ol id="install_status">
             <!--
             <li>전체 테이블 생성 완료</li>
@@ -21,12 +21,12 @@
             <li>환경설정 메뉴의 기본환경설정 페이지로 이동</li>
         </ol>
         <div class="inner_btn">
-            <a href="{{ url_for('index') }}">새로운 그누보드6으로 이동</a>
+            <a href="{{ url_for('index') }}">메인으로 이동</a>
         </div>
     </div>
 
     <div class="ins_inner" id="install_fail">
-        <h2>설치가 실패했습니다. 다시 시도해주세요</h2>
+        <h2>설치 중 문제가 발생했습니다. 다시 시도해주세요</h2>
         <div class="inner_btn">
             <a href="javascript:history.back();">뒤로가기</a>
         </div>

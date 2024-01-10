@@ -94,6 +94,12 @@ async def content_form_update(request: Request,
     Returns:
         RedirectResponse: 내용 등록/수정 후 상세 폼으로 이동
     """
+    # 모바일 내용이 없거나 모바일 스킨 값이 없으면 빈값으로 처리
+    if form_data.co_mobile_content is None:
+        form_data.co_mobile_content = ''
+    if form_data.co_mobile_skin is None:
+        form_data.co_mobile_skin = ''
+    
     if action == "w":
         # ID 중복 검사
         exists_content = db.scalar(select(Content).where(Content.co_id == co_id))

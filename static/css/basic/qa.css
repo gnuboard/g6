@@ -46,10 +46,10 @@
 #bo_cate ul {zoom:1}
 #bo_cate ul:after {display:block;visibility:hidden;clear:both;content:""}
 #bo_cate li {display:inline-block;padding:2px}
-#bo_cate a {display:block;line-height:28px;padding:5px 15px;border-radius:30px;border:1px solid #d6e9ff;color:#6794d3}
-#bo_cate a:focus, #bo_cate a:hover, #bo_cate a:active {text-decoration:none;background:#3a8afd;color:#fff}
-#bo_cate #bo_cate_on {z-index:2;background:#3a8afd;color:#fff;font-weight:bold;border:1px solid #3a8afd;
-box-shadow:inset 0 2px 5px rgb(33, 135, 202)}
+#bo_cate a {display:block;line-height:28px;padding:5px 15px;border-radius:30px;border:1px solid #ffded8;color:#ff8269}
+#bo_cate a:focus, #bo_cate a:hover, #bo_cate a:active {text-decoration:none;background:#ff8269;color:#fff}
+#bo_cate #bo_cate_on {z-index:2;background:#ff8269;color:#fff;font-weight:bold;
+}
 .td_subject img {margin-left:5px}
 
 
@@ -83,7 +83,7 @@ box-shadow:inset 0 2px 5px rgb(33, 135, 202)}
 .more_opt li i {float:right;line-height:36px}
 
 .td_num strong {color:#000}
-.bo_cate_link {float:left;display:inline-block;margin-right:10px;background:#e2eaf6;color:#3a8afd;font-weight:normal !important;height:20px;line-height:10px;padding:5px 8px;border-radius:5px;font-size:0.95em} /* 글제목줄 분류스타일 */
+.bo_cate_link {float:left;display:inline-block;margin-right:10px;background:#ff826930;color:#ff8269;font-weight:normal !important;height:20px;line-height:10px;padding:5px 8px;border-radius:5px;font-size:0.95em} /* 글제목줄 분류스타일 */
 .bo_cate_link:hover {text-decoration:none}
 .bo_tit {display:block;color:#000;font-weight:bold}
 .td_subject .fa-download {width:16px;height:16px;line-height:16px;background:#ecaa30;color:#fff;text-align:center;font-size:10px;border-radius:2px}
@@ -141,7 +141,7 @@ box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075)}
 #bo_v header {background:#fff;border:1px solid #dde7e9;border-bottom:0;border-radius:3px 3px 0 0}
 #bo_v_title {font-size:1.6em;padding:20px 20px 10px}
 #bo_v_title .bo_v_tit {display:block;font-size:2em;margin:5px 0 0;word-break:break-all}
-#bo_v_title .bo_v_cate {display:inline-block;line-height:23px;font-size:0.6em;background:#e2eaf6;color:#3a8afd;padding:0 10px;border-radius:3px;vertical-align:middle}
+#bo_v_title .bo_v_cate {display:inline-block;line-height:23px;font-size:0.6em;background:#ff826930;color:#ff8269;padding:0 10px;border-radius:3px;vertical-align:middle}
 
 #bo_v_info {position:relative;padding:0 20px 20px;background:#fff;border:1px solid #dde7e9;border-bottom:1px solid #f1f1f1;color:#555;border-top:0}
 #bo_v_info h2 {position:absolute;font-size:0;line-height:0;overflow:hidden}
@@ -279,7 +279,7 @@ box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075)}
 #bo_vc form {padding:0}
 
 /*글쓰기*/
-#bo_w .write_div {margin:10px 0;position:relative}
+#bo_w .write_div {margin:0px;position:relative}
 #bo_w li, .form_01 li {position:relative}
 #bo_w .bo_w_info:after {display:block;visibility:hidden;clear:both;content:""}
 #bo_w .bo_w_info .frm_input {float:left;width:33%}
@@ -292,19 +292,19 @@ box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075)}
 #bo_w .bo_w_link .frm_input, .form_01 .bo_w_link .frm_input {padding-left:50px}
 #bo_w .bo_w_flie .lb_icon, .form_01 .bo_w_flie .lb_icon {position:absolute;top:0px;left:0px;border-radius:3px 0 0 3px;height:38px;line-height:38px;width:40px;font-size:1.2em;text-align:center;color:#b2b2b2}
 #bo_w .bo_w_flie .frm_file, .form_01 .bo_w_flie .frm_file {padding-left:50px;margin-top:3px}
-#bo_w .bo_w_flie .file_wr, .form_01 .bo_w_flie .file_wr {border:1px solid #ccc;background:#fff;color:#000;vertical-align:middle;border-radius:3px;padding:5px;height:40px;margin:0}
+#bo_w .bo_w_flie .file_wr, .form_01 .bo_w_flie .file_wr {border:1px solid #ccc;background:#fff;color:#000;vertical-align:middle;border-radius:3px;padding:5px;height:45px;margin:0}
 #bo_w .bo_w_flie .frm_input, .form_01 .bo_w_flie .frm_input {margin:10px 0 0}
 #bo_w .bo_w_flie .file_del {position:absolute;top:10px;right:10px;font-size:0.92em;color:#7d7d7d}
 #bo_w .bo_w_select select {border:1px solid #d0d3db;width:100%;height:40px;border-radius:3px}
 
-#bo_w .bo_w_mail {float:left;width:49.5%}
-#bo_w .bo_w_hp {float:right;width:49.5%}
+#bo_w .bo_w_mail {float:left;width:49.5%;margin: 24px 0px;}
+#bo_w .bo_w_hp {float:right;width:49.5%;margin: 24px 0px;}
 #bo_w .bo_w_sbj {clear:both}
-#bo_w .frm_info {position:relative;line-height:18px;color:#3497d9;margin:10px 0;display:inline-block;font-size:1em}
+#bo_w .frm_info {position:relative;line-height:18px;color:#e7664d;margin:10px 0;display:inline-block;font-size:1em}
 
 .selec_chk {position:absolute;top:0;left:0;width:0;height:0;opacity:0;outline:0;z-index:-1;overflow:hidden}
 .chk_box {position:relative}
-.chk_box input[type="checkbox"] + label {position:relative;padding-left:10px;color:#676e70}
+.chk_box input[type="checkbox"] + label {position:relative;padding-left:24px;color:#676e70}
 .chk_box input[type="checkbox"] + label:hover{color:#2172f8}
 .chk_box input[type="checkbox"] + label span {position:absolute;top:0;left:0;width:17px;height:17px;display:block;background:#fff;border:1px solid #d0d4df;border-radius:3px}
 .chk_box input[type="checkbox"]:checked + label {color:#000}
