@@ -2,11 +2,12 @@ import asyncio
 
 from fastapi import APIRouter, Depends, Query, Request, Form, Path
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy import or_, select, update, delete, func
+from sqlalchemy import or_, select, update, delete, func, DateTime
 from sse_starlette.sse import EventSourceResponse
 
 from core.database import db_session
 from core.exception import AlertException
+from core.database import db_connect
 from core.models import Group, Mail, Member
 from core.template import AdminTemplates
 from lib.common import *
@@ -276,11 +277,16 @@ async def mail_select_list(
     # 1년 1월 1일의 datetime 객체를 생성합니다.
     cutoff_date = datetime(1, 1, 1)
     # cutoff_date 이전의 mb_leave_date와 mb_intercept_date를 가진 멤버만 선택합니다.
+    current_db_engine = db_connect._db_engine
+    if current_db_engine == 'sqlite':
+        comparing_leave_date = Member.mb_leave_date <= cutoff_date
+        comparing_intercept_date = Member.mb_intercept_date <= cutoff_date
+    else:
+        comparing_leave_date = func.cast(Member.mb_leave_date, DateTime) <= cutoff_date
+        comparing_intercept_date = func.cast(Member.mb_intercept_date, DateTime) <= cutoff_date            
     query = query.where(
-        or_((Member.mb_leave_date <= cutoff_date),
-            (Member.mb_leave_date.is_(None))),
-        or_((Member.mb_intercept_date <= cutoff_date),
-            (Member.mb_intercept_date.is_(None)))
+        or_(Member.mb_leave_date == "", comparing_leave_date),
+        or_(Member.mb_intercept_date == "", comparing_intercept_date)
     )
     members = db.scalars(query).all()
 
