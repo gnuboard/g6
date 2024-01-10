@@ -141,6 +141,7 @@ async def main_middleware(request: Request, call_next):
     # 기본환경설정 조회 및 설정
     config = db.scalar(select(Config))
     request.state.config = config
+    request.state.title = config.cf_title
 
     # 에디터 전역변수
     request.state.editor = config.cf_editor

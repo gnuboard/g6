@@ -6,7 +6,7 @@
 {% if request.state.config and request.state.config.cf_add_meta -%}
     {{ request.state.config.cf_add_meta|safe -}}
 {% endif -%}
-<title>{% block title %}그누보드{% endblock title %}</title>
+<title>{% block title %}{{ request.state.title }}{% endblock title %}</title>
 <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 <link rel="stylesheet" href="{{ theme_asset('css/board.css') }}">
 <link rel="stylesheet" href="{{ theme_asset('css/connect.css') }}">
