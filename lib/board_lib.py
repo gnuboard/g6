@@ -806,7 +806,7 @@ def write_search_filter(
         keyword: str = None,
         operator: str = "or") -> Select:
     """게시판 검색 필터를 적용합니다.
-    - 그누보드6의 get_sql_search와 동일한 기능을 합니다.
+    - 그누보드5의 get_sql_search와 동일한 기능을 합니다.
 
     Args:
         request (Request): FastAPI Request 객체.
@@ -884,7 +884,7 @@ def get_next_num(bo_table: str) -> int:
 
 def get_list(request: Request, write: WriteBaseModel, board_config: BoardConfig, subject_len: int = 0):
     """게시글 목록의 출력에 필요한 정보를 추가합니다.
-    - 그누보드6의 get_list와 동일한 기능을 합니다.
+    - 그누보드5의 get_list와 동일한 기능을 합니다.
 
     Args:
         request (Request): FastAPI Request 객체.

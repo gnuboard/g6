@@ -1,8 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}
-    그누보드
-{% endblock %}
+{% block title %}{{ request.state.title }}{% endblock %}
 
 {% block content %}
 

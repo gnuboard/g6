@@ -215,7 +215,8 @@ class AdminTemplates(Jinja2Templates):
 
     def _default_admin_context(self, request: Request):
         context = {
-            "admin_menus": get_admin_menus()
+            "admin_menus": get_admin_menus(),
+            "version": read_version()
         }
         return context
 
