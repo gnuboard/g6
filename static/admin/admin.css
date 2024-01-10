@@ -173,7 +173,7 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0;color: var(--fontColor);}
 #container_wr{padding:25px;min-height:500px;}
 .container_title.top{position: sticky;top: 71px;line-height:50px;font-size:1.5em;z-index:99;margin: 0px 40px;padding-top: 20px;background: var(--containerBg);color: var(--containerColor);border-bottom: var(--containerBorder);width: calc(100% - 80px);}
 .container_title.top::after {display: block;content: "";position: absolute;left: 0px;bottom: -2px;width: 30px;height: 3px;background: #ffd343;}
-.container_wr.top{padding:60px 40px 20px;min-height: calc(100vh - 150px);margin-bottom: 24px;width: 100%;}
+.container_wr.top{padding:20px 40px;min-height: calc(100vh - 150px);margin-bottom: 24px;width: 100%;}
 
 
 /* 화면낭독기 사용자용 */
@@ -460,6 +460,7 @@ tfoot th {}
 .tbl_frm01 #captcha input {margin-left:5px;text-align:center}
 .h2_frm{text-align:left;color:var(--h2Color);font-size:1.4em;font-weight:bold;margin:0px 0 10px;padding-top: 40px;}
 
+
 @media (max-width: 1100px) {
     #tnb {flex-direction: column;justify-content: center;}
     #tnb ul {display: flex;justify-content: center;padding: 0px 20px 20px;}
@@ -470,11 +471,14 @@ tfoot th {}
     #hd_top {margin: 0px auto;}
     form[name="fconfigform"] table {display: grid;table-layout: fixed;}
     form[name="fconfigform"] select {width: 100%;}
-    .tbl_frm01 tr{display: grid;grid-template-columns: 25% 75%;margin-bottom: 10px;}
-    .tbl_frm01 th {width: 100%;}
-    .tbl_frm01 td {width: 100%;}
+    form[name="fconfigform"] .tbl_frm01 tr{display: grid;grid-template-columns: 25% 75%;margin-bottom: 10px;}
+    form[name="fconfigform"] .tbl_frm01 th {width: 100%;}
+    form[name="fconfigform"] .tbl_frm01 td {width: 100%;}
+    form[name="fboardform"] .tbl_frm01 th {width: 150px;}
+    form[name="fboardform"] .tbl_frm01 td.td_grpset {width: 190px;}
+    form[name="fboardform"] .tbl_frm01 td {width: calc(100% - 340px);}
     .td_extra input {width: 100% !important;}
-    form[name="fconfigform"] .frm_input {width: 100%;}
+    form[name="fconfigform"] .frm_input, form[name="fboardform"] .frm_input {width: 100%;}
     #fsendmailtest .frm_input {width: calc(100% - 140px)}
     #gnb .gnb_ul {display: flex;height: auto;width: 96%;position: relative;margin: 0 auto;justify-content: space-between;}
     #container {margin: 0px auto;width: 96%;max-width: 100%;}
@@ -608,7 +612,7 @@ tfoot th {}
 .td_extra label {display:inline-block;width:100px}
 .td_extra input {margin-right:5px;width:130px}
 .td_grid {width:60px;text-align:center}
-td.td_grpset {width:160px;border-left:1px solid #e9ecee;text-align:center}
+td.td_grpset {width:190px;border-left:var(--frmInputBorder);text-align:center}
 .td_id {width:150px}
 .td_idsmall {width:75px}
 .td_itname {text-align:left !important}
