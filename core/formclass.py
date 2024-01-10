@@ -353,11 +353,11 @@ class WriteCommentForm:
 @dataclass
 class ContentForm:
     co_subject: str = Form(...)
-    co_content: str = Form(None)
-    co_mobile_content: str = Form(None)
-    co_html: str = Form(None)
-    co_skin: str = Form(None)
-    co_mobile_skin: str = Form(None)
+    co_content: str = Form(default="")
+    co_mobile_content: str = Form(default="")
+    co_html: str = Form(default="1")
+    co_skin: str = Form(default="")
+    co_mobile_skin: str = Form(default="")
 
 
 @dataclass

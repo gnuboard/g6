@@ -30,47 +30,57 @@ async def content_list(request: Request, db: db_session):
     request.session["menu_key"] = MENU_KEY
 
     contents = db.scalars(select(Content)).all()
-    return templates.TemplateResponse(
-        "content_list.html", {"request": request, "contents": contents}
-    )
+
+    context = {
+        "request": request,
+        "contents": contents,
+    }
+    return templates.TemplateResponse("content_list.html", context)
 
 
 @router.get("/content_form")
-async def content_form_add(request: Request, db: db_session):
+async def content_form_add(request: Request):
     """
     내용추가 폼
     """
-    return templates.TemplateResponse(
-        "content_form.html", {"request": request, "content": None}
-    )
-
+    context = {
+        "request": request,
+        "content": None,
+    }
+    return templates.TemplateResponse("content_form.html", context)
 
 @router.get("/content_form/{co_id}")
-async def content_form_edit(co_id: str, request: Request, db: db_session):
+async def content_form_edit(
+    request: Request,
+    db: db_session,
+    co_id: str = Path(...),
+):
     """
     내용 수정 폼
     """
-    content = db.scalar(select(Content).where(Content.co_id == co_id))
+    content = db.get(Content, co_id)
     if not content:
-        raise AlertException(status_code=404, detail=f"{co_id} : 내용 아이디가 존재하지 않습니다.")
+        raise AlertException(f"{co_id} : 내용 아이디가 존재하지 않습니다.", 404)
 
-    return templates.TemplateResponse(
-        "content_form.html",
-        {"request": request, "content": content},
-    )
+    context = {
+        "request": request,
+        "content": content,
+    }
+    return templates.TemplateResponse("content_form.html", context)
 
 
 @router.post("/content_form_update", dependencies=[Depends(validate_token)])
-async def content_form_update(request: Request,
-                        db: db_session,
-                        action: str = Form(...),
-                        co_id: str = Form(...),
-                        form_data: ContentForm = Depends(),
-                        co_himg: UploadFile = File(None),
-                        co_timg: UploadFile = File(None),
-                        co_himg_del: int = Form(None),
-                        co_timg_del: int = Form(None),
-                        ):
+async def content_form_update(
+    request: Request,
+    db: db_session,
+    action: str = Form(...),
+    co_id: str = Form(...),
+    form_data: ContentForm = Depends(),
+    co_himg: UploadFile = File(None),
+    co_timg: UploadFile = File(None),
+    co_himg_del: int = Form(None),
+    co_timg_del: int = Form(None),
+):
     """내용등록 및 수정 처리
 
     - 내용 등록 및 수정 데이터 저장
@@ -130,18 +140,20 @@ async def content_form_update(request: Request,
     save_image(IMAGE_DIRECTORY, f"{co_id}_h", co_himg)
     save_image(IMAGE_DIRECTORY, f"{co_id}_t", co_timg)
 
-    
+
     return RedirectResponse(url=request.url_for('content_form_edit', co_id=co_id), status_code=302)
 
 
 @router.get("/content_delete/{co_id}", dependencies=[Depends(validate_token)])
-async def content_delete(request: Request, 
-                   db: db_session,
-                   co_id: str = Path(...)):
+async def content_delete(
+    request: Request, 
+    db: db_session,
+    co_id: str = Path(...)
+):
     """
     내용 삭제
     """    
-    content = db.scalar(select(Content).where(Content.co_id == co_id))
+    content = db.get(Content, co_id)
     if not content:
         raise AlertException(status_code=404, detail=f"{co_id}: 내용 아이디가 존재하지 않습니다.")
 
