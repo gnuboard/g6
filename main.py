@@ -20,7 +20,7 @@ from core.plugin import (
     import_plugin_by_states, read_plugin_state, register_plugin,
     register_plugin_admin_menu, register_statics
 )
-from core.template import UserTemplates, register_theme_statics
+from core.template import UserTemplates, register_template_statics
 from lib.common import *
 from lib.member_lib import is_admin, MemberService
 from lib.point import insert_point
@@ -72,8 +72,8 @@ from lib.editor.ckeditor4 import router as editor_router
 if not os.path.exists("data"):
     os.mkdir("data")
 
-# templates/{theme}/static, static, data 디렉토리에 있는 파일을 정적 파일로 등록합니다.
-register_theme_statics(app)
+# 각 경로에 있는 파일들을 정적 파일로 등록합니다.
+register_template_statics(app)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
 

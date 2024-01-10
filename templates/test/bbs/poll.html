@@ -1,7 +1,6 @@
 {% if poll %}
     <form name="fpoll" action="{{ url_for('poll_update', po_id=poll.po_id) }}" onsubmit="return fpoll_submit(this);" method="post" target="win_poll">
         <input type="hidden" name="po_id" value="{{ poll.po_id }}">
-        <input type="hidden" name="skin_dir" value="theme%2Fbasic">
         <input type="hidden" name="token" value="">
         <section id="poll">
             <header>
