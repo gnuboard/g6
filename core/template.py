@@ -124,7 +124,7 @@ class UserTemplates(Jinja2Templates):
         from lib.board_lib import render_latest_posts
 
         context = {
-            "current_login_count": get_current_login_count(),
+            "current_login_count": get_current_login_count(request),
             "menus": get_menus(),
             "poll": get_recent_poll(),
             "populars": get_populars(),

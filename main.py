@@ -226,16 +226,18 @@ async def main_middleware(request: Request, call_next):
             .where(models.Login.lo_ip == current_ip)
         )
         if current_login:
-            current_login.lo_location = url_path
+            current_login.lo_ip = current_ip
             current_login.mb_id = getattr(member, "mb_id", "")
             current_login.lo_datetime = datetime.now()
+            current_login.lo_location = url_path
             current_login.lo_url = url_path
         else:
             db.execute(
                 insert(models.Login).values(
-                    lo_location=url_path,
+                    lo_ip=current_ip,
                     mb_id=getattr(member, "mb_id", ""),
                     lo_datetime=datetime.now(),
+                    lo_location=url_path,
                     lo_url=url_path)
             )
         db.commit()
