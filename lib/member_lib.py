@@ -112,12 +112,11 @@ def get_member_level(request: Request) -> int:
     return int(member.mb_level) if member else 1
 
 
-# TODO: 그누보드6의 is_admin 함수
-# 이미 is_admin 함수가 존재하므로 함수 이름을 변경함
 def get_admin_type(
         request: Request, mb_id: str = None,
         group: Group = None, board: Board = None) -> Union[str, None]:
     """게시판 관리자 여부 확인 후 관리자 타입 반환
+    - 그누보드5의 is_admin 함수를 참고하여 작성하려고 했으나, 이미 is_admin가 있어서 함수 이름을 변경함
 
     Args:
         request (Request): FastAPI Request 객체

@@ -74,7 +74,7 @@
 <div id="tnb">
   <div id="hd_top">
     <button type="button" id="btn_gnb" class="btn_gnb_close ">메뉴</button>
-    <div id="logo"><a href="/admin/"><img src="/static/admin/img/logo.png" alt="그누보드6 관리자"></a></div>
+    <div id="logo"><a href="/admin/"><img src="/static/admin/img/logo.png" alt="{{ request.state.title }} 관리자"></a></div>
 </div>
   <ul>
                           <li class="tnb_li"><a href="/shop/" class="tnb_shop" target="_blank" title="쇼핑몰 바로가기">쇼핑몰 바로가기</a></li>
@@ -97,7 +97,7 @@
 </div>
 <div id="wrapper">
   <header id="hd">
-    <h1>그누보드6</h1>
+    <h1>{{ request.state.title }}</h1>
    
         <nav id="gnb" class="gnb_large ">
             <h2>관리자 주메뉴</h2>

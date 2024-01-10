@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% block title %}그누보드{% endblock %}</title>
+<title>{% block title %}{{ request.state.title }}{% endblock %}</title>
 <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 <link rel="stylesheet" href="/static/css/default.css">
 <link rel="stylesheet" href="/static/js/font-awesome/css/font-awesome.min.css">
@@ -58,7 +58,7 @@ var g5_shop_url = "{{request.base_url}}shop";
     <div id="hd_wrapper">
 
         <div id="logo">
-            <a href="/"><img src="/static/img/logo_white.png" alt="그누보드5"></a>
+            <a href="/"><img src="/static/img/logo_white.png" alt="{{ request.state.title }}"></a>
         </div>
 
         <!-- 검색영역 -->
@@ -267,7 +267,7 @@ var g5_shop_url = "{{request.base_url}}shop";
           </div>
         </div>
     </div>
-    <!-- <div id="ft_catch"><img src="http://g5.pypot.com/img/ft_logo.png" alt="그누보드5"></div> -->
+    <!-- <div id="ft_catch"><img src="http://g5.pypot.com/img/ft_logo.png" alt="{{ request.state.title }}"></div> -->
     <div id="ft_copy">Copyright &copy; <b>{{ request.url.hostname }}.</b> All rights reserved.</div>
 
     <button type="button" id="top_btn">

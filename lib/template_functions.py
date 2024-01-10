@@ -243,7 +243,7 @@ def get_paging(request: Request,
                add_url: str = ""):
     """페이지 출력 함수
 
-    그누보드6 get_paging() 함수와 다른점
+    그누보드5 get_paging() 함수와 다른점
     1. 인수에서 write_pages 삭제
     2. 인수에서 total_page 대신 total_count 를 사용함
 
