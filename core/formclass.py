@@ -404,8 +404,8 @@ class QaConfigForm:
     """
     qa_title: str = Form(...)
     qa_category: str = Form(None)
-    qa_skin: str = Form(None)
-    qa_mobile_skin: str = Form(None)
+    qa_skin: str = Form(default="")
+    qa_mobile_skin: str = Form(default="")
     qa_use_email: int = Form(None)
     qa_req_email: int = Form(None)
     qa_use_hp: int = Form(None)
