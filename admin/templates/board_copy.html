@@ -51,7 +51,7 @@
 
 <script>
     function fboardcopy_check(f) {
-        var banned_array = ["adm","bbs","css","data","extend","img","install","js","lib","mobile","plugin","pma","shop","skin","theme"];
+        var banned_array = ["adm","bbs","css","data","extend","img","install","js","lib","mobile","plugin","pma","shop","skin","template","theme"];
 
         // 게시판명이 금지된 단어로 되어 있으면
         if ((typeof banned_array != 'undefined') && jQuery.inArray(f.target_table.value, banned_array) !== -1) {

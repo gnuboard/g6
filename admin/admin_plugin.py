@@ -18,7 +18,7 @@ router = APIRouter()
 
 
 @router.post("/plugin_detail")
-async def theme_detail(request: Request, module_name: str = Form(...)):
+async def plugin_detail(request: Request, module_name: str = Form(...)):
     if not request.state.is_super_admin:
         return AlertException(status_code=400, detail="관리자만 접근 가능합니다.")
 
@@ -31,8 +31,12 @@ async def theme_detail(request: Request, module_name: str = Form(...)):
         # 플러그인의 readme.txt 파일의 양식 체크. 
         raise HTTPException(status_code=400, detail="플러그인의 상세 정보가 없습니다.")
 
-    return templates.TemplateResponse("theme_detail.html",
-                                      {"request": request, "name": info['plugin_name'], "info": info})
+    context = {
+        "request": request,
+        "name": info['plugin_name'],
+        "info": info,
+    }
+    return templates.TemplateResponse("plugin_detail.html", context)
 
 
 @router.get("/plugin_list")
