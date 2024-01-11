@@ -171,7 +171,7 @@ p input:valid + label::after { width:100%; transform:translateX(0); }
 .tooltip_icon:hover {color:#ff8269}
 .tooltip {position:absolute;display: inline-block;opacity: 0;width:auto;box-shadow: 0px 3px 6px #00000010;color:#fff;background:#464646;padding:10px;font-size:small;line-height:18px;visibility: hidden;z-index:9;font-weight:normal;margin-left:15px;margin-top:10px;white-space: nowrap;transition: all 0.2s;}
 .tooltip:before {content:"";position:absolute;top:0;left:-10px;width:0;height:0;border-style:solid;border-top:0px solid transparent;border-bottom:10px solid transparent;border-left:0;border-right:10px solid #464646}
-.tooltip_icon:hover .tooltip {visibility: visible;opacity: 1;}
+.tooltip_icon:hover > .tooltip {visibility: visible;opacity: 1;}
 
 /*기존 계정에 연결하기*/
 

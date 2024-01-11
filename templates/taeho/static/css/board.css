@@ -4,7 +4,7 @@
 #bo_list {position:relative;margin-bottom:20px}
 #bo_list:after {display:block;visibility:hidden;clear:both;content:""}
 #bo_list .td_board {width:120px;text-align:center}
-#bo_list .td_chk {width:30px;text-align:center;border-top:1px solid #ecf0f1;border-bottom:1px solid #ecf0f1}
+#bo_list .td_chk {width:30px;text-align:center;border-top:var(--border);border-bottom:var(--border)}
 #bo_list .td_date {width:60px;text-align:center}
 #bo_list .td_datetime {width:60px;text-align:center}
 #bo_list .td_group {width:100px;text-align:center}
@@ -19,7 +19,7 @@
 #bo_list .txt_expired {color:#ccc}
 #bo_list tbody tr {border-left:2px solid transparent}
 #bo_list tbody tr:hover {border-left:2px solid #ff8269}
-#bo_list tbody .even td {background:#fbfbfb}
+#bo_list tbody .even td {background:var(--evenTdBg)}
 
 #bo_cate {margin:25px 0}
 #bo_cate h2 {position:absolute;font-size:0;line-height:0;overflow:hidden}
@@ -48,10 +48,10 @@
 .bo_fx {margin-bottom:5px;float:right;zoom:1}
 .bo_fx:after {display:block;visibility:hidden;clear:both;content:""}
 .bo_fx ul {margin:0;padding:0;list-style:none}
-#bo_list_total {float:left;line-height:34px;font-size:0.92em;color:#4e546f}
+#bo_list_total {float:left;line-height:34px;font-size:0.92em;color:var(--boListColor)}
 
 .btn_bo_user {float:right;margin:0;padding:0;list-style:none}
-.btn_bo_user li {float:left;width:40px;text-align:center;margin-left:5px;background:#fff}
+.btn_bo_user li {float:left;width:40px;text-align:center;margin-left:5px;background:var(--contBg)}
 .btn_bo_user > li {position:relative}
 .btn_bo_adm {float:left}
 .btn_bo_adm li {float:left;margin-right:5px}
@@ -60,14 +60,14 @@
 .bo_notice td a {font-weight:bold}
 .bo_notice .notice_icon {display:inline-block;line-height:25px;border-radius:5px;font-weight:bold;color:#f9267f}
 
-.more_opt {display:none;position:absolute;top:45px;right:0;background:#fff;border:1px solid #b8bfc4;z-index:999}
-.more_opt:before {content:"";position:absolute;top:-8px;right:13px;width:0;height:0;border-style:solid;border-width:0 6px 8px 6px;border-color:transparent transparent #b8bfc4 transparent}
-.more_opt:after {content:"";position:absolute;top:-6px;right:13px;width:0;height:0;border-style:solid;border-width:0 6px 8px 6px;border-color:transparent transparent #fff transparent}
-.more_opt li {border-bottom:1px solid #f1f1f1;padding:10px;float:inherit;width:90px;margin:0;color:#6b757c;text-align:left}
+.more_opt {display:none;position:absolute;top:45px;right:0;background:#fff;border:var(--moreUlBorder);z-index:999}
+.more_opt:before {content:"";position:absolute;top:-8px;right:13px;width:0;height:0;border-style:solid;border-width:0 6px 8px 6px;border-color:transparent transparent var(--moreColor) transparent}
+.more_opt:after {content:"";position:absolute;top:-6px;right:13px;width:0;height:0;border-style:solid;border-width:0 6px 8px 6px;border-color:transparent transparent var(--contBg) transparent}
+.more_opt li {border-bottom:var(--moreLiBorder);padding:10px;float:inherit;width:90px;margin:0;color:#6b757c;text-align:left}
 .more_opt li:last-child {border-bottom:0}
-.more_opt li button, .more_opt li a {width:100%;border:0;background:#fff;color:#6b757c}
+.more_opt li button, .more_opt li a {width:100%;border:0;background:var(--contBg);color:#6b757c}
 .more_opt li:hover a,
-.more_opt li:hover button {color:#000}
+.more_opt li:hover button {color:var(--fontColor)}
 .more_opt li i {float:right;line-height:20px}
 
 .td_num strong {color:#000}
@@ -337,7 +337,7 @@ box-shadow:inset 0 1px 2px rgba(0, 0, 0, 0.1)}
 #bo_w .bo_w_link .frm_input {padding-left:50px}
 #bo_w .bo_w_flie .lb_icon {position:absolute;top:0px;left:0px;border-radius:3px 0 0 3px;height:38px;line-height:38px;width:40px;font-size:1.2em;text-align:center;color:#b2b2b2}
 #bo_w .bo_w_flie .frm_file {padding-left:50px;margin-top:3px}
-#bo_w .bo_w_flie .file_wr {position:relative;border:1px solid #ccc;background:#fff;color:#000;vertical-align:middle;border-radius:3px;padding:5px;height:40px;margin:0}
+#bo_w .bo_w_flie .file_wr {position:relative;border:var(--inputBorder);background:var(--inputBg);color:var(--fontColor);vertical-align:middle;border-radius:3px;padding:5px;height:40px;margin:0}
 #bo_w .bo_w_flie .frm_input {margin:10px 0 0}
 #bo_w .bo_w_flie .file_del {position:absolute;top:10px;right:10px;font-size:0.92em;color:#7d7d7d}
 #bo_w .bo_w_select select {border:1px solid #d0d3db;width:100%;height:40px;border-radius:3px}
