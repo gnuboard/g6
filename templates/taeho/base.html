@@ -10,10 +10,10 @@
 
     <div id="tnb">
       <div class="inner">
-          <ul id="hd_define">
+          <!-- <ul id="hd_define">
             <li class="active"><a href="/">커뮤니티</a></li>
             <li><a href="/shop">쇼핑몰</a></li>
-          </ul>
+          </ul> -->
           <ul id="hd_qnb">
             <li><a href="{{ url_for('faq_view') }}">FAQ</a></li>
             <li><a href="{{ url_for('qa_list') }}">Q&A</a></li>
@@ -164,21 +164,10 @@
         </nav>
   
         <!-- 접속자집계 시작 { -->
-        <section id="visit" class="ft_cnt">
-            <h2>접속자집계</h2>
-            <dl>
-                <dt><span></span> 오늘</dt>
-                <dd><strong>1</strong></dd>
-                <dt><span></span> 어제</dt>
-                <dd><strong>1</strong></dd>
-                <dt><span></span> 최대</dt>
-                <dd><strong>1</strong></dd>
-                <dt><span></span> 전체</dt>
-                <dd><strong>3</strong></dd>
-            </dl>
-            <a href="/admin/visit_list" class="btn_admin btn"><i class="fa fa-cog fa-spin fa-fw"></i><span class="sound_only">관리자</span></a>
-        </section>
-        <!-- } 접속자집계 끝 -->  
+        {% if render_visit_statistics %}
+            {{ render_visit_statistics(request)|safe }}
+        {% endif %}
+        <!-- } 접속자집계 끝 -->
       <script>
         // aside/최신글 - 탭메뉴 기능
         var tabItems = document.querySelectorAll('.aside_tab ul.tab_01 li');
@@ -221,7 +210,13 @@
             <a href="{{ url_for('content_view', co_id='company') }}">회사소개</a>
             <a href="{{ url_for('content_view', co_id='privacy') }}">개인정보처리방침</a>
             <a href="{{ url_for('content_view', co_id='provision') }}">서비스이용약관</a>
-            <a href="/?device=mobile">모바일버전</a>
+            {% if not request.state.is_responsive %}
+                {% if request.state.is_mobile %}
+                    <a href="{{ url_for('device_change', device='pc') }}">PC버전</a>
+                {% else %}
+                    <a href="{{ url_for('device_change', device='mobile') }}">모바일버전</a>
+                {% endif %}
+            {% endif %}
         </div>
         <div id="ft_company" class="ft_cnt">
         	<h2>사이트 정보</h2>
@@ -244,8 +239,7 @@
         {% endif %}
         <!-- } 접속자집계 끝 -->
     </div>
-    <!-- <div id="ft_catch"><img src="http://g5.pypot.com/img/ft_logo.png" alt="그누보드5"></div> -->
-    <div id="ft_copy">Copyright &copy; <b>소유하신 도메인.</b> All rights reserved.</div>
+    <div id="ft_copy">Copyright &copy; <b>{{ request.url.hostname }}.</b> All rights reserved.</div>
 
     <button type="button" id="top_btn">
     	<i class="fa fa-arrow-up" aria-hidden="true"></i><span class="sound_only">상단으로</span>

@@ -806,7 +806,7 @@ def write_search_filter(
         keyword: str = None,
         operator: str = "or") -> Select:
     """게시판 검색 필터를 적용합니다.
-    - 그누보드6의 get_sql_search와 동일한 기능을 합니다.
+    - 그누보드5의 get_sql_search와 동일한 기능을 합니다.
 
     Args:
         request (Request): FastAPI Request 객체.
@@ -884,7 +884,7 @@ def get_next_num(bo_table: str) -> int:
 
 def get_list(request: Request, write: WriteBaseModel, board_config: BoardConfig, subject_len: int = 0):
     """게시글 목록의 출력에 필요한 정보를 추가합니다.
-    - 그누보드6의 get_list와 동일한 기능을 합니다.
+    - 그누보드5의 get_list와 동일한 기능을 합니다.
 
     Args:
         request (Request): FastAPI Request 객체.
@@ -1322,12 +1322,13 @@ def insert_board_new(bo_table: str, write: WriteBaseModel) -> None:
     db.close()
 
 
-def render_latest_posts(request: Request, skin_dir='', bo_table='', rows=10, subject_len=40):
+def render_latest_posts(request: Request, skin_name: str = 'basic', bo_table: str='',
+                        rows: int = 10, subject_len: int = 40):
     """최신글 목록 HTML 출력
 
     Args:
         request (Request): _description_
-        skin_dir (str, optional): 스킨 경로. Defaults to ''.
+        skin_name (str, optional): 스킨 경로. Defaults to ''.
         bo_table (str, optional): 게시판 코드. Defaults to ''.
         rows (int, optional): 노출 게시글 수. Defaults to 10.
         subject_len (int, optional): 제목길이 제한. Defaults to 40.
@@ -1338,11 +1339,9 @@ def render_latest_posts(request: Request, skin_dir='', bo_table='', rows=10, sub
     templates = UserTemplates()
     templates.env.globals["get_list_thumbnail"] = get_list_thumbnail
 
-    if not skin_dir:
-        skin_dir = 'basic'
-
+    device = request.state.device
     file_cache = FileCache()
-    cache_filename = f"latest-{bo_table}-{skin_dir}-{rows}-{subject_len}-{file_cache.get_cache_secret_key()}.html"
+    cache_filename = f"latest-{bo_table}-{device}-{skin_name}-{rows}-{subject_len}-{file_cache.get_cache_secret_key()}.html"
     cache_file = os.path.join(file_cache.cache_dir, cache_filename)
 
     # 캐시된 파일이 있으면 파일을 읽어서 반환
@@ -1372,7 +1371,7 @@ def render_latest_posts(request: Request, skin_dir='', bo_table='', rows=10, sub
         "writes": writes,
         "bo_table": bo_table,
     }
-    temp = templates.TemplateResponse(f"latest/{skin_dir}.html", context)
+    temp = templates.TemplateResponse(f"latest/{skin_name}.html", context)
     temp_decode = temp.body.decode("utf-8")
 
     # 캐시 파일 생성

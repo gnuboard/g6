@@ -22,8 +22,10 @@ async def current_connect(
     logins = db.execute(
         select(Login, Member)
         .outerjoin(Member, Login.mb_id == Member.mb_id)
-        .where(Login.mb_id != config.cf_admin)
-        .order_by(Login.lo_datetime.desc())
+        .where(
+            Login.mb_id != config.cf_admin,
+            Login.lo_ip != ""
+        ).order_by(Login.lo_datetime.desc())
     ).all()
 
     for login, member in logins:

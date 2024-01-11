@@ -154,12 +154,12 @@ def get_skin_select(skin_gubun: str, id: str, selected: str,
     SELECT 형식으로 얻음
 
     Args:
-        skin_gubun (str): 테마 내부의 폴더명(기능)
+        skin_gubun (str): 템플릿 내부의 폴더명(기능)
         id (str): select 태그의 id 속성값
         selected (str): 기본적으로 선택되어야 할 스킨명
         attribute (str, optional): select 태그의 추가 속성값. Defaults to "".
         device (str, optional): 디바이스별 폴더명(mobile). Defaults to "".
-            PC는 추가 경로 없음 (ex: /template/{theme}/board/{skin_gubun})
+            PC는 추가 경로 없음 (ex: /template/{template_name}/board/{skin_gubun})
 
     Returns:
         str: select 태그의 HTML 코드
@@ -243,7 +243,7 @@ def get_paging(request: Request,
                add_url: str = ""):
     """페이지 출력 함수
 
-    그누보드6 get_paging() 함수와 다른점
+    그누보드5 get_paging() 함수와 다른점
     1. 인수에서 write_pages 삭제
     2. 인수에서 total_page 대신 total_count 를 사용함
 

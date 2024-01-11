@@ -1283,15 +1283,22 @@ def set_url_query_params(url: Union[str, URL], query_params: Any) -> str:
     return url.replace_query_params(**query_params).__str__()
 
 
-def get_current_login_count() -> tuple:
+def get_current_login_count(request: Request) -> tuple:
     """현재 접속자수를 반환하는 함수"""
+    config = request.state.config
+
     with DBConnect().sessionLocal() as db:
-        result = db.execute(select(
+        result = db.execute(
+            select(
                 func.count(Login.mb_id).label("login"),
                 func.sum(case(
                     (Login.mb_id != "", 1),
                     else_=0
                 )).label("member"),
-            )).first()
+            ).where(
+                Login.mb_id != config.cf_admin,
+                Login.lo_ip != ""
+            )
+        ).first()
         return result.login, result.member
 

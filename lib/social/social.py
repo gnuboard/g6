@@ -18,7 +18,7 @@ def register_social_provider(config: Config):
     """
     소셜 서비스 인증 객체를 등록
     Args:
-        config (Config): 그누보드 설정 객체
+        config (Config): 기본환경설정 객체
     Examples:
         서버 재시작 후 인증 객체가 등록되지 않아
         각 소셜서비스를 사용할 수 없는 경우가 있음.

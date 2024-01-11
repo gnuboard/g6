@@ -20,7 +20,7 @@ from core.plugin import (
     import_plugin_by_states, read_plugin_state, register_plugin,
     register_plugin_admin_menu, register_statics
 )
-from core.template import UserTemplates, register_theme_statics
+from core.template import UserTemplates, register_template_statics
 from lib.common import *
 from lib.member_lib import is_admin, MemberService
 from lib.point import insert_point
@@ -72,8 +72,8 @@ from lib.editor.ckeditor4 import router as editor_router
 if not os.path.exists("data"):
     os.mkdir("data")
 
-# templates/{theme}/static, static, data 디렉토리에 있는 파일을 정적 파일로 등록합니다.
-register_theme_statics(app)
+# 각 경로에 있는 파일들을 정적 파일로 등록합니다.
+register_template_statics(app)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
 
@@ -141,6 +141,7 @@ async def main_middleware(request: Request, call_next):
     # 기본환경설정 조회 및 설정
     config = db.scalar(select(Config))
     request.state.config = config
+    request.state.title = config.cf_title
 
     # 에디터 전역변수
     request.state.editor = config.cf_editor
@@ -226,16 +227,18 @@ async def main_middleware(request: Request, call_next):
             .where(models.Login.lo_ip == current_ip)
         )
         if current_login:
-            current_login.lo_location = url_path
+            current_login.lo_ip = current_ip
             current_login.mb_id = getattr(member, "mb_id", "")
             current_login.lo_datetime = datetime.now()
+            current_login.lo_location = url_path
             current_login.lo_url = url_path
         else:
             db.execute(
                 insert(models.Login).values(
-                    lo_location=url_path,
+                    lo_ip=current_ip,
                     mb_id=getattr(member, "mb_id", ""),
                     lo_datetime=datetime.now(),
+                    lo_location=url_path,
                     lo_url=url_path)
             )
         db.commit()

@@ -1,0 +1,43 @@
+{% extends "base_sub.html" %}
+
+{% block title %}템플릿 상세보기{% endblock title %}
+
+{% block content %}
+    <div id="template_detail">
+        <h2>{{ info.template_name }}</h2>
+        <div class="template_dt_img">
+            {% if info.screenshot %}
+                <img src="{{ info.screenshot }}" alt="{{ info.template_name }}">
+            {% else %}
+                <img src="{{ url_for('static', path='/admin/img/template_img.jpg') }}" alt="템플릿 없음">
+            {% endif %}
+        </div>
+        <div class="template_dt_if">
+            <p>{{ info.detail }}</p>
+            <table>
+                <tr>
+                    <th scope="row">Version</th>
+                    <td>{{ info.version }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Maker</th>
+                    <td>{{ info.maker }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">License</th>
+                    <td>{{ info.license }}</td>
+                </tr>
+            </table>
+            <div class="template_dt_btn">
+                <!-- <a href="/admin/template_preview?template={{ template }}" class="template_pr btn_03" target="template_preview">미리보기</a> -->
+                <button type="button" class="close_btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelector(".close_btn").addEventListener("click", function() {
+            document.getElementById("template_detail").remove();
+        });
+    </script>
+{% endblock content %}

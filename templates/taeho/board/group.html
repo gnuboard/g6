@@ -7,7 +7,7 @@
     <div class="latest_wr">
         {% for board in boards %}
             <div style="float:left; {{ loop.cycle("", "margin-left:2%", "margin-left:2%") }}" class="lt_wr">
-                {{ latest(request, 'basic', board.bo_table, 6, 25)|safe }}
+                {{ render_latest_posts(request, 'basic', board.bo_table, 6, 25)|safe }}
             </div>
         {% endfor %}
     </div>

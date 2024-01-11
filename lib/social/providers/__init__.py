@@ -1,7 +1,8 @@
-# Path: lib/social/social.py
-import pkgutil
 import importlib
-from sqlalchemy import select
+import logging
+import pkgutil
+
+from sqlalchemy import select, inspect
 
 from core.database import DBConnect
 from core.models import Config
@@ -24,9 +25,13 @@ __all__ = [
     "twitter",
 ]
 
+
 with DBConnect().sessionLocal() as db:
-    try:
-        config = db.scalar(select(Config))
-        register_social_provider(config)
-    except Exception as e:
-        print("소셜로그인 설정을 불러올 수 없습니다. " + str(e.args[0]) )
+    # 설치되기 전에는 config 테이블이 없으므로 확인.
+    if inspect(DBConnect().engine).has_table(DBConnect().table_prefix + "config"):
+        try:
+            config = db.scalar(select(Config))
+            # 서버시작시 소셜로그인 설정을 불러온다.
+            register_social_provider(config)
+        except Exception as e:
+            logging.warning("소셜로그인 설정을 불러올 수 없습니다. " + str(e.args[0]))

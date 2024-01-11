@@ -169,7 +169,7 @@ async def install_process(request: Request):
                 board_group_setup(db)
                 board_setup(db)
                 db.commit()
-                yield "그누보드6 기본 데이터 입력 완료"
+                yield "기본설정 정보 입력 완료"
 
             for board in default_boards:
                 dynamic_create_write_table(board['bo_table'], create_table=True)

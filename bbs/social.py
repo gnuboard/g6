@@ -330,11 +330,12 @@ class SocialAuthService:
 
     @classmethod
     def get_profile_by_member_id(cls, identifier, provider) -> Optional[str]:
-        """
-        소셜 서비스 아이디로 그누보드6 회원 아이디를 가져옴
+        """ 소셜 서비스 아이디로 회원 아이디를 가져옴
+
         Args:
             identifier (str) : 소셜서비스 사용자 식별 id
             provider (str) : 소셜 제공자
+
         Returns:
             g5 user_id
         """
@@ -396,12 +397,14 @@ class SocialAuthService:
 
     @classmethod
     def g6_convert_social_id(cls, identifier, provider: str):
-        """
-        그누보드6 소셜 id 생성 함수 get_social_convert_id
-        provider + uid로 부터 고유 해시값생성
+        """소셜 id 생성 함수
+        - 그누보드5의 get_social_convert_id() 함수를 참고하여 작성
+        - provider + uid로 부터 고유 해시값생성
+
         Args:
             identifier (str) : 소셜서비스 사용자 식별 id
             provider (str) : 소셜 제공자
+
         Returns:
             provider_hax(adler32(md5(uid)))
         """
