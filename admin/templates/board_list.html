@@ -53,7 +53,7 @@
                 </thead>
                 <tbody>
                     {% for board in boards %}
-                    <tr class="bg0">
+                    <tr class="bg{{ loop.cycle('0', '1') }}">
                         <td class="td_chk">
                             <label for="chk_{{ loop.index0 }}" class="sound_only">{{ board.bo_subject }}</label>
                             <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">

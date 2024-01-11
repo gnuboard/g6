@@ -22,7 +22,7 @@ from core.plugin import (
 )
 from core.template import UserTemplates, register_template_statics
 from lib.common import *
-from lib.member_lib import is_admin, MemberService
+from lib.member_lib import is_super_admin, MemberService
 from lib.point import insert_point
 from lib.template_filters import default_if_none
 from lib.token import create_session_token
@@ -40,7 +40,6 @@ APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False
 app = FastAPI(debug=APP_IS_DEBUG)
 
 templates = UserTemplates()
-templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
 
 from admin.admin import router as admin_router
@@ -168,7 +167,7 @@ async def main_middleware(request: Request, call_next):
         mb_id = re.sub("[^a-zA-Z0-9_]", "", cookie_mb_id)[:20]
         member = MemberService.create_by_id(db, mb_id)
         # 최고관리자는 보안상 자동로그인 기능을 사용하지 않는다.
-        if (not is_admin(request, mb_id)
+        if (not is_super_admin(request, mb_id)
                 and member.is_email_certify(bool(config.cf_use_email_certify))
                 and not member.is_intercept_or_leave()):
             # 쿠키에 저장된 키와 여러가지 정보를 조합하여 만든 키가 일치한다면 로그인으로 간주
@@ -190,7 +189,7 @@ async def main_middleware(request: Request, call_next):
     # 로그인한 회원 정보
     request.state.login_member = member
     # 최고관리자 여부
-    request.state.is_super_admin = is_admin(request, getattr(member, "mb_id", None))
+    request.state.is_super_admin = is_super_admin(request, getattr(member, "mb_id", None))
 
     # 접근가능/차단 IP 체크
     # - IP 체크 기능을 사용할 때 is_super_admin 여부를 확인하기 때문에 로그인 코드 이후에 실행

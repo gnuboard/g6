@@ -196,21 +196,10 @@ var g5_shop_url = "{{request.base_url}}shop";
         </nav>
   
         <!-- 접속자집계 시작 { -->
-        <section id="visit" class="ft_cnt">
-            <h2>접속자집계</h2>
-            <dl>
-                <dt><span></span> 오늘</dt>
-                <dd><strong>1</strong></dd>
-                <dt><span></span> 어제</dt>
-                <dd><strong>1</strong></dd>
-                <dt><span></span> 최대</dt>
-                <dd><strong>1</strong></dd>
-                <dt><span></span> 전체</dt>
-                <dd><strong>3</strong></dd>
-            </dl>
-            <a href="/admin/visit_list" class="btn_admin btn"><i class="fa fa-cog fa-spin fa-fw"></i><span class="sound_only">관리자</span></a>
-        </section>
-        <!-- } 접속자집계 끝 -->  
+            {% if render_visit_statistics %}
+            {{ render_visit_statistics(request)|safe }}
+        {% endif %}
+        <!-- } 접속자집계 끝 -->
       <script>
         // aside/최신글 - 탭메뉴 기능
         var tabItems = document.querySelectorAll('.aside_tab ul.tab_01 li');

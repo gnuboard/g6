@@ -48,7 +48,7 @@
                         <a href="{{ request.url.include_query_params(sfl="mb_id", stx=row.mb_id) }}">{{ row.mb_id }}</a>
                     </td>
                     <td class="td_auth_mbnick">{{ row.mb_nick }}</td>
-                    <td class="td_menu">{{ row.au_menu }}</td>
+                    <td class="td_menu">{{ row.au_menu ~ " " ~ row.au_name }}</td>
                     <td class="td_auth">{{ row.au_auth }}</td>
                 </tr>
                 {% else %}

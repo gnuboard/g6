@@ -4,15 +4,17 @@ from typing_extensions import Annotated
 from fastapi import Depends, Form, Path, Query, Request
 from sqlalchemy import exists, inspect, select
 
-from core.database import DBConnect
+from core.database import DBConnect, db_session
 from core.exception import AlertException
-from core.models import Auth, Board, GroupMember
+from core.models import Auth, Board, GroupMember, Member
 from core.template import get_template_list
 from lib.common import (
-    ENV_PATH, get_current_admin_menu_id, get_current_captcha_cls
+    dynamic_create_write_table, ENV_PATH, get_current_admin_menu_id,
+    get_current_captcha_cls,
 )
-from lib.member_lib import get_admin_type, is_admin
+from lib.member_lib import get_admin_type
 from lib.token import check_token
+
 
 async def get_variety_tokens(
     token_form: Annotated[str, Form(alias="token")] = None,
@@ -57,6 +59,12 @@ async def validate_captcha(
         captcha = captcha_cls(config)
         if captcha and (not await captcha.verify(response)):
             raise AlertException("캡차가 올바르지 않습니다.", 400)
+
+
+async def validate_super_admin(request: Request):
+    """최고관리자 여부 검사"""
+    if not request.state.is_super_admin:
+        raise AlertException("최고관리자만 접근 가능합니다.", 403)
 
 
 async def validate_install():
@@ -122,7 +130,7 @@ async def check_admin_access(request: Request):
     # 관리자페이지 접근 권한 체크
     if not ss_mb_id:
         raise AlertException("로그인이 필요합니다.", 302, url="/bbs/login?url=" + path)
-    elif not is_admin(request):
+    elif not request.state.is_super_admin:
         method = request.method
         admin_menu_id = get_current_admin_menu_id(request)
 
@@ -165,3 +173,44 @@ def common_search_query_params(
         # current_page가 정수로 변환할 수 없는 경우 기본값으로 1을 사용하도록 설정
         current_page = 1
     return {"sst": sst, "sod": sod, "sfl": sfl, "stx": stx, "sca": sca, "current_page": current_page}
+
+
+def get_board(db: db_session, bo_table: Annotated[str, Path(...)]):
+    """게시판 존재 여부 검사 & 반환"""
+    board = db.get(Board, bo_table)
+    if not board:
+        raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
+
+    return board
+
+
+def get_write(db: db_session, 
+              bo_table: Annotated[str, Path(...)],
+              wr_id: Annotated[int, Path(...)]):
+    """게시글 존재 여부 검사 & 반환"""
+    write_model = dynamic_create_write_table(bo_table)
+    write = db.get(write_model, wr_id)
+    if not write:
+        raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
+
+    return write
+
+
+def get_member(db: db_session, mb_id: str = Path(...)):
+    """회원 존재 여부 검사 & 반환"""
+    member = db.scalar(select(Member).where(Member.mb_id == mb_id))
+    if not member:
+        raise AlertException(f"{mb_id} : 존재하지 않는 회원입니다.", 404)
+
+    return member
+
+
+def get_login_member(request: Request):
+    """로그인 여부 검사 & 반환"""
+    member: Member = request.state.login_member
+    if not member:
+        path = request.url.path
+        url = request.url_for("login_form").replace_query_params(url=path)
+        raise AlertException(f"로그인 후 이용 가능합니다.", 403, url=url)
+
+    return member
