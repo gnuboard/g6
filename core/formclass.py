@@ -471,7 +471,7 @@ class NewwinForm:
     nw_width: int = Form(...)
     nw_subject: str = Form(...)
     nw_content: str = Form(...)
-    nw_content_html: int = Form(None)
+    nw_content_html: int = Form(0)
 
 @dataclass
 class SocialProfile:
