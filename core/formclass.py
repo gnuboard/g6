@@ -334,7 +334,7 @@ class WriteForm:
     wr_homepage: str = Form(None)
     wr_password: str = Form(None)
     wr_subject: str = Form(...)
-    wr_content: str = Form(...)
+    wr_content: str = Form("")
     wr_is_comment: int = 0
     wr_link1: str = Form(None)
     wr_link2: str = Form(None)
