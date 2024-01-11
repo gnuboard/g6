@@ -78,9 +78,9 @@ def get_member_icon(mb_id: str = None) -> str:
 
         if os.path.exists(icon_path):
             mtime = os.path.getmtime(icon_path)  # 캐시를 위해 파일수정시간을 추가
-            return f"{icon_path}?{mtime}"
+            return f"/{icon_path}?{mtime}"
 
-    return "static/img/no_profile.gif"
+    return "/static/img/no_profile.gif"
 
 
 def get_member_image(mb_id: str = None) -> str:
@@ -100,9 +100,9 @@ def get_member_image(mb_id: str = None) -> str:
 
         if os.path.exists(image_path):
             mtime = os.path.getmtime(image_path)  # 캐시를 위해 파일수정시간을 추가
-            return f"{image_path}?{mtime}"
+            return f"/{image_path}?{mtime}"
 
-    return "static/img/no_profile.gif"
+    return "/static/img/no_profile.gif"
 
 
 def get_member_level(request: Request) -> int:

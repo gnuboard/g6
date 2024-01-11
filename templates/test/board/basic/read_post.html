@@ -29,7 +29,7 @@
         <section id="bo_v_info">
             <h2>페이지 정보</h2>
             <div class="profile_info">
-                <div class="pf_img"><img src="/{{ get_member_image(write.mb_id) }}" alt="profile_image"></div>
+                <div class="pf_img"><img src="{{ get_member_image(write.mb_id) }}" alt="profile_image"></div>
                 <div class="profile_info_ct">
                     <span class="sound_only">작성자</span>
                     <strong>
@@ -253,7 +253,7 @@
         {% for comment in comments %}
         {% set reply_depth=comment.wr_comment_reply|length %}
         <article id="c_{{ comment.wr_id }}" {% if reply_depth %}style="margin-left:{{ reply_depth * 50 }}px;border-top-color:#e0e0e0"{% endif %}>
-            <div class="pf_img"><img src="/{{ get_member_image(comment.mb_id) }}" alt="profile_image"></div>
+            <div class="pf_img"><img src="{{ get_member_image(comment.mb_id) }}" alt="profile_image"></div>
             <div class="cm_wrap">
                 <header>
                     <h2>{{ comment.name }}님의  댓글</h2>

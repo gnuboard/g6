@@ -93,8 +93,8 @@ async def member_profile(
         "action_url": app.url_path_for("member_profile", mb_no=mb_no),
         "name_readonly": "readonly",
         "hp_readonly": "readonly" if get_is_phone_certify(member, config) else "",
-        "mb_icon_url": request.base_url.__str__() + get_member_icon(member.mb_id),
-        "mb_img_url": request.base_url.__str__() + get_member_image(member.mb_id),
+        "mb_icon_url": get_member_icon(member.mb_id),
+        "mb_img_url": get_member_image(member.mb_id),
         "is_profile_open": check_profile_open(open_date=member.mb_open_date, config=request.state.config)
     }
 
