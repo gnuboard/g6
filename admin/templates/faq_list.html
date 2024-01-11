@@ -1,10 +1,8 @@
 {% extends "base.html" %}
-{% block title %}
-    FAQ 상세관리 : {{ faq_master.fm_subject }}
-{% endblock title %}
-{% block subtitle %}
-    FAQ 상세관리 : {{ faq_master.fm_subject }} > 목록
-{% endblock subtitle %}
+
+{% block title %}FAQ 상세관리 : {{ faq_master.fm_subject }}{% endblock title %}
+{% block subtitle %}FAQ 상세관리 : {{ faq_master.fm_subject }} > 목록{% endblock subtitle %}
+
 {% block content %}
     <div class="local_ov01 local_ov">
         <span class="btn_ov01"><span class="ov_txt"> 등록된 FAQ 상세내용</span><span class="ov_num"> {{ faqs|count }}건</span></span>

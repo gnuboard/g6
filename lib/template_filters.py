@@ -34,8 +34,8 @@ def number_format(number: int) -> str:
     """
     if isinstance(number, int):
         return "{:,}".format(number)
-    else:
-        return "Invalid input. Please provide an integer."
+
+    return "0"
 
 
 def search_font(content: str, stx: str) -> str:
