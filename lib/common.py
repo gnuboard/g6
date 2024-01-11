@@ -1013,7 +1013,7 @@ def get_editor_image(contents: str, view: bool = True) -> list:
         list: 이미지 태그 src 속성 값
     """
     if not contents:
-        return False
+        return []
 
     # contents 중 img 태그 추출
     if view:
