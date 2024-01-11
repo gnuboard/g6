@@ -334,7 +334,7 @@ class WriteForm:
     wr_homepage: str = Form(None)
     wr_password: str = Form(None)
     wr_subject: str = Form(...)
-    wr_content: str = Form(...)
+    wr_content: str = Form("")
     wr_is_comment: int = 0
     wr_link1: str = Form(None)
     wr_link2: str = Form(None)
@@ -462,14 +462,14 @@ class QaContentForm:
     """
     1:1문의 폼 데이터
     """
-    qa_email: str = Form(None)
-    qa_hp: str = Form(None)
+    qa_email: str = Form("")
+    qa_hp: str = Form("")
     qa_category: str = Form(None)
-    qa_email_recv: int = Form(None)
-    qa_sms_recv: int = Form(None)
+    qa_email_recv: int = Form(0)
+    qa_sms_recv: int = Form(0)
     qa_html: int = Form(None)
     qa_subject: str = Form(...)
-    qa_content: str = Form(...)
+    qa_content: str = Form("")
 
 
 @dataclass
