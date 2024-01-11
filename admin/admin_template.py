@@ -101,8 +101,10 @@ async def template_update(
     register_template_statics(app)
     user_template = UserTemplates()
     current_template_path = user_template.env.loader.searchpath
+    
     if current_template_path[0] in user_template.env.loader.searchpath:
-        user_template.env.loader.searchpath = [f"{TEMPLATES}/{template}"]
+        user_template.env.loader.searchpath.remove(current_template_path[0])
+        user_template.env.loader.searchpath.insert(0, f"{TEMPLATES}/{template}")
         user_template.env.cache.clear()
 
     return {"success": f"{info['template_name']} 템플릿으로 변경하였습니다."}

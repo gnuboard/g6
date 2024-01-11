@@ -6,6 +6,7 @@
     let ck4editorAttachId = '';
     let ck4editors = [];
     
+    // 태그 id로 찾는다. 
     function getEditorContent(id) {
         let content = ck4editors[id].getData();
         return content;
@@ -14,6 +15,7 @@
     function setEditorContent(id, content) {
         ck4editors[id].setData(content);
     }
+    
 </script>
 {%- endmacro %}
 
@@ -30,8 +32,12 @@
 <script>
     //ck4 global var - edit_head
     ck4editorAttachId = '{{ tag_name }}'
-    ck4editors[ck4editorAttachId] = CKEDITOR.replace(ck4editorAttachId, {});
+    ck4editors[ck4editorAttachId] = CKEDITOR.replace(ck4editorAttachId, {}).on('change', function() {
+        // textarea 내용을 업데이트 한다.
+        this.updateElement();
+    });
     CKEDITOR.add
+ 
     
 </script>
 {%- endmacro %}

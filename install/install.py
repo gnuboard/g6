@@ -112,7 +112,7 @@ def config_setup(admin_id, admin_email):
             cf_member_img_width = '60',
             cf_member_img_height = '60',
             cf_login_minutes = '10',
-            cf_image_extension = '{$image_extension}',
+            cf_image_extension = 'gif|jpg|jpeg|png|webp',
             cf_flash_extension = 'swf',
             cf_movie_extension = 'asx|asf|wmv|wma|mpg|mpeg|mov|avi|mp3',
             cf_formmail_is_member = '1',
