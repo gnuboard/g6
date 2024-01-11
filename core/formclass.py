@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, List
+
 from fastapi import Form
 
 
@@ -353,12 +354,28 @@ class WriteCommentForm:
 @dataclass
 class ContentForm:
     co_subject: str = Form(...)
-    co_content: str = Form(None)
-    co_mobile_content: str = Form(None)
-    co_html: str = Form(None)
-    co_skin: str = Form(None)
-    co_mobile_skin: str = Form(None)
+    co_content: str = Form(default="")
+    co_mobile_content: str = Form(default="")
+    co_html: str = Form(default="1")
+    co_skin: str = Form(default="")
+    co_mobile_skin: str = Form(default="")
 
+
+@dataclass
+class FaqMasterForm:
+    fm_subject: str = Form(...)
+    fm_head_html: str = Form(default="")
+    fm_tail_html: str = Form(default="")
+    fm_mobile_head_html: str = Form(default="")
+    fm_mobile_tail_html: str = Form(default="")
+    fm_order: int = Form(default=0)
+
+
+@dataclass
+class FaqForm:
+    fa_subject: str = Form(default="")
+    fa_content: str = Form(default="")
+    fa_order: int = Form(default=1)
 
 @dataclass
 class PollForm:
@@ -404,8 +421,8 @@ class QaConfigForm:
     """
     qa_title: str = Form(...)
     qa_category: str = Form(None)
-    qa_skin: str = Form(None)
-    qa_mobile_skin: str = Form(None)
+    qa_skin: str = Form(default="")
+    qa_mobile_skin: str = Form(default="")
     qa_use_email: int = Form(None)
     qa_req_email: int = Form(None)
     qa_use_hp: int = Form(None)

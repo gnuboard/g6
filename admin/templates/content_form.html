@@ -113,9 +113,12 @@
         errmsg = "";
         errfld = "";
 
+        f.co_content.value = getEditorContent('co_content')
+
         check_field(f.co_id, "ID를 입력하세요.");
         check_field(f.co_subject, "제목을 입력하세요.");
         check_field(f.co_content, "내용을 입력하세요.");
+        check_field(f.co_skin, "스킨을 선택하세요.");
 
         if (errmsg != "") {
             alert(errmsg);
