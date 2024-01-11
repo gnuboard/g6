@@ -360,7 +360,7 @@ class BoardConfig():
         Returns:
             str: _description_
         """
-        notice_ids = list(self.board.bo_notice.split(","))
+        notice_ids = self.board.bo_notice.split(",") if self.board.bo_notice else []
         exist = self.is_board_notice(wr_id)
 
         if insert and not exist:
