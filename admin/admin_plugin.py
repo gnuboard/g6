@@ -20,7 +20,7 @@ router = APIRouter()
 
 
 @router.post("/plugin_detail", dependencies=[Depends(validate_super_admin)])
-async def theme_detail(request: Request, module_name: str = Form(...)):
+async def plugin_detail(request: Request, module_name: str = Form(...)):
     module = module_name.strip()
     info = get_plugin_info(module, PLUGIN_DIR)
     if not info:
@@ -30,8 +30,12 @@ async def theme_detail(request: Request, module_name: str = Form(...)):
         # 플러그인의 readme.txt 파일의 양식 체크. 
         raise HTTPException(status_code=400, detail="플러그인의 상세 정보가 없습니다.")
 
-    return templates.TemplateResponse("theme_detail.html",
-                                      {"request": request, "name": info['plugin_name'], "info": info})
+    context = {
+        "request": request,
+        "name": info['plugin_name'],
+        "info": info,
+    }
+    return templates.TemplateResponse("plugin_detail.html", context)
 
 
 @router.get("/plugin_list", dependencies=[Depends(validate_super_admin)])

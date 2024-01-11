@@ -49,12 +49,20 @@
     function fmailform_submit(f) {
         errmsg = "";
         errfld = "";
+        const editor = CKEDITOR.instances.ma_content;
+        const editorContent = editor.getData().trim();
 
         check_field(f.ma_subject, "제목을 입력하세요.");
 
         if (errmsg != "") {
             alert(errmsg);
             errfld.focus();
+            return false;
+        }
+
+        if (!editorContent) {
+            alert('메일 내용을 입력 해주세요.');
+            editor.focus();
             return false;
         }
 

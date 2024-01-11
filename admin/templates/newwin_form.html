@@ -129,12 +129,20 @@
         function frmnewwin_check(f) {
             errmsg = "";
             errfld = "";
+            const editor = CKEDITOR.instances.nw_content;
+            const editorContent = editor.getData().trim();
 
             check_field(f.nw_subject, "제목을 입력하세요.");
 
             if (errmsg != "") {
                 alert(errmsg);
                 errfld.focus();
+                return false;
+            }
+
+            if (!editorContent) {
+                alert('팝업 내용을 입력 해주세요.');
+                editor.focus();
                 return false;
             }
 

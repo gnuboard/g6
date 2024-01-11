@@ -7,6 +7,7 @@ from sqlalchemy import exists, inspect, select
 from core.database import DBConnect, db_session
 from core.exception import AlertException
 from core.models import Auth, Board, GroupMember, Member
+from core.template import get_template_list
 from lib.common import (
     dynamic_create_write_table, ENV_PATH, get_current_admin_menu_id,
     get_current_captcha_cls,
@@ -24,6 +25,17 @@ async def get_variety_tokens(
     - 함수의 매개변수 순서대로 우선순위를 가짐
     """
     return token_form or token_query
+
+
+async def get_variety_templates(
+    template_form: Annotated[str, Form(alias="template")] = None,
+    template_path: Annotated[str, Path(alias="template")] = None
+):
+    """
+    요청 매개변수의 유형별 변수를 수신, 하나의 변수만 반환
+    - 함수의 매개변수 순서대로 우선순위를 가짐
+    """
+    return template_form or template_path
 
 
 async def validate_token(
@@ -66,6 +78,18 @@ async def validate_install():
             and inspect(engine).has_table(prefix + "config")):
         raise AlertException(
             "이미 설치가 완료되었습니다.\\n재설치하시려면 .env파일을 삭제 후 다시 시도해주세요.", 400, "/")
+
+
+async def validate_template(
+        template: Annotated[str, Depends(get_variety_templates)]):
+    """템플릿 유효성 검사"""
+    template = template.strip()
+    template_list = get_template_list()
+
+    if template not in template_list:
+        raise AlertException("선택하신 템플릿이 설치되어 있지 않습니다.", 404)
+    
+    return template
 
 
 async def check_group_access(
