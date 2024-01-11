@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Form, Query
-from sqlalchemy import extract, select
+from sqlalchemy import extract, select, cast, String
 
 from core.database import db_session
 from core.exception import AlertException
@@ -47,7 +47,7 @@ async def visit_search(
     if sfl is not None and stx is not None:
         if hasattr(Visit, sfl):
             if sfl in ["vi_ip", "vi_date"]:
-                query = query.where(getattr(Visit, sfl).like(f"{stx}%"))
+                query = query.where(cast(getattr(Visit, sfl), String).like(f"{stx}%"))
             else:
                 query = query.where(getattr(Visit, sfl).like(f"%{stx}%"))
 
