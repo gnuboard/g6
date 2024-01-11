@@ -173,7 +173,7 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0;color: var(--fontColor);}
 #container_wr{padding:25px;min-height:500px;}
 .container_title.top{position: sticky;top: 71px;line-height:50px;font-size:1.5em;z-index:99;margin: 0px 40px;padding-top: 20px;background: var(--containerBg);color: var(--containerColor);border-bottom: var(--containerBorder);width: calc(100% - 80px);}
 .container_title.top::after {display: block;content: "";position: absolute;left: 0px;bottom: -2px;width: 30px;height: 3px;background: #ffd343;}
-.container_wr.top{padding:20px 40px;min-height: calc(100vh - 150px);margin-bottom: 24px;width: 100%;}
+.container_wr.top{padding:20px 40px;min-height: calc(100vh - 150px);margin-bottom: 24px;width: 100%;color: var(--fontColor);}
 
 
 /* 화면낭독기 사용자용 */
@@ -469,14 +469,13 @@ tfoot th {}
     #wrapper {flex-direction: column;}
     #hd{position: static;padding: 0px;height: auto;width: 100%;}
     #hd_top {margin: 0px auto;}
-    form[name="fconfigform"] table {display: grid;table-layout: fixed;}
-    form[name="fconfigform"] select {width: 100%;}
-    form[name="fconfigform"] .tbl_frm01 tr{display: grid;grid-template-columns: 25% 75%;margin-bottom: 10px;}
-    form[name="fconfigform"] .tbl_frm01 th {width: 100%;}
-    form[name="fconfigform"] .tbl_frm01 td {width: 100%;}
-    form[name="fboardform"] .tbl_frm01 th {width: 150px;}
-    form[name="fboardform"] .tbl_frm01 td.td_grpset {width: 190px;}
-    form[name="fboardform"] .tbl_frm01 td {width: calc(100% - 340px);}
+    form[name="fconfigform"] .frm_input, form[name="fboardgroup"] .frm_input, form[name="fboardform"] .frm_input {width: 100%;}
+    form[name="fconfigform"] table, form[name="fboardgroup"] table, form[name="fboardform"] table {display: grid;table-layout: fixed;}
+    form[name="fconfigform"] select, form[name="fboardgroup"] select, form[name="fboardform"] select {width: 100%;}
+    form[name="fconfigform"] .tbl_frm01 tr, form[name="fboardgroup"] .tbl_frm01 tr {display: grid;grid-template-columns: 25% 75%;margin-bottom: 10px;}
+    form[name="fconfigform"] .tbl_frm01 th, form[name="fboardgroup"] .tbl_frm01 th, form[name="fboardform"] .tbl_frm01 th {width: 100%;}
+    form[name="fconfigform"] .tbl_frm01 td, form[name="fboardgroup"] .tbl_frm01 td, form[name="fboardform"] .tbl_frm01 td {width: 100%;}
+    form[name="fboardform"] .tbl_frm01 tr {display: grid;grid-template-columns: 25% 50% 25%;margin-bottom: 10px;}
     .td_extra input {width: 100% !important;}
     form[name="fconfigform"] .frm_input, form[name="fboardform"] .frm_input {width: 100%;}
     #fsendmailtest .frm_input {width: calc(100% - 140px)}
@@ -1049,8 +1048,8 @@ strong.sodr_nonpay {display:block;padding:5px 0;text-align:right}
 .price_engine li {margin:5px 0 5px -1px;list-style:disc }
 
 /* 새창 기본 스타일 */
-.new_win {}
-.new_win h1 {font-size:1.17em;padding:15px 20px;background:#fff;border-bottom:1px solid #ddd}
+.new_win {background: var(--wrapperBg);height: 100vh;}
+.new_win h1 {font-size:1.17em;padding:15px 20px;background:var(--mainBg);border-bottom:var(--themeBorder);color: var(--fontColor);}
 .new_win h2 {margin:0 20px 10px}
 .new_win_ul {margin:-20px 0 20px 0;padding:0 0 0 20px;border-bottom:1px solid #515151;background:#484848;list-style:none;zoom:1}
 .new_win_ul:after {display:block;visibility:hidden;clear:both;content:""}
@@ -1068,7 +1067,7 @@ strong.sodr_nonpay {display:block;padding:5px 0;text-align:right}
 
 .new_win .local_sch, .new_win .local_cmd, .new_win .local_desc01, .new_win .local_desc02, .new_win .local_ov {margin:10px}
 
-.new_win_con{margin: 10px; background:#fff;padding:20px}
+.new_win_con{margin: 10px; background:var(--mainBg);color: var(--fontColor);padding:20px}
 .new_win_con .table_form table th{width:120px}
 
 .new_win .btn_confirm {text-align:center;}

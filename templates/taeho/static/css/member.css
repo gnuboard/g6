@@ -31,8 +31,8 @@
 #fregister p i {font-size:1.2em;vertical-align:middle}
 #fregister section {margin:10px auto 15px;position:relative;border-radius:3px}
 #fregister_chkall {position:relative;text-align:center;line-height:50px;border-radius:3px;margin-bottom:15px}
-#fregister h2 {text-align:left;padding:20px 0px;font-size:1.2em;font-weight: bold;}
-#fregister textarea {display:block;padding:10px;width:100%;height:150px;background:#fff;border:0;line-height:1.6em;border: 1px solid #d1d7d8;}
+#fregister h2 {text-align:left;padding:20px 0px;font-size:1.2em;font-weight: bold;color: var(--fontColor);}
+#fregister textarea {display:block;padding:10px;width:100%;height:150px;background:var(--inputBg);border:var(--priTableBorder);line-height:1.6em;color: var(--fontColor);}
 #fregister_private {position:relative}
 #fregister_private div {background:#fff}
 #fregister_private table {width:100%;border-collapse:collapse;font-size:1em;}
@@ -100,12 +100,12 @@
 
 /* 아이디/비밀번호 찾기 */
 #find_info h3 {display:none;margin-bottom:30px;text-align:center;font-size:1.1em;}
-#find_info .new_win_con {background:#f7f7f7;}
+#find_info .new_win_con {background:var(--newBg);}
 #find_info.cert .new_win_con {width:460px;float:left;}
 #find_info.cert .new_win_con:nth-child(2) {margin-left:10px;}
 #find_info.cert h3 {display:block;}
 #find_info #mb_hp_label {display:inline-block;margin-left:10px}
-#find_info p {line-height:1.5em}
+#find_info p {line-height:1.5em;color: var(--fontColor);}
 #find_info #mb_email {margin:10px 0}
 #find_info .find_btn .btn_submit {width:30%;word-break:keep-all;}
 

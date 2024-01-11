@@ -26,7 +26,7 @@ INSTALL_TEMPLATES = "install/templates"
 
 router = APIRouter()
 templates = Jinja2Templates(directory=INSTALL_TEMPLATES)
-templates.env.globals["version"] = default_version
+templates.env.globals["default_version"] = default_version
 
 form_cache = TTLCache(maxsize=1, ttl=60)
 
