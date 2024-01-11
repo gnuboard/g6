@@ -1,7 +1,9 @@
+from typing import List
+from typing_extensions import Annotated
+
 from fastapi import APIRouter, Depends, File, Form, Path, Query, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import query
-from typing import List
 
 from core.database import DBConnect, db_session
 from core.exception import AlertException
@@ -9,7 +11,10 @@ from core.formclass import QaContentForm
 from core.models import QaConfig, QaContent
 from core.template import UserTemplates
 from lib.common import *
-from lib.dependencies import common_search_query_params, validate_token
+from lib.dependencies import (
+    common_search_query_params, get_login_member,
+    validate_super_admin, validate_token
+)
 from lib.template_filters import number_format, search_font
 from lib.template_functions import get_paging
 
@@ -94,15 +99,13 @@ class QaConfigService:
 async def qa_list(
     request: Request,
     db: db_session,
-    current_page: int = Query(default=1, ge=1, alias="page"),
+    member: Annotated[Member, Depends(get_login_member)],
     search_params: dict = Depends(common_search_query_params),
     qa_config_service: QaConfigService = Depends()
 ):
     """
     Q&A 목록 보기
     """
-    member = ensure_member_login(request)
-
     # Q&A 설정 조회
     qa_config = qa_config_service.get()
 
@@ -113,6 +116,7 @@ async def qa_list(
     query = filter_query_by_search_params(query, search_params)
 
     # 페이징 변수
+    current_page = search_params["current_page"]
     records_per_page = qa_config_service.page_rows
     total_count = db.scalar(query.add_columns(func.count()).order_by(None))
     offset = (current_page - 1) * records_per_page
@@ -137,7 +141,7 @@ async def qa_list(
     return templates.TemplateResponse("/qa/qa_list.html", context)
 
 
-@router.get("/qawrite")
+@router.get("/qawrite", dependencies=[Depends(get_login_member)])
 async def qa_form_write(
     request: Request,
     db: db_session,
@@ -147,8 +151,6 @@ async def qa_form_write(
     """
     Q&A 작성하기
     """
-    member = ensure_member_login(request)
-
     # Q&A 설정 조회
     qa_config = qa_config_service.get()
     content = qa_config.qa_insert_content
@@ -179,14 +181,13 @@ async def qa_form_write(
 async def qa_form_edit(
     request: Request,
     db: db_session,
+    member: Annotated[Member, Depends(get_login_member)],
     qa_id: int = Path(...),
     qa_config_service: QaConfigService = Depends()
 ):
     """
     Q&A 수정하기
     """
-    member = ensure_member_login(request)
-
     # Q&A 설정 조회
     qa_config = qa_config_service.get()
 
@@ -212,6 +213,7 @@ async def qa_form_edit(
 async def qa_write_update(
     request: Request,
     db: db_session,
+    member: Annotated[Member, Depends(get_login_member)],
     form_data: QaContentForm = Depends(),
     qa_id: int = Form(None),
     qa_parent: str = Form(None),
@@ -226,7 +228,6 @@ async def qa_write_update(
     1:1문의 설정 등록/수정 처리
     """
     config = request.state.config
-    member = ensure_member_login(request)
 
     # Q&A 설정 조회
     qa_config = qa_config_service.get()
@@ -335,13 +336,12 @@ async def qa_write_update(
 async def qa_delete(
     request: Request,
     db: db_session,
+    member: Annotated[Member, Depends(get_login_member)],
     qa_id: int = Path(...),
 ):
     """
     Q&A 삭제하기
     """
-    member = ensure_member_login(request)
-
     # Q&A 삭제
     qa = db.get(QaContent, qa_id)
     if not qa:
@@ -357,7 +357,8 @@ async def qa_delete(
     return RedirectResponse(set_url_query_params(url, query_params), 302)
 
 
-@router.post("/qadelete/list", dependencies=[Depends(validate_token)])
+@router.post("/qadelete/list",
+             dependencies=[Depends(validate_token), Depends(validate_super_admin)])
 async def qa_delete_list(
     request: Request,
     db: db_session,
@@ -382,6 +383,7 @@ async def qa_delete_list(
 async def qa_view(
     request: Request,
     db: db_session,
+    member: Annotated[Member, Depends(get_login_member)],
     qa_id: int = Path(...),
     search_params: dict = Depends(common_search_query_params),
     qa_config_service: QaConfigService = Depends()
@@ -389,8 +391,6 @@ async def qa_view(
     """
     Q&A 상세보기
     """
-    member = ensure_member_login(request)
-
     # Q&A 설정 조회
     qa_config = qa_config_service.get()
 
@@ -462,18 +462,6 @@ def set_file_list(request: Request, qa: QaContent = None):
                 file.append({"name": qa.qa_source2, "path": qa.qa_file2})
 
     return image, file
-
-# TODO: 공용으로 사용하도록 수정 필요
-def ensure_member_login(request: Request, url: str = None):
-    member = request.state.login_member
-    if not member:
-        message = "로그인 후 이용해주세요."
-        status_code = 403
-        if url:
-            raise AlertException(message, status_code, url)
-        else:
-            raise AlertException(message, status_code)
-    return member
 
 
 def filter_query_by_search_params(query: query, search_params: dict) -> query:

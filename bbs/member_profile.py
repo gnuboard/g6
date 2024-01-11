@@ -1,4 +1,5 @@
 from typing import Dict
+from typing_extensions import Annotated
 
 from fastapi import APIRouter, Form, File, Depends, Path
 from sqlalchemy import select, update
@@ -11,29 +12,30 @@ from core.formclass import MemberForm
 from core.models import Member, MemberSocialProfiles
 from core.template import UserTemplates
 from lib.common import *
-from lib.dependencies import validate_token, validate_captcha
-from lib.member_lib import get_member_icon, get_member_image, is_admin
+from lib.dependencies import (
+    get_login_member, validate_token, validate_captcha
+)
+from lib.member_lib import get_member_icon, get_member_image
 from lib.pbkdf2 import validate_password, create_hash
 from lib.template_filters import default_if_none
 from main import app
 
 router = APIRouter()
 templates = UserTemplates()
-templates.env.globals["is_admin"] = is_admin
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals["captcha_widget"] = captcha_widget
 templates.env.globals["check_profile_open"] = check_profile_open
 
 
 @router.get("/member_confirm")
-async def check_member_form(request: Request, db: db_session):
+async def check_member_form(
+    request: Request,
+    db: db_session,
+    member: Annotated[Member, Depends(get_login_member)]
+):
     """
     회원프로필 수정 전 비밀번호 확인 폼
     """
-    member = request.state.login_member
-    if not member:
-        raise AlertException("회원정보가 없습니다.", 404)
-
     # 회원정보를 수정할 수 있는지 확인하는 세션변수
     request.session["ss_profile_change"] = False
 
@@ -57,14 +59,12 @@ async def check_member_form(request: Request, db: db_session):
 @router.post("/member_confirm", name='member_password')
 async def check_member(
     request: Request,
+    member: Annotated[Member, Depends(get_login_member)],
     mb_password: str = Form(...)
 ):
     """
     회원프로필 수정 전 비밀번호 확인 처리
     """
-    member = request.state.login_member
-    if not member:
-        raise AlertException("회원정보가 없습니다.", 404)
     if not validate_password(mb_password, member.mb_password):
         raise AlertException("아이디 또는 패스워드가 일치하지 않습니다.", 404)
 
@@ -77,17 +77,15 @@ async def check_member(
 async def member_profile(
     request: Request,
     db: db_session,
+    member: Annotated[Member, Depends(get_login_member)],
     mb_no: int = Path(...),
 ):
     config = request.state.config
-    mb_id = request.session.get("ss_mb_id", "")
 
-    if not mb_id:
-        raise AlertException("로그인한 회원만 접근하실 수 있습니다.", 403)
     if not request.session.get("ss_profile_change", False):
         raise AlertException("잘못된 접근입니다", 403, url="/")
 
-    member = db.scalar(select(Member).filter_by(mb_id=mb_id))
+    member = db.scalar(select(Member).filter_by(mb_id=member.mb_id))
     if not member:
         raise AlertException("회원정보가 없습니다.", 404)
 
@@ -109,10 +107,12 @@ async def member_profile(
     return templates.TemplateResponse("/member/register_form.html", context)
 
 
-@router.post("/member_profile/{mb_no}", name='member_profile_save', dependencies=[Depends(validate_token), Depends(validate_captcha)])
+@router.post("/member_profile/{mb_no}", name='member_profile_save',
+             dependencies=[Depends(validate_token), Depends(validate_captcha)])
 async def member_profile_save(
     request: Request,
     db: db_session,
+    member: Annotated[Member, Depends(get_login_member)],
     mb_password: str = Form(None),
     mb_password_re: str = Form(None),
     mb_certify_case: str = Form(default=""),
@@ -129,7 +129,7 @@ async def member_profile_save(
     if not request.session.get("ss_profile_change", False):
         raise AlertException("잘못된 접근입니다.", 403, url=app.url_path_for("member_confirm"))
 
-    mb_id = request.session.get("ss_mb_id", "")
+    mb_id = member.mb_id
     exists_member = db.scalar(select(Member).filter_by(mb_id=mb_id))
     if not exists_member:
         raise AlertException("회원정보가 없습니다.", 403)

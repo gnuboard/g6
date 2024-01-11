@@ -11,12 +11,12 @@ from core.template import (
     register_template_statics, TEMPLATES, UserTemplates
 )
 from lib.common import *
-from lib.dependencies import validate_template
+from lib.dependencies import validate_super_admin, validate_template
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(validate_super_admin)])
 templates = AdminTemplates()
 templates.env.globals['get_template_info'] = get_template_info
 
@@ -29,9 +29,6 @@ async def template(request: Request, db: db_session):
     템플릿 목록 조회
     """
     request.session["menu_key"] = TEMPLATE_MENU_KEY
-
-    if not request.state.is_super_admin:
-        raise AlertException("최고관리자만 접근 가능합니다.", 403)
 
     config = db.scalar(select(Config))
     current_template = getattr(config, "cf_theme", None)
@@ -64,9 +61,6 @@ async def template_detail(
     """
     템플릿 상세정보 조회
     """
-    if not request.state.is_super_admin:
-        raise AlertException("최고관리자만 접근 가능합니다.", 403)
-
     context = {
         "request": request,
         "info": get_template_info(template)
@@ -82,9 +76,6 @@ async def template_preview(
     """템플릿 미리보기 (미완성)
     - 프로그램 실행시 템플릿을 미리 지정하므로 중간에 다른 템플릿의 미리보기를 하기가 어려움
     """
-    if not request.state.is_super_admin:
-        raise AlertException("최고관리자만 접근 가능합니다.", 403)
-
     context = {
         "request": request,
         "info": get_template_info(template)
@@ -99,9 +90,6 @@ async def template_update(
     template: Annotated[str, Depends(validate_template)]
 ):
     """ 템플릿 적용 """
-    if not request.state.is_super_admin:
-        raise AlertException("최고관리자만 접근 가능합니다.", 403)
-
     info = get_template_info(template)
 
     db.execute(update(Config).values(cf_theme=template))
@@ -113,8 +101,10 @@ async def template_update(
     register_template_statics(app)
     user_template = UserTemplates()
     current_template_path = user_template.env.loader.searchpath
+    
     if current_template_path[0] in user_template.env.loader.searchpath:
-        user_template.env.loader.searchpath = [f"{TEMPLATES}/{template}"]
+        user_template.env.loader.searchpath.remove(current_template_path[0])
+        user_template.env.loader.searchpath.insert(0, f"{TEMPLATES}/{template}")
         user_template.env.cache.clear()
 
     return {"success": f"{info['template_name']} 템플릿으로 변경하였습니다."}

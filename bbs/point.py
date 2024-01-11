@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Query, Request
+from typing_extensions import Annotated
+
+from fastapi import APIRouter, Depends, Query, Request
 
 from core.database import db_session
-from core.exception import AlertCloseException
 from core.models import Point
 from core.template import UserTemplates
 from lib.common import *
+from lib.dependencies import get_login_member
 from lib.template_functions import get_paging
 
 router = APIRouter()
@@ -15,15 +17,12 @@ templates = UserTemplates()
 async def point_list(
     request: Request,
     db: db_session,
+    member: Annotated[Member, Depends(get_login_member)],
     current_page: int = Query(default=1, alias="page")
 ):
     """
     포인트 목록
     """
-    member = request.state.login_member
-    if not member:
-        raise AlertCloseException("로그인 후 이용 가능합니다.", 403)
-
     # 스크랩 목록 조회 쿼리
     query = (
         select()

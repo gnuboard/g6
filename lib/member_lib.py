@@ -112,9 +112,8 @@ def get_member_level(request: Request) -> int:
     return int(member.mb_level) if member else 1
 
 
-def get_admin_type(
-        request: Request, mb_id: str = None,
-        group: Group = None, board: Board = None) -> Union[str, None]:
+def get_admin_type(request: Request, mb_id: str = None,
+                   group: Group = None, board: Board = None) -> Union[str, None]:
     """게시판 관리자 여부 확인 후 관리자 타입 반환
     - 그누보드5의 is_admin 함수를 참고하여 작성하려고 했으나, 이미 is_admin가 있어서 함수 이름을 변경함
 
@@ -125,13 +124,13 @@ def get_admin_type(
         board (Board, optional): 게시판 정보. Defaults to None.
 
     Returns:
-        str: 관리자 타입. super, group, board, None
+        Union[str, None]: 관리자 타입 (super, group, board, None)
     """
     if not mb_id:
         return None
 
     config = request.state.config
-    group = board.group if board else None
+    group = group or (board.group if board else None)
 
     is_authority = None
     if config.cf_admin == mb_id:
@@ -144,7 +143,7 @@ def get_admin_type(
     return is_authority
 
 
-def is_admin(request: Request, mb_id: str = None) -> bool:
+def is_super_admin(request: Request, mb_id: str = None) -> bool:
     """최고관리자 여부 확인
 
     Args:

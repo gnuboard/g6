@@ -4,7 +4,7 @@
     <header id="ol_after_hd">
         <h2>나의 회원정보</h2>
         <span class="profile_img">
-            <img src="/static/img/no_profile.gif" alt="profile_image"></span>
+            <img src="/{{ get_member_image(member.mb_id) }}" alt="profile_image"></span>
         <strong>{{ member.mb_nick if member is defined else '' }}님</strong>
         <a href="/bbs/member_confirm" id="ol_after_info" title="정보수정">정보수정</a>
         {% if request.state.is_super_admin %}

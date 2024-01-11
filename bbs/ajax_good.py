@@ -37,7 +37,7 @@ async def ajax_good(
         return JSONResponse({"status": "fail", "message": "토큰이 유효하지 않습니다."}, 403)
 
     # 게시판 존재여부 확인
-    board = db.scalar(select(Board).where(Board.bo_table == bo_table))
+    board = db.get(Board, bo_table)
     if not board:
         return JSONResponse({"status": "fail", "message": "존재하지 않는 게시판입니다."}, 404)
 
@@ -47,7 +47,7 @@ async def ajax_good(
 
     # 게시글 존재여부 확인
     write_model = dynamic_create_write_table(bo_table)
-    write = db.scalar(select(write_model).where(write_model.wr_id == wr_id))
+    write = db.get(write_model, wr_id)
     if not write:
         return JSONResponse({"status": "fail", "message": "존재하지 않는 게시글입니다."}, 404)
 

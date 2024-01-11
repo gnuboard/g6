@@ -7,15 +7,11 @@
     <link rel="stylesheet" href="{{ url_for('static', path='/css/gallery/board.css') }}">
 {% endblock head %}
 
-{% block title %}
-    {{ board.bo_subject }} {{ current_page }} 페이지
-{% endblock title %}
-{% block subtitle %}
-    {{ board.bo_subject }}
-{% endblock subtitle %}
+{% block title %}{{ board.bo_subject }} {{ current_page }} 페이지{% endblock title %}
+{% block subtitle %}{{ board.bo_subject }}{% endblock subtitle %}
 
 {% block content %}
-{% set is_admin=get_admin_type(request, request.state.login_member.mb_id, group=board.group, board=board) %}
+{% set is_admin=get_admin_type(request, request.state.login_member.mb_id, board=board) %}
 {% set sca=request.query_params.sca %}
 {% set sod_reverse="asc" if request.query_params.sod == "desc" else "desc" %}
 
