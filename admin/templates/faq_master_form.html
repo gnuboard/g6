@@ -1,17 +1,19 @@
 {% extends "base.html" %}
-{% set action='입력' if not faq_master else '수정' %}
-{% set form_action=url_for("faq_master_add") if not faq_master else url_for("faq_master_update", fm_id=faq_master.fm_id) %}
+{% import editor_macro(request) as editor %}
+
+{% block head %}
+    {{ editor.head() }}
+{% endblock head %}
 
 {% block title %}FAQ 관리{% endblock title %}
 {% block subtitle %}FAQ {{ action }} 관리{% endblock subtitle %}
 
 {% block content %}
-<div class="container_wr">
-    <form name="frmfaqmasterform"
-              action="{{ form_action }}"
-              method="post"
-              enctype="multipart/form-data"
-              onsubmit="return frmfaqmasterform_check(this);">
+    {% set action='입력' if not faq_master else '수정' %}
+    {% set form_action=url_for("faq_master_add") if not faq_master else url_for("faq_master_update", fm_id=faq_master.fm_id) %}
+
+    <div class="container_wr">
+        <form name="frmfaqmasterform" action="{{ form_action }}" method="post" enctype="multipart/form-data" onsubmit="return frmfaqmasterform_check(this);">
             <input type="hidden" name="token" value="">
             <div class="tbl_frm01 tbl_wrap">
                 <table>
@@ -35,7 +37,7 @@
                                 <label for="fm_subject">제목</label>
                             </th>
                             <td>
-                                <input type="text" id="fm_subject" name="fm_subject" value="{{ faq_master.fm_subject }}"  required class="frm_input required" size="70">
+                                <input type="text" id="fm_subject" name="fm_subject" value="{{ faq_master.fm_subject }}" required class="frm_input required" size="70">
                             </td>
                         </tr>
                         <tr>
@@ -73,27 +75,19 @@
                         
                         <tr>
                             <th scope="row">상단 내용</th>
-                            <td>
-                                <textarea id="fm_head_html" name="fm_head_html" class="smarteditor2" maxlength="65536" style="width:100%; height:300px">{{ faq_master.fm_head_html|default('', true) }}</textarea>
-                            </td>
+                            <td>{{ editor.body("fm_head_html", faq_master.fm_head_html) }}</td>
                         </tr>
                         <tr>
                             <th scope="row">하단 내용</th>
-                            <td>
-                                <textarea id="fm_tail_html" name="fm_tail_html" class="smarteditor2" maxlength="65536" style="width:100%; height:300px">{{ faq_master.fm_tail_html|default('', true) }}</textarea>
-                            </td>
+                            <td>{{ editor.body("fm_tail_html", faq_master.fm_tail_html) }}</td>
                         </tr>
                         <tr>
                             <th scope="row">모바일상단 내용</th>
-                            <td>
-                                <textarea id="fm_mobile_head_html" name="fm_mobile_head_html" class="smarteditor2" maxlength="65536" style="width:100%; height:300px">{{ faq_master.fm_mobile_head_html|default('', true) }}</textarea>
-                            </td>
+                            <td>{{ editor.body("fm_mobile_head_html", faq_master.fm_mobile_head_html) }}</td>
                         </tr>
                         <tr>
                             <th scope="row">모바일하단 내용</th>
-                            <td>
-                                <textarea id="fm_mobile_tail_html" name="fm_mobile_tail_html" class="smarteditor2" maxlength="65536" style="width:100%; height:300px">{{ faq_master.fm_mobile_tail_html|default('', true) }}</textarea>
-                            </td>
+                            <td>{{ editor.body("fm_mobile_tail_html", faq_master.fm_mobile_tail_html) }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -106,6 +100,17 @@
     </div>
     <script>
         function frmfaqmasterform_check(f) {
+            errmsg = "";
+            errfld = "";
+
+            check_field(f.fm_subject, "제목을 입력하세요.");
+
+            if (errmsg != "") {
+                alert(errmsg);
+                errfld.focus();
+                return false;
+            }
+
             f.token.value = generate_token();
             return true;
         }

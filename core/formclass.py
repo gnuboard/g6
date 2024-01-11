@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, List
+
 from fastapi import Form
 
 
@@ -359,6 +360,22 @@ class ContentForm:
     co_skin: str = Form(default="")
     co_mobile_skin: str = Form(default="")
 
+
+@dataclass
+class FaqMasterForm:
+    fm_subject: str = Form(...)
+    fm_head_html: str = Form(default="")
+    fm_tail_html: str = Form(default="")
+    fm_mobile_head_html: str = Form(default="")
+    fm_mobile_tail_html: str = Form(default="")
+    fm_order: int = Form(default=0)
+
+
+@dataclass
+class FaqForm:
+    fa_subject: str = Form(default="")
+    fa_content: str = Form(default="")
+    fa_order: int = Form(default=1)
 
 @dataclass
 class PollForm:
