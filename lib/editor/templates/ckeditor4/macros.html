@@ -15,7 +15,7 @@
     function setEditorContent(id, content) {
         ck4editors[id].setData(content);
     }
-    
+
 </script>
 {%- endmacro %}
 
@@ -32,12 +32,12 @@
 <script>
     //ck4 global var - edit_head
     ck4editorAttachId = '{{ tag_name }}'
-    ck4editors[ck4editorAttachId] = CKEDITOR.replace(ck4editorAttachId, {}).on('change', function() {
-        // textarea 내용을 업데이트 한다.
+    ck4editors[ck4editorAttachId] = CKEDITOR.replace(ck4editorAttachId, {});
+    CKEDITOR.instances[ck4editorAttachId].on('change', function () {
+        // textarea 에 업데이트 한다.
         this.updateElement();
     });
     CKEDITOR.add
- 
-    
+
 </script>
 {%- endmacro %}
