@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 
+{% block head %}
+    {% include "datepicker.html" %}
+{% endblock head %}
 {% block title %}인기검색어 관리{% endblock title %}
 {% block subtitle %}인기검색어 관리{% endblock subtitle %}
 
@@ -23,7 +26,7 @@
                 <option value="pp_date" {{ get_selected('pp_date', sfl) }}>등록일</option>
             </select>
             <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
-            <input type="text" name="stx" value="{{ stx }}" id="stx" required="" class="required frm_input">
+            <input type="text" name="stx" value="{{ stx }}" id="stx" required="" class="required frm_input" autocomplete="off">
             <input type="submit" value="검색" class="btn_submit">
         </div>
     </form>
@@ -77,6 +80,34 @@
     {{ paging|safe }}
     
     <script>
+        $(function(){
+            $("#sfl").change(function() {
+                if ($(this).val() == "pp_date"){
+                    $("#stx").datepicker({ 
+                        changeMonth: true,
+                        changeYear: true,
+                        dateFormat: "yy-mm-dd",
+                        showButtonPanel: true,
+                        yearRange: "c-99:c+99",
+                        maxDate: "+0d"
+                    });
+                } else {
+                    $("#stx").datepicker("destroy");
+                }
+            });
+
+            if ($("#sfl option:selected").val() == "pp_date") {
+                $("#stx").datepicker({
+                    changeMonth: true,
+                    changeYear: true,
+                    dateFormat: "yy-mm-dd",
+                    showButtonPanel: true,
+                    yearRange: "c-99:c+99",
+                    maxDate: "+0d"
+                });
+            }
+        });
+
         function fpopularlist_submit(f) {
             if (!is_checked("chk[]")) {
                 alert("선택삭제 하실 항목을 하나 이상 선택하세요.");
