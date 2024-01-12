@@ -9,7 +9,7 @@
     -ms-transform:skew(8deg) rotate(3deg);
      -o-transform:skew(8deg) rotate(3deg);
       transform:skew(8deg) rotate(3deg)}
-.mbskin .mbskin_box{border:1px solid #dde7e9;background:#fff}
+.mbskin .mbskin_box{border:1px solid #dde7e9;background:var(--contBg);border: var(--border);color: var(--fontColor);}
 .mbskin .frm_input {width:100%}
 .mbskin .btn_submit {width:100%;margin:10px 0 0;height:45px;font-weight:bold;font-size:1.25em}
 .mbskin h1 {margin:60px 0 30px;font-size:2em}
@@ -90,7 +90,7 @@
 .reg_btn_submit {display:inline-block;background:#3a8afd;color:#fff;text-align:center;border-radius:3px;width:280px;height:57px;line-height:57px;font-size:1.2em;margin:0 auto;font-weight:bold}
 
 .mb_log_cate h2 {width:50%;float:left;padding:20px 0;text-align:center}
-.mb_log_cate .join {width:50%;float:left;padding:20px 0;text-align:center;background:#f7f7f7;color:#6e6e6e}
+.mb_log_cate .join {width:50%;float:left;padding:20px 0;text-align:center;background:var(--bovHover);color:#6e6e6e}
 .mb_log_cate:after {display:block;visibility:hidden;clear:both;content:""}
 
 .tooltip_icon {display:inline-block;vertical-align:baseline;color:#b3b5b8;border:0;font-size:1.4em;background:transparent;cursor:pointer}
@@ -144,13 +144,13 @@
 #mb_login {}
 #mb_login h1 {position:absolute;font-size:0;line-height:0;overflow:hidden}
 #login_fs {padding:35px}
-#mb_login #login_fs .frm_input {margin:0 0 10px}
+#mb_login #login_fs .frm_input {margin:0 0 10px;}
 #mb_login #login_fs .btn_submit {margin:0 0 15px}
 
 #login_info {}
 #login_info:after {display:block;visibility:hidden;clear:both;content:""}
 #login_info .login_if_auto {float:left}
-#login_info .login_if_auto label {vertical-align:baseline;padding-left:5px}
+#login_info .login_if_auto label {vertical-align:baseline;padding-left:24px}
 #login_info .login_if_lpl {float:right}
 #login_password_lost {display:inline-block;border:1px solid #d5d9dd;color:#3a8afd;border-radius:2px;padding:2px 5px;line-height:20px}
 
@@ -173,7 +173,7 @@
 #mb_login #sns_login .txt {font-size:0.95em;padding-left:5px !important;border-left:0 !important}
 
 /* 쪽지 */
-.memo_list {border-top:1px solid #ececec}
+.memo_list {border-top:var(--border)}
 .memo_list li {border-bottom:1px solid #ececec;background:#fff;padding:10px 15px;list-style:none;position:relative}
 .memo_list li:after {display:block;visibility:hidden;clear:both;content:""}
 .memo_list li.read {background:#f6f6f6}
@@ -227,16 +227,16 @@
 #memo_view p {padding:10px;min-height:150px;height:auto !important;height:150px;background:#fff;line-height:1.8em}
 #memo_view textarea {height:100px}
 
-#memo_write .form_01 {padding:20px;border-top:1px solid #ececec}
+#memo_write .form_01 {padding:20px;border-top:var(--border)}
 
 .reply_btn {display:inline-block;width:150px;height:45px;line-height:50px;padding:0 10px;font-weight:bold;background:#3a8afd;color:#fff;border-radius:3px;vertical-align:bottom;margin-right:5px}
 #memo_write .reply_btn {font-size:1em}
 
 /* 스크랩 */
 #scrap li:after {display:block;visibility:hidden;clear:both;content:""}
-#scrap li {position:relative;padding:20px;border-bottom:1px solid #ececec}
+#scrap li {position:relative;padding:20px;border-bottom:var(--border)}
 #scrap .scrap_tit {font-weight:bold;display:block;font-size:1.083em;margin-bottom:10px;line-height:1.3em}
-#scrap .scrap_cate {float:left;display:block;color:#ac92ec;background:#eeeaf8;padding:3px;border-radius:3px;font-size:0.92em;margin-right:10px}
+#scrap .scrap_cate {float:left;display:block;color:#ac92ec;background:var(--scrapBg);padding:3px;border-radius:3px;font-size:0.92em;margin-right:10px}
 #scrap .scrap_datetime {color:#777;line-height:18px}
 #scrap .scrap_del {position:absolute;top:15px;right:15px;font-size:18px;color:#c7c9cb}
 #scrap .scrap_del:hover {color:#3a8afd}
@@ -253,7 +253,7 @@
 /*포인트*/
 #point {text-align:center}
 #point h1 {text-align:left}
-#point .point_all {margin:20px 20px 15px;border-radius:5px;background:#ff8269;border:1px solid #d6e2f4;color:#fff;font-size:1.083em}
+#point .point_all {margin:20px 20px 15px;border-radius:5px;background:#ff8269;color:#fff;font-size:1.083em}
 #point .point_all:after {display:block;visibility:hidden;clear:both;content:""}
 #point .point_all li {float:left;width:50%;padding:20px;text-align:left}
 #point .point_all li span {float:right;color:#485172;font-weight:bold}
@@ -265,16 +265,16 @@
 #point .point_status span{margin-left:10px;float:right}
 
 .point_list {}
-.point_list li:first-child {border-top:1px solid #ececec}
-.point_list li {border-bottom:1px solid #ececec;background:#fff;padding:15px 30px;list-style:none;position:relative}
+.point_list li:first-child {border-top:var(--border)}
+.point_list li {border-bottom:var(--border);background:var(--contBg);padding:15px 30px;list-style:none;position:relative}
 .point_list li:after {display:block;visibility:hidden;clear:both;content:""}
 
-.point_list .point_use {background:#f6f6f6}
+.point_list .point_use {background:var(--bovHover)}
 .point_list .point_use .point_num {font-size:1.25em;color:#ff4f76;font-weight:bold;float:right}
 .point_list .point_num {font-size:1.25em;color:#ff8269;font-weight:bold;position:absolute;right:30px;top:25px}
 .point_list .point_top {line-height:15px;margin:0 0 5px}
 .point_list .point_top:after {display:block;visibility:hidden;clear:both;content:""}
-.point_list .point_tit {font-weight:bold;float:left;font-size:1.083em;display:block}
+.point_list .point_tit {font-weight:bold;float:left;font-size:1.083em;display:block;color: var(--fontColor);}
 .point_list .point_date1 {float:left;color:#888d92}
 .point_list .point_date {float:left;color:#888d92}
 .point_list .txt_expired {color:red;margin-left:5px}
@@ -284,13 +284,13 @@
 
 /* 회원 비밀번호 확인 */
 #mb_confirm {}
-#mb_confirm h1 {margin:60px 0 30px;font-size:2em}
-#mb_confirm p {padding:0 20px 40px;border-bottom:1px solid #e9e9e9;font-size:1.083em;line-height:1.4em;color:#656565}
-#mb_confirm p strong {display:block;color:#3ca1ff;font-size:1.167em;margin:0 0 5px}
+#mb_confirm h1 {margin:60px 0 30px;font-size:2em;color: var(--fontColor);}
+#mb_confirm p {padding:0 20px 40px;border-bottom:var(--border);font-size:1.083em;line-height:1.4em;color:#656565}
+#mb_confirm p strong {display:block;color:#ff8269;font-size:1.167em;margin:0 0 5px}
 #mb_confirm fieldset {padding:50px;text-align:left}
-#mb_confirm fieldset .frm_input {background-color:#fff !important}
+#mb_confirm fieldset .frm_input {background-color:var(--inputBg) !important}
 #mb_confirm label {letter-spacing:-0.1em}
-#mb_confirm_id {display:block;margin:5px 0 10px;font-weight:bold}
+#mb_confirm_id {display:block;margin:5px 0 10px;font-weight:bold;color: var(--fontColor);}
 #mb_confirm .confirm_id {font-size:0.92em;color:#666}
 
 /* 비밀글 비밀번호 확인 */
