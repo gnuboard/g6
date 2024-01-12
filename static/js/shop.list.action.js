@@ -125,7 +125,7 @@ jQuery(function ($) {
         return false;
     }
 
-    // 5.4 버전의 기본 템플릿의 사이드바의 장바구니를 새로고침합니다.
+    // 5.4 버전의 기본 테마의 사이드바의 장바구니를 새로고침합니다.
     mainCart.update_cart_side = function(){
         var ajax_url = g6_shop_url || g6_shop_url;
 
