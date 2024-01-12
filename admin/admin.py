@@ -17,7 +17,7 @@ from admin.admin_boardgroup import router as admin_boardgroup_router
 from admin.admin_boardgroupmember import router as admin_boardgroupmember_router
 from admin.admin_content import router as admin_content_router
 from admin.admin_faq import router as admin_faq_router
-from admin.admin_template import router as admin_template_router
+from admin.admin_theme import router as admin_theme_router
 from admin.admin_visit import router as admin_visit_router
 from admin.admin_qa import router as admin_qa_router
 from admin.admin_sendmail import router as admin_sendmail_router
@@ -40,7 +40,7 @@ router.include_router(admin_boardgroup_router, tags=["admin_boardgroup"])
 router.include_router(admin_boardgroupmember_router, tags=["admin_boardgroupmember"])
 router.include_router(admin_content_router, tags=["admin_content"])
 router.include_router(admin_faq_router, tags=["admin_faq"])
-router.include_router(admin_template_router, tags=["admin_template"])
+router.include_router(admin_theme_router, tags=["admin_theme"])
 router.include_router(admin_visit_router, tags=["admin_visit"])
 router.include_router(admin_qa_router, tags=["admin_qa"])
 router.include_router(admin_sendmail_router, tags=["admin_sendmail"])
