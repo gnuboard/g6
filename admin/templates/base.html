@@ -1,7 +1,7 @@
 {% extends "base_sub.html" %}
 
 {% block body_html %}
-<div id="hd_login_msg">최고관리자 최고관리자님 로그인 중 <a href="/bbs/logout">로그아웃</a></div>
+<div id="hd_login_msg">{{ request.state.login_member.mb_nick }} 로그인 중 <a href="/bbs/logout">로그아웃</a></div>
 <script>
     var admin_csrf_token_key = "";
     var tempX = 0;
@@ -77,8 +77,8 @@
     <div id="logo"><a href="/admin/"><img src="/static/admin/img/logo.png" alt="{{ request.state.title }} 관리자"></a></div>
 </div>
   <ul>
-                          <li class="tnb_li"><a href="/shop/" class="tnb_shop" target="_blank" title="쇼핑몰 바로가기">쇼핑몰 바로가기</a></li>
-                      <li class="tnb_li"><a href="/" class="tnb_community" target="_blank" title="커뮤니티 바로가기">커뮤니티 바로가기</a></li>
+      <!-- <li class="tnb_li"><a href="/shop/" class="tnb_shop" target="_blank" title="쇼핑몰 바로가기">쇼핑몰 바로가기</a></li> -->
+      <li class="tnb_li"><a href="/" class="tnb_community" target="_blank" title="커뮤니티 바로가기">커뮤니티 바로가기</a></li>
       <li class="tnb_li"><a href="/admin/service" class="tnb_service">부가서비스</a></li>
       <li class="tnb_li"><button type="button" class="tnb_mb_btn">관리자<span class="./img/btn_gnb.png">메뉴열기</span></button>
           <ul class="tnb_mb_area">

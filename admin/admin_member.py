@@ -29,8 +29,8 @@ templates.env.globals["is_none_datetime"] = is_none_datetime
 MEMBER_MENU_KEY = "200100"
 MEMBER_ICON_DIR = "data/member"
 MEMBER_IMAGE_DIR = "data/member_image"
-CF_MEMBER_IMG_WIDTH = 60
-CF_MEMBER_IMG_HEIGHT = 60
+# CF_MEMBER_IMG_WIDTH = 60
+# CF_MEMBER_IMG_HEIGHT = 60
 
 
 @router.get("/member_list")
@@ -226,7 +226,8 @@ async def member_form(
         exists_member.mb_icon = get_member_icon(mb_id)
         exists_member.mb_img = get_member_image(mb_id)
 
-    context = {"request": request, "member": exists_member}
+    context = {
+        "request": request, "member": exists_member}
     return templates.TemplateResponse("member_form.html", context)
 
 
@@ -320,8 +321,8 @@ async def member_form_update(
 
         db.commit()
 
-    upload_member_icon(mb_id, mb_icon, del_mb_icon)
-    upload_member_image(mb_id, mb_img, del_mb_img)
+    upload_member_icon(request, mb_id, mb_icon, del_mb_icon)
+    upload_member_image(request, mb_id, mb_img, del_mb_img)
 
     url = f"/admin/member_form/{mb_id}"
     query_params = request.query_params
@@ -386,7 +387,7 @@ async def check_member_nick(
         return {"result": "not_exists"}
 
 
-def upload_member_icon(mb_id: str, mb_icon: UploadFile, del_mb_icon: int):
+def upload_member_icon(request: Request, mb_id: str, mb_icon: UploadFile, del_mb_icon: int):
     """회원아이콘 업로드
 
     Args:
@@ -397,6 +398,7 @@ def upload_member_icon(mb_id: str, mb_icon: UploadFile, del_mb_icon: int):
     Raises:
         AlertException: 이미지 파일이 아닌경우
     """
+    config = request.state.config
     member_icon_dir = f"{MEMBER_ICON_DIR}/{mb_id[:2]}"
 
     # 이미지 삭제
@@ -411,10 +413,13 @@ def upload_member_icon(mb_id: str, mb_icon: UploadFile, del_mb_icon: int):
     # 하위경로를 만들지 않아도 알아서 만들어줌 data/member/ka/kagla.gif
     make_directory(member_icon_dir)
     # 이미지 저장
-    save_image(member_icon_dir, f"{mb_id}.gif", mb_icon)
+    # save_image(member_icon_dir, f"{mb_id}.gif", mb_icon)
+    # 이미지 저장
+    img = Image.open(mb_icon.file)
+    img.resize((config.cf_member_icon_width, config.cf_member_icon_height)).save(f"{member_icon_dir}/{mb_id}.gif")
 
 
-def upload_member_image(mb_id: str, uploaded_mb_img: UploadFile, del_mb_img: int):
+def upload_member_image(request: Request, mb_id: str, uploaded_mb_img: UploadFile, del_mb_img: int):
     """회원이미지 업로드
 
     Args:
@@ -425,6 +430,7 @@ def upload_member_image(mb_id: str, uploaded_mb_img: UploadFile, del_mb_img: int
     Raises:
         AlertException: 이미지 파일이 아닌경우
     """
+    config = request.state.config
     image_filename = f"{mb_id}.gif"
     member_image_dir = f"{MEMBER_IMAGE_DIR}/{mb_id[:2]}"
 
@@ -446,9 +452,9 @@ def upload_member_image(mb_id: str, uploaded_mb_img: UploadFile, del_mb_img: int
 
     if os.path.exists(dest_path):
         with Image.open(dest_path) as img:
-            if img.width > CF_MEMBER_IMG_WIDTH or img.height > CF_MEMBER_IMG_HEIGHT:
+            if img.width > config.cf_member_img_width or img.height > config.cf_member_img_height:
                 if img.format in ['JPEG', 'PNG']:
-                    img.thumbnail((CF_MEMBER_IMG_WIDTH, CF_MEMBER_IMG_HEIGHT))
+                    img.thumbnail((config.cf_member_img_width, config.cf_member_img_height))
                     os.unlink(dest_path)
                     img.save(dest_path)
                 else:

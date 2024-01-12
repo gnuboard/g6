@@ -236,7 +236,7 @@
                         </label>
                         <input type="file" name="mb_icon" accept="image/*" id="id_mb_icon">
                         {% if not is_register and form.mb_icon_url %}
-                            <img src="{{ form.mb_icon_url }}" alt="">
+                            <img src="{{ form.mb_icon_url }}" alt="" width="{{ config.cf_user_icon_width }}" height="{{ config.cf_user_icon_height }}">
                             <input type="checkbox" name="del_mb_icon" value="1" id="del_mb_icon">
                             <label for="del_mb_icon" class="inline">삭제</label>
                         {% endif %}
