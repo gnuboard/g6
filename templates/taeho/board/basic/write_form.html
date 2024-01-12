@@ -141,7 +141,7 @@
                     {% if file.bf_no != None %}
                     <span class="file_del">
                         <input type="checkbox" id="bf_file_del{{ i }}" name="bf_file_del[]" value="{{ file.bf_no }}">
-                        <label for="bf_file_del{{ i }}">{{ file.bf_source }} ({{ file.bf_filesize|filesizeformat }}) 파일 삭제</label>
+                        <label for="bf_file_del{{ i }}"><span class="elip" title="{{ file.bf_source }}">{{ file.bf_source }}</span> ({{ file.bf_filesize|filesizeformat }}) 파일 삭제</label>
                     </span>
                     {% endif %}
                 </div>
