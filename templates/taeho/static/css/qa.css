@@ -68,12 +68,12 @@
 .btn_bo_adm {float:left}
 .btn_bo_adm li {float:left;margin-right:5px}
 .btn_bo_adm input {padding:0 8px;border:0;background:#d4d4d4;color:#666;text-decoration:none;vertical-align:middle}
-.bo_notice td {background:#f5f6fa}
+.bo_notice td {background:var(--boNoticeBg)}
 .bo_notice td a {font-weight:bold}
 
 .more_opt {display:none;position:absolute;top:45px;right:0;background:#fff;border:var(--moreUlBorder);z-index:999}
 .more_opt:before {content:"";position:absolute;top:-8px;right:5px;width:0;height:0;border-style:solid;border-width:0 6px 8px 6px;border-color:transparent transparent var(--moreColor) transparent}
-.more_opt:after {content:"";position:absolute;top:-6px;right:5px;width:0;height:0;border-style:solid;border-width:0 6px 8px 6px;border-color:transparent transparent var(--contBg) transparent}
+.more_opt:after {content:"";position:absolute;top:-6px;right:5px;width:0;height:0; order-style:solid;border-width:0 6px 8px 6px;border-color:transparent transparent var(--contBg) transparent}
 .more_opt li {border-bottom:var(--moreLiBorder);float:inherit;width:64px;margin:0;color:#6b757c;text-align:left;padding: 0px;}
 .more_opt li a {font-size:1em}
 .more_opt li:last-child {border-bottom:0}
@@ -101,20 +101,20 @@
 #bo_list .bo_tit .fa-link {display:inline-block;width:16px;line-height:16px;font-size:0.833em;color:#b451fd;background:#edd3fd;text-align:center;border-radius:2px;vertical-align:middle}
 
 .bo_sch_wrap {display:none;width:100%;height:100%;position:fixed;top:0;left:0;z-index:999}
-.bo_sch {position:absolute;top:50%;left:50%;background:#fff;text-align:left;width:330px;max-height:300px;margin-left:-125px;margin-top:-180px;overflow-y:auto;border-radius:5px;-webkit-box-shadow:1px 1px 18px rgba(0,0,0,0.2);-moz-box-shadow:1px 1px 18px rgba(0,0,0,0.2);box-shadow:1px 1px 18px rgba(0,0,0,0.2);border:1px solid #dde7e9;background:#fff;border-radius:3px}
+.bo_sch {position:absolute;top:50%;left:50%;background:var(--bodyBg);text-align:left;width:330px;max-height:300px;margin-left:-125px;margin-top:-180px;overflow-y:auto;border-radius:5px;-webkit-box-shadow:1px 1px 18px rgba(0,0,0,0.2);-moz-box-shadow:1px 1px 18px rgba(0,0,0,0.2);box-shadow:1px 1px 18px rgba(0,0,0,0.2);border:var(--border);border-radius:3px}
 .bo_sch:after {display:block;visibility:hidden;clear:both;content:""}
-.bo_sch h3 {padding:15px;border-bottom:1px solid #e8e8e8}
+.bo_sch h3 {padding:15px;border-bottom:var(--border);color: var(--fontColor);}
 .bo_sch legend {background:red}
 .bo_sch form {padding:15px;display:block}
-.bo_sch select {border:0;width:100%;height:40px;border:1px solid #d0d3db;border-radius:2px;-webkit-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
+.bo_sch select {border:0;width:100%;height:40px;border:var(--inputBorder);background: var(--inputBg);color: var(--fontColor);border-radius:2px;-webkit-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
 -moz-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
 box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075)}
-.bo_sch .sch_bar {display:inline-block;width:100%;clear:both;margin-top:15px;border:1px solid #d0d3db;border-radius:2px;-webkit-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
+.bo_sch .sch_bar {display:inline-block;width:100%;clear:both;margin-top:15px;background: var(--inputBg);border:var(--inputBorder);border-radius:2px;-webkit-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
 -moz-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
 box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075)}
-.bo_sch .sch_input {width:250px;height:38px;border:0;padding:0;background-color:transparent;float:left}
+.bo_sch .sch_input {width:250px;height:38px;border:0;padding:0;background-color:transparent;float:left;color: var(--fontColor);}
 .bo_sch .sch_btn {height:38px;float:right;color:#656565;background:none;border:0;width:40px;font-size:15px}
-.bo_sch .bo_sch_cls {position:absolute;right:0;top:0;color:#b5b8bb;border:0;padding:12px 15px;font-size:16px;background:#fff}
+.bo_sch .bo_sch_cls {position:absolute;right:0;top:0;color:#b5b8bb;border:0;padding:12px 15px;font-size:16px;background:var(--bodyBg)}
 .bo_sch_bg {background:#000;background:rgba(0,0,0,0.1);width:100%;height:100%}
 
 
