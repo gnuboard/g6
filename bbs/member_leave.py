@@ -39,18 +39,19 @@ async def member_leave(
     """
     login_member = request.state.login_member
     if not login_member:
-        raise AlertException(status_code=403, detail="회원만 접근하실 수 있습니다.")
+        raise AlertException("회원만 접근하실 수 있습니다.", 403)
     if request.state.is_super_admin:
-        raise AlertException(status_code=400, detail="최고관리자는 탈퇴할 수 없습니다.")
+        raise AlertException("최고관리자는 탈퇴할 수 없습니다.", 400)
     if not validate_password(mb_password, login_member.mb_password):
         raise AlertException("패스워드가 일치하지 않습니다.", 404)
 
     # 회원탈퇴
     leave_date = datetime.now().strftime("%Y-%m-%d")
+    leave_date_ymd = datetime.now().strftime("%Y%m%d")
     memo = f"{login_member.mb_memo}\n{leave_date}탈퇴함"
     db.execute(
         update(Member)
-        .values(mb_leave_date=leave_date, mb_memo=memo)
+        .values(mb_leave_date=leave_date_ymd, mb_memo=memo)
         .where(Member.mb_id == login_member.mb_id)
     )
     db.commit()
@@ -62,4 +63,4 @@ async def member_leave(
     # 로그아웃
     request.session.clear()
 
-    raise AlertException(status_code=200, detail=f"{login_member.mb_nick} 님께서는 {leave_date} 에 회원에서 탈퇴 하셨습니다.", url="/")
+    raise AlertException(f"{login_member.mb_nick} 님께서는 {leave_date} 에 회원에서 탈퇴 하셨습니다.", url="/")
