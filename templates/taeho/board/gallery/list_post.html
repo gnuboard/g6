@@ -4,7 +4,7 @@
 {% endif %}
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/gallery/board.css') }}">
+    <link rel="stylesheet" href="{{ template_asset('css/board.css') }}">
 {% endblock head %}
 
 {% block title %}{{ board.subject }} {{ current_page }} 페이지{% endblock title %}
