@@ -35,7 +35,7 @@
                 {% for faq in faqs %}
                     <tr class="bg{{ loop.cycle('0', '1') }}">
                         <td class="td_num">{{ loop.index }}</td>
-                        <td class="td_left">{{ faq.fa_subject }}</td>
+                        <td class="td_left">{{ faq.fa_subject|safe }}</td>
                         <td class="td_num">{{ faq.fa_order }}</td>
                         <td class="td_mng td_mng_m">
                             <a href="{{ url_for('faq_update_form', fm_id=faq_master.fm_id, fa_id=faq.fa_id) }}" class="btn btn_03">
