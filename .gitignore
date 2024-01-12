@@ -21,3 +21,5 @@ sqlite3.db
 venv/
 plugin_states.json
 plugin_states.json.lock
+log_config.ini
+uvicorn.log
