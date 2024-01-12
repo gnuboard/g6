@@ -1,18 +1,18 @@
 {% extends "base_sub.html" %}
 
-{% block title %}템플릿 상세보기{% endblock title %}
+{% block title %}테마 상세보기{% endblock title %}
 
 {% block content %}
-    <div id="template_detail">
-        <h2>{{ info.template_name }}</h2>
-        <div class="template_dt_img">
+    <div id="theme_detail">
+        <h2>{{ info.theme_name }}</h2>
+        <div class="theme_dt_img">
             {% if info.screenshot %}
-                <img src="{{ info.screenshot }}" alt="{{ info.template_name }}">
+                <img src="{{ info.screenshot }}" alt="{{ info.theme_name }}">
             {% else %}
-                <img src="{{ url_for('static', path='/admin/img/template_img.jpg') }}" alt="템플릿 없음">
+                <img src="{{ url_for('static', path='/admin/img/theme_img.jpg') }}" alt="테마 없음">
             {% endif %}
         </div>
-        <div class="template_dt_if">
+        <div class="theme_dt_if">
             <p>{{ info.detail }}</p>
             <table>
                 <tr>
@@ -28,8 +28,8 @@
                     <td>{{ info.license }}</td>
                 </tr>
             </table>
-            <div class="template_dt_btn">
-                <!-- <a href="/admin/template_preview?template={{ template }}" class="template_pr btn_03" target="template_preview">미리보기</a> -->
+            <div class="theme_dt_btn">
+                <!-- <a href="/admin/theme_preview?theme={{ theme }}" class="theme_pr btn_03" target="theme_preview">미리보기</a> -->
                 <button type="button" class="close_btn">Close</button>
             </div>
         </div>
@@ -37,7 +37,7 @@
 
     <script>
         document.querySelector(".close_btn").addEventListener("click", function() {
-            document.getElementById("template_detail").remove();
+            document.getElementById("theme_detail").remove();
         });
     </script>
 {% endblock content %}

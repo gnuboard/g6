@@ -2,7 +2,7 @@
 
 /* ### 기본 스타일 커스터마이징 시작 ### */
 /* 기본박스 */
-.mbskin {position:relative;margin:40px auto 0;width:360px;text-align:center}
+.mbskin {position:relative;margin:100px auto 0;width:360px;text-align:center}
 .mbskin:after {right:10px;left:auto;
       transform:skew(8deg) rotate(3deg)}
 .mbskin .mbskin_box{border:1px solid #dde7e9;background:#fff}
@@ -13,24 +13,22 @@
 /* ### 기본 스타일 커스터마이징 끝 ### */
 
 /* 회원가입 약관 */
-.register_wrap {max-width: 400px;margin: 0 auto;}
-.register_wrap.input_form {max-width: 400px;}
-.register {margin:0 auto;padding-bottom: 40px;}
+.register {margin:0 auto}
 .register:after {display:block;visibility:hidden;clear:both;content:""}
 .register .btn_confirm .btn_submit,
 .register .btn_confirm .btn_close {float:left;height:50px !important;width:49.5%;font-weight:bold;font-size:1.083em}
 .register .btn_confirm {text-align:left}
 .register .btn_confirm .btn_submit {margin-left:1%}
 
-#fregister p {position:relative;text-align:left;color:#fff;padding: 20px 10px;font-size:1.1em;background:#f2838f;margin:0 0 10px;border-radius:5px;font-weight:bold}
-#fregister p:before {content:"";position:absolute;top:0;left:0;width:5px;height:100%;border-radius:5px 0 0 5px;background:#da4453}
+#fregister p {position:relative;text-align:center;color:#fff;height:50px;line-height:50px;font-size:1.1em;background:#f2838f;margin:0 0 10px;border-radius:5px;font-weight:bold}
+#fregister p:before {content:"";position:absolute;top:0;left:0;width:5px;height:50px;border-radius:5px 0 0 5px;background:#da4453}
 #fregister p i {font-size:1.2em;vertical-align:middle}
-#fregister section {margin:10px auto 15px;position:relative;border-radius:3px}
-#fregister_chkall {position:relative;text-align:center;line-height:50px;border-radius:3px;margin-bottom:15px}
-#fregister h2 {text-align:left;padding:20px 0px;font-size:1.2em;font-weight: bold;}
-#fregister textarea {display:block;padding:10px;width:100%;height:150px;background:#fff;border:0;line-height:1.6em;border: 1px solid #d1d7d8;}
+#fregister section {margin:10px auto 15px;border:1px solid #dde7e9;position:relative;border-radius:3px}
+#fregister_chkall {position:relative;text-align:center;background:#f5f7fa;line-height:50px;border:1px solid #e5e9f0;border-radius:3px;margin-bottom:15px}
+#fregister h2 {text-align:left;padding:20px;border-bottom:1px solid #dde7e9;font-size:1.2em}
+#fregister textarea {display:block;padding:20px;width:100%;height:150px;background:#fff;border:0;line-height:1.6em}
 #fregister_private {position:relative}
-#fregister_private div {background:#fff}
+#fregister_private div {padding:20px;background:#fff}
 #fregister_private table {width:100%;border-collapse:collapse;font-size:1em;}
 #fregister_private table caption {position:absolute;font-size:0;line-height:0;overflow:hidden}
 #fregister_private table th {background:#f7f7f9;width:33.33%;color:#000;padding:10px;border:1px solid #d8dbdf}
@@ -51,9 +49,9 @@
 
 /* 회원가입 입력 */
 #register_form {background:#fff;margin-bottom:20px}
-#register_form h2 {padding:40px 0px 0px;}
-.register_form_inner {border-radius:3px}
-.register_form_inner ul {padding:0px;}
+#register_form h2 {padding:20px;border-bottom:1px solid #dde7e9}
+.register_form_inner {background:#f7f7f7;border:1px solid #dde7e9;border-radius:3px}
+.register_form_inner ul {padding:20px}
 .register_form_inner label {display:block;margin-bottom:10px;line-height:24px}
 .register_form_inner label.inline {display:inline}
 
@@ -91,8 +89,8 @@
 
 .tooltip_icon {display:inline-block;vertical-align:baseline;color:#b3b5b8;border:0;font-size:1.4em;background:transparent;cursor:pointer}
 .tooltip_icon:hover {color:#448bf5}
-.tooltip {position:relative;width:auto;color:#fff;background:#383838;padding:10px;font-size:small;line-height:18px;display:none;position:absolute;z-index:9;font-weight:normal;margin-left:15px;margin-top:10px;border-radius: 0px 4px 4px 4px;}
-.tooltip:before {content:"";position:absolute;top:0;left:-10px;width:0;height:0;border-style:solid;border-top:0px solid transparent;border-bottom:10px solid transparent;border-left:0;border-right:10px solid #383838}
+.tooltip {position:relative;width:auto;color:#fff;background:#000;padding:10px;font-size:small;line-height:18px;display:none;position:absolute;z-index:9;font-weight:normal;margin-left:15px;margin-top:10px}
+.tooltip:before {content:"";position:absolute;top:0;left:-10px;width:0;height:0;border-style:solid;border-top:0px solid transparent;border-bottom:10px solid transparent;border-left:0;border-right:10px solid #000}
 
 /* 아이디/비밀번호 찾기 */
 #find_info h3 {display:none;margin-bottom:30px;text-align:center;font-size:1.1em;}
@@ -225,7 +223,7 @@
 
 #memo_write .form_01 {padding:20px;border-top:1px solid #ececec}
 
-.reply_btn {display:inline-block;width:150px;height:45px;line-height:50px;padding:0 10px;font-weight:bold;background:#ff8269;color:#fff;border-radius:3px;vertical-align:bottom;margin-right:5px}
+.reply_btn {display:inline-block;width:150px;height:45px;line-height:50px;padding:0 10px;font-weight:bold;background:#3a8afd;color:#fff;border-radius:3px;vertical-align:bottom;margin-right:5px}
 #memo_write .reply_btn {font-size:1em}
 
 /* 스크랩 */
@@ -249,25 +247,25 @@
 /*포인트*/
 #point {text-align:center}
 #point h1 {text-align:left}
-#point .point_all {margin:20px 20px 15px;border-radius:5px;background:#ff8269;border:1px solid #d6e2f4;color:#fff;font-size:1.083em}
+#point .point_all {margin:20px 20px 15px;border-radius:5px;background:#edf3fc;border:1px solid #d6e2f4;color:#485172;font-size:1.083em}
 #point .point_all:after {display:block;visibility:hidden;clear:both;content:""}
 #point .point_all li {float:left;width:50%;padding:20px;text-align:left}
 #point .point_all li span {float:right;color:#485172;font-weight:bold}
-#point .point_all li:last-child {}
-#point .point_all .full_li {width:100%;text-align:left}
-#point .point_all .full_li span {color:#fff;font-weight:bold;font-size:1.2em}
+#point .point_all li:last-child {border-left:1px solid #d6e2f4}
+#point .point_all .full_li {width:100%;border-bottom:1px solid #d6e2f4;text-align:left}
+#point .point_all .full_li span {color:#000;font-weight:bold;font-size:1.2em}
 #point .point_status{background:#737373;border:0;color:#fff;font-weight:bold;font-size:1.083em;text-align:left}
 #point .point_status:after {display:block;visibility:hidden;clear:both;content:""}
 #point .point_status span{margin-left:10px;float:right}
 
 .point_list {}
 .point_list li:first-child {border-top:1px solid #ececec}
-.point_list li {border-bottom:1px solid #ececec;background:#fff;padding:15px 30px;list-style:none;position:relative}
+.point_list li {border-bottom:1px solid #ececec;background:#fff;padding:15px;list-style:none;position:relative}
 .point_list li:after {display:block;visibility:hidden;clear:both;content:""}
 
 .point_list .point_use {background:#f6f6f6}
 .point_list .point_use .point_num {font-size:1.25em;color:#ff4f76;font-weight:bold;float:right}
-.point_list .point_num {font-size:1.25em;color:#ff8269;font-weight:bold;position:absolute;right:30px;top:25px}
+.point_list .point_num {font-size:1.25em;color:#3a8afd;font-weight:bold;position:absolute;right:15px;top:25px}
 .point_list .point_top {line-height:15px;margin:0 0 5px}
 .point_list .point_top:after {display:block;visibility:hidden;clear:both;content:""}
 .point_list .point_tit {font-weight:bold;float:left;font-size:1.083em;display:block}

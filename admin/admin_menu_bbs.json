@@ -19,9 +19,9 @@
         },
         {
             "id": "100280",
-            "name": "템플릿설정",
-            "url": "template",
-            "tag": "admin_template"
+            "name": "테마설정",
+            "url": "theme",
+            "tag": "admin_theme"
         },
         {
             "id": "100290",

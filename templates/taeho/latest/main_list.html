@@ -397,7 +397,7 @@ html {
                 <div class="slide-dummy"></div>
                     <div class="slide-txt">
                         <h2 class="txt-tt"><a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}">{{ write.subject }}</a></h2>
-                        <p class="txt-desc">{{ write.wr_content }}</p>
+                        <p class="txt-desc">{{ write.wr_content|striptags }}</p>
                         <div class="txt-btn">
                             <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}">바로가기</a>
                         </div>

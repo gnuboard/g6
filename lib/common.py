@@ -20,7 +20,7 @@ from fastapi import Request, UploadFile
 from markupsafe import Markup, escape
 from PIL import Image, ImageOps, UnidentifiedImageError
 from passlib.context import CryptContext
-from sqlalchemy import Index, asc, case, desc, func, select, delete, between, exists
+from sqlalchemy import Index, asc, case, desc, func, select, delete, between, exists, cast, String
 from sqlalchemy.exc import IntegrityError
 from starlette.datastructures import URL
 from user_agents import parse
@@ -362,7 +362,7 @@ def select_query(request: Request, table_model, search_params: dict,
             elif search_params['sfl'] in prefix_search_fields:
                 query = query.where(getattr(table_model, search_params['sfl']).like(f"{search_params['stx']}%"))
             else:
-                query = query.where(getattr(table_model, search_params['sfl']).like(f"%{search_params['stx']}%"))
+                query = query.where(cast(getattr(table_model, search_params['sfl']), String).like(f"%{search_params['stx']}%"))
 
     # 페이지 번호에 따른 offset 계산
     offset = (search_params['current_page'] - 1) * records_per_page
