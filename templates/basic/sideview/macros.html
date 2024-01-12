@@ -5,7 +5,7 @@
         <span class="sv_wrap">
             <a href="/bbs/profile/{{ mb_id }}" class="sv_member" title="{{ name }} 자기소개" target="_blank" rel="nofollow" onclick="return false;">
                 {% if use_member_icon != 0 %}
-                <span class="profile_img"><img src="/{{ get_member_icon(mb_id) }}" width="22" height="22" alt=""></span>
+                <span class="profile_img"><img src="{{ get_member_icon(mb_id) }}" width="22" height="22" alt=""></span>
                 {% endif %}
                 {% if use_member_icon != 1 %}
                 {{ name }}
