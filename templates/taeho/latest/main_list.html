@@ -450,4 +450,9 @@ html {
             }
         });
     }, 500);
+
+    // 최신글 없을 시 슬라이더 삭제
+    if ($('.slide-con').length == 0) {
+        $('.slick-dots').remove();
+    }
 </script>
