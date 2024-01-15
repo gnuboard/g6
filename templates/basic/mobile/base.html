@@ -1,0 +1,1367 @@
+{% extends "base_sub.html" %}
+
+{% block body_html %}
+
+    <header id="hd">
+        <h1 id="hd_h1"></h1>
+    
+        <div class="to_content"><a href="#container">본문 바로가기</a></div>
+    
+        
+    <!-- 팝업레이어 시작 { -->
+    <div id="hd_pop">
+        <h2>팝업레이어 알림</h2>
+    
+    <span class="sound_only">팝업레이어 알림이 없습니다.</span></div>
+    
+    <script>
+    $(function() {
+        $(".hd_pops_reject").click(function() {
+            var id = $(this).attr('class').split(' ');
+            var ck_name = id[1];
+            var exp_time = parseInt(id[2]);
+            $("#"+id[1]).css("display", "none");
+            set_cookie(ck_name, 1, exp_time, g5_cookie_domain);
+        });
+        $('.hd_pops_close').click(function() {
+            var idb = $(this).attr('class').split(' ');
+            $('#'+idb[1]).css('display','none');
+        });
+    });
+    </script>
+    <!-- } 팝업레이어 끝 -->
+        <div id="hd_wrapper">
+    
+            <div id="logo">
+                <a href="http://127.0.0.1/g5-update"><img src="http://127.0.0.1/g5-update/img/m_logo.png" alt="그누보드55"></a>
+            </div>
+    
+            <button type="button" id="gnb_open" class="hd_opener"><i class="fa fa-bars" aria-hidden="true"></i><span class="sound_only"> 메뉴열기</span></button>
+    
+            <div id="gnb" class="hd_div">
+                <button type="button" id="gnb_close" class="hd_closer"><span class="sound_only">메뉴 닫기</span><i class="fa fa-times" aria-hidden="true"></i></button>
+                
+    <aside id="ol_before" class="ol">
+        <h2>회원로그인</h2>
+        <a href="http://127.0.0.1/g5-update/bbs/login.php" class="btn_b01">로그인</a>
+        <a href="http://127.0.0.1/g5-update/bbs/register.php" class="btn_b02">회원가입</a>
+    </aside>
+    
+    <!-- 로그인 전 외부로그인 끝 -->
+                <ul id="gnb_1dul">
+                                <li class="gnb_1dli">
+                        <a href="/g5-update/adm/menu_list.php" target="_self" class="gnb_1da">메뉴1</a>
+                        <button type="button" class="btn_gnb_op"><span class="sound_only">하위분류</span></button><ul class="gnb_2dul">
+                            <li class="gnb_2dli"><a href="/g5-update/adm/sendmail_test.php" target="_self" class="gnb_2da"><span></span>메일테스트</a></li>
+                        </ul>
+                    </li>
+                                            <li class="gnb_1dli"><a href="http://127.0.0.1/g5-update/shop" class="gnb_1da"> 쇼핑몰</a></li>
+                            </ul>
+    
+                <ul id="hd_nb">
+                    <li class="hd_nb1"><a href="http://127.0.0.1/g5-update/bbs/faq.php" id="snb_faq"><i class="fa fa-question" aria-hidden="true"></i>FAQ</a></li>
+                    <li class="hd_nb2"><a href="http://127.0.0.1/g5-update/bbs/qalist.php" id="snb_qa"><i class="fa fa-comments" aria-hidden="true"></i>1:1문의</a></li>
+                    <li class="hd_nb3"><a href="http://127.0.0.1/g5-update/bbs/current_connect.php" id="snb_cnt"><i class="fa fa-users" aria-hidden="true"></i>접속자 <span>1</span></a></li>
+                    <li class="hd_nb4"><a href="http://127.0.0.1/g5-update/bbs/new.php" id="snb_new"><i class="fa fa-history" aria-hidden="true"></i>새글</a></li>   
+                </ul>
+            </div>
+    
+            <button type="button" id="user_btn" class="hd_opener"><i class="fa fa-search" aria-hidden="true"></i><span class="sound_only">사용자메뉴</span></button>
+            <div class="hd_div" id="user_menu">
+                <button type="button" id="user_close" class="hd_closer"><span class="sound_only">메뉴 닫기</span><i class="fa fa-times" aria-hidden="true"></i></button>
+                <div id="hd_sch">
+                    <h2>사이트 내 전체검색</h2>
+                    <form name="fsearchbox" action="http://127.0.0.1/g5-update/bbs/search.php" onsubmit="return fsearchbox_submit(this);" method="get">
+                    <input type="hidden" name="sfl" value="wr_subject||wr_content">
+                    <input type="hidden" name="sop" value="and">
+                    <input type="text" name="stx" id="sch_stx" placeholder="검색어를 입력해주세요" required="" maxlength="20">
+                    <button type="submit" value="검색" id="sch_submit"><i class="fa fa-search" aria-hidden="true"></i><span class="sound_only">검색</span></button>
+                    </form>
+    
+                    <script>
+                    function fsearchbox_submit(f)
+                    {
+                        var stx = f.stx.value.trim();
+                        if (stx.length < 2) {
+                            alert("검색어는 두글자 이상 입력하십시오.");
+                            f.stx.select();
+                            f.stx.focus();
+                            return false;
+                        }
+    
+                        // 검색에 많은 부하가 걸리는 경우 이 주석을 제거하세요.
+                        var cnt = 0;
+                        for (var i = 0; i < stx.length; i++) {
+                            if (stx.charAt(i) == ' ')
+                                cnt++;
+                        }
+    
+                        if (cnt > 1) {
+                            alert("빠른 검색을 위하여 검색어에 공백은 한개만 입력할 수 있습니다.");
+                            f.stx.select();
+                            f.stx.focus();
+                            return false;
+                        }
+                        f.stx.value = stx;
+    
+                        return true;
+                    }
+                    </script>
+                </div>
+                
+    <aside id="popular">
+        <h2>인기검색어</h2>
+        
+            
+    </aside>            <div id="text_size">
+                <!-- font_resize('엘리먼트id', '제거할 class', '추가할 class'); -->
+                    <button id="size_down" onclick="font_resize('container', 'ts_up ts_up2', '', this);" class="select"><img src="http://127.0.0.1/g5-update/img/ts01.png" width="20" alt="기본"></button>
+                    <button id="size_def" onclick="font_resize('container', 'ts_up ts_up2', 'ts_up', this);"><img src="http://127.0.0.1/g5-update/img/ts02.png" width="20" alt="크게"></button>
+                    <button id="size_up" onclick="font_resize('container', 'ts_up ts_up2', 'ts_up2', this);"><img src="http://127.0.0.1/g5-update/img/ts03.png" width="20" alt="더크게"></button>
+                </div>
+            </div>
+    
+            <script>
+            $(function () {
+                //폰트 크기 조정 위치 지정
+                var font_resize_class = get_cookie("ck_font_resize_add_class");
+                if( font_resize_class == 'ts_up' ){
+                    $("#text_size button").removeClass("select");
+                    $("#size_def").addClass("select");
+                } else if (font_resize_class == 'ts_up2') {
+                    $("#text_size button").removeClass("select");
+                    $("#size_up").addClass("select");
+                }
+    
+                $(".hd_opener").on("click", function() {
+                    var $this = $(this);
+                    var $hd_layer = $this.next(".hd_div");
+    
+                    if($hd_layer.is(":visible")) {
+                        $hd_layer.hide();
+                        $this.find("span").text("열기");
+                    } else {
+                        var $hd_layer2 = $(".hd_div:visible");
+                        $hd_layer2.prev(".hd_opener").find("span").text("열기");
+                        $hd_layer2.hide();
+    
+                        $hd_layer.show();
+                        $this.find("span").text("닫기");
+                    }
+                });
+    
+                $("#container").on("click", function() {
+                    $(".hd_div").hide();
+    
+                });
+    
+                $(".btn_gnb_op").click(function(){
+                    $(this).toggleClass("btn_gnb_cl").next(".gnb_2dul").slideToggle(300);
+                    
+                });
+    
+                $(".hd_closer").on("click", function() {
+                    var idx = $(".hd_closer").index($(this));
+                    $(".hd_div:visible").hide();
+                    $(".hd_opener:eq("+idx+")").find("span").text("열기");
+                });
+            });
+            </script>
+            
+        </div>
+    </header>
+    
+    
+    
+    <div id="wrapper">
+    
+        <div id="container">
+        sadasf
+    <!-- 메인화면 최신글 시작 -->
+    
+    <div class="lt owl-carousel-wrap">
+        <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery" class="lt_title"><strong>갤러리</strong></a>
+        <div class="latest-sel owl-carousel owl-loaded owl-drag">
+            
+        <div class="owl-stage-outer owl-height" style="height: 352px;"><div class="owl-stage" style="transition: all 0s ease 0s; width: 2730px; transform: translate3d(-780px, 0px, 0px);"><div class="owl-item cloned" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=17" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/editor/2311/thumb-4b0c7fd71fb76e610d8b2ac853e7921a_1700010894_3055_138x80.gif" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=17" class="lt_tit">123132 <i class="fa fa-heart" aria-hidden="true"></i></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-15                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=16" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/file/gallery/thumb-7b018c827432d9b37a214761cfb43782_KmPcTL4w_eff11b265275cc440ee5438381f73361976ae1d1_138x80.gif" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=16" class="lt_tit">321 <i class="fa fa-download" aria-hidden="true"></i> <i class="fa fa-heart" aria-hidden="true"></i></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-15                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=15" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/file/gallery/thumb-7b018c827432d9b37a214761cfb43782_9ZfmjlMc_b3b545afe1d44028e7e656a8571b7e0a6fffce72_138x80.gif" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=15" class="lt_tit">4123 <i class="fa fa-download" aria-hidden="true"></i></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-15                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=2" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/file/gallery/thumb-7b018c827432d9b37a214761cfb43782_Ata8wC7u_8ea1ad5433c6141c37a5a2d6465864a49c492dd3_138x80.gif" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=2" class="lt_tit">최신글테스트 <i class="fa fa-download" aria-hidden="true"></i> <i class="fa fa-heart" aria-hidden="true"></i>
+                    <span class="lt_cmt"><span class="sound_only">댓글</span><span class="cnt_cmt">12</span></span></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-10-25                    </span>
+                    </div>
+                </li>
+                </ul></div><div class="owl-item cloned" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=1" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/file/gallery/thumb-7b018c827432d9b37a214761cfb43782_xD9OabIg_2b1f56c2aff9b0f60ed5da59e73a0dc483cdadda_138x80.png" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=1" class="lt_tit">테스트 <i class="fa fa-download" aria-hidden="true"></i></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-09-26                    </span>
+                    </div>
+                </li>
+                                    </ul></div><div class="owl-item active center" style="width: 390px;"><ul class="item">
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=21" class="lt_tit">1234</a>               
+                    <div class="lt_info">
+                        1234                    <span class="lt_date">
+                            2023-12-19                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=20" class="lt_tit">1</a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=kjhied" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">탐탐</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=kjhied" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=kjhied" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=kjhied" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=kjhied" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=kjhied" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=kjhied" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-12-19                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=19" class="lt_tit"><i class="fa fa-lock" aria-hidden="true"></i> 321</a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-16                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=18" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/file/gallery/thumb-7b018c827432d9b37a214761cfb43782_QYJ469xW_15973fd442ac023ceeaad8af2b5eacad559c027a_138x80.jpg" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=18" class="lt_tit">231 <i class="fa fa-download" aria-hidden="true"></i></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-15                    </span>
+                    </div>
+                </li>
+                </ul></div><div class="owl-item" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=17" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/editor/2311/thumb-4b0c7fd71fb76e610d8b2ac853e7921a_1700010894_3055_138x80.gif" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=17" class="lt_tit">123132 <i class="fa fa-heart" aria-hidden="true"></i></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-15                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=16" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/file/gallery/thumb-7b018c827432d9b37a214761cfb43782_KmPcTL4w_eff11b265275cc440ee5438381f73361976ae1d1_138x80.gif" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=16" class="lt_tit">321 <i class="fa fa-download" aria-hidden="true"></i> <i class="fa fa-heart" aria-hidden="true"></i></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-15                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=15" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/file/gallery/thumb-7b018c827432d9b37a214761cfb43782_9ZfmjlMc_b3b545afe1d44028e7e656a8571b7e0a6fffce72_138x80.gif" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=15" class="lt_tit">4123 <i class="fa fa-download" aria-hidden="true"></i></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-15                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=2" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/file/gallery/thumb-7b018c827432d9b37a214761cfb43782_Ata8wC7u_8ea1ad5433c6141c37a5a2d6465864a49c492dd3_138x80.gif" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=2" class="lt_tit">최신글테스트 <i class="fa fa-download" aria-hidden="true"></i> <i class="fa fa-heart" aria-hidden="true"></i>
+                    <span class="lt_cmt"><span class="sound_only">댓글</span><span class="cnt_cmt">12</span></span></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-10-25                    </span>
+                    </div>
+                </li>
+                </ul></div><div class="owl-item" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=1" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/file/gallery/thumb-7b018c827432d9b37a214761cfb43782_xD9OabIg_2b1f56c2aff9b0f60ed5da59e73a0dc483cdadda_138x80.png" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=1" class="lt_tit">테스트 <i class="fa fa-download" aria-hidden="true"></i></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-09-26                    </span>
+                    </div>
+                </li>
+                                    </ul></div><div class="owl-item cloned" style="width: 390px;"><ul class="item">
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=21" class="lt_tit">1234</a>               
+                    <div class="lt_info">
+                        1234                    <span class="lt_date">
+                            2023-12-19                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=20" class="lt_tit">1</a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=kjhied" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">탐탐</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=kjhied" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=kjhied" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=kjhied" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=kjhied" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=kjhied" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=kjhied" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-12-19                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=19" class="lt_tit"><i class="fa fa-lock" aria-hidden="true"></i> 321</a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-16                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=18" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/file/gallery/thumb-7b018c827432d9b37a214761cfb43782_QYJ469xW_15973fd442ac023ceeaad8af2b5eacad559c027a_138x80.jpg" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=18" class="lt_tit">231 <i class="fa fa-download" aria-hidden="true"></i></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-15                    </span>
+                    </div>
+                </li>
+                </ul></div><div class="owl-item cloned" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=17" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/editor/2311/thumb-4b0c7fd71fb76e610d8b2ac853e7921a_1700010894_3055_138x80.gif" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=17" class="lt_tit">123132 <i class="fa fa-heart" aria-hidden="true"></i></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-15                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=16" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/file/gallery/thumb-7b018c827432d9b37a214761cfb43782_KmPcTL4w_eff11b265275cc440ee5438381f73361976ae1d1_138x80.gif" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=16" class="lt_tit">321 <i class="fa fa-download" aria-hidden="true"></i> <i class="fa fa-heart" aria-hidden="true"></i></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-15                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=15" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/file/gallery/thumb-7b018c827432d9b37a214761cfb43782_9ZfmjlMc_b3b545afe1d44028e7e656a8571b7e0a6fffce72_138x80.gif" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=15" class="lt_tit">4123 <i class="fa fa-download" aria-hidden="true"></i></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-15                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=2" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/file/gallery/thumb-7b018c827432d9b37a214761cfb43782_Ata8wC7u_8ea1ad5433c6141c37a5a2d6465864a49c492dd3_138x80.gif" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery&amp;wr_id=2" class="lt_tit">최신글테스트 <i class="fa fa-download" aria-hidden="true"></i> <i class="fa fa-heart" aria-hidden="true"></i>
+                    <span class="lt_cmt"><span class="sound_only">댓글</span><span class="cnt_cmt">12</span></span></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-10-25                    </span>
+                    </div>
+                </li>
+                </ul></div></div></div><div class="owl-nav disabled"><button type="button" role="presentation" class="owl-prev"><span aria-label="Previous">‹</span></button><button type="button" role="presentation" class="owl-next"><span aria-label="Next">›</span></button></div><div class="owl-dots disabled"></div></div>
+            <div class="lt_page">
+            <button class="lt_page_prev"><span class="sound_only">이전페이지</span><i class="fa fa-caret-left" aria-hidden="true"></i></button>
+            <span class="page_print"><b>1</b>/3</span>
+            <button class="lt_page_next"><span class="sound_only">다음페이지</span><i class="fa fa-caret-right" aria-hidden="true"></i></button>
+        </div>
+            <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=gallery" class="lt_more"><span class="sound_only">갤러리</span>전체보기</a>
+    </div>
+    <div class="lt owl-carousel-wrap">
+        <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice" class="lt_title"><strong>공지사항</strong></a>
+        <div class="latest-sel owl-carousel owl-loaded owl-drag">
+            
+        <div class="owl-stage-outer owl-height" style="height: 352px;"><div class="owl-stage" style="transition: all 0s ease 0s; width: 2730px; transform: translate3d(-780px, 0px, 0px);"><div class="owl-item cloned" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=41" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=42" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=43" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=44" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                </ul></div><div class="owl-item cloned" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=45" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=46" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=47" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=48" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                                    </ul></div><div class="owl-item active center" style="width: 390px;"><ul class="item">
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=69" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/file/notice/thumb-7b018c827432d9b37a214761cfb43782_vrceguJl_d50b651f903d92115792ba0b844f02efb341ac66_138x80.gif" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=69" class="lt_tit">2131 <i class="fa fa-download" aria-hidden="true"></i></a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-20                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=68" class="lt_tit">421</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">test</span>                    <span class="lt_date">
+                            2023-09-15                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=39" class="lt_tit">공지다
+                    <span class="lt_cmt"><span class="sound_only">댓글</span><span class="cnt_cmt">1</span></span></a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=40" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                </ul></div><div class="owl-item" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=41" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=42" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=43" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=44" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                </ul></div><div class="owl-item" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=45" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=46" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=47" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=48" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                                    </ul></div><div class="owl-item cloned" style="width: 390px;"><ul class="item">
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=69" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/file/notice/thumb-7b018c827432d9b37a214761cfb43782_vrceguJl_d50b651f903d92115792ba0b844f02efb341ac66_138x80.gif" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=69" class="lt_tit">2131 <i class="fa fa-download" aria-hidden="true"></i></a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-20                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=68" class="lt_tit">421</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">test</span>                    <span class="lt_date">
+                            2023-09-15                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=39" class="lt_tit">공지다
+                    <span class="lt_cmt"><span class="sound_only">댓글</span><span class="cnt_cmt">1</span></span></a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=40" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                </ul></div><div class="owl-item cloned" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=41" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=42" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=43" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice&amp;wr_id=44" class="lt_tit">공지다</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-09-14                    </span>
+                    </div>
+                </li>
+                </ul></div></div></div><div class="owl-nav disabled"><button type="button" role="presentation" class="owl-prev"><span aria-label="Previous">‹</span></button><button type="button" role="presentation" class="owl-next"><span aria-label="Next">›</span></button></div><div class="owl-dots disabled"></div></div>
+            <div class="lt_page">
+            <button class="lt_page_prev"><span class="sound_only">이전페이지</span><i class="fa fa-caret-left" aria-hidden="true"></i></button>
+            <span class="page_print"><b>1</b>/3</span>
+            <button class="lt_page_next"><span class="sound_only">다음페이지</span><i class="fa fa-caret-right" aria-hidden="true"></i></button>
+        </div>
+            <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=notice" class="lt_more"><span class="sound_only">공지사항</span>전체보기</a>
+    </div>
+    <div class="lt owl-carousel-wrap">
+        <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa" class="lt_title"><strong>질문답변</strong></a>
+        <div class="latest-sel owl-carousel owl-loaded owl-drag">
+            
+        <div class="owl-stage-outer owl-height" style="height: 320px;"><div class="owl-stage" style="transition: all 0s ease 0s; width: 2730px; transform: translate3d(-780px, 0px, 0px);"><div class="owl-item cloned" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=13" class="lt_tit">2</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=12" class="lt_tit">1</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=8" class="lt_tit">질문답변 글쓰기</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=9" class="lt_tit">Re: 답변 - 질문답변 글쓰기</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                </ul></div><div class="owl-item cloned" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=3" class="lt_tit"><i class="fa fa-lock" aria-hidden="true"></i> 임시저장글321321
+                    <span class="lt_cmt"><span class="sound_only">댓글</span><span class="cnt_cmt">2</span></span></a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-01                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=4" class="lt_tit">Re: 임시저장글321321</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-01                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=6" class="lt_tit">Re: 답글</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-01                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=10" class="lt_tit"><i class="fa fa-lock" aria-hidden="true"></i> Re: 답변 -임시저장글321321</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                                    </ul></div><div class="owl-item active center" style="width: 390px;"><ul class="item">
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=17" class="lt_tit">231</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-09                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=16" class="lt_tit">6</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=15" class="lt_tit">5</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=14" class="lt_tit">4</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                </ul></div><div class="owl-item" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=13" class="lt_tit">2</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=12" class="lt_tit">1</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=8" class="lt_tit">질문답변 글쓰기</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=9" class="lt_tit">Re: 답변 - 질문답변 글쓰기</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                </ul></div><div class="owl-item" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=3" class="lt_tit"><i class="fa fa-lock" aria-hidden="true"></i> 임시저장글321321
+                    <span class="lt_cmt"><span class="sound_only">댓글</span><span class="cnt_cmt">2</span></span></a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-01                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=4" class="lt_tit">Re: 임시저장글321321</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-01                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=6" class="lt_tit">Re: 답글</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-01                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=10" class="lt_tit"><i class="fa fa-lock" aria-hidden="true"></i> Re: 답변 -임시저장글321321</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                                    </ul></div><div class="owl-item cloned" style="width: 390px;"><ul class="item">
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=17" class="lt_tit">231</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-09                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=16" class="lt_tit">6</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=15" class="lt_tit">5</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=14" class="lt_tit">4</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                </ul></div><div class="owl-item cloned" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=13" class="lt_tit">2</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=12" class="lt_tit">1</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=8" class="lt_tit">질문답변 글쓰기</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa&amp;wr_id=9" class="lt_tit">Re: 답변 - 질문답변 글쓰기</a>               
+                    <div class="lt_info">
+                        <span class="sv_member tooltipstered">최고관리자</span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                </ul></div></div></div><div class="owl-nav disabled"><button type="button" role="presentation" class="owl-prev"><span aria-label="Previous">‹</span></button><button type="button" role="presentation" class="owl-next"><span aria-label="Next">›</span></button></div><div class="owl-dots disabled"></div></div>
+            <div class="lt_page">
+            <button class="lt_page_prev"><span class="sound_only">이전페이지</span><i class="fa fa-caret-left" aria-hidden="true"></i></button>
+            <span class="page_print"><b>1</b>/3</span>
+            <button class="lt_page_next"><span class="sound_only">다음페이지</span><i class="fa fa-caret-right" aria-hidden="true"></i></button>
+        </div>
+            <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=qa" class="lt_more"><span class="sound_only">질문답변</span>전체보기</a>
+    </div>
+    <div class="lt owl-carousel-wrap">
+        <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free" class="lt_title"><strong>자유게시판</strong></a>
+        <div class="latest-sel owl-carousel owl-loaded owl-drag">
+            
+        <div class="owl-stage-outer owl-height" style="height: 323px;"><div class="owl-stage" style="transition: all 0s ease 0s; width: 2730px; transform: translate3d(-780px, 0px, 0px);"><div class="owl-item cloned" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=111" class="lt_tit"><i class="fa fa-lock" aria-hidden="true"></i> 321</a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-22                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=108" class="lt_tit">1234
+                    <span class="lt_cmt"><span class="sound_only">댓글</span><span class="cnt_cmt">3</span></span></a>               
+                    <div class="lt_info">
+                        김탐                    <span class="lt_date">
+                            2023-11-17                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=103" class="lt_tit"><i class="fa fa-lock" aria-hidden="true"></i> 12111
+                    <span class="lt_cmt"><span class="sound_only">댓글</span><span class="cnt_cmt">2</span></span></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-16                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=102" class="lt_tit"><i class="fa fa-lock" aria-hidden="true"></i> 123</a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-16                    </span>
+                    </div>
+                </li>
+                </ul></div><div class="owl-item cloned" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=101" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/editor/2311/thumb-4b0c7fd71fb76e610d8b2ac853e7921a_1700009990_1939_138x80.gif" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=101" class="lt_tit">123
+                    <span class="lt_cmt"><span class="sound_only">댓글</span><span class="cnt_cmt">2</span></span></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-15                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=94" class="lt_tit">원글
+                    <span class="lt_cmt"><span class="sound_only">댓글</span><span class="cnt_cmt">5</span></span></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-08                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=95" class="lt_tit">Re: 원글 , 답글</a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-08                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=88" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/file/free/thumb-7b018c827432d9b37a214761cfb43782_HtE4kdgu_daee0bf9241e33801ab11c14585e92b938bfd4eb_138x80.gif" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=88" class="lt_tit">321 <i class="fa fa-download" aria-hidden="true"></i></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                                    </ul></div><div class="owl-item active center" style="width: 390px;"><ul class="item">
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=115" class="lt_tit">123</a>               
+                    <div class="lt_info">
+                        비회원                    <span class="lt_date">
+                            2023-11-24                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=114" class="lt_tit">321</a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=test" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">test</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=test" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=test" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=test" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=test" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=test" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=test" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-22                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=113" class="lt_tit"><i class="fa fa-lock" aria-hidden="true"></i> 비밀그링비니다</a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=test" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">test</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=test" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=test" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=test" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=test" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=test" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=test" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-22                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=112" class="lt_tit"><i class="fa fa-lock" aria-hidden="true"></i> 321</a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=test" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">test</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=test" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=test" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=test" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=test" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=test" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=test" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-22                    </span>
+                    </div>
+                </li>
+                </ul></div><div class="owl-item" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=111" class="lt_tit"><i class="fa fa-lock" aria-hidden="true"></i> 321</a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-22                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=108" class="lt_tit">1234
+                    <span class="lt_cmt"><span class="sound_only">댓글</span><span class="cnt_cmt">3</span></span></a>               
+                    <div class="lt_info">
+                        김탐                    <span class="lt_date">
+                            2023-11-17                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=103" class="lt_tit"><i class="fa fa-lock" aria-hidden="true"></i> 12111
+                    <span class="lt_cmt"><span class="sound_only">댓글</span><span class="cnt_cmt">2</span></span></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-16                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=102" class="lt_tit"><i class="fa fa-lock" aria-hidden="true"></i> 123</a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-16                    </span>
+                    </div>
+                </li>
+                </ul></div><div class="owl-item" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=101" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/editor/2311/thumb-4b0c7fd71fb76e610d8b2ac853e7921a_1700009990_1939_138x80.gif" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=101" class="lt_tit">123
+                    <span class="lt_cmt"><span class="sound_only">댓글</span><span class="cnt_cmt">2</span></span></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-15                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=94" class="lt_tit">원글
+                    <span class="lt_cmt"><span class="sound_only">댓글</span><span class="cnt_cmt">5</span></span></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-08                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=95" class="lt_tit">Re: 원글 , 답글</a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-08                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=88" class="lt_thumb"><img src="http://127.0.0.1/g5-update/data/file/free/thumb-7b018c827432d9b37a214761cfb43782_HtE4kdgu_daee0bf9241e33801ab11c14585e92b938bfd4eb_138x80.gif" alt=""></a> <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=88" class="lt_tit">321 <i class="fa fa-download" aria-hidden="true"></i></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-02                    </span>
+                    </div>
+                </li>
+                                    </ul></div><div class="owl-item cloned" style="width: 390px;"><ul class="item">
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=115" class="lt_tit">123</a>               
+                    <div class="lt_info">
+                        비회원                    <span class="lt_date">
+                            2023-11-24                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=114" class="lt_tit">321</a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=test" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">test</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=test" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=test" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=test" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=test" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=test" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=test" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-22                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=113" class="lt_tit"><i class="fa fa-lock" aria-hidden="true"></i> 비밀그링비니다</a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=test" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">test</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=test" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=test" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=test" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=test" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=test" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=test" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-22                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=112" class="lt_tit"><i class="fa fa-lock" aria-hidden="true"></i> 321</a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=test" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">test</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=test" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=test" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=test" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=test" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=test" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=test" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-22                    </span>
+                    </div>
+                </li>
+                </ul></div><div class="owl-item cloned" style="width: 390px;"><ul class="item">
+                <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=111" class="lt_tit"><i class="fa fa-lock" aria-hidden="true"></i> 321</a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-22                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=108" class="lt_tit">1234
+                    <span class="lt_cmt"><span class="sound_only">댓글</span><span class="cnt_cmt">3</span></span></a>               
+                    <div class="lt_info">
+                        김탐                    <span class="lt_date">
+                            2023-11-17                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=103" class="lt_tit"><i class="fa fa-lock" aria-hidden="true"></i> 12111
+                    <span class="lt_cmt"><span class="sound_only">댓글</span><span class="cnt_cmt">2</span></span></a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-16                    </span>
+                    </div>
+                </li>
+                            <li>
+                    <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free&amp;wr_id=102" class="lt_tit"><i class="fa fa-lock" aria-hidden="true"></i> 123</a>               
+                    <div class="lt_info">
+                        <span class="sv_wrap"><a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" class="sv_member tooltipstered" target="_blank" rel="nofollow" onclick="return false;">최고관리자</a><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span><noscript class="sv_nojs"><span class="sv"><a href="http://127.0.0.1/g5-update/bbs/memo_form.php?me_recv_mb_id=admin" rel="nofollow" onclick="win_memo(this.href); return false;">쪽지보내기</a>
+    <a href="http://127.0.0.1/g5-update/bbs/profile.php?mb_id=admin" onclick="win_profile(this.href); return false;" rel="nofollow">자기소개</a>
+    <a href="http://127.0.0.1/g5-update/bbs/new.php?mb_id=admin" class="link_new_page" onclick="check_goto_new(this.href, event);" rel="nofollow">전체게시물</a></span></noscript></span>                    <span class="lt_date">
+                            2023-11-16                    </span>
+                    </div>
+                </li>
+                </ul></div></div></div><div class="owl-nav disabled"><button type="button" role="presentation" class="owl-prev"><span aria-label="Previous">‹</span></button><button type="button" role="presentation" class="owl-next"><span aria-label="Next">›</span></button></div><div class="owl-dots disabled"></div></div>
+            <div class="lt_page">
+            <button class="lt_page_prev"><span class="sound_only">이전페이지</span><i class="fa fa-caret-left" aria-hidden="true"></i></button>
+            <span class="page_print"><b>1</b>/3</span>
+            <button class="lt_page_next"><span class="sound_only">다음페이지</span><i class="fa fa-caret-right" aria-hidden="true"></i></button>
+        </div>
+            <a href="http://127.0.0.1/g5-update/bbs/board.php?bo_table=free" class="lt_more"><span class="sound_only">자유게시판</span>전체보기</a>
+    </div><!-- 메인화면 최신글 끝 -->
+    
+        </div>
+    </div>
+    
+    
+    
+    <!-- 설문조사 시작 { -->
+    <form name="fpoll" action="http://127.0.0.1/g5-update/bbs/poll_update.php" onsubmit="return fpoll_submit(this);" method="post">
+    <input type="hidden" name="po_id" value="1">
+    <input type="hidden" name="skin_dir" value="theme%2Fbasic">
+    <aside id="poll">
+        <header>
+            <h2>설문조사</h2>
+            <a href="http://127.0.0.1/g5-update/bbs/poll_result.php?po_id=1&amp;skin_dir=theme%2Fbasic" target="_blank" onclick="poll_result(this.href); return false;" class="btn_result">결과보기</a>
+                </header>
+        <div class="poll_con">
+            <p>투표1</p>
+            <ul>
+                            <li class="chk_box">
+                    <input type="radio" name="gb_poll" value="1" id="gb_poll_1">
+                    <label for="gb_poll_1">
+                        <span></span>
+                        항목1	        	</label>
+                </li>
+                            <li class="chk_box">
+                    <input type="radio" name="gb_poll" value="2" id="gb_poll_2">
+                    <label for="gb_poll_2">
+                        <span></span>
+                        항목2	        	</label>
+                </li>
+                            <li class="chk_box">
+                    <input type="radio" name="gb_poll" value="3" id="gb_poll_3">
+                    <label for="gb_poll_3">
+                        <span></span>
+                        항목2	        	</label>
+                </li>
+                            <li class="chk_box">
+                    <input type="radio" name="gb_poll" value="4" id="gb_poll_4">
+                    <label for="gb_poll_4">
+                        <span></span>
+                        항목2	        	</label>
+                </li>
+                            <li class="chk_box">
+                    <input type="radio" name="gb_poll" value="5" id="gb_poll_5">
+                    <label for="gb_poll_5">
+                        <span></span>
+                        항목3	        	</label>
+                </li>
+                            <li class="chk_box">
+                    <input type="radio" name="gb_poll" value="6" id="gb_poll_6">
+                    <label for="gb_poll_6">
+                        <span></span>
+                        항목2	        	</label>
+                </li>
+                            <li class="chk_box">
+                    <input type="radio" name="gb_poll" value="7" id="gb_poll_7">
+                    <label for="gb_poll_7">
+                        <span></span>
+                        항목2	        	</label>
+                </li>
+                            <li class="chk_box">
+                    <input type="radio" name="gb_poll" value="8" id="gb_poll_8">
+                    <label for="gb_poll_8">
+                        <span></span>
+                        항목8	        	</label>
+                </li>
+                            <li class="chk_box">
+                    <input type="radio" name="gb_poll" value="9" id="gb_poll_9">
+                    <label for="gb_poll_9">
+                        <span></span>
+                        항목2	        	</label>
+                </li>
+                        </ul>
+            <div id="poll_btn">
+                <button type="submit" class="btn_poll">투표하기</button>
+            </div>
+        </div>
+    </aside>
+    </form>
+    
+    <script>
+    function fpoll_submit(f)
+    {
+        
+        var chk = false;
+        for (i=0; i<f.gb_poll.length;i ++) {
+            if (f.gb_poll[i].checked == true) {
+                chk = f.gb_poll[i].value;
+                break;
+            }
+        }
+    
+        if (!chk) {
+            alert("투표하실 설문항목을 선택하세요");
+            return false;
+        }
+    
+        var new_win = window.open("about:blank", "win_poll", "width=616,height=500,scrollbars=yes,resizable=yes");
+        f.target = "win_poll";
+    
+        return true;
+    }
+    
+    function poll_result(url)
+    {
+        
+        win_poll(url);
+    }
+    </script>
+    <!-- } 설문조사 끝 -->
+    <aside id="visit">
+        <h2>접속자집계</h2>
+        <dl>
+            <dt>오늘</dt>
+            <dd>1</dd>
+            <dt>어제</dt>
+            <dd>0</dd>
+            <dt>최대</dt>
+            <dd>2</dd>
+            <dt>전체</dt>
+            <dd>92</dd>
+        </dl>
+        </aside>
+    
+    
+    <div id="ft">
+        <div id="ft_copy">
+            <div id="ft_company">
+                <a href="http://127.0.0.1/g5-update/bbs/content.php?co_id=company">회사소개</a>
+                <a href="http://127.0.0.1/g5-update/bbs/content.php?co_id=privacy">개인정보처리방침</a>
+                <a href="http://127.0.0.1/g5-update/bbs/content.php?co_id=provision">서비스이용약관</a>
+            </div>
+            Copyright © <b>소유하신 도메인.</b> All rights reserved.<br>
+        </div>
+        <div class="ft_cnt">
+            <h2>사이트 정보</h2>
+            <p class="ft_info">
+                회사명 : 회사명 / 대표 : 대표자명<br>
+                주소  : OO도 OO시 OO구 OO동 123-45<br>
+                사업자 등록번호  : 123-45-67890<br>
+                전화 :  02-123-4567  팩스  : 02-123-4568<br>
+                통신판매업신고번호 :  제 OO구 - 123호<br>
+                개인정보관리책임자 :  정보책임자명<br>
+            </p>
+        </div>
+        <button type="button" id="top_btn"><i class="fa fa-arrow-up" aria-hidden="true"></i><span class="sound_only">상단으로</span></button>
+            <a href="http://127.0.0.1/g5-update/?device=pc" id="device_change">PC 버전으로 보기</a>
+        <script>console.log("방문자분석 스크립트")</script></div>
+    <script>
+    jQuery(function($) {
+    
+        $( document ).ready( function() {
+    
+            // 폰트 리사이즈 쿠키있으면 실행
+            font_resize("container", get_cookie("ck_font_resize_rmv_class"), get_cookie("ck_font_resize_add_class"));
+            
+            //상단고정
+            if( $(".top").length ){
+                var jbOffset = $(".top").offset();
+                $( window ).scroll( function() {
+                    if ( $( document ).scrollTop() > jbOffset.top ) {
+                        $( '.top' ).addClass( 'fixed' );
+                    }
+                    else {
+                        $( '.top' ).removeClass( 'fixed' );
+                    }
+                });
+            }
+    
+            //상단으로
+            $("#top_btn").on("click", function() {
+                $("html, body").animate({scrollTop:0}, '500');
+                return false;
+            });
+    
+        });
+    });
+    </script>
+{% endblock body_html %}

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block head %}
-    <link rel="stylesheet" href="{{ theme_asset('css/qa.css') }}">
+    <link rel="stylesheet" href="{{ theme_asset(request, 'css/qa.css') }}">
 {% endblock head %}
 
 {% block title %}{{ qa_config.qa_title }}{% endblock title %}

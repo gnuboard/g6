@@ -20,7 +20,7 @@ from core.plugin import (
     import_plugin_by_states, read_plugin_state, register_plugin,
     register_plugin_admin_menu, register_statics
 )
-from core.template import UserTemplates, register_theme_statics
+from core.template import register_theme_statics, TemplateService, UserTemplates
 from lib.common import *
 from lib.member_lib import is_super_admin, MemberService
 from lib.point import insert_point
@@ -332,13 +332,12 @@ async def device_change(
     Returns:
         RedirectResponse: 이전 페이지로 리디렉션
     """
-    if device not in ["pc", "mobile"]:
-        raise AlertException("잘못된 접근입니다.", 400, "/")
-
-    if device == "pc":
-        request.session["is_mobile"] = False
-    else:
-        request.session["is_mobile"] = True
+    if (device in ["pc", "mobile"] 
+            and not TemplateService.get_responsive()):
+        if device == "pc":
+            request.session["is_mobile"] = False
+        else:
+            request.session["is_mobile"] = True
 
     referer = request.headers.get("Referer", "/")
     return RedirectResponse(referer, status_code=303)
