@@ -242,8 +242,8 @@
 #scrap .scrap_del:hover {color:#3a8afd}
 
 #scrap_do .new_win_con {padding:0 20px}
-#scrap_do textarea {width:100%;height:100px}
-#scrap_do .scrap_tit {margin-bottom:10px;background:#f3f3f3;padding:10px 15px;font-size:1.2em;font-weight:bold}
+#scrap_do textarea {width:100%;height:100px;background: var(--inputBg);border: var(--inputBorder);color: var(--fontColor);}
+#scrap_do .scrap_tit {margin-bottom:10px;background:var(--inputBg);border: var(--inputBorder);color: var(--fontColor);padding:10px 15px;font-size:1.2em;font-weight:bold}
 #scrap_do label {display:block;margin:0 0 5px;font-size:1em}
 #scrap_do .win_btn:after {display:block;visibility:hidden;clear:both;content:""}
 #scrap .win_btn, #scrap_do .win_btn {margin:20px 0;text-align:center}
