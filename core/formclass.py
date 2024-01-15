@@ -45,8 +45,6 @@ class ConfigForm:
     cf_intercept_ip: Optional[str] = Form(default="")
     cf_analytics: Optional[str] = Form(default="")
     cf_add_meta: Optional[str] = Form(default="")
-    cf_syndi_token: Optional[str] = Form(default="")
-    cf_syndi_except: Optional[str] = Form(default="")
     cf_delay_sec: Optional[int] = Form(default=0)
     cf_link_target: Optional[str] = Form(default="")
     cf_read_point: Optional[int] = Form(default=0)

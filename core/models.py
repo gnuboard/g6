@@ -52,8 +52,6 @@ class Config(Base):
     cf_intercept_ip = Column(Text, nullable=False, default="")
     cf_analytics = Column(Text, nullable=False, default="")
     cf_add_meta = Column(Text, nullable=False, default="")
-    cf_syndi_token = Column(String(255), nullable=False, default="")
-    cf_syndi_except = Column(Text, nullable=False, default="")
     cf_member_skin = Column(String(50), nullable=False, default="")
     cf_use_homepage = Column(Integer, nullable=False, default=0, server_default=text("0"))
     cf_req_homepage = Column(Integer, nullable=False, default=0, server_default=text("0"))
