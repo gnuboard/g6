@@ -163,7 +163,8 @@ async def install_process(request: Request):
 
             with SessionLocal() as db:
                 config_setup(db, form.admin_id, form.admin_email)
-                admin_member_setup(db, form.admin_id, form.admin_password, form.admin_email)
+                admin_member_setup(db, form.admin_id, form.admin_name,
+                                   form.admin_password, form.admin_name, form.admin_email)
                 content_setup(db)
                 faq_master_setup(db)
                 board_group_setup(db)
@@ -203,13 +204,17 @@ def config_setup(db: Session, admin_id, admin_email):
         )
 
 
-def admin_member_setup(db: Session, admin_id, admin_password, admin_email):
+def admin_member_setup(db: Session, admin_id: str, admin_name : str,
+                       admin_password: str, admin_email: str):
     """최고관리자 등록"""
-    exists_admin_member = db.scalar(
-        exists(models.Member)
-        .where(models.Member.mb_id == admin_id).select()
+    admin_member = db.scalar(
+        select(models.Member).where(models.Member.mb_id == admin_id)
     )
-    if not exists_admin_member:
+    if admin_member:
+        admin_member.mb_password = create_hash(admin_password)
+        admin_member.mb_name = admin_name
+        admin_member.mb_email = admin_email
+    else:
         db.execute(
             insert(models.Member).values(
                 mb_id=admin_id,
