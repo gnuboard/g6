@@ -173,6 +173,7 @@ async def install_process(request: Request):
                 admin_member_setup(db, form.admin_id, form.admin_name,
                                    form.admin_password, form.admin_email)
                 content_setup(db)
+                qa_setup(db)
                 faq_master_setup(db)
                 board_group_setup(db)
                 board_setup(db)
@@ -244,6 +245,16 @@ def content_setup(db: Session):
         )
         if not exists_content:
             db.execute(insert(models.Content).values(**content))
+
+
+def qa_setup(db: Session):
+    """Q&A 기본값 등록"""
+
+    exists_qa = db.scalar(
+        exists(models.QaConfig).select()
+    )
+    if not exists_qa:
+        db.execute(insert(models.QaConfig).values(**default_qa_config))
 
 
 def faq_master_setup(db: Session):
