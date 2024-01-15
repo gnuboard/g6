@@ -2,7 +2,7 @@
 {% import editor_macro(request) as editor %}
 
 {% block head %}
-    <link rel="stylesheet" href="{{ theme_asset('css/qa.css') }}">
+    <link rel="stylesheet" href="{{ theme_asset(request, 'css/qa.css') }}">
     <script rel="stylesheet" src="{{ url_for('static', path="/js/viewimageresize.js") }}"></script>
     {{ editor.head() }}
 {% endblock head %}

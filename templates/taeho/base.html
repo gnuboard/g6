@@ -18,7 +18,10 @@
             <li><a href="{{ url_for('faq_view') }}">FAQ</a></li>
             <li><a href="{{ url_for('qa_list') }}">Q&A</a></li>
             <li><a href="/bbs/new">새글</a></li>
-            <li><a href="/bbs/current_connect" class="visit">접속자<strong class="visit-num">0</strong></a></li>
+            <li><a href="/bbs/current_connect" class="visit">
+                접속자<strong class="visit-num">{{ current_login_count[0] }}</strong></a>
+                <!-- current_login_count[1]은 회원 수 -->
+            </li>
         </ul>
         </div>
     </div>
@@ -145,10 +148,9 @@
     <div id="container_wr">
    
         <div id="container">
-            <h2 id="container_title"><span>{% block subtitle %}{% endblock %}</span></h2>
+            <h2 id="container_title"><span>{% block subtitle %}{% endblock subtitle %}</span></h2>
             {% block content %}
-
-            {% endblock %}
+            {% endblock content %}
         </div>
     <div id="aside">
         {% if request.state.login_member %}
@@ -220,16 +222,16 @@
             {% endif %}
         </div>
         <div id="ft_company" class="ft_cnt">
-        </div>
-        {% if latest %}
-            {{ latest(request, 'notice', 'notice', 4, 13)|safe }}
-        {% endif %}
-
-        <!-- 접속자집계 시작 { -->
-        {% if visit %}
-            {{ visit(request)|safe }}
-        {% endif %}
-        <!-- } 접속자집계 끝 -->
+        	<h2>사이트 정보</h2>
+	        <p class="ft_info">
+	        	회사명 : 회사명 / 대표 : 대표자명<br>
+				주소  : OO도 OO시 OO구 OO동 123-45<br>
+				사업자 등록번호  : 123-45-67890<br>
+				전화 :  02-123-4567  팩스  : 02-123-4568<br>
+				통신판매업신고번호 :  제 OO구 - 123호<br>
+				개인정보관리책임자 :  정보책임자명<br>
+			</p>
+	    </div>
     </div>
     <div id="ft_copy">Copyright &copy; <b>{{ request.url.hostname }}.</b> All rights reserved.</div>
 
