@@ -49,12 +49,36 @@ def get_theme_path() -> str:
             return theme_path
     except Exception:
         return default_theme_path
+    
+
+def get_admin_theme_path() -> str:
+    """관리자 > 테마의 설정 경로를 반환
+    - .env 파일에서 설정된 테마를 조회하여 반환
+    - 설정된 테마가 존재하지 않을 경우 기본 테마를 반환
+
+    Returns:
+        str: 테마 경로
+    """
+    default_theme = "basic"
+    default_theme_path = f"{ADMIN_TEMPLATES}/{default_theme}"
+    try:
+        theme = os.getenv("ADMIN_THEME", "basic")
+        theme_path = f"{ADMIN_TEMPLATES}/{theme}"
+
+        # 실제 테마가 존재하는지 확인            
+        if not os.path.exists(theme_path):
+            return default_theme_path
+
+        return theme_path
+    except Exception:
+        return default_theme_path
 
 
 TEMPLATES = "templates"
 TEMPLATES_DIR = get_theme_path()  # 사용자 템플릿 경로
-ADMIN_TEMPLATES_DIR = "admin/templates"  # 관리자 템플릿 경로
 
+ADMIN_TEMPLATES = "admin/templates"
+ADMIN_TEMPLATES_DIR = get_admin_theme_path()  # 관리자 템플릿 경로
 
 class TemplateService():
     """템플릿 서비스 클래스
