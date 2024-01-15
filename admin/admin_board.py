@@ -320,7 +320,7 @@ async def board_copy_update(
     if copy_case == 'schema_data_both':
         writes = db.scalars(select(origin_write_model)).all()
         for write in writes:
-            copy_data = {key: value for key, value in write.__dict__.items() if not key.startswith('_')}
+            copy_data = {column.name: getattr(write, column.name) for column in write.__table__.columns}
 
             # write 객체로 target_write 테이블에 레코드 추가
             db.execute(target_write_model.__table__.insert(), copy_data)
