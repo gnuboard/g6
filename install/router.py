@@ -16,6 +16,7 @@ from .default_values import *
 from core.database import DBConnect, DBSetting
 from core.exception import AlertException
 from core.formclass import InstallFrom
+from core.plugin import read_plugin_state, write_plugin_state
 from core.template import TemplateService
 from lib.common import *
 from lib.dependencies import validate_install, validate_token
@@ -125,6 +126,12 @@ async def install(
         db_connect.engine = new_engine
         db_connect.sessionLocal = session
 
+        # 플러그인 활성화 초기화
+        plugin_list = read_plugin_state()
+        for plugin in plugin_list:
+            plugin.is_enable = False
+        write_plugin_state(plugin_list)
+
         form_cache.update({"form": form})
 
         return templates.TemplateResponse("result.html", {"request": request})
@@ -163,7 +170,8 @@ async def install_process(request: Request):
 
             with SessionLocal() as db:
                 config_setup(db, form.admin_id, form.admin_email)
-                admin_member_setup(db, form.admin_id, form.admin_password, form.admin_email)
+                admin_member_setup(db, form.admin_id, form.admin_name,
+                                   form.admin_password, form.admin_email)
                 content_setup(db)
                 faq_master_setup(db)
                 board_group_setup(db)
@@ -181,6 +189,7 @@ async def install_process(request: Request):
             yield f"[success] 축하합니다. {default_version} 설치가 완료되었습니다."
         
         except Exception as e:
+            os.remove(ENV_PATH)
             yield f"[error] 설치가 실패했습니다. {e}"
 
     # 설치 진행 이벤트 스트림 실행
@@ -203,13 +212,17 @@ def config_setup(db: Session, admin_id, admin_email):
         )
 
 
-def admin_member_setup(db: Session, admin_id, admin_password, admin_email):
+def admin_member_setup(db: Session, admin_id: str, admin_name : str,
+                       admin_password: str, admin_email: str):
     """최고관리자 등록"""
-    exists_admin_member = db.scalar(
-        exists(models.Member)
-        .where(models.Member.mb_id == admin_id).select()
+    admin_member = db.scalar(
+        select(models.Member).where(models.Member.mb_id == admin_id)
     )
-    if not exists_admin_member:
+    if admin_member:
+        admin_member.mb_password = create_hash(admin_password)
+        admin_member.mb_name = admin_name
+        admin_member.mb_email = admin_email
+    else:
         db.execute(
             insert(models.Member).values(
                 mb_id=admin_id,
