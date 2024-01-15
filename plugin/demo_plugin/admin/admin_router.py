@@ -2,8 +2,8 @@ from fastapi import APIRouter
 from starlette.requests import Request
 from starlette.templating import Jinja2Templates
 
-from core.template import ADMIN_TEMPLATES_DIR
 from core.plugin import get_admin_plugin_menus, get_all_plugin_module_names
+from core.template import ADMIN_TEMPLATES_DIR
 from lib.common import get_admin_menus, get_client_ip
 from lib.template_functions import (
     get_editor_select, get_member_id_select, get_member_level_select,

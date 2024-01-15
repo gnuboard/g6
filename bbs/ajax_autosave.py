@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Path
 from starlette.responses import JSONResponse
 
-from core.database import DBConnect, db_session
+from core.database import db_session
 from core.formclass import AutoSaveForm
 from core.models import AutoSave
 from lib.common import *
@@ -11,8 +11,12 @@ router = APIRouter()
 
 @router.get("/autosave_list")
 async def autosave_list(request: Request, db: db_session):
-    """
-    자동저장 목록을 보여준다.
+    """자동저장 목록을 반환한다.
+    Args:
+        request (Request): Request 객체
+        db (db_session): 데이터베이스 세션
+    Returns:
+        AutoSave[list]: 자동저장 목록
     """
     member: Member = request.state.login_member
     if not member:
@@ -27,9 +31,12 @@ async def autosave_list(request: Request, db: db_session):
 
 
 @router.get("/autosave_count")
-async def autosave_count(request: Request, db: db_session):
-    """
-    자동저장글 개수를 반환한다.
+async def autosave_count(request: Request):
+    """자동저장글 개수를 반환한다.
+    Args:
+        request (Request): Request 객체
+    Returns:
+        dict: 자동저장글 개수
     """
     member: Member = request.state.login_member
     if not member:
@@ -40,12 +47,21 @@ async def autosave_count(request: Request, db: db_session):
 
 @router.get("/autosave_load/{as_id}")
 async def autosave_load(
-    request: Request,
-    db: db_session,
-    as_id: int = Path(..., title="자동저장 ID")
+        request: Request,
+        db: db_session,
+        as_id: int = Path(..., title="자동저장 ID")
 ):
-    """
-    자동저장 내용을 불러온다.
+    """자동저장 내용을 불러온다.
+    Args:
+        request (Request): Request 객체
+        db (db_session): 데이터베이스 세션
+        as_id (int, optional): 자동저장 ID.
+    Returns:
+        AutoSave: 자동저장 데이터
+    Raises:
+        HTTPException:  로그인이 필요합니다
+        HTTPException: 저장된 글이 없을 경우
+        HTTPException: 접근 권한이 없을 경우
     """
     member: Member = request.state.login_member
     if not member:
@@ -62,18 +78,25 @@ async def autosave_load(
 
 @router.post("/autosave")
 async def autosave(
-    request: Request,
-    db: db_session,
-    form_data: AutoSaveForm = Depends()
+        request: Request,
+        db: db_session,
+        form_data: AutoSaveForm = Depends()
 ):
-    """
-    글 임시저장
+    """글 임시저장
+    Args:
+        request (Request): Request 객체
+        db (db_session): 데이터베이스 세션
+        form_data (AutoSaveForm, optional): 자동저장 데이터.
+    Returns:
+        JSONResponse: 임시저장글 개수
+    Raises:
+        HTTPException:  로그인이 필요합니다
     """
     member = request.state.login_member
     if not member:
         raise HTTPException(status_code=403, detail="로그인 후 이용 가능합니다.")
 
-    # 임시저장 데이턱 있는지 확인 후 수정 또는 추가
+    # 임시저장 데이터가 있는지 확인 후 수정 또는 추가
     save_data = db.scalar(
         select(AutoSave)
         .where(AutoSave.mb_id == member.mb_id, AutoSave.as_uid == form_data.as_uid)
@@ -93,12 +116,21 @@ async def autosave(
 
 @router.delete("/autosave/{as_id}")
 async def autosave(
-    request: Request,
-    db: db_session,
-    as_id: int = Path(..., title="자동저장 ID")
+        request: Request,
+        db: db_session,
+        as_id: int = Path(..., title="자동저장 ID")
 ):
-    """
-    임시저장글 삭제
+    """임시저장글 삭제
+    Args:
+        request (Request): Request 객체
+        db (db_session): 데이터베이스 세션
+        as_id (int, optional): 자동저장 ID.
+    Returns:
+        JSONResponse: 삭제되었습니다.
+    Raises:
+    HTTPException:  로그인이 필요합니다, 저장된 글이 없을 경우, 접근 권한이 없을 경우
+    HTTPException: 저장된 글이 없을 경우
+    HTTPException: 접근 권한이 없을 경우
     """
     member = request.state.login_member
     if not member:
@@ -117,8 +149,11 @@ async def autosave(
 
 
 def get_autosave_count(mb_id: str):
-    """
-    자동저장글 개수를 반환한다.
+    """임시저장된 글 개수를 반환한다.
+    Args:
+        mb_id (str): 회원 아이디
+    Returns:
+        int: 임시저장된 글 개수
     """
     db = DBConnect().sessionLocal()
     count = db.scalar(
