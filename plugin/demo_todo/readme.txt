@@ -1,7 +1,7 @@
 plugin Name: 플러그인 todo
-plugin URI: http://localhost
+plugin URI: gnuboard.com
 Maker: GNUBOARD
-Maker URI: https://gnuboard.com
+Maker URI: gnuboard.com
 Version: 1.0.0
 Detail: 플러그인 DB todo입니다.
 License: MIT
