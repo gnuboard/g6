@@ -159,7 +159,7 @@ html.no-overflowscrolling #autosave_pop {height:auto;max-height:10000px !importa
 
 #bo_v_file h2 {position:absolute;font-size:0;line-height:0;overflow:hidden}
 #bo_v_file ul {margin:0;list-style:none}
-#bo_v_file li {padding:15px;position:relative;margin:10px 0;border:var(--fileBorder);border-radius:5px;}
+#bo_v_file li {padding:15px;position:relative;margin:10px 0;border:var(--fileBorder);border-radius:5px;transition: all 0.2s;}
 #bo_v_file li i {float:left;color:#b2b2b2;font-size:2.35em;margin-right:20px}
 #bo_v_file a {float:left;display:block;text-decoration:none;word-wrap:break-word;color:var(--fontColor)}
 #bo_v_file a:focus, #bo_v_file li:hover a, #bo_v_file a:active {text-decoration:underline;color:#e7664d}
@@ -340,3 +340,64 @@ box-shadow:inset 0 1px 2px rgba(0, 0, 0, 0.1)}
 #bo_w .bo_w_select select {border:1px solid #d0d3db;width:100%;height:40px;border-radius:3px}
 #bo_w .btn_submit {padding:0 20px;font-size:1.167em}
 #bo_w .btn_cancel {border-radius:3px;font-size:1.167em}
+
+/* 갤러리 */
+
+/* 갤러리 목록 */
+#bo_gall h2 {margin:0;padding:0;width:1px;height:1px;font-size:0;line-height:0;overflow:hidden}
+#bo_gall #gall_ul {margin:10px -10px 0;padding:0;list-style:none;zoom:1}
+#bo_gall #gall_ul:after {display:block;visibility:hidden;clear:both;content:""}
+#bo_gall .gall_li {}
+#bo_gall .gall_li .gall_chk {position:absolute;top:0;left:0;padding:5px;z-index:1}
+#bo_gall .gall_box {position:relative;margin:0 0 50px 0;border-radius:0 0 2px 2px}
+#bo_gall .gall_con {position:relative}
+
+.gall_row .col-gn-0,.gall_row .col-gn-1,.gall_row .col-gn-2,.gall_row .col-gn-3,.gall_row .col-gn-4,.gall_row .col-gn-5,.gall_row .col-gn-6,.gall_row .col-gn-7,.gall_row .col-gn-8,.gall_row .col-gn-9,.gall_row .col-gn-10 {position:relative;min-height:1px;padding-left:10px;*padding-left:0;padding-right:10px;*padding-right:0;float:left;box-sizing:border-box;margin-left:0}
+.gall_row .col-gn-0,.gall_row .col-gn-1 {width:100%}
+.gall_row .col-gn-2 {width:50%}
+.gall_row .col-gn-3 {width:33.33333333%}
+.gall_row .col-gn-4 {width:25%}
+.gall_row .col-gn-5 {width:20%}
+.gall_row .col-gn-6 {width:16.66666667%}
+.gall_row .col-gn-7 {width:14.28571428%}
+.gall_row .col-gn-8 {width:12.5%}
+.gall_row .col-gn-9 {width:11.11111111%}
+.gall_row .col-gn-10 {width:10%}
+
+.gall_row .box_clear {clear:both}
+
+#bo_gall .gall_now .gall_text_href a {color:#ff3061}
+
+#bo_gall .gall_href a:link, #bo_gall .gall_href a:focus, #bo_gall .gall_href a:hover {text-decoration:none}
+#bo_gall .gall_img {border-bottom:1px solid var(--noImgBg);text-align:center;overflow:hidden}
+#bo_gall .gall_img a,#bo_gall .gall_img .no_image,#bo_gall .gall_img .is_notice {display:block}
+#bo_gall .gall_img img, #bo_gall .gall_img video {max-width:100%;height:auto !important}
+#bo_gall .gall_img span {display:inline-block;background:var(--noImgBg);text-align:center;text-transform:uppercase;font-weight:bold;font-size:1.25em;color:#777}
+
+#bo_gall .gall_text_href {margin:10px 0}
+#bo_gall .gall_text_href a {font-weight:bold}
+#bo_gall .gall_text_href img {margin:0 0 0 4px}
+#bo_gall .bo_tit {display:block;line-height:30px;font-weight:bold;color:var(--fontColor);font-size:1.2em}
+#bo_gall .bo_tit .cnt_cmt {background:#e9eff5;color:#3a8afd;font-size:11px;height:16px;line-height:16px;padding:0 5px;border-radius:3px;vertical-align:middle}
+
+#bo_gall .bo_cnt {color:#acacac;line-height:18px}
+#bo_gall .profile_img img {border-radius:50%}
+#bo_gall .bo_tit .fa-download {width:16px;height:16px;line-height:16px;background:#e89f31;color:#fff;text-align:center;font-size:10px;border-radius:2px;margin-right:2px;vertical-align:middle}
+#bo_gall .bo_tit .fa-link {width:16px;height:16px;line-height:16px;background:#ad68d8;color:#fff;text-align:center;font-size:10px;border-radius:2px;margin-right:2px;vertical-align:middle;font-weight:normal}
+#bo_gall .bo_tit .fa-link {width:16px;height:16px;line-height:16px;background:#ad68d8;color:#fff;text-align:center;font-size:10px;border-radius:2px;margin-right:2px;vertical-align:middle;margin-right:2px}
+#bo_gall .bo_tit .new_icon {display:inline-block;width:16px;line-height:16px;font-size:0.825em;color:#23db79;background:#b9ffda;text-align:center;border-radius:2px;margin-left:2px;font-weight:bold;vertical-align:baseline}
+#bo_gall .bo_tit .hot_icon {display:inline-block;width:16px;line-height:16px;font-size:0.833em;color:#fff;background:#e52955;text-align:center;border-radius:2px;vertical-align:middle;margin-right:2px}
+#bo_gall .bo_tit .fa-lock {display:inline-block;line-height:16px;color:#999;text-align:center;vertical-align:middle}
+
+#bo_gall .gall_info {line-height:1.5em;line-height:20px}
+#bo_gall .gall_info strong {display:inline-block;margin:0}
+#bo_gall .gall_info i {font-size:12px}
+#bo_gall .gall_info .gall_date,
+#bo_gall .gall_info .gall_view {display:inline-block;margin-left:10px;color:#777}
+
+#bo_gall .gall_option {position:absolute;top:10px;right:10px}
+#bo_gall .gall_option strong {background:#fff;padding:5px 10px;border-radius:30px;
+box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
+
+#bo_gall li.empty_list {padding:85px 0;text-align:center}
+

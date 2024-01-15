@@ -27,6 +27,7 @@
   --scrapBg: #f8ebea;
   --boListBg: #ccd1d9;
   --btnPrvBg: #fff1f1;
+  --noImgBg: #eaeaea;
   /* 폰트색상 */
   --fontColor: #000;
   --gnbFontColor: #080808;
@@ -39,8 +40,8 @@
   --ptStatusColor: #737373;
   --moreOptColor: #6b757c;
   --ftColor: #525252;
-  --boListColor: #4e546f;
-  --moreColor: #b8bfc4;
+  --boListColor: #6f534e;
+  --moreColor: #c4bab8;
   /* border */
   --border: 1px solid #e5ecee;
   --topBtnBorder: 2px solid #00000032;
@@ -84,6 +85,7 @@
   --scrapBg: #493937;
   --boListBg: #38393b;
   --btnPrvBg: #363636;
+  --noImgBg: #1f1d1d;
   /* 폰트색상 */
   --fontColor: #fff;
   --gnbFontColor: #a0a0a0;
@@ -97,7 +99,7 @@
   --ptStatusColor: #2c2c2c;
   --moreOptColor: #a0a0a0;
   --ftColor: #999999;
-  --boListColor: #8589a0;
+  --boListColor: #a08a85;
   --moreColor: #646464;
   /* border */
   --border: 1px solid #383838;
@@ -201,7 +203,7 @@ border:1px solid #ff8269 !important;
 
 #hd_wrapper {max-width: 1200px;margin: 0 auto;position: relative;background: #ff8269;border-radius: 8px;height: 80px;display: flex;justify-content: space-between;align-items: center;padding: 0px 20px;}
 
-#logo {float:left;width: 60px;}
+#logo {float:left;width: 54px;}
 #logo img {width: 100%;}
 
 .hd_sch_wr {width:445px;}
@@ -302,7 +304,7 @@ box-shadow:0 2px 5px rgba(0,0,0,0.2)}
 #aside .tab-content {display: none;}
 #aside .tab-content.current {display: block;}
 
-#container {position:relative;float:right;min-height:500px;height:auto !important;margin:20px 0 56px;height:500px;font-size:1em;width:calc(100% - 290px);zoom:1;padding: 20px;border-radius: 8px;background: var(--contBg);border: var(--border);}
+#container {position:relative;float:right;min-height:500px;height:auto !important;margin:20px 0 56px;height:500px;font-size:1em;width:calc(100% - 290px);zoom:1;padding: 20px;border-radius: 8px;background: var(--contBg);border: var(--border);color: var(--fontColor);}
 #container:after {display:block;visibility:hidden;clear:both;content:""}
 #container_title {font-size:1.333em;margin:0 auto;font-weight:bold;color: #ff8269;}
 #container_title span {margin:0 auto 24px;display:block;line-height:30px}
