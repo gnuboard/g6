@@ -10,6 +10,6 @@ class Todo(Base):
     __tablename__ = DBConnect().table_prefix + "todos"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(length=50), index=True)
-    content = Column(Text(length=255))
+    content = Column(Text)
     is_done = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.now)

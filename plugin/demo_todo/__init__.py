@@ -14,7 +14,6 @@ def register_plugin():
     """
     register_admin_router()
     register_user_router()
-    # register_event()
     # 그밖에 필요한 작업 추가하세요
 
 

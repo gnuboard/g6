@@ -54,7 +54,6 @@
                     {% if get_member_level(request) >= poll.po_level %}
                         <form name="fpollresult" action="{{ url_for('poll_etc_update', po_id=poll.po_id) }}" onsubmit="return fpollresult_submit(this);" method="post" autocomplete="off" id="poll_other_q">
                             <input type="hidden" name="token" value="">
-                            <input type="hidden" name="skin_dir" value="">
                             {% if request.state.login_member.mb_id %}
                                 <input type="hidden" name="pc_name" value="{{ request.state.login_member.mb_nick }}">
                             {% endif %}

@@ -9,10 +9,10 @@ from lib.common import *
 router = APIRouter(prefix="/ckeditor4")
 
 UPLOAD_IMAGE_RESIZE = TypeAdapter(bool).validate_python(os.getenv("UPLOAD_IMAGE_RESIZE", True))
-UPLOAD_IMAGE_SIZE_LIMIT = os.getenv("UPLOAD_IMAGE_SIZE_LIMIT", 20) * 1024 * 1024  # 20 MB
-UPLOAD_IMAGE_RESIZE_WIDTH = os.getenv("UPLOAD_IMAGE_RESIZE_WIDTH", 1200)  # px
-UPLOAD_IMAGE_RESIZE_HEIGHT = os.getenv("UPLOAD_IMAGE_RESIZE_HEIGHT", 2800)  # px
-UPLOAD_IMAGE_QUALITY = os.getenv("UPLOAD_IMAGE_QUALITY", 80)  # (0~100) default 80
+UPLOAD_IMAGE_SIZE_LIMIT = TypeAdapter(int).validate_python(os.getenv("UPLOAD_IMAGE_SIZE_LIMIT", 20)) * 1024 * 1024  # 20 MB
+UPLOAD_IMAGE_RESIZE_WIDTH = TypeAdapter(int).validate_python(os.getenv("UPLOAD_IMAGE_RESIZE_WIDTH", 1200))  # px
+UPLOAD_IMAGE_RESIZE_HEIGHT = TypeAdapter(int).validate_python(os.getenv("UPLOAD_IMAGE_RESIZE_HEIGHT", 2800))  # px
+UPLOAD_IMAGE_QUALITY = TypeAdapter(int).validate_python(os.getenv("UPLOAD_IMAGE_QUALITY", 80))  # (0~100) default 80
 
 
 @router.post("/upload")

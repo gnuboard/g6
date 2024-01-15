@@ -41,26 +41,27 @@ async def auth_list(
         default_sod="",
     )
 
+    # JSON 파일에서 데이터 로드
+    auth_menu = get_admin_menus()
+    # 자식메뉴의 id, name 값만 추출
+    auth_child_menu = {}
+    for menu_items in auth_menu.values():
+        auth_child_menu.update({
+            item.get('id', ''): item.get('name', '')
+            for item in menu_items
+        })
+
+    # 닉네임, 권한이름 추가
     for row in result['rows']:
         row.mb_nick = row.member.mb_nick
+        row.au_name = auth_child_menu.get(row.au_menu, '')
 
-    # JSON 파일에서 데이터 로드
-    with open('admin/admin_menu_bbs.json', 'r', encoding='utf-8') as file:
-        auth_menu = json.load(file)
-
-    # 사전의 각 키-값 쌍을 확인
+    # 권한 옵션 생성
     auth_options = []
-    # 사전의 각 메뉴 항목을 순회
-    for menu_items in auth_menu.values():
-        # 메뉴의 각 항목을 순회
-        for item in menu_items:
-            # id와 name 값을 가져옴
-            id_value = item.get('id', '')
-            name_value = item.get('name', '')
-            # id와 name 값이 비어 있지 않은 경우 그들을 옵션으로 출력
-            if id_value and name_value and id_value[-3:] != '000':
-                # print(id_value, name_value)
-                auth_options.append(f'<option value="{id_value}">{id_value} {name_value}</option>')    
+    for id, name in auth_child_menu.items():
+        # id와 name 값이 비어 있지 않은 경우 그들을 옵션으로 출력
+        if id and name and id[-3:] != '000':
+            auth_options.append(f'<option value="{id}">{id} {name}</option>')
 
     context = {
         "request": request,

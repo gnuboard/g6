@@ -5,9 +5,11 @@ from fastapi import FastAPI, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-from core.plugin import register_plugin_admin_menu, get_plugin_state_change_time,\
-    read_plugin_state, cache_plugin_state, cache_plugin_menu, register_plugin,\
+from core.plugin import (
+    register_plugin_admin_menu, get_plugin_state_change_time,
+    read_plugin_state, cache_plugin_state, cache_plugin_menu, register_plugin,
     unregister_plugin, delete_router_by_tagname
+)
 from core.template import TemplateService
 
 
@@ -89,6 +91,7 @@ async def should_run_middleware(request: Request) -> bool:
     if (path.startswith('/generate_token')
             or path.startswith('/device/change')
             or path.startswith('/static')
+            or path.startswith('/data')
             or path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.webp'))):
         return False
 

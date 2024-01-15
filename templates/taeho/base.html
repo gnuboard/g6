@@ -93,12 +93,14 @@
         <!-- 프로필 -->
         <div class="profile_wrap">
           <span class="profile_img" tabindex="0">
-            <img src="/{{ get_member_image(request.state.login_member.mb_id)|safe }}" alt="profile_image">
+            <img src="{{ get_member_image(request.state.login_member.mb_id)|safe }}" alt="profile_image">
           </span>
           <ul class="hd_login">       
             {% if request.state.login_member %}
             <li><a href="/bbs/member_confirm?url=/bbs/register_form">정보수정</a></li>
-            <li class="tnb_admin"><a href="/admin">관리자</a></li>
+            {% if request.state.is_super_admin %}
+              <li class="tnb_admin"><a href="/admin">관리자</a></li>
+            {% endif %}
             <li><a href="/bbs/logout">로그아웃</a></li>
             {% else %}
             <li><a href="/bbs/register">회원가입</a></li>
@@ -167,7 +169,7 @@
         {% if render_visit_statistics %}
             {{ render_visit_statistics(request)|safe }}
         {% endif %}
-        <!-- } 접속자집계 끝 -->
+        <!-- } 접속자집계 끝 -->  
       <script>
         // aside/최신글 - 탭메뉴 기능
         var tabItems = document.querySelectorAll('.aside_tab ul.tab_01 li');

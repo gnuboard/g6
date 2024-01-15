@@ -18,7 +18,7 @@ PLUGIN_STATE_FILE_PATH = f'{PLUGIN_DIR}/{PLUGIN_STATE_FILE}'
 # 플러그인 관리자 메뉴를 저장하는 캐시
 cache_plugin_menu = cachetools.Cache(maxsize=1)
 
-# plugin_states.json 파일읽기를 줄이기 위한 캐시
+# PLUGIN_STATE_FILE 파일읽기를 줄이기 위한 캐시
 cache_plugin_state = cachetools.Cache(maxsize=1)
 
 
@@ -30,8 +30,7 @@ class PluginState:
 
 
 def get_all_plugin_info(plugin_dir=PLUGIN_DIR):
-    """
-    PLUGIN_DIR 폴더 내부의 모든 패키지들 정보를 가져온다. (비활성화된 플러그인 포함)
+    """PLUGIN_DIR 폴더 내부의 모든 패키지들 정보를 가져온다. (비활성화된 플러그인 포함)
     Args:
         plugin_dir (str): 플러그인 폴더
     Returns:
@@ -61,12 +60,11 @@ def get_all_plugin_info(plugin_dir=PLUGIN_DIR):
 
 
 def get_all_plugin_module_names(plugin_dir=PLUGIN_DIR):
-    """
-    플러그인 폴더 내부의 모든 패키지들의 이름을 가져온다. (비활성화 포함)
+    """플러그인 폴더에 있는 모든 플러그인들의 이름을 가져온다. (비활성화 된것 포함)
     Args:
         plugin_dir (str): 플러그인 폴더
     Returns:
-        plugin_name_list (list): 플러그인 이름 목록
+        list: plugin_name_list 플러그인 이름 목록
     """
     plugin_names = []
     for module_name in os.listdir(plugin_dir):
@@ -81,7 +79,7 @@ def get_all_plugin_module_names(plugin_dir=PLUGIN_DIR):
 def get_plugin_state_change_time():
     """플러그인 상태 변경 시간을 반환한다.
     Returns:
-        mtime (float): 플러그인 상태 변경 시간
+        float: mtime 플러그인 상태 변경 시간
     """
     if not os.path.isfile(PLUGIN_STATE_FILE_PATH):
         return 0
@@ -90,13 +88,12 @@ def get_plugin_state_change_time():
 
 
 def get_plugin_info(module_name, plugin_dir=PLUGIN_DIR):
-    """
-    플러그인 정보를 반환한다.
+    """플러그인 정보를 반환한다.
     Args:
-        plugin_dir (str): 플러그인 루트 폴더
         module_name (str): 플러그인 모듈 이름 - 개별 패키지 폴더 이름
+        plugin_dir (str): 플러그인 루트 폴더
     Returns:
-        info (dict): 플러그인 정보
+        dict: info 플러그인 정보
     """
     info = {}
     path = os.path.join(plugin_dir, module_name)
@@ -144,12 +141,11 @@ def get_plugin_info(module_name, plugin_dir=PLUGIN_DIR):
 
 
 def get_admin_plugin_menus():
-    """
-    전역 캐시에 저장된 관리자 메뉴를 반환한다.
+    """전역 캐시에 저장된 관리자 메뉴를 반환한다.
     Returns:
-        admin_menus (list): 관리자 메뉴 목록
+        list: 관리자 메뉴 목록
     """
-    # 전역변수 cache_plugin_menu
+    # 전역변수 cache_plugin_menu 에서 가져온다
     return cache_plugin_menu.get('admin_menus')
 
 
@@ -166,12 +162,11 @@ def delete_router_by_tagname(app, tagname: str):
 
 
 def read_plugin_state() -> List[PluginState]:
-    """
-    플러그인 활성 상태를 plugin_states.json 에서 읽는다.
+    """플러그인 활성 상태를 plugin_states.json 에서 읽는다.
     Returns:
-        plugin_state (list): PluginState 목록 반환
+        PluginState 목록 반환
     Examples:
-        플러그인 상태값 변경시
+        플러그인 상태값 변경시 읽는다.
     """
     if not os.path.isfile(PLUGIN_STATE_FILE_PATH):
         return []
@@ -185,9 +180,9 @@ def read_plugin_state() -> List[PluginState]:
             try:
                 plugin_state = json.load(file)
             except Exception as e:
-                # plugin_states.json 파일이 json 포멧에 안맞을 경우 플러그인 로딩을 하지 못한다.
-                # 빈 파일은 허용되지 않는다. 에러메시지: 'Expecting value: line 1 column 1 (char 0)'
-                # json 포멧에 맞게 고치거나 plugin_states.json 파일을 지우고 플러그인을 관리자에서 새로 설정해야한다.
+                # plugin_states.json 파일이 json 포맷에 안맞을 경우 플러그인 로딩을 못한다.
+                # 빈 파일은 오류가 발생한다. 에러메시지: 'Expecting value: line 1 column 1 (char 0)'
+                # json 포맷에 맞게 고치거나 plugin_states.json 파일을 지우고 플러그인을 관리자에서 새로 설정해야한다.
                 logging.critical("/plugin/plugin_states.json json validate error. not load any plugin!.")
                 logging.critical("It's not allow empty file. check json format. "
                                  f"or remove {PLUGIN_STATE_FILE} file.")
@@ -202,8 +197,7 @@ def read_plugin_state() -> List[PluginState]:
 
 
 def write_plugin_state(plugin_states: List[PluginState]):
-    """
-    플러그인 활성 상태를 plugin_states.json 에 기록한다.
+    """플러그인 활성 상태를 plugin_states.json 에 기록한다.
     Args:
         plugin_states (list): 플러그인 목록
     Raises:
@@ -226,13 +220,12 @@ def write_plugin_state(plugin_states: List[PluginState]):
 
 
 def import_plugin_by_states(plugin_states: List[PluginState], plugin_dir=PLUGIN_DIR) -> List[PluginState]:
-    """
-    플러그인 상태값에 따라 플러그인을 import 한다.
+    """플러그인 상태값에 따라 플러그인을 import 한다.
     Args:
-        plugin_dir (str): 플러그인 폴더
         plugin_states (list): 플러그인 상태 목록
+        plugin_dir (str): 플러그인 폴더
     Returns:
-        plugin_list (list): 플러그인 목록
+        List[PluginState] : 플러그인 목록
     Examples:
         main, 그누보드 시작 (프로세스 시작)
     """
@@ -246,13 +239,12 @@ def import_plugin_by_states(plugin_states: List[PluginState], plugin_dir=PLUGIN_
 
 
 def register_plugin_admin_menu(plugin_states, plugin_dir=PLUGIN_DIR):
-    """
-    플러그인의 관리자 메뉴를 등록한다.
+    """플러그인의 관리자 메뉴를 등록한다.
     Args:
         plugin_states (list): 플러그인 상태 목록
         plugin_dir (str): 플러그인 폴더
     Returns:
-        admin_menus (list): 관리자 메뉴 목록
+        list: admin_menus 관리자 메뉴 목록
     """
     admin_menus = []
     for plugin in plugin_states:
@@ -267,13 +259,12 @@ def register_plugin_admin_menu(plugin_states, plugin_dir=PLUGIN_DIR):
 
 
 def register_plugin(plugin_states, plugin_dir=PLUGIN_DIR):
-    """
-    플러그인의 관리자 메뉴를 등록한다.
+    """플러그인의 관리자 메뉴를 등록한다.
     Args:
         plugin_states (list): 플러그인 상태 목록
         plugin_dir (str): 플러그인 폴더
     Returns:
-        admin_menus (list): 관리자 메뉴 목록
+        list: admin_menus 관리자 메뉴 목록
     """
     for plugin in plugin_states:
         if plugin.is_enable:
@@ -287,13 +278,12 @@ def register_plugin(plugin_states, plugin_dir=PLUGIN_DIR):
 
 
 def unregister_plugin(plugin_states, plugin_dir=PLUGIN_DIR):
-    """
-    등록된 플러그인을 해제한다. unregister_plugin() 을 실행.
+    """등록된 플러그인을 해제한다. unregister_plugin() 을 실행.
     Args:
         plugin_states (list): 플러그인 상태 목록
         plugin_dir (str): 플러그인 폴더
     Returns:
-        admin_menus (list): 관리자 메뉴 목록
+        list: admin_menus 관리자 메뉴 목록
     """
     for plugin in plugin_states:
         if not plugin.is_enable:
@@ -307,12 +297,11 @@ def unregister_plugin(plugin_states, plugin_dir=PLUGIN_DIR):
 
 
 def register_statics(app, plugin_info: List[PluginState], plugin_dir=PLUGIN_DIR):
-    """
-    플러그인의 static 을 등록한다.
+    """플러그인의 static 을 등록한다.
     Args:
         app: FastAPI()
         plugin_info: 등록할 플러그인 정보
-        plugin_dir: 플러그인이 모여 있는 폴더
+        plugin_dir: 플러그인 폴더
     """
     for plugin in plugin_info:
         try:

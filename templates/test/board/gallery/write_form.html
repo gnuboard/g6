@@ -5,16 +5,12 @@
     {{ editor.head() }}
 {% endblock head %}
 
-{% block title %}
-    {{ board.subject }} 글쓰기
-{% endblock title %}
-{% block subtitle %}
-    {{ board.subject }} 글쓰기
-{% endblock subtitle %}
+{% block title %}{{ board.subject }} 글쓰기{% endblock title %}
+{% block subtitle %}{{ board.subject }} 글쓰기{% endblock subtitle %}
 
 {% block content %}
 {% set login_member=request.state.login_member %}
-{% set is_admin=get_admin_type(request, login_member.mb_id, group=board.group, board=board) %}
+{% set is_admin=get_admin_type(request, login_member.mb_id, board=board) %}
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
 <section id="bo_w">
     <!-- 게시물 작성/수정 시작 { -->

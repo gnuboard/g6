@@ -1,3 +1,5 @@
+from typing_extensions import Annotated
+
 from fastapi import APIRouter, Depends, Form, Path, Request
 from fastapi.responses import RedirectResponse
 
@@ -6,7 +8,7 @@ from core.exception import AlertException
 from core.models import Member
 from core.template import UserTemplates
 from lib.common import *
-from lib.dependencies import validate_token
+from lib.dependencies import get_write, validate_token
 from lib.pbkdf2 import validate_password
 from lib.template_filters import default_if_none
 from lib.token import create_session_token
@@ -20,18 +22,13 @@ templates.env.filters["default_if_none"] = default_if_none
 async def password(
     request: Request,
     db: db_session,
+    write: Annotated[WriteBaseModel, Depends(get_write)],
     action: str = Path(...),
     bo_table: str = Path(...),
-    wr_id: int = Path(...)
 ):
     """
     게시글/댓글 비밀번호 확인 페이지
     """
-    write_model = dynamic_create_write_table(bo_table)
-    write = db.get(write_model, wr_id)
-    if not write:
-        raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
-
     write.subject = write.wr_subject if not write.wr_is_comment else "비밀 댓글"
 
     context = {
@@ -47,6 +44,7 @@ async def password(
 async def password_check(
     request: Request,
     db: db_session,
+    write: Annotated[WriteBaseModel, Depends(get_write)],
     action: str = Path(...),
     bo_table: str = Path(...),
     wr_id: int = Path(...),
@@ -55,12 +53,6 @@ async def password_check(
     """
     게시글/댓글 행동 시 비밀번호 확인
     """
-
-    write_model = dynamic_create_write_table(bo_table)
-    write = db.get(write_model, wr_id)
-    if not write:
-        raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
-
     # 게시글/댓글 보기
     if "view" in action:
         # 비밀번호가 없는 회원 게시글은

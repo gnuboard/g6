@@ -28,33 +28,57 @@ from lib.template_functions import (
 )
 
 
-def get_template_path() -> str:
-    """기본환경설정 > 템플릿의 설정 경로를 반환
-    - 설정된 템플릿이 존재하지 않을 경우 기본 템플릿을 반환
+def get_theme_path() -> str:
+    """기본환경설정 > 테마의 설정 경로를 반환
+    - 설정된 테마가 존재하지 않을 경우 기본 테마를 반환
 
     Returns:
-        str: 템플릿 경로
+        str: 테마 경로
     """
-    default_template = "basic"
-    default_template_path = f"{TEMPLATES}/{default_template}"
+    default_theme = "basic"
+    default_theme_path = f"{TEMPLATES}/{default_theme}"
     try:
         with DBConnect().sessionLocal() as db:
-            template = db.scalar(select(Config.cf_theme)) or default_template
-            template_path = f"{TEMPLATES}/{template}"
+            theme = db.scalar(select(Config.cf_theme)) or default_theme
+            theme_path = f"{TEMPLATES}/{theme}"
 
-            # 실제 템플릿이 존재하는지 확인            
-            if not os.path.exists(template_path):
-                return default_template_path
+            # 실제 테마가 존재하는지 확인            
+            if not os.path.exists(theme_path):
+                return default_theme_path
 
-            return template_path
+            return theme_path
     except Exception:
-        return default_template_path
+        return default_theme_path
+    
+
+def get_admin_theme_path() -> str:
+    """관리자 > 테마의 설정 경로를 반환
+    - .env 파일에서 설정된 테마를 조회하여 반환
+    - 설정된 테마가 존재하지 않을 경우 기본 테마를 반환
+
+    Returns:
+        str: 테마 경로
+    """
+    default_theme = "basic"
+    default_theme_path = f"{ADMIN_TEMPLATES}/{default_theme}"
+    try:
+        theme = os.getenv("ADMIN_THEME", "basic")
+        theme_path = f"{ADMIN_TEMPLATES}/{theme}"
+
+        # 실제 테마가 존재하는지 확인            
+        if not os.path.exists(theme_path):
+            return default_theme_path
+
+        return theme_path
+    except Exception:
+        return default_theme_path
 
 
 TEMPLATES = "templates"
-TEMPLATES_DIR = get_template_path()  # 사용자 템플릿 경로
-ADMIN_TEMPLATES_DIR = "admin/templates"  # 관리자 템플릿 경로
+TEMPLATES_DIR = get_theme_path()  # 사용자 템플릿 경로
 
+ADMIN_TEMPLATES = "admin/templates"
+ADMIN_TEMPLATES_DIR = get_admin_theme_path()  # 관리자 템플릿 경로
 
 class TemplateService():
     """템플릿 서비스 클래스
@@ -112,7 +136,7 @@ class UserTemplates(Jinja2Templates):
             self.env.globals["get_selected"] = get_selected
             self.env.globals["get_member_icon"] = get_member_icon
             self.env.globals["get_member_image"] = get_member_image
-            self.env.globals["template_asset"] = template_asset
+            self.env.globals["theme_asset"] = theme_asset
             # 템플릿 컨텍스트 프로세서 설정
             self.context_processors.append(self._default_context)
             # 추가 env.global 설정
@@ -200,7 +224,7 @@ class AdminTemplates(Jinja2Templates):
             self.env.globals["get_selected"] = get_selected
             self.env.globals["get_member_icon"] = get_member_icon
             self.env.globals["get_member_image"] = get_member_image
-            self.env.globals["template_asset"] = template_asset
+            self.env.globals["theme_asset"] = theme_asset
             self.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
             self.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
             self.env.globals["option_selected"] = option_selected
@@ -221,9 +245,9 @@ class AdminTemplates(Jinja2Templates):
         return context
 
 
-def template_asset(asset_path: str) -> str:
+def theme_asset(asset_path: str) -> str:
     """
-    현재 템플릿의 asset url을 반환하는 헬퍼 함수
+    현재 테마의 asset url을 반환하는 헬퍼 함수
 
     Args:
         asset_path (str): 플러그인 모듈 이름
@@ -231,36 +255,36 @@ def template_asset(asset_path: str) -> str:
     Returns:
         asset_url (str): asset url
     """
-    template_path = get_template_path()
-    template_name = template_path.replace(TEMPLATES + '/', "")
+    theme_path = get_theme_path()
+    theme = theme_path.replace(TEMPLATES + '/', "")
 
-    return f"/template_static/{template_name}/{asset_path}"
+    return f"/theme_static/{theme}/{asset_path}"
 
 
-def register_template_statics(app: FastAPI) -> None:
+def register_theme_statics(app: FastAPI) -> None:
     """
-    현재 템플릿의 static 경로를 가상의 경로로 등록하는 함수
-    - ex) /templates/basic/static/css -> /template_static/basic/css
+    현재 테마의 static 경로를 가상의 경로로 등록하는 함수
+    - ex) /{theme}/basic/static/css -> /theme_static/basic/css
 
     Args:
         app (FastAPI): FastAPI 객체
     """
-    template_path = get_template_path()
-    template_name = template_path.replace(TEMPLATES + '/', "")
-    static_directory = f"{TEMPLATES}/{template_name}/static"
+    theme_path = get_theme_path()
+    theme = theme_path.replace(TEMPLATES + '/', "")
+    static_directory = f"{TEMPLATES}/{theme}/static"
 
     if not os.path.isdir(static_directory):
         logger = logging.getLogger("uvicorn.error")
-        logger.warning("template has not static directory")
+        logger.warning("theme has not static directory")
         return
 
-    url = f"/template_static/{template_name}"
+    url = f"/theme_static/{theme}"
     path = StaticFiles(directory=static_directory)
-    app.mount(url, path, name=f"static_{template_name}")  # tag
+    app.mount(url, path, name=f"static_{theme}")  # tag
 
 
-def get_template_list():
-    """템플릿 경로의 템플릿 목록을 리스트로 반환
+def get_theme_list():
+    """테마 디렉토리의 목록을 리스트로 반환
     
     Returns:
         list: 디렉토리 리스트
@@ -273,10 +297,10 @@ def get_template_list():
         if file in ['.', '..']:
             continue
 
-        template_path = os.path.join(dirname, file)
+        theme_path = os.path.join(dirname, file)
         file_list = ['readme.txt', 'screenshot.png', 'index.html']
-        if (os.path.isdir(template_path)
-                and all(os.path.isfile(os.path.join(template_path, fname)) for fname in file_list)):
+        if (os.path.isdir(theme_path)
+                and all(os.path.isfile(os.path.join(theme_path, fname)) for fname in file_list)):
             result_array.append(file)
 
     result_array.sort()  # Using Python's default sort which is similar to natsort for strings
@@ -284,17 +308,17 @@ def get_template_list():
     return result_array
 
 
-def get_template_info(template_name: str) -> dict:
-    """템플릿 정보를 반환합니다.
+def get_theme_info(theme_name: str) -> dict:
+    """테마 정보를 반환합니다.
 
     Args:
-        template_name (str): 템플릿 이름
+        theme_name (str): 테마 이름
 
     Returns:
-        dict: 템플릿 정보
+        dict: 테마 정보
     """
     info = {}
-    path = os.path.join(TEMPLATES, template_name)
+    path = os.path.join(TEMPLATES, theme_name)
 
     if os.path.isdir(path):
         screenshot = os.path.join(path, 'screenshot.png')
@@ -303,7 +327,7 @@ def get_template_info(template_name: str) -> dict:
             try:
                 with Image.open(screenshot) as img:
                     if img.format == "PNG":
-                        screenshot_url = f"/admin/screenshot/{template_name}"
+                        screenshot_url = f"/admin/screenshot/{theme_name}"
             except:
                 pass
 
@@ -315,8 +339,8 @@ def get_template_info(template_name: str) -> dict:
                 content = [line.strip() for line in f.readlines()]
 
             patterns = [
-                ("^Template Name:(.+)$", "template_name"),
-                ("^Template URI:(.+)$", "template_uri"),
+                ("^Theme Name:(.+)$", "theme_name"),
+                ("^Theme URI:(.+)$", "theme_uri"),
                 ("^Maker:(.+)$", "maker"),
                 ("^Maker URI:(.+)$", "maker_uri"),
                 ("^Version:(.+)$", "version"),
@@ -331,9 +355,9 @@ def get_template_info(template_name: str) -> dict:
                     if match:
                         info[key] = match.group(1).strip()
 
-        if not info.get('template_name'):
-            info['template_name'] = template_name
+        if not info.get('theme_name'):
+            info['theme_name'] = theme_name
 
-        info['template_dir'] = template_name
+        info['theme_dir'] = theme_name
 
     return info

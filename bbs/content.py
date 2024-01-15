@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Path, Request
 
 from core.database import db_session
 from core.exception import AlertException
@@ -11,31 +11,26 @@ templates = UserTemplates()
 
 
 @router.get("/content/{co_id}")
-async def content_view(request: Request, co_id: str, db: db_session):
-    '''
-    컨텐츠 보기
-    '''
-    content = db.scalar(select(Content).where(Content.co_id==co_id))
+async def content_view(
+    request: Request,
+    db: db_session,
+    co_id: str = Path(...),
+):
+    """
+    컨텐츠 페이지 조회
+    """
+    content = db.get(Content, co_id)
     if not content:
-        raise AlertException(status_code=404, detail=f"{co_id} : 내용 아이디가 존재하지 않습니다.")
-    
-    # 상단 이미지가 있으면 상단 이미지를 출력하고 없으면 내용의 첫번째 이미지를 출력한다.
-    co_himg_url = ""
-    img_data = get_head_tail_img('content', content.co_id + '_h')
-    if (img_data['img_exists']):
-        co_himg_url = img_data['img_url']
-    co_timg_url = ""
-    img_data = get_head_tail_img('content', content.co_id + '_t')
-    if (img_data['img_exists']):
-        co_timg_url = img_data['img_url']
-    
+        raise AlertException(f"{co_id} : 내용 아이디가 존재하지 않습니다.", 404)
+
+    head_img = get_head_tail_img('content', content.co_id + '_h')
+    tail_img = get_head_tail_img('content', content.co_id + '_t')
+
     context = {
         "request": request,
-        "title": f"{content.co_subject}",
+        "title": content.co_subject,
         "content": content,
-        "co_himg_url": co_himg_url,
-        "co_timg_url": co_timg_url,
+        "co_himg_url": head_img['img_url'] if head_img['img_exists'] else "",
+        "co_timg_url": tail_img['img_url'] if tail_img['img_exists'] else "",
     }
-    
     return templates.TemplateResponse(f"/content/{content.co_skin}/content.html", context)
-

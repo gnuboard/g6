@@ -1,3 +1,5 @@
+from typing_extensions import Annotated
+
 from fastapi import APIRouter, Depends, Request, Form, Path
 from fastapi.responses import HTMLResponse, RedirectResponse
 from typing import List
@@ -8,7 +10,9 @@ from core.models import Board, BoardNew, Scrap, BoardFile, BoardGood
 from core.formclass import BoardForm
 from core.template import AdminTemplates
 from lib.common import *
-from lib.dependencies import common_search_query_params, validate_token
+from lib.dependencies import (
+    common_search_query_params, get_board, validate_token
+)
 from lib.template_functions import (
     get_editor_select, get_group_select, 
     get_member_level_select, get_paging, get_skin_select, 
@@ -81,13 +85,13 @@ async def board_list_update(
             board.bo_mobile_skin = bo_mobile_skin[i]
             board.bo_subject = bo_subject[i]
             board.bo_read_point = int(
-                bo_read_point[i]) if bo_read_point[i] is not None and bo_read_point[i].isdigit() else 0
+                bo_read_point[i]) if bo_read_point[i] is not None and is_integer_format(bo_read_point[i]) else 0
             board.bo_write_point = int(
-                bo_write_point[i]) if bo_write_point[i] is not None and bo_write_point[i].isdigit() else 0
+                bo_write_point[i]) if bo_write_point[i] is not None and is_integer_format(bo_write_point[i]) else 0
             board.bo_comment_point = int(
-                bo_comment_point[i]) if bo_comment_point[i] is not None and bo_comment_point[i].isdigit() else 0
+                bo_comment_point[i]) if bo_comment_point[i] is not None and is_integer_format(bo_comment_point[i]) else 0
             board.bo_download_point = int(
-                bo_download_point[i]) if bo_download_point[i] is not None and bo_download_point[i].isdigit() else 0
+                bo_download_point[i]) if bo_download_point[i] is not None and is_integer_format(bo_download_point[i]) else 0
             board.bo_use_sns = get_from_list(bo_use_sns, i, 0)
             board.bo_use_search = get_from_list(bo_use_search, i, 0)
             board.bo_order = int(
@@ -187,16 +191,11 @@ async def board_form(request: Request, db: db_session):
 @router.get("/board_form/{bo_table}")
 async def board_form(
     request: Request,
-    db: db_session,
-    bo_table: str = Path(...),
+    board: Annotated[Board, Depends(get_board)],
 ):
     """
     게시판 수정 폼
     """
-    board = db.get(Board, bo_table)
-    if not board:
-        raise AlertException(f"{bo_table} 게시판이 존재하지 않습니다.", 404)
-
     context = {
         "request": request,
         "board": board,
@@ -275,17 +274,15 @@ async def board_form_update(
 @router.get("/board_copy/{bo_table}")
 async def board_copy(
     request: Request,
-    db: db_session,
-    bo_table: str = Path(...),
+    board: Annotated[Board, Depends(get_board)],
 ):
     """
     게시판 복사 폼
     """
-    board = db.get(Board, bo_table)
-    if not board:
-        raise AlertException(f"{bo_table} 게시판이 존재하지 않습니다.", 404)
-
-    context = {"request": request, "board": board}
+    context = {
+        "request": request,
+        "board": board
+    }
     return templates.TemplateResponse("board_copy.html", context)
 
 
@@ -293,6 +290,7 @@ async def board_copy(
 async def board_copy_update(
     request: Request,
     db: db_session,
+    origin_board: Annotated[Board, Depends(get_board)],
     bo_table: str = Form(...),
     target_table: str = Form(...),
     target_subject: str = Form(...),
@@ -301,33 +299,29 @@ async def board_copy_update(
     """
     게시판 복사 처리
     """
-    source_row = db.get(Board, bo_table)
-    if not source_row:
-        raise AlertException(f"{bo_table} 게시판이 존재하지 않습니다.", 404)
-
-    target_row = db.get(Board, target_table)
-    if target_row:
+    target_board = db.get(Board, target_table)
+    if target_board:
         raise AlertException(f"{bo_table} 게시판이 이미 존재합니다.", 404)
 
     # 복사될 레코드의 모든 필드를 딕셔너리로 변환
-    target_dict = {key: value for key, value in source_row.__dict__.items() if not key.startswith('_')}
+    target_dict = {key: value for key, value in origin_board.__dict__.items() if not key.startswith('_')}
     
     target_dict['bo_table'] = target_table
     target_dict['bo_subject'] = target_subject
 
-    target_row = Board(**target_dict)
-    db.add(target_row)
+    target_board = Board(**target_dict)
+    db.add(target_board)
     db.commit()
 
     # 새로운 게시판 테이블 생성
-    source_write_model = dynamic_create_write_table(table_name=bo_table, create_table=False)
+    origin_write_model = dynamic_create_write_table(table_name=bo_table, create_table=False)
     target_write_model = dynamic_create_write_table(table_name=target_table, create_table=True)
     # 복사 유형을 '구조와 데이터' 선택시 테이블의 레코드 모두 복사
     if copy_case == 'schema_data_both':
-        writes = db.scalars(select(source_write_model)).all()
+        writes = db.scalars(select(origin_write_model)).all()
         for write in writes:
             copy_data = {key: value for key, value in write.__dict__.items() if not key.startswith('_')}
-            print(copy_data)
+
             # write 객체로 target_write 테이블에 레코드 추가
             db.execute(target_write_model.__table__.insert(), copy_data)
             db.commit()

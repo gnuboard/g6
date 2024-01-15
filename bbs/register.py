@@ -1,4 +1,5 @@
 import secrets
+from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends, Form, File, Path, Query, UploadFile
 from fastapi.responses import RedirectResponse, Response
@@ -12,8 +13,7 @@ from core.formclass import MemberForm
 from core.models import Member
 from core.template import UserTemplates
 from lib.common import *
-from lib.dependencies import validate_token, validate_captcha
-from lib.member_lib import is_admin
+from lib.dependencies import get_member, validate_token, validate_captcha
 from lib.pbkdf2 import create_hash
 from lib.point import insert_point
 from lib.template_filters import default_if_none
@@ -21,7 +21,6 @@ from lib.template_filters import default_if_none
 router = APIRouter()
 templates = UserTemplates()
 templates.env.filters["default_if_none"] = default_if_none
-templates.env.globals["is_admin"] = is_admin
 templates.env.globals["captcha_widget"] = captcha_widget
 templates.env.globals["check_profile_open"] = check_profile_open
 
@@ -326,12 +325,9 @@ async def register_result(
 async def email_certify(
     request: Request,
     db: db_session,
-    mb_id: str = Path(...),
+    member: Annotated[Member, Depends(get_member)],
     certify: str = Query(...),
 ):
-    member = db.scalar(select(Member).where(Member.mb_id == mb_id))
-    if not member:
-        raise AlertException("존재하는 회원이 아닙니다.", 404, "/")
     if member.mb_leave_date or member.mb_intercept_date:
         raise AlertException("탈퇴한 회원이거나 차단된 회원입니다.", 403, "/")
     elif member.mb_email_certify != datetime(1, 1, 1, 0, 0, 0):
@@ -343,4 +339,4 @@ async def email_certify(
     member.mb_email_certify2 = ""
     db.commit()
 
-    raise AlertException(f"메일인증 처리를 완료 하였습니다.\\n\\n지금부터 {mb_id} 아이디로 로그인 가능합니다", 200, "/")
+    raise AlertException(f"메일인증 처리를 완료 하였습니다. \\n\\n지금부터 {member.mb_id} 아이디로 로그인 가능합니다", 200, "/")

@@ -10,7 +10,7 @@
 
 {% block content %}
 {% set login_member=request.state.login_member %}
-{% set is_admin=get_admin_type(request, login_member.mb_id, group=board.group, board=board) %}
+{% set is_admin=get_admin_type(request, login_member.mb_id, board=board) %}
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
 <section id="bo_w">
     <!-- 게시물 작성/수정 시작 { -->
@@ -141,7 +141,7 @@
                     {% if file.bf_no != None %}
                     <span class="file_del">
                         <input type="checkbox" id="bf_file_del{{ i }}" name="bf_file_del[]" value="{{ file.bf_no }}">
-                        <label for="bf_file_del{{ i }}">{{ file.bf_source }} ({{ file.bf_filesize|filesizeformat }}) 파일 삭제</label>
+                        <label for="bf_file_del{{ i }}"><span class="elip" title="{{ file.bf_source }}">{{ file.bf_source }}</span> ({{ file.bf_filesize|filesizeformat }}) 파일 삭제</label>
                     </span>
                     {% endif %}
                 </div>

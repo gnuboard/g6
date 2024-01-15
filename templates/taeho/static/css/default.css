@@ -643,3 +643,6 @@ box-sizing:content-box;
 /* 다크모드 설정 */
 #darkmode_btn .visible.dark {display: var(--lightVisible)}
 #darkmode_btn .visible.bright {display: var(--darkVisible)}
+
+/* 긴 문자열 ... 처리 */
+.elip {display:inline-block; width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
