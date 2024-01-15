@@ -529,6 +529,7 @@ a.btn_admin,.btn_admin {display:inline-block;color:#d13f4a;text-decoration:none;
 
 /* 새창 기본 스타일 */
 .new_win {position:relative}
+.new_win ul {margin-bottom: 15px;}
 .new_win .tbl_wrap {margin:0 20px}
 .new_win #win_title {font-size:1.3em;height:50px;line-height:30px;padding:10px 20px;background:var(--contBg);color:var(--fontColor);
 box-shadow:0 1px 10px rgba(0,0,0,.1)}
