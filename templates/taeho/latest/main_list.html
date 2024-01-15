@@ -393,25 +393,25 @@ html {
     <div class="slider main-slider con">
       {% for write in writes -%}
         <div class="slide-item">
-            <div class="slide-con" data-dot-title="{{ write.subject }}" data-dot-content="{{ write.wr_content }}">
+            <div class="slide-con" data-dot-title="{{ write.subject }}" data-dot-content="{{ write.wr_content }}" data-dot-bo-table="{{ bo_table }}" data-dot-wr-id="{{ write.wr_id }}">
                 <div class="slide-dummy"></div>
-                    <div class="slide-txt">
-                        <h2 class="txt-tt"><a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}">{{ write.subject }}</a></h2>
-                        <p class="txt-desc">{{ write.wr_content|striptags }}</p>
-                        <div class="txt-btn">
-                            <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}">바로가기</a>
-                        </div>
+                <div class="slide-txt">
+                    <h2 class="txt-tt"><a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}">{{ write.subject }}</a></h2>
+                    <p class="txt-desc">{{ write.wr_content|striptags }}</p>
+                    <div class="txt-btn">
+                        <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}">바로가기</a>
                     </div>
-                    <picture class="img-box">
-                      <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}" class="lt_img">
-                        {% set thumbnail=get_list_thumbnail(request, board, write, thumb_width, thumb_height) %}
-                        {% if thumbnail.src %}
-                        <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}">
-                        {% else %}
-                        <img src="{{ url_for('static', path='/img/no_img.png') }}" alt="이미지가 없습니다." width="{{ thumb_width }}" height="{{ thumb_height }}">
-                        {% endif %}
-                      </a>
-                    </picture>
+                </div>
+                <picture class="img-box">
+                    <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}" class="lt_img">
+                    {% set thumbnail=get_list_thumbnail(request, board, write, thumb_width, thumb_height) %}
+                    {% if thumbnail.src %}
+                    <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}">
+                    {% else %}
+                    <img src="{{ url_for('static', path='/img/no_img.png') }}" alt="이미지가 없습니다." width="{{ thumb_width }}" height="{{ thumb_height }}">
+                    {% endif %}
+                    </a>
+                </picture>
             </div>
         </div>
         
@@ -429,8 +429,8 @@ html {
         dots:true,
         fade:true,
         customPaging: function(slider, i) { 
-            console.log($(slider.$slides[i]).html());
-            return '<button class="tab"><span class="s-line-fill"></span><div class="s-indicator only-pc"><span class="inner-txt">' + $(slider.$slides[i]).find('.slide-con').attr('data-dot-title') + '</span></div></button>';
+            const slideCon = $(slider.$slides[i]).find('.slide-con');
+            return `<button class="tab"><span class="s-line-fill"></span><div class="s-indicator only-pc"><a href="/board/${slideCon.attr('data-dot-bo-table')}/${slideCon.attr('data-dot-wr-id')}" class="inner-txt">` + slideCon.attr('data-dot-title') + '</a></div></button>';
         },
     });
 
@@ -442,12 +442,16 @@ html {
             if ( $slider.parent().attr('data-slick-autoplay-status') !== 'N' ) {
                 var width = $slider.find('.slick-dots .slick-active > button > .s-line-fill').css('width');
                 var buttonWidth = $slider.find('.slick-dots .slick-active > button').css('width');
-                
-                //console.log(width);
+
                 if ( width == buttonWidth ) {
                     $slider.slick('slickNext');
                 }
             }
         });
     }, 500);
+
+    // 최신글 없을 시 슬라이더 삭제
+    if ($('.slide-con').length == 0) {
+        $('.slick-dots').remove();
+    }
 </script>
