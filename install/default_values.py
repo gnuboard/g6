@@ -44,6 +44,7 @@ default_boards = [
 ]
 default_board_data = {
     'gr_id': default_gr_id,
+    'bo_count_delete': 1,
     'bo_read_point': default_read_point,
     'bo_write_point': default_write_point,
     'bo_comment_point': default_comment_point,
@@ -53,7 +54,7 @@ default_board_data = {
     'bo_use_sideview': 0,
     'bo_use_file_content': 0,
     'bo_use_secret': 0,
-    'bo_use_dhtml_editor': 0,
+    'bo_use_dhtml_editor': 1,
     'bo_use_rss_view': 0,
     'bo_use_good': 0,
     'bo_use_nogood': 0,
@@ -183,6 +184,24 @@ default_member = {
     'mb_email_certify': datetime.now(),
     'mb_datetime': datetime.now(),
     'mb_ip': '127.0.0.1'
+}
+default_qa_config = {
+    'qa_title': '1:1문의',
+    'qa_category': '회원|포인트',
+    'qa_skin': 'basic',
+    'qa_mobile_skin': 'basic',
+    'qa_use_email': 1,
+    'qa_req_email': 0,
+    'qa_use_hp': 1,
+    'qa_req_hp': 0,
+    'qa_use_editor': 1,
+    'qa_subject_len': 60,
+    'qa_mobile_subject_len': 30,
+    'qa_page_rows': 15,
+    'qa_mobile_page_rows': 15,
+    'qa_image_width': 600,
+    'qa_upload_size': 1048576,
+    'qa_insert_content': ''
 }
 default_faq_master = {
     'fm_id': 1,

@@ -289,9 +289,9 @@ def register_theme_statics(app: FastAPI) -> None:
         static_directory = f"{TEMPLATES}/{theme}{directory}/static"
 
         if not os.path.isdir(static_directory):
-            logger = logging.getLogger("uvicorn.error")
-            logger.warning("theme has not static directory : ",
-                           static_directory)
+            # logger = logging.getLogger("uvicorn.error")
+            # logger.warning("theme has not static directory : ",
+            #                static_directory)
             continue
 
         url = f"/theme_static/{theme}{directory}"

@@ -297,7 +297,7 @@ def board_setup():
                 bo_use_sideview=0,
                 bo_use_file_content=0,
                 bo_use_secret=0,
-                bo_use_dhtml_editor=0,
+                bo_use_dhtml_editor=1,
                 bo_use_rss_view=0,
                 bo_use_good=0,
                 bo_use_nogood=0,
