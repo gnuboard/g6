@@ -172,6 +172,7 @@ html {
     max-width: 500px;
     z-index:50;
     color: #fff;
+    text-align: left;
 }
 
 .main-slider .slide-item .slide-con .img-box::after {
@@ -413,11 +414,20 @@ html {
                     </a>
                 </picture>
             </div>
-        </div>
-        
+        </div>   
         {% else -%}
-        <div class="slider-single" style="line-height:145px;color:#666;text-align:center;padding:0">
-            게시물이 없습니다.
+        <div class="slide-item" style="line-height:145px;color:#666;text-align:center;padding:0">
+          <div class="slide-con" data-dot-title="게시물이 없습니다.">
+            <div class="slide-txt">
+              <h2 class="txt-tt">게시물이 없습니다.</h2>
+              <p class="txt-desc">게시물이 없습니다.</p>
+          </div>
+          <picture class="img-box">
+            <a href="#" class="lt_img">
+              <img src="{{ url_for('static', path='/img/no_img.png') }}" alt="이미지가 없습니다." width="{{ thumb_width }}" height="{{ thumb_height }}">
+            </a>
+          </picture>
+          </div>
         </div>
         {%- endfor %}
     </div>
@@ -429,8 +439,7 @@ html {
         dots:true,
         fade:true,
         customPaging: function(slider, i) { 
-            const slideCon = $(slider.$slides[i]).find('.slide-con');
-            return `<button class="tab"><span class="s-line-fill"></span><div class="s-indicator only-pc"><a href="/board/${slideCon.attr('data-dot-bo-table')}/${slideCon.attr('data-dot-wr-id')}" class="inner-txt">` + slideCon.attr('data-dot-title') + '</a></div></button>';
+            return '<button class="tab"><span class="s-line-fill"></span><div class="s-indicator only-pc"><span class="inner-txt">' + $(slider.$slides[i]).find('.slide-con').attr('data-dot-title') + '</span></div></button>';
         },
     });
 

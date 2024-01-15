@@ -2,7 +2,7 @@
 {% import editor_macro(request) as editor %}
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', path="/css/basic/qa.css") }}">
+    <link rel="stylesheet" href="{{ template_asset('css/qa.css') }}">
     <script rel="stylesheet" src="{{ url_for('static', path="/js/viewimageresize.js") }}"></script>
     {{ editor.head() }}
 {% endblock head %}
@@ -107,6 +107,7 @@
                             <a href="/{{ file.path }}" class="view_file_download" download="{{ file.name }}">
                                 <strong>{{ file.name }}</strong>
                             </a>
+                            <br>
                         </li>
                     {% endfor %}
                 </ul>
@@ -115,20 +116,22 @@
         </section>
 
         <ul class="bo_v_nb">
-            <li>
-                {% if prev %}
-                    <a href="{{ url_for('qa_view', qa_id=prev.qa_id) }}?{{ request.query_params }}" class="btn_b01 btn">
-                        <i class="fa fa-chevron-left" aria-hidden="true"></i> 이전글
-                    </a>
-                {% endif %}
-            </li>
-            <li>
-                {% if next %}
-                    <a href="{{ url_for('qa_view', qa_id=next.qa_id) }}?{{ request.query_params }}" class="btn_b01 btn">
-                        다음글 <i class="fa fa-chevron-right" aria-hidden="true"></i>
-                    </a>
-                {% endif %}
-            </li>
+              {% if prev %}
+                <li class="btn_prv">
+                  <a href="{{ url_for('qa_view', qa_id=prev.qa_id) }}?{{ request.query_params }}" class="btn_b01 btn">
+                    <i class="fa fa-chevron-left" aria-hidden="true"></i>
+                    <span class="nb_tit">이전글</span>
+                  </a>
+                </li>
+              {% endif %}
+              {% if next %}
+                <li class="btn_next">
+                  <a href="{{ url_for('qa_view', qa_id=next.qa_id) }}?{{ request.query_params }}" class="btn_b01 btn">
+                    <span class="nb_tit">다음글</span>
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i>
+                  </a>
+                </li>
+              {% endif %}
         </ul>
 
         {% if answer %}

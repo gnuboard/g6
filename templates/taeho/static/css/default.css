@@ -25,6 +25,9 @@
   --pgBg: #eee;
   --pgHvBg: #fafafa;
   --scrapBg: #f8ebea;
+  --boListBg: #ccd1d9;
+  --btnPrvBg: #fff1f1;
+  --noImgBg: #eaeaea;
   /* 폰트색상 */
   --fontColor: #000;
   --gnbFontColor: #080808;
@@ -32,13 +35,13 @@
   --btnColor: #000;
   --bovColor: #666;
   --tdColor: #666;
-  --shareColor: #555;
+  --bovTitColor: #555;
   --iconColor: #4b5259;
   --ptStatusColor: #737373;
   --moreOptColor: #6b757c;
   --ftColor: #525252;
-  --boListColor: #4e546f;
-  --moreColor: #b8bfc4;
+  --boListColor: #6f534e;
+  --moreColor: #c4bab8;
   /* border */
   --border: 1px solid #e5ecee;
   --topBtnBorder: 2px solid #00000032;
@@ -51,6 +54,9 @@
   --afterBorder: transparent transparent #fff transparent;
   --beforeBorder: transparent transparent #e5ecee transparent;
   --priTableBorder: 1px solid #d8dbdf;
+  --qaBorder: 1px solid #ffded8;
+  --fileBorder: 2px solid #00000010;
+  --shareBorder: 1px solid #d5d5d5;
 }
 :root[color-theme='dark'] {
   /* 스위치 버튼 */
@@ -67,7 +73,7 @@
   --prHover: #151616;
   --pointBg: #2c2c2c;
   --bovHover: #1f1d1d;
-  --boNoticeBg: #2b2528;
+  --boNoticeBg: #1b1716;
   --footerBg: #242020;
   --ftCopyBg: #2b2727;
   --evenTdBg: #1f1d1d; 
@@ -77,6 +83,9 @@
   --pgBg: #323235;
   --pgHvBg: #1f1d1d;
   --scrapBg: #493937;
+  --boListBg: #38393b;
+  --btnPrvBg: #363636;
+  --noImgBg: #1f1d1d;
   /* 폰트색상 */
   --fontColor: #fff;
   --gnbFontColor: #a0a0a0;
@@ -84,13 +93,13 @@
   --btnColor: #4158d1;
   --bovColor: #b9b9b9;
   --tdColor: #a0a0a0;
-  --shareColor: #fff;
+  --bovTitColor: #bababa;
   --iconColor: #fff;
   --ptAllColor: #8d8c8c;
   --ptStatusColor: #2c2c2c;
   --moreOptColor: #a0a0a0;
   --ftColor: #999999;
-  --boListColor: #8589a0;
+  --boListColor: #a08a85;
   --moreColor: #646464;
   /* border */
   --border: 1px solid #383838;
@@ -104,6 +113,9 @@
   --afterBorder: transparent transparent #212020 transparent;
   --beforeBorder: transparent transparent #383838 transparent;
   --priTableBorder: 1px solid #414141;
+  --qaBorder: 1px solid #504544;
+  --fileBorder: 2px solid #ffffff24;
+  --shareBorder: 1px solid #4d4d4d;
   /* filter */
   --invert: invert(92%);
 }
@@ -191,7 +203,7 @@ border:1px solid #ff8269 !important;
 
 #hd_wrapper {max-width: 1200px;margin: 0 auto;position: relative;background: #ff8269;border-radius: 8px;height: 80px;display: flex;justify-content: space-between;align-items: center;padding: 0px 20px;}
 
-#logo {float:left;width: 60px;}
+#logo {float:left;width: 54px;}
 #logo img {width: 100%;}
 
 .hd_sch_wr {width:445px;}
@@ -292,7 +304,7 @@ box-shadow:0 2px 5px rgba(0,0,0,0.2)}
 #aside .tab-content {display: none;}
 #aside .tab-content.current {display: block;}
 
-#container {position:relative;float:right;min-height:500px;height:auto !important;margin:20px 0 56px;height:500px;font-size:1em;width:calc(100% - 290px);zoom:1;padding: 20px;border-radius: 8px;background: var(--contBg);border: var(--border);}
+#container {position:relative;float:right;min-height:500px;height:auto !important;margin:20px 0 56px;height:500px;font-size:1em;width:calc(100% - 290px);zoom:1;padding: 20px;border-radius: 8px;background: var(--contBg);border: var(--border);color: var(--fontColor);}
 #container:after {display:block;visibility:hidden;clear:both;content:""}
 #container_title {font-size:1.333em;margin:0 auto;font-weight:bold;color: #ff8269;}
 #container_title span {margin:0 auto 24px;display:block;line-height:30px}
@@ -411,7 +423,7 @@ a.btn_b01,.btn_b01 {display:inline-block;color:#bababa;text-decoration:none;vert
 .btn_b01:hover, .btn_b01:hover {color:var(--fontColor)}
 a.btn_b02,.btn_b02 {display:inline-block;background:#ff8269;height: 45px;padding:0 10px;color:#fff;text-decoration:none;border:0;vertical-align:middle}
 a.btn_b02:hover, .btn_b02:hover {background:#e7664d}
-a.btn_b03, .btn_b03 {display:inline-block;background:#fff;border:1px solid #b9bdd3;color:#646982;text-decoration:none;vertical-align:middle}
+a.btn_b03, .btn_b03 {display:inline-block;background:var(--contBg);border:1px solid #b9bdd3;color:#646982;text-decoration:none;vertical-align:middle}
 a.btn_b03:hover, .btn_b03:hover {background:#ebedf6}
 a.btn_b04, .btn_b04 {display:inline-block;background:#fff;border:1px solid #ccc;color:#707070;text-decoration:none;vertical-align:middle}
 a.btn_b04:hover, .btn_b04:hover {color:#333;background:#f9f9f9}
@@ -493,7 +505,7 @@ a.btn_admin,.btn_admin {display:inline-block;color:#d13f4a;text-decoration:none;
 .empty_list {padding:20px 0 !important;color:#666;text-align:center}
 
 /* 필수입력 */
-.required, textarea.required {background-image:url('/static/img/require.png') !important;background-repeat:no-repeat !important;background-position:right center !important}
+.required, textarea.required {background-image:url('/static/img/require.png') !important;background-repeat:no-repeat !important;background-position:right top !important}
 
 /* 테이블 항목별 정의 */
 .td_board {width:80px;text-align:center}

@@ -74,17 +74,17 @@
 #reg_mb_icon, #reg_mb_img {float:right}
 
 /* 회원가입 완료 */
-#reg_result {padding:40px 30px;text-align:center;background:#edf3fc;border:1px solid #d6e2f4;border-radius:5px}
+#reg_result {padding:40px 30px;text-align:center;background:var(--contBg);border:var(--border);border-radius:5px}
 #reg_result h2 {font-size:2em;margin:0 0 20px}
 #reg_result h2 strong {color:#ed6478}
 #reg_result #result_email {margin:20px 0;padding:10px 50px;border-top:1px solid #e9e9e9;border-bottom:1px solid #dde4e9;background:#fff;line-height:2em}
 #reg_result #result_email span {display:inline-block;width:150px}
 #reg_result #result_email strong {color:#e8180c;font-size:1.2em}
 #reg_result p {line-height:1.8em}
-#reg_result .result_txt {text-align:left}
+#reg_result .result_txt {text-align:left;color: var(--fontColor);}
 #reg_result .btn_confirm {margin:50px 0}
 #reg_result i {font-size:3em}
-#reg_result .reg_result_p {font-size:1.25em;margin:0 0 10px;color:#3684fa}
+#reg_result .reg_result_p {font-size:1.25em;margin:0 0 10px;color:#ff8269}
 
 .btn_confirm_reg {margin:20px 0;text-align:center}
 .reg_btn_submit {display:inline-block;background:#3a8afd;color:#fff;text-align:center;border-radius:3px;width:280px;height:57px;line-height:57px;font-size:1.2em;margin:0 auto;font-weight:bold}
