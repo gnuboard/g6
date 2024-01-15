@@ -175,7 +175,18 @@ def common_search_query_params(
     return {"sst": sst, "sod": sod, "sfl": sfl, "stx": stx, "sca": sca, "current_page": current_page}
 
 
-def get_board(db: db_session, bo_table: Annotated[str, Path(...)]):
+def get_variery_board(
+        board_path: Annotated[str, Path(alias="bo_table")] = None,
+        board_form: Annotated[str, Form(alias="bo_table")] = None,
+):
+    """
+    요청 매개변수의 유형별 bo_table을 수신, 하나의 bo_table 값만 반환
+    - 함수의 매개변수 순서대로 우선순위를 가짐
+    """
+    return board_path or board_form
+
+
+def get_board(db: db_session, bo_table: Annotated[str, Depends(get_variery_board)]):
     """게시판 존재 여부 검사 & 반환"""
     board = db.get(Board, bo_table)
     if not board:
