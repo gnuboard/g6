@@ -44,6 +44,7 @@ default_boards = [
 ]
 default_board_data = {
     'gr_id': default_gr_id,
+    'bo_count_delete': 1,
     'bo_read_point': default_read_point,
     'bo_write_point': default_write_point,
     'bo_comment_point': default_comment_point,
@@ -53,7 +54,7 @@ default_board_data = {
     'bo_use_sideview': 0,
     'bo_use_file_content': 0,
     'bo_use_secret': 0,
-    'bo_use_dhtml_editor': 0,
+    'bo_use_dhtml_editor': 1,
     'bo_use_rss_view': 0,
     'bo_use_good': 0,
     'bo_use_nogood': 0,
