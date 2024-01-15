@@ -31,7 +31,7 @@
 #ol_after_hd .profile_img {position:absolute;top:15px;left:15px;display:inline-block}
 #ol_after_hd .profile_img img {border:1px solid #bbb;border-radius:50%;width:50px;height:50px}
 #ol_after_hd .profile_img a {text-align:center;font-size:17px;width:30px;line-height:30px;color:#777}
-#ol_after_info {display:inline-block;height:28px;line-height:22px;border:var(--border);color:#f16245;border-radius:2px;padding:2px 5px}
+#ol_after_info {display:inline-block;height:28px;line-height:22px;border:var(--border);color:#ff8269;border-radius:2px;padding:2px 5px}
 #ol_after h2 {margin:0;padding:0;width:1px;height:1px;font-size:0;line-height:0;overflow:hidden}
 #ol_after_hd .btn_admin {border-radius:3px;height:28px;line-height:28px;vertical-align:baseline}
 #ol_after_hd .btn_b04 {line-height:23px;padding:0 5px}

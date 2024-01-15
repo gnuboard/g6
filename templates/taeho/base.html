@@ -156,7 +156,6 @@
         {% else %}
             {% include "bbs/outlogin_before.html" %}
         {% endif %}
-        {% include "/bbs/poll.html" %}
         <!-- 메뉴 -->
         <nav id="gnb">
           <h2>메인메뉴</h2>
@@ -164,7 +163,7 @@
               {% include "/bbs/menu.html" %}
           </div>
         </nav>
-  
+        {% include "/bbs/poll.html" %}
         <!-- 접속자집계 시작 { -->
         {% if render_visit_statistics %}
             {{ render_visit_statistics(request)|safe }}

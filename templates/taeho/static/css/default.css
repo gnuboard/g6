@@ -240,7 +240,7 @@ border:1px solid #ff8269 !important;
 .hd_login a:hover {background: #f7f3f3;}
 
 /* 메인메뉴 */
-#gnb {position:relative;background:var(--contBg);border: var(--border);border-radius: 8px;overflow: hidden;}
+#gnb {position:relative;background:var(--contBg);border: var(--border);border-radius: 8px;overflow: hidden;margin-bottom: 15px;}
 #gnb > h2 {position:absolute;font-size:0;line-height:0;overflow:hidden}
 #gnb .gnb_wrap {margin:0 auto;position:relative}
 #gnb .gnb_wrap:hover, #gnb .gnb_wrap:focus, #gnb .gnb_wrap:active{z-index:3}
