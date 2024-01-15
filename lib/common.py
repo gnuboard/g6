@@ -1302,3 +1302,10 @@ def get_current_login_count(request: Request) -> tuple:
         ).first()
         return result.login, result.member
 
+
+def is_integer_format(s):
+    if not s:
+        return False
+    if s[0] == "-":
+        s = s[1:]
+    return s.isdigit()

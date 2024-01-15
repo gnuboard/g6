@@ -85,13 +85,13 @@ async def board_list_update(
             board.bo_mobile_skin = bo_mobile_skin[i]
             board.bo_subject = bo_subject[i]
             board.bo_read_point = int(
-                bo_read_point[i]) if bo_read_point[i] is not None and bo_read_point[i].isdigit() else 0
+                bo_read_point[i]) if bo_read_point[i] is not None and is_integer_format(bo_read_point[i]) else 0
             board.bo_write_point = int(
-                bo_write_point[i]) if bo_write_point[i] is not None and bo_write_point[i].isdigit() else 0
+                bo_write_point[i]) if bo_write_point[i] is not None and is_integer_format(bo_write_point[i]) else 0
             board.bo_comment_point = int(
-                bo_comment_point[i]) if bo_comment_point[i] is not None and bo_comment_point[i].isdigit() else 0
+                bo_comment_point[i]) if bo_comment_point[i] is not None and is_integer_format(bo_comment_point[i]) else 0
             board.bo_download_point = int(
-                bo_download_point[i]) if bo_download_point[i] is not None and bo_download_point[i].isdigit() else 0
+                bo_download_point[i]) if bo_download_point[i] is not None and is_integer_format(bo_download_point[i]) else 0
             board.bo_use_sns = get_from_list(bo_use_sns, i, 0)
             board.bo_use_search = get_from_list(bo_use_search, i, 0)
             board.bo_order = int(
