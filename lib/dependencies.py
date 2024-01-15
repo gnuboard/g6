@@ -195,9 +195,20 @@ def get_board(db: db_session, bo_table: Annotated[str, Depends(get_variery_board
     return board
 
 
+def get_variery_wr_id(
+        wr_id_path: Annotated[int, Path(alias="wr_id")] = None,
+        wr_id_form: Annotated[int, Form(alias="wr_id")] = None,
+):
+    """
+    요청 매개변수의 유형별 wr_id를 수신, 하나의 wr_id 값만 반환
+    - 함수의 매개변수 순서대로 우선순위를 가짐
+    """
+    return wr_id_path or wr_id_form
+
+
 def get_write(db: db_session, 
               bo_table: Annotated[str, Path(...)],
-              wr_id: Annotated[int, Path(...)]):
+              wr_id: Annotated[int, Depends(get_variery_wr_id)]):
     """게시글 존재 여부 검사 & 반환"""
     write_model = dynamic_create_write_table(bo_table)
     write = db.get(write_model, wr_id)
