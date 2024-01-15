@@ -3,7 +3,7 @@
 {% set query_params=request.query_params %}
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/basic/search.css') }}">
+    <link rel="stylesheet" href="{{ theme_asset(request, 'css/search.css') }}">
 {% endblock head %}
 
 {% block title %}전체검색 결과{% endblock title %}

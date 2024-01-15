@@ -31,7 +31,7 @@
 #ol_after_hd .profile_img {position:absolute;top:15px;left:15px;display:inline-block}
 #ol_after_hd .profile_img img {border:1px solid #bbb;border-radius:50%;width:50px;height:50px}
 #ol_after_hd .profile_img a {text-align:center;font-size:17px;width:30px;line-height:30px;color:#777}
-#ol_after_info {display:inline-block;height:28px;line-height:22px;border:var(--border);color:#f16245;border-radius:2px;padding:2px 5px}
+#ol_after_info {display:inline-block;height:28px;line-height:22px;border:var(--border);color:#ff8269;border-radius:2px;padding:2px 5px}
 #ol_after h2 {margin:0;padding:0;width:1px;height:1px;font-size:0;line-height:0;overflow:hidden}
 #ol_after_hd .btn_admin {border-radius:3px;height:28px;line-height:28px;vertical-align:baseline}
 #ol_after_hd .btn_b04 {line-height:23px;padding:0 5px}
@@ -58,9 +58,9 @@
 .selec_chk {position:absolute;top:0;left:0;width:0;height:0;opacity:0;outline:0;z-index:-1;overflow:hidden}
 .chk_box {position:relative}
 .chk_box input[type="checkbox"] + label {padding-left:20px;color:#676e70}
-.chk_box input[type="checkbox"] + label:hover{color:#2172f8}
+.chk_box input[type="checkbox"] + label:hover{color:#ff8269}
 .chk_box input[type="checkbox"] + label span {position:absolute;top:2px;left:0;width:15px;height:15px;display:block;margin:0;background:#fff;border:1px solid #d0d4df;border-radius:3px}
-.chk_box input[type="checkbox"]:checked + label {color:#000}
+.chk_box input[type="checkbox"]:checked + label {color:var(--fontColor)}
 .chk_box input[type="checkbox"]:checked + label span {background:url(/static/img/chk.png) no-repeat 50% 50% #3a8afd;border-color:#1471f6;border-radius:3px}
 .chk_box input[type="checkbox"]:checked + label span {
   background: url(/static/img/chk.png) no-repeat 50% 50% #ff8269;

@@ -18,7 +18,10 @@
             <li><a href="{{ url_for('faq_view') }}">FAQ</a></li>
             <li><a href="{{ url_for('qa_list') }}">Q&A</a></li>
             <li><a href="/bbs/new">새글</a></li>
-            <li><a href="/bbs/current_connect" class="visit">접속자<strong class="visit-num">0</strong></a></li>
+            <li><a href="/bbs/current_connect" class="visit">
+                접속자<strong class="visit-num">{{ current_login_count[0] }}</strong></a>
+                <!-- current_login_count[1]은 회원 수 -->
+            </li>
         </ul>
         </div>
     </div>
@@ -145,10 +148,9 @@
     <div id="container_wr">
    
         <div id="container">
-            <h2 id="container_title"><span>{% block subtitle %}{% endblock %}</span></h2>
+            <h2 id="container_title"><span>{% block subtitle %}{% endblock subtitle %}</span></h2>
             {% block content %}
-
-            {% endblock %}
+            {% endblock content %}
         </div>
     <div id="aside">
         {% if request.state.login_member %}
@@ -156,7 +158,6 @@
         {% else %}
             {% include "bbs/outlogin_before.html" %}
         {% endif %}
-        {% include "/bbs/poll.html" %}
         <!-- 메뉴 -->
         <nav id="gnb">
           <h2>메인메뉴</h2>
@@ -164,7 +165,7 @@
               {% include "/bbs/menu.html" %}
           </div>
         </nav>
-  
+        {% include "/bbs/poll.html" %}
         <!-- 접속자집계 시작 { -->
         {% if render_visit_statistics %}
             {{ render_visit_statistics(request)|safe }}
@@ -231,15 +232,6 @@
 				개인정보관리책임자 :  정보책임자명<br>
 			</p>
 	    </div>
-        {% if latest %}
-            {{ latest(request, 'notice', 'notice', 4, 13)|safe }}
-        {% endif %}
-
-        <!-- 접속자집계 시작 { -->
-        {% if visit %}
-            {{ visit(request)|safe }}
-        {% endif %}
-        <!-- } 접속자집계 끝 -->
     </div>
     <div id="ft_copy">Copyright &copy; <b>{{ request.url.hostname }}.</b> All rights reserved.</div>
 

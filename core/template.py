@@ -28,6 +28,22 @@ from lib.template_functions import (
 )
 
 
+def get_current_theme() -> str:
+    """현재 설정된 테마를 반환
+    - 설정된 테마가 존재하지 않을 경우 기본 테마를 반환
+
+    Returns:
+        str: 테마 이름
+    """
+    default_theme = "basic"
+    try:
+        with DBConnect().sessionLocal() as db:
+            theme = db.scalar(select(Config.cf_theme)) or default_theme
+            return theme
+    except Exception:
+        return default_theme
+
+
 def get_theme_path() -> str:
     """기본환경설정 > 테마의 설정 경로를 반환
     - 설정된 테마가 존재하지 않을 경우 기본 테마를 반환
@@ -35,26 +51,46 @@ def get_theme_path() -> str:
     Returns:
         str: 테마 경로
     """
+    default_theme_path = f"{TEMPLATES}/basic"
+
+    theme = get_current_theme()
+    theme_path = f"{TEMPLATES}/{theme}"
+
+    # 실제 테마가 존재하는지 확인            
+    if not os.path.exists(theme_path):
+        return default_theme_path
+
+    return theme_path
+    
+
+def get_admin_theme_path() -> str:
+    """관리자 > 테마의 설정 경로를 반환
+    - .env 파일에서 설정된 테마를 조회하여 반환
+    - 설정된 테마가 존재하지 않을 경우 기본 테마를 반환
+
+    Returns:
+        str: 테마 경로
+    """
     default_theme = "basic"
-    default_theme_path = f"{TEMPLATES}/{default_theme}"
+    default_theme_path = f"{ADMIN_TEMPLATES}/{default_theme}"
     try:
-        with DBConnect().sessionLocal() as db:
-            theme = db.scalar(select(Config.cf_theme)) or default_theme
-            theme_path = f"{TEMPLATES}/{theme}"
+        theme = os.getenv("ADMIN_THEME", "basic")
+        theme_path = f"{ADMIN_TEMPLATES}/{theme}"
 
-            # 실제 테마가 존재하는지 확인            
-            if not os.path.exists(theme_path):
-                return default_theme_path
+        # 실제 테마가 존재하는지 확인            
+        if not os.path.exists(theme_path):
+            return default_theme_path
 
-            return theme_path
+        return theme_path
     except Exception:
         return default_theme_path
 
 
 TEMPLATES = "templates"
 TEMPLATES_DIR = get_theme_path()  # 사용자 템플릿 경로
-ADMIN_TEMPLATES_DIR = "admin/templates"  # 관리자 템플릿 경로
 
+ADMIN_TEMPLATES = "admin/templates"
+ADMIN_TEMPLATES_DIR = get_admin_theme_path()  # 관리자 템플릿 경로
 
 class TemplateService():
     """템플릿 서비스 클래스
@@ -221,42 +257,47 @@ class AdminTemplates(Jinja2Templates):
         return context
 
 
-def theme_asset(asset_path: str) -> str:
+def theme_asset(request: Request, asset_path: str) -> str:
     """
     현재 테마의 asset url을 반환하는 헬퍼 함수
 
     Args:
+        request (Request): Request 객체
         asset_path (str): 플러그인 모듈 이름
 
     Returns:
         asset_url (str): asset url
     """
-    theme_path = get_theme_path()
-    theme = theme_path.replace(TEMPLATES + '/', "")
+    theme = get_current_theme()
+    mobile_dir = "/mobile" if request.state.is_mobile else ""
 
-    return f"/theme_static/{theme}/{asset_path}"
+    return f"/theme_static/{theme}{mobile_dir}/{asset_path}"
 
 
 def register_theme_statics(app: FastAPI) -> None:
     """
     현재 테마의 static 경로를 가상의 경로로 등록하는 함수
-    - ex) /{theme}/basic/static/css -> /theme_static/basic/css
+    - ex) PC: /{theme}/basic/static/css -> /theme_static/basic/css
+    - ex) Mobile: /{theme}/basic/mobile/static/css -> /theme_static/basic/mobile/css
 
     Args:
         app (FastAPI): FastAPI 객체
     """
-    theme_path = get_theme_path()
-    theme = theme_path.replace(TEMPLATES + '/', "")
-    static_directory = f"{TEMPLATES}/{theme}/static"
+    theme = get_current_theme()
+    directories = ["/mobile", ""]
+    for directory in directories:
+        static_directory = f"{TEMPLATES}/{theme}{directory}/static"
 
-    if not os.path.isdir(static_directory):
-        logger = logging.getLogger("uvicorn.error")
-        logger.warning("theme has not static directory")
-        return
+        if not os.path.isdir(static_directory):
+            logger = logging.getLogger("uvicorn.error")
+            logger.warning("theme has not static directory : ",
+                           static_directory)
+            continue
 
-    url = f"/theme_static/{theme}"
-    path = StaticFiles(directory=static_directory)
-    app.mount(url, path, name=f"static_{theme}")  # tag
+        url = f"/theme_static/{theme}{directory}"
+        path = StaticFiles(directory=static_directory)
+        static_device = directory.replace("/", "_")
+        app.mount(url, path, name=f"static_{theme}{static_device}")  # tag
 
 
 def get_theme_list():

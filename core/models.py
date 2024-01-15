@@ -52,8 +52,6 @@ class Config(Base):
     cf_intercept_ip = Column(Text, nullable=False, default="")
     cf_analytics = Column(Text, nullable=False, default="")
     cf_add_meta = Column(Text, nullable=False, default="")
-    cf_syndi_token = Column(String(255), nullable=False, default="")
-    cf_syndi_except = Column(Text, nullable=False, default="")
     cf_member_skin = Column(String(50), nullable=False, default="")
     cf_use_homepage = Column(Integer, nullable=False, default=0, server_default=text("0"))
     cf_req_homepage = Column(Integer, nullable=False, default=0, server_default=text("0"))
@@ -920,7 +918,7 @@ class Login(Base):
     """현재 로그인 및 접속자 테이블"""
     __tablename__ = DB_TABLE_PREFIX + "login"
 
-    ol_id = Column(Integer, primary_key=True, autoincrement=True)  # 새로 추가된 기본키
+    lo_id = Column(Integer, primary_key=True, autoincrement=True)  # 새로 추가된 기본키
     lo_ip = Column(String(100), nullable=False, default='')
     mb_id = Column(String(20), nullable=False, default='')
     lo_datetime = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))

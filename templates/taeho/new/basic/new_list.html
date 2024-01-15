@@ -2,7 +2,7 @@
 {% set query_params=request.query_params %}
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', path="/css/basic/new.css") }}">
+    <link rel="stylesheet" href="{{ theme_asset(request, 'css/new.css') }}">
 {% endblock head %}
 
 {% block title %}새글{% endblock title %}

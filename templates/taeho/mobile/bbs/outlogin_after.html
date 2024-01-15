@@ -1,0 +1,46 @@
+{% set member=request.state.login_member %}
+
+<aside id="ol_after" class="ol">
+    <h2>나의 회원정보</h2>
+    <div id="ol_after_hd">
+        <span class="profile_img">
+            <img src="{{ get_member_image(member.mb_id) }}" alt="profile_image">
+            <a href="/bbs/member_confirm" id="ol_after_info">
+                <i class="fa fa-cog fa-3x fa-fw"></i>
+                <span class="sound_only">정보수정</span>
+            </a>
+        </span>
+        <strong>최고관리자님</strong>
+        <div id="ol_after_btn">
+            {% if request.state.is_super_admin %}
+            <a href="/admin" class="btn_admin">
+                <i class="fa fa-cog fa-spin fa-fw"></i>
+                <span class="sound_only">관리자</span>
+            </a>
+            {% endif %}
+            <a href="/bbs/logout" id="ol_after_logout">로그아웃</a>
+        </div>
+    </div>
+
+    <ul id="ol_after_private">
+        <li id="ol_after_memo">
+            <a href="{{ url_for('memo_list') }}" target="_blank" class="win_memo">
+                <i class="fa fa-envelope-o" aria-hidden="true"></i>
+                <span class="sound_only">안 읽은</span>쪽지
+                <strong>{{ member.mb_memo_cnt|number_format if member is defined else 0 }}</strong>
+            </a>
+        </li>
+        <li id="ol_after_pt">
+            <a href="/bbs/point" target="_blank" class="win_point">
+                <i class="fa fa-database" aria-hidden="true"></i>
+                포인트
+                <strong>{{ member.mb_point|number_format if member else '' }}</strong>
+            </a>
+        </li>
+        <li id="ol_after_scrap">
+            <a href="{{ url_for('scrap_list') }}" target="_blank" class="win_scrap">
+                <i class="fa fa-thumb-tack" aria-hidden="true"></i>스크랩
+            </a>
+        </li>
+    </ul>
+</aside>

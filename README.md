@@ -56,8 +56,8 @@ uvicorn main:app --reload --host {서버IP}
       - `{영문+숫자}_` 형식으로 입력해야 합니다.
       - 기본값은 `g6_` 입니다(예: gnuboard5_)
    - 재설치 여부를 체크합니다. (선택)
-      - > **Warning**  
-        > 재설치는 테이블을 삭제 후 재생성합니다. 기존 데이터가 망실될 수 있으니 주의하시기 바랍니다.
+      > **Warning**  
+      > 재설치는 테이블을 삭제 후 재생성합니다. 기존 데이터가 망실될 수 있으니 주의하시기 바랍니다.
 
 6. 관리자 정보를 입력합니다. 입력한 정보를 바탕으로 관리자 계정이 생성됩니다.
 
@@ -182,6 +182,8 @@ pip install -r requirements.txt
 설치 후 생성된 `.env`파일을 수정하여 사용자 설정을 변경할 수 있습니다.
 - True/False 는 반드시 문자열로 입력해야 합니다.
 - 전체 설정은 `.env.example` 파일을 참고하세요.
+> **Note**  
+> 설정을 변경하면 서버를 재시작해야 정상적으로 적용됩니다.
 
 #### 데이터베이스 설정
 ```bash
@@ -214,6 +216,14 @@ SMTP_PASSWORD=""
 # SMTP_PASSWORD="네이버 로그인 비밀번호"
 ```
 
+#### 관리자 테마 설정
+```bash
+# 관리자 테마 설정
+# 관리자 테마는 /admin/templates/{테마} 에 위치해야 합니다.
+# 테마 이름을 입력하지 않으면 기본 테마(basic)가 적용됩니다.
+ADMIN_THEME = "basic"
+```
+
 #### 이미지 설정
 ```bash
 # 이미지 크기변환 여부
@@ -238,7 +248,7 @@ APP_IS_DEBUG = "False"
 # 웹사이트 표시 방법 (True/False)
 # "True" (기본값) : 반응형 웹사이트 (참고: 반응형 템플릿만 제공합니다.)
 # "False" : 적응형 웹사이트
-IS_RESPONSIVE = "False" 
+IS_RESPONSIVE = "True"
 
 # www.gnuboard.com 과 gnuboard.com 도메인은 서로 다른 도메인으로 인식합니다. 
 # 쿠키를 공유하려면 .gnuboard.com 과 같이 입력하세요.
