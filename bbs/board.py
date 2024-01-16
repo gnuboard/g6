@@ -284,7 +284,7 @@ async def move_update(
     request: Request,
     db: db_session,
     origin_board: Annotated[Board, Depends(get_board)],
-    origin_bo_table: str = Form(...),
+    origin_bo_table: str = Form(..., alias="bo_table"),
     sw: str = Form(...),
     wr_ids: str = Form(..., alias="wr_id_list"),
     target_bo_tables: list = Form(..., alias="chk_bo_table[]"),
