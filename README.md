@@ -1,5 +1,5 @@
 
-# GNUBOARD6 with python
+# GNUBOARD6 with Python
 <p align="center">
 <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/fastapi?logo=python&color=%233776AB">
 </p>
@@ -7,17 +7,23 @@
 ## 시작하기
 ### 1. 설치
 - Git을 사용한 설치를 권장합니다.
-- `.env`파일을 생성하지 않아도 설치 진행 시 자동으로 생성됩니다.
+- 루트 디렉토리에 `.env` 파일이 없다면 설치를 자동으로 진행합니다.
 
 #### 설치 방법
 ```bash
 # Github에서 그누보드6 복사 및 설치합니다.
-git clone git@github.com:gnuboard/gnu6.git
+git clone https://github.com/gnuboard/g6.git
 ```
 
 ```bash
-# cd 명령어를 이용하여 gnu6 디렉토리로 이동합니다.
-cd gnu6
+# cd 명령어를 이용하여 g6 디렉토리로 이동합니다.
+cd g6
+```
+
+```bash
+# 가상환경을 만듭니다. 필수 설치 요소는 아닙니다.
+python -m venv venv
+source venv/bin/activate
 ```
 
 ```bash
@@ -54,7 +60,7 @@ uvicorn main:app --reload --host {서버IP}
       - SQLite : 연결정보가 필요 없으며, 설치 시 루트 디렉토리에 `sqlite3.db` 데이터베이스 파일이 생성됩니다.
    - 접두사를 입력합니다. 
       - `{영문+숫자}_` 형식으로 입력해야 합니다.
-      - 기본값은 `g6_` 입니다(예: gnuboard5_)
+      - 기본값은 `g6_` 입니다(예: gnuboard6_)
    - 재설치 여부를 체크합니다. (선택)
       > **Warning**  
       > 재설치는 테이블을 삭제 후 재생성합니다. 기존 데이터가 망실될 수 있으니 주의하시기 바랍니다.

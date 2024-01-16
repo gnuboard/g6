@@ -1,7 +1,10 @@
-from typing import Optional, Tuple, Union, Any
+import base64
+from typing import Optional, Tuple
 
-from lib.social.social import SocialProvider
+import httpx
+
 from core.formclass import SocialProfile
+from lib.social.social import SocialProvider
 
 
 class Twitter(SocialProvider):
@@ -67,3 +70,27 @@ class Twitter(SocialProvider):
         )
 
         return email, socialprofile
+
+    @classmethod
+    async def logout(cls, oauth_instance, auth_token):
+        """
+        소셜 서비스 토큰 revoke
+        Args:
+            oauth_instance (OAuth): OAuth 인증 객체
+            auth_token (Dict): 소셜 서비스 토큰
+        """
+        access_token = auth_token.get('access_token', None)
+        client_id = oauth_instance.__getattr__(cls.provider_name).client_id
+        client_secret = oauth_instance.__getattr__(cls.provider_name).client_secret
+
+        async with httpx.AsyncClient() as client:
+            bearer_token = base64.b64encode(f"{client_id}:{client_secret}".encode())
+            headers = {
+                "Authorization": f"Basic {bearer_token.decode()}",
+                "Content-Type": "application/x-www-form-urlencoded",
+            }
+            await client.post(
+                'https://api.twitter.com/oauth2/invalidate_token',
+                params={'access_token': access_token},
+                headers=headers
+            )
