@@ -96,7 +96,6 @@ async def install(
         set_key(ENV_PATH, "DB_PASSWORD", form.db_password)
         set_key(ENV_PATH, "DB_NAME", form.db_name)
         set_key(ENV_PATH, "DB_TABLE_PREFIX", form.db_table_prefix)
-        
         # .env 파일에 쿠키 도메인 추가
         set_key(ENV_PATH, "COOKIE_DOMAIN", "")
 
@@ -104,27 +103,14 @@ async def install(
         TemplateService.set_responsive()
 
         # 데이터베이스 연결 설정
-        db_setting = DBSetting()
-        if not db_setting.supported_engines.get(form.db_engine.lower()):
+        db = DBConnect()
+        if not db.supported_engines.get(form.db_engine.lower()):
             raise Exception("지원가능한 데이터베이스 엔진을 선택해주세요.")
 
-        new_engine = create_engine(
-            db_setting.url,
-            poolclass=QueuePool,
-            pool_size=20,
-            max_overflow=40,
-            pool_timeout=60
-        )
-        # 데이터베이스 연결 테스트
-        connect = new_engine.connect()
+        # 새로운 데이터베이스 연결 생성 및 테스트
+        db.create_engine()
+        connect = db.engine.connect()
         connect.close()
-        session = sessionmaker(autocommit=False, autoflush=False,
-                               bind=new_engine, expire_on_commit=True)
-
-        # 새로운 데이터베이스 연결 추가
-        db_connect = DBConnect()
-        db_connect.engine = new_engine
-        db_connect.sessionLocal = session
 
         # 플러그인 활성화 초기화
         plugin_list = read_plugin_state()
@@ -134,10 +120,10 @@ async def install(
 
         form_cache.update({"form": form})
 
-        return templates.TemplateResponse("result.html", {"request": request})
+        # 세션 초기화
+        request.session.clear()
 
-    # except FileNotFoundError as e:
-    #     raise AlertException(f"설치가 실패했습니다. '{e.filename}' 파일을 찾을 수 없습니다.\\n{e}")
+        return templates.TemplateResponse("result.html", {"request": request})
 
     except OperationalError as e:
         os.remove(ENV_PATH)
@@ -153,10 +139,10 @@ async def install(
 async def install_process(request: Request):
     
     async def install_event():
-        yield "설치를 시작합니다. 브라우저 창을 닫지 말고 잠시만 기다려주세요."
         db_connect = DBConnect()
         engine = db_connect.engine
         SessionLocal = db_connect.sessionLocal
+        yield "데이터베이스 연결 완료"
 
         try:
             form: InstallFrom = form_cache.get("form")
@@ -228,8 +214,8 @@ def admin_member_setup(db: Session, admin_id: str, admin_name : str,
             insert(models.Member).values(
                 mb_id=admin_id,
                 mb_password=create_hash(admin_password),
-                mb_name=admin_id,
-                mb_nick=admin_id,
+                mb_name=admin_name,
+                mb_nick=admin_name,
                 mb_email=admin_email,
                 **default_member
             )
