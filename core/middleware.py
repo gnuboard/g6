@@ -40,26 +40,24 @@ def regist_core_middleware(app: FastAPI) -> None:
             cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(new_plugin_state))
             cache_plugin_state.__setitem__('change_time', plugin_state_change_time)
 
-        # 적응형 여부 설정
+        # 접속환경 설정
+        request.state.is_mobile = False
         request.state.is_responsive = TemplateService.get_responsive()
 
-        # 모바일 여부 설정
-        request.state.is_mobile = False
-        # 사용자의 PC/모바일 버전 설정이 있는지 세션에서 확인합니다.
-        if not request.session.get("is_mobile"):
-            # User-Agent 헤더를 통해 모바일 여부를 판단합니다.
-            # 모바일과 태블릿에서 접속하면 모바일로 간주
+        # 반응형이라면 PC/모바일 버전 설정 세션을 초기화합니다.
+        if request.state.is_responsive:
+            request.session["is_mobile"] = False
+
+        if request.session.get("is_mobile"):
+            request.state.is_mobile = request.session.get("is_mobile", False)
+        else:
+            # User-Agent 헤더를 통해 모바일 여부를 판단합니다. (모바일과 태블릿 접속)
             user_agent = parse(request.headers.get("User-Agent", ""))
             if user_agent.is_mobile or user_agent.is_tablet:
                 request.state.is_mobile = True
-        else:
-            request.state.is_mobile = request.session.get("is_mobile", False)
 
         # 디바이스 기본값 설정
-        # 반응형이 아니라면 모바일 접속은 mobile로, 그 외 접속은 PC로 간주합니다.
-        request.state.device = "pc"
-        if not request.state.is_responsive and request.state.is_mobile:
-            request.state.device = "mobile"
+        request.state.device = "mobile" if request.state.is_mobile else "pc"
 
         return await call_next(request)
 
