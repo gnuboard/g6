@@ -26,6 +26,7 @@ from lib.pbkdf2 import create_hash
 from lib.point import delete_point, insert_point
 from lib.template_filters import datetime_format, number_format
 from lib.template_functions import get_paging
+from lib.g5_compatibility import G5Compatibility
 
 router = APIRouter()
 templates = UserTemplates()
@@ -1083,6 +1084,8 @@ async def write_comment_update(
     member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
     write_model = dynamic_create_write_table(bo_table)
+    compatible_instance = G5Compatibility(db)
+    now = compatible_instance.get_wr_last_now(write_model.__tablename__)
 
     # 댓글 내용 검증
     filter_word = filter_words(request, form.wr_content)
@@ -1138,7 +1141,7 @@ async def write_comment_update(
         comment.wr_name = board_config.set_wr_name(member, form.wr_name)
         comment.wr_email = getattr(member, "mb_email", "")
         comment.wr_homepage = getattr(member, "mb_homepage", "")
-        comment.wr_datetime = comment.wr_last = datetime.now()
+        comment.wr_datetime = comment.wr_last = now
         comment.wr_ip = request.client.host
         db.add(comment)
 
@@ -1168,7 +1171,7 @@ async def write_comment_update(
 
         comment.wr_content = form.wr_content
         comment.wr_option = form.wr_secret or "html1"
-        comment.wr_last = datetime.now()
+        comment.wr_last = now
         db.commit()
 
     query_params = request.query_params
