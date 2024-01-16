@@ -37,8 +37,10 @@
                 <ul>
                     <li>
                         <input type="text" name="mb_id" value="{{ member.mb_id|default_if_none('') }}"
-                        id="reg_mb_id" required class="frm_input full_input required "
-                        maxlength="20">
+                            id="reg_mb_id" required class="frm_input full_input required " minlength="3"
+                            maxlength="20"
+                            {% if member.mb_id %}readonly="readonly"{% endif %}
+                            placeholder="아이디">
                         <label for="reg_mb_id" class="text_input">
                             아이디 (필수)
                             <button type="button" class="tooltip_icon">
