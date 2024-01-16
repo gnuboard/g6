@@ -1,5 +1,6 @@
 import os
-from dotenv import load_dotenv
+
+from dotenv import dotenv_values, load_dotenv
 from fastapi import Depends
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
@@ -33,17 +34,6 @@ class DBSetting:
         self.set_connect_infomation()
         self.create_url()
 
-    def set_connect_infomation(self) -> None:
-        load_dotenv()
-
-        self._table_prefix = os.getenv("DB_TABLE_PREFIX", "")
-        self._db_engine = os.getenv("DB_ENGINE", "").lower()
-        self._user = os.getenv("DB_USER")
-        self._password = os.getenv("DB_PASSWORD")
-        self._host = os.getenv("DB_HOST")
-        self._port = os.getenv("DB_PORT")
-        self._db_name = os.getenv("DB_NAME")
-
     @property
     def url(self) -> str:
         return self._url
@@ -51,6 +41,26 @@ class DBSetting:
     @url.setter
     def url(self, url: str) -> None:
         self._url = url
+
+    @property
+    def table_prefix(self) -> str:
+        return self._table_prefix
+
+    @table_prefix.setter
+    def table_prefix(self, prefix: str) -> None:
+        self._table_prefix = prefix
+
+    def set_connect_infomation(self) -> None:
+        load_dotenv()
+        env_values = dotenv_values()
+
+        self._table_prefix = env_values.get("DB_TABLE_PREFIX", "")
+        self._db_engine = env_values.get("DB_ENGINE", "").lower()
+        self._user = env_values.get("DB_USER")
+        self._password = env_values.get("DB_PASSWORD")
+        self._host = env_values.get("DB_HOST")
+        self._port = env_values.get("DB_PORT")
+        self._db_name = env_values.get("DB_NAME")
 
     def create_url(self) -> None:
         url = None
@@ -61,14 +71,6 @@ class DBSetting:
             else:
                 url = prefix + f"{self._user}:{self._password}@{self._host}:{self._port}/{self._db_name}"
         self._url = url
-
-    @property
-    def table_prefix(self) -> str:
-        return self._table_prefix
-
-    @table_prefix.setter
-    def table_prefix(self, prefix: str) -> None:
-        self._table_prefix = prefix
 
 
 class DBConnect(DBSetting):
@@ -99,6 +101,14 @@ class DBConnect(DBSetting):
     def engine(self, engine: Engine) -> None:
         self._engine = engine
 
+    @property
+    def sessionLocal(self) -> sessionmaker[Session]:
+        return self._sessionLocal
+
+    @sessionLocal.setter
+    def sessionLocal(self, sessionLocal: sessionmaker[Session]) -> None:
+        self._sessionLocal = sessionLocal
+
     def create_engine(self) -> None:
         self.engine = create_engine(
             self._url,
@@ -109,14 +119,6 @@ class DBConnect(DBSetting):
         )
 
         self.create_sessionmaker()
-
-    @property
-    def sessionLocal(self) -> sessionmaker[Session]:
-        return self._sessionLocal
-
-    @sessionLocal.setter
-    def sessionLocal(self, sessionLocal: sessionmaker[Session]) -> None:
-        self._sessionLocal = sessionLocal
 
     def create_sessionmaker(self) -> None:
         self._sessionLocal = sessionmaker(autocommit=False, autoflush=False,
