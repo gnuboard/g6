@@ -151,6 +151,7 @@
 .register_form_inner .frm_input:valid + label.text_input,
 .register_form_inner .frm_input:-webkit-autofill + label.text_input {bottom:50%;font-size:12px;color: #ff8269;}  /* input에 글을 입력하고 포커스가 지나간 상태에서 제어하려면 valid 선택자를 써야한다. */
 .register_form_inner .frm_input:placeholder-shown + label.text_input {bottom: 0;color: var(--bovColor);}
+.register_form_inner .frm_input:read-only {background: var(--pgBg);}
 /* 포커스 될 때 label span(name)이 위로 올라감 */
 p input:focus + label::after,
 p input:valid + label::after { width:100%; transform:translateX(0); } 

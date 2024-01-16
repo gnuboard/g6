@@ -54,7 +54,7 @@
 #sns_register h2 {border:0 !important}
 
 /* 회원가입 입력 */
-#register_form {background:#fff;margin-bottom:20px}
+#register_form {background:var(--contBg);margin-bottom:20px}
 #register_form h2 {padding:40px 0px 0px;}
 .register_form_inner {border-radius:3px}
 .register_form_inner ul {padding:0px;}
