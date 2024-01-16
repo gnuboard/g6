@@ -71,7 +71,9 @@ def regist_core_middleware(app: FastAPI) -> None:
                    max_age=60 * 60 * 3)
 
     # 모든 들어오는 요청을 HTTPS로 리디렉션하는 미들웨어를 추가합니다.
-    app.add_middleware(HTTPSRedirectMiddleware)
+    # 단 개발환경에서는 제거한다.
+    if not app.debug:
+        app.add_middleware(HTTPSRedirectMiddleware)
 
 
 async def should_run_middleware(request: Request) -> bool:
