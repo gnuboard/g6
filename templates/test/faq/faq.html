@@ -84,13 +84,14 @@
             </div>
         {% endif %}
 
-        {# 관리자만 표시하도록 수정 #}
+        {% if request.state.is_super_admin %}
         <div class="faq_admin">
             <a href="{{ url_for('faq_master_update_form', fm_id=faq_master.fm_id) }}" class="btn_admin btn" title="FAQ 수정">
                 <i class="fa fa-cog fa-spin fa-fw"></i>
                 <span class="sound_only">FAQ 수정</span>
             </a>
         </div>
+        {% endif %}
 
         <!-- } FAQ 끝 -->
         {# static 경로 함수 적용 필요 #}
