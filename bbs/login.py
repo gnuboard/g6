@@ -7,6 +7,8 @@ from core.template import UserTemplates
 from lib.common import *
 from lib.member_lib import is_super_admin
 from lib.pbkdf2 import validate_password
+from lib.social import providers
+from lib.social.social import SocialProvider, oauth
 
 router = APIRouter()
 templates = UserTemplates()
@@ -14,8 +16,8 @@ templates = UserTemplates()
 
 @router.get("/login")
 async def login_form(
-    request: Request,
-    url: str = Query(default="/")
+        request: Request,
+        url: str = Query(default="/")
 ):
     """
     로그인 폼을 보여준다.
@@ -29,12 +31,12 @@ async def login_form(
 
 @router.post("/login")
 async def login(
-    request: Request,
-    db: db_session,
-    mb_id: str = Form(...),
-    mb_password: str = Form(...),
-    auto_login: bool = Form(default=False),
-    url: str = Form(default="/")
+        request: Request,
+        db: db_session,
+        mb_id: str = Form(...),
+        mb_password: str = Form(...),
+        auto_login: bool = Form(default=False),
+        url: str = Form(default="/")
 ):
     """
     로그인 폼화면에서 로그인
@@ -73,10 +75,19 @@ async def login(
 
 @router.get("/logout")
 async def logout(request: Request):
+    """로그아웃 - 세션/자동로그인 쿠키를 초기화.
+    Args:
+        request (Request): request
+    Returns:
+        Response: RedirectResponse
     """
-    로그아웃
-    - 세션/자동로그인 쿠키를 초기화.
-    """
+    if 'ss_social_access' in request.session:
+        social_provider_name = request.session.get('ss_social_provider', None)
+        if social_provider_name:
+            provider_module_name = getattr(providers, f"{social_provider_name}")
+            provider_class: SocialProvider = getattr(provider_module_name, f"{social_provider_name.capitalize()}")
+            await provider_class.logout(oauth_instance=oauth, auth_token=request.session.get('ss_social_access'))
+
     request.session.clear()
 
     response = RedirectResponse(url="/", status_code=302)

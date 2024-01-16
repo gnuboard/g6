@@ -1,7 +1,9 @@
 from typing import Optional, Tuple
 
-from lib.social.social import SocialProvider
+import httpx
+
 from core.formclass import SocialProfile
+from lib.social.social import SocialProvider
 
 
 class Google(SocialProvider):
@@ -82,3 +84,18 @@ class Google(SocialProvider):
         )
 
         return email, socialprofile
+
+    @classmethod
+    async def logout(cls, oauth_instance, auth_token):
+        """
+        소셜 서비스 토큰 revoke
+        Args:
+            oauth_instance (OAuth): OAuth 인증 객체
+            auth_token (Dict): 소셜 서비스 토큰
+        """
+
+        access_token = auth_token.get('access_token', None)
+        async with httpx.AsyncClient() as client:
+            await client.post('https://accounts.google.com/o/oauth2/revoke',
+                              params={'token': access_token},
+                              headers={'content-type': 'application/x-www-form-urlencoded'})

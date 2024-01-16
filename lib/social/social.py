@@ -12,8 +12,6 @@ from lib.social import providers
 oauth = OAuth()
 
 
-# 소셜인증 제공자 등록
-
 def register_social_provider(config: Config):
     """
     소셜 서비스 인증 객체를 등록
@@ -154,9 +152,9 @@ class SocialProvider:
         raise NotImplementedError()
 
     @classmethod
-    def logout(cls, oauth_instance, auth_token):
+    async def logout(cls, oauth_instance, auth_token):
         """
-        소셜 서비스 로그아웃
+        소셜 서비스 토큰 revoke
         Args:
             oauth_instance (OAuth): OAuth 인증 객체
             auth_token (Dict): 소셜 서비스 토큰
