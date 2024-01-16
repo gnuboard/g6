@@ -1,4 +1,4 @@
-
+ 
 # GNUBOARD6 with Python
 <p align="center">
 <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/fastapi?logo=python&color=%233776AB">
