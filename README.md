@@ -7,12 +7,12 @@
 ## 시작하기
 ### 1. 설치
 - Git을 사용한 설치를 권장합니다.
-- `.env`파일을 생성하지 않아도 설치 진행 시 자동으로 생성됩니다.
+- 루트 디렉토리에 `.env` 파일이 없다면 설치를 자동으로 진행합니다.
 
 #### 설치 방법
 ```bash
 # Github에서 그누보드6 복사 및 설치합니다.
-git clone git@github.com:gnuboard/g6.git
+git clone https://github.com/gnuboard/g6.git
 ```
 
 ```bash
