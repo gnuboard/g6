@@ -289,7 +289,7 @@ box-shadow:0 0 10px var(--containerShadowBg);
 -moz-box-shadow:1px 2px 5px rgba(191, 191, 191, 0.4);
 box-shadow:1px 2px 5px rgba(191, 191, 191, 0.4)}
 #top_btn i {font-size:1.4em}
-#top_btn:hover {background:#3b8afb;border-color:#3b8afb;color:#fff}
+#top_btn:hover {background:#ff8269;border-color:#ff8269;color:#fff}
 #device_change {display:block;line-height:40px;border-radius:5px;background:#302e2e;color:#777;font-size:1em;text-decoration:none;text-align:center}
 
 /* 게시물 선택복사 선택이동 */
@@ -364,7 +364,7 @@ a.btn_frmline, button.btn_frmline {display:inline-block;padding:0 5px;border:0;b
 button.btn_frmline {font-size:1em}
 
 /* 게시판용 버튼 */
-a.btn_b01,.btn_b01 {display:inline-block;background:#ff8269;color:#fff;border-radius:3px;padding:10px;border:0;text-decoration:none;vertical-align:middle}
+a.btn_b01,.btn_b01 {display:inline-block;background:var(--contBg);color:#fff;border-radius:3px;padding:10px;border:0;text-decoration:none;vertical-align:middle}
 .btn_b01:hover, .btn_b01:hover {}
 a.btn_b02, .btn_b02 {display:inline-block;background:transparent;color:#fff;border:0;border-radius:3px;padding:10px;text-decoration:none;vertical-align:middle}
 a.btn_b02:hover, .btn_b02:hover {}
@@ -517,7 +517,7 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 
 /* 다크모드 설정 */
 /* 스위치버튼 */
-#darkmode_btn{position:fixed;bottom:10px;right:70px;width:50px;height:50px;border:0;text-align:center;background:#4158d1;color: #fff;display: flex;align-items: center;justify-content: center;cursor: pointer;border-radius: 50%;z-index: 99;}
+#darkmode_btn{position:fixed;bottom:10px;right:70px;width:50px;height:50px;border:0;text-align:center;background:#ff8269;color: #fff;display: flex;align-items: center;justify-content: center;cursor: pointer;border-radius: 50%;z-index: 99;}
 #darkmode_btn input {opacity: 0;width: 0;height: 0;}
 #darkmode_btn .visible {width:24px; height:24px; vertical-align:middle;}
 #darkmode_btn .visible.dark {display: var(--darkVisible)}
