@@ -363,7 +363,7 @@ class SocialAuthService:
         """
         with SessionLocal() as db:
             result = db.scalar(
-                exists(MemberSocialProfiles.mp_id)
+                exists(MemberSocialProfiles.mp_no)
                 .where(
                     MemberSocialProfiles.provider == provider,
                     MemberSocialProfiles.identifier == identifier
