@@ -1,10 +1,10 @@
 @charset "utf-8";
 
 /* 전체검색결과 스킨 */
-#sch_res_detail {background:#f7f7f7;padding:30px;text-align:center;margin:0 0 10px}
+#sch_res_detail {background:var(--newBg);padding:30px;text-align:center;margin:0 0 10px}
 #sch_res_detail legend {position:absolute;margin:0;padding:0;font-size:0;line-height:0;text-indent:-9999em;overflow:hidden}
-#sch_res_detail select {border:1px solid #d0d3db;width:175px;height:45px;padding:0 5px;border-radius:3px}
-#sch_res_detail .frm_input {border:1px solid #d0d3db;width:300px;height:45px;border-radius:3px}
+#sch_res_detail select {background: var(--inputBg);border:var(--inputBorder);color: var(--fontColor);width:175px;height:45px;padding:0 5px;border-radius:3px}
+#sch_res_detail .frm_input {border:var(--inputBorder);width:300px;height:45px;border-radius:3px}
 #sch_res_detail .sch_wr {position:relative;display:inline-block}
 #sch_res_detail .btn_submit {padding:0 10px;height:45px;width:88px;font-size:1.083em;font-weight:bold;color:#fff;background:#434a54}
 
@@ -12,8 +12,7 @@
 .switch_field {display:inline-block;vertical-align:middle;padding:10px 5px}
 .switch_field input {position:absolute !important;clip:rect(0, 0, 0, 0);height:1px;width:1px;border:0;overflow:hidden}
 .switch_field label {float:left}
-.switch_field label {display:inline-block;width:50px;background-color:#fff;color:rgba(0, 0, 0, 0.6);font-size:1em;font-weight:normal;text-align:center;text-shadow:none;padding:6px 14px;border:1px solid #bbc0c6;
-box-shadow:inset 0 5px 8px rgb(234, 234, 234), 0 1px rgba(255, 255, 255, 0.1);
+.switch_field label {display:inline-block;width:50px;background-color:var(--contBg);color:rgba(0, 0, 0, 0.6);font-size:1em;font-weight:normal;text-align:center;text-shadow:none;padding:6px 14px;border:var(--border);color: var(--fontColor);
 transition:all 0.1s ease-in-out}
 .switch_field label:hover {cursor:pointer}
 .switch_field input:checked + label {background-color:#ff8269;border:1px solid #ff8269;color:#fff;box-shadow:none}
