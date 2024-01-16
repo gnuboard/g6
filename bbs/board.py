@@ -548,7 +548,7 @@ async def write_update(
     board: Annotated[Board, Depends(get_board)],
     recaptcha_response: str = Form("", alias="g-recaptcha-response"),
     bo_table: str = Path(...),
-    wr_id: int = Form(None),
+    wr_id: str = Form(None),
     parent_id: int = Form(None),
     uid: str = Form(None),
     notice: bool = Form(False),
