@@ -1,7 +1,7 @@
 from typing import Optional, Tuple
 
-from lib.social.social import SocialProvider
 from core.formclass import SocialProfile
+from lib.social.social import SocialProvider
 
 
 class Kakao(SocialProvider):
@@ -81,11 +81,13 @@ class Kakao(SocialProvider):
         return email, socialprofile
 
     @classmethod
-    def logout(cls, oauth_instance, auth_token):
+    async def logout(cls, oauth_instance, auth_token):
         """
-        소셜 서비스 로그아웃
+        소셜 서비스 토큰 revoke
         Args:
             oauth_instance (OAuth): OAuth 인증 객체
             auth_token (Dict): 소셜 서비스 토큰
+        Docs:
+            https://developers.kakao.com/docs/latest/ko/kakaologin/rest-api
         """
-        oauth_instance.__getattr__(cls.provider_name).post('https://kapi.kakao.com/v1/user/logout', token=auth_token)
+        await oauth_instance.__getattr__(cls.provider_name).post('https://kapi.kakao.com/v1/user/logout', token=auth_token)

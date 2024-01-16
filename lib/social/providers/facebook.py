@@ -1,7 +1,7 @@
-from typing import Optional, Tuple, Union, Any
+from typing import Optional, Tuple
 
-from lib.social.social import SocialProvider
 from core.formclass import SocialProfile
+from lib.social.social import SocialProvider
 
 
 class Facebook(SocialProvider):
@@ -68,3 +68,15 @@ class Facebook(SocialProvider):
         )
 
         return email, socialprofile
+
+    @classmethod
+    async def logout(cls, oauth_instance, auth_token):
+        """
+        소셜 서비스 토큰 revoke
+        Args:
+            oauth_instance (OAuth): OAuth 인증 객체
+            auth_token (Dict): 소셜 서비스 토큰
+        """
+        # 페이스북은 토큰 무효화를 위한 엔드포인트를 제공하지 않음
+        # 앱 접근 권한 삭제만 제공
+        pass

@@ -1,7 +1,7 @@
 from typing import Optional, Tuple
 
-from lib.social.social import SocialProvider
 from core.formclass import SocialProfile
+from lib.social.social import SocialProvider
 
 
 class Naver(SocialProvider):
@@ -49,8 +49,7 @@ class Naver(SocialProvider):
 
     @classmethod
     def convert_gnu_profile_data(cls, response) -> Tuple[str, SocialProfile]:
-        """
-        그누보드 MemberSocialProfiles 에서 사용하는 SocialProfile 형식으로 변환
+        """그누보드 MemberSocialProfiles 에서 사용하는 SocialProfile 형식으로 변환
         Args:
             response: 소셜 제공자에서 받은 프로필 정보
         """
@@ -65,6 +64,17 @@ class Naver(SocialProvider):
             displayname=response.get("nickname", ""),
             disciption=""
         )
-    
+
         return email, socialprofile
 
+    @classmethod
+    async def logout(cls, oauth_instance, auth_token):
+        """소셜 서비스 토큰 revoke
+        Args:
+            oauth_instance (OAuth): OAuth 인증 객체
+            auth_token (Dict): 소셜 서비스 토큰
+        """
+        # https://developers.naver.com/docs/login/api/api.md  
+        # 네이버 정책상 로그아웃이 별도로 없다.
+        # 문서 3.2 항목에 있는 delete는 로그인 연동해제.
+        pass

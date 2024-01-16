@@ -10,6 +10,7 @@ from core.models import Board, BoardNew, Scrap, BoardFile, BoardGood
 from core.formclass import BoardForm
 from core.template import AdminTemplates
 from lib.common import *
+from lib.board_lib import BoardFileManager
 from lib.dependencies import (
     common_search_query_params, get_board, validate_token
 )
@@ -17,6 +18,7 @@ from lib.template_functions import (
     get_editor_select, get_group_select, 
     get_member_level_select, get_paging, get_skin_select, 
 )
+
 
 router = APIRouter()
 templates = AdminTemplates()
@@ -26,6 +28,7 @@ templates.env.globals['get_skin_select'] = get_skin_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
 
 BOARD_MENU_KEY = "300100"
+FILE_DIRECTORY = "data/file/"
 
 
 @router.get("/board_list")
@@ -325,6 +328,9 @@ async def board_copy_update(
             # write 객체로 target_write 테이블에 레코드 추가
             db.execute(target_write_model.__table__.insert(), copy_data)
             db.commit()
+            file_manager = BoardFileManager(origin_board, write.wr_id)
+            if file_manager.is_exist(bo_table, write.wr_id):
+                file_manager.copy_board_files(FILE_DIRECTORY, target_table, write.wr_id)
 
     content = """
     <script>

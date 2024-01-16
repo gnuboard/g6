@@ -1,22 +1,19 @@
-import hashlib
-import logging
 import secrets
 import zlib
-from datetime import datetime
-from typing import List, Optional
 from urllib.parse import parse_qs
-from fastapi import APIRouter, Depends
+from uuid import uuid4
 
-from starlette.requests import Request
+from fastapi import APIRouter, Depends
 from starlette.responses import RedirectResponse
 
 from bbs.member_profile import validate_nickname, validate_userid
-from core.database import DBConnect, db_session
+from core.database import db_session
 from core.exception import AlertException
 from core.formclass import MemberForm
-from core.models import Config, MemberSocialProfiles, Member
+from core.models import MemberSocialProfiles
 from core.template import UserTemplates
 from lib.common import *
+from lib.pbkdf2 import create_hash
 from lib.point import insert_point
 from lib.social import providers
 from lib.social.social import (
@@ -96,8 +93,12 @@ async def authorize_social_login(
     request: Request,
     db: db_session
 ):
-    """
-    소셜 로그인 인증 콜백
+    """소셜 로그인 인증 콜백
+    Args:
+        request (Request): starlette request
+        db (SessionLocal): db session
+    Returns:
+        RedirectResponse
     """
     provider: List = parse_qs(request.url.query).get('provider', [])
     if provider.__len__() == 0:
@@ -146,6 +147,7 @@ async def authorize_social_login(
         request.session["ss_mb_id"] = member.mb_id
         # XSS 공격에 대응하기 위하여 회원의 고유키를 생성해 놓는다.
         request.session["ss_mb_key"] = session_member_key(request, member)
+        request.session["ss_social_provider"] = provider_name
         return RedirectResponse(url="/", status_code=302)
 
     if 'ss_social_link' in request.session and request.state.login_member.mb_id:
@@ -273,7 +275,7 @@ async def post_social_register(
 
     member = Member()
     member.mb_id = gnu_social_id
-    member.mb_password = hash_password(hash_password(str(request_time.microsecond)))
+    member.mb_password = create_hash(str(request_time.microsecond) + uuid4().hex)
     member.mb_name = mb_nick
     member.mb_nick = mb_nick
     member.mb_email = member_form.mb_email
@@ -352,8 +354,7 @@ class SocialAuthService:
 
     @classmethod
     def check_exists_by_social_id(cls, identifier, provider) -> bool:
-        """
-        소셜 서비스 아이디가 존재하는지 확인
+        """소셜 서비스 아이디가 존재하는지 확인
         Args:
             identifier (str) : 소셜서비스 사용자 식별 id
             provider (str) : 소셜 제공자
@@ -362,7 +363,7 @@ class SocialAuthService:
         """
         with SessionLocal() as db:
             result = db.scalar(
-                exists(MemberSocialProfiles.mp_id)
+                exists(MemberSocialProfiles.mp_no)
                 .where(
                     MemberSocialProfiles.provider == provider,
                     MemberSocialProfiles.identifier == identifier
@@ -375,8 +376,7 @@ class SocialAuthService:
 
     @classmethod
     def check_exists_by_member_id(cls, member_id) -> bool:
-        """
-        회원아이디가 존재하는지 확인
+        """회원아이디가 존재하는지 확인
         Args:
             member_id (str) : 회원 아이디
         Returns:
@@ -404,7 +404,7 @@ class SocialAuthService:
             provider (str) : 소셜 제공자
 
         Returns:
-            provider_hax(adler32(md5(uid)))
+            provider_hax(adler32(md5(identifier)))
         """
         md5_hash = hashlib.md5(identifier.encode()).hexdigest()
         # Adler-32 hash on the hexadecimal MD5 hash
@@ -414,8 +414,7 @@ class SocialAuthService:
 
     @classmethod
     def unlink_social_login(cls, member_id):
-        """
-        소셜계정 연결해제
+        """소셜계정 연결해제
         """
         with SessionLocal() as db:
             db.execute(

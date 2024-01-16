@@ -264,7 +264,7 @@ box-shadow:1px 1px 5px 0px hsl(232, 36%, 96%)}
 #bo_vc article .profile_img img {border-radius:50%}
 #bo_vc article .pf_img {float:left;margin-right:10px}
 #bo_vc article .pf_img img {border-radius:50%;width:50px;height:50px}
-#bo_vc article .cm_wrap {float:left;max-width:870px;width:90%}
+#bo_vc article .cm_wrap {float:left;max-width: 100%;width: calc(100% - 90PX);}
 #bo_vc header {position:relative;width:100%;color: var(--fontColor);}
 #bo_vc header:after {display:block;visibility:hidden;clear:both;content:""}
 #bo_vc header .profile_img {display:none}
@@ -401,3 +401,8 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 
 #bo_gall li.empty_list {padding:85px 0;text-align:center}
 
+@media (max-width: 501px)  {
+  .bo_v_nb {flex-direction: column;}
+  .bo_v_nb li {width: 100%;}
+  .bo_v_nb li.btn_prv {margin-bottom: 15px;}
+}

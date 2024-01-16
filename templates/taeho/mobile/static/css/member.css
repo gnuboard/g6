@@ -7,7 +7,7 @@
 .mbskin p strong {color:#4162ff;padding-bottom:5px;display:block;font-size:1.083em}
 
 /* 버튼 */
-.mbskin .btn_submit {display:block;width:100%;height:40px;line-height:40px;padding:0 10px;border:0;font-weight:bold;background:#3a8afd;color:#fff;border-radius:3px}
+.mbskin .btn_submit {display:block;width:100%;height:40px;line-height:40px;padding:0 10px;border:0;font-weight:bold;background:#ff8269;color:#fff;border-radius:3px}
 /* ### 기본 스타일 커스터마이징 끝 ### */
 
 /* 회원가입 공통 */
@@ -48,7 +48,7 @@
 #fregisterform .reg_mb_img_file img {max-width:100%;height:auto}
 
 .filebox .fileName {display:inline-block;position:relative;width:100%;height:45px;padding-left:10px;margin-right:5px;line-height:30px;border: 1px solid #d0d3db;background-color:#fff;color:red;vertical-align:middle}
-.filebox .btn_file {display:inline-block;position:absolute;right:8px;top:8px;border:1px solid #3a8afd;border-radius:3px;width:70px;height:30px;color:#3a8afd;font-size:1em;line-height:30px;font-weight:bold;text-align:center;vertical-align:middle}
+.filebox .btn_file {display:inline-block;position:absolute;right:8px;top:8px;border:1px solid #ff8269;border-radius:3px;width:70px;height:30px;color:#ff8269;font-size:1em;line-height:30px;font-weight:bold;text-align:center;vertical-align:middle}
 .filebox input[type="file"] {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
 
 .adress {background:red;width:100%}
@@ -60,7 +60,7 @@
 .chk_box input[type="checkbox"] + label:hover{color:#2172f8}
 .chk_box input[type="checkbox"] + label span {position:absolute;top:1px;left:0;width:17px;height:17px;display:block;background:#fff;border:1px solid #d0d4df;border-radius:3px}
 .chk_box input[type="checkbox"]:checked + label {color:#000}
-.chk_box input[type="checkbox"]:checked + label span {background:url('./img/chk.png') no-repeat 50% 50% #3a8afd;border-color:#1471f6;border-radius:3px}
+.chk_box input[type="checkbox"]:checked + label span {background:url('./img/chk.png') no-repeat 50% 50% #ff8269;border-color:#1471f6;border-radius:3px}
 .chk_li {padding-left:10px;line-height:20px}
 
 .selec_chk {position:absolute;top:0;left:0;width:0;height:0;opacity:0;outline:0;z-index:-1;overflow:hidden}
@@ -68,7 +68,7 @@
 .fregister_agree input[type="checkbox"] + label:hover {color:#2172f8}
 .fregister_agree input[type="checkbox"] + label span {position:absolute;top:20px;right:15px;width:17px;height:17px;display:block;background:#fff;border:1px solid #999;border-radius:3px}
 .fregister_agree input[type="checkbox"]:checked + label {color:#000}
-.fregister_agree input[type="checkbox"]:checked + label span {background:url('./img/chk.png') no-repeat 50% 50% #3a8afd;border-color:#1471f6;border-radius:3px}
+.fregister_agree input[type="checkbox"]:checked + label span {background:url('./img/chk.png') no-repeat 50% 50% #ff8269;border-color:#1471f6;border-radius:3px}
 .fregister_agree.chk_all input[type="checkbox"] + label span {top:15px}
 
 /* 회원가입 완료 */
@@ -112,7 +112,7 @@
 .member_cert_refresh_agree input[type="checkbox"] + label:hover {color:#2172f8}
 .member_cert_refresh_agree input[type="checkbox"] + label span {position:absolute;top:20px;right:15px;width:17px;height:17px;display:block;background:#fff;border:1px solid #999;border-radius:3px}
 .member_cert_refresh_agree input[type="checkbox"]:checked + label {color:#000}
-.member_cert_refresh_agree input[type="checkbox"]:checked + label span {background:url('./img/chk.png') no-repeat 50% 50% #3a8afd;border-color:#1471f6;border-radius:3px}
+.member_cert_refresh_agree input[type="checkbox"]:checked + label span {background:url('./img/chk.png') no-repeat 50% 50% #ff8269;border-color:#1471f6;border-radius:3px}
 .member_cert_refresh_agree.chk_all input[type="checkbox"] + label span {top:15px}
 
 #member_cert_refresh #find_info .find_btn > div {margin:10px 0;padding:0}
@@ -171,7 +171,7 @@
 .memo_list .memo_preview a:hover{text-decoration:underline}
 .memo_list .memo_name a,
 .memo_list .memo_name .sv_wrap {font-weight:bold}
-.memo_list .no_read {position:absolute;bottom:0;right:0;display:inline-block;background:#3a8afd;border:1px solid #e1edff;text-indent:-9999px;border-radius:10px;width:10px;height:10px;box-shadow:0 0 10px 3px #9ec3f9}
+.memo_list .no_read {position:absolute;bottom:0;right:0;display:inline-block;background:#ff8269;border:1px solid #e1edff;text-indent:-9999px;border-radius:10px;width:10px;height:10px;box-shadow:0 0 10px 3px #9ec3f9}
 .memo_list .no_read {animation:blinker 1s linear infinite}
 
 @keyframes blinker {
@@ -212,7 +212,7 @@
 
 #memo_write .form_01 {padding:20px;border-top:1px solid #ececec}
 
-.reply_btn {display:inline-block;width:150px;height:45px;line-height:50px;padding:0 10px;font-weight:bold;background:#3a8afd;color:#fff;border-radius:3px;vertical-align:bottom;margin-right:5px}
+.reply_btn {display:inline-block;width:150px;height:45px;line-height:50px;padding:0 10px;font-weight:bold;background:#ff8269;color:#fff;border-radius:3px;vertical-align:bottom;margin-right:5px}
 #memo_write .reply_btn {font-size:1em}
 
 /* 스크랩 */
@@ -222,7 +222,7 @@
 #scrap .scrap_cate {float:left;display:block;color:#ac92ec;background:#eeeaf8;padding:3px;border-radius:3px;font-size:0.92em;margin-right:10px}
 #scrap .scrap_datetime {color:#777;line-height:18px}
 #scrap .scrap_del {position:absolute;top:15px;right:15px;font-size:18px;color:#c7c9cb}
-#scrap .scrap_del:hover {color:#3a8afd}
+#scrap .scrap_del:hover {color:#ff8269}
 
 #scrap_do textarea {width:100%;height:100px}
 #scrap_do .scrap_tit {margin-bottom:10px;background:#f3f3f3;padding:10px 15px;font-size:1.2em;font-weight:bold}
@@ -253,7 +253,7 @@
 
 .point_list .point_use {background:#f6f6f6}
 .point_list .point_use .point_num {font-size:1.25em;color:#ff4f76;font-weight:bold;float:right}
-.point_list .point_num {font-size:1.25em;color:#3a8afd;font-weight:bold;position:absolute;right:15px;top:25px}
+.point_list .point_num {font-size:1.25em;color:#ff8269;font-weight:bold;position:absolute;right:15px;top:25px}
 .point_list .point_top {line-height:15px;margin:0 0 5px}
 .point_list .point_top:after {display:block;visibility:hidden;clear:both;content:""}
 .point_list .point_tit {font-weight:bold;float:left;font-size:1.083em;display:block}
@@ -289,9 +289,9 @@
 .chk_box input[type="radio"] {position:absolute;top:0;left:0;width:0;height:0;opacity:0;outline:0;z-index:-1;overflow:hidden}
 .chk_box input[type="radio"] + label {position:relative;padding-left:23px;display:inline-block;color:#676e70}
 .chk_box input[type="radio"] + label span {position:absolute;top:0;left:0;width:15px;height:15px;display:block;background:#f7f8f9;border:1px solid #cdd6df;border-radius:50%}
-.chk_box input[type="radio"]:checked + label {color:#3a8afd}
-.chk_box input[type="radio"]:checked + label span {border-color:#3a8afd}
-.chk_box input[type="radio"]:checked + label span:before {width:7px;height:7px;background:#3a8afd;content:'';position:absolute;top:3px;left:3px;border-radius:50%}
+.chk_box input[type="radio"]:checked + label {color:#ff8269}
+.chk_box input[type="radio"]:checked + label span {border-color:#ff8269}
+.chk_box input[type="radio"]:checked + label span:before {width:7px;height:7px;background:#ff8269;content:'';position:absolute;top:3px;left:3px;border-radius:50%}
 
 /* 자기소개 */
 #profile section {margin:10px}
