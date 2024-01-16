@@ -28,6 +28,7 @@
   --boListBg: #ccd1d9;
   --btnPrvBg: #fff1f1;
   --noImgBg: #eaeaea;
+  --gnbShadowBg: #37370566;
   /* 폰트색상 */
   --fontColor: #000;
   --gnbFontColor: #080808;
@@ -86,6 +87,7 @@
   --boListBg: #38393b;
   --btnPrvBg: #363636;
   --noImgBg: #1f1d1d;
+  --gnbShadowBg: #00000080;
   /* 폰트색상 */
   --fontColor: #fff;
   --gnbFontColor: #a0a0a0;
@@ -618,28 +620,63 @@ box-sizing:content-box;
   opacity: 0.9; /* 마우스 오버 시 투명도 조절 */
 }
 
+/* 모바일 반응형 GNB메뉴 */
+.gnb_mo {display:none;background:var(--wrapperBg);position:fixed;top:0;left:0;z-index:99999;width:100%;max-width:400px;height:100%;overflow-y:auto;
+  -webkit-box-shadow:0 0 5px var(--gnbShadowBg);
+  -moz-box-shadow:0 0 5px var(--gnbShadowBg);
+  box-shadow:0 0 5px var(--gnbShadowBg)}
+.gnb_mo #gnb_1dul {background:var(--contBg)}
+.gnb_mo #gnb_1dul a {display:block;color:var(--fontColor)}
+.gnb_mo .gnb_1dli {position:relative;line-height:40px;}
+.gnb_mo .gnb_1dli button {position:absolute;top:5px;right:0;width:40px;height:40px;overflow:hidden;border:0;font-size:1.2em;background:#fff;background:url(../img/mobile/gnb_bg2.png) no-repeat 50% 50%;text-indent:-9999px}
+.gnb_mo .gnb_1dli button.btn_gnb_cl {background:url(../img/mobile/gnb_bg.png) no-repeat 50% 50%}
+.gnb_mo .gnb_1da {padding:5px 20px;background: var(--contBg);border-bottom:var(--border);font-weight:bold;font-size:1.2em;}
+.gnb_mo .gnb_2dul {display:none;background:#fafafa}
+.gnb_mo .gnb_2da {padding-left:30px}
+#gnb_close {display:block;position:absolute;right:8px;top:10px;z-index:99;font-weight:bold;margin:0;height:40px;width:40px;border:0;color:#bfb8b2;font-size:2em;background:transparent}
+
+.gnb_mo #hd_nb {background:var(--contBg);margin-top:10px;border-bottom:var(--border)}
+.gnb_mo #hd_nb:after {display:block;visibility:hidden;clear:both;content:""}
+.gnb_mo #hd_nb li {width:50%;float:left;text-align:center;line-height:25px;font-size:1.083em;font-weight:bold}
+.gnb_mo #hd_nb li a {display:block;color:var(--fontColor);text-align:left;padding:10px 15px}
+.gnb_mo #hd_nb li i {font-size:14px;margin-right:10px;color:#a5a8ac}
+.gnb_mo #hd_nb .hd_nb1 {border-right:var(--border);border-bottom:var(--border)}
+.gnb_mo #hd_nb .hd_nb2 {border-bottom:var(--border)}
+.gnb_mo #hd_nb .hd_nb3 {border-right:var(--border)}
+
+
 @media (max-width: 1100px)  {
   #hd_wrapper, #container_wr, #tnb{width: 96%;}
-  #aside {
+  #aside #ol_after, #aside #gnb, #tnb {
     display: none;
   }
+  #aside {width: 100%;margin: 0px 20px 20px 0px;}
+  #visit {margin-top: 0px;}
   #container {
     width: 100%;
   }
-
+  #logo {position: absolute;left: 50%;transform: translateX(-50%);width: 48px;}
+  .profile_wrap {display: none;}
   #ft_wr .ft_cnt {margin-bottom: 40px;}
   #ft_wr .ft_cnt:last-child {margin-bottom: 0px;}
   #ft_wr .ft_cnt_wrap {flex-direction: column;}
   #ft_wr .ft_cnt_wrap .ft_cnt {width: 100%;}
-  .hd_opener {display: block;width: 50px;height: 50px;font-size: 2.2em;margin-left: auto;margin-right: 8px;background: transparent;border: none;}
+  .hd_opener {display: block;}
   .hd_opener i {color: #fff;}
+  #user_btn {width: 50px;height: 50px;font-size: 2.2em;margin-left: auto;background: transparent;border: none;margin-top: -5px;}
+  #gnb_open {width: 50px;height: 50px;font-size: 2.6em;margin-right: auto;background: transparent;border: none;}
   .hd_sch_wr {display: none;position: absolute;bottom: -64px;left: 0;width: 100%;height: 60px;z-index: 9999;}
   #hd_sch #sch_stx {height: 60px;background: #383838;}
   #hd_sch #sch_submit {height: 60px;background: #383838;}
   .hd_sch_wr.active {display: block;}
   .latest_wr.boards {flex-direction: column;}
   .lt_wr {width: 100%;}
+  #user_btn {margin-right: 0px;}
+  .gnb_mo.active {display: block;}
+  .pic_li_lt {width: 100%;}
+  .full_input {max-width: 100%;}
 }
+
 
 /* 다크모드 설정 */
 #darkmode_btn .visible.dark {display: var(--lightVisible)}

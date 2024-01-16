@@ -32,6 +32,51 @@
             <a href="/"><img src="/static/img/logo_new2.png" alt="그누보드5"></a>
         </div>
 
+        <button type="button" id="gnb_open" class="hd_opener">
+          <i class="fa fa-bars" aria-hidden="true"></i>
+          <span class="sound_only">열기</span>
+        </button>
+        <div id="gnb_mo" class="gnb_mo">
+          <button type="button" id="gnb_close" class="hd_closer">
+              <span class="sound_only">메뉴 닫기</span>
+              <i class="fa fa-times" aria-hidden="true"></i>
+          </button>
+          <!-- 아웃 로그인 -->
+          {% if request.state.login_member %}
+              {% include "mobile/bbs/outlogin_after.html" ignore missing %}
+          {% else %}
+              {% include "mobile/bbs/outlogin_before.html" ignore missing %}
+          {% endif %}
+
+          <!-- 메뉴 -->
+          {% include "mobile/bbs/menu.html" ignore missing %}
+
+          <ul id="hd_nb">
+              <li class="hd_nb1">
+                  <a href="/bbs/faq" id="snb_faq">
+                      <i class="fa fa-question" aria-hidden="true"></i>FAQ
+                  </a>
+              </li>
+              <li class="hd_nb2">
+                  <a href="/bbs/qalist" id="snb_qa">
+                      <i class="fa fa-comments" aria-hidden="true"></i>1:1문의
+                  </a>
+              </li>
+              <li class="hd_nb3">
+                  <a href="/bbs/current_connect" id="snb_cnt">
+                      <i class="fa fa-users" aria-hidden="true"></i>접속자
+                     <span>{{ current_login_count[0]|number_format }}</span>
+                  </a>
+              </li>
+              <li class="hd_nb4">
+                  <a href="/bbs/new" id="snb_new">
+                      <i class="fa fa-history" aria-hidden="true"></i>새글
+                  </a>
+              </li>
+          </ul>
+      </div>
+
+
         <!-- 검색영역 -->
         <div class="hd_sch_wr">
             <fieldset id="hd_sch">
@@ -83,14 +128,26 @@
         <button type="button" id="user_btn" class="hd_opener"><i class="fa fa-search" aria-hidden="true"></i><span class="sound_only">사용자메뉴</span></button>
 
         <script>
-          var hd_opener = document.querySelector(".hd_opener");
+          var gnb_opener = document.querySelector("#gnb_open");
+          var sch_opener = document.querySelector("#user_btn");
+          var close_btn = document.querySelector("#gnb_close");
           var hd_sch_wr = document.querySelector(".hd_sch_wr");
+          var hd_gnb_wr = document.querySelector("#gnb_mo");
   
           function handleSearchClick() {
             hd_sch_wr.classList.toggle("active");
           }
+          function handleGnbClick() {
+            hd_gnb_wr.classList.add("active");
+          }
+          function delGnbClick() {
+            hd_gnb_wr.classList.remove("active");
+          }
   
-          hd_opener.addEventListener("click", handleSearchClick);
+          sch_opener.addEventListener("click", handleSearchClick);
+          gnb_opener.addEventListener("click", handleGnbClick);
+          close_btn.addEventListener("click", delGnbClick);
+     
         </script>
 
         <!-- 프로필 -->
@@ -115,7 +172,7 @@
 
     <!-- 프로필 이미지 클릭 이벤트 -->
     <script>
-        var profileImg = document.querySelector(".profile_img");
+        var profileImg = document.querySelector(".profile_wrap .profile_img");
         var mypageBox = document.querySelector(".hd_login");
 
         function handleProfileClick() {
@@ -222,15 +279,7 @@
             {% endif %}
         </div>
         <div id="ft_company" class="ft_cnt">
-        	<h2>사이트 정보</h2>
-	        <p class="ft_info">
-	        	회사명 : 회사명 / 대표 : 대표자명<br>
-				주소  : OO도 OO시 OO구 OO동 123-45<br>
-				사업자 등록번호  : 123-45-67890<br>
-				전화 :  02-123-4567  팩스  : 02-123-4568<br>
-				통신판매업신고번호 :  제 OO구 - 123호<br>
-				개인정보관리책임자 :  정보책임자명<br>
-			</p>
+
 	    </div>
     </div>
     <div id="ft_copy">Copyright &copy; <b>{{ request.url.hostname }}.</b> All rights reserved.</div>
