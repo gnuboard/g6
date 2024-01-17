@@ -246,10 +246,10 @@ border:1px solid #ff8269 !important;
 .profile_wrap .profile_img {display: inline-block;width: 50px;height: 50px;border-radius: 50%;overflow: hidden;cursor: pointer;}
 .profile_wrap .profile_img img {width: 100%;}
 
-.hd_login {visibility: hidden;opacity: 0;position: absolute;right: 0;top: 40px;background: #fff;border: 1px solid #eee;border-radius: 8px;transition: all 0.2s;z-index: 9999;}
+.hd_login {visibility: hidden;opacity: 0;position: absolute;right: 0;top: 40px;background: var(--contBg);border: var(--border);border-radius: 8px;transition: all 0.2s;z-index: 9999;overflow: hidden;}
 .hd_login.active {visibility: visible;opacity: 1;}
 .hd_login a {color:rgb(148, 155, 160);font-size: 1.2em;padding: 10px 40px;display: block;white-space: nowrap;}
-.hd_login a:hover {background: #f7f3f3;}
+.hd_login a:hover {background: var(--bovHover);color: #ff8269;}
 
 /* 메인메뉴 */
 #gnb {position:relative;background:var(--contBg);border: var(--border);border-radius: 8px;overflow: hidden;margin-bottom: 15px;}
@@ -660,9 +660,7 @@ box-sizing:content-box;
 
 @media (max-width: 1100px)  {
   #hd_wrapper, #container_wr, #tnb{width: 96%;}
-  #aside #ol_after, #aside #ol_before,#sns_login, #aside #gnb, #tnb {
-    display: none;
-  }
+  #aside #ol_after, #aside #ol_before,#sns_login, #aside #gnb, #tnb {display: none;}
   #aside {width: 100%;margin: 0px 20px 20px 0px;}
   #visit {margin-top: 0px;}
   #container {width: 100%;margin: 20px 0px;}
