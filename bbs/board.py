@@ -831,7 +831,7 @@ async def read_post(
     # 세션 체크
     # 한번 읽은 게시글은 세션만료까지 조회수, 포인트 처리를 하지 않는다.
     session_name = f"ss_view_{bo_table}_{wr_id}"
-    if not request.session.get(session_name) and member.mb_id != write.mb_id:
+    if not request.session.get(session_name) and mb_id != write.mb_id:
         # 포인트 검사
         if config.cf_use_point:
             read_point = board.bo_read_point
