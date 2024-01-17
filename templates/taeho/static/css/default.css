@@ -23,12 +23,15 @@
   --newBg: #f7f7f7;
   --priThBg: #f7f7f9;
   --pgBg: #eee;
+  --autoBg: #eee;
   --pgHvBg: #fafafa;
   --scrapBg: #f8ebea;
   --boListBg: #ccd1d9;
   --btnPrvBg: #fff1f1;
   --noImgBg: #eaeaea;
   --gnbShadowBg: #37370566;
+  --autoPopBg: #e8e8e8;
+  --autoHvBg: #dbdbdb;
   /* 폰트색상 */
   --fontColor: #000;
   --gnbFontColor: #080808;
@@ -58,6 +61,8 @@
   --qaBorder: 1px solid #ffded8;
   --fileBorder: 2px solid #00000010;
   --shareBorder: 1px solid #d5d5d5;
+  --autoLiBorder: 1px solid #ffffff;
+  --autoUlBorder: 1px solid #e8e8e8;
 }
 :root[color-theme='dark'] {
   /* 스위치 버튼 */
@@ -82,12 +87,15 @@
   --newBg: #1f1d1d;
   --priThBg: #242424;
   --pgBg: #323235;
+  --autoBg: #3a3a3a;
   --pgHvBg: #1f1d1d;
   --scrapBg: #493937;
   --boListBg: #38393b;
   --btnPrvBg: #363636;
   --noImgBg: #1f1d1d;
   --gnbShadowBg: #00000080;
+  --autoPopBg: #ffffff40;
+  --autoHvBg: #525252;
   /* 폰트색상 */
   --fontColor: #fff;
   --gnbFontColor: #a0a0a0;
@@ -118,6 +126,8 @@
   --qaBorder: 1px solid #504544;
   --fileBorder: 2px solid #ffffff24;
   --shareBorder: 1px solid #4d4d4d;
+  --autoLiBorder: 1px solid #252525;
+  --autoUlBorder: 1px solid #ffffff40;
   /* filter */
   --invert: invert(92%);
 }
@@ -236,10 +246,10 @@ border:1px solid #ff8269 !important;
 .profile_wrap .profile_img {display: inline-block;width: 50px;height: 50px;border-radius: 50%;overflow: hidden;cursor: pointer;}
 .profile_wrap .profile_img img {width: 100%;}
 
-.hd_login {visibility: hidden;opacity: 0;position: absolute;right: 0;top: 40px;background: #fff;border: 1px solid #eee;border-radius: 8px;transition: all 0.2s;z-index: 9999;}
+.hd_login {visibility: hidden;opacity: 0;position: absolute;right: 0;top: 40px;background: var(--contBg);border: var(--border);border-radius: 8px;transition: all 0.2s;z-index: 9999;overflow: hidden;}
 .hd_login.active {visibility: visible;opacity: 1;}
 .hd_login a {color:rgb(148, 155, 160);font-size: 1.2em;padding: 10px 40px;display: block;white-space: nowrap;}
-.hd_login a:hover {background: #f7f3f3;}
+.hd_login a:hover {background: var(--bovHover);color: #ff8269;}
 
 /* 메인메뉴 */
 #gnb {position:relative;background:var(--contBg);border: var(--border);border-radius: 8px;overflow: hidden;margin-bottom: 15px;}
@@ -643,18 +653,17 @@ box-sizing:content-box;
 .gnb_mo #hd_nb .hd_nb1 {border-right:var(--border);border-bottom:var(--border)}
 .gnb_mo #hd_nb .hd_nb2 {border-bottom:var(--border)}
 .gnb_mo #hd_nb .hd_nb3 {border-right:var(--border)}
+.gnb_mo a.btn_b01 {border: 1px solid #727272;height: auto;padding: 10px;}
+.gnb_mo a.btn_b01:hover {color: #ffffff;}
+.gnb_mo a.btn_b02 {height: auto;padding: 10px;margin-left: 6px;}
 
 
 @media (max-width: 1100px)  {
   #hd_wrapper, #container_wr, #tnb{width: 96%;}
-  #aside #ol_after, #aside #gnb, #tnb {
-    display: none;
-  }
+  #aside #ol_after, #aside #ol_before,#sns_login, #aside #gnb, #tnb {display: none;}
   #aside {width: 100%;margin: 0px 20px 20px 0px;}
   #visit {margin-top: 0px;}
-  #container {
-    width: 100%;
-  }
+  #container {width: 100%;margin: 20px 0px;}
   #logo {position: absolute;left: 50%;transform: translateX(-50%);width: 48px;}
   .profile_wrap {display: none;}
   #ft_wr .ft_cnt {margin-bottom: 40px;}
