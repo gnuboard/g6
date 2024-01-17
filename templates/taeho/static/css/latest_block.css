@@ -32,5 +32,5 @@
 .pic_lt .empty_li:before {background:none;padding:0}
 
 .pic_lt .lt_cmt {background:#e9eff5;color:#3a8afd;font-size:11px;height:16px;line-height:16px;padding:0 5px;border-radius:3px;vertical-align:middle}
-.pic_lt .lt_more {position:absolute;top:11px;right:0;display:block;width:40px;line-height:25px;color:#ff8269;border-radius:3px;text-align:center}
+.pic_lt .lt_more {position:absolute;top:11px;right:0;display:block;width:40px;line-height:25px;color:var(--primary);border-radius:3px;text-align:center}
 .pic_lt .lt_more:hover {color:#777}

@@ -121,10 +121,10 @@
 
 .fregister_agree {position:absolute;top:0;right:0}
 .fregister_agree input[type="checkbox"] + label {color:var(--fontColor);font-weight: bold;}
-.fregister_agree input[type="checkbox"] + label:hover {color:#ff8269}
+.fregister_agree input[type="checkbox"] + label:hover {color:var(--primary)}
 .fregister_agree input[type="checkbox"] + label span {position:absolute;top:20px;right:15px;width:17px;height:17px;display:block;background:#fff;border:1px solid #999;border-radius:3px}
-.fregister_agree input[type="checkbox"]:checked + label {color:#ff8269}
-.fregister_agree input[type="checkbox"]:checked + label span {background:url('/static/img/chk.png') no-repeat 50% 50% #ff8269;border-color:#ff8269;border-radius:3px}
+.fregister_agree input[type="checkbox"]:checked + label {color:var(--primary)}
+.fregister_agree input[type="checkbox"]:checked + label span {background:url('/static/img/chk.png') no-repeat 50% 50% var(--primary);border-color:var(--primary);border-radius:3px}
 .fregister_agree.chk_all input[type="checkbox"] + label span {top:18px}
 
 .chk_li {padding-left:20px}
@@ -145,11 +145,11 @@
 .register_form_inner label.text_input {position:absolute;left:0%; bottom:50%; width:100%; line-height: 45px; text-align:left;transition: all 0.2s;cursor: pointer;color: var(--bovColor);}
 .register_form_inner .frm_input:focus,
 .register_form_inner .frm_input:valid,
-.register_form_inner .frm_input:-webkit-autofill {border: none !important;border-bottom: 2px solid #ff8269 !important;box-shadow: none;}
+.register_form_inner .frm_input:-webkit-autofill {border: none !important;border-bottom: 2px solid var(--primary) !important;box-shadow: none;}
 .register_form_inner .frm_input:placeholder-shown {border-bottom: 1px solid #d0d3db !important}
 .register_form_inner .frm_input:focus + label.text_input, 
 .register_form_inner .frm_input:valid + label.text_input,
-.register_form_inner .frm_input:-webkit-autofill + label.text_input {bottom:50%;font-size:12px;color: #ff8269;}  /* input에 글을 입력하고 포커스가 지나간 상태에서 제어하려면 valid 선택자를 써야한다. */
+.register_form_inner .frm_input:-webkit-autofill + label.text_input {bottom:50%;font-size:12px;color: var(--primary);}  /* input에 글을 입력하고 포커스가 지나간 상태에서 제어하려면 valid 선택자를 써야한다. */
 .register_form_inner .frm_input:placeholder-shown + label.text_input {bottom: 0;color: var(--bovColor);}
 .register_form_inner .frm_input:read-only {background: var(--pgBg);}
 /* 포커스 될 때 label span(name)이 위로 올라감 */
@@ -171,7 +171,7 @@ p input:valid + label::after { width:100%; transform:translateX(0); }
 #reg_mb_icon, #reg_mb_img {float:right}
 
 .tooltip_icon {position: relative;display:inline-block;vertical-align:baseline;color:#b3b5b8;border:0;font-size:1.4em;background:transparent;cursor:pointer;}
-.tooltip_icon:hover {color:#ff8269}
+.tooltip_icon:hover {color:var(--primary)}
 .tooltip {position:absolute;display: inline-block;opacity: 0;width:auto;color:#fff;background:#464646;padding:10px;font-size:small;line-height:18px;visibility: hidden;z-index:9;font-weight:normal;margin-left:15px;margin-top:10px;white-space: nowrap;transition: all 0.2s;}
 .tooltip:before {content:"";position:absolute;top:0;left:-10px;width:0;height:0;border-style:solid;border-top:0px solid transparent;border-bottom:10px solid transparent;border-left:0;border-right:10px solid #464646}
 .tooltip_icon:hover .tooltip {visibility: visible;opacity: 1;}

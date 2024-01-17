@@ -1,7 +1,7 @@
 @charset "utf-8";
 
 /* 접속자 집계 */
-#visit {position:relative;margin-top:20px;background:#ff8269;border-radius: 8px;overflow: hidden;color: #fff;}
+#visit {position:relative;margin-top:20px;background:var(--primary);border-radius: 8px;overflow: hidden;color: #fff;}
 #visit h2 {line-height:24px;font-size:1.2em;padding:15px 0px;margin: 0px 15px; border-bottom:1px solid #ffffff69}
 #visit dl{padding:15px 20px;border-radius:3px;line-height:20px}
 #visit dl:after {display:block;visibility:hidden;clear:both;content:""}

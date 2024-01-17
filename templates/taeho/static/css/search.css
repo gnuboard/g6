@@ -15,7 +15,7 @@
 .switch_field label {display:inline-block;width:50px;background-color:var(--contBg);color:rgba(0, 0, 0, 0.6);font-size:1em;font-weight:normal;text-align:center;text-shadow:none;padding:6px 14px;border:var(--border);color: var(--fontColor);
 transition:all 0.1s ease-in-out}
 .switch_field label:hover {cursor:pointer}
-.switch_field input:checked + label {background-color:#ff8269;border:1px solid #ff8269;color:#fff;box-shadow:none}
+.switch_field input:checked + label {background-color:var(--primary);border:1px solid var(--primary);color:#fff;box-shadow:none}
 .switch_field label:first-of-type {border-radius:4px 0 0 4px;border-right:0}
 .switch_field label:last-of-type {border-radius:0 4px 4px 0}
 

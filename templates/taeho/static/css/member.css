@@ -84,7 +84,7 @@
 #reg_result .result_txt {text-align:left;color: var(--fontColor);}
 #reg_result .btn_confirm {margin:50px 0}
 #reg_result i {font-size:3em}
-#reg_result .reg_result_p {font-size:1.25em;margin:0 0 10px;color:#ff8269}
+#reg_result .reg_result_p {font-size:1.25em;margin:0 0 10px;color:var(--primary)}
 
 .btn_confirm_reg {margin:20px 0;text-align:center}
 .reg_btn_submit {display:inline-block;background:#3a8afd;color:#fff;text-align:center;border-radius:3px;width:280px;height:57px;line-height:57px;font-size:1.2em;margin:0 auto;font-weight:bold}
@@ -253,7 +253,7 @@
 /*포인트*/
 #point {text-align:center}
 #point h1 {text-align:left}
-#point .point_all {margin:20px 20px 15px;border-radius:5px;background:#ff8269;color:#fff;font-size:1.083em}
+#point .point_all {margin:20px 20px 15px;border-radius:5px;background:var(--primary);color:#fff;font-size:1.083em}
 #point .point_all:after {display:block;visibility:hidden;clear:both;content:""}
 #point .point_all li {float:left;width:50%;padding:20px;text-align:left}
 #point .point_all li span {float:right;color:#485172;font-weight:bold}
@@ -271,7 +271,7 @@
 
 .point_list .point_use {background:var(--bovHover)}
 .point_list .point_use .point_num {font-size:1.25em;color:#ff4f76;font-weight:bold;float:right}
-.point_list .point_num {font-size:1.25em;color:#ff8269;font-weight:bold;position:absolute;right:30px;top:25px}
+.point_list .point_num {font-size:1.25em;color:var(--primary);font-weight:bold;position:absolute;right:30px;top:25px}
 .point_list .point_top {line-height:15px;margin:0 0 5px}
 .point_list .point_top:after {display:block;visibility:hidden;clear:both;content:""}
 .point_list .point_tit {font-weight:bold;float:left;font-size:1.083em;display:block;color: var(--fontColor);}
@@ -286,7 +286,7 @@
 #mb_confirm {}
 #mb_confirm h1 {margin:60px 0 30px;font-size:2em;color: var(--fontColor);}
 #mb_confirm p {padding:0 20px 40px;border-bottom:var(--border);font-size:1.083em;line-height:1.4em;color:#656565}
-#mb_confirm p strong {display:block;color:#ff8269;font-size:1.167em;margin:0 0 5px}
+#mb_confirm p strong {display:block;color:var(--primary);font-size:1.167em;margin:0 0 5px}
 #mb_confirm fieldset {padding:50px;text-align:left}
 #mb_confirm fieldset .frm_input {background-color:var(--inputBg) !important}
 #mb_confirm label {letter-spacing:-0.1em}
@@ -314,9 +314,9 @@
 .chk_box input[type="radio"] {position:absolute;top:0;left:0;width:0;height:0;opacity:0;outline:0;z-index:-1;overflow:hidden}
 .chk_box input[type="radio"] + label {position:relative;padding-left:23px;display:inline-block;color:var(--fontColor)}
 .chk_box input[type="radio"] + label span {position:absolute;top:0;left:0;width:15px;height:15px;display:block;background:#f7f8f9;border:1px solid #cdd6df;border-radius:50%}
-.chk_box input[type="radio"]:checked + label {color:#ff8269}
-.chk_box input[type="radio"]:checked + label span {border-color:#ff8269}
-.chk_box input[type="radio"]:checked + label span:before {width:7px;height:7px;background:#ff8269;content:'';position:absolute;top:3px;left:3px;border-radius:50%}
+.chk_box input[type="radio"]:checked + label {color:var(--primary)}
+.chk_box input[type="radio"]:checked + label span {border-color:var(--primary)}
+.chk_box input[type="radio"]:checked + label span:before {width:7px;height:7px;background:var(--primary);content:'';position:absolute;top:3px;left:3px;border-radius:50%}
 .chk_box input[type="checkbox"] + label {position:relative;color:#676e70}
 .chk_box input[type="checkbox"] + label:hover {color:#2172f8}
 .chk_box input[type="checkbox"] + label span {float:left;width:15px;height:15px;display:block;background:#fff;border:1px solid #d0d4df;border-radius:3px}
