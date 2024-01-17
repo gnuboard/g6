@@ -5,7 +5,7 @@
 #visit dl{background:var(--contBg);padding:15px 20px;border-radius:3px;line-height:20px}
 #visit dl:after {display:block;visibility:hidden;clear:both;content:""}
 #visit dt {float:left;width:50%;position:relative;line-height:32px;padding-left:15px;color: var(--fontColor);}
-#visit dt:after {position:absolute;left:0;top:13px;width:5px;height:5px;background:#ff8269;content:"";border-radius:5px}
-#visit dd {float:left;width:50%;text-align:right;line-height:32px;color:#ff8269}
+#visit dt:after {position:absolute;left:0;top:13px;width:5px;height:5px;background:var(--primary);content:"";border-radius:5px}
+#visit dd {float:left;width:50%;text-align:right;line-height:32px;color:var(--primary)}
 #visit a {display:inline-block;padding:10px 3px;text-decoration:none}
 #visit .btn_admin {position:absolute;top:0;right:15px}

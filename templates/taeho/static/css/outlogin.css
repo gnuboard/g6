@@ -15,9 +15,9 @@
 #aside #ol_before .ol_wr {position:relative;margin-bottom:5px}
 #aside #ol_id {display:block;width:100%;background: var(--inputBg);border:var(--inputBorder);color: var(--fontColor);padding:0 10px;height:35px;margin-bottom:5px;border-radius:3px}
 #aside #ol_pw {display:block;width:100%;background: var(--inputBg);border:var(--inputBorder);color: var(--fontColor);padding:0 10px;height:35px;margin-bottom:5px;border-radius:3px}
-#aside #ol_submit {width:100%;height:35px;background:#ff8269;border-left:1px solid #ccc;color:#fff;font-weight:bold;font-size:1.167em;border-radius:3px}
+#aside #ol_submit {width:100%;height:35px;background:var(--primary);border-left:1px solid #ccc;color:#fff;font-weight:bold;font-size:1.167em;border-radius:3px}
 #aside #ol_svc {float:right;line-height:20px}
-#aside #ol_svc a {display:inline-block;border:var(--border);color:#ff8269;border-radius:2px;padding:2px 5px}
+#aside #ol_svc a {display:inline-block;border:var(--border);color:var(--primary);border-radius:2px;padding:2px 5px}
 #aside #ol_auto {float:left;line-height:20px;margin-top:5px}
 #aside #ol_auto label {color:var(--shareColor);vertical-align:baseline}
 #aside #ol_auto input {width:13px;height:13px} 
@@ -31,7 +31,7 @@
 #aside #ol_after_hd .profile_img {position:absolute;top:15px;left:15px;display:inline-block}
 #aside #ol_after_hd .profile_img img {border:1px solid #bbb;border-radius:50%;width:50px;height:50px}
 #aside #ol_after_hd .profile_img a {text-align:center;font-size:17px;width:30px;line-height:30px;color:#777}
-#aside #ol_after_info {display:inline-block;height:28px;line-height:22px;border:var(--border);color:#ff8269;border-radius:2px;padding:2px 5px}
+#aside #ol_after_info {display:inline-block;height:28px;line-height:22px;border:var(--border);color:var(--primary);border-radius:2px;padding:2px 5px}
 #aside #ol_after h2 {margin:0;padding:0;width:1px;height:1px;font-size:0;line-height:0;overflow:hidden}
 #aside #ol_after_hd .btn_admin {border-radius:3px;height:28px;line-height:28px;vertical-align:baseline}
 #aside #ol_after_hd .btn_b04 {line-height:23px;padding:0 5px}
@@ -42,10 +42,10 @@
 #aside #ol_after_private a {display:block;color:var(--prFontColor);line-height:18px;padding:10px 10px 10px 20px}
 #aside #ol_after_private a strong {display:inline-block;float:right;max-width:87px;overflow:hidden;white-space:nowrap;text-overflow:clip;color:#f16245;padding:0 5px;border-radius:15px;font-size:0.92em}
 #aside #ol_after_private a:hover strong {background:#4b8bff}
-#aside #ol_after_private li a:hover {color:#ff8269;background:var(--bovHover)}
-#aside #ol_after_private li a:hover:after {position:absolute;left:-1px;top:0;width:2px;height:38px;background:#ff8269;content:""}
+#aside #ol_after_private li a:hover {color:var(--primary);background:var(--bovHover)}
+#aside #ol_after_private li a:hover:after {position:absolute;left:-1px;top:0;width:2px;height:38px;background:var(--primary);content:""}
 #aside #ol_after_private li i {width:25px;color:#8c9eb0;margin-right:5px}
-#aside #ol_after_private li:hover i {color:#ff8269}
+#aside #ol_after_private li:hover i {color:var(--primary)}
 #aside #ol_after_private .win_point:hover strong {background:#37bc9b;color:#fff}
 #aside #ol_after_private .win_memo:hover strong {background:#8cc152;color:#fff}
 #aside #ol_after_private .win_scrap:hover strong {background:#ff8b77;color:#fff}
@@ -58,13 +58,13 @@
 .selec_chk {position:absolute;top:0;left:0;width:0;height:0;opacity:0;outline:0;z-index:-1;overflow:hidden}
 .chk_box {position:relative}
 .chk_box input[type="checkbox"] + label {padding-left:20px;color:#676e70}
-.chk_box input[type="checkbox"] + label:hover{color:#ff8269}
+.chk_box input[type="checkbox"] + label:hover{color:var(--primary)}
 .chk_box input[type="checkbox"] + label span {position:absolute;top:2px;left:0;width:15px;height:15px;display:block;margin:0;background:#fff;border:1px solid #d0d4df;border-radius:3px}
 .chk_box input[type="checkbox"]:checked + label {color:var(--fontColor)}
 .chk_box input[type="checkbox"]:checked + label span {background:url(/static/img/chk.png) no-repeat 50% 50% #3a8afd;border-color:#1471f6;border-radius:3px}
 .chk_box input[type="checkbox"]:checked + label span {
-  background: url(/static/img/chk.png) no-repeat 50% 50% #ff8269;
-  border-color: #ff8269;
+  background: url(/static/img/chk.png) no-repeat 50% 50% var(--primary);
+  border-color: var(--primary);
   border-radius: 3px;
 }
 
@@ -103,4 +103,4 @@
 
 .gnb_mo #ol_after_btn {position:absolute;top:15px;right:55px}
 .gnb_mo #ol_after_btn a {display:inline-block;padding:0 10px;line-height:30px;color:#fff;border-radius:3px;font-weight:bold}
-.gnb_mo #ol_after_logout {background:#ff8269;color:#fff}
+.gnb_mo #ol_after_logout {background:var(--primary);color:#fff}

@@ -47,14 +47,15 @@ def regist_core_middleware(app: FastAPI) -> None:
         # 반응형이라면 PC/모바일 버전 설정 세션을 초기화합니다.
         if request.state.is_responsive:
             request.session["is_mobile"] = False
-
-        if request.session.get("is_mobile"):
-            request.state.is_mobile = request.session.get("is_mobile", False)
         else:
-            # User-Agent 헤더를 통해 모바일 여부를 판단합니다. (모바일과 태블릿 접속)
-            user_agent = parse(request.headers.get("User-Agent", ""))
-            if user_agent.is_mobile or user_agent.is_tablet:
-                request.state.is_mobile = True
+            # 사용자가 설정한 PC/모바일 버전 설정 세션을 확인합니다.
+            if request.session.get("is_mobile"):
+                request.state.is_mobile = request.session.get("is_mobile", False)
+            else:
+                # User-Agent 헤더를 통해 모바일 여부를 판단합니다. (모바일과 태블릿 접속)
+                user_agent = parse(request.headers.get("User-Agent", ""))
+                if user_agent.is_mobile or user_agent.is_tablet:
+                    request.state.is_mobile = True
 
         # 디바이스 기본값 설정
         request.state.device = "mobile" if request.state.is_mobile else "pc"
