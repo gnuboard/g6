@@ -68,8 +68,8 @@ def regist_core_middleware(app: FastAPI) -> None:
                    session_cookie=os.getenv("SESSION_COOKIE_NAME", "session"),
                    max_age=60 * 60 * 3)
 
-    # 모든 들어오는 요청을 HTTPS로 리디렉션하는 미들웨어를 추가합니다.
-    app.add_middleware(HTTPSRedirectMiddleware)
+    # 클라이언트가 사용할 프로토콜을 결정하는 미들웨어를 추가합니다.
+    app.add_middleware(BaseSchemeMiddleware)
 
 
 async def should_run_middleware(request: Request) -> bool:
@@ -96,11 +96,8 @@ async def should_run_middleware(request: Request) -> bool:
     return True
 
 
-class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
-    """이 클래스는 BaseHTTPMiddleware를 상속받아,
-    HTTP 요청을 HTTPS로 리디렉션하는 미들웨어로 사용됩니다.
-    """
+class BaseSchemeMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        if request.headers.get("X-Forwarded-Proto") != "https":
-            request.scope["scheme"] = "https"
+        # X-Forwarded-Proto 헤더를 통해 클라이언트가 사용하는 실제 프로토콜을 결정합니다.
+        request.scope["scheme"] = request.headers.get("X-Forwarded-Proto", "http")
         return await call_next(request)
