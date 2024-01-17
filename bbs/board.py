@@ -831,7 +831,7 @@ async def read_post(
     # 세션 체크
     # 한번 읽은 게시글은 세션만료까지 조회수, 포인트 처리를 하지 않는다.
     session_name = f"ss_view_{bo_table}_{wr_id}"
-    if not request.session.get(session_name) and member.mb_id != write.mb_id:
+    if not request.session.get(session_name) and mb_id != write.mb_id:
         # 포인트 검사
         if config.cf_use_point:
             read_point = board.bo_read_point
@@ -933,9 +933,11 @@ async def read_post(
 
         # 비밀댓글 처리
         session_secret_comment_name = f"ss_secret_comment_{bo_table}_{comment.wr_id}"
+        parent_write = db.get(write_model, comment.wr_parent)
         if (comment.is_secret
                 and not admin_type
                 and not is_owner(comment, mb_id)
+                and not is_owner(parent_write, mb_id)
                 and not request.session.get(session_secret_comment_name)):
             comment.is_secret_content = True
             comment.save_content = "비밀글 입니다."
