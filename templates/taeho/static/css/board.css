@@ -172,17 +172,14 @@ html.no-overflowscrolling #autosave_pop {height:auto;max-height:10000px !importa
 
 #bo_v_link h2 {position:absolute;font-size:0;line-height:0;overflow:hidden}
 #bo_v_file ul {margin:0;list-style:none}
-#bo_v_link li {padding:15px;position:relative;margin:10px 0;border:1px solid #dfdfdf;border-radius:5px;
--webkit-box-shadow:1px 1px 5px 0px hsl(232, 36%, 96%);
--moz-box-shadow:1px 1px 5px 0px hsl(232, 36%, 96%);
-box-shadow:1px 1px 5px 0px hsl(232, 36%, 96%)}
+#bo_v_link li {padding:15px;position:relative;margin:10px 0;border:var(--fileBorder);border-radius:5px;transition: all 0.2s;}
 #bo_v_link li i {float:left;color:#b2b2b2;font-size:2.35em;margin-right:20px}
-#bo_v_link a {float:left;display:block;text-decoration:none;word-wrap:break-word;color:#000}
-#bo_v_link a:focus, #bo_v_link li:hover a, #bo_v_link a:active {text-decoration:underline;color:#3a8afd}
+#bo_v_link a {float:left;display:block;text-decoration:none;word-wrap:break-word;color:var(--fontColor)}
+#bo_v_link a:focus, #bo_v_link li:hover a, #bo_v_link a:active {text-decoration:underline;color:#e7664d}
 #bo_v_link .bo_v_link_cnt {color:#b2b2b2;font-size:0.92em}
-#bo_v_link li:hover {border-color:#bed4f4;color:#bed4f4}
-#bo_v_link li:hover i {color:#3a8afd}
-#bo_v_link li:hover .bo_v_link_cnt {color:#99c2fc}
+#bo_v_link li:hover {border-color:#ec957f;color:#bed4f4}
+#bo_v_link li:hover i {color:#ff8269}
+#bo_v_link li:hover .bo_v_link_cnt {color:#ff8269}
 
 #bo_v_top {zoom:1}
 #bo_v_top:after {display:block;visibility:hidden;clear:both;content:""}
