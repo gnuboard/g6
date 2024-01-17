@@ -420,7 +420,13 @@ class BoardConfig():
 
         write_model = dynamic_create_write_table(self.board.bo_table)
         comment_count = db.scalar(
-            select(func.count()).select_from(write_model))
+            select(func.count())
+            .select_from(write_model)
+            .where(
+                write_model.wr_parent == wr_id,
+                write_model.wr_is_comment == 1
+            )
+        )
 
         db.close()
 

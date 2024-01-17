@@ -35,7 +35,10 @@
                         </label>
                         <input type="text" name="mb_id" value="{{ member.mb_id|default_if_none('') }}"
                                id="reg_mb_id" required class="frm_input full_input required " minlength="3"
-                               maxlength="20" placeholder="아이디">
+                               maxlength="20"
+                               {% if member.mb_id %}readonly="readonly"{% endif %}
+                               placeholder="아이디">
+
                         <span id="msg_mb_id"></span>
                     </li>
                     <li class="half_input left_input margin_input">
