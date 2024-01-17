@@ -126,8 +126,7 @@ async def authorize_social_login(
                              url=request.url_for('login').__str__())
 
     # 가입된 소셜 서비스 아이디가 존재하는지 확인
-    gnu_social_id = SocialAuthService.g6_convert_social_id(identifier, provider_name)
-    social_profile = SocialAuthService.get_profile_by_member_id(gnu_social_id, provider_name)
+    social_profile = SocialAuthService.get_profile_by_identifer(identifier, provider_name)
     if social_profile:
         config = request.state.config
         # 이미 가입된 회원이라면 로그인
@@ -266,7 +265,7 @@ async def post_social_register(
     member_social_profiles = MemberSocialProfiles()
     member_social_profiles.mb_id = gnu_social_id
     member_social_profiles.provider = provider_name
-    member_social_profiles.identifier = gnu_social_id
+    member_social_profiles.identifier = identifier
     member_social_profiles.nickname = mb_nick
     member_social_profiles.profile_url = profile.profile_url
     member_social_profiles.photourl = profile.photourl
@@ -329,8 +328,8 @@ async def post_social_register(
 class SocialAuthService:
 
     @classmethod
-    def get_profile_by_member_id(cls, identifier, provider) -> Optional[str]:
-        """ 소셜 서비스 아이디로 회원 아이디를 가져옴
+    def get_profile_by_identifer(cls, identifier, provider) -> Optional[str]:
+        """ 소셜 서비스 identifer 로 회원 아이디를 가져옴
 
         Args:
             identifier (str) : 소셜서비스 사용자 식별 id

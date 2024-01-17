@@ -212,7 +212,7 @@ async def memo_form_update(
         db.commit()
 
         # 포인트 소진
-        insert_point(request, member.mb_id, use_point * (-1), f"{target.mb_nick}({target.mb_id})님에게 쪽지 발송", "@memo", target.mb_id, login_member.mb_id)
+        insert_point(request, member.mb_id, use_point * (-1), f"{target.mb_nick}({target.mb_id})님에게 쪽지 발송", "@memo", target.mb_id, "쪽지전송")
 
     return RedirectResponse(url=f"/bbs/memo?kind=send", status_code=302)
 
