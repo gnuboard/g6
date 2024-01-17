@@ -411,7 +411,7 @@ def nl2br(value) -> str:
 
 popular_cache = TTLCache(maxsize=10, ttl=300)
 
-def get_populars(limit: int = 7, day: int = 3):
+def get_populars(limit: int = 10, day: int = 3):
     """인기검색어 조회
 
     Args:

@@ -161,8 +161,9 @@
                     <td class="td_datetime">{{ write.datetime }}</td>
                 </tr>
                 {% endfor %}
+
                 {% for write in writes %}
-                {% set reply_depth=write.wr_reply|length %}
+                    {% set reply_depth=write.wr_reply|length %}
                     <tr class="{{ loop.cycle("", "even") }}">
                         {% if is_admin %}
                         <td class="td_chk chk_box">
@@ -225,6 +226,8 @@
                         {% endif %}
                         <td class="td_datetime">{{ write.wr_datetime|datetime_format('%y-%m-%d') }}</td>
                     </tr>
+                {% else %}
+                    <tr><td colspan="9" class="empty_table">게시글이 없습니다.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
