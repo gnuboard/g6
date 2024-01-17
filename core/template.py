@@ -199,7 +199,15 @@ class UserTemplates(Jinja2Templates):
             self.env.loader = FileSystemLoader(self.default_directories)
             self._is_mobile = is_mobile
 
-        return super().TemplateResponse(name, context, status_code, headers, media_type, background)
+        return super().TemplateResponse(
+            name=name,
+            context=context,
+            status_code=status_code,
+            headers=headers,
+            media_type=media_type,
+            background=background
+        )
+    
 
 
 class AdminTemplates(Jinja2Templates):
