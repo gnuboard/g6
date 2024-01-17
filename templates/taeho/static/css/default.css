@@ -23,12 +23,15 @@
   --newBg: #f7f7f7;
   --priThBg: #f7f7f9;
   --pgBg: #eee;
+  --autoBg: #eee;
   --pgHvBg: #fafafa;
   --scrapBg: #f8ebea;
   --boListBg: #ccd1d9;
   --btnPrvBg: #fff1f1;
   --noImgBg: #eaeaea;
   --gnbShadowBg: #37370566;
+  --autoPopBg: #e8e8e8;
+  --autoHvBg: #dbdbdb;
   /* 폰트색상 */
   --fontColor: #000;
   --gnbFontColor: #080808;
@@ -58,6 +61,8 @@
   --qaBorder: 1px solid #ffded8;
   --fileBorder: 2px solid #00000010;
   --shareBorder: 1px solid #d5d5d5;
+  --autoLiBorder: 1px solid #ffffff;
+  --autoUlBorder: 1px solid #e8e8e8;
 }
 :root[color-theme='dark'] {
   /* 스위치 버튼 */
@@ -82,12 +87,15 @@
   --newBg: #1f1d1d;
   --priThBg: #242424;
   --pgBg: #323235;
+  --autoBg: #3a3a3a;
   --pgHvBg: #1f1d1d;
   --scrapBg: #493937;
   --boListBg: #38393b;
   --btnPrvBg: #363636;
   --noImgBg: #1f1d1d;
   --gnbShadowBg: #00000080;
+  --autoPopBg: #ffffff40;
+  --autoHvBg: #525252;
   /* 폰트색상 */
   --fontColor: #fff;
   --gnbFontColor: #a0a0a0;
@@ -118,6 +126,8 @@
   --qaBorder: 1px solid #504544;
   --fileBorder: 2px solid #ffffff24;
   --shareBorder: 1px solid #4d4d4d;
+  --autoLiBorder: 1px solid #252525;
+  --autoUlBorder: 1px solid #ffffff40;
   /* filter */
   --invert: invert(92%);
 }
