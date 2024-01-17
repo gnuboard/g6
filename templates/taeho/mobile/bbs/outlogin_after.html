@@ -10,7 +10,7 @@
                 <span class="sound_only">정보수정</span>
             </a>
         </span>
-        <strong>최고관리자님</strong>
+        <strong>{{ member.mb_nick if member is defined else '' }}님</strong>
         <div id="ol_after_btn">
             {% if request.state.is_super_admin %}
             <a href="/admin" class="btn_admin">
@@ -23,6 +23,13 @@
     </div>
 
     <ul id="ol_after_private">
+         <li id="ol_after_pt">
+            <a href="/bbs/point" target="_blank" class="win_point">
+                <i class="fa fa-database" aria-hidden="true"></i>
+                포인트
+                <strong>{{ member.mb_point|number_format if member else '' }}</strong>
+            </a>
+        </li>
         <li id="ol_after_memo">
             <a href="{{ url_for('memo_list') }}" target="_blank" class="win_memo">
                 <i class="fa fa-envelope-o" aria-hidden="true"></i>
@@ -30,16 +37,11 @@
                 <strong>{{ member.mb_memo_cnt|number_format if member is defined else 0 }}</strong>
             </a>
         </li>
-        <li id="ol_after_pt">
-            <a href="/bbs/point" target="_blank" class="win_point">
-                <i class="fa fa-database" aria-hidden="true"></i>
-                포인트
-                <strong>{{ member.mb_point|number_format if member else '' }}</strong>
-            </a>
-        </li>
+
         <li id="ol_after_scrap">
             <a href="{{ url_for('scrap_list') }}" target="_blank" class="win_scrap">
                 <i class="fa fa-thumb-tack" aria-hidden="true"></i>스크랩
+                <strong>{{ member.mb_scrap_cnt|number_format if member is defined else '' }}</strong>
             </a>
         </li>
     </ul>
