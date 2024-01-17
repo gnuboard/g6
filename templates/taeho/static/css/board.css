@@ -110,26 +110,25 @@ box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075)}
 #char_count {font-weight:bold}
 
 #autosave_wrapper {position:relative}
-#autosave_pop {display:none;z-index:10;position:absolute !important;top:34px;right:0;width:350px;height:auto !important;height:180px;max-height:180px;border:1px solid #565656;background:var(--contBg);
+#autosave_pop {display:none;z-index:10;position:absolute !important;top:34px;right:0;width:350px;height:auto !important;height:180px;max-height:180px;border:1px solid #565656;background:#fff;
 -webkit-box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2);
 -moz-box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2);
 box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
-#autosave_pop:before {content:"";position:absolute;top:-8px;right:45px;width:0;height:0;border-style:solid;border-width:0 6px 8px 6px;border-color:transparent transparent var(--autoPopBg) transparent}
-#autosave_pop:after {content:"";position:absolute;top:-7px;right:45px;width:0;height:0;border-style:solid;border-width:0 6px 8px 6px;border-color:transparent transparent var(--contBg) transparent}
+#autosave_pop:before {content:"";position:absolute;top:-8px;right:45px;width:0;height:0;border-style:solid;border-width:0 6px 8px 6px;border-color:transparent transparent #000 transparent}
+#autosave_pop:after {content:"";position:absolute;top:-7px;right:45px;width:0;height:0;border-style:solid;border-width:0 6px 8px 6px;border-color:transparent transparent #fff transparent}
 html.no-overflowscrolling #autosave_pop {height:auto;max-height:10000px !important} /* overflow 미지원 기기 대응 */
 #autosave_pop strong {position:absolute;font-size:0;line-height:0;overflow:hidden}
 #autosave_pop div {text-align:center;margin:0 !important}
 #autosave_pop button {margin:0;padding:0;border:0}
-#autosave_pop ul {padding:15px;border-top:var(--autoUlBorder);list-style:none;overflow-y:scroll;height:130px;border-bottom:var(--autoUlBorder)}
-#autosave_pop li {padding:8px 5px;border-bottom:var(--autoLiBorder);background:var(--autoBg);zoom:1;transition: all 0.2s;}
+#autosave_pop ul {padding:15px;border-top:1px solid #e9e9e9;list-style:none;overflow-y:scroll;height:130px;border-bottom:1px solid #e8e8e8}
+#autosave_pop li {padding:8px 5px;border-bottom:1px solid #fff;background:#eee;zoom:1}
 #autosave_pop li:after {display:block;visibility:hidden;clear:both;content:""}
-#autosave_pop li:hover {background: var(--autoHvBg);}
 #autosave_pop a {display:block;float:left}
 #autosave_pop span {display:block;float:right;font-size:0.92em;font-style:italic;color:#999}
 .autosave_close {cursor:pointer;width:100%;height:30px;background:none;color:#888;font-weight:bold;font-size:0.92em}
-.autosave_close:hover {background:var(--bovHover);color:#ff8269}
+.autosave_close:hover {background:#f3f3f3;color:#3597d9}
 .autosave_content {display:none}
-.autosave_del {background:url(/static/img/close_btn.png) no-repeat 50% 50%;text-indent:-999px;overflow:hidden;height:20px;width:20px}
+.autosave_del {background:url(./img/close_btn.png) no-repeat 50% 50%;text-indent:-999px;overflow:hidden;height:20px;width:20px}
 
 /* 게시판 읽기 */
 #bo_v {margin-bottom:20px;background:var(--contBg);box-sizing:border-box}
