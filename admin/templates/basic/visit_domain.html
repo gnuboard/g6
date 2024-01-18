@@ -1,10 +1,12 @@
 {% extends "base.html" %}
+{% import "/visit_forms.html" as form %}
 
 {% block title %}도메인별 접속자집계{% endblock title %}
 {% block subtitle %}도메인별 접속자집계{% endblock subtitle %}
 
 {% block content %}
-    {% include "visit_sub.html" %}
+    {{ form.search(request, fr_date, to_date) }}
+    {{ form.anchor('domain', fr_date, to_date) }}
 
     <div class="tbl_head01 tbl_wrap">
         <table>
