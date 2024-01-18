@@ -394,7 +394,7 @@ def get_memo_not_read(mb_id: str) -> int:
         select(func.count(Memo.me_id))
         .where(
             Memo.me_recv_mb_id == mb_id,
-            Memo.me_read_datetime == None,
+            Memo.me_read_datetime == datetime(1, 1, 1, 0, 0, 0),
             Memo.me_type == 'recv'
         )
     )
