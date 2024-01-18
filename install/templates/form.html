@@ -118,6 +118,14 @@
         }
     });
 
+    document.getElementById('reinstall').addEventListener('change', (e) => {
+        if (e.target.checked) {
+            if (!confirm('재설치를 하시면 기존의 데이터베이스 자료가 전부 삭제됩니다.\n계속하시겠습니까?')) {
+                e.target.checked = false;
+            }
+        }
+    });
+
     // 데이터베이스 입력 초기화
     document.getElementById('db_engine').dispatchEvent(new Event('change'));
 

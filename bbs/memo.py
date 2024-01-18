@@ -5,7 +5,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import select, update, func
 
 from core.database import db_session
-from core.exception import AlertCloseException, AlertException
+from core.exception import AlertException
 from core.models import Member, Memo
 from core.template import UserTemplates
 from lib.common import *
@@ -18,8 +18,9 @@ from lib.template_functions import get_paging
 
 router = APIRouter()
 templates = UserTemplates()
-templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals["captcha_widget"] = captcha_widget
+templates.env.filters["default_if_none"] = default_if_none
+templates.env.globals["is_none_datetime"] = is_none_datetime
 
 
 @router.get("/memo")
@@ -103,7 +104,7 @@ async def memo_view(
     ).first()
 
     # 받은 쪽지 읽음처리
-    if kind == "recv" and memo.me_read_datetime is None:
+    if kind == "recv" and is_none_datetime(memo.me_read_datetime):
         now = datetime.now()
         memo.me_read_datetime = now
         send_memo = db.scalar(select(Memo).where(Memo.me_id==memo.me_send_id))
@@ -212,7 +213,7 @@ async def memo_form_update(
         db.commit()
 
         # 포인트 소진
-        insert_point(request, member.mb_id, use_point * (-1), f"{target.mb_nick}({target.mb_id})님에게 쪽지 발송", "@memo", target.mb_id, login_member.mb_id)
+        insert_point(request, member.mb_id, use_point * (-1), f"{target.mb_nick}({target.mb_id})님에게 쪽지 발송", "@memo", target.mb_id, "쪽지전송")
 
     return RedirectResponse(url=f"/bbs/memo?kind=send", status_code=302)
 
@@ -238,7 +239,7 @@ async def memo_delete(
         raise AlertException(status_code=403, detail="본인의 쪽지만 삭제 가능합니다.", url="/bbs/memo")
     
     # 실시간 알림 삭제(업데이트)
-    if memo.me_read_datetime is None:
+    if is_none_datetime(memo.me_read_datetime):
         target_member = db.scalar(
             select(Member).where(
                 Member.mb_id == memo.me_recv_mb_id,

@@ -1,12 +1,18 @@
 {% extends "base.html" %}
 {% import editor_macro(request) as editor %}
 
+{% if request.query_params.get("parent_id") %}
+    {% set action="답변" %}
+{% else %}
+    {% set action="수정" if write.wr_id else "쓰기" %}
+{% endif %}
+
 {% block head %}
     {{ editor.head() }}
 {% endblock head %}
 
-{% block title %}{{ board.subject }} 글쓰기{% endblock title %}
-{% block subtitle %}{{ board.subject }} 글쓰기{% endblock subtitle %}
+{% block title %}{{ board.subject }} 글 {{ action }}{% endblock title %}
+{% block subtitle %}{{ board.subject }} 글 {{ action }}{% endblock subtitle %}
 
 {% block content %}
 {% set login_member=request.state.login_member %}

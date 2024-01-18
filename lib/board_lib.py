@@ -183,7 +183,11 @@ class BoardConfig():
         Returns:
             list: 게시판 카테고리 목록.
         """
-        return self.board.bo_category_list.split("|") if self.board.bo_use_category else []
+        if (not self.board.bo_use_category 
+                or self.board.bo_category_list == ""):
+            return []
+
+        return self.board.bo_category_list.split("|")
 
     def get_display_ip(self, ip: str) -> str:
         """IP 주소를 표시형식으로 변환
@@ -420,7 +424,13 @@ class BoardConfig():
 
         write_model = dynamic_create_write_table(self.board.bo_table)
         comment_count = db.scalar(
-            select(func.count()).select_from(write_model))
+            select(func.count())
+            .select_from(write_model)
+            .where(
+                write_model.wr_parent == wr_id,
+                write_model.wr_is_comment == 1
+            )
+        )
 
         db.close()
 

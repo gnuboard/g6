@@ -75,4 +75,8 @@ def template_response(
     #   처음 설치 시에는 DB가 없으므로 새로운 템플릿 응답 객체를 생성합니다.
     template = Jinja2Templates(directory=TEMPLATES_DIR)
     template.env.globals["theme_asset"] = theme_asset
-    return template.TemplateResponse(template_html, context, status_code)
+    return template.TemplateResponse(
+        name=template_html,
+        context=context,
+        status_code=status_code
+    )

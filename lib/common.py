@@ -394,7 +394,7 @@ def get_memo_not_read(mb_id: str) -> int:
         select(func.count(Memo.me_id))
         .where(
             Memo.me_recv_mb_id == mb_id,
-            Memo.me_read_datetime == None,
+            Memo.me_read_datetime == datetime(1, 1, 1, 0, 0, 0),
             Memo.me_type == 'recv'
         )
     )
@@ -411,7 +411,7 @@ def nl2br(value) -> str:
 
 popular_cache = TTLCache(maxsize=10, ttl=300)
 
-def get_populars(limit: int = 7, day: int = 3):
+def get_populars(limit: int = 10, day: int = 3):
     """인기검색어 조회
 
     Args:
@@ -1287,6 +1287,9 @@ def get_current_login_count(request: Request) -> tuple:
     """현재 접속자수를 반환하는 함수"""
     config = request.state.config
 
+    login_minute = getattr(config, "cf_login_minutes", 10)
+    base_date = datetime.now() - timedelta(minutes=login_minute)
+
     with DBConnect().sessionLocal() as db:
         result = db.execute(
             select(
@@ -1297,7 +1300,8 @@ def get_current_login_count(request: Request) -> tuple:
                 )).label("member"),
             ).where(
                 Login.mb_id != config.cf_admin,
-                Login.lo_ip != ""
+                Login.lo_ip != "",
+                Login.lo_datetime > base_date
             )
         ).first()
         return result.login, result.member

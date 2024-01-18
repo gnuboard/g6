@@ -5,15 +5,14 @@ from fastapi import APIRouter, Depends, Form, Request
 import fastapi
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import create_engine, exists, insert
+from sqlalchemy import exists, insert, MetaData, Table
 from sqlalchemy.exc import OperationalError
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import QueuePool
+from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
 
 import core.models as models
 from .default_values import *
-from core.database import DBConnect, DBSetting
+from core.database import DBConnect
 from core.exception import AlertException
 from core.formclass import InstallFrom
 from core.plugin import read_plugin_state, write_plugin_state
@@ -149,6 +148,14 @@ async def install_process(request: Request):
 
             if form.reinstall:
                 models.Base.metadata.drop_all(bind=engine)
+                # 접두사 + 'write_' 게시판 테이블 전부 삭제
+                metadata = MetaData()
+                metadata.reflect(bind=engine)
+                table_names = metadata.tables.keys()
+                for name in table_names:
+                    if name.startswith(f"{form.db_table_prefix}write_"):
+                        Table(name, metadata, autoload=True).drop(bind=engine)
+
                 yield "기존 데이터베이스 테이블 삭제 완료"
 
             models.Base.metadata.create_all(bind=engine)

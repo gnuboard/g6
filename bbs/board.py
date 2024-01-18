@@ -133,7 +133,6 @@ async def list_post(
 
     # 게시글 목록 조회
     query = write_search_filter(request, write_model, sca, sfl, stx)
-    query = query.where(write_model.wr_is_comment == 0)
     # 정렬
     if sst and hasattr(write_model, sst):
         if sod == "desc":
@@ -146,7 +145,7 @@ async def list_post(
     # 검색일 경우 검색단위 갯수 설정
     prev_spt = None
     next_spt = None
-    if (sca or (sfl and stx)):
+    if (sca or (sfl and stx)):  # 검색일 경우
         search_part = int(config.cf_search_part) or 10000
         min_spt = db.scalar(
             select(func.coalesce(func.min(write_model.wr_num), 0)))
@@ -156,6 +155,12 @@ async def list_post(
 
         # wr_num 컬럼을 기준으로 검색단위를 구분합니다. (wr_num은 음수)
         query = query.where(write_model.wr_num.between(spt, spt + search_part))
+
+        # 검색 내용에 댓글이 잡히는 경우 부모 글을 가져오기 위해 wr_parent를 불러오는 subquery를 이용합니다.
+        subquery = query.add_columns(write_model.wr_parent).distinct().order_by(None).subquery().alias("subquery")
+        query = select().where(write_model.wr_id.in_(subquery))
+    else:   # 검색이 아닌 경우
+        query = query.where(write_model.wr_is_comment == 0)
 
     # 페이지 번호에 따른 offset 계산
     offset = (current_page - 1) * page_rows
@@ -548,7 +553,7 @@ async def write_update(
     board: Annotated[Board, Depends(get_board)],
     recaptcha_response: str = Form("", alias="g-recaptcha-response"),
     bo_table: str = Path(...),
-    wr_id: int = Form(None),
+    wr_id: str = Form(None),
     parent_id: int = Form(None),
     uid: str = Form(None),
     notice: bool = Form(False),
@@ -831,7 +836,7 @@ async def read_post(
     # 세션 체크
     # 한번 읽은 게시글은 세션만료까지 조회수, 포인트 처리를 하지 않는다.
     session_name = f"ss_view_{bo_table}_{wr_id}"
-    if not request.session.get(session_name):
+    if not request.session.get(session_name) and mb_id != write.mb_id:
         # 포인트 검사
         if config.cf_use_point:
             read_point = board.bo_read_point
@@ -933,9 +938,11 @@ async def read_post(
 
         # 비밀댓글 처리
         session_secret_comment_name = f"ss_secret_comment_{bo_table}_{comment.wr_id}"
+        parent_write = db.get(write_model, comment.wr_parent)
         if (comment.is_secret
                 and not admin_type
                 and not is_owner(comment, mb_id)
+                and not is_owner(parent_write, mb_id)
                 and not request.session.get(session_secret_comment_name)):
             comment.is_secret_content = True
             comment.save_content = "비밀글 입니다."
