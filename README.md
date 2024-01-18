@@ -197,15 +197,15 @@ pip install -r requirements.txt
 # (DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)
 
 # 테이블 이름 접두사 설정
-DB_TABLE_PREFIX = "g6_"
+DB_TABLE_PREFIX="g6_"
 # mysql, postgresql, sqlite
-DB_ENGINE = ""
-DB_USER = "username"
-DB_PASSWORD = ""
-DB_HOST = ""
-DB_PORT = ""
-DB_NAME = ""
-DB_CHARSET = "utf8"
+DB_ENGINE=""
+DB_USER="username"
+DB_PASSWORD=""
+DB_HOST=""
+DB_PORT=""
+DB_NAME=""
+DB_CHARSET="utf8"
 ```
 #### 이메일 발송 설정
 ```bash
@@ -227,38 +227,38 @@ SMTP_PASSWORD=""
 # 관리자 테마 설정
 # 관리자 테마는 /admin/templates/{테마} 에 위치해야 합니다.
 # 테마 이름을 입력하지 않으면 기본 테마(basic)가 적용됩니다.
-ADMIN_THEME = "basic"
+ADMIN_THEME="basic"
 ```
 
 #### 이미지 설정
 ```bash
 # 이미지 크기변환 여부
-UPLOAD_IMAGE_RESIZE = "False"
+UPLOAD_IMAGE_RESIZE="False"
 # MB 이미지 업로드 용량 (기본값 20MB)
-UPLOAD_IMAGE_SIZE_LIMIT = 20
+UPLOAD_IMAGE_SIZE_LIMIT=20
 # (0~100) default 80 이미지 업로드 퀄리티(jpg)
-UPLOAD_IMAGE_QUALITY = 80
+UPLOAD_IMAGE_QUALITY=80
 
 # UPLOAD_IMAGE_RESIZE 가 True 이고 설정된값보다 크면 크기를 변환합니다.
 # px 이미지 업로드 크기변환 가로 크기
-UPLOAD_IMAGE_RESIZE_WIDTH = 1200
+UPLOAD_IMAGE_RESIZE_WIDTH=1200
 # px 이미지 업로드 크기변환 세로 크기
-UPLOAD_IMAGE_RESIZE_HEIGHT = 2800
+UPLOAD_IMAGE_RESIZE_HEIGHT=2800
 ```
 
 #### 기타 설정들
 ```bash
 # 디버그 모드 설정 (True/False)
-APP_IS_DEBUG = "False"
+APP_IS_DEBUG="False"
 
 # 웹사이트 표시 방법 (True/False)
 # "True" (기본값) : 반응형 웹사이트 (참고: 반응형 템플릿만 제공합니다.)
 # "False" : 적응형 웹사이트
-IS_RESPONSIVE = "True"
+IS_RESPONSIVE="True"
 
 # www.gnuboard.com 과 gnuboard.com 도메인은 서로 다른 도메인으로 인식합니다. 
 # 쿠키를 공유하려면 .gnuboard.com 과 같이 입력하세요.
 # 이곳에 입력하지 않으면 www 붙은 도메인과 그렇지 않은 도메인은 쿠키를 공유하지 못하므로 
 # 로그인이 풀릴 수 있습니다.
-COOKIE_DOMAIN = ""
+COOKIE_DOMAIN=""
 ```
