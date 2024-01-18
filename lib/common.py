@@ -1287,6 +1287,9 @@ def get_current_login_count(request: Request) -> tuple:
     """현재 접속자수를 반환하는 함수"""
     config = request.state.config
 
+    login_minute = getattr(config, "cf_login_minutes", 10)
+    base_date = datetime.now() - timedelta(minutes=login_minute)
+
     with DBConnect().sessionLocal() as db:
         result = db.execute(
             select(
@@ -1297,7 +1300,8 @@ def get_current_login_count(request: Request) -> tuple:
                 )).label("member"),
             ).where(
                 Login.mb_id != config.cf_admin,
-                Login.lo_ip != ""
+                Login.lo_ip != "",
+                Login.lo_datetime > base_date
             )
         ).first()
         return result.login, result.member

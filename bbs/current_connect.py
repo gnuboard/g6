@@ -1,5 +1,6 @@
 import re
 
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Request
 from sqlalchemy import select
 
@@ -19,12 +20,16 @@ async def current_connect(
     """현재 접속중인 사용자의 정보를 반환합니다."""
     config: Config = request.state.config
 
+    login_minute = getattr(config, "cf_login_minutes", 10)
+    base_date = datetime.now() - timedelta(minutes=login_minute)
+
     logins = db.execute(
         select(Login, Member)
         .outerjoin(Member, Login.mb_id == Member.mb_id)
         .where(
             Login.mb_id != config.cf_admin,
-            Login.lo_ip != ""
+            Login.lo_ip != "",
+            Login.lo_datetime > base_date
         ).order_by(Login.lo_datetime.desc())
     ).all()
 
