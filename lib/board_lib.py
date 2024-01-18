@@ -1328,12 +1328,13 @@ def insert_board_new(bo_table: str, write: WriteBaseModel) -> None:
     db.close()
 
 
-def render_latest_posts(request: Request, skin_name: str = 'basic', bo_table: str='',
+def render_latest_posts(request: Request, skin_directory: str = '' ,  skin_name: str = 'basic', bo_table: str='',
                         rows: int = 10, subject_len: int = 40):
     """최신글 목록 HTML 출력
 
     Args:
         request (Request): _description_
+        skin_directory (str, optional): 스킨 폴더명. Defaults to ''.
         skin_name (str, optional): 스킨 경로. Defaults to ''.
         bo_table (str, optional): 게시판 코드. Defaults to ''.
         rows (int, optional): 노출 게시글 수. Defaults to 10.
@@ -1342,12 +1343,19 @@ def render_latest_posts(request: Request, skin_name: str = 'basic', bo_table: st
     Returns:
         str: 최신글 HTML
     """
+    # 스킨 폴더 경로 확인
+    if skin_directory != '':
+        template_name = f"latest/{skin_directory}/{skin_name}.html"
+    else:
+        template_name = f"latest/{skin_name}.html"
+    # 스킨 폴더가 없으면 기본 스킨으로 설정
+
     templates = UserTemplates()
     templates.env.globals["get_list_thumbnail"] = get_list_thumbnail
 
     device = request.state.device
     file_cache = FileCache()
-    cache_filename = f"latest-{bo_table}-{device}-{skin_name}-{rows}-{subject_len}-{file_cache.get_cache_secret_key()}.html"
+    cache_filename = f"latest-{bo_table}-{device}-${skin_directory}--{skin_name}-{rows}-{subject_len}-{file_cache.get_cache_secret_key()}.html"
     cache_file = os.path.join(file_cache.cache_dir, cache_filename)
 
     # 캐시된 파일이 있으면 파일을 읽어서 반환
@@ -1377,7 +1385,7 @@ def render_latest_posts(request: Request, skin_name: str = 'basic', bo_table: st
         "writes": writes,
         "bo_table": bo_table,
     }
-    temp = templates.TemplateResponse(f"latest/{skin_name}.html", context)
+    temp = templates.TemplateResponse(template_name, context)
     temp_decode = temp.body.decode("utf-8")
 
     # 캐시 파일 생성
