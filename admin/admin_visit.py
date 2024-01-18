@@ -178,13 +178,28 @@ async def visit_list(
     # 초기 쿼리 설정
     query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
 
+    # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
+    sst = request.query_params.get("sst", "vi_datetime")
+    sod = request.query_params.get("sod", "desc")
+    if sst and sst != "":
+        if sod == "desc":
+            query = query.order_by(desc(sst))
+        else:
+            query = query.order_by(asc(sst))
+    else:
+        query = query.order_by(desc(sst))
+
     # 페이지 번호에 따른 offset 계산
     records_per_page = getattr(config, "cf_page_rows", 10)
     offset = (current_page - 1) * records_per_page
     # 전체 레코드 개수 계산
     total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
     # 최종 쿼리 결과를 가져옵니다.
-    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
+    visits = db.scalars(
+        query.add_columns(Visit, func.concat(Visit.vi_date, " ", Visit.vi_time).label("vi_datetime"))
+        .offset(offset)
+        .limit(records_per_page)
+    ).all()
 
     context = {
         "request": request,
