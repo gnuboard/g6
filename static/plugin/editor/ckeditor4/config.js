@@ -93,7 +93,8 @@ CKEDITOR.editorConfig = function( config ) {
 		config.removePlugins = 'enterkey';
 	}
 
-	if (get_cookie('darkmode') == 'ON') {
+	if (localStorage.getItem('color-theme') == 'dark') {
 		config.contentsCss = [CKEDITOR.getUrl('darkmode.css')];
     }
 };
+

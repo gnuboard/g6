@@ -91,8 +91,7 @@ For licensing, see LICENSE.md or http://ckeditor.com/license
 {
     display:block;
     padding:0;
-    border:1px solid #dddddd;
-    box-shadow:0 0 6px 1px rgba(172,181,194,0.56);
+    border:var(--border);
 }
 
 .cke_inner
@@ -121,10 +120,10 @@ For licensing, see LICENSE.md or http://ckeditor.com/license
 
 .cke_top
 {
-    border-bottom:1px solid #e1e1e1;
+    border-bottom:var(--border);
     padding:6px 8px 2px;
     white-space:normal;
-    background:#fff;
+    background:var(--bovHover);
 }
 
 .cke_float .cke_top
@@ -137,7 +136,7 @@ For licensing, see LICENSE.md or http://ckeditor.com/license
 {
     padding:6px 8px 2px;
     position:relative;
-    background:#dddddd;
+    background:var(--bovHover);
 }
 
 .cke_browser_ios .cke_contents
@@ -151,7 +150,7 @@ For licensing, see LICENSE.md or http://ckeditor.com/license
     height:0;
     overflow:hidden;
     border-width:10px 10px 0 0;
-    border-color:transparent #fff transparent transparent;
+    border-color:transparent var(--moreColor) transparent transparent;
     border-style:dashed solid dashed dashed;
     font-size:0;
     vertical-align:bottom;
@@ -777,9 +776,9 @@ a.cke_button_off:hover,a.cke_button_off:focus,a.cke_button_off:active,a.cke_butt
     display:inline-block;
     float:left;
     margin:0 6px 5px 0;
-    border:1px solid #e1e1e1;
+    border:var(--border);
     cursor:default;
-    background:#fff;
+    background:var(--inputBg);
 }
 
 .cke_combo_off a.cke_combo_button:hover,.cke_combo_off a.cke_combo_button:focus
@@ -825,7 +824,7 @@ a.cke_button_off:hover,a.cke_button_off:focus,a.cke_button_off:active,a.cke_butt
     overflow:hidden;
     float:left;
     cursor:default;
-    color:#474747;
+    color:var(--fontColor);
     text-shadow:0 1px 0 rgba(255,255,255,.5);
     width:60px;
 }
@@ -904,7 +903,7 @@ a.cke_button_off:hover,a.cke_button_off:focus,a.cke_button_off:active,a.cke_butt
     text-decoration:none;
     outline:0;
     border:0;
-    color:#fff;
+    color: var(--moreColor);
     font-size:11px;
 }
 
