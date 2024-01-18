@@ -101,4 +101,4 @@
 
 .gnb_mo #ol_after_btn {position:absolute;top:15px;right:55px}
 .gnb_mo #ol_after_btn a {display:inline-block;padding:0 10px;line-height:30px;color:#fff;border-radius:3px;font-weight:bold}
-.gnb_mo #ol_after_logout {background:#ff8269;color:#fff}
+.gnb_mo #ol_after_logout {border: 1px solid #ffffff40;color:#fff}
