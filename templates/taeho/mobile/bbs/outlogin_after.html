@@ -10,7 +10,7 @@
                 <span class="sound_only">정보수정</span>
             </a>
         </span>
-        <strong>최고관리자님</strong>
+        <strong>{{ member.mb_nick if member is defined else '' }}님</strong>
         <div id="ol_after_btn">
             {% if request.state.is_super_admin %}
             <a href="/admin" class="btn_admin">
