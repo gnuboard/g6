@@ -339,6 +339,8 @@ def subject_sort_link(request: Request,
     sfl = request.query_params.get("sfl", "")
     stx = request.query_params.get("stx", "")
     sca = request.query_params.get("sca", "")
+    fr_date = request.query_params.get("fr_date", "")
+    to_date = request.query_params.get("to_date", "")
     page = request.query_params.get("page", "")
 
     # q1에는 column 값을 추가한다.
@@ -365,14 +367,18 @@ def subject_sort_link(request: Request,
     arr_query.append(q1)
     arr_query.append(q2)
 
-    # sfl, stx, sca, page 값이 None이 아닌 경우, 각각의 값을 arr_query에 추가한다.
+    # sfl, stx, sca, fr_date, to_date, page 값이 None이 아닌 경우, 각각의 값을 arr_query에 추가한다.
     if sfl is not None:
         arr_query.append(f'sfl={sfl}')
     if stx is not None:
         arr_query.append(f'stx={stx}')
     if sca is not None:
         arr_query.append(f'sca={sca}')
-    if page is not None:
+    if fr_date:
+        arr_query.append(f'fr_date={fr_date}')
+    if to_date:
+        arr_query.append(f'to_date={to_date}')
+    if page:
         arr_query.append(f'page={page}')
 
     # arr_query의 첫 번째 요소를 제외한 나머지 요소를 '&'로 연결하여 qstr에 할당한다.

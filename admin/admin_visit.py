@@ -176,7 +176,18 @@ async def visit_list(
         to_date = from_date
 
     # 초기 쿼리 설정
-    query = select()
+    query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
+
+    # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
+    sst = request.query_params.get("sst", "vi_datetime")
+    sod = request.query_params.get("sod", "desc")
+    if sst and sst != "":
+        if sod == "desc":
+            query = query.order_by(desc(sst))
+        else:
+            query = query.order_by(asc(sst))
+    else:
+        query = query.order_by(desc(sst))
 
     # 페이지 번호에 따른 offset 계산
     records_per_page = getattr(config, "cf_page_rows", 10)
@@ -184,7 +195,11 @@ async def visit_list(
     # 전체 레코드 개수 계산
     total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
     # 최종 쿼리 결과를 가져옵니다.
-    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
+    visits = db.scalars(
+        query.add_columns(Visit, func.concat(Visit.vi_date, " ", Visit.vi_time).label("vi_datetime"))
+        .offset(offset)
+        .limit(records_per_page)
+    ).all()
 
     context = {
         "request": request,
@@ -201,7 +216,6 @@ async def visit_list(
 async def visit_domain(
     request: Request,
     db: db_session,
-    current_page: int = Query(default=1, alias="page"),  # 페이지
     from_date: str = Query(default="", alias="fr_date"),  # 시작일
     to_date: str = Query(default=""),  # 종료일
 ):
@@ -209,26 +223,20 @@ async def visit_domain(
     도메인별 접속자집계 목록
     """
     request.session["menu_key"] = VISIT_MENU_KEY
-    config = request.state.config
     from_date, to_date = validate_time(from_date, to_date)
 
     # 초기 쿼리 설정
-    query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
-
-    # 페이지 번호에 따른 offset 계산
-    records_per_page = getattr(config, "cf_page_rows", 10)
-    offset = (current_page - 1) * records_per_page
-    # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
-    # 최종 쿼리 결과를 가져옵니다.
-    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
+    visits = db.scalars(
+        select(Visit)
+        .where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
+    ).all()
 
     site_url = f"{request.base_url.scheme}://{request.base_url.hostname}"
     if request.base_url.port:
         site_url += f":{request.base_url.port}"
     # referer에서 도메인 필터링
     filtered_visits = []
-
+    total_records = 0
     for visit in visits:
         # http or https
         match = re.search(r'^http[s]*\S+', visit.vi_referer)
@@ -244,6 +252,8 @@ async def visit_domain(
                 "count": 1,
             })
 
+            total_records += 1
+
     visits = count_by_field(filtered_visits, "vi_referer")
     visits = add_percent_field(visits)
 
@@ -251,7 +261,6 @@ async def visit_domain(
         "request": request,
         "visits": visits,
         "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records),
         "fr_date": from_date,
         "to_date": to_date,
     }
@@ -262,7 +271,6 @@ async def visit_domain(
 async def visit_browser(
     request: Request,
     db: db_session,
-    current_page: int = Query(default=1, alias="page"),  # 페이지
     from_date: str = Query(default="", alias="fr_date"),  # 시작일
     to_date: str = Query(default=""),  # 종료일
 ):
@@ -270,27 +278,24 @@ async def visit_browser(
     브라우저별 접속자집계 목록
     """
     request.session["menu_key"] = VISIT_MENU_KEY
-    config = request.state.config
     from_date, to_date = validate_time(from_date, to_date)
 
     # 초기 쿼리 설정
-    query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
-
-    # 페이지 번호에 따른 offset 계산
-    records_per_page = getattr(config, "cf_page_rows", 10)
-    offset = (current_page - 1) * records_per_page
-    # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
-    # 최종 쿼리 결과를 가져옵니다.
-    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
+    visits = db.scalars(
+        select(Visit)
+        .where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
+    ).all()
 
     # 브라우저별 접속자집계
     filtered_visits = []
+    total_records = 0
     for visit in visits:
         filtered_visits.append({
             "vi_browser": visit.vi_browser or get_browser(visit.vi_agent),
             "count": 1,
         })
+
+        total_records += 1
 
     visits = count_by_field(filtered_visits, "vi_browser")
     visits = add_percent_field(visits)
@@ -299,11 +304,9 @@ async def visit_browser(
         "request": request,
         "visits": visits,
         "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records),
         "fr_date": from_date,
         "to_date": to_date,
     }
-
     return templates.TemplateResponse("visit_browser.html", context)
 
 
@@ -311,7 +314,6 @@ async def visit_browser(
 async def visit_os(
     request: Request,
     db: db_session,
-    current_page: int = Query(default=1, alias="page"),  # 페이지
     from_date: str = Query(default="", alias="fr_date"),  # 시작일
     to_date: str = Query(default=""),  # 종료일
 ):
@@ -319,27 +321,24 @@ async def visit_os(
     OS별 접속자집계 목록
     """
     request.session["menu_key"] = VISIT_MENU_KEY
-    config = request.state.config
     from_date, to_date = validate_time(from_date, to_date)
 
     # 초기 쿼리 설정
-    query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
-
-    # 페이지 번호에 따른 offset 계산
-    records_per_page = getattr(config, "cf_page_rows", 10)
-    offset = (current_page - 1) * records_per_page
-    # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
-    # 최종 쿼리 결과를 가져옵니다.
-    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
+    visits = db.scalars(
+        select(Visit)
+        .where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
+    ).all()
 
     # OS별 접속자집계
     filtered_visits = []
+    total_records = 0
     for visit in visits:
         filtered_visits.append({
             "vi_os": visit.vi_os or get_os(visit.vi_agent),
             "count": 1,
         })
+
+        total_records += 1
 
     visits = count_by_field(filtered_visits, "vi_os")
     visits = add_percent_field(visits)
@@ -348,11 +347,9 @@ async def visit_os(
         "request": request,
         "visits": visits,
         "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records),
         "fr_date": from_date,
         "to_date": to_date,
     }
-
     return templates.TemplateResponse("visit_os.html", context)
 
 
@@ -360,7 +357,6 @@ async def visit_os(
 async def visit_device(
     request: Request,
     db: db_session,
-    current_page: int = Query(default=1, alias="page"),  # 페이지
     from_date: str = Query(default="", alias="fr_date"),  # 시작일
     to_date: str = Query(default=""),  # 종료일
 ):
@@ -368,27 +364,24 @@ async def visit_device(
     접속기기별 접속자집계 목록
     """
     request.session["menu_key"] = VISIT_MENU_KEY
-    config = request.state.config
     from_date, to_date = validate_time(from_date, to_date)
 
     # 초기 쿼리 설정
-    query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
-
-    # 페이지 번호에 따른 offset 계산
-    records_per_page = getattr(config, "cf_page_rows", 10)
-    offset = (current_page - 1) * records_per_page
-    # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
-    # 최종 쿼리 결과를 가져옵니다.
-    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
+    visits = db.scalars(
+        select(Visit)
+        .where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
+    ).all()
 
     # 접속기기별 접속자집계
     filtered_visits = []
+    total_records = 0
     for visit in visits:
         filtered_visits.append({
             "vi_device": visit.vi_device,
             "count": 1,
         })
+
+        total_records += 1
 
     visits = count_by_field(filtered_visits, "vi_device")
     visits = add_percent_field(visits)
@@ -397,7 +390,6 @@ async def visit_device(
         "request": request,
         "visits": visits,
         "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records),
         "fr_date": from_date,
         "to_date": to_date,
     }
@@ -431,7 +423,7 @@ async def visit_hour(
         query = query.add_columns(func.strftime('%H', Visit.vi_time).label('hour'))
     query_result = db.execute(
         query.add_columns(Visit.vi_time, func.count().label('hour_count'))
-        .group_by(Visit.vi_time, 'hour')
+        .group_by('hour')
     ).all()
 
     # 00 ~ 23 시간별 접속자집계
@@ -479,7 +471,7 @@ async def visit_weekday(
         query = query.add_columns(func.strftime('%w', Visit.vi_date).label('dow'))
     query_result = db.execute(
         query.add_columns(Visit.vi_date, func.count().label('dow_count'))
-        .group_by(Visit.vi_date, 'dow')
+        .group_by('dow')
     ).all()
 
     # 요일별 접속자집계
@@ -515,7 +507,6 @@ async def visit_weekday(
 async def visit_date(
     request: Request,
     db: db_session,
-    current_page: int = Query(default=1, alias="page"),  # 페이지
     from_date: str = Query(default="", alias="fr_date"),  # 시작일
     to_date: str = Query(default=""),  # 종료일
 ):
@@ -523,27 +514,24 @@ async def visit_date(
     일별 접속자집계 목록
     """
     request.session["menu_key"] = VISIT_MENU_KEY
-    config = request.state.config
     from_date, to_date = validate_time(from_date, to_date)
 
     # 초기 쿼리 설정
-    query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
-
-    # 페이지 번호에 따른 offset 계산
-    records_per_page = getattr(config, "cf_page_rows", 10)
-    offset = (current_page - 1) * records_per_page
-    # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
-    # 최종 쿼리 결과를 가져옵니다.
-    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
+    visits = db.scalars(
+        select(Visit)
+        .where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
+    ).all()
 
     # 접속자집계
     filtered_visits = []
+    total_records = 0
     for visit in visits:
         filtered_visits.append({
             "visit_date": visit.vi_date.strftime("%Y-%m-%d"),
             "count": 1,
         })
+
+        total_records += 1
 
     visits = count_by_field(filtered_visits, "visit_date")
     visits = add_percent_field(visits)
@@ -552,7 +540,6 @@ async def visit_date(
         "request": request,
         "visits": visits,
         "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records),
         "fr_date": from_date,
         "to_date": to_date,
     }
@@ -563,7 +550,6 @@ async def visit_date(
 async def visit_month(
     request: Request,
     db: db_session,
-    current_page: int = Query(default=1, alias="page"),  # 페이지
     from_date: str = Query(default="", alias="fr_date"),  # 시작일
     to_date: str = Query(default=""),  # 종료일
 ):
@@ -571,27 +557,24 @@ async def visit_month(
     월별 접속자집계 목록
     """
     request.session["menu_key"] = VISIT_MENU_KEY
-    config = request.state.config
     from_date, to_date = validate_time(from_date, to_date)
 
     # 초기 쿼리 설정
-    query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
-
-    # 페이지 번호에 따른 offset 계산
-    records_per_page = getattr(config, "cf_page_rows", 10)
-    offset = (current_page - 1) * records_per_page
-    # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
-    # 최종 쿼리 결과를 가져옵니다.
-    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
+    visits = db.scalars(
+        select(Visit)
+        .where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
+    ).all()
 
     # 접속자집계
     filtered_visits = []
+    total_records = 0
     for visit in visits:
         filtered_visits.append({
             "visit_month": visit.vi_date.strftime("%Y-%m"),
             "count": 1,
         })
+
+        total_records += 1
 
     visits = count_by_field(filtered_visits, "visit_month")
     visits = add_percent_field(visits)
@@ -600,7 +583,6 @@ async def visit_month(
         "request": request,
         "visits": visits,
         "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records),
         "fr_date": from_date,
         "to_date": to_date,
     }
@@ -611,7 +593,6 @@ async def visit_month(
 async def visit_year(
     request: Request,
     db: db_session,
-    current_page: int = Query(default=1, alias="page"),  # 페이지
     from_date: str = Query(default="", alias="fr_date"),  # 시작일
     to_date: str = Query(default=""),  # 종료일
 ):
@@ -619,27 +600,24 @@ async def visit_year(
     연도별 접속자집계 목록
     """
     request.session["menu_key"] = VISIT_MENU_KEY
-    config = request.state.config
     from_date, to_date = validate_time(from_date, to_date)
 
     # 초기 쿼리 설정
-    query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
-
-    # 페이지 번호에 따른 offset 계산
-    records_per_page = getattr(config, "cf_page_rows", 10)
-    offset = (current_page - 1) * records_per_page
-    # 전체 레코드 개수 계산
-    total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
-    # 최종 쿼리 결과를 가져옵니다.
-    visits = db.scalars(query.add_columns(Visit).offset(offset).limit(records_per_page)).all()
+    visits = db.scalars(
+        select(Visit)
+        .where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
+    ).all()
 
     # 접속자집계
     filtered_visits = []
+    total_records = 0
     for visit in visits:
         filtered_visits.append({
             "visit_year": visit.vi_date.strftime("%Y"),
             "count": 1,
         })
+
+        total_records += 1
 
     visits = count_by_field(filtered_visits, "visit_year")
     visits = add_percent_field(visits)
@@ -648,7 +626,6 @@ async def visit_year(
         "request": request,
         "visits": visits,
         "total_records": total_records,
-        "paging": get_paging(request, current_page, total_records),
         "fr_date": from_date,
         "to_date": to_date,
     }
