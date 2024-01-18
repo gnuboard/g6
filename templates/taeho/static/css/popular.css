@@ -12,5 +12,9 @@
 #popular li a:hover {text-decoration:underline}
 
 .popular_inner .popular_btns{display:none}
-.popular_btns .pp-next {position:absolute;top:68%;right:0px;width:18px;height:18px;line-height:15px;text-align:center;border:1px solid #ffffff;margin-top:-12px;color:#d3d2d2}
-.popular_btns .pp-prev {position:absolute;top:68%;right:17px;width:18px;height:18px;line-height:15px;text-align:center;border:1px solid #ffffff;margin-top:-12px;color:#d3d2d2}
+.popular_btns .pp-next {position:absolute;top:60%;right:10px;width:18px;height:18px;line-height:15px;text-align:center;border:1px solid #ffffff;margin-top:-12px;color:#d3d2d2}
+.popular_btns .pp-prev {position:absolute;top:60%;right:27px;width:18px;height:18px;line-height:15px;text-align:center;border:1px solid #ffffff;margin-top:-12px;color:#d3d2d2}
+
+@media (max-width: 1100px) {
+  #popular {background: #38383890;padding: 10px;}
+}
