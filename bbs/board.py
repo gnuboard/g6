@@ -133,7 +133,6 @@ async def list_post(
 
     # 게시글 목록 조회
     query = write_search_filter(request, write_model, sca, sfl, stx)
-    query = query.where(write_model.wr_is_comment == 0)
     # 정렬
     if sst and hasattr(write_model, sst):
         if sod == "desc":
@@ -146,7 +145,7 @@ async def list_post(
     # 검색일 경우 검색단위 갯수 설정
     prev_spt = None
     next_spt = None
-    if (sca or (sfl and stx)):
+    if (sca or (sfl and stx)):  # 검색일 경우
         search_part = int(config.cf_search_part) or 10000
         min_spt = db.scalar(
             select(func.coalesce(func.min(write_model.wr_num), 0)))
@@ -156,6 +155,12 @@ async def list_post(
 
         # wr_num 컬럼을 기준으로 검색단위를 구분합니다. (wr_num은 음수)
         query = query.where(write_model.wr_num.between(spt, spt + search_part))
+
+        # 검색 내용에 댓글이 잡히는 경우 부모 글을 가져오기 위해 wr_parent를 불러오는 subquery를 이용합니다.
+        subquery = query.add_columns(write_model.wr_parent).distinct().order_by(None).subquery().alias("subquery")
+        query = select().where(write_model.wr_id.in_(subquery))
+    else:   # 검색이 아닌 경우
+        query = query.where(write_model.wr_is_comment == 0)
 
     # 페이지 번호에 따른 offset 계산
     offset = (current_page - 1) * page_rows
