@@ -174,7 +174,7 @@
 
 /* 쪽지 */
 .memo_list {border-top:var(--border)}
-.memo_list li {border-bottom:1px solid #ececec;background:#fff;padding:10px 15px;list-style:none;position:relative}
+.memo_list li {border-bottom:var(--border);background:var(--wrapperBg);padding:10px 15px;list-style:none;position:relative}
 .memo_list li:after {display:block;visibility:hidden;clear:both;content:""}
 .memo_list li.read {background:#f6f6f6}
 .memo_list li.empty_li {text-align:center;padding:20px 0;color:#666}
@@ -234,7 +234,7 @@
 
 /* 스크랩 */
 #scrap li:after {display:block;visibility:hidden;clear:both;content:""}
-#scrap li {position:relative;padding:20px;border-bottom:var(--border)}
+#scrap li {position:relative;padding:20px;border-bottom:var(--border);color: var(--fontColor);}
 #scrap .scrap_tit {font-weight:bold;display:block;font-size:1.083em;margin-bottom:10px;line-height:1.3em}
 #scrap .scrap_cate {float:left;display:block;color:#ac92ec;background:var(--scrapBg);padding:3px;border-radius:3px;font-size:0.92em;margin-right:10px}
 #scrap .scrap_datetime {color:#777;line-height:18px}
