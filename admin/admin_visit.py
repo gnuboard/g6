@@ -176,7 +176,7 @@ async def visit_list(
         to_date = from_date
 
     # 초기 쿼리 설정
-    query = select()
+    query = select().where(Visit.vi_date.between(from_date, to_date + " 23:59:59"))
 
     # 페이지 번호에 따른 offset 계산
     records_per_page = getattr(config, "cf_page_rows", 10)
