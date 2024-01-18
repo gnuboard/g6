@@ -1,12 +1,12 @@
 {# get_all_plugin_module_names() // 플러그인 모듈이름 배열로 리턴 #}
-{% for plugin in get_all_plugin_module_names() %}
-    {% with module_name=plugin %}
-        {# 플러그인 메뉴 아이콘 호출 
-            실제 경로 plugin/플러그인폴더이름/templates/admin/admin_menu.html
-        #}
-        {# 플러그인 제외한 관리자 전역에서 호출하는 경로 #}
-        {% include '/'~plugin~'/templates/admin/admin_menu.html' ignore missing %}
-        {# 플러그인의 관리자 페이지에서 호출하는 경로 #}
-        {% include '/admin/admin_menu.html' ignore missing %}
-    {% endwith %}
+{% for plugin in get_plugin_state_cache() %} 
+    {% if plugin.is_enable %}
+        {% with module_name=plugin.module_name %}
+            {# 플러그인 메뉴 아이콘 호출 
+                실제 경로 plugin/플러그인 폴더이름/templates/admin/admin_menu.html
+            #}
+            {# 관리자 전역에서 호출하는 경로 #}
+            {% include ''~module_name~'/templates/admin/admin_menu.html' ignore missing %}
+        {% endwith %}
+    {% endif %}
 {% endfor %}

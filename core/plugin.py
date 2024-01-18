@@ -18,8 +18,13 @@ PLUGIN_STATE_FILE_PATH = f'{PLUGIN_DIR}/{PLUGIN_STATE_FILE}'
 # 플러그인 관리자 메뉴를 저장하는 캐시
 cache_plugin_menu = cachetools.Cache(maxsize=1)
 
-# PLUGIN_STATE_FILE 파일읽기를 줄이기 위한 캐시
-cache_plugin_state = cachetools.Cache(maxsize=1)
+# PLUGIN_STATE_FILE 파일읽기를 줄이기 위한 정보와 마지막 변경시간 캐시
+# 키 값
+# change_time: 플러그인 상태 변경 시간
+# info: 플러그인 상태파일을 읽어서 저장한 플러그인 정보
+cache_plugin_state = cachetools.Cache(maxsize=2)
+
+# 활성화된 플러그인의 모듈정보를 저장
 
 
 @dataclass
@@ -57,6 +62,14 @@ def get_all_plugin_info(plugin_dir=PLUGIN_DIR):
                 plugin['is_enable'] = False
         all_plugin_info.append(plugin)
     return all_plugin_info
+
+
+def get_plugin_state_cache():
+    """현재 플러그인 상태 파일의 캐시를 가져온다.
+    Returns:
+        active_plugin_info (dict): 활성화된 플러그인 정보
+    """
+    return cache_plugin_state.__getitem__('info') or {}
 
 
 def get_all_plugin_module_names(plugin_dir=PLUGIN_DIR):
