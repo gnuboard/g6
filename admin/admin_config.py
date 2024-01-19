@@ -69,9 +69,9 @@ async def config_form_update(
             pattern[i] = pattern[i].strip()
             if not pattern[i]:
                 continue
-            pattern[i] = pattern[i].replace(".", "\.")
-            pattern[i] = pattern[i].replace("+", "[0-9\.]+", pattern[i])
-            if re.match("/^{$pattern[$i]}$/", client_ip):
+            pattern[i] = pattern[i].replace(".", r"\.")
+            pattern[i] = pattern[i].replace("+", r"[0-9\.]+")
+            if re.match(fr"^{pattern[i]}$", client_ip):
                 raise AlertException("현재 접속 IP : " + client_ip + " 가 차단될수 있으므로 다른 IP를 입력해 주세요.")
 
     # 본인인증 설정 체크
