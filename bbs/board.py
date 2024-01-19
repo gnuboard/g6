@@ -910,7 +910,7 @@ async def read_post(
             )
 
     # 파일정보 조회
-    images, files = BoardFileManager(board, wr_id).get_board_files_by_type(request)
+    images, normal_files = BoardFileManager(board, wr_id).get_board_files_by_type(request)
 
     # 링크정보 조회
     links = []
@@ -971,7 +971,7 @@ async def read_post(
         "prev": prev,
         "next": next,
         "images": images,
-        "files": files,
+        "files": images + normal_files,
         "links": links,
         "is_write": board_config.is_write_level(),
         "is_reply": board_config.is_reply_level(),
