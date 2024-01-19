@@ -1,19 +1,18 @@
 from fastapi import APIRouter
 from starlette.requests import Request
-from starlette.templating import Jinja2Templates
 
 from core.plugin import get_admin_plugin_menus, get_all_plugin_module_names
-from core.template import ADMIN_TEMPLATES_DIR
+from core.template import AdminTemplates
 from lib.common import get_admin_menus, get_client_ip
 from lib.template_functions import (
     get_editor_select, get_member_id_select, get_member_level_select,
     get_selected, get_skin_select, option_array_checked
 )
+from . import plugin_config
 from ..plugin_config import module_name, admin_router_prefix
 
-PLUGIN_TEMPLATES_DIR = f"plugin/{module_name}/templates"
+templates = AdminTemplates()
 
-templates = Jinja2Templates(directory=[PLUGIN_TEMPLATES_DIR, ADMIN_TEMPLATES_DIR])
 templates.env.globals["admin_menus"] = get_admin_menus()
 templates.env.globals["getattr"] = getattr
 templates.env.globals["get_member_id_select"] = get_member_id_select
@@ -53,4 +52,4 @@ async def show(request: Request):
         "content": f"Hello {module_name}",
         "module_name": module_name,
     }
-    return templates.TemplateResponse("admin/admin_demo.html", context)
+    return templates.TemplateResponse(f"{plugin_config.TEMPLATE_PATH}/admin/admin_demo.html", context)
