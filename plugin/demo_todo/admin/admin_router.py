@@ -43,7 +43,7 @@ def show_todo(
         "request": request,
         "todo": todo,
     }
-    return templates.TemplateResponse(f"{plugin_config.TEMPLATE_PATH}admin/show.html", context)
+    return templates.TemplateResponse(f"{plugin_config.TEMPLATE_PATH}/admin/show.html", context)
 
 
 @admin_router.get("/todos")
