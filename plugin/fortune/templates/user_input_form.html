@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}오늘의 운세{% endblock %}
+
+{% block subtitle %}오늘의 운세{% endblock %}
+
+{% block content %}    
+    <h1>운세 알려주는 고양이 (Fortune Cat)</h1>
+    <div id="resultImage">
+        <img src="/plugin/{{ module_name }}/static/img/fortune_cat_800.png" alt="포춘캣" width="100%">
+    </div>
+
+    <h1>생년월일과 태어난 시간을 입력하세요</h1>
+    <form action="/fortune/submit" method="post">
+        <p>
+            <label for="birth_date">생년월일:
+                <input type="text" id="birth_date" name="birth_date" required>
+            </label>
+        </p>
+
+        <p>
+            <label for="birth_time">태어난 시간:
+                <input type="text" id="birth_time" name="birth_time" required placeholder="모름">
+            </label>
+        </p>
+
+        <button type="submit">제출</button>
+    </form>
+{% endblock %}    

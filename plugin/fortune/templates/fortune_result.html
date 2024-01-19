@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}오늘의 운세 결과{% endblock %}
+
+{% block subtitle %}오늘의 운세 결과{% endblock %}
+
+{% block content %}    
+    <h1>오늘의 운세 결과</h1>
+    <p><strong>생년월일:</strong> {{ fortune.date }}</p>
+    <p><strong>태어난 시간:</strong> {{ fortune.time }}</p>
+    <p><strong>띠:</strong> {{ fortune.animal }}</p>
+    <p><strong>오늘의 운세:</strong> {{ fortune.description }}</p>
+{% endblock %}

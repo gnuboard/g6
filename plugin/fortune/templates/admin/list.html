@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block head %}
+{# css, js 경로 /plugin/플러그인 모듈이름/static/파일경로 #}
+{% endblock %}
+
+{% block title %}
+{{ title }}
+{% endblock %}
+
+{% block subtitle %}
+{{ title }}
+{% endblock %}
+
+{% block content %}
+
+<h1 id="container_title">오늘의 운세</h1>
+<div class="container_wr">
+    <div class="local_ov01 local_ov">
+        <span class="btn_ov01"><span class="ov_txt">전체</span><span class="ov_num">{{ fortunes|length }}</span></span>
+    </div>
+
+    <form method="post" name="f_list" id="ftodo_list" action="/admin/fortune/update"
+          onsubmit="return f_list_submit(this);" autocomplete="off">
+        <input type="hidden" name="token" value="">
+
+        <div class="tbl_head01 tbl_wrap">
+            <table>
+                <caption>운세 목록</caption>
+                <thead>
+                <tr>
+                    <th scope="col">
+                        <label for="chkall" class="sound_only">운세 전체</label>
+                        <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
+                    </th>
+                    <th scope="col">ID</th>
+                    <th scope="col">생년월일</th>
+                    <th scope="col">태어난 시간</th>
+                    <th scope="col">운세</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for fortune in fortunes %}
+                <tr class="bg{{ loop.cycle('0', '1') }}">
+                    <td class="td_chk">
+                        <label for="chk_{{ loop.index0 }}" class="sound_only">{{ fortune.id }} 운세</label>
+                        <input type="checkbox" name="chk[]" value="{{ todo.id }}" id="chk_{{ loop.index0 }}">
+                    </td>
+                    <td class="td_left">
+                        <a href="/admin/fortune/{{ fortune.id }}">{{ fortune.id }}</a>
+                    </td>
+                    <td class="td_left">
+                        {{ fortune.birth_date }}
+                    </td>
+                    <td class="td_left">
+                        {{ fortune.birth_time }}
+                    </td>
+                    <td class="td_left">
+                        <p>
+                            {{ fortune.fortune_info }}</a>
+                        </p>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not fortunes %}
+                <tr>
+                    <td colspan="5">자료가 없습니다.</td>
+                </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="btn_fixed_top">
+            <input type="submit" name="act_button" onclick="document.pressed=this.value" value="선택삭제"
+                   class="btn btn_02">
+            <a href="/admin/fortune" class="btn btn_01">추가</a>
+        </div>
+    </form>
+
+    <div class="local_desc01 local_desc">
+        <p><b>안내 사항</b></p>
+        개인정보를 유추할 수 있으므로 회원아이디는 저장하고 있지 않습니다.
+    </div>
+
+
+    <script>
+        function f_list_submit(f) {
+            if (!is_checked("chk[]")) {
+                alert(document.pressed + " 하실 항목을 하나 이상 선택하세요.");
+                return false;
+            }
+
+            if (document.pressed == "선택삭제") {
+                if (!confirm("선택한 자료를 정말 삭제하시겠습니까?")) {
+                    return false;
+                }
+
+                f.action = "/admin/fortune/delete";
+            }
+
+            f.token.value = generate_token();
+
+            return true;
+        }
+    </script>
+
+</div>
+
+{% endblock %}
