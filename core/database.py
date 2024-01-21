@@ -1,5 +1,3 @@
-import os
-
 from dotenv import dotenv_values, load_dotenv
 from fastapi import Depends
 from sqlalchemy import create_engine
@@ -59,7 +57,7 @@ class DBSetting:
         self._user = env_values.get("DB_USER")
         self._password = env_values.get("DB_PASSWORD")
         self._host = env_values.get("DB_HOST")
-        self._port = env_values.get("DB_PORT")
+        self._port = env_values.get("DB_PORT", 0)
         self._db_name = env_values.get("DB_NAME")
 
     def create_url(self) -> None:
