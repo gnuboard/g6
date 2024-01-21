@@ -3,6 +3,7 @@
 # 테이블명은 write 로, 글 한개에 대한 의미는 write 와 post 를 혼용하여 사용합니다.
 import datetime
 import os
+import html as htmllib
 from datetime import datetime
 from typing import List
 from typing_extensions import Annotated
@@ -1162,7 +1163,7 @@ async def write_comment_update(
         comment.wr_num = write.wr_num
         comment.wr_parent = form.wr_id
         comment.wr_is_comment = 1
-        comment.wr_content = form.wr_content
+        comment.wr_content = htmllib.escape(form.wr_content)
         comment.mb_id = getattr(member, "mb_id", "")
         comment.wr_password = create_hash(form.wr_password) if form.wr_password else ""
         comment.wr_name = board_config.set_wr_name(member, form.wr_name)
@@ -1196,7 +1197,7 @@ async def write_comment_update(
         if not comment:
             raise AlertException(f"{form.comment_id} : 존재하지 않는 댓글입니다.", 404)
 
-        comment.wr_content = form.wr_content
+        comment.wr_content = htmllib.escape(form.wr_content)
         comment.wr_option = form.wr_secret or "html1"
         comment.wr_last = now
         db.commit()
