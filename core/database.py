@@ -81,6 +81,7 @@ class DBConnect(DBSetting):
     """
     _engine: Annotated[Engine, None]
     _sessionLocal: Annotated[sessionmaker[Session], None]
+    _instance: Annotated['DBConnect', None]
 
     def __new__(cls):
         if not hasattr(cls, "_instance"):
