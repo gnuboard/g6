@@ -19,6 +19,7 @@ def regist_core_middleware(app: FastAPI) -> None:
     미들웨어의 실행 순서는 코드의 역순으로 실행됩니다.
     - main.py의 main_middleware()보다 먼저 실행됩니다.
     """
+
     # 기본으로 실행되는 core 미들웨어를 추가합니다.
     @app.middleware("http")
     async def core_middleware(request: Request, call_next):
@@ -39,6 +40,7 @@ def regist_core_middleware(app: FastAPI) -> None:
 
             cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(new_plugin_state))
             cache_plugin_state.__setitem__('change_time', plugin_state_change_time)
+            cache_plugin_state.__setitem__('info', new_plugin_state)
 
         # 접속환경 설정
         request.state.is_mobile = False
@@ -47,14 +49,15 @@ def regist_core_middleware(app: FastAPI) -> None:
         # 반응형이라면 PC/모바일 버전 설정 세션을 초기화합니다.
         if request.state.is_responsive:
             request.session["is_mobile"] = False
-
-        if request.session.get("is_mobile"):
-            request.state.is_mobile = request.session.get("is_mobile", False)
         else:
-            # User-Agent 헤더를 통해 모바일 여부를 판단합니다. (모바일과 태블릿 접속)
-            user_agent = parse(request.headers.get("User-Agent", ""))
-            if user_agent.is_mobile or user_agent.is_tablet:
-                request.state.is_mobile = True
+            # 사용자가 설정한 PC/모바일 버전 설정 세션을 확인합니다.
+            if request.session.get("is_mobile"):
+                request.state.is_mobile = request.session.get("is_mobile", False)
+            else:
+                # User-Agent 헤더를 통해 모바일 여부를 판단합니다. (모바일과 태블릿 접속)
+                user_agent = parse(request.headers.get("User-Agent", ""))
+                if user_agent.is_mobile or user_agent.is_tablet:
+                    request.state.is_mobile = True
 
         # 디바이스 기본값 설정
         request.state.device = "mobile" if request.state.is_mobile else "pc"
@@ -64,12 +67,12 @@ def regist_core_middleware(app: FastAPI) -> None:
     # 세션 미들웨어를 추가합니다.
     # .env 파일의 설정을 통해 secret_key, session_cookie를 설정할 수 있습니다.
     app.add_middleware(SessionMiddleware,
-                   secret_key=os.getenv("SESSION_SECRET_KEY", "secret"),
-                   session_cookie=os.getenv("SESSION_COOKIE_NAME", "session"),
-                   max_age=60 * 60 * 3)
+                       secret_key=os.getenv("SESSION_SECRET_KEY", "secret"),
+                       session_cookie=os.getenv("SESSION_COOKIE_NAME", "session"),
+                       max_age=60 * 60 * 3)
 
-    # 모든 들어오는 요청을 HTTPS로 리디렉션하는 미들웨어를 추가합니다.
-    app.add_middleware(HTTPSRedirectMiddleware)
+    # 클라이언트가 사용할 프로토콜을 결정하는 미들웨어를 추가합니다.
+    app.add_middleware(BaseSchemeMiddleware)
 
 
 async def should_run_middleware(request: Request) -> bool:
@@ -96,11 +99,8 @@ async def should_run_middleware(request: Request) -> bool:
     return True
 
 
-class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
-    """이 클래스는 BaseHTTPMiddleware를 상속받아,
-    HTTP 요청을 HTTPS로 리디렉션하는 미들웨어로 사용됩니다.
-    """
+class BaseSchemeMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        if request.headers.get("X-Forwarded-Proto") != "https":
-            request.scope["scheme"] = "https"
+        # X-Forwarded-Proto 헤더를 통해 클라이언트가 사용하는 실제 프로토콜을 결정합니다.
+        request.scope["scheme"] = request.headers.get("X-Forwarded-Proto", "http")
         return await call_next(request)

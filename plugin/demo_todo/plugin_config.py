@@ -5,11 +5,13 @@ module_name = os.path.basename(os.path.dirname(os.path.realpath(__file__)))
 router_prefix = "todo"
 admin_router_prefix = router_prefix
 
+TEMPLATE_PATH = f"{module_name}/templates"
+
 # 관리자 메뉴를 설정합니다.
 admin_menu = {
     f"{module_name}": [
         {
-            "name": "플러그인 데모",
+            "name": "플러그인 todo",
             "url": "",
         },
         {

@@ -1,39 +1,43 @@
 {% extends "base.html" %}
+{% import "/visit_forms.html" as form %}
 
 {% block title %}접속자집계{% endblock title %}
 {% block subtitle %}접속자집계{% endblock subtitle %}
 
 {% block content %}
-{% include "visit_sub.html" %}
+    {{ form.search(request, fr_date, to_date) }}
+    {{ form.anchor('list', fr_date, to_date) }}
 
-<div class="tbl_head01 tbl_wrap">
-    <table>
-    <caption>접속자집계 목록</caption>
-    <thead>
-    <tr>
-        <th scope="col">IP</th>
-        <th scope="col">접속 경로</th>
-        <th scope="col">브라우저</th>
-        <th scope="col">OS</th>
-        <th scope="col">접속기기</th>
-        <th scope="col">일시</th>
-    </tr>
-    </thead>
-    <tbody>
-        {% for visit in visits %}
-        <tr class="bg{{ loop.cycle('0', '1') }}">
-            <td class="td_category">{{ visit.vi_ip }}</td>
-            <td>{{ visit.vi_referer }}</td>
-            <td class="td_category td_category1">{{ visit.vi_browser }}</td>
-            <td class="td_category td_category2">{{ visit.vi_os }}</td>
-            <td class="td_category td_category3">{{ visit.vi_device }}</td>
-            <td class="td_datetime">{{ visit.vi_date }} {{ visit.vi_time }}</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-{{ paging|safe }}
-
+    <div class="tbl_head01 tbl_wrap">
+        <table>
+            <caption>접속자집계 목록</caption>
+            <thead>
+                <tr>
+                    <th scope="col">IP</th>
+                    <th scope="col">접속 경로</th>
+                    <th scope="col">브라우저</th>
+                    <th scope="col">OS</th>
+                    <th scope="col">접속기기</th>
+                    <th scope="col">{{ subject_sort_link(request, 'vi_datetime')|safe }}일시</a></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for visit in visits %}
+                <tr class="bg{{ loop.cycle('0', '1') }}">
+                    <td class="td_category">{{ visit.vi_ip }}</td>
+                    <td>{{ visit.vi_referer }}</td>
+                    <td class="td_category td_category1">{{ visit.vi_browser }}</td>
+                    <td class="td_category td_category2">{{ visit.vi_os }}</td>
+                    <td class="td_category td_category3">{{ visit.vi_device }}</td>
+                    <td class="td_datetime">{{ visit.vi_date }} {{ visit.vi_time }}</td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="6" class="empty_table">자료가 없거나 관리자에 의해 삭제되었습니다.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {{ paging|safe }}
 {% endblock content %}

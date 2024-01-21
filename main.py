@@ -82,6 +82,7 @@ import_plugin_by_states(plugin_states)
 register_plugin(plugin_states)
 register_statics(app, plugin_states)
 
+cache_plugin_state.__setitem__('info', plugin_states)
 cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
 cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(plugin_states))
 

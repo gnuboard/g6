@@ -133,7 +133,6 @@ async def list_post(
 
     # 게시글 목록 조회
     query = write_search_filter(request, write_model, sca, sfl, stx)
-    query = query.where(write_model.wr_is_comment == 0)
     # 정렬
     if sst and hasattr(write_model, sst):
         if sod == "desc":
@@ -146,7 +145,7 @@ async def list_post(
     # 검색일 경우 검색단위 갯수 설정
     prev_spt = None
     next_spt = None
-    if (sca or (sfl and stx)):
+    if (sca or (sfl and stx)):  # 검색일 경우
         search_part = int(config.cf_search_part) or 10000
         min_spt = db.scalar(
             select(func.coalesce(func.min(write_model.wr_num), 0)))
@@ -156,6 +155,12 @@ async def list_post(
 
         # wr_num 컬럼을 기준으로 검색단위를 구분합니다. (wr_num은 음수)
         query = query.where(write_model.wr_num.between(spt, spt + search_part))
+
+        # 검색 내용에 댓글이 잡히는 경우 부모 글을 가져오기 위해 wr_parent를 불러오는 subquery를 이용합니다.
+        subquery = query.add_columns(write_model.wr_parent).distinct().order_by(None).subquery().alias("subquery")
+        query = select().where(write_model.wr_id.in_(subquery))
+    else:   # 검색이 아닌 경우
+        query = query.where(write_model.wr_is_comment == 0)
 
     # 페이지 번호에 따른 offset 계산
     offset = (current_page - 1) * page_rows
@@ -625,7 +630,12 @@ async def write_update(
         if config.cf_use_point:
             write_point = board.bo_write_point
             if not board_config.is_write_point():
-                raise AlertException(f"글 작성에 필요한 포인트({number_format(abs(write_point))})가 부족합니다.", 403)                
+                point = number_format(abs(write_point))
+                message = f"글 작성에 필요한 포인트({point})가 부족합니다."
+                if not member:
+                    message += f"\\n로그인 후 다시 시도해주세요."
+
+                raise AlertException(message, 403)
 
         form_data.wr_password = create_hash(form_data.wr_password) if form_data.wr_password else ""
         form_data.wr_name = board_config.set_wr_name(member, form_data.wr_name)
@@ -831,12 +841,17 @@ async def read_post(
     # 세션 체크
     # 한번 읽은 게시글은 세션만료까지 조회수, 포인트 처리를 하지 않는다.
     session_name = f"ss_view_{bo_table}_{wr_id}"
-    if not request.session.get(session_name) and member.mb_id != write.mb_id:
+    if not request.session.get(session_name) and mb_id != write.mb_id:
         # 포인트 검사
         if config.cf_use_point:
             read_point = board.bo_read_point
             if not board_config.is_read_point(write):
-                raise AlertException(f"게시글 읽기에 필요한 포인트({number_format(abs(read_point))})가 부족합니다.", 403)
+                point = number_format(abs(read_point))
+                message = f"게시글 읽기에 필요한 포인트({point})가 부족합니다."
+                if not member:
+                    message += f"\\n로그인 후 다시 시도해주세요."
+
+                raise AlertException(message, 403)
             else:
                 insert_point(request, mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table, write.wr_id, "읽기")
 
@@ -905,7 +920,7 @@ async def read_post(
             )
 
     # 파일정보 조회
-    images, files = BoardFileManager(board, wr_id).get_board_files_by_type(request)
+    images, normal_files = BoardFileManager(board, wr_id).get_board_files_by_type(request)
 
     # 링크정보 조회
     links = []
@@ -933,9 +948,11 @@ async def read_post(
 
         # 비밀댓글 처리
         session_secret_comment_name = f"ss_secret_comment_{bo_table}_{comment.wr_id}"
+        parent_write = db.get(write_model, comment.wr_parent)
         if (comment.is_secret
                 and not admin_type
                 and not is_owner(comment, mb_id)
+                and not is_owner(parent_write, mb_id)
                 and not request.session.get(session_secret_comment_name)):
             comment.is_secret_content = True
             comment.save_content = "비밀글 입니다."
@@ -964,7 +981,7 @@ async def read_post(
         "prev": prev,
         "next": next,
         "images": images,
-        "files": files,
+        "files": images + normal_files,
         "links": links,
         "is_write": board_config.is_write_level(),
         "is_reply": board_config.is_reply_level(),
@@ -1048,7 +1065,12 @@ async def download_file(
         if config.cf_use_point:
             download_point = board.bo_download_point
             if not board_config.is_download_point(write):
-                raise AlertException(f"파일 다운로드에 필요한 포인트({number_format(abs(download_point))})가 부족합니다.", 403)
+                point = number_format(abs(download_point))
+                message = f"파일 다운로드에 필요한 포인트({point})가 부족합니다."
+                if not member:
+                    message += f"\\n로그인 후 다시 시도해주세요."
+
+                raise AlertException(message, 403)
             else:
                 insert_point(request, mb_id, download_point, f"{board.bo_subject} {write.wr_id} 파일 다운로드", board.bo_table, write.wr_id, "다운로드")
 
@@ -1109,7 +1131,12 @@ async def write_comment_update(
         comment_point = board.bo_comment_point
         if config.cf_use_point:
             if not board_config.is_comment_point():
-                raise AlertException(f"댓글 작성에 필요한 포인트({number_format(abs(comment_point))})가 부족합니다.", 403)
+                point = number_format(abs(comment_point))
+                message = f"댓글 작성에 필요한 포인트({point})가 부족합니다."
+                if not member:
+                    message += f"\\n로그인 후 다시 시도해주세요."
+
+                raise AlertException(message, 403)
 
         # 댓글 객체 생성
         comment = write_model()

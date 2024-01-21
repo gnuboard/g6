@@ -1,28 +1,28 @@
 from fastapi import APIRouter
 from starlette.requests import Request
-from starlette.templating import Jinja2Templates
 
-from core.template import TEMPLATES_DIR, theme_asset
+from core.template import UserTemplates
+from .. import plugin_config
 from ..plugin_config import module_name
 
 router = APIRouter()
 
-PLUGIN_TEMPLATES_DIR = f"plugin/{module_name}/templates"
-templates = Jinja2Templates(directory=[TEMPLATES_DIR, PLUGIN_TEMPLATES_DIR])
-templates.env.globals["theme_asset"] = theme_asset
+templates = UserTemplates()
 
 
 @router.get("/show")
 async def show(request: Request):
-    return {"message": "Hello Plugin!"}
+    """json 출력예시"""
+    return {"message": "Hello Plugin JSON!"}
 
 
 @router.get("/show_template")
 async def show(request: Request):
+    """템플릿 출력예시"""
     return templates.TemplateResponse(
-        "user_demo.html",
+        f"{plugin_config.TEMPLATE_PATH}/user_demo.html",
         {
             "request": request,
-            "title": "Hello plugin!",
+            "title": "Hello plugin Template!",
             "content": f"Hello {module_name}!",
         })

@@ -183,7 +183,11 @@ class BoardConfig():
         Returns:
             list: 게시판 카테고리 목록.
         """
-        return self.board.bo_category_list.split("|") if self.board.bo_use_category else []
+        if (not self.board.bo_use_category 
+                or self.board.bo_category_list == ""):
+            return []
+
+        return self.board.bo_category_list.split("|")
 
     def get_display_ip(self, ip: str) -> str:
         """IP 주소를 표시형식으로 변환

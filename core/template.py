@@ -1,21 +1,15 @@
-import logging
-import os
 import typing
 
-from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment, FileSystemLoader
 from pydantic import TypeAdapter
-from sqlalchemy import select
 from starlette.background import BackgroundTask
 from starlette.staticfiles import StaticFiles
 from starlette.templating import _TemplateResponse
 
-from core.database import DBConnect
-from core.models import Config
 from core.plugin import (
-    get_admin_plugin_menus, get_all_plugin_module_names, PLUGIN_DIR
+    get_admin_plugin_menus, get_all_plugin_module_names, PLUGIN_DIR, get_plugin_state_cache
 )
 from lib.common import *
 from lib.member_lib import get_member_icon, get_member_image
@@ -122,7 +116,7 @@ class UserTemplates(Jinja2Templates):
     """
     _instance = None
     _is_mobile: bool = False
-    default_directories = [TEMPLATES_DIR, EDITOR_PATH, CAPTCHA_PATH]
+    default_directories = [TEMPLATES_DIR, EDITOR_PATH, CAPTCHA_PATH, PLUGIN_DIR]
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
@@ -199,7 +193,15 @@ class UserTemplates(Jinja2Templates):
             self.env.loader = FileSystemLoader(self.default_directories)
             self._is_mobile = is_mobile
 
-        return super().TemplateResponse(name, context, status_code, headers, media_type, background)
+        return super().TemplateResponse(
+            name=name,
+            context=context,
+            status_code=status_code,
+            headers=headers,
+            media_type=media_type,
+            background=background
+        )
+    
 
 
 class AdminTemplates(Jinja2Templates):
@@ -238,6 +240,7 @@ class AdminTemplates(Jinja2Templates):
             self.env.globals["get_member_image"] = get_member_image
             self.env.globals["theme_asset"] = theme_asset
             self.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
+            self.env.globals["get_plugin_state_cache"] = get_plugin_state_cache
             self.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
             self.env.globals["option_selected"] = option_selected
             self.env.globals["option_array_checked"] = option_array_checked

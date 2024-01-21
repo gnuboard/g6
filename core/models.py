@@ -694,7 +694,7 @@ class Memo(Base):
     me_recv_mb_id = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "member.mb_id"), nullable=False, default="")
     me_send_mb_id = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "member.mb_id"), nullable=False, default="")
     me_send_datetime = Column(DateTime, nullable=False, default=datetime.now())
-    me_read_datetime = Column(DateTime, nullable=True)
+    me_read_datetime = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
     me_memo = Column(Text, nullable=False)
     me_send_id = Column(Integer, nullable=False, default=0)
     me_type = Column(Enum("send", "recv", name="me_type"), nullable=False, default="recv")
