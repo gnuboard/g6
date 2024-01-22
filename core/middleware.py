@@ -62,6 +62,9 @@ def regist_core_middleware(app: FastAPI) -> None:
         # 디바이스 기본값 설정
         request.state.device = "mobile" if request.state.is_mobile else "pc"
 
+        # 미들웨어에서 라우터를 사용할 수 있도록 설정합니다.
+        request.scope["router"] = app.router
+
         return await call_next(request)
 
     # 세션 미들웨어를 추가합니다.

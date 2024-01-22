@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block head %}
-    <link rel="stylesheet" href="/static/js/remodal/remodal.css">
-    <link rel="stylesheet" href="/static/js/remodal/remodal-default-theme.css">
-    <link rel="stylesheet" href="/static/css/basic/social.css">
-    <script src="/static/js/remodal/remodal.js"></script>
-    <script src="/static/js/jquery.register_form.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', path='/js/remodal/remodal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/js/remodal/remodal-default-theme.css') }}">
+    <link rel="stylesheet" href="{{ theme_asset(request, 'css/social.css') }}">
+    <script src="{{ url_for('static', path='/js/remodal/remodal.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/jquery.register_form.js') }}"></script>
 
     {% if (config.cf_cert_use and (config.cf_cert_simple or config.cf_cert_ipin or config.cf_cert_hp)) %}
     <script src="/static/js/certify.js"></script>

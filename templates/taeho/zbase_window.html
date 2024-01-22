@@ -7,9 +7,9 @@
     {{ request.state.config.cf_add_meta|safe }}
 {% endif %}
 <title>{% block title %}{{ request.state.title }}{% endblock title %}</title>
-<link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+<link rel="icon" href="{{ url_for('static', path='/favicon.ico') }}" type="image/x-icon">
 <link rel="stylesheet" href="/static/css/default.css">
-<link rel="stylesheet" href="/static/js/font-awesome/css/font-awesome.min.css">
+<link rel="stylesheet" href="{{ url_for('static', path='/js/font-awesome/css/font-awesome.min.css?ver=4.7.0') }}">
 <link rel="stylesheet" href="/static/css/basic/connect.css">
 <link rel="stylesheet" href="/static/css/basic/faq.css">
 <link rel="stylesheet" href="/static/css/basic/poll.css">
@@ -21,7 +21,7 @@
 <link rel="stylesheet" href="/static/css/basic/outlogin.css">
 <link rel="stylesheet" href="/static/css/basic/latest_notice.css">
 <link rel="stylesheet" href="/static/css/basic/visit.css">
-<link rel="stylesheet" href="/static/js/owlcarousel/owl.carousel.min.css">
+<link rel="stylesheet" href="{{ url_for('static', path='/js/owlcarousel/owl.carousel.min.css') }}">
 <script>
 // 자바스크립트에서 사용하는 전역변수 선언
 var g6_url       = "{{ request.base_url }}";
@@ -35,13 +35,13 @@ var g6_editor    = "";
 var g6_cookie_domain = "";
 var g6_shop_url = "{{ request.base_url }}shop";
 </script>
-<script src="/static/js/jquery-3.7.1.min.js"></script>
-<script src="/static/js/jquery-migrate-3.4.0.min.js"></script>
-<script src="/static/js/jquery.menu.js"></script>
-<script src="/static/js/common.js"></script>
-<script src="/static/js/wrest.js"></script>
+<script src="{{ url_for('static', path='/js/jquery.min.js?ver=3.7.1') }}"></script>
+<script src="{{ url_for('static', path='/js/jquery-migrate.min.js?ver=3.4.0') }}"></script>
+<script src="{{ url_for('static', path='/js/jquery.menu.js') }}"></script>
+<script src="{{ url_for('static', path='/js/common.js') }}"></script>
+<script src="{{ url_for('static', path='/js/wrest.js?ver=1.0') }}"></script>
 <script src="/static/js/placeholders.min.js"></script>
-<script src="/static/js/owlcarousel/owl.carousel.min.js"></script>
+<script src="{{ url_for('static', path='/js/owlcarousel/owl.carousel.min.js') }}"></script>
 <script src="/static/js/jquery.bxslider.js"></script>
 {% if request.state.config %}
     {{ request.state.config.cf_add_script|safe }}
