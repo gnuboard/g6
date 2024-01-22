@@ -52,7 +52,17 @@
         dots:true,
         fade:true,
         customPaging: function(slider, i) { 
-            return '<button class="tab"><span class="s-line-fill"></span><div class="s-indicator only-pc"><span class="inner-txt">' + $(slider.$slides[i]).find('.slide-con').attr('data-dot-title') + '</span></div></button>';
+            const slideCon = $(slider.$slides[i]).find('.slide-con');
+            return `
+                <button class="tab">
+                    <span class="s-line-fill"></span>
+                    <div class="s-indicator only-pc">
+                        <a href="/board/${slideCon.attr('data-dot-bo-table')}/${slideCon.attr('data-dot-wr-id')}" class="inner-txt">
+                            ${$(slider.$slides[i]).find('.slide-con').attr('data-dot-title')}
+                        </a>
+                    </div>
+                </button>
+            `;
         },
     });
 

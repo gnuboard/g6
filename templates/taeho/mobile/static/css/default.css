@@ -208,8 +208,8 @@ box-shadow:0 0 5px var(--gnbShadowBg)}
 #gnb_1dul {background:var(--btnBg)}
 #gnb_1dul a {display:block;color:var(--fontColor)}
 .gnb_1dli {position:relative;line-height:40px}
-.gnb_1dli button {position:absolute;top:5px;right:0;width:40px;height:40px;overflow:hidden;border:0;font-size:1.2em;background:#fff;background:url(../img/mobile/gnb_bg2.png) no-repeat 50% 50%;text-indent:-9999px}
-.gnb_1dli button.btn_gnb_cl {background:url(../img/mobile/gnb_bg.png) no-repeat 50% 50%}
+.gnb_1dli button {position:absolute;top:5px;right:0;width:40px;height:40px;overflow:hidden;border:0;font-size:1.2em;background:#fff;background:url(/static/img/mobile/gnb_bg2.png) no-repeat 50% 50%;text-indent:-9999px}
+.gnb_1dli button.btn_gnb_cl {background:url(/static/img/mobile/gnb_bg.png) no-repeat 50% 50%}
 .gnb_1da {padding:5px 20px;border-bottom:var(--ltContBorder);font-weight:bold;font-size:1.2em;}
 .gnb_2dul {display:none;background:#fafafa}
 .gnb_2da {padding-left:30px}

@@ -27,7 +27,7 @@ source venv/bin/activate
 ```
 
 ```bash
-# 실행에 필요한 라이브러리들을 설치합니다.
+# 실행에 필요한 파이썬 패키지들을 설치합니다.
 pip install -r requirements.txt
 ```
 
