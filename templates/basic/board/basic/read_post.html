@@ -216,24 +216,26 @@
     <ul class="bo_v_nb">
         {% if prev %}
         <li class="btn_prv">
-            <span class="nb_tit">
-                <i class="fa fa-chevron-up" aria-hidden="true"></i> 이전글
-            </span>
-            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=prev.wr_id )|set_query_params(request) }}">
-                {{ prev.wr_subject }}
-            </a>
+          <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=prev.wr_id )|set_query_params(request) }}">
+            <i class="fa fa-chevron-up" aria-hidden="true"></i>
+            <p>
+            <span class="nb_tit">이전글</span>
+            <span class="nb_cont">{{ prev.wr_subject }}</span>
             <span class="nb_date">{{ prev.wr_datetime }}</span>
+            </p>
+          </a>
         </li>
         {% endif %}
         {% if next %}
         <li class="btn_next">
-            <span class="nb_tit">
-                <i class="fa fa-chevron-down" aria-hidden="true"></i> 다음글
-            </span>
-            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=next.wr_id )|set_query_params(request) }}">
-                {{ next.wr_subject }}
-            </a>
-            <span class="nb_date">{{ next.wr_datetime }}</span>
+          <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=next.wr_id )|set_query_params(request) }}">
+            <p>
+              <span class="nb_tit">다음글</span>
+              <span class="nb_cont">{{ next.wr_subject }}</span>
+              <span class="nb_date">{{ next.wr_datetime }}</span>
+            </p>
+            <i class="fa fa-chevron-down" aria-hidden="true"></i> 
+          </a>
         </li>
         {% endif %}
     </ul>
@@ -532,7 +534,7 @@
         function comment_delete(href) {
             if (confirm("이 댓글을 삭제하시겠습니까?")) {
                 token = generate_token();
-                location.href = href + "?token=" + token + "&{{ request.query_params|safe }}";
+                location.href = href + "?token=" + token + "&{{ request.query_params }}";
                 return true;
             }
             return false;

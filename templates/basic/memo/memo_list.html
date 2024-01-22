@@ -28,7 +28,7 @@
                 {% for memo in memos %}
                     {% set is_read=(False if is_none_datetime(memo.me_read_datetime) else True) %}
                     {% set target_member=memo.target_member %}
-
+                    
                     <li class="{% if is_read %}read{% endif %}">
                         <div class="memo_li profile_big_img">
                             <img src="{{ get_member_image(target_member.mb_id) }}" alt="profile_image">
@@ -37,7 +37,7 @@
                             {% endif %}
                         </div>
                         <div class="memo_li memo_name">
-                            {{ sideview.get(request, target_member.mb_id, getattr(target_member, "mb_nick", "[회원정보 없음]"))|safe }}
+                            {{ sideview.get(request, target_member.mb_id, target_member.mb_nick|default_if_none("[회원정보 없음]"))|safe }}
                             <span class="memo_datetime">
                                 <i class="fa fa-clock-o" aria-hidden="true"></i>
                                 {{ memo.me_send_datetime }}
@@ -51,7 +51,7 @@
                         <a href="{{ url_for('memo_delete', me_id=memo.me_id) }}?page={{ page }}" onclick="del(this.href); return false;" class="memo_del"><i class="fa fa-trash-o" aria-hidden="true"></i> <span class="sound_only">삭제</span></a>
                     </li>
                 {% else %}
-                <li class="empty_table">쪽지가 없습니다.</li>
+                    <li class="empty_table">쪽지가 없습니다.</li>
                 {% endfor %}
                 </ul>
             </div>
@@ -68,4 +68,26 @@
             </div>
         </div>
     </div>
+    <script>  
+      // 다크모드 설정
+      function handleDarkModeChange() {
+            const isUserColorTheme = localStorage.getItem('color-theme');
+            const isOsColorTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            const getUserTheme = () => (isUserColorTheme ? isUserColorTheme : isOsColorTheme);
+
+            const initialTheme = getUserTheme();
+            if (initialTheme === 'dark') {
+              document.documentElement.setAttribute('color-theme', 'dark');
+            } else {
+              document.documentElement.setAttribute('color-theme', 'light');
+            }
+          }; 
+
+          document.addEventListener('DOMContentLoaded', handleDarkModeChange)
+
+          // 로컬스토리지 데이터에따라 실시간 변경
+          window.addEventListener('storage', function (event) {
+              handleDarkModeChange();
+          });
+    </script>
 {% endblock content %}
