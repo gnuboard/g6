@@ -127,7 +127,7 @@ async def member_profile_save(
     회원정보 수정 처리
     """
     if not request.session.get("ss_profile_change", False):
-        raise AlertException("잘못된 접근입니다.", 403, url=app.url_path_for("member_confirm"))
+        raise AlertException("잘못된 접근입니다.", 403, url=app.url_path_for("member_password"))
 
     mb_id = member.mb_id
     exists_member = db.scalar(select(Member).filter_by(mb_id=mb_id))
