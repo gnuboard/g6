@@ -5,11 +5,11 @@
 {% endblock head %}
 
 {% block title %}{{ qa_config.qa_title }}{% endblock title %}
+
 {% block subtitle %}{{ qa_config.qa_title }}{% endblock subtitle %}
 
 {% block content %}
-    {% set query_params = request.query_params %}
-
+{% set query_params = request.query_params %}
     {% if qa_config.qa_content_head %}
         {{ qa_config.qa_content_head|safe }}
     {% endif %}
