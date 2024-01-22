@@ -4,14 +4,13 @@
 {% endif %}
 
 {% block head %}
-    <script src="{{ url_for('static', path="js/viewimageresize.js") }}"></script>
+    <script src="{{ url_for('static', path="/js/viewimageresize.js") }}"></script>
 {% endblock head %}
 
 {% block title %}{{ write.wr_subject|truncate(20, False, '...', 0) }} > {{ board.subject }}{% endblock title %}
 {% block subtitle %}{{ board.subject }}{% endblock subtitle %}
 
 {% block content %}
-dsadsaddas
 {% set board_config=board_config(request, board) %}
 {% set login_member=request.state.login_member %}
 {% set is_admin=get_admin_type(request, login_member.mb_id, board=board) %}

@@ -8,17 +8,17 @@
     {{ request.state.config.cf_add_meta|safe -}}
 {% endif -%}
 <title>{% block title %}{{ request.state.title }}{% endblock title %}</title>
-<link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+<link rel="icon" href="{{ url_for('static', path='/favicon.ico') }}" type="image/x-icon">
 <link rel="stylesheet" href="{{ theme_asset(request, 'css/default.css?ver=1.0') }}">
-<link rel="stylesheet" href="{{ theme_asset(request, 'js/font-awesome/css/font-awesome.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='/js/font-awesome/css/font-awesome.min.css?ver=4.7.0') }}">
 <link rel="stylesheet" href="{{ theme_asset(request, 'js/slick/slick.css?ver=1.8.1') }}">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100;200;300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-<script src="/static/js/jquery.min.js?ver=3.7.1"></script>
-<script src="/static/js/jquery-migrate.min.js?ver=3.4.0"></script>
-<script src="/static/js/common.js?ver=1.0"></script>
-<script src="/static/js/wrest.js?ver=1.0"></script>
-<script src="{{ theme_asset(request, 'js/jquery.menu.js?ver=3.7.1') }}"></script>
+<script src="{{ url_for('static', path='/js/jquery.min.js?ver=3.7.1') }}"></script>
+<script src="{{ url_for('static', path='/js/jquery-migrate.min.js?ver=3.4.0') }}"></script>
+<script src="{{ url_for('static', path='/js/common.js?ver=1.0') }}"></script>
+<script src="{{ url_for('static', path='/js/wrest.js?ver=1.0') }}"></script>
+<script src="{{ url_for('static', path='/js/jquery.menu.js') }}"></script>
 <script src="{{ theme_asset(request, 'js/slick/slick.min.js?ver=1.8.1') }}"></script>
 <script>
 // 자바스크립트에서 사용하는 전역변수 선언
@@ -148,7 +148,7 @@ var g6_shop_url = "{{ request.base_url }}shop";
   #gnb .gnb_1dli { line-height:55px; padding:0px; position:relative } 
   #gnb .gnb_1dli:hover > a { background: #ff8269; color: #fff;-webkit-transition: all 2s ease-out;-moz-transition: all 0.3s ease-out;-o-transition: all 0.3s ease-out;transition: all 0.3s ease-out } 
 
-  .gnb_1dli .bg { position:absolute; top:24px; right:8px; display:inline-block; width:10px; height:10px; overflow:hidden; background:url('./images/gnb_bg2.gif') no-repeat 50% 50%; text-indent:-999px } 
+  .gnb_1dli .bg { position:absolute; top:24px; right:8px; display:inline-block; width:10px; height:10px; overflow:hidden; background:url('/static/img/gnb_bg2.gif') no-repeat 50% 50%; text-indent:-999px } 
   .gnb_1da { display:block; font-weight:bold; padding:0 15px; color:#a5a5a5; text-decoration:none } 
   .gnb_1dli.gnb_al_li_plus .gnb_1da { padding-right:25px } 
   .gnb_2dli:first-child { border:0 } 
