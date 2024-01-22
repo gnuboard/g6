@@ -18,7 +18,6 @@ from lib.dependencies import (
 from lib.member_lib import get_member_icon, get_member_image
 from lib.pbkdf2 import validate_password, create_hash
 from lib.template_filters import default_if_none
-from main import app
 
 router = APIRouter()
 templates = UserTemplates()
@@ -90,7 +89,7 @@ async def member_profile(
         raise AlertException("회원정보가 없습니다.", 404)
 
     form_context = {
-        "action_url": app.url_path_for("member_profile", mb_no=mb_no),
+        "action_url": request.url_for("member_profile", mb_no=mb_no).path,
         "name_readonly": "readonly",
         "hp_readonly": "readonly" if get_is_phone_certify(member, config) else "",
         "mb_icon_url": get_member_icon(member.mb_id),
@@ -127,7 +126,7 @@ async def member_profile_save(
     회원정보 수정 처리
     """
     if not request.session.get("ss_profile_change", False):
-        raise AlertException("잘못된 접근입니다.", 403, url=app.url_path_for("member_password"))
+        raise AlertException("잘못된 접근입니다.", 403, url=request.url_for("member_password").path)
 
     mb_id = member.mb_id
     exists_member = db.scalar(select(Member).filter_by(mb_id=mb_id))
