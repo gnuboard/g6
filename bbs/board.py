@@ -2,8 +2,8 @@
 # 게시판 테이블을 write 로 사용하여 테이블명을 바꾸지 못하는 관계로
 # 테이블명은 write 로, 글 한개에 대한 의미는 write 와 post 를 혼용하여 사용합니다.
 import datetime
-import os
 import html as htmllib
+import os
 from datetime import datetime
 from typing import List
 from typing_extensions import Annotated
@@ -591,6 +591,10 @@ async def write_update(
     if subject_filter_word or content_filter_word:
         word = subject_filter_word if subject_filter_word else content_filter_word
         raise AlertException(f"제목/내용에 금지단어({word})가 포함되어 있습니다.", 400)
+    
+    # Stored XSS 방지
+    form_data.wr_subject = htmllib.escape(form_data.wr_subject)
+    form_data.wr_content = htmllib.escape(form_data.wr_content)
 
     # 게시글 테이블 정보 조회
     write_model = dynamic_create_write_table(bo_table)
