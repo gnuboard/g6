@@ -81,9 +81,10 @@ class DBConnect(DBSetting):
     """
     _engine: Annotated[Engine, None]
     _sessionLocal: Annotated[sessionmaker[Session], None]
+    _instance: Annotated['DBConnect', None] = None
 
     def __new__(cls):
-        if not hasattr(cls, "_instance"):
+        if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
@@ -138,6 +139,7 @@ async def get_db() -> Session:
         yield db
     finally:
         db.close()
+
 
 # Annotated를 사용하여 의존성 주입
 db_session = Annotated[Session, Depends(get_db)]
