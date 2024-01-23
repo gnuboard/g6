@@ -3,7 +3,7 @@
 
 {% block head %}
     <link rel="stylesheet" href="{{ theme_asset(request, 'css/qa.css') }}">
-    <script rel="stylesheet" src="{{ url_for('static', path="/js/viewimageresize.js") }}"></script>
+    <script rel="stylesheet" src="/static/js/viewimageresize.js"></script>
     {{ editor.head() }}
 {% endblock head %}
 
@@ -29,7 +29,7 @@
             <strong class="bo_date"><i class="fa fa-clock-o" aria-hidden="true"></i> {{ qa.qa_datetime }}</strong>
             {% if qa.qa_email %}
                 <span class="sound_only">이메일</span>
-                <strong><i class="fa fa-envelope-o" aria-hidden="true"></i> {{ qa.qa_email }}</strong>
+                <strong><i class="fa fa-regular fa-envelope" aria-hidden="true"></i> {{ qa.qa_email }}</strong>
             {% endif %}
             {% if qa.qa_hp %}
                 <span class="sound_only">휴대폰</span>
@@ -60,13 +60,13 @@
                             <li>
                                 <a href="{{ url_for('qa_form_edit', qa_id=qa.qa_id) }}" class="btn_b01 btn" title="수정">
                                     수정
-                                    <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+                                    <i class="fa fa-pen-to-square" aria-hidden="true"></i>
                                 </a>
                             </li>
                             <li>
                                 <a href="{{ url_for('qa_delete', qa_id=qa.qa_id) }}" class="btn_b01 btn" onclick="del(this.href); return false;" title="삭제">
                                     삭제
-                                    <i class="fa fa-trash-o" aria-hidden="true"></i>
+                                    <i class="fa fa-regular fa-trash-can" aria-hidden="true"></i>
                                 </a>
                             </li>
                         </ul>
@@ -139,7 +139,7 @@
                 <h2><span class="bo_v_reply">답변</span> {{ answer.qa_subject }}</h2>
                 <header>
                     <div id="ans_datetime">
-                        <i class="fa fa-clock-o" aria-hidden="true"></i> {{ answer.qa_datetime }}
+                        <i class="fa fa-regular fa-clock" aria-hidden="true"></i> {{ answer.qa_datetime }}
                     </div>
                     {% if request.state.is_super_admin %}
                     <div id="ans_add">

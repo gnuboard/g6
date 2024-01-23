@@ -21,7 +21,7 @@
         </li>
         <li>
             <a href="{{ url_for('memo_list') }}" target="_blank" id="ol_after_memo" class="win_memo">
-                <i class="fa fa-envelope-o" aria-hidden="true"></i><span class="sound_only">안 읽은 </span>쪽지
+                <i class="fa fa-regular fa-envelope" aria-hidden="true"></i><span class="sound_only">안 읽은 </span>쪽지
                 <strong>{{ member.mb_memo_cnt if member is defined else '' }}</strong>
             </a>
         </li>

@@ -25,7 +25,7 @@
     <ul id="ol_after_private">
         <li id="ol_after_memo">
             <a href="{{ url_for('memo_list') }}" target="_blank" class="win_memo">
-                <i class="fa fa-envelope-o" aria-hidden="true"></i>
+                <i class="fa fa-regular fa-envelope" aria-hidden="true"></i>
                 <span class="sound_only">안 읽은</span>쪽지
                 <strong>{{ member.mb_memo_cnt|number_format if member is defined else 0 }}</strong>
             </a>

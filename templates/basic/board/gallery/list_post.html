@@ -68,8 +68,8 @@
                         <span class="sound_only">게시판 리스트 옵션</span>
                     </button>
                     <ul class="more_opt is_list_btn">
-                        <li><button type="submit" name="btn_submit" value="선택삭제" onclick="document.pressed=this.value"><i class="fa fa-trash-o" aria-hidden="true"></i> 선택삭제</button></li>
-                        <li><button type="submit" name="btn_submit" value="선택복사" onclick="document.pressed=this.value"><i class="fa fa-files-o" aria-hidden="true"></i> 선택복사</button></li>
+                        <li><button type="submit" name="btn_submit" value="선택삭제" onclick="document.pressed=this.value"><i class="fa fa-regular fa-trash-can" aria-hidden="true"></i> 선택삭제</button></li>
+                        <li><button type="submit" name="btn_submit" value="선택복사" onclick="document.pressed=this.value"><i class="fa fa-regular fa-file" aria-hidden="true"></i> 선택복사</button></li>
                         <li><button type="submit" name="btn_submit" value="선택이동" onclick="document.pressed=this.value"><i class="fa fa-arrows" aria-hidden="true"></i> 선택이동</button></li>
                     </ul>
                 </li>
@@ -153,15 +153,15 @@
                                     {{ write.name }}
                                 </span>
                             {% endif %}
-                            <span class="gall_date"><span class="sound_only">작성일 </span><i class="fa fa-clock-o" aria-hidden="true"></i> {{ write.wr_datetime|datetime_format('%y-%m-%d') }}</span>
+                            <span class="gall_date"><span class="sound_only">작성일 </span><i class="fa fa-regular fa-clock" aria-hidden="true"></i> {{ write.wr_datetime|datetime_format('%y-%m-%d') }}</span>
                             <span class="gall_view"><span class="sound_only">조회 </span><i class="fa fa-eye" aria-hidden="true"></i> {{ write.wr_hit|number_format }}</span>
                         </div>
                         <div class="gall_option">
                             {% if board.bo_use_good %}
-                            <span class="sound_only">추천</span><strong><i class="fa fa-thumbs-o-up" aria-hidden="true"></i> {{ write.wr_good|number_format }}</strong>
+                            <span class="sound_only">추천</span><strong><i class="fa fa-regular fa-thumbs-up" aria-hidden="true"></i> {{ write.wr_good|number_format }}</strong>
                             {% endif %}
                             {% if board.bo_use_nogood %}
-                            <span class="sound_only">비추천</span><strong><i class="fa fa-thumbs-o-down" aria-hidden="true"></i> {{ write.wr_nogood|number_format }}</strong>
+                            <span class="sound_only">비추천</span><strong><i class="fa fa-regular fa-thumbs-down" aria-hidden="true"></i> {{ write.wr_nogood|number_format }}</strong>
                             {% endif %}
                         </div>
                     </div>
@@ -230,7 +230,7 @@
                     </button>
                 </div>
                 <button type="button" class="bo_sch_cls" title="닫기">
-                    <i class="fa fa-times" aria-hidden="true"></i><span class="sound_only">닫기</span>
+                    <i class="fa fa-xmark" aria-hidden="true"></i><span class="sound_only">닫기</span>
                 </button>
             </form>
         </fieldset>

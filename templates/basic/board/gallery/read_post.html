@@ -4,7 +4,7 @@
 {% endif %}
 
 {% block head %}
-    <script src="{{ url_for('static', path="/js/viewimageresize.js") }}"></script>
+    <script src="/static/js/viewimageresize.js"></script>
 {% endblock head %}
 
 {% block title %}{{ write.wr_subject|truncate(20, False, '...', 0) }} > {{ board.subject }}{% endblock title %}
@@ -45,9 +45,9 @@
                         {% endif %}
                     </strong>
                     <br>
-                    <span class="sound_only">댓글</span><strong><a href="#bo_vc"> <i class="fa fa-commenting-o" aria-hidden="true"></i> {{ write.wr_comment|number_format }}건</a></strong>
+                    <span class="sound_only">댓글</span><strong><a href="#bo_vc"> <i class="fa fa-regular fa-commenting" aria-hidden="true"></i> {{ write.wr_comment|number_format }}건</a></strong>
                     <span class="sound_only">조회</span><strong><i class="fa fa-eye" aria-hidden="true"></i> {{ write.wr_hit|number_format }}회</strong>
-                    <strong class="if_date"><span class="sound_only">작성일</span><i class="fa fa-clock-o" aria-hidden="true"></i> {{ write.wr_datetime }}</strong>
+                    <strong class="if_date"><span class="sound_only">작성일</span><i class="fa fa-regular fa-clock" aria-hidden="true"></i> {{ write.wr_datetime }}</strong>
                 </div>
             </div>
             <!-- 게시물 상단 버튼 시작 { -->
@@ -80,18 +80,18 @@
                         <ul class="more_opt is_view_btn" style="display: none;">
                             <li>
                                 <a href="{{ url_for('write_form_edit', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}">
-                                    수정<i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+                                    수정<i class="fa fa-pen-to-square" aria-hidden="true"></i>
                                 </a>
                             </li>
                             <li>
                                 <a href="{{ url_for('delete_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}" onclick="del(this.href); return false;">
-                                    삭제<i class="fa fa-trash-o" aria-hidden="true"></i>
+                                    삭제<i class="fa fa-regular fa-trash-can" aria-hidden="true"></i>
                                 </a>
                             </li>
                             {% if is_admin %}
                             <li>
                                 <a href="#" onclick="board_move(this.href, 'copy'); return false;">
-                                    복사<i class="fa fa-files-o" aria-hidden="true"></i>
+                                    복사<i class="fa fa-regular fa-file" aria-hidden="true"></i>
                                 </a>
                             </li>
                             <li>
@@ -155,7 +155,7 @@
             {% if board.bo_use_good %}
             <span class="bo_v_act_gng">
                 <a href="/bbs/ajax/good/{{ board.bo_table }}/{{ write.wr_id }}/good" id="good_button" class="bo_v_good {{ "active" if write.is_good else "" }}">
-                    <i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
+                    <i class="fa fa-regular fa-thumbs-up" aria-hidden="true"></i>
                     <span class="sound_only">추천</span>
                     <strong>{{ write.wr_good }}</strong>
                 </a>
@@ -165,7 +165,7 @@
             {% if board.bo_use_nogood %}
             <span class="bo_v_act_gng">
                 <a href="/bbs/ajax/good/{{ board.bo_table }}/{{ write.wr_id }}/nogood" id="nogood_button" class="bo_v_nogood {{ "active" if write.is_nogood else "" }}">
-                    <i class="fa fa-thumbs-o-down" aria-hidden="true"></i>
+                    <i class="fa fa-regular fa-thumbs-down" aria-hidden="true"></i>
                     <span class="sound_only">비추천</span>
                     <strong>{{ write.wr_nogood }}</strong>
                 </a>
@@ -272,7 +272,7 @@
                     {% endif %}
                     <span class="sound_only">작성일</span>
                     <span class="bo_vc_hdinfo">
-                        <i class="fa fa-clock-o" aria-hidden="true"></i>
+                        <i class="fa fa-regular fa-clock" aria-hidden="true"></i>
                         <time datetime="{{ comment.wr_datetime|datetime_format }}">{{ comment.wr_datetime|datetime_format }}</time>
                     </span>
                 </header>

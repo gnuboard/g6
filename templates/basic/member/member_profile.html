@@ -20,13 +20,13 @@
         <table>
             <tbody>
             <tr>
-                <th scope="row"><i class="fa fa-star-o" aria-hidden="true"></i> 회원권한</th>
+                <th scope="row"><i class="fa fa-regular fa-star" aria-hidden="true"></i> 회원권한</th>
                 <td>{{ member.mb_level }}</td>
                 <th scope="row"><i class="fa fa-database" aria-hidden="true"></i> 포인트</th>
                 <td>{{ member.mb_point|number_format }}</td>
             </tr>
             <tr>
-                <th scope="row"><i class="fa fa-clock-o" aria-hidden="true"></i> 회원가입일</th>
+                <th scope="row"><i class="fa fa-regular fa-clock" aria-hidden="true"></i> 회원가입일</th>
                 <td>
                     {% if request.state.login_member and request.state.login_member.mb_level >= member.mb_level %}
                         {{ member.mb_datetime |datetime_format("%Y-%m-%d") }}
@@ -36,7 +36,7 @@
                     {% endif %}
 
                 </td>
-                <th scope="row"><i class="fa fa-clock-o" aria-hidden="true"></i> 최종접속일</th>
+                <th scope="row"><i class="fa fa-regular fa-clock" aria-hidden="true"></i> 최종접속일</th>
                 <td>
                     {% if request.state.login_member and request.state.login_member.mb_level >= member.mb_level %}
                         {{ member.mb_today_login |datetime_format("%Y-%m-%d") }}

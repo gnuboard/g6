@@ -70,7 +70,7 @@
 .more_opt li button, .more_opt li a {width:100%;border:0;background:#fff;color:#6b757c}
 .more_opt li:hover a,
 .more_opt li:hover button {color:#000}
-.more_opt li i {line-height:20px}
+.more_opt li svg {line-height:20px}
 
 .bo_share {position:relative}
 #bo_v_share {display:none;position:absolute;top:42px;right:0;padding:10px;text-align:right;background:#fff;border:1px solid #b8bfc4}
@@ -92,7 +92,7 @@
 .bo_cate_link {display:inline-block;background:#e2eaf6;padding:0 5px;line-height:20px;border-radius:5px;font-weight:bold;font-size:11px;color:#3ca1ff !important;text-decoration:none;/*font-size:0.92em*/} /* 글제목줄 분류스타일 */
 .bo_cate_ico {margin-bottom:5px}
 .bo_cnt {display:block;width:100%;font-size:1.083em;font-weight:bold;line-height:1.4em}
-.bo_cnt i {color:#8d96c2;font-size:12px}
+.bo_cnt svg {color:#8d96c2;font-size:12px}
 .bo_cnt .fa-heart {color:#ff0000}
 .bo_chk {display:inline-block;float:left;margin-right:5px}
 
@@ -111,7 +111,7 @@
 .bo_current {color:#e8180c}
 .bo_info:after {display:block;visibility:hidden;clear:both;content:""}
 .bo_info {position:relative;padding-top:5px;line-height:20px;color:#646464;vertical-align:top}
-.bo_info i {margin-left:10px}
+.bo_info svg {margin-left:10px}
 .bo_info .comment_icon {background:url(./img/icon_comment.png) no-repeat 50% 50%;display:inline-block;width:20px;height:28px;text-indent:-999px;overflow:hidden;vertical-align:top;background-size:70%;margin:0 0px 0 5px}
 .bo_info .bo_date {}
 .bo_info .cnt_cmt {display:inline-block;margin: 0 5px 0 3px}
@@ -158,7 +158,7 @@
 #bo_v_file h2 {position:absolute;font-size:0;line-height:0;overflow:hidden}
 #bo_v_file ul {margin:0;list-style:none}
 #bo_v_file li {padding:15px;position:relative;margin:10px 0;border:1px solid #dfdfdf}
-#bo_v_file li i {float:left;color:#b2b2b2;font-size:1.6em;margin-right:20px}
+#bo_v_file li svg {float:left;color:#b2b2b2;font-size:1.6em;margin-right:20px}
 #bo_v_file a {float:left;display:block;margin-right:10px;text-decoration:none;word-wrap:break-word;color:#000}
 
 @media (max-width:450px){
@@ -169,19 +169,19 @@
 #bo_v_file img {float:left;margin:0 10px 0 0}
 #bo_v_file .bo_v_file_cnt {color:#b2b2b2;font-size:0.92em}
 #bo_v_file li:hover {border-color:#bed4f4;color:#bed4f4}
-#bo_v_file li:hover i {color:#ff8269}
+#bo_v_file li:hover svg {color:#ff8269}
 #bo_v_file li:hover .bo_v_file_cnt {color:#99c2fc}
 
 #bo_v_link {padding:0 15px;margin-bottom:20px}
 #bo_v_link h2 {position:absolute;font-size:0;line-height:0;overflow:hidden}
 #bo_v_file ul {margin:0;list-style:none}
 #bo_v_link li {padding:15px;position:relative;margin:10px 0;border:1px solid #dfdfdf}
-#bo_v_link li i {float:left;color:#b2b2b2;font-size:1.6em;margin-right:20px}
+#bo_v_link li svg {float:left;color:#b2b2b2;font-size:1.6em;margin-right:20px}
 #bo_v_link a {float:left;display:block;margin-right:10px;text-decoration:none;word-wrap:break-word;color:#000}
 #bo_v_link a:focus, #bo_v_link li:hover a, #bo_v_link a:active {text-decoration:underline;color:#ff8269}
 #bo_v_link .bo_v_link_cnt {color:#b2b2b2;font-size:0.92em}
 #bo_v_link li:hover {border-color:#bed4f4;color:#bed4f4}
-#bo_v_link li:hover i {color:#ff8269}
+#bo_v_link li:hover svg {color:#ff8269}
 #bo_v_link li:hover .bo_v_link_cnt {color:#99c2fc}
 
 #bo_v_top {margin:10px 15px}
@@ -202,7 +202,7 @@
 .bo_v_nb:after {display:block;visibility:hidden;clear:both;content:""}
 .bo_v_nb li {}
 .bo_v_nb li a {display:block;padding:15px;color:#777}
-.bo_v_nb li a i {color:#c5cfdd}
+.bo_v_nb li a svg {color:#c5cfdd}
 .bo_v_nb li.bo_v_prev {border-bottom:1px solid #f8f8f8}
 .bo_v_nb li.bo_v_next {}
 
@@ -223,7 +223,7 @@
 #bo_v_act .bo_v_act_gng {position:relative}
 #bo_v_act a {margin-right:5px;vertical-align:middle;color:#4a5158}
 #bo_v_act a:hover {background-color:#fff;color:#ff484f;border-color:#ff484f}
-#bo_v_act i {font-size:1.4em;margin-right:5px}
+#bo_v_act svg {font-size:1.4em;margin-right:5px}
 #bo_v_act_good, #bo_v_act_nogood {display:none;position:absolute;top:30px;left:0;z-index:9999;padding:10px 0;width:165px;background:#ff3061;color:#fff;text-align:center}
 #bo_v_act .bo_v_good {display:inline-block;border:1px solid #dedede;width:70px;line-height:46px;border-radius:30px}
 #bo_v_act .bo_v_nogood {display:inline-block;border:1px solid #dedede;width:70px;line-height:46px;border-radius:30px}
