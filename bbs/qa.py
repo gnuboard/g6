@@ -242,7 +242,6 @@ async def qa_write_update(
     
     # Stored XSS 방지
     form_data.qa_subject = htmllib.escape(form_data.qa_subject)
-    form_data.qa_content = htmllib.escape(form_data.qa_content)
     
     # Q&A 업로드파일 크기 검증
     if not request.state.is_super_admin:
