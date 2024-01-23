@@ -101,7 +101,7 @@ async def poll_result(
 
     context = {
         "request": request,
-        "poll": poll,
+        "poll_result": poll,
         "items": items,
         "total_count": total_count,
         "max_count": max_count,

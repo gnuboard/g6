@@ -9,7 +9,7 @@
             <!-- 설문조사 결과 그래프 시작 { -->
             <span class="poll_all">전체 {{ total_count|number_format }}표</span>
             <section id="poll_result_list">
-                <h2>{{ poll.po_subject }} 결과</h2>
+                <h2>{{ poll_result.po_subject }} 결과</h2>
                 <ol>
                     {% for item in items %}
                         {% set rate = ((item.count / total_count * 100)|round(1)) if total_count > 0 else 0 %}
@@ -30,7 +30,7 @@
             <!-- } 설문조사 결과 그래프 끝 -->
 
             <!-- 설문조사 기타의견 시작 { -->
-            {% if poll.po_etc %}
+            {% if poll_result.po_etc %}
                 <section id="poll_result_cmt">
                     <h2>이 설문에 대한 기타의견</h2>
                     {% for etc in etcs %}
@@ -51,14 +51,14 @@
                             <p>{{ etc.pc_idea[:255]|safe }}</p>
                         </article>
                     {% endfor %}
-                    {% if get_member_level(request) >= poll.po_level %}
-                        <form name="fpollresult" action="{{ url_for('poll_etc_update', po_id=poll.po_id) }}" onsubmit="return fpollresult_submit(this);" method="post" autocomplete="off" id="poll_other_q">
+                    {% if get_member_level(request) >= poll_result.po_level %}
+                        <form name="fpollresult" action="{{ url_for('poll_etc_update', po_id=poll_result.po_id) }}" onsubmit="return fpollresult_submit(this);" method="post" autocomplete="off" id="poll_other_q">
                             <input type="hidden" name="token" value="">
                             {% if request.state.login_member.mb_id %}
                                 <input type="hidden" name="pc_name" value="{{ request.state.login_member.mb_nick }}">
                             {% endif %}
                             <div id="poll_result_wcmt">
-                                <h3><span>기타의견</span>{{ poll.po_etc|safe }}</h3>
+                                <h3><span>기타의견</span>{{ poll_result.po_etc|safe }}</h3>
                                 <div>
                                     <label for="pc_idea" class="sound_only">의견<strong>필수</strong></label>
                                     <input type="text" id="pc_idea" name="pc_idea" required="" class="full_input required" size="47" maxlength="100" placeholder="의견을 입력해주세요">
