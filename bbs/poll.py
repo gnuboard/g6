@@ -1,3 +1,5 @@
+import html as htmllib
+
 from fastapi import APIRouter, Depends, Form, Path, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy import insert, select
@@ -133,6 +135,9 @@ async def poll_etc_update(
     
     if not member:
         await validate_captcha(request, recaptcha_response)
+
+    # Stored XSS 방지
+    pc_idea = htmllib.escape(pc_idea)
 
     db.execute(
         insert(PollEtc)
