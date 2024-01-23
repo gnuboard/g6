@@ -1,8 +1,15 @@
 
 # GNUBOARD6 with Python
 <p align="center">
-<img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/fastapi?logo=python&color=%233776AB">
+   <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/fastapi?logo=python&color=%233776AB">
+   <a href='https://g6.demo.sir.kr/' target='_blank'>
+      <img alt="Static Badge" src="https://img.shields.io/badge/G6%20Demo-%234d0585">
+   </a>
 </p>
+
+## 데모 사이트
+- [https://g6.demo.sir.kr/](https://g6.demo.sir.kr/)
+
 
 ## 시작하기
 ### 1. 설치
