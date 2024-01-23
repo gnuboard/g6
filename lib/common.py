@@ -20,7 +20,7 @@ from fastapi import Request, UploadFile
 from markupsafe import Markup, escape
 from PIL import Image, ImageOps, UnidentifiedImageError
 from passlib.context import CryptContext
-from sqlalchemy import Index, asc, case, desc, func, select, delete, between, exists, cast, String
+from sqlalchemy import Index, asc, case, desc, func, select, delete, between, exists, cast, String, DateTime
 from sqlalchemy.exc import IntegrityError
 from starlette.datastructures import URL
 from user_agents import parse
@@ -1069,8 +1069,12 @@ def delete_old_records():
         # 방문자 기록 삭제
         if config.cf_visit_del > 0:
             base_date = today - timedelta(days=config.cf_visit_del)
+            if db.bind.dialect.name == "sqlite":
+                concat_expr = func.strftime("%Y-%m-%d %H:%M:%S", f"{Visit.vi_date} {Visit.vi_time}")
+            else:
+                concat_expr = func.cast(func.concat(f"{Visit.vi_date} {Visit.vi_time}"), DateTime)
             result = db.execute(
-                delete(Visit).where(func.concat(Visit.vi_date, " ", Visit.vi_time) < base_date)
+                delete(Visit).where(concat_expr < base_date)
             )
             print("방문자기록 삭제 기준일 : ", base_date, f"{result.rowcount}건 삭제")
 
