@@ -215,13 +215,15 @@
         {% else %}
             {% include "bbs/outlogin_before.html" %}
         {% endif %}
-        <!-- 메뉴 -->
-        <nav id="gnb">
-          <h2>메인메뉴</h2>
-          <div class="gnb_wrap">
-              {% include "/bbs/menu.html" %}
-          </div>
-        </nav>
+        {% if menus -%}
+          <!-- 메뉴 -->
+          <nav id="gnb">
+            <h2>메인메뉴</h2>
+            <div class="gnb_wrap">
+                {% include "/bbs/menu.html" ignore missing %}
+            </div>
+          </nav>
+        {%- endif %}
         {% include "/bbs/poll.html" %}
         <!-- 접속자집계 시작 { -->
         {% if render_visit_statistics %}
