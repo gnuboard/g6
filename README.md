@@ -47,6 +47,9 @@ uvicorn main:app --reload
 
 # 외부서버
 uvicorn main:app --reload --host {서버IP}
+
+# 외부서버 80포트
+uvicorn main:app --reload --host {서버IP} --port 80
 ```
 
 #### 그누보드6 데이터베이스 설정 방법
