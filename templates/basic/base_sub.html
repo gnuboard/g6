@@ -10,16 +10,15 @@
 <title>{% block title %}{{ request.state.title }}{% endblock title %}</title>
 <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 <link rel="stylesheet" href="{{ theme_asset(request, 'css/default.css?ver=1.0') }}">
-<link rel="stylesheet" href="{{ theme_asset(request, 'js/font-awesome/css/font-awesome.min.css?ver=4.7.0') }}">
+<link rel="stylesheet" href="{{ theme_asset(request, 'js/font-awesome/css/all.min.css?ver=6.5.1') }}">
 <link rel="stylesheet" href="{{ theme_asset(request, 'js/slick/slick.css?ver=1.8.1') }}">
-<link rel="preconnect" href="https://fonts.gstatic.com">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100;200;300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="/static/js/jquery.min.js?ver=3.7.1"></script>
 <script src="/static/js/jquery-migrate.min.js?ver=3.4.0"></script>
 <script src="/static/js/common.js?ver=1.0"></script>
 <script src="/static/js/wrest.js?ver=1.0"></script>
 <script src="/static/js/jquery.menu.js"></script>
 <script src="{{ theme_asset(request, 'js/slick/slick.min.js?ver=1.8.1') }}"></script>
+<script src="{{ theme_asset(request, 'js/font-awesome/js/all.min.js?ver=6.5.1') }}"></script>
 <script>
 // 자바스크립트에서 사용하는 전역변수 선언
 var g6_url       = "{{ request.base_url }}";

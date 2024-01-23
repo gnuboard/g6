@@ -81,7 +81,7 @@
                         <div class="sch_tit">
                             <a href="{{ write.href }}" class="sch_res_title">
                                 {% if write.wr_is_comment %}
-                                <span class="cmt_def"><i class="fa fa-commenting-o" aria-hidden="true"></i><span class="sound_only">댓글</span></span>
+                                <span class="cmt_def"><i class="fa fa-regular fa-commenting" aria-hidden="true"></i><span class="sound_only">댓글</span></span>
                                 {% endif %}
                                 {{ write.subject|truncate(100, False, '...', 0)|search_font(query_params.stx)|safe }}
                             </a>
@@ -97,7 +97,7 @@
                             {% else %}
                                 <span class="sv_member">{{ write.name }}</span>
                             {% endif %}
-                            <span class="sch_datetime"><i class="fa fa-clock-o" aria-hidden="true"></i>
+                            <span class="sch_datetime"><i class="fa fa-regular fa-clock" aria-hidden="true"></i>
                                 {{ write.wr_datetime.strftime("%y-%m-%d %H:%M:%S") }}
                             </span>
                         </div>
