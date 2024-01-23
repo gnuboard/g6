@@ -111,7 +111,7 @@
                             <ul>
                                 {% for submenu in submenus[1:] %}
                                     <li data-menu="{{ submenu['id'] }}">
-                                        <a href="/admin/{{ submenu['url'] }}" class="gnb_2da">{{ submenu['name'] }}</a>
+                                        <a href="/admin{{ submenu['url'] }}" class="gnb_2da">{{ submenu['name'] }}</a>
                                     </li>
                                 {% endfor %}
                             </ul>

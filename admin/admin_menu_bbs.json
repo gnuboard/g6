@@ -3,60 +3,60 @@
         {
             "id": "100000",
             "name": "환경설정",
-            "url": "config_form"
+            "url": "/config_form"
         },
         {
             "id": "100100",
             "name": "기본환경설정",
-            "url": "config_form",
+            "url": "/config_form",
             "tag": "admin_config"
         },
         {
             "id": "100200",
             "name": "관리권한설정",
-            "url": "auth_list",
+            "url": "/auth_list",
             "tag": "admin_auth"
         },
         {
             "id": "100280",
             "name": "테마설정",
-            "url": "theme",
+            "url": "/theme",
             "tag": "admin_theme"
         },
         {
             "id": "100290",
             "name": "메뉴설정",
-            "url": "menu_list",
+            "url": "/menu_list",
             "tag": "admin_menu"
         },
         {
             "id": "100300",
             "name": "메일 테스트",
-            "url": "sendmail_test",
+            "url": "/sendmail_test",
             "tag": "admin_sendmail"
         },
         {
             "id": "100310",
             "name": "팝업레이어관리",
-            "url": "newwin_list",
+            "url": "/newwin_list",
             "tag": "admin_newwin"
         },
         {
             "id": "100900",
             "name": "캐시파일 일괄삭제",
-            "url": "cache_file_delete",
+            "url": "/cache_file_delete",
             "tag": "admin_cache"
         },
         {
             "id": "100400",
             "name": "부가서비스",
-            "url": "service",
+            "url": "/service",
             "tag": ""
         },
         {
             "id": "100420",
             "name": "플러그인 관리",
-            "url": "plugin_list",
+            "url": "/plugin_list",
             "tag": "admin_plugin"
         }
     ],
@@ -64,48 +64,48 @@
         {
             "id": "200000",
             "name": "회원관리",
-            "url": "member_list"
+            "url": "/member_list"
         },
         {
             "id": "200100",
             "name": "회원관리",
-            "url": "member_list",
+            "url": "/member_list",
             "tag": "admin_member"
         },
         {
             "id": "200300",
             "name": "회원메일발송",
-            "url": "mail_list",
+            "url": "/mail_list",
             "tag": "admin_mail"
         },
         {
             "id": "200800",
             "name": "접속자집계",
-            "url": "visit_list",
+            "url": "/visit_list",
             "tag": "admin_visit_list"
         },
         {
             "id": "200810",
             "name": "접속자검색",
-            "url": "visit_search",
+            "url": "/visit_search",
             "tag": "admin_visit_search"
         },
         {
             "id": "200820",
             "name": "접속자로그삭제",
-            "url": "visit_delete",
+            "url": "/visit_delete",
             "tag": "admin_visit_delete"
         },
         {
             "id": "200200",
             "name": "포인트관리",
-            "url": "point_list",
+            "url": "/point_list",
             "tag": "admin_point"
         },
         {
             "id": "200900",
             "name": "투표관리",
-            "url": "poll_list",
+            "url": "/poll_list",
             "tag": "admin_poll"
         }
     ],
@@ -113,54 +113,54 @@
         {
             "id": "300000",
             "name": "게시판관리",
-            "url": "board_list"
+            "url": "/board_list"
         },
         {
             "id": "300100",
             "name": "게시판관리",
-            "url": "board_list",
+            "url": "/board_list",
             "tag": "admin_board"
         },
         {
             "id": "300200",
             "name": "게시판그룹관리",
-            "url": "boardgroup_list",
+            "url": "/boardgroup_list",
             "tag": "admin_boardgroup"
         },
         {
             "id": "300300",
             "name": "인기검색어관리",
-            "url": "popular_list",
+            "url": "/popular_list",
             "tag": "admin_popular_list"
         },
         {
             "id": "300400",
             "name": "인기검색어순위",
-            "url": "popular_rank",
+            "url": "/popular_rank",
             "tag": "admin_popular_rank"
         },
         {
             "id": "300500",
             "name": "1:1문의설정",
-            "url": "qa_config",
+            "url": "/qa_config",
             "tag": "admin_qa"
         },
         {
             "id": "300600",
             "name": "내용관리",
-            "url": "content_list",
+            "url": "/content_list",
             "tag": "admin_content"
         },
         {
             "id": "300700",
             "name": "FAQ관리",
-            "url": "faq_master_list",
+            "url": "/faq_master_list",
             "tag": "admin_faq"
         },
         {
             "id": "300820",
             "name": "글,댓글 현황",
-            "url": "write_count",
+            "url": "/write_count",
             "tag": "admin_write_count"
         }
     ]
