@@ -4,7 +4,7 @@
 {% endif %}
 
 {% block head %}
-    <script src="{{ url_for('static', path="/js/viewimageresize.js") }}"></script>
+    <script src="/static/js/viewimageresize.js"></script>
 {% endblock head %}
 
 {% block title %}{{ write.wr_subject|truncate(20, False, '...', 0) }} > {{ board.subject }}{% endblock title %}
