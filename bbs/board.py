@@ -594,7 +594,6 @@ async def write_update(
     
     # Stored XSS 방지
     form_data.wr_subject = htmllib.escape(form_data.wr_subject)
-    form_data.wr_content = htmllib.escape(form_data.wr_content)
 
     # 게시글 테이블 정보 조회
     write_model = dynamic_create_write_table(bo_table)
