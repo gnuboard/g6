@@ -25,7 +25,7 @@ templates.env.globals["get_admin_plugin_menus"] = get_admin_plugin_menus
 templates.env.globals["get_client_ip"] = get_client_ip
 templates.env.globals["get_all_plugin_module_names"] = get_all_plugin_module_names
 
-admin_router = APIRouter(prefix=f"/{admin_router_prefix}", tags=['demo_admin'])
+admin_router = APIRouter(prefix=admin_router_prefix, tags=['demo_admin'])
 
 
 @admin_router.get("/test_demo_admin")
