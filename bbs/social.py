@@ -126,7 +126,7 @@ async def authorize_social_login(
                              url=request.url_for('login').__str__())
 
     # 가입된 소셜 서비스 아이디가 존재하는지 확인
-    social_profile = SocialAuthService.get_profile_by_identifer(identifier, provider_name)
+    social_profile = SocialAuthService.get_profile_by_identifier(identifier, provider_name)
     if social_profile:
         config = request.state.config
         # 이미 가입된 회원이라면 로그인
@@ -328,8 +328,8 @@ async def post_social_register(
 class SocialAuthService:
 
     @classmethod
-    def get_profile_by_identifer(cls, identifier, provider) -> Optional[str]:
-        """ 소셜 서비스 identifer 로 회원 아이디를 가져옴
+    def get_profile_by_identifier(cls, identifier, provider) -> Optional[str]:
+        """ 소셜 서비스 identifier 로 회원 아이디를 가져옴
 
         Args:
             identifier (str) : 소셜서비스 사용자 식별 id
