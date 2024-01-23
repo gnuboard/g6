@@ -195,8 +195,12 @@ async def visit_list(
     # 전체 레코드 개수 계산
     total_records = db.scalar(query.add_columns(func.count(Visit.vi_id)).order_by(None))
     # 최종 쿼리 결과를 가져옵니다.
+    if db.bind.dialect.name == 'sqlite':
+        concat_expr = func.strftime('%Y-%m-%d %H:%M:%S', f'{Visit.vi_date} {Visit.vi_time}')
+    else:
+        concat_expr = func.concat(f'{Visit.vi_date} {Visit.vi_time}')
     visits = db.scalars(
-        query.add_columns(Visit, func.concat(Visit.vi_date, " ", Visit.vi_time).label("vi_datetime"))
+        query.add_columns(Visit, concat_expr.label("vi_datetime"))
         .offset(offset)
         .limit(records_per_page)
     ).all()

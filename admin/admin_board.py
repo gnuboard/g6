@@ -120,6 +120,8 @@ async def board_list_delete(
     """
     게시판관리 목록 일괄삭제
     """
+    from lib.common import _created_models
+
     for i in checks:
         board = db.get(Board, bo_table[i])
         if board:
@@ -133,14 +135,17 @@ async def board_list_delete(
             db.execute(delete(BoardFile).where(BoardFile.bo_table == board.bo_table))
             # 좋아요 기록 삭제
             db.execute(delete(BoardGood).where(BoardGood.bo_table == board.bo_table))
-            # 게시판 테이블 삭제
-            write_model = dynamic_create_write_table(table_name=board.bo_table, create_table=False)
-            # FIXME: 게시판 생성 직후 삭제시 database locked 에러 발생
-            write_model.__table__.drop(DBConnect().engine)
-            # 최신글 캐시 삭제
-            FileCache().delete_prefix(f'latest-{board.bo_table}')
 
             db.commit()
+
+            # 게시판 테이블 삭제
+            write_model = dynamic_create_write_table(table_name=board.bo_table, create_table=False)
+            write_model.__table__.indexes.clear()  # 인덱스까지 삭제해야 동일한 table로 재생성시 에러가 안남
+            write_model.__table__.drop(DBConnect().engine)
+            _created_models.pop(board.bo_table, None)  # 동적 모델 캐싱 삭제
+
+            # 최신글 캐시 삭제
+            FileCache().delete_prefix(f'latest-{board.bo_table}')
 
     url = "/admin/board_list"
     query_params = request.query_params

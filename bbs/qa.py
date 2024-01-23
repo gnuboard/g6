@@ -1,3 +1,4 @@
+import html as htmllib
 from typing import List
 from typing_extensions import Annotated
 
@@ -238,6 +239,9 @@ async def qa_write_update(
     if subject_filter_word or content_filter_word:
         word = subject_filter_word if subject_filter_word else content_filter_word
         raise AlertException(f"제목/내용에 금지단어({word})가 포함되어 있습니다.", 400)
+    
+    # Stored XSS 방지
+    form_data.qa_subject = htmllib.escape(form_data.qa_subject)
     
     # Q&A 업로드파일 크기 검증
     if not request.state.is_super_admin:
