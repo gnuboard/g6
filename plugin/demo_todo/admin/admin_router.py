@@ -13,7 +13,7 @@ from ..models import Todo
 from ..plugin_config import module_name, admin_router_prefix
 
 templates = AdminTemplates()
-admin_router = APIRouter(prefix=f'/{admin_router_prefix}', tags=['demo_admin'])
+admin_router = APIRouter(prefix=admin_router_prefix, tags=['demo_admin'])
 
 
 @admin_router.get("/test_demo_admin")

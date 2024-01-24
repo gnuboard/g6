@@ -1097,11 +1097,11 @@ def get_list_thumbnail(request: Request, board: Board, write: WriteBaseModel, th
         editor_images = get_editor_image(write.wr_content, view=False)
         for image in editor_images:
             ext = image.split(".")[-1].lower()
-            # TODO: 아래 코드가 정상처리되는지 확인 필요
-            # image의 경로 앞에 /가 있으면 /를 제거한다. 에디터 본문의 경로와 python의 경로가 다르기 때문에..
-            if image.startswith("/"):
-                image = image[1:]
-
+            
+            # 에디터로 삽입된 이미지의 주소는 웹 경로이기에 os.path로 체크할 수 있도록 경로를 변경한다.
+            # 외부 이미지도 썸네일로 보여지기를 희망하는 경우 썸네일 조건 및 생성 로직을 수정해야한다.
+            image = "./data/editor/" + image.split("/data/editor/")[1]
+            
             # image경로의 파일이 존재하고 이미지파일인지 확인
             if (os.path.exists(image)
                     and os.path.isfile(image)
