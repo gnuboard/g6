@@ -189,10 +189,6 @@ a.gnb_2da:hover { color:#fff; background:#e7664d;-moz-transition:all 0.3s ease-o
 #top_btn { position:fixed; bottom:20px; right:20px; width:50px; height:50px; line-height:46px; border:var(--topBtnBorder); color:#ff8269; text-align:center; font-size:15px; z-index:90; background:#ffffff40; border-radius: 3px; } 
 #top_btn:hover { border-color:#ff8269; background:#ff8269; color:#fff } 
 
-#darkmode_btn { position:fixed; bottom:20px; right:80px; width:50px; height:50px; border:0; text-align:center; border-radius: 3px; background: #ff8269; color: #fff; display: flex; justify-content: center; align-items: center; cursor: pointer; } 
-#darkmode_btn input { opacity: 0; width: 0; height: 0; } 
-#darkmode_btn .visible { width:24px; height:24px; vertical-align:middle; } 
-
 /* 아웃로그인 스킨 */
 #aside .ol {position:relative;margin-bottom:15px;border-radius:8px;background: var(--contBg);color: var(--fontColor);border: var(--border);}
 #aside .ol h2 {width:50%;float:left;padding:15px 0;text-align:center}
@@ -1934,8 +1930,10 @@ p input:valid + label::after { width:100%; transform:translateX(0); }
 html.remodal-is-locked {overflow-y:scroll !important}
 
 /* 다크모드 설정 */
-#darkmode_btn .visible.dark { display: var(--lightVisible) } 
-#darkmode_btn .visible.bright { display: var(--darkVisible) } 
+.toggle-switch { position:fixed; bottom:20px; right:80px; width:50px; height:50px; border:0; text-align:center; border-radius: 3px; background: #ff8269; color: #fff; display: flex; justify-content: center; align-items: center; cursor: pointer; }  
+.toggle-switch .visible { width:24px; height:24px; vertical-align:middle; } 
+.toggle-switch .visible.dark { display: var(--lightVisible) } 
+.toggle-switch .visible.bright { display: var(--darkVisible) }
 
 /* 긴 문자열 ... 처리 */
 .elip { display:inline-block; width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap } 

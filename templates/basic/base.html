@@ -289,11 +289,10 @@
     <button type="button" id="top_btn">
     	<i class="fa fa-arrow-up" aria-hidden="true"></i><span class="sound_only">상단으로</span>
     </button>
-    <label type="button" id="darkmode_btn" class="toggle-switch light-mode">
-      <input type="checkbox" id="dark-mode-toggle">
+    <button type="button" class="toggle-switch">
       <i class="fa-solid fa-moon visible bright"></i>
       <i class="fa-solid fa-sun visible dark"></i>
-    </label>
+    </button>
 </div>
 
 {% if request.state.config.cf_analytics %}
@@ -314,7 +313,7 @@
 
   
   // 다크모드 설정
-  const $checkbox = document.querySelector('#dark-mode-toggle');
+  const darkmodeBtn = document.querySelector('.toggle-switch');
 
   const isUserColorTheme = localStorage.getItem('color-theme');
   const isOsColorTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -324,23 +323,25 @@
   document.addEventListener('DOMContentLoaded', function () {
   const initialTheme = getUserTheme();
     if (initialTheme === 'dark') {
-      $checkbox.checked = true;
+      darkmodeBtn.classList.add("dark")
       localStorage.setItem('color-theme', 'dark');
       document.documentElement.setAttribute('color-theme', 'dark');
     } else {
-      $checkbox.checked = false;
+      darkmodeBtn.classList.remove("dark")
       localStorage.setItem('color-theme', 'light');
       document.documentElement.setAttribute('color-theme', 'light');
     }
   }); 
 
-  $checkbox.addEventListener('click', e => {
-    if (e.target.checked) {
-      localStorage.setItem('color-theme', 'dark');
-      document.documentElement.setAttribute('color-theme', 'dark');
-    } else {
+  darkmodeBtn.addEventListener('click', e => {
+    if (e.target.classList.contains('dark')) {
+      e.target.classList.remove('dark')
       localStorage.setItem('color-theme', 'light');
       document.documentElement.setAttribute('color-theme', 'light');
+    } else {
+      e.target.classList.add('dark')
+      localStorage.setItem('color-theme', 'dark');
+      document.documentElement.setAttribute('color-theme', 'dark');
     }
   });
 
