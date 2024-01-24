@@ -1,14 +1,12 @@
-import html as htmllib
-from typing import List
 from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, Path, Query, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import query
 
-from core.database import DBConnect, db_session
+from core.database import db_session
 from core.exception import AlertException
-from core.formclass import QaContentForm
+from core.formclass import QaContentForm, AfterValidationContent
 from core.models import QaConfig, QaContent
 from core.template import UserTemplates
 from lib.common import *
@@ -18,6 +16,7 @@ from lib.dependencies import (
 )
 from lib.template_filters import number_format, search_font
 from lib.template_functions import get_paging
+from lib.tools import validate_and_clean_data
 
 router = APIRouter()
 templates = UserTemplates()
@@ -88,7 +87,8 @@ class QaConfigService:
         Returns:
             - str : 수정된 subject 문자열.
         """
-        cut_length = cut_length or (self.qa_config.qa_mobile_subject_len if self.is_mobile else self.qa_config.qa_subject_len)
+        cut_length = cut_length or (
+            self.qa_config.qa_mobile_subject_len if self.is_mobile else self.qa_config.qa_subject_len)
 
         if not cut_length:
             return subject
@@ -98,11 +98,11 @@ class QaConfigService:
 
 @router.get("/qalist")
 async def qa_list(
-    request: Request,
-    db: db_session,
-    member: Annotated[Member, Depends(get_login_member)],
-    search_params: dict = Depends(common_search_query_params),
-    qa_config_service: QaConfigService = Depends()
+        request: Request,
+        db: db_session,
+        member: Annotated[Member, Depends(get_login_member)],
+        search_params: dict = Depends(common_search_query_params),
+        qa_config_service: QaConfigService = Depends()
 ):
     """
     Q&A 목록 보기
@@ -111,9 +111,9 @@ async def qa_list(
     qa_config = qa_config_service.get()
 
     # Q&A 목록 조회
-    query = select().where(QaContent.qa_type==0).order_by(QaContent.qa_id.desc())
+    query = select().where(QaContent.qa_type == 0).order_by(QaContent.qa_id.desc())
     if not request.state.is_super_admin:
-        query = query.where(QaContent.mb_id==member.mb_id)
+        query = query.where(QaContent.mb_id == member.mb_id)
     query = filter_query_by_search_params(query, search_params)
 
     # 페이징 변수
@@ -144,10 +144,10 @@ async def qa_list(
 
 @router.get("/qawrite", dependencies=[Depends(get_login_member)])
 async def qa_form_write(
-    request: Request,
-    db: db_session,
-    qa_related: int = Query(None),
-    qa_config_service: QaConfigService = Depends()
+        request: Request,
+        db: db_session,
+        qa_related: int = Query(None),
+        qa_config_service: QaConfigService = Depends()
 ):
     """
     Q&A 작성하기
@@ -180,11 +180,11 @@ async def qa_form_write(
 
 @router.get("/qawrite/{qa_id}")
 async def qa_form_edit(
-    request: Request,
-    db: db_session,
-    member: Annotated[Member, Depends(get_login_member)],
-    qa_id: int = Path(...),
-    qa_config_service: QaConfigService = Depends()
+        request: Request,
+        db: db_session,
+        member: Annotated[Member, Depends(get_login_member)],
+        qa_id: int = Path(...),
+        qa_config_service: QaConfigService = Depends()
 ):
     """
     Q&A 수정하기
@@ -212,18 +212,18 @@ async def qa_form_edit(
 
 @router.post("/qawrite_update", dependencies=[Depends(validate_token)])
 async def qa_write_update(
-    request: Request,
-    db: db_session,
-    member: Annotated[Member, Depends(get_login_member)],
-    form_data: QaContentForm = Depends(),
-    qa_id: int = Form(None),
-    qa_parent: str = Form(None),
-    qa_related: int = Form(None),
-    file1: UploadFile = File(None),
-    file2: UploadFile = File(None),
-    qa_file_del1: int = Form(None),
-    qa_file_del2: int = Form(None),
-    qa_config_service: QaConfigService = Depends()
+        request: Request,
+        db: db_session,
+        member: Annotated[Member, Depends(get_login_member)],
+        form_data: QaContentForm = Depends(),
+        qa_id: int = Form(None),
+        qa_parent: str = Form(None),
+        qa_related: int = Form(None),
+        file1: UploadFile = File(None),
+        file2: UploadFile = File(None),
+        qa_file_del1: int = Form(None),
+        qa_file_del2: int = Form(None),
+        qa_config_service: QaConfigService = Depends()
 ):
     """
     1:1문의 설정 등록/수정 처리
@@ -234,15 +234,10 @@ async def qa_write_update(
     qa_config = qa_config_service.get()
 
     # Q&A 내용 검증
-    subject_filter_word = filter_words(request, form_data.qa_subject)
-    content_filter_word = filter_words(request, form_data.qa_content)
-    if subject_filter_word or content_filter_word:
-        word = subject_filter_word if subject_filter_word else content_filter_word
-        raise AlertException(f"제목/내용에 금지단어({word})가 포함되어 있습니다.", 400)
-    
-    # Stored XSS 방지
-    form_data.qa_subject = htmllib.escape(form_data.qa_subject)
-    
+    _cleaned_content: AfterValidationContent = validate_and_clean_data(request, form_data.qa_subject, form_data.qa_content)
+    form_data.qa_subject = _cleaned_content.subject_field
+    form_data.qa_content = _cleaned_content.content_field
+
     # Q&A 업로드파일 크기 검증
     if not request.state.is_super_admin:
         if file1.size > 0 and file1.size > qa_config.qa_upload_size:
@@ -258,7 +253,7 @@ async def qa_write_update(
 
         if not request.state.is_super_admin and member.mb_id != qa.mb_id:
             raise AlertException("수정 권한이 없습니다.", 403)
-        
+
         for field, value in form_data.__dict__.items():
             setattr(qa, field, value)
         db.commit()
@@ -329,19 +324,18 @@ async def qa_write_update(
         # 2. 문의글 등록 시, 관리자에게 발송
         pass
 
-
     if qa.qa_type == 1:
         return RedirectResponse(url=f"/bbs/qaview/{qa.qa_parent}", status_code=302)
     else:
         return RedirectResponse(url=f"/bbs/qaview/{qa.qa_id}", status_code=302)
-    
+
 
 @router.get("/qadelete/{qa_id}", dependencies=[Depends(validate_token)])
 async def qa_delete(
-    request: Request,
-    db: db_session,
-    member: Annotated[Member, Depends(get_login_member)],
-    qa_id: int = Path(...),
+        request: Request,
+        db: db_session,
+        member: Annotated[Member, Depends(get_login_member)],
+        qa_id: int = Path(...),
 ):
     """
     Q&A 삭제하기
@@ -364,9 +358,9 @@ async def qa_delete(
 @router.post("/qadelete/list",
              dependencies=[Depends(validate_token), Depends(validate_super_admin)])
 async def qa_delete_list(
-    request: Request,
-    db: db_session,
-    checks: List[int] = Form(..., alias="chk_qa_id[]")
+        request: Request,
+        db: db_session,
+        checks: List[int] = Form(..., alias="chk_qa_id[]")
 ):
     """
     Q&A 목록 일괄삭제
@@ -385,12 +379,12 @@ async def qa_delete_list(
 
 @router.get("/qaview/{qa_id}")
 async def qa_view(
-    request: Request,
-    db: db_session,
-    member: Annotated[Member, Depends(get_login_member)],
-    qa_id: int = Path(...),
-    search_params: dict = Depends(common_search_query_params),
-    qa_config_service: QaConfigService = Depends()
+        request: Request,
+        db: db_session,
+        member: Annotated[Member, Depends(get_login_member)],
+        qa_id: int = Path(...),
+        search_params: dict = Depends(common_search_query_params),
+        qa_config_service: QaConfigService = Depends()
 ):
     """
     Q&A 상세보기
@@ -405,24 +399,24 @@ async def qa_view(
     qa.image, qa.file = set_file_list(request, qa)
 
     # Q&A 답변글 조회
-    answer = db.scalar(select(QaContent).where(QaContent.qa_type==1, QaContent.qa_parent==qa_id))
+    answer = db.scalar(select(QaContent).where(QaContent.qa_type == 1, QaContent.qa_parent == qa_id))
     if answer:
         answer.image, answer.file = set_file_list(request, answer)
 
     # 연관질문 목록 조회
-    related_query = select(QaContent).where(QaContent.qa_type==0, QaContent.qa_related==qa_id)
+    related_query = select(QaContent).where(QaContent.qa_type == 0, QaContent.qa_related == qa_id)
     if not request.state.is_super_admin:
-        related_query = related_query.where(QaContent.mb_id==member.mb_id)
+        related_query = related_query.where(QaContent.mb_id == member.mb_id)
     related_list = db.scalars(related_query.order_by(QaContent.qa_id.desc())).all()
 
     # 이전글, 다음글 검색조건 추가
     query = select(QaContent)
     if not request.state.is_super_admin:
-        query = query.where(QaContent.mb_id==member.mb_id)
+        query = query.where(QaContent.mb_id == member.mb_id)
     query = filter_query_by_search_params(query, search_params)
 
-    prev = db.scalar(query.where(QaContent.qa_type==0, QaContent.qa_id<qa_id).order_by(QaContent.qa_id.desc()))
-    next = db.scalar(query.where(QaContent.qa_type==0, QaContent.qa_id>qa_id).order_by(QaContent.qa_id.asc()))
+    prev = db.scalar(query.where(QaContent.qa_type == 0, QaContent.qa_id < qa_id).order_by(QaContent.qa_id.desc()))
+    next = db.scalar(query.where(QaContent.qa_type == 0, QaContent.qa_id > qa_id).order_by(QaContent.qa_id.asc()))
 
     context = {
         "request": request,
@@ -470,7 +464,7 @@ def set_file_list(request: Request, qa: QaContent = None):
 
 def filter_query_by_search_params(query: query, search_params: dict) -> query:
     if search_params["sca"]:
-        query = query.where(QaContent.qa_category==search_params["sca"])
+        query = query.where(QaContent.qa_category == search_params["sca"])
     if search_params["stx"] and search_params["sfl"] in ["qa_subject", "qa_content", "qa_name", "mb_id"]:
         query = query.where(getattr(QaContent, search_params["sfl"]).like(f"%{search_params['stx']}%"))
     return query

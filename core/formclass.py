@@ -123,7 +123,7 @@ class ConfigForm:
     cf_googl_shorturl_apikey: Optional[str] = Form(default="")
     cf_kakao_rest_key: Optional[str] = Form(default="")
     cf_kakao_js_apikey: Optional[str] = Form(default="")
-    cf_kakao_client_secret: Optional[str] = Form(default="") 
+    cf_kakao_client_secret: Optional[str] = Form(default="")
     cf_payco_clientid: Optional[str] = Form(default="")
     cf_payco_secret: Optional[str] = Form(default="")
     cf_add_script: Optional[str] = Form(default="")
@@ -375,6 +375,7 @@ class FaqForm:
     fa_content: str = Form(default="")
     fa_order: int = Form(default=1)
 
+
 @dataclass
 class PollForm:
     po_subject: str = Form(...)
@@ -409,7 +410,7 @@ class AutoSaveForm:
     as_content: str = Form(default="")
     as_datetime: datetime = Form(default=datetime.now())
 
-      
+
 @dataclass
 class QaConfigForm:
     """1:1문의 설정 폼 데이터
@@ -488,6 +489,7 @@ class NewwinForm:
     nw_content: str = Form(...)
     nw_content_html: int = Form(0)
 
+
 @dataclass
 class SocialProfile:
     """소셜 프로필 폼 데이터"""
@@ -498,6 +500,7 @@ class SocialProfile:
     photourl: str
     displayname: str
     disciption: str
+
 
 @dataclass
 class InstallFrom:
@@ -515,3 +518,9 @@ class InstallFrom:
     admin_email: str = Form(...)
 
     reinstall: int = Form(None)
+
+
+@dataclass
+class AfterValidationContent:
+    subject_field: str
+    content_field: str
