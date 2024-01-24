@@ -25,7 +25,7 @@ from sqlalchemy.exc import IntegrityError
 from starlette.datastructures import URL
 from user_agents import parse
 
-from core.database import DBConnect
+from core.database import DBConnect, MySQLCharsetMixin
 from core.models import (
     Auth, BoardNew, Config, Login, Member, Memo, Menu, NewWin, Poll, Popular,
     UniqId, Visit, VisitSum, WriteBaseModel
@@ -88,7 +88,11 @@ def dynamic_create_write_table(
             "__table_args__": (
                 Index(f'idx_wr_num_reply_{table_name}', 'wr_num', 'wr_reply'),
                 Index(f'idex_wr_is_comment_{table_name}', 'wr_is_comment'),
-                {"extend_existing": True}),
+                {
+                    "extend_existing": True,
+                    **MySQLCharsetMixin().__table_args__
+                },
+            ),
         }
     )
     # 게시판 추가시 한번만 테이블 생성
