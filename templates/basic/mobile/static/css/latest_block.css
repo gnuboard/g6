@@ -15,12 +15,12 @@
 .pic_lt li .lt_img img, .pic_lt li .lt_img video {width:100%;height:auto}
 .pic_lt li a:hover {color:#a22121}
 .pic_lt li .fa-heart {color:#ff0000}
-.pic_lt li .fa-lock {display:inline-block;line-height:14px;width:16px;color:#4f818c;background:#cbe3e8;text-align:center;border-radius:2px;font-size:12px;border:1px solid #cbe3e8;vertical-align:middle}
+.pic_lt li .fa-lock {display:inline-block;width:10px;height: 10px;padding: 3px;color:#4f818c;background:#cbe3e8;text-align:center;border-radius:2px;font-size:12px;border:1px solid #cbe3e8;vertical-align:middle}
 .pic_lt li .new_icon {display:inline-block;width:16px;line-height:16px;font-size:0.833em;color:#23db79;background:#b9ffda;text-align:center;border-radius:2px;margin-left:2px;font-weight:bold;vertical-align:middle}
 .pic_lt li .hot_icon {display:inline-block;width:16px;line-height:16px;font-size:0.833em;color:#ff0000;background:#ffb9b9;text-align:center;border-radius:2px;vertical-align:middle}
 .pic_lt li .fa-caret-right {color:#bbb}
-.pic_lt li .fa-download {display:inline-block;width:16px;line-height:16px;font-size:0.833em;color:#daae37;background:#ffefb9;text-align:center;border-radius:2px;vertical-align:middle}
-.pic_lt li .fa-link {display:inline-block;width:16px;line-height:16px;font-size:0.833em;color:#b451fd;background:#edd3fd;text-align:center;border-radius:2px;vertical-align:middle}
+.pic_lt li .fa-download {display:inline-block;width:10px;height: 10px;padding: 3px;color:#daae37;background:#ffefb9;text-align:center;border-radius:2px;vertical-align:middle}
+.pic_lt li .fa-link {display:inline-block;width:10px;height: 10px;padding: 3px;color:#b451fd;background:#edd3fd;text-align:center;border-radius:2px;vertical-align:middle}
 
 .pic_lt .profile_img img{border-radius:50%}
 
