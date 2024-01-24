@@ -14,7 +14,7 @@ from sqlalchemy import asc, desc, exists, func, select, update
 
 from core.database import db_session
 from core.exception import AlertException
-from core.formclass import WriteForm, WriteCommentForm
+from core.formclass import WriteForm, WriteCommentForm, AfterValidationContent
 from core.models import AutoSave, Board, BoardGood, Group, Scrap
 from core.template import UserTemplates
 from lib.board_lib import *
@@ -28,6 +28,7 @@ from lib.point import delete_point, insert_point
 from lib.template_filters import datetime_format, number_format
 from lib.template_functions import get_paging
 from lib.g5_compatibility import G5Compatibility
+from lib.tools import remove_script_tags, validate_and_clean_data
 
 router = APIRouter()
 templates = UserTemplates()
@@ -44,9 +45,9 @@ FILE_DIRECTORY = "data/file/"
 
 @router.get("/group/{gr_id}")
 async def group_board_list(
-    request: Request,
-    db: db_session,
-    gr_id: str = Path(...)
+        request: Request,
+        db: db_session,
+        gr_id: str = Path(...)
 ):
     """
     게시판그룹의 모든 게시판 목록을 보여준다.
@@ -66,7 +67,7 @@ async def group_board_list(
     # FIXME: 모바일/PC 분기처리
     if not admin_type and request.state.device == 'mobile':
         raise AlertException(f"{group.gr_subject} 그룹은 모바일에서만 접근할 수 있습니다.", 400, url="/")
-    
+
     # 그룹별 게시판 목록 조회
     query = (
         select(Board)
@@ -94,12 +95,12 @@ async def group_board_list(
 
 @router.get("/{bo_table}")
 async def list_post(
-    request: Request,
-    db: db_session,
-    board: Annotated[Board, Depends(get_board)],
-    bo_table: str = Path(..., title="게시판 아이디"),
-    spt: int = Query(None, title="검색단위"),
-    search_params: dict = Depends(common_search_query_params),
+        request: Request,
+        db: db_session,
+        board: Annotated[Board, Depends(get_board)],
+        bo_table: str = Path(..., title="게시판 아이디"),
+        spt: int = Query(None, title="검색단위"),
+        search_params: dict = Depends(common_search_query_params),
 ):
     """
     지정된 게시판의 글 목록을 보여준다.
@@ -160,7 +161,7 @@ async def list_post(
         # 검색 내용에 댓글이 잡히는 경우 부모 글을 가져오기 위해 wr_parent를 불러오는 subquery를 이용합니다.
         subquery = query.add_columns(write_model.wr_parent).distinct().order_by(None).subquery().alias("subquery")
         query = select().where(write_model.wr_id.in_(subquery))
-    else:   # 검색이 아닌 경우
+    else:  # 검색이 아닌 경우
         query = query.where(write_model.wr_is_comment == 0)
 
     # 페이지 번호에 따른 offset 계산
@@ -201,11 +202,11 @@ async def list_post(
 
 @router.post("/list_delete/{bo_table}", dependencies=[Depends(validate_token)])
 async def list_delete(
-    request: Request,
-    db: db_session,
-    board: Annotated[Board, Depends(get_board)],
-    bo_table: str = Path(...),
-    wr_ids: list = Form(..., alias="chk_wr_id[]"),
+        request: Request,
+        db: db_session,
+        board: Annotated[Board, Depends(get_board)],
+        bo_table: str = Path(...),
+        wr_ids: list = Form(..., alias="chk_wr_id[]"),
 ):
     """
     게시글을 일괄 삭제한다.
@@ -228,7 +229,7 @@ async def list_delete(
         # 원글 포인트 삭제
         if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
             insert_point(request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
-        
+
         # 파일 삭제
         BoardFileManager(board, write.wr_id).delete_board_files()
 
@@ -248,12 +249,12 @@ async def list_delete(
 
 @router.post("/move/{bo_table}")
 async def move_post(
-    request: Request,
-    db: db_session,
-    board: Annotated[Board, Depends(get_board)],
-    bo_table: str = Path(...),
-    sw: str = Form(...),
-    wr_ids: list = Form(..., alias="chk_wr_id[]"),
+        request: Request,
+        db: db_session,
+        board: Annotated[Board, Depends(get_board)],
+        bo_table: str = Path(...),
+        sw: str = Form(...),
+        wr_ids: list = Form(..., alias="chk_wr_id[]"),
 ):
     """
     게시글 복사/이동
@@ -287,13 +288,13 @@ async def move_post(
 
 @router.post("/move_update/", dependencies=[Depends(validate_token)])
 async def move_update(
-    request: Request,
-    db: db_session,
-    origin_board: Annotated[Board, Depends(get_board)],
-    origin_bo_table: str = Form(..., alias="bo_table"),
-    sw: str = Form(...),
-    wr_ids: str = Form(..., alias="wr_id_list"),
-    target_bo_tables: list = Form(..., alias="chk_bo_table[]"),
+        request: Request,
+        db: db_session,
+        origin_board: Annotated[Board, Depends(get_board)],
+        origin_bo_table: str = Form(..., alias="bo_table"),
+        sw: str = Form(...),
+        wr_ids: str = Form(..., alias="wr_id_list"),
+        target_bo_tables: list = Form(..., alias="chk_bo_table[]"),
 ):
     """
     게시글 복사/이동
@@ -325,7 +326,7 @@ async def move_update(
             # 복사/이동 로그 기록
             if not origin_write.wr_is_comment and config.cf_use_copy_log:
                 nick = cut_name(request, member.mb_nick)
-                log_msg = f"[이 게시물은 {nick}님에 의해 {datetime_format(datetime.now()) } {origin_board.bo_subject}에서 {act} 됨]"
+                log_msg = f"[이 게시물은 {nick}님에 의해 {datetime_format(datetime.now())} {origin_board.bo_subject}에서 {act} 됨]"
                 if "html" in origin_write.wr_option:
                     log_msg = f'<div class="content_{sw}">' + log_msg + '</div>'
                 else:
@@ -404,11 +405,11 @@ async def move_update(
 
 @router.get("/write/{bo_table}", dependencies=[Depends(check_group_access)])
 async def write_form_add(
-    request: Request,
-    db: db_session,
-    board: Annotated[Board, Depends(get_board)],
-    bo_table: str = Path(...),
-    parent_id: int = Query(None)
+        request: Request,
+        db: db_session,
+        board: Annotated[Board, Depends(get_board)],
+        bo_table: str = Path(...),
+        parent_id: int = Query(None)
 ):
     """
     게시글을 작성하는 form을 보여준다.
@@ -468,12 +469,12 @@ async def write_form_add(
 
 @router.get("/write/{bo_table}/{wr_id}", dependencies=[Depends(check_group_access)])
 async def write_form_edit(
-    request: Request,
-    db: db_session,
-    board: Annotated[Board, Depends(get_board)],
-    write: Annotated[WriteBaseModel, Depends(get_write)],
-    bo_table: str = Path(...),
-    wr_id: int = Path(...)
+        request: Request,
+        db: db_session,
+        board: Annotated[Board, Depends(get_board)],
+        write: Annotated[WriteBaseModel, Depends(get_write)],
+        bo_table: str = Path(...),
+        wr_id: int = Path(...)
 ):
     """
     게시글을 작성하는 form을 보여준다.
@@ -546,25 +547,25 @@ async def write_form_edit(
 
 
 @router.post(
-        "/write_update/{bo_table}",
-        dependencies=[Depends(validate_token), Depends(check_group_access)])
+    "/write_update/{bo_table}",
+    dependencies=[Depends(validate_token), Depends(check_group_access)])
 async def write_update(
-    request: Request,
-    db: db_session,
-    board: Annotated[Board, Depends(get_board)],
-    recaptcha_response: str = Form("", alias="g-recaptcha-response"),
-    bo_table: str = Path(...),
-    wr_id: str = Form(None),
-    parent_id: int = Form(None),
-    uid: str = Form(None),
-    notice: bool = Form(False),
-    html: str = Form(""),
-    mail: str = Form(""),
-    secret: str = Form(""),
-    form_data: WriteForm = Depends(),
-    files: List[UploadFile] = File(None, alias="bf_file[]"),
-    file_content: list = Form(None, alias="bf_content[]"),
-    file_dels: list = Form(None, alias="bf_file_del[]"),
+        request: Request,
+        db: db_session,
+        board: Annotated[Board, Depends(get_board)],
+        recaptcha_response: str = Form("", alias="g-recaptcha-response"),
+        bo_table: str = Path(...),
+        wr_id: str = Form(None),
+        parent_id: int = Form(None),
+        uid: str = Form(None),
+        notice: bool = Form(False),
+        html: str = Form(""),
+        mail: str = Form(""),
+        secret: str = Form(""),
+        form_data: WriteForm = Depends(),
+        files: List[UploadFile] = File(None, alias="bf_file[]"),
+        file_content: list = Form(None, alias="bf_content[]"),
+        file_dels: list = Form(None, alias="bf_file_del[]"),
 ):
     """
     게시글을 Table 추가한다.
@@ -586,14 +587,9 @@ async def write_update(
             secret = "secret"
 
     # 게시글 내용 검증
-    subject_filter_word = filter_words(request, form_data.wr_subject)
-    content_filter_word = filter_words(request, form_data.wr_content)
-    if subject_filter_word or content_filter_word:
-        word = subject_filter_word if subject_filter_word else content_filter_word
-        raise AlertException(f"제목/내용에 금지단어({word})가 포함되어 있습니다.", 400)
-    
-    # Stored XSS 방지
-    form_data.wr_subject = htmllib.escape(form_data.wr_subject)
+    _cleaned_content: AfterValidationContent = validate_and_clean_data(request, form_data.wr_subject, form_data.wr_content)
+    form_data.wr_subject = _cleaned_content.subject_field
+    form_data.wr_content = _cleaned_content.content_field
 
     # 게시글 테이블 정보 조회
     write_model = dynamic_create_write_table(bo_table)
@@ -781,19 +777,19 @@ async def write_update(
 
 @router.get("/{bo_table}/{wr_id}", dependencies=[Depends(check_group_access)])
 async def read_post(
-    request: Request,
-    db: db_session,
-    board: Annotated[Board, Depends(get_board)],
-    write: Annotated[WriteBaseModel, Depends(get_write)],
-    bo_table: str = Path(...),
-    wr_id: int = Path(...)
+        request: Request,
+        db: db_session,
+        board: Annotated[Board, Depends(get_board)],
+        write: Annotated[WriteBaseModel, Depends(get_write)],
+        bo_table: str = Path(...),
+        wr_id: int = Path(...)
 ):
     """
     게시글을 1개 읽는다.
     """
     config = request.state.config
     board_config = BoardConfig(request, board)
-    
+
     # 게시판 설정
     board.subject = board_config.subject
     write_model = dynamic_create_write_table(bo_table)
@@ -842,6 +838,9 @@ async def read_post(
     write.ip = board_config.get_display_ip(write.wr_ip)
     write.name = cut_name(request, write.wr_name)
 
+    # Stored XSS 더블체크
+    write.wr_content = remove_script_tags(write.wr_content)
+
     # 세션 체크
     # 한번 읽은 게시글은 세션만료까지 조회수, 포인트 처리를 하지 않는다.
     session_name = f"ss_view_{bo_table}_{wr_id}"
@@ -857,7 +856,8 @@ async def read_post(
 
                 raise AlertException(message, 403)
             else:
-                insert_point(request, mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table, write.wr_id, "읽기")
+                insert_point(request, mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table,
+                             write.wr_id, "읽기")
 
         # 조회수 증가
         write.wr_hit = write.wr_hit + 1
@@ -898,7 +898,7 @@ async def read_post(
             query = query.where(write_model.ca_name == sca)
         if sfl and stx and hasattr(write_model, sfl):
             query = query.where(getattr(write_model, sfl).like(f"%{stx}%"))
-         # 같은 wr_num 내에서 이전글 조회
+        # 같은 wr_num 내에서 이전글 조회
         prev = db.scalar(
             query.where(
                 write_model.wr_num == write.wr_num,
@@ -947,7 +947,7 @@ async def read_post(
         comment.ip = board_config.get_display_ip(comment.wr_ip)
         comment.is_reply = len(comment.wr_comment_reply) < 5 and board.bo_comment_level <= member_level
         comment.is_edit = admin_type or (member and comment.mb_id == member.mb_id)
-        comment.is_del = admin_type or (member and comment.mb_id == member.mb_id) or not comment.mb_id 
+        comment.is_del = admin_type or (member and comment.mb_id == member.mb_id) or not comment.mb_id
         comment.is_secret = "secret" in comment.wr_option
 
         # 비밀댓글 처리
@@ -998,12 +998,12 @@ async def read_post(
 # 게시글 삭제
 @router.get("/delete/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
 async def delete_post(
-    request: Request,
-    db: db_session,
-    board: Annotated[Board, Depends(get_board)],
-    write: Annotated[WriteBaseModel, Depends(get_write)],
-    bo_table: str = Path(...),
-    wr_id: int = Path(...),
+        request: Request,
+        db: db_session,
+        board: Annotated[Board, Depends(get_board)],
+        write: Annotated[WriteBaseModel, Depends(get_write)],
+        bo_table: str = Path(...),
+        wr_id: int = Path(...),
 ):
     """
     게시글을 삭제한다.
@@ -1024,13 +1024,13 @@ async def delete_post(
 
 @router.get("/{bo_table}/{wr_id}/download/{bf_no}", dependencies=[Depends(check_group_access)])
 async def download_file(
-    request: Request,
-    db: db_session,
-    board: Annotated[Board, Depends(get_board)],
-    write: Annotated[WriteBaseModel, Depends(get_write)],
-    bo_table: str = Path(...),
-    wr_id: int = Path(...),
-    bf_no: int = Path(...),
+        request: Request,
+        db: db_session,
+        board: Annotated[Board, Depends(get_board)],
+        write: Annotated[WriteBaseModel, Depends(get_write)],
+        bo_table: str = Path(...),
+        wr_id: int = Path(...),
+        bf_no: int = Path(...),
 ):
     """첨부파일 다운로드
 
@@ -1076,7 +1076,8 @@ async def download_file(
 
                 raise AlertException(message, 403)
             else:
-                insert_point(request, mb_id, download_point, f"{board.bo_subject} {write.wr_id} 파일 다운로드", board.bo_table, write.wr_id, "다운로드")
+                insert_point(request, mb_id, download_point, f"{board.bo_subject} {write.wr_id} 파일 다운로드",
+                             board.bo_table, write.wr_id, "다운로드")
 
         request.session[session_name] = True
 
@@ -1091,16 +1092,16 @@ async def download_file(
 
 
 @router.post(
-        "/write_comment_update/{bo_table}",
-        dependencies=[Depends(validate_token), Depends(check_group_access)])
+    "/write_comment_update/{bo_table}",
+    dependencies=[Depends(validate_token), Depends(check_group_access)])
 async def write_comment_update(
-    request: Request,
-    db: db_session,
-    board: Annotated[Board, Depends(get_board)],
-    write: Annotated[WriteBaseModel, Depends(get_write)],
-    bo_table: str = Path(...),
-    form: WriteCommentForm = Depends(),
-    recaptcha_response: str = Form("", alias="g-recaptcha-response"),
+        request: Request,
+        db: db_session,
+        board: Annotated[Board, Depends(get_board)],
+        write: Annotated[WriteBaseModel, Depends(get_write)],
+        bo_table: str = Path(...),
+        form: WriteCommentForm = Depends(),
+        recaptcha_response: str = Form("", alias="g-recaptcha-response"),
 ):
     """
     댓글 등록
@@ -1130,7 +1131,7 @@ async def write_comment_update(
         # 댓글 작성 권한 검증
         if not board_config.is_comment_level():
             raise AlertException("댓글을 작성할 권한이 없습니다.", 403)
-        
+
         # 포인트 검사
         comment_point = board.bo_comment_point
         if config.cf_use_point:
@@ -1188,7 +1189,8 @@ async def write_comment_update(
 
         # 포인트 처리
         if member:
-            insert_point(request, mb_id, comment_point, f"{board.bo_subject} {comment.wr_parent}-{comment.wr_id} 댓글쓰기", board.bo_table, comment.wr_id, "댓글")
+            insert_point(request, mb_id, comment_point, f"{board.bo_subject} {comment.wr_parent}-{comment.wr_id} 댓글쓰기",
+                         board.bo_table, comment.wr_id, "댓글")
 
         # 메일 발송
         if board_config.use_email:
@@ -1213,12 +1215,12 @@ async def write_comment_update(
 
 @router.get("/delete_comment/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
 async def delete_comment(
-    request: Request,
-    db: db_session,
-    board: Annotated[Board, Depends(get_board)],
-    comment: Annotated[WriteBaseModel, Depends(get_write)],
-    bo_table: str = Path(...),
-    comment_id: int = Path(..., alias="wr_id"),
+        request: Request,
+        db: db_session,
+        board: Annotated[Board, Depends(get_board)],
+        comment: Annotated[WriteBaseModel, Depends(get_write)],
+        bo_table: str = Path(...),
+        comment_id: int = Path(..., alias="wr_id"),
 ):
     """
     댓글 삭제
@@ -1264,13 +1266,13 @@ async def delete_comment(
 
 @router.get("/{bo_table}/{wr_id}/link/{no}")
 async def link_url(
-    request: Request,
-    db: db_session,
-    board: Annotated[Board, Depends(get_board)],
-    write: Annotated[WriteBaseModel, Depends(get_write)],
-    bo_table: str = Path(...),
-    wr_id: int = Path(...),
-    no: int = Path(...)
+        request: Request,
+        db: db_session,
+        board: Annotated[Board, Depends(get_board)],
+        write: Annotated[WriteBaseModel, Depends(get_write)],
+        bo_table: str = Path(...),
+        wr_id: int = Path(...),
+        no: int = Path(...)
 ):
     """
     게시글에 포함된 링크이동
