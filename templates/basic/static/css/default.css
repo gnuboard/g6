@@ -1,15 +1,136 @@
 @charset "utf-8";
+
 :root[color-theme='light'] { /* 스위치 버튼 */
- --lightVisible: none; --darkVisible: inline-block; /* background */
- --inputBg: #fff; --bodyBg: #fff; --wrapperBg: #f6f6f6; --contBg: #fff; --gnbBg: rgba(0,0,0,0.1); --menuBg: #4158d1; --joinBg: #f7f7f7; --prHover: #f7f7f7; --pointBg: #edf3fc; --bovHover: #f7f7f7; --boNoticeBg: #fff6fa; --footerBg: #f8f3f2; --ftCopyBg: #f1e7e5; --evenTdBg: #fbfbfb; --copyHvBg: #f4f4f4; --newBg: #f7f7f7; --priThBg: #f7f7f9; --pgBg: #eee; --autoBg: #eee; --pgHvBg: #fafafa; --scrapBg: #f8ebea; --boListBg: #ccd1d9; --btnPrvBg: #fff1f1; --noImgBg: #eaeaea; --gnbShadowBg: #37370566; --autoPopBg: #e8e8e8; --autoHvBg: #dbdbdb; /* 폰트색상 */
- --fontColor: #000; --gnbFontColor: #080808; --prFontColor: #465168; --btnColor: #000; --bovColor: #666; --tdColor: #666; --bovTitColor: #555; --iconColor: #4b5259; --ptStatusColor: #737373; --moreOptColor: #6b757c; --ftColor: #525252; --boListColor: #6f534e; --moreColor: #c4bab8; /* border */
- --border: 1px solid #e5ecee; --topBtnBorder: 2px solid #00000032; --inputBorder: 1px solid #d0d3db; --gnbBorder: 1px solid #e0e2e5; --olBorder: 1px solid #d5d9dd; --scrabBorder: 1px solid #e5ecee; --moreUlBorder: 1px solid #b8bfc4; --moreLiBorder: 1px solid #f1f1f1; --afterBorder: transparent transparent #fff transparent; --beforeBorder: transparent transparent #e5ecee transparent; --priTableBorder: 1px solid #d8dbdf; --qaBorder: 1px solid #ffded8; --fileBorder: 2px solid #00000010; --shareBorder: 1px solid #d5d5d5; --autoLiBorder: 1px solid #ffffff; --autoUlBorder: 1px solid #e8e8e8; } 
+    --lightVisible: none; 
+    --darkVisible: inline-block; 
+    /* background */
+    --inputBg: #fff; 
+    --bodyBg: #fff; 
+    --wrapperBg: #f6f6f6; 
+    --contBg: #fff; 
+    --gnbBg: rgba(0,0,0,0.1); 
+    --menuBg: #4158d1; 
+    --joinBg: #f7f7f7; 
+    --prHover: #f7f7f7; 
+    --pointBg: #edf3fc; 
+    --bovHover: #f7f7f7; 
+    --boNoticeBg: #fff6fa; 
+    --footerBg: #f8f3f2; 
+    --ftCopyBg: #f1e7e5; 
+    --evenTdBg: #fbfbfb; 
+    --copyHvBg: #f4f4f4; 
+    --newBg: #f7f7f7; 
+    --priThBg: #f7f7f9; 
+    --pgBg: #eee; 
+    --autoBg: #eee; 
+    --pgHvBg: #fafafa; 
+    --scrapBg: #f8ebea; 
+    --boListBg: #ccd1d9; 
+    --btnPrvBg: #fff1f1; 
+    --noImgBg: #eaeaea; 
+    --gnbShadowBg: #37370566; 
+    --autoPopBg: #e8e8e8; 
+    --autoHvBg: #dbdbdb; 
+    /* 폰트색상 */
+    --fontColor: #000; 
+    --gnbFontColor: #080808; 
+    --prFontColor: #465168; 
+    --btnColor: #000; 
+    --bovColor: #666; 
+    --tdColor: #666; 
+    --bovTitColor: #555; 
+    --iconColor: #4b5259; 
+    --ptStatusColor: #737373; 
+    --moreOptColor: #6b757c; 
+    --ftColor: #525252; 
+    --boListColor: #6f534e; 
+    --moreColor: #c4bab8; 
+    /* border */
+    --border: 1px solid #e5ecee; 
+    --topBtnBorder: 2px solid #00000032; 
+    --inputBorder: 1px solid #d0d3db; 
+    --gnbBorder: 1px solid #e0e2e5; 
+    --olBorder: 1px solid #d5d9dd; 
+    --scrabBorder: 1px solid #e5ecee; 
+    --moreUlBorder: 1px solid #b8bfc4; 
+    --moreLiBorder: 1px solid #f1f1f1; 
+    --afterBorder: transparent transparent #fff transparent; 
+    --beforeBorder: transparent transparent #e5ecee transparent; 
+    --priTableBorder: 1px solid #d8dbdf; 
+    --qaBorder: 1px solid #ffded8; 
+    --fileBorder: 2px solid #00000010; 
+    --shareBorder: 1px solid #d5d5d5; 
+    --autoLiBorder: 1px solid #ffffff; 
+    --autoUlBorder: 1px solid #e8e8e8; 
+} 
+
 :root[color-theme='dark'] { /* 스위치 버튼 */
- --lightVisible: inline-block; --darkVisible: none; /* background */
- --inputBg: #323235; --bodyBg: #151616; --wrapperBg: #151616; --contBg: #252525; --gnbBg: rgba(0,0,0,0.4); --menuBg: #323235; --joinBg: #151616; --prHover: #151616; --pointBg: #1f1d1d; --bovHover: #1f1d1d; --boNoticeBg: #1b1716; --footerBg: #242020; --ftCopyBg: #2b2727; --evenTdBg: #1f1d1d; --copyHvBg: #1f1d1d; --newBg: #1f1d1d; --priThBg: #242424; --pgBg: #323235; --autoBg: #3a3a3a; --pgHvBg: #1f1d1d; --scrapBg: #493937; --boListBg: #38393b; --btnPrvBg: #363636; --noImgBg: #1f1d1d; --gnbShadowBg: #00000080; --autoPopBg: #ffffff40; --autoHvBg: #525252; /* 폰트색상 */
- --fontColor: #fff; --gnbFontColor: #a0a0a0; --prFontColor: #a0a0a0; --btnColor: #4158d1; --bovColor: #b9b9b9; --tdColor: #a0a0a0; --bovTitColor: #bababa; --iconColor: #fff; --ptAllColor: #8d8c8c; --ptStatusColor: #2c2c2c; --moreOptColor: #a0a0a0; --ftColor: #999999; --boListColor: #a08a85; --moreColor: #646464; /* border */
- --border: 1px solid #383838; --topBtnBorder: 2px solid #ffffff50; --inputBorder: none; --gnbBorder: 1px solid #383838; --olBorder: 1px solid #383838; --scrabBorder: 1px solid #616161; --moreUlBorder: 1px solid #646464; --moreLiBorder: 1px solid #383838; --afterBorder: transparent transparent #212020 transparent; --beforeBorder: transparent transparent #383838 transparent; --priTableBorder: 1px solid #414141; --qaBorder: 1px solid #504544; --fileBorder: 2px solid #ffffff24; --shareBorder: 1px solid #4d4d4d; --autoLiBorder: 1px solid #252525; --autoUlBorder: 1px solid #ffffff40; /* filter */
- --invert: invert(92%); }
+    --lightVisible: inline-block; 
+    --darkVisible: none; 
+    /* background */
+    --inputBg: #323235; 
+    --bodyBg: #151616; 
+    --wrapperBg: #151616; 
+    --contBg: #252525; 
+    --gnbBg: rgba(0,0,0,0.4); 
+    --menuBg: #323235; 
+    --joinBg: #151616; 
+    --prHover: #151616; 
+    --pointBg: #1f1d1d; 
+    --bovHover: #1f1d1d; 
+    --boNoticeBg: #1b1716; 
+    --footerBg: #242020; 
+    --ftCopyBg: #2b2727; 
+    --evenTdBg: #1f1d1d; 
+    --copyHvBg: #1f1d1d; 
+    --newBg: #1f1d1d; 
+    --priThBg: #242424; 
+    --pgBg: #323235; 
+    --autoBg: #3a3a3a; 
+    --pgHvBg: #1f1d1d; 
+    --scrapBg: #493937; 
+    --boListBg: #38393b; 
+    --btnPrvBg: #363636; 
+    --noImgBg: #1f1d1d; 
+    --gnbShadowBg: #00000080; 
+    --autoPopBg: #ffffff40; 
+    --autoHvBg: #525252; 
+    /* 폰트색상 */
+    --fontColor: #fff; 
+    --gnbFontColor: #a0a0a0; 
+    --prFontColor: #a0a0a0; 
+    --btnColor: #4158d1; 
+    --bovColor: #b9b9b9; 
+    --tdColor: #a0a0a0; 
+    --bovTitColor: #bababa; 
+    --iconColor: #fff; 
+    --ptAllColor: #8d8c8c; 
+    --ptStatusColor: #2c2c2c; 
+    --moreOptColor: #a0a0a0; 
+    --ftColor: #999999; 
+    --boListColor: #a08a85; 
+    --moreColor: #646464; 
+    /* border */
+    --border: 1px solid #383838; 
+    --topBtnBorder: 2px solid #ffffff50; 
+    --inputBorder: none; 
+    --gnbBorder: 1px solid #383838; 
+    --olBorder: 1px solid #383838; 
+    --scrabBorder: 1px solid #616161; 
+    --moreUlBorder: 1px solid #646464; 
+    --moreLiBorder: 1px solid #383838; 
+    --afterBorder: transparent transparent #212020 transparent; 
+    --beforeBorder: transparent transparent #383838 transparent; 
+    --priTableBorder: 1px solid #414141; 
+    --qaBorder: 1px solid #504544; 
+    --fileBorder: 2px solid #ffffff24; 
+    --shareBorder: 1px solid #4d4d4d; 
+    --autoLiBorder: 1px solid #252525; 
+    --autoUlBorder: 1px solid #ffffff40; 
+    /* filter */
+    --invert: invert(92%); 
+}
+
 
 /* 초기화 */
 html { overflow-y:scroll } 
