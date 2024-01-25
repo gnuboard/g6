@@ -16,7 +16,7 @@
 {% set is_admin=get_admin_type(request, login_member.mb_id, board=board) %}
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
     <!-- 게시물 읽기 시작 { -->
-    <article id="bo_v" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
+    <div id="bo_v" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
         <header>
             <h2 id="bo_v_title">
                 {% if board.bo_use_category and write.ca_name %}
@@ -122,7 +122,7 @@
             <!-- } 게시물 상단 버튼 끝 -->
         </section>
 
-        <section id="bo_v_atc">
+        <div id="bo_v_atc">
             <h2 id="bo_v_atc_title">본문</h2>
             <div id="bo_v_share">
                 <!-- SNS START -->
@@ -144,7 +144,9 @@
             <!-- 파일 출력 END -->
 
             <!-- 본문 내용 시작 { -->
-            <div id="bo_v_con">{{ write.wr_content|set_image_width(board_config.image_width)|url_auto_link(request)|safe }}</div>
+            <div id="bo_v_con" class="ckeditor4">
+                {{ write.wr_content|set_image_width(board_config.image_width)|url_auto_link(request)|safe }}
+            </div>
             <!-- } 본문 내용 끝 -->
             <!-- 서명 START -->
             {{ board_config.get_member_signature(write.mb_id) }}
