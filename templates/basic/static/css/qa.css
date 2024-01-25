@@ -165,7 +165,7 @@ html.no-overflowscrolling #autosave_pop {height:auto;max-height:10000px !importa
 #bo_v_file a:focus, #bo_v_file li:hover a, #bo_v_file a:active {text-decoration:underline;color:#285981}
 #bo_v_file img {float:left;margin:0 10px 0 0}
 #bo_v_file .bo_v_file_cnt {color:#b2b2b2;font-size:1.1rem}
-#bo_v_file li:hover {border-color:#ec957f;color:#bed4f4}
+#bo_v_file li:hover {border-color:#78afdb;color:#bed4f4}
 #bo_v_file li:hover svg {color:#4989bc}
 #bo_v_file li:hover .bo_v_file_cnt {color:#4989bc}
 
