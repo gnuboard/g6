@@ -1074,9 +1074,10 @@ def delete_old_records():
         if config.cf_visit_del > 0:
             base_date = today - timedelta(days=config.cf_visit_del)
             if db.bind.dialect.name == "sqlite":
-                concat_expr = func.strftime("%Y-%m-%d %H:%M:%S", f"{Visit.vi_date} {Visit.vi_time}")
+                visit_datetime = Visit.vi_date.concat(" ").concat(Visit.vi_time)
+                concat_expr = func.strftime("%Y-%m-%d %H:%M:%S", visit_datetime)
             else:
-                concat_expr = func.cast(func.concat(f"{Visit.vi_date} {Visit.vi_time}"), DateTime)
+                concat_expr = func.cast(func.concat(Visit.vi_date, " ", Visit.vi_time), DateTime)
             result = db.execute(
                 delete(Visit).where(concat_expr < base_date)
             )
