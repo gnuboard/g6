@@ -25,7 +25,7 @@
                 {% if write.is_notice %}<strong>{{ write.subject }}</strong>{% else %}{{ write.subject }}{% endif %}
             </a>
             {% if write.icon_new %}<span class="new_icon">N<span class="sound_only">새글</span></span>{% endif %}
-            {% if write.icon_hot %}<span class="hot_icon">H<i class="fa fa-heart" aria-hidden="true"></i><span class="sound_only">인기글</span></span>{% endif %}
+            {% if write.icon_hot %}<span class="hot_icon"><i class="fa fa-heart" aria-hidden="true"></i><span class="sound_only">인기글</span></span>{% endif %}
             {% if write.wr_comment %}<span class="lt_cmt"><span class="sound_only">댓글</span>{{ write.wr_comment }}</span>{% endif %}
             <div class="lt_info">
                 <span class="lt_nick">
