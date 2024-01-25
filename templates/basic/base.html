@@ -334,12 +334,12 @@
   }); 
 
   darkmodeBtn.addEventListener('click', e => {
-    if (e.target.classList.contains('dark')) {
-      e.target.classList.remove('dark')
+    if (e.currentTarget.classList.contains('dark')) {
+      e.currentTarget.classList.remove('dark')
       localStorage.setItem('color-theme', 'light');
       document.documentElement.setAttribute('color-theme', 'light');
     } else {
-      e.target.classList.add('dark')
+      e.currentTarget.classList.add('dark')
       localStorage.setItem('color-theme', 'dark');
       document.documentElement.setAttribute('color-theme', 'dark');
     }
