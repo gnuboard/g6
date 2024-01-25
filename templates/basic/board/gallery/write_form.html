@@ -219,7 +219,7 @@
             f.token.value = generate_token();
             f.action += "?{{ request.query_params|safe }}"
 
-            // document.getElementById("btn_submit").disabled = "disabled";
+            document.getElementById("btn_submit").disabled = true;
 
             return true;
         }
