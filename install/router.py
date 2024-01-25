@@ -1,3 +1,4 @@
+import secrets
 import sys
 from cachetools import TTLCache
 from dotenv import set_key
@@ -95,6 +96,8 @@ async def install(
         set_key(ENV_PATH, "DB_PASSWORD", form.db_password)
         set_key(ENV_PATH, "DB_NAME", form.db_name)
         set_key(ENV_PATH, "DB_TABLE_PREFIX", form.db_table_prefix)
+        # .env 세션 비밀키 설정
+        set_key(ENV_PATH, "SESSION_SECRET_KEY", secrets.token_urlsafe(50))
         # .env 파일에 쿠키 도메인 추가
         set_key(ENV_PATH, "COOKIE_DOMAIN", "")
 

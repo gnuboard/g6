@@ -144,9 +144,9 @@
                         </label>
 
                         <input type="hidden" name="mb_nick_default"
-                               value="{{ social_user_nick }}">
+                               value="{{ form.social_nickname }}">
                         <input type="text" name="mb_nick"
-                               value="{{ social_user_nick }}" id="reg_mb_nick"
+                               value="{{ form.social_nickname }}" id="reg_mb_nick"
                                required class="frm_input required nospace full_input" size="10" maxlength="20"
                                placeholder="닉네임">
                         <span id="msg_mb_nick"></span>
@@ -167,9 +167,9 @@
                                 </span>
                             {% endif %}
                         </label>
-                        <input type="text" name="mb_email" value="{{ social_member_email }}"
+                        <input type="text" name="mb_email" value="{{ form.social_email }}"
                                id="reg_mb_email"
-                               {% if form.social_member_email and not form.is_exists_email %}
+                               {% if form.social_email and not form.is_exists_email %}
                                readonly
                                {% endif %}
                                required

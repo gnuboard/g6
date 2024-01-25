@@ -13,6 +13,7 @@ from core.formclass import MemberForm
 from core.models import MemberSocialProfiles
 from core.template import UserTemplates
 from lib.common import *
+from lib.member_lib import check_exist_member_email
 from lib.pbkdf2 import create_hash
 from lib.point import insert_point
 from lib.social import providers
@@ -90,8 +91,8 @@ async def social_login(request: Request):
 
 @router.get('/social/login/callback')
 async def authorize_social_login(
-    request: Request,
-    db: db_session
+        request: Request,
+        db: db_session
 ):
     """소셜 로그인 인증 콜백
     Args:
@@ -178,11 +179,21 @@ async def get_social_register_form(request: Request):
         raise AlertException(status_code=400, detail="먼저 소셜로그인을 하셔야됩니다.",
                              url=request.url_for('login').__str__())
     social_email = request.session.get('ss_social_email', None)
-    is_exists_email = False if social_email is None else True
+    if social_email:
+        is_exists_email = check_exist_member_email(social_email, None)
+    else:
+        is_exists_email = False
+
+    auth_token = request.session.get('ss_social_access', None)
+    response = await get_social_profile(auth_token, provider_name, request)
+
+    provider_module_name = getattr(providers, f"{provider_name}")
+    provider_class: SocialProvider = getattr(provider_module_name, f"{provider_name.capitalize()}")
+    social_email, profile = provider_class.convert_gnu_profile_data(response)
 
     form_context = {
-        "social_member_id": "",  # g5 user_id
-        "social_member_email": social_email,  # user_email
+        "social_nickname": profile.displayname,
+        "social_email": social_email,
         "action_url": request.url_for('post_social_register'),
         "is_exists_email": is_exists_email,
     }
@@ -196,9 +207,9 @@ async def get_social_register_form(request: Request):
 
 @router.post('/social/register')
 async def post_social_register(
-    request: Request,
-    db: db_session,
-    member_form: MemberForm = Depends(),
+        request: Request,
+        db: db_session,
+        member_form: MemberForm = Depends(),
 ):
     """
     신규 소셜 회원등록
@@ -266,7 +277,7 @@ async def post_social_register(
     member_social_profiles.mb_id = gnu_social_id
     member_social_profiles.provider = provider_name
     member_social_profiles.identifier = identifier
-    member_social_profiles.nickname = mb_nick
+    member_social_profiles.displayname = profile.displayname
     member_social_profiles.profile_url = profile.profile_url
     member_social_profiles.photourl = profile.photourl
     member_social_profiles.object_sha = ""  # 사용하지 않는 데이터.
@@ -295,7 +306,7 @@ async def post_social_register(
     db.commit()
 
     # 회원가입 포인트 부여
-    insert_point(request, member.mb_id, config.cf_register_point,  "회원가입 축하", "@member", member.mb_id, "회원가입")
+    insert_point(request, member.mb_id, config.cf_register_point, "회원가입 축하", "@member", member.mb_id, "회원가입")
 
     # 회원에게 인증메일 발송
     if config.cf_use_email_certify:

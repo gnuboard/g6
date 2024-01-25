@@ -5,7 +5,7 @@ from fastapi import Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from core.models import Board, Config, Group, Member as MemberModel
+from core.models import Board, Config, Group, Member as MemberModel, Member
 from core.database import DBConnect
 from lib.common import is_none_datetime
 
@@ -164,3 +164,23 @@ def is_super_admin(request: Request, mb_id: str = None) -> bool:
         return True
 
     return False
+
+
+def check_exist_member_email(email_address: str, mb_id: str = None):
+    """이메일 중복 확인"""
+    filters = []
+
+    if mb_id:
+        filters.append(Member.mb_id != mb_id)
+
+    with DBConnect().sessionLocal() as db:
+        exists_member = db.scalar(
+            select(Member)
+            .where(Member.mb_email == email_address)
+            .filter(*filters)
+        )
+
+    if exists_member:
+        return True
+    else:
+        return False

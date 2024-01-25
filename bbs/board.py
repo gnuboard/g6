@@ -798,6 +798,9 @@ async def read_post(
     board.subject = board_config.subject
     write_model = dynamic_create_write_table(bo_table)
 
+    # 게시판 에디터 설정
+    request.state.editor = board_config.select_editor
+
     # 게시판 관리자 확인
     member: Member = request.state.login_member
     mb_id = getattr(member, "mb_id", None)
