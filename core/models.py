@@ -5,9 +5,9 @@ from typing import List
 # from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import DynamicMapped, Mapped, relationship, declarative_base
 from datetime import datetime, date
-from core.database import DBConnect
+from core.database import DBConnect, MySQLCharsetMixin
 
-Base = declarative_base()
+Base = declarative_base(cls=MySQLCharsetMixin)
 
 DB_TABLE_PREFIX = DBConnect().table_prefix or "g6_"
 
