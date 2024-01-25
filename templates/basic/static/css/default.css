@@ -946,10 +946,10 @@ html.no-overflowscrolling #autosave_pop { height:auto; max-height:10000px !impor
 #bo_v_img a.view_image { display:block }
 #bo_v_img img { margin-bottom:20px; max-width:100%; height:auto }
 
-#bo_v_con.plain { margin:10px 0 30px; width:100%; line-height:2rem; min-height:200px; word-break:break-all; overflow:hidden; color: var(--fontColor); }
-#bo_v_con.plain ul { list-style:disc }
-#bo_v_con.plain a { color:#000; text-decoration:underline }
-#bo_v_con.plain img { max-width:100%; height:auto }
+#bo_v_con.textarea { margin:10px 0 30px; width:100%; line-height:2rem; min-height:200px; word-break:break-all; overflow:hidden; color: var(--fontColor); }
+#bo_v_con.textarea ul { list-style:disc }
+#bo_v_con.textarea a { color:#000; text-decoration:underline }
+#bo_v_con.textarea img { max-width:100%; height:auto }
 
 #bo_v_con.ckeditor4
 {
@@ -2311,28 +2311,4 @@ html.remodal-is-locked {overflow-y:scroll !important}
   #sch_res_detail .frm_input {width: 100%;}
   #sch_res_detail .btn_submit {margin-top: 20px;}
 
-}
-
-
-#bo_v_con.plain ul { list-style:disc }
-#bo_v_con.plain a { color:#000; text-decoration:underline }
-#bo_v_con.plain img { max-width:100%; height:auto }
-
-#bo_v_con.ckeditor4
-{
-    margin: 20px;
-    font-family: "Malgun Gothic", "맑은 고딕";
-    line-height: 1.8;
-    word-wrap: break-word;
-    font-size:1.2rem;
-}
-
-#bo_v_con.ckeditor4 blockquote
-{
-    padding: 2px 8px 0 10px;
-    border-style: solid;
-    border-color: #000;
-    border-width: 0;
-    border-left-width: 3px;
-    margin:0;
 }
