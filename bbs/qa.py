@@ -55,6 +55,18 @@ class QaConfigService:
         page_rows = self.config.cf_mobile_page_rows if self.is_mobile else self.config.cf_page_rows
 
         return qa_page_rows if qa_page_rows != 0 else page_rows
+    
+    @property
+    def select_editor(self) -> str:
+        """게시판에 사용할 에디터를 반환.
+
+        Returns:
+            str: 게시판에 사용할 에디터.
+        """
+        if not self.qa_config.qa_use_editor or not self.config.cf_editor:
+            return "textarea"
+
+        return self.config.cf_editor
 
     def get(self):
         """Q&A 설정 조회
@@ -397,6 +409,7 @@ async def qa_view(
     """
     # Q&A 설정 조회
     qa_config = qa_config_service.get()
+    request.state.editor = qa_config_service.select_editor
 
     # Q&A 조회
     qa = db.get(QaContent, qa_id)
