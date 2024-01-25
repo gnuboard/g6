@@ -1563,7 +1563,7 @@ button { cursor:pointer; padding:0; font-size:inherit; }
 #profile h2 {margin:0 0 5px}
 #profile .profile_name {text-align:center;font-weight:bold}
 #profile .my_profile_img {display:block;margin:20px 0 5px}
-#profile .my_profile_img img {border-radius:50%}
+#profile .my_profile_img img {border-radius:50%;width:50px}
 #profile .profile_img img {border-radius:50%}
 #profile .profile_name .sv_wrap {font-weight:bold;text-align:left}
 
@@ -1883,7 +1883,7 @@ p input:valid + label::after { width:100%; transform:translateX(0); }
 #fregisterform .btn_confirm {text-align:center;max-width: 600px;}
 #fregisterform .form_01 div {margin:0 0 20px}
 #fregisterform .captcha {display:block;margin:5px 0 0}
-#fregisterform .reg_mb_img_file img {max-width:100%;height:auto}
+#fregisterform .reg_mb_img_file img {width:50px;height:auto}
 #reg_mb_icon, #reg_mb_img {float:right}
 
 .tooltip_icon {position: relative;display:inline-block;vertical-align:baseline;color:#b3b5b8;border:0;font-size:1.4em;background:transparent;cursor:pointer;}
