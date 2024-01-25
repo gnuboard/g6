@@ -144,7 +144,9 @@
             <!-- 파일 출력 END -->
 
             <!-- 본문 내용 시작 { -->
-            <div id="bo_v_con">{{ write.wr_content|set_image_width(board_config.image_width)|url_auto_link(request)|safe }}</div>
+            <div id="bo_v_con" class="ckeditor4">
+                {{ write.wr_content|set_image_width(board_config.image_width)|url_auto_link(request)|safe }}
+            </div>
             <!-- } 본문 내용 끝 -->
             <!-- 서명 START -->
             {{ board_config.get_member_signature(write.mb_id) }}
