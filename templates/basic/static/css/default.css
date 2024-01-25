@@ -961,10 +961,11 @@ html.no-overflowscrolling #autosave_pop { height:auto; max-height:10000px !impor
 
 #bo_v_con.ckeditor4 blockquote
 {
-    padding: 2px 0;
+    padding: 2px 8px 0 10px;
     border-style: solid;
     border-color: #000;
     border-width: 0;
+    border-left-width: 3px;
     margin:0;
 }
 
