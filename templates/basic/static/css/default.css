@@ -338,11 +338,11 @@ a.gnb_2da:hover { color:#fff; background:#e7664d;-moz-transition:all 0.3s ease-o
 /* 접속자 집계 */
 #visit {position:relative;margin-top:20px;background:#ff8269;border-radius: 8px;overflow: hidden;color: #fff;}
 #visit h2 {line-height:24px;font-size:1.2em;padding:15px 0px;margin: 0px 15px; border-bottom:1px solid #ffffff69}
-#visit dl{padding:15px 20px;border-radius:3px;line-height:20px}
-#visit dl:after {display:block;visibility:hidden;clear:both;content:""}
-#visit dt {float:left;width:50%;position:relative;line-height:32px;padding-left:15px}
-#visit dt:after {position:absolute;left:0;top:13px;width:5px;height:5px;background:#fff;content:"";border-radius:5px}
-#visit dd {float:left;width:50%;text-align:right;line-height:32px;color:#fff}
+#visit ul {padding:15px 20px;border-radius:3px;line-height:20px;}
+#visit li {display: flex;justify-content: space-between;}
+#visit li span:after {position:absolute;left:0;top:13px;width:5px;height:5px;background:#fff;content:"";border-radius:5px}
+#visit span {width:50%;position:relative;line-height:32px;padding-left:15px;}
+#visit strong {width:50%;text-align:right;line-height:32px;color:#fff}
 #visit a {display:inline-block;padding:10px 3px;text-decoration:none}
 #visit .btn_admin {position:absolute;top:0;right:15px}
 
