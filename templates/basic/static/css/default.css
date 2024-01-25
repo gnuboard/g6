@@ -129,6 +129,7 @@
     --autoUlBorder: 1px solid #ffffff40;
     /* filter */
     --invert: invert(92%);
+    --moreInvert: invert(86%);
 }
 
 
@@ -1168,7 +1169,7 @@ html.no-overflowscrolling #autosave_pop { height:auto; max-height:10000px !impor
 /* 게시판 댓글 */
 .cmt_btn { width:100%; text-align:left; border:0; border-bottom:var(--border); background:var(--contBg); font-weight:bold; margin:30px 0 0px; padding:0 0 15px } 
 .cmt_btn span.total { position:relative; display:inline-block; margin-right:5px; font-size:1.2rem; color:#4989bc } 
-.cmt_btn span.cmt_more { float:right; display:inline-block; width:15px; height:10px; background:url(/static/img/btn_cmt.png) no-repeat right 2px; margin-top:5px } 
+.cmt_btn span.cmt_more { float:right; display:inline-block; width:15px; height:10px; background:url(/static/img/btn_cmt.png) no-repeat right 2px; margin-top:5px; filter: var(--moreInvert); } 
 .cmt_btn_op span.cmt_more { background-position:right -8px } 
 .cmt_btn b { font-size:1.4rem; color:var(--fontColor) } 
 .cmt_btn span.total:after { position:absolute; bottom:-17px; left:0; display:inline-block; background:#4989bc; content:""; width:100%; height:2px } 
