@@ -152,47 +152,47 @@
             {{ board_config.get_member_signature(write.mb_id) }}
             <!-- 서명 END -->
 
-        <!--  추천 비추천 시작 { -->
-        <div id="bo_v_act">
-            {% if board.bo_use_good %}
-            <span class="bo_v_act_gng">
-                <a href="/bbs/ajax/good/{{ board.bo_table }}/{{ write.wr_id }}/good" id="good_button" class="bo_v_good {{ "active" if write.is_good else "" }}">
-                    <i class="fa fa-regular fa-thumbs-up" aria-hidden="true"></i>
-                    <span class="sound_only">추천</span>
-                    <strong>{{ write.wr_good }}</strong>
-                </a>
-                <b id="bo_v_act_good"></b>
-            </span>
-            {% endif %}
-            {% if board.bo_use_nogood %}
-            <span class="bo_v_act_gng">
-                <a href="/bbs/ajax/good/{{ board.bo_table }}/{{ write.wr_id }}/nogood" id="nogood_button" class="bo_v_nogood {{ "active" if write.is_nogood else "" }}">
-                    <i class="fa fa-regular fa-thumbs-down" aria-hidden="true"></i>
-                    <span class="sound_only">비추천</span>
-                    <strong>{{ write.wr_nogood }}</strong>
-                </a>
-                <b id="bo_v_act_nogood"></b>
-            </span>
-            {% endif %}
+            <!--  추천 비추천 시작 { -->
+            <div id="bo_v_act">
+                {% if board.bo_use_good %}
+                <span class="bo_v_act_gng">
+                    <a href="/bbs/ajax/good/{{ board.bo_table }}/{{ write.wr_id }}/good" id="good_button" class="bo_v_good {{ "active" if write.is_good else "" }}">
+                        <i class="fa fa-regular fa-thumbs-up" aria-hidden="true"></i>
+                        <span class="sound_only">추천</span>
+                        <strong>{{ write.wr_good }}</strong>
+                    </a>
+                    <b id="bo_v_act_good"></b>
+                </span>
+                {% endif %}
+                {% if board.bo_use_nogood %}
+                <span class="bo_v_act_gng">
+                    <a href="/bbs/ajax/good/{{ board.bo_table }}/{{ write.wr_id }}/nogood" id="nogood_button" class="bo_v_nogood {{ "active" if write.is_nogood else "" }}">
+                        <i class="fa fa-regular fa-thumbs-down" aria-hidden="true"></i>
+                        <span class="sound_only">비추천</span>
+                        <strong>{{ write.wr_nogood }}</strong>
+                    </a>
+                    <b id="bo_v_act_nogood"></b>
+                </span>
+                {% endif %}
+            </div>
+            <!-- }  추천 비추천 끝 -->
         </div>
-        <!-- }  추천 비추천 끝 -->
-    </section>
 
-    <section id="bo_v_file">
-        <h2>첨부파일</h2>
-        <ul>
-        {% for file in files %}
-            <li>
-                <i class="fa fa-folder-open" aria-hidden="true"></i>
-                <a href="/board/{{ board.bo_table }}/{{ write.wr_id }}/download/{{ file.bf_no }}" class="view_file_download">
-                    <strong>{{ file.bf_source }}</strong>  ({{ file.bf_filesize|filesizeformat }})
-                </a>
-                <br>
-                <span class="bo_v_file_cnt">{{ file.bf_download }}회 다운로드 | DATE : {{ file.bf_datetime }}</span>
-            </li>
-        {% endfor %}
-        </ul>
-    </section>
+        <section id="bo_v_file">
+            <h2>첨부파일</h2>
+            <ul>
+            {% for file in files %}
+                <li>
+                    <i class="fa fa-folder-open" aria-hidden="true"></i>
+                    <a href="/board/{{ board.bo_table }}/{{ write.wr_id }}/download/{{ file.bf_no }}" class="view_file_download">
+                        <strong>{{ file.bf_source }}</strong>  ({{ file.bf_filesize|filesizeformat }})
+                    </a>
+                    <br>
+                    <span class="bo_v_file_cnt">{{ file.bf_download }}회 다운로드 | DATE : {{ file.bf_datetime }}</span>
+                </li>
+            {% endfor %}
+            </ul>
+        </section>
 
     
     <!-- 관련링크 시작 { -->
@@ -557,7 +557,7 @@
         });
     });
     </script>
-    </article>
+    </div>
     <!-- } 게시판 읽기 끝 -->
 
     <script>
