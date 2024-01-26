@@ -785,3 +785,36 @@ function generate_token() {
     });
     return token;
 }
+
+// 다크모드 설정
+document.addEventListener('DOMContentLoaded', function () {
+
+  const darkmodeBtn = document.querySelector('.toggle-switch');
+  const isUserColorTheme = localStorage.getItem('color-theme');
+  const isOsColorTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  const getUserTheme = () => (isUserColorTheme ? isUserColorTheme : isOsColorTheme);
+  const initialTheme = getUserTheme();
+
+  if (initialTheme === 'dark') {
+    darkmodeBtn.classList.add("dark")
+    localStorage.setItem('color-theme', 'dark');
+    document.documentElement.setAttribute('color-theme', 'dark');
+  } else {
+    darkmodeBtn.classList.remove("dark")
+    localStorage.setItem('color-theme', 'light');
+    document.documentElement.setAttribute('color-theme', 'light');
+  }
+
+  darkmodeBtn.addEventListener('click', e => {
+    if (e.currentTarget.classList.contains('dark')) {
+      e.currentTarget.classList.remove('dark')
+      localStorage.setItem('color-theme', 'light');
+      document.documentElement.setAttribute('color-theme', 'light');
+    } else {
+      e.currentTarget.classList.add('dark')
+      localStorage.setItem('color-theme', 'dark');
+      document.documentElement.setAttribute('color-theme', 'dark');
+    }
+    });
+}); 
+
