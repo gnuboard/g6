@@ -219,34 +219,39 @@ async def main_middleware(request: Request, call_next):
                             max_age=age_1day, domain=cookie_domain)
         record_visit(request)
 
-    # 현재 접속자 데이터 갱신
-    if (not request.state.is_super_admin
-            and not url_path.startswith("/admin")):
-        current_login = db.scalar(
-            select(models.Login)
-            .where(models.Login.lo_ip == current_ip)
-        )
-        if current_login:
-            current_login.lo_ip = current_ip
-            current_login.mb_id = getattr(member, "mb_id", "")
-            current_login.lo_datetime = datetime.now()
-            current_login.lo_location = url_path
-            current_login.lo_url = url_path
-        else:
-            db.execute(
-                insert(models.Login).values(
-                    lo_ip=current_ip,
-                    mb_id=getattr(member, "mb_id", ""),
-                    lo_datetime=datetime.now(),
-                    lo_location=url_path,
-                    lo_url=url_path)
+    try:
+        # 현재 접속자 데이터 갱신
+        if (not request.state.is_super_admin
+                and not url_path.startswith("/admin")):
+            current_login = db.scalar(
+                select(models.Login)
+                .where(models.Login.lo_ip == current_ip)
             )
+            if current_login:
+                current_login.mb_id = getattr(member, "mb_id", "")
+                current_login.lo_datetime = datetime.now()
+                current_login.lo_location = url_path
+                current_login.lo_url = url_path
+            else:
+                db.execute(
+                    insert(models.Login).values(
+                        lo_id=25,
+                        lo_ip=current_ip,
+                        mb_id=getattr(member, "mb_id", ""),
+                        lo_datetime=datetime.now(),
+                        lo_location=url_path,
+                        lo_url=url_path)
+                )
+            db.commit()
+
+        # 현재 로그인한 이력 삭제
+        config_time = timedelta(minutes=int(config.cf_login_minutes))
+        db.execute(delete(models.Login)
+                .where(models.Login.lo_datetime < datetime.now() - config_time))
         db.commit()
 
-    # 현재 로그인한 이력 삭제
-    config_time = timedelta(minutes=int(config.cf_login_minutes))
-    db.execute(delete(models.Login)
-               .where(models.Login.lo_datetime < datetime.now() - config_time))
+    except Exception as e:
+        print(e)
 
     db.close()
 

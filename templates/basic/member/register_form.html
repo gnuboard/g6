@@ -439,9 +439,9 @@
             // captcha 사용시
             if (typeof check_captcha === "function") {
                 if (!check_captcha(f)) return false;
-                // 캡차함수에서 폼 전송을 하므로 버튼 비활성화
-                document.getElementById("btn_submit").disabled = "disabled";
             }
+
+            document.getElementById("btn_submit").disabled = true;
 
             // 토큰 생성은 폼 체크의 가장 마지막에서 한다.
             f.token.value = generate_token();

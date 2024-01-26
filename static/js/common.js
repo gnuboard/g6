@@ -761,6 +761,17 @@ $(function() {
 
         return true;
     });
+
+    // 서버에서 에러 반환 시 `btn_submit` 버튼 재활성화
+    // - alert창 이후 history.back()
+    window.onpageshow = function(event){
+        if(event.persisted || (window.performance && performance.getEntriesByType("navigation")[0].type === 'back_forward')) {
+            const $btn_submit = document.getElementById("btn_submit")
+            if ($btn_submit) {
+                $btn_submit.disabled = false;
+            }
+        }
+    }
 });
 
 
@@ -787,34 +798,38 @@ function generate_token() {
 }
 
 // 다크모드 설정
+// 다크모드 스위치버튼 이벤트리스너 함수
 document.addEventListener('DOMContentLoaded', function () {
-
   const darkmodeBtn = document.querySelector('.toggle-switch');
-  const isUserColorTheme = localStorage.getItem('color-theme');
-  const isOsColorTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  const getUserTheme = () => (isUserColorTheme ? isUserColorTheme : isOsColorTheme);
-  const initialTheme = getUserTheme();
+  darkmodeBtn?.addEventListener('click', handleDarkMode);
+  isDarkModeEnabled();
+});
 
-  if (initialTheme === 'dark') {
-    darkmodeBtn.classList.add("dark")
-    localStorage.setItem('color-theme', 'dark');
-    document.documentElement.setAttribute('color-theme', 'dark');
-  } else {
-    darkmodeBtn.classList.remove("dark")
+// Dark mode 상태 변경 함수
+function handleDarkMode(e) {
+  if (e.currentTarget.classList.contains('dark')) {
+    e.currentTarget.classList.remove('dark')
     localStorage.setItem('color-theme', 'light');
-    document.documentElement.setAttribute('color-theme', 'light');
+  } else {
+    e.currentTarget.classList.add('dark')
+    localStorage.setItem('color-theme', 'dark');
   }
+  isDarkModeEnabled()
+}
 
-  darkmodeBtn.addEventListener('click', e => {
-    if (e.currentTarget.classList.contains('dark')) {
-      e.currentTarget.classList.remove('dark')
-      localStorage.setItem('color-theme', 'light');
-      document.documentElement.setAttribute('color-theme', 'light');
-    } else {
-      e.currentTarget.classList.add('dark')
-      localStorage.setItem('color-theme', 'dark');
+// Dark mode 상태 확인 함수
+function isDarkModeEnabled() {
+    const isUserColorTheme = localStorage.getItem('color-theme');
+    const isOsColorTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const getUserTheme = () => (isUserColorTheme ? isUserColorTheme : isOsColorTheme);
+    const initialTheme = getUserTheme();
+    
+    if (initialTheme === 'dark') {
       document.documentElement.setAttribute('color-theme', 'dark');
+    } else {
+      document.documentElement.setAttribute('color-theme', 'light');
     }
-    });
-}); 
+}
 
+// 로컬스토리지 데이터에따라 실시간 변경
+window.addEventListener('storage', isDarkModeEnabled);
