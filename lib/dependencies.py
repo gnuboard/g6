@@ -99,6 +99,9 @@ async def check_group_access(
 
     with DBConnect().sessionLocal() as db:
         board = db.get(Board, bo_table)
+        if not board:
+            raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
+
         group = board.group
         member = request.state.login_member
 
