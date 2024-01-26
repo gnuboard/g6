@@ -266,14 +266,6 @@ function get_top_pos(obj)
     return top;
 }
 
-function flash_movie(src, ids, width, height, wmode)
-{
-    var wh = "";
-    if (parseInt(width) && parseInt(height))
-        wh = " width='"+width+"' height='"+height+"' ";
-    return "<object classid='clsid:d27cdb6e-ae6d-11cf-96b8-444553540000' codebase='http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,0,0' "+wh+" id="+ids+"><param name=wmode value="+wmode+"><param name=movie value="+src+"><param name=quality value=high><embed src="+src+" quality=high wmode="+wmode+" type='application/x-shockwave-flash' pluginspage='http://www.macromedia.com/shockwave/download/index.cgi?p1_prod_version=shockwaveflash' "+wh+"></embed></object>";
-}
-
 function obj_movie(src, ids, width, height, autostart)
 {
     var wh = "";
@@ -281,11 +273,6 @@ function obj_movie(src, ids, width, height, autostart)
         wh = " width='"+width+"' height='"+height+"' ";
     if (!autostart) autostart = false;
     return "<embed src='"+src+"' "+wh+" autostart='"+autostart+"'></embed>";
-}
-
-function doc_write(cont)
-{
-    document.write(cont);
 }
 
 var win_password_lost = function(href) {
@@ -557,26 +544,6 @@ function font_resize(id, rmv_class, add_class, othis)
     if(typeof othis !== "undefined"){
         $(othis).addClass('select').siblings().removeClass('select');
     }
-}
-
-/**
- * 댓글 수정 토큰
-**/
-function set_comment_token(f)
-{
-    if(typeof f.token === "undefined")
-        $(f).prepend('<input type="hidden" name="token" value="">');
-
-    $.ajax({
-        url: g6_bbs_url+"/ajax.comment_token.php",
-        type: "GET",
-        dataType: "json",
-        async: false,
-        cache: false,
-        success: function(data, textStatus) {
-            f.token.value = data.token;
-        }
-    });
 }
 
 $(function(){
