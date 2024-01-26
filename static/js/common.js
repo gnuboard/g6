@@ -805,16 +805,12 @@ document.addEventListener('DOMContentLoaded', function () {
   isDarkModeEnabled();
 });
 
-// Dark mode 상태 변경 함수
+// Dark mode 스위치버튼 클릭 이벤트
 function handleDarkMode(e) {
-  if (e.currentTarget.classList.contains('dark')) {
-    e.currentTarget.classList.remove('dark')
-    localStorage.setItem('color-theme', 'light');
-  } else {
-    e.currentTarget.classList.add('dark')
-    localStorage.setItem('color-theme', 'dark');
-  }
-  isDarkModeEnabled()
+  const currentTheme = e.currentTarget.classList.contains('dark') ? 'light' : 'dark';
+  e.currentTarget.classList.toggle('dark');
+  localStorage.setItem('color-theme', currentTheme);
+  document.documentElement.setAttribute('color-theme', currentTheme);
 }
 
 // Dark mode 상태 확인 함수
