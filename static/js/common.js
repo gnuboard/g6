@@ -5,11 +5,10 @@ var errfld = null;
 // 필드 검사
 function check_field(fld, msg)
 {
-    if ((fld.value = trim(fld.value)) == "")
+    if ((fld.value = fld.value.tirm()) == "")
         error_field(fld, msg);
     else
         clear_field(fld);
-    return;
 }
 
 // 필드 오류 표시
@@ -27,40 +26,8 @@ function clear_field(fld)
     fld.style.background = "#FFFFFF";
 }
 
-function trim(s)
-{
-    var t = "";
-    var from_pos = to_pos = 0;
 
-    for (i=0; i<s.length; i++)
-    {
-        if (s.charAt(i) == ' ')
-            continue;
-        else
-        {
-            from_pos = i;
-            break;
-        }
-    }
-
-    for (i=s.length; i>=0; i--)
-    {
-        if (s.charAt(i-1) == ' ')
-            continue;
-        else
-        {
-            to_pos = i;
-            break;
-        }
-    }
-
-    t = s.substring(from_pos, to_pos);
-    //				alert(from_pos + ',' + to_pos + ',' + t+'.');
-    return t;
-}
-
-// 자바스크립트로 PHP의 number_format 흉내를 냄
-// 숫자에 , 를 출력
+// 숫자에 , 콤마를 출력
 function number_format(data)
 {
 
