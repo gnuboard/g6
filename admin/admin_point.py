@@ -51,7 +51,7 @@ async def point_list(
             .where(Member.mb_id == search_params['stx'])
         )
     # 전체 포인트 합계
-    sum_point = db.scalar(func.sum(Point.po_point))
+    sum_point = db.scalar(func.sum(Point.po_point)) or 0
 
     context = {
         "request": request,
