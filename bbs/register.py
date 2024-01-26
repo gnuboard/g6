@@ -13,6 +13,7 @@ from core.formclass import MemberForm
 from core.models import Member
 from core.template import UserTemplates
 from lib.common import *
+from lib.member_lib import validate_and_update_member_image
 from lib.dependencies import get_member, validate_token, validate_captcha
 from lib.pbkdf2 import create_hash
 from lib.point import insert_point
@@ -167,25 +168,8 @@ async def post_register_form(
         member_form.mb_certify = ""
         member_form.mb_adult = 0
 
-    # 이미지 검사
-    if mb_img and mb_img.filename:
-        if not re.match(r".*\.(gif)$", mb_img.filename, re.IGNORECASE):
-            raise AlertException(status_code=400, detail="gif 이미지 파일만 업로드 가능합니다.")
-
-    if mb_icon and mb_icon.filename:
-        mb_icon_info = Image.open(mb_icon.file)
-        width, height = mb_icon_info.size
-
-        if 0 < config.cf_member_icon_size < mb_icon.size:
-            raise AlertException(status_code=400, detail=f"아이콘 용량은 {config.cf_member_icon_size} 이하로 업로드 해주세요.")
-
-        if config.cf_member_icon_width and config.cf_member_icon_height:
-            if width > config.cf_member_icon_width or height > config.cf_member_icon_height:
-                raise AlertException(status_code=400,
-                                     detail=f"아이콘 크기는 {config.cf_member_icon_width}x{config.cf_member_icon_height} 이하로 업로드 해주세요.")
-
-        if not re.match(r".*\.(gif)$", mb_icon.filename, re.IGNORECASE):
-            raise AlertException(status_code=400, detail="gif 파일만 업로드 가능합니다.")
+    # 이미지 검사 & 업로드
+    validate_and_update_member_image(request, mb_img, mb_icon, mb_id, None, None)
 
     if member_form.mb_sex not in {"m", "f"}:
         member_form.mb_sex = ""
@@ -197,22 +181,6 @@ async def post_register_form(
 
     # 레벨 입력방지
     del member_form.mb_level
-
-    # 유효성 검증 통과
-
-    if mb_img and mb_img.filename:
-        upload_file(
-            mb_img,
-            filename=mb_id + os.path.splitext(mb_img.filename)[1],
-            path=os.path.join('data', 'member_image', f"{mb_id[:2]}")
-        )
-
-    if mb_icon and mb_icon.filename and mb_icon_info:
-        # 파일객체를 pillow에서 열었으므로 따로 지정.
-        path = os.path.join('data', 'member', f"{mb_id[:2]}")
-        make_directory(path)
-        filename = mb_id + os.path.splitext(mb_icon.filename)[1]
-        mb_icon_info.save(os.path.join(path, filename))
 
     new_member = Member(mb_id=mb_id, **member_form.__dict__)
     new_member.mb_datetime = datetime.now()

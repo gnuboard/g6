@@ -1,13 +1,15 @@
 import os
-from typing import Union
+import re
+from typing import Union, Optional
+from PIL import Image, UnidentifiedImageError
 
-from fastapi import Request
+from fastapi import Request, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from core.models import Board, Config, Group, Member as MemberModel, Member
 from core.database import DBConnect
-from lib.common import is_none_datetime, get_img_path
+from lib.common import is_none_datetime, get_img_path, delete_image
 
 
 class MemberService(MemberModel):
@@ -89,7 +91,118 @@ def get_member_image(request: Request, mb_id: str = None) -> str:
     return image_path
 
 
+def validate_member_image(request: Request, img_file: UploadFile, img_type: str) -> Optional[Image.Image]:
+    """
+    멤버 이미지, 아이콘 파일 유효성 검사
+    Args:
+        request: FastAPI Request 객체
+        img_file: 업로드할 이미지 파일
+        img_type: 이미지 타입 (img, icon)
+    Returns:
+        Image.Image: PIL.Image.open()을 통해 얻어진 이미지 객체
+    """
 
+    if not img_file or not img_file.filename:
+        return None
+    
+    from core.exception import AlertException
+    config = request.state.config
+
+    img_type_dict = {
+        'icon': {
+            'cf_size': 'cf_member_icon_size',
+            'cf_width': 'cf_member_icon_width',
+            'cf_height': 'cf_member_icon_height',
+            'expr': '아이콘'
+        },
+        'img': {
+            'cf_size': 'cf_member_img_size',
+            'cf_width': 'cf_member_img_width',
+            'cf_height': 'cf_member_img_height',
+            'expr': '이미지'
+        },
+    }
+
+    img_ext_regex = config.cf_image_extension
+    img_ext_str = img_ext_regex.replace("|", ", ")
+    
+    try:
+        img_file_info = Image.open(img_file.file)
+    except UnidentifiedImageError:
+        raise AlertException("이미지 파일이 아닙니다.", 400)
+
+    width, height = img_file_info.size
+    expr = img_type_dict[img_type]['expr']
+    cf_size = getattr(config, img_type_dict[img_type]['cf_size'])
+    cf_width = getattr(config, img_type_dict[img_type]['cf_width'])
+    cf_height = getattr(config, img_type_dict[img_type]['cf_height'])
+
+    if 0 < config.cf_member_img_size < img_file.size:
+        raise AlertException(f"{expr} 용량은 {cf_size} 이하로 업로드 해주세요.", 400)
+
+    if cf_width and cf_height:
+        if width > cf_width or height > cf_height:
+            raise AlertException(f"{expr} 크기는 {cf_width}x{cf_height} 이하로 업로드 해주세요.", 400)
+
+    if not re.match(fr".*\.({img_ext_regex})$", img_file.filename, re.IGNORECASE):
+        raise AlertException(f"{img_ext_str} 파일만 업로드 가능합니다.", 400)
+    
+    return img_file_info
+
+
+def update_member_image(request: Request, upload_object: Optional[Image.Image], directory: str, filename: str, is_delete: Optional[int]):
+    """멤버 이미지, 아이콘 파일 업데이트(업로드/수정/삭제)
+    Args:
+        request: FastAPI Request 객체)
+        upload_object: 업로드할 이미지 객체 (Image.Image, PIL.Image.open()으로 얻어진 이미지 객체)
+        filename: 저장할 파일명 (확장자 제외)
+        is_delete: 이미지 삭제 여부
+    """
+    if is_delete or upload_object:
+        # 기존 이미지 삭제
+        img_ext_list = request.state.config.cf_image_extension.split("|")
+        for ext in img_ext_list:
+            delete_image(directory, f"{filename}.{ext}", 1)
+        if is_delete:
+            return
+    else:
+        return
+
+    # 이미지 저장 경로 생성
+    os.makedirs(directory, exist_ok=True)
+
+    # 이미지 저장 경로
+    file_ext = upload_object.format.lower()
+    save_path = os.path.join(directory, f"{filename}.{file_ext}")
+    # 이미지 저장
+    upload_object.save(save_path)
+    upload_object.close()
+
+
+def validate_and_update_member_image(
+    request: Request,
+    img_file: UploadFile,
+    icon_file: UploadFile,
+    filename: str,
+    is_delete_img: Optional[int],
+    is_delete_icon: Optional[int],
+):
+    """
+    멤버 이미지, 아이콘 파일 유효성 검사 및 업데이트 통합 함수(업로드/수정/삭제)
+    Args:
+        request: FastAPI Request 객체
+        img_file: 업로드할 이미지 파일
+        icon_file: 업로드할 아이콘 파일
+        filename: 저장할 파일명 (확장자 제외)
+        is_delete_img: 이미지 삭제 여부
+        is_delete_icon: 아이콘 삭제 여부
+    """
+    member_image_path = f"data/member_image/{filename[:2]}"
+    member_icon_path = f"data/member/{filename[:2]}"
+    mb_img_info = validate_member_image(request, img_file, 'img')
+    mb_icon_info = validate_member_image(request, icon_file, 'icon')
+    update_member_image(request, mb_img_info, member_image_path, filename, is_delete_img)
+    update_member_image(request, mb_icon_info, member_icon_path, filename, is_delete_icon)
 
 
 def get_member_level(request: Request) -> int:
