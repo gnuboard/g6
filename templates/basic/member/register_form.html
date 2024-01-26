@@ -26,7 +26,7 @@
                 <ul>
                     <li>
                         <input type="text" name="mb_id" value="{{ member.mb_id|default_if_none('') }}"
-                               id="reg_mb_id" required class="frm_input full_input required " minlength="3"
+                               id="reg_mb_id" required class="frm_input full_input required alnum_" minlength="3"
                                maxlength="20"
                                {% if member.mb_id %}readonly="readonly"{% endif %}
                                placeholder="">
