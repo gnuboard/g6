@@ -346,12 +346,15 @@ legend {position:absolute;width:0;height:0;font-size:0;line-height:0;text-indent
 .scroll_top span.top_img{display:inline-block;width: 0; height: 0; border-left: 5px solid transparent;border-right: 5px solid transparent;
 border-bottom: 5px solid black;}
 .scroll_top span.top_txt{display:block}
-#darkmode_btn{width:40px;height:40px;border:0;text-align:center;border-radius: 3px;border: 1px solid #ffffff40; color: #fff;display: flex;justify-content: center;align-items: center;cursor: pointer;}
-.toggle-switch{position: relative;}
-.toggle-switch::after {position: absolute;display: inline-block;width: 120px;bottom: -22px;background: #fff;padding: 4px 10px;color: #151c24;border-radius: 4px;opacity: 0;content: var(--switchCont);transition: all 0.2s;}
-.toggle-switch:hover::after{opacity: 1;}
-#darkmode_btn input {opacity: 0;width: 0;height: 0;}
-#darkmode_btn .visible {width:24px; height:24px; vertical-align:middle;}
+
+#tnb button.toggle-switch{position: relative;width:40px;height:40px;text-align:center;border-radius: 3px;border: 1px solid #ffffff40; color: #fff;display: flex;justify-content: center;align-items: center;cursor: pointer;padding: 0;overflow: visible;}
+#tnb button.toggle-switch::after {position: absolute;display: inline-block;width: 120px;bottom: -22px;background: var(--mainBg);color: var(--fontColor) !important;padding: 4px 10px;color: #151c24;border-radius: 4px;opacity: 0;content: var(--switchCont);transition: all 0.2s;box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.3);}
+#tnb button.toggle-switch:hover::after{opacity: 1;}
+#tnb button.toggle-switch .visible {width:24px; height:24px; vertical-align:middle;}
+
+/* 다크모드 설정 */
+.toggle-switch .visible.dark {display: var(--lightVisible)}
+.toggle-switch .visible.bright {display: var(--darkVisible)}
 
 /* 페이지 내 검색 */
 .local_sch{}
@@ -1330,10 +1333,6 @@ input[type="text"]{max-width:200px}
 /* Styles */
 input[type="text"]{max-width:200px}
 }
-
-/* 다크모드 설정 */
-#darkmode_btn .visible.dark {display: var(--lightVisible)}
-#darkmode_btn .visible.bright {display: var(--darkVisible)}
 
 /* .dark-mode #gnb .gnb_oparea {border-right: #545454;}
 .dark-mode #gnb .gnb_oparea h3 {color: #eeeeee;} */
