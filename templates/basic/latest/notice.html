@@ -4,7 +4,7 @@
         {% for write in writes -%}
         <li>
             <!-- <span class="lock_icon"><i class="fa fa-lock" aria-hidden="true"></i></span> -->
-            {% if write.icon_new %}<span class="new_icon">N<span class="sound_only">새글</span></span>{% endif %}
+            {% if write.icon_new %}<span class="new_icon">N<span class="blind">새글</span></span>{% endif %}
             <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}">
                 {% if write|string in board.bo_notice %}
                     <strong>{{ write.subject }}</strong>

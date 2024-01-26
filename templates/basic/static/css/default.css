@@ -490,7 +490,7 @@ a.gnb_2da:hover { color:#fff; background:#285981;-moz-transition:all 0.3s ease-o
 
 /* 화면낭독기 사용자용 */
 #hd_login_msg { position:absolute; top:0; left:0; font-size:0; line-height:0; overflow:hidden }
-.msg_sound_only, .sound_only { display:inline-block !important; position:absolute; top:0; left:0; width:0; height:0; margin:0 !important; padding:0 !important; font-size:0; line-height:0; border:0 !important; overflow:hidden !important }
+.msg_blind, .blind { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: polygon(0 0, 0 0, 0 0); }
 
 /* 본문 바로가기 */
 #skip_to_container a { z-index:100000; position:absolute; top:0; left:0; width:1px; height:1px; font-size:0; line-height:0; overflow:hidden } 

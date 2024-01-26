@@ -34,7 +34,7 @@
                           아이디 (필수)
                           <button type="button" class="tooltip_icon">
                               <i class="fa fa-regular fa-question-circle" aria-hidden="true"></i>
-                              <span class="sound_only">설명보기</span>
+                              <span class="blind">설명보기</span>
                               <span class="tooltip">영문자, 숫자, _ 만 입력 가능. 최소 3자이상 입력하세요.</span>
                           </button>
                         </label>
@@ -75,7 +75,7 @@
                           닉네임 (필수)
                           <button type="button" class="tooltip_icon">
                               <i class="fa fa-regular fa-question-circle" aria-hidden="true"></i>
-                              <span class="sound_only">설명보기</span>
+                              <span class="blind">설명보기</span>
                               <span class="tooltip">공백없이 한글,영문,숫자만 입력 가능 (한글2자, 영문4자 이상)<br> 닉네임을 바꾸시면 앞으로 60일 이내에는 변경 할 수 없습니다.</span>
                           </button>
                         </label>
@@ -98,7 +98,7 @@
 
                     {% if config.cf_use_homepage %}
                     <li>
-                        <label for="reg_mb_homepage" class="sound_only">홈페이지{% if config.cf_req_homepage %} (필수){% endif
+                        <label for="reg_mb_homepage" class="blind">홈페이지{% if config.cf_req_homepage %} (필수){% endif
                             %}</label>
                         <input type="text" name="mb_homepage" value="{{ member.mb_homepage|default_if_none('') }}"
                                id="reg_mb_homepage"
@@ -110,7 +110,7 @@
                     {% endif %}
                     {% if config.cf_use_tel %}
                     <li>
-                        <label for="reg_mb_tel" class="sound_only">전화번호
+                        <label for="reg_mb_tel" class="blind">전화번호
                             {% if config.cf_req_tel %} (필수) {% endif %}
                         </label>
                         <input type="text" name="mb_tel" value="{{ member.mb_tel|default_if_none('') }}"
@@ -124,7 +124,7 @@
 
                     {% if config.cf_use_hp %}
                     <li>
-                        <label for="reg_mb_hp" class="sound_only">
+                        <label for="reg_mb_hp" class="blind">
                             휴대폰번호{% if config.cf_req_hp %} (필수){% endif %}{{ desc_phone }}
                         </label>
                         <input type="text" name="mb_hp"
@@ -143,7 +143,7 @@
                     {% if config.cf_use_addr %}
                     <li>
                         <label>주소 {% if config.cf_req_addr %} (필수) {% endif %}</label> 
-                        <label for="reg_mb_zip" class="sound_only">
+                        <label for="reg_mb_zip" class="blind">
                             우편번호 {% if config.cf_req_addr %} (필수) {% endif %}
                         </label>
                         <input type="text" name="mb_zip" 
@@ -165,15 +165,15 @@
                                size="50"
                         placeholder="기본주소">
                         <label for="reg_mb_addr1"
-                               class="sound_only">기본주소  {% if config.cf_req_addr %} (필수) {% endif %}  </label><br>
+                               class="blind">기본주소  {% if config.cf_req_addr %} (필수) {% endif %}  </label><br>
                         <input type="text" name="mb_addr2" value="{{ member.mb_addr2|default_if_none('') }}"
                                id="reg_mb_addr2" class="frm_input frm_address full_input" size="50" placeholder="상세주소">
-                        <label for="reg_mb_addr2" class="sound_only">상세주소</label>
+                        <label for="reg_mb_addr2" class="blind">상세주소</label>
                         <br>
                         <input type="text" name="mb_addr3" value="{{ member.mb_addr3|default_if_none('') }}"
                                id="reg_mb_addr3" class="frm_input frm_address full_input" size="50" readonly="readonly"
                                placeholder="참고항목">
-                        <label for="reg_mb_addr3" class="sound_only">참고항목</label>
+                        <label for="reg_mb_addr3" class="blind">참고항목</label>
                         <input type="hidden" name="mb_addr_jibeon"
                                value="{{ member.mb_addr_jibeon|default_if_none('ewwwww') }}">
                     </li>
@@ -187,7 +187,7 @@
                     
                     {% if config.cf_use_signature %}
                     <li>
-                        <label for="reg_mb_signature" class="sound_only">
+                        <label for="reg_mb_signature" class="blind">
                             서명 {% if config.cf_req_signature %} (필수){% endif %}
                         </label>
                         <textarea name="mb_signature" id="reg_mb_signature"
@@ -198,7 +198,7 @@
                     {% endif %}
                     {% if config.cf_use_profile %}
                     <li>
-                        <label for="reg_mb_profile" class="sound_only">자기소개</label>
+                        <label for="reg_mb_profile" class="blind">자기소개</label>
                         <textarea name="mb_profile" id="reg_mb_profile"
                                   class="{% if config.cf_req_profile %} required{% endif %}" 
                                   {% if config.cf_req_profile %} required {% endif %}
@@ -212,7 +212,7 @@
                             회원이미지
                             <button type="button" class="tooltip_icon">
                               <i class="fa fa-regular fa-question-circle" aria-hidden="true"></i>
-                              <span class="sound_only">설명보기</span>
+                              <span class="blind">설명보기</span>
                               <span class="tooltip">이미지 크기는 가로 {{ config.cf_user_img_width }} 픽셀, 세로 {{ config.cf_user_img_height }}픽셀로 리사이즈 됩니다.<br>
                                 gif, jpg, png파일만 가능하며 용량 {{ config.cf_user_img_size }}바이트 이하만 등록됩니다.</span>
                             </button>
@@ -230,7 +230,7 @@
                             회원아이콘
                             <button type="button" class="tooltip_icon">
                               <i class="fa fa-regular fa-question-circle" aria-hidden="true"></i>
-                              <span class="sound_only">설명보기</span>
+                              <span class="blind">설명보기</span>
                               <span class="tooltip">이미지 크기는 가로 {{ config.cf_user_icon_width }} 픽셀, 세로 {{ config.cf_user_icon_height }}픽셀로 리사이즈 됩니다.<br>
                                 gif, jpg, png파일만 가능하며 용량 {{ config.cf_user_icon_size }}바이트 이하만 등록됩니다.</span>
                             </button>
@@ -253,7 +253,7 @@
                         >
                         <label for="reg_mb_mailling">
                             <span></span>
-                            <b class="sound_only">메일링서비스</b>
+                            <b class="blind">메일링서비스</b>
                         </label>
                         <span class="chk_li">정보 메일을 받겠습니다.</span>
                     </li>
@@ -267,7 +267,7 @@
                         >
                         <label for="reg_mb_sms">
                             <span></span>
-                            <b class="sound_only">SMS 수신여부</b>
+                            <b class="blind">SMS 수신여부</b>
                         </label>
                         <span class="chk_li">휴대폰 문자메세지를 받겠습니다.</span>
                     </li>
@@ -282,7 +282,7 @@
                         >
                         <label for="reg_mb_open">
                             <span></span>
-                            <b class="sound_only">정보공개</b>
+                            <b class="blind">정보공개</b>
                         </label>
                         <span class="chk_li">다른분들이 나의 정보를 볼 수 있도록 합니다.</span>
                         <span class="frm_info">

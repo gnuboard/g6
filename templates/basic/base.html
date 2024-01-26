@@ -34,11 +34,11 @@
 
         <button type="button" id="gnb_open" class="hd_opener">
           <i class="fa fa-bars" aria-hidden="true"></i>
-          <span class="sound_only">열기</span>
+          <span class="blind">열기</span>
         </button>
         <div id="gnb_mo" class="gnb_mo">
           <button type="button" id="gnb_close" class="hd_closer">
-              <span class="sound_only">메뉴 닫기</span>
+              <span class="blind">메뉴 닫기</span>
               <i class="fa fa-xmark" aria-hidden="true"></i>
           </button>
           <!-- 아웃 로그인 -->
@@ -84,9 +84,9 @@
                 <form name="fsearchbox" method="get" action="/bbs/search" onsubmit="return fsearchbox_submit(this);">
                 <input type="hidden" name="sfl" value="wr_subject||wr_content">
                 <input type="hidden" name="sop" value="and">
-                <label for="sch_stx" class="sound_only">검색어 필수</label>
+                <label for="sch_stx" class="blind">검색어 필수</label>
                 <input type="text" name="stx" id="sch_stx" maxlength="20" placeholder="검색어를 입력해주세요">
-                <button type="submit" id="sch_submit" value="검색"><i class="fa fa-search" aria-hidden="true"></i><span class="sound_only">검색</span></button>
+                <button type="submit" id="sch_submit" value="검색"><i class="fa fa-search" aria-hidden="true"></i><span class="blind">검색</span></button>
                 </form>
 
                 <script>
@@ -125,7 +125,7 @@
         </div>
 
         <!-- 모바일 검색 버튼 -->
-        <button type="button" id="user_btn" class="hd_opener"><i class="fa fa-search" aria-hidden="true"></i><span class="sound_only">사용자메뉴</span></button>
+        <button type="button" id="user_btn" class="hd_opener"><i class="fa fa-search" aria-hidden="true"></i><span class="blind">사용자메뉴</span></button>
 
         <script>
           var gnb_opener = document.querySelector("#gnb_open");
@@ -287,7 +287,7 @@
     <div id="ft_copy">Copyright &copy; <b>{{ request.url.hostname }}.</b> All rights reserved.</div>
 
     <button type="button" id="top_btn">
-    	<i class="fa fa-arrow-up" aria-hidden="true"></i><span class="sound_only">상단으로</span>
+    	<i class="fa fa-arrow-up" aria-hidden="true"></i><span class="blind">상단으로</span>
     </button>
     <button type="button" class="toggle-switch">
       <i class="fa-solid fa-moon visible bright"></i>

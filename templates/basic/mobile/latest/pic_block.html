@@ -19,14 +19,14 @@
             </a>
             {% if write.icon_secret -%}
                 <i class="fa fa-lock" aria-hidden="true"></i>
-                <span class="sound_only">비밀글</span>
+                <span class="blind">비밀글</span>
             {%- endif -%}
             <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}">
                 {% if write.is_notice %}<strong>{{ write.subject }}</strong>{% else %}{{ write.subject }}{% endif %}
             </a>
-            {% if write.icon_new %}<span class="new_icon">N<span class="sound_only">새글</span></span>{% endif %}
-            {% if write.icon_hot %}<span class="hot_icon"><i class="fa fa-heart" aria-hidden="true"></i><span class="sound_only">인기글</span></span>{% endif %}
-            {% if write.wr_comment %}<span class="lt_cmt"><span class="sound_only">댓글</span>{{ write.wr_comment }}</span>{% endif %}
+            {% if write.icon_new %}<span class="new_icon">N<span class="blind">새글</span></span>{% endif %}
+            {% if write.icon_hot %}<span class="hot_icon"><i class="fa fa-heart" aria-hidden="true"></i><span class="blind">인기글</span></span>{% endif %}
+            {% if write.wr_comment %}<span class="lt_cmt"><span class="blind">댓글</span>{{ write.wr_comment }}</span>{% endif %}
             <div class="lt_info">
                 <span class="lt_nick">
                     {% if board.bo_use_sideview %}
@@ -45,6 +45,6 @@
         {%- endfor %}
     </ul>
     <a href="{{ url_for('list_post', bo_table=bo_table) }}" class="lt_more">
-        <span class="sound_only">{{ board.subject }}</span>더보기
+        <span class="blind">{{ board.subject }}</span>더보기
     </a>
 </div>

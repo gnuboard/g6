@@ -31,7 +31,7 @@
             <div class="profile_info">
                 <div class="pf_img"><img src="{{ get_member_image(write.mb_id) }}" alt="profile_image"></div>
                 <div class="profile_info_ct">
-                    <span class="sound_only">작성자</span>
+                    <span class="blind">작성자</span>
                     <strong>
                         {% if board.bo_use_sideview %}
                             {{ sideview.get(request, write.mb_id, write.name, write.wr_email, write.wr_homepage)|safe }}
@@ -45,9 +45,9 @@
                         {% endif %}
                     </strong>
                     <br>
-                    <span class="sound_only">댓글</span><strong><a href="#bo_vc"> <i class="fa fa-regular fa-commenting" aria-hidden="true"></i> {{ write.wr_comment|number_format }}건</a></strong>
-                    <span class="sound_only">조회</span><strong><i class="fa fa-eye" aria-hidden="true"></i> {{ write.wr_hit|number_format }}회</strong>
-                    <strong class="if_date"><span class="sound_only">작성일</span><i class="fa fa-regular fa-clock" aria-hidden="true"></i> {{ write.wr_datetime }}</strong>
+                    <span class="blind">댓글</span><strong><a href="#bo_vc"> <i class="fa fa-regular fa-commenting" aria-hidden="true"></i> {{ write.wr_comment|number_format }}건</a></strong>
+                    <span class="blind">조회</span><strong><i class="fa fa-eye" aria-hidden="true"></i> {{ write.wr_hit|number_format }}회</strong>
+                    <strong class="if_date"><span class="blind">작성일</span><i class="fa fa-regular fa-clock" aria-hidden="true"></i> {{ write.wr_datetime }}</strong>
                 </div>
             </div>
             <!-- 게시물 상단 버튼 시작 { -->
@@ -55,27 +55,27 @@
                 <ul class="btn_bo_user bo_v_com">
                     <li>
                         <a href="{{ url_for('list_post', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_b01 btn" title="목록">
-                            <i class="fa fa-list" aria-hidden="true"></i><span class="sound_only">목록</span>
+                            <i class="fa fa-list" aria-hidden="true"></i><span class="blind">목록</span>
                         </a>
                     </li>
                     {% if is_reply %}
                     <li>
                         <a href="{{ url_for('write_form_add', bo_table=board.bo_table)|set_query_params(request, parent_id=write.wr_id) }}" class="btn_b01 btn" title="답변">
-                            <i class="fa fa-reply" aria-hidden="true"></i><span class="sound_only">답변</span>
+                            <i class="fa fa-reply" aria-hidden="true"></i><span class="blind">답변</span>
                         </a>
                     </li>
                     {% endif %}
                     {% if is_write %}
                     <li>
                         <a href="{{ url_for('write_form_add', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_b01 btn" title="글쓰기">
-                            <i class="fa fa-pencil" aria-hidden="true"></i><span class="sound_only">글쓰기</span>
+                            <i class="fa fa-pencil" aria-hidden="true"></i><span class="blind">글쓰기</span>
                         </a>
                     </li>
                     {% endif %}
                     {% if is_admin or write.mb_id == login_member.mb_id or not write.mb_id %}
                     <li>
                         <button type="button" class="btn_more_opt is_view_btn btn_b01 btn">
-                            <i class="fa fa-ellipsis-v" aria-hidden="true"></i><span class="sound_only">게시판 리스트 옵션</span>
+                            <i class="fa fa-ellipsis-v" aria-hidden="true"></i><span class="blind">게시판 리스트 옵션</span>
                         </button>
                         <ul class="more_opt is_view_btn" style="display: none;">
                             <li>
@@ -158,7 +158,7 @@
             <span class="bo_v_act_gng">
                 <a href="/bbs/ajax/good/{{ board.bo_table }}/{{ write.wr_id }}/good" id="good_button" class="bo_v_good {{ "active" if write.is_good else "" }}">
                     <i class="fa fa-regular fa-thumbs-up" aria-hidden="true"></i>
-                    <span class="sound_only">추천</span>
+                    <span class="blind">추천</span>
                     <strong>{{ write.wr_good }}</strong>
                 </a>
                 <b id="bo_v_act_good"></b>
@@ -168,7 +168,7 @@
             <span class="bo_v_act_gng">
                 <a href="/bbs/ajax/good/{{ board.bo_table }}/{{ write.wr_id }}/nogood" id="nogood_button" class="bo_v_nogood {{ "active" if write.is_nogood else "" }}">
                     <i class="fa fa-regular fa-thumbs-down" aria-hidden="true"></i>
-                    <span class="sound_only">비추천</span>
+                    <span class="blind">비추천</span>
                     <strong>{{ write.wr_nogood }}</strong>
                 </a>
                 <b id="bo_v_act_nogood"></b>
@@ -269,10 +269,10 @@
                         </span>
                     {% endif %}
                     {% if comment.ip %}
-                        <span class="sound_only">아이피</span>
+                        <span class="blind">아이피</span>
                         <span>({{ comment.ip }})</span>
                     {% endif %}
-                    <span class="sound_only">작성일</span>
+                    <span class="blind">작성일</span>
                     <span class="bo_vc_hdinfo">
                         <i class="fa fa-regular fa-clock" aria-hidden="true"></i>
                         <time datetime="{{ comment.wr_datetime|datetime_format }}">{{ comment.wr_datetime|datetime_format }}</time>
@@ -302,7 +302,7 @@
             <div class="bo_vl_opt">
                 <button type="button" class="btn_cm_opt btn_b01 btn">
                     <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
-                    <span class="sound_only">댓글 옵션</span>
+                    <span class="blind">댓글 옵션</span>
                 </button>
                 <ul class="bo_vc_act" style="display: none;">
                     {% if comment.is_reply %}
@@ -361,7 +361,7 @@
                 <strong id="char_cnt"><span id="char_count">0</span>글자</strong>
                 {% endif %}
 
-                <span class="sound_only">내용</span>
+                <span class="blind">내용</span>
                 <textarea id="wr_content" name="wr_content" maxlength="10000" required="" class="required"
                     {% if board.bo_comment_min and board.bo_comment_max %}
                         onkeyup="check_byte('wr_content', 'char_count');"
@@ -381,9 +381,9 @@
                 <div class="bo_vc_w_wr">
                     <div class="bo_vc_w_info">
                         {% if not request.state.login_member %}
-                            <label for="wr_name" class="sound_only">이름<strong> 필수</strong></label>
+                            <label for="wr_name" class="blind">이름<strong> 필수</strong></label>
                             <input type="text" name="wr_name" value="" id="wr_name" required class="frm_input required" size="25" placeholder="이름">
-                            <label for="wr_password" class="sound_only">비밀번호<strong> 필수</strong></label>
+                            <label for="wr_password" class="blind">비밀번호<strong> 필수</strong></label>
                             <input type="password" name="wr_password" id="wr_password" required class="frm_input required" size="25"  placeholder="비밀번호">
                             <!-- Captcha Start -->
                             <fieldset id="captcha" class="captcha">{% include captcha_widget(request) ignore missing %}</fieldset>

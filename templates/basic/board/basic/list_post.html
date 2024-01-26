@@ -51,14 +51,14 @@
                 <li>
                     <button type="button" class="btn_bo_sch btn_b01 btn" title="게시판 검색">
                         <i class="fa fa-search" aria-hidden="true"></i>
-                        <span class="sound_only">게시판 검색</span>
+                        <span class="blind">게시판 검색</span>
                     </button>
                 </li>
                 {% if is_write %}
                 <li>
                     <a href="{{ url_for('write_form_add', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_b01 btn" title="글쓰기">
                         <i class="fa fa-pencil" aria-hidden="true"></i>
-                        <span class="sound_only">글쓰기</span>
+                        <span class="blind">글쓰기</span>
                     </a>
                 </li>
                 {% endif %}
@@ -66,7 +66,7 @@
                 <li>
                     <button type="button" class="btn_more_opt is_list_btn btn_b01 btn" title="게시판 리스트 옵션">
                         <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
-                        <span class="sound_only">게시판 리스트 옵션</span>
+                        <span class="blind">게시판 리스트 옵션</span>
                     </button>
                     <ul class="more_opt is_list_btn">
                         <li><button type="submit" name="btn_submit" value="선택삭제" onclick="document.pressed=this.value"><i class="fa fa-regular fa-trash-can" aria-hidden="true"></i> 선택삭제</button></li>
@@ -77,7 +77,7 @@
                 <li>
                     <a href="{{ url_for('board_form', bo_table=board.bo_table) }}" class="btn_admin btn" title="관리자">
                         <i class="fa fa-cog fa-spin fa-fw"></i>
-                        <span class="sound_only">관리자</span>
+                        <span class="blind">관리자</span>
                     </a>
                 </li>
                 {% endif %}
@@ -95,7 +95,7 @@
                         <input type="checkbox" id="chkall" onclick="if (this.checked) all_checked(true); else all_checked(false);" class="selec_chk">
                         <label for="chkall">
                             <span>&nbsp;</span>
-                            <b class="sound_only">현재 페이지 게시물 전체선택</b>
+                            <b class="blind">현재 페이지 게시물 전체선택</b>
                         </label>
                     </th>
                     {% endif %}
@@ -137,11 +137,11 @@
                             <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}">
                                 {{ write.subject }}
                             </a>
-                            {% if write.icon_new %}<span class="new_icon">N<span class="sound_only">새글</span></span>{% endif %}
+                            {% if write.icon_new %}<span class="new_icon">N<span class="blind">새글</span></span>{% endif %}
                             {% if write.icon_hot %}<i class="fa fa-heart" aria-hidden="true"></i>{% endif %}
                             {% if write.icon_file %}<i class="fa fa-download" aria-hidden="true"></i>{% endif %}
                             {% if write.icon_link %}<i class="fa fa-link" aria-hidden="true"></i>{% endif %}
-                            {% if write.wr_comment %}<span class="sound_only">댓글</span><span class="cnt_cmt">{{ write.wr_comment }}</span><span class="sound_only">개</span>{% endif %}
+                            {% if write.wr_comment %}<span class="blind">댓글</span><span class="cnt_cmt">{{ write.wr_comment }}</span><span class="blind">개</span>{% endif %}
                         </div>
                     </td>
                     <td class="td_name sv_use">
@@ -171,7 +171,7 @@
                             <input type="checkbox" name="chk_wr_id[]" value="{{ write.wr_id }}" id="chk_wr_id_{{ loop.index }}" class="selec_chk">
                             <label for="chk_wr_id_{{ loop.index }}">
                                 <span>&nbsp;</span>
-                                <b class="sound_only">{{ write.subject }}</b>
+                                <b class="blind">{{ write.subject }}</b>
                             </label>
                             {% endif %}
                         </td>
@@ -201,11 +201,11 @@
                                     <i class="fa fa-lock" aria-hidden="true"></i>
                                 {% endif %}
                                 <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}">{{ write.wr_subject }}</a>
-                                {% if write.icon_new %}<span class="new_icon">N<span class="sound_only">새글</span></span>{% endif %}
+                                {% if write.icon_new %}<span class="new_icon">N<span class="blind">새글</span></span>{% endif %}
                                 {% if write.icon_hot %}<i class="fa fa-heart" aria-hidden="true"></i>{% endif %}
                                 {% if write.icon_file %}<i class="fa fa-download" aria-hidden="true"></i>{% endif %}
                                 {% if write.icon_link %}<i class="fa fa-link" aria-hidden="true"></i>{% endif %}
-                                {% if write.wr_comment %}<span class="sound_only">댓글</span><span class="cnt_cmt">{{ write.wr_comment }}</span><span class="sound_only">개</span>{% endif %}
+                                {% if write.wr_comment %}<span class="blind">댓글</span><span class="cnt_cmt">{{ write.wr_comment }}</span><span class="blind">개</span>{% endif %}
                             </div>
                         </td>
                         <td class="td_name sv_use">
@@ -246,14 +246,14 @@
                 {% if is_admin %}
                 <li>
                     <a href="{{ url_for('board_form', bo_table=board.bo_table) }}" class="btn_admin btn" title="관리자">
-                        <i class="fa fa-cog fa-spin fa-fw"></i><span class="sound_only">관리자</span>
+                        <i class="fa fa-cog fa-spin fa-fw"></i><span class="blind">관리자</span>
                     </a>
                 </li>
                 {% endif %}
                 {% if board.bo_use_rss_view %}
                 <li>
                     <a href="" class="btn_b01 btn" title="RSS">
-                        <i class="fa fa-rss" aria-hidden="true"></i><span class="sound_only">RSS</span>
+                        <i class="fa fa-rss" aria-hidden="true"></i><span class="blind">RSS</span>
                     </a>
                 </li>
                 {% endif %}
@@ -261,7 +261,7 @@
                 <li>
                     <a href="{{ url_for('write_form_add', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_b01 btn" title="글쓰기">
                         <i class="fa fa-pencil" aria-hidden="true"></i>
-                        <span class="sound_only">글쓰기</span>
+                        <span class="blind">글쓰기</span>
                     </a>
                 </li>
                 {% endif %}
@@ -276,7 +276,7 @@
             <form name="fsearch" method="get">
                 <input type="hidden" name="sca" value="{{ request.query_params.sca }}">
                 <input type="hidden" name="sop" value="{{ request.query_params.sop }}">
-                <label for="sfl" class="sound_only">검색대상</label>
+                <label for="sfl" class="blind">검색대상</label>
                 <select name="sfl" id="sfl">
                     <option value="wr_subject" {{ get_selected(request.query_params.sfl, "wr_subject")|safe }}>제목</option>
                     <option value="wr_content" {{ get_selected(request.query_params.sfl, "wr_content")|safe }}>내용</option>
@@ -284,15 +284,15 @@
                     <option value="wr_name,1" {{ get_selected(request.query_params.sfl, "wr_name,1")|safe }}>글쓴이</option>
                     <option value="wr_name,0" {{ get_selected(request.query_params.sfl, "wr_name,0")|safe }}>글쓴이(코)</option>
                 </select>
-                <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
+                <label for="stx" class="blind">검색어<strong class="blind"> 필수</strong></label>
                 <div class="sch_bar">
                     <input type="text" name="stx" value="{{ request.query_params.stx }}" required id="stx" class="sch_input" size="25" maxlength="20" placeholder=" 검색어를 입력해주세요">
                     <button type="submit" value="검색" class="sch_btn">
-                        <i class="fa fa-search" aria-hidden="true"></i><span class="sound_only">검색</span>
+                        <i class="fa fa-search" aria-hidden="true"></i><span class="blind">검색</span>
                     </button>
                 </div>
                 <button type="button" class="bo_sch_cls" title="닫기">
-                    <i class="fa fa-xmark" aria-hidden="true"></i><span class="sound_only">닫기</span>
+                    <i class="fa fa-xmark" aria-hidden="true"></i><span class="blind">닫기</span>
                 </button>
             </form>
         </fieldset>

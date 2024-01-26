@@ -9,7 +9,7 @@
 <form name="fsearch" onsubmit="return fsearch_submit(this);" method="get">
     <fieldset id="sch_res_detail">
         <legend>상세검색</legend>
-        <label class="sound_only" for="gr_id">게시판 그룹선택</label>
+        <label class="blind" for="gr_id">게시판 그룹선택</label>
         <select id="gr_id" name="gr_id" class="select">
             <option value="">전체 분류</option>
             {% for group in groups %}
@@ -19,7 +19,7 @@
             {% endfor %}
         </select>
 
-        <label class="sound_only" for="sfl">검색조건</label>
+        <label class="blind" for="sfl">검색조건</label>
         <select id="sfl" name="sfl">
             <option value="wr_subject||wr_content" {{ get_selected(query_params.sfl, "wr_subject||wr_content") }})>제목+내용</option>
             <option value="wr_subject" {{ get_selected(query_params.sfl, "wr_subject") }}>제목</option>
@@ -27,7 +27,7 @@
             <option value="wr_name" {{ get_selected(query_params.sfl, "wr_name") }}>작성자</option>
         </select>
 
-        <label class="sound_only" for="stx">검색어<strong class="sound_only"> 필수</strong></label>
+        <label class="blind" for="stx">검색어<strong class="blind"> 필수</strong></label>
         <span class="sch_wr">
             <input type="text" id="stx" name="stx" class="frm_input" value="{{ query_params.stx }}" size="40" required>
             <button type="submit" class="btn_submit">
@@ -81,13 +81,13 @@
                         <div class="sch_tit">
                             <a href="{{ write.href }}" class="sch_res_title">
                                 {% if write.wr_is_comment %}
-                                <span class="cmt_def"><i class="fa fa-regular fa-commenting" aria-hidden="true"></i><span class="sound_only">댓글</span></span>
+                                <span class="cmt_def"><i class="fa fa-regular fa-commenting" aria-hidden="true"></i><span class="blind">댓글</span></span>
                                 {% endif %}
                                 {{ write.subject|truncate(100, False, '...', 0)|search_font(query_params.stx)|safe }}
                             </a>
                             <a href="{{ write.href }}" target="_blank" class="pop_a">
                                 <i class="fa fa-window-restore" aria-hidden="true"></i>
-                                <span class="sound_only">새창</span>
+                                <span class="blind">새창</span>
                             </a>
                         </div>
                         <p>{{ write.wr_content|striptags|truncate(100, False, '...', 0)|search_font(query_params.stx)|safe }}</p>

@@ -9,16 +9,16 @@
 <fieldset id="new_sch">
     <legend>상세검색</legend>
     <form name="fnew" method="get">
-        <label for="gr_id" class="sound_only">그룹</label>
+        <label for="gr_id" class="blind">그룹</label>
         {{ get_group_select('gr_id', query_params.gr_id)|safe }}
 
-        <label for="view" class="sound_only">검색대상</label>
+        <label for="view" class="blind">검색대상</label>
         <select name="view" id="view">
             <option value="">전체게시물</option>
             <option value="write" {{ get_selected(query_params.view, "write") }}>원글만</option>
             <option value="comment" {{ get_selected(query_params.view, "comment") }}>코멘트만</option>
         </select>
-        <label for="mb_id" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
+        <label for="mb_id" class="blind">검색어<strong class="blind"> 필수</strong></label>
         <input type="text" name="mb_id" value="{{ query_params.mb_id }}" id="mb_id" class="frm_input" size="40">
         <button type="submit" class="btn_submit">
             <i class="fa fa-search" aria-hidden="true"></i> 검색
@@ -36,7 +36,7 @@
     <div class="admin_new_btn">
         <button type="submit" title="선택삭제" class="btn_b01 btn">
             <i class="fa fa-regular fa-trash-can" aria-hidden="true"></i>
-            <span class="sound_only">선택삭제</span>
+            <span class="blind">선택삭제</span>
         </button>
     </div>
     <div class="tbl_head01 tbl_wrap">
@@ -47,7 +47,7 @@
                         <input type="checkbox" id="all_chk" class="selec_chk">
                         <label for="all_chk">
                             <span>&nbsp;</span>
-                            <b class="sound_only">목록 전체</b>
+                            <b class="blind">목록 전체</b>
                         </label>
                     </th>
                     <th scope="col">그룹</th>
@@ -64,7 +64,7 @@
                         <input type="checkbox" name="chk_bn_id[]" value="{{ board_new.bn_id }}" id="chk_bn_id_{{ loop.index }}" class="selec_chk">
                         <label for="chk_bn_id_{{ loop.index }}">
                             <span>&nbsp;</span>
-                            <b class="sound_only">{{ board_new.num }}번</b>
+                            <b class="blind">{{ board_new.num }}번</b>
                         </label>
                     </td>
                     <td class="td_group">
@@ -89,7 +89,7 @@
     <div class="admin_new_btn">
         <button type="submit" title="선택삭제" class="btn_b01 btn">
             <i class="fa fa-regular fa-trash-can" aria-hidden="true"></i>
-            <span class="sound_only">선택삭제</span>
+            <span class="blind">선택삭제</span>
         </button>
     </div>
 </form>
