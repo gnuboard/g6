@@ -177,6 +177,34 @@ def make_directory(directory: str):
         os.makedirs(directory)
 
 
+def get_img_path(request: Request, dir: str, mb_id: str = None) -> str:
+    """이미지 경로를 반환하는 함수
+    Args:
+        request (Request): FastAPI Request 객체
+        dir (str): 상위 경로
+        mb_id (str, optional): 회원아이디.
+    Returns:
+        str: 이미지 경로
+    """
+
+    default_image_path = "/static/img/no_profile.gif"
+    image_path = default_image_path
+    if not mb_id:
+        return image_path
+
+    member_dir = f"{dir}/{mb_id[:2]}"
+    img_ext_list = request.state.config.cf_image_extension.split("|")
+    for ext in img_ext_list:
+        image_file = f"{mb_id}.{ext}"
+        image_path_with_ext = os.path.join(member_dir, image_file)
+
+        if os.path.exists(image_path_with_ext):
+            mtime = os.path.getmtime(image_path_with_ext)   # 캐시를 위해 파일수정시간을 추가
+            image_path = f"/{image_path_with_ext}?{mtime}"
+            break
+    return image_path
+
+
 def delete_image(directory: str, filename: str, delete: bool = True):
     """이미지 삭제 처리 함수
 

@@ -223,8 +223,8 @@ async def member_form(
         if not exists_member:
             raise AlertException("회원아이디가 존재하지 않습니다.")
 
-        exists_member.mb_icon = get_member_icon(mb_id)
-        exists_member.mb_img = get_member_image(mb_id)
+        exists_member.mb_icon = get_member_icon(request, mb_id)
+        exists_member.mb_img = get_member_image(request, mb_id)
 
     context = {
         "request": request, "member": exists_member}

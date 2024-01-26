@@ -92,8 +92,8 @@ async def member_profile(
         "action_url": request.url_for("member_profile", mb_no=mb_no).path,
         "name_readonly": "readonly",
         "hp_readonly": "readonly" if get_is_phone_certify(member, config) else "",
-        "mb_icon_url": get_member_icon(member.mb_id),
-        "mb_img_url": get_member_image(member.mb_id),
+        "mb_icon_url": get_member_icon(request, member.mb_id),
+        "mb_img_url": get_member_image(request, member.mb_id),
         "is_profile_open": check_profile_open(open_date=member.mb_open_date, config=request.state.config)
     }
 
@@ -117,8 +117,8 @@ async def member_profile_save(
     mb_certify_case: str = Form(default=""),
     mb_zip: str = Form(None),
     member_form: MemberForm = Depends(MemberForm),
-    del_mb_img: str = Form(None),
-    del_mb_icon: str = Form(None),
+    del_mb_img: int = Form(None),
+    del_mb_icon: int = Form(None),
     mb_img: UploadFile = File(None),
     mb_icon: UploadFile = File(None),
 ):

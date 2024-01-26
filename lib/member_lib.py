@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from core.models import Board, Config, Group, Member as MemberModel, Member
 from core.database import DBConnect
-from lib.common import is_none_datetime
+from lib.common import is_none_datetime, get_img_path
 
 
 class MemberService(MemberModel):
@@ -61,7 +61,7 @@ def get_member(mb_id: str) -> MemberModel:
     return member
 
 
-def get_member_icon(mb_id: str = None) -> str:
+def get_member_icon(request: Request, mb_id: str = None) -> str:
     """회원 아이콘 경로를 반환하는 함수
 
     Args:
@@ -71,19 +71,11 @@ def get_member_icon(mb_id: str = None) -> str:
         str: 회원 아이콘 경로
     """
     icon_dir = "data/member"
-
-    if mb_id:
-        member_dir = f"{icon_dir}/{mb_id[:2]}"
-        icon_path = os.path.join(member_dir, f"{mb_id}.gif")
-
-        if os.path.exists(icon_path):
-            mtime = os.path.getmtime(icon_path)  # 캐시를 위해 파일수정시간을 추가
-            return f"/{icon_path}?{mtime}"
-
-    return "/static/img/no_profile.gif"
+    image_path = get_img_path(request, icon_dir, mb_id)
+    return image_path
 
 
-def get_member_image(mb_id: str = None) -> str:
+def get_member_image(request: Request, mb_id: str = None) -> str:
     """회원 이미지 경로를 반환하는 함수
 
     Args:
@@ -93,16 +85,11 @@ def get_member_image(mb_id: str = None) -> str:
         str: 회원 이미지 경로
     """
     image_dir = "data/member_image"
+    image_path = get_img_path(request, image_dir, mb_id)
+    return image_path
 
-    if mb_id:
-        member_dir = f"{image_dir}/{mb_id[:2]}"
-        image_path = os.path.join(member_dir, f"{mb_id}.gif")
 
-        if os.path.exists(image_path):
-            mtime = os.path.getmtime(image_path)  # 캐시를 위해 파일수정시간을 추가
-            return f"/{image_path}?{mtime}"
 
-    return "/static/img/no_profile.gif"
 
 
 def get_member_level(request: Request) -> int:
