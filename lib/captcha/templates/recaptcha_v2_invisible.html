@@ -7,13 +7,10 @@
     
     {# 사용자가 캡차를 입력했는지 폼전송시 확인 합니다. #}
     function check_captcha(form) {
-        form.addEventListener('submit', function(event) {
-            event.preventDefault();
-        });
         if (document.getElementById(getRecaptchaTokenName()).value == "") {
             grecaptcha.execute();
         }
-        
+
         return false;
     }
     

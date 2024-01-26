@@ -761,6 +761,17 @@ $(function() {
 
         return true;
     });
+
+    // 서버에서 에러 반환 시 `btn_submit` 버튼 재활성화
+    // - alert창 이후 history.back()
+    window.onpageshow = function(event){
+        if(event.persisted || (window.performance && performance.getEntriesByType("navigation")[0].type === 'back_forward')) {
+            const $btn_submit = document.getElementById("btn_submit")
+            if ($btn_submit) {
+                $btn_submit.disabled = false;
+            }
+        }
+    }
 });
 
 

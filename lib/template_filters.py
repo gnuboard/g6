@@ -75,23 +75,30 @@ def search_font(content: str, stx: str) -> str:
     return re.sub(f'({pattern})', replace, content, flags=re.IGNORECASE)
 
 
-def set_query_params(url: Union[URL, str], request: Request, **params: dict) -> URL:
+def set_query_params(url: Union[URL, str], request: Request,
+                     remove: list = [], **params: dict) -> URL:
     """url에 query string을 추가
 
     Args:
-        url (str): URL
+        url (Union[URL, str]): URL
         request (Request): FastAPI Request 객체
+        remove (list): 제거할 query string
         **params (dict): 추가할 query string
 
     Returns:
-        str: query string이 추가된 URL
+        URL: query string이 추가된 URL
     """
-    # 현재 query string
-    query_params = request.query_params
-    if query_params or params:
-        if isinstance(url, str):
-            url = URL(url)
-        # 현재 query string을 유지하면서 추가할 query string을 추가
-        url = url.replace_query_params(**query_params, **params)
+    url = URL(url) if isinstance(url, str) else url
+
+    query_params = request.query_params._dict
+    # 제거할 query string을 제거
+    for key in remove:
+        query_params.pop(key, None)
+
+    # query_params와 params를 병합
+    set_params = {**query_params, **params}
+
+    # 현재 query string을 유지하면서 추가할 query string을 추가
+    url = url.replace_query_params(**set_params)
 
     return url

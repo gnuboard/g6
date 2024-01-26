@@ -4,42 +4,19 @@
 <div id="hd_login_msg">{{ request.state.login_member.mb_nick }} 로그인 중 <a href="/bbs/logout">로그아웃</a></div>
 <script>
     var admin_csrf_token_key = "";
-    var tempX = 0;
-    var tempY = 0;
-
-    function imageview(id, w, h) {
-
-        menu(id);
-
-        var el_id = document.getElementById(id);
-
-        //submenu = eval(name+".style");
-        submenu = el_id.style;
-        submenu.left = tempX - (w + 11);
-        submenu.top = tempY - (h / 2);
-
-        selectBoxVisible();
-
-        if (el_id.style.display != 'none')
-            selectBoxHidden(id);
-    }
 </script>
 
 <div id="to_content"><a href="#container">본문 바로가기</a></div>
 
-
-
 <script>
     jQuery(function($) {
-
-        var menu_cookie_key = 'g6_admin_btn_gnb';
+        const menu_cookie_key = 'g6_admin_btn_gnb';
 
         $(".tnb_mb_btn").click(function() {
             $(".tnb_mb_area").toggle();
         });
 
         $("#btn_gnb").click(function() {
-
             var $this = $(this);
 
             try {
@@ -60,7 +37,6 @@
         $(".gnb_ul li .btn_op").click(function() {
             $(this).parent().addClass("on").siblings().removeClass("on");
         });
-
     });
 </script>
 
