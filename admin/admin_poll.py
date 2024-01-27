@@ -106,6 +106,8 @@ async def poll_form_update(
     if poll:
         # 데이터 수정 후 commit
         for field, value in form_data.__dict__.items():
+            if value is None:
+                value = ""
             setattr(poll, field, value)
         db.commit()
     # 투표 등록
