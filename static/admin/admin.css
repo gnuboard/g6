@@ -492,7 +492,7 @@ tfoot th {}
     #gnb .gnb_li.on {margin-bottom: 200px;}
     #gnb .gnb_li button {text-indent: -9999px;overflow: hidden;padding: 0px;}
     .container_wr.top {padding: 20px 0px;}
-    #gnb .gnb_oparea {position: absolute;left: 0;top: 60px; width: 100%;height: auto;z-index: 5;}
+    #gnb .gnb_oparea {position: absolute;left: 0;top: 60px; width: 100%;height: auto;z-index: 1;}
     #gnb .gnb_oparea h3 {display: none;}
     #gnb .gnb_oparea ul {display: flex;flex-wrap: wrap;}
     #gnb .gnb_oparea ul li {width: calc(100%/4);text-align: center;}
