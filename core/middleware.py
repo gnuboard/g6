@@ -70,7 +70,7 @@ def regist_core_middleware(app: FastAPI) -> None:
     # 세션 미들웨어를 추가합니다.
     # .env 파일의 설정을 통해 secret_key, session_cookie를 설정할 수 있습니다.
     app.add_middleware(SessionMiddleware,
-                       secret_key=os.getenv("SESSION_SECRET_KEY", "secret"),
+                       secret_key=os.getenv("SESSION_SECRET_KEY", ''),
                        session_cookie=os.getenv("SESSION_COOKIE_NAME", "session"),
                        max_age=60 * 60 * 3)
 
@@ -95,6 +95,7 @@ async def should_run_middleware(request: Request) -> bool:
     if (path.startswith('/generate_token')
             or path.startswith('/device/change')
             or path.startswith('/static')
+            or path.startswith('/theme_static')
             or path.startswith('/data')
             or path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.webp'))):
         return False

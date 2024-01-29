@@ -2,9 +2,17 @@ from dotenv import dotenv_values, load_dotenv
 from fastapi import Depends
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
 from typing_extensions import Annotated
+
+
+class MySQLCharsetMixin:
+    """ MySQL의 기본 charset을 설정하는 Mixin 클래스 """
+    @declared_attr.directive
+    def __table_args__(cls):
+        return {'mysql_charset': DBConnect().charset}
 
 
 class DBSetting:
@@ -21,6 +29,7 @@ class DBSetting:
     _port: Annotated[int, 0]
     _name: Annotated[str, ""]
     _url: Annotated[str, ""]
+    _charset: Annotated[str, ""]
 
     supported_engines = {
         "mysql": "mysql+pymysql://",
@@ -31,6 +40,10 @@ class DBSetting:
     def __init__(self) -> None:
         self.set_connect_infomation()
         self.create_url()
+
+    @property
+    def charset(self) -> str:
+        return self._charset
 
     @property
     def url(self) -> str:
@@ -60,6 +73,7 @@ class DBSetting:
         self._host = env_values.get("DB_HOST")
         self._port = int(port) if port.isdigit() else 3306
         self._db_name = env_values.get("DB_NAME")
+        self._charset = env_values.get("DB_CHARSET", "utf8mb4")
 
     def create_url(self) -> None:
         url = None

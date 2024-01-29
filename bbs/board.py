@@ -1258,7 +1258,6 @@ async def delete_comment(
     )
     db.commit()
 
-    query_params = request.query_params
     url = f"/board/{bo_table}/{comment.wr_parent}"
     return RedirectResponse(
         set_url_query_params(url, query_params), status_code=303)
