@@ -376,7 +376,7 @@ a.gnb_2da:hover { color:#fff; background:#285981;-moz-transition:all 0.3s ease-o
 
 .gnb_mo .ol{border-radius: 0;border: none;border-bottom: var(--border);}
 .gnb_mo .ol {position:relative;margin:0 0 10px;text-align:center}
-.gnb_mo .ol h2 {width:0;height:0;overflow:hidden}
+.gnb_mo .ol h2 {margin:0;padding:0;width:0px;height:0px;font-size:0;line-height:0;overflow:hidden}
 
 .gnb_mo #ol_before {background:#212020;padding:11px 15px;text-align:left}
 .gnb_mo #ol_before input[type=text], #ol_before input[type=password] {width:100%;border:0;border-bottom:1px solid #434242;background:none;height:40px;;margin:0 0 10px;color:#fff}
@@ -2154,8 +2154,8 @@ transition:all 0.1s ease-in-out}
 .register_form_inner label.text_input {position:absolute;left:0%; bottom:50%; width:100%; line-height: 45px; text-align:left;transition: all 0.2s;cursor: pointer;color: var(--bovColor);}
 .register_form_inner .frm_input:focus,
 .register_form_inner .frm_input:valid,
-.register_form_inner .frm_input:-webkit-autofill {border: none !important;border-bottom: 2px solid #4989bc !important;box-shadow: none;}
-.register_form_inner .frm_input:placeholder-shown {border-bottom: 1px solid #d0d3db !important}
+.register_form_inner .frm_input:-webkit-autofill {border: none !important;border: 2px solid #4989bc !important;box-shadow: none;}
+.register_form_inner .frm_input:placeholder-shown {border: 1px solid #d0d3db !important}
 .register_form_inner .frm_input:focus + label.text_input, 
 .register_form_inner .frm_input:valid + label.text_input,
 .register_form_inner .frm_input:-webkit-autofill + label.text_input {bottom:50%;font-size:1.2rem;color: #4989bc;}  /* input에 글을 입력하고 포커스가 지나간 상태에서 제어하려면 valid 선택자를 써야한다. */
