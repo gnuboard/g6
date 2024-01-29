@@ -39,7 +39,7 @@ class HTMLCleaner:
         return parsed_css.cssText.decode('utf-8')
 
     @staticmethod
-    def __cleanse_html(html_content):
+    def __step1_cleanse_html(html_content):
         soup = BeautifulSoup(html_content, 'html.parser')
         # <script> 태그 삭제
         for _tag in soup.find_all('script'):
@@ -52,30 +52,32 @@ class HTMLCleaner:
                 _tag.decompose()
         return str(soup)
 
-    def __extract_and_validate_styles(self, html_content):
+    def __step2_extract_and_validate_styles(self, html_content):
         soup = BeautifulSoup(html_content, 'html.parser')
         for style_tag in soup.find_all('style'):
             clean_css = self.__validate_css(style_tag.string)
             style_tag.string = clean_css
         return str(soup)
 
-    def __bleach_clean(self, clean_html):
+    def __step3_bleach_clean(self, clean_html):
         return bleach.clean(clean_html, tags=self.allowed_tags, attributes=self.allowed_attrs, strip=True)
 
     @timeit
     def clean(self, raw_html):
         """
         HTML 값을 빡빡 닦아서 돌려주는 함수 입니다.
-
+        함수 이름을 step으로 적어둔 이유는 바뀌면 문자열 처리 과정에서 에러가 발생합니다.
+        의도를 전달 할 수 있는 코드 스타일을 좋아하다보니 이렇게 명명한 점 참고해주시고 언제든 바꾸셔도 좋습니다.
+            - 그렇다고 함수형 패러다임을 적용하는 것도 이 프로젝트 구조상 안맞는것 같기도해서 😅
         Args:
             raw_html:
                 - 원본 HTML 문자열 변수입니다.
         Returns:
             - script 태그, `javascript:` 소스, CSS 내 위험요소 등을 삭제 한 html 문자열 값
         """
-        clean_html = self.__cleanse_html(raw_html)
-        clean_html = self.__extract_and_validate_styles(clean_html)
-        clean_html = self.__bleach_clean(clean_html)
+        clean_html = self.__step1_cleanse_html(raw_html)
+        clean_html = self.__step2_extract_and_validate_styles(clean_html)
+        clean_html = self.__step3_bleach_clean(clean_html)
         return clean_html
 
 
