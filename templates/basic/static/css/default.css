@@ -811,10 +811,9 @@ a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:no
 #bo_list .cnt_cmt { background:#e9eff5; color:#4989bc; font-size:1.1rem; height:16px; line-height:16px; padding:0 5px; border-radius:3px; vertical-align:middle } 
 
 #bo_list .bo_tit .title_icon { margin-right:2px } 
-#bo_list .bo_tit .fa-heart { color:#ff0000 } 
+#bo_list .bo_tit .fa-heart { display:inline-block; width:10px;height: 10px;padding: 3px; color:#ff0000; background:#ffb9b9; text-align:center; border-radius:2px; vertical-align:middle } 
 #bo_list .bo_tit .fa-lock { display:inline-block; width:10px;height: 10px;padding: 3px; color:#4f818c; background:#cbe3e8; text-align:center; border-radius:2px; font-size:1.2rem; border:1px solid #cbe3e8; vertical-align:middle } 
 #bo_list .bo_tit .new_icon { display:inline-block; width:16px; line-height:16px; font-size:1rem; color:#23db79; background:#b9ffda; text-align:center; border-radius:2px; margin-left:2px; font-weight:bold; vertical-align:middle } 
-#bo_list .bo_tit .hot_icon { display:inline-block; width:10px;height: 10px;padding: 3px; color:#ff0000; background:#ffb9b9; text-align:center; border-radius:2px; vertical-align:middle } 
 #bo_list .bo_tit .fa-caret-right { color:#bbb } 
 #bo_list .bo_tit .fa-download { display:inline-block; width:10px;height: 10px;padding: 3px; color:#daae37; background:#ffefb9; text-align:center; border-radius:2px; margin-left:5px; vertical-align:middle } 
 #bo_list .bo_tit .fa-link { display:inline-block; width:10px;height: 10px;padding: 3px; color:#b451fd; background:#edd3fd; text-align:center; border-radius:2px; margin-left:5px; vertical-align:middle } 
@@ -1375,10 +1374,9 @@ html.no-overflowscrolling #autosave_pop { height:auto; max-height:10000px !impor
 .pic_lt li .lt_img { margin:5px 0; display:block } 
 .pic_lt li .lt_img img, .pic_lt li .lt_img video { width:100%; height:auto } 
 .pic_lt li a:hover { color:#a22121 } 
-.pic_lt li .fa-heart { color:#ff0000 } 
+.pic_lt li .fa-heart { display:inline-block; width:10px;height: 10px;padding: 3px; color:#ff0000; background:#ffb9b9; text-align:center; border-radius:2px; vertical-align:middle } 
 .pic_lt li .fa-lock { display:inline-block; line-height:14px; width:10px; height: 10px; padding: 3px; background:#cbe3e8; text-align:center; border-radius:2px; font-size:1.2rem; border:1px solid #cbe3e8; vertical-align:middle } 
 .pic_lt li .new_icon { display:inline-block; width:16px; line-height:16px; font-size:1rem; color:#23db79; background:#b9ffda; text-align:center; border-radius:2px; margin-left:2px; font-weight:bold; vertical-align:middle } 
-.pic_lt li .hot_icon { display:inline-block; width:10px;height: 10px;padding: 3px; color:#ff0000; background:#ffb9b9; text-align:center; border-radius:2px; vertical-align:middle } 
 .pic_lt li .fa-caret-right { color:#bbb } 
 .pic_lt li .fa-download { display:inline-block; width:10px; height: 10px; padding: 3px; color:#daae37; background:#ffefb9; text-align:center; border-radius:2px; vertical-align:middle } 
 .pic_lt li .fa-link { display:inline-block; width:10px; height: 10px; padding: 3px; color:#b451fd; background:#edd3fd; text-align:center; border-radius:2px; vertical-align:middle } 
@@ -1412,10 +1410,9 @@ html.no-overflowscrolling #autosave_pop { height:auto; max-height:10000px !impor
 .pic_li_lt li:first-child .lt_img img, .pic_li_lt li .lt_img video { width:100%; height:auto } 
 .pic_li_lt li .pic_li_tit { font-weight:bold; font-size:1.4rem; line-height:20px; vertical-align:middle } 
 
-.pic_li_lt li .fa-heart { color:#ff0000 } 
+.pic_li_lt li .fa-heart { display:inline-block; width:10px;height: 10px;padding: 3px; color:#ff0000; background:#ffb9b9; text-align:center; border-radius:2px; vertical-align:middle } 
 .pic_li_lt li .fa-lock { display:inline-block; width:10px; height: 10px; padding: 3px; color:#4f818c; background:#cbe3e8; text-align:center; border-radius:2px; font-size:1.2rem; border:1px solid #cbe3e8; vertical-align:middle } 
 .pic_li_lt li .new_icon { display:inline-block; width:16px; line-height:16px; font-size:1rem; color:#23db79; background:#b9ffda; text-align:center; border-radius:2px; margin-left:2px; font-weight:bold; vertical-align:middle } 
-.pic_li_lt li .hot_icon { display:inline-block; width:10px;height: 10px;padding: 3px; color:#ff0000; background:#ffb9b9; text-align:center; border-radius:2px; vertical-align:middle } 
 .pic_li_lt li .fa-caret-right { color:#bbb } 
 .pic_li_lt li .fa-download { display:inline-block; width:10px; height: 10px; padding: 3px; color:#daae37; background:#ffefb9; text-align:center; border-radius:2px; vertical-align:middle } 
 .pic_li_lt li .fa-link { display:inline-block; width:10px; height: 10px; padding: 3px; color:#b451fd; background:#edd3fd; text-align:center; border-radius:2px; vertical-align:middle } 
@@ -1455,10 +1452,9 @@ html.no-overflowscrolling #autosave_pop { height:auto; max-height:10000px !impor
 .lat li { position:relative; line-height:18px; border-bottom:var(--border); color: var(--fontColor); margin-bottom:10px } 
 .lat li a { font-weight:bold; font-size:1.4rem; line-height:20px; vertical-align:middle } 
 .lat li a:hover { color:#4989bc } 
-.lat li .fa-heart { color:#ff0000 } 
+.lat li .fa-heart { display:inline-block; width:10px;height: 10px;padding: 3px; color:#ff0000; background:#ffb9b9; text-align:center; border-radius:2px; vertical-align:middle } 
 .lat li .fa-lock { display:inline-block; width:10px; height: 10px; padding: 3px; color:#4f818c; background:#cbe3e8; text-align:center; border-radius:2px; font-size:1.2rem; border:1px solid #cbe3e8; vertical-align:middle } 
 .lat li .new_icon { display:inline-block; width:16px; line-height:16px; font-size:1rem; color:#23db79; background:#b9ffda; text-align:center; border-radius:2px; margin-left:2px; font-weight:bold; vertical-align:middle } 
-.lat li .hot_icon { display:inline-block; width:10px;height: 10px;padding: 3px; color:#ff0000; background:#ffb9b9; text-align:center; border-radius:2px; vertical-align:middle } 
 .lat li .fa-caret-right { color:#bbb } 
 .lat li .fa-download { display:inline-block; width:10px; height: 10px; padding: 3px; color:#daae37; background:#ffefb9; text-align:center; border-radius:2px; vertical-align:middle } 
 .lat li .fa-link { display:inline-block; width:10px; height: 10px; padding: 3px; color:#b451fd; background:#edd3fd; text-align:center; border-radius:2px; vertical-align:middle } 
@@ -1922,8 +1918,8 @@ button { cursor:pointer; padding:0; font-size:inherit; }
 .poll_numerical .poll_cnt {font-size:1.2rem;text-align:right;color:#8d8d8d}
 
 #poll_result_cmt {margin:20px}
-#poll_result_cmt h2 {position:absolute;font-size:0;line-height:0;overflow:hidden}
-#poll_result_cmt article {margin:15px 0;position:relative;border-bottom:1px solid #eaeaea}
+#poll_result_cmt h2 {position:absolute;font-size:0;line-height:0;overflow:hidden;color: var(--fontColor);}
+#poll_result_cmt article {margin:15px 0;position:relative;border-bottom:var(--border)}
 #poll_result_cmt h1 {position:absolute;margin:0;padding:0;border:0;font-size:0;text-indent:-9999rem;line-height:0;overflow:hidden}
 #poll_result_cmt header {margin:0 0 5px}
 #poll_result_cmt .poll_datetime {display:inline-block;font-size:1.1rem;color:#777}
@@ -2238,10 +2234,10 @@ p input:valid + label::after { width:100%; transform:translateX(0); }
 html.remodal-is-locked {overflow-y:scroll !important}
 
 /* 다크모드 설정 */
-.toggle-switch { position:fixed; bottom:20px; right:80px; width:50px; height:50px; border:0; text-align:center; border-radius: 3px; background: #4989bc; color: #fff; display: flex; justify-content: center; align-items: center; cursor: pointer; } 
-.toggle-switch .visible { width:24px; height:24px; vertical-align:middle; }
-.toggle-switch .visible.dark { display: var(--lightVisible) }
-.toggle-switch .visible.bright { display: var(--darkVisible) }
+.darkmode-toggle-switch { position:fixed; bottom:20px; right:80px; width:50px; height:50px; border:0; text-align:center; border-radius: 3px; background: #4989bc; color: #fff; display: flex; justify-content: center; align-items: center; cursor: pointer; } 
+.darkmode-toggle-switch .visible { width:24px; height:24px; vertical-align:middle; }
+.darkmode-toggle-switch .visible.dark { display: var(--lightVisible) }
+.darkmode-toggle-switch .visible.bright { display: var(--darkVisible) }
 
 /* 긴 문자열 ... 처리 */
 .elip { display:inline-block; width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }

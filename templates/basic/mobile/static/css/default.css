@@ -964,10 +964,9 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 .pic_lt li .lt_img {margin:5px 0;display:block}
 .pic_lt li .lt_img img, .pic_lt li .lt_img video {width:100%;height:auto}
 .pic_lt li a:hover {color:#a22121}
-.pic_lt li .fa-heart {color:#ff0000}
+.pic_lt li .fa-heart {display:inline-block;width:10px;height: 10px;padding: 3px;color:#ff0000;background:#ffb9b9;text-align:center;border-radius:2px;vertical-align:middle}
 .pic_lt li .fa-lock {display:inline-block;width:10px;height: 10px;padding: 3px;color:#4f818c;background:#cbe3e8;text-align:center;border-radius:2px;font-size:1.2rem;border:1px solid #cbe3e8;vertical-align:middle}
 .pic_lt li .new_icon {display:inline-block;width:16px;line-height:16px;font-size:1rem;color:#23db79;background:#b9ffda;text-align:center;border-radius:2px;margin-left:2px;font-weight:bold;vertical-align:middle}
-.pic_lt li .hot_icon {display:inline-block;width:10px;height: 10px;padding: 3px;color:#ff0000;background:#ffb9b9;text-align:center;border-radius:2px;vertical-align:middle}
 .pic_lt li .fa-caret-right {color:#bbb}
 .pic_lt li .fa-download {display:inline-block;width:10px;height: 10px;padding: 3px;color:#daae37;background:#ffefb9;text-align:center;border-radius:2px;vertical-align:middle}
 .pic_lt li .fa-link {display:inline-block;width:10px;height: 10px;padding: 3px;color:#b451fd;background:#edd3fd;text-align:center;border-radius:2px;vertical-align:middle}
@@ -1000,10 +999,9 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 .pic_li_lt li:first-child .lt_img img, .pic_li_lt li .lt_img video {width:100%;height:auto}
 .pic_li_lt li .pic_li_tit {font-weight:bold;font-size:1.4rem;line-height:20px;vertical-align:middle}
 
-.pic_li_lt li .fa-heart {color:#ff0000}
+.pic_li_lt li .fa-heart {display:inline-block;width:10px;height: 10px;padding: 3px;color:#ff0000;background:#ffb9b9;text-align:center;border-radius:2px;vertical-align:middle}
 .pic_li_lt li .fa-lock {display:inline-block;width:10px;height: 10px;padding: 3px;color:#4f818c;background:#cbe3e8;text-align:center;border-radius:2px;font-size:1.2rem;border:1px solid #cbe3e8;vertical-align:middle}
 .pic_li_lt li .new_icon {display:inline-block;width:16px;line-height:16px;font-size:1rem;color:#23db79;background:#b9ffda;text-align:center;border-radius:2px;margin-left:2px;font-weight:bold;vertical-align:middle}
-.pic_li_lt li .hot_icon {display:inline-block;width:10px;height: 10px;padding: 3px;color:#ff0000;background:#ffb9b9;text-align:center;border-radius:2px;vertical-align:middle}
 .pic_li_lt li .fa-caret-right {color:#bbb}
 .pic_li_lt li .fa-download {display:inline-block;width:10px;height: 10px;padding: 3px;color:#daae37;background:#ffefb9;text-align:center;border-radius:2px;vertical-align:middle}
 .pic_li_lt li .fa-link {display:inline-block;width:10px;height: 10px;padding: 3px;color:#b451fd;background:#edd3fd;text-align:center;border-radius:2px;vertical-align:middle}
@@ -1054,8 +1052,7 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 .lt li .fa-lock {display:inline-block;width:10px;height: 10px;padding: 3px;color:#4f818c;background:#cbe3e8;text-align:center;border-radius:2px;font-size:1.2rem;border:1px solid #cbe3e8;vertical-align:middle}
 .lt li .fa-download {display:inline-block;width:10px;height: 10px;padding: 3px;color:#daae37;background:#ffefb9;text-align:center;border-radius:2px;vertical-align:middle}
 .lt li .fa-link {display:inline-block;width:10px;height: 10px;padding: 3px;color:#b451fd;background:#edd3fd;text-align:center;border-radius:2px;vertical-align:middle}
-.lt li .hot_icon {display:inline-block;width:10px;height: 10px;padding: 3px;color:#ff0000;background:#ffb9b9;text-align:center;border-radius:2px;vertical-align:middle}
-.lt li .fa-heart {color:#ff0000}
+.lt li .fa-heart {display:inline-block;width:10px;height: 10px;padding: 3px;color:#ff0000;background:#ffb9b9;text-align:center;border-radius:2px;vertical-align:middle}
 .lt li .new_icon {display:inline-block;width:16px;line-height:16px;font-size:1.1rem;color:#23db79;background:#b9ffda;text-align:center;border-radius:2px;margin-left:2px;font-weight:bold;vertical-align:middle}
 .lt .lt_tit .fa-heart {color:#fe4560;margin-left:5px}
 
@@ -1474,7 +1471,7 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 #visit .btn_admin {position:absolute;top:0;right:15px}
 
 /* 다크모드 설정 */
-.toggle-switch { position:fixed; bottom:10px; right:70px; width:50px; height:50px; border: 2px solid #d2d2d2; text-align:center; border-radius: 50%; background: #4989bc; color: #fff; display: flex; justify-content: center; align-items: center; cursor: pointer; } 
-.toggle-switch .visible { width:24px; height:24px; vertical-align:middle; }
-.toggle-switch .visible.dark { display: var(--lightVisible) }
-.toggle-switch .visible.bright { display: var(--darkVisible) }
+.darkmode-toggle-switch { position:fixed; bottom:10px; right:70px; width:50px; height:50px; border: 2px solid #d2d2d2; text-align:center; border-radius: 50%; background: #4989bc; color: #fff; display: flex; justify-content: center; align-items: center; cursor: pointer; } 
+.darkmode-toggle-switch .visible { width:24px; height:24px; vertical-align:middle; }
+.darkmode-toggle-switch .visible.dark { display: var(--lightVisible) }
+.darkmode-toggle-switch .visible.bright { display: var(--darkVisible) }
