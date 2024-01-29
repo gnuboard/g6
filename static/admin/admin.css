@@ -171,7 +171,7 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0;color: var(--fontColor);}
 /*중간*/
 #container{margin:0px;position: relative;background:var(--wrapperBg);max-width: calc(100% - 220px);width: 100%;transition: all 0.2s;}
 #container_wr{padding:25px;min-height:500px;}
-.container_title.top{position: sticky;top: 71px;line-height:50px;font-size:1.5em;z-index:99;margin: 0px 40px;padding-top: 20px;background: var(--containerBg);color: var(--containerColor);border-bottom: var(--containerBorder);width: calc(100% - 80px);}
+.container_title.top{position: sticky;top: 71px;line-height:50px;font-size:1.5em;z-index:1;margin: 0px 40px;padding-top: 20px;background: var(--containerBg);color: var(--containerColor);border-bottom: var(--containerBorder);width: calc(100% - 80px);}
 .container_title.top::after {display: block;content: "";position: absolute;left: 0px;bottom: -2px;width: 30px;height: 3px;background: #ffd343;}
 .container_wr.top{padding:20px 40px;min-height: calc(100vh - 150px);margin-bottom: 24px;width: 100%;color: var(--fontColor);}
 
