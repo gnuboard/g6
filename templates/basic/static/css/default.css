@@ -2288,6 +2288,8 @@ html.remodal-is-locked {overflow-y:scroll !important}
   .main-slider .slick-dots { max-width: 200px; }
   .main-slider .slick-dots { visibility: hidden; }
   .main-slider .slide-item > .slide-con > .slide-txt { width: 90%; }
+
+  #hd_sch #sch_stx::placeholder { color: var(--fontColor); } 
 }
 
 @media all and (min-width:641px) {
