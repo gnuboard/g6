@@ -89,10 +89,9 @@
 #bo_list .profile_img img {border-radius:50%}
 #bo_list .cnt_cmt {display:inline-block;margin:0 0 0 3px;font-weight:bold;color:#ed6478}
 #bo_list .bo_tit .title_icon {margin-right:2px}
-#bo_list .bo_tit .fa-heart {color:#ff0000}
+#bo_list .bo_tit .fa-heart {display:inline-block;width:10px;height: 10px;padding: 3px;color:#ff0000;background:#ffb9b9;text-align:center;border-radius:2px;vertical-align:middle}
 #bo_list .bo_tit .fa-lock {display:inline-block;line-height:14px;width:16px;font-size:1rem;color:#4f818c;background:#cbe3e8;text-align:center;border-radius:2px;font-size:1.2rem;border:1px solid #cbe3e8;vertical-align:middle}
 #bo_list .bo_tit .new_icon {display:inline-block;width:16px;line-height:16px;font-size:1rem;color:#23db79;background:#b9ffda;text-align:center;border-radius:2px;margin-left:2px;font-weight:bold;vertical-align:middle}
-#bo_list .bo_tit .hot_icon {display:inline-block;width:10px;height: 10px;padding: 3px;color:#ff0000;background:#ffb9b9;text-align:center;border-radius:2px;vertical-align:middle}
 #bo_list .bo_tit .fa-caret-right {color:#bbb}
 #bo_list .bo_tit .fa-download {display:inline-block;width:16px;line-height:16px;font-size:1rem;color:#daae37;background:#ffefb9;text-align:center;border-radius:2px;vertical-align:middle}
 #bo_list .bo_tit .fa-link {display:inline-block;width:16px;line-height:16px;font-size:1rem;color:#b451fd;background:#edd3fd;text-align:center;border-radius:2px;vertical-align:middle}
@@ -141,7 +140,7 @@ html.no-overflowscrolling #autosave_pop {height:auto;max-height:10000px !importa
 #bo_v header {background:var(--contBg);border:var(--border);border-bottom:0;border-radius:3px 3px 0 0}
 #bo_v_title {font-size:1.9rem;padding:20px 20px 10px;color: var(--fontColor);}
 #bo_v_title .bo_v_tit {display:block;font-size:2.4rem;margin:5px 0 0;word-break:break-all}
-#bo_v_title .bo_v_cate {display:inline-block;line-height:23px;font-size:0.7rem;background:#4989bc30;color:#4989bc;padding:0 10px;border-radius:3px;vertical-align:middle}
+#bo_v_title .bo_v_cate {display:inline-block;line-height:23px;font-size:1.1rem;background:#4989bc30;color:#4989bc;padding:0 10px;border-radius:3px;vertical-align:middle}
 
 #bo_v_info {position:relative;padding:0 20px 20px;background:var(--contBg);border:var(--border);border-bottom:var(--border);color:var(--bovTitColor);border-top:0}
 #bo_v_info h2 {position:absolute;font-size:0;line-height:0;overflow:hidden}
