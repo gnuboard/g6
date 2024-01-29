@@ -16,7 +16,9 @@
         <input type="hidden" name="sfl" value="mb_id" id="sfl">
         <label for="stx" class="sound_only">회원아이디<strong class="sound_only"> 필수</strong></label>
         <input type="text" name="stx" value="{{ stx }}" id="stx" required class="required frm_input">
-        <input type="submit" value="검색" id="fsearch_submit" class="btn_submit">
+        <button type="submit" id="fsearch_submit" class="btn_submit">
+          <span class="blind">검색</span>
+        </button>
     </form>
 
     <form name="fauthlist" id="fauthlist" method="post" action="/admin/auth_list_delete?{{ query_params|safe }}" onsubmit="return fauthlist_submit(this);">
