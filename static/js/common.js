@@ -800,7 +800,7 @@ function generate_token() {
 // 다크모드 설정
 // 다크모드 스위치버튼 이벤트리스너 함수
 document.addEventListener('DOMContentLoaded', function () {
-  const darkmodeBtn = document.querySelector('.toggle-switch');
+  const darkmodeBtn = document.querySelector('.darkmode-toggle-switch');
   darkmodeBtn?.addEventListener('click', handleDarkMode);
   isDarkModeEnabled();
 });
