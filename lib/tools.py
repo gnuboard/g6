@@ -4,6 +4,7 @@ import re
 from core.exception import AlertException
 from core.formclass import AfterValidationContent
 from lib.common import filter_words
+from lib.html_cleaner import HTMLCleaner
 
 
 def remove_script_tags(input_str):
@@ -25,6 +26,8 @@ def validate_and_clean_data(request, subject_field, content_field):
         raise AlertException(f"제목/내용에 금지단어({word})가 포함되어 있습니다.", 400)
 
     cleaned_subject = htmllib.escape(subject_field)
-    cleaned_content = remove_script_tags(content_field)
+    # cleaned_content = remove_script_tags(content_field)
+    cleaned_content = HTMLCleaner().clean(content_field)
 
     return AfterValidationContent(subject_field=cleaned_subject, content_field=cleaned_content)
+
