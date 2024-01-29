@@ -49,12 +49,12 @@
 {% endif %}
 <div id="tnb">
   <div id="hd_top">
-    <button type="button" id="btn_gnb" class="btn_gnb_close ">메뉴</button>
+    <button type="button" id="btn_gnb" class="btn_gnb_close "><span class="blind">메뉴</span></button>
     <div id="logo"><a href="/admin/"><img src="/static/admin/img/logo.png" alt="{{ request.state.title }} 관리자"></a></div>
 </div>
   <ul>
       <!-- <li class="tnb_li"><a href="/shop/" class="tnb_shop" target="_blank" title="쇼핑몰 바로가기">쇼핑몰 바로가기</a></li> -->
-      <li class="tnb_li"><a href="/" class="tnb_community" target="_blank" title="커뮤니티 바로가기">커뮤니티 바로가기</a></li>
+      <li class="tnb_li"><a href="/" class="tnb_community" target="_blank" title="커뮤니티 바로가기"><span class="blind">커뮤니티 바로가기</span></a></li>
       <li class="tnb_li"><a href="/admin/service" class="tnb_service">부가서비스</a></li>
       <li class="tnb_li"><button type="button" class="tnb_mb_btn">관리자<span class="./img/btn_gnb.png">메뉴열기</span></button>
           <ul class="tnb_mb_area">
@@ -63,9 +63,9 @@
           </ul>
       </li>
       <li class="tnb_li">
-        <button type="button" class="toggle-switch">
-          <svg xmlns="http://www.w3.org/2000/svg" class="fa-solid fa-moon visible bright" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-          <svg xmlns="http://www.w3.org/2000/svg" class="fa-solid fa-sun visible dark" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path></svg>
+        <button type="button" class="darkmode-toggle-switch">
+          <i class="fa-solid fa-moon visible bright"></i>
+          <i class="fa-solid fa-sun visible dark"></i>
         </button>
       </li>
   </ul>
