@@ -1,14 +1,7 @@
-from sqlalchemy import inspect
-
-from core.database import DBConnect
 from main import app
-from .. import models, plugin_config
+from .. import plugin_config
 from ..admin.admin_router import admin_router
 from ..plugin_config import module_name
-
-# install
-if not inspect(DBConnect().engine).has_table(DBConnect().table_prefix + "todos"):
-    models.Base.metadata.create_all(bind=DBConnect().engine)
 
 
 # 플러그인의 admin 라우터를 등록한다.
