@@ -7,6 +7,7 @@ import random
 import re
 import shutil
 import smtplib
+import httpx
 from datetime import datetime, timedelta, date
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -165,6 +166,15 @@ def get_client_ip(request: Request) -> str:
         return x_forwarded_for.split(",")[0]
     else:
         return request.client.host
+
+
+async def get_host_public_ip():
+    """
+    호스트의 공인 IP 주소를 반환하는 함수
+    """
+    async with httpx.AsyncClient() as client:
+        response = await client.get('https://httpbin.org/ip')
+        return response.json()['origin']
 
 
 def make_directory(directory: str):
