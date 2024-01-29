@@ -321,11 +321,6 @@ box-shadow:1px 2px 5px rgba(191, 191, 191, 0.4)}
 #captcha.recaptcha {width:213px;height:55px;overflow:hidden}
 #rc-imageselect, .g-recaptcha {transform:scale(0.7);-webkit-transform:scale(0.7);transform-origin:0 0;-webkit-transform-origin:0 0}
 
-/* ckeditor 태그 기본값 */
-#bo_v_con ul {display:block;list-style-type:disc;margin-top:1.2rem;margin-bottom:1.2rem;margin-left:0;margin-right:0;padding-left:40px}
-#bo_v_con ol {display:block;list-style-type:decimal;margin-top:1.2rem;margin-bottom:1.2rem;margin-left:0;margin-right:0;padding-left:40px}
-#bo_v_con li {display:list-item}
-
 /*단축키일람 */
 .cke_sc {text-align:right}
 .btn_cke_sc {background:#333;color:#fff;padding:5px;border:none}
@@ -822,7 +817,6 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 .bo_v_nb li.bo_v_prev {border-bottom:1px solid #f8f8f8}
 .bo_v_nb li.bo_v_next {}
 
-
 #bo_v_atc {min-height:200px;padding:15px}
 #bo_v_atc_title {margin:0;padding:0;height:0;overflow:hidden}
 
@@ -831,9 +825,200 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 #bo_v_img a.view_image {display:block}
 #bo_v_img img {margin-bottom:15px;max-width:100%;height:auto}
 
-#bo_v_con {min-height:200px;margin-bottom:20px;width:100%;font-size:1.5rem;line-height:2rem;word-break:break-all;overflow:hidden}
-#bo_v_con a {color:#000;text-decoration:underline}
-#bo_v_con img {max-width:100%;height:auto}
+#bo_v_con.textarea { margin:10px 0 30px; width:100%; line-height:2rem; min-height:200px; word-break:break-all; overflow:hidden; color: var(--fontColor); }
+#bo_v_con.textarea ul { list-style:disc }
+#bo_v_con.textarea a { color:#000; text-decoration:underline }
+#bo_v_con.textarea img { max-width:100%; height:auto }
+
+#bo_v_con.ckeditor4
+{
+    margin: 20px;
+    font-family: "Malgun Gothic", "맑은 고딕";
+    line-height: 1.8;
+    word-wrap: break-word;
+    font-size:1.2rem;
+}
+
+#bo_v_con.ckeditor4 blockquote
+{
+    padding: 2px 8px 0 10px;
+    border-style: solid;
+    border-color: #000;
+    border-width: 0;
+    border-left-width: 3px;
+    margin:0;
+}
+
+#bo_v_con.ckeditor4 p
+{
+    margin:0;
+    padding:0;
+}
+
+#bo_v_con.ckeditor4 a
+{
+    color: #0782C1;
+}
+
+#bo_v_con.ckeditor4 ol, #bo_v_con.ckeditor4 ul, #bo_v_con.ckeditor4 dl
+{
+    margin-right: 0px;
+    padding: 0 40px;
+}
+
+#bo_v_con.ckeditor4 ul {
+    list-style:disc;
+}
+
+#bo_v_con.ckeditor4 h1, #bo_v_con.ckeditor4 h2, #bo_v_con.ckeditor4 h6
+{
+    font-weight: normal;
+    line-height: 1.2;
+}
+
+#bo_v_con.ckeditor4 hr
+{
+    border: 0px;
+    border-top: 1px solid #ccc;
+}
+
+#bo_v_con.ckeditor4 p img 
+{
+    vertical-align:middle;
+}
+
+#bo_v_con.ckeditor4 img.right
+{
+    border: 1px solid #ccc;
+    float: right;
+    margin-left: 15px;
+    padding: 5px;
+}
+
+#bo_v_con.ckeditor4 img.left
+{
+    border: 1px solid #ccc;
+    float: left;
+    margin-right: 15px;
+    padding: 5px;
+}
+
+#bo_v_con.ckeditor4 pre
+{
+    white-space: pre-wrap; /* CSS 2.1 */
+    word-wrap: break-word; /* IE7 */
+    -moz-tab-size: 4;
+    tab-size: 4;
+}
+
+#bo_v_con.ckeditor4 .marker
+{
+    background-color: Yellow;
+}
+
+#bo_v_con.ckeditor4 span[lang]
+{
+    font-style: italic;
+}
+
+#bo_v_con.ckeditor4 figure
+{
+    text-align: center;
+    border: solid 1px #ccc;
+    border-radius: 2px;
+    background: rgba(0,0,0,0.05);
+    padding: 10px;
+    margin: 10px 20px;
+    display: inline-block;
+}
+
+#bo_v_con.ckeditor4 figure > figcaption
+{
+    text-align: center;
+    display: block; /* For IE8 */
+}
+
+#bo_v_con.ckeditor4 a > img {
+    padding: 1px;
+    margin: 1px;
+    border: none;
+    outline: 1px solid #0782C1;
+}
+
+/* Widget Styles */
+#bo_v_con.ckeditor4 .code-featured
+{
+    border: 5px solid red;
+}
+
+#bo_v_con.ckeditor4 .math-featured
+{
+    padding: 20px;
+    box-shadow: 0 0 2px rgba(200, 0, 0, 1);
+    background-color: rgba(255, 0, 0, 0.05);
+    margin: 10px;
+}
+
+#bo_v_con.ckeditor4 .image-clean
+{
+    border: 0;
+    background: none;
+    padding: 0;
+}
+
+#bo_v_con.ckeditor4 .image-clean > figcaption
+{
+    font-size: 1.1rem;
+    text-align: right;
+}
+
+#bo_v_con.ckeditor4 .image-grayscale
+{
+    background-color: white;
+    color: #666;
+}
+
+#bo_v_con.ckeditor4 .image-grayscale img, #bo_v_con.ckeditor4 img.image-grayscale
+{
+    filter: grayscale(100%);
+}
+
+#bo_v_con.ckeditor4 .atwho-inserted {color: #4183C4}
+
+#bo_v_con.ckeditor4 .embed-240p
+{
+    max-width: 426px;
+    max-height: 240px;
+    margin:0 auto;
+}
+
+#bo_v_con.ckeditor4 .embed-360p
+{
+    max-width: 640px;
+    max-height: 360px;
+    margin:0 auto;
+}
+
+#bo_v_con.ckeditor4 .embed-480p
+{
+    max-width: 854px;
+    max-height: 480px;
+    margin:0 auto;
+}
+
+#bo_v_con.ckeditor4 .embed-720p
+{
+    max-width: 1280px;
+    max-height: 720px;
+    margin:0 auto;
+}
+
+#bo_v_con.ckeditor4 .embed-1080p
+{
+    max-width: 1920px;
+    max-height: 1080px;
+    margin:0 auto;
+}
 
 #bo_v_act {margin-bottom:30px;text-align:center}
 #bo_v_act .bo_v_act_gng {position:relative}
