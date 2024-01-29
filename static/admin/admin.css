@@ -463,6 +463,7 @@ tfoot th {}
 
 
 @media (max-width: 1100px) {
+    .blind_mo {margin:0;padding:0;width:0px !important;height:0px !important;font-size:0;line-height:0;overflow:hidden}
     #tnb {flex-direction: column;justify-content: center;}
     #tnb ul {display: flex;justify-content: center;padding: 0px 20px 20px;}
     #tnb li {float: none;}
@@ -485,24 +486,23 @@ tfoot th {}
     #tnb {padding: 0px;}
     #container_title {margin: 0px;width: 100%;}
     #container.container-small {padding-left: 0px;margin-left: 0px;margin: auto;}
-    #gnb {position: static;max-width: 100%;width: 100%;height: auto;padding-top: 0px;margin: 20px auto;}
+    #gnb {position: static;max-width: 100%;width: 100%;height: auto;padding-top: 0px;margin: 20px auto;} 
     #gnb .gnb_li {width: calc((100% / 6) - 10px);margin-bottom: 0px;}
     #gnb .gnb_li.on {margin-bottom: 200px;}
-    #gnb .gnb_li button {text-indent: -9999px;overflow: hidden;padding: 0px;}
+    #gnb .gnb_li button {padding: 0px;}
     .container_wr.top {padding: 20px 0px;}
     #gnb .gnb_oparea {position: absolute;left: 0;top: 60px; width: 100%;height: auto;z-index: 1;}
     #gnb .gnb_oparea h3 {display: none;}
     #gnb .gnb_oparea ul {display: flex;flex-wrap: wrap;}
     #gnb .gnb_oparea ul li {width: calc(100%/4);text-align: center;}
-    #btn_gnb {display: none;}
+    #btn_gnb {display: none !important;}
     #logo {padding: 15px 0px;width: 160px;}
     .local_ov {min-width:100%}
     #gnb .gnb_oparea li {padding: 0px;line-height: 1.6;}
     #gnb .gnb_oparea li a{padding: 5px 10px;justify-content: center;font-size: 1em;}
     .service_wrap {width: 100% !important;}
     .sevice_1 {width: 100% !important;margin-right: 0px;margin-bottom: 13px;}
-    #gnb .gnb_li .btn_op {background-position: 50% 50% !important;}
-    
+    #gnb .btn_op::before {top: 50%; left: 50%;transform: translate(-50%, -50%);}
     #theme_detail, #plugin_detail {left: 50%;transform: translateX(-50%);width: 96% !important;height: auto !important;}
     .theme_dt_img, .plugin_dt_img {float: none;}
     .theme_dt_if, .plugin_dt_if {float: none;padding: 20px !important;width: 100% !important;}

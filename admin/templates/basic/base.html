@@ -79,7 +79,7 @@
             <ul class="gnb_ul">
                 {% macro render_admin_menu(menu_key, submenus, loop_index) %}
                 <li class="gnb_li {{ 'on' if request_menu_key == menu_key else '' }}">
-                    <button type="button" class="btn_op menu-{{ menu_key }} menu-order-{{ loop_index }}" title="{{ submenus[0]['name'] }}">{{ submenus[0]['name'] }}</button>
+                    <button type="button" class="btn_op menu-{{ menu_key }} menu-order-{{ loop_index }}" title="{{ submenus[0]['name'] }}"><span class="blind_mo">{{ submenus[0]['name'] }}</span></button>
                     <div class="gnb_oparea_wr">
                         <div class="gnb_oparea">
                             <!-- <h3>{{ submenus[0]['name'] }}</h3> -->
