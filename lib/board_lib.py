@@ -1381,7 +1381,7 @@ def render_latest_posts(request: Request, skin_name: str = 'basic', bo_table: st
         .limit(rows)
     ).all()
     for write in writes:
-        write = get_list(request, write, board_config)
+        write = get_list(request, write, board_config, subject_len)
     
     context = {
         "request": request,
