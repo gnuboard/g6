@@ -1,6 +1,7 @@
 version: "3.8"
 services:
   gnuboard-g6:
+    restart: always
     build:
       context: .
       dockerfile: Full.Dockerfile
