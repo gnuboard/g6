@@ -245,19 +245,20 @@ async def visit_domain(
     for visit in visits:
         # http or https
         match = re.search(r'^http[s]*\S+', visit.vi_referer)
-        if not match:
-            continue
-
-        match_group = match.group()
-        if match_group:
+        if match:
+            match_group = match.group()
             referer: str = re.sub(r"^(www\.|search\.|dirsearch\.|dir\.search\.|dir\.|kr\.search\.|myhome\.)(.*)",
                                   "\\2", match_group)
             filtered_visits.append({
                 "vi_referer": '직접' if referer.startswith(site_url) else referer,
                 "count": 1,
             })
-
-            total_records += 1
+        else:
+            filtered_visits.append({
+                "vi_referer": '직접',
+                "count": 1,
+            })
+        total_records += 1
 
     visits = count_by_field(filtered_visits, "vi_referer")
     visits = add_percent_field(visits)
