@@ -5,7 +5,7 @@
 {% block subtitle %}접속자집계{% endblock subtitle %}
 
 {% block content %}
-    {{ form.search(request, fr_date, to_date) }}
+    {{ form.search(request, total_records, fr_date, to_date) }}
     {{ form.anchor('list', fr_date, to_date) }}
 
     <div class="tbl_head01 tbl_wrap">

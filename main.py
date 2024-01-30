@@ -235,7 +235,6 @@ async def main_middleware(request: Request, call_next):
             else:
                 db.execute(
                     insert(models.Login).values(
-                        lo_id=25,
                         lo_ip=current_ip,
                         mb_id=getattr(member, "mb_id", ""),
                         lo_datetime=datetime.now(),
