@@ -31,7 +31,7 @@
                     
                     <li class="{% if is_read %}read{% endif %}">
                         <div class="memo_li profile_big_img">
-                            <img src="{{ get_member_image(target_member.mb_id) }}" alt="profile_image">
+                            <img src="{{ get_member_image(request, target_member.mb_id) }}" alt="profile_image">
                             {% if not is_read %}
                                 <span class="no_read">안 읽은 쪽지</span>
                             {% endif %}

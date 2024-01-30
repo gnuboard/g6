@@ -97,7 +97,7 @@ async def should_run_middleware(request: Request) -> bool:
             or path.startswith('/static')
             or path.startswith('/theme_static')
             or path.startswith('/data')
-            or path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.webp'))):
+            or path.endswith(('.css', '.js', '.jpg', 'jpeg', '.png', '.gif', '.webp'))):
         return False
 
     return True
