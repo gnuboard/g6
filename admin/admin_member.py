@@ -1,5 +1,4 @@
 import datetime
-import re
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, Path, Request
@@ -14,7 +13,7 @@ from core.models import Member, Point, GroupMember, Memo, Scrap, Auth, Group, Bo
 from core.template import AdminTemplates
 from lib.common import *
 from lib.dependencies import common_search_query_params, validate_token
-from lib.member_lib import get_member_icon, get_member_image
+from lib.member_lib import get_member_icon, get_member_image, validate_and_update_member_image
 from lib.pbkdf2 import create_hash
 from lib.template_functions import get_member_level_select, get_paging
 
@@ -191,12 +190,7 @@ async def member_list_delete(
             # 소셜로그인에서 삭제 또는 해제
             if SocialAuthService.check_exists_by_member_id(member.mb_id):
                 SocialAuthService.unlink_social_login(member.mb_id)
-
-            # 아이콘 삭제
-            delete_image(f"{MEMBER_ICON_DIR}/{member.mb_id[:2]}", f"{member.mb_id}.gif", 1)
-
-            # 프로필 이미지 삭제
-            delete_image(f"{MEMBER_IMAGE_DIR}/{member.mb_id[:2]}", f"{member.mb_id}.gif", 1)
+            validate_and_update_member_image(request, None, None, member.mb_id, 1, 1)
 
             db.commit()
 
@@ -223,8 +217,8 @@ async def member_form(
         if not exists_member:
             raise AlertException("회원아이디가 존재하지 않습니다.")
 
-        exists_member.mb_icon = get_member_icon(mb_id)
-        exists_member.mb_img = get_member_image(mb_id)
+        exists_member.mb_icon = get_member_icon(request, mb_id)
+        exists_member.mb_img = get_member_image(request, mb_id)
 
     context = {
         "request": request, "member": exists_member}
@@ -321,8 +315,8 @@ async def member_form_update(
 
         db.commit()
 
-    upload_member_icon(request, mb_id, mb_icon, del_mb_icon)
-    upload_member_image(request, mb_id, mb_img, del_mb_img)
+    # 이미지 검사 -> 이미지 수정(삭제 포함)
+    validate_and_update_member_image(request, mb_img, mb_icon, mb_id, del_mb_img, del_mb_icon)
 
     url = f"/admin/member_form/{mb_id}"
     query_params = request.query_params
@@ -385,77 +379,3 @@ async def check_member_nick(
         return {"result": "exists"}
     else:
         return {"result": "not_exists"}
-
-
-def upload_member_icon(request: Request, mb_id: str, mb_icon: UploadFile, del_mb_icon: int):
-    """회원아이콘 업로드
-
-    Args:
-        mb_id (str): 회원아이디
-        mb_icon (UploadFile): 업로드된 이미지
-        del_mb_icon (int): 삭제여부
-
-    Raises:
-        AlertException: 이미지 파일이 아닌경우
-    """
-    config = request.state.config
-    member_icon_dir = f"{MEMBER_ICON_DIR}/{mb_id[:2]}"
-
-    # 이미지 삭제
-    delete_image(member_icon_dir, f"{mb_id}.gif", del_mb_icon)
-
-    if mb_icon.filename == "" or mb_icon.size == 0:
-        return
-
-    if mb_icon.filename[-3:].lower() != "gif":
-        raise AlertException("아이콘은 gif 파일만 업로드 가능합니다.", 400)
-
-    # 하위경로를 만들지 않아도 알아서 만들어줌 data/member/ka/kagla.gif
-    make_directory(member_icon_dir)
-    # 이미지 저장
-    # save_image(member_icon_dir, f"{mb_id}.gif", mb_icon)
-    # 이미지 저장
-    img = Image.open(mb_icon.file)
-    img.resize((config.cf_member_icon_width, config.cf_member_icon_height)).save(f"{member_icon_dir}/{mb_id}.gif")
-
-
-def upload_member_image(request: Request, mb_id: str, uploaded_mb_img: UploadFile, del_mb_img: int):
-    """회원이미지 업로드
-
-    Args:
-        mb_id (str): 회원아이디
-        uploaded_mb_img (UploadFile): 업로드된 이미지
-        del_mb_img (int): 삭제여부
-
-    Raises:
-        AlertException: 이미지 파일이 아닌경우
-    """
-    config = request.state.config
-    image_filename = f"{mb_id}.gif"
-    member_image_dir = f"{MEMBER_IMAGE_DIR}/{mb_id[:2]}"
-
-    # 이미지 삭제
-    delete_image(member_image_dir, image_filename, del_mb_img)
-
-    if uploaded_mb_img.filename == "" or uploaded_mb_img.size == 0:
-        return
-
-    IMAGE_REGEX = r"\.(gif|jpe?g|png)$"
-    print(uploaded_mb_img.filename)
-    if not re.search(IMAGE_REGEX, uploaded_mb_img.filename, re.IGNORECASE):
-        raise AlertException(status_code=400, detail="회원이미지 파일은 이미지 파일만 업로드 가능합니다.")
-
-    make_directory(member_image_dir)
-
-    dest_path = os.path.join(member_image_dir, image_filename)
-    save_image(member_image_dir, image_filename, uploaded_mb_img)
-
-    if os.path.exists(dest_path):
-        with Image.open(dest_path) as img:
-            if img.width > config.cf_member_img_width or img.height > config.cf_member_img_height:
-                if img.format in ['JPEG', 'PNG']:
-                    img.thumbnail((config.cf_member_img_width, config.cf_member_img_height))
-                    os.unlink(dest_path)
-                    img.save(dest_path)
-                else:
-                    os.unlink(dest_path)

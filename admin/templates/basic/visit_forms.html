@@ -1,4 +1,4 @@
-{% macro search(request, fr_date='', to_date='') -%}
+{% macro search(request, total_records, fr_date='', to_date='') -%}
     <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
     <link href="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/themes/base/jquery-ui.css" rel="stylesheet" />
     <link href="{{ request.url_for('static', path='/admin/calendar_style.css') }}" rel="stylesheet" />
@@ -25,6 +25,12 @@
     });
     </script>
     <form name="fvisit" id="fvisit" class="local_sch03 local_sch" method="get">
+        {% if request.path == '/admin/visit_list' %}
+            <span class="btn_ov01">
+                <span class="ov_txt">전체 </span>
+                <span class="ov_num"> {{ total_records }} 건 </span>
+            </span>
+        {% endif %}
         <div class="sch_last">
             <strong>기간별검색</strong>
             <input type="text" name="fr_date" value="{{ fr_date }}" id="fr_date" class="frm_input" size="11" maxlength="10">
