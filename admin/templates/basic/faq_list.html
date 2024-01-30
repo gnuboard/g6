@@ -39,10 +39,10 @@
                         <td class="td_num">{{ faq.fa_order }}</td>
                         <td class="td_mng td_mng_m">
                             <a href="{{ url_for('faq_update_form', fm_id=faq_master.fm_id, fa_id=faq.fa_id) }}" class="btn btn_03">
-                                <span class="sound_only">{{ faq.fa_subject }} </span>수정
+                                <span class="blind">{{ faq.fa_subject }} </span>수정
                             </a>
                             <a href="{{ url_for('faq_delete', fa_id=faq.fa_id) }}" onclick="return delete_confirm3(this);" class="btn btn_02">
-                                <span class="sound_only">{{ faq.fa_subject }} </span>삭제
+                                <span class="blind">{{ faq.fa_subject }} </span>삭제
                             </a>
                         </td>
                     </tr>

@@ -22,7 +22,7 @@
         </colgroup>
         <tbody>
             <tr>
-                <th scope="row"><label for="mb_id">아이디<strong class="sound_only">필수</strong></label></th>
+                <th scope="row"><label for="mb_id">아이디<strong class="blind">필수</strong></label></th>
                 <td>
                     {% if member.mb_id %}
                         <input type="hidden" name="mb_id" value="{{ member.mb_id }}" id="mb_id">
@@ -32,7 +32,7 @@
                         <input type="text" name="mb_id" value="" id="mb_id" required class="frm_input required alnum_" size="15" maxlength="20">
                     {% endif %}
                 </td>
-                <th scope="row"><label for="mb_password">비밀번호<strong class="sound_only">필수</strong></label></th>
+                <th scope="row"><label for="mb_password">비밀번호<strong class="blind">필수</strong></label></th>
                 <td>
                     <div>
                     {% set mb_password_required = 'required' if not member else '' %}
@@ -41,9 +41,9 @@
                 </td>
             </tr>
             <tr>
-                <th scope="row"><label for="mb_name">이름(실명)<strong class="sound_only">필수</strong></label></th>
+                <th scope="row"><label for="mb_name">이름(실명)<strong class="blind">필수</strong></label></th>
                 <td><input type="text" name="mb_name" value="{{ member.mb_name }}" id="mb_name" required class="required frm_input" size="15" maxlength="20"></td>
-                <th scope="row"><label for="mb_nick">닉네임<strong class="sound_only">필수</strong></label></th>
+                <th scope="row"><label for="mb_nick">닉네임<strong class="blind">필수</strong></label></th>
                 <td><input type="text" name="mb_nick" value="{{ member.mb_nick }}" id="mb_nick" required class="required frm_input" size="15" maxlength="20"></td>
             </tr>
             <tr>
@@ -61,7 +61,7 @@
                 </td>
             </tr>
             <tr>
-                <th scope="row"><label for="mb_email">E-mail<strong class="sound_only">필수</strong></label></th>
+                <th scope="row"><label for="mb_email">E-mail<strong class="blind">필수</strong></label></th>
                 <td><input type="text" name="mb_email" value="{{ member.mb_email }}" id="mb_email" maxlength="100" required class="required frm_input email" size="30"></td>
                 <th scope="row"><label for="mb_homepage">홈페이지</label></th>
                 <td><input type="text" name="mb_homepage" value="{{ member.mb_homepage }}" id="mb_homepage" class="frm_input" maxlength="255" size="15"></td>
@@ -107,7 +107,7 @@
             <tr>
                 <th scope="row">주소</th>
                 <td colspan="3" class="td_addr_line">
-                    <label for="mb_zip" class="sound_only">우편번호</label>
+                    <label for="mb_zip" class="blind">우편번호</label>
                     <input type="text" name="mb_zip" value="{{ member.mb_zip1 ~ member.mb_zip2 }}" id="mb_zip" class="frm_input readonly" size="5" maxlength="6">
                     <button type="button" class="btn_frmline" onclick="win_zip('fmember', 'mb_zip', 'mb_addr1', 'mb_addr2', 'mb_addr3', 'mb_addr_jibeon');">주소 검색</button><br>
                     <input type="text" name="mb_addr1" value="{{ member.mb_addr1 }}" id="mb_addr1" class="frm_input readonly" size="60">

@@ -88,7 +88,7 @@ article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, 
 ul{margin:0;padding:0;list-style:none}
 li,dt,dd,ol{margin:0;padding:0}
 ol{list-style-position:inside}
-legend {position:absolute;margin:0;padding:0;font-size:0;line-height:0;text-indent:-9999em;overflow:hidden}
+legend {position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: polygon(0 0, 0 0, 0 0);}
 label, input, button, select, img {vertical-align:middle}
 input, button {margin:0;padding:0;font-family:'Malgun Gothic',AppleGothic,Dotum,"돋움", sans-serif;font-size:1em}
 button,input[type="submit"] {cursor:pointer}
@@ -103,11 +103,11 @@ box-sizing: border-box;
 }
 
 h2{font-size: 1.083em;font-weight: bold;margin:10px 0;color: var(--fontColor);}
-.blind {margin:0;padding:0;width:0px !important;height:0px !important;font-size:0;line-height:0;overflow:hidden}
+.blind {position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: polygon(0 0, 0 0, 0 0);}
 #wrapper {min-height:480px;width: 100%;display: flex;background: var(--wrapperBg);}
 /* 레이아웃 */
 #hd {position: sticky;top: 71px;width: 220px;height: calc(100vh - 71px); padding: 0px 20px;background-color: #272E3D;overflow-y: auto;overflow-x: hidden;transition: all 0.2s;}
-#hd h1 {position:absolute;font-size:0;line-height:0;overflow:hidden}
+#hd h1 {position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: polygon(0 0, 0 0, 0 0);}
 #hd_top{position: relative;height:50px;z-index:1000;border-radius: 12px;margin: 0px;}
 #hd_top:after{display:block;visibility:hidden;clear:both;content:""}
 #logo{height:100%;width:220px;text-align:center;display: flex;align-items: center;justify-content: flex-start;}
@@ -134,7 +134,7 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0;color: var(--fontColor);}
 
 /*gnb*/
 #gnb{width: 100%;height:auto;margin-top:20px;z-index:999;border-radius: 12px;}
-#gnb h2 {position:absolute;font-size:0;line-height:0;overflow:hidden}
+#gnb h2 {position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: polygon(0 0, 0 0, 0 0);}
 #gnb .gnb_ul{position:relative;height:100%;width:100%;white-space: nowrap;}
 
 #gnb .gnb_li button{background-color: transparent;border:0;width:100%;height:46px;text-align: left;padding: 0px 20px 0px 50px;margin-bottom: 10px;font-size: 14px;}
@@ -174,8 +174,7 @@ h2{font-size: 1.083em;font-weight: bold;margin:10px 0;color: var(--fontColor);}
 
 
 /* 화면낭독기 사용자용 */
-#hd_login_msg {position:absolute;top:0;left:0;width:1px;height:1px;overflow:hidden}
-.msg_sound_only, .sound_only {display:inline-block !important;position:absolute;top:0;left:0;margin:0 !important;padding:0 !important;width:1px !important;height:1px !important;font-size:0;line-height:0;border:0 !important;overflow:hidden !important}
+#hd_login_msg, .msg_blind, .blind {position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: polygon(0 0, 0 0, 0 0);}
 /* 본문 바로가기 */
 #to_content a {z-index:100000;position:absolute;top:0;left:0;font-size:0;line-height:0;overflow:hidden}
 #to_content a:focus, #to_content a:active {width:100%;height:70px;background:#fff;font-size:2em;font-weight:bold;text-align:center;text-decoration:none;line-height:3.1em}
@@ -287,13 +286,11 @@ a.btn_ov02,a.ov_listall{display:inline-block;line-height:30px;height:30px;font-s
 a.btn_ov02:hover,a.ov_listall:hover{background:#3f51b5}
 
 /*form*/
-.sound_only {display:inline-block !important;position:absolute;top:0;left:0;margin:0 !important;padding:0 !important;width:1px !important;height:1px !important;font-size:0;line-height:0;border:0 !important;overflow:hidden !important}
 .frm_input{padding:0 5px;height:40px;line-height:40px;border:var(--frmInputBorder);background: var(--frmInputBg);color: var(--fontColor);border-radius: 4px;}
 .frm_input_full{width:100%}
 .required{background:url('/static/admin/img/wrest.gif') top right no-repeat var(--frmInputBg) !important}
 select{height:40px;line-height:32px;background: var(--frmInputBg);border:var(--frmInputBorder);color: var(--fontColor);border-radius: 4px;}
 textarea{width:100%;background: var(--frmInputBg);border:var(--frmInputBorder);color: var(--fontColor);min-height:80px;border-radius: 4px;}
-legend {position:absolute;width:0;height:0;font-size:0;line-height:0;text-indent:-9999em;border:0;overflow:hidden}
 .code_input{font:bold 15px Consolas}
 
 /* 외부서비스 사이트코드 */
@@ -404,7 +401,7 @@ border-bottom: 5px solid black;}
 
 /* 테이블 */
 table {clear:both;width:100%;border-collapse: separate;border-spacing: 0 16px;}
-table caption {height:0;font-size:0;line-height:0;overflow:hidden}
+table caption {position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: polygon(0 0, 0 0, 0 0);}
 table td{line-height: 22px;}
 tfoot th, tfoot td {border:var(--tblBodyBorder);background:var(--tfootBg);color: var(--fontColor);padding:5px;text-align:center;font-weight:bold;}
 tfoot th {}
@@ -463,7 +460,7 @@ tfoot th {}
 
 
 @media (max-width: 1100px) {
-    .blind_mo {margin:0;padding:0;width:0px !important;height:0px !important;font-size:0;line-height:0;overflow:hidden}
+    .blind_mo {position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: polygon(0 0, 0 0, 0 0);}
     #tnb {flex-direction: column;justify-content: center;}
     #tnb ul {display: flex;justify-content: center;padding: 0px 20px 20px;}
     #tnb li {float: none;}
@@ -693,7 +690,7 @@ td.td_grpset {width:190px;border-left:var(--frmInputBorder);text-align:center}
 .is_rewrite .connect-close {position:absolute;top:10px;right:10px;margin:0;padding:0;width:30px;height:30px;border:0;background:transparent;color:#383838;cursor:pointer;font-size:15px}
 .is_rewrite .connect-close:hover {color:#ff5191}
 .is_rewrite .connect-close .fa {margin:0 0 0 1px}
-.is_rewrite .connect-close .txt {position:absolute;line-height:0;font-size:0;overflow:hidden}
+.is_rewrite .connect-close .txt {position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: polygon(0 0, 0 0, 0 0);}
 .is_rewrite textarea{width:99%;min-height:260px}
 .is_rewrite .copy_title{margin-top:15px;margin-bottom:10px;font-weight:bold;text-align:left}
 .is_rewrite .info-success{color:#155724}
@@ -887,7 +884,7 @@ strong.sodr_nonpay {display:block;padding:5px 0;text-align:right}
 #sodr_sort a.sort_on {color:#ff3061}
 
 #sodr_all {margin:0 20px}
-#sodr_all h2 {position:absolute;font-size:0;line-height:0;overflow:hidden}
+#sodr_all h2 {position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: polygon(0 0, 0 0, 0 0);}
 
 #sodr_all .btn_list {margin:10px 0}
 
@@ -1189,7 +1186,6 @@ box-shadow: 2px 2px 3px 0px rgba(0,0,0,0.2);}
 
 /* 캡챠 */
 #captcha {display:inline-block;position:relative}
-#captcha legend {position:absolute;margin:0;padding:0;font-size:0;line-height:0;text-indent:-9999em;overflow:hidden;}
 #captcha #captcha_img {height:40px;border:1px solid #898989;vertical-align:top;padding:0;margin:0}
 #captcha #captcha_mp3 {margin:0;padding:0;width:40px;height:40px;border:0;background:transparent;vertical-align:middle;overflow:hidden;cursor:pointer;background:url('..//static/admin/img/captcha2.png') no-repeat;text-indent:-999px;border-radius:3px}
 #captcha #captcha_reload {margin:0;padding:0;width:40px;height:40px;border:0;background:transparent;vertical-align:middle;overflow:hidden;cursor:pointer;background:url('..//static/admin/img/captcha2.png') no-repeat 0 -40px;text-indent:-999px;border-radius:3px}

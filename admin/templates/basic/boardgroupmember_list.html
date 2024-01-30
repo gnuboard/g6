@@ -8,11 +8,11 @@
     {% set sod_reverse="asc" if request.query_params.sod == "desc" else "desc" %}
 
     <form name="fsearch" id="fsearch" class="local_sch01 local_sch" method="get">
-        <label for="sfl" class="sound_only">검색대상</label>
+        <label for="sfl" class="blind">검색대상</label>
         <select name="sfl" id="sfl">
             <option value="mb_id" {{ get_selected('mb_id', sfl)|safe }}>회원아이디</option>
         </select>
-        <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
+        <label for="stx" class="blind">검색어<strong class="blind"> 필수</strong></label>
         <input type="text" name="stx" value="{{ request.query_params.get("stx", "") }}" id="stx" class="frm_input">
         <button type="submit" class="btn_submit">
           <span class="blind">검색</span>
@@ -29,7 +29,7 @@
                 <thead>
                     <tr>
                         <th scope="col">
-                            <label for="chkall" class="sound_only">접근가능회원 전체</label>
+                            <label for="chkall" class="blind">접근가능회원 전체</label>
                             <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                         </th>
                         <th scope="col">접근가능 그룹 수</th>
@@ -44,7 +44,7 @@
                 {% for row in group_members %}
                     <tr class="bg{{ loop.cycle('0', '1') }}">
                         <td class="td_chk">
-                            <label for="chk_{{ loop.index0 }}" class="sound_only">{{ row.member_info.mb_nick }} 회원</label>
+                            <label for="chk_{{ loop.index0 }}" class="blind">{{ row.member_info.mb_nick }} 회원</label>
                             <input type="checkbox" name="chk[]" value="{{ row.gm_id }}" id="chk_{{ loop.index0 }}">
                         </td>
                         <td class="td_grid"><a href="/admin/boardgroupmember_form/{{ row.mb_id }}">{{ row.group_count|number_format }}</a></td>

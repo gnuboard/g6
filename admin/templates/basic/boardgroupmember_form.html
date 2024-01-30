@@ -36,7 +36,7 @@
                 <thead>
                     <tr>
                         <th scope="col">
-                            <label for="chkall" class="sound_only">접근가능그룹 전체</label>
+                            <label for="chkall" class="blind">접근가능그룹 전체</label>
                             <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                         </th>
                         <th scope="col">그룹아이디</th>
@@ -48,7 +48,7 @@
                     {% for group, group_member in allow_groups %}
                     <tr>
                         <td class="td_chk">
-                            <label for="chk_{{ loop.index0 }}" class="sound_only">{{ group.gr_subject }} 그룹</label>
+                            <label for="chk_{{ loop.index0 }}" class="blind">{{ group.gr_subject }} 그룹</label>
                             <input type="checkbox" name="chk[]" value="{{ group_member.gm_id }}" id="chk_{{ loop.index0 }}">
                         </td>
                         <td class="td_grid"><a href="/board/group/{{ group.gr_id }}">{{ group.gr_id }}</a></td>
