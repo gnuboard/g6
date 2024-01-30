@@ -34,8 +34,7 @@ function wrestItemname(fld)
 // 양쪽 공백 없애기
 function wrestTrim(fld)
 {
-    var pattern = /(^\s+)|(\s+$)/g; // \s 공백 문자
-    return fld.value.replace(pattern, "");
+    return fld.value.trim();
 }
 
 // 필수 입력 검사
@@ -365,7 +364,6 @@ function wrestInitialized()
 }
 
 // 폼필드 자동검사
-$(document).ready(function(){
-    // onload
+document.addEventListener('DOMContentLoaded', function () {
     wrestInitialized();
 });
