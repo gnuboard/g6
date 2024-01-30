@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+  gnuboard-g6:
+    build:
+      context: .
+      dockerfile: Full.Dockerfile
+    volumes:
+      - gnuboard6-data-dev:/g6/data
+    ports:
+      - "8000:8000"
+
+volumes:
+  gnuboard6-data-dev:
