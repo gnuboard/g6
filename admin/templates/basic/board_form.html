@@ -34,7 +34,7 @@
             <col class="grid_3">
         </colgroup>
         <tbody>
-        <tr>
+        <tr class="no_grpset">
             <th scope="row"><label for="bo_table">TABLE<strong class="sound_only">필수</strong></label></th>
             <td colspan="2">
                 {% if board.bo_table %}
@@ -48,7 +48,7 @@
                 {% endif %}
             </td>
         </tr>
-        <tr>
+        <tr class="no_grpset">
             <th scope="row"><label for="gr_id">그룹<strong class="sound_only">필수</strong></label></th>
             <td colspan="2">
                 {{ get_group_select('gr_id', board.gr_id, 'required')|safe }}
@@ -57,13 +57,13 @@
                 {% endif %}
             </td>
         </tr>
-        <tr>
+        <tr class="no_grpset">
             <th scope="row"><label for="bo_subject">게시판 제목<strong class="sound_only">필수</strong></label></th>
             <td colspan="2">
                 <input type="text" name="bo_subject" value="{{ board.bo_subject }}" id="bo_subject" required class="required frm_input" size="80" maxlength="120">
             </td>
         </tr>
-        <tr>
+        <tr class="no_grpset">
             <th scope="row"><label for="bo_mobile_subject">모바일 게시판 제목</label></th>
             <td colspan="2">
                 <span class="frm_info">모바일에서 보여지는 게시판 제목이 다른 경우에 입력합니다. 입력이 없으면 기본 게시판 제목이 출력됩니다.</span>                
@@ -1003,7 +1003,7 @@
             <col class="grid_3">
         </colgroup>
         <tbody>
-        <tr>
+        <tr class="no_grpset">
             <th scope="row"><label for="chk_grp_point">기본값으로 설정</label></th>
             <td colspan="2">
                 <label for="chk_grp_point"><span class="frm_info">환경설정에 입력된 포인트로 설정</span></label>
