@@ -371,7 +371,7 @@ border-bottom: 5px solid black;}
 .local_sch03 label{margin-right:5px;display:inline-block}
 .local_sch03 button{height:30px;padding:0 5px;border:0;background:#9eacc6;color:#fff;}
 .local_sch03 .btn_submit{height:30px;padding:0 5px;border:0;color:#4d4d4d;}
-.local_sch03 .frm_input{height:30px;border:1px solid #dcdcdc;padding:0 5px;}
+.local_sch03 .frm_input{height:30px;border:var(--frmInputBorder);padding:0 5px;}
 /* 페이지 내 실행 */
 .local_cmd {min-width:960px}
 
@@ -471,15 +471,15 @@ tfoot th {}
     #wrapper {flex-direction: column;}
     #hd{position: static;padding: 0px;height: auto;width: 100%;}
     #hd_top {margin: 0px auto;}
-    form[name="fconfigform"] .frm_input, form[name="fboardgroup"] .frm_input, form[name="fboardform"] .frm_input {width: 100%;}
-    form[name="fconfigform"] table, form[name="fboardgroup"] table, form[name="fboardform"] table {display: grid;table-layout: fixed;}
-    form[name="fconfigform"] select, form[name="fboardgroup"] select, form[name="fboardform"] select {width: 100%;}
-    form[name="fconfigform"] .tbl_frm01 tr, form[name="fboardgroup"] .tbl_frm01 tr {display: grid;grid-template-columns: 25% 75%;margin-bottom: 10px;}
-    form[name="fconfigform"] .tbl_frm01 th, form[name="fboardgroup"] .tbl_frm01 th, form[name="fboardform"] .tbl_frm01 th {width: 100%;}
-    form[name="fconfigform"] .tbl_frm01 td, form[name="fboardgroup"] .tbl_frm01 td, form[name="fboardform"] .tbl_frm01 td {width: 100%;}
-    form[name="fboardform"] .tbl_frm01 tr {display: grid;grid-template-columns: 25% 50% 25%;margin-bottom: 10px;}
+    .tbl_head01 {overflow-x: auto;}
+    .tbl_head01 table {min-width: 1100px;}
+    .tbl_frm01.tbl_wrap table {display: grid;table-layout: fixed;}
+    .tbl_frm01.tbl_wrap table tr {display: grid;grid-template-columns: 25% 75%;margin-bottom: 10px;}
+    .tbl_frm01.tbl_wrap table th, .tbl_frm01.tbl_wrap table td {width: 100%;}
+    .tbl_frm01.tbl_wrap table .frm_input, .tbl_frm01.tbl_wrap table select {width: 100%;}
+    form[name="fboardform"] .tbl_frm01 tr:not(.no_grpset) {grid-template-columns: 25% 50% 25%;}
     .td_extra input {width: 100% !important;}
-    form[name="fconfigform"] .frm_input, form[name="fboardform"] .frm_input {width: 100%;}
+    .frm_input[size="40"] {margin-bottom: 10px;}
     #fsendmailtest .frm_input {width: calc(100% - 140px)}
     #gnb .gnb_ul {display: flex;height: auto;width: 96%;position: relative;margin: 0 auto;justify-content: space-between;}
     #container {margin: 0px auto;width: 96%;max-width: 100%;}
