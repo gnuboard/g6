@@ -27,7 +27,7 @@
     </div>
 
     <form id="fsearch" name="fsearch" class="local_sch01 local_sch" method="get">
-        <label for="sfl" class="sound_only">검색대상</label>
+        <label for="sfl" class="blind">검색대상</label>
         <select name="sfl" id="sfl">
             <option value="mb_id" {{ get_selected('mb_id', sfl) }}>회원아이디</option>
             <option value="mb_nick" {{ get_selected('mb_nick', sfl) }}>닉네임</option>
@@ -41,7 +41,7 @@
             <option value="mb_ip" {{ get_selected('mb_ip', sfl) }}>IP주소</option>
             <option value="mb_recommend" {{ get_selected('mb_recommend', sfl) }}>추천인</option>
         </select>
-        <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
+        <label for="stx" class="blind">검색어<strong class="blind"> 필수</strong></label>
         <input type="text" name="stx" value="{{ stx }}" id="stx" required class="required frm_input">
         <button type="submit" class="btn_submit">
           <span class="blind">검색</span>
@@ -63,7 +63,7 @@
                 <thead>
                     <tr>
                         <th scope="col" id="mb_list_chk" rowspan="2">
-                            <label for="chkall" class="sound_only">회원 전체</label>
+                            <label for="chkall" class="blind">회원 전체</label>
                             <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                         </th>
                         <th scope="col" id="mb_list_id" colspan="2">{{ subject_sort_link(request, 'mb_id')|safe }}아이디</a></th>
@@ -95,7 +95,7 @@
                         <tr class="{{ background_color }}">
                         <td headers="mb_list_chk" class="td_chk" rowspan="2">
                             <input type="hidden" name="mb_id[]" value="{{ member.mb_id }}" id="mb_id_{{ loop.index0 }}">
-                            <label for="chk_{{ loop.index0 }}" class="sound_only">{{ member.mb_name }}님</label>
+                            <label for="chk_{{ loop.index0 }}" class="blind">{{ member.mb_name }}님</label>
                             <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
                         </td>
                         <td headers="mb_list_id" colspan="2" class="td_name sv_use">{{ member.mb_id }}</td>
@@ -123,7 +123,7 @@
                             {% endif %}
                         </td>
                         <td headers="mb_list_adultc">
-                            <label for="mb_adult_{{ loop.index0 }}" class="sound_only">성인인증</label>
+                            <label for="mb_adult_{{ loop.index0 }}" class="blind">성인인증</label>
                             {% if member.mb_adult %}
                                 <span class="txt_true">Yes</span>
                             {% else %}
@@ -131,7 +131,7 @@
                             {% endif %}
                         </td>
                         <td headers="mb_list_open" rowspan="2">
-                            <label for="mb_open_{{ loop.index0 }}" class="sound_only">정보공개</label>
+                            <label for="mb_open_{{ loop.index0 }}" class="blind">정보공개</label>
                             <input type="checkbox" name="mb_open[]" value="{{ loop.index0 }}" id="mb_open_{{ loop.index0 }}" {{ 'checked' if member.mb_open }}>
                         </td>
                         <td headers="mb_list_mobile" class="td_tel"><!-- 휴대폰번호 -->{{ member.mb_hp }}</td>
@@ -152,16 +152,16 @@
                             {{ get_member_level_select('mb_level[]', 1, admin.mb_level if admin else 1, member.mb_level if member else 1)|safe }}
                         </td>
                         <td headers="mb_list_mailr">
-                            <label for="mb_mailling_0" class="sound_only">메일수신</label>
+                            <label for="mb_mailling_0" class="blind">메일수신</label>
                             <input type="checkbox" name="mb_mailling[]" value="{{ loop.index0 }}" id="mb_mailling_{{ loop.index0 }}" {{ 'checked' if member.mb_mailling }}>
                         </td>
                         <td headers="mb_list_sms">
-                            <label for="mb_sms_0" class="sound_only">SMS수신</label>
+                            <label for="mb_sms_0" class="blind">SMS수신</label>
                             <input type="checkbox" name="mb_sms[]"  value="{{ loop.index0 }}" id="mb_sms_{{ loop.index0 }}" {{ 'checked' if member.mb_sms }}>
                         </td>
                         <td headers="mb_list_deny"><!-- 접근차단 -->
                             <input type="checkbox" name="mb_intercept_date[]"  value="{{ loop.index0 }}" id="mb_intercept_date_{{ loop.index0 }}" title="차단하기" {{ 'checked' if member.mb_intercept_date }}>
-                            <label for="mb_intercept_date_{{ loop.index0 }}" class="sound_only">접근차단</label>
+                            <label for="mb_intercept_date_{{ loop.index0 }}" class="blind">접근차단</label>
                         </td>
                         <td headers="mb_list_tel" class="td_tel"><!-- 전화번호 -->{{ member.mb_tel }}</td>
                         <td headers="mb_list_join" class="td_date"><!--회원가입일 -->{{ member.mb_datetime }}</td>

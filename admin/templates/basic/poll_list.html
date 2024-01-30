@@ -17,11 +17,11 @@
     
     <form name="fsearch" id="fsearch" class="local_sch01 local_sch" method="get">
         <div class="sch_last">
-            <label for="sfl" class="sound_only">검색대상</label>
+            <label for="sfl" class="blind">검색대상</label>
             <select name="sfl" id="sfl">
                 <option value="po_subject" {{ get_selected('po_subject', sfl) }}>제목</option>
             </select>
-            <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
+            <label for="stx" class="blind">검색어<strong class="blind"> 필수</strong></label>
             <input type="text" name="stx" value="{{ stx }}" id="stx" required="" class="required frm_input">
             <button type="submit" class="btn_submit">
               <span class="blind">검색</span>
@@ -37,7 +37,7 @@
                 <thead>
                     <tr>
                         <th scope="col">
-                            <label for="chkall" class="sound_only">현재 페이지 투표 전체</label>
+                            <label for="chkall" class="blind">현재 페이지 투표 전체</label>
                             <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                         </th>
                         <th scope="col">번호</th>
@@ -53,7 +53,7 @@
                     {% for poll in polls %}
                         <tr class="bg{{ loop.cycle('0', '1') }}">
                             <td class="td_chk">
-                                <label for="chk_{{ loop.index0 }}" class="sound_only">{{ poll.po_subject[:70] }} 투표</label>
+                                <label for="chk_{{ loop.index0 }}" class="blind">{{ poll.po_subject[:70] }} 투표</label>
                                 <input type="checkbox" name="chk[]" value="{{ poll .po_id }}" id="chk_{{ loop.index0 }}">
                             </td>
                             <td class="td_num">{{ poll.po_id }}</td>

@@ -13,13 +13,13 @@
     </div>
 
     <form name="fsearch" id="fsearch" class="local_sch01 local_sch" method="get" autocomplete="off">
-        <label for="sfl" class="sound_only">검색대상</label>
+        <label for="sfl" class="blind">검색대상</label>
         <select name="sfl" id="sfl">
             <option value="gr_subject" {{ get_selected('gr_subject', sfl) }}>제목</option>
             <option value="gr_id" {{ get_selected('gr_id', sfl) }}>ID</option>
             <option value="gr_admin" {{ get_selected('gr_admin', sfl) }}>그룹관리자</option>
         </select>
-        <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
+        <label for="stx" class="blind">검색어<strong class="blind"> 필수</strong></label>
         <input type="text" name="stx" id="stx" value="{{ stx }}" required class="required frm_input">
         <button type="submit" class="btn_submit">
           <span class="blind">검색</span>
@@ -35,7 +35,7 @@
                 <thead>
                     <tr>
                         <th scope="col">
-                            <label for="chkall" class="sound_only">그룹 전체</label>
+                            <label for="chkall" class="blind">그룹 전체</label>
                             <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                         </th>
                         <th scope="col">{{ subject_sort_link(request, 'gr_id')|safe }}그룹아이디</a></th>
@@ -54,30 +54,30 @@
                     <tr class="bg{{ loop.cycle('0', '1') }}">
                         <td class="td_chk">
                             <input type="hidden" name="gr_id[]" value="{{ group.gr_id }}">
-                            <label for="chk_{{ loop.index0 }}" class="sound_only">{{ group.gr_subject }} 그룹</label>
+                            <label for="chk_{{ loop.index0 }}" class="blind">{{ group.gr_subject }} 그룹</label>
                             <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
                         </td>
                         <td class="td_left"><a href="{{ url_for('group_board_list', gr_id=group.gr_id) }}">{{ group.gr_id }}</a></td>
                         <td class="td_input">
-                            <label for="gr_subject_{{ loop.index0 }}" class="sound_only">그룹제목</label>
+                            <label for="gr_subject_{{ loop.index0 }}" class="blind">그룹제목</label>
                             <input type="text" name="gr_subject[]" value="{{ group.gr_subject }}" id="gr_subject_{{ loop.index0 }}" class="tbl_input">
                         </td>
                         <td class="td_mng td_input">
-                            <label for="gr_admin_{{ loop.index0 }}" class="sound_only">그룹관리자</label>
+                            <label for="gr_admin_{{ loop.index0 }}" class="blind">그룹관리자</label>
                             <input type="text" name="gr_admin[]" value="{{ group.gr_admin }}" id="gr_admin_{{ loop.index0 }}" class="tbl_input" size="10" maxlength="20">
                         </td>
                         <td class="td_num"><a href="/admin/board_list?sfl=gr_id&amp;stx={{ group.gr_id }}">{{ group.board_count }}</a></td>
                         <td class="td_numsmall">
-                            <label for="gr_use_access_{{ loop.index0 }}" class="sound_only">접근회원 사용</label>
+                            <label for="gr_use_access_{{ loop.index0 }}" class="blind">접근회원 사용</label>
                             <input type="checkbox" name="gr_use_access[]"  value="{{ loop.index0 }}" id="gr_use_access_{{ loop.index0 }}" {{ 'checked' if group.gr_use_access }}>
                         </td>
                         <td class="td_num"><a href="/admin/boardgroupmember_list/{{ group.gr_id }}">{{ group.access_member_count|number_format }}</a></td>
                         <td class="td_numsmall">
-                            <label for="gr_order_{{ loop.index0 }}" class="sound_only">메인메뉴 출력순서</label>
+                            <label for="gr_order_{{ loop.index0 }}" class="blind">메인메뉴 출력순서</label>
                             <input type="text" name="gr_order[]" value="{{ group.gr_order }}" id="gr_order_{{ loop.index0 }}" class="tbl_input" size="2">
                         </td>
                         <td class="td_mng">
-                            <label for="gr_device_{{ loop.index0 }}" class="sound_only">접속기기</label>
+                            <label for="gr_device_{{ loop.index0 }}" class="blind">접속기기</label>
                             <select name="gr_device[]" id="gr_device_{{ loop.index0 }}">
                                 <option value="both" {{ get_selected(group.gr_device, 'both') }}>모두</option>
                                 <option value="pc" {{ get_selected(group.gr_device, 'pc') }}>PC</option>

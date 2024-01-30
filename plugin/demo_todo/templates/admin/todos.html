@@ -29,7 +29,7 @@
                 <thead>
                 <tr>
                     <th scope="col">
-                        <label for="chkall" class="sound_only">todo 전체</label>
+                        <label for="chkall" class="blind">todo 전체</label>
                         <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                     </th>
                     <th scope="col"> id</th>
@@ -42,7 +42,7 @@
                 {% for todo in todos %}
                 <tr class="bg{{ loop.cycle('0', '1') }}">
                     <td class="td_chk">
-                        <label for="chk_{{ loop.index0 }}" class="sound_only">{{ todo.title }} todo</label>
+                        <label for="chk_{{ loop.index0 }}" class="blind">{{ todo.title }} todo</label>
                         <input type="checkbox" name="chk[]" value="{{ todo.id }}" id="chk_{{ loop.index0 }}">
                     </td>
                     <td class="td_left">

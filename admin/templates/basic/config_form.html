@@ -45,22 +45,22 @@
             </colgroup>
             <tbody>
                 <tr>
-                    <th scope="row"><label for="cf_title">홈페이지 제목<strong class="sound_only">필수</strong></label></th>
+                    <th scope="row"><label for="cf_title">홈페이지 제목<strong class="blind">필수</strong></label></th>
                     <td colspan="3"><input type="text" name="cf_title" value="{{ config.cf_title|safe }}" id="cf_title" class="required frm_input" size="40"></td>
                 </tr>
                 <tr>
-                    <th scope="row"><label for="cf_admin">최고관리자<strong class="sound_only">필수</strong></label></th>
+                    <th scope="row"><label for="cf_admin">최고관리자<strong class="blind">필수</strong></label></th>
                     <td colspan="3">{{ get_member_id_select('cf_admin', 10, config.cf_admin, 'required')|safe }}</td>
                 </tr>
                 <tr>
-                    <th scope="row"><label for="cf_admin_email">관리자 메일 주소<strong class="sound_only">필수</strong></label></th>
+                    <th scope="row"><label for="cf_admin_email">관리자 메일 주소<strong class="blind">필수</strong></label></th>
                     <td colspan="3">
                         <span class="frm_info">관리자가 보내고 받는 용도로 사용하는 메일 주소를 입력합니다. (회원가입, 인증메일, 테스트, 회원메일발송 등에서 사용)</span>                            
                         <input type="text" name="cf_admin_email" value="{{ config.cf_admin_email }}" id="cf_admin_email" class="required email frm_input" size="40">
                         <span class="frm_info">외부메일설정이나 기타 설정을 하지 않았다면, 도메인과 다른 헤더로 여겨 스팸이나 차단될 가능성이 있습니다.<br>name@49.247.41.166 과 같은 도메인 형식으로 설정할것을 권장합니다.</span>                                                    </td>
                 </tr>
                 <tr>
-                    <th scope="row"><label for="cf_admin_email_name">관리자 메일 발송이름<strong class="sound_only">필수</strong></label></th>
+                    <th scope="row"><label for="cf_admin_email_name">관리자 메일 발송이름<strong class="blind">필수</strong></label></th>
                     <td colspan="3">
                         <span class="frm_info">관리자가 보내고 받는 용도로 사용하는 메일의 발송이름을 입력합니다. (회원가입, 인증메일, 테스트, 회원메일발송 등에서 사용)</span>                            
                         <input type="text" name="cf_admin_email_name" value="{{ config.cf_admin_email_name }}" id="cf_admin_email_name" class="required frm_input" size="40">
@@ -71,12 +71,12 @@
                     <td colspan="3"><input type="checkbox" name="cf_use_point" value="1" id="cf_use_point" {{ 'checked' if config.cf_use_point else '' }}> 사용</td>
                 </tr>
                 <tr>
-                    <th scope="row"><label for="cf_login_point">로그인시 포인트<strong class="sound_only">필수</strong></label></th>
+                    <th scope="row"><label for="cf_login_point">로그인시 포인트<strong class="blind">필수</strong></label></th>
                     <td>
                         <span class="frm_info">회원이 로그인시 하루에 한번만 적립</span>                            
                         <input type="text" name="cf_login_point" value="{{ config.cf_login_point }}" id="cf_login_point" class="required frm_input" size="5"> 점
                     </td>
-                    <th scope="row"><label for="cf_memo_send_point">쪽지보낼시 차감 포인트<strong class="sound_only">필수</strong></label></th>
+                    <th scope="row"><label for="cf_memo_send_point">쪽지보낼시 차감 포인트<strong class="blind">필수</strong></label></th>
                     <td>
                         <span class="frm_info">양수로 입력하십시오. 0점은 쪽지 보낼시 포인트를 차감하지 않습니다.</span>                            
                         <input type="text" name="cf_memo_send_point" value="{{ config.cf_memo_send_point }}" id="cf_memo_send_point" class="required frm_input" size="5"> 점
@@ -143,9 +143,9 @@
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row"><label for="cf_write_pages">페이지 표시 수<strong class="sound_only">필수</strong></label></th>
+                    <th scope="row"><label for="cf_write_pages">페이지 표시 수<strong class="blind">필수</strong></label></th>
                     <td><input type="text" name="cf_write_pages" value="{{ config.cf_write_pages }}" id="cf_write_pages" class="required numeric frm_input" size="3"> 페이지씩 표시</td>
-                    <th scope="row"><label for="cf_mobile_pages">모바일 페이지 표시 수<strong class="sound_only">필수</strong></label></th>
+                    <th scope="row"><label for="cf_mobile_pages">모바일 페이지 표시 수<strong class="blind">필수</strong></label></th>
                     <td><input type="text" name="cf_mobile_pages" value="{{ config.cf_mobile_pages }}" id="cf_mobile_pages" class="required numeric frm_input" size="3"> 페이지씩 표시</td>
                 </tr>
                 <tr>
@@ -156,7 +156,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row"><label for="cf_captcha">캡챠 선택<strong class="sound_only">필수</strong></label></th>
+                    <th scope="row"><label for="cf_captcha">캡챠 선택<strong class="blind">필수</strong></label></th>
                     <td colspan="3">
                         <span class="frm_info">사용할 캡챠를 선택합니다.
                             <br>1) reCAPTCHA V2 는 구글에서 서비스하는 원클릭 형식의 간편한 캡챠입니다. ( 모바일 친화적 UI )
@@ -246,7 +246,7 @@
             </colgroup>
             <tbody>
                 <tr>
-                    <th scope="row"><label for="cf_delay_sec">글쓰기 간격<strong class="sound_only">필수</strong></label></th>
+                    <th scope="row"><label for="cf_delay_sec">글쓰기 간격<strong class="blind">필수</strong></label></th>
                     <td><input type="text" name="cf_delay_sec" value="{{ config.cf_delay_sec }}" id="cf_delay_sec" class="required numeric frm_input" size="3"> 초 지난후 가능</td>
                     <th scope="row"><label for="cf_link_target">새창 링크</label></th>
                     <td>
@@ -260,7 +260,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row"><label for="cf_read_point">글읽기 포인트<strong class="sound_only">필수</strong></label></th>
+                    <th scope="row"><label for="cf_read_point">글읽기 포인트<strong class="blind">필수</strong></label></th>
                     <td><input type="text" name="cf_read_point" value="{{ config.cf_read_point }}" id="cf_read_point" class="required frm_input" size="3"> 점</td>
                     <th scope="row"><label for="cf_write_point">글쓰기 포인트</label></th>
                     <td><input type="text" name="cf_write_point" value="{{ config.cf_write_point }}" id="cf_write_point" class="required frm_input" size="3"> 점</td>

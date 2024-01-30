@@ -272,7 +272,7 @@
         </colgroup>
         <tbody>
         <tr>
-            <th scope="row"><label for="bo_count_modify">원글 수정 불가<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_count_modify">원글 수정 불가<strong class="blind">필수</strong></label></th>
             <td>
                  <span class="frm_info">댓글의 수가 설정 수 이상이면 원글을 수정할 수 없습니다. 0으로 설정하시면 댓글 수에 관계없이 수정할 수있습니다.</span>
                  댓글 <input type="text" name="bo_count_modify" value="{{ board.bo_count_modify }}" id="bo_count_modify" required class="required numeric frm_input" size="3">개 이상 달리면 수정불가
@@ -285,7 +285,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_count_delete">원글 삭제 불가<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_count_delete">원글 삭제 불가<strong class="blind">필수</strong></label></th>
             <td>
                 댓글 <input type="text" name="bo_count_delete" value="{{ board.bo_count_delete }}" id="bo_count_delete" required class="required numeric frm_input" size="3">개 이상 달리면 삭제불가
             </td>
@@ -512,7 +512,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_upload_count">파일 업로드 개수<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_upload_count">파일 업로드 개수<strong class="blind">필수</strong></label></th>
             <td>
                 <span class="frm_info">게시물 한건당 업로드 할 수 있는 파일의 최대 개수 (0 은 파일첨부 사용하지 않음)</span>
                 <input type="text" name="bo_upload_count" value="{{ board.bo_upload_count }}" id="bo_upload_count" required class="required numeric frm_input" size="4">
@@ -525,7 +525,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_upload_size">파일 업로드 용량<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_upload_size">파일 업로드 용량<strong class="blind">필수</strong></label></th>
             <td>
                 <span class="frm_info">최대 2M 이하 업로드 가능, 1 MB = 1,048,576 bytes</span>
                 업로드 파일 한개당 <input type="text" name="bo_upload_size" value="{{ board.bo_upload_size }}" id="bo_upload_size" required class="required numeric frm_input"  size="10"> bytes 이하
@@ -680,7 +680,7 @@
         </colgroup>
         <tbody>
             <tr>
-            <th scope="row"><label for="bo_skin">스킨 디렉토리<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_skin">스킨 디렉토리<strong class="blind">필수</strong></label></th>
             <td>
                 {{ get_skin_select('board', 'bo_skin', board.bo_skin, attribute='required')|safe }}
             </td>
@@ -692,7 +692,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_mobile_skin">모바일<br>스킨 디렉토리<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_mobile_skin">모바일<br>스킨 디렉토리<strong class="blind">필수</strong></label></th>
             <td>
                 {{ get_skin_select('board', 'bo_mobile_skin', board.bo_mobile_skin, device='mobile')|safe }}
             </td>
@@ -764,7 +764,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_subject_len">제목 길이<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_subject_len">제목 길이<strong class="blind">필수</strong></label></th>
             <td>
                 <span class="frm_info">목록에서의 제목 글자수. 잘리는 글은 … 로 표시</span>
                 <input type="text" name="bo_subject_len" value="{{ board.bo_subject_len }}" id="bo_subject_len" required class="required numeric frm_input" size="4">
@@ -777,7 +777,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_mobile_subject_len">모바일 제목 길이<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_mobile_subject_len">모바일 제목 길이<strong class="blind">필수</strong></label></th>
             <td>
                 <span class="frm_info">목록에서의 제목 글자수. 잘리는 글은 … 로 표시</span>
                 <input type="text" name="bo_mobile_subject_len" value="{{ board.bo_mobile_subject_len }}" id="bo_mobile_subject_len" required class="required numeric frm_input" size="4">
@@ -790,7 +790,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_page_rows">페이지당 목록 수<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_page_rows">페이지당 목록 수<strong class="blind">필수</strong></label></th>
             <td>
                 <input type="text" name="bo_page_rows" value="{{ board.bo_page_rows }}" id="bo_page_rows" required class="required numeric frm_input" size="4">
             </td>
@@ -802,7 +802,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_mobile_page_rows">모바일 페이지당 목록 수<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_mobile_page_rows">모바일 페이지당 목록 수<strong class="blind">필수</strong></label></th>
             <td>
                 <input type="text" name="bo_mobile_page_rows" value="{{ board.bo_mobile_page_rows }}" id="bo_mobile_page_rows" required class="required numeric frm_input" size="4">
             </td>
@@ -814,7 +814,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_gallery_cols">갤러리 이미지 수<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_gallery_cols">갤러리 이미지 수<strong class="blind">필수</strong></label></th>
             <td>
                 <span class="frm_info">갤러리 형식의 게시판 목록에서 이미지를 한줄에 몇장씩 보여 줄 것인지를 설정하는 값</span>
                 <input type="text" name="bo_gallery_cols" value="{{ board.bo_gallery_cols }}" id="bo_gallery_cols" required class="required numeric frm_input" size="4">
@@ -827,7 +827,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_gallery_width">갤러리 이미지 폭<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_gallery_width">갤러리 이미지 폭<strong class="blind">필수</strong></label></th>
             <td>
                 <span class="frm_info">갤러리 형식의 게시판 목록에서 썸네일 이미지의 폭을 설정하는 값</span>
                 <input type="text" name="bo_gallery_width" value="{{ board.bo_gallery_width }}" id="bo_gallery_width" required class="required numeric frm_input" size="4">
@@ -840,7 +840,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_gallery_height">갤러리 이미지 높이<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_gallery_height">갤러리 이미지 높이<strong class="blind">필수</strong></label></th>
             <td>
                 <span class="frm_info">갤러리 형식의 게시판 목록에서 썸네일 이미지의 높이를 설정하는 값</span>
                 <input type="text" name="bo_gallery_height" value="{{ board.bo_gallery_height }}" id="bo_gallery_height" required class="required numeric frm_input" size="4">
@@ -853,7 +853,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_mobile_gallery_width">모바일<br>갤러리 이미지 폭<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_mobile_gallery_width">모바일<br>갤러리 이미지 폭<strong class="blind">필수</strong></label></th>
             <td>
                 <span class="frm_info">모바일로 접속시 갤러리 형식의 게시판 목록에서 썸네일 이미지의 폭을 설정하는 값</span>
                 <input type="text" name="bo_mobile_gallery_width" value="{{ board.bo_mobile_gallery_width }}" id="bo_mobile_gallery_width" required class="required numeric frm_input" size="4">
@@ -866,7 +866,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_mobile_gallery_height">모바일<br>갤러리 이미지 높이<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_mobile_gallery_height">모바일<br>갤러리 이미지 높이<strong class="blind">필수</strong></label></th>
             <td>
                 <span class="frm_info">모바일로 접속시 갤러리 형식의 게시판 목록에서 썸네일 이미지의 높이를 설정하는 값</span>
                 <input type="text" name="bo_mobile_gallery_height" value="{{ board.bo_mobile_gallery_height }}" id="bo_mobile_gallery_height" required class="required numeric frm_input" size="4">
@@ -879,7 +879,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_table_width">게시판 폭<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_table_width">게시판 폭<strong class="blind">필수</strong></label></th>
             <td>
                 <span class="frm_info">100 이하는 %</span>
                 <input type="text" name="bo_table_width" value="{{ board.bo_table_width }}" id="bo_table_width" required class="required numeric frm_input" size="4">
@@ -892,7 +892,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_image_width">이미지 폭 크기<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_image_width">이미지 폭 크기<strong class="blind">필수</strong></label></th>
             <td>
                 <span class="frm_info">게시판에서 출력되는 이미지의 폭 크기</span>
                 <input type="text" name="bo_image_width" value="{{ board.bo_image_width }}" id="bo_image_width" required class="required numeric frm_input" size="4"> 픽셀
@@ -905,7 +905,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_new">새글 아이콘<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_new">새글 아이콘<strong class="blind">필수</strong></label></th>
             <td>
                 <span class="frm_info">글 입력후 new 이미지를 출력하는 시간. 0을 입력하시면 아이콘을 출력하지 않습니다.</span>
                 <input type="text" name="bo_new" value="{{ board.bo_new }}" id="bo_new" required class="required numeric frm_input" size="4">
@@ -918,7 +918,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_hot">인기글 아이콘<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_hot">인기글 아이콘<strong class="blind">필수</strong></label></th>
             <td>
                 <span class="frm_info">조회수가 설정값 이상이면 hot 이미지 출력. 0을 입력하시면 아이콘을 출력하지 않습니다.</span>
                 <input type="text" name="bo_hot" value="{{ board.bo_hot }}" id="bo_hot" required class="required numeric frm_input" size="4">
@@ -1011,7 +1011,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_read_point">글읽기 포인트<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_read_point">글읽기 포인트<strong class="blind">필수</strong></label></th>
             <td>
                 <input type="text" name="bo_read_point" value="{{ board.bo_read_point }}" id="bo_read_point" required class="required frm_input" size="5">
             </td>
@@ -1023,7 +1023,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_write_point">글쓰기 포인트<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_write_point">글쓰기 포인트<strong class="blind">필수</strong></label></th>
             <td>
                 <input type="text" name="bo_write_point" value="{{ board.bo_write_point }}" id="bo_write_point" required class="required frm_input" size="5">
             </td>
@@ -1035,7 +1035,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_comment_point">댓글쓰기 포인트<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_comment_point">댓글쓰기 포인트<strong class="blind">필수</strong></label></th>
             <td>
                 <input type="text" name="bo_comment_point" value="{{ board.bo_comment_point }}" id="bo_comment_point" required class="required frm_input" size="5">
             </td>
@@ -1047,7 +1047,7 @@
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_download_point">다운로드 포인트<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_download_point">다운로드 포인트<strong class="blind">필수</strong></label></th>
             <td>
                 <input type="text" name="bo_download_point" value="{{ board.bo_download_point }}" id="bo_download_point" required class="required frm_input" size="5">
             </td>

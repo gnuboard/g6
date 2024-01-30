@@ -20,12 +20,12 @@
     
     <form name="fsearch" id="fsearch" class="local_sch01 local_sch" method="get">
         <div class="sch_last">
-            <label for="sfl" class="sound_only">검색대상</label>
+            <label for="sfl" class="blind">검색대상</label>
             <select name="sfl" id="sfl">
                 <option value="pp_word" {{ get_selected('pp_word', sfl) }}>검색어</option>
                 <option value="pp_date" {{ get_selected('pp_date', sfl) }}>등록일</option>
             </select>
-            <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
+            <label for="stx" class="blind">검색어<strong class="blind"> 필수</strong></label>
             <input type="text" name="stx" value="{{ stx }}" id="stx" required="" class="required frm_input" autocomplete="off">
             <button type="submit" class="btn_submit">
               <span class="blind">검색</span>
@@ -42,7 +42,7 @@
                 <thead>
                     <tr>
                         <th scope="col">
-                            <label for="chkall" class="sound_only">현재 페이지 인기검색어 전체</label>
+                            <label for="chkall" class="blind">현재 페이지 인기검색어 전체</label>
                             <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                         </th>
                         <th scope="col">
@@ -56,7 +56,7 @@
                 {% for keyword in keywords %}
                     <tr class="bg{{ loop.cycle('0', '1') }}">
                         <td class="td_chk">
-                            <label for="chk_{{ loop.index0 }}" class="sound_only">{{ keyword.pp_word|safe }}</label>
+                            <label for="chk_{{ loop.index0 }}" class="blind">{{ keyword.pp_word|safe }}</label>
                             <input type="checkbox" name="chk[]" value="{{ keyword.pp_id }}" id="chk_{{ loop.index0 }}">
                         </td>
                         <td class="td_left">

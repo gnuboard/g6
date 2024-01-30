@@ -32,7 +32,7 @@
             {% for mail in mails %}
                 <tr class="bg{{ loop.cycle('0', '1') }}">
                     <td class="td_chk">
-                        <label for="chk_{{ loop.index0 }}" class="sound_only">{{ mail.ma_subject }} 메일</label>
+                        <label for="chk_{{ loop.index0 }}" class="blind">{{ mail.ma_subject }} 메일</label>
                         <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
                         <input type="hidden" name="ma_id[]" value="{{ mail.ma_id }}">
                     </td>

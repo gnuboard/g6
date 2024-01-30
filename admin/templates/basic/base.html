@@ -34,8 +34,9 @@
 
         });
 
-        $(".gnb_ul li .btn_op").click(function() {
-            $(this).parent().addClass("on").siblings().removeClass("on");
+        $("#gnb .gnb_btn").click(function() {
+            $(".gnb_li").removeClass("on");
+            $(this).parents(".gnb_li").addClass("on");
         });
     });
 </script>
@@ -47,78 +48,103 @@
     {% endfor %}
 </div>
 {% endif %}
+
 <div id="tnb">
-  <div id="hd_top">
-    <button type="button" id="btn_gnb" class="btn_gnb_close "><span class="blind">메뉴</span></button>
-    <div id="logo"><a href="/admin/"><img src="/static/admin/img/logo.png" alt="{{ request.state.title }} 관리자"></a></div>
-</div>
-  <ul>
-      <!-- <li class="tnb_li"><a href="/shop/" class="tnb_shop" target="_blank" title="쇼핑몰 바로가기">쇼핑몰 바로가기</a></li> -->
-      <li class="tnb_li"><a href="/" class="tnb_community" target="_blank" title="커뮤니티 바로가기"><span class="blind">커뮤니티 바로가기</span></a></li>
-      <li class="tnb_li"><a href="/admin/service" class="tnb_service">부가서비스</a></li>
-      <li class="tnb_li"><button type="button" class="tnb_mb_btn">관리자<span class="./img/btn_gnb.png">메뉴열기</span></button>
-          <ul class="tnb_mb_area">
-              <li><a href="/admin/member_form?w=u&amp;mb_id=admin">관리자정보</a></li>
-              <li id="tnb_logout"><a href="/bbs/logout">로그아웃</a></li>
-          </ul>
-      </li>
-      <li class="tnb_li">
-        <button type="button" class="darkmode-toggle-switch">
-          <i class="fa-solid fa-moon visible bright"></i>
-          <i class="fa-solid fa-sun visible dark"></i>
-        </button>
-      </li>
-  </ul>
-</div>
-<div id="wrapper">
-  <header id="hd">
-    <h1>{{ request.state.title }}</h1>
-   
-        <nav id="gnb" class="gnb_large ">
-            <h2>관리자 주메뉴</h2>
-            <ul class="gnb_ul">
-                {% macro render_admin_menu(menu_key, submenus, loop_index) %}
-                <li class="gnb_li {{ 'on' if request_menu_key == menu_key else '' }}">
-                    <button type="button" class="btn_op menu-{{ menu_key }} menu-order-{{ loop_index }}" title="{{ submenus[0]['name'] }}"><span class="blind_mo">{{ submenus[0]['name'] }}</span></button>
-                    <div class="gnb_oparea_wr">
-                        <div class="gnb_oparea">
-                            <!-- <h3>{{ submenus[0]['name'] }}</h3> -->
-                            <ul>
-                                {% for submenu in submenus[1:] %}
-                                    <li data-menu="{{ submenu['id'] }}">
-                                        <a href="/admin{{ submenu['url'] }}" class="gnb_2da">{{ submenu['name'] }}</a>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
-                </li>
-                {% endmacro %}
-                
-                {# 관리자 메뉴 #}
-                {% set request_menu_key = request.session.get('menu_key', '')[:3] %}
-                {% if get_admin_menus %}
-                    {% set admin_menus=get_admin_menus() %}
-                {% endif %}
-                {% for menu_key, submenus in admin_menus.items() %}
-                    {{ render_admin_menu(menu_key[4:], submenus, loop.index) }}
-                {% endfor %}
-        
-                {# 플러그인 메뉴 #}
-                {% set request_menu_key = request.session.get('menu_key', '') %}
-                {% if get_admin_plugin_menus %}
-                    {% set plugin_menus=get_admin_plugin_menus() %}
-                {% endif %}
-                    
-                {% for plugin in plugin_menus %}
-                    {% for menu_key, submenus in plugin.items() %}
-                        {{ render_admin_menu(menu_key, submenus, loop.index) }}
-                    {% endfor %}
-                {% endfor %}
+
+    <div id="hd_top">
+        <button type="button" id="btn_gnb" class="btn_gnb_close "><span class="blind">메뉴</span></button>
+        <div id="logo"><a href="/admin/"><img src="/static/admin/img/logo.png" alt="{{ request.state.title }} 관리자"></a></div>
+    </div>
+
+    <ul>
+        <!-- <li class="tnb_li"><a href="/shop/" class="tnb_shop" target="_blank" title="쇼핑몰 바로가기">쇼핑몰 바로가기</a></li> -->
+        <li class="tnb_li"><a href="/" class="tnb_community" target="_blank" title="커뮤니티 바로가기"><span class="blind">커뮤니티 바로가기</span></a></li>
+        <li class="tnb_li"><a href="/admin/service" class="tnb_service">부가서비스</a></li>
+        <li class="tnb_li"><button type="button" class="tnb_mb_btn">관리자<span class="./img/btn_gnb.png">메뉴열기</span></button>
+            <ul class="tnb_mb_area">
+                <li><a href="/admin/member_form?w=u&amp;mb_id=admin">관리자정보</a></li>
+                <li id="tnb_logout"><a href="/bbs/logout">로그아웃</a></li>
             </ul>
+        </li>
+        <li class="tnb_li">
+        <button type="button" class="darkmode-toggle-switch">
+            <i class="fa-solid fa-moon visible bright"></i>
+            <i class="fa-solid fa-sun visible dark"></i>
+        </button>
+        </li>
+    </ul>
+
+</div>
+
+<div id="wrapper">
+    <header id="hd">
+
+        <h1>{{ request.state.title }}</h1>
+
+        <nav id="gnb_wrapper">
+
+            <h2 class="blind">관리자 주메뉴</h2>
+
+            <style>
+                @media (max-width:1100px) {
+
+                    /* 이 곳에 위치해야 하는 코드입니다. */
+                    {% for i in range(2, 10) %}
+                    .gnb_li:nth-child({{ i }}) .gnb_btn {
+                        margin:0 0 0 {{ i*56 - 56 }}px;
+                    }
+                    {% endfor %}
+
+                }
+            </style>
+
+            <ul id="gnb">
+
+            {% macro render_admin_menu(menu_key, submenus, loop_index) %}
+                <li class="gnb_li {{ 'on' if request_menu_key == menu_key else '' }}">
+
+                    <button type="button" class="gnb_btn menu_{{ menu_key }} menu_order_{{ loop_index }}" title="{{ submenus[0]['name'] }}">
+                        <span class="blind_mo">{{ submenus[0]['name'] }}</span>
+                    </button>
+
+                    <ul class="gnb_sub">
+                    {% for submenu in submenus[1:] %}
+                        <li class="gnb_sub_li current_{{ submenu['id'] }}">
+                            <a href="/admin{{ submenu['url'] }}" class="gnb_sub_link">{{ submenu['name'] }}</a>
+                        </li>
+                    {% endfor %}
+                    </ul>
+
+                </li>
+            {% endmacro %}
+
+            {# 관리자 메뉴 #}
+            {% set request_menu_key = request.session.get('menu_key', '')[:3] %}
+            {% if get_admin_menus %}
+                {% set admin_menus=get_admin_menus() %}
+            {% endif %}
+            {% for menu_key, submenus in admin_menus.items() %}
+                {{ render_admin_menu(menu_key[4:], submenus, loop.index) }}
+            {% endfor %}
+    
+            {# 플러그인 메뉴 #}
+            {% set request_menu_key = request.session.get('menu_key', '') %}
+            {% if get_admin_plugin_menus %}
+                {% set plugin_menus=get_admin_plugin_menus() %}
+            {% endif %}
+                
+            {% for plugin in plugin_menus %}
+                {% for menu_key, submenus in plugin.items() %}
+                    {{ render_admin_menu(menu_key, submenus, loop.index) }}
+                {% endfor %}
+            {% endfor %}
+
+            </ul>
+
         </nav>
 
     </header>
+
     <div id="container" class="">
      
         <h1 id="container_title" class="container_title top">{% block subtitle %}관리자메인{% endblock subtitle %}</h1>
@@ -140,14 +166,10 @@
             scrollTop: 0
         }, 400);
     })
-
 </script>
 
-
-
-
-<script src="/static/admin/admin.js"></script>
-<script src="/static/js/jquery.anchorScroll.js"></script>
+<script src="/static/admin/admin.js?ver=1.0.0"></script>
+<script src="/static/js/jquery.anchorScroll.js?ver=1.0.0"></script>
 <script>
     $(function() {
 
@@ -164,83 +186,12 @@
             }
         });
 
-        
         // 현재 페이지 메뉴 활성화
         const current_menu = "{{ request.session.get('menu_key', '') }}"
-        current_menu_element = document.querySelector(`li[data-menu="${current_menu}"] > a`)
-        if (current_menu_element) {
-            current_menu_element.classList.add('on');
+        const $current_menu_element = $(".current_" + current_menu);
+        if ($current_menu_element) {
+            $current_menu_element.children(".gnb_sub_link").addClass("on");
         }
-        
-        var hide_menu = false;
-        var mouse_event = false;
-        var oldX = oldY = 0;
-
-        $(document).mousemove(function(e) {
-            if (oldX == 0) {
-                oldX = e.pageX;
-                oldY = e.pageY;
-            }
-
-            if (oldX != e.pageX || oldY != e.pageY) {
-                mouse_event = true;
-            }
-        });
-
-        // 주메뉴
-        var $gnb = $(".gnb_1dli > a");
-        $gnb.mouseover(function() {
-            if (mouse_event) {
-                $(".gnb_1dli").removeClass("gnb_1dli_over gnb_1dli_over2 gnb_1dli_on");
-                $(this).parent().addClass("gnb_1dli_over gnb_1dli_on");
-                menu_rearrange($(this).parent());
-                hide_menu = false;
-            }
-        });
-
-        $gnb.mouseout(function() {
-            hide_menu = true;
-        });
-
-        $(".gnb_2dli").mouseover(function() {
-            hide_menu = false;
-        });
-
-        $(".gnb_2dli").mouseout(function() {
-            hide_menu = true;
-        });
-
-        $gnb.focusin(function() {
-            $(".gnb_1dli").removeClass("gnb_1dli_over gnb_1dli_over2 gnb_1dli_on");
-            $(this).parent().addClass("gnb_1dli_over gnb_1dli_on");
-            menu_rearrange($(this).parent());
-            hide_menu = false;
-        });
-
-        $gnb.focusout(function() {
-            hide_menu = true;
-        });
-
-        $(".gnb_2da").focusin(function() {
-            $(".gnb_1dli").removeClass("gnb_1dli_over gnb_1dli_over2 gnb_1dli_on");
-            var $gnb_li = $(this).closest(".gnb_1dli").addClass("gnb_1dli_over gnb_1dli_on");
-            menu_rearrange($(this).closest(".gnb_1dli"));
-            hide_menu = false;
-        });
-
-        $(".gnb_2da").focusout(function() {
-            hide_menu = true;
-        });
-
-        $('#gnb_1dul>li').bind('mouseleave', function() {
-            submenu_hide();
-        });
-
-        $(document).bind('click focusin', function() {
-            if (hide_menu) {
-                submenu_hide();
-            }
-        });
 
         // 폰트 리사이즈 쿠키있으면 실행
         var font_resize_act = get_cookie("ck_font_resize_act");
@@ -248,26 +199,5 @@
             font_resize("container", font_resize_act);
         }
     });
-
-    function submenu_hide() {
-        $(".gnb_1dli").removeClass("gnb_1dli_over gnb_1dli_over2 gnb_1dli_on");
-    }
-
-    function menu_rearrange(el) {
-        var width = $("#gnb_1dul").width();
-        var left = w1 = w2 = 0;
-        var idx = $(".gnb_1dli").index(el);
-
-        for (i = 0; i <= idx; i++) {
-            w1 = $(".gnb_1dli:eq(" + i + ")").outerWidth();
-            w2 = $(".gnb_2dli > a:eq(" + i + ")").outerWidth(true);
-
-            if ((left + w2) > width) {
-                el.removeClass("gnb_1dli_over").addClass("gnb_1dli_over2");
-            }
-
-            left += w1;
-        }
-    }
 </script>
 {% endblock body_html %}

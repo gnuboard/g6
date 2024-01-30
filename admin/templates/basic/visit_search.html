@@ -12,13 +12,13 @@
 
     <div class="local_sch local_sch01">
         <form name="fvisit" method="get" onsubmit="return fvisit_submit(this);" autocomplete="off">
-        <label for="sch_sort" class="sound_only">검색분류</label>
+        <label for="sch_sort" class="blind">검색분류</label>
         <select name="sfl" id="sch_sort" class="search_sort">
             <option value="vi_ip" {{ get_selected('vi_ip', sfl) }}>IP</option>
             <option value="vi_referer" {{ get_selected('vi_referer', sfl) }}>접속경로</option>
             <option value="vi_date" {{ get_selected('vi_date', sfl) }}>날짜</option>
         </select>
-        <label for="sch_word" class="sound_only">검색어</label>
+        <label for="sch_word" class="blind">검색어</label>
         <input type="text" name="stx" size="20" value="{{ stx }}" id="sch_word" class="frm_input">
         <button type="submit" class="btn_submit">
           <span class="blind">검색</span>
