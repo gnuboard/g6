@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Form, Path, Request
 from fastapi.responses import RedirectResponse
 
 from core.database import db_session
+from core.exception import AlertException
 from core.formclass import PollForm
 from core.models import Poll, PollEtc
 from core.template import AdminTemplates
@@ -101,21 +102,28 @@ async def poll_form_update(
     """
     투표등록 및 수정 처리
     """
-    poll = db.get(Poll, po_id)
+    
     # 투표 수정
-    if poll:
+    if po_id:
+        poll = db.get(Poll, po_id)
+        if not poll:
+            raise AlertException("투표가 존재하지 않습니다.", 404)
+
         # 데이터 수정 후 commit
         for field, value in form_data.__dict__.items():
+            if value is None:
+                value = ""
             setattr(poll, field, value)
         db.commit()
+
     # 투표 등록
     else:
         poll = Poll(**form_data.__dict__)
         db.add(poll)
         db.commit()
 
-        # 기존캐시 삭제
-        lfu_cache.update({"poll": None})
+    # 기존캐시 삭제
+    lfu_cache.update({"poll": None})
 
     url = f"/admin/poll_form/{poll.po_id}"
     query_params = request.query_params

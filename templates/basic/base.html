@@ -153,7 +153,7 @@
         <!-- 프로필 -->
         <div class="profile_wrap">
           <span class="profile_img" tabindex="0">
-            <img src="{{ get_member_image(request.state.login_member.mb_id)|safe }}" alt="profile_image">
+            <img src="{{ get_member_image(request, request.state.login_member.mb_id)|safe }}" alt="profile_image">
           </span>
           <ul class="hd_login">       
             {% if request.state.login_member %}
