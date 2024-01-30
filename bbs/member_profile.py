@@ -15,7 +15,7 @@ from lib.common import *
 from lib.dependencies import (
     get_login_member, validate_token, validate_captcha
 )
-from lib.member_lib import get_member_icon, get_member_image
+from lib.member_lib import get_member_icon, get_member_image, validate_and_update_member_image
 from lib.pbkdf2 import validate_password, create_hash
 from lib.template_filters import default_if_none
 
@@ -92,8 +92,8 @@ async def member_profile(
         "action_url": request.url_for("member_profile", mb_no=mb_no).path,
         "name_readonly": "readonly",
         "hp_readonly": "readonly" if get_is_phone_certify(member, config) else "",
-        "mb_icon_url": get_member_icon(member.mb_id),
-        "mb_img_url": get_member_image(member.mb_id),
+        "mb_icon_url": get_member_icon(request, member.mb_id),
+        "mb_img_url": get_member_image(request, member.mb_id),
         "is_profile_open": check_profile_open(open_date=member.mb_open_date, config=request.state.config)
     }
 
@@ -117,8 +117,8 @@ async def member_profile_save(
     mb_certify_case: str = Form(default=""),
     mb_zip: str = Form(None),
     member_form: MemberForm = Depends(MemberForm),
-    del_mb_img: str = Form(None),
-    del_mb_icon: str = Form(None),
+    del_mb_img: int = Form(None),
+    del_mb_icon: int = Form(None),
     mb_img: UploadFile = File(None),
     mb_icon: UploadFile = File(None),
 ):
@@ -183,54 +183,14 @@ async def member_profile_save(
             if result["msg"]:
                 raise AlertException(result["msg"], 400)
 
-    member_image_path = f"data/member_image/{mb_id[:2]}/"
-    member_icon_path = f"data/member/{mb_id[:2]}/"
-
-    # 이미지 삭제
-    if del_mb_img:
-        delete_image(member_image_path, f"{mb_id}.gif")
-
-    if del_mb_icon:
-        delete_image(member_icon_path, f"{mb_id}.gif")
-
-    if mb_img and mb_img.filename:
-        if not re.match(r".*\.(gif)$", mb_img.filename, re.IGNORECASE):
-            raise AlertException("gif 파일만 업로드 가능합니다.", 400)
-
-    # 이미지 검사
-    if mb_icon and mb_icon.filename:
-        mb_icon_info = Image.open(mb_icon.file)
-        width, height = mb_icon_info.size
-
-        if 0 < config.cf_member_icon_size < mb_icon.size:
-            raise AlertException(f"아이콘 용량은 {config.cf_member_icon_size} 이하로 업로드 해주세요.", 400)
-
-        if config.cf_member_icon_width and config.cf_member_icon_height:
-            if width > config.cf_member_icon_width or height > config.cf_member_icon_height:
-                raise AlertException(f"아이콘 크기는 {config.cf_member_icon_width}x{config.cf_member_icon_height} 이하로 업로드 해주세요.", 400)
-
-        if not re.match(r".*\.(gif)$", mb_icon.filename, re.IGNORECASE):
-            raise AlertException("gif 파일만 업로드 가능합니다.", 400)
+    # 이미지 검사 & 이미지 수정(삭제 포함)
+    validate_and_update_member_image(request, mb_img, mb_icon, mb_id, del_mb_img, del_mb_icon)
 
     if not member_form.mb_sex in {"m", "f"}:
         member_form.mb_sex = ""
 
     member_form.mb_level = exists_member.mb_level
 
-    # 유효성검사 통과
-    if mb_img and mb_img.filename:
-        upload_file(
-            mb_img,
-            filename=mb_id + os.path.splitext(mb_img.filename)[1],
-            path=os.path.join('data', 'member_image', f"{mb_id[:2]}")
-        )
-
-    if mb_icon and mb_icon.filename and mb_icon_info:
-        # 파일객체를 pillow에서 열었으므로 따로 지정.
-        path = os.path.join('data', 'member', f"{mb_id[:2]}")
-        os.makedirs(path, exist_ok=True)
-        filename = mb_id + os.path.splitext(mb_icon.filename)[1]
-        mb_icon_info.save(os.path.join(path, filename))
 
     del member_form.mb_birth
     del member_form.mb_name
