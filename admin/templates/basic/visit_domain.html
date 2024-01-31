@@ -24,7 +24,7 @@
             {% for visit in visits %}
                 <tr class="bg{{ loop.cycle('0', '1') }}">
                     <td class="td_num">{{ loop.index }}</td>
-                    <td class="td_category">{{ visit.vi_referer }}</td>
+                    <td class="td_category td_left">{{ visit.vi_referer }}</td>
                     <td>
                         <div class="visit_bar">
                             <span style="width:{{ visit.percent }}%"></span>
