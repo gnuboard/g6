@@ -17,11 +17,11 @@
             </div>
             <button type="button" id="gnb_open" class="hd_opener">
                 <i class="fa fa-bars" aria-hidden="true"></i>
-                <span class="sound_only">메뉴열기</span>
+                <span class="blind">메뉴열기</span>
             </button>
             <div id="gnb" class="hd_div">
                 <button type="button" id="gnb_close" class="hd_closer">
-                    <span class="sound_only">메뉴 닫기</span>
+                    <span class="blind">메뉴 닫기</span>
                     <i class="fa fa-xmark" aria-hidden="true"></i>
                 </button>
                 <!-- 아웃 로그인 -->
@@ -60,11 +60,11 @@
             </div>
             <button type="button" id="user_btn" class="hd_opener">
                 <i class="fa fa-search" aria-hidden="true"></i>
-                <span class="sound_only">사용자메뉴</span>
+                <span class="blind">사용자메뉴</span>
             </button>
             <div class="hd_div" id="user_menu">
                 <button type="button" id="user_close" class="hd_closer">
-                    <span class="sound_only">메뉴 닫기</span><i class="fa fa-xmark" aria-hidden="true"></i>
+                    <span class="blind">메뉴 닫기</span><i class="fa fa-xmark" aria-hidden="true"></i>
                 </button>
                 <div id="hd_sch">
                     <h2>사이트 내 전체검색</h2>
@@ -73,7 +73,7 @@
                         <input type="hidden" name="sop" value="and">
                         <input type="text" name="stx" id="sch_stx" maxlength="20" placeholder="검색어를 입력해주세요" required="">
                         <button type="submit" value="검색" id="sch_submit">
-                            <i class="fa fa-search" aria-hidden="true"></i><span class="sound_only">검색</span>
+                            <i class="fa fa-search" aria-hidden="true"></i><span class="blind">검색</span>
                         </button>
                     </form>
                     <script>
@@ -198,7 +198,7 @@
     </button>
     <button type="button" id="top_btn">
         <i class="fa fa-arrow-up" aria-hidden="true"></i>
-        <span class="sound_only">상단으로</span>
+        <span class="blind">상단으로</span>
     </button>
     {% if not request.state.is_responsive %}
         <a href="{{ url_for('device_change', device='pc') }}" id="device_change">PC버전으로 보기</a>
