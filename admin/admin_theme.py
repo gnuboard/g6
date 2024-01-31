@@ -1,13 +1,14 @@
 from typing_extensions import Annotated
 
+from jinja2 import FileSystemLoader
 from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.responses import FileResponse
 from sqlalchemy import select, update
 
 from core.database import db_session
 from core.template import (
-    AdminTemplates, TEMPLATES, UserTemplates,
-    get_theme_list, get_theme_info, register_theme_statics,
+    AdminTemplates, TEMPLATES, TemplateService, UserTemplates,
+    get_current_theme, get_theme_list, get_theme_info, register_theme_statics,
 )
 from lib.common import *
 from lib.dependencies import validate_super_admin, validate_theme
@@ -89,6 +90,9 @@ async def theme_update(
     theme: Annotated[str, Depends(validate_theme)]
 ):
     """ 테마 적용 """
+    before_theme = get_current_theme()
+    before_theme_path = f"{TEMPLATES}/{before_theme}"
+
     info = get_theme_info(theme)
 
     db.execute(update(Config).values(cf_theme=theme))
@@ -99,12 +103,17 @@ async def theme_update(
     # todo 미들웨어로 옮기기
     register_theme_statics(app)
     user_template = UserTemplates()
-    current_theme_path = user_template.env.loader.searchpath
-    
-    if current_theme_path[0] in user_template.env.loader.searchpath:
-        user_template.env.loader.searchpath.remove(current_theme_path[0])
-        user_template.env.loader.searchpath.insert(0, f"{TEMPLATES}/{theme}")
-        user_template.env.cache.clear()
+    current_theme_path: list = user_template.default_directories
+
+    # 이전 테마 경로를 제거 후 새로운 테마 경로를 추가합니다.
+    theme_path = [path for path in current_theme_path if not path.startswith(before_theme_path)]
+    theme_path.insert(0, f"{TEMPLATES}/{theme}")
+
+    user_template.default_directories = theme_path
+    user_template.env.loader = FileSystemLoader(theme_path)
+
+    # 현재 테마의 경로를 변경합니다.
+    TemplateService.set_templates_dir()
 
     return {"success": f"{info['theme_name']} 테마로 변경되었습니다."}
 
