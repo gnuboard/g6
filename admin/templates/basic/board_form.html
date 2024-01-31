@@ -35,7 +35,7 @@
         </colgroup>
         <tbody>
         <tr class="no_grpset">
-            <th scope="row"><label for="bo_table">TABLE<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_table">TABLE<strong class="blind">필수</strong></label></th>
             <td colspan="2">
                 {% if board.bo_table %}
                     <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
@@ -49,7 +49,7 @@
             </td>
         </tr>
         <tr class="no_grpset">
-            <th scope="row"><label for="gr_id">그룹<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="gr_id">그룹<strong class="blind">필수</strong></label></th>
             <td colspan="2">
                 {{ get_group_select('gr_id', board.gr_id, 'required')|safe }}
                 {% if board %}
@@ -58,7 +58,7 @@
             </td>
         </tr>
         <tr class="no_grpset">
-            <th scope="row"><label for="bo_subject">게시판 제목<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_subject">게시판 제목<strong class="blind">필수</strong></label></th>
             <td colspan="2">
                 <input type="text" name="bo_subject" value="{{ board.bo_subject }}" id="bo_subject" required class="required frm_input" size="80" maxlength="120">
             </td>
