@@ -328,7 +328,7 @@ function wrestSubmit()
             // 오류메세지를 위한 element 추가
             var msg_el = document.createElement("strong");
             msg_el.id = "msg_"+id;
-            msg_el.className = "msg_sound_only";
+            msg_el.className = "blind";
             msg_el.innerHTML = wrestMsg;
             wrestFld.parentNode.insertBefore(msg_el, wrestFld);
 
