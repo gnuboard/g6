@@ -165,9 +165,9 @@ def get_skin_select(skin_gubun: str, id: str, selected: str,
         str: select 태그의 HTML 코드
     """
     # Lazy import
-    from core.template import TEMPLATES_DIR
+    from core.template import TemplateService
 
-    skin_path = TEMPLATES_DIR + f"/{device}/{skin_gubun}"
+    skin_path = TemplateService.get_templates_dir() + f"/{device}/{skin_gubun}"
 
     html_code = []
     html_code.append(f'<select id="{id}" name="{id}" {attribute}>')
