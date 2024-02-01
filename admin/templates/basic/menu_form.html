@@ -110,34 +110,34 @@
 
             var list = "<tr class=\"menu_list menu_group_{{ code }}\">";
             list += "<td" + sub_menu_class + ">";
-            list += "<label for=\"me_name_" + ms + "\"  class=\"sound_only\">메뉴<strong class=\"sound_only\"> 필수</strong></label>";
+            list += "<label for=\"me_name_" + ms + "\"  class=\"blind\">메뉴<strong class=\"blind\"> 필수</strong></label>";
             list += "<input type=\"hidden\" name=\"code[]\" value=\"{{ code }}\">";
             list += "<input type=\"text\" name=\"me_name[]\" value=\"" + name + "\" id=\"me_name_" + ms + "\" required class=\"required frm_input full_input\">";
             list += "</td>";
             list += "<td>";
-            list += "<label for=\"me_link_" + ms + "\"  class=\"sound_only\">링크<strong class=\"sound_only\"> 필수</strong></label>";
+            list += "<label for=\"me_link_" + ms + "\"  class=\"blind\">링크<strong class=\"blind\"> 필수</strong></label>";
             list += "<input type=\"text\" name=\"me_link[]\" value=\"" + link + "\" id=\"me_link_" + ms + "\" required class=\"required frm_input full_input\">";
             list += "</td>";
             list += "<td class=\"td_mng\">";
-            list += "<label for=\"me_target_" + ms + "\"  class=\"sound_only\">새창</label>";
+            list += "<label for=\"me_target_" + ms + "\"  class=\"blind\">새창</label>";
             list += "<select name=\"me_target[]\" id=\"me_target_" + ms + "\">";
             list += "<option value=\"self\">사용안함</option>";
             list += "<option value=\"blank\">사용함</option>";
             list += "</select>";
             list += "</td>";
             list += "<td class=\"td_numsmall\">";
-            list += "<label for=\"me_order_" + ms + "\"  class=\"sound_only\">순서<strong class=\"sound_only\"> 필수</strong></label>";
+            list += "<label for=\"me_order_" + ms + "\"  class=\"blind\">순서<strong class=\"blind\"> 필수</strong></label>";
             list += "<input type=\"text\" name=\"me_order[]\" value=\"0\" id=\"me_order_" + ms + "\" required class=\"required frm_input\" size=\"5\">";
             list += "</td>";
             list += "<td class=\"td_mngsmall\">";
-            list += "<label for=\"me_use_" + ms + "\"  class=\"sound_only\">PC사용</label>";
+            list += "<label for=\"me_use_" + ms + "\"  class=\"blind\">PC사용</label>";
             list += "<select name=\"me_use[]\" id=\"me_use_" + ms + "\">";
             list += "<option value=\"1\">사용함</option>";
             list += "<option value=\"0\">사용안함</option>";
             list += "</select>";
             list += "</td>";
             list += "<td class=\"td_mngsmall\">";
-            list += "<label for=\"me_mobile_use_" + ms + "\"  class=\"sound_only\">모바일사용</label>";
+            list += "<label for=\"me_mobile_use_" + ms + "\"  class=\"blind\">모바일사용</label>";
             list += "<select name=\"me_mobile_use[]\" id=\"me_mobile_use_" + ms + "\">";
             list += "<option value=\"1\">사용함</option>";
             list += "<option value=\"0\">사용안함</option>";
@@ -174,29 +174,6 @@
 
             window.close();
         }
-
-        // 다크모드 설정
-        function handleDarkModeChange() {
-          const isUserColorTheme = localStorage.getItem('color-theme');
-          const isOsColorTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-          const getUserTheme = () => (isUserColorTheme ? isUserColorTheme : isOsColorTheme);
-
-          const initialTheme = getUserTheme();
-          if (initialTheme === 'dark') {
-            document.documentElement.setAttribute('color-theme', 'dark');
-          } else {
-            document.documentElement.setAttribute('color-theme', 'light');
-          }
-        }; 
-
-        document.addEventListener('DOMContentLoaded', handleDarkModeChange)
-
-        // 로컬스토리지 데이터에따라 실시간 변경
-        window.addEventListener('storage', function (event) {
-            handleDarkModeChange();
-        });
-
-        
 
     </script>
 

@@ -284,9 +284,8 @@ def theme_asset(request: Request, asset_path: str) -> str:
         asset_url (str): asset url
     """
     theme = get_current_theme()
-    mobile_dir = "/mobile" if request.state.is_mobile else ""
 
-    return f"/theme_static/{theme}{mobile_dir}/{asset_path}"
+    return f"/theme_static/{theme}/{asset_path}"
 
 
 def register_theme_statics(app: FastAPI) -> None:

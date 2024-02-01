@@ -15,13 +15,13 @@
                 <caption>투표 {{ action }}</caption>
                 <tbody>
                     <tr>
-                        <th scope="row"><label for="po_subject">투표 제목<strong class="sound_only">필수</strong></label></th>
+                        <th scope="row"><label for="po_subject">투표 제목<strong class="blind">필수</strong></label></th>
                         <td><input type="text" name="po_subject" value="{{ poll.po_subject }}" id="po_subject" required="" class="required frm_input" size="80" maxlength="125"></td>
                     </tr>
                     {% for i in range(1, 10) %}
                         {% set required='required' if i in [1, 2] else '' %}
                         <tr>
-                            <th scope="row"><label for="po_poll{{ i }}">항목 {{ i }}<strong class="sound_only">필수</strong></label></th>
+                            <th scope="row"><label for="po_poll{{ i }}">항목 {{ i }}<strong class="blind">필수</strong></label></th>
                             <td>
                                 <input type="text" name="po_poll{{ i }}" value="{{ getattr(poll, 'po_poll' ~ i, '') }}" id="po_poll{{ i }}" class="frm_input {{ required }}" maxlength="125" {{ required }}>
                                 <label for="po_cnt{{ i }}">항목 {{ i }} 투표수</label>

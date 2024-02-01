@@ -112,6 +112,9 @@ class BoardConfig():
         Returns:
             str: 게시판에 사용할 에디터.
         """
+        if not self.board.bo_use_dhtml_editor or not self.config.cf_editor:
+            return "textarea"
+
         return self.board.bo_select_editor or self.config.cf_editor
 
     @property

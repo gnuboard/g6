@@ -14,10 +14,10 @@
         <form name="f_scrap_popin" action="{{ url_for('scrap_form_update', bo_table=bo_table, wr_id=write.wr_id) }}" method="post" onsubmit="return fscrappopin_submit(this);">
             <input type="hidden" name="token" value="">
             <div class="new_win_con">
-                <h2 class="sound_only">제목 확인 및 댓글 쓰기</h2>
+                <h2 class="blind">제목 확인 및 댓글 쓰기</h2>
                 <ul>
                     <li class="scrap_tit">
-                        <span class="sound_only">제목</span>
+                        <span class="blind">제목</span>
                         {{ write.wr_subject }}
                     </li>
                     <li>
@@ -37,28 +37,5 @@
             f.token.value = generate_token();
             return true;
         }
-
-          
-      // 다크모드 설정
-      function handleDarkModeChange() {
-            const isUserColorTheme = localStorage.getItem('color-theme');
-            const isOsColorTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            const getUserTheme = () => (isUserColorTheme ? isUserColorTheme : isOsColorTheme);
-
-            const initialTheme = getUserTheme();
-            if (initialTheme === 'dark') {
-              document.documentElement.setAttribute('color-theme', 'dark');
-            } else {
-              document.documentElement.setAttribute('color-theme', 'light');
-            }
-          }; 
-
-          document.addEventListener('DOMContentLoaded', handleDarkModeChange)
-
-          // 로컬스토리지 데이터에따라 실시간 변경
-          window.addEventListener('storage', function (event) {
-              handleDarkModeChange();
-          });
-    
     </script>
 {% endblock content %}
