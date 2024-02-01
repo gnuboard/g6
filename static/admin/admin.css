@@ -605,6 +605,7 @@ tfoot th {}
     #hd_top {margin: 0px auto;}
     .tbl_head01 {overflow-x: auto;border: var(--tblHeadBorder);}
     .tbl_head01 table {min-width: 1100px;}
+    .new_win .tbl_head01 table {min-width:auto}
     .tbl_frm01.tbl_wrap table {display: grid;table-layout: fixed;}
     .tbl_frm01.tbl_wrap table tr {display: grid;grid-template-columns: 25% 75%;margin-bottom: 10px;}
     .tbl_frm01.tbl_wrap table th, .tbl_frm01.tbl_wrap table td {width: 100%;}
