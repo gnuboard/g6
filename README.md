@@ -10,6 +10,12 @@
 ## 데모 사이트
 - [https://g6.demo.sir.kr/](https://g6.demo.sir.kr/)
 
+## 커뮤니티
+### 그누보드6 커뮤니티
+- [https://sir.kr/main/g6](https://sir.kr/main/g6)
+
+### 그누보드6 유튜브 채널
+- [https://www.youtube.com/@gnuboard-official](https://www.youtube.com/@gnuboard-official)
 
 ## 시작하기
 ### 1. 설치

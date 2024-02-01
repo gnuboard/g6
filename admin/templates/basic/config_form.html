@@ -198,6 +198,17 @@
                     </td>
                 </tr>
                 <tr>
+                    <th scope="row"><label for="cf_possible_ip">나의 IP 주소</label></th>
+                    <td>
+                        <span>{{ client_ip }}</span>
+                    </td>
+                    <th scope="row"><label for="cf_intercept_ip">서버 IP 주소</label></th>
+                    <td>
+                        <div>공인 IP: {{ host_public_ip }}</div>
+                        <div>사설 IP: {{ host_ip }}</div>
+                    </td>
+                </tr>
+                <tr>
                     <th scope="row"><label for="cf_possible_ip">접근가능 IP</label></th>
                     <td>
                         <span class="frm_info">입력된 IP의 컴퓨터만 접근할 수 있습니다.<br>123.123.+ 도 입력 가능. (엔터로 구분)</span>                            

@@ -39,7 +39,7 @@
                     <li class="bo_w_mail chk_box">
                         <label for="qa_email" class="blind">이메일 </label>
                         <input type="text" name="qa_email" value="{{ qa.qa_email|default(request.state.login_member.mb_email) }}" id="qa_email" class="{{ required }} frm_input full_input email" size="50" maxlength="100" placeholder="이메일" {{ required }}>
-                        <input type="checkbox" name="qa_email_recv" id="qa_email_recv" value="1" class="selec_chk" {{ "checked" if qa.qa_email_recv else "" }}>
+                        <input type="checkbox" name="qa_email_recv" id="qa_email_recv" value="1" {{ "checked" if qa.qa_email_recv else "" }}>
                         <label for="qa_email_recv" class="frm_info"><span>&nbsp;</span>답변받기</label>
                     </li>
                     {% endif %}
@@ -48,7 +48,7 @@
                     <li class="bo_w_hp chk_box">
                         <label for="qa_hp" class="blind">휴대폰</label>
                         <input type="text" name="qa_hp" value="{{ qa.qa_hp|default(request.state.login_member.mb_hp) }}" id="qa_hp" class="{{ required }} frm_input full_input" size="30" placeholder="휴대폰" {{ required }}>
-                        <input type="checkbox" name="qa_sms_recv" id="qa_sms_recv" value="1" class="selec_chk" {{ "checked" if qa.qa_sms_recv else "" }}>
+                        <input type="checkbox" name="qa_sms_recv" id="qa_sms_recv" value="1" {{ "checked" if qa.qa_sms_recv else "" }}>
                         {% if qa_config.qa_sms %}
                             <label for="qa_sms_recv" class="frm_info"><span>&nbsp;</span>답변등록 SMS알림 수신</label>
                         {% endif %}

@@ -56,14 +56,14 @@
             <ul class="bo_v_option">
             {% if is_notice %}
                 <li class="chk_box">
-                    <input type="checkbox" id="notice" name="notice" class="selec_chk" value="1" {{ notice_checked }}>
+                    <input type="checkbox" id="notice" name="notice" value="1" {{ notice_checked }}>
                     <label for="notice"><span>&nbsp;</span>공지</label>
                 </li>
             {% endif %}
             {% if is_html %}
                 <li class="chk_box">
                     {% if not board.bo_use_dhtml_editor %}
-                    <input type="checkbox" id="html" name="html" onclick="html_auto_br(this);" class="selec_chk" value="{{ html_value }}" {{ html_checked }}>
+                    <input type="checkbox" id="html" name="html" onclick="html_auto_br(this);" value="{{ html_value }}" {{ html_checked }}>
                     <label for="html"><span>&nbsp;</span>html</label>
                     {% else %}
                     <input type="hidden" name="html" value="html1">
@@ -73,7 +73,7 @@
             {% if is_secret %}
                 {% if is_admin or is_secret == 1 %}
                     <li class="chk_box">
-                        <input type="checkbox" id="secret" name="secret"  class="selec_chk" value="secret" {{ secret_checked }}>
+                        <input type="checkbox" id="secret" name="secret" value="secret" {{ secret_checked }}>
                         <label for="secret"><span>&nbsp;</span>비밀글</label>
                     </li>
                 {% else %}
@@ -82,7 +82,7 @@
             {% endif %}
             {% if is_mail %}
                 <li class="chk_box">
-                    <input type="checkbox" id="mail" name="mail"  class="selec_chk" value="mail" {{ recv_email_checked }}>
+                    <input type="checkbox" id="mail" name="mail" value="mail" {{ recv_email_checked }}>
                     <label for="mail"><span>&nbsp;</span>답변메일받기</label>
                 </li>
             {% endif %}

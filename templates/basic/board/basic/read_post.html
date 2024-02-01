@@ -263,7 +263,7 @@
         </button>
 
         <!-- 댓글 시작 { -->
-        <div id="bo_vc">
+        <div id="bo_basic_comment" class="bo_comment">
             <h2>댓글목록</h2>
 
             {% for comment in comments %}
@@ -405,7 +405,7 @@
                         {% endif %}
 
                         <span class="bo_vc_secret chk_box">
-                            <input type="checkbox" name="wr_secret" value="secret" id="wr_secret" class="selec_chk">
+                            <input type="checkbox" name="wr_secret" value="secret" id="wr_secret">
                             <label for="wr_secret" class="icon_lock">
                                 <span>&nbsp;</span>비밀댓글
                             </label>

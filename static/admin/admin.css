@@ -25,6 +25,7 @@
   --themeBg: #e5ecef;
   --processBg: #f9f9f9;
   --tfootBg: #eeeeee;
+  --bovHover: #f7f7f7;
   /* border */
   --containerBorder: 1px solid #cecece;
   --tblHeadBorder: 1px solid #60718b;
@@ -35,6 +36,7 @@
   --themeBorder: 1px solid #d1dee2;
   --pageBorder: 1px solid #dddddd;
   --themeTableBorder: 1px solid #f3f3f3;
+  --border: 1px solid #e5ecee;
   /* fontColor */
   --fontColor: #000;
   --anchorColor: #4b4b4b;
@@ -63,6 +65,7 @@
   --themeBg: #000000;
   --processBg: #272E3D;
   --tfootBg: #1f2531;
+  --bovHover: #1f1d1d;
   /* border */
   --containerBorder: 1px solid #ffffff30;
   --tblHeadBorder: 1px solid #545454;
@@ -73,6 +76,7 @@
   --themeBorder: 1px solid #2e2e2e;
   --pageBorder: 1px solid #ffffff30;
   --themeTableBorder: 1px solid #545454;
+  --border: 1px solid #383838;
   /* fontColor */
   --fontColor: #eee;
   --anchorColor: #ffffff;
@@ -601,6 +605,7 @@ tfoot th {}
     #hd_top {margin: 0px auto;}
     .tbl_head01 {overflow-x: auto;border: var(--tblHeadBorder);}
     .tbl_head01 table {min-width: 1100px;}
+    .new_win .tbl_head01 table {min-width:auto}
     .tbl_frm01.tbl_wrap table {display: grid;table-layout: fixed;}
     .tbl_frm01.tbl_wrap table tr {display: grid;grid-template-columns: 25% 75%;margin-bottom: 10px;}
     .tbl_frm01.tbl_wrap table th, .tbl_frm01.tbl_wrap table td {width: 100%;}
