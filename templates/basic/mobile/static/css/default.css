@@ -667,7 +667,7 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 /* 게시판 목록 공통 */
 #bo_list {}
 #bo_list li {background:#fff}
-#bo_list li.bo_notice {background:#fff6fa}
+#bo_list li.is_notice {background:#fff6fa}
 
 .bo_fx {margin-bottom:5px;padding:0 10px}
 .bo_fx:after {display:block;visibility:hidden;clear:both;content:""}
