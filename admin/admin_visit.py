@@ -428,7 +428,7 @@ async def visit_hour(
     elif dialect == 'sqlite':
         query = query.add_columns(func.strftime('%H', Visit.vi_time).label('hour'))
     query_result = db.execute(
-        query.add_columns(Visit.vi_time, func.count().label('hour_count'))
+        query.add_columns(func.count().label('hour_count'))
         .group_by('hour')
     ).all()
 
