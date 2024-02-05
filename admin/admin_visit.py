@@ -477,7 +477,9 @@ async def visit_weekday(
         query = query.add_columns(func.strftime('%w', Visit.vi_date).label('dow'))
     query_result = db.execute(
         query.add_columns(Visit.vi_date, func.count().label('dow_count'))
-        .group_by('dow')
+        .group_by(Visit.vi_date, 'dow')
+        # 데이터베이스 별로 요일(day of week)을 출력하는 기준이 다르기 때문에
+        # vi_date 가 필요하다.
     ).all()
 
     # 요일별 접속자집계
