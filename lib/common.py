@@ -18,7 +18,6 @@ from urllib.parse import urlencode
 from cachetools import LFUCache, TTLCache
 from dotenv import load_dotenv
 from fastapi import Request, UploadFile
-from markupsafe import Markup, escape
 from PIL import Image, ImageOps, UnidentifiedImageError
 from passlib.context import CryptContext
 from sqlalchemy import Index, asc, case, desc, func, select, delete, between, exists, cast, String, DateTime
@@ -445,13 +444,8 @@ def get_memo_not_read(mb_id: str) -> int:
     return count
 
 
-def nl2br(value) -> str:
-    """ \n 을 <br> 태그로 변환
-    """
-    return escape(value).replace('\n', Markup('<br>\n'))
-
-
 popular_cache = TTLCache(maxsize=10, ttl=300)
+
 
 def get_populars(limit: int = 10, day: int = 3):
     """인기검색어 조회
