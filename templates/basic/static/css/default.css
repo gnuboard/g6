@@ -925,7 +925,7 @@ html.no-overflowscrolling .bo_write .write_subject #autosave_pop { height:auto; 
 /* } 에디터를 사용하지 않을 때 */
 
 /* ckeditor4를 사용할 때 { */
-.bo_view #article_contents.ckeditor4 { margin: 20px; line-height: 1.8; font-family: "Malgun Gothic", "맑은 고딕"; font-size:1.2rem; word-wrap: break-word; }
+.bo_view #article_contents.ckeditor4 { line-height: 1.8; font-family: "Malgun Gothic", "맑은 고딕"; font-size:1.2rem; word-wrap: break-word; }
 .bo_view #article_contents.ckeditor4 blockquote { margin:0; padding: 2px 8px 0 10px; border-style: solid; border-color: #000; border-width: 0;border-left-width: 3px; }
 .bo_view #article_contents.ckeditor4 p { margin:0; padding:0; }
 .bo_view #article_contents.ckeditor4 a { color: #0782C1; }
