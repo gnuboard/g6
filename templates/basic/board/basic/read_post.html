@@ -117,14 +117,13 @@
         </ul>
         <script>
             jQuery(function($){
-                // 게시판 보기 버튼 옵션
-                $(".more_opener").on("click", function(e) {
+                $(".buttons_more .more_opener").on("click", function(e) {
                     e.stopPropagation();
-                    $(this).next("ul").toggle();
+                    $(this).next(".more").toggle();
                 })
                 $(document).on("click", function (e) {
                     if(!$(e.target).closest(".more_opener").length) {
-                        $(".buttons_more ul").hide();
+                        $(".buttons_more .more").hide();
                     }
                 });
             });
