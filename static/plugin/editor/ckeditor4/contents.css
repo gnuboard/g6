@@ -3,6 +3,10 @@ Copyright (c) 2003-2017, CKSource - Frederico Knabben. All rights reserved.
 For licensing, see LICENSE.md or http://ckeditor.com/license
 */
 
+html {
+    font-size:10px;
+}
+
 body
 {
 	/* Font */
@@ -19,13 +23,13 @@ body
 
 @media all and (min-width:701px) {
     body {
-    	font-size: 0.875em;
+    	font-size: 1.2rem;
     }
 }
 
 @media all and (max-width:700px) {
     body {
-        font-size: 1em
+        font-size: 1.2rem
     }
 }
 

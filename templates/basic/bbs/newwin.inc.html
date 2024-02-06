@@ -2,7 +2,7 @@
 {% if newwins %}
     <!-- 팝업레이어 시작 { -->
     <div id="hd_pop">
-        <h2>팝업레이어 알림</h2>
+        <h2 class="blind">팝업레이어 알림</h2>
         {% for newwin in newwins %}
             <div id="hd_pops_{{ newwin.nw_id }}" class="hd_pops" style="top:{{ newwin.nw_top }}px;left:{{ newwin.nw_left }}px">
                 <div class="hd_pops_con" style="width:{{ newwin.nw_width }}px;height:{{ newwin.nw_height }}px">
@@ -18,7 +18,7 @@
                 </div>
             </div>
         {% else %}
-            <span class="sound_only">팝업레이어 알림이 없습니다.</span>
+            <span class="blind">팝업레이어 알림이 없습니다.</span>
         {% endfor %}
     </div>
     <script>

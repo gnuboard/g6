@@ -1,6 +1,6 @@
 {% macro head() -%}
-<script src="/static/plugin/editor/ckeditor4/ckeditor.js"></script>
-<script src="/static/plugin/editor/ckeditor4/config.js"></script>
+<script src="/static/plugin/editor/ckeditor4/ckeditor.js?ver=4.11.1.1"></script>
+<script src="/static/plugin/editor/ckeditor4/config.js?ver=4.11.1.1"></script>
 <script>
     // ckeditor4 global variables
     let ck4editorAttachId = '';
@@ -25,7 +25,7 @@
         <textarea id="{{ tag_name }}" name="{{ tag_name }}" class="ckeditor-textarea" maxlength="65536" style="height: 0px;">
             {{- content -}}
         </textarea>
-        <span class="sound_only">board.end_web_editor</span>
+        <span class="blind">board.end_web_editor</span>
     </div>
 </div>
 <input type="hidden" name="option" value="html2">

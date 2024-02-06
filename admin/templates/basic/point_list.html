@@ -24,14 +24,16 @@
     </div>
 
     <form name="fsearch" id="fsearch" class="local_sch01 local_sch" method="get">
-        <label for="sfl" class="sound_only">검색대상</label>
+        <label for="sfl" class="blind">검색대상</label>
         <select name="sfl" id="sfl">
         <option value="mb_id" {{ get_selected('mb_id', sfl) }}>회원아이디</option>
         <option value="po_content" {{ get_selected('po_content', sfl) }}>내용</option>
         </select>
-        <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
+        <label for="stx" class="blind">검색어<strong class="blind"> 필수</strong></label>
         <input type="text" name="stx" value="{{ stx }}" id="stx" required class="required frm_input">
-        <input type="submit" class="btn_submit" value="검색">
+        <button type="submit" class="btn_submit">
+          <span class="blind">검색</span>
+        </button>
     </form>
 
     <form name="fpointlist" id="fpointlist" method="post" action="/admin/point_list_delete" onsubmit="return fpointlist_submit(this);">
@@ -43,7 +45,7 @@
                 <thead>
                     <tr>
                         <th scope="col">
-                            <label for="chkall" class="sound_only">포인트 내역 전체</label>
+                            <label for="chkall" class="blind">포인트 내역 전체</label>
                             <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                         </th>
                         <th scope="col">{{ subject_sort_link(request, 'mb_id')|safe }}회원아이디</a></th>
@@ -63,7 +65,7 @@
                         <td class="td_chk">
                             <input type="hidden" name="mb_id[]" value="admin" id="mb_id_{{ loop.index0 }}">
                             <input type="hidden" name="po_id[]" value="{{ point.po_id }}" id="po_id_{{ loop.index0 }}">
-                            <label for="chk_{{ loop.index0 }}" class="sound_only">{{ point.po_content }}</label>
+                            <label for="chk_{{ loop.index0 }}" class="blind">{{ point.po_content }}</label>
                             <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
                         </td>
                         <td class="td_left"><a href="?sfl=mb_id&stx={{ point.mb_id }}">{{ point.mb_id }}</a></td>
@@ -109,15 +111,15 @@
                     </colgroup>
                     <tbody>
                         <tr>
-                            <th scope="row"><label for="mb_id">회원아이디<strong class="sound_only">필수</strong></label></th>
+                            <th scope="row"><label for="mb_id">회원아이디<strong class="blind">필수</strong></label></th>
                             <td><input type="text" name="mb_id" value="{{ stx if sfl == 'mb_id' else '' }}" id="mb_id" class="required frm_input" required></td>
                         </tr>
                         <tr>
-                            <th scope="row"><label for="po_content">포인트 내용<strong class="sound_only">필수</strong></label></th>
+                            <th scope="row"><label for="po_content">포인트 내용<strong class="blind">필수</strong></label></th>
                             <td><input type="text" name="po_content" id="po_content" required class="required frm_input" size="80"></td>
                         </tr>
                         <tr>
-                            <th scope="row"><label for="po_point">포인트<strong class="sound_only">필수</strong></label></th>
+                            <th scope="row"><label for="po_point">포인트<strong class="blind">필수</strong></label></th>
                             <td><input type="text" name="po_point" id="po_point" required class="required frm_input" pattern="^(-?)[0-9]{1,7}$" title="1~7자리 이하로 숫자만 입력하세요."></td>
                         </tr>
                         {% if config.cf_point_term > 0 %}

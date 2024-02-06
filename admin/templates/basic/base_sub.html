@@ -6,8 +6,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}관리자 base{% endblock title %} | {{ request.state.title }}</title>
 <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
-<link rel="stylesheet" href="/static/admin/admin.css">
-<link rel="stylesheet" href="{{ theme_asset(request, 'js/font-awesome/css/font-awesome.min.css?ver=4.7.0') }}">
+<link rel="stylesheet" href="/static/admin/admin.css?ver=1.0.2">
+<link rel="stylesheet" href="/static/js/font-awesome/css/all.min.css?ver=6.5.1">
 <script>
 // 자바스크립트에서 사용하는 전역변수 선언
 const g6_url       = "{{ request.base_url }}";
@@ -20,8 +20,9 @@ const g6_shop_url = "{{ request.base_url }}shop";
 </script>
 <script src="/static/js/jquery.min.js?ver=3.7.1"></script>
 <script src="/static/js/jquery-migrate.min.js?ver=3.4.0"></script>
-<script src="/static/js/jquery.menu.js"></script>
-<script src="/static/js/common.js"></script>
+<script src="/static/js/common.js?ver=1.0.0"></script>
+<script src="/static/js/wrest.js?ver=1.0.0"></script>
+<script src="/static/js/font-awesome/js/all.min.js?ver=6.5.1"></script>
 {% block head -%}
 {% endblock head -%}
 {% include "plugin_menu_header.html" %}

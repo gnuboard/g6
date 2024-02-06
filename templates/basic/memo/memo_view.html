@@ -34,20 +34,20 @@
                                 {{ sideview.get(request, target.mb_id, getattr(target, "mb_nick", "[회원정보 없음]"))|safe }}
                             </li>
                             <li class="memo_view_date">
-                                <span class="sound_only">받은시간</span>
+                                <span class="blind">받은시간</span>
                                 <i class="fa fa-regular fa-clock" aria-hidden="true"></i>
                                 {{ memo.me_send_datetime }}
                             </li> 
                             <li class="memo_op_btn list_btn">
                                 <a href="{{ url_for('memo_list') }}?{{ request.query_params }}" class="btn_b01 btn">
                                     <i class="fa fa-list" aria-hidden="true"></i>
-                                    <span class="sound_only">목록</span>
+                                    <span class="blind">목록</span>
                                 </a>
                             </li>
                             <li class="memo_op_btn del_btn">
                                 <a href="{{ url_for('memo_delete', me_id=memo.me_id) }}?{{ request.query_params }}" onclick="del(this.href); return false;" class="memo_del btn_b01 btn">
                                     <i class="fa fa-regular fa-trash-can" aria-hidden="true"></i>
-                                    <span class="sound_only">삭제</span>
+                                    <span class="blind">삭제</span>
                                 </a>
                             </li>
                         </ul>

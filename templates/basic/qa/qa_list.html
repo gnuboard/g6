@@ -38,14 +38,14 @@
                 <li>
                     <a href="{{ url_for('qa_config_form') }}" class="btn_admin btn" title="관리자">
                         <i class="fa fa-cog fa-spin fa-fw"></i>
-                        <span class="sound_only">관리자</span>
+                        <span class="blind">관리자</span>
                     </a>
                 </li>
                 {% endif %}
                 <li>
                     <button type="button" class="btn_bo_sch btn_b01 btn" title="게시판 검색">
                         <i class="fa fa-search" aria-hidden="true"></i>
-                        <span class="sound_only">게시판 검색</span>
+                        <span class="blind">게시판 검색</span>
                     </button>
                     <!-- 게시판 검색 시작 -->
                     <div class="bo_sch_wrap">
@@ -55,24 +55,24 @@
                             <form name="fsearch" method="get">
                                 <input type="hidden" name="sca" value="{{ query_params.sca }}">
                                 <input type="hidden" name="sop" value="{{ query_params.sop|default("or") }}">
-                                <label for="sfl" class="sound_only">검색대상</label>
+                                <label for="sfl" class="blind">검색대상</label>
                                 <select name="sfl" id="sfl">
                                     <option value="qa_subject" {{ get_selected(query_params.sfl, 'qa_subject') }}>제목</option>
                                     <option value="qa_content" {{ get_selected(query_params.sfl, 'qa_content') }}>내용</option>
                                     <option value="qa_name" {{ get_selected(query_params.sfl, 'qa_name') }}>글쓴이</option>
                                     <option value="mb_id" {{ get_selected(query_params.sfl, 'mb_id') }}>회원아이디</option>
                                 </select>
-                                <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
+                                <label for="stx" class="blind">검색어<strong class="blind"> 필수</strong></label>
                                 <div class="sch_bar">
                                     <input type="text" name="stx" value="{{ query_params.get("stx", "") }}" id="stx" required="" class="sch_input" size="25" maxlength="15" placeholder=" 검색어를 입력해주세요">
                                     <button type="submit" value="검색" class="sch_btn" title="검색">
                                         <i class="fa fa-search" aria-hidden="true"></i>
-                                        <span class="sound_only">검색</span>
+                                        <span class="blind">검색</span>
                                     </button>
                                 </div>
                                 <button type="button" class="bo_sch_cls">
                                     <i class="fa fa-xmark" aria-hidden="true"></i>
-                                    <span class="sound_only">닫기</span>
+                                    <span class="blind">닫기</span>
                                 </button>
                             </form>
                         </fieldset>
@@ -83,7 +83,7 @@
                 <li>
                     <a href="{{ url_for('qa_form_write') }}?{{ query_params }}" class="btn_b01 btn" title="문의등록">
                         <i class="fa fa-pencil" aria-hidden="true"></i>
-                        <span class="sound_only">문의등록</span>
+                        <span class="blind">문의등록</span>
                     </a>
                 </li>
             </ul>
@@ -101,7 +101,7 @@
                         <input type="checkbox" id="chkall" onclick="if (this.checked) all_checked(true); else all_checked(false);" class="selec_chk">
                         <label for="chkall">
                             <span>&nbsp;</span>
-                            <b class="sound_only">현재 페이지 게시물 전체선택</b>
+                            <b class="blind">현재 페이지 게시물 전체선택</b>
                         </label>
                     </th>
                     <th scope="col">번호</th>
@@ -118,7 +118,7 @@
                                 <input type="checkbox" name="chk_qa_id[]" value="{{ qa.qa_id }}" id="chk_qa_id_{{ loop.index }}" class="selec_chk">
                                 <label for="chk_qa_id_{{ loop.index }}">
                                     <span>&nbsp;</span>
-                                    <b class="sound_only">{{ qa.subject }}</b>
+                                    <b class="blind">{{ qa.subject }}</b>
                                 </label>
                             </td>
                             <td class="td_num">{{ qa.num }}</td>
@@ -154,20 +154,20 @@
                     <li>
                         <button type="submit" name="btn_submit" value="선택삭제" title="선택삭제" onclick="document.pressed=this.value" class="btn btn_b01 btn_admin">
                             <i class="fa fa-regular fa-trash-can" aria-hidden="true"></i>
-                            <span class="sound_only">선택삭제</span>
+                            <span class="blind">선택삭제</span>
                         </button>
                     </li>
                     {% endif %}
                     <li>
                         <a href="{{ url_for('qa_list') }}" class="btn_b01 btn" title="목록">
                             <i class="fa fa-list" aria-hidden="true"></i>
-                            <span class="sound_only">목록</span>
+                            <span class="blind">목록</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ url_for('qa_form_write') }}" class="btn_b01 btn" title="문의등록">
                             <i class="fa fa-pencil" aria-hidden="true"></i>
-                            <span class="sound_only">문의등록</span>
+                            <span class="blind">문의등록</span>
                         </a>
                     </li>
                 </ul>

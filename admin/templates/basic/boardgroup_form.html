@@ -19,7 +19,7 @@
             </colgroup>
             <tbody>
                 <tr>
-                    <th scope="row"><label for="gr_id">그룹 ID<strong class="sound_only"> 필수</strong></label></th>
+                    <th scope="row"><label for="gr_id">그룹 ID<strong class="blind"> 필수</strong></label></th>
                     <td>
                         {% if group %}
                             <input type="hidden" name="gr_id" value="{{ group.gr_id }}">
@@ -31,7 +31,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row"><label for="gr_subject">그룹 제목<strong class="sound_only"> 필수</strong></label></th>
+                    <th scope="row"><label for="gr_subject">그룹 제목<strong class="blind"> 필수</strong></label></th>
                     <td>
                         <input type="text" name="gr_subject" value="{{ group.gr_subject }}" id="gr_subject" required class="required frm_input" size="80">
                     </td>

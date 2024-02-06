@@ -30,7 +30,7 @@
             <textarea readonly>{{ config.cf_stipulation }}</textarea>
             <fieldset class="fregister_agree">
                 <input type="checkbox" name="agree" value="1" id="agree11" class="selec_chk">
-                <label for="agree11"><span></span><b class="sound_only">회원가입약관의 내용에 동의합니다.</b></label>
+                <label for="agree11"><span></span><b class="blind">회원가입약관의 내용에 동의합니다.</b></label>
             </fieldset>
         </section>
 
@@ -38,7 +38,7 @@
             <h2>개인정보 수집 및 이용</h2>
             <div>
                 <table>
-                    <caption>개인정보 수집 및 이용</caption>
+                    <caption class="blind">개인정보 수집 및 이용</caption>
                     <thead>
                     <tr>
                         <th>목적</th>
@@ -65,7 +65,7 @@
 
             <fieldset class="fregister_agree">
                 <input type="checkbox" name="agree2" value="1" id="agree21" class="selec_chk">
-                <label for="agree21"><span></span><b class="sound_only">개인정보 수집 및 이용의 내용에 동의합니다.</b></label>
+                <label for="agree21"><span></span><b class="blind">개인정보 수집 및 이용의 내용에 동의합니다.</b></label>
             </fieldset>
         </section>
 
@@ -120,7 +120,7 @@
                             닉네임 (필수)
                             <button type="button" class="tooltip_icon">
                                 <i class="fa fa-regular fa-question-circle" aria-hidden="true"></i>
-                                <span class="sound_only">설명보기</span>
+                                <span class="blind">설명보기</span>
                             </button>
                             <span class="tooltip">공백없이 한글,영문,숫자만 입력 가능 (한글2자, 영문4자 이상)<br> 닉네임을 바꾸시면 앞으로 
                                 {{ config.cf_nick_modify }} 일 이내에는 변경 할 수 없습니다.
@@ -140,7 +140,7 @@
                             {% if config.cf_use_email_certify %}
                             <button type="button" class="tooltip_icon">
                                 <i class="fa fa-regular fa-question-circle" aria-hidden="true"></i>
-                                <span class="sound_only">설명보기</span>
+                                <span class="blind">설명보기</span>
                             </button>
                             <span class="tooltip">
                                     {% if is_register %}
@@ -210,7 +210,7 @@
             <div id="login_fs">
                 <label for="login_id" class="login_id">아이디 (필수)</label>
                 <span class="lg_id">
-                    <input type="text" name="mb_id" id="login_id" class="frm_input required" size="20" maxLength="20">
+                    <input type="text" name="mb_id" id="login_id" class="frm_input required alnum_" size="20" maxLength="20">
                 </span>
                 <label for="login_pw" class="login_pw">비밀번호 (필수)</label>
                 <span class="lg_pw">

@@ -23,14 +23,14 @@
                     </colgroup>
                     <tbody>
                         <tr>
-                            <th scope="row"><label for="qa_title">타이틀<strong class="sound_only">필수</strong></label></th>
+                            <th scope="row"><label for="qa_title">타이틀<strong class="blind">필수</strong></label></th>
                             <td>
                                 <input type="text" name="qa_title" value="{{ qa_config.qa_title|default('1:1문의') }}" id="qa_title" required="" class="required frm_input" size="40">
                                 <a href="{{ url_for('qa_list') }}" class="btn_frmline">1:1문의 바로가기</a>
                             </td>
                         </tr>
                         <tr>
-                            <th scope="row"><label for="qa_category">분류<strong class="sound_only">필수</strong></label></th>
+                            <th scope="row"><label for="qa_category">분류<strong class="blind">필수</strong></label></th>
                             <td>
                                 <span class="frm_info">분류와 분류 사이는 | 로 구분하세요. (예: 질문|답변) 첫자로 #은 입력하지 마세요. (예: #질문|#답변 [X])</span>
                                 <input type="text" name="qa_category" value="{{ qa_config.qa_category }}" id="qa_category" required="" class="required frm_input" size="70">
@@ -92,40 +92,40 @@
                             </td>
                         </tr>
                         <tr>
-                            <th scope="row"><label for="qa_subject_len">제목 길이<strong class="sound_only"> 필수</strong></label></th>
+                            <th scope="row"><label for="qa_subject_len">제목 길이<strong class="blind"> 필수</strong></label></th>
                             <td>
                                 <span class="frm_info">목록에서의 제목 글자수</span>
                                 <input type="text" name="qa_subject_len" value="{{ qa_config.qa_subject_len|default(60) }}" id="qa_subject_len" required="" class="required numeric frm_input" size="4">
                             </td>
                         </tr>
                         <tr>
-                            <th scope="row"><label for="qa_mobile_subject_len">모바일 제목 길이<strong class="sound_only"> 필수</strong></label></th>
+                            <th scope="row"><label for="qa_mobile_subject_len">모바일 제목 길이<strong class="blind"> 필수</strong></label></th>
                             <td>
                                 <span class="frm_info">목록에서의 제목 글자수</span>
                                 <input type="text" name="qa_mobile_subject_len" value="{{ qa_config.qa_mobile_subject_len|default(40) }}" id="qa_mobile_subject_len" required="" class="required numeric frm_input" size="4">
                             </td>
                         </tr>
                         <tr>
-                            <th scope="row"><label for="qa_page_rows">페이지당 목록 수<strong class="sound_only"> 필수</strong></label></th>
+                            <th scope="row"><label for="qa_page_rows">페이지당 목록 수<strong class="blind"> 필수</strong></label></th>
                             <td>
                                 <input type="text" name="qa_page_rows" value="{{ qa_config.qa_page_rows|default(15) }}" id="qa_page_rows" required="" class="required numeric frm_input" size="4">
                             </td>
                         </tr>
                         <tr>
-                            <th scope="row"><label for="qa_mobile_page_rows">모바일 페이지당 목록 수<strong class="sound_only"> 필수</strong></label></th>
+                            <th scope="row"><label for="qa_mobile_page_rows">모바일 페이지당 목록 수<strong class="blind"> 필수</strong></label></th>
                             <td>
                                 <input type="text" name="qa_mobile_page_rows" value="{{ qa_config.qa_mobile_page_rows|default(10) }}" id="qa_mobile_page_rows" required="" class="required numeric frm_input" size="4">
                             </td>
                         </tr>
                         <tr>
-                            <th scope="row"><label for="qa_image_width">이미지 폭 크기<strong class="sound_only"> 필수</strong></label></th>
+                            <th scope="row"><label for="qa_image_width">이미지 폭 크기<strong class="blind"> 필수</strong></label></th>
                             <td>
                                 <span class="frm_info">게시판에서 출력되는 이미지의 폭 크기</span>
                                 <input type="text" name="qa_image_width" value="{{ qa_config.qa_image_width|default(150) }}" id="qa_image_width" required="" class="required numeric frm_input" size="4"> 픽셀
                             </td>
                         </tr>
                         <tr>
-                            <th scope="row"><label for="qa_upload_size">파일 업로드 용량<strong class="sound_only"> 필수</strong></label></th>
+                            <th scope="row"><label for="qa_upload_size">파일 업로드 용량<strong class="blind"> 필수</strong></label></th>
                             <td>
                                 <span class="frm_info">최대 40M 이하 업로드 가능, 1 MB = 1,048,576 bytes</span>
                                 업로드 파일 한개당
