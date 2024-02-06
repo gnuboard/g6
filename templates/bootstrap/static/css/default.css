@@ -185,9 +185,10 @@ input[type=text]:focus,input[type=password]:focus, textarea:focus,select:focus {
 .input-bg {background: var(--inputBg) !important;}
 
 .primary-bb {border-bottom: var(--border) !important;}
-.primary-border {border: var(--border) !important;}
+.main-border {border: var(--border) !important;}
+.input-border {border: var(--inputBorder);}
 
-.primary-font {color: var(--fontColor) !important;}
+.main-font {color: var(--fontColor) !important;}
 
 /* 메뉴 슬라이드 */
 #gnb .dropdown:hover > .dropdown-menu {display: flex;}
@@ -283,22 +284,13 @@ input[type=text]:focus,input[type=password]:focus, textarea:focus,select:focus {
 
 /* 아웃로그인 스킨 */
 #profile section {width: 320px !important;}
-#profile .ol .join {width:50%;float:right;padding:15px 0;text-align:center;background:var(--bovHover);color:#6e6e6e}
-#profile .ol h2 {margin:0}
-#profile .ol form {padding:20px}
+
 #profile .ol a.btn_admin {display:inline-block;padding:0 10px;height:25px;text-decoration:none;line-height:25px;vertical-align:middle}/* 관리자 전용 버튼 */
 #profile .ol a.btn_admin:focus, #profile .ol a.btn_admin:hover {text-decoration:none}
 #profile .ol .login-sns{padding-bottom:0px}
 
-#profile #ol_id {display:block;width:100%;background: var(--inputBg);border:var(--inputBorder);color: var(--fontColor);padding:0 10px;height:35px;margin-bottom:5px;border-radius:3px}
-#profile #ol_pw {display:block;width:100%;background: var(--inputBg);border:var(--inputBorder);color: var(--fontColor);padding:0 10px;height:35px;margin-bottom:5px;border-radius:3px}
-#profile #ol_submit {width:100%;height:35px;background:var(--primaryColor);border-left:1px solid #ccc;color:#fff;font-weight:bold;font-size:1.4rem;border-radius:3px}
-#profile #ol_svc {float:right;line-height:20px}
+/* #profile #ol_submit {width:100%;height:35px;background:var(--primaryColor);border-left:1px solid #ccc;color:#fff;font-weight:bold;font-size:1.4rem;border-radius:3px} */
 #profile #ol_svc a {display:inline-block;border:var(--border);color:var(--primaryColor);border-radius:2px;padding:2px 5px}
-#profile #ol_auto {float:left;line-height:20px;margin-top:5px}
-#profile #ol_auto label {color:var(--shareColor);vertical-align:baseline}
-#profile #ol_auto input {width:13px;height:13px}
-#profile .ol_auto_wr:after {display:block;visibility:hidden;clear:both;content:""}
 #profile #sns_login {margin-top:0 !important;border-top:0 !important}
 #profile #sns_login h3 {position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: polygon(0 0, 0 0, 0 0);}
 
@@ -344,8 +336,7 @@ input[type=text]:focus,input[type=password]:focus, textarea:focus,select:focus {
 .gnb_mo .ol {position:relative;margin:0 0 10px;text-align:center}
 .gnb_mo .ol h2 {margin:0;padding:0;width:0px;height:0px;font-size:0;line-height:0;overflow:hidden}
 
-.gnb_mo #ol_before {background:#212020;padding:11px 15px;text-align:left}
-.gnb_mo #ol_before input[type=text], #ol_before input[type=password] {width:100%;border:0;border-bottom:1px solid #434242;background:none;height:40px;;margin:0 0 10px;color:#fff}
+.gnb_mo #ol_before input[type=text], .gnb_mo #ol_before input[type=password] {width:100%;border:0;border-bottom:1px solid #434242;background:none;height:40px;;margin:0 0 10px;color:#fff}
 .gnb_mo #ol_submit {width:100%;height:40px;border-radius:23px;font-weight:bold;font-size:1.3rem; }
 .gnb_mo #ol_svc {text-align:left;color:#dadada;font-size:1.1rem;margin:5px 0 20px}
 .gnb_mo .ol_before_btn {margin:15px 0 0;color:#aaa;line-height:1.2rem}
@@ -733,7 +724,7 @@ a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:no
 .chk_box input[type="checkbox"] + label span { float:left; width:15px; height:15px; display:block; background:#fff; border:1px solid #d0d4df; border-radius:3px }
 .write_div .chk_box input[type="checkbox"] + label, .bo_vc_w .chk_box input[type="checkbox"] + label { padding-left:20px }
 .write_div .chk_box input[type="checkbox"] + label span, .bo_vc_w .chk_box input[type="checkbox"] + label span { position:absolute; top:2px; left:0; width:15px; height:15px; display:block; margin:0; background:#fff; border:1px solid #d0d4df; border-radius:3px }
-.chk_box input[type="checkbox"]:checked + label { color:#000 }
+.chk_box input[type="checkbox"]:checked + label { color:var(--fontColor) }
 .chk_box input[type="checkbox"]:checked + label span { background:url(./img/chk.png) no-repeat 50% 50% var(--primaryColor); border-color:#1471f6; border-radius:3px }
 
 
@@ -1760,7 +1751,7 @@ button { cursor:pointer; padding:0; font-size:inherit; }
 .chk_box input[type="checkbox"] + label {position:relative;color:#676e70}
 .chk_box input[type="checkbox"] + label:hover {color:#2172f8}
 .chk_box input[type="checkbox"] + label span {float:left;width:15px;height:15px;display:block;background:#fff;border:1px solid #d0d4df;border-radius:3px}
-.chk_box input[type="checkbox"]:checked + label {color:#000}
+.chk_box input[type="checkbox"]:checked + label {color:var(--fontColor)}
 .chk_box input[type="checkbox"]:checked + label span {background:url(/static/img/chk.png) no-repeat 50% 50% var(--primaryColor);border-color:#1471f6;border-radius:3px}
 
 /* 자기소개 */
@@ -1793,7 +1784,7 @@ button { cursor:pointer; padding:0; font-size:inherit; }
 .chk_box input[type="checkbox"] + label {position:relative;padding-left:20px;color:#676e70}
 .chk_box input[type="checkbox"] + label:hover {color:#2172f8}
 .chk_box input[type="checkbox"] + label span {position:absolute;top:2px;left:0;width:15px;height:15px;display:block;margin:0;background:#fff;border:1px solid #d0d4df;border-radius:3px}
-.chk_box input[type="checkbox"]:checked + label {color:#000}
+.chk_box input[type="checkbox"]:checked + label {color:var(--fontColor)}
 .chk_box input[type="checkbox"]:checked + label span {background:url(./img/chk.png) no-repeat 50% 50% var(--primaryColor);border-color:#1471f6;border-radius:3px}
 
 /* outlogin.css */

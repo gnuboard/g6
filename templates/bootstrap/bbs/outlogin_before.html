@@ -1,27 +1,28 @@
 <!-- 로그인 전 아웃로그인 시작 { -->
-<section id="ol_before" class="position-relative mb-4 rounded-4 cont-bg">
+<section id="ol_before" class="position-relative rounded-4">
     <div class="d-flex">
-        <h2 class="col-6 text-center py-3 fs-5 primary-font"><span class="blind">회원</span>로그인</h2>
-        <a href="/bbs/register" class="col-6 text-center bov-bg py-3 fs-5 primary-font">회원가입</a>
+        <h2 class="col-6 text-center py-4 fs-5 main-font"><span class="blind">회원</span>로그인</h2>
+        <a href="/bbs/register" class="col-6 text-center bov-bg py-4 fs-5 main-font">회원가입</a>
     </div>
     <form name="foutlogin" action="/bbs/login" onsubmit="return fhead_submit(this);" method="post" autocomplete="off" class="p-5">
     <fieldset>
         <div class="position-relative mb-2">
             <input type="hidden" name="url" value="{{ request.url }}">
             <label for="ol_id" id="ol_idlabel" class="blind">회원아이디<strong>필수</strong></label>
-            <input type="text" id="ol_id" name="mb_id" required class="required alnum_" maxlength="20" placeholder="아이디">
+            <input type="text" id="ol_id" class="d-block w-100 input-bg input-border main-font fs-4 rounded-1 mb-2 px-3 py-2" name="mb_id" required class="required alnum_" maxlength="20" placeholder="아이디">
             <label for="ol_pw" id="ol_pwlabel" class="blind">비밀번호<strong>필수</strong></label>
-            <input type="password" name="mb_password" id="ol_pw" required class="required" maxlength="20" placeholder="비밀번호">
-            <input type="submit" id="ol_submit" value="로그인" class="btn_b02">
+            <input type="password" name="mb_password" id="ol_pw" class="d-block w-100 input-bg input-border main-font fs-4 rounded-1 mb-2 px-3 py-2" required class="required" maxlength="20" placeholder="비밀번호">
+            <input type="submit" id="ol_submit" value="로그인" class="main-bg text-white w-100 text-center fs-4 py-3 border-0">
         </div>
-        <div class="ol_auto_wr"> 
+        <div class="d-flex justify-content-between align-items-center"> 
             <div id="ol_auto" class="chk_box">
                 <input type="checkbox" name="auto_login" id="auto_login" class="selec_chk">
                 <label for="auto_login" id="auto_login_label"><span></span>자동로그인</label>
             </div>
-            <div id="ol_svc">
-                <a href="/bbs/id_lost">ID 찾기</a> / 
-                <a href="/bbs/password_lost">PW 찾기</a>
+            <div id="ol_svc" class="main-font fs-5 mt-3">
+                <a href="/bbs/id_lost" class="main-border main-font rounded-1 py-2 px-3 fs-5 text-decoration-none">ID 찾기</a>
+                /
+                <a href="/bbs/password_lost" class="main-border main-font rounded-1 py-2 px-3 fs-5 text-decoration-none">PW 찾기</a>
             </div>
         </div>
         
