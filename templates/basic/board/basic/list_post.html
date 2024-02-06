@@ -12,21 +12,28 @@
 {% set sod_reverse="asc" if request.query_params.sod == "desc" else "desc" %}
 
 <!-- 게시판 목록 시작 { -->
-<div id="bo_list" style="width:{{ table_width }}">
+<div id="bo_basic_list" class="bo_common bo_list" style="width:{{ table_width }}">
+
     {% if board.bo_use_category %}
     <!-- 게시판 카테고리 시작 { -->
-        <nav id="bo_cate">
-            <h2>{{ board.subject }} 카테고리</h2>
-            <ul id="bo_cate_ul">
-                <li><a href="{{ request.url.replace_query_params() }}" {% if not sca %}id="bo_cate_on"{% endif %}>전체</a></li>
-                {% for category in categories %}
-                <li><a href="{{ request.url.replace_query_params(sca=category) }}" {% if sca == category %}id="bo_cate_on"{% endif %}>{{ category }}</a></li>
-                {% endfor %}
-            </ul>
-        </nav>
+    <div class="list_cate">
+        <h2 class="blind">{{ board.subject }} 카테고리</h2>
+        <ul>
+            <li>
+                <a href="{{ request.url.replace_query_params() }}" {% if not sca %}id="bo_cate_on"{% endif %}>전체</a>
+            </li>
+            {% for category in categories %}
+            <li>
+                <a href="{{ request.url.replace_query_params(sca=category) }}" {% if sca == category %}id="bo_cate_on"{% endif %}>{{ category }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
     <!-- } 게시판 카테고리 끝 -->
     {% endif %}
+
     <form name="fboardlist" id="fboardlist" action="" onsubmit="return fboardlist_submit(this);" method="post">
+
         <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
         <input type="hidden" name="sw" value="">
         <input type="hidden" name="sfl" value="{{ request.query_params.sfl }}">
@@ -38,16 +45,15 @@
         <input type="hidden" name="page" value="{{ current_page }}">
         <input type="hidden" name="token" value="">
         <input type="hidden" name="act_button" value="">
-        
 
         <!-- 게시판 페이지 정보 및 버튼 시작 { -->
-        <div id="bo_btn_top">
-            <div id="bo_list_total">
+        <div class="list_top">
+            <div class="total">
                 <span>Total {{ total_count|number_format }}건</span>
                 {{ current_page|number_format }} 페이지
             </div>
 
-            <ul class="btn_bo_user">
+            <ul>
                 <li>
                     <button type="button" class="btn_bo_sch btn_b01 btn" title="게시판 검색">
                         <i class="fa fa-search" aria-hidden="true"></i>
@@ -68,7 +74,7 @@
                         <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
                         <span class="blind">게시판 리스트 옵션</span>
                     </button>
-                    <ul class="more_opt is_list_btn">
+                    <ul>
                         <li><button type="submit" name="btn_submit" value="선택삭제" onclick="document.pressed=this.value"><i class="fa fa-regular fa-trash-can" aria-hidden="true"></i> 선택삭제</button></li>
                         <li><button type="submit" name="btn_submit" value="선택복사" onclick="document.pressed=this.value"><i class="fa fa-regular fa-file" aria-hidden="true"></i> 선택복사</button></li>
                         <li><button type="submit" name="btn_submit" value="선택이동" onclick="document.pressed=this.value"><i class="fa fa-arrows" aria-hidden="true"></i> 선택이동</button></li>
@@ -92,7 +98,7 @@
                 <tr>
                     {% if is_admin %}
                     <th scope="col" class="all_chk chk_box">
-                        <input type="checkbox" id="chkall" onclick="if (this.checked) all_checked(true); else all_checked(false);" class="selec_chk">
+                        <input type="checkbox" id="chkall" onclick="if (this.checked) all_checked(true); else all_checked(false);">
                         <label for="chkall">
                             <span>&nbsp;</span>
                             <b class="blind">현재 페이지 게시물 전체선택</b>
@@ -117,7 +123,7 @@
             </thead>
                 <tbody>
                 {% for write in notice_writes %}
-                <tr class="bo_notice">
+                <tr class="is_notice">
                     {% if is_admin %}
                     <td class="td_chk chk_box"></td>
                     {% endif %}
@@ -168,7 +174,7 @@
                         {% if is_admin %}
                         <td class="td_chk chk_box">
                             {% if not write.is_notice %}
-                            <input type="checkbox" name="chk_wr_id[]" value="{{ write.wr_id }}" id="chk_wr_id_{{ loop.index }}" class="selec_chk">
+                            <input type="checkbox" name="chk_wr_id[]" value="{{ write.wr_id }}" id="chk_wr_id_{{ loop.index }}">
                             <label for="chk_wr_id_{{ loop.index }}">
                                 <span>&nbsp;</span>
                                 <b class="blind">{{ write.subject }}</b>

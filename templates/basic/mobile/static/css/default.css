@@ -618,10 +618,6 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 #ol_after_btn a {display:inline-block;padding:0 10px;line-height:30px;color:#fff;border-radius:3px;font-weight:bold}
 #ol_after_logout {background:var(--main_color);color:#fff}
 
-/* ### 기본 스타일 커스터마이징 시작 ### */
-
-/* 게시판 버튼 */
-/* 목록 버튼 */
 .chk_all {margin:10px 0}
 
 /* 게시판 목록 */
@@ -667,7 +663,7 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 /* 게시판 목록 공통 */
 #bo_list {}
 #bo_list li {background:#fff}
-#bo_list li.bo_notice {background:#fff6fa}
+#bo_list li.is_notice {background:#fff6fa}
 
 .bo_fx {margin-bottom:5px;padding:0 10px}
 .bo_fx:after {display:block;visibility:hidden;clear:both;content:""}
@@ -712,13 +708,6 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 .bo_cnt .fa-heart {color:#ff0000}
 .bo_chk {display:inline-block;float:left;margin-right:5px}
 
-.selec_chk {position:absolute;top:0;left:0;width:0;height:0;opacity:0;outline:0;z-index:-1;overflow:hidden}
-.chk_box {position:relative}
-.chk_box input[type="checkbox"] + label {padding-left:20px;color:#676e70}
-.chk_box input[type="checkbox"] + label:hover{color:#2172f8}
-.chk_box input[type="checkbox"] + label span {position:absolute;top:0;left:0;width:15px;height:15px;display:block;background:#fff;border:1px solid #d0d4df;border-radius:3px}
-.chk_box input[type="checkbox"]:checked + label {color:#000}
-.chk_box input[type="checkbox"]:checked + label span {background:url(./img/chk.png) no-repeat 50% 50% var(--main_color);border-color:#1471f6;border-radius:3px}
 .all_chk.chk_box input[type="checkbox"] + label span {top:18px;left:15px}
 
 .bo_cmt {background:#e9eff5;color:var(--main_color);font-size:1.1rem;height:16px;padding:0 5px;border-radius:2px;vertical-align:top;min-width:16px}
@@ -1317,7 +1306,6 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 .chk_box input[type="checkbox"]:checked + label span {background:url('./img/chk.png') no-repeat 50% 50% var(--main_color);border-color:#1471f6;border-radius:3px}
 .chk_li {padding-left:10px;line-height:20px}
 
-.selec_chk {position:absolute;top:0;left:0;width:0;height:0;opacity:0;outline:0;z-index:-1;overflow:hidden}
 .fregister_agree input[type="checkbox"] + label {color:#676e70}
 .fregister_agree input[type="checkbox"] + label:hover {color:#2172f8}
 .fregister_agree input[type="checkbox"] + label span {position:absolute;top:20px;right:15px;width:17px;height:17px;display:block;background:#fff;border:1px solid #999;border-radius:3px}
@@ -1567,15 +1555,6 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 #poll header .btn_admin {float:right;height:28px;margin-right:5px;line-height:28px;font-size:1.7rem}
 #poll ul {padding:10px 20px}
 #poll li {padding:5px 0}
-
-.selec_chk {position:absolute;top:0;left:0;width:0;height:0;opacity:0;outline:0;z-index:-1;overflow:hidden}
-.chk_box {position:relative}
-.chk_box input[type="radio"] {position:absolute;top:0;left:0;width:0;height:0;opacity:0;outline:0;z-index:-1;overflow:hidden}
-.chk_box input[type="radio"] + label {position:relative;padding-left:23px;display:inline-block;color:#676e70}
-.chk_box input[type="radio"] + label span {position:absolute;top:0;left:0;width:15px;height:15px;display:block;background:#f7f8f9;border:1px solid #cdd6df;border-radius:50%}
-.chk_box input[type="radio"]:checked + label {color:var(--main_color)}
-.chk_box input[type="radio"]:checked + label span {border-color:var(--main_color)}
-.chk_box input[type="radio"]:checked + label span:before {width:7px;height:7px;background:var(--main_color);content:'';position:absolute;top:3px;left:3px;border-radius:50%}
 
 #poll .poll_con {}
 #poll .poll_con p {font-weight:bold;padding:20px 20px 5px;color:#000;font-size:1.4rem}

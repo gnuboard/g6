@@ -86,7 +86,7 @@
 
         {% if is_admin %}
             <div id="gall_allchk" class="all_chk chk_box">
-                <input type="checkbox" id="chkall" onclick="if (this.checked) all_checked(true); else all_checked(false);" class="selec_chk">
+                <input type="checkbox" id="chkall" onclick="if (this.checked) all_checked(true); else all_checked(false);">
                 <label for="chkall">
                     <span></span>
                     <b class="blind">현재 페이지 게시물 </b> 전체선택
@@ -101,7 +101,7 @@
             <li class="gall_li col-gn-{{ board.bo_gallery_cols|default(1) }} {% if (board.bo_gallery_cols == 0 or loop.index0 % board.bo_gallery_cols == 0) %}box_clear{% endif %}">
                 <div class="gall_box">
                     <div class="gall_chk chk_box">
-                        <input type="checkbox" name="chk_wr_id[]" value="{{ write.wr_id }}" id="chk_wr_id_{{ loop.index }}" class="selec_chk">
+                        <input type="checkbox" name="chk_wr_id[]" value="{{ write.wr_id }}" id="chk_wr_id_{{ loop.index }}">
                         <label for="chk_wr_id_{{ loop.index }}">
                             <span>&nbsp;</span>
                             <b class="blind">{{ write.subject }}</b>

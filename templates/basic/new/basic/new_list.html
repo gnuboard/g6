@@ -44,7 +44,7 @@
             <thead>
                 <tr>
                     <th scope="col" class="chk_box">
-                        <input type="checkbox" id="all_chk" class="selec_chk">
+                        <input type="checkbox" id="all_chk">
                         <label for="all_chk">
                             <span>&nbsp;</span>
                             <b class="blind">목록 전체</b>
@@ -61,7 +61,7 @@
                 {% for board_new in board_news %}
                 <tr>
                     <td class="td_chk chk_box">
-                        <input type="checkbox" name="chk_bn_id[]" value="{{ board_new.bn_id }}" id="chk_bn_id_{{ loop.index }}" class="selec_chk">
+                        <input type="checkbox" name="chk_bn_id[]" value="{{ board_new.bn_id }}" id="chk_bn_id_{{ loop.index }}">
                         <label for="chk_bn_id_{{ loop.index }}">
                             <span>&nbsp;</span>
                             <b class="blind">{{ board_new.num }}번</b>

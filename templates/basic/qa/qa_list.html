@@ -14,7 +14,7 @@
         {{ qa_config.qa_content_head|safe }}
     {% endif %}
 
-    <div id="bo_list">
+    <div id="bo_qa_list" class="bo_common bo_list">
         <!-- 카테고리 시작 { -->
         <nav id="bo_cate">
             <h2>{{ qa_config.qa_title }} 카테고리</h2>
@@ -98,7 +98,7 @@
                 <thead>
                 <tr>
                     <th scope="col" class="all_chk chk_box">
-                        <input type="checkbox" id="chkall" onclick="if (this.checked) all_checked(true); else all_checked(false);" class="selec_chk">
+                        <input type="checkbox" id="chkall" onclick="if (this.checked) all_checked(true); else all_checked(false);">
                         <label for="chkall">
                             <span>&nbsp;</span>
                             <b class="blind">현재 페이지 게시물 전체선택</b>
@@ -115,7 +115,7 @@
                     {% for qa in qa_list %}
                         <tr class="{{ loop.cycle('', 'even') }}">
                             <td class="td_chk chk_box">
-                                <input type="checkbox" name="chk_qa_id[]" value="{{ qa.qa_id }}" id="chk_qa_id_{{ loop.index }}" class="selec_chk">
+                                <input type="checkbox" name="chk_qa_id[]" value="{{ qa.qa_id }}" id="chk_qa_id_{{ loop.index }}">
                                 <label for="chk_qa_id_{{ loop.index }}">
                                     <span>&nbsp;</span>
                                     <b class="blind">{{ qa.subject }}</b>

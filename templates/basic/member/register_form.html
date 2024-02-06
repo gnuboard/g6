@@ -246,11 +246,7 @@
                     {% endif %}
                     
                     <li class="chk_box">
-                        <input type="checkbox" name="mb_mailling" value="1"
-                               id="reg_mb_mailling" 
-                               {% if member.mb_mailling %} checked {% endif %}
-                               class="selec_chk"
-                        >
+                        <input type="checkbox" name="mb_mailling" value="1" id="reg_mb_mailling" {% if member.mb_mailling %} checked {% endif %}>
                         <label for="reg_mb_mailling">
                             <span></span>
                             <b class="blind">메일링서비스</b>
@@ -260,11 +256,7 @@
                     
                     {% if config.cf_use_hp %}
                     <li class="chk_box">
-                        <input type="checkbox" name="mb_sms" value="1"
-                               id="reg_mb_sms"
-                               {% if member.mb_sms %} checked {% endif %}
-                               class="selec_chk"
-                        >
+                        <input type="checkbox" name="mb_sms" value="1" id="reg_mb_sms" {% if member.mb_sms %} checked {% endif %}>
                         <label for="reg_mb_sms">
                             <span></span>
                             <b class="blind">SMS 수신여부</b>
@@ -275,11 +267,7 @@
                     
                     {% if form.is_profile_open %}
                     <li class="chk_box">
-                        <input type="checkbox" name="mb_open" value="1"
-                               id="reg_mb_open"
-                               {% if is_register or member.mb_open %} checked {% endif %}
-                               class="selec_chk"
-                        >
+                        <input type="checkbox" name="mb_open" value="1" id="reg_mb_open" {% if is_register or member.mb_open %} checked {% endif %}>
                         <label for="reg_mb_open">
                             <span></span>
                             <b class="blind">정보공개</b>
@@ -290,7 +278,6 @@
                         </span>
                     </li>
                     {% else %}
-                    
                      <li>
                         <span class="frm_label">정보공개</span>
                         <input type="hidden" name="mb_open" value="{{ member.mb_open }}">
