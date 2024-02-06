@@ -2,26 +2,32 @@
 
 {% block body_html %}
 <!-- 상단 시작 { -->
-<header id="hd" class="wrapper-bg pt-3">
+<header id="hd" class="container-fluid wrapper-bg py-4 sticky-top primary-bb">
   <div id="skip_to_container"><a href="#container">본문 바로가기</a></div>
 
   {% include "/bbs/newwin.inc.html" %}
 
 
-  <div id="hd_wrapper" class="container-xl d-flex justify-content-between align-items-center">
+  <div id="hd_wrapper" class="container-xxl d-flex justify-content-between align-items-center">
     <div id="logo">
-      <a href="/"><img src="/static/img/logo_new2.png" width="54" height="54" alt="그누보드6"></a>
+      <a href="/"><img src="/static/img/logo_new2.png" width="48" height="48" alt="그누보드6"></a>
     </div>
-
+    <!-- 메뉴 -->
+    <nav id="gnb">
+      <h2 class="blind">메인메뉴</h2>
+      <div>
+        {% include "/bbs/menu.html" ignore missing %}
+      </div>
+    </nav>
     <button type="button" id="gnb_open" class="d-block d-md-none text-white">
       <i class="fa fa-bars" aria-hidden="true"></i>
       <span class="blind">열기</span>
     </button>
     <div id="gnb_mo" class="gnb_mo">
-      <button type="button" id="gnb_close" class="hhd_defined_closer">
-        <span class="blind">메뉴 닫기</span>
-        <i class="fa fa-xmark" aria-hidden="true"></i>
-      </button>
+    <button type="button" id="gnb_close" class="hhd_defined_closer">
+      <span class="blind">메뉴 닫기</span>
+      <i class="fa fa-xmark" aria-hidden="true"></i>
+    </button>
       <!-- 아웃 로그인 -->
       {% if request.state.login_member %}
       {% include "mobile/bbs/outlogin_after.html" ignore missing %}
@@ -56,61 +62,6 @@
         </li>
       </ul>
     </div>
-    <!-- 검색영역 -->
-    <div class="hd_sch_wr col-4">
-      <fieldset id="hd_sch">
-        <span class="blind">사이트 내 전체검색</span>
-        <form name="fsearchbox" method="get" action="/bbs/search" onsubmit="return fsearchbox_submit(this);" class="position-relative" >
-          <input type="hidden" name="sfl" value="wr_subject||wr_content">
-          <input type="hidden" name="sop" value="and">
-          <label for="sch_stx" class="blind">검색어 필수</label>
-          <input type="text" name="stx" id="sch_stx" maxlength="20" placeholder="검색어를 입력해주세요" class="form-control form-control-lg text-white bg-black bg-opacity-10 border-0" style="height: 38px; border-radius: 3px 0px 0px 3px;" >
-          <button type="submit" id="sch_submit" class="position-absolute top-0 end-0 text-white bg-transparent border-0 fs-4" style="width: 38px; height: 38px; border-radius:0px 3px 3px 0px;" value="검색">
-            <i class="fa fa-search" aria-hidden="true" ></i>
-            <span class="blind">검색</span>
-          </button>
-        </form>
-
-        <script>
-          function fsearchbox_submit(f) {
-            var stx = f.stx.value.trim();
-            if (stx.length < 2) {
-              alert("검색어는 두글자 이상 입력하십시오.");
-              f.stx.select();
-              f.stx.focus();
-              return false;
-            }
-
-            // 검색에 많은 부하가 걸리는 경우 이 주석을 제거하세요.
-            var cnt = 0;
-            for (var i = 0; i < stx.length; i++) {
-              if (stx.charAt(i) == ' ')
-                cnt++;
-            }
-
-            if (cnt > 1) {
-              alert("빠른 검색을 위하여 검색어에 공백은 한개만 입력할 수 있습니다.");
-              f.stx.select();
-              f.stx.focus();
-              return false;
-            }
-            f.stx.value = stx;
-
-            return true;
-          }
-        </script>
-      </fieldset>
-      <!-- 인기검색어 시작 { -->
-      {% include "/bbs/popular.html" %}
-      <!-- } 인기검색어 끝 -->
-    </div>
-
-    <!-- 모바일 검색 버튼 -->
-    <button type="button" id="user_btn" class="d-block d-md-none text-white">
-      <i class="fa fa-search" aria-hidden="true"></i>
-      <span class="blind">사용자메뉴</span>
-    </button>
-
     <script>
       var gnb_opener = document.querySelector("#gnb_open");
       var sch_opener = document.querySelector("#user_btn");
@@ -135,24 +86,33 @@
       close_btn.addEventListener("click", delGnbClick);
     </script>
 
-    <!-- 프로필 -->
-    <div id="profile" class="dropdown d-none d-md-block">
-      <span id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false" class="d-inline-block rounded-circle overflow-hidden cursor-pointer" style="width: 50px; height: 50px;" tabindex="0">
-        <img src="{{ get_member_image(request, request.state.login_member.mb_id)|safe }}" style="width: 100%;" alt="profile_image">
-      </span>
-      <ul class="dropdown-menu fs-5 p-0" aria-labelledby="profileDropdown">
-        {% if request.state.login_member %}
-        <li><a class="dropdown-item pe-5 py-3" href="/bbs/member_confirm?url=/bbs/register_form"><i class="fa-regular fa-pen-to-square"></i> 정보수정</a></li>
-        {% if request.state.is_super_admin %}
-        <li class="tnb_admin"><a class="dropdown-item pe-5 py-3" href="/admin"><i class="fa-solid fa-gear"></i> 관리자</a></li>
-        {% endif %}
-        <li><a class="dropdown-item pe-5 py-3" href="/bbs/logout"><i class="fa-solid fa-arrow-right-from-bracket"></i> 로그아웃</a></li>
-        {% else %}
-        <li><a class="dropdown-item pe-5 py-3" href="/bbs/register"><i class="fa-solid fa-user-plus"></i> 회원가입</a></li>
-        <li><a class="dropdown-item pe-5 py-3" href="/bbs/login"><i class="fa-solid fa-arrow-right-to-bracket"></i> 로그인</a></li>
-        {% endif %}
-      </ul>
-    </div>
+    <div id="util_box" class="d-flex">
+      <!-- 검색 버튼 -->
+      <button type="button" id="user_btn" class="rounded-circle overflow-hidden border-0 bg-transparent fs-3 primary-font me-3" style="width: 48px; height: 48px;">
+        <i class="fa fa-search" aria-hidden="true"></i>
+        <span class="blind">사용자메뉴</span>
+      </button>
+      <!-- 다크모드 버튼 -->
+      <button type="button" id="darkmode-toggle-switch" class="rounded-circle overflow-hidden border-0 bg-transparent fs-4 primary-font me-3" style="width: 48px; height: 48px;">
+        <i class="fa-solid fa-regular fa-moon visible bright"></i>
+        <i class="fa-solid fa-regular fa-sun visible dark"></i>
+      </button>
+      <!-- 프로필 -->
+      <div id="profile" class="dropdown d-none d-md-block bg-transparent">
+        <span id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false" class="d-inline-block rounded-circle overflow-hidden cursor-pointer" style="width: 48px; height: 48px;" tabindex="0">
+          <img src="{{ get_member_image(request, request.state.login_member.mb_id)|safe }}" style="width: 100%;" alt="profile_image">
+        </span>
+        <div class="dropdown-menu" aria-labelledby="profileDropdown">
+          {% if request.state.login_member %}
+          {% include "bbs/outlogin_after.html" %}
+          {% else %}
+          {% include "bbs/outlogin_before.html" %}
+          {% endif %}
+          {% if menus -%}
+          {%- endif %}
+        </div>
+      </div>
+    </div> 
   </div>
 
   <!-- 프로필 이미지 클릭 이벤트 -->
@@ -186,34 +146,26 @@
 <hr>
 
 <!-- 콘텐츠 시작 { -->
-<div id="wrapper">
-  <div id="container_wr" class="container-xl px-0">
-    <div id="container">
-      <h2 id="container_title"><span>{% block subtitle %}{% endblock subtitle %}</span></h2>
+<div id="wrapper" class="container-xxl pt-5">
+  <div id="container_wr" class="row">
+    <div id="container" class="col-9">
+      <h2 id="container_title" class="m-0"><span>{% block subtitle %}{% endblock subtitle %}</span></h2>
       {% block content %}
       {% endblock content %}
     </div>
-    <div id="aside">
-      {% if request.state.login_member %}
-      {% include "bbs/outlogin_after.html" %}
-      {% else %}
-      {% include "bbs/outlogin_before.html" %}
-      {% endif %}
-      {% if menus -%}
-      <!-- 메뉴 -->
-      <nav id="gnb" class="position-relative cont-bg main-border overflow-hidden rounded-4 mb-4">
-        <h2 class="blind">메인메뉴</h2>
-        <div class="position-relative mx-auto">
-          {% include "/bbs/menu.html" ignore missing %}
-        </div>
-      </nav>
-      {%- endif %}
+    <div id="aside" class="col-3">
+
+      <!-- 설문조사 -->
       {% include "/bbs/poll.html" %}
-      <!-- 접속자집계 시작 { -->
+
+      <!-- 공지사항 -->
+      {{ render_latest_posts(request, 'main_notice', 'notice', 4, 23)|safe }}
+
+      <!-- 접속자집계 { -->
       {% if render_visit_statistics %}
       {{ render_visit_statistics(request)|safe }}
       {% endif %}
-      <!-- } 접속자집계 끝 -->
+
       <script>
         // aside/최신글 - 탭메뉴 기능
         var tabItems = document.querySelectorAll('.aside_tab ul.tab_01 li');
@@ -240,7 +192,6 @@
       </script>
     </div>
   </div>
-
 </div>
 <!-- } 콘텐츠 끝 -->
 
@@ -271,10 +222,6 @@
 
   <button type="button" id="top_btn">
     <i class="fa fa-arrow-up" aria-hidden="true"></i><span class="blind">상단으로</span>
-  </button>
-  <button type="button" class="darkmode-toggle-switch">
-    <i class="fa-solid fa-moon visible bright"></i>
-    <i class="fa-solid fa-sun visible dark"></i>
   </button>
 </div>
 
