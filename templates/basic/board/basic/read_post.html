@@ -294,8 +294,8 @@
                         {{ comment.wr_content|safe }}
                     {% endif %}
 
-                    <span id="edit_{{ comment.wr_id }}" class="bo_comment_write"></span><!-- 수정 -->
-                    <span id="reply_{{ comment.wr_id }}" class="bo_comment_write"></span><!-- 답변 -->
+                    <div id="edit_{{ comment.wr_id }}" class="bo_comment_write"></div><!-- 수정 -->
+                    <div id="reply_{{ comment.wr_id }}" class="bo_comment_write"></div><!-- 답변 -->
                 </div>
 
             </div>
@@ -303,7 +303,7 @@
             <input type="hidden" value="{% if "secret" in comment.wr_option %}secret{% endif %}" id="secret_comment_{{ comment.wr_id }}">
             <textarea id="save_comment_{{ comment.wr_id }}" style="display:none">{{ comment.save_content|safe }}</textarea>
 
-            <div class="comment_more">
+            <div class="buttons_more">
                 <button type="button" class="more_opener btn_b01 btn">
                     <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
                     <span class="blind">댓글 옵션</span>

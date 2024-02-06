@@ -731,17 +731,17 @@ a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:no
 .bo_common .txt_rdy {display:inline-block;height:30px;line-height:28px;padding:0 10px;border-radius:3px;color:#fff;font-size:1.2rem;background:var(--boListBg);font-weight:bold}
 
 .bo_common .buttons_more { position:relative; }
-.bo_common .buttons_more .more { display:none; position:absolute; top:45px; right:10px; background:#fff; border:var(--moreUlBorder); z-index:999 }
+.bo_common .buttons_more .more { display:none; position:absolute; top:45px; background:#fff; border:var(--moreUlBorder); z-index:999 }
 .bo_common .buttons_more .more:before { content:""; position:absolute; top:-8px; right:13px; width:0; height:0; border-style:solid; border-width:0 6px 8px 6px; border-color:transparent transparent var(--moreColor) transparent }
 .bo_common .buttons_more .more:after { content:""; position:absolute; top:-6px; right:13px; width:0; height:0; border-style:solid; border-width:0 6px 8px 6px; border-color:transparent transparent var(--contBg) transparent }
-.bo_common .buttons_more .more li { border-bottom:var(--moreLiBorder); padding:10px; float:inherit; width:90px; margin:0; color:#6b757c; text-align:left }
-.bo_common .buttons_more .more li a {font-size:1.2rem}
-.bo_common .buttons_more .more li:last-child { border-bottom:0 }
+.bo_common .buttons_more .more li { border-bottom:var(--moreLiBorder); color:#6b757c; text-align:left }
 .bo_common .buttons_more .more li button,
-.bo_common .buttons_more .more li a { width:100%; border:0; background:var(--contBg); color:#6b757c }
-.bo_common .buttons_more .more li:hover a,
-.bo_common .buttons_more .more li:hover button { color:var(--fontColor) }
-.bo_common .buttons_more .more li svg { float:right; line-height:20px }
+.bo_common .buttons_more .more a { display:block; padding:10px 7px;width:100%; border:0; background:var(--contBg); color:#6b757c; font-size:1.2rem; }
+.bo_common .buttons_more .more a:hover,
+.bo_common .buttons_more .more a:focus,
+.bo_common .buttons_more .more button:hover,
+.bo_common .buttons_more .more button:focus { color:var(--fontColor) }
+.bo_common .buttons_more .more svg { float:right; }
 
 /* 게시판 목록 */
 .bo_list { position:relative; margin-bottom:20px }
@@ -885,7 +885,7 @@ html.no-overflowscrolling .bo_write .write_subject #autosave_pop { height:auto; 
 
 .bo_view .view_buttons { }
 .bo_view .view_buttons { display:flex; justify-content: right; list-style:none; word-break:break-all; background:var(--contBg) }
-.bo_view .view_buttons li { height:35px }
+.bo_view .view_buttons > li { height:35px }
 
 .bo_view #view_subject {font-size:2.4rem; margin:5px 0 20px; padding:0; word-break:break-all; color: var(--fontColor);}
 .bo_view #view_subject .subject_cate { display:inline-block; line-height:20px; background:#e2eaf6; color:var(--primaryColor); padding:0 10px; border-radius:3px; }
@@ -903,6 +903,8 @@ html.no-overflowscrolling .bo_write .write_subject #autosave_pop { height:auto; 
 .bo_view #view_header .profile_img { display:none }
 .bo_view #view_header .sv_member { color:#000 }
 .bo_view #view_header .if_date { margin:0; color:#888 }
+
+.bo_view #view_header .buttons_more .more { right:-8px; width:80px; }
 
 .bo_view #view_article { min-height:200px; height:auto !important; height:200px }
 
@@ -1059,14 +1061,7 @@ html.no-overflowscrolling .bo_write .write_subject #autosave_pop { height:auto; 
 
 .bo_comment .empty { margin:0; padding:80px 0 !important; color:#777; text-align:center }
 
-.bo_comment .more_opener { position:absolute; top:0; right:0; width:30px; height:30px; border:0; background:none; } 
-.bo_comment .more { display:none; position:absolute; right:0; top:40px; width:58px; text-align:right; border:var(--moreUlBorder); margin:0; list-style:none; background:var(--contBg); zoom:1; z-index:9999 }
-.bo_comment .more:before { content:""; position:absolute; top:-8px; right:5px; width:0; height:0; border-style:solid; border-width:0 6px 8px 6px; border-color:transparent transparent var(--moreColor) transparent }
-.bo_comment .more:after { content:""; position:absolute; top:-6px; right:5px; width:0; height:0; border-style:solid; border-width:0 6px 8px 6px; border-color:transparent transparent var(--contBg) transparent }
-.bo_comment .more li { border-bottom:var(--moreLiBorder) }
-.bo_comment .more li:last-child { border-bottom:0 }
-.bo_comment .more li button { display:block; padding:10px 15px; width:100%; border:0; background:0; color: #6b757c; }
-.bo_comment .more li button:hover { color:var(--fontColor) }
+.bo_comment .buttons_more .more { right:8px; width:58px; }
 
 #bo_vc_send_sns { display:inline-block; float:left }
 #bo_vc_sns { display:inline-block; margin:0; padding:0; list-style:none; zoom:1 }
