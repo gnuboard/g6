@@ -617,20 +617,6 @@ a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:no
 .required, textarea.required { background-image:url('/static/img/require.png') !important; background-repeat:no-repeat !important; background-position:right top !important }
 
 /* 테이블 항목별 정의 */
-.td_board { width:80px; text-align:center }
-.td_category { width:80px; text-align:center }
-.td_chk { width:30px; text-align:center }
-.td_date { width:60px; text-align:center }
-.td_datetime { width:110px; text-align:center }
-.td_group { width:80px; text-align:center }
-.td_mb_id { width:100px; text-align:center }
-.td_mng { width:80px; text-align:center }
-.td_name { width:100px; text-align:center }
-.td_nick { width:100px; text-align:center }
-.td_num { width:50px; text-align:center }
-.td_numbig { width:80px; text-align:center }
-.td_stat { width:60px; text-align:center }
-
 .txt_active { color:#5d910b }
 .txt_done { color:#e8180c }
 .txt_expired { color:#ccc }
@@ -707,19 +693,15 @@ a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:no
 
 /* 게시판 공통 */
 .bo_common {}
+.bo_common .txt_rdy {display:inline-block;height:30px;line-height:28px;padding:0 10px;border-radius:3px;color:#fff;font-size:1.2rem;background:var(--boListBg);font-weight:bold}
 .bo_common .txt_rdy i,
 .bo_common .txt_rdy svg {font-size:1.3rem}
-.bo_common .title_icon { margin-right:2px }
+.bo_common .txt_done { display:inline-block;height:30px;line-height:30px;padding:0 10px;border-radius:3px;color:#fff;font-size:1.2rem;background:#f6bb42;font-weight:bold }
+.bo_common .txt_done i,
+.bo_common .txt_done svg {font-size:1.3rem}
 .bo_common .fa-heart { display:inline-block; width:10px;height: 10px;padding: 3px; color:#ff0000; background:#ffb9b9; text-align:center; border-radius:2px; vertical-align:middle }
 .bo_common .fa-lock { display:inline-block; width:10px;height: 10px;padding: 3px; color:#4f818c; background:#cbe3e8; text-align:center; border-radius:2px; font-size:1.2rem; border:1px solid #cbe3e8; vertical-align:middle }
 .bo_common .new_icon { display:inline-block; width:16px; line-height:16px; font-size:1rem; color:#23db79; background:#b9ffda; text-align:center; border-radius:2px; margin-left:2px; font-weight:bold; vertical-align:middle }
-.bo_common .txt_active {color:#5d910b}
-.bo_common .txt_expired {color:#ccc}
-.bo_common .txt_done {display:inline-block;height:30px;line-height:30px;padding:0 10px;border-radius:3px;color:#fff;font-size:1.2rem;background:#f6bb42;font-weight:bold}
-.bo_common .txt_done i,
-.bo_common .txt_done svg {font-size:1.3rem}
-.bo_common .txt_rdy,
-.bo_common .txt_rdy {display:inline-block;height:30px;line-height:28px;padding:0 10px;border-radius:3px;color:#fff;font-size:1.2rem;background:var(--boListBg);font-weight:bold}
 
 .bo_common .buttons_more { position:relative; }
 .bo_common .buttons_more .more { display:none; position:absolute; top:45px; background:#fff; border:var(--moreUlBorder); z-index:999 }
@@ -766,8 +748,8 @@ a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:no
 .bo_list .list_table .fa-download { display:inline-block; width:10px;height: 10px;padding: 3px; color:#daae37; background:#ffefb9; text-align:center; border-radius:2px; vertical-align:middle; }
 .bo_list .list_table .fa-link { display:inline-block; width:10px;height: 10px;padding: 3px; color:#b451fd; background:#edd3fd; text-align:center; border-radius:2px; vertical-align:middle; }
 .bo_list .list_table .category_link { display:inline-block; margin-right:10px; background:#e2eaf6; color:var(--primaryColor); font-weight:normal !important; height:20px; line-height:10px; padding:5px 8px; border-radius:5px; font-size:1.1rem } /* 글제목줄 분류스타일 */
-.bo_list .list_table .category_link:hover { text-decoration:none } 
-.bo_list .list_table .current_article { color:#e8180c } 
+.bo_list .list_table .category_link:hover { text-decoration:none }
+.bo_list .list_table .current_article { color:#e8180c }
 
 @media (min-width:1101px) {
     .bo_list .list_table { margin:0 0 10px; width:100%; border-collapse:collapse; border-spacing:0 5px; background:var(--contBg); border-top:var(--border); border-bottom:var(--border) }
@@ -789,6 +771,7 @@ a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:no
     .bo_list .list_table .table_good,
     .bo_list .list_table .table_nogood { width: 50px; text-align: center; }
     .bo_list .list_table .table_datetime { width: 80px; text-align: center; }
+    .bo_list .list_table .table_status { width: 80px; text-align: center; }
 }
 
 @media (max-width:1100px) {
