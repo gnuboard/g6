@@ -186,10 +186,11 @@
         <ul>
         {% for file in files %}
             <li>
-                <i class="fa fa-folder-open" aria-hidden="true"></i>
+                <i class="fa fa-download" aria-hidden="true"></i>
                 <div>
                     <a href="/board/{{ board.bo_table }}/{{ write.wr_id }}/download/{{ file.bf_no }}" class="view_file_download">
-                        <strong>{{ file.bf_source }}</strong>  ({{ file.bf_filesize|filesizeformat }})
+                        <strong>{{ file.bf_source }}</strong>
+                        ({{ file.bf_filesize|filesizeformat }})
                     </a>
                     <div class="filelink_cnt">{{ file.bf_download }}회 다운로드 | DATE : {{ file.bf_datetime }}</div>
                 </div>
@@ -220,7 +221,7 @@
     <div id="view_move">
         {% if prev %}
         <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=prev.wr_id )|set_query_params(request) }}" class="prev">
-            <i class="fa fa-chevron-up" aria-hidden="true"></i>
+            <i class="fa fa-chevron-left" aria-hidden="true"></i>
             <span class="label">이전글</span>
             <span class="subject">{{ prev.wr_subject }}</span>
             <span class="date">{{ prev.wr_datetime }}</span>
@@ -230,7 +231,7 @@
         {% endif %}
         {% if next %}
         <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=next.wr_id )|set_query_params(request) }}" class="next">
-            <i class="fa fa-chevron-down" aria-hidden="true"></i>
+            <i class="fa fa-chevron-right" aria-hidden="true"></i>
             <span class="label">다음글</span>
             <span class="subject">{{ next.wr_subject }}</span>
             <span class="date">{{ next.wr_datetime }}</span>
@@ -602,7 +603,7 @@
 
     $(function() {
         // 이미지 리사이즈
-        $("#bo_v_atc").viewimageresize();
+        $("#view_article").viewimageresize();
 
         $("a.view_image").click(function() {
             window.open(this.href, "large_image", "location=yes,links=no,toolbar=no,top=10,left=10,width=10,height=10,resizable=yes,scrollbars=no,status=no");

@@ -62,7 +62,7 @@
                 <input type="text" name="qa_subject" value="{{ qa.qa_subject|default("") }}" id="qa_subject" required="" class="frm_input full_input required" size="50" maxlength="255" placeholder="제목">
             </div>
 
-            <div class="qa_content_wrap">
+            <div>
                 <label for="qa_content" class="blind">내용<strong class="blind">필수</strong></label>
                 {% if qa_config.qa_use_editor %}
                     {{ editor.body("qa_content", content) }}
@@ -120,13 +120,12 @@
 
         function fwrite_submit(f)
         {
-            /*
             var hp = f.qa_hp.value.replace(/[0-9\-]/g, "");
             if(hp.length > 0) {
                 alert("휴대폰번호는 숫자, - 으로만 입력해 주십시오.");
                 return false;
             }
-            */
+
             document.getElementById("btn_submit").disabled = true;
 
             f.token.value = generate_token();
