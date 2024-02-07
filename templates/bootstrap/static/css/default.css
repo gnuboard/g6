@@ -73,6 +73,7 @@ input[type=text]:focus,input[type=password]:focus, textarea:focus,select:focus {
     --cardBg: #f3f3f3;
     /* 폰트색상 */
     --fontColor: #000;
+    --subFontColor: #616161;
     --gnbFontColor: #080808;
     --prFontColor: #465168;
     --btnColor: #000;
@@ -138,6 +139,7 @@ input[type=text]:focus,input[type=password]:focus, textarea:focus,select:focus {
     --cardBg: #333333;
     /* 폰트색상 */
     --fontColor: #fff;
+    --subFontColor: #b1b1b1;
     --gnbFontColor: #a0a0a0;
     --prFontColor: #a0a0a0;
     --btnColor: #4158d1;
@@ -189,6 +191,8 @@ input[type=text]:focus,input[type=password]:focus, textarea:focus,select:focus {
 .input-border {border: var(--inputBorder);}
 
 .main-font {color: var(--fontColor) !important;}
+.sub-font {color: var(--subFontColor) !important;}
+.em-font {color: var(--primaryColor) !important;}
 
 /* 메뉴 슬라이드 */
 #gnb .dropdown:hover > .dropdown-menu {display: flex;}
@@ -210,13 +214,13 @@ input[type=text]:focus,input[type=password]:focus, textarea:focus,select:focus {
 .main-slider { position:relative; margin-bottom:0 !important; } 
 .main-slider .slide-item .slide-con { position:relative; height: 800px; } 
 .main-slider .slide-item .slide-con .img-box img { width: 100%; height: 100%; object-fit: cover; } 
-.main-slider .slide-item > .slide-con > .slide-txt { position:absolute; bottom: 7%; left: 4%; width: 100%; max-width: 500px; z-index:50; color: #fff; text-align: left; } 
+.main-slider .slide-item > .slide-con > .slide-txt { position:absolute; bottom: 5%; left: 5%; width: 100%; max-width: 500px; z-index:50; color: #fff; text-align: left; } 
 .main-slider .slide-item .slide-con .img-box::after { content:''; display:block; width:100%; height:100%; position:absolute; top:0; left:0; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.4) 47.92%, rgba(0, 0, 0, 0.8) 100%); } 
 .main-slider .slide-item-1 > .slide-con > .slide-txt { left:50%; transform:translatex(-50%); padding:0; text-align:center; } 
 .main-slider .slide-item > .slide-con > .slide-txt > h2.txt-tt { margin:0; padding:0; font-size:2.4rem; } 
 .main-slider .slide-item > .slide-con > .slide-txt > h2.txt-tt a { color: #ffffff; } 
 .main-slider .slide-item > .slide-con > .slide-txt > p.txt-desc { font-size:1.6rem; font-weight:300; margin-top:16px; width: 100%; line-height: 1.4; } 
-.main-slider .slide-item > .slide-con > .slide-txt > .txt-btn { margin-top:32px; border: 1px solid #eeeeee60; display: inline-block; border-radius: 4px; transition: all 0.3s; cursor: pointer; } 
+.main-slider .slide-item > .slide-con > .slide-txt > .txt-btn { margin-top:24px; border: 1px solid #eeeeee60; display: inline-block; border-radius: 4px; transition: all 0.3s; cursor: pointer; } 
 .main-slider .slide-item > .slide-con > .slide-txt > .txt-btn:hover { background: var(--primaryColor); color: #000000; } 
 .main-slider .slide-item > .slide-con > .slide-txt > .txt-btn a { display: block; padding: 8px 24px; } 
 .main-slider .slide-item > .slide-con > .slide-txt > .txt-btn > a { font-size:1.4rem; display:inline-block; color: #ffffff; } 
@@ -254,6 +258,7 @@ input[type=text]:focus,input[type=password]:focus, textarea:focus,select:focus {
 
 /* 중간 레이아웃 */
 #aside {height: 800px;}
+
 
 /* sssasdasd */
 
@@ -293,31 +298,12 @@ input[type=text]:focus,input[type=password]:focus, textarea:focus,select:focus {
 #profile #ol_svc a {display:inline-block;border:var(--border);color:var(--primaryColor);border-radius:2px;padding:2px 5px}
 #profile #sns_login {margin-top:0 !important;border-top:0 !important}
 #profile #sns_login h3 {position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: polygon(0 0, 0 0, 0 0);}
-
-#profile #ol_after {}
-#profile #ol_after_hd {position:relative;padding:10px;padding-left:80px;height:80px}
-#profile #ol_after_hd strong {display:block;margin:5px 0 10px}
-#profile #ol_after_hd .profile_img {position:absolute;top:15px;left:15px;display:inline-block}
-#profile #ol_after_hd .profile_img img {border:1px solid #bbb;border-radius:50%;width:50px;height:50px}
-#profile #ol_after_hd .profile_img a {text-align:center;font-size:1.7rem;width:30px;line-height:30px;color:#777}
-#profile #ol_after_info {display:inline-block;height:28px;line-height:22px;border:var(--border);color:var(--primaryColor);border-radius:2px;padding:2px 5px}
-#profile #ol_after h2 {margin:0;padding:0;width:1px;height:1px;font-size:0;line-height:0;overflow:hidden}
-#profile #ol_after_hd .btn_admin {border-radius:3px;height:28px;line-height:28px;vertical-align:baseline}
-#profile #ol_after_hd .btn_b04 {line-height:23px;padding:0 5px}
-#profile #ol_after_private {zoom:1}
-#profile #ol_after_private:after {display:block;visibility:hidden;clear:both;content:""}
-#profile #ol_after_private li {text-align:left;position:relative;text-align:left}
-#profile #ol_after_private li:first-child a {border-left:0}
-#profile #ol_after_private a {display:block;color:var(--prFontColor);line-height:18px;padding:10px 10px 10px 20px}
-#profile #ol_after_private a strong {display:inline-block;float:right;max-width:87px;overflow:hidden;white-space:nowrap;text-overflow:clip;color:var(--primaryColor);padding:0 5px;border-radius:15px;font-size:1.1rem}
-#profile #ol_after_private a:hover strong {background:#4b8bff}
 #profile #ol_after_private li a:hover {color:var(--primaryColor);background:var(--bovHover)}
-#profile #ol_after_private li a:hover:after {position:absolute;left:-1px;top:0;width:2px;height:38px;background:var(--primaryColor);content:""}
-#profile #ol_after_private li svg {width:12px;color:#8c9eb0;margin-right:16px}
 #profile #ol_after_private li:hover svg {color:var(--primaryColor)}
 #profile #ol_after_private .win_point:hover strong {background:#37bc9b;color:#fff}
 #profile #ol_after_private .win_memo:hover strong {background:#8cc152;color:#fff}
 #profile #ol_after_private .win_scrap:hover strong {background:#ff8b77;color:#fff}
+
 
 .selec_chk {position:absolute;top:0;left:0;width:0;height:0;opacity:0;outline:0;z-index:-1;overflow:hidden}
 .chk_box {position:relative}
@@ -1758,13 +1744,7 @@ button { cursor:pointer; padding:0; font-size:inherit; }
 #profile h1 a {}
 #profile table {margin-bottom:0}
 #profile table th {text-align:left;padding:10px;width:100px}
-/* #profile section {color:#6794d3;background:#fff;padding:10px;border:1px solid #eee;margin:10px 0} */
-#profile h2 {margin:0 0 5px;padding:0;}
-#profile .profile_name {text-align:center;font-weight:bold}
-#profile .my_profile_img {display:block;margin:20px 0 5px}
-#profile .my_profile_img img {border-radius:50%}
-#profile .profile_img img {border-radius:50%}
-#profile .profile_name .sv_wrap {font-weight:bold;text-align:left}
+
 
 /* new.css */
 /* 최근게시물 스킨 (new) */
