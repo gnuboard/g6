@@ -9,6 +9,7 @@
     --darkVisible: inline-block;
     /* background */
     --inputBg: #fff;
+    --inputBgGray: #f6f6f6;
     --bodyBg: #fff;
     --wrapperBg: #f6f6f6;
     --contBg: #fff;
@@ -848,11 +849,11 @@ html.no-overflowscrolling .bo_write .write_subject #autosave_pop { height:auto; 
 .bo_write .write_link label { position:absolute; top:1px; left:1px; border-radius:3px 0 0 3px; height:38px; line-height:38px; width:40px; font-size:1.4rem; text-align:center; color:#b2b2b2 }
 .bo_write .write_link .frm_input { padding-left:50px }
 
-.bo_write .write_flie .lb_icon { position:absolute; top:0px; left:0px; border-radius:3px 0 0 3px; height:38px; line-height:38px; width:40px; font-size:1.4rem; text-align:center; color:#b2b2b2 } 
-.bo_write .write_flie .frm_file { padding-left:50px; margin-top:3px } 
-.bo_write .write_flie .file_wr { position:relative; border:var(--inputBorder); background:var(--inputBg); color:var(--fontColor); vertical-align:middle; border-radius:3px; padding:5px; height:40px; margin:0 } 
-.bo_write .write_flie .frm_input { margin:10px 0 0 } 
-.bo_write .write_flie .file_del { position:absolute; top:10px; right:10px; font-size:1.1rem; color:#7d7d7d } 
+.bo_write .write_flie { position:relative; border:var(--inputBorder); background:var(--inputBg); color:var(--fontColor); vertical-align:middle; border-radius:3px; padding:5px; }
+.bo_write .write_flie label { position:absolute; top:0px; left:0px; border-radius:3px 0 0 3px; height:38px; line-height:38px; width:40px; font-size:1.4rem; text-align:center; color:#b2b2b2 }
+.bo_write .write_flie .frm_file { padding-left:50px; margin-top:3px }
+.bo_write .write_flie .frm_input { margin:10px 0 0; background:var(--inputBgGray); }
+.bo_write .write_flie .file_del { position:absolute; top:10px; right:10px; font-size:1.1rem; color:#7d7d7d }
 
 .bo_write .btn_submit { padding:0 20px; font-size:1.4rem } 
 .bo_write .btn_cancel { border-radius:3px; font-size:1.4rem }
