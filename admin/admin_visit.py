@@ -676,15 +676,14 @@ def get_browser(user_agent):
     user_agent = user_agent.lower()
 
     browsers = {
-        'MSIE': r"msie ([1-9][0-9]\.[0-9]+)",
-        'FireFox': r"firefox",
         'Chrome': r"chrome",
-        'Netscape': r"x11",
+        'FireFox': r"firefox",
+        'Safari': r"safari",
         'Opera': r"opera",
-        'Gecko': r"gec",
-        'Robot': r"bot|slurp",
-        'IE': r"internet explorer",
-        'Mozilla': r"mozilla"
+        'MSIE': r"msie ([1-9][0-9]\.[0-9]+)",
+        'Mozilla': r"mozilla",
+        'Robot': r"bot|Yeti|Baidu|Daumoa|Yandex|slurp|facebook",
+        'IE': r"internet explorer"
     }
 
     for browser_name, pattern in browsers.items():
