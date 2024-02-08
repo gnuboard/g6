@@ -1,21 +1,21 @@
 <section id="visit" class="ft_cnt">
-    <h2>접속자집계</h2>
-    <ul>
-      <li>
-        <span>오늘</span>
-        <strong>{{ today|number_format }}</strong>
+    <h2 class="fs-4 p-4 mb-5 border-white">접속자집계</h2>
+    <ul class="p-4">
+      <li class="d-flex justify-content-between fs-5 py-2">
+        <span class="col-6 position-relative ps-4">오늘</span>
+        <strong class="col-6 text-end text-white">{{ today|number_format }}</strong>
       </li>
-      <li>
-        <span>어제</span>
-        <strong>{{ yesterday|number_format }}</strong>
+      <li class="d-flex justify-content-between fs-5 py-2">
+        <span class="col-6 position-relative ps-4">어제</span>
+        <strong class="col-6 text-end text-white">{{ yesterday|number_format }}</strong>
       </li>
-      <li>
-        <span>최대</span>
-        <strong>{{ max|number_format }}</strong>
+      <li class="d-flex justify-content-between fs-5 py-2">
+        <span class="col-6 position-relative ps-4">최대</span>
+        <strong class="col-6 text-end text-white">{{ max|number_format }}</strong>
       </li>
-      <li>
-        <span>전체</span>
-        <strong>{{ total|number_format }}</strong>
+      <li class="d-flex justify-content-between fs-5 py-2">
+        <span class="col-6 position-relative ps-4">전체</span>
+        <strong class="col-6 text-end text-white">{{ total|number_format }}</strong>
       </li>
     </ul>
     {% if request.state.is_super_admin %}
