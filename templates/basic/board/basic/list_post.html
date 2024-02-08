@@ -219,7 +219,8 @@
                     <td class="table_subject" style="padding-left:{{ reply_depth * 10 }}px">
                         <div class="bo_tit">
                             {% if write.wr_reply %}
-                                <img src="{{ url_for('static', path="/img/icon_reply.gif") }}" class="icon_reply" alt="답변글">
+                                <i class="fa fa-reply"></i>
+                                <span class="blind">답변</span>
                             {% endif %}
                             {% if "secret" in write.wr_option %}
                                 <i class="fa fa-lock" aria-hidden="true"></i>

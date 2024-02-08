@@ -259,6 +259,11 @@
 
             <h3 class="blind">{{ comment.name }}님의 댓글</h3>
 
+            {% if reply_depth %}
+                <i class="fa fa-reply"></i>
+                <span class="blind">대댓글</span>
+            {% endif %}
+
             <div class="comment_profile_img">
                 <img src="{{ get_member_image(request, comment.mb_id) }}" alt="">
             </div>

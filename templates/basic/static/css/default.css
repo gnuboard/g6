@@ -938,6 +938,8 @@ html.no-overflowscrolling .bo_write .write_subject #autosave_pop { height:auto; 
 .bo_comment .comment_depth4 { margin: 0 0 0 200px }
 .bo_comment .comment_depth5 { margin: 0 0 0 250px }
 
+.bo_comment .comment .fa-reply { position:absolute; top:0; left:-15px; transform: rotate(180deg); }
+
 .bo_comment .comment_profile_img img { border-radius:100%; width:50px; height:50px }
 .bo_comment .comment_info { color: var(--fontColor); }
 .bo_comment .member,
@@ -945,7 +947,6 @@ html.no-overflowscrolling .bo_write .write_subject #autosave_pop { height:auto; 
 .bo_comment .sv_member,
 .bo_comment .sv_guest { font-weight:bold }
 .bo_comment .comment .datetime { color:#666 }
-.bo_comment .comment .icon_reply { position:absolute; top:15px; left:-20px }
 
 .bo_comment .comment_contents { padding:0 0 20px; line-height:2.1rem; color: var(--fontColor); }
 .bo_comment .comment_contents .contents_info { margin: 0 0 5px; }
@@ -1013,6 +1014,7 @@ html.no-overflowscrolling .bo_write .write_subject #autosave_pop { height:auto; 
 .bo_list .list_table .fa-caret-right { color:#bbb }
 .bo_list .list_table .fa-download { display:inline-block; width:10px;height: 10px;padding: 3px; color:#daae37; background:#ffefb9; text-align:center; border-radius:2px; vertical-align:middle; }
 .bo_list .list_table .fa-link { display:inline-block; width:10px;height: 10px;padding: 3px; color:#b451fd; background:#edd3fd; text-align:center; border-radius:2px; vertical-align:middle; }
+.bo_list .list_table .fa-reply { transform: rotate(180deg); }
 .bo_list .list_table .category_link { display:inline-block; margin-right:10px; background:#e2eaf6; color:var(--primaryColor); font-weight:normal !important; height:20px; line-height:10px; padding:5px 8px; border-radius:5px; font-size:1.1rem } /* 글제목줄 분류스타일 */
 .bo_list .list_table .category_link:hover { text-decoration:none }
 .bo_list .list_table .current_article { color:#e8180c }
