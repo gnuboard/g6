@@ -1086,10 +1086,6 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 #bo_w .bo_w_flie .file_wr {position:relative;color:#000;vertical-align:middle;margin:0}
 #bo_w .bo_w_flie .frm_input {margin:5px 0 0}
 
-.filebox .btn_file {display:inline-block;position:absolute;right:8px;top:8px;border:1px solid var(--primaryColor);border-radius:3px;width:60px;height:30px;color:var(--primaryColor);font-size:1.2rem;line-height:30px;font-weight:bold;background:#fff;text-align:center;vertical-align:middle;cursor:pointer}
-.filebox .fileName {display:inline-block;position:relative;width:100%;height:45px;padding-left:45px;line-height:30px;border:1px solid #d0d3db;background-color:#fff;color:red;vertical-align:middle;border-radius:0}
-.filebox input[type="file"] {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
-
 #bo_w .btn_confirm {text-align:center;margin:20px 0}
 #bo_w .btn_submit {width:49%;height:45px;padding:0 30px;font-weight:bold;font-size:1.3rem}
 #bo_w .btn_cancel {width:49%;line-height:45px;height:45px;padding:0 30px;font-weight:bold;font-size:1.3rem;background:#fff;border-radius:3px;border:1px solid #dcdcdc}
