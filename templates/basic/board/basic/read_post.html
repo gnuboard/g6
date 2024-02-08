@@ -156,6 +156,7 @@
 
         {{ board_config.get_member_signature(write.mb_id) }}
 
+        {% if board.bo_use_good or board.bo_use_nogood %}
         <div id="article_react">
             {% if board.bo_use_good %}
             <div>
@@ -178,6 +179,7 @@
             </div>
             {% endif %}
         </div>
+        {% endif %}
 
     </div>
 
