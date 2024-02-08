@@ -1073,16 +1073,6 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 .bo_vc_w_wr:after {display:block;visibility:hidden;clear:both;content:""}
 .bo_vc_w .bo_vc_secret {display:block}
 
-#bo_vc_send_sns {display:block;margin-bottom:10px}
-#bo_vc_sns {display:block;margin:0;padding:0;list-style:none;zoom:1}
-#bo_vc_sns:after {display:block;visibility:hidden;clear:both;content:""}
-#bo_vc_sns li {float:left;margin:0 5px 0 0}
-#bo_vc_sns .sns_li_f {border-radius:3px;background:#3a589b;height:40px;padding: 10px 0 10px 10px}
-#bo_vc_sns .sns_li_t {border-radius:3px;background:#00aced;height:40px;padding: 10px 0 10px 10px}
-#bo_vc_sns .sns_li_off {background:#bbb}
-#bo_vc_sns a {display:inline-block;padding:0 15px 0 5px}
-#bo_vc_sns input {margin:0 5px 0 0}
-
 /* 게시판 쓰기 */
 #bo_w {padding:15px}
 #bo_w .bo_v_option li {display:inline-block;float:left;margin:0 5px 0 0}
