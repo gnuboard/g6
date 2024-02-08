@@ -2,20 +2,22 @@
     <form name="fpoll" action="{{ url_for('poll_update', po_id=poll.po_id) }}" onsubmit="return fpoll_submit(this);" method="post" target="win_poll">
         <input type="hidden" name="po_id" value="{{ poll.po_id }}">
         <input type="hidden" name="token" value="">
-        <section id="poll" class="card-bg">
-            <header>
-                <h2>설문조사</h2>
-                {% if request.state.is_super_admin %}
-                <a href="{{ url_for('poll_form_edit', po_id=poll.po_id) }}" class="btn_admin" title="설문관리">
-                    <i class="fa fa-cog fa-spin fa-fw"></i>
-                    <span class="blind">설문관리</span>
-                </a>
-                {% endif %}
-                <a href="{{ url_for('poll_result', po_id=poll.po_id) }}" target="_blank" onclick="poll_result(this.href); return false;" class="btn_result">결과보기</a>
+        <section id="poll" class="card-bg main-border rounded-4">
+            <header class="d-flex justify-content-between align-items-center p-4 main-bb">
+                <h2 class="fs-4 main-font">설문조사</h2>
+                <div>
+                  {% if request.state.is_super_admin %}
+                  <a href="{{ url_for('poll_form_edit', po_id=poll.po_id) }}" class="btn_admin fs-3" title="설문관리">
+                      <i class="fa fa-cog fa-spin fa-fw"></i>
+                      <span class="blind">설문관리</span>
+                  </a>
+                  {% endif %}
+                  <a href="{{ url_for('poll_result', po_id=poll.po_id) }}" target="_blank" onclick="poll_result(this.href); return false;" class="main-border main-font rounded-2 p-3 fs-5 text-decoration-none">결과보기</a>
+                </div>
             </header>
-            <div class="poll_con">
+            <div class="p-4 main-font fs-5 fw-bold">
                 <p>{{ poll.po_subject }}</p>
-                <ul>
+                <ul class="p-0">
                     {% for i in range(1, 10) %}
                         {% set subject = getattr(poll, 'po_poll' ~ i, '') %}
                         {% if subject %}
@@ -29,8 +31,8 @@
                         {% endif %}
                     {% endfor %}
                 </ul>
-                <div id="poll_btn">
-                    <button type="submit" class="btn_poll">투표하기</button>
+                <div id="poll_btn" class="pt-3">
+                    <button type="submit" class="d-block w-100 p-3 main-bg text-white rounded-2 border-0">투표하기</button>
                 </div>
             </div>
         </section>
