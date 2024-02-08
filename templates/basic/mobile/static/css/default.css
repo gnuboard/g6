@@ -329,7 +329,7 @@ box-shadow:1px 2px 5px rgba(191, 191, 191, 0.4)}
 .cke_sc {text-align:right}
 .btn_cke_sc {background:#333;color:#fff;padding:5px;border:none}
 .cke_sc_def {margin:0 0 5px;padding:10px;border:1px solid #ccc;background:#f7f7f7;text-align:center}
-.cke_sc_def dl {margin:0 0 5px;text-align:left;zoom:1}
+.cke_sc_def dl {margin:0 0 5px;text-align:left;}
 .cke_sc_def dl:after {display:block;visibility:hidden;clear:both;content:""}
 .cke_sc_def dt, .cke_sc_def dd {float:left;margin:0;padding:5px 0;border-bottom:1px solid #e9e9e9}
 .cke_sc_def dt {width:50%;font-weight:bold}
@@ -1091,7 +1091,7 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 #bo_w .btn_cancel {width:49%;line-height:45px;height:45px;padding:0 30px;font-weight:bold;font-size:1.3rem;background:#fff;border-radius:3px;border:1px solid #dcdcdc}
 
 /* 현재접속자 */
-#current_connect ul {margin:0 -10px 0;padding:0;list-style:none;zoom:1}
+#current_connect ul {margin:0 -10px 0;padding:0;list-style:none;}
 #current_connect ul:after {display:block;visibility:hidden;clear:both;content:""}
 #current_connect li:after {display:block;visibility:hidden;clear:both;content:""}
 #current_connect li {position:relative;padding:10px 20px;background:#fff;border-bottom:1px solid #ececec;min-height:1px;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;margin-left:0}
