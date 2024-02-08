@@ -785,8 +785,8 @@ html.no-overflowscrolling .bo_write .write_subject #autosave_pop { height:auto; 
 .bo_view #view_header { display:grid; gap:10px; padding-bottom: 5px; border-bottom:var(--border); color:#666 }
 .bo_view #view_header .header_profile_img img { border-radius:100%; width:50px; height:50px }
 .bo_view #view_header .header_info { display:flex; flex-direction: column; justify-content: center; gap: 5px; }
-.bo_view #view_header span { display:inline-block; margin:0 10px 0 0; font-weight:normal }
-.bo_view #view_header span a {color: #888888;}
+.bo_view #view_header > span { display:inline-block; margin:0 10px 0 0; font-weight:normal }
+.bo_view #view_header > span a {color: #888888;}
 .bo_view #view_header .sv_member,
 .bo_view #view_header .sv_guest,
 .bo_view #view_header .member,
@@ -948,8 +948,9 @@ html.no-overflowscrolling .bo_write .write_subject #autosave_pop { height:auto; 
 .bo_comment .comment .icon_reply { position:absolute; top:15px; left:-20px }
 
 .bo_comment .comment_contents { padding:0 0 20px; line-height:2.1rem; color: var(--fontColor); }
-.bo_comment .comment_contents a { text-decoration:underline }
-.bo_comment .comment_contents a.certify { text-decoration:underline; color:#ed6479 }
+.bo_comment .comment_contents .contents_info { margin: 0 0 5px; }
+.bo_comment .comment_contents .contents a { text-decoration:underline }
+.bo_comment .comment_contents .contents a.certify { text-decoration:underline; color:#ed6479 }
 
 .bo_comment .empty { margin:0; padding:80px 0 !important; color:#777; text-align:center }
 
