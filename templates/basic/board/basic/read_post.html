@@ -183,6 +183,7 @@
 
     </div>
 
+    {% if files %}
     <div id="view_file" class="view_filelink">
         <h2 class="blind">첨부파일</h2>
         <ul>
@@ -200,6 +201,7 @@
         {% endfor %}
         </ul>
     </div>
+    {% endif %}
 
     {% if links %}
     <div id="view_link" class="view_filelink">
