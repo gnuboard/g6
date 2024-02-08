@@ -2,7 +2,7 @@
 
 {% block body_html %}
 <!-- 상단 시작 { -->
-<header id="hd" class="container-fluid wrapper-bg py-4 sticky-top primary-bb">
+<header id="hd" class="container-fluid wrapper-bg py-4 sticky-top main-bb">
   <div id="skip_to_container"><a href="#container">본문 바로가기</a></div>
 
   {% include "/bbs/newwin.inc.html" %}
@@ -88,12 +88,12 @@
 
     <div id="util_box" class="d-flex">
       <!-- 검색 버튼 -->
-      <button type="button" id="user_btn" class="rounded-circle overflow-hidden border-0 bg-transparent fs-3 main-font me-3" style="width: 48px; height: 48px;">
+      <button type="button" id="user_btn" class="rounded-circle overflow-hidden border-0 bg-transparent fs-2 sub-font me-1" style="width: 48px; height: 48px;">
         <i class="fa fa-search" aria-hidden="true"></i>
         <span class="blind">사용자메뉴</span>
       </button>
       <!-- 다크모드 버튼 -->
-      <button type="button" id="darkmode-toggle-switch" class="rounded-circle overflow-hidden border-0 bg-transparent fs-4 main-font me-3" style="width: 48px; height: 48px;">
+      <button type="button" id="darkmode-toggle-switch" class="rounded-circle overflow-hidden border-0 bg-transparent fs-4 sub-font me-3" style="width: 48px; height: 48px;">
         <i class="fa-solid fa-regular fa-moon visible bright"></i>
         <i class="fa-solid fa-regular fa-sun visible dark"></i>
       </button>
@@ -102,7 +102,7 @@
         <span id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false" class="d-inline-block rounded-circle overflow-hidden cursor-pointer" style="width: 48px; height: 48px;" tabindex="0">
           <img src="{{ get_member_image(request, request.state.login_member.mb_id)|safe }}" style="width: 100%;" alt="profile_image">
         </span>
-        <div class="dropdown-menu cont-bg rounded-4 border border-secondary-subtle overflow-hidden" aria-labelledby="profileDropdown">
+        <div class="dropdown-menu cont-bg rounded-4 main-border overflow-hidden" aria-labelledby="profileDropdown">
           {% if request.state.login_member %}
           {% include "bbs/outlogin_after.html" %}
           {% else %}
@@ -147,51 +147,8 @@
 
 <!-- 콘텐츠 시작 { -->
 <div id="wrapper" class="container-xxl pt-5">
-  <div id="container_wr" class="row">
-    <div id="container" class="col-9">
-      <h2 id="container_title" class="m-0"><span>{% block subtitle %}{% endblock subtitle %}</span></h2>
-      {% block content %}
-      {% endblock content %}
-    </div>
-    <div id="aside" class="col-3">
-
-      <!-- 설문조사 -->
-      {% include "/bbs/poll.html" %}
-
-      <!-- 공지사항 -->
-      {{ render_latest_posts(request, 'main_notice', 'notice', 4, 23)|safe }}
-
-      <!-- 접속자집계 { -->
-      {% if render_visit_statistics %}
-      {{ render_visit_statistics(request)|safe }}
-      {% endif %}
-
-      <script>
-        // aside/최신글 - 탭메뉴 기능
-        var tabItems = document.querySelectorAll('.aside_tab ul.tab_01 li');
-
-        tabItems.forEach(function (item) {
-          item.addEventListener('click', function () {
-            var asideTabId = this.getAttribute('data-tab');
-
-            // Remove 'current' class from all tab items and content elements
-            tabItems.forEach(function (tabItem) {
-              tabItem.classList.remove('current');
-            });
-
-            var contentElements = document.querySelectorAll('.aside_tab .content01');
-            contentElements.forEach(function (contentElement) {
-              contentElement.classList.remove('current');
-            });
-
-            // Add 'current' class to the clicked tab item and corresponding content element
-            this.classList.add('current');
-            document.getElementById(asideTabId).classList.add('current');
-          });
-        });
-      </script>
-    </div>
-  </div>
+    {% block content %}
+    {% endblock content %}
 </div>
 <!-- } 콘텐츠 끝 -->
 

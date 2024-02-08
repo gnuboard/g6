@@ -3,23 +3,69 @@
 {% block title %}{{ request.state.title }}{% endblock title %}
 
 {% block content %}
-    <h2 class="blind">최신글</h2>
-    <div class="latest_top_wr">
-      {{ render_latest_posts(request, 'main_list', 'notice', 4, 23)|safe }}
-    </div>
-    <div class="latest_wr">
-        {{ render_latest_posts(request, 'pic_list', 'free', 4, 23)|safe }}
-        {{ render_latest_posts(request, 'pic_list', 'qa', 4, 23)|safe }}
-        {{ render_latest_posts(request, 'pic_list', 'notice', 4, 23)|safe }}
-    </div>
-    <div class="latest_wr">
-        {{ render_latest_posts(request, 'pic_block', 'gallery', 4, 23)|safe }}
-    </div>
-    <div class="latest_wr">
-        {% for board in boards %}
-        <div style="float:left; {{ loop.cycle("", "margin-left:2%", "margin-left:2%") }}" class="lt_wr">
-            {{ render_latest_posts(request, 'basic', board.bo_table, 6, 24)|safe }}
+    <div id="container_wr" class="container-xxl">
+      <div class="row">
+        <div id="container" class="col-9">
+          <div class="latest_top_wr">
+            {{ render_latest_posts(request, 'main_list', 'notice', 4, 23)|safe }}
+          </div>
         </div>
-        {% endfor %}
+        <div id="aside" class="col-3">
+
+          <!-- 설문조사 -->
+          {% include "/bbs/poll.html" %}
+
+          <!-- 공지사항 -->
+          {{ render_latest_posts(request, 'main_notice', 'notice', 4, 23)|safe }}
+
+          <!-- 접속자집계 { -->
+          {% if render_visit_statistics %}
+          {{ render_visit_statistics(request)|safe }}
+          {% endif %}
+
+          <script>
+            // aside/최신글 - 탭메뉴 기능
+            var tabItems = document.querySelectorAll('.aside_tab ul.tab_01 li');
+
+            tabItems.forEach(function (item) {
+              item.addEventListener('click', function () {
+                var asideTabId = this.getAttribute('data-tab');
+
+                // Remove 'current' class from all tab items and content elements
+                tabItems.forEach(function (tabItem) {
+                  tabItem.classList.remove('current');
+                });
+
+                var contentElements = document.querySelectorAll('.aside_tab .content01');
+                contentElements.forEach(function (contentElement) {
+                  contentElement.classList.remove('current');
+                });
+
+                // Add 'current' class to the clicked tab item and corresponding content element
+                this.classList.add('current');
+                document.getElementById(asideTabId).classList.add('current');
+              });
+            });
+          </script>
+        </div>
+      </div>
+    </div>
+    <div id="container_wr" class="container-xxl">
+      <h2 class="blind">최신글</h2>
+      <div class="latest_wr">
+          {{ render_latest_posts(request, 'pic_list', 'free', 4, 23)|safe }}
+          {{ render_latest_posts(request, 'pic_list', 'qa', 4, 23)|safe }}
+          {{ render_latest_posts(request, 'pic_list', 'notice', 4, 23)|safe }}
+      </div>
+      <div class="latest_wr">
+          {{ render_latest_posts(request, 'pic_block', 'gallery', 4, 23)|safe }}
+      </div>
+      <div class="latest_wr">
+          {% for board in boards %}
+          <div style="float:left; {{ loop.cycle("", "margin-left:2%", "margin-left:2%") }}" class="lt_wr">
+              {{ render_latest_posts(request, 'basic', board.bo_table, 6, 24)|safe }}
+          </div>
+          {% endfor %}
+      </div>
     </div>
 {% endblock content %}

@@ -8,7 +8,7 @@
     {% for menu in menus %}
         {% set is_submenu = True if menu.sub|count > 0 else False %}
         <li class="{% if is_submenu %}dropdown{% endif %}" style="z-index:{{ 999 - loop.index }}">
-            <a href="{{ menu.me_link }}" target="_{{ menu.me_target }}" class="d-block fw-bold p-4 text-secondary text-decoration-none {% if is_submenu %}dropdown-toggle{% endif %}" data-mdb-toggle="dropdown" aria-expanded="false" >{{ menu.me_name }}</a>
+            <a href="{{ menu.me_link }}" target="_{{ menu.me_target }}" class="d-block fw-bold p-4 sub-font text-decoration-none fs-4 {% if is_submenu %}dropdown-toggle{% endif %}" data-mdb-toggle="dropdown" aria-expanded="false" >{{ menu.me_name }}</a>
             {% if is_submenu %}
                 <span class="blind">하위분류</span>
                     <ul class="dropdown-menu start-50 translate-middle-x" aria-labelledby="dropdownMenuButton">
