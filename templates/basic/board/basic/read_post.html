@@ -52,7 +52,7 @@
 
             <div>
                 <i class="blind">댓글</i>
-                <span><a href="#bo_vc"> <i class="fa fa-regular fa-commenting" aria-hidden="true"></i> {{ write.wr_comment|number_format }}건</a></span>
+                <span><a href="#bo_basic_comment"> <i class="fa fa-regular fa-commenting" aria-hidden="true"></i> {{ write.wr_comment|number_format }}건</a></span>
 
                 <i class="blind">조회</i>
                 <span><i class="fa fa-eye" aria-hidden="true"></i> {{ write.wr_hit|number_format }}회</span>
@@ -438,7 +438,7 @@
 
     <script>
     var save_before = '';
-    var save_html = document.getElementById('bo_vc_w').innerHTML;
+    var save_html = document.getElementById('bo_basic_comment_write').innerHTML;
     /*
     function good_and_write()
     {
