@@ -53,6 +53,7 @@
         </div>
         {% endif %}
 
+        {% if is_notice or (is_html and not board.bo_use_dhtml_editor) or is_secret or is_mail %}
         <div class="write_option">
             <span class="blind">옵션</span>
 
@@ -91,6 +92,7 @@
             {% endif %}
             </ul>
         </div>
+        {% endif %}
 
         <div class="write_subject">
             <label for="wr_subject" class="blind">제목<strong>필수</strong></label>
