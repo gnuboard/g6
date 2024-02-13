@@ -463,7 +463,7 @@ def get_populars(limit: int = 10, day: int = 3):
     Returns:
         List[Popular]: 인기검색어 리스트
     """
-    if popular_cache.get("populars"):
+    if popular_cache.get("populars") is not None:
         return popular_cache.get("populars")
 
     db = DBConnect().sessionLocal()
@@ -528,7 +528,7 @@ def get_recent_poll():
     """
     최근 투표 정보 1건을 가져오는 함수
     """
-    if lfu_cache.get("poll"):
+    if lfu_cache.get("poll") is not None:
         return lfu_cache.get("poll")
 
     db = DBConnect().sessionLocal()
@@ -550,7 +550,8 @@ def get_menus():
     Returns:
         list: 자식메뉴가 포함된 메뉴 list
     """
-    if lfu_cache.get("menus"):
+
+    if lfu_cache.get("menus") is not None:
         return lfu_cache.get("menus")
 
     db = DBConnect().sessionLocal()
@@ -575,6 +576,7 @@ def get_menus():
 
         menu.sub = child_menus
         menus.append(menu)
+    db.close()
 
     lfu_cache.update({"menus": menus})
 
