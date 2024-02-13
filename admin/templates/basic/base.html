@@ -134,8 +134,9 @@
             {% endif %}
                 
             {% for plugin in plugin_menus %}
+                {% set plugin_menu_index = loop.index0 + 4 %}  {# 플러그인 메뉴순서는 4번 부터 시작한다. #}
                 {% for menu_key, submenus in plugin.items() %}
-                    {{ render_admin_menu(menu_key, submenus, loop.index) }}
+                    {{ render_admin_menu(menu_key, submenus, plugin_menu_index) }}
                 {% endfor %}
             {% endfor %}
 

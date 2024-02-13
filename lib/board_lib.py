@@ -377,7 +377,7 @@ class BoardConfig():
 
         return ",".join(map(str, notice_ids))
 
-    def set_wr_name(self, member: Member = None, default_name: str = "") -> str:
+    def set_wr_name(self, member: Member = None, default_name: str = None) -> str:
         """실명사용 여부를 확인 후 실명이면 이름을, 아니면 닉네임을 반환한다.
 
         Args:
@@ -392,8 +392,10 @@ class BoardConfig():
                 return member.mb_name
             else:
                 return member.mb_nick
-        else:
+        elif default_name:
             return default_name
+        else:
+            raise AlertException("로그인 세션 만료, 비회원 글쓰기시 작성자 이름 미기재 등의 비정상적인 접근입니다.", 400)
 
     def _can_action_by_level(self, level: int) -> bool:
         """회원 레벨에 따라 행동 가능 여부를 판단한다.

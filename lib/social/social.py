@@ -18,8 +18,7 @@ def register_social_provider(config: Config):
     Args:
         config (Config): 기본환경설정 객체
     Examples:
-        서버 재시작 후 인증 객체가 등록되지 않아
-        각 소셜서비스를 사용할 수 없는 경우가 있음.
+        서버 재시작 후 인증 객체가 등록되지 않아서 등록에 사용.
     """
     if not config.cf_social_login_use:
         return

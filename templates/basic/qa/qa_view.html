@@ -33,7 +33,7 @@
                 <span class="blind">작성일</span>
                 <span class="info_date">
                     <i class="fa fa-regular fa-clock" aria-hidden="true"></i>
-                    {{ qa.qa_datetime }}
+                    {{ qa.qa_datetime|datetime_format }}
                 </span>
             </div>
 
@@ -170,7 +170,7 @@
                 </span>
                 <span class="datetime">
                     <i class="fa fa-regular fa-clock" aria-hidden="true"></i>
-                    {{ answer.qa_datetime }}
+                    {{ answer.qa_datetime|datetime_format }}
                 </span>
             </div>
 
@@ -309,7 +309,7 @@
                             {{ related.qa_subject }}
                         </a>
                     </td>
-                    <td class="table_datetime">{{ related.qa_datetime }}</td>
+                    <td class="table_datetime">{{ related.qa_datetime|datetime_format('%y-%m-%d') }}</td>
                     <td class="table_status">
                         {% if related.qa_status %}
                             <span class="txt_done">답변완료</span>
