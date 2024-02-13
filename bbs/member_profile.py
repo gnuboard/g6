@@ -206,14 +206,15 @@ async def member_profile_save(
         member_form.mb_adult = 0
 
     db.execute(
-        update(Member)
-        .values(member_form.__dict__)
+        update(Member).values(member_form.__dict__)
         .where(Member.mb_id == mb_id)
     )
     db.commit()
+
     if "ss_profile_change" in request.session:
         del request.session["ss_profile_change"]
-    return RedirectResponse(url="/", status_code=302)
+
+    raise AlertException("회원정보가 수정되었습니다.", 302, "/")
 
 
 def get_is_phone_certify(member: Member, config: Config) -> bool:
