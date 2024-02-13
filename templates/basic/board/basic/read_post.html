@@ -221,6 +221,7 @@
     </div>
     {% endif %}
 
+    {% if prev or next %}
     <div id="view_move">
         {% if prev %}
         <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=prev.wr_id )|set_query_params(request) }}" class="prev">
@@ -243,6 +244,7 @@
         <div class="next"></div>
         {% endif %}
     </div>
+    {% endif %}
 
     <button type="button" class="comment_opener">
         <span class="total"><b>댓글</b> {{ comments|count|number_format }}</span>
