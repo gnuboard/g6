@@ -10,6 +10,7 @@ from typing_extensions import Annotated
 
 class MySQLCharsetMixin:
     """ MySQL의 기본 charset을 설정하는 Mixin 클래스 """
+
     @declared_attr.directive
     def __table_args__(cls):
         return {'mysql_charset': DBConnect().charset}
@@ -84,9 +85,13 @@ class DBSetting:
                 query_option = {}
                 if self._db_engine == "mysql":
                     query_option = {"charset": self._charset}
+
                 elif self._db_engine == "postgresql":
-                    # postgresql pycopg 드라이버 인코딩 설정 utf8mb4 -> utf8 을 사용
-                    query_option = {"client_encoding": self._charset}  
+                    if self._charset == "utf8mb4" or self._charset == "utf8":
+                        # pycopg 드라이버 인코딩 설정 utf8 을 사용
+                        query_option = {"client_encoding": 'utf8'}
+                    else:
+                        query_option = {"client_encoding": self._charset}
                 url = URL(
                     drivername=db_driver,
                     username=self._user,
