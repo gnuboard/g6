@@ -28,6 +28,9 @@
         {% if is_html and board.bo_use_dhtml_editor %}
         <input type="hidden" name="html" value="html1">
         {% endif %}
+        {% if not is_admin and is_secret == 2 %}
+        <input type="hidden" name="secret" value="secret">
+        {% endif %}
 
         {% if categories %}
         <div class="write_select">
@@ -56,7 +59,7 @@
         </div>
         {% endif %}
 
-        {% if is_notice or (is_html and not board.bo_use_dhtml_editor) or is_secret or is_mail %}
+        {% if is_notice or (is_html and not board.bo_use_dhtml_editor) or (is_admin and is_secret) or is_secret == 1 or is_mail %}
         <div class="write_option">
             <span class="blind">옵션</span>
 
@@ -73,15 +76,11 @@
                     <label for="html"><span>&nbsp;</span>html</label>
                 </li>
             {% endif %}
-            {% if is_secret %}
-                {% if is_admin or is_secret == 1 %}
-                    <li class="chk_box">
-                        <input type="checkbox" id="secret" name="secret" value="secret" {{ secret_checked }}>
-                        <label for="secret"><span>&nbsp;</span>비밀글</label>
-                    </li>
-                {% else %}
-                    <input type="hidden" name="secret" value="secret">
-                {% endif %}
+            {% if (is_admin and is_secret) or is_secret == 1 %}
+                <li class="chk_box">
+                    <input type="checkbox" id="secret" name="secret" value="secret" {{ secret_checked }}>
+                    <label for="secret"><span>&nbsp;</span>비밀글</label>
+                </li>
             {% endif %}
             {% if is_mail %}
                 <li class="chk_box">
