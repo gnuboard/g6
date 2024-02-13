@@ -25,6 +25,9 @@
         <input type="hidden" name="wr_id" value="{{ write.wr_id }}">
         <input type="hidden" name="parent_id" value="{{ request.query_params.parent_id }}">
         <input type="hidden" name="token" value="">
+        {% if is_html and board.bo_use_dhtml_editor %}
+        <input type="hidden" name="html" value="html1">
+        {% endif %}
 
         {% if categories %}
         <div class="write_select">
@@ -53,7 +56,7 @@
         </div>
         {% endif %}
 
-        {% if is_notice or (is_html and not board.bo_use_dhtml_editor) or is_secret or is_mail %}
+        {% if is_notice or is_html or is_secret or is_mail %}
         <div class="write_option">
             <span class="blind">옵션</span>
 
@@ -64,14 +67,10 @@
                     <label for="notice"><span>&nbsp;</span>공지</label>
                 </li>
             {% endif %}
-            {% if is_html %}
+            {% if is_html and not board.bo_use_dhtml_editor %}
                 <li class="chk_box">
-                    {% if not board.bo_use_dhtml_editor %}
                     <input type="checkbox" id="html" name="html" onclick="html_auto_br(this);" value="{{ html_value }}" {{ html_checked }}>
                     <label for="html"><span>&nbsp;</span>html</label>
-                    {% else %}
-                    <input type="hidden" name="html" value="html1">
-                    {% endif %}
                 </li>
             {% endif %}
             {% if is_secret %}
