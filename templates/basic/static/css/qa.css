@@ -43,9 +43,9 @@
 #bo_cate ul {zoom:1}
 #bo_cate ul:after {display:block;visibility:hidden;clear:both;content:""}
 #bo_cate li {display:inline-block;padding:2px}
-#bo_cate a {display:block;line-height:28px;padding:5px 15px;border-radius:30px;border:var(--qaBorder);color:var(--main_color)}
-#bo_cate a:focus, #bo_cate a:hover, #bo_cate a:active {text-decoration:none;background:var(--main_color);color:#fff}
-#bo_cate #bo_cate_on {z-index:2;background:var(--main_color);color:#fff;font-weight:bold;
+#bo_cate a {display:block;line-height:28px;padding:5px 15px;border-radius:30px;border:1px solid var(--primaryColor);color:var(--primaryColor)}
+#bo_cate a:focus, #bo_cate a:hover, #bo_cate a:active {text-decoration:none;background:var(--primaryColor);color:#fff}
+#bo_cate #bo_cate_on {z-index:2;background:var(--primaryColor);color:#fff;font-weight:bold;
 }
 .td_subject img {margin-left:5px}
 

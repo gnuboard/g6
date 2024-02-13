@@ -47,7 +47,11 @@
                     <br>
                     <span class="blind">댓글</span><strong><a href="#bo_vc"> <i class="fa fa-regular fa-commenting" aria-hidden="true"></i> {{ write.wr_comment|number_format }}건</a></strong>
                     <span class="blind">조회</span><strong><i class="fa fa-eye" aria-hidden="true"></i> {{ write.wr_hit|number_format }}회</strong>
-                    <strong class="if_date"><span class="blind">작성일</span><i class="fa fa-regular fa-clock" aria-hidden="true"></i> {{ write.wr_datetime }}</strong>
+                    <strong class="if_date">
+                        <span class="blind">작성일</span>
+                        <i class="fa fa-regular fa-clock" aria-hidden="true"></i>
+                        {{ write.wr_datetime|datetime_format }}
+                    </strong>
                 </div>
             </div>
             <!-- 게시물 상단 버튼 시작 { -->
@@ -188,7 +192,7 @@
                         <strong>{{ file.bf_source }}</strong>  ({{ file.bf_filesize|filesizeformat }})
                     </a>
                     <br>
-                    <span class="bo_v_file_cnt">{{ file.bf_download }}회 다운로드 | DATE : {{ file.bf_datetime }}</span>
+                    <span class="bo_v_file_cnt">{{ file.bf_download }}회 다운로드 | DATE : {{ file.bf_datetime|datetime_format }}</span>
                 </li>
             {% endfor %}
             </ul>
@@ -223,7 +227,7 @@
             <p>
             <span class="nb_tit">이전글</span>
             <span class="nb_cont">{{ prev.wr_subject }}</span>
-            <span class="nb_date">{{ prev.wr_datetime }}</span>
+            <span class="nb_date">{{ prev.wr_datetime|datetime_format }}</span>
             </p>
           </a>
         </li>
@@ -234,7 +238,7 @@
             <p>
               <span class="nb_tit">다음글</span>
               <span class="nb_cont">{{ next.wr_subject }}</span>
-              <span class="nb_date">{{ next.wr_datetime }}</span>
+              <span class="nb_date">{{ next.wr_datetime|datetime_format }}</span>
             </p>
             <i class="fa fa-chevron-down" aria-hidden="true"></i> 
           </a>

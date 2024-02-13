@@ -352,17 +352,6 @@ a.gnb_2da:hover { color:#fff; background:#285981;-moz-transition:all 0.3s ease-o
 #aside #ol_after_private .win_scrap:hover strong {background:#ff8b77;color:#fff}
 
 .selec_chk {position:absolute;top:0;left:0;width:0;height:0;opacity:0;outline:0;z-index:-1;overflow:hidden}
-.chk_box {position:relative}
-.chk_box input[type="checkbox"] + label {padding-left:20px;color:#676e70}
-.chk_box input[type="checkbox"] + label:hover{color:var(--primaryColor)}
-.chk_box input[type="checkbox"] + label span {position:absolute;top:2px;left:0;width:15px;height:15px;display:block;margin:0;background:#fff;border:1px solid #d0d4df;border-radius:3px}
-.chk_box input[type="checkbox"]:checked + label {color:var(--fontColor)}
-.chk_box input[type="checkbox"]:checked + label span {background:url(/static/img/chk.png) no-repeat 50% 50% var(--primaryColor);border-color:#1471f6;border-radius:3px}
-.chk_box input[type="checkbox"]:checked + label span {
-  background: url(/static/img/chk.png) no-repeat 50% 50% var(--primaryColor);
-  border-color: var(--primaryColor);
-  border-radius: 3px;
-}
 
 .gnb_mo .ol{border-radius: 0;border: none;border-bottom: var(--border);}
 .gnb_mo .ol {position:relative;margin:0 0 10px;text-align:center}
@@ -434,12 +423,6 @@ a.gnb_2da:hover { color:#fff; background:#285981;-moz-transition:all 0.3s ease-o
 #poll header .btn_admin {float:right;margin-left:5px;line-height:28px;font-size:1.7rem}
 #poll ul {padding:0 20px;list-style:none}
 #poll li {padding:5px 0}
-
-.chk_box input[type="radio"] {position:absolute;top:0;left:0;width:0;height:0;opacity:0;outline:0;z-index:-1;overflow:hidden}
-.chk_box input[type="radio"] + label {position:relative;padding-left:23px;display:inline-block;color:var(--fontColor)}
-.chk_box input[type="radio"] + label span {position:absolute;top:0;left:0;width:15px;height:15px;display:block;background:#fff;border:1px solid #cdd6df;border-radius:50%}
-.chk_box input[type="radio"]:checked + label {color:var(--primaryColor)}
-.chk_box input[type="radio"]:checked + label span:before {width:7px;height:7px;background:var(--primaryColor);content:'';position:absolute;top:3px;left:3px;border-radius:50%}
 
 #poll .poll_con {}
 #poll .poll_con p {font-weight:bold;padding:15px 20px;color:var(--fontColor);font-size:1.4rem}
@@ -753,15 +736,6 @@ a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:no
 .td_subject img { margin-left:5px }
 
 /* 게시판 목록 공통 */
-.chk_box input[type="checkbox"] + label { position:relative; color:#676e70 }
-.chk_box input[type="checkbox"] + label:hover { color:#2172f8 }
-.chk_box input[type="checkbox"] + label span { float:left; width:15px; height:15px; display:block; background:#fff; border:1px solid #d0d4df; border-radius:3px }
-.write_div .chk_box input[type="checkbox"] + label, .bo_vc_w .chk_box input[type="checkbox"] + label { padding-left:20px }
-.write_div .chk_box input[type="checkbox"] + label span, .bo_vc_w .chk_box input[type="checkbox"] + label span { position:absolute; top:2px; left:0; width:15px; height:15px; display:block; margin:0; background:#fff; border:1px solid #d0d4df; border-radius:3px }
-.chk_box input[type="checkbox"]:checked + label { color:#000 }
-.chk_box input[type="checkbox"]:checked + label span { background:url(./img/chk.png) no-repeat 50% 50% var(--primaryColor); border-color:#1471f6; border-radius:3px }
-
-
 #bo_btn_top { margin:10px 0 } 
 #bo_btn_top:after { display:block; visibility:hidden; clear:both; content:"" } 
 .bo_fx { margin-bottom:5px; float:right; zoom:1 } 
@@ -1822,17 +1796,6 @@ button { cursor:pointer; padding:0; font-size:inherit; }
 #formmail .lb_icon {position:absolute;top:1px;left:1px;border-radius:3px 0 0 3px;height:38px;line-height:38px;width:40px;background:#fff;text-align:center;color:#b2b2b2}
 #formmail .frm_file {padding-left:50px}
 #formmail .frm_info {color:#3497d9;font-size:1.1rem}
-.chk_box input[type="radio"] {position:absolute;top:0;left:0;width:0;height:0;opacity:0;outline:0;z-index:-1;overflow:hidden}
-.chk_box input[type="radio"] + label {position:relative;padding-left:23px;display:inline-block;color:var(--fontColor)}
-.chk_box input[type="radio"] + label span {position:absolute;top:0;left:0;width:15px;height:15px;display:block;background:#f7f8f9;border:1px solid #cdd6df;border-radius:50%}
-.chk_box input[type="radio"]:checked + label {color:var(--primaryColor)}
-.chk_box input[type="radio"]:checked + label span {border-color:var(--primaryColor)}
-.chk_box input[type="radio"]:checked + label span:before {width:7px;height:7px;background:var(--primaryColor);content:'';position:absolute;top:3px;left:3px;border-radius:50%}
-.chk_box input[type="checkbox"] + label {position:relative;color:#676e70}
-.chk_box input[type="checkbox"] + label:hover {color:#2172f8}
-.chk_box input[type="checkbox"] + label span {float:left;width:15px;height:15px;display:block;background:#fff;border:1px solid #d0d4df;border-radius:3px}
-.chk_box input[type="checkbox"]:checked + label {color:#000}
-.chk_box input[type="checkbox"]:checked + label span {background:url(/static/img/chk.png) no-repeat 50% 50% var(--primaryColor);border-color:#1471f6;border-radius:3px}
 
 /* 자기소개 */
 #profile h1 a {}
@@ -1860,12 +1823,6 @@ button { cursor:pointer; padding:0; font-size:inherit; }
 #fnewlist .td_board a {background:#eeeaf8;color:#ac92ec;padding:3px 4px;border-radius:5px;font-weight:normal}
 
 .admin_new_btn {float:right;margin-bottom:10px}
-
-.chk_box input[type="checkbox"] + label {position:relative;padding-left:20px;color:#676e70}
-.chk_box input[type="checkbox"] + label:hover {color:#2172f8}
-.chk_box input[type="checkbox"] + label span {position:absolute;top:2px;left:0;width:15px;height:15px;display:block;margin:0;background:#fff;border:1px solid #d0d4df;border-radius:3px}
-.chk_box input[type="checkbox"]:checked + label {color:#000}
-.chk_box input[type="checkbox"]:checked + label span {background:url(./img/chk.png) no-repeat 50% 50% var(--primaryColor);border-color:#1471f6;border-radius:3px}
 
 /* outlogin.css */
 #aside #ol_after_logout {text-align:center;font-weight:bold;display:block;padding:15px 0;color:#a0a0a1;border-top:var(--border)}
@@ -2134,9 +2091,8 @@ transition:all 0.1s ease-in-out}
 .register_form_inner .frm_input {padding: 5px 0px;border: none;border-bottom: 1px solid #d0d3db;border-radius: 0px;background: transparent;}
 .register_form_inner label.text_input {position:absolute;left:0%; bottom:50%; width:100%; line-height: 45px; text-align:left;transition: all 0.2s;cursor: pointer;color: var(--bovColor);}
 .register_form_inner .frm_input:focus,
-.register_form_inner .frm_input:valid,
-.register_form_inner .frm_input:-webkit-autofill {border: none !important;border: 2px solid var(--primaryColor) !important;box-shadow: none;}
-.register_form_inner .frm_input:placeholder-shown {border: 1px solid #d0d3db !important}
+.register_form_inner .frm_input:-webkit-autofill {border:0 !important;border-bottom: 2px solid var(--primaryColor) !important;box-shadow: none;}
+.register_form_inner .frm_input:placeholder-shown {border-bottom: 1px solid #d0d3db}
 .register_form_inner .frm_input:focus + label.text_input, 
 .register_form_inner .frm_input:valid + label.text_input,
 .register_form_inner .frm_input:-webkit-autofill + label.text_input {bottom:50%;font-size:1.2rem;color: var(--primaryColor);}  /* input에 글을 입력하고 포커스가 지나간 상태에서 제어하려면 valid 선택자를 써야한다. */

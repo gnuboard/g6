@@ -5,7 +5,7 @@ var errfld = null;
 // 필드 검사
 function check_field(fld, msg)
 {
-    if ((fld.value = fld.value.tirm()) == "")
+    if ((fld.value = fld.value.trim()) == "")
         error_field(fld, msg);
     else
         clear_field(fld);
