@@ -26,7 +26,7 @@
             <span class="blind">작성자</span>
             <strong> {{ qa.qa_name }}</strong>
             <span class="blind">작성일</span>
-            <strong class="bo_date"><i class="fa fa-regular fa-clock" aria-hidden="true"></i> {{ qa.qa_datetime }}</strong>
+            <strong class="bo_date"><i class="fa fa-regular fa-clock" aria-hidden="true"></i> {{ qa.qa_datetime|datetime_format }}</strong>
             {% if qa.qa_email %}
                 <span class="blind">이메일</span>
                 <strong><i class="fa fa-regular fa-envelope" aria-hidden="true"></i> {{ qa.qa_email }}</strong>
@@ -139,7 +139,8 @@
                 <h2><span class="bo_v_reply">답변</span> {{ answer.qa_subject }}</h2>
                 <header>
                     <div id="ans_datetime">
-                        <i class="fa fa-regular fa-clock" aria-hidden="true"></i> {{ answer.qa_datetime }}
+                        <i class="fa fa-regular fa-clock" aria-hidden="true"></i>
+                        {{ answer.qa_datetime|datetime_format }}
                     </div>
                     {% if request.state.is_super_admin %}
                     <div id="ans_add">
@@ -275,7 +276,7 @@
                                             {{ related.qa_subject }}
                                         </a>
                                     </td>
-                                    <td class="td_date">{{ related.qa_datetime }}</td>
+                                    <td class="td_date">{{ related.qa_datetime|datetime_format('%y-%m-%d') }}</td>
                                     <td class="td_stat">
                                         {% if related.qa_status %}
                                             <span class="txt_done">답변완료</span>

@@ -130,7 +130,7 @@
                                 </a>
                             </td>
                             <td class="td_name">{{ qa.qa_name }}</td>
-                            <td class="td_date">{{ qa.qa_datetime }}</td>
+                            <td class="td_date">{{ qa.qa_datetime|datetime_format('%y-%m-%d') }}</td>
                             <td class="td_stat">
                                 {% if qa.qa_status %}
                                     <span class="txt_done">답변완료</span>
