@@ -216,12 +216,9 @@ input[type=text]:focus,input[type=password]:focus, textarea:focus,select:focus {
 .gnb_wrap .gnb_al_ul .gnb_empty, .gnb_wrap .gnb_al_ul .gnb_empty a { color:#555 } 
 
 /* 메인 배너 슬라이더 */
-.slider-wrap { position:relative; } 
-.main-slider { position:relative; margin-bottom:0 !important; } 
-.main-slider .slide-item .slide-con { position:relative; height: 800px; } 
-.main-slider .slide-item .slide-con .img-box img { width: 100%; height: 100%; object-fit: cover; } 
+.main-slider .slide-item .slide-con { position:relative; height: 690px; } 
 .main-slider .slide-item > .slide-con > .slide-txt { position:absolute; bottom: 5%; left: 5%; width: 100%; max-width: 500px; z-index:50; color: #fff; text-align: left; } 
-.main-slider .slide-item .slide-con .img-box::after { content:''; display:block; width:100%; height:100%; position:absolute; top:0; left:0; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.4) 47.92%, rgba(0, 0, 0, 0.8) 100%); } 
+.main-slider .slide-item .slide-con .img-box::after { content:''; display:block; width:100%; height:100%; position:absolute; top:0; left:0; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.4) 47.92%, rgba(0, 0, 0, 0.8) 100%); }
 .main-slider .slide-item-1 > .slide-con > .slide-txt { left:50%; transform:translatex(-50%); padding:0; text-align:center; } 
 .main-slider .slide-item > .slide-con > .slide-txt > h2.txt-tt { margin:0; padding:0; font-size:2.4rem; } 
 .main-slider .slide-item > .slide-con > .slide-txt > h2.txt-tt a { color: #ffffff; } 
@@ -232,24 +229,19 @@ input[type=text]:focus,input[type=password]:focus, textarea:focus,select:focus {
 .main-slider .slide-item > .slide-con > .slide-txt > .txt-btn > a { font-size:1.4rem; display:inline-block; color: #ffffff; } 
 .main-slider .slide-item > .slide-con > .slide-txt > .txt-btn > a.txt-btn-1 { position:relative; margin-right:31px; } 
 .main-slider .slide-item > .slide-con > .slide-txt > .txt-btn > a.txt-btn-1::after { content:""; width:0; height:1px; position:absolute; left:50%; bottom:0; transform:translatex(-50%); background-color:#555; } 
-.main-slider .slide-item > .slide-con > .slide-txt > .txt-btn > a.txt-btn-2 { padding:12px 38px; border:1px solid #fff; border-radius:45px; line-height:1; letter-spacing:.05rem; color:#fff; transition:all .5s; } 
 .main-slider .slide-item > .slide-con > .slide-txt > .txt-btn > a.txt-btn-2:hover { background-color:#555; } 
-
-/* 사이드 버튼 */
 .main-slider .slick-arrow { display: none !important; }
 
-/* 중간 레이아웃 */
-#aside {height: 800px;}
-picture {min-height: 250px;}
+/* 상단 레이아웃 */
+#container {width: calc(100% - 220px);}
+#aside {width: 220px;height: 690px;}
 
 /* 메인 상단 */
-#notice-main {max-height: calc((100% / 3) - 10px);height: 100%;}
-#poll {margin-bottom:15px;max-height: calc((100% / 3) - 10px);height: 100%;}
-#visit {position:relative;margin-top:15px;background:var(--primaryColor);border-radius: 8px;overflow: hidden;color: #fff; max-height: calc((100% / 3) - 10px);height: 100%;}
+#notice-main {width: 100%;height: 220px;}
+#poll {margin-bottom:15px;width: 100%;height: 220px;}
+#visit {position:relative;margin-top:15px;background:var(--primaryColor);border-radius: 8px;overflow: hidden;color: #fff;width: 100%;height: 220px;}
 
 .lt_wr { width:32% }
-.lt_wr:nth-child(3n+1) { clear:both }
-.latest_wr { margin-bottom:20px }
 .latest_wr.boards { display: flex; flex-wrap: wrap; }
 .latest_wr:after { display:block; visibility:hidden; clear:both; content:"" }
 .latest_top_wr { width: 100%; }
@@ -363,8 +355,6 @@ picture {min-height: 250px;}
 .gnb_mo a.btn_b02 { height: auto; padding: 10px; margin-left: 6px; }
 
 /* 설문조사 스킨 */
-#poll li {padding:5px 0}
-
 .chk_box input[type="radio"] {position:absolute;top:0;left:0;width:0;height:0;opacity:0;outline:0;z-index:-1;overflow:hidden}
 .chk_box input[type="radio"] + label {position:relative;padding-left:23px;display:inline-block;color:var(--fontColor)}
 .chk_box input[type="radio"] + label span {position:absolute;top:0;left:0;width:15px;height:15px;display:block;background:#fff;border:1px solid #cdd6df;border-radius:50%}
@@ -1738,15 +1728,8 @@ button { cursor:pointer; padding:0; font-size:inherit; }
 #profile #ol_after_pt {margin-right:1px}
 
 /* poll.css */
-/* ### 기본 스타일 커스터마이징 시작 ### */
-
-#poll_result .win_btn {text-align:center}/* 새창용 */
-
-/* ### 기본 스타일 커스터마이징 끝 ### */
 
 /* 설문조사 결과 (새창) */
-#poll_result {}
-#poll_result section {}
 #poll_result .tbl_wrap {margin:0}
 #poll_result .sv_member,
 #poll_result .sv_guest {font-weight:bold}

@@ -20,9 +20,9 @@
                     <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}" class="lt_img">
                     {% set thumbnail=get_list_thumbnail(request, board, write, thumb_width, thumb_height) %}
                     {% if thumbnail.src %}
-                    <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}">
+                    <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}" class="w-100 h-100 object-fit-cover">
                     {% else %}
-                    <img src="{{ url_for('static', path='/img/no_img.png') }}" alt="이미지가 없습니다." width="{{ thumb_width }}" height="{{ thumb_height }}">
+                    <img src="{{ url_for('static', path='/img/no_img.png') }}" alt="이미지가 없습니다." class="w-100 h-100 object-fit-cover">
                     {% endif %}
                     </a>
                 </picture>
@@ -37,7 +37,7 @@
           </div>
           <picture class="img-box">
             <a href="#" class="lt_img">
-              <img src="{{ url_for('static', path='/img/no_img.png') }}" alt="이미지가 없습니다." width="{{ thumb_width }}" height="{{ thumb_height }}">
+              <img src="{{ url_for('static', path='/img/no_img.png') }}" alt="이미지가 없습니다." class="w-100 h-100 object-fit-cover">
             </a>
           </picture>
           </div>
