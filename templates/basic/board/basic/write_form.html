@@ -11,8 +11,8 @@
     {{ editor.head() }}
 {% endblock head %}
 
-{% block title %}{{ board.subject }} 글 {{ action }}{% endblock title %}
-{% block subtitle %}{{ board.subject }} 글 {{ action }}{% endblock subtitle %}
+{% block title %}{{ board.subject }} 글{{ action }}{% endblock title %}
+{% block subtitle %}{{ board.subject }} 글{{ action }}{% endblock subtitle %}
 
 {% block content %}
 {% set login_member=request.state.login_member %}
@@ -43,13 +43,13 @@
         {% if not login_member or (is_admin and write and write.mb_id != login_member.mb_id) %}
         <div class="write_writer">
             <label for="wr_name" class="blind">이름<strong>필수</strong></label>
-            <input type="text" name="wr_name" value="{{ write.wr_name if write else login_member.mb_name }}" id="wr_name" required class="frm_input half_input required" maxlength="20" placeholder="이름">
+            <input type="text" name="wr_name" value="{{ write.wr_name if write else login_member.mb_name }}" id="wr_name" required class="frm_input required" maxlength="20" placeholder="이름">
             <label for="wr_password" class="blind">비밀번호<strong>필수</strong></label>
-            <input type="password" name="wr_password" id="wr_password" {{ "required" if write else "" }} class="frm_input half_input {{ "required" if write else "" }}" maxlength="20" placeholder="비밀번호">
+            <input type="password" name="wr_password" id="wr_password" {{ "required" if write else "" }} class="frm_input {{ "required" if write else "" }}" maxlength="20" placeholder="비밀번호">
             <label for="wr_email" class="blind">이메일</label>
-            <input type="email" name="wr_email" value="{{ write.wr_email if write else login_member.mb_email }}" id="wr_email" class="frm_input half_input email" maxlength="100" placeholder="이메일">
+            <input type="email" name="wr_email" value="{{ write.wr_email if write else login_member.mb_email }}" id="wr_email" class="frm_input email" maxlength="100" placeholder="이메일">
             <label for="wr_homepage" class="blind">홈페이지</label>
-            <input type="text" name="wr_homepage" value="{{ write.wr_homepage if write else login_member.mb_homepage }}" id="wr_homepage" class="frm_input half_input" placeholder="홈페이지">
+            <input type="text" name="wr_homepage" value="{{ write.wr_homepage if write else login_member.mb_homepage }}" id="wr_homepage" class="frm_input" placeholder="홈페이지">
         </div>
         {% endif %}
 
