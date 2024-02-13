@@ -138,35 +138,33 @@
                     </td>
                     {% endif %}
                     <td class="table_subject">
-                        <div class="bo_tit">
-                            {% if "secret" in write.wr_option %}
-                                <i class="fa fa-lock" aria-hidden="true"></i>
-                            {% endif %}
-                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}">
-                                {{ write.subject }}
-                            </a>
-                            {% if write.wr_comment %}
-                            <span class="blind">댓글</span>
-                            <span class="count_comment">{{ write.wr_comment }}</span>
-                            <span class="blind">개</span>
-                            {% endif %}
-                            {% if write.icon_new %}
-                            <span class="new_icon">N</span>
-                            <span class="blind">새글</span>
-                            {% endif %}
-                            {% if write.icon_hot %}
-                            <i class="fa fa-heart" aria-hidden="true"></i>
-                            <span class="blind">새글</span>
-                            {% endif %}
-                            {% if write.icon_file %}
-                            <i class="fa fa-download" aria-hidden="true"></i>
-                            <span class="blind">첨부파일있음</span>
-                            {% endif %}
-                            {% if write.icon_link %}
-                            <i class="fa fa-link" aria-hidden="true"></i>
-                            <span class="blind">링크있음</span>
-                            {% endif %}
-                        </div>
+                        {% if "secret" in write.wr_option %}
+                            <i class="fa fa-lock" aria-hidden="true"></i>
+                        {% endif %}
+                        <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}">
+                            {{ write.subject }}
+                        </a>
+                        {% if write.wr_comment %}
+                        <span class="blind">댓글</span>
+                        <span class="count_comment">{{ write.wr_comment }}</span>
+                        <span class="blind">개</span>
+                        {% endif %}
+                        {% if write.icon_new %}
+                        <span class="new_icon">N</span>
+                        <span class="blind">새글</span>
+                        {% endif %}
+                        {% if write.icon_hot %}
+                        <i class="fa fa-heart" aria-hidden="true"></i>
+                        <span class="blind">새글</span>
+                        {% endif %}
+                        {% if write.icon_file %}
+                        <i class="fa fa-download" aria-hidden="true"></i>
+                        <span class="blind">첨부파일있음</span>
+                        {% endif %}
+                        {% if write.icon_link %}
+                        <i class="fa fa-link" aria-hidden="true"></i>
+                        <span class="blind">링크있음</span>
+                        {% endif %}
                     </td>
                     <td class="table_writer">
                         {% if board.bo_use_sideview %}
@@ -217,39 +215,37 @@
                     </td>
                     {% endif %}
                     <td class="table_subject" style="padding-left:{{ reply_depth * 10 }}px">
-                        <div class="bo_tit">
-                            {% if write.wr_reply %}
-                                <i class="fa fa-reply"></i>
-                                <span class="blind">답변</span>
-                            {% endif %}
-                            {% if "secret" in write.wr_option %}
-                                <i class="fa fa-lock" aria-hidden="true"></i>
-                            {% endif %}
-                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}">
-                                {{ write.wr_subject }}
-                            </a>
-                            {% if write.wr_comment %}
-                            <span class="blind">댓글</span>
-                            <span class="count_comment">{{ write.wr_comment }}</span>
-                            <span class="blind">개</span>
-                            {% endif %}
-                            {% if write.icon_new %}
-                            <span class="new_icon">N</span>
-                            <span class="blind">새글</span>
-                            {% endif %}
-                            {% if write.icon_hot %}
-                            <i class="fa fa-heart" aria-hidden="true"></i>
-                            <span class="blind">새글</span>
-                            {% endif %}
-                            {% if write.icon_file %}
-                            <i class="fa fa-download" aria-hidden="true"></i>
-                            <span class="blind">첨부파일있음</span>
-                            {% endif %}
-                            {% if write.icon_link %}
-                            <i class="fa fa-link" aria-hidden="true"></i>
-                            <span class="blind">링크있음</span>
-                            {% endif %}
-                        </div>
+                        {% if write.wr_reply %}
+                            <i class="fa fa-reply"></i>
+                            <span class="blind">답변</span>
+                        {% endif %}
+                        {% if "secret" in write.wr_option %}
+                            <i class="fa fa-lock" aria-hidden="true"></i>
+                        {% endif %}
+                        <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}">
+                            {{ write.wr_subject }}
+                        </a>
+                        {% if write.wr_comment %}
+                        <span class="blind">댓글</span>
+                        <span class="count_comment">{{ write.wr_comment }}</span>
+                        <span class="blind">개</span>
+                        {% endif %}
+                        {% if write.icon_new %}
+                        <span class="new_icon">N</span>
+                        <span class="blind">새글</span>
+                        {% endif %}
+                        {% if write.icon_hot %}
+                        <i class="fa fa-heart" aria-hidden="true"></i>
+                        <span class="blind">새글</span>
+                        {% endif %}
+                        {% if write.icon_file %}
+                        <i class="fa fa-download" aria-hidden="true"></i>
+                        <span class="blind">첨부파일있음</span>
+                        {% endif %}
+                        {% if write.icon_link %}
+                        <i class="fa fa-link" aria-hidden="true"></i>
+                        <span class="blind">링크있음</span>
+                        {% endif %}
                     </td>
                     <td class="table_writer">
                         {% if board.bo_use_sideview %}
@@ -362,6 +358,7 @@
             });
         });
     </script>
+
 </div>
 
 {% if is_admin %}
