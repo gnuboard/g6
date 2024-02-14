@@ -24,10 +24,10 @@
       <span class="blind">열기</span>
     </button>
     <div id="gnb_mo" class="gnb_mo">
-    <button type="button" id="gnb_close" class="hhd_defined_closer">
-      <span class="blind">메뉴 닫기</span>
-      <i class="fa fa-xmark" aria-hidden="true"></i>
-    </button>
+      <button type="button" id="gnb_close" class="hhd_defined_closer">
+        <span class="blind">메뉴 닫기</span>
+        <i class="fa fa-xmark" aria-hidden="true"></i>
+      </button>
       <!-- 아웃 로그인 -->
       {% if request.state.login_member %}
       {% include "mobile/bbs/outlogin_after.html" ignore missing %}
@@ -156,10 +156,9 @@
 <hr>
 
 <!-- 하단 시작 { -->
-<div id="ft">
-
-  <div id="ft_wr" class="container-xl">
-    <div id="ft_link" class="ft_cnt">
+<div id="ft" class="my-0 mx-auto text-center main-bt">
+  <div id="ft_wr" class="container-xl position-relative d-flex flex-column text-start" style="padding: 40px 0;margin: 0 auto;">
+    <div id="ft_link" class="d-flex px-4 mb-4 text-start">
       <a href="{{ url_for('content_view', co_id='company') }}">회사소개</a>
       <a href="{{ url_for('content_view', co_id='privacy') }}">개인정보처리방침</a>
       <a href="{{ url_for('content_view', co_id='provision') }}">서비스이용약관</a>
@@ -171,11 +170,8 @@
       {% endif %}
       {% endif %}
     </div>
-    <div id="ft_company" class="ft_cnt">
-
-    </div>
   </div>
-  <div id="ft_copy">Copyright &copy; <b>{{ request.url.hostname }}.</b> All rights reserved.</div>
+  <div id="ft_copy" class="ft-copy-bg text-center my-0 mx-auto py-4 fs-5 fw-bold" style="color: #999999;">Copyright &copy; <b>{{ request.url.hostname }}.</b> All rights reserved.</div>
 
   <button type="button" id="top_btn">
     <i class="fa fa-arrow-up" aria-hidden="true"></i><span class="blind">상단으로</span>
