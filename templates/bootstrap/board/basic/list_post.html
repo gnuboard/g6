@@ -12,11 +12,11 @@
 {% set sod_reverse="asc" if request.query_params.sod == "desc" else "desc" %}
 
 <!-- 게시판 목록 시작 { -->
-<div id="bo_list" style="width:{{ table_width }}">
+<div id="bo_list" class="position-relative mb-4" style="width:{{ table_width }}">
     {% if board.bo_use_category %}
     <!-- 게시판 카테고리 시작 { -->
-        <nav id="bo_cate">
-            <h2>{{ board.subject }} 카테고리</h2>
+        <nav id="bo_cate" class="my-5">
+            <h2 class="blind" >{{ board.subject }} 카테고리</h2>
             <ul id="bo_cate_ul">
                 <li><a href="{{ request.url.replace_query_params() }}" {% if not sca %}id="bo_cate_on"{% endif %}>전체</a></li>
                 {% for category in categories %}
@@ -41,7 +41,7 @@
         
 
         <!-- 게시판 페이지 정보 및 버튼 시작 { -->
-        <div id="bo_btn_top">
+        <div id="bo_btn_top" class="my-3">
             <div id="bo_list_total">
                 <span>Total {{ total_count|number_format }}건</span>
                 {{ current_page|number_format }} 페이지

@@ -15,7 +15,7 @@
 <div id="bo_gall" style="width:{{ table_width }}">
     {% if board.bo_use_category %}
     <!-- 게시판 카테고리 시작 { -->
-        <nav id="bo_cate">
+        <nav id="bo_cate" class="my-5">
             <h2>{{ board.bo_subject }} 카테고리</h2>
             <ul id="bo_cate_ul">
                 <li><a href="{{ request.url.replace_query_params() }}" {% if not sca %}id="bo_cate_on"{% endif %}>전체</a></li>
@@ -40,7 +40,7 @@
         <input type="hidden" name="token" value="">
         <input type="hidden" name="act_button" value="">
         <!-- 게시판 페이지 정보 및 버튼 시작 { -->
-        <div id="bo_btn_top">
+        <div id="bo_btn_top" class="my-3">
             <div id="bo_list_total">
                 <span>Total {{ total_count|number_format }}건</span>
                 {{ current_page|number_format }} 페이지
