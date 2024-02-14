@@ -5,7 +5,7 @@
 {% set thumb_width, thumb_height = 210, 150 %}
 
 <div class="pic_lt">
-    <h2 class="d-block m-0 pt-5 pb-3 fs-3"><a href="{{ url_for('list_post', bo_table=bo_table) }}" class="main-font text-decoration-none fw-bold">{{ board.subject }}</a></h2>
+    <h2 class="d-block m-0 pt-5 pb-4 fs-3"><a href="{{ url_for('list_post', bo_table=bo_table) }}" class="main-font text-decoration-none fw-bold">{{ board.subject }}</a></h2>
     <ul class="row p-0">
         {% for write in writes -%}
         <li class="col-3">
