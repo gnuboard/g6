@@ -2,7 +2,7 @@
     <form name="fpoll" action="{{ url_for('poll_update', po_id=poll.po_id) }}" onsubmit="return fpoll_submit(this);" method="post" target="win_poll">
         <input type="hidden" name="po_id" value="{{ poll.po_id }}">
         <input type="hidden" name="token" value="">
-        <section id="poll" class="card-bg main-border rounded-4">
+        <section id="poll" class="card-bg main-border rounded-4 w-100" style="margin-bottom: 15px;height: 240px;">
             <header class="d-flex justify-content-between align-items-center p-4 main-bb">
                 <h2 class="fs-4 main-font">설문조사</h2>
                 <div>
@@ -12,7 +12,7 @@
                       <span class="blind">설문관리</span>
                   </a>
                   {% endif %}
-                  <a href="{{ url_for('poll_result', po_id=poll.po_id) }}" target="_blank" onclick="poll_result(this.href); return false;" class="main-border main-font rounded-2 p-3 fs-5 text-decoration-none">결과보기</a>
+                  <a href="{{ url_for('poll_result', po_id=poll.po_id) }}" target="_blank" onclick="poll_result(this.href); return false;" class="main-font fs-2 align-middle ms-2" title="결과보기"><i class="fa-solid fa-square-poll-horizontal"></i></a>
                 </div>
             </header>
             <div class="p-4 main-font fs-5 fw-bold">
@@ -21,7 +21,7 @@
                     {% for i in range(1, 10) %}
                         {% set subject = getattr(poll, 'po_poll' ~ i, '') %}
                         {% if subject %}
-                        <li class="chk_box">
+                        <li class="chk_box py-2">
                             <input type="radio" name="gb_poll" value="{{ i }}" id="gb_poll_{{ i }}">
                             <label for="gb_poll_{{ i }}">
                                 <span>&nbsp;</span>

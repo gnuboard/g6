@@ -11,7 +11,7 @@
                     <span class="blind">설문관리</span>
                 </a>
                 {% endif %}
-                <a href="{{ url_for('poll_result', po_id=poll.po_id) }}" target="_blank" onclick="poll_result(this.href); return false;" class="btn_result">결과보기</a>
+                <a href="{{ url_for('poll_result', po_id=poll.po_id) }}" target="_blank" onclick="poll_result(this.href); return false;" class="btn_result"><i class="fa-solid fa-square-poll-horizontal"></i></a>
             </header>
             <div class="poll_con">
                 <p>{{ poll.po_subject }}</p>
