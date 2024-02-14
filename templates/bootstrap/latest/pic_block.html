@@ -5,7 +5,7 @@
 {% set thumb_width, thumb_height = 210, 150 %}
 
 <div class="pic_lt">
-    <h2 class="lat_title"><a href="{{ url_for('list_post', bo_table=bo_table) }}">{{ board.subject }}</a></h2>
+    <h2 class="d-block m-0 pt-5 pb-3 fs-4"><a href="{{ url_for('list_post', bo_table=bo_table) }}" class="main-font text-decoration-none">{{ board.subject }}</a></h2>
     <ul>
         {% for write in writes -%}
         <li class="galley_li">
@@ -27,7 +27,7 @@
             {% if write.icon_new %}<span class="new_icon">N<span class="blind">새글</span></span>{% endif %}
             {% if write.icon_hot %}<span class="hot_icon"><i class="fa fa-heart" aria-hidden="true"></i><span class="blind">인기글</span></span>{% endif %}
             {% if write.wr_comment %}<span class="lt_cmt"><span class="blind">댓글</span>{{ write.wr_comment }}</span>{% endif %}
-            <div class="lt_info">
+            <div class="lt_info py-3">
                 <span class="lt_nick">
                     {% if board.bo_use_sideview %}
                         {{ sideview.get(request, write.mb_id, write.name, write.wr_email, write.wr_homepage)|safe }}
@@ -44,7 +44,7 @@
             <li class="empty_li">게시물이 없습니다.</li>
         {%- endfor %}
     </ul>
-    <a href="{{ url_for('list_post', bo_table=bo_table) }}" class="lt_more">
-        <span class="blind">{{ board.subject }}</span>더보기
+    <a href="{{ url_for('list_post', bo_table=bo_table) }}" class="lt_more" title="더보기">
+        <span class="blind">{{ board.subject }}</span><i class="fa-solid fa-circle-plus"></i>
     </a>
 </div>

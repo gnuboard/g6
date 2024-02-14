@@ -7,17 +7,17 @@
     <div class="slider main-slider con">
       {% for write in writes -%}
         <div class="slide-item">
-            <div class="slide-con" data-dot-title="{{ write.subject }}" data-dot-content="{{ write.wr_content }}" data-dot-bo-table="{{ bo_table }}" data-dot-wr-id="{{ write.wr_id }}">
+            <div class="slide-con position-relative" style="height: 750px;" data-dot-title="{{ write.subject }}" data-dot-content="{{ write.wr_content }}" data-dot-bo-table="{{ bo_table }}" data-dot-wr-id="{{ write.wr_id }}">
                 <div class="slide-dummy"></div>
-                <div class="slide-txt">
-                    <h2 class="txt-tt"><a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}">{{ write.subject }}</a></h2>
-                    <p class="txt-desc">{{ write.wr_content|striptags }}</p>
-                    <div class="txt-btn">
-                        <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}">바로가기</a>
+                <div class="position-absolute w-100 text-white" style="max-width: 500px;bottom: 5%;left: 5%;z-index: 50;">
+                    <h2 class="m-0 p-0 fs-1"><a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}" class="text-white text-decoration-none">{{ write.subject }}</a></h2>
+                    <p class="fs-4 fw-light mt-4 w-100">{{ write.wr_content|striptags }}</p>
+                    <div class="txt-btn mt-4 pointer">
+                        <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}" class="d-inline-block px-4 py-2 text-white text-decoration-none fs-4 rounded-2" style="border: 1px solid #eeeeee60; transition: all 0.3s;">바로가기</a>
                     </div>
                 </div>
                 <picture class="img-box">
-                    <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}" class="lt_img">
+                    <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}">
                     {% set thumbnail=get_list_thumbnail(request, board, write, thumb_width, thumb_height) %}
                     {% if thumbnail.src %}
                     <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}" class="w-100 h-100 object-fit-cover">
