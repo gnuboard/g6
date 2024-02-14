@@ -126,10 +126,6 @@
                 </div>
 
                 <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}" class="item_link item_img">
-                {% if write.wr_id|string in board.bo_notice %}
-                    <span class="is_label is_notice">공지</span>
-                    <img src="{{ url_for('static', path='/img/dummy-donotremove.png?ver=1.0.0') }}" alt="" width="{{ gallery_width }}" height="{{ gallery_height }}">
-                {% else %}
                     {% set thumbnail=get_list_thumbnail(request, board, write, gallery_width, gallery_height) %}
                     {% if thumbnail.src %}
                     <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}" class="thumb">
@@ -137,7 +133,6 @@
                     <span class="is_label is_noimage">NO IMAGE</span>
                     <img src="{{ url_for('static', path='/img/dummy-donotremove.png?ver=1.0.0') }}" alt="" width="{{ gallery_width }}" height="{{ gallery_height }}">
                     {% endif %}
-                {% endif %}
                 </a>
 
                 <div class="item_icon">
@@ -166,6 +161,10 @@
                     {% if write.wr_reply %}
                         <i class="fa fa-reply"></i>
                         <span class="blind">답변</span>
+                    {% endif %}
+
+                    {% if write.wr_id|string in board.bo_notice %}
+                        [공지]
                     {% endif %}
 
                     {{ write.subject }}
