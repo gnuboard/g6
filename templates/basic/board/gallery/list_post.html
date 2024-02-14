@@ -128,13 +128,14 @@
                 <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}" class="item_link item_img">
                     {% set thumbnail=get_list_thumbnail(request, board, write, gallery_width, gallery_height) %}
                     {% if thumbnail.src %}
-                    <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}" class="thumb">
+                    <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}">
                     {% else %}
                     <span class="is_label is_noimage">NO IMAGE</span>
                     <img src="{{ url_for('static', path='/img/dummy-donotremove.png?ver=1.0.0') }}" alt="" width="{{ gallery_width }}" height="{{ gallery_height }}">
                     {% endif %}
                 </a>
 
+                {% if write.icon_new or write.icon_hot %}
                 <div class="item_icon">
                     <div>
 
@@ -152,6 +153,7 @@
 
                     </div>
                 </div>
+                {% endif %}
 
                 {% if write.ca_name %}
                 <a href="{{ request.url.replace_query_params(sca=write.ca_name) }}">{{ write.ca_name }}</a>
@@ -323,81 +325,79 @@
 
 </div>
 
-
 {% if is_admin %}
-    <noscript>
-        <p>자바스크립트를 사용하지 않는 경우<br>별도의 확인 절차 없이 바로 선택삭제 처리하므로 주의하시기 바랍니다.</p>
-    </noscript>
-    <script>
-    function all_checked(sw) {
-        var f = document.fboardlist;
-    
-        for (var i = 0; i < f.length; i++) {
-            if (f.elements[i].name == "chk_wr_id[]")
-                f.elements[i].checked = sw;
-        }
+<noscript>
+    <p>자바스크립트를 사용하지 않는 경우<br>별도의 확인 절차 없이 바로 선택삭제 처리하므로 주의하시기 바랍니다.</p>
+</noscript>
+<script>
+function all_checked(sw) {
+    var f = document.fboardlist;
+
+    for (var i = 0; i < f.length; i++) {
+        if (f.elements[i].name == "chk_wr_id[]")
+            f.elements[i].checked = sw;
     }
-    
-    function fboardlist_submit(f) {
-        var chk_count = 0;
-    
-        for (var i = 0; i < f.length; i++) {
-            if (f.elements[i].name == "chk_wr_id[]" && f.elements[i].checked)
-                chk_count++;
-        }
-    
-        if (!chk_count) {
-            alert(document.pressed + "할 게시물을 하나 이상 선택하세요.");
+}
+
+function fboardlist_submit(f) {
+    var chk_count = 0;
+
+    for (var i = 0; i < f.length; i++) {
+        if (f.elements[i].name == "chk_wr_id[]" && f.elements[i].checked)
+            chk_count++;
+    }
+
+    if (!chk_count) {
+        alert(document.pressed + "할 게시물을 하나 이상 선택하세요.");
+        return false;
+    }
+
+    if(document.pressed == "선택복사") {
+        select_copy("copy");
+        return;
+    }
+
+    if(document.pressed == "선택이동") {
+        select_copy("move");
+        return;
+    }
+
+    if(document.pressed == "선택삭제") {
+        if (!confirm("선택한 게시물을 정말 삭제하시겠습니까?\n\n한번 삭제한 자료는 복구할 수 없습니다\n\n답변글이 있는 게시글을 선택하신 경우\n답변글도 선택하셔야 게시글이 삭제됩니다."))
             return false;
-        }
-    
-        if(document.pressed == "선택복사") {
-            select_copy("copy");
-            return;
-        }
-    
-        if(document.pressed == "선택이동") {
-            select_copy("move");
-            return;
-        }
-    
-        if(document.pressed == "선택삭제") {
-            if (!confirm("선택한 게시물을 정말 삭제하시겠습니까?\n\n한번 삭제한 자료는 복구할 수 없습니다\n\n답변글이 있는 게시글을 선택하신 경우\n답변글도 선택하셔야 게시글이 삭제됩니다."))
-                return false;
-    
-            f.removeAttribute("target");
-            f.action = "{{ url_for('list_delete', bo_table=board.bo_table)|set_query_params(request)|safe }}";
-        }
 
-        f.token.value = generate_token();
+        f.removeAttribute("target");
+        f.action = "{{ url_for('list_delete', bo_table=board.bo_table)|set_query_params(request)|safe }}";
+    }
 
-        return true;
-    }
-    
-    // 선택한 게시물 복사 및 이동
-    function select_copy(sw) {
-        var f = document.fboardlist;
-        var sub_win = window.open("", "move", "left=50, top=50, width=500, height=550, scrollbars=1");
-    
-        f.sw.value = sw;
-        f.target = "move";
-        f.action = "{{ url_for('move_post', bo_table=board.bo_table)|safe }}";
-        f.submit();
-    }
-    
-    // 게시판 리스트 관리자 옵션
-    jQuery(function($){
-        $(".btn_more_opt.is_list_btn").on("click", function(e) {
-            e.stopPropagation();
-            $(".more_opt.is_list_btn").toggle();
-        });
-        $(document).on("click", function (e) {
-            if(!$(e.target).closest('.is_list_btn').length) {
-                $(".more_opt.is_list_btn").hide();
-            }
-        });
+    f.token.value = generate_token();
+
+    return true;
+}
+
+// 선택한 게시물 복사 및 이동
+function select_copy(sw) {
+    var f = document.fboardlist;
+    var sub_win = window.open("", "move", "left=50, top=50, width=500, height=550, scrollbars=1");
+
+    f.sw.value = sw;
+    f.target = "move";
+    f.action = "{{ url_for('move_post', bo_table=board.bo_table)|safe }}";
+    f.submit();
+}
+
+jQuery(function($){
+    $(".buttons_more .more_opener").on("click", function(e) {
+        e.stopPropagation();
+        $(this).next(".more").toggle();
+    })
+    $(document).on("click", function (e) {
+        if(!$(e.target).closest(".more_opener").length) {
+            $(".buttons_more .more").hide();
+        }
     });
-    </script>
+});
+</script>
 {% endif %}
 <!-- } 게시판 목록 끝 -->
 {% endblock content %}

@@ -1055,9 +1055,8 @@ html.no-overflowscrolling .bo_write .write_subject #autosave_pop { height:auto; 
 .bo_list .grid_item .item_chk { display:flex; justify-content: left; gap:10px; padding:10px; border-bottom: var(--border); }
 .bo_list .grid_item .item_link { display:flex; position:relative; border-bottom: var(--border); }
 .bo_list .grid_item .item_link .is_label { display:flex; position:absolute; top:0; left:0; width:100%; height:100%; align-items: center; justify-content: center; }
-.bo_list .grid_item .item_img { justify-content: center; }
-.bo_list .grid_item .item_img img { max-width:100%; }
-.bo_list .grid_item .item_img .thumb { height:auto; }
+.bo_list .grid_item .item_img { justify-content: center; background:var(--contBg); }
+.bo_list .grid_item .item_img img { max-width:100%; height:auto; }
 .bo_list .grid_item .item_icon { z-index:2; position:relative; }
 .bo_list .grid_item .item_icon > div { display:flex; gap:5px; position:absolute; top:-25px; left:10px; }
 .bo_list .grid_item .item_subject { gap:5px; align-items: center; padding:15px; font-size:1.6rem; font-weight:bold; }
