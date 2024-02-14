@@ -1,6 +1,6 @@
 from dotenv import dotenv_values, load_dotenv
 from fastapi import Depends
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, URL
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import Session, sessionmaker
@@ -10,6 +10,7 @@ from typing_extensions import Annotated
 
 class MySQLCharsetMixin:
     """ MySQL의 기본 charset을 설정하는 Mixin 클래스 """
+
     @declared_attr.directive
     def __table_args__(cls):
         return {'mysql_charset': DBConnect().charset}
@@ -32,8 +33,8 @@ class DBSetting:
     _charset: Annotated[str, ""]
 
     supported_engines = {
-        "mysql": "mysql+pymysql://",
-        "postgresql": "postgresql://",
+        "mysql": "mysql+pymysql",
+        "postgresql": "postgresql",
         "sqlite": "sqlite:///sqlite3.db"
     }
 
@@ -77,12 +78,29 @@ class DBSetting:
 
     def create_url(self) -> None:
         url = None
-        prefix = self.supported_engines.get(self._db_engine)
-        if prefix:
+        if db_driver := self.supported_engines.get(self._db_engine):
             if self._db_engine == "sqlite":
-                url = prefix
+                url = db_driver
             else:
-                url = prefix + f"{self._user}:{self._password}@{self._host}:{self._port}/{self._db_name}"
+                query_option = {}
+                if self._db_engine == "mysql":
+                    query_option = {"charset": self._charset}
+
+                elif self._db_engine == "postgresql":
+                    if self._charset == "utf8mb4" or self._charset == "utf8":
+                        # pycopg 드라이버 인코딩 설정 utf8 을 사용
+                        query_option = {"client_encoding": 'utf8'}
+                    else:
+                        query_option = {"client_encoding": self._charset}
+                url = URL(
+                    drivername=db_driver,
+                    username=self._user,
+                    password=self._password,
+                    host=self._host,
+                    port=self._port,
+                    database=self._db_name,
+                    query=query_option,
+                )
         self._url = url
 
 
