@@ -36,7 +36,7 @@
             {% if write.icon_link %}<span class="link_icon"><i class="fa fa-link" aria-hidden="true"></i><span class="blind">링크</span></span>{% endif %}
             {% if write.icon_reply %}<span class="reply_icon"><i class="fa fa-regular fa-commenting" aria-hidden="true"></i><span class="blind">답변</span></span>{% endif %}
             {% if write.wr_comment %}<span class="lt_cmt"><span class="blind">댓글</span>{{ write.wr_comment }}</span>{% endif %}
-            <div class="py-3 fs-5 sub-font">
+            <div class="pt-2 pb-3 fs-5 sub-font">
                 <span class="lt_nick">
                     {% if board.bo_use_sideview %}
                         {{ sideview.get(request, write.mb_id, write.name, write.wr_email, write.wr_homepage)|safe }}
