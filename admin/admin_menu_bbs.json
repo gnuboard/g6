@@ -51,7 +51,7 @@
             "id": "100400",
             "name": "부가서비스",
             "url": "/service",
-            "tag": ""
+            "tag": "admin_service"
         },
         {
             "id": "100420",
