@@ -28,7 +28,7 @@
         
         {% if categories %}
             <div class="bo_w_select write_div">
-                <label for="ca_name" class="sound_only">분류<strong>필수</strong></label>
+                <label for="ca_name" class="blind">분류<strong>필수</strong></label>
                 <select name="ca_name" id="ca_name" required="">
                     <option value="">분류를 선택하세요</option>
                     {% for category in categories %}
@@ -40,19 +40,19 @@
                 
         {% if not login_member or (is_admin and write and write.mb_id != login_member.mb_id) %}
         <div class="bo_w_info write_div">
-            <label for="wr_name" class="sound_only">이름<strong>필수</strong></label>
+            <label for="wr_name" class="blind">이름<strong>필수</strong></label>
             <input type="text" name="wr_name" value="{{ write.wr_name if write else login_member.mb_name }}" id="wr_name" required class="frm_input half_input required" maxlength="20" placeholder="이름">
-            <label for="wr_password" class="sound_only">비밀번호<strong>필수</strong></label>
+            <label for="wr_password" class="blind">비밀번호<strong>필수</strong></label>
             <input type="password" name="wr_password" id="wr_password" {{ "required" if write else "" }} class="frm_input half_input {{ "required" if write else "" }}" maxlength="20" placeholder="비밀번호">
-            <label for="wr_email" class="sound_only">이메일</label>
-            <input type="email" name="wr_email" value="{{ write.wr_email if write else login_member.mb_email }}" id="wr_email" class="frm_input half_input" maxlength="100" placeholder="이메일">
-            <label for="wr_homepage" class="sound_only">홈페이지</label>
+            <label for="wr_email" class="blind">이메일</label>
+            <input type="email" name="wr_email" value="{{ write.wr_email if write else login_member.mb_email }}" id="wr_email" class="frm_input half_input email" maxlength="100" placeholder="이메일">
+            <label for="wr_homepage" class="blind">홈페이지</label>
             <input type="text" name="wr_homepage" value="{{ write.wr_homepage if write else login_member.mb_homepage }}" id="wr_homepage" class="frm_input half_input" placeholder="홈페이지">
         </div>
         {% endif %}
 
         <div class="write_div">
-            <span class="sound_only">옵션</span>
+            <span class="blind">옵션</span>
             <ul class="bo_v_option">
             {% if is_notice %}
                 <li class="chk_box">
@@ -90,7 +90,7 @@
         </div>
     
         <div class="bo_w_tit write_div">
-            <label for="wr_subject" class="sound_only">제목<strong>필수</strong></label>
+            <label for="wr_subject" class="blind">제목<strong>필수</strong></label>
             
             <div id="autosave_wrapper" class="write_div">
                 <input type="text" name="wr_subject" value="{{ write.wr_subject }}" id="wr_subject" required class="frm_input full_input required" size="50" maxlength="255" placeholder="제목">
@@ -110,7 +110,7 @@
 
         <!-- TODO: editor.body 영역 HTML 수정 필요 -->
         <div class="write_div">
-            <label for="wr_content" class="sound_only">내용<strong>필수</strong></label>
+            <label for="wr_content" class="blind">내용<strong>필수</strong></label>
             <div class="wr_content">
                 {% if write_min and write_max %}
                 <p id="char_count_desc">이 게시판은 최소 <strong>{{ write_min }}</strong>글자 이상, 최대 <strong>{{ write_max }}</strong>글자 이하까지 글을 쓰실 수 있습니다.</p>
@@ -125,7 +125,7 @@
         {% if is_link %}
             {% for i in range(1, 3) %}
                 <div class="bo_w_link write_div">
-                    <label for="wr_link{{ i }}"><i class="fa fa-link" aria-hidden="true"></i><span class="sound_only"> 링크 #{{ i }}</span></label>
+                    <label for="wr_link{{ i }}"><i class="fa fa-link" aria-hidden="true"></i><span class="blind"> 링크 #{{ i }}</span></label>
                     <input type="text" name="wr_link{{ i }}" value="{{ getattr(write, "wr_link" ~ i, "") }}" id="wr_link{{ i }}" class="frm_input full_input" size="50">
                 </div>
             {% endfor %}
@@ -137,7 +137,7 @@
                 <div class="bo_w_flie write_div">
                     <div class="file_wr write_div">
                         <label for="bf_file_{{ i }}" class="lb_icon">
-                            <i class="fa fa-folder-open" aria-hidden="true"></i><span class="sound_only"> 파일 #{{ i }}</span>
+                            <i class="fa fa-folder-open" aria-hidden="true"></i><span class="blind"> 파일 #{{ i }}</span>
                         </label>
                         <input type="file" name="bf_file[]" id="bf_file_{{ i }}" title="파일첨부{{ i }} : 용량 {{ board.bo_upload_size }} 바이트 이하만 업로드 가능" class="frm_file">
                     </div>

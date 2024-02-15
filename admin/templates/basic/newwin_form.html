@@ -49,14 +49,14 @@
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="nw_disable_hours">시간<strong class="sound_only"> 필수</strong></label></th>
+                        <th scope="row"><label for="nw_disable_hours">시간<strong class="blind"> 필수</strong></label></th>
                         <td>
                             <span class="frm_info">고객이 다시 보지 않음을 선택할 시 몇 시간동안 팝업레이어를 보여주지 않을지 설정합니다.</span>
                             <input type="text" name="nw_disable_hours" value="{{ newwin.nw_disable_hours|default(24) }}" id="nw_disable_hours" required="" class="frm_input required" size="5"> 시간
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="nw_begin_time">시작일시<strong class="sound_only"> 필수</strong></label></th>
+                        <th scope="row"><label for="nw_begin_time">시작일시<strong class="blind"> 필수</strong></label></th>
                         <td>
                             <input type="text" name="nw_begin_time" value="{{ newwin.nw_begin_time }}" id="nw_begin_time" required="" class="frm_input required" size="21" maxlength="19">
                             <input type="checkbox" name="nw_begin_chk" value="{{ start_day }}" id="nw_begin_chk" onclick="if (this.checked == true) this.form.nw_begin_time.value=this.form.nw_begin_chk.value; else this.form.nw_begin_time.value = this.form.nw_begin_time.defaultValue;">
@@ -64,7 +64,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="nw_end_time">종료일시<strong class="sound_only"> 필수</strong></label></th>
+                        <th scope="row"><label for="nw_end_time">종료일시<strong class="blind"> 필수</strong></label></th>
                         <td>
                             <input type="text" name="nw_end_time" value="{{ newwin.nw_end_time }}" id="nw_end_time" required="" class="frm_input required" size="21" maxlength="19">
                             <input type="checkbox" name="nw_end_chk" value="{{ after_7days }}" id="nw_end_chk" onclick="if (this.checked == true) this.form.nw_end_time.value=this.form.nw_end_chk.value; else this.form.nw_end_time.value = this.form.nw_end_time.defaultValue;">
@@ -72,31 +72,31 @@
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="nw_left">팝업레이어 좌측 위치<strong class="sound_only"> 필수</strong></label></th>
+                        <th scope="row"><label for="nw_left">팝업레이어 좌측 위치<strong class="blind"> 필수</strong></label></th>
                         <td>
                             <input type="text" name="nw_left" value="{{ newwin.nw_left|default(10) }}" id="nw_left" required="" class="frm_input required" size="5"> px
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="nw_top">팝업레이어 상단 위치<strong class="sound_only"> 필수</strong></label></th>
+                        <th scope="row"><label for="nw_top">팝업레이어 상단 위치<strong class="blind"> 필수</strong></label></th>
                         <td>
                             <input type="text" name="nw_top" value="{{ newwin.nw_top|default(10) }}" id="nw_top" required="" class="frm_input required" size="5"> px
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="nw_width">팝업레이어 넓이<strong class="sound_only"> 필수</strong></label></th>
+                        <th scope="row"><label for="nw_width">팝업레이어 넓이<strong class="blind"> 필수</strong></label></th>
                         <td>
                             <input type="text" name="nw_width" value="{{ newwin.nw_width|default(450) }}" id="nw_width" required="" class="frm_input required" size="5"> px
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="nw_height">팝업레이어 높이<strong class="sound_only"> 필수</strong></label></th>
+                        <th scope="row"><label for="nw_height">팝업레이어 높이<strong class="blind"> 필수</strong></label></th>
                         <td>
                             <input type="text" name="nw_height" value="{{ newwin.nw_height|default(500) }}" id="nw_height" required="" class="frm_input required" size="5"> px
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="nw_subject">팝업 제목<strong class="sound_only"> 필수</strong></label></th>
+                        <th scope="row"><label for="nw_subject">팝업 제목<strong class="blind"> 필수</strong></label></th>
                         <td>
                             <input type="text" name="nw_subject" value="{{ newwin.nw_subject }}" id="nw_subject" required="" class="frm_input required" size="80">
                         </td>

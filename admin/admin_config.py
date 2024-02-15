@@ -37,6 +37,7 @@ async def config_form(request: Request):
 
     host_name = socket.gethostname()
     host_ip = socket.gethostbyname(host_name)
+    host_public_ip = await get_host_public_ip()
     client_ip = get_client_ip(request)
 
     context = {
@@ -44,6 +45,7 @@ async def config_form(request: Request):
         "config": request.state.config,
         "host_name": host_name,
         "host_ip": host_ip,
+        "host_public_ip": host_public_ip,
         "client_ip": client_ip,
     }
     return templates.TemplateResponse("config_form.html", context)

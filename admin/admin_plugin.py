@@ -16,10 +16,10 @@ from core.plugin import (
 from lib.dependencies import validate_super_admin
 
 logging.basicConfig(level=logging.INFO)
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(validate_super_admin)])
 
 
-@router.post("/plugin_detail", dependencies=[Depends(validate_super_admin)])
+@router.post("/plugin_detail")
 async def plugin_detail(request: Request, module_name: str = Form(...)):
     module = module_name.strip()
     info = get_plugin_info(module, PLUGIN_DIR)
@@ -38,7 +38,7 @@ async def plugin_detail(request: Request, module_name: str = Form(...)):
     return templates.TemplateResponse("plugin_detail.html", context)
 
 
-@router.get("/plugin_list", dependencies=[Depends(validate_super_admin)])
+@router.get("/plugin_list")
 async def show_plugins(request: Request):
     """
     플러그인 목록

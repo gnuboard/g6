@@ -57,3 +57,4 @@ filelock==3.12.2
 APScheduler>=3.10.0
 pymysql==1.1.0
 psycopg2-binary==2.9.9
+lxml==5.1.0

@@ -30,33 +30,33 @@
                         <tr class="bg0 menu_list menu_group_{{ menu.me_code[:2] }}">
                             <td class="td_category {% if menu.subclass %}sub_menu_class{% endif %}">
                                 <input type="hidden" name="code[]" value="{{ menu.me_code[:2] }}">
-                                <label for="me_name_{{ loop.index0 }}" class="sound_only"> 메뉴<strong class="sound_only"> 필수</strong></label>
+                                <label for="me_name_{{ loop.index0 }}" class="blind"> 메뉴<strong class="blind"> 필수</strong></label>
                                 <input type="text" name="me_name[]" value="{{ menu.me_name }}" id="me_name_{{ loop.index0 }}" required="" class="required tbl_input full_input">
                             </td>
                             <td>
-                                <label for="me_link_{{ loop.index0 }}" class="sound_only">링크<strong class="sound_only"> 필수</strong></label>
+                                <label for="me_link_{{ loop.index0 }}" class="blind">링크<strong class="blind"> 필수</strong></label>
                                 <input type="text" name="me_link[]" value="{{ menu.me_link }}" id="me_link_{{ loop.index0 }}" required="" class="required tbl_input full_input">
                             </td>
                             <td class="td_mng">
-                                <label for="me_target_{{ loop.index0 }}" class="sound_only">새창</label>
+                                <label for="me_target_{{ loop.index0 }}" class="blind">새창</label>
                                 <select name="me_target[]" id="me_target_{{ loop.index0 }}">
                                     <option value="self" {{ get_selected(menu.me_target, 'self') }}>사용안함</option>
                                     <option value="blank" {{ get_selected(menu.me_target, 'blank') }}>사용함</option>
                                 </select>
                             </td>
                             <td class="td_num">
-                                <label for="me_order_{{ loop.index0 }}" class="sound_only">순서</label>
+                                <label for="me_order_{{ loop.index0 }}" class="blind">순서</label>
                                 <input type="text" name="me_order[]" value="{{ menu.me_order }}" id="me_order_{{ loop.index0 }}" class="tbl_input" size="5">
                             </td>
                             <td class="td_mng">
-                                <label for="me_use_{{ loop.index0 }}" class="sound_only">PC사용</label>
+                                <label for="me_use_{{ loop.index0 }}" class="blind">PC사용</label>
                                 <select name="me_use[]" id="me_use_{{ loop.index0 }}">
                                     <option value="1" {{ get_selected(menu.me_use, 1) }}>사용함</option>
                                     <option value="0" {{ get_selected(menu.me_use, 0) }}>사용안함</option>
                                 </select>
                             </td>
                             <td class="td_mng">
-                                <label for="me_mobile_use_{{ loop.index0 }}" class="sound_only">모바일사용</label>
+                                <label for="me_mobile_use_{{ loop.index0 }}" class="blind">모바일사용</label>
                                 <select name="me_mobile_use[]" id="me_mobile_use_{{ loop.index0 }}">
                                     <option value="1" {{ get_selected(menu.me_mobile_use, 1) }}>사용함</option>
                                     <option value="0" {{ get_selected(menu.me_mobile_use, 0) }}>사용안함</option>
@@ -75,7 +75,7 @@
         </div>
         <div class="btn_fixed_top">
             <button type="button" onclick="return add_menu();" class="btn btn_02">
-                메뉴추가<span class="sound_only"> 새창</span>
+                메뉴추가<span class="blind"> 새창</span>
             </button>
             <input type="submit" name="act_button" value="확인" class="btn_submit btn">
         </div>

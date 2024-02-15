@@ -26,7 +26,7 @@
             <div class="form_01">
                 <ul>
                     <li class="bo_w_select write_div">
-                        <label for="qa_category" class="sound_only">분류<strong>필수</strong></label>
+                        <label for="qa_category" class="blind">분류<strong>필수</strong></label>
                         <select name="qa_category" id="qa_category" required="">
                             <option value="">분류를 선택하세요</option>
                             {% for category in categories %}
@@ -37,7 +37,7 @@
                     {% if qa_config.qa_use_email and qa.qa_type != 1 %}
                     {% set required = "required" if qa_config.qa_req_email else "" %}
                     <li class="bo_w_mail chk_box">
-                        <label for="qa_email" class="sound_only">이메일 </label>
+                        <label for="qa_email" class="blind">이메일 </label>
                         <input type="text" name="qa_email" value="{{ qa.qa_email|default(request.state.login_member.mb_email) }}" id="qa_email" class="{{ required }} frm_input full_input email" size="50" maxlength="100" placeholder="이메일" {{ required }}>
                         <input type="checkbox" name="qa_email_recv" id="qa_email_recv" value="1" class="selec_chk" {{ "checked" if qa.qa_email_recv else "" }}>
                         <label for="qa_email_recv" class="frm_info"><span>&nbsp;</span>답변받기</label>
@@ -46,7 +46,7 @@
                     {% if qa_config.qa_use_hp and qa.qa_type != 1 %}
                     {% set required = "required" if qa_config.qa_req_hp else "" %}
                     <li class="bo_w_hp chk_box">
-                        <label for="qa_hp" class="sound_only">휴대폰</label>
+                        <label for="qa_hp" class="blind">휴대폰</label>
                         <input type="text" name="qa_hp" value="{{ qa.qa_hp|default(request.state.login_member.mb_hp) }}" id="qa_hp" class="{{ required }} frm_input full_input" size="30" placeholder="휴대폰" {{ required }}>
                         <input type="checkbox" name="qa_sms_recv" id="qa_sms_recv" value="1" class="selec_chk" {{ "checked" if qa.qa_sms_recv else "" }}>
                         {% if qa_config.qa_sms %}
@@ -55,11 +55,11 @@
                     </li>
                     {% endif %}
                     <li class="bo_w_sbj">
-                        <label for="qa_subject" class="sound_only">제목<strong class="sound_only">필수</strong></label>
+                        <label for="qa_subject" class="blind">제목<strong class="blind">필수</strong></label>
                         <input type="text" name="qa_subject" value="{{ qa.qa_subject|default("") }}" id="qa_subject" required="" class="frm_input full_input required" size="50" maxlength="255" placeholder="제목">        
                     </li>
                     <li class="qa_content_wrap">
-                        <label for="qa_content" class="sound_only">내용<strong class="sound_only">필수</strong></label>
+                        <label for="qa_content" class="blind">내용<strong class="blind">필수</strong></label>
                         {% if qa_config.qa_use_editor %}
                             {{ editor.body("qa_content", content) }}
                         {% else %}
@@ -72,7 +72,7 @@
                         <div class="file_wr">
                             <label for="qa_file_1" class="lb_icon">
                                 <i class="fa fa-download" aria-hidden="true"></i>
-                                <span class="sound_only"> 파일 #1</span>
+                                <span class="blind"> 파일 #1</span>
                             </label>
                             <input type="file" name="file1" id="qa_file_1" title="파일첨부 1 :  용량 {{ qa_config.qa_upload_size }} 바이트 이하만 업로드 가능" class="frm_file">
                             {% if qa.qa_file1 %}
@@ -85,7 +85,7 @@
                         <div class="file_wr">
                             <label for="qa_file_2" class="lb_icon">
                                 <i class="fa fa-download" aria-hidden="true"></i>
-                                <span class="sound_only"> 파일 #2</span>
+                                <span class="blind"> 파일 #2</span>
                             </label>
                             <input type="file" name="file2" id="qa_file_2" title="파일첨부 2 :  용량 {{ qa_config.qa_upload_size }} 바이트 이하만 업로드 가능" class="frm_file">
                             {% if qa.qa_file2 %}

@@ -81,7 +81,6 @@ def get_admin_theme_path() -> str:
 
 
 TEMPLATES = "templates"
-TEMPLATES_DIR = get_theme_path()  # 사용자 템플릿 경로
 
 ADMIN_TEMPLATES = "admin/templates"
 ADMIN_TEMPLATES_DIR = get_admin_theme_path()  # 관리자 템플릿 경로
@@ -91,6 +90,7 @@ class TemplateService():
     - TODO: 반응형/적응형 변수 외의 다른 부분도 클래스화 해야한다.
     """
     _is_responsive: bool = None  # 반응형 템플릿 여부
+    _templates_dir: str = None  # 사용자 템플릿 경로
 
     @classmethod
     def get_responsive(cls) -> bool:
@@ -107,6 +107,17 @@ class TemplateService():
             .validate_python(os.getenv("IS_RESPONSIVE", True))
         )
 
+    @classmethod
+    def get_templates_dir(cls) -> str:
+        if cls._templates_dir is None:
+            cls.set_templates_dir()
+
+        return cls._templates_dir
+
+    @classmethod
+    def set_templates_dir(cls) -> None:
+        cls._templates_dir = get_theme_path()
+
 
 class UserTemplates(Jinja2Templates):
     """
@@ -116,7 +127,7 @@ class UserTemplates(Jinja2Templates):
     """
     _instance = None
     _is_mobile: bool = False
-    default_directories = [TEMPLATES_DIR, EDITOR_PATH, CAPTCHA_PATH, PLUGIN_DIR]
+    default_directories = [TemplateService.get_templates_dir(), EDITOR_PATH, CAPTCHA_PATH, PLUGIN_DIR]
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
@@ -143,6 +154,10 @@ class UserTemplates(Jinja2Templates):
             self.env.globals["get_member_icon"] = get_member_icon
             self.env.globals["get_member_image"] = get_member_image
             self.env.globals["theme_asset"] = theme_asset
+            self.env.globals["get_populars"] = get_populars
+            self.env.globals["get_recent_poll"] = get_recent_poll
+            self.env.globals["get_menus"] = get_menus
+
             # 템플릿 컨텍스트 프로세서 설정
             self.context_processors.append(self._default_context)
             # 추가 env.global 설정
@@ -155,9 +170,6 @@ class UserTemplates(Jinja2Templates):
 
         context = {
             "current_login_count": get_current_login_count(request),
-            "menus": get_menus(),
-            "poll": get_recent_poll(),
-            "populars": get_populars(),
             "render_latest_posts": render_latest_posts,
             "render_visit_statistics": render_visit_statistics,
         }
@@ -184,10 +196,12 @@ class UserTemplates(Jinja2Templates):
         if (not TemplateService.get_responsive()
                 and self._is_mobile != is_mobile):
             # 경로 우선순위 변경
+            mobile_dir = f"{TemplateService.get_templates_dir()}/mobile"
             if is_mobile:
-                self.default_directories.insert(0, f"{TEMPLATES_DIR}/mobile")
+                self.default_directories.insert(0, mobile_dir)
             else:
-                self.default_directories.remove(f"{TEMPLATES_DIR}/mobile")
+                if mobile_dir in self.default_directories:
+                    self.default_directories.remove(mobile_dir)
 
             # 템플릿 로더 재설정
             self.env.loader = FileSystemLoader(self.default_directories)
@@ -201,7 +215,6 @@ class UserTemplates(Jinja2Templates):
             media_type=media_type,
             background=background
         )
-    
 
 
 class AdminTemplates(Jinja2Templates):
@@ -272,9 +285,8 @@ def theme_asset(request: Request, asset_path: str) -> str:
         asset_url (str): asset url
     """
     theme = get_current_theme()
-    mobile_dir = "/mobile" if request.state.is_mobile else ""
 
-    return f"/theme_static/{theme}{mobile_dir}/{asset_path}"
+    return f"/theme_static/{theme}/{asset_path}"
 
 
 def register_theme_statics(app: FastAPI) -> None:

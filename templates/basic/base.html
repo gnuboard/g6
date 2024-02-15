@@ -34,11 +34,11 @@
 
         <button type="button" id="gnb_open" class="hd_opener">
           <i class="fa fa-bars" aria-hidden="true"></i>
-          <span class="sound_only">열기</span>
+          <span class="blind">열기</span>
         </button>
         <div id="gnb_mo" class="gnb_mo">
           <button type="button" id="gnb_close" class="hd_closer">
-              <span class="sound_only">메뉴 닫기</span>
+              <span class="blind">메뉴 닫기</span>
               <i class="fa fa-xmark" aria-hidden="true"></i>
           </button>
           <!-- 아웃 로그인 -->
@@ -84,9 +84,9 @@
                 <form name="fsearchbox" method="get" action="/bbs/search" onsubmit="return fsearchbox_submit(this);">
                 <input type="hidden" name="sfl" value="wr_subject||wr_content">
                 <input type="hidden" name="sop" value="and">
-                <label for="sch_stx" class="sound_only">검색어 필수</label>
+                <label for="sch_stx" class="blind">검색어 필수</label>
                 <input type="text" name="stx" id="sch_stx" maxlength="20" placeholder="검색어를 입력해주세요">
-                <button type="submit" id="sch_submit" value="검색"><i class="fa fa-search" aria-hidden="true"></i><span class="sound_only">검색</span></button>
+                <button type="submit" id="sch_submit" value="검색"><i class="fa fa-search" aria-hidden="true"></i><span class="blind">검색</span></button>
                 </form>
 
                 <script>
@@ -125,7 +125,7 @@
         </div>
 
         <!-- 모바일 검색 버튼 -->
-        <button type="button" id="user_btn" class="hd_opener"><i class="fa fa-search" aria-hidden="true"></i><span class="sound_only">사용자메뉴</span></button>
+        <button type="button" id="user_btn" class="hd_opener"><i class="fa fa-search" aria-hidden="true"></i><span class="blind">사용자메뉴</span></button>
 
         <script>
           var gnb_opener = document.querySelector("#gnb_open");
@@ -215,6 +215,7 @@
         {% else %}
             {% include "bbs/outlogin_before.html" %}
         {% endif %}
+        {% set menus = get_menus() %}
         {% if menus -%}
           <!-- 메뉴 -->
           <nav id="gnb">
@@ -287,13 +288,12 @@
     <div id="ft_copy">Copyright &copy; <b>{{ request.url.hostname }}.</b> All rights reserved.</div>
 
     <button type="button" id="top_btn">
-    	<i class="fa fa-arrow-up" aria-hidden="true"></i><span class="sound_only">상단으로</span>
+    	<i class="fa fa-arrow-up" aria-hidden="true"></i><span class="blind">상단으로</span>
     </button>
-    <label id="darkmode_btn" class="toggle-switch light-mode">
-      <input type="checkbox" id="dark-mode-toggle">
-      <svg xmlns="http://www.w3.org/2000/svg" class="visible bright" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-      <svg xmlns="http://www.w3.org/2000/svg" class="visible dark" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path></svg>
-    </label>
+    <button type="button" class="darkmode-toggle-switch">
+      <i class="fa-solid fa-moon visible bright"></i>
+      <i class="fa-solid fa-sun visible dark"></i>
+    </button>
 </div>
 
 {% if request.state.config.cf_analytics %}
@@ -311,38 +311,6 @@
             return false;
         });
     });
-
-  
-  // 다크모드 설정
-  const $checkbox = document.querySelector('#dark-mode-toggle');
-
-  const isUserColorTheme = localStorage.getItem('color-theme');
-  const isOsColorTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-
-  const getUserTheme = () => (isUserColorTheme ? isUserColorTheme : isOsColorTheme);
-
-  document.addEventListener('DOMContentLoaded', function () {
-  const initialTheme = getUserTheme();
-    if (initialTheme === 'dark') {
-      $checkbox.checked = true;
-      localStorage.setItem('color-theme', 'dark');
-      document.documentElement.setAttribute('color-theme', 'dark');
-    } else {
-      $checkbox.checked = false;
-      localStorage.setItem('color-theme', 'light');
-      document.documentElement.setAttribute('color-theme', 'light');
-    }
-  }); 
-
-  $checkbox.addEventListener('click', e => {
-    if (e.target.checked) {
-      localStorage.setItem('color-theme', 'dark');
-      document.documentElement.setAttribute('color-theme', 'dark');
-    } else {
-      localStorage.setItem('color-theme', 'light');
-      document.documentElement.setAttribute('color-theme', 'light');
-    }
-  });
 
 </script>
 {% endblock body_html %}

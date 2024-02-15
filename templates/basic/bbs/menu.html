@@ -2,9 +2,10 @@
     <li class="gnb_1dli gnb_mnal">
         <button type="button" class="gnb_menu_btn" title="전체메뉴">
             <i class="fa fa-bars" aria-hidden="true"></i>
-            <span class="sound_only">전체메뉴열기</span>
+            <span class="blind">전체메뉴열기</span>
         </button>
     </li>
+    {% set menus = get_menus() %}
     {% for menu in menus %}
         {% set is_submenu = True if menu.sub|count > 0 else False %}
         <li class="gnb_1dli {% if is_submenu %}gnb_al_li_plus{% endif %}" style="z-index:{{ 999 - loop.index }}">
@@ -32,6 +33,7 @@
 <div id="gnb_all">
     <h2>전체메뉴</h2>
     <ul class="gnb_al_ul">
+        {% set menus = get_menus() %}
         {% for menu in menus %}
             {% set is_submenu = True if menu.sub|count > 0 else False %}
             <li class="gnb_al_li">

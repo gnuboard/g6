@@ -1,3 +1,4 @@
+{% set menus = get_menus() %}
 {% if menus %}
     <ul id="gnb_1dul">
     {% for menu in menus %}
@@ -5,7 +6,7 @@
         <li class="gnb_1dli">
             <a href="{{ menu.me_link }}" target="_{{ menu.me_target }}" class="gnb_1da">{{ menu.me_name }}</a>
             {% if is_submenu %}
-            <button type="button" class="btn_gnb_op"><span class="sound_only">하위분류</span></button>
+            <button type="button" class="btn_gnb_op"><span class="blind">하위분류</span></button>
             <ul class="gnb_2dul">
                 {% for sub in menu.sub %}
                 <li class="gnb_2dli">

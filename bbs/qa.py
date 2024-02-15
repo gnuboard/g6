@@ -1,4 +1,3 @@
-import html as htmllib
 from typing import List
 from typing_extensions import Annotated
 
@@ -18,6 +17,8 @@ from lib.dependencies import (
 )
 from lib.template_filters import number_format, search_font
 from lib.template_functions import get_paging
+from lib.html_sanitizer import subject_sanitizer, content_sanitizer
+
 
 router = APIRouter()
 templates = UserTemplates()
@@ -55,6 +56,18 @@ class QaConfigService:
         page_rows = self.config.cf_mobile_page_rows if self.is_mobile else self.config.cf_page_rows
 
         return qa_page_rows if qa_page_rows != 0 else page_rows
+    
+    @property
+    def select_editor(self) -> str:
+        """게시판에 사용할 에디터를 반환.
+
+        Returns:
+            str: 게시판에 사용할 에디터.
+        """
+        if not self.qa_config.qa_use_editor or not self.config.cf_editor:
+            return "textarea"
+
+        return self.config.cf_editor
 
     def get(self):
         """Q&A 설정 조회
@@ -241,8 +254,9 @@ async def qa_write_update(
         raise AlertException(f"제목/내용에 금지단어({word})가 포함되어 있습니다.", 400)
     
     # Stored XSS 방지
-    form_data.qa_subject = htmllib.escape(form_data.qa_subject)
-    
+    form_data.qa_subject = subject_sanitizer.get_cleaned_data(form_data.qa_subject)
+    form_data.qa_content = content_sanitizer.get_cleaned_data(form_data.qa_content)
+
     # Q&A 업로드파일 크기 검증
     if not request.state.is_super_admin:
         if file1.size > 0 and file1.size > qa_config.qa_upload_size:
@@ -397,6 +411,7 @@ async def qa_view(
     """
     # Q&A 설정 조회
     qa_config = qa_config_service.get()
+    request.state.editor = qa_config_service.select_editor
 
     # Q&A 조회
     qa = db.get(QaContent, qa_id)

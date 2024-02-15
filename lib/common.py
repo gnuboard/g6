@@ -7,6 +7,7 @@ import random
 import re
 import shutil
 import smtplib
+import httpx
 from datetime import datetime, timedelta, date
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -165,6 +166,15 @@ def get_client_ip(request: Request) -> str:
         return x_forwarded_for.split(",")[0]
     else:
         return request.client.host
+
+
+async def get_host_public_ip():
+    """
+    호스트의 공인 IP 주소를 반환하는 함수
+    """
+    async with httpx.AsyncClient() as client:
+        response = await client.get('https://httpbin.org/ip')
+        return response.json()['origin']
 
 
 def make_directory(directory: str):
@@ -453,7 +463,7 @@ def get_populars(limit: int = 10, day: int = 3):
     Returns:
         List[Popular]: 인기검색어 리스트
     """
-    if popular_cache.get("populars"):
+    if popular_cache.get("populars") is not None:
         return popular_cache.get("populars")
 
     db = DBConnect().sessionLocal()
@@ -518,7 +528,7 @@ def get_recent_poll():
     """
     최근 투표 정보 1건을 가져오는 함수
     """
-    if lfu_cache.get("poll"):
+    if lfu_cache.get("poll") is not None:
         return lfu_cache.get("poll")
 
     db = DBConnect().sessionLocal()
@@ -540,7 +550,8 @@ def get_menus():
     Returns:
         list: 자식메뉴가 포함된 메뉴 list
     """
-    if lfu_cache.get("menus"):
+
+    if lfu_cache.get("menus") is not None:
         return lfu_cache.get("menus")
 
     db = DBConnect().sessionLocal()
@@ -565,6 +576,7 @@ def get_menus():
 
         menu.sub = child_menus
         menus.append(menu)
+    db.close()
 
     lfu_cache.update({"menus": menus})
 

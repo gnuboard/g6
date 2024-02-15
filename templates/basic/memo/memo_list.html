@@ -1,27 +1,24 @@
 {% extends "base_sub.html" %}
 {% import "/sideview/macros.html" as sideview %}
+{% set action='받은' if kind == "recv" else '보낸' %}
 
 {% block title %}내 쪽지함{% endblock title %}
 
 {% block content %}
     <div id="memo_list" class="new_win">
         <h1 id="win_title">
-            내 쪽지함
+            <i class="fa fa-regular fa-envelope" aria-hidden="true"></i> 내 쪽지함
             <div class="win_total">
-                {% if kind == "recv" %}
-                    전체 받은쪽지 
-                {% else %}
-                    전체 보낸쪽지 
-                {% endif %}
-                {{ total_records|number_format }}통
+                    전체 {{ action }}쪽지 
+                    {{ total_records|number_format }}통
                 <br>
             </div>
         </h1>
         <div class="new_win_con2">
             <ul class="win_ul">
-                <li class="{% if kind == "recv" %}selected{% endif %}"><a href="{{ url_for('memo_list') }}?kind=recv">받은쪽지</a></li>
-                <li class="{% if kind == "send" %}selected{% endif %}"><a href="{{ url_for('memo_list') }}?kind=send">보낸쪽지</a></li>
-                <li><a href="{{ url_for('memo_form') }}">쪽지쓰기</a></li>
+                <li class="{% if kind == "recv" %}selected{% endif %}"><a href="{{ url_for('memo_list') }}?kind=recv">받은 쪽지</a></li>
+                <li class="{% if kind == "send" %}selected{% endif %}"><a href="{{ url_for('memo_list') }}?kind=send">보낸 쪽지</a></li>
+                <li><a href="{{ url_for('memo_form') }}">쪽지 쓰기</a></li>
             </ul>
             <div class="memo_list">
                 <ul>
@@ -48,10 +45,10 @@
                                 </a>
                             </div>
                         </div>	
-                        <a href="{{ url_for('memo_delete', me_id=memo.me_id) }}?page={{ page }}" onclick="del(this.href); return false;" class="memo_del"><i class="fa fa-regular fa-trash-can" aria-hidden="true"></i> <span class="sound_only">삭제</span></a>
+                        <a href="{{ url_for('memo_delete', me_id=memo.me_id) }}?page={{ page }}" onclick="del(this.href); return false;" class="memo_del"><i class="fa fa-regular fa-trash-can" aria-hidden="true"></i> <span class="blind">삭제</span></a>
                     </li>
                 {% else %}
-                    <li class="empty_table">쪽지가 없습니다.</li>
+                    <li class="empty_table">{{ action }} 쪽지가 없습니다.</li>
                 {% endfor %}
                 </ul>
             </div>
@@ -64,30 +61,8 @@
             </p>
     
             <div class="win_btn">
-                <button type="button" onclick="window.close();" class="btn_close">창닫기</button>
+                <button type="button" onclick="window.close();" class="btn_close">창 닫기</button>
             </div>
         </div>
     </div>
-    <script>  
-      // 다크모드 설정
-      function handleDarkModeChange() {
-            const isUserColorTheme = localStorage.getItem('color-theme');
-            const isOsColorTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            const getUserTheme = () => (isUserColorTheme ? isUserColorTheme : isOsColorTheme);
-
-            const initialTheme = getUserTheme();
-            if (initialTheme === 'dark') {
-              document.documentElement.setAttribute('color-theme', 'dark');
-            } else {
-              document.documentElement.setAttribute('color-theme', 'light');
-            }
-          }; 
-
-          document.addEventListener('DOMContentLoaded', handleDarkModeChange)
-
-          // 로컬스토리지 데이터에따라 실시간 변경
-          window.addEventListener('storage', function (event) {
-              handleDarkModeChange();
-          });
-    </script>
 {% endblock content %}

@@ -389,9 +389,13 @@ async def mail_select_send(
         # 종료 메시지 전송
         yield "data: [끝]\n\n"
 
+    async def send_error_events(message: str):
+        yield "data: 메일발송 중 오류가 발생하였습니다.\n\n"
+        yield f"[오류] {message}\n\n"
+
     exists_mail = db.get(Mail, ma_id)
     if not exists_mail.ma_subject or not exists_mail.ma_content:
-        raise AlertException("메일 내용이 없습니다.", 400)
+        return EventSourceResponse(send_error_events("메일 내용이 없습니다."))
 
     members = exists_mail.ma_last_option.split("\n")
 
