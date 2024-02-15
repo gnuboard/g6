@@ -12,7 +12,10 @@ from core.template import AdminTemplates
 from lib.common import *
 from lib.board_lib import BoardFileManager
 from lib.dependencies import (
-    common_search_query_params, get_board, validate_token
+    check_demo_alert,
+    common_search_query_params,
+    get_board,
+    validate_token
 )
 from lib.template_functions import (
     get_editor_select, get_group_select, 
@@ -58,7 +61,8 @@ async def board_list(
     return templates.TemplateResponse("board_list.html", context)
 
 
-@router.post("/board_list_update", dependencies=[Depends(validate_token)])
+@router.post("/board_list_update",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def board_list_update(
     request: Request,
     db: db_session,
@@ -110,7 +114,8 @@ async def board_list_update(
     return RedirectResponse(set_url_query_params(url, query_params), 302)
 
 
-@router.post("/board_list_delete", dependencies=[Depends(validate_token)])
+@router.post("/board_list_delete",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def board_list_delete(
     request: Request,
     db: db_session,
@@ -212,7 +217,8 @@ async def board_form(
     return templates.TemplateResponse("board_form.html", context)
 
 
-@router.post("/board_form_update", dependencies=[Depends(validate_token)])
+@router.post("/board_form_update",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def board_form_update(
     request: Request,
     db: db_session,
@@ -294,7 +300,8 @@ async def board_copy(
     return templates.TemplateResponse("board_copy.html", context)
 
 
-@router.post("/board_copy_update", dependencies=[Depends(validate_token)])
+@router.post("/board_copy_update",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def board_copy_update(
     request: Request,
     db: db_session,

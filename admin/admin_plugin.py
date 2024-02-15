@@ -13,13 +13,13 @@ from core.plugin import (
     get_plugin_info, get_all_plugin_info, PLUGIN_DIR,
     PluginState, read_plugin_state, write_plugin_state
 )
-from lib.dependencies import validate_super_admin
+from lib.dependencies import check_demo_http
 
 logging.basicConfig(level=logging.INFO)
 router = APIRouter()
 
 
-@router.post("/plugin_detail", dependencies=[Depends(validate_super_admin)])
+@router.post("/plugin_detail")
 async def plugin_detail(request: Request, module_name: str = Form(...)):
     module = module_name.strip()
     info = get_plugin_info(module, PLUGIN_DIR)
@@ -38,7 +38,7 @@ async def plugin_detail(request: Request, module_name: str = Form(...)):
     return templates.TemplateResponse("plugin_detail.html", context)
 
 
-@router.get("/plugin_list", dependencies=[Depends(validate_super_admin)])
+@router.get("/plugin_list")
 async def show_plugins(request: Request):
     """
     플러그인 목록
@@ -54,7 +54,7 @@ async def show_plugins(request: Request):
     return templates.TemplateResponse("plugin_list.html", context)
 
 
-@router.post("/plugin_update")
+@router.post("/plugin_update", dependencies=[Depends(check_demo_http)])
 async def update_plugin_state(
         request: Request,
         type: str = Form(...),

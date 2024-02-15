@@ -11,12 +11,12 @@ from core.template import (
     get_current_theme, get_theme_list, get_theme_info, register_theme_statics,
 )
 from lib.common import *
-from lib.dependencies import validate_super_admin, validate_theme
+from lib.dependencies import check_demo_http, validate_theme
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-router = APIRouter(dependencies=[Depends(validate_super_admin)])
+router = APIRouter()
 templates = AdminTemplates()
 templates.env.globals['get_theme_info'] = get_theme_info
 
@@ -83,7 +83,7 @@ async def theme_preview(
     return templates.TemplateResponse("theme_preview.html", context)
 
 
-@router.post("/theme_update")
+@router.post("/theme_update", dependencies=[Depends(check_demo_http)])
 async def theme_update(
     request: Request,
     db: db_session,

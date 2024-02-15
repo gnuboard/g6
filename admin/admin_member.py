@@ -12,7 +12,11 @@ from core.formclass import MemberForm
 from core.models import Member, Point, GroupMember, Memo, Scrap, Auth, Group, Board
 from core.template import AdminTemplates
 from lib.common import *
-from lib.dependencies import common_search_query_params, validate_token
+from lib.dependencies import (
+    check_demo_alert,
+    common_search_query_params,
+    validate_token
+)
 from lib.member_lib import get_member_icon, get_member_image, validate_and_update_member_image
 from lib.pbkdf2 import create_hash
 from lib.template_functions import get_member_level_select, get_paging
@@ -90,7 +94,8 @@ async def member_list(
     return templates.TemplateResponse("member_list.html", context)
 
 
-@router.post("/member_list_update", dependencies=[Depends(validate_token)])
+@router.post("/member_list_update",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def member_list_update(
     request: Request,
     db: db_session,
@@ -123,7 +128,8 @@ async def member_list_update(
     return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
-@router.post("/member_list_delete", dependencies=[Depends(validate_token)])
+@router.post("/member_list_delete",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def member_list_delete(
     request: Request,
     db: db_session,
@@ -247,7 +253,8 @@ async def member_form(
 
 
 # DB등록 및 수정
-@router.post("/member_form_update", dependencies=[Depends(validate_token)])
+@router.post("/member_form_update",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def member_form_update(
     request: Request,
     db: db_session,

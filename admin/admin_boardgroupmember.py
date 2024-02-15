@@ -8,7 +8,11 @@ from core.exception import AlertException
 from core.models import Group, GroupMember, Member
 from core.template import AdminTemplates
 from lib.common import *
-from lib.dependencies import common_search_query_params, validate_token
+from lib.dependencies import (
+    check_demo_alert,
+    common_search_query_params,
+    validate_token
+)
 from lib.template_functions import get_paging
 
 router = APIRouter()
@@ -109,7 +113,8 @@ async def board_form(
     return templates.TemplateResponse("boardgroupmember_form.html", context)
 
 
-@router.post("/boardgroupmember_insert", dependencies=[Depends(validate_token)])
+@router.post("/boardgroupmember_insert",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def boardgroupmember_insert(
     request: Request,
     db: db_session,
@@ -142,7 +147,8 @@ async def boardgroupmember_insert(
     return RedirectResponse(f"/admin/boardgroupmember_form/{mb_id}", status_code=303)
 
 
-@router.post("/boardgroupmember_delete", dependencies=[Depends(validate_token)])
+@router.post("/boardgroupmember_delete",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def boardgroupmember_delete(
     request: Request,
     db: db_session,

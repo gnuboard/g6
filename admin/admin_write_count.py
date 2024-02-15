@@ -3,7 +3,7 @@ from collections import defaultdict
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import case, func, or_, select
 from sqlalchemy.sql.expression import func
 
@@ -11,13 +11,14 @@ from core.database import db_session
 from core.models import *
 from core.template import AdminTemplates
 from lib.common import *
+from lib.dependencies import check_demo_alert
 from lib.template_functions import (
     get_editor_select, get_group_select,
     get_member_level_select, get_skin_select
 )
 
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(check_demo_alert)])
 templates = AdminTemplates()
 templates.env.globals['get_skin_select'] = get_skin_select
 templates.env.globals['get_group_select'] = get_group_select

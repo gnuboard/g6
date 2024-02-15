@@ -11,7 +11,11 @@ from core.database import db_connect
 from core.models import Group, Mail, Member
 from core.template import AdminTemplates
 from lib.common import *
-from lib.dependencies import common_search_query_params, validate_token
+from lib.dependencies import (
+    check_demo_alert,
+    common_search_query_params,
+    validate_token
+)
 from lib.template_functions import get_group_select, get_paging
 
 router = APIRouter()
@@ -129,7 +133,8 @@ async def mail_form_update(
     return RedirectResponse(f"/admin/mail_form/{ma_id}", status_code=303)
 
 
-@router.post("/mail_delete", dependencies=[Depends(validate_token)])
+@router.post("/mail_delete",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def mail_delete(
     request: Request,
     db: db_session,
@@ -146,7 +151,7 @@ async def mail_delete(
     return RedirectResponse("/admin/mail_list", status_code=303)
 
 
-@router.get("/mail_test/{ma_id}")
+@router.get("/mail_test/{ma_id}", dependencies=[Depends(check_demo_alert)])
 async def mail_test(
     request: Request,
     db: db_session,
@@ -328,7 +333,9 @@ async def mail_select_list(
     return templates.TemplateResponse("mail_select_list.html", extend)
 
 
-@router.post("/mail_select_result", dependencies=[Depends(validate_token)], response_class=HTMLResponse)
+@router.post("/mail_select_result",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)],
+             response_class=HTMLResponse)
 async def mail_select_result(
     request: Request,
     db: db_session,
@@ -344,7 +351,7 @@ async def mail_select_result(
     return templates.TemplateResponse("mail_select_result.html", context)
 
 
-@router.get("/mail_select_send")
+@router.get("/mail_select_send", dependencies=[Depends(check_demo_alert)])
 async def mail_select_send(
     request: Request,
     db: db_session,

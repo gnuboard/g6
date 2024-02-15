@@ -7,7 +7,11 @@ from core.formclass import PollForm
 from core.models import Poll, PollEtc
 from core.template import AdminTemplates
 from lib.common import *
-from lib.dependencies import common_search_query_params, validate_token
+from lib.dependencies import (
+    check_demo_alert,
+    common_search_query_params,
+    validate_token
+)
 from lib.template_functions import get_member_level_select, get_paging
 
 router = APIRouter()
@@ -50,7 +54,8 @@ async def poll_list(
     return templates.TemplateResponse("poll_list.html", context)
 
 
-@router.post("/poll_list_delete", dependencies=[Depends(validate_token)])
+@router.post("/poll_list_delete",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def poll_list_delete(
     request: Request,
     db: db_session,

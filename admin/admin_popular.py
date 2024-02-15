@@ -6,7 +6,11 @@ from core.database import db_session
 from core.models import Popular
 from core.template import AdminTemplates
 from lib.common import *
-from lib.dependencies import common_search_query_params, validate_token
+from lib.dependencies import (
+    check_demo_alert,
+    common_search_query_params,
+    validate_token
+)
 from lib.template_functions import get_paging
 
 router = APIRouter()
@@ -46,7 +50,9 @@ async def popular_list(
     return templates.TemplateResponse("popular_list.html", context)
 
 
-@router.post("/popular/delete", dependencies=[Depends(validate_token)], tags=["admin_popular_list"])
+@router.post("/popular/delete",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)],
+             tags=["admin_popular_list"])
 async def popular_delete(
     request: Request,
     db: db_session,

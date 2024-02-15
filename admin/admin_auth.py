@@ -9,12 +9,14 @@ from core.exception import AlertException
 from core.models import Auth, Member
 from core.template import AdminTemplates
 from lib.dependencies import (
-    common_search_query_params, validate_token, validate_captcha
+    check_demo_alert,
+    common_search_query_params,
+    validate_captcha, validate_token,
 )
 from lib.common import *
 from lib.template_functions import get_paging
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(check_demo_alert)])
 templates = AdminTemplates()
 templates.env.globals['captcha_widget'] = captcha_widget
 

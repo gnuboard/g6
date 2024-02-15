@@ -1,8 +1,10 @@
 import os
 from typing_extensions import Annotated
 
-from fastapi import Depends, Form, Path, Query, Request
+from fastapi import Depends, Form, HTTPException, Path, Query, Request
+from pydantic import TypeAdapter
 from sqlalchemy import exists, inspect, select
+from starlette.status import HTTP_403_FORBIDDEN
 
 from core.database import DBConnect, db_session
 from core.exception import AlertException
@@ -242,3 +244,25 @@ def get_login_member(request: Request):
         raise AlertException(f"로그인 후 이용 가능합니다.", 403, url=url)
 
     return member
+
+
+def _check_demo_mode_active(request: Request) -> bool:
+    """데모모드 여부 검사"""
+    demo_mode = TypeAdapter(bool).validate_python(os.getenv("DEMO_MODE", False))
+    print("demo_mode", demo_mode)
+
+    if not request.state.is_super_admin and demo_mode:
+        return False
+
+    return True
+
+def check_demo_http(validate: Annotated[bool, Depends(_check_demo_mode_active)]):
+    """데모모드 여부 검사 - HTTPException"""
+    if not validate:
+        raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="데모 화면에서는 하실(보실) 수 없는 작업입니다.")
+
+def check_demo_alert(validate: Annotated[bool, Depends(_check_demo_mode_active)]):
+    """데모모드 여부 검사 - AlertException"""
+    if not validate:
+        raise AlertException("데모 화면에서는 하실(보실) 수 없는 작업입니다.", 403)
+

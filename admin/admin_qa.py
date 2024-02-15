@@ -7,7 +7,7 @@ from core.formclass import QaConfigForm
 from core.models import QaConfig
 from core.template import AdminTemplates
 from lib.common import *
-from lib.dependencies import validate_token
+from lib.dependencies import check_demo_alert, validate_token
 from lib.template_functions import get_skin_select
 
 
@@ -32,7 +32,8 @@ async def qa_config_form(request: Request, db: db_session):
     )
 
 
-@router.post("/qa_config_update", dependencies=[Depends(validate_token)])
+@router.post("/qa_config_update",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 def qa_config_update(
     request: Request,
     db: db_session,

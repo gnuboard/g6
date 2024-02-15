@@ -6,7 +6,7 @@ from core.models import BoardNew, Board
 from core.template import UserTemplates
 from lib.board_lib import *
 from lib.common import *
-from lib.dependencies import validate_token
+from lib.dependencies import check_demo_alert, validate_token
 from lib.point import delete_point, insert_point
 from lib.template_functions import get_group_select, get_paging
 
@@ -76,7 +76,8 @@ async def board_new_list(
     return templates.TemplateResponse("/new/basic/new_list.html", context)
 
 
-@router.post("/new_delete", dependencies=[Depends(validate_token)])
+@router.post("/new_delete",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def new_delete(
     request: Request,
     db: db_session,

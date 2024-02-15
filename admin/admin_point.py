@@ -10,7 +10,11 @@ from core.exception import AlertException
 from core.models import Point, Member
 from core.template import AdminTemplates
 from lib.common import *
-from lib.dependencies import common_search_query_params, validate_token
+from lib.dependencies import (
+    check_demo_alert,
+    common_search_query_params,
+    validate_token
+)
 from lib.point import (
     delete_expire_point, delete_use_point, get_point_sum,
     insert_point, insert_use_point
@@ -98,7 +102,8 @@ async def point_update(
     return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
-@router.post("/point_list_delete", dependencies=[Depends(validate_token)])
+@router.post("/point_list_delete",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def point_list_delete(
     request: Request,
     db: db_session,

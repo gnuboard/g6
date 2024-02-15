@@ -8,7 +8,7 @@ from core.formclass import ContentForm
 from core.models import Content
 from core.template import AdminTemplates
 from lib.common import *
-from lib.dependencies import validate_token
+from lib.dependencies import check_demo_alert, validate_token
 from lib.template_functions import (
     get_skin_select
 )
@@ -138,7 +138,8 @@ async def content_form_update(
     return RedirectResponse(url=request.url_for('content_form_edit', co_id=co_id), status_code=302)
 
 
-@router.get("/content_delete/{co_id}", dependencies=[Depends(validate_token)])
+@router.get("/content_delete/{co_id}",
+            dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def content_delete(
     request: Request, 
     db: db_session,

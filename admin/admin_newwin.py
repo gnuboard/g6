@@ -7,7 +7,7 @@ from core.formclass import NewwinForm
 from core.models import NewWin
 from core.template import AdminTemplates
 from lib.common import *
-from lib.dependencies import validate_token
+from lib.dependencies import check_demo_alert, validate_token
 
 router = APIRouter()
 templates = AdminTemplates()
@@ -67,7 +67,8 @@ async def newwin_form_edit(
     return templates.TemplateResponse("newwin_form.html", context)
 
 
-@router.post("/newwin_form_update", dependencies=[Depends(validate_token)])
+@router.post("/newwin_form_update",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def newwin_form_update(
     request: Request,
     db: db_session,
@@ -92,7 +93,8 @@ async def newwin_form_update(
     return RedirectResponse(url=f"/admin/newwin_form/{newwin.nw_id}", status_code=302)
 
 
-@router.get("/newwin_delete/{nw_id}", dependencies=[Depends(validate_token)])
+@router.get("/newwin_delete/{nw_id}",
+            dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def newwin_delete(
     request: Request,
     db: db_session,

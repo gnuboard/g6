@@ -8,7 +8,11 @@ from core.models import Board, Group, GroupMember
 from core.formclass import GroupForm
 from core.template import AdminTemplates
 from lib.common import *
-from lib.dependencies import common_search_query_params, validate_token
+from lib.dependencies import (
+    check_demo_alert,
+    common_search_query_params,
+    validate_token
+)
 
 router = APIRouter()
 templates = AdminTemplates()
@@ -44,7 +48,8 @@ async def boardgroup_list(
     return templates.TemplateResponse("boardgroup_list.html", context)
 
 
-@router.post("/boardgroup_list_update", dependencies=[Depends(validate_token)])
+@router.post("/boardgroup_list_update",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def boardgroup_list_update(
     request: Request,
     db: db_session,
@@ -75,7 +80,8 @@ async def boardgroup_list_update(
     return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
-@router.post("/boardgroup_list_delete", dependencies=[Depends(validate_token)])
+@router.post("/boardgroup_list_delete",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def boardgroup_list_delete(
     request: Request,
     db: db_session,
@@ -134,7 +140,8 @@ async def boardgroup_form(
     return templates.TemplateResponse("boardgroup_form.html", context)
 
 
-@router.post("/boardgroup_form_update", dependencies=[Depends(validate_token)])
+@router.post("/boardgroup_form_update",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def boardgroup_form_update(
     request: Request,
     db: db_session,

@@ -20,7 +20,8 @@ from core.template import UserTemplates
 from lib.board_lib import *
 from lib.common import *
 from lib.dependencies import (
-    check_group_access, common_search_query_params, get_board, get_write,
+    check_demo_alert, check_group_access,
+    common_search_query_params, get_board, get_write,
     validate_captcha, validate_token
 )
 from lib.pbkdf2 import create_hash
@@ -199,7 +200,8 @@ async def list_post(
         f"/board/{board.bo_skin}/list_post.html", context)
 
 
-@router.post("/list_delete/{bo_table}", dependencies=[Depends(validate_token)])
+@router.post("/list_delete/{bo_table}",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def list_delete(
     request: Request,
     db: db_session,
@@ -999,7 +1001,8 @@ async def read_post(
 
 
 # 게시글 삭제
-@router.get("/delete/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
+@router.get("/delete/{bo_table}/{wr_id}",
+            dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def delete_post(
     request: Request,
     db: db_session,
@@ -1214,7 +1217,8 @@ async def write_comment_update(
         set_url_query_params(url, query_params), status_code=303)
 
 
-@router.get("/delete_comment/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
+@router.get("/delete_comment/{bo_table}/{wr_id}",
+            dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def delete_comment(
     request: Request,
     db: db_session,

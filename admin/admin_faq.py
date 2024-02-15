@@ -9,7 +9,10 @@ from core.formclass import FaqMasterForm, FaqForm
 from core.models import FaqMaster, Faq
 from core.template import AdminTemplates
 from lib.common import *
-from lib.dependencies import validate_token
+from lib.dependencies import (
+    check_demo_alert, check_demo_http,
+    validate_token
+)
 
 router = APIRouter()
 templates = AdminTemplates()
@@ -47,7 +50,8 @@ async def faq_master_add_form(request: Request):
     return templates.TemplateResponse("faq_master_form.html", context)
 
 
-@router.post("/faq_master_form_update", dependencies=[Depends(validate_token)])
+@router.post("/faq_master_form_update",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def faq_master_add(
     request: Request,
     db: db_session,
@@ -95,7 +99,8 @@ async def faq_master_update_form(
     return templates.TemplateResponse("faq_master_form.html", context)
 
 
-@router.post("/faq_master_form_update/{fm_id}", dependencies=[Depends(validate_token)])
+@router.post("/faq_master_form_update/{fm_id}",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def faq_master_update(
     request: Request,
     db: db_session,
@@ -136,7 +141,8 @@ async def faq_master_update(
     return RedirectResponse(f"/admin/faq_master_form/{fm_id}", 303)
 
 
-@router.delete("/faq_master_form_delete/{fm_id}", dependencies=[Depends(validate_token)])
+@router.delete("/faq_master_form_delete/{fm_id}",
+               dependencies=[Depends(check_demo_http), Depends(validate_token)])
 async def faq_master_delete(
     request: Request,
     db: db_session,
@@ -189,7 +195,8 @@ async def faq_add_form(
     return templates.TemplateResponse("faq_form.html", context)
 
 
-@router.post("/faq_form_update/{fm_id}", dependencies=[Depends(validate_token)])
+@router.post("/faq_form_update/{fm_id}",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def faq_add(
     request: Request,
     db: db_session,
@@ -221,7 +228,8 @@ async def faq_update_form(fa_id: int, request: Request, db: db_session):
     return templates.TemplateResponse("faq_form.html", context)
 
 
-@router.post("/faq_form_update/{fm_id}/{fa_id}", dependencies=[Depends(validate_token)])
+@router.post("/faq_form_update/{fm_id}/{fa_id}",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def faq_update(
     request: Request,
     db: db_session,
@@ -238,7 +246,8 @@ async def faq_update(
     return RedirectResponse(f"/admin/faq_form/{fm_id}/{fa_id}", status_code=303)
 
 
-@router.delete("/faq_form_delete/{fa_id}", dependencies=[Depends(validate_token)])
+@router.delete("/faq_form_delete/{fa_id}",
+               dependencies=[Depends(check_demo_http), Depends(validate_token)])
 async def faq_delete(
     request: Request,
     db: db_session,

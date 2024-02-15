@@ -11,7 +11,7 @@ from core.exception import AlertException
 from core.models import Board, Content, Group, Menu
 from core.template import AdminTemplates
 from lib.common import *
-from lib.dependencies import validate_token
+from lib.dependencies import check_demo_alert, validate_token
 
 router = APIRouter()
 templates = AdminTemplates()
@@ -98,7 +98,8 @@ async def menu_form_search(
     return templates.TemplateResponse(f"menu_search_{type}.html", context)
 
 
-@router.post("/menu_list_update", dependencies=[Depends(validate_token)])
+@router.post("/menu_list_update",
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def menu_list_update(
     request: Request,
     db: db_session,

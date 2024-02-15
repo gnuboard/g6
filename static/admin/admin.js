@@ -64,7 +64,7 @@ function delete_confirm3(element)
                 },
                 error: function(xhr, textStatus, errorThrown) {
                     responese = JSON.parse(xhr.responseText);
-                    alert(responese.message);
+                    alert(responese.detail);
                 }
             });
         }

@@ -65,6 +65,10 @@
                         alert(response.success);
                         document.location.reload();
                     }
+                },
+                error: function(xhr, status, error) {
+                    res = JSON.parse(xhr.responseText);
+                    alert(res.detail);
                 }
             });
         });

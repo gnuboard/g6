@@ -11,7 +11,7 @@ from core.formclass import ConfigForm
 from core.models import Config
 from core.template import AdminTemplates
 from lib.common import *
-from lib.dependencies import validate_super_admin, validate_token
+from lib.dependencies import check_demo_alert, validate_token
 from lib.template_functions import (
     get_editor_select, get_member_level_select, get_skin_select,
     get_member_id_select, 
@@ -28,7 +28,7 @@ templates.env.globals["get_member_level_select"] = get_member_level_select
 CONFIG_MENU_KEY = "100100"
 
 
-@router.get("/config_form", dependencies=[Depends(validate_super_admin)])
+@router.get("/config_form")
 async def config_form(request: Request):
     """
     기본환경설정 폼
@@ -52,8 +52,7 @@ async def config_form(request: Request):
 
 
 @router.post("/config_form_update",
-             dependencies=[Depends(validate_token),
-                           Depends(validate_super_admin)])
+             dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def config_form_update(
     request: Request,
     db: db_session,
