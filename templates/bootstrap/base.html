@@ -147,7 +147,7 @@
 
 <!-- 콘텐츠 시작 { -->
 <div id="wrapper" class="container-xxl pt-5">
-  <h2 id="container_title"><span class="fs-2 main-font">{% block subtitle %}{% endblock subtitle %}</span></h2>
+  <h2 id="container_title"><span class="fs-3 main-font">{% block subtitle %}{% endblock subtitle %}</span></h2>
     {% block content %}
     {% endblock content %}
 </div>
@@ -159,15 +159,15 @@
 <!-- 하단 시작 { -->
 <div id="ft" class="my-0 mx-auto text-center main-bt">
   <div id="ft_wr" class="container-xl position-relative d-flex flex-column text-start" style="padding: 40px 0;margin: 0 auto;">
-    <div id="ft_link" class="d-flex px-4 mb-4 text-start">
-      <a href="{{ url_for('content_view', co_id='company') }}">회사소개</a>
-      <a href="{{ url_for('content_view', co_id='privacy') }}">개인정보처리방침</a>
-      <a href="{{ url_for('content_view', co_id='provision') }}">서비스이용약관</a>
+    <div id="ft_link" class="d-flex gap-3 px-4 text-start">
+      <a class="d-block sub-font py-3 fw-bold fs-4 text-decoration-none" href="{{ url_for('content_view', co_id='company') }}">회사소개</a>
+      <a class="d-block sub-font py-3 fw-bold fs-4 text-decoration-none" href="{{ url_for('content_view', co_id='privacy') }}">개인정보처리방침</a>
+      <a class="d-block sub-font py-3 fw-bold fs-4 text-decoration-none" href="{{ url_for('content_view', co_id='provision') }}">서비스이용약관</a>
       {% if not request.state.is_responsive %}
       {% if request.state.is_mobile %}
-      <a href="{{ url_for('device_change', device='pc') }}">PC버전</a>
+      <a class="d-block sub-font py-3 fw-bold fs-4 text-decoration-none" href="{{ url_for('device_change', device='pc') }}">PC버전</a>
       {% else %}
-      <a href="{{ url_for('device_change', device='mobile') }}">모바일버전</a>
+      <a class="d-block sub-font py-3 fw-bold fs-4 text-decoration-none" href="{{ url_for('device_change', device='mobile') }}">모바일버전</a>
       {% endif %}
       {% endif %}
     </div>
