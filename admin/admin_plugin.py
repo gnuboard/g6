@@ -13,7 +13,7 @@ from core.plugin import (
     get_plugin_info, get_all_plugin_info, PLUGIN_DIR,
     PluginState, read_plugin_state, write_plugin_state
 )
-from lib.dependencies import check_demo_http
+from lib.dependencies import check_demo_http, validate_super_admin
 
 logging.basicConfig(level=logging.INFO)
 router = APIRouter(dependencies=[Depends(validate_super_admin)])
