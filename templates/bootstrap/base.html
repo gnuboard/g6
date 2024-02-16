@@ -19,7 +19,7 @@
         {% include "/bbs/menu.html" ignore missing %}
       </div>
     </nav>
-    <button type="button" id="gnb_open" class="d-block d-md-none text-white">
+    <button type="button" id="gnb_open" class="d-block d-md-none fs-1 sub-font">
       <i class="fa fa-bars" aria-hidden="true"></i>
       <span class="blind">열기</span>
     </button>
@@ -62,38 +62,63 @@
         </li>
       </ul>
     </div>
-    <script>
-      var gnb_opener = document.querySelector("#gnb_open");
-      var sch_opener = document.querySelector("#user_btn");
-      var close_btn = document.querySelector("#gnb_close");
-      var hd_sch_wr = document.querySelector(".hd_sch_wr");
-      var hd_gnb_wr = document.querySelector("#gnb_mo");
-
-      function handleSearchClick() {
-        hd_sch_wr.classList.toggle("active");
-      }
-
-      function handleGnbClick() {
-        hd_gnb_wr.classList.add("active");
-      }
-
-      function delGnbClick() {
-        hd_gnb_wr.classList.remove("active");
-      }
-
-      sch_opener.addEventListener("click", handleSearchClick);
-      gnb_opener.addEventListener("click", handleGnbClick);
-      close_btn.addEventListener("click", delGnbClick);
-    </script>
+       <!-- 검색영역 -->
+       <div id="hd_sch_wr" class="container-xxl position-absolute start-50 translate-middle-x rounded-4 overflow-hidden main-border shadow-lg p-0" style="top: 90px; height: 60px; z-index: 999;">
+        <fieldset id="hd_sch">
+          <span class="blind">사이트 내 전체검색</span>
+          <form name="fsearchbox" method="get" action="/bbs/search" onsubmit="return fsearchbox_sub                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          mit(this);" class="position-relative h-100" >
+            <input type="hidden" name="sfl" value="wr_subject||wr_content">
+            <input type="hidden" name="sop" value="and">
+            <label for="sch_stx" class="blind">검색어 필수</label>
+            <input type="text" name="stx" id="sch_stx" maxlength="20" placeholder="검색어를 입력해주세요" class="form-control form-control-lg card-bg border-0 fs-4" style="border-radius: 3px 0px 0px 3px;" >
+            <button type="submit" id="sch_submit" class="position-absolute top-0 end-0 main-font bg-transparent border-0 fs-4" style="width: 60px; height: 60px;" value="검색">
+              <i class="fa fa-search" aria-hidden="true" ></i>
+              <span class="blind">검색</span>
+            </button>
+          </form>
+  
+          <script>
+            function fsearchbox_submit(f) {
+              var stx = f.stx.value.trim();
+              if (stx.length < 2) {
+                alert("검색어는 두글자 이상 입력하십시오.");
+                f.stx.select();
+                f.stx.focus();
+                return false;
+              }
+  
+              // 검색에 많은 부하가 걸리는 경우 이 주석을 제거하세요.
+              var cnt = 0;
+              for (var i = 0; i < stx.length; i++) {
+                if (stx.charAt(i) == ' ')
+                  cnt++;
+              }
+  
+              if (cnt > 1) {
+                alert("빠른 검색을 위하여 검색어에 공백은 한개만 입력할 수 있습니다.");
+                f.stx.select();
+                f.stx.focus();
+                return false;
+              }
+              f.stx.value = stx;
+  
+              return true;
+            }
+          </script>
+        </fieldset>
+        <!-- 인기검색어 시작 { -->
+        {% include "/bbs/popular.html" %}
+        <!-- } 인기검색어 끝 -->
+      </div>
 
     <div id="util_box" class="d-flex">
       <!-- 검색 버튼 -->
-      <button type="button" id="user_btn" class="rounded-circle overflow-hidden border-0 bg-transparent fs-2 sub-font me-1" style="width: 48px; height: 48px;">
+      <button type="button" id="user_btn" class="overflow-hidden border-0 bg-transparent fs-2 sub-font me-1" style="width: 48px; height: 48px;">
         <i class="fa fa-search" aria-hidden="true"></i>
         <span class="blind">사용자메뉴</span>
       </button>
       <!-- 다크모드 버튼 -->
-      <button type="button" id="darkmode-toggle-switch" class="rounded-circle overflow-hidden border-0 bg-transparent fs-4 sub-font me-3" style="width: 48px; height: 48px;">
+      <button type="button" id="darkmode-toggle-switch" class="overflow-hidden border-0 bg-transparent fs-4 sub-font me-3" style="width: 48px; height: 48px;">
         <i class="fa-solid fa-regular fa-moon visible bright"></i>
         <i class="fa-solid fa-regular fa-sun visible dark"></i>
       </button>
@@ -114,24 +139,6 @@
       </div>
     </div> 
   </div>
-
-  <!-- 프로필 이미지 클릭 이벤트 -->
-  <script>
-    var profileImg = document.querySelector("#profile");
-    var mypageBox = document.querySelector(".hd_login");
-
-    function handleProfileClick() {
-      mypageBox.classList.add("active");
-    }
-
-    function handleProfileFocusout() {
-      mypageBox.classList.remove("active");
-    }
-
-    profileImg.addEventListener("click", handleProfileClick);
-    profileImg.addEventListener("focusout", handleProfileFocusout);
-  </script>
-
 </header>
 <!-- } 상단 끝 -->
 
@@ -186,6 +193,45 @@
 <!-- } 하단 끝 -->
 
 <script>
+  // 프로필 이미지 클릭 이벤트
+  var profileImg = document.querySelector("#profile");
+  var mypageBox = document.querySelector(".hd_login");
+
+  function handleProfileClick() {
+    mypageBox.classList.add("active");
+  }
+
+  function handleProfileFocusout() {
+    mypageBox.classList.remove("active");
+  }
+
+  profileImg.addEventListener("click", handleProfileClick);
+  profileImg.addEventListener("focusout", handleProfileFocusout);
+
+  // util box내 메뉴,검색바 이벤트리스너
+  var gnb_opener = document.querySelector("#gnb_open");
+  var sch_opener = document.querySelector("#user_btn");
+  var close_btn = document.querySelector("#gnb_close");
+  var hd_sch_wr = document.querySelector("#hd_sch_wr");
+  var hd_gnb_wr = document.querySelector("#gnb_mo");
+
+  function handleSearchClick() {
+    hd_sch_wr.classList.toggle("active");
+  }
+
+  function handleGnbClick() {
+    hd_gnb_wr.classList.add("active");
+    console.log("aa")
+  }
+
+  function delGnbClick() {
+    hd_gnb_wr.classList.remove("active");
+  }
+
+  sch_opener.addEventListener("click", handleSearchClick);
+  gnb_opener.addEventListener("click", handleGnbClick);
+  close_btn.addEventListener("click", delGnbClick);
+
   // 상단 스크롤 버튼
   $(function () {
     $("#top_btn").on("click", function () {
@@ -195,5 +241,6 @@
       return false;
     });
   });
-</script>
+  </script>
+  
 {% endblock body_html %}
