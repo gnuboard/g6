@@ -19,7 +19,6 @@ class MySQLCharsetMixin:
 class DBSetting:
     """
     데이터베이스 설정 클래스
-    - 매번 설정이 불러와지는 문제점 해결해야함..
     """
 
     _table_prefix: Annotated[str, ""]
@@ -31,6 +30,8 @@ class DBSetting:
     _name: Annotated[str, ""]
     _url: Annotated[str, ""]
     _charset: Annotated[str, ""]
+    _instance: Annotated['DBSetting', None] = None
+    _setting_init: Annotated[bool, False]
 
     supported_engines = {
         "mysql": "mysql+pymysql",
@@ -38,9 +39,17 @@ class DBSetting:
         "sqlite": "sqlite:///sqlite3.db"
     }
 
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
     def __init__(self) -> None:
-        self.set_connect_infomation()
-        self.create_url()
+        super().__init__()
+        if not hasattr(DBSetting, "_setting_init"):
+            DBSetting._setting_init = True
+            self.set_connect_infomation()
+            self.create_url()
 
     @property
     def charset(self) -> str:
