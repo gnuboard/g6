@@ -208,14 +208,14 @@
     </form>
 
     <!-- 게시판 검색 시작 { -->
-    <div class="bo_sch_wrap d-none w-100 h-100 fixed-top" style="z-index:999;">
-        <fieldset class="bo_sch">
+    <div class="bo_sch_wrap d-none w-100 h-100 fixed-top" style="z-index:9999;">
+      <fieldset class="bo_sch position-absolute top-50 start-50 translate-middle wrapper-bg shadow-lg main-border rounded-4 overflow-y-auto" style="width:330px; max-height:300px;">
             <h3>검색</h3>
-            <form name="fsearch" method="get">
+            <form name="fsearch" method="get" class="d-block p-4">
                 <input type="hidden" name="sca" value="{{ request.query_params.sca }}">
                 <input type="hidden" name="sop" value="{{ request.query_params.sop }}">
                 <label for="sfl" class="blind">검색대상</label>
-                <select name="sfl" id="sfl">
+                <select name="sfl" id="sfl" class="w-100 input-border input-bg main-font rounded-1 fs-5" style="height: 40px;">
                     <option value="wr_subject" {{ get_selected(request.query_params.sfl, "wr_subject")|safe }}>제목</option>
                     <option value="wr_content" {{ get_selected(request.query_params.sfl, "wr_content")|safe }}>내용</option>
                     <option value="wr_subject||wr_content" {{ get_selected(request.query_params.sfl, "wr_subject||wr_content")|safe }}>제목+내용</option>
@@ -223,9 +223,9 @@
                     <option value="wr_name,0" {{ get_selected(request.query_params.sfl, "wr_name,0")|safe }}>글쓴이(코)</option>
                 </select>
                 <label for="stx" class="blind">검색어<strong class="blind"> 필수</strong></label>
-                <div class="sch_bar">
-                    <input type="text" name="stx" value="{{ request.query_params.stx }}" required id="stx" class="sch_input" size="25" maxlength="20" placeholder=" 검색어를 입력해주세요">
-                    <button type="submit" value="검색" class="sch_btn">
+                <div class="sch_bar d-inline-block w-100 mt-4 input-border input-bg main-font rounded-1 fs-5">
+                    <input type="text" name="stx" value="{{ request.query_params.stx }}" required id="stx" class="sch_input border-0 bg-transparent px-1 main-font" style="width: 250px;height: 38px;" size="25" maxlength="20" placeholder=" 검색어를 입력해주세요">
+                    <button type="submit" value="검색" class="sch_btn sub-font bg-transparent border-0 fs-4" style="width: 40px;height: 38px;">
                         <i class="fa fa-search" aria-hidden="true"></i><span class="blind">검색</span>
                     </button>
                 </div>
@@ -234,7 +234,7 @@
                 </button>
             </form>
         </fieldset>
-        <div class="bo_sch_bg"></div>
+        <div class="bo_sch_bg bg-black bg-opacity-10 w-100 h-100"></div>
     </div>
     <script>
     jQuery(function($){
