@@ -21,7 +21,7 @@ from fastapi import Request, UploadFile
 from markupsafe import Markup, escape
 from PIL import Image, ImageOps, UnidentifiedImageError
 from passlib.context import CryptContext
-from sqlalchemy import Index, asc, case, desc, func, select, delete, between, exists, cast, String, DateTime
+from sqlalchemy import Index, asc, case, desc, func, inspect, select, delete, between, exists, cast, String, DateTime
 from sqlalchemy.exc import IntegrityError
 from starlette.datastructures import URL
 from user_agents import parse
@@ -1362,3 +1362,39 @@ def is_integer_format(s):
     if s[0] == "-":
         s = s[1:]
     return s.isdigit()
+
+
+def conv_field_info(request: Request, data: object, field: list, exclude: list = []):
+    """특정 필드의 값을 '*'로 변환
+    - 데모모드에서는 민감한 정보를 보여주지 않는다.
+    - 변환된 객체는 원본 객체를 변경하므로 함수처리 이후 commit 하지 않도록 주의한다.
+
+    Args:
+        data (object): 원본 데이터
+        field (list): 변환할 필드
+        exclude (list, optional): 제외할 필드. Defaults to [].
+
+    Returns:
+        dict: 변환된 데이터
+    """
+    if request.state.is_super_admin:
+        return data
+
+    # 인스턴스의 속성과 값을 추출하기
+    keys_and_values = {c.key: getattr(data, c.key)
+                        for c in inspect(data).mapper.column_attrs}
+
+    for key, val in keys_and_values.items():
+        # 필드명이 exclude에 있거나 변환 대상 필드가 아니면 다음으로 넘어감
+        if key in exclude or (field != ['*'] and key not in field):
+            continue
+
+        # 값을 변환해야 하는 경우, 문자, 숫자, 한글을 '*'로 변환
+        # val이 문자열이 아닐 수 있으므로, str 타입으로 변환 필요
+        val_str = str(val)
+        transformed_val = ''.join('*' if c.isalnum() or '\uac00' <= c <= '\ud7a3' else c for c in val_str)
+        
+        # 변환된 값을 원본 객체에 다시 할당
+        setattr(data, key, transformed_val)
+
+    return data

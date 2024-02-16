@@ -57,6 +57,13 @@ async def point_list(
     # 전체 포인트 합계
     sum_point = db.scalar(func.sum(Point.po_point)) or 0
 
+    # 데모모드
+    for point in result['rows']:
+        if point.mb_id != request.state.login_member.mb_id:
+            point.member_info = conv_field_info(request, point.member, ['mb_id','mb_name','mb_nick','mb_email'])
+        else:
+            point.member_info = point.member
+
     context = {
         "request": request,
         "config": request.state.config,

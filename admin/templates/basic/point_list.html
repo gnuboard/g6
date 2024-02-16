@@ -60,7 +60,7 @@
                 </thead>
                 <tbody>
                 {% for point in points %}
-                    {% set member=point.member %}
+                    {% set member=point.member_info %}
                     <tr class="bg{{ loop.cycle('0', '1') }}">
                         <td class="td_chk">
                             <input type="hidden" name="mb_id[]" value="admin" id="mb_id_{{ loop.index0 }}">
@@ -68,10 +68,10 @@
                             <label for="chk_{{ loop.index0 }}" class="blind">{{ point.po_content }}</label>
                             <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
                         </td>
-                        <td class="td_left"><a href="?sfl=mb_id&stx={{ point.mb_id }}">{{ point.mb_id }}</a></td>
+                        <td class="td_left"><a href="?sfl=mb_id&stx={{ member.mb_id }}">{{ member.mb_id }}</a></td>
                         <td class="td_left">{{ member.mb_name }}</td>
                         <td class="td_left sv_use">
-                            {{ sideview.get(request, member.mb_id, member.mb_name, member.wr_email, member.wr_homepage)|safe }}
+                            {{ sideview.get(request, member.mb_id, member.mb_name, member.mb_email, member.mb_homepage)|safe }}
                         </td>
                         <td class="td_left">{{ point.po_content }}</td>
                         <td class="td_num td_pt">{{ point.po_point|number_format }}</td>

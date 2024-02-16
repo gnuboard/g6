@@ -47,8 +47,8 @@
                             <label for="chk_{{ loop.index0 }}" class="blind">{{ row.member_info.mb_nick }} 회원</label>
                             <input type="checkbox" name="chk[]" value="{{ row.gm_id }}" id="chk_{{ loop.index0 }}">
                         </td>
-                        <td class="td_grid"><a href="/admin/boardgroupmember_form/{{ row.mb_id }}">{{ row.group_count|number_format }}</a></td>
-                        <td class="td_mbid">{{ row.mb_id }}</td>
+                        <td class="td_grid"><a href="/admin/boardgroupmember_form/{{ row.member_info.mb_id }}">{{ row.group_count|number_format }}</a></td>
+                        <td class="td_mbid">{{ row.member_info.mb_id }}</td>
                         <td class="td_mbname">{{ row.member_info.mb_nick }}</td>
                         <td class="td_name sv_use">
                             {{ row.member_info.mb_nick }}

@@ -76,6 +76,12 @@ async def member_list(
         else:
             member.mb_today_login = "없음"
 
+        # 데모모드
+        if member.mb_id != request.state.login_member.mb_id:
+            member = conv_field_info(
+                request, member, ["mb_id", "mb_name", "mb_nick", "mb_email", "mb_tel", "mb_hp"]
+            )
+
     # 탈퇴/차단 회원수
     leave_count = db.scalar(select(func.count(Member.mb_id)).where(Member.mb_leave_date != ""))
     intercept_count = db.scalar(select(func.count(Member.mb_id)).where(Member.mb_intercept_date != ""))
@@ -225,6 +231,10 @@ async def member_form(
 
         exists_member.mb_icon = get_member_icon(request, mb_id)
         exists_member.mb_img = get_member_image(request, mb_id)
+
+        # 데모모드
+        if exists_member.mb_id != request.state.login_member.mb_id:
+            exists_member = conv_field_info(request, exists_member, ['*'])
 
     context = {
         "request": request, "member": exists_member}

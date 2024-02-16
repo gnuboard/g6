@@ -322,6 +322,11 @@ async def mail_select_list(
     )
     db.commit()
 
+    # 데모모드
+    for member in members:
+        db.refresh(member)
+        member = conv_field_info(request, member, ['mb_id','mb_name','mb_nick','mb_email'])
+
     extend = {
         "request": request,
         "config": request.state.config,

@@ -134,13 +134,19 @@ async def base(request: Request, db: db_session):
         .order_by(Point.po_id.desc())
         .limit(5)
     ).all()
-
+    
     for point in new_points:
         rel_table = point.po_rel_table or ""
         rel_id = point.po_rel_id
         if (rel_id and rel_table
                 and not "@" in rel_table):
             point.link = f"/board/{rel_table}/{rel_id}"
+        # 데모모드
+        point.member_info = conv_field_info(request, point.member, ['mb_id','mb_name','mb_nick','mb_email'])
+
+    # 데모모드
+    for member in new_members:
+        member = conv_field_info(request, member, ['mb_id','mb_name','mb_nick','mb_email'])
 
     context = {
         "request": request,

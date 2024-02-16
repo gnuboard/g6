@@ -29,7 +29,7 @@ CONFIG_MENU_KEY = "100100"
 
 
 @router.get("/config_form")
-async def config_form(request: Request):
+async def config_form(request: Request, db: db_session):
     """
     기본환경설정 폼
     """
@@ -40,9 +40,21 @@ async def config_form(request: Request):
     host_public_ip = await get_host_public_ip()
     client_ip = get_client_ip(request)
 
+    # 데모모드
+    config = db.scalars(select(Config)).first()
+    config = conv_field_info(request, config, [
+        'cf_admin_email', 'cf_cert_kcb_cd', 'cf_cert_kcp_cd', 'cf_icode_id',
+        'cf_icode_pw', 'cf_facebook_appid', 'cf_facebook_secret',
+        'cf_twitter_key', 'cf_twitter_secret', 'cf_googl_shorturl_apikey',
+        'cf_naver_clientid', 'cf_naver_secret', 'cf_kakao_js_apikey',
+        'cf_payco_clientid', 'cf_payco_secret', 'cf_lg_mid',
+        'cf_lg_mert_key', 'cf_cert_kg_mid', 'cf_cert_kg_cd',
+        'cf_recaptcha_site_key', 'cf_recaptcha_secret_key', 'cf_google_clientid',
+        'cf_google_secret', 'cf_kakao_rest_key', 'cf_kakao_client_secret'])
+
     context = {
         "request": request,
-        "config": request.state.config,
+        "config": config,
         "host_name": host_name,
         "host_ip": host_ip,
         "host_public_ip": host_public_ip,

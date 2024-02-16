@@ -67,8 +67,13 @@ async def boardgroupmember_list(
     ).all()
 
     for group_member in group_members:
-        group_member.member_info = group_member.member
         group_member.group_count = len(group_member.member.groups)
+        # 데모모드
+        if group_member.mb_id != request.state.login_member.mb_id:
+            group_member.member_info = conv_field_info(
+                request, group_member.member, ['mb_id','mb_name','mb_nick','mb_email', 'mb_today_login', 'mb_datetime'])
+        else:
+            group_member.member_info = group_member.member
 
     context = {
         "request": request,
