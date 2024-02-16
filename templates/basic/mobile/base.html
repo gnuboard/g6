@@ -1,237 +1,218 @@
 {% extends "base_sub.html" %}
 
 {% block body_html %}
-    <header id="hd">
-        <h1 id="hd_h1"></h1>
-        <div class="to_content">
-            <a href="#container">본문 바로가기</a>
+<!-- 상단 시작 { -->
+<div id="hd">
+
+    <h1 id="hd_h1"></h1>
+    <div id="skip_to_container"><a href="#container">본문 바로가기</a></div>
+
+    {% include "/bbs/newwin.inc.html" %}
+
+    <div id="hd_wrapper">
+
+        <div id="logo">
+            <a href="/"><img src="/static/img/logo_gnuboard6.png" alt="그누보드6"></a>
         </div>
 
-        {% include "/bbs/newwin.inc.html" ignore missing %}
+        <button type="button" id="gnb_open" class="hd_opener">
+            <i class="fa fa-bars" aria-hidden="true"></i>
+            <span class="blind">열기</span>
+        </button>
 
-        <div id="hd_wrapper">
-            <div id="logo">
-                <a href="{{ url_for("index") }}">
-                    <img src="{{ url_for('static', path='/img/logo_gnuboard6.png') }}" alt="{{ request.state.title }}">
-                </a>
-            </div>
-            <button type="button" id="gnb_open" class="hd_opener">
-                <i class="fa fa-bars" aria-hidden="true"></i>
-                <span class="blind">메뉴열기</span>
+        <div id="gnb_mo" class="gnb_mo">
+            <button type="button" id="gnb_close" class="hd_closer">
+                <span class="blind">메뉴 닫기</span>
+                <i class="fa fa-xmark" aria-hidden="true"></i>
             </button>
-            <div id="gnb" class="hd_div">
-                <button type="button" id="gnb_close" class="hd_closer">
-                    <span class="blind">메뉴 닫기</span>
-                    <i class="fa fa-xmark" aria-hidden="true"></i>
-                </button>
-                <!-- 아웃 로그인 -->
-                {% if request.state.login_member %}
-                    {% include "mobile/bbs/outlogin_after.html" ignore missing %}
-                {% else %}
-                    {% include "mobile/bbs/outlogin_before.html" ignore missing %}
-                {% endif %}
 
-                <!-- 메뉴 -->
-                {% include "mobile/bbs/menu.html" ignore missing %}
+            <!-- 아웃 로그인 -->
+            {% if request.state.login_member %}
+                {% include "mobile/bbs/outlogin_after.html" ignore missing %}
+            {% else %}
+                {% include "mobile/bbs/outlogin_before.html" ignore missing %}
+            {% endif %}
 
-                <ul id="hd_nb">
-                    <li class="hd_nb1">
-                        <a href="/bbs/faq" id="snb_faq">
-                            <i class="fa fa-question" aria-hidden="true"></i>FAQ
-                        </a>
-                    </li>
-                    <li class="hd_nb2">
-                        <a href="/bbs/qalist" id="snb_qa">
-                            <i class="fa fa-comments" aria-hidden="true"></i>1:1문의
-                        </a>
-                    </li>
-                    <li class="hd_nb3">
-                        <a href="/bbs/current_connect" id="snb_cnt">
-                            <i class="fa fa-users" aria-hidden="true"></i>접속자
-                           <span>{{ current_login_count[0]|number_format }}</span>
-                        </a>
-                    </li>
-                    <li class="hd_nb4">
-                        <a href="/bbs/new" id="snb_new">
-                            <i class="fa fa-history" aria-hidden="true"></i>새글
-                        </a>
-                    </li>
-                </ul>
-            </div>
-            <button type="button" id="user_btn" class="hd_opener">
-                <i class="fa fa-search" aria-hidden="true"></i>
-                <span class="blind">사용자메뉴</span>
-            </button>
-            <div class="hd_div" id="user_menu">
-                <button type="button" id="user_close" class="hd_closer">
-                    <span class="blind">메뉴 닫기</span><i class="fa fa-xmark" aria-hidden="true"></i>
-                </button>
-                <div id="hd_sch">
-                    <h2 class="blind">사이트 내 전체검색</h2>
-                    <form name="fsearchbox" method="get" action="/bbs/search" onsubmit="return fsearchbox_submit(this);">
-                        <input type="hidden" name="sfl" value="wr_subject||wr_content">
-                        <input type="hidden" name="sop" value="and">
-                        <input type="text" name="stx" id="sch_stx" maxlength="20" placeholder="검색어를 입력해주세요" required="">
-                        <button type="submit" value="검색" id="sch_submit">
-                            <i class="fa fa-search" aria-hidden="true"></i><span class="blind">검색</span>
-                        </button>
-                    </form>
-                    <script>
-                    function fsearchbox_submit(f)
-                    {
-                        var stx = f.stx.value.trim();
-                        if (stx.length < 2) {
-                            alert("검색어는 두글자 이상 입력하십시오.");
-                            f.stx.select();
-                            f.stx.focus();
-                            return false;
-                        }
-    
-                        // 검색에 많은 부하가 걸리는 경우 이 주석을 제거하세요.
-                        var cnt = 0;
-                        for (var i = 0; i < stx.length; i++) {
-                            if (stx.charAt(i) == ' ')
-                                cnt++;
-                        }
-    
-                        if (cnt > 1) {
-                            alert("빠른 검색을 위하여 검색어에 공백은 한개만 입력할 수 있습니다.");
-                            f.stx.select();
-                            f.stx.focus();
-                            return false;
-                        }
-                        f.stx.value = stx;
-    
-                        return true;
+            <!-- 메뉴 -->
+            {% include "mobile/bbs/menu.html" ignore missing %}
+
+            <ul id="hd_nb">
+                <li class="hd_nb1">
+                    <a href="/bbs/faq" id="snb_faq">
+                        <i class="fa fa-question" aria-hidden="true"></i>FAQ
+                    </a>
+                </li>
+                <li class="hd_nb2">
+                    <a href="/bbs/qalist" id="snb_qa">
+                        <i class="fa fa-comments" aria-hidden="true"></i>1:1문의
+                    </a>
+                </li>
+                <li class="hd_nb3">
+                    <a href="/bbs/current_connect" id="snb_cnt">
+                        <i class="fa fa-users" aria-hidden="true"></i>접속자
+                        <span>{{ current_login_count[0]|number_format }}</span>
+                    </a>
+                </li>
+                <li class="hd_nb4">
+                    <a href="/bbs/new" id="snb_new">
+                        <i class="fa fa-history" aria-hidden="true"></i>새글
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 검색영역 -->
+        <div class="hd_sch_wr">
+            <fieldset id="hd_sch">
+                <legend>사이트 내 전체검색</legend>
+
+                <form name="fsearchbox" method="get" action="/bbs/search" onsubmit="return fsearchbox_submit(this);">
+                    <input type="hidden" name="sfl" value="wr_subject||wr_content">
+                    <input type="hidden" name="sop" value="and">
+                    <label for="sch_stx" class="blind">검색어 필수</label>
+                    <input type="text" name="stx" id="sch_stx" maxlength="20" placeholder="검색어를 입력해주세요">
+                    <button type="submit" id="sch_submit" value="검색"><i class="fa fa-search" aria-hidden="true"></i><span class="blind">검색</span></button>
+                </form>
+
+                <script>
+                function fsearchbox_submit(f)
+                {
+                    var stx = f.stx.value.trim();
+                    if (stx.length < 2) {
+                        alert("검색어는 두글자 이상 입력하십시오.");
+                        f.stx.select();
+                        f.stx.focus();
+                        return false;
                     }
-                    </script>
-                </div>
 
-                {% include "mobile/bbs/popular.html" ignore missing %}
+                    // 검색에 많은 부하가 걸리는 경우 이 주석을 제거하세요.
+                    var cnt = 0;
+                    for (var i = 0; i < stx.length; i++) {
+                        if (stx.charAt(i) == ' ')
+                            cnt++;
+                    }
 
-                <div id="text_size">
-                    <!-- font_resize('엘리먼트id', '제거할 class', '추가할 class'); -->
-                    <button id="size_down" onclick="font_resize('container', 'ts_up ts_up2', '', this);" class="select">
-                        <img src="{{ url_for('static', path='/img/ts01.png') }}" width="20" alt="기본">
-                    </button>
-                    <button id="size_def"
-                            onclick="font_resize('container', 'ts_up ts_up2', 'ts_up', this);">
-                        <img src="{{ url_for('static', path='/img/ts02.png') }}" width="20" alt="크게">
-                    </button>
-                    <button id="size_up"
-                            onclick="font_resize('container', 'ts_up ts_up2', 'ts_up2', this);">
-                        <img src="{{ url_for('static', path='/img/ts03.png') }}" width="20" alt="더크게">
-                    </button>
-                </div>
-            </div>
-            <script>
-            $(function () {
-                //폰트 크기 조정 위치 지정
-                var font_resize_class = get_cookie("ck_font_resize_add_class");
-                if( font_resize_class == 'ts_up' ){
-                    $("#text_size button").removeClass("select");
-                    $("#size_def").addClass("select");
-                } else if (font_resize_class == 'ts_up2') {
-                    $("#text_size button").removeClass("select");
-                    $("#size_up").addClass("select");
+                    if (cnt > 1) {
+                        alert("빠른 검색을 위하여 검색어에 공백은 한개만 입력할 수 있습니다.");
+                        f.stx.select();
+                        f.stx.focus();
+                        return false;
+                    }
+                    f.stx.value = stx;
+
+                    return true;
                 }
-    
-                $(".hd_opener").on("click", function() {
-                    var $this = $(this);
-                    var $hd_layer = $this.next(".hd_div");
-    
-                    if($hd_layer.is(":visible")) {
-                        $hd_layer.hide();
-                        $this.find("span").text("열기");
-                    } else {
-                        var $hd_layer2 = $(".hd_div:visible");
-                        $hd_layer2.prev(".hd_opener").find("span").text("열기");
-                        $hd_layer2.hide();
-    
-                        $hd_layer.show();
-                        $this.find("span").text("닫기");
-                    }
-                });
-    
-                $("#container").on("click", function() {
-                    $(".hd_div").hide();
-    
-                });
-    
-                $(".hd_closer").on("click", function() {
-                    var idx = $(".hd_closer").index($(this));
-                    $(".hd_div:visible").hide();
-                    $(".hd_opener:eq("+idx+")").find("span").text("열기");
-                });
-            });
-            </script>
+                </script>
+            </fieldset>
+
+            <!-- 인기검색어 시작 { -->
+            {% include "/bbs/popular.html" %}
+            <!-- } 인기검색어 끝 -->
         </div>
-    </header>
-    <div id="wrapper">
+
+        <!-- 모바일 검색 버튼 -->
+        <button type="button" id="user_btn" class="hd_opener"><i class="fa fa-search" aria-hidden="true"></i><span class="blind">사용자메뉴</span></button>
+
+        <script>
+            var gnb_opener = document.querySelector("#gnb_open");
+            var sch_opener = document.querySelector("#user_btn");
+            var close_btn = document.querySelector("#gnb_close");
+            var hd_sch_wr = document.querySelector(".hd_sch_wr");
+            var hd_gnb_wr = document.querySelector("#gnb_mo");
+
+            function handleSearchClick() {
+                hd_sch_wr.classList.toggle("active");
+            }
+            function handleGnbClick() {
+                hd_gnb_wr.classList.add("active");
+            }
+            function delGnbClick() {
+                hd_gnb_wr.classList.remove("active");
+            }
+
+            sch_opener.addEventListener("click", handleSearchClick);
+            gnb_opener.addEventListener("click", handleGnbClick);
+            close_btn.addEventListener("click", delGnbClick);
+        </script>
+
+    </div>
+
+</div>
+<!-- } 상단 끝 -->
+
+{% if errors %}
+<ul>
+    {% for error in errors %}
+    <li>{{ error }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+<hr>
+
+<!-- 콘텐츠 시작 { -->
+<div id="wrapper">
+    <div id="container_wr">
+
         <div id="container">
+            <h2 id="container_title"><span>{% block subtitle %}{% endblock subtitle %}</span></h2>
             {% block content %}
             {% endblock content %}
         </div>
+
+        {% if render_visit_statistics %}
+            {{ render_visit_statistics(request)|safe }}
+        {% endif %}
+
     </div>
-<!-- 투표하기 -->
-{% include "mobile/bbs/poll.html" ignore missing %}
+</div>
+<!-- } 콘텐츠 끝 -->
 
-<!-- 접속자 집계 -->
-{% if render_visit_statistics %}
-    {{ render_visit_statistics(request)|safe }}
-{% endif %}
+<hr>
 
+<!-- 하단 시작 { -->
 <div id="ft">
-    <div id="ft_copy">
-        <div id="ft_company">
+
+    <div id="ft_wr">
+        <div id="ft_link" class="ft_cnt">
             <a href="{{ url_for('content_view', co_id='company') }}">회사소개</a>
             <a href="{{ url_for('content_view', co_id='privacy') }}">개인정보처리방침</a>
             <a href="{{ url_for('content_view', co_id='provision') }}">서비스이용약관</a>
+            {% if not request.state.is_responsive %}
+                {% if request.state.is_mobile %}
+                    <a href="{{ url_for('device_change', device='pc') }}">PC버전</a>
+                {% else %}
+                    <a href="{{ url_for('device_change', device='mobile') }}">모바일버전</a>
+                {% endif %}
+            {% endif %}
         </div>
-        Copyright &copy; <b>{{ request.url.hostname }}.</b> All rights reserved.
-        <br>
     </div>
-   
+
+    <div id="ft_copy">Copyright &copy; <b>{{ request.url.hostname }}.</b> All rights reserved.</div>
+
+    <button type="button" id="top_btn">
+        <i class="fa fa-arrow-up" aria-hidden="true"></i><span class="blind">상단으로</span>
+    </button>
     <button type="button" class="darkmode-toggle-switch">
       <i class="fa-solid fa-moon visible bright"></i>
       <i class="fa-solid fa-sun visible dark"></i>
     </button>
-    <button type="button" id="top_btn">
-        <i class="fa fa-arrow-up" aria-hidden="true"></i>
-        <span class="blind">상단으로</span>
-    </button>
-    {% if not request.state.is_responsive %}
-        <a href="{{ url_for('device_change', device='pc') }}" id="device_change">PC버전으로 보기</a>
-    {% endif %}
+
 </div>
+
 {% if request.state.config.cf_analytics %}
     {{ request.state.config.cf_analytics|safe }}
 {% endif %}
 
+<!-- } 하단 끝 -->
+
 <script>
-    jQuery(function($) {
-        $(document).ready(function(){
-            // 폰트 리사이즈 쿠키있으면 실행
-            font_resize("container", get_cookie("ck_font_resize_rmv_class"), get_cookie("ck_font_resize_add_class"));
-            
-            //상단고정
-            if($(".top").length){
-                var jbOffset = $(".top").offset();
-                $(window).scroll( function() {
-                    if ($(document).scrollTop() > jbOffset.top) {
-                        $('.top').addClass('fixed');
-                    }
-                    else {
-                        $('.top').removeClass('fixed');
-                    }
-                });
-            }
-            //상단으로
-            $("#top_btn").on("click", function() {
-                $("html, body").animate({scrollTop:0}, '500');
-                return false;
-            });
-    
+
+  // 상단 스크롤 버튼
+    $(function() {
+        $("#top_btn").on("click", function() {
+            $("html, body").animate({scrollTop:0}, '500');
+            return false;
         });
     });
 

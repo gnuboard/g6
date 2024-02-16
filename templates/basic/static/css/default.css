@@ -1,9 +1,9 @@
 @charset "utf-8";
 
 :root {
-  --primaryColor: #4989bc;
-  --react-good: #ff484f;
-  --react-nogood: #217aee;
+    --primaryColor: #4989bc;
+    --react-good: #ff484f;
+    --react-nogood: #217aee;
 }
 
 :root[color-theme='light'] { /* 스위치 버튼 */
