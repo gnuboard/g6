@@ -154,6 +154,10 @@ class UserTemplates(Jinja2Templates):
             self.env.globals["get_member_icon"] = get_member_icon
             self.env.globals["get_member_image"] = get_member_image
             self.env.globals["theme_asset"] = theme_asset
+            self.env.globals["get_populars"] = get_populars
+            self.env.globals["get_recent_poll"] = get_recent_poll
+            self.env.globals["get_menus"] = get_menus
+
             # 템플릿 컨텍스트 프로세서 설정
             self.context_processors.append(self._default_context)
             # 추가 env.global 설정
@@ -166,9 +170,6 @@ class UserTemplates(Jinja2Templates):
 
         context = {
             "current_login_count": get_current_login_count(request),
-            "menus": get_menus(),
-            "poll": get_recent_poll(),
-            "populars": get_populars(),
             "render_latest_posts": render_latest_posts,
             "render_visit_statistics": render_visit_statistics,
         }

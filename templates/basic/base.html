@@ -221,6 +221,7 @@
                 {% include "bbs/outlogin_before.html" %}
             {% endif %}
 
+            {% set menus = get_menus() %}
             {% if menus -%}
             <!-- 메뉴 -->
             <nav id="gnb">
