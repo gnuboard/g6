@@ -605,20 +605,13 @@ a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:no
 .sv_nojs .sv { display:block }
 
 /* 페이징 */
-.pg_wrap { clear:both; float:inherit; text-align: center; display:inline-block; width: 100%; }
-.pg_wrap:after { display:block; visibility:hidden; clear:both; content:"" }
-.pg { text-align:center }
-.pg_page, .pg_current { display:inline-block; vertical-align:middle; background:var(--pgBg); border:1px solid var(--pgBg) }
-.pg a:focus, .pg a:hover { text-decoration:none }
-.pg_page { color:#959595; font-size:1.3rem; height:30px; line-height:28px; padding:0 5px; min-width:30px; text-decoration:none; border-radius:3px }
-.pg_page:hover { background-color:var(--pgHvBg) }
-.pg_start { text-indent:-999px; overflow:hidden; background:url('/static/img/btn_first.gif') no-repeat 50% 50% var(--pgBg); padding:0; border:1px solid var(--pgBg) }
-.pg_prev { text-indent:-999px; overflow:hidden; background:url('/static/img/btn_prev.gif') no-repeat 50% 50% var(--pgBg); padding:0; border:1px solid var(--pgBg) }
-.pg_end { text-indent:-999px; overflow:hidden; background:url('/static/img/btn_end.gif') no-repeat 50% 50% var(--pgBg); padding:0; border:1px solid var(--pgBg) }
-.pg_next { text-indent:-999px; overflow:hidden; background:url('/static/img/btn_next.gif') no-repeat 50% 50% var(--pgBg); padding:0; border:1px solid var(--pgBg) }
-.pg_start:hover,.pg_prev:hover,.pg_end:hover,.pg_next:hover { background-color:var(--pgHvBg) }
-
-.pg_current { display:inline-block; background:var(--primaryColor); border:1px solid var(--primaryColor); color:#fff; font-weight:bold; height:30px; line-height:30px; padding:0 10px; min-width:30px; border-radius:3px }
+.pagination { display:flex; justify-content: center; align-items: center; gap:3px; }
+.pagination .page { display:inline-block; padding:0 5px; min-width:30px; height:30px; line-height:28px; border-radius:3px; border:1px solid var(--pgBg); background:var(--pgBg); color:#959595; font-size:1.3rem; text-align:center; text-decoration:none }
+.pagination .page:hover,
+.pagination .page:focus { background-color:var(--pgHvBg); border:1px solid var(--pgBg) }
+.pagination .current,
+.pagination .current:hover,
+.pagination .current:focus { background:var(--primaryColor); border:1px solid var(--primaryColor); color:#fff; font-weight:bold; }
 
 /* cheditor 이슈 */
 .cheditor-popup-window *, .cheditor-popup-window :after, .cheditor-popup-window :before {box-sizing:content-box; }
