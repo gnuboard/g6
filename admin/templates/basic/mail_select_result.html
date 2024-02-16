@@ -18,8 +18,8 @@
         const data = event.data.trim();  // 공백 제거
         
         document.getElementById("status").innerHTML += data + "<br>"; // 메시지 출력
-        if (data.includes("[끝]")) {
-            evtSource.close(); // "[끝]" 메시지를 받으면 연결을 닫습니다.
+        if (data.includes("[끝]") || data.includes("[오류]")) {
+            evtSource.close(); // "[끝]" 또는 "[오류]" 메시지를 받으면 연결을 닫습니다.
         }
     }
 </script>

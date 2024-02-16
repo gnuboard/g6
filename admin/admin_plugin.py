@@ -16,7 +16,7 @@ from core.plugin import (
 from lib.dependencies import check_demo_http
 
 logging.basicConfig(level=logging.INFO)
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(validate_super_admin)])
 
 
 @router.post("/plugin_detail")

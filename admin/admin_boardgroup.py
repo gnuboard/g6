@@ -11,6 +11,7 @@ from lib.common import *
 from lib.dependencies import (
     check_demo_alert,
     common_search_query_params,
+    validate_super_admin,
     validate_token
 )
 
@@ -110,7 +111,7 @@ async def boardgroup_list_delete(
     return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
-@router.get("/boardgroup_form")
+@router.get("/boardgroup_form", dependencies=[Depends(validate_super_admin)])
 async def boardgroup_form(request: Request):
     """
     게시판그룹 등록 폼

@@ -19,7 +19,7 @@
     <!-- 게시물 읽기 시작 { -->
     <article id="bo_v">
         <header>
-            <h2 id="bo_v_title"><span class="bo_v_cate">{{ qa.qa_category }}</span> {{ qa.qa_subject }}</h2>
+            <h2 id="bo_v_title"><span class="bo_v_cate">{{ qa.qa_category }}</span> {{ qa.qa_subject|safe }}</h2>
         </header>
         <section id="bo_v_info">
             <h2>페이지 정보</h2>

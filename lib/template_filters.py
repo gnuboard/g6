@@ -10,7 +10,7 @@ from starlette.datastructures import URL
 
 def datetime_format(date: datetime, format="%Y-%m-%d %H:%M:%S"):
     """날짜를 지정된 포맷으로 변환"""
-    if not date:
+    if not date or not isinstance(date, datetime):
         return ""
 
     return date.strftime(format)
