@@ -246,23 +246,22 @@ def get_login_member(request: Request):
     return member
 
 
-def _check_demo_mode_active(request: Request) -> bool:
+def check_demo_mode_active(request: Request) -> bool:
     """데모모드 여부 검사"""
     demo_mode = TypeAdapter(bool).validate_python(os.getenv("DEMO_MODE", False))
-    print("demo_mode", demo_mode)
 
     if not request.state.is_super_admin and demo_mode:
-        return False
+        return True
 
-    return True
+    return False
 
-def check_demo_http(validate: Annotated[bool, Depends(_check_demo_mode_active)]):
+def check_demo_http(active: Annotated[bool, Depends(check_demo_mode_active)]):
     """데모모드 여부 검사 - HTTPException"""
-    if not validate:
+    if active:
         raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="데모 화면에서는 하실(보실) 수 없는 작업입니다.")
 
-def check_demo_alert(validate: Annotated[bool, Depends(_check_demo_mode_active)]):
+def check_demo_alert(active: Annotated[bool, Depends(check_demo_mode_active)]):
     """데모모드 여부 검사 - AlertException"""
-    if not validate:
+    if active:
         raise AlertException("데모 화면에서는 하실(보실) 수 없는 작업입니다.", 403)
 

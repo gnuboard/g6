@@ -1377,7 +1377,9 @@ def conv_field_info(request: Request, data: object, field: list, exclude: list =
     Returns:
         dict: 변환된 데이터
     """
-    if request.state.is_super_admin:
+    from lib.dependencies import check_demo_mode_active
+
+    if not check_demo_mode_active(request):
         return data
 
     # 인스턴스의 속성과 값을 추출하기
