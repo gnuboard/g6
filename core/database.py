@@ -1,4 +1,4 @@
-from dotenv import dotenv_values, load_dotenv
+from dotenv import dotenv_values
 from fastapi import Depends
 from sqlalchemy import create_engine, URL
 from sqlalchemy.engine import Engine
@@ -72,7 +72,6 @@ class DBSetting:
         self._table_prefix = prefix
 
     def set_connect_infomation(self) -> None:
-        load_dotenv()
         env_values = dotenv_values()
         port = env_values.get("DB_PORT", "3306")
 
