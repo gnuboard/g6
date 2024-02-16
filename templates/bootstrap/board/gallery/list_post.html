@@ -18,9 +18,9 @@
         <nav id="bo_cate" class="my-5">
             <h2>{{ board.bo_subject }} 카테고리</h2>
             <ul id="bo_cate_ul">
-                <li><a href="{{ request.url.replace_query_params() }}" {% if not sca %}id="bo_cate_on"{% endif %}>전체</a></li>
+                <li class="d-inline-block p-1"><a href="{{ request.url.replace_query_params() }}" {% if not sca %}id="bo_cate_on"{% endif %}>전체</a></li>
                 {% for category in categories %}
-                <li><a href="{{ request.url.replace_query_params(sca=category) }}" {% if sca == category %}id="bo_cate_on"{% endif %}>{{ category }}</a></li>
+                <li class="d-inline-block p-1"><a href="{{ request.url.replace_query_params(sca=category) }}" {% if sca == category %}id="bo_cate_on"{% endif %}>{{ category }}</a></li>
                 {% endfor %}
             </ul>
         </nav>
@@ -131,7 +131,7 @@
                                 <a href="{{ request.url.replace_query_params(sca=write.ca_name) }}" class="bo_cate_link">{{ write.ca_name }}</a>
                             {% endif %}
 
-                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}" class="bo_tit">
+                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}" class="bo_tit d-block main-font fw-bold">
                                 {% if write.wr_reply %}
                                     <img src="{{ url_for('static', path="/img/icon_reply.gif") }}" class="icon_reply" alt="답변글">
                                 {% endif %}
@@ -208,7 +208,7 @@
     </form>
 
     <!-- 게시판 검색 시작 { -->
-    <div class="bo_sch_wrap">
+    <div class="bo_sch_wrap d-none w-100 h-100 fixed-top" style="z-index:999;">
         <fieldset class="bo_sch">
             <h3>검색</h3>
             <form name="fsearch" method="get">

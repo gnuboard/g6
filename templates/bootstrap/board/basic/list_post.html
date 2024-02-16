@@ -18,9 +18,9 @@
         <nav id="bo_cate" class="my-5">
             <h2 class="blind" >{{ board.subject }} 카테고리</h2>
             <ul id="bo_cate_ul">
-                <li><a href="{{ request.url.replace_query_params() }}" {% if not sca %}id="bo_cate_on"{% endif %}>전체</a></li>
+                <li class="d-inline-block p-1"><a href="{{ request.url.replace_query_params() }}" {% if not sca %}id="bo_cate_on"{% endif %}>전체</a></li>
                 {% for category in categories %}
-                <li><a href="{{ request.url.replace_query_params(sca=category) }}" {% if sca == category %}id="bo_cate_on"{% endif %}>{{ category }}</a></li>
+                <li class="d-inline-block p-1"><a href="{{ request.url.replace_query_params(sca=category) }}" {% if sca == category %}id="bo_cate_on"{% endif %}>{{ category }}</a></li>
                 {% endfor %}
             </ul>
         </nav>
@@ -41,30 +41,30 @@
         
 
         <!-- 게시판 페이지 정보 및 버튼 시작 { -->
-        <div id="bo_btn_top" class="my-3">
-            <div id="bo_list_total">
+        <div id="bo_btn_top" class="d-flex justify-content-between align-items-center my-3">
+            <div id="bo_list_total" class="fs-6 sub-font">
                 <span>Total {{ total_count|number_format }}건</span>
                 {{ current_page|number_format }} 페이지
             </div>
 
-            <ul class="btn_bo_user">
-                <li>
-                    <button type="button" class="btn_bo_sch btn_b01 btn" title="게시판 검색">
+            <ul class="row gx-1">
+                <li id="btn_bo_sch" class="col text-center ml-1" style="width: 40px;">
+                    <button type="button" class="btn_b01 btn main-font fs-4" title="게시판 검색">
                         <i class="fa fa-search" aria-hidden="true"></i>
                         <span class="blind">게시판 검색</span>
                     </button>
                 </li>
                 {% if is_write %}
-                <li>
-                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_b01 btn" title="글쓰기">
+                <li class="col text-center ml-1" style="width: 40px;">
+                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_b01 btn main-font fs-4" title="글쓰기">
                         <i class="fa fa-pencil" aria-hidden="true"></i>
                         <span class="blind">글쓰기</span>
                     </a>
                 </li>
                 {% endif %}
                 {% if is_admin %}
-                <li>
-                    <button type="button" class="btn_more_opt is_list_btn btn_b01 btn" title="게시판 리스트 옵션">
+                <li id="btn_more_opt" class="col text-center ml-1" style="width: 40px;">
+                    <button type="button" class="is_list_btn btn_b01 btn main-font fs-4" title="게시판 리스트 옵션">
                         <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
                         <span class="blind">게시판 리스트 옵션</span>
                     </button>
@@ -74,7 +74,7 @@
                         <li><button type="submit" name="btn_submit" value="선택이동" onclick="document.pressed=this.value"><i class="fa fa-arrows" aria-hidden="true"></i> 선택이동</button></li>
                     </ul>
                 </li>
-                <li>
+                <li class="col text-center ml-1" style="width: 40px;">
                     <a href="{{ url_for('board_form', bo_table=board.bo_table) }}" class="btn_admin btn" title="관리자">
                         <i class="fa fa-cog fa-spin fa-fw"></i>
                         <span class="blind">관리자</span>
@@ -130,7 +130,7 @@
                     </td>
                     {% endif %}
                     <td class="td_subject">
-                        <div class="bo_tit">
+                        <div class="bo_tit d-block main-font fw-bold">
                             {% if "secret" in write.wr_option %}
                                 <i class="fa fa-lock" aria-hidden="true"></i>
                             {% endif %}
@@ -178,7 +178,7 @@
                         {% endif %}
                         <td class="td_num2">
                             {% if wr_id == write.wr_id %}
-                                <span class="bo_current">열람중</span>
+                                <span id="bo_current" style="color: #e8180c;">열람중</span>
                             {% else %}
                                 {{ write.num }}
                             {% endif %}
@@ -193,7 +193,7 @@
                         </td>
                         {% endif %}
                         <td class="td_subject" style="padding-left:{{ reply_depth * 10 }}px">
-                            <div class="bo_tit">
+                            <div class="bo_tit d-block main-font fw-bold">
                                 {% if write.wr_reply %}
                                     <img src="{{ url_for('static', path="/img/icon_reply.gif") }}" class="icon_reply" alt="답변글">
                                 {% endif %}
@@ -232,10 +232,13 @@
                 </tbody>
             </table>
         </div>
-        <!-- 페이지 -->
-        {{ paging|safe }}
-        <!-- 페이지 -->
-        <div class="bo_fx">
+        <div class="d-flex justify-content-between align-items-center">
+          <!-- 페이지 -->
+          <div class="mx-auto d-inline-block">
+            {{ paging|safe }}
+          </div>
+          <!-- 페이지 -->
+          <div class="d-inline-block">
             {% if prev_spt %}
                 <a href="{{ request.url.include_query_params(spt=prev_spt) }}" class="btn02">이전검색</a>
             {% endif %}
@@ -266,11 +269,12 @@
                 </li>
                 {% endif %}
             </ul>
+          </div>
         </div>
     </form>
 
     <!-- 게시판 검색 시작 { -->
-    <div class="bo_sch_wrap">
+    <div class="bo_sch_wrap d-none w-100 h-100 fixed-top" style="z-index:999;">
         <fieldset class="bo_sch">
             <h3>검색</h3>
             <form name="fsearch" method="get">
@@ -301,7 +305,7 @@
     <script>
     jQuery(function($){
         // 게시판 검색
-        $(".btn_bo_sch").on("click", function() {
+        $("#btn_bo_sch").on("click", function() {
             $(".bo_sch_wrap").toggle();
         })
         $('.bo_sch_bg, .bo_sch_cls').click(function(){
@@ -374,7 +378,7 @@
     
     // 게시판 리스트 관리자 옵션
     jQuery(function($){
-        $(".btn_more_opt.is_list_btn").on("click", function(e) {
+        $("#btn_more_opt").on("click", function(e) {
             e.stopPropagation();
             $(".more_opt.is_list_btn").toggle();
         });
