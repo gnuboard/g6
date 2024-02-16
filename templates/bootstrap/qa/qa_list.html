@@ -19,9 +19,9 @@
         <nav id="bo_cate" class="my-5">
             <h2>{{ qa_config.qa_title }} 카테고리</h2>
             <ul id="bo_cate_ul">
-                <li><a href="{{ request.url.replace_query_params() }}" {% if not query_params.sca %}id="bo_cate_on"{% endif %}>전체</a></li>
+                <li class="d-inline-block p-1"><a href="{{ request.url.replace_query_params() }}" {% if not query_params.sca %}id="bo_cate_on"{% endif %}>전체</a></li>
                 {% for category in categories %}
-                <li><a href="{{ request.url.replace_query_params(sca=category) }}" {% if query_params.sca == category %}id="bo_cate_on"{% endif %}>{{ category }}</a></li>
+                <li class="d-inline-block p-1"><a href="{{ request.url.replace_query_params(sca=category) }}" {% if query_params.sca == category %}id="bo_cate_on"{% endif %}>{{ category }}</a></li>
                 {% endfor %}
             </ul>
         </nav>
@@ -48,7 +48,7 @@
                         <span class="blind">게시판 검색</span>
                     </button>
                     <!-- 게시판 검색 시작 -->
-                    <div class="bo_sch_wrap">
+                    <div class="bo_sch_wrap d-none w-100 h-100 fixed-top" style="z-index:999;">
                         <fieldset class="bo_sch">
                             <h3>검색</h3>
                             <legend>게시물 검색</legend>
@@ -124,7 +124,7 @@
                             <td class="td_num">{{ qa.num }}</td>
                             <td class="td_subject">
                                 <span class="bo_cate_link">{{ qa.qa_category }}</span>
-                                <a href="{{ url_for('qa_view', qa_id=qa.qa_id) }}?{{ query_params }}" class="bo_tit">
+                                <a href="{{ url_for('qa_view', qa_id=qa.qa_id) }}?{{ query_params }}" class="bo_tit d-block main-font fw-bold">
                                     {{ qa.subject|search_font(query_params.get("stx", ""))|safe }}
                                     {% if qa.icon_file %}<i class="fa fa-download" aria-hidden="true"></i>{% endif %}
                                 </a>
