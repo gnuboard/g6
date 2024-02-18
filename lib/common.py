@@ -1039,11 +1039,11 @@ def thumbnail(source_file: str, target_path: str = None, width: int = 200, heigh
     
     except UnidentifiedImageError as e:
         print("원본 이미지 객체 생성 실패 : ", e)
-        return False
+        return ""
 
     except Exception as e:
         print("섬네일 생성 실패 : ", e)
-        return False
+        return ""
 
 
 def get_editor_image(contents: str, view: bool = True) -> list:
