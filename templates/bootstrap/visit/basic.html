@@ -1,0 +1,27 @@
+<section id="visit" class="position-relative main-bg rounded-4 overflow-hidden text-white w-100" style="margin-top: 15px;height: 240px;">
+    <h2 class="fs-4 p-4 border-white">접속자집계</h2>
+    <ul class="p-4">
+      <li class="d-flex justify-content-between fs-5 py-2">
+        <span class="col-6 position-relative ps-4">오늘</span>
+        <strong class="col-6 text-end text-white">{{ today|number_format }}</strong>
+      </li>
+      <li class="d-flex justify-content-between fs-5 py-2">
+        <span class="col-6 position-relative ps-4">어제</span>
+        <strong class="col-6 text-end text-white">{{ yesterday|number_format }}</strong>
+      </li>
+      <li class="d-flex justify-content-between fs-5 py-2">
+        <span class="col-6 position-relative ps-4">최대</span>
+        <strong class="col-6 text-end text-white">{{ max|number_format }}</strong>
+      </li>
+      <li class="d-flex justify-content-between fs-5 py-2">
+        <span class="col-6 position-relative ps-4">전체</span>
+        <strong class="col-6 text-end text-white">{{ total|number_format }}</strong>
+      </li>
+    </ul>
+    {% if request.state.is_super_admin %}
+        <a href="/admin/visit_list" class="btn_admin btn">
+            <i class="fa fa-cog fa-spin fa-fw"></i>
+            <span class="blind">관리자</span>
+        </a>
+    {% endif %}
+</section>
