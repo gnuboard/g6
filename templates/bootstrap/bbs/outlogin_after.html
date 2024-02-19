@@ -10,7 +10,7 @@
           <strong class="d-block fs-4 mt-1 mb-2 main-font">{{ member.mb_nick if member is defined else '' }}님</strong>
           <a href="/bbs/member_confirm" id="ol_after_info" class="d-inline-block main-border px-3 py-2 main-font text-decoration-none" title="정보수정">정보수정</a>
           {% if request.state.is_super_admin %}
-          <a href="/admin" class="btn_admin btn" title="관리자"><i class="fa fa-cog fa-spin fa-fw"></i><span class="blind">관리자</span></a>
+          <a href="/admin" class="btn d-inline-block px-3 text-decoration-none align-middle" style="height: 25px;line-height:25px;" title="관리자"><i class="fa fa-cog fa-spin fa-fw"></i><span class="blind">관리자</span></a>
           {% endif %}
         </div>
     </header>
