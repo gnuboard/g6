@@ -5,8 +5,8 @@
 
 {% block head %}
     <script src="/static/js/viewimageresize.js"></script>
-    <link rel="stylesheet" href="{{ theme_asset(request, 'css/bo_common.css?ver=1.0.0') }}">
-    <link rel="stylesheet" href="{{ theme_asset(request, 'css/bo_skin_gallery.css?ver=1.0.0') }}">
+    <link rel="stylesheet" href="{{ theme_asset(request, 'mobile/css/bo_common.css?ver=1.0.0') }}">
+    <link rel="stylesheet" href="{{ theme_asset(request, 'mobile/css/bo_skin_gallery.css?ver=1.0.0') }}">
 {% endblock head %}
 
 {% block title %}{{ write.wr_subject|truncate(20, False, '...', 0) }} > {{ board.subject }}{% endblock title %}

@@ -7,8 +7,8 @@
 {% block subtitle %}{{ board.subject }}{% endblock subtitle %}
 
 {% block head %}
-    <link rel="stylesheet" href="{{ theme_asset(request, 'css/bo_common.css?ver=1.0.0') }}">
-    <link rel="stylesheet" href="{{ theme_asset(request, 'css/bo_skin_basic.css?ver=1.0.0') }}">
+    <link rel="stylesheet" href="{{ theme_asset(request, 'mobile/css/bo_common.css?ver=1.0.0') }}">
+    <link rel="stylesheet" href="{{ theme_asset(request, 'mobile/css/bo_skin_gallery.css?ver=1.0.0') }}">
 {% endblock head %}
 
 {% block content %}
@@ -16,7 +16,7 @@
 {% set sca=request.query_params.sca %}
 {% set sod_reverse="asc" if request.query_params.sod == "desc" else "desc" %}
 
-<div id="bo_basic_list" class="bo_common bo_list" style="width:{{ table_width }}">
+<div id="bo_gallery_list" class="bo_common bo_list" style="width:{{ table_width }}">
 
     {% if board.bo_use_category %}
     <div class="list_category">
@@ -99,160 +99,94 @@
 
         </div>
 
-        <table class="list_table">
-            <caption class="blind">자유게시판 목록</caption>
-            <thead>
-                <tr>
-                    {% if is_admin %}
-                    <th scope="col" class="chk_box">
-                        <input type="checkbox" id="chkall" onclick="if (this.checked) all_checked(true); else all_checked(false);">
-                        <label for="chkall">
-                            <span>&nbsp;</span>
-                            <b class="blind">현재 페이지 게시물 전체선택</b>
-                        </label>
-                    </th>
-                    {% endif %}
-                    <th scope="col">번호</th>
-                    {% if board.bo_use_category %}
-                    <th scope="col">분류</th>
-                    {% endif %}
-                    <th scope="col">제목</th>
-                    <th scope="col">글쓴이</th>
-                    <th scope="col"><a href="{{ request.url.include_query_params(sst="wr_hit", sod=sod_reverse) }}">조회</a></th>
-                    {% if board.bo_use_good %}
-                    <th scope="col"><a href="{{ request.url.include_query_params(sst="wr_good", sod=sod_reverse) }}">추천</a></th>
-                    {% endif %}
-                    {% if board.bo_use_nogood %}
-                    <th scope="col"><a href="{{ request.url.include_query_params(sst="wr_nogood", sod=sod_reverse) }}">비추천</a></th>
-                    {% endif %}
-                    <th scope="col"><a href="{{ request.url.include_query_params(sst="wr_datetime", sod=sod_reverse) }}">날짜</a></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for write in notice_writes %}
-                <tr class="is_notice">
-                    {% if is_admin %}
-                    <td class="table_check chk_box"></td>
-                    {% endif %}
-                    <td class="table_wrid">공지</td>
-                    {% if board.bo_use_category and write.ca_name %}
-                    <td class="table_category">
-                        <a href="{{ request.url.replace_query_params(sca=write.ca_name) }}" class="category_link">
-                            {{ write.ca_name }}
-                        </a>
-                    </td>
-                    {% endif %}
-                    <td class="table_subject">
-                        {% if "secret" in write.wr_option %}
-                            <i class="fa fa-lock" aria-hidden="true"></i>
-                        {% endif %}
-                        <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}">
-                            {{ write.subject }}
-                        </a>
-                        {% if write.wr_comment %}
-                        <span class="blind">댓글</span>
-                        <span class="count_comment">{{ write.wr_comment }}</span>
-                        <span class="blind">개</span>
-                        {% endif %}
-                        {% if write.icon_new %}
-                        <span class="new_icon">N</span>
-                        <span class="blind">새글</span>
-                        {% endif %}
-                        {% if write.icon_hot %}
-                        <i class="fa fa-heart" aria-hidden="true"></i>
-                        <span class="blind">새글</span>
-                        {% endif %}
-                        {% if write.icon_file %}
-                        <i class="fa fa-download" aria-hidden="true"></i>
-                        <span class="blind">첨부파일있음</span>
-                        {% endif %}
-                        {% if write.icon_link %}
-                        <i class="fa fa-link" aria-hidden="true"></i>
-                        <span class="blind">링크있음</span>
-                        {% endif %}
-                    </td>
-                    <td class="table_writer">
-                        {% if board.bo_use_sideview %}
-                            {{ sideview.get(request, write.mb_id, write.name, write.wr_email, write.wr_homepage)|safe }}
-                        {% else %}
-                            <span class="sv_member">{{ write.name }}</span>
-                        {% endif %}
-                    </td>
-                    <td class="table_hit" data-label="조회수">{{ write.wr_hit|number_format }}</td>
-                    {% if board.bo_use_good %}
-                    <td class="table_good" data-label="추천">{{ write.wr_good|number_format }}</td>
-                    {% endif %}
-                    {% if board.bo_use_nogood %}
-                    <td class="table_nogood" data-label="비추">{{ write.wr_nogood|number_format }}</td>
-                    {% endif %}
-                    <td class="table_datetime">{{ write.datetime }}</td>
-                </tr>
-                {% endfor %}
+        {% if is_admin %}
+        <div class="list_all_check chk_box">
+            <input type="checkbox" id="chkall" onclick="if (this.checked) all_checked(true); else all_checked(false);">
+            <label for="chkall">
+                <span></span>
+                <b class="blind">현재 페이지 게시물 </b> 전체선택
+            </label>
+        </div>
+        {% endif %}
 
-                {% for write in writes %}
-                {% set reply_depth=write.wr_reply|length %}
-                <tr class="{{ loop.cycle("", "even") }}">
-                    {% if is_admin %}
-                    <td class="table_check chk_box">
-                        {% if not write.is_notice %}
-                        <input type="checkbox" name="chk_wr_id[]" value="{{ write.wr_id }}" id="chk_wr_id_{{ loop.index }}">
-                        <label for="chk_wr_id_{{ loop.index }}">
-                            <span>&nbsp;</span>
-                            <b class="blind">{{ write.subject }}</b>
-                        </label>
-                        {% endif %}
-                    </td>
-                    {% endif %}
-                    <td class="table_wrid">
+        <ul class="list_grid" style="grid-template-columns: repeat({{ board.bo_gallery_cols }}, 1fr);">
+            {% for write in writes %}
+
+            <li class="grid_item {% if wr_id == write.wr_id %}grid_now{% endif %}">
+
+                <div class="item_chk chk_box">
+                    <input type="checkbox" name="chk_wr_id[]" value="{{ write.wr_id }}" id="chk_wr_id_{{ loop.index }}">
+                    <label for="chk_wr_id_{{ loop.index }}">
+                        <span></span>
+                        <b class="blind">{{ write.subject }}</b>
+                        선택
+                    </label>
+                    <span class="blind">
                         {% if wr_id == write.wr_id %}
-                            <span class="current_article">열람중</span>
+                        열람중
                         {% else %}
-                            {{ write.num }}
+                        {{ write.num }}
                         {% endif %}
-                    </td>
-                    {% if board.bo_use_category %}
-                    <td class="table_category">
-                        {% if write.ca_name %}
-                        <a href="{{ request.url.replace_query_params(sca=write.ca_name) }}" class="category_link">
-                            {{ write.ca_name }}
-                        </a>
-                        {% endif %}
-                    </td>
+                    </span>
+                </div>
+
+                <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}" class="item_link item_img">
+                    {% set thumbnail=get_list_thumbnail(request, board, write, gallery_width, gallery_height) %}
+                    {% if thumbnail.src %}
+                    <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}">
+                    {% else %}
+                    <span class="is_label is_noimage">NO IMAGE</span>
+                    <img src="{{ url_for('static', path='/img/dummy-donotremove.png?ver=1.0.0') }}" alt="" width="{{ gallery_width }}" height="{{ gallery_height }}">
                     {% endif %}
-                    <td class="table_subject" style="padding-left:{{ reply_depth * 10 }}px">
-                        {% if write.wr_reply %}
-                            <i class="fa fa-reply"></i>
-                            <span class="blind">답변</span>
-                        {% endif %}
-                        {% if "secret" in write.wr_option %}
-                            <i class="fa fa-lock" aria-hidden="true"></i>
-                        {% endif %}
-                        <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}">
-                            {{ write.wr_subject }}
-                        </a>
-                        {% if write.wr_comment %}
-                        <span class="blind">댓글</span>
-                        <span class="count_comment">{{ write.wr_comment }}</span>
-                        <span class="blind">개</span>
-                        {% endif %}
+                </a>
+
+                {% if write.icon_new or write.icon_hot %}
+                <div class="item_icon">
+                    <div>
+
                         {% if write.icon_new %}
                         <span class="new_icon">N</span>
                         <span class="blind">새글</span>
                         {% endif %}
+
                         {% if write.icon_hot %}
                         <i class="fa fa-heart" aria-hidden="true"></i>
                         <span class="blind">인기글</span>
                         {% endif %}
-                        {% if write.icon_file %}
-                        <i class="fa fa-download" aria-hidden="true"></i>
-                        <span class="blind">첨부파일있음</span>
-                        {% endif %}
-                        {% if write.icon_link %}
-                        <i class="fa fa-link" aria-hidden="true"></i>
-                        <span class="blind">링크있음</span>
-                        {% endif %}
-                    </td>
-                    <td class="table_writer">
+
+                        <!-- TODO: 비밀글 아이콘 -->
+
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if write.ca_name %}
+                <a href="{{ request.url.replace_query_params(sca=write.ca_name) }}">{{ write.ca_name }}</a>
+                {% endif %}
+
+                <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}" class="item_link item_subject">
+                    {% if write.wr_reply %}
+                        <i class="fa fa-reply"></i>
+                        <span class="blind">답변</span>
+                    {% endif %}
+
+                    {% if write.wr_id|string in board.bo_notice %}
+                        [공지]
+                    {% endif %}
+
+                    {{ write.subject }}
+
+                    {% if write.wr_comment %}
+                    <span class="blind">댓글</span>
+                    <span class="count_comment">{{ write.wr_comment }}</span>
+                    <span class="blind">개</span>
+                    {% endif %}
+                </a>
+
+                <div class="item_footer">
+
+                    <div class="item_writer">
+                        <span class="blind">작성자 </span>
                         {% if board.bo_use_sideview %}
                             {{ sideview.get(request, write.mb_id, write.name, write.wr_email, write.wr_homepage)|safe }}
                         {% else %}
@@ -260,21 +194,51 @@
                                 {{ write.name }}
                             </span>
                         {% endif %}
-                    </td>
-                    <td class="table_hit" data-label="조회수">{{ write.wr_hit|number_format }}</td>
-                    {% if board.bo_use_good %}
-                    <td class="table_good" data-label="추천">{{ write.wr_good|number_format }}</td>
-                    {% endif %}
-                    {% if board.bo_use_nogood %}
-                    <td class="table_nogood" data-label="비추">{{ write.wr_nogood|number_format }}</td>
-                    {% endif %}
-                    <td class="table_datetime">{{ write.wr_datetime|datetime_format('%y-%m-%d') }}</td>
-                </tr>
-                {% else %}
-                <tr><td colspan="9" class="empty_table">게시글이 없습니다.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                    </div>
+
+                    <div class="item_info">
+                        <div class="info_panel">
+                            <span class="datetime">
+                                <span class="blind">작성일 </span>
+                                <i class="fa fa-regular fa-clock" aria-hidden="true"></i>
+                                {{ write.wr_datetime|datetime_format('%y-%m-%d') }}
+                            </span>
+
+                            <span class="hit">
+                                <span class="blind">조회 </span>
+                                <i class="fa fa-eye" aria-hidden="true"></i>
+                                {{ write.wr_hit|number_format }}
+                            </span>
+                        </div>
+
+                        {% if board.bo_use_good or board.bo_use_nogood %}
+                        <div class="info_react">
+                            {% if board.bo_use_good %}
+                            <span class="blind">추천</span>
+                            <strong class="react_good">
+                                <i class="fa fa-regular fa-thumbs-up" aria-hidden="true"></i>
+                                {{ write.wr_good|number_format }}
+                            </strong>
+                            {% endif %}
+                            {% if board.bo_use_nogood %}
+                            <span class="blind">비추천</span>
+                            <strong class="react_nogood">
+                                <i class="fa fa-regular fa-thumbs-down" aria-hidden="true"></i>
+                                {{ write.wr_nogood|number_format }}
+                            </strong>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                </div>
+
+            </li>
+
+            {% else %}
+            <li class="grid_empty">게시글이 없습니다.</li>
+            {% endfor %}
+        </ul>
 
         {{ paging|safe }}
 
@@ -416,6 +380,7 @@ function fboardlist_submit(f) {
     return true;
 }
 
+// 선택한 게시물 복사 및 이동
 function select_copy(sw) {
     var f = document.fboardlist;
     var sub_win = window.open("", "move", "left=50, top=50, width=500, height=550, scrollbars=1");
@@ -439,4 +404,5 @@ jQuery(function($){
 });
 </script>
 {% endif %}
+<!-- } 게시판 목록 끝 -->
 {% endblock content %}
