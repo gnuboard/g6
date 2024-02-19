@@ -73,7 +73,7 @@
                     <a href="/board/{{ board.bo_table }}?{{ query_params }}">
                         {{ board.subject }} 검색결과 ({{ board.search_count }})
                     </a>
-                    <a href="/board/{{ board.bo_table }}?{{ query_params }}" class="sch_more"><i class="fa-solid fa-circle-plus"></i></a>
+                    <a href="/board/{{ board.bo_table }}?{{ query_params }}" class="sch_more" title="더보기"><i class="fa-solid fa-circle-plus"></i></a>
                 </h2>
                 <ul>
                 {% for write in board.writes %}
