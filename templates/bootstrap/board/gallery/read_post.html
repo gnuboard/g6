@@ -16,23 +16,23 @@
 {% set is_admin=get_admin_type(request, login_member.mb_id, board=board) %}
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
     <!-- 게시물 읽기 시작 { -->
-    <article id="bo_v" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
+    <article id="bo_v" class="mb-4" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
         <header>
-            <h2 id="bo_v_title">
+            <h2 id="bo_v_title" class="m-0 p-0">
                 {% if board.bo_use_category and write.ca_name %}
-                    <span class="bo_v_cate">{{ write.ca_name }}</span>
+                    <span class="bo_v_cate d-inline-block main-font px-3 rounded-2" style="line-height: 20px;">{{ write.ca_name }}</span>
                 {% endif %}
-                <span class="bo_v_tit">{{ write.wr_subject|truncate(250, False, '...', 0) }}</span>
+                <span class="bo_v_tit d-block fs-1 mt-5 mb-4 main-font fw-bold" style="word-break: break-all;">{{ write.wr_subject|truncate(250, False, '...', 0) }}</span>
             </h2>
         </header>
 
-        <section id="bo_v_info">
-            <h2>페이지 정보</h2>
-            <div class="profile_info">
-                <div class="pf_img"><img src="{{ get_member_image(request, write.mb_id) }}" alt="profile_image"></div>
-                <div class="profile_info_ct">
+        <section id="bo_v_info" class="d-flex justify-content-between align-items-center main-bb mt-5 pb-5">
+            <h2 class="blind">페이지 정보</h2>
+            <div class="profile_info d-inline-flex">
+                <div class="pf_img me-3 rounded-circle overflow-hidden" style="width: 50px;height: 50px;"><img src="{{ get_member_image(request, write.mb_id) }}" alt="profile_image" width="50" height="50"></div>
+                <div class="profile_info_ct py-2 fs-5" style="line-height: 18px;">
                     <span class="blind">작성자</span>
-                    <strong>
+                    <strong class="d-inline-block me-3 fw-normal">
                         {% if board.bo_use_sideview %}
                             {{ sideview.get(request, write.mb_id, write.name, write.wr_email, write.wr_homepage)|safe }}
                         {% else %}
@@ -45,9 +45,9 @@
                         {% endif %}
                     </strong>
                     <br>
-                    <span class="blind">댓글</span><strong><a href="#bo_vc"> <i class="fa fa-regular fa-commenting" aria-hidden="true"></i> {{ write.wr_comment|number_format }}건</a></strong>
-                    <span class="blind">조회</span><strong><i class="fa fa-eye" aria-hidden="true"></i> {{ write.wr_hit|number_format }}회</strong>
-                    <strong class="if_date"><span class="blind">작성일</span><i class="fa fa-regular fa-clock" aria-hidden="true"></i> {{ write.wr_datetime }}</strong>
+                    <span class="blind">댓글</span><strong class="d-inline-block me-3 fw-normal"><a href="#bo_vc" style="color:#888;"> <i class="fa fa-regular fa-commenting" aria-hidden="true"></i> {{ write.wr_comment|number_format }}건</a></strong>
+                    <span class="blind">조회</span><strong class="d-inline-block me-3 fw-normal"><i class="fa fa-eye" aria-hidden="true"></i> {{ write.wr_hit|number_format }}회</strong>
+                    <strong class="if_date d-inline-block fw-normal"><span class="blind">작성일</span><i class="fa fa-regular fa-clock" aria-hidden="true"></i> {{ write.wr_datetime }}</strong>
                 </div>
             </div>
             <!-- 게시물 상단 버튼 시작 { -->
@@ -179,7 +179,7 @@
     </section>
 
     <section id="bo_v_file">
-        <h2>첨부파일</h2>
+        <h2 class="blind">첨부파일</h2>
         <ul>
         {% for file in files %}
             <li>
