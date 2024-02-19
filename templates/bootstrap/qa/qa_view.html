@@ -100,16 +100,15 @@
             <!-- 첨부파일 시작 { -->
             <section id="bo_v_file">
                 <h2 class="blind">첨부파일</h2>
-                <ul>
-                    {% for file in qa.file %}
-                        <li>
-                            <i class="fa fa-download" aria-hidden="true"></i>
-                            <a href="/{{ file.path }}" class="view_file_download" download="{{ file.name }}">
-                                <strong>{{ file.name }}</strong>
-                            </a>
-                            <br>
-                        </li>
-                    {% endfor %}
+                <ul class="m-0 list-unstyled">
+                {% for file in qa.file %}
+                    <li class="position-relative d-flex align-items-center file-border rounded-3 transition-effect p-4 mt-3" style="color: #b2b2b2;">
+                        <i class="fa fa-folder-open fs-1 me-4" aria-hidden="true"></i>
+                        <a href="/{{ file.path }}" download="{{ file.name }}" class="d-block text-decoration-none break-word main-font fs-5">
+                            <strong>{{ file.name }}</strong>
+                        </a>
+                    </li>
+                {% endfor %}
                 </ul>
             </section>
             <!-- } 첨부파일 끝 -->
@@ -170,14 +169,16 @@
                     <!-- 첨부파일 시작 { -->
                     <section id="bo_v_file">
                         <h2 class="blind">첨부파일</h2>
+                        <ul class="m-0 list-unstyled">
                         {% for file in answer.file %}
-                            <li>
-                                <i class="fa fa-download" aria-hidden="true"></i>
-                                <a href="/{{ file.path }}" class="view_file_download" download="{{ file.name }}">
+                            <li class="position-relative d-flex align-items-center file-border rounded-3 transition-effect p-4 mt-3" style="color: #b2b2b2;">
+                                <i class="fa fa-download fs-1 me-4" aria-hidden="true"></i>
+                                <a href="/{{ file.path }}" download="{{ file.name }}" class="d-block text-decoration-none break-word main-font fs-5">
                                     <strong>{{ file.name }}</strong>
                                 </a>
                             </li>
                         {% endfor %}
+                        </ul>
                     </section>
                     <!-- } 첨부파일 끝 -->
                 </div>
