@@ -1181,7 +1181,7 @@ p input:valid + label::after { width:100%; transform:translateX(0); }
 #memo_list .memo_datetime {font-size:1.1rem;color:#888d92}
 #memo_list .memo_del {position:absolute;right:15px;top:15px;padding:10px;color:#c7c9cb;font-size:1.7rem}
 #memo_list .memo_cnt {margin-top:5px;font-weight:normal;display:inline-block;font-size:1.4rem}
-#memo_list .pg_wrap {margin-top:10px;width:100%;float:inherit;text-align:center}
+#memo_list .pagination {margin-top:10px;width:100%;float:inherit;text-align:center}
 
 #memo_view_contents {margin-bottom:20px;border-top:1px solid #ececec;border-bottom:1px solid #ececec}
 #memo_view_contents h2 { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: polygon(0 0, 0 0, 0 0); }
@@ -1262,7 +1262,7 @@ p input:valid + label::after { width:100%; transform:translateX(0); }
 .point_list .point_date {float:left;color:#888d92}
 .point_list .txt_expired {color:red;margin-left:5px}
 
-#point .pg_wrap {width:100%;float:inherit;text-align:center}
+#point .pagination {width:100%;float:inherit;text-align:center}
 #point .btn_close {margin:20px auto}
 
 /* 회원 비밀번호 확인 */
