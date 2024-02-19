@@ -290,35 +290,35 @@ def get_paging(request: Request,
     # 처음 페이지 링크 생성
     if current_page > 1:
         start_url = f"{url_prefix.include_query_params(page=1)}{add_url}"
-        page_links.append(f'<a href="{start_url}" class="pg_page pg_start" title="처음 페이지"><span class="blind">처음</span></a>')
+        page_links.append(f'<a href="{start_url}" class="page start" title="처음 페이지"><i class="fa fa-backward-fast"></i><span class="blind">처음</span></a>')
 
     # 이전 페이지 구간 링크 생성
     if start_page > 1:
         prev_page = max(current_page - page_count, 1)
         prev_url = f"{url_prefix.include_query_params(page=prev_page)}{add_url}"
-        page_links.append(f'<a href="{prev_url}" class="pg_page pg_prev" title="이전 구간"><span class="blind">이전</span></a>')
+        page_links.append(f'<a href="{prev_url}" class="page prev" title="이전 구간"><i class="fa fa-caret-left"></i><span class="blind">이전</span></a>')
 
     # 페이지 링크 생성
     for page in range(start_page, end_page + 1):
         page_url = f"{url_prefix.include_query_params(page=page)}{add_url}"
         if page == current_page:
-            page_links.append(f'<a href="{page_url}"><strong class="pg_current" title="현재 {page} 페이지">{page}</strong></a>')
+            page_links.append(f'<a href="{page_url}" class="page current" title="현재 {page} 페이지"><strong class="blind">현재</strong>{page}<strong class="blind">페이지</strong></a>')
         else:
-            page_links.append(f'<a href="{page_url}" class="pg_page" title="{page} 페이지">{page}</a>')
+            page_links.append(f'<a href="{page_url}" class="page" title="{page} 페이지">{page}</a>')
 
     # 다음 페이지 구간 링크 생성
     if total_pages > end_page:
         next_page = min(current_page + page_count, total_pages)
         next_url = f"{url_prefix.include_query_params(page=next_page)}{add_url}"
-        page_links.append(f'<a href="{next_url}" class="pg_page pg_next" title="다음 구간"><span class="blind">다음</span></a>')
+        page_links.append(f'<a href="{next_url}" class="page next" title="다음 구간"><i class="fa fa-caret-right"></i><span class="blind">다음</span></a>')
     
-    # 마지막 페이지 링크 생성        
+    # 마지막 페이지 링크 생성
     if current_page < total_pages:
         end_url = f"{url_prefix.include_query_params(page=total_pages)}{add_url}"
-        page_links.append(f'<a href="{end_url}" class="pg_page pg_end" title="마지막 페이지"><span class="blind">마지막</span></a>')
+        page_links.append(f'<a href="{end_url}" class="page end" title="마지막 페이지"><i class="fa fa-forward"></i><span class="blind">마지막</span></a>')
 
     # 페이지 링크 목록을 문자열로 변환하여 반환
-    return '<nav class="pg_wrap"><span class="pg">' + ''.join(page_links) + '</span></nav>'
+    return '<div class="pagination">' + ''.join(page_links) + '</div>'
 
 
 def subject_sort_link(request: Request,
