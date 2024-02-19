@@ -87,6 +87,9 @@ async def member_profile(
     member = db.scalar(select(Member).filter_by(mb_id=member.mb_id))
     if not member:
         raise AlertException("회원정보가 없습니다.", 404)
+    # 데모관리자는 수정할 수 없음
+    if member.mb_id == os.getenv("DEMO_ADMIN_ID", ""):
+        raise AlertException("데모관리자는 수정할 수 없습니다.", 403)
 
     form_context = {
         "action_url": request.url_for("member_profile", mb_no=mb_no).path,
@@ -124,7 +127,7 @@ async def member_profile_save(
 ):
     """
     회원정보 수정 처리
-    """
+    """   
     if not request.session.get("ss_profile_change", False):
         raise AlertException("잘못된 접근입니다.", 403, url=request.url_for("member_password").path)
 
@@ -132,6 +135,9 @@ async def member_profile_save(
     exists_member = db.scalar(select(Member).filter_by(mb_id=mb_id))
     if not exists_member:
         raise AlertException("회원정보가 없습니다.", 403)
+    # 데모관리자는 수정할 수 없음
+    if exists_member.mb_id == os.getenv("DEMO_ADMIN_ID", ""):
+        raise AlertException("데모관리자는 수정할 수 없습니다.", 403)
 
     config = request.state.config
 

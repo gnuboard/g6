@@ -24,7 +24,9 @@ async def login_form(
     """
     context = {
         "request": request,
-        "url": url
+        "url": url,
+        "demo_admin_id": os.getenv("DEMO_ADMIN_ID", ""),
+        "demo_admin_password": os.getenv("DEMO_ADMIN_PASSWORD", "")
     }
     return templates.TemplateResponse("bbs/login_form.html", context)
 
