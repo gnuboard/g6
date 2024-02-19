@@ -17,7 +17,7 @@ templates.env.globals["captcha_widget"] = captcha_widget
 async def formmail(
     request: Request,
     db: db_session,
-    mb_id: str = Path(None),
+    mb_id: str = Path,
     name: str = None,
     email: str = None
 ):

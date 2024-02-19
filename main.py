@@ -66,6 +66,7 @@ from bbs.social import router as social_router
 from bbs.password import router as password_router
 from bbs.search import router as search_router
 from bbs.current_connect import router as current_connect_router
+from bbs.formmail import router as formmail_router
 from lib.editor.ckeditor4 import router as editor_router
 
 # git clone으로 소스를 받은 경우에는 data디렉토리가 없으므로 생성해야 함
@@ -110,6 +111,7 @@ app.include_router(social_router, prefix="/bbs", tags=["social"])
 app.include_router(password_router, prefix="/bbs", tags=["password"])
 app.include_router(search_router, prefix="/bbs", tags=["search"])
 app.include_router(current_connect_router, prefix="/bbs", tags=["current_connect"])
+app.include_router(formmail_router, prefix="/bbs", tags=["formmail"])
 app.include_router(editor_router, prefix="/editor", tags=["editor"])
 
 
