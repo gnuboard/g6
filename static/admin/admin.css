@@ -478,14 +478,14 @@ textarea{width:100%;background: var(--frmInputBg);border:var(--frmInputBorder);c
 border-bottom: 5px solid black;}
 .scroll_top span.top_txt{display:block}
 
-#tnb button.darkmode-toggle-switch{position: relative;width:40px;height:40px;text-align:center;border-radius: 3px;border: 1px solid #ffffff40; color: #fff;display: flex;justify-content: center;align-items: center;cursor: pointer;padding: 0;overflow: visible;}
-#tnb button.darkmode-toggle-switch::after {position: absolute;right:0;display: inline-block;width: 120px;bottom: -22px;background: var(--mainBg);color: var(--fontColor) !important;padding: 4px 10px;color: #151c24;border-radius: 4px;opacity: 0;content: var(--switchCont);transition: all 0.2s;box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.3);}
-#tnb button.darkmode-toggle-switch:hover::after{opacity: 1;}
-#tnb button.darkmode-toggle-switch .visible {font-size: 18px; vertical-align:middle;}
+#tnb #darkmode-toggle-switch{position: relative;width:40px;height:40px;text-align:center;border-radius: 3px;border: 1px solid #ffffff40; color: #fff;display: flex;justify-content: center;align-items: center;cursor: pointer;padding: 0;overflow: visible;}
+#tnb #darkmode-toggle-switch::after {position: absolute;right:0;display: inline-block;width: 120px;bottom: -22px;background: var(--mainBg);color: var(--fontColor) !important;padding: 4px 10px;color: #151c24;border-radius: 4px;opacity: 0;content: var(--switchCont);transition: all 0.2s;box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.3);}
+#tnb #darkmode-toggle-switch:hover::after{opacity: 1;}
+#tnb #darkmode-toggle-switch .visible {font-size: 18px; vertical-align:middle;}
 
 /* 다크모드 설정 */
-.darkmode-toggle-switch .visible.dark {display: var(--lightVisible)}
-.darkmode-toggle-switch .visible.bright {display: var(--darkVisible)}
+#darkmode-toggle-switch .visible.dark {display: var(--lightVisible)}
+#darkmode-toggle-switch .visible.bright {display: var(--darkVisible)}
 
 /* 페이지 내 검색 */
 .local_sch{}
