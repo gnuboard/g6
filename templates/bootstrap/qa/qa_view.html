@@ -17,23 +17,23 @@
     {% endif %}
 
     <!-- 게시물 읽기 시작 { -->
-    <article id="bo_v">
+    <article id="bo_v" class="mb-4">
         <header>
-            <h2 id="bo_v_title"><span class="bo_v_cate">{{ qa.qa_category }}</span> {{ qa.qa_subject }}</h2>
+            <h2 id="bo_v_title" class="m-0 p-0"><span class="bo_v_cate d-inline-block main-font px-3 rounded-2" style="line-height: 20px;">{{ qa.qa_category }}</span> {{ qa.qa_subject }}</h2>
         </header>
-        <section id="bo_v_info">
-            <h2>페이지 정보</h2>
+        <section id="bo_v_info fs-5" class="d-flex justify-content-between align-items-center main-bb mt-5 pb-5">
+            <h2 class="blind">페이지 정보</h2>
             <span class="blind">작성자</span>
-            <strong> {{ qa.qa_name }}</strong>
+            <strong class="d-inline-block me-3 fw-normal"> {{ qa.qa_name }}</strong>
             <span class="blind">작성일</span>
-            <strong class="bo_date"><i class="fa fa-regular fa-clock" aria-hidden="true"></i> {{ qa.qa_datetime }}</strong>
+            <strong class="bo_date d-inline-block me-3 fw-normal"><i class="fa fa-regular fa-clock" aria-hidden="true"></i> {{ qa.qa_datetime }}</strong>
             {% if qa.qa_email %}
                 <span class="blind">이메일</span>
-                <strong><i class="fa fa-regular fa-envelope" aria-hidden="true"></i> {{ qa.qa_email }}</strong>
+                <strong class="d-inline-block me-3 fw-normal"><i class="fa fa-regular fa-envelope" aria-hidden="true"></i> {{ qa.qa_email }}</strong>
             {% endif %}
             {% if qa.qa_hp %}
                 <span class="blind">휴대폰</span>
-                <strong><i class="fa fa-phone" aria-hidden="true"></i> {{ qa.qa_hp }}</strong>
+                <strong class="d-inline-block me-3 fw-normal"><i class="fa fa-phone" aria-hidden="true"></i> {{ qa.qa_hp }}</strong>
             {% endif %}
             <!-- 게시물 상단 버튼 시작 { -->
             <div id="bo_v_top">
@@ -99,7 +99,7 @@
             
             <!-- 첨부파일 시작 { -->
             <section id="bo_v_file">
-                <h2>첨부파일</h2>
+                <h2 class="blind">첨부파일</h2>
                 <ul>
                     {% for file in qa.file %}
                         <li>
@@ -169,7 +169,7 @@
                     {{ answer.qa_content|safe }}
                     <!-- 첨부파일 시작 { -->
                     <section id="bo_v_file">
-                        <h2>첨부파일</h2>
+                        <h2 class="blind">첨부파일</h2>
                         {% for file in answer.file %}
                             <li>
                                 <i class="fa fa-download" aria-hidden="true"></i>
