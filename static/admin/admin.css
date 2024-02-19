@@ -25,6 +25,8 @@
   --themeBg: #e5ecef;
   --processBg: #f9f9f9;
   --tfootBg: #eeeeee;
+  --pgBg: #eee;
+  --pgHvBg: #fafafa;
   --bovHover: #f7f7f7;
   /* border */
   --containerBorder: 1px solid #cecece;
@@ -65,6 +67,8 @@
   --themeBg: #000000;
   --processBg: #272E3D;
   --tfootBg: #1f2531;
+  --pgBg: #323235;
+  --pgHvBg: #1f1d1d;
   --bovHover: #1f1d1d;
   /* border */
   --containerBorder: 1px solid #ffffff30;
@@ -1217,12 +1221,12 @@ box-shadow: 2px 2px 3px 0px rgba(0,0,0,0.2);}
 
 /* 페이징 */
 .pagination { display:flex; justify-content: center; align-items: center; gap:3px; }
-.pagination .page { display:inline-block; padding:0 5px; min-width:30px; height:30px; line-height:28px; border-radius:3px; border:1px solid var(--pgBg); background:var(--pgBg); color:#959595; font-size:1.3rem; text-align:center; text-decoration:none }
+.pagination .page { display:inline-block; padding:0 5px; min-width:30px; height:30px; line-height:28px; border-radius:3px; border:1px solid var(--pgBg); background:var(--pgBg); color:#959595; text-align:center; text-decoration:none }
 .pagination .page:hover,
 .pagination .page:focus { background-color:var(--pgHvBg); border:1px solid var(--pgBg) }
 .pagination .current,
 .pagination .current:hover,
-.pagination .current:focus { background:var(--primaryColor); border:1px solid var(--primaryColor); color:#fff; font-weight:bold; }
+.pagination .current:focus { background:var(--primaryColor1); border:1px solid var(--primaryColor1); color:#fff; font-weight:bold; }
 
 .social_config_explain p{padding-bottom:10px}
 
