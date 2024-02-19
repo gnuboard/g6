@@ -110,7 +110,7 @@ class CSPMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         response: Response = await call_next(request)
         response.headers['Content-Security-Policy'] = (
-            "default-src 'self' 'unsafe-inline';"
+            "default-src 'self' 'unsafe-inline' http://t1.daumcdn.net https://www.google.com https://www.gstatic.com;"
         )
         return response
 
