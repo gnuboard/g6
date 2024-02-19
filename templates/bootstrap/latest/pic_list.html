@@ -54,7 +54,7 @@
             {% endif %}
         </li>
         {% else -%}
-            <li class="empty_li">게시물이 없습니다.</li>
+            <li class="empty_li sub-font fs-4">게시물이 없습니다.</li>
         {%- endfor %}
     </ul>
     <a href="{{ url_for('list_post', bo_table=bo_table) }}" class="lt_more" title="더보기">
