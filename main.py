@@ -1,3 +1,27 @@
+from lib.editor.ckeditor4 import router as editor_router
+from bbs.current_connect import router as current_connect_router
+from bbs.search import router as search_router
+from bbs.password import router as password_router
+from bbs.social import router as social_router
+from bbs.member_find import router as member_find_router
+from bbs.member_leave import router as member_leave_router
+from bbs.ajax_autosave import router as autosave_router
+from bbs.ajax_good import router as good_router
+from bbs.board_new import router as board_new_router
+from bbs.scrap import router as scrap_router
+from bbs.point import router as point_router
+from bbs.poll import router as poll_router
+from bbs.memo import router as memo_router
+from bbs.profile import router as profile_router
+from bbs.member_profile import router as user_profile_router
+from bbs.qa import router as qa_router
+from bbs.faq import router as faq_router
+from bbs.content import router as content_router
+from bbs.register import router as register_router
+from bbs.login import router as login_router
+from bbs.board import router as board_router
+from install.router import router as install_router
+from admin.admin import router as admin_router
 import datetime
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -34,7 +58,8 @@ load_dotenv()
 # 'APP_IS_DEBUG' 환경 변수를 가져와서 boolean 타입으로 변환합니다.
 # 이 환경 변수가 설정되어 있지 않은 경우, 기본값으로 False를 사용합니다.
 # TypeAdapter는 값을 특정 타입으로 변환하는 데 사용되는 유틸리티 클래스입니다.
-APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
+APP_IS_DEBUG = TypeAdapter(bool).validate_python(
+    os.getenv("APP_IS_DEBUG", False))
 
 # APP_IS_DEBUG 값이 True일 경우, 디버그 모드가 활성화됩니다.
 app = FastAPI(debug=APP_IS_DEBUG)
@@ -42,30 +67,6 @@ app = FastAPI(debug=APP_IS_DEBUG)
 templates = UserTemplates()
 templates.env.filters["default_if_none"] = default_if_none
 
-from admin.admin import router as admin_router
-from install.router import router as install_router
-from bbs.board import router as board_router
-from bbs.login import router as login_router
-from bbs.register import router as register_router
-from bbs.content import router as content_router
-from bbs.faq import router as faq_router
-from bbs.qa import router as qa_router
-from bbs.member_profile import router as user_profile_router
-from bbs.profile import router as profile_router
-from bbs.memo import router as memo_router
-from bbs.poll import router as poll_router
-from bbs.point import router as point_router
-from bbs.scrap import router as scrap_router
-from bbs.board_new import router as board_new_router
-from bbs.ajax_good import router as good_router
-from bbs.ajax_autosave import router as autosave_router
-from bbs.member_leave import router as member_leave_router
-from bbs.member_find import router as member_find_router
-from bbs.social import router as social_router
-from bbs.password import router as password_router
-from bbs.search import router as search_router
-from bbs.current_connect import router as current_connect_router
-from lib.editor.ckeditor4 import router as editor_router
 
 # git clone으로 소스를 받은 경우에는 data디렉토리가 없으므로 생성해야 함
 if not os.path.exists("data"):
@@ -84,7 +85,8 @@ register_statics(app, plugin_states)
 
 cache_plugin_state.__setitem__('info', plugin_states)
 cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
-cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(plugin_states))
+cache_plugin_menu.__setitem__(
+    'admin_menus', register_plugin_admin_menu(plugin_states))
 
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(install_router, prefix="/install", tags=["install"])
@@ -108,7 +110,8 @@ app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
 app.include_router(social_router, prefix="/bbs", tags=["social"])
 app.include_router(password_router, prefix="/bbs", tags=["password"])
 app.include_router(search_router, prefix="/bbs", tags=["search"])
-app.include_router(current_connect_router, prefix="/bbs", tags=["current_connect"])
+app.include_router(current_connect_router, prefix="/bbs",
+                   tags=["current_connect"])
 app.include_router(editor_router, prefix="/editor", tags=["editor"])
 
 
@@ -127,10 +130,12 @@ async def main_middleware(request: Request, call_next):
     try:
         if not url_path.startswith("/install"):
             if not os.path.exists(ENV_PATH):
-                raise AlertException(".env 파일이 없습니다. 설치를 진행해 주세요.", 400, "/install")
+                raise AlertException(
+                    ".env 파일이 없습니다. 설치를 진행해 주세요.", 400, "/install")
 
             if not inspect(db_connect.engine).has_table(db_connect.table_prefix + "config"):
-                raise AlertException("DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요.", 400, "/install")
+                raise AlertException(
+                    "DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요.", 400, "/install")
         else:
             return await call_next(request)
 
@@ -181,7 +186,8 @@ async def main_middleware(request: Request, call_next):
         # 오늘 처음 로그인 이라면 포인트 지급 및 로그인 정보 업데이트
         ymd_str = datetime.now().strftime("%Y-%m-%d")
         if member.mb_today_login.strftime("%Y-%m-%d") != ymd_str:
-            insert_point(request, member.mb_id, config.cf_login_point, ymd_str + " 첫로그인", "@login", member.mb_id, ymd_str)
+            insert_point(request, member.mb_id, config.cf_login_point,
+                         ymd_str + " 첫로그인", "@login", member.mb_id, ymd_str)
 
             member.mb_today_login = datetime.now()
             member.mb_login_ip = request.client.host
@@ -190,7 +196,8 @@ async def main_middleware(request: Request, call_next):
     # 로그인한 회원 정보
     request.state.login_member = member
     # 최고관리자 여부
-    request.state.is_super_admin = is_super_admin(request, getattr(member, "mb_id", None))
+    request.state.is_super_admin = is_super_admin(
+        request, getattr(member, "mb_id", None))
 
     # 접근가능/차단 IP 체크
     # - IP 체크 기능을 사용할 때 is_super_admin 여부를 확인하기 때문에 로그인 코드 이후에 실행
@@ -246,7 +253,7 @@ async def main_middleware(request: Request, call_next):
         # 현재 로그인한 이력 삭제
         config_time = timedelta(minutes=int(config.cf_login_minutes))
         db.execute(delete(models.Login)
-                .where(models.Login.lo_datetime < datetime.now() - config_time))
+                   .where(models.Login.lo_datetime < datetime.now() - config_time))
         db.commit()
 
     except Exception as e:
@@ -269,9 +276,13 @@ regist_core_exception_handler(app)
 # 예약 작업을 관리할 스케줄러 생성
 # https://apscheduler.readthedocs.io/en/3.x/modules/triggers/cron.html
 scheduler = BackgroundScheduler(timezone='Asia/Seoul')
+
+
 @scheduler.scheduled_job('cron', hour=10, id='remove_data_by_config')
 def job():
     delete_old_records()
+
+
 # FastAPI 앱 시작 시 스케줄러 시작
 scheduler.start()
 
@@ -337,7 +348,7 @@ async def device_change(
     Returns:
         RedirectResponse: 이전 페이지로 리디렉션
     """
-    if (device in ["pc", "mobile"] 
+    if (device in ["pc", "mobile"]
             and not TemplateService.get_responsive()):
         if device == "pc":
             request.session["is_mobile"] = False
