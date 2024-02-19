@@ -1122,9 +1122,12 @@ def get_list_thumbnail(request: Request, board: Board, write: WriteBaseModel, th
 
     # 섬네일 생성
     if source_file:
-        src = thumbnail(source_file, width=thumb_width, height=thumb_height, **kwargs)
-        if src:
-            result["src"] = src
+        result["src"] = thumbnail(source_file, width=thumb_width, height=thumb_height, **kwargs)
+    # 이미지가 없을 때
+    else:
+        result["src"] = thumbnail("./static/img/dummy-donotremove.png",
+                        target_path="./data/thumbnail_tmp",
+                        width=thumb_width, height=thumb_height, **kwargs)
 
     return result
 
