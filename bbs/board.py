@@ -66,7 +66,7 @@ async def group_board_list(
 
     # FIXME: 모바일/PC 분기처리
     if not admin_type and request.state.device == 'mobile':
-        raise AlertException(f"{group.gr_subject} 그룹은 모바일에서만 접근할 수 있습니다.", 400, url="/")
+        raise AlertException(f"{group.gr_subject} 그룹은 모바일에서만 접근할 수 있습니다.", 400, url=request.url_for("index"))
     
     # 그룹별 게시판 목록 조회
     query = (
@@ -242,7 +242,7 @@ async def list_delete(
     # TODO: 게시글 삭제시 같이 삭제해야할 것들 추가
 
     query_params = request.query_params
-    url = f"/board/{bo_table}"
+    url = request.url_for("list_post", bo_table=bo_table)
     return RedirectResponse(
         set_url_query_params(url, query_params), status_code=303)
 
@@ -500,7 +500,7 @@ async def write_form_edit(
         if not write.mb_id:
             if not request.session.get(f"ss_edit_{bo_table}_{wr_id}"):
                 query_params = request.query_params
-                url = f"/bbs/password/update/{bo_table}/{write.wr_id}"
+                url = request.url_for("password_page", action='update', bo_table=bo_table, wr_id=write.wr_id)
                 return RedirectResponse(
                     set_url_query_params(url, query_params), status_code=303)
         # 회원 글
@@ -769,7 +769,7 @@ async def write_update(
 
     # 글쓰기 후 이동할 URL
     query_params = remove_query_params(request, "parent_id")
-    url = f"/board/{bo_table}/{write.wr_id}"
+    url = request.url_for("read_post", bo_table=bo_table, wr_id=write.wr_id)
     redirect_url = set_url_query_params(url, query_params)
 
     # exclude_file이 존재하면 파일 업로드 실패 메시지 출력
@@ -841,7 +841,7 @@ async def read_post(
                 owner = True
         if not owner:
             query_params = request.query_params
-            url = f"/bbs/password/view/{bo_table}/{write.wr_id}"
+            url = request.url_for("password_page", action='view', bo_table=bo_table, wr_id=write.wr_id)
             return RedirectResponse(
                 set_url_query_params(url, query_params), status_code=303)
 
@@ -1215,7 +1215,7 @@ async def write_comment_update(
         db.commit()
 
     query_params = request.query_params
-    url = f"/board/{bo_table}/{form.wr_id}"
+    url = request.url_for("read_post", bo_table=bo_table, wr_id=form.wr_id)
     return RedirectResponse(
         set_url_query_params(url, query_params), status_code=303)
 
@@ -1247,7 +1247,7 @@ async def delete_comment(
         # 익명 댓글
         if not comment.mb_id:
             if not request.session.get(f"ss_delete_comment_{bo_table}_{comment_id}"):
-                url = f"/bbs/password/comment-delete/{bo_table}/{comment_id}"
+                url = request.url_for("password_page", action='comment-delete', bo_table=bo_table, wr_id=comment_id)
                 raise AlertException("삭제할 권한이 없습니다.", 403,
                                      set_url_query_params(url, query_params))
         # 회원 댓글
@@ -1265,7 +1265,7 @@ async def delete_comment(
     )
     db.commit()
 
-    url = f"/board/{bo_table}/{comment.wr_parent}"
+    url = request.url_for("read_post", bo_table=bo_table, wr_id=comment.wr_parent)
     return RedirectResponse(
         set_url_query_params(url, query_params), status_code=303)
 

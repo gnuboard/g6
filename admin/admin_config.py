@@ -94,4 +94,4 @@ async def config_form_update(
         setattr(config, field, value)
     db.commit()
 
-    return RedirectResponse("/admin/config_form", status_code=303)
+    return RedirectResponse(request.url_for('config_form'), status_code=303)

@@ -59,7 +59,7 @@ async def post_register(
 
     request.session["ss_agree"] = agree
     request.session["ss_agree2"] = agree2
-    return RedirectResponse(url="/bbs/register_form", status_code=302)
+    return RedirectResponse(url=request.url_for("register_form"), status_code=302)
 
 
 @router.get("/register_form", name='register_form')
@@ -68,9 +68,9 @@ async def get_register_form(request: Request):
     agree = request.session.get("ss_agree", None)
     agree2 = request.session.get("ss_agree2", None)
     if not agree:
-        return RedirectResponse(url="/bbs/register", status_code=302)
+        return RedirectResponse(url=request.url_for("get_register"), status_code=302)
     if not agree2:
-        return RedirectResponse(url="/bbs/register", status_code=302)
+        return RedirectResponse(url=request.url_for("get_register"), status_code=302)
 
     config = request.state.config
     member = Member()
@@ -113,9 +113,9 @@ async def post_register_form(
     agree = request.session.get("ss_agree", "")
     agree2 = request.session.get("ss_agree", "")
     if not agree:
-        return RedirectResponse(url="/bbs/register", status_code=302)
+        return RedirectResponse(url=request.url_for("get_register"), status_code=302)
     if not agree2:
-        return RedirectResponse(url="/bbs/register", status_code=302)
+        return RedirectResponse(url=request.url_for("get_register"), status_code=302)
 
     config = request.state.config
 
@@ -261,7 +261,7 @@ async def post_register_form(
         request.session["ss_mb_key"] = session_member_key(request, new_member)
     request.session["ss_mb_reg"] = new_member.mb_id
 
-    return RedirectResponse(url="/bbs/register_result", status_code=302)
+    return RedirectResponse(url=request.url_for("register_result"), status_code=302)
 
 
 @router.get("/register_result")
@@ -275,12 +275,12 @@ async def register_result(
 
     # 회원가입이 아닐때.
     if not register_mb_id:
-        return RedirectResponse(url="/bbs/register", status_code=302)
+        return RedirectResponse(url=request.url_for("get_register"), status_code=302)
 
     member = db.scalar(select(Member).where(Member.mb_id == register_mb_id))
     if not member:
         # 가입실패
-        return RedirectResponse(url="/bbs/register", status_code=302)
+        return RedirectResponse(url=request.url_for("get_register"), status_code=302)
 
     context = {
         "request": request,

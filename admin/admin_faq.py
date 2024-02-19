@@ -74,7 +74,7 @@ async def faq_master_add(
         with open(f"{FAQ_FILE_PATH}{fm_id}_t", "wb") as buffer:
             shutil.copyfileobj(fm_timg.file, buffer)
 
-    return RedirectResponse(f"/admin/faq_master_form/{fm_id}", 303)
+    return RedirectResponse(request.url_for('faq_master_update_form', fm_id=fm_id), 303)
 
 
 @router.get("/faq_master_form/{fm_id}")
@@ -133,7 +133,7 @@ async def faq_master_update(
         with open(file_path_t, "wb") as buffer:
             shutil.copyfileobj(fm_timg.file, buffer)
 
-    return RedirectResponse(f"/admin/faq_master_form/{fm_id}", 303)
+    return RedirectResponse(request.url_for("faq_master_update_form", fm_id=fm_id), 303)
 
 
 @router.delete("/faq_master_form_delete/{fm_id}", dependencies=[Depends(validate_token)])
@@ -202,7 +202,7 @@ async def faq_add(
     db.add(faq)
     db.commit()
 
-    return RedirectResponse(f"/admin/faq_form/{fm_id}/{faq.fa_id}", status_code=303)
+    return RedirectResponse(request.url_for("faq_update_form", fm_id=fm_id, fa_id=faq.fa_id), status_code=303)
 
 
 @router.get("/faq_form/{fm_id}/{fa_id}")
@@ -235,7 +235,7 @@ async def faq_update(
         setattr(faq, field, value)
     db.commit()
 
-    return RedirectResponse(f"/admin/faq_form/{fm_id}/{fa_id}", status_code=303)
+    return RedirectResponse(request.url_for("faq_update_form", fm_id=fm_id, fa_id=fa_id), status_code=303)
 
 
 @router.delete("/faq_form_delete/{fa_id}", dependencies=[Depends(validate_token)])

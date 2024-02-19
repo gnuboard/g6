@@ -23,7 +23,7 @@ templates = AdminTemplates()
 POINT_MENU_KEY = "200200"
 
 
-@router.get("/point_list")
+@router.get("/point_list", name="admin_point_list")
 async def point_list(
     request: Request,
     db: db_session,
@@ -94,7 +94,7 @@ async def point_update(
     rel_action = exist_member.mb_id + '-' + str(uuid.uuid4())
     insert_point(request, mb_id, po_point, po_content, "@passive", mb_id, rel_action, po_expire_term)
 
-    url = "/admin/point_list"
+    url = request.url_for("admin_point_list")
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 303)
 
@@ -145,6 +145,6 @@ async def point_list_delete(
         )
         db.commit()
 
-    url = "/admin/point_list"
+    url = request.url_for("poll_list")
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 303)

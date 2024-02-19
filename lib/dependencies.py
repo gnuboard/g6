@@ -132,7 +132,7 @@ async def check_admin_access(request: Request):
         ss_mb_id = request.session.get("ss_mb_id", "")
 
         if not ss_mb_id:
-            raise AlertException("로그인이 필요합니다.", 302, url="/bbs/login?url=" + path)
+            raise AlertException("로그인이 필요합니다.", 302, url=f"{request.url_for('login_form')}?url={path}")
         elif not request.state.is_super_admin:
             method = request.method
             admin_menu_id = get_current_admin_menu_id(request)
@@ -146,11 +146,11 @@ async def check_admin_access(request: Request):
                 # 각 요청 별 권한 체크
                 # delete 요청은 GET 요청으로 처리되므로, 요청에 "delete"를 포함하는지 확인하여 처리
                 if ("delete" in path and not "d" in au_auth):
-                    raise AlertException("삭제 권한이 없습니다.", 302, url="/")
+                    raise AlertException("삭제 권한이 없습니다.", 302, url=request.url_for("index"))
                 elif (method == "POST" and not "w" in au_auth):
-                    raise AlertException("수정 권한이 없습니다.", 302, url="/")
+                    raise AlertException("수정 권한이 없습니다.", 302, url=request.url_for("index"))
                 elif (method == "GET" and not "r" in au_auth):
-                    raise AlertException("읽기 권한이 없습니다.", 302, url="/")
+                    raise AlertException("읽기 권한이 없습니다.", 302, url=request.url_for("index"))
             # 관리자메인은 메뉴ID가 없으므로, 다른 메뉴의 권한이 있는지 확인
             else:
                 exists_auth = db.scalar(
@@ -159,7 +159,7 @@ async def check_admin_access(request: Request):
                 )
                 if not exists_auth:
                     raise AlertException(
-                        "최고관리자 또는 관리권한이 있는 회원만 접근 가능합니다.", 302, url="/")
+                        "최고관리자 또는 관리권한이 있는 회원만 접근 가능합니다.", 302, url=request.url_for("index"))
 
 
 def common_search_query_params(

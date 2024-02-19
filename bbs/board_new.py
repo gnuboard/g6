@@ -121,7 +121,7 @@ async def new_delete(
 
     db.commit()
 
-    url = "/bbs/new"
+    url = request.url_for("board_new_list")
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 303)
 

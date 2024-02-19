@@ -92,7 +92,7 @@ async def newwin_form_update(
     # 기존 캐시 삭제
     get_newwins.cache_clear()
 
-    return RedirectResponse(url=f"/admin/newwin_form/{newwin.nw_id}", status_code=302)
+    return RedirectResponse(request.url_for("newwin_form_edit", nw_id=newwin.nw_id), status_code=302)
 
 
 @router.get("/newwin_delete/{nw_id}", dependencies=[Depends(validate_token)])
@@ -111,4 +111,4 @@ async def newwin_delete(
     # 기존 캐시 삭제
     get_newwins.cache_clear()
 
-    return RedirectResponse(url=f"/admin/newwin_list", status_code=302)
+    return RedirectResponse(request.url_for("newwin_list"), status_code=302)

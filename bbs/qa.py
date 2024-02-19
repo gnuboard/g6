@@ -370,7 +370,7 @@ async def qa_delete(
     db.delete(qa)
     db.commit()
 
-    url = "/bbs/qalist"
+    url = request.url_for('qa_list')
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 302)
 
@@ -392,7 +392,7 @@ async def qa_delete_list(
     db.execute(delete(QaContent).where(QaContent.qa_id.in_(checks)))
     db.commit()
 
-    url = "/bbs/qalist"
+    url = request.url_for('qa_list')
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 303)
 

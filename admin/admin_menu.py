@@ -165,7 +165,7 @@ async def menu_list_update(
         db.rollback()
         raise AlertException(f"Error: {e}", 400)
 
-    return RedirectResponse(f"/admin/menu_list", status_code=303)
+    return RedirectResponse(request.url_for("menu_list"), status_code=303)
 
 
 def base36_to_base10(number: str = None):

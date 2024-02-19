@@ -68,24 +68,24 @@ async def password_check(
     # 비밀번호 검증 후 처리
     if action == "view":
         request.session[f"ss_secret_{bo_table}_{wr_id}"] = True
-        redirect_url = f"/board/{bo_table}/{wr_id}?{request.query_params}"
+        redirect_url = f"{request.url_for('read_post', bo_table=bo_table, wr_id=wr_id)}?{request.query_params}"
 
     elif action == "comment-view":
         request.session[f"ss_secret_comment_{bo_table}_{wr_id}"] = True
-        redirect_url = f"/board/{bo_table}/{write.wr_parent}?{request.query_params}#c_{wr_id}"
+        redirect_url = f"{request.url_for('read_post', bo_table=bo_table, wr_id=write.wr_parent)}?{request.query_params}#c_{wr_id}"
 
     elif action == "update":
         request.session[f"ss_edit_{bo_table}_{wr_id}"] = True
-        redirect_url = f"/board/write/{bo_table}/{wr_id}?{request.query_params}"
+        redirect_url = f"{request.url_for('write_form_edit', bo_table=bo_table, wr_id=wr_id)}?{request.query_params}"
 
     elif action == "delete":
         token = create_session_token(request)
         request.session[f"ss_delete_{bo_table}_{wr_id}"] = True
-        redirect_url = f"/board/delete/{bo_table}/{wr_id}?token={token}&{request.query_params}"
+        redirect_url = f"{request.url_for('delete_post', bo_table=bo_table, wr_id=wr_id)}?token={token}&{request.query_params}"
 
     elif action == "comment-delete":
         token = create_session_token(request)
         request.session[f"ss_delete_comment_{bo_table}_{wr_id}"] = True
-        redirect_url = f"/board/delete_comment/{bo_table}/{wr_id}?token={token}&{request.query_params}"
+        redirect_url = f"{request.url_for('delete_comment', bo_table=bo_table, wr_id=wr_id)}?token={token}&{request.query_params}"
 
     return RedirectResponse(url=redirect_url, status_code=302)

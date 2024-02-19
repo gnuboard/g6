@@ -74,7 +74,7 @@ async def memo_view(
     # 본인 쪽지 조회
     memo = db.get(Memo, me_id)
     if not memo:
-        raise AlertException(status_code=404, detail="쪽지가 존재하지 않습니다.", url="/bbs/memo")
+        raise AlertException(status_code=404, detail="쪽지가 존재하지 않습니다.", url=request.url_for("memo_list"))
     
     kind = memo.me_type
     target_mb_id = memo.me_send_mb_id if kind == "recv" else memo.me_recv_mb_id
@@ -82,7 +82,7 @@ async def memo_view(
     memo_mb_column = Memo.me_recv_mb_id if kind == "recv" else Memo.me_send_mb_id
 
     if not memo_mb_id == login_member.mb_id:
-        raise AlertException(status_code=403, detail="본인의 쪽지만 조회 가능합니다.", url="/bbs/memo")
+        raise AlertException(status_code=403, detail="본인의 쪽지만 조회 가능합니다.", url=request.url_for("memo_list"))
 
     # 상대방 정보 조회
     target = db.scalar(select(Member).where(Member.mb_id == target_mb_id))
@@ -231,12 +231,12 @@ async def memo_delete(
     """
     memo = db.get(Memo, me_id)
     if not memo:
-        raise AlertException(status_code=403, detail="쪽지가 존재하지 않습니다.", url="/bbs/memo")
+        raise AlertException(status_code=403, detail="쪽지가 존재하지 않습니다.", url=request.url_for("memo_list"))
     
     kind = memo.me_type
     memo_mb_id = memo.me_recv_mb_id if kind == "recv" else memo.me_send_mb_id
     if not memo_mb_id == member.mb_id:
-        raise AlertException(status_code=403, detail="본인의 쪽지만 삭제 가능합니다.", url="/bbs/memo")
+        raise AlertException(status_code=403, detail="본인의 쪽지만 삭제 가능합니다.", url=request.url_for("memo_list"))
     
     # 실시간 알림 삭제(업데이트)
     if is_none_datetime(memo.me_read_datetime):

@@ -106,7 +106,7 @@ async def board_list_update(
             # 최신글 캐시 삭제
             FileCache().delete_prefix(f'latest-{board.bo_table}')
 
-    url = "/admin/board_list"
+    url = request.url_for("board_list")
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 302)
 
@@ -148,7 +148,7 @@ async def board_list_delete(
             # 최신글 캐시 삭제
             FileCache().delete_prefix(f'latest-{board.bo_table}')
 
-    url = "/admin/board_list"
+    url = request.url_for("board_list")
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 303)
 
@@ -275,7 +275,7 @@ async def board_form_update(
     # 최신글 캐시 삭제
     FileCache().delete_prefix(f'latest-{bo_table}')
 
-    url = f"/admin/board_form/{bo_table}"
+    url = request.url_for("board_form", bo_table=bo_table)
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 303)
 
@@ -338,9 +338,9 @@ async def board_copy_update(
             if file_manager.is_exist(bo_table, write.wr_id):
                 file_manager.copy_board_files(FILE_DIRECTORY, target_table, write.wr_id)
 
-    content = """
+    content = f"""
     <script>
-        window.opener.location.href = "/admin/board_list";
+        window.opener.location.href = "{request.url_for('board_list')}";
         window.close();
     </script>
     """

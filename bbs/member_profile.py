@@ -45,7 +45,7 @@ async def check_member_form(
         )
         if social_member:
             request.session["ss_profile_change"] = True
-            return RedirectResponse(url=f"/bbs/member_profile/{member.mb_no}", status_code=302)
+            return RedirectResponse(url=request.url_for("member_profile", mb_no=member.mb_no), status_code=302)
 
     context = {
         "request": request,
@@ -69,7 +69,7 @@ async def check_member(
 
     request.session["ss_profile_change"] = True
 
-    return RedirectResponse(url=f"/bbs/member_profile/{member.mb_no}", status_code=302)
+    return RedirectResponse(url=request.url_for("member_profile", mb_no=member.mb_no), status_code=302)
 
 
 @router.get("/member_profile/{mb_no}", name='member_profile')
@@ -82,7 +82,7 @@ async def member_profile(
     config = request.state.config
 
     if not request.session.get("ss_profile_change", False):
-        raise AlertException("잘못된 접근입니다", 403, url="/")
+        raise AlertException("잘못된 접근입니다", 403, url=request.url_for("index"))
 
     member = db.scalar(select(Member).filter_by(mb_id=member.mb_id))
     if not member:
@@ -214,7 +214,7 @@ async def member_profile_save(
     if "ss_profile_change" in request.session:
         del request.session["ss_profile_change"]
 
-    raise AlertException("회원정보가 수정되었습니다.", 302, "/")
+    raise AlertException("회원정보가 수정되었습니다.", 302, request.url_for("index"))
 
 
 def get_is_phone_certify(member: Member, config: Config) -> bool:

@@ -114,7 +114,7 @@ async def auth_update(
         db.add(auth)
         db.commit()
 
-    url = "/admin/auth_list"
+    url = request.url_for("auth_list")
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 303)
 
@@ -134,6 +134,6 @@ async def auth_list_delete(
         db.execute(delete(Auth).filter_by(mb_id=mb_id[i], au_menu=au_menu[i]))
         db.commit()
 
-    url = "/admin/auth_list"
+    url = request.url_for("auth_list")
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 303)

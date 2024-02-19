@@ -139,7 +139,7 @@ async def boardgroupmember_insert(
     db.add(group_member)
     db.commit()
 
-    return RedirectResponse(f"/admin/boardgroupmember_form/{mb_id}", status_code=303)
+    return RedirectResponse(request.url_for('board_form', mb_id=mb_id), status_code=303)
 
 
 @router.post("/boardgroupmember_delete", dependencies=[Depends(validate_token)])
@@ -157,8 +157,8 @@ async def boardgroupmember_delete(
     db.commit()
 
     if mb_id:
-        url = f"/admin/boardgroupmember_form/{mb_id}"
+        url = request.url_for('board_form', mb_id=mb_id)
     else:
-        url = f"/admin/boardgroupmember_list/{gr_id}"
+        url = request.url_for('boardgroupmember_list', gr_id=gr_id)
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 303)

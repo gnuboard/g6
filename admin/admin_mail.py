@@ -127,7 +127,7 @@ async def mail_form_update(
         mail.ma_content = ma_content
         db.commit()
 
-    return RedirectResponse(f"/admin/mail_form/{ma_id}", status_code=303)
+    return RedirectResponse(request.url_for("mail_form", ma_id=ma_id), status_code=303)
 
 
 @router.post("/mail_delete", dependencies=[Depends(validate_token)])
@@ -144,7 +144,7 @@ async def mail_delete(
         db.execute(delete(Mail).where(Mail.ma_id == ma_id[i]))
     db.commit()
 
-    return RedirectResponse("/admin/mail_list", status_code=303)
+    return RedirectResponse(request.url_for("mail_list"), status_code=303)
 
 
 @router.get("/mail_test/{ma_id}")

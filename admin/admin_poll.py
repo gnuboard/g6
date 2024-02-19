@@ -69,7 +69,7 @@ async def poll_list_delete(
     # 기존캐시 삭제
     get_recent_poll.cache_clear()
 
-    url = "/admin/poll_list"
+    url = request.url_for("poll_list")
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 303)
 
@@ -130,6 +130,6 @@ async def poll_form_update(
     # 기존캐시 삭제
     get_recent_poll.cache_clear()
 
-    url = f"/admin/poll_form/{poll.po_id}"
+    url = request.url_for("poll_form_edit", po_id=poll.po_id)
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 302)

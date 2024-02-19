@@ -120,7 +120,7 @@ async def member_list_update(
             db.commit()
 
     query_params = request.query_params
-    url = "/admin/member_list"
+    url = request.url_for("member_list")
     return RedirectResponse(set_url_query_params(url, query_params), 303)
 
 
@@ -195,7 +195,7 @@ async def member_list_delete(
 
             db.commit()
 
-    url = "/admin/member_list"
+    url = request.url_for("member_list")
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 303)
 
@@ -298,7 +298,7 @@ async def member_form_update(
     # 이미지 검사 -> 이미지 수정(삭제 포함)
     validate_and_update_member_image(request, mb_img, mb_icon, mb_id, del_mb_img, del_mb_icon)
 
-    url = f"/admin/member_form/{mb_id}"
+    url = request.url_for("member_form", mb_id=mb_id)
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 302)
 

@@ -59,7 +59,7 @@ router.include_router(admin_service_router, tags=["admin_service"])
 MAIN_MENU_KEY = "100000"
 
 
-@router.get("/")
+@router.get("", name="admin_index")
 async def base(request: Request, db: db_session):
     """
     관리자 메인
@@ -120,11 +120,11 @@ async def base(request: Request, db: db_session):
         # 게시글
         if new.wr_id == new.wr_parent:
             new.subject = new.write.wr_subject
-            new.link = f"/board/{new.bo_table}/{new.wr_id}"
+            new.link = request.url_for('read_post', bo_table=new.bo_table, wr_id=new.wr_id)
         # 댓글
         else:
             new.subject = f"[댓글] {new.write.wr_content}"
-            new.link = f"/board/{new.bo_table}/{new.wr_parent}#c_{new.wr_id}"
+            new.link = request.url_for('read_post', bo_table=new.bo_table, wr_id=f"{new.wr_parent}#c_{new.wr_id}")
 
     # 최근 포인트 발생 내역
     query = select()

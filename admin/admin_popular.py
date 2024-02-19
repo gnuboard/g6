@@ -63,7 +63,7 @@ async def popular_delete(
     # 기존 캐시 삭제
     popular_cache.update({"populars": None})
 
-    url = "/admin/popular_list"
+    url = request.url_for("popular_list")
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 303)
 

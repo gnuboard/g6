@@ -90,7 +90,7 @@ async def logout(request: Request):
 
     request.session.clear()
 
-    response = RedirectResponse(url="/", status_code=302)
+    response = RedirectResponse(url=request.url_for("index"), status_code=302)
     response.delete_cookie(key="ck_auto")
     response.delete_cookie(key="ck_mb_id")
 

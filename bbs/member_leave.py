@@ -63,4 +63,4 @@ async def member_leave(
     # 로그아웃
     request.session.clear()
 
-    raise AlertException(f"{login_member.mb_nick} 님께서는 {leave_date} 에 회원에서 탈퇴 하셨습니다.", url="/")
+    raise AlertException(f"{login_member.mb_nick} 님께서는 {leave_date} 에 회원에서 탈퇴 하셨습니다.", url=request.url_for("index"))

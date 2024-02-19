@@ -148,7 +148,7 @@ async def authorize_social_login(
         # XSS 공격에 대응하기 위하여 회원의 고유키를 생성해 놓는다.
         request.session["ss_mb_key"] = session_member_key(request, member)
         request.session["ss_social_provider"] = provider_name
-        return RedirectResponse(url="/", status_code=302)
+        return RedirectResponse(url=request.url_for("index"), status_code=302)
 
     if 'ss_social_link' in request.session and request.state.login_member.mb_id:
         # 소셜 가입 연결
@@ -333,7 +333,7 @@ async def post_social_register(
         ).body.decode("utf-8")
         mailer(config.cf_admin_email, subject, body)
 
-    return RedirectResponse(url="/", status_code=302)
+    return RedirectResponse(url=request.url_for("index"), status_code=302)
 
 
 class SocialAuthService:

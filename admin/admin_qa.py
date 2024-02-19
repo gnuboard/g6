@@ -59,4 +59,4 @@ def qa_config_update(
             setattr(qa_config, field, value)
         db.commit()
     
-    return RedirectResponse("/admin/qa_config", status_code=302)
+    return RedirectResponse(request.url_for("qa_config_form"), status_code=302)

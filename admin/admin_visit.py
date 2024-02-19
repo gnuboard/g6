@@ -141,7 +141,7 @@ async def visit_delete_update(
 
     raise AlertException(
         f"총 {total_records}개의 자료 중 {result.rowcount}개의 자료가 삭제되었습니다.",
-        url="/admin/visit_delete"
+        url=request.url_for("visit_delete")
     )
 
 

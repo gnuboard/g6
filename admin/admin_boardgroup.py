@@ -75,7 +75,7 @@ async def boardgroup_list_update(
             group.gr_device = gr_device[i]
             db.commit()
 
-    url = "/admin/boardgroup_list"
+    url = request.url_for("boardgroup_list")
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 303)
 
@@ -104,7 +104,7 @@ async def boardgroup_list_delete(
 
     db.commit()
 
-    url = "/admin/boardgroup_list"
+    url = request.url_for("boardgroup_list")
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 303)
 
@@ -172,6 +172,6 @@ async def boardgroup_form_update(
     else:
         raise AlertException("잘못된 접근입니다.", 400)
 
-    url = f"/admin/boardgroup_form/{gr_id}"
+    url = request.url_for("boardgroup_form", gr_id=gr_id)
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 303)
