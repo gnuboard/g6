@@ -1,7 +1,7 @@
 <!-- <script src="{{ request.base_url.__str__() + 'static/plugin/editor/ckeditor4/ckeditor.js' }}"></script>
 <script src="{{ request.base_url.__str__() + 'static/plugin/editor/ckeditor4/config.js' }}"></script> -->
-<script src="/static/plugin/editor/ckeditor4/ckeditor.js"></script>
-<script src="/static/plugin/editor/ckeditor4/config.js"></script>
+<script src="{{ url_for('static', path='/plugin/editor/ckeditor4/ckeditor.js') }}"></script>
+<script src="{{ url_for('static', path='/plugin/editor/ckeditor4/config.js') }}"></script>
 <script>
     // ckeditor4 global variables
     let ck4editorAttachId = '';

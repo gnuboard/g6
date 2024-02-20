@@ -23,7 +23,7 @@
                     {% if plugin.screenshot %}
                     <img src="{{ plugin.screenshot }}" alt="{{ plugin.plugin_name }}">
                     {% else %}
-                    <img src="/static/admin/img/plugin_img.jpg" alt="">
+                    <img src="{{ url_for('static', path='/admin/img/plugin_img.jpg') }}" alt="">
                     {% endif %}
                     <div class="tmli_tit">
                         <p>{{ plugin.plugin_name }}</p>

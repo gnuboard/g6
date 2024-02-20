@@ -9,7 +9,7 @@
             {% if info.screenshot %}
                 <img src="{{ info.screenshot }}" alt="{{ name }}">
             {% else %}
-                <img src="/static/admin/img/plugin_img.jpg" alt="">
+                <img src="{{ url_for('static', path='/admin/img/plugin_img.jpg') }}" alt="">
             {% endif %}
         </div>
         <div class="plugin_dt_if">

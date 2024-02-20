@@ -4,10 +4,10 @@
     <link rel="stylesheet" href="{{ theme_asset(request, 'js/remodal/remodal.css') }}">
     <link rel="stylesheet" href="{{ theme_asset(request, 'js/remodal/remodal-default-theme.css') }}">
     <script src="{{ theme_asset(request, 'js/remodal/remodal.js') }}"></script>
-    <script src="/static/js/jquery.register_form.js"></script>
+    <script src="{{ url_for('static', path='/js/jquery.register_form.js') }}"></script>
 
     {% if (config.cf_cert_use and (config.cf_cert_simple or config.cf_cert_ipin or config.cf_cert_hp)) %}
-    <script src="/static/js/certify.js"></script>
+    <script src="{{ url_for('static', path='/js/certify.js') }}"></script>
     {% endif %}
 {% endblock head %}
 

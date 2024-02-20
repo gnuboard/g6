@@ -5,10 +5,13 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=Edge">
         <title>설치하기 | {{ app_name }}</title>
-        <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
-        <link rel="stylesheet" href="/static/css/install.css">
-        <script src="/static/js/jquery.min.js?ver=3.7.1"></script>
-        <script src="/static/js/common.js"></script>
+        <link rel="icon" href="{{ url_for('static', path='/favicon.ico') }}" type="image/x-icon">
+        <link rel="stylesheet" href="{{ url_for('static', path='/css/install.css') }}">
+        <script>
+            const g6_gen_token_url = "{{ url_for('generate_token') }}"
+        </script>
+        <script src="{{ url_for('static', path='/js/jquery.min.js?ver=3.7.1') }}"></script>
+        <script src="{{ url_for('static', path='/js/common.js') }}"></script>
     </head>
     <body>
         <div id="ins_bar">

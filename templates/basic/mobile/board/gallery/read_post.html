@@ -4,7 +4,7 @@
 {% endif %}
 
 {% block head %}
-    <script src="/static/js/viewimageresize.js"></script>
+    <script src="{{ url_for('static', path='/js/viewimageresize.js') }}"></script>
     <link rel="stylesheet" href="{{ theme_asset(request, 'mobile/css/board_common.css?ver=1.0.0') }}">
     <link rel="stylesheet" href="{{ theme_asset(request, 'mobile/css/board_skin_gallery.css?ver=1.0.0') }}">
 {% endblock head %}

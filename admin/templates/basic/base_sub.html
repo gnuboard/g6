@@ -5,9 +5,9 @@
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}관리자 base{% endblock title %} | {{ request.state.title }}</title>
-<link rel="icon" href="/static/favicon.ico" type="image/x-icon">
-<link rel="stylesheet" href="/static/admin/admin.css?ver=1.0.2">
-<link rel="stylesheet" href="/static/js/font-awesome/css/all.min.css?ver=6.5.1">
+<link rel="icon" href="{{ url_for('static', path='/favicon.ico') }}" type="image/x-icon">
+<link rel="stylesheet" href="{{ url_for('static', path='/admin/admin.css?ver=1.0.2') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='/js/font-awesome/css/all.min.css?ver=6.5.1') }}">
 <script>
 // 자바스크립트에서 사용하는 전역변수 선언
 const g6_url       = "{{ request.base_url }}";
@@ -19,11 +19,11 @@ const g6_cookie_domain = "{{ request.state.cookie_domain }}";
 const g6_shop_url = "{{ request.base_url }}shop";
 const g6_gen_token_url = "{{ url_for('generate_token') }}";
 </script>
-<script src="/static/js/jquery.min.js?ver=3.7.1"></script>
-<script src="/static/js/jquery-migrate.min.js?ver=3.4.0"></script>
-<script src="/static/js/common.js?ver=1.0.0"></script>
-<script src="/static/js/wrest.js?ver=1.0.0"></script>
-<script src="/static/js/font-awesome/js/all.min.js?ver=6.5.1"></script>
+<script src="{{ url_for('static', path='/js/jquery.min.js?ver=3.7.1') }}"></script>
+<script src="{{ url_for('static', path='/js/jquery-migrate.min.js?ver=3.4.0') }}"></script>
+<script src="{{ url_for('static', path='/js/common.js?ver=1.0.0') }}"></script>
+<script src="{{ url_for('static', path='/js/wrest.js?ver=1.0.0') }}"></script>
+<script src="{{ url_for('static', path='/js/font-awesome/js/all.min.js?ver=6.5.1') }}"></script>
 {% block head -%}
 {% endblock head -%}
 {% include "plugin_menu_header.html" %}

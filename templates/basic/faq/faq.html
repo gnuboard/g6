@@ -95,7 +95,7 @@
     {% endif %}
     <!-- } FAQ 끝 -->
 
-    <script src="/static/js/viewimageresize.js"></script>
+    <script src="{{ url_for('static', path='/js/viewimageresize.js') }}"></script>
     <script>
     jQuery(function() {
         $(".closer_btn").on("click", function() {

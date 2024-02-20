@@ -2,7 +2,7 @@
 {% import "/sideview/macros.html" as sideview %}
 
 {% block head %}
-    <link rel="stylesheet" href="/static/css/basic/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/basic/style.css') }}">
 {% endblock head %}
 
 {% block title %}{{ member.mb_nick }}의 자기소개{% endblock title %}

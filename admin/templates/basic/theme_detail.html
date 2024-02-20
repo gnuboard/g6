@@ -9,7 +9,7 @@
             {% if info.screenshot %}
                 <img src="{{ info.screenshot }}" alt="{{ info.theme_name }}">
             {% else %}
-                <img src="/static/admin/img/theme_img.jpg" alt="테마 없음">
+                <img src="{{ url_for('static', path='/admin/img/theme_img.jpg') }}" alt="테마 없음">
             {% endif %}
         </div>
         <div class="theme_dt_if">
