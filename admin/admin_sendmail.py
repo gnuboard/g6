@@ -12,7 +12,7 @@ SENDMAIL_MENU_KEY = "100300"
 
 
 @router.get("/sendmail_test")
-async def visit_search(request: Request):
+async def sendmail_test(request: Request):
     """
     메일 테스트
     """
