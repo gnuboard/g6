@@ -3,6 +3,7 @@
 /* 게시판 목록: 갤러리형 */
 .bo_list .list_all_check { margin:0 0 10px; }
 .bo_list .list_grid { display: grid; row-gap: 30px; margin:0 0 20px; }
+.bo_list .list_grid .grid_empty { display:flex; align-items:center; height:200px; justify-content:center; }
 .bo_list .grid_item { border: var(--border); }
 .bo_list .grid_item .item_chk { display:flex; justify-content: left; gap:10px; padding:10px; border-bottom: var(--border); }
 .bo_list .grid_item .item_link { display:flex; position:relative; border-bottom: var(--border); }

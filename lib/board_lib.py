@@ -1089,7 +1089,7 @@ def get_list_thumbnail(request: Request, board: Board, write: WriteBaseModel, th
     config = request.state.config
     images, files = BoardFileManager(board, write.wr_id).get_board_files_by_type(request)
     source_file = None
-    result = {"src": "", "alt": ""}
+    result = {"src": "", "alt": "", "noimg":""}
 
     if images:
         # TODO : 게시글의 파일정보를 캐시된 데이터에서 조회한다.
@@ -1128,6 +1128,7 @@ def get_list_thumbnail(request: Request, board: Board, write: WriteBaseModel, th
         result["src"] = thumbnail("./static/img/dummy-donotremove.png",
                         target_path="./data/thumbnail_tmp",
                         width=thumb_width, height=thumb_height, **kwargs)
+        result["noimg"] = "img_not_found"
 
     return result
 
