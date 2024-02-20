@@ -37,7 +37,7 @@
             {% endif %}
             <!-- 게시물 상단 버튼 시작 { -->
             <div id="bo_v_top">
-                <ul class="bo_v_com">
+                <ul class="d-inline-flex p-0 list-unstyled break-word">
                     <li>
                         <a href="{{ url_for('qa_list') }}?{{ request.query_params }}" class="btn_b01 btn" title="목록">
                             <i class="fa fa-list" aria-hidden="true"></i>
@@ -51,12 +51,12 @@
                         </a>
                     </li>
                     {% if request.state.is_super_admin or qa.mb_id == request.state.login_member.mb_id %}
-                    <li>
-                        <button type="button" class="btn_more_opt btn_b01 btn" title="게시판 읽기 옵션">
+                    <li class="position-relative">
+                        <a type="button" class="btn_more_opt btn_b01 btn" title="게시판 읽기 옵션">
                             <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
                             <span class="blind">게시판 읽기 옵션</span>
-                        </button>
-                        <ul class="more_opt">
+                        </a>
+                        <ul class="more_opt position-absolute end-0">
                             <li>
                                 <a href="{{ url_for('qa_form_edit', qa_id=qa.qa_id) }}" class="btn_b01 btn" title="수정">
                                     수정
@@ -113,20 +113,19 @@
             </section>
             <!-- } 첨부파일 끝 -->
         </section>
-
-        <ul class="bo_v_nb">
+        <ul id="bo_v_nb" class="position-relative row mt-3 mb-5 p-0">
               {% if prev %}
-                <li class="btn_prv">
-                  <a href="{{ url_for('qa_view', qa_id=prev.qa_id) }}?{{ request.query_params }}" class="btn_b01 btn">
+                <li class="col-md-6">
+                  <a href="{{ url_for('qa_view', qa_id=prev.qa_id) }}?{{ request.query_params }}" class="btn_prv rounded-3 text-decoration-none sub-font">
                     <i class="fa fa-chevron-left" aria-hidden="true"></i>
-                    <span class="nb_tit">이전글</span>
+                    <span class="fs-4 fw-bold">이전글</span>
                   </a>
                 </li>
               {% endif %}
               {% if next %}
-                <li class="btn_next">
-                  <a href="{{ url_for('qa_view', qa_id=next.qa_id) }}?{{ request.query_params }}" class="btn_b01 btn">
-                    <span class="nb_tit">다음글</span>
+                <li class="col-md-6">
+                  <a href="{{ url_for('qa_view', qa_id=next.qa_id) }}?{{ request.query_params }}" class="btn_next rounded-3 text-decoration-none text-light">
+                    <span class="fs-4 fw-bold">다음글</span>
                     <i class="fa fa-chevron-right" aria-hidden="true"></i>
                   </a>
                 </li>
