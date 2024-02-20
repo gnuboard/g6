@@ -12,22 +12,24 @@
 <link rel="stylesheet" href="{{ theme_asset(request, 'mobile/css/default.css?ver=1.0.6') }}">
 <link rel="stylesheet" href="{{ theme_asset(request, 'js/slick/slick.css?ver=1.8.1') }}">
 <link rel="stylesheet" href="/static/js/font-awesome/css/all.min.css?ver=6.5.1">
+<script>
+    // 자바스크립트에서 사용하는 전역변수 선언
+    const g6_url       = "{{ request.base_url }}";
+    const g6_bbs_url   = "{{ request.base_url }}bbs";
+    const g6_is_member = "{{ 1 if request.state.login_member else '' }}";
+    const g6_is_mobile = "{{ 1 if request.state.is_mobile else '' }}";
+    const g6_editor    = "{{ request.state.editor }}";
+    const g6_cookie_domain = "{{ request.state.cookie_domain }}";
+    const g6_shop_url = "{{ request.base_url }}shop";
+    const g6_gen_token_url = "{{ url_for('generate_token') }}";
+    </script>
 <script src="/static/js/jquery.min.js?ver=3.7.1"></script>
 <script src="/static/js/jquery-migrate.min.js?ver=3.4.0"></script>
 <script src="/static/js/common.js?ver=1.0.0"></script>
 <script src="/static/js/wrest.js?ver=1.0.0"></script>
 <script src="{{ theme_asset(request, 'js/slick/slick.min.js?ver=1.8.1') }}"></script>
 <script src="/static/js/font-awesome/js/all.min.js?ver=6.5.1"></script>
-<script>
-// 자바스크립트에서 사용하는 전역변수 선언
-const g6_url       = "{{ request.base_url }}";
-const g6_bbs_url   = "{{ request.base_url }}bbs";
-const g6_is_member = "{{ 1 if request.state.login_member else '' }}";
-const g6_is_mobile = "{{ 1 if request.state.is_mobile else '' }}";
-const g6_editor    = "{{ request.state.editor }}";
-const g6_cookie_domain = "{{ request.state.cookie_domain }}";
-const g6_shop_url = "{{ request.base_url }}shop";
-</script>
+
 {% block head -%}
 {% endblock head -%}
 {% if request.state.config -%}

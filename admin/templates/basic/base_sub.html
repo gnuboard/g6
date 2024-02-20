@@ -17,6 +17,7 @@ const g6_is_mobile = "{{ 1 if request.state.is_mobile else '' }}";
 const g6_editor    = "{{ request.state.editor }}";
 const g6_cookie_domain = "{{ request.state.cookie_domain }}";
 const g6_shop_url = "{{ request.base_url }}shop";
+const g6_gen_token_url = "{{ url_for('generate_token') }}";
 </script>
 <script src="/static/js/jquery.min.js?ver=3.7.1"></script>
 <script src="/static/js/jquery-migrate.min.js?ver=3.4.0"></script>

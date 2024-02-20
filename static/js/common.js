@@ -712,7 +712,7 @@ $(function() {
 function generate_token() {
     var token = "";
     $.ajax({
-        url: '/generate_token',
+        url: g6_gen_token_url,
         type: 'POST',
         async: false,
         cache: false,
