@@ -31,6 +31,7 @@ from core.models import (
     Auth, BoardNew, Config, Login, Member, Memo, Menu, NewWin, Poll, Popular,
     UniqId, Visit, VisitSum, WriteBaseModel
 )
+from core.root_path import ROOT_PATH
 from lib.captcha.recaptch_v2 import ReCaptchaV2
 from lib.captcha.recaptch_inv import ReCaptchaInvisible
 
@@ -197,7 +198,7 @@ def get_img_path(request: Request, dir: str, mb_id: str = None) -> str:
         str: 이미지 경로
     """
 
-    default_image_path = "/static/img/no_profile.gif"
+    default_image_path = f"{ROOT_PATH}/static/img/no_profile.gif"
     image_path = default_image_path
     if not mb_id:
         return image_path
@@ -210,7 +211,7 @@ def get_img_path(request: Request, dir: str, mb_id: str = None) -> str:
 
         if os.path.exists(image_path_with_ext):
             mtime = os.path.getmtime(image_path_with_ext)   # 캐시를 위해 파일수정시간을 추가
-            image_path = f"/{image_path_with_ext}?{mtime}"
+            image_path = f"{ROOT_PATH}/{image_path_with_ext}?{mtime}"
             break
     return image_path
 

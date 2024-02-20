@@ -4,6 +4,7 @@ from fastapi.responses import RedirectResponse
 from core.database import db_session
 from core.exception import AlertException
 from core.template import UserTemplates
+from core.root_path import ROOT_PATH
 from lib.common import *
 from lib.member_lib import is_super_admin
 from lib.pbkdf2 import validate_password
@@ -17,7 +18,7 @@ templates = UserTemplates()
 @router.get("/login")
 async def login_form(
         request: Request,
-        url: str = Query(default="/")
+        url: str = Query(default=f"{ROOT_PATH}/")
 ):
     """
     로그인 폼을 보여준다.
@@ -36,7 +37,7 @@ async def login(
         mb_id: str = Form(...),
         mb_password: str = Form(...),
         auto_login: bool = Form(default=False),
-        url: str = Form(default="/")
+        url: str = Form(default=f"{ROOT_PATH}/")
 ):
     """
     로그인 폼화면에서 로그인

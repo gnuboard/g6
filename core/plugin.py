@@ -10,6 +10,8 @@ from filelock import FileLock
 from starlette.staticfiles import StaticFiles
 from typing import List
 
+from core.root_path import ROOT_PATH
+
 PLUGIN_DIR = 'plugin'
 PLUGIN_STATE_FILE = 'plugin_states.json'
 PLUGIN_STATE_FILE_PATH = f'{PLUGIN_DIR}/{PLUGIN_STATE_FILE}'
@@ -119,7 +121,7 @@ def get_plugin_info(module_name, plugin_dir=PLUGIN_DIR):
                 from PIL import Image
                 with Image.open(screenshot) as img:
                     if img.format == "PNG":
-                        screenshot_url = f"/admin/plugin/screenshot/{module_name}"
+                        screenshot_url = f"{ROOT_PATH}/admin/plugin/screenshot/{module_name}"
             except:
                 pass
         info['screenshot'] = screenshot_url

@@ -11,6 +11,7 @@ from core.plugin import (
     unregister_plugin, delete_router_by_tagname
 )
 from core.template import TemplateService
+from core.root_path import ROOT_PATH
 
 
 def regist_core_middleware(app: FastAPI) -> None:
@@ -95,11 +96,11 @@ async def should_run_middleware(request: Request) -> bool:
         bool: 미들웨어를 실행할지 여부
     """
     path = request.url.path
-    if (path.startswith('/generate_token')
-            or path.startswith('/device/change')
-            or path.startswith('/static')
-            or path.startswith('/theme_static')
-            or path.startswith('/data')
+    if (path.startswith(f'{ROOT_PATH}/generate_token')
+            or path.startswith(f'{ROOT_PATH}/device/change')
+            or path.startswith(f'{ROOT_PATH}/static')
+            or path.startswith(f'{ROOT_PATH}/theme_static')
+            or path.startswith(f'{ROOT_PATH}/data')
             or path.endswith(('.css', '.js', '.jpg', 'jpeg', '.png', '.gif', '.webp'))):
         return False
 

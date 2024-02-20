@@ -1112,7 +1112,7 @@ def get_list_thumbnail(request: Request, board: Board, write: WriteBaseModel, th
                 
                 # 에디터로 삽입된 이미지의 주소는 웹 경로이기에 os.path로 체크할 수 있도록 경로를 변경한다.
                 # 외부 이미지도 썸네일로 보여지기를 희망하는 경우 썸네일 조건 및 생성 로직을 수정해야한다.
-                image = "./data/editor/" + image.split("/data/editor/")[1]
+                image = f"{ROOT_PATH}/data/editor/" + image.split("/data/editor/")[1]
                 
                 # image경로의 파일이 존재하고 이미지파일인지 확인
                 if (os.path.exists(image)
@@ -1131,8 +1131,8 @@ def get_list_thumbnail(request: Request, board: Board, write: WriteBaseModel, th
         result["src"] = thumbnail(source_file, width=thumb_width, height=thumb_height, **kwargs)
     # 이미지가 없을 때
     else:
-        result["src"] = thumbnail("./static/img/dummy-donotremove.png",
-                        target_path="./data/thumbnail_tmp",
+        result["src"] = thumbnail("/static/img/dummy-donotremove.png",
+                        target_path="/data/thumbnail_tmp",
                         width=thumb_width, height=thumb_height, **kwargs)
         result["noimg"] = "img_not_found"
 

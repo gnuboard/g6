@@ -22,6 +22,7 @@ from core.plugin import (
     register_plugin_admin_menu, register_statics
 )
 from core.template import register_theme_statics, TemplateService, UserTemplates
+from core.root_path import ROOT_PATH
 from lib.common import *
 from lib.member_lib import is_super_admin, MemberService
 from lib.point import insert_point
@@ -38,7 +39,7 @@ load_dotenv()
 APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
 
 # APP_IS_DEBUG 값이 True일 경우, 디버그 모드가 활성화됩니다.
-app = FastAPI(debug=APP_IS_DEBUG)
+app = FastAPI(debug=APP_IS_DEBUG, root_path=ROOT_PATH)
 
 templates = UserTemplates()
 templates.env.filters["default_if_none"] = default_if_none
@@ -129,9 +130,9 @@ async def main_middleware(request: Request, call_next):
     config = None
 
     try:
-        if not url_path.startswith("/install"):
+        if not url_path.startswith(f"{ROOT_PATH}/install"):
             if not os.path.exists(ENV_PATH):
-                raise AlertException(".env 파일이 없습니다. 설치를 진행해 주세요.", 400, "/install")
+                raise AlertException(".env 파일이 없습니다. 설치를 진행해 주세요.", 400, request.url_for("install"))
             # 기본환경설정 테이블 조회
             config = db.scalar(select(Config))
         else:
@@ -232,7 +233,7 @@ async def main_middleware(request: Request, call_next):
     try:
         # 현재 접속자 데이터 갱신
         if (not request.state.is_super_admin
-                and not url_path.startswith("/admin")):
+                and not url_path.startswith(f"{ROOT_PATH}/admin")):
             current_login = db.scalar(
                 select(models.Login)
                 .where(models.Login.lo_ip == current_ip)

@@ -11,6 +11,7 @@ from starlette.templating import _TemplateResponse
 from core.plugin import (
     get_admin_plugin_menus, get_all_plugin_module_names, PLUGIN_DIR, get_plugin_state_cache
 )
+from core.root_path import ROOT_PATH
 from lib.common import *
 from lib.member_lib import get_member_icon, get_member_image
 from lib.template_filters import (
@@ -157,6 +158,7 @@ class UserTemplates(Jinja2Templates):
             self.env.globals["get_populars"] = get_populars
             self.env.globals["get_recent_poll"] = get_recent_poll
             self.env.globals["get_menus"] = get_menus
+            self.env.globals["root_path"] = ROOT_PATH
 
             # 템플릿 컨텍스트 프로세서 설정
             self.context_processors.append(self._default_context)
@@ -258,6 +260,7 @@ class AdminTemplates(Jinja2Templates):
             self.env.globals["option_selected"] = option_selected
             self.env.globals["option_array_checked"] = option_array_checked
             self.env.globals["subject_sort_link"] = subject_sort_link
+            self.env.globals["root_path"] = ROOT_PATH
             # 템플릿 컨텍스트 프로세서 설정
             self.context_processors.append(self._default_admin_context)
 
@@ -286,7 +289,7 @@ def theme_asset(request: Request, asset_path: str) -> str:
     """
     theme = get_current_theme()
 
-    return f"/theme_static/{theme}/{asset_path}"
+    return f"{ROOT_PATH}/theme_static/{theme}/{asset_path}"
 
 
 def register_theme_statics(app: FastAPI) -> None:
@@ -359,7 +362,7 @@ def get_theme_info(theme_name: str) -> dict:
             try:
                 with Image.open(screenshot) as img:
                     if img.format == "PNG":
-                        screenshot_url = f"/admin/screenshot/{theme_name}"
+                        screenshot_url = f"{ROOT_PATH}/admin/screenshot/{theme_name}"
             except:
                 pass
 
