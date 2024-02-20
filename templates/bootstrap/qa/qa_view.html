@@ -85,8 +85,8 @@
         </section>
 
         <section id="bo_v_atc">
-            <h2 id="bo_v_atc_title">본문</h2>
-            <div id="bo_v_img">
+            <h2 class="blind">본문</h2>
+            <div id="bo_v_img" class="w-100 overflow-hidden">
                 {% for image in qa.image %}
                     <a href="javascrip:;" target="_blank" class="view_image">
                         <img src="/{{ image }}" max-width="{{ qa_config.qa_image_width }}">
@@ -157,7 +157,7 @@
                 </header>
 
                 <div id="ans_con">
-                    <div id="bo_v_img">
+                    <div id="bo_v_img" class="w-100 overflow-hidden">
                         {% for image in answer.image %}
                             <a href="javascrip:;" target="_blank" class="view_image">
                                 <img src="/{{ image }}">

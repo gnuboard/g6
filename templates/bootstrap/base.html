@@ -66,11 +66,11 @@
        <div id="hd_sch_wr" class="container-xxl position-absolute start-50 translate-middle-x" style="top: 90px; height: 60px; z-index: 999;">
         <fieldset id="hd_sch">
           <span class="blind">사이트 내 전체검색</span>
-          <form name="fsearchbox" method="get" action="/bbs/search" onsubmit="return fsearchbox_sub                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          mit(this);" class="position-relative h-100" >
+          <form name="fsearchbox" method="get" action="/bbs/search" onsubmit="return fsearchbox_submit(this);" class="position-relative h-100" >
             <input type="hidden" name="sfl" value="wr_subject||wr_content">
             <input type="hidden" name="sop" value="and">
             <label for="sch_stx" class="blind">검색어 필수</label>
-            <input type="text" name="stx" id="sch_stx" maxlength="20" placeholder="검색어를 입력해주세요" class="form-control form-control-lg card-bg fs-4 rounded-4 overflow-hidden main-border shadow-lg p-0" style="border-radius: 3px 0px 0px 3px;" >
+            <input type="text" name="stx" id="sch_stx" maxlength="20" placeholder="검색어를 입력해주세요" class="form-control form-control-lg card-bg fs-4 rounded-4 overflow-hidden main-border shadow-lg px-0" style="border-radius: 3px 0px 0px 3px;" >
             <button type="submit" id="sch_submit" class="position-absolute top-0 end-0 main-font bg-transparent border-0 fs-4" style="width: 60px; height: 60px;" value="검색">
               <i class="fa fa-search" aria-hidden="true" ></i>
               <span class="blind">검색</span>
@@ -221,7 +221,6 @@
 
   function handleGnbClick() {
     hd_gnb_wr.classList.add("active");
-    console.log("aa")
   }
 
   function delGnbClick() {

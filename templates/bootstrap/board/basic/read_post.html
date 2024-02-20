@@ -32,7 +32,7 @@
                 <div class="pf_img me-3 rounded-circle overflow-hidden" style="width: 50px;height: 50px;"><img src="{{ get_member_image(request, write.mb_id) }}" alt="profile_image" width="50" height="50"></div>
                 <div class="profile_info_ct py-2 fs-5" style="line-height: 18px;">
                     <span class="blind">작성자</span>
-                    <strong class="d-inline-block me-3 fw-normal">
+                    <strong class="d-inline-block me-3 fw-normal" style="color: #888;">
                         {% if board.bo_use_sideview %}
                             {{ sideview.get(request, write.mb_id, write.name, write.wr_email, write.wr_homepage)|safe }}
                         {% else %}
@@ -46,13 +46,13 @@
                     </strong>
                     <br>
                     <span class="blind">댓글</span><strong class="d-inline-block me-3 fw-normal"><a href="#bo_vc" style="color:#888;"> <i class="fa fa-regular fa-commenting" aria-hidden="true"></i> {{ write.wr_comment|number_format }}건</a></strong>
-                    <span class="blind">조회</span><strong class="d-inline-block me-3 fw-normal"><i class="fa fa-eye" aria-hidden="true"></i> {{ write.wr_hit|number_format }}회</strong>
+                    <span class="blind">조회</span><strong class="d-inline-block me-3 fw-normal" style="color:#888;"><i class="fa fa-eye" aria-hidden="true"></i> {{ write.wr_hit|number_format }}회</strong>
                     <strong class="if_date d-inline-block fw-normal"><span class="blind">작성일</span><i class="fa fa-regular fa-clock" aria-hidden="true"></i> {{ write.wr_datetime }}</strong>
                 </div>
             </div>
             <!-- 게시물 상단 버튼 시작 { -->
-            <div id="bo_v_top">
-                <ul class="btn_bo_user bo_v_com">
+            <div id="bo_v_top" >
+                <ul class="d-inline-flex p-0 list-unstyled break-word">
                     <li>
                         <a href="{{ url_for('list_post', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_b01 btn" title="목록">
                             <i class="fa fa-list" aria-hidden="true"></i><span class="blind">목록</span>
@@ -73,11 +73,11 @@
                     </li>
                     {% endif %}
                     {% if is_admin or write.mb_id == login_member.mb_id or not write.mb_id %}
-                    <li>
-                        <button type="button" class="btn_more_opt is_view_btn btn_b01 btn">
+                    <li class="position-relative">
+                        <a class="btn_b01 btn btn_more_opt is_view_btn px-4">
                             <i class="fa fa-ellipsis-v" aria-hidden="true"></i><span class="blind">게시판 리스트 옵션</span>
-                        </button>
-                        <ul class="more_opt is_view_btn" style="display: none;">
+                        </a>
+                        <ul class="more_opt is_view_btn position-absolute end-0 p-0" style="display: none;">
                             <li>
                                 <a href="{{ url_for('write_form_edit', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}">
                                     수정<i class="fa fa-pen-to-square" aria-hidden="true"></i>
@@ -123,8 +123,8 @@
         </section>
 
         <div id="bo_v_atc">
-            <h2 id="bo_v_atc_title">본문</h2>
-            <div id="bo_v_share">
+            <h2 class="blind">본문</h2>
+              <div id="bo_v_share">
                 <!-- SNS START -->
                 <!-- SNS END -->
                 {% if login_member %}
@@ -132,10 +132,10 @@
                         <i class="fa fa-bookmark" aria-hidden="true"></i>스크랩
                     </a>
                 {% endif %}
-            </div>
+              </div>
 
             <!-- 파일 출력 START -->
-            <div id="bo_v_img">
+            <div id="bo_v_img" class="w-100 overflow-hidden">
                 {% for image in images %}
                     <img src="/{{ image.bf_file }}" width="{{ board_config.image_width }}" alt="" title="">
                 {% endfor %}
@@ -217,27 +217,27 @@
     {% endif %}
     <!-- } 관련링크 끝 -->
 
-    <ul class="bo_v_nb">
+    <ul id="bo_v_nb" class="position-relative row mt-3 mb-5 p-0">
         {% if prev %}
-        <li class="btn_prv">
-          <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=prev.wr_id )|set_query_params(request) }}">
+        <li class="col-md-6">
+          <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=prev.wr_id )|set_query_params(request) }}" class="btn_prv rounded-3 text-decoration-none sub-font">
             <i class="fa fa-chevron-up" aria-hidden="true"></i>
-            <p>
-            <span class="nb_tit">이전글</span>
-            <span class="nb_cont">{{ prev.wr_subject }}</span>
-            <span class="nb_date">{{ prev.wr_datetime }}</span>
-            </p>
+            <div class="fs-5" style="width: calc(100% - 40px);">
+              <p class="mb-0">이전글</p>
+              <p class="fs-3 fw-bold text-truncate py-2 mb-0">{{ prev.wr_subject }}</p>
+              <p class="mb-0">{{ prev.wr_datetime }}</p>
+            </div>
           </a>
         </li>
         {% endif %}
         {% if next %}
-        <li class="btn_next">
-          <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=next.wr_id )|set_query_params(request) }}">
-            <p>
-              <span class="nb_tit">다음글</span>
-              <span class="nb_cont">{{ next.wr_subject }}</span>
-              <span class="nb_date">{{ next.wr_datetime }}</span>
-            </p>
+        <li class="col-md-6">
+          <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=next.wr_id )|set_query_params(request) }}" class="btn_next rounded-3 text-decoration-none text-light">
+            <div class="fs-5" style="width: calc(100% - 40px);">
+              <p class="mb-0">다음글</p>
+              <p class="fs-3 fw-bold text-truncate py-2 mb-0">{{ next.wr_subject }}</p>
+              <p class="mb-0">{{ next.wr_datetime }}</p>
+            </div>
             <i class="fa fa-chevron-down" aria-hidden="true"></i> 
           </a>
         </li>
