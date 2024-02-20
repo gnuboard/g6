@@ -9,7 +9,7 @@
     {% set stx = request.query_params.get("stx", "") %}
 
     <div class="local_ov01 local_ov">
-        <a href="/admin/point_list" class="ov_listall">전체목록</a>    
+        <a href="{{ url_for('admin_point_list') }}" class="ov_listall">전체목록</a>    
         <span class="btn_ov01"><span class="ov_txt">전체 </span><span class="ov_num"> {{ total_count|number_format }} 건 </span></span>
         &nbsp;
         <span class="btn_ov01">
@@ -36,7 +36,7 @@
         </button>
     </form>
 
-    <form name="fpointlist" id="fpointlist" method="post" action="/admin/point_list_delete" onsubmit="return fpointlist_submit(this);">
+    <form name="fpointlist" id="fpointlist" method="post" action="{{ url_for('point_list_delete') }}" onsubmit="return fpointlist_submit(this);">
         <input type="hidden" name="token" value="">
 
         <div class="tbl_head01 tbl_wrap">
@@ -101,7 +101,7 @@
 
     <section id="point_mng">
         <h2 class="h2_frm">개별회원 포인트 증감 설정</h2>
-        <form name="fpointlist2" method="post" id="fpointlist2" action="/admin/point_update" autocomplete="off" onsubmit="return fpoint_submit(this);">
+        <form name="fpointlist2" method="post" id="fpointlist2" action="{{ url_for('point_update') }}" autocomplete="off" onsubmit="return fpoint_submit(this);">
             <input type="hidden" name="token" value="">
             <div class="tbl_frm01 tbl_wrap">
                 <table>

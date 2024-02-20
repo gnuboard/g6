@@ -15,7 +15,7 @@
                 기본환경설정에서 관리자 메일 주소를 user{{ domain_mail_host(request) }} 같은 도메인 형식으로 설정할것을 권장합니다.
             </p>
         </div>
-        <form name="fsendmailtest" method="post" action="/admin/sendmail_test_result" onsubmit="return form_submit(this);">
+        <form name="fsendmailtest" method="post" action="{{ url_for('sendmail_test_result') }}" onsubmit="return form_submit(this);">
         <input type="hidden" name="token" value="">
         <fieldset id="fsendmailtest">
             <legend>테스트메일 발송</legend>

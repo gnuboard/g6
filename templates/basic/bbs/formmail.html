@@ -6,7 +6,7 @@
 <div id="formmail" class="new_win">
     <h1 id="win_title">{{ to_name }}님께 메일보내기</h1>
 
-    <form name="fformmail" action="/bbs/formmail_send" onsubmit="return fformmail_submit(this);" method="post" enctype="multipart/form-data" style="margin:0px;">
+    <form name="fformmail" action="{{ url_for('formmail_send') }}" onsubmit="return fformmail_submit(this);" method="post" enctype="multipart/form-data" style="margin:0px;">
         <input type="hidden" name="token" value="">
         <input type="hidden" name="to" value="{{ to_email }}">
         <input type="hidden" name="attach" value="2">

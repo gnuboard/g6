@@ -4,7 +4,7 @@
 {% block subtitle %}접근가능 그룹(ID : {{ member.mb_id }}){% endblock subtitle %}
 
 {% block content %}
-    <form name="fboardgroupmember_form" id="fboardgroupmember_form" action="/admin/boardgroupmember_insert" onsubmit="return boardgroupmember_form_check(this)" method="post">
+    <form name="fboardgroupmember_form" id="fboardgroupmember_form" action="{{ url_for('boardgroupmember_insert') }}" onsubmit="return boardgroupmember_form_check(this)" method="post">
         <input type="hidden" name="mb_id" value="{{ member.mb_id }}" id="mb_id">
         <input type="hidden" name="token" id="token" value="">
 
@@ -26,7 +26,7 @@
         </div>
     </form>
 
-    <form name="fboardgroupmember" id="fboardgroupmember" action="/admin/boardgroupmember_delete" onsubmit="return fboardgroupmember_submit(this);" method="post">
+    <form name="fboardgroupmember" id="fboardgroupmember" action="{{ url_for('boardgroupmember_delete') }}" onsubmit="return fboardgroupmember_submit(this);" method="post">
         <input type="hidden" name="token" value="">
         <input type="hidden" name="mb_id" value="{{ member.mb_id }}" id="mb_id">
 
@@ -51,7 +51,7 @@
                             <label for="chk_{{ loop.index0 }}" class="blind">{{ group.gr_subject }} 그룹</label>
                             <input type="checkbox" name="chk[]" value="{{ group_member.gm_id }}" id="chk_{{ loop.index0 }}">
                         </td>
-                        <td class="td_grid"><a href="/board/group/{{ group.gr_id }}">{{ group.gr_id }}</a></td>
+                        <td class="td_grid"><a href="{{ url_for('group_board_list', gr_id=group.gr_id) }}">{{ group.gr_id }}</a></td>
                         <td class="td_category">{{ group.gr_subject }}</td>
                         <td class="td_datetime">{{ group_member.gm_datetime }}</td>
                     </tr>

@@ -2,50 +2,50 @@
     <h3>소셜계정으로 로그인</h3>
     <div class="sns-wrap">
         {% if 'naver' in request.state.config.cf_social_servicelist  %}     <!-- 네이버 로그인을 사용한다면 -->
-        <a href="/bbs/social/login?provider=naver" class="sns-icon social_link sns-naver" title="네이버">
+        <a href="{{ url_for('social_login') }}?provider=naver" class="sns-icon social_link sns-naver" title="네이버">
             <span class="ico"></span>
             <span class="txt">네이버<i> 로그인</i></span>
         </a>
         {% endif %}
         {% if 'kakao' in request.state.config.cf_social_servicelist %}     <!-- 카카오 로그인을 사용한다면 -->
-        <a href="/bbs/social/login?provider=kakao" class="sns-icon social_link sns-kakao" title="카카오">
+        <a href="{{ url_for('social_login') }}?provider=kakao" class="sns-icon social_link sns-kakao" title="카카오">
             <span class="ico"></span>
             <span class="txt">카카오<i> 로그인</i></span>
         </a>
         {% endif %}
         {% if 'facebook' in request.state.config.cf_social_servicelist %}     <!-- 페이스북 로그인을 사용한다면 -->
-        <a href="/bbs/social/login?provider=facebook" class="sns-icon social_link sns-facebook" title="페이스북">
+        <a href="{{ url_for('social_login') }}?provider=facebook" class="sns-icon social_link sns-facebook" title="페이스북">
             <span class="ico"></span>
             <span class="txt">페이스북<i> 로그인</i></span>
         </a>
         {% endif %}
         {% if 'google' in request.state.config.cf_social_servicelist %}     <!-- 구글 로그인을 사용한다면 -->
-        <a href="/bbs/social/login?provider=google" class="sns-icon social_link sns-google" title="구글">
+        <a href="{{ url_for('social_login') }}?provider=google" class="sns-icon social_link sns-google" title="구글">
             <span class="ico"></span>
             <span class="txt">구글<i> 로그인</i></span>
         </a>
         {% endif %}
         {% if 'twitter' in request.state.config.cf_social_servicelist %}     <!-- 트위터 로그인을 사용한다면 -->
-        <a href="/bbs/social/login?provider=twitter" class="sns-icon social_link sns-twitter" title="트위터">
+        <a href="{{ url_for('social_login') }}?provider=twitter" class="sns-icon social_link sns-twitter" title="트위터">
             <span class="ico"></span>
             <span class="txt">트위터<i> 로그인</i></span>
         </a>
         {% endif %}
         {% if 'apple' in request.state.config.cf_social_servicelist %}
-        <a href="/bbs/social/login?provider=apple" class="sns-icon social_link sns-apple" title="애플">
+        <a href="{{ url_for('social_login') }}?provider=apple" class="sns-icon social_link sns-apple" title="애플">
             <span class="ico"></span>
             <span class="txt">애플<i> 로그인</i></span>
         </a>
         {% endif %}
         {% if 'apple' in request.state.config.cf_social_servicelist %}     <!-- 애플 로그인을 사용한다면 -->
-        <a href="/bbs/social/login?provider=apple" class="sns-icon social_link sns-apple" title="애플">
+        <a href="{{ url_for('social_login') }}?provider=apple" class="sns-icon social_link sns-apple" title="애플">
             <span class="ico"></span>
             <span class="txt">애플<i> 로그인</i></span>
         </a>
         {% endif %}
         {#
         {% if 'payco' in request.state.config.cf_social_servicelist %}     <!-- 페이코 로그인을 사용한다면 -->
-        <a href="/bbs/social/login?provider=payco" class="sns-icon social_link sns-payco" title="페이코">
+        <a href="{{ url_for('social_login') }}?provider=payco" class="sns-icon social_link sns-payco" title="페이코">
             <span class="ico"></span>
             <span class="txt">페이코<i> 로그인</i></span>
         </a>

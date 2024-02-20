@@ -68,10 +68,10 @@
                         </label>
                     </td>
                     <td class="td_group">
-                        <a href="/bbs/new?gr_id={{ board_new.board.gr_id }}">{{ board_new.board.group.gr_subject }}</a>
+                        <a href="{{ url_for('board_new_list') }}?gr_id={{ board_new.board.gr_id }}">{{ board_new.board.group.gr_subject }}</a>
                     </td>
                     <td class="td_board">
-                        <a href="/board/{{ board_new.bo_table }}">{{ board_new.board.bo_subject }}</a>
+                        <a href="{{ url_for('list_post', bo_table=board_new.bo_table) }}">{{ board_new.board.bo_subject }}</a>
                     </td>
                     <td>
                         <a href="{{ board_new.link }}" class="new_tit">{{ board_new.subject }}</a>

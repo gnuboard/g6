@@ -16,7 +16,7 @@
 
 
     <script>
-        const evtSource = new EventSource("/admin/cache_file_deleting");
+        const evtSource = new EventSource("{{ url_for('cache_file_deleting') }}");
         evtSource.onmessage = function(event) {
             const data = event.data.trim();  // 공백 제거
             

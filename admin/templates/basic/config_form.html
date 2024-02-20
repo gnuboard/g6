@@ -26,7 +26,7 @@
   <li><a href="#anc_cf_extra">여분필드</a></li>
 </ul>
 {{ pg_anchor }}
-<form name="fconfigform" method="post" action="/admin/config_form_update" onsubmit="return fconfigform_submit(this);" enctype="application/x-www-form-urlencoded" autocomplete="off">
+<form name="fconfigform" method="post" action="{{ url_for('config_form_update') }}" onsubmit="return fconfigform_submit(this);" enctype="application/x-www-form-urlencoded" autocomplete="off">
  
   <input type="hidden" name="token" value="">
 
@@ -744,7 +744,7 @@
                             <label for="check_social_naver">네이버 로그인을 사용합니다</label>
                             <div>
                                 <h3>네이버 CallbackURL</h3>
-                                <p>{{ request.base_url }}bbs/social/login/callback?provider=naver</p>
+                                <p>{{ url_for("authorize_social_login") }}?provider=naver</p>
                             </div>
                         </div>
                         <div class="explain_box">
@@ -752,7 +752,7 @@
                             <label for="check_social_kakao">카카오 로그인을 사용합니다</label>
                             <div>
                                 <h3>카카오 로그인 Redirect URI</h3>
-                                <p>{{ request.base_url }}bbs/social/login/callback?provider=kakao</p>
+                                <p>{{ url_for("authorize_social_login") }}?provider=kakao</p>
                             </div>
                         </div>
                         <div class="explain_box">
@@ -760,7 +760,7 @@
                             <label for="check_social_facebook">페이스북 로그인을 사용합니다</label>
                             <div>
                                 <h3>페이스북 유효한 OAuth 리디렉션 URI</h3>
-                                <p>{{ request.base_url }}bbs/social/login/callback?provider=facebook</p>
+                                <p>{{ url_for("authorize_social_login") }}?provider=facebook</p>
                             </div>
                         </div>
                         <div class="explain_box">
@@ -768,7 +768,7 @@
                             <label for="check_social_google">구글 로그인을 사용합니다</label>
                             <div>
                                 <h3>구글 승인된 리디렉션 URI</h3>
-                                <p>{{ request.base_url }}bbs/social/login/callback?provider=google</p>
+                                <p>{{ url_for("authorize_social_login") }}?provider=google</p>
                             </div>
                         </div>
                         <div class="explain_box">
@@ -776,7 +776,7 @@
                             <label for="check_social_twitter">X(트위터) 로그인을 사용합니다</label>
                             <div>
                                 <h3>X(트위터) CallbackURL</h3>
-                                <p>{{ request.base_url }}bbs/social/login/callback?provider=twitter</p>
+                                <p>{{ url_for("authorize_social_login") }}?provider=twitter</p>
                             </div>
                         </div>
                         <div class="explain_box">
@@ -784,7 +784,7 @@
                             <label for="check_social_payco">페이코 로그인을 사용합니다</label>
                             <div>
                                 <h3>페이코 CallbackURL</h3>
-                                <p>{{ request.base_url }}bbs/social/login/callback?provider=payco</p>
+                                <p>{{ url_for("authorize_social_login") }}?provider=payco</p>
                             </div>
                         </div>
                     </td>

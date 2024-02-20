@@ -310,7 +310,7 @@
             </div>
         </div>
         <div class="btn_confirm">
-            <a href="/" class="btn_close">취소</a>
+            <a href="{{ url_for('index') }}" class="btn_close">취소</a>
             <button type="submit" id="btn_submit" class="btn_submit" accesskey="s">{% if is_register %}회원가입{% else %}정보수정{% endif %}</button>
         </div>
     </form>

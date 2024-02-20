@@ -12,7 +12,7 @@
     <div id="hd_wrapper">
 
         <div id="logo">
-            <a href="/"><img src="/static/img/logo_gnuboard6.png" alt="그누보드6"></a>
+            <a href="{{ url_for('index') }}"><img src="{{ url_for('static', path='/img/logo_gnuboard6.png') }}" alt="그누보드6"></a>
         </div>
 
         <button type="button" id="gnb_open" class="hd_opener">
@@ -38,23 +38,23 @@
 
             <ul id="hd_nb">
                 <li class="hd_nb1">
-                    <a href="/bbs/faq" id="snb_faq">
+                    <a href="{{ url_for('faq_view') }}" id="snb_faq">
                         <i class="fa fa-question" aria-hidden="true"></i>FAQ
                     </a>
                 </li>
                 <li class="hd_nb2">
-                    <a href="/bbs/qalist" id="snb_qa">
+                    <a href="{{ url_for('qa_list') }}" id="snb_qa">
                         <i class="fa fa-comments" aria-hidden="true"></i>1:1문의
                     </a>
                 </li>
                 <li class="hd_nb3">
-                    <a href="/bbs/current_connect" id="snb_cnt">
+                    <a href="{{ url_for('current_connect') }}" id="snb_cnt">
                         <i class="fa fa-users" aria-hidden="true"></i>접속자
                         <span>{{ current_login_count[0]|number_format }}</span>
                     </a>
                 </li>
                 <li class="hd_nb4">
-                    <a href="/bbs/new" id="snb_new">
+                    <a href="{{ url_for('board_new_list') }}" id="snb_new">
                         <i class="fa fa-history" aria-hidden="true"></i>새글
                     </a>
                 </li>
@@ -66,7 +66,7 @@
             <fieldset id="hd_sch">
                 <legend>사이트 내 전체검색</legend>
 
-                <form name="fsearchbox" method="get" action="/bbs/search" onsubmit="return fsearchbox_submit(this);">
+                <form name="fsearchbox" method="get" action="{{ url_for('search') }}" onsubmit="return fsearchbox_submit(this);">
                     <input type="hidden" name="sfl" value="wr_subject||wr_content">
                     <input type="hidden" name="sop" value="and">
                     <label for="sch_stx" class="blind">검색어 필수</label>
@@ -194,8 +194,8 @@
         <i class="fa fa-arrow-up" aria-hidden="true"></i><span class="blind">상단으로</span>
     </button>
     <button type="button" class="darkmode-toggle-switch">
-      <i class="fa-solid fa-moon visible bright"></i>
-      <i class="fa-solid fa-sun visible dark"></i>
+        <i class="fa-solid fa-moon visible bright"></i>
+        <i class="fa-solid fa-sun visible dark"></i>
     </button>
 
 </div>
@@ -208,13 +208,13 @@
 
 <script>
 
-  // 상단 스크롤 버튼
-    $(function() {
-        $("#top_btn").on("click", function() {
-            $("html, body").animate({scrollTop:0}, '500');
-            return false;
+    // 상단 스크롤 버튼
+        $(function() {
+            $("#top_btn").on("click", function() {
+                $("html, body").animate({scrollTop:0}, '500');
+                return false;
+            });
         });
-    });
 
 </script>
 {% endblock body_html %}

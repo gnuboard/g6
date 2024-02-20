@@ -5,7 +5,7 @@
 
 {% block content %}
 <div class="register">
-    <form  name="fregister" id="fregister" action="/bbs/register" onsubmit="return fregister_submit(this);" method="post" autocomplete="off">
+    <form  name="fregister" id="fregister" action="{{ url_for('post_register') }}" onsubmit="return fregister_submit(this);" method="post" autocomplete="off">
     <p><i class="fa fa-check-circle" aria-hidden="true"></i> 회원가입약관 및 개인정보 수집 및 이용의 내용에 동의하셔야 회원가입 하실 수 있습니다.</p>
         <section id="fregister_term">
         <h2>회원가입약관</h2>
@@ -55,7 +55,7 @@
     </div>
 	    
     <div class="btn_confirm">
-    	<a href="/" class="btn_close">취소</a>
+    	<a href="{{ url_for('index') }}" class="btn_close">취소</a>
         <button type="submit" class="btn_submit">회원가입</button>
     </div>
 

@@ -8,7 +8,7 @@
 {% block subtitle %}회원 {{ '수정' if member else '추가' }}{% endblock subtitle %}
 
 {% block content %}
-<form name="fmember" id="fmember" action="/admin/member_form_update" onsubmit="return fmember_submit(this);" method="post" enctype="multipart/form-data" autocomplete="off">
+<form name="fmember" id="fmember" action="{{ url_for('member_form_update') }}" onsubmit="return fmember_submit(this);" method="post" enctype="multipart/form-data" autocomplete="off">
 <input type="hidden" name="token" value="">
 
 <div class="tbl_frm01 tbl_wrap">
@@ -27,7 +27,7 @@
                     {% if member.mb_id %}
                         <input type="hidden" name="mb_id" value="{{ member.mb_id }}" id="mb_id">
                         <b>{{ member.mb_id }}</b>
-                        <a href="/admin/boardgroupmember_form/{{ member.mb_id }}" class="btn_frmline">접근가능그룹보기</a>
+                        <a href="{{ url_for('board_form', mb_id=member.mb_id) }}" class="btn_frmline">접근가능그룹보기</a>
                     {% else %}
                         <input type="text" name="mb_id" value="" id="mb_id" required class="frm_input required alnum_" size="15" maxlength="20">
                     {% endif %}
@@ -54,9 +54,9 @@
                 <th scope="row">포인트</th>
                 <td>
                     {% if member %}
-                        <a href="/admin/point_list?sfl=mb_id&stx={{ member.mb_id }}" target="_blank">{{ member.mb_point|number_format }}</a> 점
+                        <a href="{{ url_for('admin_point_list') }}?sfl=mb_id&stx={{ member.mb_id }}" target="_blank">{{ member.mb_point|number_format }}</a> 점
                     {% else %}
-                        <a href="/admin/config_form#anc_cf_join" target="_blank">{{ request.state.config.cf_register_point }}</a> 점
+                        <a href="{{ url_for('config_form') }}#anc_cf_join" target="_blank">{{ request.state.config.cf_register_point }}</a> 점
                     {% endif %}
                 </td>
             </tr>
@@ -210,7 +210,7 @@
     </div>
 
     <div class="btn_fixed_top">
-        <a href="/admin/member_list?sst=&amp;sod=&amp;sfl=&amp;stx=&amp;page=" class="btn btn_02">목록</a>
+        <a href="{{ url_for('member_list') }}?sst=&amp;sod=&amp;sfl=&amp;stx=&amp;page=" class="btn btn_02">목록</a>
         <input type="submit" value="확인" class="btn_submit btn" accesskey='s'>
     </div>
 </form>

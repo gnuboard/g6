@@ -10,7 +10,7 @@
 
 {% block content %}
 
-<form name="frmcontentform" action="/admin/content_form_update" onsubmit="return frmcontentform_check(this);" method="post" enctype="multipart/form-data">
+<form name="frmcontentform" action="{{ url_for('content_form_update') }}" onsubmit="return frmcontentform_check(this);" method="post" enctype="multipart/form-data">
     <input type="hidden" name="action" value="{{ "u" if content.co_id else "w" }}">
     <input type="hidden" name="co_html" value="1">
     <input type="hidden" name="token" value="">
@@ -102,7 +102,7 @@
     </div>
 
     <div class="btn_fixed_top">
-        <a href="/admin/content_list" class="btn btn_02">목록</a>
+        <a href="{{ url_for('content_list') }}" class="btn btn_02">목록</a>
         <input type="submit" value="확인" class="btn btn_submit" accesskey="s">
     </div>
 

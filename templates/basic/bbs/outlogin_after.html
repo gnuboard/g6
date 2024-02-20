@@ -7,14 +7,14 @@
             <img src="{{ get_member_image(request, request.state.login_member.mb_id)|safe }}" alt="profile_image">
         </span>
         <strong>{{ member.mb_nick if member is defined else '' }}님</strong>
-        <a href="/bbs/member_confirm" id="ol_after_info" title="정보수정">정보수정</a>
+        <a href="{{ url_for('check_member_form') }}" id="ol_after_info" title="정보수정">정보수정</a>
         {% if request.state.is_super_admin %}
-        <a href="/admin" class="btn_admin btn" title="관리자"><i class="fa fa-cog fa-spin fa-fw"></i><span class="blind">관리자</span></a>
+        <a href="{{ url_for('admin_index') }}" class="btn_admin btn" title="관리자"><i class="fa fa-cog fa-spin fa-fw"></i><span class="blind">관리자</span></a>
         {% endif %}
     </header>
     <ul id="ol_after_private">
         <li>
-            <a href="/bbs/point" target="_blank" id="ol_after_pt" class="win_point">
+            <a href="{{ url_for('point_list') }}" target="_blank" id="ol_after_pt" class="win_point">
                 <i class="fa fa-database" aria-hidden="true"></i>포인트
                 <strong>{{ member.mb_point|number_format if member else '' }}</strong>
             </a>
@@ -33,7 +33,7 @@
         </li>
     </ul>
     <footer>
-        <a href="/bbs/logout" id="ol_after_logout"><i class="fa fa-sign-out" aria-hidden="true"></i> 로그아웃</a>
+        <a href="{{ url_for('logout') }}" id="ol_after_logout"><i class="fa fa-sign-out" aria-hidden="true"></i> 로그아웃</a>
     </footer>
 </section>
 

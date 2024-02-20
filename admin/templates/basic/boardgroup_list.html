@@ -8,7 +8,7 @@
     {% set stx = request.query_params.get("stx", "") %}
 
     <div class="local_ov01 local_ov">
-        <a href="/admin/boardgroup_list" class="ov_listall">처음</a>    
+        <a href="{{ url_for('boardgroup_list') }}" class="ov_listall">처음</a>    
         <span class="btn_ov01"><span class="ov_txt">전체그룹</span><span class="ov_num"> {{ groups|length|number_format }}개</span></span>
     </div>
 
@@ -26,7 +26,7 @@
         </button>
     </form>
 
-    <form method="post" name="fboardgrouplist" id="fboardgrouplist" action="/admin/boardgroup_list_update" onsubmit="return fboardgrouplist_submit(this);" autocomplete="off">
+    <form method="post" name="fboardgrouplist" id="fboardgrouplist" action="{{ url_for('boardgroup_list_update') }}" onsubmit="return fboardgrouplist_submit(this);" autocomplete="off">
         <input type="hidden" name="token" value="">
 
         <div class="tbl_head01 tbl_wrap">
@@ -66,12 +66,12 @@
                             <label for="gr_admin_{{ loop.index0 }}" class="blind">그룹관리자</label>
                             <input type="text" name="gr_admin[]" value="{{ group.gr_admin }}" id="gr_admin_{{ loop.index0 }}" class="tbl_input" size="10" maxlength="20">
                         </td>
-                        <td class="td_num"><a href="/admin/board_list?sfl=gr_id&amp;stx={{ group.gr_id }}">{{ group.board_count }}</a></td>
+                        <td class="td_num"><a href="{{ url_for('board_list') }}?sfl=gr_id&amp;stx={{ group.gr_id }}">{{ group.board_count }}</a></td>
                         <td class="td_numsmall">
                             <label for="gr_use_access_{{ loop.index0 }}" class="blind">접근회원 사용</label>
                             <input type="checkbox" name="gr_use_access[]"  value="{{ loop.index0 }}" id="gr_use_access_{{ loop.index0 }}" {{ 'checked' if group.gr_use_access }}>
                         </td>
-                        <td class="td_num"><a href="/admin/boardgroupmember_list/{{ group.gr_id }}">{{ group.access_member_count|number_format }}</a></td>
+                        <td class="td_num"><a href="{{ url_for('boardgroupmember_list', gr_id=group.gr_id) }}">{{ group.access_member_count|number_format }}</a></td>
                         <td class="td_numsmall">
                             <label for="gr_order_{{ loop.index0 }}" class="blind">메인메뉴 출력순서</label>
                             <input type="text" name="gr_order[]" value="{{ group.gr_order }}" id="gr_order_{{ loop.index0 }}" class="tbl_input" size="2">
@@ -84,7 +84,7 @@
                                 <option value="mobile" {{ get_selected(group.gr_device, 'mobile') }}>모바일</option>
                         </select>
                         </td>
-                        <td class="td_mng td_mng_s"><a href="/admin/boardgroup_form/{{ group.gr_id }}?{{ request.query_params }}" class="btn_03 btn">수정</a></td>
+                        <td class="td_mng td_mng_s"><a href="{{ url_for('boardgroup_form', gr_id=group.gr_id) }}?{{ request.query_params }}" class="btn_03 btn">수정</a></td>
                     </tr>
                     {% else %}
                     <tr><td colspan="10">자료가 없습니다.</td></tr>
@@ -96,7 +96,7 @@
         <div class="btn_fixed_top">
             <input type="submit" name="act_button" onclick="document.pressed=this.value" value="선택수정" class="btn btn_02">
             <input type="submit" name="act_button" onclick="document.pressed=this.value" value="선택삭제" class="btn btn_02">
-            <a href="/admin/boardgroup_form" class="btn btn_01">게시판그룹 추가</a>
+            <a href="{{ url_for('boardgroup_form') }}" class="btn btn_01">게시판그룹 추가</a>
         </div>
     </form>
     <div class="local_desc01 local_desc">
@@ -117,7 +117,7 @@
                     return false;
                 }
 
-                f.action = "/admin/boardgroup_list_delete";
+                f.action = "{{ url_for('boardgroup_list_delete') }}";
             }
 
             f.token.value = generate_token();

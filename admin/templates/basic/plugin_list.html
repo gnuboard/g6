@@ -9,7 +9,7 @@
 <div class="container_wr">
 
     <div class="local_ov01 local_ov">
-        <a href="/admin/plugin_list" class="ov_listall">전체목록</a>
+        <a href="{{ url_for('show_plugins') }}" class="ov_listall">전체목록</a>
         <span class="btn_ov01">
             <span class="ov_txt">전체 </span>
             <span class="ov_num"> {{ total_count }} </span>
@@ -69,7 +69,7 @@
             formData.append('module_name', module_name);
             $.ajax({
                 type: "POST",
-                url: "/admin/plugin_update",
+                url: "{{ url_for('update_plugin_state') }}",
                 data: formData,
                 processData: false,
                 contentType: false,
@@ -100,7 +100,7 @@
     
             $.ajax({
                 type: "POST",
-                url: "/admin/plugin_update",
+                url: "{{ url_for('update_plugin_state') }}",
                 data: formData,
                 processData: false,
                 contentType: false,
@@ -121,7 +121,7 @@
     
             $.ajax({
                 type: "POST",
-                url: "/admin/plugin_detail",
+                url: "{{ url_for('plugin_detail') }}",
                 contentType: 'application/x-www-form-urlencoded',
                 data: {
                     "module_name": module_name

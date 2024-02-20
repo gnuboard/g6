@@ -7,7 +7,7 @@
 
 <div class="new_win">
     <h1>게시판 복사</h1>
-    <form name="fboardcopy" id="fboardcopy" action="/admin/board_copy_update" onsubmit="return fboardcopy_check(this);" method="post" autocomplete="off">
+    <form name="fboardcopy" id="fboardcopy" action="{{ url_for('board_copy_update') }}" onsubmit="return fboardcopy_check(this);" method="post" autocomplete="off">
         <input type="hidden" name="bo_table" value="{{ board.bo_table }}" id="bo_table">
         <input type="hidden" name="token" value="">
         <div class=" new_win_con">

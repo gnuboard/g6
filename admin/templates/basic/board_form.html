@@ -10,7 +10,7 @@
 {% block subtitle %}게시판 {{ action }}{% endblock subtitle %}
 
 {% block content %}
-<form method="post" name="fboardform" id="fboardform" action="/admin/board_form_update"  onsubmit="return fboardform_submit(this)" enctype="multipart/form-data" autocomplete="off">
+<form method="post" name="fboardform" id="fboardform" action="{{ url_for('board_form_update') }}"  onsubmit="return fboardform_submit(this)" enctype="multipart/form-data" autocomplete="off">
 <input type="hidden" name="action" value="{{ 'u' if board.bo_table else 'w' }}">
 <input type="hidden" name="token" value="">
 
@@ -40,8 +40,8 @@
                 {% if board.bo_table %}
                     <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
                     <b>{{ board.bo_table }}</b>
-                    <a href="/board/{{ board.bo_table }}" class="btn_frmline">게시판 바로가기</a>
-                    <a href={{ "/admin/board_list"|set_query_params(request) }} class="btn_frmline">목록으로</a>
+                    <a href="{{ url_for('board_form', bo_table=board.bo_table) }}" class="btn_frmline">게시판 바로가기</a>
+                    <a href="{{ url_for('board_list')|set_query_params(request) }}" class="btn_frmline">목록으로</a>
                 {% else %}
                     <input type="text" name="bo_table" value="" id="bo_table" required  class="frm_input  required alnum_" maxlength="20">
                     영문자, 숫자, _ 만 가능 (공백없이 20자 이내)
@@ -53,7 +53,7 @@
             <td colspan="2">
                 {{ get_group_select('gr_id', board.gr_id, 'required')|safe }}
                 {% if board %}
-                    <a href="javascript:document.location.href='/admin/board_list?sfl=gr_id&stx='+document.fboardform.gr_id.value;" class="btn_frmline">동일그룹 게시판목록</a>
+                    <a href="javascript:document.location.href='{{ url_for('board_list') }}?sfl=gr_id&stx='+document.fboardform.gr_id.value;" class="btn_frmline">동일그룹 게시판목록</a>
                 {% endif %}
             </td>
         </tr>
@@ -1106,7 +1106,7 @@
 </section>
 
 <div class="btn_fixed_top">
-    <a href="/admin/board_list" class="btn btn_02">목록</a>
+    <a href="{{ url_for('board_list') }}" class="btn btn_02">목록</a>
     <input type="submit" value="확인" class="btn_submi btn btn_01" accesskey="s">
 </div>
 </form>

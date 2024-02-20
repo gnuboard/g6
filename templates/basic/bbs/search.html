@@ -70,10 +70,10 @@
             <div class="search_board_result">
             {% for board in boards if not onetable or onetable == board.bo_table %}
                 <h2>
-                    <a href="/board/{{ board.bo_table }}?{{ query_params }}">
+                    <a href="{{ url_for('list_post', bo_table=board.bo_table) }}?{{ query_params }}">
                         {{ board.subject }} 검색결과 ({{ board.search_count }})
                     </a>
-                    <a href="/board/{{ board.bo_table }}?{{ query_params }}" class="sch_more">더보기</a>
+                    <a href="{{ url_for('list_post', bo_table=board.bo_table) }}?{{ query_params }}" class="sch_more">더보기</a>
                 </h2>
                 <ul>
                 {% for write in board.writes %}

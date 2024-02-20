@@ -4,7 +4,7 @@
 {% block subtitle %}메일발송 대상 회원{% endblock subtitle %}
 
 {% block content %}
-<form method="post" name="fmailselectlist" action="/admin/mail_select_result" onsubmit="return fmailselectlist_submit(this);">
+<form method="post" name="fmailselectlist" action="{{ url_for('mail_select_result') }}" onsubmit="return fmailselectlist_submit(this);">
     <input type="hidden" name="token" value="">
     <input type="hidden" name="ma_id" value="{{ ma_id }}">
 
@@ -36,7 +36,7 @@
 
     <div class="btn_confirm01 btn_confirm">
         <input type="submit" value="메일보내기" class="btn_submit">
-        <a href="/admin/mail_select_form/{{ ma_id }}">뒤로</a>
+        <a href="{{ url_for('mail_select_form', ma_id=ma_id) }}">뒤로</a>
     </div>
 </form>
 

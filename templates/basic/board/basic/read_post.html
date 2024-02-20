@@ -4,7 +4,7 @@
 {% endif %}
 
 {% block head %}
-    <script src="/static/js/viewimageresize.js"></script>
+    <script src="{{ url_for('static', path='/js/viewimageresize.js') }}"></script>
     <link rel="stylesheet" href="{{ theme_asset(request, 'css/board_common.css?ver=1.0.0') }}">
     <link rel="stylesheet" href="{{ theme_asset(request, 'css/board_skin_basic.css?ver=1.0.0') }}">
 {% endblock head %}
@@ -161,7 +161,7 @@
         <div id="article_react">
             {% if board.bo_use_good %}
             <div>
-                <a href="/bbs/ajax/good/{{ board.bo_table }}/{{ write.wr_id }}/good" id="react_good" class="btn_react react_good {{ "active" if write.is_good else "" }}">
+                <a href="{{ url_for('ajax_good', bo_table=board.bo_table, wr_id=write.wr_id,  type='good') }}" id="react_good" class="btn_react react_good {{ "active" if write.is_good else "" }}">
                     <i class="fa fa-regular fa-thumbs-up" aria-hidden="true"></i>
                     <span class="blind">추천</span>
                     <strong>{{ write.wr_good }}</strong>
@@ -171,7 +171,7 @@
             {% endif %}
             {% if board.bo_use_nogood %}
             <div>
-                <a href="/bbs/ajax/good/{{ board.bo_table }}/{{ write.wr_id }}/nogood" id="react_nogood" class="btn_react react_nogood {{ "active" if write.is_nogood else "" }}">
+                <a href="{{ url_for('ajax_good', bo_table=board.bo_table, wr_id=write.wr_id,  type='nogood') }}" id="react_nogood" class="btn_react react_nogood {{ "active" if write.is_nogood else "" }}">
                     <i class="fa fa-regular fa-thumbs-down" aria-hidden="true"></i>
                     <span class="blind">비추천</span>
                     <strong>{{ write.wr_nogood }}</strong>
@@ -192,7 +192,7 @@
             <li>
                 <i class="fa fa-download" aria-hidden="true"></i>
                 <div>
-                    <a href="/board/{{ board.bo_table }}/{{ write.wr_id }}/download/{{ file.bf_no }}" class="view_file_download">
+                    <a href="{{ url_for('download_file', bo_table=board.bo_table, wr_id=write.wr_id, bf_no=file.bf_no) }}" class="view_file_download">
                         <strong>{{ file.bf_source }}</strong>
                         ({{ file.bf_filesize|filesizeformat }})
                     </a>
@@ -328,7 +328,7 @@
                     <li><button type="button" class="more_modify" data-wrid="{{ comment.wr_id }}">수정</button></li>
                     {% endif %}
                     {% if comment.is_del %}
-                    <li><button type="button" class="more_delete" data-href="/board/delete_comment/{{ board.bo_table }}/{{ comment.wr_id }}">삭제</button></li>
+                    <li><button type="button" class="more_delete" data-href="{{ url_for('delete_comment', bo_table=board.bo_table, wr_id=comment.wr_id) }}">삭제</button></li>
                     {% endif %}
                 </ul>
             </div>

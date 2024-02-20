@@ -9,7 +9,7 @@
     {% set stx = request.query_params.get("stx", "") %}
 
     <div class="local_ov01 local_ov">
-        <a href="/admin/member_list" class="ov_listall">전체목록</a>
+        <a href="{{ url_for('member_list') }}" class="ov_listall">전체목록</a>
         <span class="btn_ov01">
             <span class="ov_txt">총회원수</span>
             <span class="ov_num">{{ total_count|number_format }}명</span>
@@ -54,7 +54,7 @@
         </p>
     </div>
 
-    <form name="fmemberlist" id="fmemberlist" action="/admin/member_list_update" onsubmit="return fmemberlist_submit(this);" method="post">
+    <form name="fmemberlist" id="fmemberlist" action="{{ url_for('member_list_update') }}" onsubmit="return fmemberlist_submit(this);" method="post">
         <input type="hidden" name="token" value="">
 
         <div class="tbl_head01 tbl_wrap">
@@ -137,11 +137,11 @@
                         <td headers="mb_list_mobile" class="td_tel"><!-- 휴대폰번호 -->{{ member.mb_hp }}</td>
                         <td headers="mb_list_lastcall" class="td_date"><!-- 최근접속일 -->{{ member.mb_today_login }}</td>
                         <td headers="mb_list_grp" class="td_numsmall">
-                            <a href="/admin/boardgroupmember_form/{{ member.mb_id }}">{{ member.group_count|number_format }}</a>
+                            <a href="{{ url_for('board_form', mb_id=member.mb_id) }}">{{ member.group_count|number_format }}</a>
                         </td>
                         <td headers="mb_list_mng" rowspan="2" class="td_mng td_mng_s">
-                            <a href={{ "/admin/member_form/" ~ member.mb_id|set_query_params(request) }} class="btn btn_03">수정</a>
-                            <a href="/admin/boardgroupmember_form/{{ member.mb_id }}" class="btn btn_02">그룹</a></td>
+                            <a href="{{ url_for('member_form', mb_id=member.mb_id)|set_query_params(request) }}" class="btn btn_03">수정</a>
+                            <a href="{{ url_for('board_form', mb_id=member.mb_id) }}" class="btn btn_02">그룹</a></td>
                     </tr>
                     <tr class="{{ background_color }}">
                         <td headers="mb_list_name" class="td_mbname">{{ member.mb_name }}</td>
@@ -166,7 +166,7 @@
                         <td headers="mb_list_tel" class="td_tel"><!-- 전화번호 -->{{ member.mb_tel }}</td>
                         <td headers="mb_list_join" class="td_date"><!--회원가입일 -->{{ member.mb_datetime }}</td>
                         <td headers="mb_list_point" class="td_num">
-                            <a href="/admin/point_list?sfl=mb_id&stx={{ member.mb_id }}">{{ member.mb_point|number_format }}</a>
+                            <a href="{{ url_for('admin_point_list') }}?sfl=mb_id&stx={{ member.mb_id }}">{{ member.mb_point|number_format }}</a>
                         </td>
                     </tr>
                     {% else %}
@@ -181,7 +181,7 @@
         <div class="btn_fixed_top">
             <input type="submit" name="act_button" value="선택수정" onclick="document.pressed=this.value" class="btn btn_02">
             <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn btn_02">
-            <a href="/admin/member_form" id="member_add" class="btn btn_01">회원추가</a>
+            <a href="{{ url_for('member_form') }}" id="member_add" class="btn btn_01">회원추가</a>
         </div>
     </form>
 

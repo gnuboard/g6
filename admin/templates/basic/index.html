@@ -37,14 +37,14 @@
                         <div>{{ sideview.get(request, member.mb_id, member.mb_nick, member.wr_email, member.wr_homepage)|safe }}</div>
                     </td>
                     <td class="td_num">{{ member.mb_level }}</td>
-                    <td><a href="/admin/point_list?sfl=mb_id&stx={{ member.mb_id }}">{{ member.mb_point|number_format }}</a></td>
+                    <td><a href="{{ url_for('admin_point_list') }}?sfl=mb_id&stx={{ member.mb_id }}">{{ member.mb_point|number_format }}</a></td>
                     <td class="td_boolean">{{ '예' if member.mb_mailling else '아니오' }}</td>
                     <td class="td_boolean">{{ '예' if member.mb_open else '아니오' }}</td>
                     <td class="td_boolean">{{ '예' if member.mb_email_certify.year > 2000 else '아니오' }}</td>
                     <td class="td_boolean">{{ '예' if member.mb_intercept_date else '아니오' }}</td>
                     <td class="td_category">
                         {% if group_count > 0 %}
-                            <a href="/admin/boardgroupmember_form/{{ member.mb_id }}">{{ group_count|number_format }}</a>
+                            <a href="{{ url_for('board_form', mb_id=member.mb_id) }}">{{ group_count|number_format }}</a>
                         {% endif %}
                     </td>
                 </tr>
@@ -58,7 +58,7 @@
     </div>
 
     <div class="btn_list03 btn_list">
-        <a href="/admin/member_list">회원 전체보기</a>
+        <a href="{{ url_for('member_list') }}">회원 전체보기</a>
     </div>
 
 </section>
@@ -83,10 +83,10 @@
                 {% for row in new_writes %}
                 <tr>
                     <td class="td_category">
-                        <a href="/bbs/new?gr_id={{ row.gr_id }}">{{ row.gr_subject|truncate(10) }}</a>
+                        <a href="{{ url_for('board_new_list') }}?gr_id={{ row.gr_id }}">{{ row.gr_subject|truncate(10) }}</a>
                     </td>
                     <td class="td_category">
-                        <a href="/board/{{ row.bo_table }}">{{ row.bo_subject|truncate(20) }}</a>
+                        <a href="{{ url_for('list_post', bo_table=row.bo_table) }}">{{ row.bo_subject|truncate(20) }}</a>
                     </td>
                     <td>
                         <a href="{{ row.link }}">{{ row.subject|striptags|truncate(100) }}</a>
@@ -108,7 +108,7 @@
     </div>
 
     <div class="btn_list03 btn_list">
-        <a href="/bbs/new">최근게시물 더보기</a>
+        <a href="{{ url_for('board_new_list') }}">최근게시물 더보기</a>
     </div>
 </section>
 
@@ -135,7 +135,7 @@
             <tbody>
             {% for row in new_points %}
                 <tr>
-                    <td class="td_mbid"><a href="/admin/point_list?sfl=mb_id&stx={{ row.mb_id }}">{{ row.mb_id }}</a></td>
+                    <td class="td_mbid"><a href="{{ url_for('admin_point_list') }}?sfl=mb_id&stx={{ row.mb_id }}">{{ row.mb_id }}</a></td>
                     <td class="td_mbname">{{ row.member.mb_name }}</td>
                     <td class="td_name sv_use">
                         <div>{{ sideview.get(request, row.member.mb_id, row.member.mb_nick, row.member.wr_email, row.member.wr_homepage)|safe }}</div>
@@ -155,7 +155,7 @@
     </div>
 
     <div class="btn_list03 btn_list">
-        <a href="/admin/point_list">포인트내역 전체보기</a>
+        <a href="{{ url_for('admin_point_list') }}">포인트내역 전체보기</a>
     </div>
 </section>
 {% endblock content %}

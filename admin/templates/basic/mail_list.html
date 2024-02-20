@@ -12,7 +12,7 @@
     </p>
 </div>
 
-<form name="fmaillist" method="post" action="/admin/mail_delete" onsubmit="return fmaillist_submit(this);">
+<form name="fmaillist" method="post" action="{{ url_for('mail_delete') }}" onsubmit="return fmaillist_submit(this);">
     <input type="hidden" name="token" id="token" value="">
     <div class="tbl_head01 tbl_wrap">
         <table>
@@ -37,11 +37,11 @@
                         <input type="hidden" name="ma_id[]" value="{{ mail.ma_id }}">
                     </td>
                     <td class="td_num_c">{{ mail.num }}</td>
-                    <td class="td_left"><a href="/admin/mail_form/{{ mail.ma_id }}">{{ mail.ma_subject }}</a></td>
+                    <td class="td_left"><a href="{{ url_for('mail_form', ma_id=mail.ma_id) }}">{{ mail.ma_subject }}</a></td>
                     <td class="td_datetime">{{ mail.ma_time }}</td>
-                    <td class="td_test"><a href="/admin/mail_test/{{ mail.ma_id }}">테스트</a></td>
-                    <td class="td_send"><a href="/admin/mail_select_form/{{ mail.ma_id }}">보내기</a></td>
-                    <td class="td_mng"><a href="/admin/mail_preview/{{ mail.ma_id }}" target="_blank" class="btn btn_03">미리보기</a></a></td>
+                    <td class="td_test"><a href="{{ url_for('mail_test', ma_id=mail.ma_id) }}">테스트</a></td>
+                    <td class="td_send"><a href="{{ url_for('mail_select_form', ma_id=mail.ma_id) }}">보내기</a></td>
+                    <td class="td_mng"><a href="{{ url_for('mail_preview', ma_id=mail.ma_id) }}" target="_blank" class="btn btn_03">미리보기</a></a></td>
                 </tr>
             {% else %}
                 <tr>
@@ -53,7 +53,7 @@
     </div>
     <div class="btn_fixed_top">
         <input type="submit" value="선택삭제" class="btn btn_02">
-        <a href="/admin/mail_form" id="mail_add" class="btn btn_01">메일내용추가</a>
+        <a href="{{ url_for('mail_form') }}" id="mail_add" class="btn btn_01">메일내용추가</a>
     </div>
 </form>
 

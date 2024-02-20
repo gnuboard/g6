@@ -21,8 +21,8 @@
 {% set is_admin=get_admin_type(request, login_member.mb_id, board=board) %}
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
 <div id="bo_gallery_write" class="bo_common bo_write">
-
-    <form name="fwrite" id="fwrite" action="/board/write_update/{{ board.bo_table }}" method="post" enctype="multipart/form-data" onsubmit="return fwrite_submit(this);" autocomplete="off" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
+    
+    <form name="fwrite" id="fwrite" action="{{ url_for('write_update', bo_table=board.bo_table) }}" method="post" enctype="multipart/form-data" onsubmit="return fwrite_submit(this);" autocomplete="off" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
         <input type="hidden" name="uid" value="{{ get_unique_id(request) }}">
         <input type="hidden" name="wr_id" value="{{ write.wr_id }}">
         <input type="hidden" name="parent_id" value="{{ request.query_params.parent_id }}">
@@ -101,7 +101,7 @@
 
             {% if login_member %}
 
-            <script src="/static/js/autosave.js?ver=1.0.0"></script>
+            <script src="{{ url_for('static', path='/js/autosave.js?ver=1.0.0') }}"></script>
             <button type="button" id="btn_autosave_list" class="btn_frmline">임시 저장된 글 
                 (<span id="autosave_count">0</span>)
             </button>

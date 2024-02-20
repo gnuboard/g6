@@ -8,7 +8,7 @@
     {% set stx = request.query_params.get("stx", "") %}
 
     <div class="local_ov01 local_ov">
-        <a href="/admin/auth_list" class="ov_listall btn_ov02">전체목록</a>
+        <a href="{{ url_for('auth_list') }}" class="ov_listall btn_ov02">전체목록</a>
         <span class="btn_ov01"><span class="ov_txt">설정된 관리권한</span><span class="ov_num"> {{ total_count|number_format }} 건</span></span>
     </div>
 
@@ -21,7 +21,7 @@
         </button>
     </form>
 
-    <form name="fauthlist" id="fauthlist" method="post" action="/admin/auth_list_delete?{{ query_params|safe }}" onsubmit="return fauthlist_submit(this);">
+    <form name="fauthlist" id="fauthlist" method="post" action="{{ url_for('auth_list_delete') }}?{{ query_params|safe }}" onsubmit="return fauthlist_submit(this);">
         <input type="hidden" name="token" value="">
         <div class="tbl_head01 tbl_wrap">
             <table>
@@ -67,7 +67,7 @@
 
     {{ paging|safe }}
 
-    <form name="fauthlist2" id="fauthlist2" action="/admin/auth_update?{{ query_params|safe }}" method="post" autocomplete="off" onsubmit="return fauth_add_submit(this);">
+    <form name="fauthlist2" id="fauthlist2" action="{{ url_for('auth_update') }}?{{ query_params|safe }}" method="post" autocomplete="off" onsubmit="return fauth_add_submit(this);">
         <input type="hidden" name="token" value="">
 
         <section id="add_admin">

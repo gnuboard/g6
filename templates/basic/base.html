@@ -10,27 +10,27 @@
     {% include "/bbs/newwin.inc.html" %}
 
     <div id="tnb">
-        <div class="inner">
-            <!-- <ul id="hd_define">
-                <li class="active"><a href="/">커뮤니티</a></li>
-                <li><a href="/shop">쇼핑몰</a></li>
-            </ul> -->
-            <ul id="hd_qnb">
-                <li><a href="{{ url_for('faq_view') }}">FAQ</a></li>
-                <li><a href="{{ url_for('qa_list') }}">Q&A</a></li>
-                <li><a href="/bbs/new">새글</a></li>
-                <li><a href="/bbs/current_connect" class="visit">
-                    접속자<strong class="visit-num">{{ current_login_count[0] }}</strong></a>
-                    <!-- current_login_count[1]은 회원 수 -->
-                </li>
-            </ul>
+      <div class="inner">
+          <!-- <ul id="hd_define">
+            <li class="active"><a href="{{ url_for('index') }}">커뮤니티</a></li>
+            <li><a href="/shop">쇼핑몰</a></li>
+          </ul> -->
+          <ul id="hd_qnb">
+            <li><a href="{{ url_for('faq_view') }}">FAQ</a></li>
+            <li><a href="{{ url_for('qa_list') }}">Q&A</a></li>
+            <li><a href="{{ url_for('board_new_list') }}">새글</a></li>
+            <li><a href="{{ url_for('current_connect') }}" class="visit">
+                접속자<strong class="visit-num">{{ current_login_count[0] }}</strong></a>
+                <!-- current_login_count[1]은 회원 수 -->
+            </li>
+        </ul>
         </div>
     </div>
 
     <div id="hd_wrapper">
 
         <div id="logo">
-            <a href="/"><img src="/static/img/logo_gnuboard6.png" alt="그누보드6"></a>
+            <a href="{{ url_for('index') }}"><img src="{{ url_for('static', path='/img/logo_gnuboard6.png') }}" alt="그누보드6"></a>
         </div>
 
         <button type="button" id="gnb_open" class="hd_opener">
@@ -56,23 +56,23 @@
 
             <ul id="hd_nb">
                 <li class="hd_nb1">
-                    <a href="/bbs/faq" id="snb_faq">
+                    <a href="{{ url_for('faq_view') }}" id="snb_faq">
                         <i class="fa fa-question" aria-hidden="true"></i>FAQ
                     </a>
                 </li>
                 <li class="hd_nb2">
-                    <a href="/bbs/qalist" id="snb_qa">
+                    <a href="{{ url_for('qa_list') }}" id="snb_qa">
                         <i class="fa fa-comments" aria-hidden="true"></i>1:1문의
                     </a>
                 </li>
                 <li class="hd_nb3">
-                    <a href="/bbs/current_connect" id="snb_cnt">
+                    <a href="{{ url_for('current_connect') }}" id="snb_cnt">
                         <i class="fa fa-users" aria-hidden="true"></i>접속자
                         <span>{{ current_login_count[0]|number_format }}</span>
                     </a>
                 </li>
                 <li class="hd_nb4">
-                    <a href="/bbs/new" id="snb_new">
+                    <a href="{{ url_for('board_new_list') }}" id="snb_new">
                         <i class="fa fa-history" aria-hidden="true"></i>새글
                     </a>
                 </li>
@@ -83,13 +83,12 @@
         <div class="hd_sch_wr">
             <fieldset id="hd_sch">
                 <legend>사이트 내 전체검색</legend>
-
-                <form name="fsearchbox" method="get" action="/bbs/search" onsubmit="return fsearchbox_submit(this);">
-                    <input type="hidden" name="sfl" value="wr_subject||wr_content">
-                    <input type="hidden" name="sop" value="and">
-                    <label for="sch_stx" class="blind">검색어 필수</label>
-                    <input type="text" name="stx" id="sch_stx" maxlength="20" placeholder="검색어를 입력해주세요">
-                    <button type="submit" id="sch_submit" value="검색"><i class="fa fa-search" aria-hidden="true"></i><span class="blind">검색</span></button>
+                <form name="fsearchbox" method="get" action="{{ url_for('search') }}" onsubmit="return fsearchbox_submit(this);">
+                <input type="hidden" name="sfl" value="wr_subject||wr_content">
+                <input type="hidden" name="sop" value="and">
+                <label for="sch_stx" class="blind">검색어 필수</label>
+                <input type="text" name="stx" id="sch_stx" maxlength="20" placeholder="검색어를 입력해주세요">
+                <button type="submit" id="sch_submit" value="검색"><i class="fa fa-search" aria-hidden="true"></i><span class="blind">검색</span></button>
                 </form>
 
                 <script>
@@ -155,21 +154,21 @@
 
         <!-- 프로필 -->
         <div class="profile_wrap">
-            <span class="profile_img" tabindex="0">
-                <img src="{{ get_member_image(request, request.state.login_member.mb_id)|safe }}" alt="profile_image">
-            </span>
-            <ul class="hd_login">
-                {% if request.state.login_member %}
-                <li><a href="/bbs/member_confirm?url=/bbs/register_form">정보수정</a></li>
-                {% if request.state.is_super_admin %}
-                <li class="tnb_admin"><a href="/admin">관리자</a></li>
-                {% endif %}
-                <li><a href="/bbs/logout">로그아웃</a></li>
-                {% else %}
-                <li><a href="/bbs/register">회원가입</a></li>
-                <li><a href="/bbs/login">로그인</a></li>
-                {% endif %}
-            </ul>
+          <span class="profile_img" tabindex="0">
+            <img src="{{ get_member_image(request, request.state.login_member.mb_id)|safe }}" alt="profile_image">
+          </span>
+          <ul class="hd_login">       
+            {% if request.state.login_member %}
+            <li><a href="{{ url_for('check_member_form') }}?url={{ url_for('register_form') }}">정보수정</a></li>
+            {% if request.state.is_super_admin %}
+              <li class="tnb_admin"><a href="{{ url_for('admin_index') }}">관리자</a></li>
+            {% endif %}
+            <li><a href="{{ url_for('logout') }}">로그아웃</a></li>
+            {% else %}
+            <li><a href="{{ url_for('get_register') }}">회원가입</a></li>
+            <li><a href="{{ url_for('login_form') }}">로그인</a></li>
+            {% endif %}
+          </ul>
         </div>
 
     </div>

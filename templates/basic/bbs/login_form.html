@@ -8,9 +8,9 @@
         <h1>로그인</h1>
         <div class="mb_log_cate">
             <h2><span class="blind">회원</span>로그인</h2>
-            <a href="/bbs/register" class="join">회원가입</a>
+            <a href="{{ url_for('get_register') }}" class="join">회원가입</a>
         </div>
-        <form name="flogin" action="/bbs/login" onsubmit="return flogin_submit(this);" method="post">
+        <form name="flogin" action="{{ url_for('login') }}" onsubmit="return flogin_submit(this);" method="post">
             <input type="hidden" name="url" value="{{ url }}">
             <fieldset id="login_fs">
                 <legend>회원로그인</legend>
@@ -26,8 +26,8 @@
                         <label for="login_auto_login"><span></span> 자동로그인</label>  
                     </div>
                     <div class="login_if_lpl">
-                        <a href="/bbs/id_lost">아이디 찾기</a> |
-                        <a href="/bbs/password_lost">비밀번호 찾기</a>
+                        <a href="{{ url_for('find_member_id_form') }}">아이디 찾기</a> |
+                        <a href="{{ url_for('find_member_password_form') }}">비밀번호 찾기</a>
                     </div>
                 </div>
             </fieldset>

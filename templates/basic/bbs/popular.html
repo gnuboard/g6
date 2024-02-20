@@ -6,7 +6,7 @@
             <ul>
                 {% for popular in populars %}
                     <li class="item">
-                        <a href="/bbs/search?stx={{ popular.pp_word }}">{{ popular.pp_word }}</a>
+                        <a href="{{ url_for('search') }}?stx={{ popular.pp_word }}">{{ popular.pp_word }}</a>
                     </li>
                 {% endfor %}
             </ul>

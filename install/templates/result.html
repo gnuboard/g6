@@ -34,7 +34,7 @@
 
         setTimeout(() => {
             token = generate_token();
-            const evtSource = new EventSource("/install/process?token=" + token);
+            const evtSource = new EventSource("{{ url_for('install_process') }}?token=" + token);
             evtSource.onmessage = function(event) {
                 const data = event.data.trim();  // 공백 제거
 

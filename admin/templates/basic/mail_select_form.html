@@ -10,7 +10,7 @@
     정상회원 {{ (member_count - leave_count)|number_format }}명 중 메일 발송 대상 선택
 </div>
 
-<form name="frmsendmailselectform" method="post" action="/admin/mail_select_list" onsubmit="return frmsendmailselectform_submit(this);" autocomplete="off">
+<form name="frmsendmailselectform" method="post" action="{{ url_for('mail_select_list') }}" onsubmit="return frmsendmailselectform_submit(this);" autocomplete="off">
     <input type="hidden" name="ma_id" value="{{ mail.ma_id }}">
     <input type="hidden" name="token" value="">
 
@@ -63,7 +63,7 @@
 
     <div class="btn_confirm01 btn_confirm">
         <input type="submit" value="확인" class="btn_submit">
-        <a href="/admin/mail_list">목록 </a>
+        <a href="{{ url_for('mail_list') }}">목록 </a>
     </div>
 </form>
 

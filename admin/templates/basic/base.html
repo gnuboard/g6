@@ -1,7 +1,7 @@
 {% extends "base_sub.html" %}
 
 {% block body_html %}
-<div id="hd_login_msg">{{ request.state.login_member.mb_nick }} 로그인 중 <a href="/bbs/logout">로그아웃</a></div>
+<div id="hd_login_msg">{{ request.state.login_member.mb_nick }} 로그인 중 <a href="{{ url_for('logout') }}">로그아웃</a></div>
 <script>
     var admin_csrf_token_key = "";
 </script>
@@ -53,17 +53,17 @@
 
     <div id="hd_top">
         <button type="button" id="btn_gnb" class="btn_gnb_close "><span class="blind">메뉴</span></button>
-        <div id="logo"><a href="/admin/"><img src="/static/admin/img/logo.png" alt="{{ request.state.title }} 관리자"></a></div>
+        <div id="logo"><a href="{{ url_for('admin_index') }}"><img src="{{ url_for('static', path='/admin/img/logo.png') }}" alt="{{ request.state.title }} 관리자"></a></div>
     </div>
 
     <ul>
         <!-- <li class="tnb_li"><a href="/shop/" class="tnb_shop" target="_blank" title="쇼핑몰 바로가기">쇼핑몰 바로가기</a></li> -->
-        <li class="tnb_li"><a href="/" class="tnb_community" target="_blank" title="커뮤니티 바로가기"><span class="blind">커뮤니티 바로가기</span></a></li>
-        <li class="tnb_li"><a href="/admin/service" class="tnb_service">부가서비스</a></li>
+        <li class="tnb_li"><a href="{{ url_for('index') }}" class="tnb_community" target="_blank" title="커뮤니티 바로가기"><span class="blind">커뮤니티 바로가기</span></a></li>
+        <li class="tnb_li"><a href="{{ url_for('service_view') }}" class="tnb_service">부가서비스</a></li>
         <li class="tnb_li"><button type="button" class="tnb_mb_btn">관리자<span class="./img/btn_gnb.png">메뉴열기</span></button>
             <ul class="tnb_mb_area">
-                <li><a href="/admin/member_form?w=u&amp;mb_id=admin">관리자정보</a></li>
-                <li id="tnb_logout"><a href="/bbs/logout">로그아웃</a></li>
+                <li><a href="{{ url_for('member_form') }}?w=u&amp;mb_id=admin">관리자정보</a></li>
+                <li id="tnb_logout"><a href="{{ url_for('logout') }}">로그아웃</a></li>
             </ul>
         </li>
         <li class="tnb_li">
@@ -110,7 +110,7 @@
                     <ul class="gnb_sub">
                     {% for submenu in submenus[1:] %}
                         <li class="gnb_sub_li current_{{ submenu['id'] }}">
-                            <a href="/admin{{ submenu['url'] }}" class="gnb_sub_link">{{ submenu['name'] }}</a>
+                            <a href="{{ url_for('admin_index') }}{{ submenu['url'] }}" class="gnb_sub_link">{{ submenu['name'] }}</a>
                         </li>
                     {% endfor %}
                     </ul>

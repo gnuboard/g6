@@ -12,7 +12,7 @@
             <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}" class="lt_img">
                 {% set thumbnail=get_list_thumbnail(request, board, write, thumb_width, thumb_height) %}
                 {% if thumbnail.src %}
-                <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}">
+                <img src="{{ root_path }}/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}">
                 {% if thumbnail.noimg %}
                 <span class="is_label is_noimage">No Image</span>
                 {% endif %}

@@ -19,7 +19,7 @@
       </li>
     </ul>
     {% if request.state.is_super_admin %}
-        <a href="/admin/visit_list" class="btn_admin btn">
+        <a href="{{ url_for('visit_list') }}" class="btn_admin btn">
             <i class="fa fa-cog fa-spin fa-fw"></i>
             <span class="blind">관리자</span>
         </a>

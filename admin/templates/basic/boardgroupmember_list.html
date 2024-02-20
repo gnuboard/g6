@@ -19,7 +19,7 @@
         </button>
     </form>
     
-    <form name="fboardgroupmember" id="fboardgroupmember" action="/admin/boardgroupmember_delete" onsubmit="return fboardgroupmember_submit(this);" method="post">
+    <form name="fboardgroupmember" id="fboardgroupmember" action="{{ url_for('boardgroupmember_delete') }}" onsubmit="return fboardgroupmember_submit(this);" method="post">
         <input type="hidden" name="token" value="">
         <input type="hidden" name="gr_id" value="{{ group.gr_id }}">
     
@@ -47,7 +47,7 @@
                             <label for="chk_{{ loop.index0 }}" class="blind">{{ row.member_info.mb_nick }} 회원</label>
                             <input type="checkbox" name="chk[]" value="{{ row.gm_id }}" id="chk_{{ loop.index0 }}">
                         </td>
-                        <td class="td_grid"><a href="/admin/boardgroupmember_form/{{ row.mb_id }}">{{ row.group_count|number_format }}</a></td>
+                        <td class="td_grid"><a href="{{ url_for('board_form', mb_id=row.mb_id) }}">{{ row.group_count|number_format }}</a></td>
                         <td class="td_mbid">{{ row.mb_id }}</td>
                         <td class="td_mbname">{{ row.member_info.mb_nick }}</td>
                         <td class="td_name sv_use">

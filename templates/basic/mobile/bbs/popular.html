@@ -2,7 +2,7 @@
     <h2>인기검색어</h2>
     {% for popular in populars %}
     <div>
-        <a href="/bbs/search?stx={{ popular.pp_word }}">{{ popular.pp_word }}</a>
+        <a href="{{ url_for('search') }}?stx={{ popular.pp_word }}">{{ popular.pp_word }}</a>
     </div>
     {% endfor %}
 </aside>

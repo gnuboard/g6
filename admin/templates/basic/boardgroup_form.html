@@ -5,7 +5,7 @@
 {% block subtitle %}게시판그룹 {{ action }}{% endblock subtitle %}
 
 {% block content %}
-<form  method="post" name="fboardgroup" id="fboardgroup" action="/admin/boardgroup_form_update?{{ request.query_params }}" onsubmit="return fboardgroup_check(this);" enctype="multipart/form-data" autocomplete="off">
+<form  method="post" name="fboardgroup" id="fboardgroup" action="{{ url_for('boardgroup_form_update') }}?{{ request.query_params }}" onsubmit="return fboardgroup_check(this);" enctype="multipart/form-data" autocomplete="off">
     <input type="hidden" name="action" value="{{ 'u' if group else 'w' }}">
     <input type="hidden" name="gr_id" value="{{ group.gr_id if group else '' }}">
     <input type="hidden" name="token" value="">
@@ -65,7 +65,7 @@
                 <tr>
                     <th scope="row">접근회원수</th>
                     <td>
-                        <a href="/admin/boardgroupmember_list/{{ group.gr_id }}">{{ member_count|int|number_format }}</a>                    
+                        <a href="{{ url_for('boardgroupmember_list', gr_id=group.gr_id) }}">{{ member_count|int|number_format }}</a>                    
                     </td>
                 </tr>
                 {% endif %}
@@ -85,7 +85,7 @@
     </div>
 
     <div class="btn_fixed_top">
-        <a href="/admin/boardgroup_list?{{ request.query_params }}" class="btn btn_02">목록</a>
+        <a href="{{ url_for('boardgroup_list') }}?{{ request.query_params }}" class="btn btn_02">목록</a>
         <input type="submit" class="btn_submit btn" accesskey="s" value="확인">
     </div>
 

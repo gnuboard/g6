@@ -5,7 +5,7 @@
     <div id="ol_after_hd">
         <span class="profile_img">
             <img src="{{ get_member_image(request, member.mb_id) }}" alt="profile_image">
-            <a href="/bbs/member_confirm" id="ol_after_info">
+            <a href="{{ url_for('check_member_form') }}" id="ol_after_info">
                 <i class="fa fa-cog fa-3x fa-fw"></i>
                 <span class="blind">정보수정</span>
             </a>
@@ -13,12 +13,12 @@
         <strong>{{ member.mb_nick if member is defined else '' }}님</strong>
         <div id="ol_after_btn">
             {% if request.state.is_super_admin %}
-            <a href="/admin" class="btn_admin">
+            <a href="{{ url_for('admin_index') }}" class="btn_admin">
                 <i class="fa fa-cog fa-spin fa-fw"></i>
                 <span class="blind">관리자</span>
             </a>
             {% endif %}
-            <a href="/bbs/logout" id="ol_after_logout">로그아웃</a>
+            <a href="{{ url_for('logout') }}" id="ol_after_logout">로그아웃</a>
         </div>
     </div>
 
@@ -31,7 +31,7 @@
             </a>
         </li>
         <li id="ol_after_pt">
-            <a href="/bbs/point" target="_blank" class="win_point">
+            <a href="{{ url_for('point_list') }}" target="_blank" class="win_point">
                 <i class="fa fa-database" aria-hidden="true"></i>
                 포인트
                 <strong>{{ member.mb_point|number_format if member else '' }}</strong>

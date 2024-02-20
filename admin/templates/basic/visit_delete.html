@@ -8,7 +8,7 @@
     접속자 로그를 삭제할 년도와 방법을 선택해주십시오.
 </div>
 
-<form method="post" name="fvisitdelete" class="visit_del" action="/admin/visit_delete_update" onsubmit="return form_submit(this);">
+<form method="post" name="fvisitdelete" class="visit_del" action="{{ url_for('visit_delete_update') }}" onsubmit="return form_submit(this);">
     <input type="hidden" name="token" value="">
     <div>
         <label for="year" class="blind">년도선택</label>

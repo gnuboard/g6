@@ -2,9 +2,9 @@
 <section id="ol_before" class="ol">
     <div id="ol_be_cate">
         <h2><span class="blind">회원</span>로그인</h2>
-        <a href="/bbs/register" class="join">회원가입</a>
+        <a href="{{ url_for('get_register') }}" class="join">회원가입</a>
     </div>
-    <form name="foutlogin" action="/bbs/login" onsubmit="return fhead_submit(this);" method="post" autocomplete="off">
+    <form name="foutlogin" action="{{ url_for('login') }}" onsubmit="return fhead_submit(this);" method="post" autocomplete="off">
     <fieldset>
         <div class="ol_wr">
             <input type="hidden" name="url" value="{{ request.url }}">
@@ -20,8 +20,8 @@
                 <label for="auto_login" id="auto_login_label"><span></span>자동로그인</label>
             </div>
             <div id="ol_svc">
-                <a href="/bbs/id_lost">ID 찾기</a> / 
-                <a href="/bbs/password_lost">PW 찾기</a>
+                <a href="{{ url_for('find_member_id_form') }}">ID 찾기</a> / 
+                <a href="{{ url_for('find_member_password_form') }}">PW 찾기</a>
             </div>
         </div>
         

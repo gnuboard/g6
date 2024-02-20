@@ -25,7 +25,7 @@
     });
     </script>
     <form name="fvisit" id="fvisit" class="local_sch03 local_sch" method="get">
-        {% if request.path == '/admin/visit_list' %}
+        {% if request.path == '{{ root_path }}/admin/visit_list' %}
             <span class="btn_ov01">
                 <span class="ov_txt">전체 </span>
                 <span class="ov_num"> {{ total_records }} 건 </span>

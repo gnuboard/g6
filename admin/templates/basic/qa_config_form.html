@@ -53,7 +53,7 @@
                         <tr>
                             <th scope="row"><label for="qa_use_sms">SMS 알림</label></th>
                             <td>
-                                <span class="frm_info">휴대폰 입력을 사용하실 경우 문의글 등록시 등록자가 답변등록시 SMS 알림 수신을 선택할 수 있도록 합니다.<br>SMS 알림을 사용하기 위해서는 기본환경설정 &gt; <a href="/admin/config_form#anc_cf_sms">SMS 설정</a>을 하셔야 합니다.</span>
+                                <span class="frm_info">휴대폰 입력을 사용하실 경우 문의글 등록시 등록자가 답변등록시 SMS 알림 수신을 선택할 수 있도록 합니다.<br>SMS 알림을 사용하기 위해서는 기본환경설정 &gt; <a href="{{ url_for('config_form') }}#anc_cf_sms">SMS 설정</a>을 하셔야 합니다.</span>
                                 <select name="qa_use_sms" id="qa_use_sms">
                                     <option value="0" {{ get_selected(qa_config.qa_use_sms, 0) }}>사용안함</option>
                                     <option value="1" {{ get_selected(qa_config.qa_use_sms, 1) }}>사용함</option>

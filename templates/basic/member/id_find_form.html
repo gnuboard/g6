@@ -6,7 +6,7 @@
 {% block content %}
 <div id="find_info" class="new_win">
     <div class="new_win_con">
-        <form name="fidlost" action="/bbs/id_lost" onsubmit="return fidlost_submit(this);" method="post" autocomplete="off">
+        <form name="fidlost" action="{{ url_for('find_member_id') }}" onsubmit="return fidlost_submit(this);" method="post" autocomplete="off">
             <input type="hidden" name="token" value="">
             <h3>회원가입정보로 ID 찾기</h3>
             <fieldset id="info_fs">

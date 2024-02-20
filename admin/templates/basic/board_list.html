@@ -8,7 +8,7 @@
     {% set stx = request.query_params.get("stx", "") %}
 
     <div class="local_ov01 local_ov">
-        <a href="/admin/board_list" class="ov_listall">전체목록</a>    
+        <a href="{{ url_for('board_list') }}" class="ov_listall">전체목록</a>    
         <span class="btn_ov01"><span class="ov_txt">생성된 게시판수</span><span class="ov_num"> {{ total_count|number_format }}개</span></span>
     </div>
 
@@ -26,7 +26,7 @@
         </button>
     </form>
 
-    <form name="fboardlist" id="fboardlist" action="/admin/board_list_update" onsubmit="return fboardlist_submit(this);" method="post">
+    <form name="fboardlist" id="fboardlist" action="{{ url_for('board_list_update') }}" onsubmit="return fboardlist_submit(this);" method="post">
         <input type="hidden" name="token" value="">
         <div class="tbl_head01 tbl_wrap">
             <table>
@@ -65,7 +65,7 @@
                         </td>
                         <td>
                             <input type="hidden" name="bo_table[]" value="{{ board.bo_table }}">
-                            <a href="/board/{{ board.bo_table }}">{{ board.bo_table }}</a>
+                            <a href="{{ url_for('list_post', bo_table=board.bo_table) }}">{{ board.bo_table }}</a>
                         </td>
                         <td>
                             <label for="bo_skin[{{ loop.index0 }}]" class="blind">스킨</label>
@@ -116,8 +116,8 @@
                             </select>
                         </td>
                         <td class="td_mng td_mng_m">
-                            <a href="/admin/board_form/{{ board.bo_table }}?{{ request.query_params }}" class="btn btn_03">수정</a>                            
-                            <a href="/admin/board_copy/{{ board.bo_table }}" class="board_copy btn btn_02" target="win_board_copy">복사</a>
+                            <a href="{{ url_for('board_form', bo_table=board.bo_table) }}?{{ request.query_params }}" class="btn btn_03">수정</a>                            
+                            <a href="{{ url_for('board_copy', bo_table=board.bo_table) }}" class="board_copy btn btn_02" target="win_board_copy">복사</a>
                         </td>
                     </tr>
                     {% else %}
@@ -130,7 +130,7 @@
         <div class="btn_fixed_top">
             <input type="submit" name="act_button" value="선택수정" onclick="document.pressed=this.value" class="btn_02 btn">
             <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn_02 btn">
-            <a href="/admin/board_form" id="bo_add" class="btn_01 btn">게시판 추가</a>
+            <a href="{{ url_for('board_form') }}" id="bo_add" class="btn_01 btn">게시판 추가</a>
         </div>
     </form>
 
@@ -148,7 +148,7 @@
                 return false;
             }
 
-            f.action = "/admin/board_list_delete";
+            f.action = "{{ url_for('board_list_delete') }}";
         }
 
         f.token.value = generate_token();
