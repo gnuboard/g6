@@ -29,6 +29,30 @@
 <script src="{{ url_for('static', path='/js/wrest.js?ver=1.0.0') }}"></script>
 <script src="{{ theme_asset(request, 'js/slick/slick.min.js?ver=1.8.1') }}"></script>
 <script src="{{ url_for('static', path='/js/font-awesome/js/all.min.js?ver=6.5.1') }}"></script>
+<style>
+    :root {
+        --chk_png: url("{{ url_for('static', path='/img/chk.png') }}");
+        --gnb_bg2_gif: url("{{ url_for('static', path='/img/gnb_bg2.gif') }}");
+        --mobile_gnb_bg_png: url("{{ url_for('static', path='/img/mobile/gnb_bg.png') }}");
+        --mobile_gnb_bg2_png: url("{{ url_for('static', path='/img/mobile/gnb_bg2.png') }}");
+        --btn_end_gif: url("{{ url_for('static', path='/img/btn_end.gif') }}");
+        --captcha2_png: url("{{ url_for('static', path='/img/captcha2.png') }}");
+        --require_png: url("{{ url_for('static', path='/img/require.png') }}");
+        --btn_first_gif: url("{{ url_for('static', path='/img/btn_first.gif') }}");
+        --btn_prev_gif: url("{{ url_for('static', path='/img/btn_prev.gif') }}");
+        --btn_next_gif: url("{{ url_for('static', path='/img/btn_next.gif') }}");
+        --close_btn_png: url("{{ url_for('static', path='/img/close_btn.png') }}");
+        --sns_gp_s_png: url("{{ url_for('static', path='/img/social/sns_gp_s.png') }}");
+        --sns_logo_png: url("{{ url_for('static', path='/img/social/sns_logo.png') }}");
+        --sns_logo_not_png: url("{{ url_for('static', path='/img/social/sns_logo_not.png') }}");
+        --sns_naver_s_png: url("{{ url_for('static', path='/img/social/sns_naver_s.png') }}");
+        --sns_fb_s_png: url("{{ url_for('static', path='/img/social/sns_fb_s.png') }}");
+        --sns_twitter_s_png: url("{{ url_for('static', path='/img/social/sns_twitter_s.png') }}");
+        --sns_payco_s_png: url("{{ url_for('static', path='/img/social/sns_payco_s.png') }}");
+        --sns_kakao_s_png: url("{{ url_for('static', path='/img/social/sns_kakao_s.png') }}");
+        --plus_minus_png: url("{{ url_for('static', path='/img/social/plus_minus.png') }}");
+    }
+</style>
 
 {% block head -%}
 {% endblock head -%}

@@ -24,6 +24,20 @@ const g6_gen_token_url = "{{ url_for('generate_token') }}";
 <script src="{{ url_for('static', path='/js/common.js?ver=1.0.0') }}"></script>
 <script src="{{ url_for('static', path='/js/wrest.js?ver=1.0.0') }}"></script>
 <script src="{{ url_for('static', path='/js/font-awesome/js/all.min.js?ver=6.5.1') }}"></script>
+<style>
+    :root {
+        --wrest_gif: url("{{ url_for('static', path='/admin/img/wrest.gif') }}");
+        --sub_menu_ico_gif: url("{{ url_for('static', path='/admin/img/sub_menu_ico.gif') }}");
+        --sns_logo_png: url("{{ url_for('static', path='/admin/img/sns_logo.png') }}");
+        --service_img1_jpg: url("{{ url_for('static', path='/admin/img/service_img1.jpg') }}");
+        --service_img2_jpg: url("{{ url_for('static', path='/admin/img/service_img2.jpg') }}");
+        --service_img3_jpg: url("{{ url_for('static', path='/admin/img/service_img3.jpg') }}");
+        --captcha2_png: url("{{ url_for('static', path='/admin/img/captcha2.png') }}");
+        --ajax_loader_gif: url("{{ url_for('static', path='/admin/img/ajax-loader.gif') }}");
+        --check_png: url("{{ url_for('static', path='/admin/img/check.png') }}");
+        --op_btn1_gif: url("{{ url_for('static', path='/admin/img/op_btn1.gif') }}");
+    }
+</style>
 {% block head -%}
 {% endblock head -%}
 {% include "plugin_menu_header.html" %}
