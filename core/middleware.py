@@ -109,9 +109,16 @@ async def should_run_middleware(request: Request) -> bool:
 class CSPMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         response: Response = await call_next(request)
-        response.headers['Content-Security-Policy'] = (
-            "default-src 'self' 'unsafe-inline';"
-        )
+        allow_url_list = [
+            "http://t1.daumcdn.net",
+            "https://www.google.com",
+            "https://www.gstatic.com",
+            "https://cdn.jsdelivr.net",
+            "https://fastapi.tiangolo.com"
+        ]
+        allow_url_list_to_string = " ".join(allow_url_list)
+        csp_policy = f"default-src 'self' 'unsafe-inline' {allow_url_list_to_string};"
+        response.headers['Content-Security-Policy'] = csp_policy
         return response
 
 
