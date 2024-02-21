@@ -123,14 +123,14 @@ async def main_middleware(request: Request, call_next):
     db_connect = DBConnect()
     db = db_connect.sessionLocal()
     url_path = request.url.path
+    config = None
 
     try:
         if not url_path.startswith("/install"):
             if not os.path.exists(ENV_PATH):
                 raise AlertException(".env 파일이 없습니다. 설치를 진행해 주세요.", 400, "/install")
-
-            if not inspect(db_connect.engine).has_table(db_connect.table_prefix + "config"):
-                raise AlertException("DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요.", 400, "/install")
+            # 기본환경설정 테이블 조회
+            config = db.scalar(select(Config))
         else:
             return await call_next(request)
 
@@ -138,8 +138,15 @@ async def main_middleware(request: Request, call_next):
         context = {"request": request, "errors": e.detail, "url": e.url}
         return template_response("alert.html", context, e.status_code)
 
+    except Exception as e:
+        context = {
+            "request": request,
+            "errors": "DB 테이블 또는 설정정보가 존재하지 않습니다. 설치를 다시 진행해 주세요.",
+            "url": "/install"
+        }
+        return template_response("alert.html", context, 400)
+
     # 기본환경설정 조회 및 설정
-    config = db.scalar(select(Config))
     request.state.config = config
     request.state.title = config.cf_title
 
