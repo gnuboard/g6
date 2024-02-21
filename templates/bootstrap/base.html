@@ -2,13 +2,13 @@
 
 {% block body_html %}
 <!-- 상단 시작 { -->
-<header id="hd" class="container-fluid wrapper-bg py-4 sticky-top main-bb">
+<header id="hd" class="container-fluid wrapper-bg py-4 sticky-top main-bb px-md-5">
   <div id="skip_to_container"><a href="#container">본문 바로가기</a></div>
 
   {% include "/bbs/newwin.inc.html" %}
 
 
-  <div id="hd_wrapper" class="container-xxl d-flex justify-content-between align-items-center">
+  <div id="hd_wrapper" class="d-flex justify-content-between align-items-center">
     <div id="logo">
       <a href="/"><img src="/static/img/logo_new2.png" width="48" height="48" alt="그누보드6"></a>
     </div>
@@ -63,14 +63,14 @@
       </ul>
     </div>
        <!-- 검색영역 -->
-       <div id="hd_sch_wr" class="container-xxl position-absolute start-50 translate-middle-x" style="top: 90px; height: 60px; z-index: 999;">
+       <div id="hd_sch_wr" class="container-fluid position-absolute start-50 translate-middle-x px-md-5" style="top: 90px; height: 60px; z-index: 999;">
         <fieldset id="hd_sch">
           <span class="blind">사이트 내 전체검색</span>
           <form name="fsearchbox" method="get" action="/bbs/search" onsubmit="return fsearchbox_submit(this);" class="position-relative h-100" >
             <input type="hidden" name="sfl" value="wr_subject||wr_content">
             <input type="hidden" name="sop" value="and">
             <label for="sch_stx" class="blind">검색어 필수</label>
-            <input type="text" name="stx" id="sch_stx" maxlength="20" placeholder="검색어를 입력해주세요" class="form-control form-control-lg card-bg fs-4 rounded-4 overflow-hidden main-border shadow-lg px-0" style="border-radius: 3px 0px 0px 3px;" >
+            <input type="text" name="stx" id="sch_stx" maxlength="20" placeholder="검색어를 입력해주세요" class="form-control form-control-lg card-bg fs-4 rounded-4 overflow-hidden main-border shadow-lg px-3" style="border-radius: 3px 0px 0px 3px;" >
             <button type="submit" id="sch_submit" class="position-absolute top-0 end-0 main-font bg-transparent border-0 fs-4" style="width: 60px; height: 60px;" value="검색">
               <i class="fa fa-search" aria-hidden="true" ></i>
               <span class="blind">검색</span>
@@ -153,7 +153,7 @@
 <hr>
 
 <!-- 콘텐츠 시작 { -->
-<div id="wrapper" class="container-xxl pt-5">
+<div id="wrapper" class="container-fluid pt-5 px-md-5">
   <h2 id="container_title"><span class="fs-4 main-font">{% block subtitle %}{% endblock subtitle %}</span></h2>
     {% block content %}
     {% endblock content %}
@@ -165,7 +165,7 @@
 
 <!-- 하단 시작 { -->
 <div id="ft" class="my-0 mx-auto text-center main-bt">
-  <div id="ft_wr" class="container-xl position-relative d-flex flex-column text-start" style="padding: 40px 0;margin: 0 auto;">
+  <div id="ft_wr" class="container-fluid position-relative d-flex flex-column text-start px-md-5" style="padding: 40px 0;margin: 0 auto;">
     <div id="ft_link" class="d-flex gap-3 px-4 text-start">
       <a class="d-block sub-font py-3 fw-bold fs-4 text-decoration-none" href="{{ url_for('content_view', co_id='company') }}">회사소개</a>
       <a class="d-block sub-font py-3 fw-bold fs-4 text-decoration-none" href="{{ url_for('content_view', co_id='privacy') }}">개인정보처리방침</a>
