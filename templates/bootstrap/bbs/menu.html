@@ -5,9 +5,10 @@
             <span class="blind">전체메뉴열기</span>
         </button>
     </li>
+    {% set menus = get_menus() %}
     {% for menu in menus %}
         {% set is_submenu = True if menu.sub|count > 0 else False %}
-        <li class="{% if is_submenu %}dropdown{% endif %}" style="z-index:{{ 999 - loop.index }}">
+        <li class="gnb_1dli {% if is_submenu %}dropdown{% endif %}" style="z-index:{{ 999 - loop.index }}">
             <a href="{{ menu.me_link }}" target="_{{ menu.me_target }}" class="d-block fw-bold p-4 sub-font text-decoration-none fs-4 {% if is_submenu %}dropdown-toggle{% endif %}" data-mdb-toggle="dropdown" aria-expanded="false" >{{ menu.me_name }}</a>
             {% if is_submenu %}
                 <span class="blind">하위분류</span>
@@ -30,6 +31,7 @@
 <div id="gnb_all" class="position-absolute d-none">
     <h2 class="blind">전체메뉴</h2>
     <ul class="gnb_al_ul">
+        {% set menus = get_menus() %}
         {% for menu in menus %}
             {% set is_submenu = True if menu.sub|count > 0 else False %}
             <li class="gnb_al_li">

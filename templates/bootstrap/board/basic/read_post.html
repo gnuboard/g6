@@ -124,7 +124,7 @@
 
         <div id="bo_v_atc">
             <h2 class="blind">본문</h2>
-              <div id="bo_v_share">
+              <div id="bo_v_share" class="position-relative py-4">
                 <!-- SNS START -->
                 <!-- SNS END -->
                 {% if login_member %}
@@ -249,16 +249,16 @@
         var char_min = parseInt({{ board.bo_comment_min }}); // 최소
         var char_max = parseInt({{ board.bo_comment_max }}); // 최대
     </script>
-    <button type="button" class="cmt_btn">
-        <span class="total"><b>댓글</b> {{ comments|count|number_format }}</span>
-        <span class="cmt_more"></span>
+    <button type="button" id="cmt_btn" class="d-flex justify-content-between align-items-center w-100 text-start border-0 fw-bold bg-transparent outline-none fs-4 mt-5 pb-4">
+        <span class="me-2 em-font"><b class="fs-4 main-font me-1">댓글</b>{{ comments|count|number_format }}</span>
+        <span class="cmt_more"><i class="fa fa-chevron-down" aria-hidden="true"></i></span>
     </button>
     <!-- 댓글 시작 { -->
     <section id="bo_vc">
-        <h2>댓글목록</h2>
+        <h2 class="blind">댓글목록</h2>
         {% for comment in comments %}
         {% set reply_depth=comment.wr_comment_reply|length %}
-        <article id="c_{{ comment.wr_id }}" {% if reply_depth %}style="margin-left:{{ reply_depth * 50 }}px;border-top-color:#e0e0e0"{% endif %}>
+        <article id="c_{{ comment.wr_id }}" class="position-relative my-4 main-bb" {% if reply_depth %}style="margin-left:{{ reply_depth * 50 }}px;border-top-color:#e0e0e0"{% endif %}>
             <div class="pf_img"><img src="{{ get_member_image(request, comment.mb_id) }}" alt="profile_image"></div>
             <div class="cm_wrap">
                 <header>
@@ -552,7 +552,7 @@
     <script>
     jQuery(function($) {            
         //댓글열기
-        $(".cmt_btn").click(function(e){
+        $("#cmt_btn").click(function(e){
             e.preventDefault();
             $(this).toggleClass("cmt_btn_op");
             $("#bo_vc").toggle();
