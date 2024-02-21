@@ -8,7 +8,7 @@ from ..plugin_config import module_name
 
 from sqlalchemy import or_, select, update, delete, func, DateTime
 from core.database import db_session
-from core.models import Member
+from core.models import Board, Member
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -20,12 +20,30 @@ templates.env.globals["theme_asset"] = theme_asset
 
 # 모든 게시판 목록을 가져오는 API
 @router.get("/boards")
-async def read_boards(request: Request):
+async def read_boards(request: Request, db: db_session, order_by: str = Query(None)):
     """
-    게시판 목록을 가져오는 API
+    게시판 목록을 가져오는 API, 동적으로 정렬 조건 적용
+    유효하지 않은 필드명으로 정렬을 시도할 경우 에러 메시지 반환
     """
-    return {"message": "GET boards"}
+    # Board 모델의 유효한 필드 목록
+    valid_fields = [column.name for column in Board.__table__.columns]
 
+    # 기본 쿼리 생성
+    query = select(Board.bo_table, Board.bo_subject)
+    
+    # order_by 매개변수가 유효한 필드인지 확인
+    if order_by:
+        if order_by in valid_fields:
+            # 동적으로 정렬 조건 추가
+            order_by_field = getattr(Board, order_by)
+            query = query.order_by(order_by_field.asc())
+        else:
+            # 유효하지 않은 필드명으로 정렬을 시도한 경우 에러 반환
+            raise HTTPException(status_code=400, detail=f"Invalid order_by field: {order_by}. Valid fields are: {valid_fields}")
+
+    # 수정된 쿼리 실행 및 결과 반환
+    boards = db.execute(query).mappings().all()
+    return {"data": boards}
 
 @router.get("/users")
 # def show(request: Request):
