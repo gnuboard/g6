@@ -134,9 +134,12 @@
                     {% set thumbnail=get_list_thumbnail(request, board, write, gallery_width, gallery_height) %}
                     {% if thumbnail.src %}
                     <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}">
+                    {% if thumbnail.noimg %}
+                    <span class="is_label is_noimage">No Image</span>
+                    {% endif %}
                     {% else %}
-                    <span class="is_label is_noimage">NO IMAGE</span>
                     <img src="{{ url_for('static', path='/img/dummy-donotremove.png?ver=1.0.0') }}" alt="" width="{{ gallery_width }}" height="{{ gallery_height }}">
+                    <span class="is_label is_noimage">No Image</span>
                     {% endif %}
                 </a>
 
