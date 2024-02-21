@@ -1,3 +1,4 @@
+import re
 from fastapi import APIRouter, HTTPException, Query
 from starlette.requests import Request
 
@@ -43,9 +44,32 @@ async def read_posts(request: Request, db: db_session, bo_table: str, page: int 
         raise HTTPException(status_code=404, detail=f"Board {bo_table} not found.")
 
     write_model = dynamic_create_write_table(bo_table)
-    query = select(write_model).order_by(write_model.wr_num.asc()).limit(10).offset((page - 1) * 10)
+    query = select(
+        write_model.wr_id, 
+        write_model.wr_num, 
+        write_model.wr_subject, 
+        write_model.wr_content, 
+        write_model.wr_name, 
+        write_model.wr_datetime, 
+        # IP 주소 중간 부분 마스킹
+        # func.regexp_replace(write_model.wr_ip, '(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)', '\\1.*.*.\\4').label('masked_ip')
+        write_model.wr_ip
+        ).where(write_model.wr_is_comment == 0).order_by(write_model.wr_num.asc()).limit(10).offset((page - 1) * 10)
     posts = db.execute(query).mappings().all()
-    return {"data": posts}
+    # for post in posts:
+    # #     # wr_ip 111.222.333.444 의 가운데 두자리를 * 로 변경
+    # #     # 222.333 을 *.* 로 변경.. 정규식으로 처리하는게 더 좋을듯
+    #     post["wr_ip"] = re.sub(r'(\d+\.)\d+\.\d+(\.\d+)', r'\1*.*\2', post["wr_ip"])
+
+    # 수정 가능한 딕셔너리 리스트로 변환
+    posts_dicts = [dict(post) for post in posts]
+
+    # posts_dicts 내 각 딕셔너리 항목을 순회하며 수정
+    for post_dict in posts_dicts:
+        # 예시: 'wr_ip' 필드 수정
+        post_dict['wr_ip'] = re.sub(r'(\d+\.)\d+\.\d+(\.\d+)', r'\1*.*\2', post_dict['wr_ip'])
+
+    return {"data": posts_dicts}
 
 
 # @router.get("/boards")
