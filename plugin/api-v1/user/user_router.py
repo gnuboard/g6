@@ -18,6 +18,14 @@ router = APIRouter()
 templates = UserTemplates()
 templates.env.globals["theme_asset"] = theme_asset
 
+# 모든 게시판 목록을 가져오는 API
+@router.get("/boards")
+async def read_boards(request: Request):
+    """
+    게시판 목록을 가져오는 API
+    """
+    return {"message": "GET boards"}
+
 
 @router.get("/users")
 # def show(request: Request):
