@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 from starlette.requests import Request
 
 from core.template import theme_asset, UserTemplates
+from lib.common import dynamic_create_write_table
 from lib.pbkdf2 import create_hash
 from .. import plugin_config
 from ..plugin_config import module_name
@@ -20,30 +21,59 @@ templates.env.globals["theme_asset"] = theme_asset
 
 # 모든 게시판 목록을 가져오는 API
 @router.get("/boards")
-async def read_boards(request: Request, db: db_session, order_by: str = Query(None)):
+async def read_boards(request: Request, db: db_session, page: int = Query(default=1, ge=1)):
     """
-    게시판 목록을 가져오는 API, 동적으로 정렬 조건 적용
-    유효하지 않은 필드명으로 정렬을 시도할 경우 에러 메시지 반환
+    게시판 목록을 가져오는 API
     """
-    # Board 모델의 유효한 필드 목록
-    valid_fields = [column.name for column in Board.__table__.columns]
-
     # 기본 쿼리 생성
-    query = select(Board.bo_table, Board.bo_subject)
-    
-    # order_by 매개변수가 유효한 필드인지 확인
-    if order_by:
-        if order_by in valid_fields:
-            # 동적으로 정렬 조건 추가
-            order_by_field = getattr(Board, order_by)
-            query = query.order_by(order_by_field.asc())
-        else:
-            # 유효하지 않은 필드명으로 정렬을 시도한 경우 에러 반환
-            raise HTTPException(status_code=400, detail=f"Invalid order_by field: {order_by}. Valid fields are: {valid_fields}")
-
-    # 수정된 쿼리 실행 및 결과 반환
+    query = select(Board.bo_table, Board.bo_subject).order_by(Board.bo_table.asc()).limit(10).offset((page - 1) * 10)
+    # 쿼리 실행 및 결과 반환
     boards = db.execute(query).mappings().all()
     return {"data": boards}
+
+# 게시판의 글을 가져오는 API
+@router.get("/boards/{bo_table}")
+async def read_posts(request: Request, db: db_session, bo_table: str, page: int = Query(default=1, ge=1)):
+    """
+    게시판의 글 목록을 가져오는 API
+    """
+    query = select(Board).where(Board.bo_table == bo_table)
+    board = db.execute(query).scalars().first()
+    if not board:
+        raise HTTPException(status_code=404, detail=f"Board {bo_table} not found.")
+
+    write_model = dynamic_create_write_table(bo_table)
+    query = select(write_model).order_by(write_model.wr_num.asc()).limit(10).offset((page - 1) * 10)
+    posts = db.execute(query).mappings().all()
+    return {"data": posts}
+
+
+# @router.get("/boards")
+# async def read_boards(request: Request, db: db_session, order_by: str = Query(None)):
+#     """
+#     게시판 목록을 가져오는 API, 동적으로 정렬 조건 적용
+#     유효하지 않은 필드명으로 정렬을 시도할 경우 에러 메시지 반환
+#     """
+#     # Board 모델의 유효한 필드 목록
+#     valid_fields = [column.name for column in Board.__table__.columns]
+
+#     # 기본 쿼리 생성
+#     query = select(Board.bo_table, Board.bo_subject)
+    
+#     # order_by 매개변수가 유효한 필드인지 확인
+#     if order_by:
+#         if order_by in valid_fields:
+#             # 동적으로 정렬 조건 추가
+#             order_by_field = getattr(Board, order_by)
+#             query = query.order_by(order_by_field.asc())
+#         else:
+#             # 유효하지 않은 필드명으로 정렬을 시도한 경우 에러 반환
+#             # raise HTTPException(status_code=400, detail=f"Invalid order_by field: {order_by}. Valid fields are: {valid_fields}")
+#             raise HTTPException(status_code=400, detail=f"Invalid order_by field: {order_by}.")
+
+#     # 수정된 쿼리 실행 및 결과 반환
+#     boards = db.execute(query).mappings().all()
+#     return {"data": boards}
 
 @router.get("/users")
 # def show(request: Request):
