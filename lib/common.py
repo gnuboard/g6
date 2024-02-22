@@ -15,7 +15,7 @@ from time import sleep
 from typing import Any, List, Optional, Union
 from urllib.parse import urlencode
 
-from cachetools import LFUCache, TTLCache
+from cachetools import cached, LFUCache, TTLCache
 from dotenv import load_dotenv
 from fastapi import Request, UploadFile
 from markupsafe import Markup, escape
@@ -451,8 +451,7 @@ def nl2br(value) -> str:
     return escape(value).replace('\n', Markup('<br>\n'))
 
 
-popular_cache = TTLCache(maxsize=10, ttl=300)
-
+@cached(TTLCache(maxsize=10, ttl=300))
 def get_populars(limit: int = 10, day: int = 3):
     """인기검색어 조회
 
@@ -463,19 +462,15 @@ def get_populars(limit: int = 10, day: int = 3):
     Returns:
         List[Popular]: 인기검색어 리스트
     """
-    if popular_cache.get("populars") is not None:
-        return popular_cache.get("populars")
-
     db = DBConnect().sessionLocal()
-    # 현재 날짜와 day일 전 날짜를 구한다.
-    today = datetime.now()
-    before = today - timedelta(days=day)
     # 현재 날짜와 day일 전 날짜 사이의 인기검색어를 조회한다.
+    today = datetime.now()
+    before_day = today - timedelta(days=day)
     populars = db.execute(
         select(Popular.pp_word, func.count(Popular.pp_word).label('count'))
         .where(
             Popular.pp_word != '',
-            Popular.pp_date >= before,
+            Popular.pp_date >= before_day,
             Popular.pp_date <= today
         )
         .group_by(Popular.pp_word)
@@ -483,8 +478,6 @@ def get_populars(limit: int = 10, day: int = 3):
         .limit(limit)
     ).all()
     db.close()
-
-    popular_cache.update({"populars": populars})
 
     return populars
 
@@ -522,15 +515,11 @@ def insert_popular(request: Request, fields: str, word: str):
         print(f"인기검색어 입력 오류: {e}")
 
 
-lfu_cache = LFUCache(maxsize=128)
-
+@cached(LFUCache(maxsize=1))
 def get_recent_poll():
     """
     최근 투표 정보 1건을 가져오는 함수
     """
-    if lfu_cache.get("poll") is not None:
-        return lfu_cache.get("poll")
-
     db = DBConnect().sessionLocal()
     poll = db.scalar(
         select(Poll)
@@ -538,22 +527,15 @@ def get_recent_poll():
         .order_by(Poll.po_id.desc())
     )
     db.close()
-
-    lfu_cache.update({"poll": poll})
-
     return poll
 
-
+@cached(LFUCache(maxsize=128))
 def get_menus():
     """사용자페이지 메뉴 조회 함수
 
     Returns:
         list: 자식메뉴가 포함된 메뉴 list
     """
-
-    if lfu_cache.get("menus") is not None:
-        return lfu_cache.get("menus")
-
     db = DBConnect().sessionLocal()
     menus = []
     # 부모메뉴 조회
@@ -577,9 +559,6 @@ def get_menus():
         menu.sub = child_menus
         menus.append(menu)
     db.close()
-
-    lfu_cache.update({"menus": menus})
-
     return menus
 
 
@@ -890,8 +869,8 @@ def is_none_datetime(input_date: Union[date, str]) -> bool:
 
     return False
 
-
-def get_newwins(request: Request):
+@cached(LFUCache(maxsize=256))
+def get_newwins(device: str):
     """
     레이어 팝업 목록 조회
     """
@@ -902,17 +881,22 @@ def get_newwins(request: Request):
     newwins = db.scalars(
         select(NewWin).where(
             between(now, NewWin.nw_begin_time, NewWin.nw_end_time),
-            NewWin.nw_device.in_(["both", request.state.device]),
+            NewWin.nw_device.in_(["both", device]),
             NewWin.nw_division.in_(["both", current_division]),
         ).order_by(NewWin.nw_id)
     ).all()
 
     db.close()
 
-    # "hd_pops_" + nw_id 이름으로 선언된 쿠키가 있는지 확인하고 있다면 팝업을 제거
-    newwins = [newwin for newwin in newwins if not request.cookies.get("hd_pops_" + str(newwin.nw_id))]
-
     return newwins
+
+
+def get_newwins_except_cookie(request: Request):
+    """쿠키에 저장된 팝업을 제외한 레이어 팝업 목록을 반환하는 함수"""
+    newwins = get_newwins(request.state.device)
+
+    # "hd_pops_" + nw_id 이름으로 선언된 쿠키가 있는지 확인하고 있다면 팝업을 제거
+    return [newwin for newwin in newwins if not request.cookies.get("hd_pops_" + str(newwin.nw_id))]
 
 
 def get_current_captcha_cls(config: Config):

@@ -308,7 +308,7 @@ async def index(request: Request, db: db_session):
 
     context = {
         "request": request,
-        "newwins": get_newwins(request),
+        "newwins": get_newwins_except_cookie(request),
         "boards": boards,
     }
     return templates.TemplateResponse("/index.html", context)
