@@ -106,6 +106,8 @@ async def install(
 
         # 데이터베이스 연결 설정
         db = DBConnect()
+        db.set_connect_infomation()
+        db.create_url()
         if not db.supported_engines.get(form.db_engine.lower()):
             raise Exception("지원가능한 데이터베이스 엔진을 선택해주세요.")
 
