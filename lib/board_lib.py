@@ -863,7 +863,8 @@ def write_search_filter(
         for word in words:
             if not word.strip():
                 continue
-            word_filters.append(or_(*[getattr(model, field).like(f"%{word}%") for field in fields]))
+            word_filters.append(or_(
+                *[getattr(model, field).like(f"%{word}%") for field in fields if hasattr(model, field)]))
 
             # 단어별 인기검색어 등록
             insert_popular(request, fields, word)
