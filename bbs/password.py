@@ -59,7 +59,7 @@ async def password_check(
         # 회원의 비밀번호로 게시글 비밀번호를 설정
         if not write.wr_password:
             write_member = db.scalar(select(Member).filter_by(mb_id=write.mb_id))
-            write.wr_password = write_member.mb_password
+            write.wr_password = getattr(write_member, "mb_password", "")
 
     # 비밀번호 비교
     if not validate_password(wr_password, write.wr_password):

@@ -428,6 +428,9 @@ async def write_form_add(
         # 답글 생성가능여부 검증
         write_model = dynamic_create_write_table(bo_table)
         parent_write = db.get(write_model, parent_id)
+        if not parent_write:
+            raise AlertException("답변할 글이 존재하지 않습니다.", 404)
+
         generate_reply_character(board, parent_write)
     else:
         if not board_config.is_write_level():
@@ -628,6 +631,8 @@ async def write_update(
             if not board_config.is_reply_level():
                 raise AlertException("답변글을 작성할 권한이 없습니다.", 403)
             parent_write = db.get(write_model, parent_id)
+            if not parent_write:
+                raise AlertException("답변할 글이 존재하지 않습니다.", 404)
         else:
             if not board_config.is_write_level():
                 raise AlertException("글을 작성할 권한이 없습니다.", 403)
