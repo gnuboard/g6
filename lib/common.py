@@ -560,42 +560,6 @@ def get_menus():
     return menus
 
 
-def auth_check_menu(request: Request, menu_key: str, attribute: str):
-    """
-    관리권한 체크
-    """    
-    # 최고관리자이면 처리 안함
-    if request.state.is_super_admin:
-        return ""
-
-    db = DBConnect().sessionLocal()
-
-    exists_member = request.state.login_member
-    if not exists_member:
-        return "로그인 후 이용해 주세요."
-
-    exists_auth = db.scalar(
-        select(Auth)
-        .where(Auth.mb_id == exists_member.mb_id, Auth.au_menu == menu_key)
-    )
-    if not exists_auth:
-        return "이 메뉴에는 접근 권한이 없습니다.\n\n접근 권한은 최고관리자만 부여할 수 있습니다."
-
-    auth_set = set(exists_auth.au_auth.split(","))
-    if not attribute in auth_set:
-        if attribute == "r":
-            error = "읽을 권한이 없습니다."
-        elif attribute == "w":
-            error = "입력, 추가, 생성, 등록, 수정 권한이 없습니다."
-        elif attribute == "d":
-            error = "삭제 권한이 없습니다."
-        else:
-            error = f"속성(attribute={attribute})이 잘못 되었습니다."
-        return error
-
-    return ""
-
-
 def get_unique_id(request) -> Optional[str]:
     """고유키 생성 함수
     그누보드 5의 get_uniqid
