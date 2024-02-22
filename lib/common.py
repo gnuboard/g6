@@ -26,7 +26,7 @@ from sqlalchemy.exc import IntegrityError
 from starlette.datastructures import URL
 from user_agents import parse
 
-from core.database import DBConnect, MySQLCharsetMixin
+from core.database import DBConnect, db_session, MySQLCharsetMixin
 from core.models import (
     Auth, BoardNew, Config, Login, Member, Memo, Menu, NewWin, Poll, Popular,
     UniqId, Visit, VisitSum, WriteBaseModel
@@ -349,7 +349,7 @@ def render_visit_statistics(request: Request):
     return visit_template.body.decode("utf-8")
 
 
-def select_query(request: Request, table_model, search_params: dict, 
+def select_query(request: Request, db: db_session, table_model, search_params: dict, 
         same_search_fields: Optional[List[str]] = "", # 값이 완전히 같아야지만 필터링 '검색어'
         prefix_search_fields: Optional[List[str]] = "", # 뒤에 %를 붙여서 필터링 '검색어%'
         default_sod: str = "asc",
@@ -357,12 +357,9 @@ def select_query(request: Request, table_model, search_params: dict,
         default_sst: str = "",
     ):
     config = request.state.config
-    
     records_per_page = config.cf_page_rows
 
-    db = DBConnect().sessionLocal()
     query = select()
-    
     # # sod가 제공되면, 해당 열을 기준으로 정렬을 추가합니다.
     # if search_params['sst'] is not None and search_params['sst'] != "":
     #     # if search_params['sod'] == "desc":
@@ -412,6 +409,7 @@ def select_query(request: Request, table_model, search_params: dict,
     rows = db.scalars(query.add_columns(table_model).offset(offset).limit(records_per_page)).all()
     # 전체 레코드 개수 계산
     total_count = db.scalar(query.add_columns(func.count()).select_from(table_model).order_by(None))
+
     return {
         "rows": rows,
         "total_count": total_count,
@@ -1142,6 +1140,8 @@ def delete_old_records():
         db.commit()
     except Exception as e:
         print(e)
+    finally:
+        db.close()
 
 
 def is_possible_ip(request: Request, ip: str) -> bool:

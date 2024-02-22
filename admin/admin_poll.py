@@ -20,6 +20,7 @@ POLL_MENU_KEY = "200900"
 @router.get("/poll_list")
 async def poll_list(
     request: Request,
+    db: db_session,
     search_params: dict = Depends(common_search_query_params)
 ):
     """
@@ -30,6 +31,7 @@ async def poll_list(
     # 투표 목록 데이터 출력
     polls = select_query(
         request,
+        db,
         Poll,
         search_params,
         default_sst="po_id",

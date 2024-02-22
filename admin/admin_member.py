@@ -45,6 +45,7 @@ async def member_list(
 
     result = select_query(
         request,
+        db,
         Member,
         search_params,
         same_search_fields=["mb_level"],

@@ -36,6 +36,7 @@ async def mail_list(
 
     result = select_query(
         request,
+        db,
         Mail,
         search_params,
     )
