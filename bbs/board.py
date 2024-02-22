@@ -159,7 +159,7 @@ async def list_post(
         query = query.where(write_model.wr_num.between(spt, spt + search_part))
 
         # 검색 내용에 댓글이 잡히는 경우 부모 글을 가져오기 위해 wr_parent를 불러오는 subquery를 이용합니다.
-        subquery = query.add_columns(write_model.wr_parent).distinct().order_by(None).subquery().alias("subquery")
+        subquery = select(query.add_columns(write_model.wr_parent).distinct().order_by(None).subquery().alias("subquery"))
         query = select().where(write_model.wr_id.in_(subquery))
     else:   # 검색이 아닌 경우
         query = query.where(write_model.wr_is_comment == 0)
