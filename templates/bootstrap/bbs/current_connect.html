@@ -6,20 +6,20 @@
 
 {% block content %}
     <div id="current_connect">
-        <ul>
+        <ul class="p-0 m-0">
         {% for login, member in logins %}
-            <li>
-                <span class="crt_num">{{ loop.index }}</span>
-                <span class="crt_profile"><img src="{{ get_member_image(request, login.mb_id) }}" alt="profile_image"></span>
-                <div class="crt_info">
-                    <span class="crt_name">
+            <li class="position-relative row align-items-center main-bb fs-5 py-4 ms-0" style="box-sizing: border-box;">
+                <span class="col-1 fw-bold main-font text-center">{{ loop.index }}</span>
+                <span class="col-1 text-start"><img src="{{ get_member_image(request, login.mb_id) }}" class="rounded-circle" style="width: 45px;height: 45px;" alt="profile_image"></span>
+                <div class="col-10">
+                    <span class="d-block main-font">
                     {% if login.mb_id %}
                         <div>{{ sideview.get(request, login.mb_id, member.mb_nick, member.mb_email, member.mb_homepage)|safe }}</div>
                     {% else %}
                         {{ login.lo_ip }}
                     {% endif %}
                     </span>
-                    <span class="crt_lct">
+                    <span class="crt_lct main-font">
                     {% if request.state.is_super_admin %}
                         <a href="{{ login.lo_url }}">{{ login.lo_location }}</a>
                     {% else %}

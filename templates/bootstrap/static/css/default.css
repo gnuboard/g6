@@ -534,7 +534,7 @@ a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:no
 .sv_nojs .sv { display:block } 
 
 /* 페이징 */
-.pagination { display:flex; justify-content: center; align-items: center; gap:3px; }
+.pagination { display:flex; justify-content: center; align-items: center; gap:3px;}
 .pagination .page { display:inline-block; padding:0 5px; min-width:30px; height:30px; line-height:28px; border-radius:3px; border:1px solid var(--pgBg); background:var(--pgBg); color:#959595; font-size:1.3rem; text-align:center; text-decoration:none }
 .pagination .page:hover,
 .pagination .page:focus { background-color:var(--pgHvBg); border:1px solid var(--pgBg) }
@@ -784,35 +784,7 @@ html.no-overflowscrolling #autosave_pop { height:auto; max-height:10000px !impor
 #bo_gall .gall_img img, #bo_gall .gall_img video { max-width:100%; width: 100%; height:auto !important } 
 #bo_gall .cnt_cmt { background:#e9eff5; color:var(--primaryColor); font-size:1.1rem; height:16px; line-height:16px; padding:0 5px; border-radius:3px; vertical-align:middle } 
 
-/*  */
-#bo_gall .gall_option { position:absolute; top:10px; right:10px }
-#bo_gall .gall_option strong { background:#fff; padding:5px 10px; border-radius:30px;box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2) }
-#bo_gall li.empty_list { padding:85px 0; text-align:center }
-
-/* connect.css */
-/* 현재접속자 */
-#current_connect ul { margin:0; padding:0; list-style:none; zoom:1 } 
-#current_connect ul:after { display:block; visibility:hidden; clear:both; content:"" } 
-#current_connect li:after { display:block; visibility:hidden; clear:both; content:"" } 
-#current_connect li { position:relative; padding:18px 0; border-bottom:var(--border); min-height:1px; box-sizing:border-box; margin-left:0 } 
-#current_connect li:first-child { border-top:var(--border) } 
-#current_connect .crt_num { float:left; line-height:45px; margin-right:20px; color:#777; font-weight:bold } 
-#current_connect .crt_profile { float:left; margin-right:20px; line-height:45px } 
-#current_connect .crt_profile > img { width:45px; height:45px; border-radius:50% } 
-#current_connect .crt_info { float:left; margin-top:5px } 
-#current_connect .crt_name { display:block; color: var(--fontColor); } 
-#current_connect .sv_member { font-weight:bold; line-height:20px; font-size:1.4rem } 
-#current_connect .profile_img { display:none } 
-#current_connect .crt_lct { display:block } 
-#current_connect .crt_lct a { color:#797979 } 
-#current_connect li.empty_li { width:100%; padding:200px 0; border:0; color:#666; text-align:center } 
-
 /* faq.css */
-#bo_cate { margin-bottom:28px }
-#bo_cate h2 { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: polygon(0 0, 0 0, 0 0); }
-#bo_cate ul { zoom:1 }
-#bo_cate ul:after { display:block; visibility:hidden; clear:both; content:"" }
-#bo_cate li { display:inline-block; padding:2px }
 #bo_cate a { display:block; line-height:28px; padding:5px 15px; border-radius:30px; border:1px solid #d6e9ff; color:#6794d3 }
 #bo_cate a:focus, #bo_cate a:hover, #bo_cate a:active { text-decoration:none; background:var(--primaryColor); color:#fff }
 #bo_cate #bo_cate_on { z-index:2; background:var(--primaryColor); color:#fff; font-weight:bold; border:1px solid var(--primaryColor);-webkit-box-shadow:inset 0 2px 5px var(--primaryColor);-moz-box-shadow:inset 0 2px 5px var(--primaryColor);box-shadow:inset 0 2px 5px var(--primaryColor) }
