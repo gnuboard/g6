@@ -155,19 +155,19 @@
                             <span class="d-inline-block"><span class="blind">작성일 </span><i class="fa fa-regular fa-clock" aria-hidden="true"></i> {{ write.wr_datetime|datetime_format('%y-%m-%d') }}</span>
                             <span class="d-inline-block"><span class="blind">조회 </span><i class="fa fa-eye" aria-hidden="true"></i> {{ write.wr_hit|number_format }}</span>
                         </div>
-                        <div class="gall_option">
+                        <div class="position-absolute" style="top: 10px;right: 10px;">
                             {% if board.bo_use_good %}
-                            <span class="blind">추천</span><strong><i class="fa fa-regular fa-thumbs-up" aria-hidden="true"></i> {{ write.wr_good|number_format }}</strong>
+                            <span class="blind">추천</span><strong class="py-2 px-3 rounded-3 main-border fs-4"><i class="fa fa-regular fa-thumbs-up" aria-hidden="true"></i> {{ write.wr_good|number_format }}</strong>
                             {% endif %}
                             {% if board.bo_use_nogood %}
-                            <span class="blind">비추천</span><strong><i class="fa fa-regular fa-thumbs-down" aria-hidden="true"></i> {{ write.wr_nogood|number_format }}</strong>
+                            <span class="blind">비추천</span><strong class="py-2 px-3 rounded-3 main-border fs-4"><i class="fa fa-regular fa-thumbs-down" aria-hidden="true"></i> {{ write.wr_nogood|number_format }}</strong>
                             {% endif %}
                         </div>
                     </div>
                 </div>
             </li>
             {% else %}
-            <li class="empty_list main-font fs-4">게시글이 없습니다.</li>
+            <li class="main-font fs-4 text-center" style="padding: 80px 0;">게시글이 없습니다.</li>
             {% endfor %}
         </ul>
       <div class="d-flex justify-content-between align-items-center py-5">
