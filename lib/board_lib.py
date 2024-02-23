@@ -492,6 +492,9 @@ class BoardFileManager():
         self.wr_id = wr_id
         self.db = DBConnect().sessionLocal()
 
+    def __del__(self):
+        self.db.close()
+
     def is_exist(self, bo_table: str = None, wr_id: int = None):
         """게시글에 파일이 있는지 확인
 
@@ -834,7 +837,6 @@ def write_search_filter(
     Returns:
         Select: 필터가 적용된 쿼리.
     """
-    db = DBConnect().sessionLocal()
     fields = []
     is_comment = False
 
@@ -877,7 +879,8 @@ def write_search_filter(
     if is_comment:
         query = query.where(model.wr_is_comment == 1)
         # 원글만 조회해야하므로, wr_parent 목록을 가져와서 in조건으로 재필터링
-        parents = db.scalars(query.add_columns(model)).all()
+        with DBConnect().sessionLocal() as db:
+            parents = db.scalars(query.add_columns(model)).all()
         query = select().where(model.wr_id.in_([row.wr_parent for row in parents]))
 
     return query
@@ -990,6 +993,8 @@ def generate_reply_character(board: Board, write):
         reply_char = char_begin
     else:
         reply_char = chr(ord(last_reply_char) + char_increase)
+
+    db.close()
 
     return origin_reply + reply_char
 
@@ -1252,6 +1257,7 @@ def delete_write(request: Request, bo_table: str, origin_write: WriteBaseModel) 
     board.bo_count_comment -= delete_comment_count
 
     db.commit()
+    db.close()
 
     # 최신글 캐시 삭제
     FileCache().delete_prefix(f'latest-{bo_table}')
@@ -1390,6 +1396,8 @@ def render_latest_posts(request: Request, skin_name: str = 'basic', bo_table: st
     for write in writes:
         write = get_list(request, write, board_config, subject_len)
     
+    db.close()
+
     context = {
         "request": request,
         "board": board,

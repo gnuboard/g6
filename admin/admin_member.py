@@ -45,6 +45,7 @@ async def member_list(
 
     result = select_query(
         request,
+        db,
         Member,
         search_params,
         same_search_fields=["mb_level"],
@@ -223,27 +224,6 @@ async def member_form(
     context = {
         "request": request, "member": exists_member}
     return templates.TemplateResponse("member_form.html", context)
-
-
-# 회원수정 폼
-# @router.get("/member_form/{mb_id}")
-# def member_form_edit(mb_id: str, request: Request, db: db_session):
-#     """
-#     회원수정 폼
-#     """
-#     request.session["menu_key"] = MEMBER_MENU_KEY
-#     error = auth_check_menu(request, request.session["menu_key"], "r")
-#     if error:
-#         return templates.TemplateResponse("alert.html", {"request": request, "errors": [error]})
-
-#     exists_member = db.query(Member).filter_by(mb_id = mb_id).first()
-#     if not exists_member:
-#         return templates.TemplateResponse("alert.html", {"request": request, "errors": ["회원아이디가 존재하지 않습니다."]})
-
-#     exists_member.mb_icon = get_member_icon(mb_id)
-#     exists_member.mb_img = get_member_image(mb_id)
-
-#     return templates.TemplateResponse("member_form.html", {"request": request, "member": exists_member})
 
 
 # DB등록 및 수정

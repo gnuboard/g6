@@ -33,6 +33,7 @@ async def boardgroup_list(
 
     result = select_query(
         request,
+        db,
         Group,
         search_params,
     )

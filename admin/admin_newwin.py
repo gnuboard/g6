@@ -89,6 +89,9 @@ async def newwin_form_update(
             setattr(newwin, field, value)
         db.commit()
 
+    # 기존 캐시 삭제
+    get_newwins.cache_clear()
+
     return RedirectResponse(url=f"/admin/newwin_form/{newwin.nw_id}", status_code=302)
 
 
@@ -104,5 +107,8 @@ async def newwin_delete(
     # 팝업 삭제
     db.delete(newwin)
     db.commit()
+
+    # 기존 캐시 삭제
+    get_newwins.cache_clear()
 
     return RedirectResponse(url=f"/admin/newwin_list", status_code=302)

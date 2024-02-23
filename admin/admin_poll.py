@@ -20,6 +20,7 @@ POLL_MENU_KEY = "200900"
 @router.get("/poll_list")
 async def poll_list(
     request: Request,
+    db: db_session,
     search_params: dict = Depends(common_search_query_params)
 ):
     """
@@ -30,6 +31,7 @@ async def poll_list(
     # 투표 목록 데이터 출력
     polls = select_query(
         request,
+        db,
         Poll,
         search_params,
         default_sst="po_id",
@@ -63,6 +65,9 @@ async def poll_list_delete(
     db.execute(delete(Poll).where(Poll.po_id.in_(checks)))
     db.execute(delete(PollEtc).where(PollEtc.po_id.in_(checks)))
     db.commit()
+
+    # 기존캐시 삭제
+    get_recent_poll.cache_clear()
 
     url = "/admin/poll_list"
     query_params = request.query_params
@@ -123,7 +128,7 @@ async def poll_form_update(
         db.commit()
 
     # 기존캐시 삭제
-    lfu_cache.update({"poll": None})
+    get_recent_poll.cache_clear()
 
     url = f"/admin/poll_form/{poll.po_id}"
     query_params = request.query_params
