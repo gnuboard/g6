@@ -49,14 +49,14 @@
 
             <ul class="row gx-1">
                 <li id="btn_bo_sch" class="col text-center ml-1" style="width: 40px;">
-                    <button type="button" class="btn_b01 btn main-font fs-4" title="게시판 검색">
+                    <button type="button" class="btn_b01 btn fs-4" title="게시판 검색">
                         <i class="fa fa-search" aria-hidden="true"></i>
                         <span class="blind">게시판 검색</span>
                     </button>
                 </li>
                 {% if is_write %}
                 <li class="col text-center ml-1" style="width: 40px;">
-                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_b01 btn main-font fs-4" title="글쓰기">
+                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_b01 btn fs-4" title="글쓰기">
                         <i class="fa fa-pencil" aria-hidden="true"></i>
                         <span class="blind">글쓰기</span>
                     </a>
@@ -64,7 +64,7 @@
                 {% endif %}
                 {% if is_admin %}
                 <li id="btn_more_opt" class="col text-center ml-1" style="width: 40px;">
-                    <button type="button" class="is_list_btn btn_b01 btn main-font fs-4" title="게시판 리스트 옵션">
+                    <button type="button" class="is_list_btn btn_b01 btn fs-4" title="게시판 리스트 옵션">
                         <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
                         <span class="blind">게시판 리스트 옵션</span>
                     </button>
@@ -232,7 +232,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex justify-content-between align-items-center py-5">
           <!-- 페이지 -->
           <div class="mx-auto d-inline-block">
             {{ paging|safe }}
@@ -245,7 +245,7 @@
             {% if next_spt %}
                 <a href="{{ request.url.include_query_params(spt=next_spt) }}" class="btn02">다음검색</a>
             {% endif %}
-            <ul class="btn_bo_user">
+            <ul class="d-flex">
                 {% if is_admin %}
                 <li>
                     <a href="{{ url_for('board_form', bo_table=board.bo_table) }}" class="btn_admin btn" title="관리자">
@@ -276,7 +276,7 @@
     <!-- 게시판 검색 시작 { -->
     <div class="bo_sch_wrap w-100 h-100 fixed-top" style="z-index:9999;">
         <fieldset class="bo_sch position-absolute top-50 start-50 translate-middle wrapper-bg shadow-lg main-border rounded-4 overflow-y-auto" style="width:330px; max-height:300px;">
-            <h3 class="m-0 p-4 main-bb main-font">검색</h3>
+            <h3 class="m-0 p-4 main-bb main-font fs-4">검색</h3>
             <form name="fsearch" method="get" class="d-block p-4">
                 <input type="hidden" name="sca" value="{{ request.query_params.sca }}">
                 <input type="hidden" name="sop" value="{{ request.query_params.sop }}">

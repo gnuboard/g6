@@ -9,7 +9,7 @@
     <ul class="row p-0">
         {% for write in writes -%}
         <li class="col-3">
-            <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}" class="lt_img d-block rounded-4 overflow-hidden">
+            <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}" class="lt_img d-block rounded-4 overflow-hidden main-border">
                 {% set thumbnail=get_list_thumbnail(request, board, write, thumb_width, thumb_height) %}
                 {% if thumbnail.src %}
                 <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}">
