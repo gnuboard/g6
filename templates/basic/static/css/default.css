@@ -736,26 +736,6 @@ a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:no
 .bo_list .list_category .active { z-index:2; background:var(--primaryColor); color:#fff; font-weight:bold; }
 /* } FAQ bo_common.css 참조 */
 
-/* Q&A bo_common.css 참조 { */
-#bo_qa_view #view_header { grid-template-columns: 1fr 170px; }
-#bo_qa_view #view_header .header_info { flex-direction: row; align-items: center; justify-content:flex-start;}
-
-#bo_qa_view #article_contact { display: flex; flex-direction: column; gap:5px; padding:20px; background:#eee; }
-#bo_qa_view #article_contents { padding: 15px 0 0; }
-
-#bo_qa_answer_view { margin:15px 0 30px;border:var(--border);background:var(--contBg);border-radius:3px; }
-#bo_qa_answer_view #answer_view_header { display:flex; justify-content: space-between; position:relative; padding:20px; border-bottom:var(--border); }
-#bo_qa_answer_view .header_subject .subject { font-size:1.9rem; color: var(--fontColor); font-weight:bold; }
-#bo_qa_answer_view .header_subject .label { font-size:1.1rem }
-#bo_qa_answer_view .header_subject .datetime { display:block; margin:5px 0 0; font-size:1.1rem; color:var(--bovTitColor); }
-#bo_qa_answer_view #answer_view_contents { margin:0 0 10px;padding:15px;line-height:2.1rem;color: var(--fontColor); }
-#bo_qa_answer_view #answer_view_contents img { max-width:100%;height:auto; }
-#bo_qa_answer_view #answer_view_contents .view_filelink li { margin-bottom: 0; }
-
-#bo_qa_answer_view #qa_continue { margin:0 0 15px; text-align: center; }
-#bo_qa_answer_view #qa_continue a { display:inline-block;background:var(--primaryColor);color:#fff;text-align:center;border-radius:3px;width:280px;height:57px;line-height:57px;font-size:1.4rem;margin:0 auto;font-weight:bold; }
-/* } Q&A bo_common.css 참조 */
-
 /* 새글 */
 .pic_lt { position:relative; margin-bottom:20px; background:var(--contBg) }
 .pic_lt .lat_title { display:block; margin:0; padding:0; line-height:45px; font-size:1.4rem; color:#253dbe }

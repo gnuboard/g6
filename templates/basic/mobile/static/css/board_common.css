@@ -1,5 +1,7 @@
 @charset "utf-8";
 
+/* board/basic, board/gallery, qa, faq에서 참조합니다. */
+
 /* 게시판 공통 */
 .bo_common {}
 .bo_common .txt_rdy {display:inline-block;height:30px;line-height:28px;padding:0 10px;border-radius:3px;color:#fff;font-size:1.2rem;background:var(--boListBg);font-weight:bold}
@@ -178,8 +180,7 @@ html.no-overflowscrolling .bo_write .write_subject #autosave_pop { height:auto; 
 .bo_view .view_filelink li:hover svg { color:var(--primaryColor) }
 .bo_view .view_filelink li:hover .filelink_cnt { color:var(--primaryColor) }
 
-.bo_view #view_move { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin:10px 0 40px; background: var(--contBg); }
-.bo_view #view_move:after { display:block; visibility:hidden; clear:both; content:"" }
+.bo_view #view_move { display:flex; flex-direction: column; row-gap: 10px; margin:10px 0 40px; background: var(--contBg); }
 .bo_view #view_move a { display:flex; flex-direction: column; position:relative; padding:20px 60px; width: 100%; border-radius: 8px; }
 .bo_view #view_move a svg { position:absolute; top:45%; width: 20px; height: 12px; text-align: center; vertical-align: middle; }
 .bo_view #view_move .prev { background: var(--btnPrvBg); color:#525252; text-align:left; margin-left: auto; }
