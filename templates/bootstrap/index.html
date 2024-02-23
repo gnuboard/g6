@@ -3,7 +3,7 @@
 {% block title %}{{ request.state.title }}{% endblock title %}
 
 {% block content %}
-    <div id="container_wr" class="container-fluid d-flex">
+    <div id="container_wr" class="w-100 d-flex">
         <div id="container" style="width: calc(100% - 240px);">
           <div class="latest_top_wr pe-4">
             {{ render_latest_posts(request, 'main_list', 'notice', 4, 23)|safe }}
@@ -48,7 +48,7 @@
           </script>
         </div>
     </div>
-    <div id="container_wr" class="container-fluid">
+    <div id="container_wr" class="w-100">
       <h2 class="blind">최신글</h2>
       <div class="row mb-4">
           {{ render_latest_posts(request, 'pic_list', 'free', 4, 23)|safe }}
