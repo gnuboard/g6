@@ -5,6 +5,7 @@ from fastapi import FastAPI, Path, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import TypeAdapter
 from sqlalchemy import select, insert, inspect
+from sqlalchemy.exc import ProgrammingError
 from starlette.staticfiles import StaticFiles
 
 import core.models as models
@@ -138,7 +139,7 @@ async def main_middleware(request: Request, call_next):
         context = {"request": request, "errors": e.detail, "url": e.url}
         return template_response("alert.html", context, e.status_code)
 
-    except Exception as e:
+    except ProgrammingError as e:
         context = {
             "request": request,
             "errors": "DB 테이블 또는 설정정보가 존재하지 않습니다. 설치를 다시 진행해 주세요.",
