@@ -36,6 +36,7 @@ async def point_list(
 
     result = select_query(
         request,
+        db,
         Point,
         search_params,
         same_search_fields=["mb_id"],

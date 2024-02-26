@@ -1,0 +1,19 @@
+@charset "utf-8";
+
+/* 게시판 목록: 리스트형 */
+.bo_list .list_table { display:block; margin:0 0 20px; }
+.bo_list .list_table thead { display:none; }
+.bo_list .list_table tbody { display:block; }
+.bo_list .list_table tr { display:block; padding:10px; border-bottom: var(--border); }
+.bo_list .list_table td { display:inline-block; position: relative; line-height: 22px; vertical-align:middle; }
+.bo_list .list_table .table_subject { display:block; margin:5px 0; font-size:1.6rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bo_list .list_table .table_hit::before,
+.bo_list .list_table .table_good::before,
+.bo_list .list_table .table_nogood::before { display:inline-block; margin:0 3px; content:attr(data-label); }
+.bo_list .list_table .is_notice { background:var(--boNoticeBg) !important; border-bottom:1px solid #f8e6ee; }
+.bo_list .list_table .is_notice .table_subject a { font-weight:bold; }
+.bo_list .list_table .is_notice .table_wrid { font-weight:bold; color:#f9267f }
+.bo_list .list_table .is_notice .table_check { display:none; }
+
+/* 게시판 읽기 커스터마이징 */
+#bo_basic_view #view_header { grid-template-columns: 50px 1fr 170px; }

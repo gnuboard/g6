@@ -2,7 +2,6 @@
 # 게시판 테이블을 write 로 사용하여 테이블명을 바꾸지 못하는 관계로
 # 테이블명은 write 로, 글 한개에 대한 의미는 write 와 post 를 혼용하여 사용합니다.
 import datetime
-import html as htmllib
 import os
 from datetime import datetime
 from typing import List
@@ -28,6 +27,8 @@ from lib.point import delete_point, insert_point
 from lib.template_filters import datetime_format, number_format
 from lib.template_functions import get_paging
 from lib.g5_compatibility import G5Compatibility
+from lib.html_sanitizer import content_sanitizer
+
 
 router = APIRouter()
 templates = UserTemplates()
@@ -158,7 +159,7 @@ async def list_post(
         query = query.where(write_model.wr_num.between(spt, spt + search_part))
 
         # 검색 내용에 댓글이 잡히는 경우 부모 글을 가져오기 위해 wr_parent를 불러오는 subquery를 이용합니다.
-        subquery = query.add_columns(write_model.wr_parent).distinct().order_by(None).subquery().alias("subquery")
+        subquery = select(query.add_columns(write_model.wr_parent).distinct().order_by(None).subquery().alias("subquery"))
         query = select().where(write_model.wr_id.in_(subquery))
     else:   # 검색이 아닌 경우
         query = query.where(write_model.wr_is_comment == 0)
@@ -425,6 +426,9 @@ async def write_form_add(
         # 답글 생성가능여부 검증
         write_model = dynamic_create_write_table(bo_table)
         parent_write = db.get(write_model, parent_id)
+        if not parent_write:
+            raise AlertException("답변할 글이 존재하지 않습니다.", 404)
+
         generate_reply_character(board, parent_write)
     else:
         if not board_config.is_write_level():
@@ -593,7 +597,7 @@ async def write_update(
         raise AlertException(f"제목/내용에 금지단어({word})가 포함되어 있습니다.", 400)
     
     # Stored XSS 방지
-    form_data.wr_subject = htmllib.escape(form_data.wr_subject)
+    form_data.wr_content = content_sanitizer.get_cleaned_data(form_data.wr_content)
 
     # 게시글 테이블 정보 조회
     write_model = dynamic_create_write_table(bo_table)
@@ -625,6 +629,8 @@ async def write_update(
             if not board_config.is_reply_level():
                 raise AlertException("답변글을 작성할 권한이 없습니다.", 403)
             parent_write = db.get(write_model, parent_id)
+            if not parent_write:
+                raise AlertException("답변할 글이 존재하지 않습니다.", 404)
         else:
             if not board_config.is_write_level():
                 raise AlertException("글을 작성할 권한이 없습니다.", 403)
@@ -1169,7 +1175,7 @@ async def write_comment_update(
         comment.wr_num = write.wr_num
         comment.wr_parent = form.wr_id
         comment.wr_is_comment = 1
-        comment.wr_content = htmllib.escape(form.wr_content)
+        comment.wr_content = content_sanitizer.get_cleaned_data(form.wr_content)
         comment.mb_id = getattr(member, "mb_id", "")
         comment.wr_password = create_hash(form.wr_password) if form.wr_password else ""
         comment.wr_name = board_config.set_wr_name(member, form.wr_name)
@@ -1203,7 +1209,7 @@ async def write_comment_update(
         if not comment:
             raise AlertException(f"{form.comment_id} : 존재하지 않는 댓글입니다.", 404)
 
-        comment.wr_content = htmllib.escape(form.wr_content)
+        comment.wr_content = content_sanitizer.get_cleaned_data(form.wr_content)
         comment.wr_option = form.wr_secret or "html1"
         comment.wr_last = now
         db.commit()

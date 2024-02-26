@@ -5,6 +5,7 @@ from fastapi import FastAPI, Path, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import TypeAdapter
 from sqlalchemy import select, insert, inspect
+from sqlalchemy.exc import ProgrammingError
 from starlette.staticfiles import StaticFiles
 
 import core.models as models
@@ -27,23 +28,7 @@ from lib.point import insert_point
 from lib.template_filters import default_if_none
 from lib.token import create_session_token
 
-# .env 파일로부터 환경 변수를 로드합니다.
-# 이 함수는 해당 파일 내의 키-값 쌍을 환경 변수로 로드하는 데 사용됩니다.
-load_dotenv()
-
-# 'APP_IS_DEBUG' 환경 변수를 가져와서 boolean 타입으로 변환합니다.
-# 이 환경 변수가 설정되어 있지 않은 경우, 기본값으로 False를 사용합니다.
-# TypeAdapter는 값을 특정 타입으로 변환하는 데 사용되는 유틸리티 클래스입니다.
-APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
-
-# APP_IS_DEBUG 값이 True일 경우, 디버그 모드가 활성화됩니다.
-app = FastAPI(debug=APP_IS_DEBUG)
-
-templates = UserTemplates()
-templates.env.filters["default_if_none"] = default_if_none
-
 from admin.admin import router as admin_router
-from install.router import router as install_router
 from bbs.board import router as board_router
 from bbs.login import router as login_router
 from bbs.register import router as register_router
@@ -65,7 +50,23 @@ from bbs.social import router as social_router
 from bbs.password import router as password_router
 from bbs.search import router as search_router
 from bbs.current_connect import router as current_connect_router
+from install.router import router as install_router
 from lib.editor.ckeditor4 import router as editor_router
+
+# .env 파일로부터 환경 변수를 로드합니다.
+# 이 함수는 해당 파일 내의 키-값 쌍을 환경 변수로 로드하는 데 사용됩니다.
+load_dotenv()
+
+# 'APP_IS_DEBUG' 환경 변수를 가져와서 boolean 타입으로 변환합니다.
+# 이 환경 변수가 설정되어 있지 않은 경우, 기본값으로 False를 사용합니다.
+# TypeAdapter는 값을 특정 타입으로 변환하는 데 사용되는 유틸리티 클래스입니다.
+APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
+
+# APP_IS_DEBUG 값이 True일 경우, 디버그 모드가 활성화됩니다.
+app = FastAPI(debug=APP_IS_DEBUG)
+
+templates = UserTemplates()
+templates.env.filters["default_if_none"] = default_if_none
 
 # git clone으로 소스를 받은 경우에는 data디렉토리가 없으므로 생성해야 함
 if not os.path.exists("data"):
@@ -123,14 +124,14 @@ async def main_middleware(request: Request, call_next):
     db_connect = DBConnect()
     db = db_connect.sessionLocal()
     url_path = request.url.path
+    config = None
 
     try:
         if not url_path.startswith("/install"):
             if not os.path.exists(ENV_PATH):
                 raise AlertException(".env 파일이 없습니다. 설치를 진행해 주세요.", 400, "/install")
-
-            if not inspect(db_connect.engine).has_table(db_connect.table_prefix + "config"):
-                raise AlertException("DB 또는 테이블이 존재하지 않습니다. 설치를 진행해 주세요.", 400, "/install")
+            # 기본환경설정 테이블 조회
+            config = db.scalar(select(Config))
         else:
             return await call_next(request)
 
@@ -138,8 +139,15 @@ async def main_middleware(request: Request, call_next):
         context = {"request": request, "errors": e.detail, "url": e.url}
         return template_response("alert.html", context, e.status_code)
 
+    except ProgrammingError as e:
+        context = {
+            "request": request,
+            "errors": "DB 테이블 또는 설정정보가 존재하지 않습니다. 설치를 다시 진행해 주세요.",
+            "url": "/install"
+        }
+        return template_response("alert.html", context, 400)
+
     # 기본환경설정 조회 및 설정
-    config = db.scalar(select(Config))
     request.state.config = config
     request.state.title = config.cf_title
 
@@ -301,7 +309,7 @@ async def index(request: Request, db: db_session):
 
     context = {
         "request": request,
-        "newwins": get_newwins(request),
+        "newwins": get_newwins_except_cookie(request),
         "boards": boards,
     }
     return templates.TemplateResponse("/index.html", context)

@@ -29,7 +29,7 @@
             <h2>회원가입약관</h2>
             <textarea readonly>{{ config.cf_stipulation }}</textarea>
             <fieldset class="fregister_agree">
-                <input type="checkbox" name="agree" value="1" id="agree11" class="selec_chk">
+                <input type="checkbox" name="agree" value="1" id="agree11">
                 <label for="agree11"><span></span><b class="blind">회원가입약관의 내용에 동의합니다.</b></label>
             </fieldset>
         </section>
@@ -64,19 +64,18 @@
             </div>
 
             <fieldset class="fregister_agree">
-                <input type="checkbox" name="agree2" value="1" id="agree21" class="selec_chk">
+                <input type="checkbox" name="agree2" value="1" id="agree21">
                 <label for="agree21"><span></span><b class="blind">개인정보 수집 및 이용의 내용에 동의합니다.</b></label>
             </fieldset>
         </section>
 
         <div id="fregister_chkall" class="chk_all fregister_agree">
-            <input type="checkbox" name="chk_all" id="chk_all" class="selec_chk">
+            <input type="checkbox" name="chk_all" id="chk_all">
             <label for="chk_all"><span></span>회원가입 약관에 모두 동의합니다</label>
         </div>
         <!-- } 회원가입 약관 동의 끝 -->
 
         <!-- 새로가입 시작 -->
-        <input type="hidden" name="action" value="is_register">
         <input type="hidden" name="cert_type" value="{{ request.state.login_member.mb_certify }}">
         <input type="hidden" name="cert_no" value="">
         <input type="hidden" name="mb_id" value="{{ form.social_member_id }}" id="reg_mb_id">
@@ -143,12 +142,8 @@
                                 <span class="blind">설명보기</span>
                             </button>
                             <span class="tooltip">
-                                    {% if is_register %}
-                                        "E-mail 로 발송된 내용을 확인한 후 인증하셔야 회원가입이 완료됩니다."
-                                    {% else %}
-                                        "E-mail 주소를 변경하시면 다시 인증하셔야 합니다."
-                                    {% endif %}
-                                </span>
+                                E-mail 로 발송된 내용을 확인한 후 인증하셔야 회원가입이 완료됩니다.
+                            </span>
                             {% endif %}
                         </label>
                         <input type="text" name="mb_email" value="{{ form.social_email }}"
@@ -170,7 +165,7 @@
         <div class="btn_confirm">
             <a href="{{ request.base_url }}" class="btn_close">취소</a>
             <button type="submit" id="btn_submit" class="btn_submit" accesskey="s">
-                {% if is_register %}회원가입{% else %}정보수정{% endif %}
+                회원가입
             </button>
         </div>
 
@@ -231,7 +226,6 @@
     const cf_cert_ipin = "{{config['cf_cert_ipin']|default_if_none('0')}}"
     const cert_url = ""
     const cert_type = ""
-    const is_register = "{{is_register}}"
     
     $(function() {
         // 모두선택
@@ -269,7 +263,7 @@
             return false;
         }
 
-        {% if (is_register == "" and config["cf_cert_use"] and config["cf_cert_req"]) %}
+        {% if (config["cf_cert_use"] and config["cf_cert_req"]) %}
             // 본인확인 체크
             if (f.cert_no.value == "") {
                 alert("회원가입을 위해서는 본인확인을 해주셔야 합니다.");
@@ -278,7 +272,7 @@
         {% endif %}
 
         // 닉네임 검사
-        if (is_register || (f.mb_nick.defaultValue != f.mb_nick.value)) {
+        if ((f.mb_nick.defaultValue != f.mb_nick.value)) {
             const msg = reg_mb_nick_check();
             if (msg) {
                 alert(msg);
@@ -288,7 +282,7 @@
         }
 
         // E-mail 검사
-        if (is_register|| (f.mb_email.defaultValue != f.mb_email.value)) {
+        if (f.mb_email.defaultValue != f.mb_email.value) {
             const msg = reg_mb_email_check();
             if (msg) {
                 alert(msg);

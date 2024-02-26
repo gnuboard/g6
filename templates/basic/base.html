@@ -1,28 +1,29 @@
 {% extends "base_sub.html" %}
 
 {% block body_html %}
-    <!-- 상단 시작 { -->
-      <div id="hd">
-        <h1 id="hd_h1"></h1>
-        <div id="skip_to_container"><a href="#container">본문 바로가기</a></div>
-    
-        {% include "/bbs/newwin.inc.html" %}
+<!-- 상단 시작 { -->
+<div id="hd">
+
+    <h1 id="hd_h1"></h1>
+    <div id="skip_to_container"><a href="#container">본문 바로가기</a></div>
+
+    {% include "/bbs/newwin.inc.html" %}
 
     <div id="tnb">
-      <div class="inner">
-          <!-- <ul id="hd_define">
-            <li class="active"><a href="/">커뮤니티</a></li>
-            <li><a href="/shop">쇼핑몰</a></li>
-          </ul> -->
-          <ul id="hd_qnb">
-            <li><a href="{{ url_for('faq_view') }}">FAQ</a></li>
-            <li><a href="{{ url_for('qa_list') }}">Q&A</a></li>
-            <li><a href="/bbs/new">새글</a></li>
-            <li><a href="/bbs/current_connect" class="visit">
-                접속자<strong class="visit-num">{{ current_login_count[0] }}</strong></a>
-                <!-- current_login_count[1]은 회원 수 -->
-            </li>
-        </ul>
+        <div class="inner">
+            <!-- <ul id="hd_define">
+                <li class="active"><a href="/">커뮤니티</a></li>
+                <li><a href="/shop">쇼핑몰</a></li>
+            </ul> -->
+            <ul id="hd_qnb">
+                <li><a href="{{ url_for('faq_view') }}">FAQ</a></li>
+                <li><a href="{{ url_for('qa_list') }}">Q&A</a></li>
+                <li><a href="/bbs/new">새글</a></li>
+                <li><a href="/bbs/current_connect" class="visit">
+                    접속자<strong class="visit-num">{{ current_login_count[0] }}</strong></a>
+                    <!-- current_login_count[1]은 회원 수 -->
+                </li>
+            </ul>
         </div>
     </div>
 
@@ -33,60 +34,62 @@
         </div>
 
         <button type="button" id="gnb_open" class="hd_opener">
-          <i class="fa fa-bars" aria-hidden="true"></i>
-          <span class="blind">열기</span>
+            <i class="fa fa-bars" aria-hidden="true"></i>
+            <span class="blind">열기</span>
         </button>
+
         <div id="gnb_mo" class="gnb_mo">
-          <button type="button" id="gnb_close" class="hd_closer">
-              <span class="blind">메뉴 닫기</span>
-              <i class="fa fa-xmark" aria-hidden="true"></i>
-          </button>
-          <!-- 아웃 로그인 -->
-          {% if request.state.login_member %}
-              {% include "mobile/bbs/outlogin_after.html" ignore missing %}
-          {% else %}
-              {% include "mobile/bbs/outlogin_before.html" ignore missing %}
-          {% endif %}
+            <button type="button" id="gnb_close" class="hd_closer">
+                <span class="blind">메뉴 닫기</span>
+                <i class="fa fa-xmark" aria-hidden="true"></i>
+            </button>
 
-          <!-- 메뉴 -->
-          {% include "mobile/bbs/menu.html" ignore missing %}
+            <!-- 아웃 로그인 -->
+            {% if request.state.login_member %}
+                {% include "mobile/bbs/outlogin_after.html" ignore missing %}
+            {% else %}
+                {% include "mobile/bbs/outlogin_before.html" ignore missing %}
+            {% endif %}
 
-          <ul id="hd_nb">
-              <li class="hd_nb1">
-                  <a href="/bbs/faq" id="snb_faq">
-                      <i class="fa fa-question" aria-hidden="true"></i>FAQ
-                  </a>
-              </li>
-              <li class="hd_nb2">
-                  <a href="/bbs/qalist" id="snb_qa">
-                      <i class="fa fa-comments" aria-hidden="true"></i>1:1문의
-                  </a>
-              </li>
-              <li class="hd_nb3">
-                  <a href="/bbs/current_connect" id="snb_cnt">
-                      <i class="fa fa-users" aria-hidden="true"></i>접속자
-                     <span>{{ current_login_count[0]|number_format }}</span>
-                  </a>
-              </li>
-              <li class="hd_nb4">
-                  <a href="/bbs/new" id="snb_new">
-                      <i class="fa fa-history" aria-hidden="true"></i>새글
-                  </a>
-              </li>
-          </ul>
-      </div>
+            <!-- 메뉴 -->
+            {% include "mobile/bbs/menu.html" ignore missing %}
 
+            <ul id="hd_nb">
+                <li class="hd_nb1">
+                    <a href="/bbs/faq" id="snb_faq">
+                        <i class="fa fa-question" aria-hidden="true"></i>FAQ
+                    </a>
+                </li>
+                <li class="hd_nb2">
+                    <a href="/bbs/qalist" id="snb_qa">
+                        <i class="fa fa-comments" aria-hidden="true"></i>1:1문의
+                    </a>
+                </li>
+                <li class="hd_nb3">
+                    <a href="/bbs/current_connect" id="snb_cnt">
+                        <i class="fa fa-users" aria-hidden="true"></i>접속자
+                        <span>{{ current_login_count[0]|number_format }}</span>
+                    </a>
+                </li>
+                <li class="hd_nb4">
+                    <a href="/bbs/new" id="snb_new">
+                        <i class="fa fa-history" aria-hidden="true"></i>새글
+                    </a>
+                </li>
+            </ul>
+        </div>
 
         <!-- 검색영역 -->
         <div class="hd_sch_wr">
             <fieldset id="hd_sch">
                 <legend>사이트 내 전체검색</legend>
+
                 <form name="fsearchbox" method="get" action="/bbs/search" onsubmit="return fsearchbox_submit(this);">
-                <input type="hidden" name="sfl" value="wr_subject||wr_content">
-                <input type="hidden" name="sop" value="and">
-                <label for="sch_stx" class="blind">검색어 필수</label>
-                <input type="text" name="stx" id="sch_stx" maxlength="20" placeholder="검색어를 입력해주세요">
-                <button type="submit" id="sch_submit" value="검색"><i class="fa fa-search" aria-hidden="true"></i><span class="blind">검색</span></button>
+                    <input type="hidden" name="sfl" value="wr_subject||wr_content">
+                    <input type="hidden" name="sop" value="and">
+                    <label for="sch_stx" class="blind">검색어 필수</label>
+                    <input type="text" name="stx" id="sch_stx" maxlength="20" placeholder="검색어를 입력해주세요">
+                    <button type="submit" id="sch_submit" value="검색"><i class="fa fa-search" aria-hidden="true"></i><span class="blind">검색</span></button>
                 </form>
 
                 <script>
@@ -119,6 +122,7 @@
                 }
                 </script>
             </fieldset>
+
             <!-- 인기검색어 시작 { -->
             {% include "/bbs/popular.html" %}
             <!-- } 인기검색어 끝 -->
@@ -128,46 +132,46 @@
         <button type="button" id="user_btn" class="hd_opener"><i class="fa fa-search" aria-hidden="true"></i><span class="blind">사용자메뉴</span></button>
 
         <script>
-          var gnb_opener = document.querySelector("#gnb_open");
-          var sch_opener = document.querySelector("#user_btn");
-          var close_btn = document.querySelector("#gnb_close");
-          var hd_sch_wr = document.querySelector(".hd_sch_wr");
-          var hd_gnb_wr = document.querySelector("#gnb_mo");
-  
-          function handleSearchClick() {
-            hd_sch_wr.classList.toggle("active");
-          }
-          function handleGnbClick() {
-            hd_gnb_wr.classList.add("active");
-          }
-          function delGnbClick() {
-            hd_gnb_wr.classList.remove("active");
-          }
-  
-          sch_opener.addEventListener("click", handleSearchClick);
-          gnb_opener.addEventListener("click", handleGnbClick);
-          close_btn.addEventListener("click", delGnbClick);
-     
+            var gnb_opener = document.querySelector("#gnb_open");
+            var sch_opener = document.querySelector("#user_btn");
+            var close_btn = document.querySelector("#gnb_close");
+            var hd_sch_wr = document.querySelector(".hd_sch_wr");
+            var hd_gnb_wr = document.querySelector("#gnb_mo");
+
+            function handleSearchClick() {
+                hd_sch_wr.classList.toggle("active");
+            }
+            function handleGnbClick() {
+                hd_gnb_wr.classList.add("active");
+            }
+            function delGnbClick() {
+                hd_gnb_wr.classList.remove("active");
+            }
+
+            sch_opener.addEventListener("click", handleSearchClick);
+            gnb_opener.addEventListener("click", handleGnbClick);
+            close_btn.addEventListener("click", delGnbClick);
         </script>
 
         <!-- 프로필 -->
         <div class="profile_wrap">
-          <span class="profile_img" tabindex="0">
-            <img src="{{ get_member_image(request, request.state.login_member.mb_id)|safe }}" alt="profile_image">
-          </span>
-          <ul class="hd_login">       
-            {% if request.state.login_member %}
-            <li><a href="/bbs/member_confirm?url=/bbs/register_form">정보수정</a></li>
-            {% if request.state.is_super_admin %}
-              <li class="tnb_admin"><a href="/admin">관리자</a></li>
-            {% endif %}
-            <li><a href="/bbs/logout">로그아웃</a></li>
-            {% else %}
-            <li><a href="/bbs/register">회원가입</a></li>
-            <li><a href="/bbs/login">로그인</a></li>
-            {% endif %}
-          </ul>
+            <span class="profile_img" tabindex="0">
+                <img src="{{ get_member_image(request, request.state.login_member.mb_id)|safe }}" alt="profile_image">
+            </span>
+            <ul class="hd_login">
+                {% if request.state.login_member %}
+                <li><a href="/bbs/member_confirm?url=/bbs/register_form">정보수정</a></li>
+                {% if request.state.is_super_admin %}
+                <li class="tnb_admin"><a href="/admin">관리자</a></li>
+                {% endif %}
+                <li><a href="/bbs/logout">로그아웃</a></li>
+                {% else %}
+                <li><a href="/bbs/register">회원가입</a></li>
+                <li><a href="/bbs/login">로그인</a></li>
+                {% endif %}
+            </ul>
         </div>
+
     </div>
 
     <!-- 프로필 이미지 클릭 이벤트 -->
@@ -176,11 +180,11 @@
         var mypageBox = document.querySelector(".hd_login");
 
         function handleProfileClick() {
-          mypageBox.classList.add("active");
+        mypageBox.classList.add("active");
         }
 
         function handleProfileFocusout() {
-          mypageBox.classList.remove("active");
+        mypageBox.classList.remove("active");
         }
 
         profileImg.addEventListener("click", handleProfileClick);
@@ -201,66 +205,69 @@
 <hr>
 
 <!-- 콘텐츠 시작 { -->
-  <div id="wrapper">
+<div id="wrapper">
     <div id="container_wr">
-   
+
         <div id="container">
             <h2 id="container_title"><span>{% block subtitle %}{% endblock subtitle %}</span></h2>
             {% block content %}
             {% endblock content %}
         </div>
-    <div id="aside">
-        {% if request.state.login_member %}
-            {% include "bbs/outlogin_after.html" %}
-        {% else %}
-            {% include "bbs/outlogin_before.html" %}
-        {% endif %}
-        {% if menus -%}
-          <!-- 메뉴 -->
-          <nav id="gnb">
-            <h2>메인메뉴</h2>
-            <div class="gnb_wrap">
-                {% include "/bbs/menu.html" ignore missing %}
-            </div>
-          </nav>
-        {%- endif %}
-        {% include "/bbs/poll.html" %}
-        <!-- 접속자집계 시작 { -->
-        {% if render_visit_statistics %}
-            {{ render_visit_statistics(request)|safe }}
-        {% endif %}
-        <!-- } 접속자집계 끝 -->  
-      <script>
-        // aside/최신글 - 탭메뉴 기능
-        var tabItems = document.querySelectorAll('.aside_tab ul.tab_01 li');
 
-          tabItems.forEach(function (item) {
-            item.addEventListener('click', function () {
-                var asideTabId = this.getAttribute('data-tab');
+        <div id="aside">
+            {% if request.state.login_member %}
+                {% include "bbs/outlogin_after.html" %}
+            {% else %}
+                {% include "bbs/outlogin_before.html" %}
+            {% endif %}
 
-                // Remove 'current' class from all tab items and content elements
-                tabItems.forEach(function (tabItem) {
-                    tabItem.classList.remove('current');
+            {% set menus = get_menus() %}
+            {% if menus -%}
+            <!-- 메뉴 -->
+            <nav id="gnb">
+                <h2>메인메뉴</h2>
+                <div class="gnb_wrap">
+                    {% include "/bbs/menu.html" ignore missing %}
+                </div>
+            </nav>
+            {%- endif %}
+
+            {% include "/bbs/poll.html" %}
+
+            <!-- 접속자집계 시작 { -->
+            {% if render_visit_statistics %}
+                {{ render_visit_statistics(request)|safe }}
+            {% endif %}
+            <!-- } 접속자집계 끝 -->  
+
+            <script>
+                // aside/최신글 - 탭메뉴 기능
+                var tabItems = document.querySelectorAll('.aside_tab ul.tab_01 li');
+
+                tabItems.forEach(function (item) {
+                    item.addEventListener('click', function () {
+                        var asideTabId = this.getAttribute('data-tab');
+
+                        // Remove 'current' class from all tab items and content elements
+                        tabItems.forEach(function (tabItem) {
+                            tabItem.classList.remove('current');
+                        });
+
+                        var contentElements = document.querySelectorAll('.aside_tab .content01');
+                        contentElements.forEach(function (contentElement) {
+                            contentElement.classList.remove('current');
+                        });
+
+                        // Add 'current' class to the clicked tab item and corresponding content element
+                        this.classList.add('current');
+                        document.getElementById(asideTabId).classList.add('current');
+                    });
                 });
-
-                var contentElements = document.querySelectorAll('.aside_tab .content01');
-                contentElements.forEach(function (contentElement) {
-                    contentElement.classList.remove('current');
-                });
-
-                // Add 'current' class to the clicked tab item and corresponding content element
-                this.classList.add('current');
-                document.getElementById(asideTabId).classList.add('current');
-            });
-        });
-
-      </script>
+            </script>
+        </div>
     </div>
 </div>
-
-</div>
 <!-- } 콘텐츠 끝 -->
-
 
 <hr>
 
@@ -282,17 +289,19 @@
         </div>
         <div id="ft_company" class="ft_cnt">
 
-	    </div>
+        </div>
     </div>
+
     <div id="ft_copy">Copyright &copy; <b>{{ request.url.hostname }}.</b> All rights reserved.</div>
 
     <button type="button" id="top_btn">
-    	<i class="fa fa-arrow-up" aria-hidden="true"></i><span class="blind">상단으로</span>
+        <i class="fa fa-arrow-up" aria-hidden="true"></i><span class="blind">상단으로</span>
     </button>
     <button type="button" class="darkmode-toggle-switch">
       <i class="fa-solid fa-moon visible bright"></i>
       <i class="fa-solid fa-sun visible dark"></i>
     </button>
+
 </div>
 
 {% if request.state.config.cf_analytics %}

@@ -1,6 +1,6 @@
-from dotenv import dotenv_values, load_dotenv
+from dotenv import dotenv_values
 from fastapi import Depends
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, URL
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import Session, sessionmaker
@@ -10,6 +10,7 @@ from typing_extensions import Annotated
 
 class MySQLCharsetMixin:
     """ MySQL의 기본 charset을 설정하는 Mixin 클래스 """
+
     @declared_attr.directive
     def __table_args__(cls):
         return {'mysql_charset': DBConnect().charset}
@@ -18,7 +19,6 @@ class MySQLCharsetMixin:
 class DBSetting:
     """
     데이터베이스 설정 클래스
-    - 매번 설정이 불러와지는 문제점 해결해야함..
     """
 
     _table_prefix: Annotated[str, ""]
@@ -30,16 +30,26 @@ class DBSetting:
     _name: Annotated[str, ""]
     _url: Annotated[str, ""]
     _charset: Annotated[str, ""]
+    _instance: Annotated['DBSetting', None] = None
+    _setting_init: Annotated[bool, False]
 
     supported_engines = {
-        "mysql": "mysql+pymysql://",
-        "postgresql": "postgresql://",
+        "mysql": "mysql+pymysql",
+        "postgresql": "postgresql",
         "sqlite": "sqlite:///sqlite3.db"
     }
 
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
     def __init__(self) -> None:
-        self.set_connect_infomation()
-        self.create_url()
+        super().__init__()
+        if not hasattr(DBSetting, "_setting_init"):
+            DBSetting._setting_init = True
+            self.set_connect_infomation()
+            self.create_url()
 
     @property
     def charset(self) -> str:
@@ -62,7 +72,6 @@ class DBSetting:
         self._table_prefix = prefix
 
     def set_connect_infomation(self) -> None:
-        load_dotenv()
         env_values = dotenv_values()
         port = env_values.get("DB_PORT", "3306")
 
@@ -77,12 +86,29 @@ class DBSetting:
 
     def create_url(self) -> None:
         url = None
-        prefix = self.supported_engines.get(self._db_engine)
-        if prefix:
+        if db_driver := self.supported_engines.get(self._db_engine):
             if self._db_engine == "sqlite":
-                url = prefix
+                url = db_driver
             else:
-                url = prefix + f"{self._user}:{self._password}@{self._host}:{self._port}/{self._db_name}"
+                query_option = {}
+                if self._db_engine == "mysql":
+                    query_option = {"charset": self._charset}
+
+                elif self._db_engine == "postgresql":
+                    if self._charset == "utf8mb4" or self._charset == "utf8":
+                        # pycopg 드라이버 인코딩 설정 utf8 을 사용
+                        query_option = {"client_encoding": 'utf8'}
+                    else:
+                        query_option = {"client_encoding": self._charset}
+                url = URL(
+                    drivername=db_driver,
+                    username=self._user,
+                    password=self._password,
+                    host=self._host,
+                    port=self._port,
+                    database=self._db_name,
+                    query=query_option,
+                )
         self._url = url
 
 
