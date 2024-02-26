@@ -14,10 +14,10 @@
     {% endif %}
     <div id="faq_hhtml">{{ faq_master.fm_head_html|default('', true)|safe }}</div>
 
-    <fieldset id="faq_sch">
+    <fieldset id="faq_sch" class="rounded-3 p-5 text-center">
         <legend>FAQ 검색</legend>
         <form name="faq_search_form" method="get">
-            <span class="sch_tit">FAQ 검색</span>
+            <span class="blind">FAQ 검색</span>
             <label for="stx" class="blind">검색어<strong class="blind"> 필수</strong></label>
             <input type="text" name="stx" value="{{ stx }}" required="" id="stx" class="frm_input" size="15" maxlength="15">
             <button type="submit" value="검색" class="btn_submit">
@@ -28,11 +28,11 @@
     </fieldset>
 
     <nav id="bo_cate" class="my-5">
-        <h2>자주하시는 질문 분류</h2>
-        <ul id="bo_cate_ul">
+        <h2 class="blind">자주하시는 질문 분류</h2>
+        <ul id="bo_cate_ul" class="p-0">
         {% for master in faq_masters %} 
             <li class="d-inline-block p-1">
-                <a href="{{ url_for('faq_view', fm_id=master.fm_id) }}" {% if master.fm_id == faq_master.fm_id %}id="bo_cate_on"{% endif %}>
+                <a href="{{ url_for('faq_view', fm_id=master.fm_id) }}" class="d-block py-2 px-4 rounded-3 sub-border main-font" {% if master.fm_id == faq_master.fm_id %}id="bo_cate_on"{% endif %}>
                     {% if master.fm_id == faq_master.fm_id %}<span class="blind">열린 분류 </span>{% endif %}
                     {{ master.fm_subject }}
                 </a>
@@ -41,23 +41,25 @@
         </ul>
     </nav>
 
-    <div id="faq_wrap" class="faq_{{ faq_master.fm_id }}">
+    <div id="faq_wrap" class="faq_{{ faq_master.fm_id }} mt-3 mb-5">
     {% for faq in faqs %}
         <section id="faq_con">
-            <h2>{{ faq_master.subject }} 목록</h2>
-            <ol>
-                <li>
-                    <h3>
-                        <span class="tit_bg">Q</span>
-                        <a href="#none" onclick="return faq_open(this);">{{ faq.fa_subject|safe }}</a>
-                        <button class="tit_btn" onclick="return faq_open(this);">
+            <h2 class="blind">{{ faq_master.subject }} 목록</h2>
+            <ol class="m-0 p-0 list-unstyled">
+                <li class="position-relative main-border card-bg rounded-3 mb-3">
+                    <h3 class="d-flex justify-content-between align-items-center fs-2 p-4">
+                        <div class="d-flex align-items-center">
+                          <span class="d-inline-block em-font fw-bold me-3">Q</span>
+                          <a href="#none" class="text-decoration-none main-font" onclick="return faq_open(this);">{{ faq.fa_subject|safe }}</a>
+                        </div>
+                        <button class="tit_btn sub-font bg-transparent border-0" onclick="return faq_open(this);">
                             <i class="fa fa-plus" aria-hidden="true"></i>
                             <span class="blind">열기</span>
                         </button>
                     </h3>
                     <div class="con_inner" style="display: none;">
                         {{ faq.fa_content|safe }}
-                        <button type="button" class="closer_btn">
+                        <button type="button" class="closer_btn sub-font card-bg border-0">
                             <i class="fa fa-minus" aria-hidden="true"></i>
                             <span class="blind">닫기</span>
                         </button>
@@ -84,7 +86,7 @@
     {% endif %}
 
     {% if request.state.is_super_admin %}
-        <div class="faq_admin">
+        <div class="faq_admin text-start">
             <a href="{{ url_for('faq_master_update_form', fm_id=faq_master.fm_id) }}" class="btn_admin btn" title="FAQ 수정">
                 <i class="fa fa-cog fa-spin fa-fw"></i>
                 <span class="blind">FAQ 수정</span>
