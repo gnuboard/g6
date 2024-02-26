@@ -1,9 +1,9 @@
 import os
-from user_agents import parse
 
 from fastapi import FastAPI, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
+from user_agents import parse
 
 from core.plugin import (
     register_plugin_admin_menu, get_plugin_state_change_time,
@@ -107,8 +107,19 @@ async def should_run_middleware(request: Request) -> bool:
 
 
 class CSPMiddleware(BaseHTTPMiddleware):
+    async def __call__(self, scope, receive, send):
+        try:
+            await super().__call__(scope, receive, send)
+        except RuntimeError as exc:
+            # 클라이언트와 끊길때 발생 예외 처리
+            if str(exc) == 'No response returned.':
+                request = Request(scope, receive=receive)
+                if await request.is_disconnected():
+                    return
+            raise
+
     async def dispatch(self, request: Request, call_next):
-        response: Response = await call_next(request)
+
         allow_url_list = [
             "http://t1.daumcdn.net",
             "https://www.google.com",
@@ -119,6 +130,8 @@ class CSPMiddleware(BaseHTTPMiddleware):
         ]
         allow_url_list_to_string = " ".join(allow_url_list)
         csp_policy = f"default-src 'self' 'unsafe-inline' data: {allow_url_list_to_string} ;"
+
+        response: Response = await call_next(request)
         response.headers['Content-Security-Policy'] = csp_policy
         return response
 
