@@ -812,7 +812,7 @@ html.no-overflowscrolling #autosave_pop { height:auto; max-height:10000px !impor
 .pic_lt .empty_li:before { background:none; padding:0 }
 
 .pic_lt .lt_cmt { background:#e9eff5; color:var(--primaryColor); font-size:1.1rem; height:16px; line-height:16px; padding:0 5px; border-radius:3px; vertical-align:middle } 
-.pic_lt .lt_more { position:absolute; top:30px; right:0; display:block; width:40px; line-height:25px; color:var(--primaryColor); border-radius:3px; text-align:center; font-size: 1.8rem; } 
+.pic_lt .lt_more { position:absolute; top:30px; right:0; display:block; color:var(--primaryColor); text-align:center; font-size: 1.8rem; } 
 .pic_lt .lt_more:hover { color:#777 } 
 
 /* latest_list.css */
