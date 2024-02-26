@@ -14,7 +14,7 @@ from lib.common import is_none_datetime, get_img_path, delete_image
 
 class MemberService(MemberModel):
     @classmethod
-    def create_by_id(cls, db: Session, mb_id: str) -> "MemberService":
+    def create_by_id(cls, db: Session, mb_id: str) -> MemberModel:
         query = select(cls).where(cls.mb_id == mb_id)
 
         return db.scalar(query)
@@ -162,7 +162,7 @@ def update_member_image(request: Request, upload_object: Optional[Image.Image], 
         # 기존 이미지 삭제
         img_ext_list = request.state.config.cf_image_extension.split("|")
         for ext in img_ext_list:
-            delete_image(directory, f"{filename}.{ext}", 1)
+            delete_image(directory, f"{filename}.{ext}", True)
         if is_delete:
             return
     else:
