@@ -5,7 +5,7 @@
 
 {% block content %}
 <section>
-    <h2>신규가입회원 {{ new_member_rows }}건 목록</h2>
+    <h2>신규가입회원 {{ new_members|length }}건 목록</h2>
     <div class="local_desc02 local_desc">
         총회원수 {{ total_member_count|number_format }}명 중 차단 {{ intercept_count|number_format }}명, 탈퇴 : {{ leave_count|number_format }}명
     </div>
@@ -115,7 +115,7 @@
 <section>
     <h2>최근 포인트 발생내역</h2>
     <div class="local_desc02 local_desc">
-        전체 {{ total_point_count|number_format }}건 중 {{ new_point_rows }}건 목록
+        전체 {{ total_point_count|number_format }}건 중 {{ new_points|length }}건 목록
     </div>
 
     <div class="tbl_head01 tbl_wrap">
