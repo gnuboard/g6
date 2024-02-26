@@ -134,7 +134,7 @@
                             {% if "secret" in write.wr_option %}
                                 <i class="fa fa-lock" aria-hidden="true"></i>
                             {% endif %}
-                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}">
+                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}" class="main-font">
                                 {{ write.subject }}
                             </a>
                             {% if write.icon_new %}<span class="new_icon">N<span class="blind">새글</span></span>{% endif %}
@@ -200,7 +200,7 @@
                                 {% if "secret" in write.wr_option %}
                                     <i class="fa fa-lock" aria-hidden="true"></i>
                                 {% endif %}
-                                <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}">{{ write.wr_subject }}</a>
+                                <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}" class="main-font">{{ write.wr_subject }}</a>
                                 {% if write.icon_new %}<span class="new_icon">N<span class="blind">새글</span></span>{% endif %}
                                 {% if write.icon_hot %}<i class="fa fa-heart" aria-hidden="true"></i>{% endif %}
                                 {% if write.icon_file %}<i class="fa fa-download" aria-hidden="true"></i>{% endif %}
