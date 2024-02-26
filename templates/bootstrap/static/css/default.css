@@ -807,26 +807,6 @@ html.no-overflowscrolling #autosave_pop { height:auto; max-height:10000px !impor
 
 /* main_list.css */
 /* 메인 슬라이드 */
-.con { margin:0 auto; } 
-.img-box > img { width:100%; display:block; } 
-.row::after { content:""; display:block; clear:both; } 
-.cell { float:left; box-sizing:border-box; } 
-.cell-right { float:right; box-sizing:border-box; } 
-.margin-0-auto { margin:0 auto; } 
-.block { display:block; } 
-.inline-block { display:inline-block; } 
-.text-align-center { text-align:center; } 
-.line-height-0-ch-only { line-height:0; } 
-.line-height-0-ch-only > * { line-height:normal; } 
-.relative { position:relative; } 
-.absolute-left { position:absolute; left:0; } 
-.absolute-right { position:absolute; right:0; } 
-.absolute-middle { position:absolute; top:50%; transform:translateY(-50%); } 
-.table { display:table; } 
-.table-cell { display:table-cell; } 
-button { cursor:pointer; padding:0; font-size:inherit; } 
-.con-min-width { min-width:320px; } 
-.main_bn { width: 100%; border-radius: 16px; overflow: hidden; } 
 
 /* member.css */
 /* ### 기본 스타일 커스터마이징 시작 ### */

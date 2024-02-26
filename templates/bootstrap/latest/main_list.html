@@ -3,8 +3,8 @@
 {% endif %}
 {% set thumb_width, thumb_height = 500, 350 %}
 
-<div class="slider-wrap con rounded-4 overflow-hidden main-border" data-slick-autoplay-status="Y">
-    <div class="slider main-slider con">
+<div class="slider-wrap mx-auto rounded-4 overflow-hidden main-border" data-slick-autoplay-status="Y">
+    <div class="slider main-slider mx-auto">
       {% for write in writes -%}
         <div class="slide-item">
             <div class="slide-con position-relative" style="height: 750px;" data-dot-title="{{ write.subject }}" data-dot-content="{{ write.wr_content }}" data-dot-bo-table="{{ bo_table }}" data-dot-wr-id="{{ write.wr_id }}">
@@ -22,7 +22,7 @@
                     {% if thumbnail.src %}
                     <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}" class="w-100 h-100 object-fit-cover">
                     {% else %}
-                    <img src="{{ url_for('static', path='/img/no_img.png') }}" alt="이미지가 없습니다." class="w-100 h-100 object-fit-cover">
+                    <img src="{{ url_for('static', path='/img/no_img.png') }}" class="w-100 h-100 object-fit-cover" alt="이미지가 없습니다." class="w-100 h-100 object-fit-cover">
                     {% endif %}
                     </a>
                 </picture>
@@ -36,7 +36,7 @@
           </div>
           <picture class="img-box">
             <a href="#" class="lt_img d-block">
-              <img src="{{ url_for('static', path='/img/no_img.png') }}" alt="이미지가 없습니다." class="w-100 h-100 object-fit-cover">
+              <img src="{{ url_for('static', path='/img/no_img.png') }}" class="w-100 h-100 object-fit-cover" alt="이미지가 없습니다.">
             </a>
           </picture>
           </div>
