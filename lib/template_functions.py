@@ -5,7 +5,7 @@ from typing import Union
 
 from fastapi import Request
 from sqlalchemy import select
-
+from markupsafe import Markup, escape
 from core.database import DBConnect
 from core.models import Group, Member
 
@@ -398,3 +398,9 @@ def subject_sort_link(request: Request,
 
     # qstr을 쿼리 문자열로 사용하여 링크를 생성하고 반환한다.
     return f'<a href="?{qstr}">'
+
+
+def nl2br(value) -> str:
+    """ \n 을 <br> 태그로 변환
+    """
+    return escape(value).replace('\n', Markup('<br>\n'))
