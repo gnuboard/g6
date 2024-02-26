@@ -5,7 +5,12 @@
 {% set thumb_width, thumb_height = 210, 150 %}
 
 <div class="pic_lt position-relative">
-    <h2 class="d-block m-0 pt-5 pb-4 fs-3"><a href="{{ url_for('list_post', bo_table=bo_table) }}" class="main-font text-decoration-none fw-bold">{{ board.subject }}</a></h2>
+  <div class="d-flex justify-content-between align-items-center mt-3">
+    <h2 class="d-block m-0 py-4 fs-3"><a href="{{ url_for('list_post', bo_table=bo_table) }}" class="main-font text-decoration-none fw-bold">{{ board.subject }}</a></h2>
+    <a href="{{ url_for('list_post', bo_table=bo_table) }}" class="lt_more" title="더보기">
+      <span class="blind">{{ board.subject }}</span><i class="fa-solid fa-circle-plus"></i>
+    </a>
+  </div>
     <ul class="row p-0">
         {% for write in writes -%}
         <li class="col-3">
@@ -41,10 +46,7 @@
             </div>
         </li>
         {% else -%}
-            <li class="empty_li sub-font fs-4">게시물이 없습니다.</li>
+            <li class="empty_li sub-font fs-4" style="padding: 50px 0;">게시물이 없습니다.</li>
         {%- endfor %}
     </ul>
-    <a href="{{ url_for('list_post', bo_table=bo_table) }}" class="lt_more" title="더보기">
-        <span class="blind">{{ board.subject }}</span><i class="fa-solid fa-circle-plus"></i>
-    </a>
 </div>

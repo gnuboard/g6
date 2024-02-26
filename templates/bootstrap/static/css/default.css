@@ -792,86 +792,18 @@ html.no-overflowscrolling #autosave_pop { height:auto; max-height:10000px !impor
 #faq_sch .frm_input { border:var(--inputBorder); background: var(--inputBg); max-width: 300px; width:calc(100% - 100px); height:45px; border-radius:0; border-radius:3px } 
 #faq_sch .btn_submit { padding:0 10px; height:45px; width:88px; font-size:1.3rem; font-weight:bold; color:#fff; background:#434a54 } 
 
-/* latest_block.css */
-/* 새글 스킨 (latest) */
-.pic_lt ul:after { display:block; visibility:hidden; clear:both; content:"" } 
-.pic_lt ul { margin: 0 -10px } 
-.pic_lt li.gallery_li:nth-child(4n+1) { clear: both!important } 
+/* 최신글 공통 */
 .pic_lt li .lt_img img, .pic_lt li .lt_img video { width:100%; height:auto } 
-.pic_lt li a:hover { color:#a22121 } 
-.pic_lt li .fa-heart { display:inline-block; width:10px;height: 10px;padding: 3px; color:#ff0000; background:#ffb9b9; text-align:center; border-radius:2px; vertical-align:middle } 
-.pic_lt li .fa-lock { display:inline-block; line-height:14px; width:10px; height: 10px; padding: 3px; background:#cbe3e8; text-align:center; border-radius:2px; font-size:1.2rem; border:1px solid #cbe3e8; vertical-align:middle } 
-.pic_lt li .new_icon { display:inline-block; width:16px; line-height:16px; font-size:1rem; color:#23db79; background:#b9ffda; text-align:center; border-radius:2px; margin-left:2px; font-weight:bold; vertical-align:middle } 
-.pic_lt li .fa-caret-right { color:#bbb } 
-.pic_lt li .fa-download { display:inline-block; width:10px; height: 10px; padding: 3px; color:#daae37; background:#ffefb9; text-align:center; border-radius:2px; vertical-align:middle } 
-.pic_lt li .fa-link { display:inline-block; width:10px; height: 10px; padding: 3px; color:#b451fd; background:#edd3fd; text-align:center; border-radius:2px; vertical-align:middle } 
-
-.pic_lt .profile_img img { border-radius:50% }
-
-.pic_lt .empty_li { line-height:145px; color:#666; text-align:center; padding:0 }
-.pic_lt .empty_li:before { background:none; padding:0 }
-
-.pic_lt .lt_cmt { background:#e9eff5; color:var(--primaryColor); font-size:1.1rem; height:16px; line-height:16px; padding:0 5px; border-radius:3px; vertical-align:middle } 
-.pic_lt .lt_more { position:absolute; top:30px; right:0; display:block; color:var(--primaryColor); text-align:center; font-size: 1.8rem; } 
-.pic_lt .lt_more:hover { color:#777 } 
-
-/* latest_list.css */
-/* 새글 스킨 (latest) */
-
-.pic_li_lt .lat_title { display:block; margin:0; padding:0; line-height:45px; font-size:1.4rem; color:#253dbe } 
-.pic_li_lt .lat_title a { color:var(--fontColor); display:inline-block; position:relative } 
-.latest_top_wr .pic_li_lt:nth-child(3n+1) { clear: both!important }
-
-.pic_li_lt .lt_more { position:absolute; top:30px; right:10px; display:block; line-height:25px; color:var(--primaryColor); border-radius:3px; text-align:center; font-size: 1.8rem; } 
-.pic_li_lt .lt_more:hover { color:#777 } 
-.pic_li_lt ul:after { display:block; visibility:hidden; clear:both; content:"" } 
-.pic_li_lt li { border-bottom:var(--border); margin-bottom:10px; color: var(--fontColor); } 
-.pic_li_lt li .lt_img { display:none } 
-.pic_li_lt li:first-child .lt_img { display:block; margin:0 0 10px; } 
-.pic_li_lt li:first-child .lt_img img, .pic_li_lt li .lt_img video { width:100%; height:auto } 
-.pic_li_lt li .pic_li_tit { font-weight:bold; font-size:1.4rem; line-height:20px; vertical-align:middle } 
-
-.pic_li_lt li .fa-heart { display:inline-block; width:10px;height: 10px;padding: 3px; color:#ff0000; background:#ffb9b9; text-align:center; border-radius:2px; vertical-align:middle } 
-.pic_li_lt li .fa-lock { display:inline-block; width:10px; height: 10px; padding: 3px; color:#4f818c; background:#cbe3e8; text-align:center; border-radius:2px; font-size:1.2rem; border:1px solid #cbe3e8; vertical-align:middle } 
-.pic_li_lt li .new_icon { display:inline-block; width:16px; line-height:16px; font-size:1rem; color:#23db79; background:#b9ffda; text-align:center; border-radius:2px; margin-left:2px; font-weight:bold; vertical-align:middle } 
-.pic_li_lt li .fa-caret-right { color:#bbb } 
-.pic_li_lt li .fa-download { display:inline-block; width:10px; height: 10px; padding: 3px; color:#daae37; background:#ffefb9; text-align:center; border-radius:2px; vertical-align:middle } 
-.pic_li_lt li .fa-link { display:inline-block; width:10px; height: 10px; padding: 3px; color:#b451fd; background:#edd3fd; text-align:center; border-radius:2px; vertical-align:middle } 
-
-.pic_li_lt .profile_img img { border-radius:50% }
-
-.pic_li_lt .empty_li { line-height:145px; color:#666; text-align:center; padding:0 }
-.pic_li_lt .empty_li:before { background:none; padding:0 }
-
-.pic_li_lt .lt_cmt { background:#e9eff5; color:var(--primaryColor); font-size:1.1rem; height:16px; line-height:16px; padding:0 5px; border-radius:3px; vertical-align:middle } 
-
-/* latest_notice.css */
-/* 새글 스킨 (latest) */
-.notice { position:relative; padding:15px 50px; } 
-.notice h2 { margin:0 0 20px; padding:0; } 
-.notice h2 a { font-size:1.4rem; color:#fff } 
-.notice li { text-overflow:ellipsis; overflow:hidden; white-space:nowrap; border-bottom:1px solid #343434 } 
-.notice li a, .notice li.empty_li { color:#e3e3e3; padding:11px 0; display:inline-block } 
-.notice li .lock_icon { display:inline-block; line-height:14px; width:16px; font-size:1rem; color:#4f818c; background:#cbe3e8; text-align:center; border-radius:2px; font-size: 1.2rem; border:1px solid #a2c6ce; vertical-align:baseline } 
-.notice li .new_icon { display:inline-block; line-height:16px; width:16px; font-size:1rem; color:#ffff00; background:#6db142; text-align:center; margin-right:3px; border-radius:2px; vertical-align:baseline } 
-.notice .cnt_cm { background:#5c85c1; color:#fff; font-size:1.1rem; height:16px; line-height:16px; padding:0 5px; border-radius:3px; white-space:nowrap; margin-left:5px } 
-.notice li.empty_li { border-bottom:0; line-height:120px } 
-
-/* latest.css */
-/* 새글 스킨 (latest) */
-#lat li a:hover { color:var(--primaryColor) } 
-#lat li .fa-heart { display:inline-block; width:10px;height: 10px;padding: 3px; color:#ff0000; background:#ffb9b9; text-align:center; border-radius:2px; vertical-align:middle } 
-#lat li .fa-lock { display:inline-block; width:10px; height: 10px; padding: 3px; color:#4f818c; background:#cbe3e8; text-align:center; border-radius:2px; font-size:1.2rem; border:1px solid #cbe3e8; vertical-align:middle } 
-#lat li .new_icon { display:inline-block; width:16px; line-height:16px; font-size:1rem; color:#23db79; background:#b9ffda; text-align:center; border-radius:2px; margin-left:2px; font-weight:bold; vertical-align:middle } 
-#lat li .fa-caret-right { color:#bbb } 
-#lat li .fa-download { display:inline-block; width:10px; height: 10px; padding: 3px; color:#daae37; background:#ffefb9; text-align:center; border-radius:2px; vertical-align:middle } 
-#lat li .fa-link { display:inline-block; width:10px; height: 10px; padding: 3px; color:#b451fd; background:#edd3fd; text-align:center; border-radius:2px; vertical-align:middle } 
-#lat .profile_img img { border-radius:50% }
-#lat .empty_li { line-height:145px; color:#666; text-align:center; padding:0 }
-#lat .empty_li:before { background:none; padding:0 }
-#lat .lt_cmt { background:#e9eff5; color:var(--primaryColor); font-size:1.1rem; height:16px; line-height:16px; padding:0 5px; border-radius:3px; vertical-align:middle } 
-#lat .lt_more { position:absolute; top:11px; right:0; display:block; color:var(--primaryColor); border-radius:3px; text-align:center; font-size: 1.8rem; } 
-#lat .lt_more:hover { color:#777 } 
+.pic_lt li a:hover, #lat li a:hover { color:var(--primaryColor) } 
+.fa-heart { display:inline-block; width:10px;height: 10px;padding: 3px; color:#ff0000; background:#ffb9b9; text-align:center; border-radius:2px; vertical-align:middle } 
+.fa-lock { display:inline-block; line-height:14px; width:10px; height: 10px; padding: 3px; background:#cbe3e8; text-align:center; border-radius:2px; font-size:1.2rem; border:1px solid #cbe3e8; vertical-align:middle } 
+.new_icon { display:inline-block; width:16px; line-height:16px; font-size:1rem; color:#23db79; background:#b9ffda; text-align:center; border-radius:2px; margin-left:2px; font-weight:bold; vertical-align:middle } 
+.fa-caret-right { color:#bbb } 
+.fa-download { display:inline-block; width:10px; height: 10px; padding: 3px; color:#daae37; background:#ffefb9; text-align:center; border-radius:2px; vertical-align:middle } 
+.fa-link { display:inline-block; width:10px; height: 10px; padding: 3px; color:#b451fd; background:#edd3fd; text-align:center; border-radius:2px; vertical-align:middle } 
+.lt_cmt { background:#e9eff5; color:var(--primaryColor); font-size:1.1rem; height:16px; line-height:16px; padding:0 5px; border-radius:3px; vertical-align:middle } 
+.lt_more { display:block; color:var(--primaryColor); text-align:center; font-size: 1.8rem; } 
+.lt_more:hover { color:#777 } 
 
 /* main_list.css */
 /* 메인 슬라이드 */
