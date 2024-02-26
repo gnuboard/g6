@@ -251,6 +251,7 @@ async def member_form_update(
     if not exists_member:  # 등록 (회원아이디가 존재하지 않으면)
 
         new_member = Member(mb_id=mb_id, **form_data.__dict__)
+        new_member.mb_datetime = datetime.now()
 
         if mb_certify_case and form_data.mb_certify:
             new_member.mb_certify = mb_certify_case
