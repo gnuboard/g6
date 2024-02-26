@@ -3,8 +3,8 @@
 {% block title %}회원 비밀번호 확인{% endblock title %}
 
 {% block content %}
-<div id="mb_confirm" class="mbskin">
-    <h1>회원 비밀번호 확인</h1>
+<div id="mb_confirm" class="mbskin position-relative mt-5 mx-auto mb-0 text-center" style="max-width: 360px;width: 100%;"">
+    <h1 class="blind">회원 비밀번호 확인</h1>
     {% if request.url == url_for('member_leave_form') %}
         <p>
             <strong>회원탈퇴를 하시려면 비밀번호를 한번 더 입력해주세요.</strong>
@@ -26,9 +26,9 @@
             <span class="confirm_id">회원아이디</span>
             <span id="mb_confirm_id"> {{ member.mb_id }} </span>
             <label for="confirm_mb_password" class="blind">비밀번호<strong>필수</strong></label>
-            <input type="password" name="mb_password" id="confirm_mb_password" required class="required frm_input"
+            <input type="password" name="mb_password" id="confirm_mb_password" required class="required frm_input w-100"
                    size="15" maxLength="20" placeholder="비밀번호">
-            <input type="submit" value="확인" id="btn_submit" class="btn_submit">
+            <input type="submit" value="확인" id="btn_submit" class="btn_submit w-100 fw-bold fs-3 mt-3 py-3">
         </fieldset>
     </form>
 </div>

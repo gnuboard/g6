@@ -805,26 +805,6 @@ html.no-overflowscrolling #autosave_pop { height:auto; max-height:10000px !impor
 .lt_more { display:block; color:var(--primaryColor); text-align:center; font-size: 1.8rem; } 
 .lt_more:hover { color:#777 } 
 
-/* main_list.css */
-/* 메인 슬라이드 */
-
-/* member.css */
-/* ### 기본 스타일 커스터마이징 시작 ### */
-/* 기본박스 */
-.mbskin {position:relative;margin:40px auto 0;width:360px;text-align:center}
-.mbskin:after {right:10px;left:auto;
-  -webkit-transform:skew(8deg) rotate(3deg);
-    -moz-transform:skew(8deg) rotate(3deg);
-    -ms-transform:skew(8deg) rotate(3deg);
-     -o-transform:skew(8deg) rotate(3deg);
-      transform:skew(8deg) rotate(3deg)}
-.mbskin .mbskin_box{border:1px solid #dde7e9;background:var(--contBg);border: var(--border);color: var(--fontColor);}
-.mbskin .frm_input {width:100%}
-.mbskin .btn_submit {width:100%;margin:10px 0 0;height:45px;font-weight:bold;font-size:1.5rem}
-.mbskin h1 {margin:60px 0 30px;font-size:2.4rem}
-.mbskin .tbl_frm01 th {width:85px}
-/* ### 기본 스타일 커스터마이징 끝 ### */
-
 /* 회원가입 약관 */
 .register_wrap {max-width: 400px;margin: 0 auto;}
 .register_wrap.input_form {max-width: 400px;}
@@ -880,10 +860,6 @@ html.no-overflowscrolling #autosave_pop { height:auto; max-height:10000px !impor
 
 .btn_confirm_reg {margin:20px 0;text-align:center}
 .reg_btn_submit {display:inline-block;background:var(--primaryColor);color:#fff;text-align:center;border-radius:3px;width:280px;height:57px;line-height:57px;font-size:1.4rem;margin:0 auto;font-weight:bold}
-
-.mb_log_cate h2 {width:50%;float:left;margin:0;padding:20px 0;text-align:center}
-.mb_log_cate .join {width:50%;float:left;padding:20px 0;text-align:center;background:var(--bovHover);color:#6e6e6e}
-.mb_log_cate:after {display:block;visibility:hidden;clear:both;content:""}
 
 .tooltip_icon {display:inline-block;vertical-align:baseline;color:#b3b5b8;border:0;font-size:1.7rem;background:transparent;cursor:pointer}
 .tooltip_icon:hover {color:#448bf5}
