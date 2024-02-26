@@ -30,6 +30,7 @@ async def popular_list(
     # 인기검색어 목록 데이터 출력
     keywords = select_query(
         request,
+        db,
         Popular,
         search_params,
         default_sst="pp_id",
