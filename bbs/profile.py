@@ -7,9 +7,10 @@ from core.database import db_session
 from core.exception import AlertException
 from core.models import Member
 from lib.common import *
-from main import templates
+from core.template import UserTemplates
 
 router = APIRouter()
+templates = UserTemplates()
 
 
 @router.get('/profile/{member_id}')
