@@ -1,15 +1,15 @@
 {% if populars %}
-    <section id="popular">
-        <h2>인기검색어</h2>
-        <div class="popular_inner">
-            <ul>
+    <section id="popular" class="position-relative mt-2">
+        <h2 class="blind">인기검색어</h2>
+        <div class="popular_inner overflow-hidden" style="width: 400px;height: 20px;">
+            <ul class="d-flex m-0 p-0">
                 {% for popular in populars %}
-                    <li class="item">
-                        <a href="/bbs/search?stx={{ popular.pp_word }}">{{ popular.pp_word }}</a>
+                    <li class="item py-2 pe-4" style="width: auto;">
+                        <a href="/bbs/search?stx={{ popular.pp_word }}" style="main-font">{{ popular.pp_word }}</a>
                     </li>
                 {% endfor %}
             </ul>
-            <span class="popular_btns">
+            <span class="popular_btns d-none">
                 <a href="#" class="pp-next"><i class="fa fa-angle-right" aria-hidden="true"></i></a>
                 <a href="#" class="pp-prev"><i class="fa fa-angle-left" aria-hidden="true"></i></a>
             </span>

@@ -7,10 +7,10 @@
 
 {% block content %}
 <form name="fsearch" onsubmit="return fsearch_submit(this);" method="get">
-    <fieldset id="sch_res_detail">
+    <fieldset id="sch_res_detail" class="py-5 text-center mb-3">
         <legend>상세검색</legend>
         <label class="blind" for="gr_id">게시판 그룹선택</label>
-        <select id="gr_id" name="gr_id" class="select">
+        <select id="gr_id" name="gr_id" class="select input-bg input-border main-font px-2 rounded-2">
             <option value="">전체 분류</option>
             {% for group in groups %}
                 <option value="{{ group.gr_id }}" {{ get_selected(query_params.gr_id, group.gr_id) }}>
@@ -28,9 +28,9 @@
         </select>
 
         <label class="blind" for="stx">검색어<strong class="blind"> 필수</strong></label>
-        <span class="sch_wr">
-            <input type="text" id="stx" name="stx" class="frm_input" value="{{ query_params.stx }}" size="40" required>
-            <button type="submit" class="btn_submit">
+        <span class="sch_wr position-relative d-inline-block" style="width: calc(100% -360px);">
+            <input type="text" id="stx" name="stx" class="frm_input input-border rounded-2" style="calc(100% - 93px);height: 45px;" value="{{ query_params.stx }}" size="40" required>
+            <button type="submit" class="btn_submit fs-5 fw-bold main-font px-3">
                 <i class="fa fa-search" aria-hidden="true"></i> 검색
             </button>
         </span>
