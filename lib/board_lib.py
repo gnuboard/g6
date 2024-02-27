@@ -3,8 +3,9 @@ import bleach
 
 from datetime import datetime, timedelta
 from fastapi import Request
-from sqlalchemy import and_, insert, or_, Select, select
+from sqlalchemy import and_, insert, or_
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import Select
 
 from core.database import DBConnect
 from core.exception import AlertException

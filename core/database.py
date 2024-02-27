@@ -1,7 +1,7 @@
 from dotenv import dotenv_values
 from fastapi import Depends
-from sqlalchemy import create_engine, URL
-from sqlalchemy.engine import Engine
+from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine, URL
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
