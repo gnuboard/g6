@@ -10,7 +10,7 @@
 
 {% block content %}
 <div class="register">
-    <form id="fregisterform" name="fregisterform" action="{{ form.action_url }}"
+    <form id="fregisterform" class="mb-4 py-3" name="fregisterform" action="{{ form.action_url }}"
           onsubmit="return fregisterform_submit(this)" method="post" enctype="multipart/form-data" autocomplete="off">
         <input type="hidden" name="is_register" value="{{ is_register }}"/>
         <input type="hidden" name="agree" value="{{ True if form.agree is defined else '' }}">
@@ -20,33 +20,33 @@
 <!--        <input type="hidden" name="cert_no" value="">-->
         <input type="hidden" name="mb_sex" value="">
 
-        <div id="register_form" class="form_01">
-            <div class="register_form_inner">
-                <h2>사이트 이용정보 입력</h2>
+        <div id="register_form" class="form_01 main-border rounded-3 p-5">
+            <div class="register_form_inner w-100" style="max-width: 500px;">
+                <h2 class="m-0 pt-0 pb-5 px-0 main-font fw-bold">사이트 이용정보 입력</h2>
                 <ul>
-                    <li>
+                    <li class="position-relative pt-4 main-font">
                         <input type="text" name="mb_id" value="{{ member.mb_id|default_if_none('') }}"
                                id="reg_mb_id" required class="frm_input full_input required alnum_" minlength="3"
                                maxlength="20"
                                {% if member.mb_id %}readonly="readonly"{% endif %}
                                placeholder="">
-                        <label for="reg_mb_id" class="text_input">
+                        <label for="reg_mb_id" class="text_input d-block">
                           아이디 (필수)
                           <button type="button" class="tooltip_icon">
                               <i class="fa fa-regular fa-question-circle" aria-hidden="true"></i>
                               <span class="blind">설명보기</span>
-                              <span class="tooltip">영문자, 숫자, _ 만 입력 가능. 최소 3자이상 입력하세요.</span>
+                              <span class="tooltip_bb">영문자, 숫자, _ 만 입력 가능. 최소 3자이상 입력하세요.</span>
                           </button>
                         </label>
                         <span id="msg_mb_id"></span>
                     </li>
-                    <li class="left_input margin_input">
+                    <li class="left_input margin_input position-relative pt-4 main-font">
                       <input type="password" name="mb_password" id="reg_mb_password"
                       {{ "required" if is_register else None }}
                        class="frm_input full_input {% if is_register %} required {% endif %}" minlength="3" maxlength="20" placeholder="">
                         <label for="reg_mb_password" class="text_input">비밀번호 (필수)</label>
                     </li>
-                    <li class="left_input">
+                    <li class="left_input position-relative pt-4 main-font">
                       <input type="password" name="mb_password_re" id="reg_mb_password_re"
                         {% if is_register %} 'required' {% endif %}
                         class="frm_input full_input
@@ -56,10 +56,10 @@
                 </ul>
             </div>
 
-            <div class="tbl_frm01 tbl_wrap register_form_inner">
-                <h2>개인정보 입력</h2>
-                <ul>
-                    <li>
+            <div class="tbl_frm01 tbl_wrap register_form_inner rounded-2 w-100" style="max-width: 500px;">
+                <h2 class="m-0 pt-5 pb-4 px-0 main-font fw-bold">개인정보 입력</h2>
+                <ul class="pt-3">
+                    <li class="position-relative pt-4 main-font">
                         <input type="text" id="reg_mb_name" name="mb_name"
                                value="{{ member.mb_name|default_if_none('') }}" 
                                required 
@@ -67,7 +67,7 @@
                                class="frm_input full_input required " size="10" placeholder="">
                         <label for="reg_mb_name" class="text_input">이름 (필수)</label>
                     </li>
-                    <li>
+                    <li class="position-relative pt-4 main-font">
                         <input type="text" name="mb_nick" value="{{ member.mb_nick|default_if_none('') }}"
                                id="reg_mb_nick" required class="frm_input required nospace full_input" size="10"
                                maxlength="20" placeholder="">
@@ -76,12 +76,12 @@
                           <button type="button" class="tooltip_icon">
                               <i class="fa fa-regular fa-question-circle" aria-hidden="true"></i>
                               <span class="blind">설명보기</span>
-                              <span class="tooltip">공백없이 한글,영문,숫자만 입력 가능 (한글2자, 영문4자 이상)<br> 닉네임을 바꾸시면 앞으로 60일 이내에는 변경 할 수 없습니다.</span>
+                              <span class="tooltip_bb">공백없이 한글,영문,숫자만 입력 가능 (한글2자, 영문4자 이상)<br> 닉네임을 바꾸시면 앞으로 60일 이내에는 변경 할 수 없습니다.</span>
                           </button>
                         </label>
                         <span id="msg_mb_nick"></span>
                     </li>
-                    <li>
+                    <li class="position-relative pt-4 main-font">
                         <input type="hidden" name="old_email" value="">
                         <input type="text" name="mb_email" value="{{ member.mb_email|default_if_none('') }}"
                               id="reg_mb_email" required class="frm_input email full_input required" size="70"
@@ -181,9 +181,9 @@
                 </ul>
             </div>
 
-            <div class="tbl_frm01 tbl_wrap register_form_inner">
-                <h2>기타 개인설정</h2>
-                <ul>
+            <div class="tbl_frm01 tbl_wrap register_form_inner w-100" style="max-width: 500px;">
+                <h2 class="m-0 pt-5 pb-4 px-0 main-font fw-bold">기타 개인설정</h2>
+                <ul class="fs-5">
                     
                     {% if config.cf_use_signature %}
                     <li>
@@ -213,7 +213,7 @@
                             <button type="button" class="tooltip_icon">
                               <i class="fa fa-regular fa-question-circle" aria-hidden="true"></i>
                               <span class="blind">설명보기</span>
-                              <span class="tooltip">이미지 크기는 가로 {{ config.cf_user_img_width }} 픽셀, 세로 {{ config.cf_user_img_height }}픽셀로 리사이즈 됩니다.<br>
+                              <span class="tooltip_bb">이미지 크기는 가로 {{ config.cf_user_img_width }} 픽셀, 세로 {{ config.cf_user_img_height }}픽셀로 리사이즈 됩니다.<br>
                                 gif, jpg, png파일만 가능하며 용량 {{ config.cf_user_img_size }}바이트 이하만 등록됩니다.</span>
                             </button>
                         </label>
@@ -225,13 +225,13 @@
                             <label for="del_mb_img" class="inline">삭제</label>
                         {% endif %}
                     </li>
-                    <li class="reg_mb_icon_file">
+                    <li class="reg_mb_icon_file main-bt pt-5">
                         <label for="reg_mb_icon_file" class="frm_label">
                             회원아이콘
                             <button type="button" class="tooltip_icon">
                               <i class="fa fa-regular fa-question-circle" aria-hidden="true"></i>
                               <span class="blind">설명보기</span>
-                              <span class="tooltip">이미지 크기는 가로 {{ config.cf_user_icon_width }} 픽셀, 세로 {{ config.cf_user_icon_height }}픽셀로 리사이즈 됩니다.<br>
+                              <span class="tooltip_bb">이미지 크기는 가로 {{ config.cf_user_icon_width }} 픽셀, 세로 {{ config.cf_user_icon_height }}픽셀로 리사이즈 됩니다.<br>
                                 gif, jpg, png파일만 가능하며 용량 {{ config.cf_user_icon_size }}바이트 이하만 등록됩니다.</span>
                             </button>
                         </label>
@@ -322,8 +322,8 @@
                 </ul>
             </div>
         </div>
-        <div class="btn_confirm">
-            <a href="/" class="btn_close">취소</a>
+        <div class="btn_confirm d-flex justify-content-start align-items-center fs-5">
+            <a href="/" class="btn_close px-3 me-2" style="height: 45px;">취소</a>
             <button type="submit" id="btn_submit" class="btn_submit" accesskey="s">{% if is_register %}회원가입{% else %}정보수정{% endif %}</button>
         </div>
     </form>
