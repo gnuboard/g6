@@ -52,14 +52,12 @@ async def cache_file_deleting(request: Request, db: db_session):
                     if count % 10 == 0:
                         await asyncio.sleep(0.1)  # 비동기 sleep 사용
 
-                    # return {"status": "Cache cleared successfully"}
                     yield f"data: ({count}) {filename} {file_dir} 삭제 \n\n"
             else:
                 yield f"data: {cache_directory} 디렉토리가 존재하지 않습니다. \n\n"
-                # return {"status": "Cache directory does not exist"}
         except Exception as e:
-            yield f"data: 오류가 발생했습니다. {str(e)} \n\n"
-            # return {"status": "Error occurred", "details": str(e)}
+            yield f"data: [끝]오류가 발생했습니다. {str(e)} \n\n"
+            raise
 
         # 종료 메시지 전송
         yield f"data: 총 {count}개의 파일과 디렉토리를 삭제했습니다.\n\n"
