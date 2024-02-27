@@ -6,7 +6,7 @@ body { margin:0; padding:0; font-size:1.2rem; font-family:'Malgun Gothic', dotum
 html, form, fieldset, img { margin:0; padding:0; border:0 } 
 h1, h2, h3, h4, h5, h6 { font-family:'Malgun Gothic', dotum, sans-serif } 
 article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section { display:block } 
-ul, dl,dt,dd { margin:0; padding:0; list-style:none; margin-bottom: 0 !important; } 
+ul, dl,dt,dd { margin:0; padding:0 !important; list-style:none; margin-bottom: 0 !important; } 
 legend { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: polygon(0 0, 0 0, 0 0); }
 label, input, button, select, img { vertical-align:middle; font-size:1.2rem } 
 input, button { margin:0; padding:0; font-family:'Malgun Gothic', dotum, sans-serif; font-size:1.2rem } 
@@ -843,32 +843,9 @@ html.no-overflowscrolling #autosave_pop { height:auto; max-height:10000px !impor
 #scrap .scrap_del {position:absolute;top:50%;right:15px;transform: translateY(-50%);font-size:1.8rem;color:#c7c9cb}
 
 /*포인트*/
-#point {text-align:center}
-#point h1 {text-align:left}
-#point .point_all {margin:20px 20px 15px;border-radius:5px;background:var(--primaryColor);color:#fff;font-size:1.3rem}
-#point .point_all:after {display:block;visibility:hidden;clear:both;content:""}
-#point .point_all li {float:left;width:50%;padding:20px;text-align:left}
-#point .point_all li span {float:right;color:#485172;font-weight:bold}
-#point .point_all li:last-child {}
-#point .point_all .full_li {width:100%;text-align:left}
-#point .point_all .full_li span {color:#fff;font-weight:bold;font-size:1.4rem}
-#point .point_status{background:#737373;border:0;color:#fff;font-weight:bold;font-size:1.3rem;text-align:left}
-#point .point_status:after {display:block;visibility:hidden;clear:both;content:""}
-#point .point_status span{margin-left:10px;float:right}
-
-.point_list {}
 .point_list li:first-child {border-top:var(--border)}
-.point_list li {border-bottom:var(--border);background:var(--contBg);padding:15px 30px;list-style:none;position:relative}
-.point_list li:after {display:block;visibility:hidden;clear:both;content:""}
-
-.point_list .point_use {background:var(--bovHover)}
-.point_list .point_use .point_num {font-size:1.5rem;color:#ff4f76;font-weight:bold;float:right}
-.point_list .point_num {font-size:1.5rem;color:var(--primaryColor);font-weight:bold;position:absolute;right:30px;top:25px}
-.point_list .point_top {line-height:15px;margin:0 0 5px}
-.point_list .point_top:after {display:block;visibility:hidden;clear:both;content:""}
-.point_list .point_tit {font-weight:bold;float:left;font-size:1.3rem;display:block;color: var(--fontColor);}
-.point_list .point_date1 {float:left;color:#888d92}
-.point_list .point_date {float:left;color:#888d92}
+.point_list .point_date1 {color:#888d92}
+.point_list .point_date {color:#888d92}
 .point_list .txt_expired {color:red;margin-left:5px}
 
 #point .pg_wrap {width:100%;float:inherit;text-align:center}
