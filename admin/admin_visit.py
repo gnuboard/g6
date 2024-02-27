@@ -678,15 +678,14 @@ def get_browser(user_agent):
     user_agent = user_agent.lower()
 
     browsers = {
-        'MSIE': r"msie ([1-9][0-9]\.[0-9]+)",
-        'FireFox': r"firefox",
         'Chrome': r"chrome",
-        'Netscape': r"x11",
+        'FireFox': r"firefox",
+        'Safari': r"safari",
         'Opera': r"opera",
-        'Gecko': r"gec",
-        'Robot': r"bot|slurp",
-        'IE': r"internet explorer",
-        'Mozilla': r"mozilla"
+        'MSIE': r"msie ([1-9][0-9]\.[0-9]+)",
+        'Mozilla': r"mozilla",
+        'Robot': r"bot|Yeti|Baidu|Daumoa|Yandex|slurp|facebook",
+        'IE': r"internet explorer"
     }
 
     for browser_name, pattern in browsers.items():
@@ -700,6 +699,10 @@ def get_os(user_agent):
     user_agent = user_agent.lower()
 
     os_patterns = {
+        "Android": r"android",
+        "IOS": r"IOS",
+        "iPad OS": r"iPad",
+        "Phone": r"phone",
         "Windows10": r"windows nt 10\.0",
         "Windows8.1": r"windows nt 6\.3",
         "Windows8": r"windows nt 6\.2",
@@ -708,14 +711,11 @@ def get_os(user_agent):
         "XP": r"windows nt 5\.1",
         "2003": r"windows nt 5\.2",
         "NT": r"windows nt 4\.[0-9]*",
-        "ME": r"windows 9x",
         "CE": r"windows ce",
         "MAC": r"mac",
-        "Android": r"android",
-        "Phone": r"phone",
-        "Robot": r"bot|Yeti|Baidu|Daumoa|Yandex|slurp",
+        "Robot": r"bot|Yeti|Baidu|Daumoa|Yandex|slurp|facebook ",
         "Linux": r"linux",
-        "sunOS": r"sunos",
+        "Solrais": r"solrais",
         "IE": r"internet explorer",
         "Mozilla": r"mozilla",
         "IRIX": r"irix"
