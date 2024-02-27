@@ -7,21 +7,21 @@
         <h1 id="win_title">설문조사 결과</h1>
         <div class="new_win_con2">
             <!-- 설문조사 결과 그래프 시작 { -->
-            <span class="poll_all">전체 {{ total_count|number_format }}표</span>
-            <section id="poll_result_list">
-                <h2>{{ poll_result.po_subject }} 결과</h2>
-                <ol>
+            <span class="poll_all position-absolute d-inline-block fs-5 em-font wrapper-bg rounded-2 px-3 py-2" style="top: 10px;right: 10px;">전체 {{ total_count|number_format }}표</span>
+            <section id="poll_result_list" class="m-4 main-border cont-bg rounded-2 overflow-hidden">
+                <h2 class="fs-5 p-4 mb-4 text-center point-bg main-font">{{ poll_result.po_subject }} 결과</h2>
+                <ol class="m-0 px-4">
                     {% for item in items %}
                         {% set rate = ((item.count / total_count * 100)|round(1)) if total_count > 0 else 0 %}
                         {% if not item %}{% continue %}{% endif %}
-                        <li class="{{ 'poll_1st' if max_count == item.count }}">
+                        <li class="{{ 'poll_1st' if max_count == item.count }} my-4 position-relative list-unstyled main-font fs-5">
                             <span>{{ item.subject }}</span>
-                            <div class="poll_result_graph">
-                                <span style="width:{{ rate }}%"></span>
+                            <div class="poll_result_graph position-relative my-2 rounded-3 main-border" style="width: 90%;height: 15px;">
+                                <span class="position-absolute main-bg top-0 start-0 rounded-3" style="width:{{ rate }}%;height:15px;background:#8395b3;"></span>
                             </div>
-                            <div class="poll_numerical">
-                                <strong class="poll_cnt">{{ item.count|number_format }} 표</strong>
-                                <span class="poll_percent">{{ rate }} %</span>
+                            <div class="poll_numerical d-inline-block position-absolute top-0 end-0 text-center">
+                                <strong class="poll_cnt fs-5 text-end" style="color: #8d8d8d;">{{ item.count|number_format }} 표</strong>
+                                <span class="poll_percent d-block fs-5 em-font fw-bold">{{ rate }} %</span>
                             </div>
                         </li>
                     {% endfor %}
@@ -31,43 +31,43 @@
 
             <!-- 설문조사 기타의견 시작 { -->
             {% if poll_result.po_etc %}
-                <section id="poll_result_cmt">
-                    <h2>이 설문에 대한 기타의견</h2>
+                <section id="poll_result_cmt" class="m-4">
+                    <h2 class="blind">이 설문에 대한 기타의견</h2>
                     {% for etc in etcs %}
-                        <article>
-                            <header>
-                                <h2>{{ etc.pc_name }}<span class="blind">님의 의견</span></h2>
+                        <article class="position-relative main-bb my-4 fs-5">
+                            <header class="mb-2">
+                                <h2 class="blind">{{ etc.pc_name }}<span>님의 의견</span></h2>
                                 {{ etc.pc_name }}
-                                <span class="poll_datetime">{{ etc.pc_datetime|safe }}</span>
+                                <span class="poll_datetime d-inline-block fs-5" style="color: #777;">{{ etc.pc_datetime|safe }}</span>
                                 {% if etc.mb_id == request.state.login_member.mb_id or request.state.login_member.mb_level == 10 %}
-                                    <span class="poll_cmt_del">
-                                        <a href="{{ url_for('poll_etc_delete', pc_id=etc.pc_id) }}" class="poll_delete" onclick="del(this.href); return false;">
+                                    <span class="poll_cmt_del d-inline-block">
+                                        <a href="{{ url_for('poll_etc_delete', pc_id=etc.pc_id) }}" class="poll_delete d-inline-block mb-2 ms-3 fs-5" style="color: #c7c9cb;" onclick="del(this.href); return false;">
                                             <i class="fa fa-circle-xmark" aria-hidden="true"></i>
                                             <span class="blind">삭제</span>
                                         </a>
                                     </span>
                                 {% endif %}
                             </header>
-                            <p>{{ etc.pc_idea[:255]|safe }}</p>
+                            <p class="py-3">{{ etc.pc_idea[:255]|safe }}</p>
                         </article>
                     {% endfor %}
                     {% if get_member_level(request) >= poll_result.po_level %}
-                        <form name="fpollresult" action="{{ url_for('poll_etc_update', po_id=poll_result.po_id) }}" onsubmit="return fpollresult_submit(this);" method="post" autocomplete="off" id="poll_other_q">
+                        <form name="fpollresult" action="{{ url_for('poll_etc_update', po_id=poll_result.po_id) }}" onsubmit="return fpollresult_submit(this);" method="post" autocomplete="off" id="poll_other_q" class="m-0 fs-5 main-font text-start">
                             <input type="hidden" name="token" value="">
                             {% if request.state.login_member.mb_id %}
                                 <input type="hidden" name="pc_name" value="{{ request.state.login_member.mb_nick }}">
                             {% endif %}
-                            <div id="poll_result_wcmt">
-                                <h3><span>기타의견</span>{{ poll_result.po_etc|safe }}</h3>
+                            <div id="poll_result_wcmt" class="innput-border mb-3">
+                                <h3 class="m-0 p-3 main-border border-bottom-0 fw-bold"><span class="p-2 d-inline-block rounded-2 me-2 fw-normal fs-5" style="background:#f7f8e3;color:#c97600;">기타의견</span>{{ poll_result.po_etc|safe }}</h3>
                                 <div>
                                     <label for="pc_idea" class="blind">의견<strong>필수</strong></label>
-                                    <input type="text" id="pc_idea" name="pc_idea" required="" class="full_input required" size="47" maxlength="100" placeholder="의견을 입력해주세요">
+                                    <input type="text" id="pc_idea" class="w-100 input-bg main-font main-border p-3" style="height: 80px;" name="pc_idea" required="" class="full_input required" size="47" maxlength="100" placeholder="의견을 입력해주세요">
                                 </div>
                             </div>
                             {% if not request.state.login_member.mb_id %}
                                 <div class="poll_guest">
                                     <label for="pc_name" class="blind">이름<strong>필수</strong></label>
-                                    <input type="text" name="pc_name" id="pc_name" required="" class="full_input required" size="20" placeholder="이름">
+                                    <input type="text" name="pc_name" id="pc_name" required="" class="full_input required main-border p-3 mb-3 d-inline-block" size="20" placeholder="이름">
                                 </div>
                                 <!-- Captcha Start -->
                                 <fieldset id="captcha" class="captcha">
@@ -75,7 +75,7 @@
                                 </fieldset>
                                 <!-- Captcha End -->
                             {% endif %}
-                            <button type="submit" class="btn_submit">의견남기기</button>
+                            <button type="submit" class="btn_submit p-4 d-flex ms-auto">의견남기기</button>
                         </form>
                     {% endif %}
                 </section>
@@ -83,13 +83,13 @@
             <!-- } 설문조사 기타의견 끝 -->
     
             <!-- 설문조사 다른 결과 보기 시작 { -->
-            <aside id="poll_result_oth">
-                <h2>다른 투표 결과 보기</h2>
-                <ul>
+            <aside id="poll_result_oth" class="m-4">
+                <h2 class="main-font pb-4 fs-5 fw-bold">다른 투표 결과 보기</h2>
+                <ul class="list-unstyled main-border cont-bg">
                     {% for other in other_list %}
-                        <li>
-                            <a href="{{ url_for('poll_result', po_id=other.po_id) }}">{{ other.po_subject }}</a>
-                            <span>
+                        <li class="position-relative main-bt py-2">
+                            <a href="{{ url_for('poll_result', po_id=other.po_id) }}" class="d-block p-3">{{ other.po_subject }}</a>
+                            <span class="position-absolute fs-5" style="bottom: 10px;right: 15px;color: #777">
                                 <i class="fa fa-regular fa-clock" aria-hidden="true"></i>
                                 {{ other.po_date }}
                             </span>
@@ -99,7 +99,7 @@
             </aside>
             <!-- } 설문조사 다른 결과 보기 끝 -->
             <div class="text-center">
-                <button type="button" onclick="window.close();" class="btn_close">창닫기</button>
+                <button type="button" onclick="window.close();" class="btn_close fs-5">창닫기</button>
             </div>
         </div>
     </div>
