@@ -31,8 +31,8 @@
         <h2 class="blind">자주하시는 질문 분류</h2>
         <ul id="bo_cate_ul" class="p-0">
         {% for master in faq_masters %} 
-            <li class="d-inline-block p-1">
-                <a href="{{ url_for('faq_view', fm_id=master.fm_id) }}" class="d-block py-2 px-4 rounded-3 sub-border text-whtie fs-4 text-decoration-none" {% if master.fm_id == faq_master.fm_id %}id="bo_cate_on"{% endif %}>
+            <li class="d-inline-block p-1 main-font fs-5">
+                <a href="{{ url_for('faq_view', fm_id=master.fm_id) }}" class="d-block py-2 px-4 rounded-3 sub-border text-whtie fs-4 text-decoration-none" {% if master.fm_id == faq_master.fm_id %}id="bo_cate_on" class="main-bg text-white"{% endif %}>
                     {% if master.fm_id == faq_master.fm_id %}<span class="blind">열린 분류 </span>{% endif %}
                     {{ master.fm_subject }}
                 </a>

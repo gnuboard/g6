@@ -18,9 +18,9 @@
         <nav id="bo_cate" class="my-5">
             <h2 class="blind" >{{ board.subject }} 카테고리</h2>
             <ul id="bo_cate_ul">
-                <li class="d-inline-block p-1"><a href="{{ request.url.replace_query_params() }}" {% if not sca %}id="bo_cate_on"{% endif %}>전체</a></li>
+                <li class="d-inline-block p-1 main-font fs-5"><a href="{{ request.url.replace_query_params() }}" {% if not sca %}id="bo_cate_on" class="main-bg text-white"{% endif %}>전체</a></li>
                 {% for category in categories %}
-                <li class="d-inline-block p-1"><a href="{{ request.url.replace_query_params(sca=category) }}" {% if sca == category %}id="bo_cate_on"{% endif %}>{{ category }}</a></li>
+                <li class="d-inline-block p-1 main-font fs-5"><a href="{{ request.url.replace_query_params(sca=category) }}" {% if sca == category %}id="bo_cate_on" class="main-bg text-white"{% endif %}>{{ category }}</a></li>
                 {% endfor %}
             </ul>
         </nav>
