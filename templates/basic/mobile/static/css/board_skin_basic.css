@@ -6,7 +6,7 @@
 .bo_list .list_table tbody { display:block; }
 .bo_list .list_table tr { display:block; padding:10px; border-bottom: var(--border); }
 .bo_list .list_table td { display:inline-block; position: relative; line-height: 22px; vertical-align:middle; }
-.bo_list .list_table .table_subject { display:block; margin:5px 0; font-size:1.6rem; }
+.bo_list .list_table .table_subject { display:block; margin:5px 0; font-size:1.6rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bo_list .list_table .table_hit::before,
 .bo_list .list_table .table_good::before,
 .bo_list .list_table .table_nogood::before { display:inline-block; margin:0 3px; content:attr(data-label); }

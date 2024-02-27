@@ -36,6 +36,7 @@ async def auth_list(
 
     result = select_query(
         request,
+        db,
         Auth,
         search_params,
         same_search_fields=["mb_id"],
