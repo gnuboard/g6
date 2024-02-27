@@ -114,10 +114,11 @@ class CSPMiddleware(BaseHTTPMiddleware):
             "https://www.google.com",
             "https://www.gstatic.com",
             "https://cdn.jsdelivr.net",
-            "https://fastapi.tiangolo.com"
+            "https://fastapi.tiangolo.com",
+            "http://ajax.googleapis.com",
         ]
         allow_url_list_to_string = " ".join(allow_url_list)
-        csp_policy = f"default-src 'self' 'unsafe-inline' {allow_url_list_to_string};"
+        csp_policy = f"default-src 'self' 'unsafe-inline' data: {allow_url_list_to_string} ;"
         response.headers['Content-Security-Policy'] = csp_policy
         return response
 
