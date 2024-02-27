@@ -123,6 +123,10 @@ async def post_register_form(
     exists_member = db.scalar(select(Member).where(Member.mb_id == mb_id))
     if exists_member:
         raise AlertException(status_code=400, detail="이미 존재하는 회원아이디 입니다.")
+    if len(mb_id) < 3 or len(mb_id) > 20:
+        raise AlertException("회원아이디는 3~20자 이어야 합니다.", 400)
+    if not re.match(r"^[a-zA-Z0-9_]+$", mb_id):
+        raise AlertException("회원아이디는 영문자, 숫자, _ 만 사용할 수 있습니다.", 400)
 
     if not (mb_password and mb_password_re):
         raise AlertException(status_code=400, detail="비밀번호를 입력해 주세요.")
