@@ -190,6 +190,7 @@ async def install_process(request: Request):
         except Exception as e:
             os.remove(ENV_PATH)
             yield f"[error] 설치가 실패했습니다. {e}"
+            raise
 
     # 설치 진행 이벤트 스트림 실행
     return EventSourceResponse(install_event())
