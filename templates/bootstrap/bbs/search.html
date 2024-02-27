@@ -30,7 +30,7 @@
         <label class="blind" for="stx">검색어<strong class="blind"> 필수</strong></label>
         <span class="sch_wr position-relative d-inline-block" style="width: calc(100% -360px);">
             <input type="text" id="stx" name="stx" class="frm_input input-border rounded-2" style="calc(100% - 93px);height: 45px;" value="{{ query_params.stx }}" size="40" required>
-            <button type="submit" class="btn_submit fs-5 fw-bold main-font px-3">
+            <button type="submit" class="btn_submit fs-5 fw-bold text-white main-bg px-3">
                 <i class="fa fa-search" aria-hidden="true"></i> 검색
             </button>
         </span>
@@ -45,7 +45,7 @@
 </form>
 
 <div id="sch_result">
-    <section id="sch_res_ov">
+    <section id="sch_res_ov" class="d-flex justify-content-between align-items-center">
         <h2>
             <strong>'{{ query_params.stx }}'</strong> 전체검색 결과
         </h2>
