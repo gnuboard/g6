@@ -841,14 +841,6 @@ html.no-overflowscrolling #autosave_pop { height:auto; max-height:10000px !impor
 
 /* 스크랩 */
 #scrap .scrap_del {position:absolute;top:50%;right:15px;transform: translateY(-50%);font-size:1.8rem;color:#c7c9cb}
-#scrap_do .new_win_con {padding:0 20px}
-#scrap_do textarea {width:100%;height:100px;background: var(--inputBg);border: var(--inputBorder);color: var(--fontColor);}
-#scrap_do .scrap_tit {margin-bottom:10px;background:var(--inputBg);border: var(--inputBorder);color: var(--fontColor);padding:10px 15px;font-size:1.4rem;font-weight:bold}
-#scrap_do label {display:block;margin:0 0 5px;font-size:1.2rem}
-#scrap_do .win_btn:after {display:block;visibility:hidden;clear:both;content:""}
-#scrap .win_btn, #scrap_do .win_btn {margin:20px 0;text-align:center}
-#scrap_do .win_btn .btn_submit {float:inherit}
-#scrap_do .win_desc {margin:0 20px}
 
 /*포인트*/
 #point {text-align:center}

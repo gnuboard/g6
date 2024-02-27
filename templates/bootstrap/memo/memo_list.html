@@ -41,7 +41,7 @@
                                 {{ memo.me_send_datetime }}
                             </span>
                             <div class="memo_preview">
-                                <a href="{{ url_for('memo_view', me_id=memo.me_id) }}?{{ request.query_params }}" class="d-block me-5 pt-3 fw-normal fs-5">
+                                <a href="{{ url_for('memo_view', me_id=memo.me_id) }}?{{ request.query_params }}" class="d-block me-5 pt-3 fw-normal fs-5 main-font">
                                     {{ memo.me_memo|truncate(50, True, '...') }}
                                 </a>
                             </div>
