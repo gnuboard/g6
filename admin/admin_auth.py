@@ -57,6 +57,9 @@ async def auth_list(
         row.mb_nick = row.member.mb_nick
         row.au_name = auth_child_menu.get(row.au_menu, '')
 
+    # auth_child_menu 키값으로 정렬
+    auth_child_menu = dict(sorted(auth_child_menu.items()))
+
     # 권한 옵션 생성
     auth_options = []
     for id, name in auth_child_menu.items():
