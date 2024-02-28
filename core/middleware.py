@@ -77,9 +77,6 @@ def regist_core_middleware(app: FastAPI) -> None:
     # 클라이언트가 사용할 프로토콜을 결정하는 미들웨어를 추가합니다.
     app.add_middleware(BaseSchemeMiddleware)
 
-    # Content-Security-Policy 헤더를 추가하는 미들웨어를 추가합니다.
-    app.add_middleware(CSPMiddleware)
-
 
 async def should_run_middleware(request: Request) -> bool:
     """미들웨어의 실행 여부를 결정합니다.
@@ -104,23 +101,6 @@ async def should_run_middleware(request: Request) -> bool:
         return False
 
     return True
-
-
-class CSPMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        response: Response = await call_next(request)
-        allow_url_list = [
-            "http://t1.daumcdn.net",
-            "https://www.google.com",
-            "https://www.gstatic.com",
-            "https://cdn.jsdelivr.net",
-            "https://fastapi.tiangolo.com",
-            "http://ajax.googleapis.com",
-        ]
-        allow_url_list_to_string = " ".join(allow_url_list)
-        csp_policy = f"default-src 'self' 'unsafe-inline' data: {allow_url_list_to_string} ;"
-        response.headers['Content-Security-Policy'] = csp_policy
-        return response
 
 
 class BaseSchemeMiddleware(BaseHTTPMiddleware):
