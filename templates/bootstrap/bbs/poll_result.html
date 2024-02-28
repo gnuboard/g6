@@ -16,7 +16,7 @@
                         {% if not item %}{% continue %}{% endif %}
                         <li class="{{ 'poll_1st' if max_count == item.count }} my-4 position-relative list-unstyled main-font fs-5">
                             <span>{{ item.subject }}</span>
-                            <div class="poll_result_graph position-relative my-2 rounded-3 main-border" style="width: 90%;height: 15px;">
+                            <div class="poll_result_graph position-relative my-2 rounded-3 input-border input-bg" style="width: 90%;height: 15px;">
                                 <span class="position-absolute main-bg top-0 start-0 rounded-3" style="width:{{ rate }}%;height:15px;background:#8395b3;"></span>
                             </div>
                             <div class="poll_numerical d-inline-block position-absolute top-0 end-0 text-center">
@@ -35,7 +35,7 @@
                     <h2 class="blind">이 설문에 대한 기타의견</h2>
                     {% for etc in etcs %}
                         <article class="position-relative main-bb my-4 fs-5">
-                            <header class="mb-2">
+                            <header class="mb-2 main-font">
                                 <h2 class="blind">{{ etc.pc_name }}<span>님의 의견</span></h2>
                                 {{ etc.pc_name }}
                                 <span class="poll_datetime d-inline-block fs-5" style="color: #777;">{{ etc.pc_datetime|safe }}</span>
@@ -48,7 +48,7 @@
                                     </span>
                                 {% endif %}
                             </header>
-                            <p class="py-3">{{ etc.pc_idea[:255]|safe }}</p>
+                            <p class="py-3 main-font">{{ etc.pc_idea[:255]|safe }}</p>
                         </article>
                     {% endfor %}
                     {% if get_member_level(request) >= poll_result.po_level %}
@@ -61,7 +61,7 @@
                                 <h3 class="m-0 p-3 main-border border-bottom-0 fw-bold"><span class="p-2 d-inline-block rounded-2 me-2 fw-normal fs-5" style="background:#f7f8e3;color:#c97600;">기타의견</span>{{ poll_result.po_etc|safe }}</h3>
                                 <div>
                                     <label for="pc_idea" class="blind">의견<strong>필수</strong></label>
-                                    <input type="text" id="pc_idea" class="w-100 input-bg main-font main-border p-3" style="height: 80px;" name="pc_idea" required="" class="full_input required" size="47" maxlength="100" placeholder="의견을 입력해주세요">
+                                    <input type="text" id="pc_idea" class="w-100 bg-transparent main-font main-border p-3" style="height: 80px;" name="pc_idea" required="" class="full_input required" size="47" maxlength="100" placeholder="의견을 입력해주세요">
                                 </div>
                             </div>
                             {% if not request.state.login_member.mb_id %}
