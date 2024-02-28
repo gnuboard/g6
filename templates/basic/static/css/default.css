@@ -716,7 +716,7 @@ a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:no
 .lt_info .lt_nick { }
 .lt_info .lt_date { color:#888 }
 
-.pic_lt .empty_li { line-height:145px; color:#666; text-align:center; padding:0 }
+.pic_lt .empty_li { float: none; padding:0; width: 100%; line-height:145px; color:#666; text-align:center; }
 .pic_lt .empty_li:before { background:none; padding:0 }
 
 .pic_lt .lt_cmt { background:#e9eff5; color:var(--primaryColor); font-size:1.1rem; height:16px; line-height:16px; padding:0 5px; border-radius:3px; vertical-align:middle }
