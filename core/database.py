@@ -1,7 +1,10 @@
+from typing import AsyncGenerator
+
 from dotenv import dotenv_values
 from fastapi import Depends
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine, URL
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
@@ -172,7 +175,7 @@ db_connect.create_engine()
 
 
 # 데이터베이스 세션을 가져오는 의존성 함수
-async def get_db() -> Session:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     db = DBConnect().sessionLocal()
     try:
         yield db
