@@ -1,32 +1,52 @@
-{% set menus = get_menus() %}
-{% if menus %}
-    <ul id="gnb_1dul">
+<div id="gnb">
+
+    <h2 class="blind">메인메뉴</h2>
+
+    <ul id="gnb_list">
+    {% set menus = get_menus() %}
     {% for menu in menus %}
         {% set is_submenu = True if menu.sub|count > 0 else False %}
-        <li class="gnb_1dli">
-            <a href="{{ menu.me_link }}" target="_{{ menu.me_target }}" class="gnb_1da">{{ menu.me_name }}</a>
+        <li class="list_item{% if is_submenu %} list_item_parents{% endif %}">
+            <a href="{{ menu.me_link }}" target="_{{ menu.me_target }}" class="item_link">
+                {{ menu.me_name }}
+            </a>
             {% if is_submenu %}
-            <button type="button" class="btn_gnb_op"><span class="blind">하위분류</span></button>
-            <ul class="gnb_2dul">
+            <button type="button" class="opener_gnb_sub">
+                <i class="fa fa-caret-down" aria-hidden="true"></i>
+                <span class="blind">{{ menu.me_name }} 서브메뉴 열기</span>
+            </button>
+            {% endif %}
+            {% if is_submenu %}
+            <ul class="gnb_sub_list">
                 {% for sub in menu.sub %}
-                <li class="gnb_2dli">
-                    <a href="{{ sub.me_link }}" target="_{{ sub.me_target }}" class="gnb_2da"><span></span>{{ sub.me_name }}</a>
+                <li class="sub_list_item">
+                    <a href="{{ sub.me_link }}" target="_{{ sub.me_target }}" class="sub_item_link">
+                        <i class="fa fa-minus" aria-hidden="true"></i>
+                        {{ sub.me_name }}
+                    </a>
                 </li>
                 {% endfor %}
             </ul>
             {% endif %}
         </li>
     {% else %}
-        <li id="gnb_empty">
-            메뉴 준비 중입니다. <br>
-            <a href="/admin/menu_list">관리자모드 &gt; 환경설정 &gt; 메뉴설정</a>에서 설정하세요.
+        <li class="gnb_empty">
+            메뉴 준비 중입니다.
+            <a href="{{ url_for('menu_list') }}">관리자모드 &gt; 환경설정 &gt; 메뉴설정</a>에서 설정하실 수 있습니다.
         </li>
     {% endfor %}
     </ul>
-{% endif %}
+
+</div>
+
+<div id="gnb_mask"></div>
 
 <script>
-$(".btn_gnb_op").click(function(){
-    $(this).toggleClass("btn_gnb_cl").next(".gnb_2dul").slideToggle(300);
-});
+    $(function(){
+
+        $(".opener_gnb_sub").on("click", function() {
+            $(this).next(".gnb_sub_list").toggle();
+        });
+
+    });
 </script>

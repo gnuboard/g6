@@ -1,36 +1,40 @@
-<!-- 로그인 전 아웃로그인 시작 { -->
-<section id="ol_before" class="ol">
-    <div id="ol_be_cate">
+<div id="member_signed_out" class="member_sign">
+
+    <div class="sign_tab">
         <h2><span class="blind">회원</span>로그인</h2>
+        <a href="/bbs/login" class="in">로그인</a>
         <a href="/bbs/register" class="join">회원가입</a>
     </div>
+
     <form name="foutlogin" action="/bbs/login" onsubmit="return fhead_submit(this);" method="post" autocomplete="off">
-    <fieldset>
-        <div class="ol_wr">
-            <input type="hidden" name="url" value="{{ request.url }}">
+        <input type="hidden" name="url" value="{{ request.url }}">
+
+        <div class="sign_form">
             <label for="ol_id" id="ol_idlabel" class="blind">회원아이디<strong>필수</strong></label>
             <input type="text" id="ol_id" name="mb_id" required class="required alnum_" maxlength="20" placeholder="아이디">
+
             <label for="ol_pw" id="ol_pwlabel" class="blind">비밀번호<strong>필수</strong></label>
             <input type="password" name="mb_password" id="ol_pw" required class="required" maxlength="20" placeholder="비밀번호">
+
             <input type="submit" id="ol_submit" value="로그인" class="btn_b02">
         </div>
-        <div class="ol_auto_wr"> 
-            <div id="ol_auto" class="chk_box">
+
+        <div class="sign_option">
+            <div class="chk_box">
                 <input type="checkbox" name="auto_login" id="auto_login">
-                <label for="auto_login" id="auto_login_label"><span></span>자동로그인</label>
+                <label for="auto_login"><span></span>자동로그인</label>
             </div>
-            <div id="ol_svc">
+
+            <div>
                 <a href="/bbs/id_lost">ID 찾기</a> / 
                 <a href="/bbs/password_lost">PW 찾기</a>
             </div>
         </div>
-        
-    </fieldset>
+
     </form>
-</section>
+</div>
 
 {% include "social/social_login.html" %}
-
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -63,4 +67,3 @@ function fhead_submit(f)
 }
 
 </script>
-<!-- } 로그인 전 아웃로그인 끝 -->
