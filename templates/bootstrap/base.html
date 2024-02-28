@@ -2,11 +2,22 @@
 
 {% block body_html %}
 <!-- 상단 시작 { -->
-<header id="hd" class="wrapper-bg py-4 sticky-top main-bb">
+<header id="hd" class="wrapper-bg pb-3 sticky-top main-bb">
   <div id="skip_to_container"><a href="#container">본문 바로가기</a></div>
 
   {% include "/bbs/newwin.inc.html" %}
 
+  <div id="tnb" class="card-bg fs-5 mb-3 py-3">
+      <ul id="hd_qnb" class="container-xxl d-md-flex justify-content-end">
+          <li><a href="{{ url_for('faq_view') }}" class="sub-font px-2">FAQ</a></li>
+          <li><a href="{{ url_for('qa_list') }}" class="sub-font px-2">Q&A</a></li>
+          <li><a href="/bbs/new" class="sub-font px-2">새글</a></li>
+          <li><a href="/bbs/current_connect" class="visit sub-font px-2">
+              접속자<strong class="visit-num">{{ current_login_count[0] }}</strong></a>
+              <!-- current_login_count[1]은 회원 수 -->
+          </li>
+      </ul>
+  </div>
 
   <div id="hd_wrapper" class="container-xxl d-flex justify-content-between align-items-center">
     <div id="logo">
