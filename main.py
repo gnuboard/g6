@@ -1,5 +1,6 @@
 import datetime
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Path, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import TypeAdapter
@@ -63,8 +64,18 @@ load_dotenv()
 # TypeAdapter는 값을 특정 타입으로 변환하는 데 사용되는 유틸리티 클래스입니다.
 APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    앱의 시작과 종료 시점에 실행되는 코드를 정의합니다.
+    - yield 이전의 코드: 서버가 시작될 때 실행
+    - yield 이후의 코드: 서버가 종료될 때 실행
+    """
+    yield
+    scheduler.remove_flag()
+
 # APP_IS_DEBUG 값이 True일 경우, 디버그 모드가 활성화됩니다.
-app = FastAPI(debug=APP_IS_DEBUG)
+app = FastAPI(debug=APP_IS_DEBUG, lifespan=lifespan)
 
 templates = UserTemplates()
 templates.env.filters["default_if_none"] = default_if_none
