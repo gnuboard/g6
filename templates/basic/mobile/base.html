@@ -145,7 +145,7 @@
             {% include "mobile/bbs/menu.html" ignore missing %}
         {%- endif %}
 
-        {% include "mobile/bbs/poll.html" %}
+        {% include "bbs/poll.html" %}
 
         {% if render_visit_statistics %}
             {{ render_visit_statistics(request)|safe }}
