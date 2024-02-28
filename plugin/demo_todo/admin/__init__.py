@@ -7,7 +7,7 @@ from ..plugin_config import module_name
 # 플러그인의 admin 라우터를 등록한다.
 # 관리자는 /admin 으로 시작해야 접근권한이 보호된다.
 def register_admin_router():
-    app.include_router(admin_router, prefix="/admin", tags=[module_name])
+    app.include_router(admin_router, prefix="/admin", tags=[module_name], include_in_schema=False)
 
 
 def register_admin_menu():

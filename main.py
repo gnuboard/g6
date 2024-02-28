@@ -52,6 +52,7 @@ from bbs.search import router as search_router
 from bbs.current_connect import router as current_connect_router
 from install.router import router as install_router
 from lib.editor.ckeditor4 import router as editor_router
+from api.v1.routers import router as api_router
 
 # .env 파일로부터 환경 변수를 로드합니다.
 # 이 함수는 해당 파일 내의 키-값 쌍을 환경 변수로 로드하는 데 사용됩니다.
@@ -87,30 +88,31 @@ cache_plugin_state.__setitem__('info', plugin_states)
 cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
 cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(plugin_states))
 
-app.include_router(admin_router, prefix="/admin", tags=["admin"])
-app.include_router(install_router, prefix="/install", tags=["install"])
-app.include_router(board_router, prefix="/board", tags=["board"])
-app.include_router(login_router, prefix="/bbs", tags=["login"])
-app.include_router(register_router, prefix="/bbs", tags=["register"])
-app.include_router(user_profile_router, prefix="/bbs", tags=["profile"])
-app.include_router(profile_router, prefix="/bbs", tags=["profile"])
-app.include_router(member_leave_router, prefix="/bbs", tags=["member_leave"])
-app.include_router(member_find_router, prefix="/bbs", tags=["member_find"])
-app.include_router(content_router, prefix="/bbs", tags=["content"])
-app.include_router(faq_router, prefix="/bbs", tags=["faq"])
-app.include_router(qa_router, prefix="/bbs", tags=["qa"])
-app.include_router(memo_router, prefix="/bbs", tags=["memo"])
-app.include_router(poll_router, prefix="/bbs", tags=["poll"])
-app.include_router(point_router, prefix="/bbs", tags=["point"])
-app.include_router(scrap_router, prefix="/bbs", tags=["scrap"])
-app.include_router(board_new_router, prefix="/bbs", tags=["board_new"])
-app.include_router(good_router, prefix="/bbs/ajax", tags=["good"])
-app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"])
-app.include_router(social_router, prefix="/bbs", tags=["social"])
-app.include_router(password_router, prefix="/bbs", tags=["password"])
-app.include_router(search_router, prefix="/bbs", tags=["search"])
-app.include_router(current_connect_router, prefix="/bbs", tags=["current_connect"])
-app.include_router(editor_router, prefix="/editor", tags=["editor"])
+app.include_router(admin_router, prefix="/admin", tags=["admin"], include_in_schema=False)
+app.include_router(install_router, prefix="/install", tags=["install"], include_in_schema=False)
+app.include_router(board_router, prefix="/board", tags=["board"], include_in_schema=False)
+app.include_router(login_router, prefix="/bbs", tags=["login"], include_in_schema=False)
+app.include_router(register_router, prefix="/bbs", tags=["register"], include_in_schema=False)
+app.include_router(user_profile_router, prefix="/bbs", tags=["profile"], include_in_schema=False)
+app.include_router(profile_router, prefix="/bbs", tags=["profile"], include_in_schema=False)
+app.include_router(member_leave_router, prefix="/bbs", tags=["member_leave"], include_in_schema=False)
+app.include_router(member_find_router, prefix="/bbs", tags=["member_find"], include_in_schema=False)
+app.include_router(content_router, prefix="/bbs", tags=["content"], include_in_schema=False)
+app.include_router(faq_router, prefix="/bbs", tags=["faq"], include_in_schema=False)
+app.include_router(qa_router, prefix="/bbs", tags=["qa"], include_in_schema=False)
+app.include_router(memo_router, prefix="/bbs", tags=["memo"], include_in_schema=False)
+app.include_router(poll_router, prefix="/bbs", tags=["poll"], include_in_schema=False)
+app.include_router(point_router, prefix="/bbs", tags=["point"], include_in_schema=False)
+app.include_router(scrap_router, prefix="/bbs", tags=["scrap"], include_in_schema=False)
+app.include_router(board_new_router, prefix="/bbs", tags=["board_new"], include_in_schema=False)
+app.include_router(good_router, prefix="/bbs/ajax", tags=["good"], include_in_schema=False)
+app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"], include_in_schema=False)
+app.include_router(social_router, prefix="/bbs", tags=["social"], include_in_schema=False)
+app.include_router(password_router, prefix="/bbs", tags=["password"], include_in_schema=False)
+app.include_router(search_router, prefix="/bbs", tags=["search"], include_in_schema=False)
+app.include_router(current_connect_router, prefix="/bbs", tags=["current_connect"], include_in_schema=False)
+app.include_router(editor_router, prefix="/editor", tags=["editor"], include_in_schema=False)
+app.include_router(api_router)
 
 
 @app.middleware("http")
@@ -284,7 +286,7 @@ def job():
 scheduler.start()
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def index(request: Request, db: db_session):
     """
     메인 페이지
@@ -315,7 +317,7 @@ async def index(request: Request, db: db_session):
     return templates.TemplateResponse("/index.html", context)
 
 
-@app.post("/generate_token")
+@app.post("/generate_token", include_in_schema=False)
 async def generate_token(request: Request) -> JSONResponse:
     """세션 토큰 생성 후 반환
 
@@ -330,7 +332,7 @@ async def generate_token(request: Request) -> JSONResponse:
     return JSONResponse(content={"success": True, "token": token})
 
 
-@app.get("/device/change/{device}")
+@app.get("/device/change/{device}", include_in_schema=False)
 async def device_change(
     request: Request,
     device: str = Path(...)
