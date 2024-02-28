@@ -17,7 +17,7 @@ select { margin:0 }
 p { margin:0 !important; padding:0; word-break:break-all } 
 hr { display:none } 
 pre { overflow-x:scroll; font-size:1.3rem } 
-a { color:var(--fontColor); text-decoration:none !important; } 
+a { text-decoration:none !important; } 
 
 *, :after, :before { box-sizing:border-box; } 
 
@@ -183,7 +183,7 @@ input[type=text]:focus,input[type=password]:focus, textarea:focus,select:focus {
 /* 공통 클래스 */
 .cursor-pointer {cursor: pointer;}
 
-/* 다크모드적용 컬러 변수설정 */
+/* 컬러 변수설정 */
 .main-bg {background: var(--primaryColor) !important;}
 .cont-bg {background:var(--contBg) !important;}
 .wrapper-bg {background:var(--wrapperBg) !important;}
@@ -192,22 +192,17 @@ input[type=text]:focus,input[type=password]:focus, textarea:focus,select:focus {
 .input-bg {background: var(--inputBg) !important;}
 .ft-copy-bg {background: var(--ftCopyBg) !important;}
 .point-bg {background: var(--pointBg) !important;}
-
 .main-bb {border-bottom: var(--border) !important;}
 .main-bt {border-top: var(--border) !important;}
 .main-border {border: var(--border) !important;}
 .sub-border {border: var(--subBorder) !important;}
 .input-border {border: var(--inputBorder) !important;}
 .file-border {border: var(--fileBorder) !important;}
-
 .main-font {color: var(--fontColor) !important;}
 .sub-font {color: var(--subFontColor) !important;}
 .em-font {color: var(--primaryColor) !important;}
-
 .btn-invert {filter: var(--btnInvert)}
-
 .pointer {cursor: pointer;}
-
 .transition-effect { transition: all 0.2s; -webkit-transition: all 0.2s; -moz-transition: all 0.2s; -ms-transition: all 0.2s; -o-transition: all 0.2s; }
 .break-word {word-wrap: break-word;}
 .text-truncate {white-space: nowrap;overflow: hidden;text-overflow: ellipsis;}
@@ -404,13 +399,13 @@ a.btn_b04:hover, .btn_b04:hover { color:#333; background:#f9f9f9 }
 a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:none; vertical-align:middle }/* 관리자 전용 버튼 */
 .btn_admin:hover, a.btn_admin:hover { color:#ff3746 }
 
-
 /* 기본테이블 */
 .tbl_wrap table { width:100%; border-collapse:collapse; border-spacing:0 5px; border-top:var(--border); border-bottom:var(--border); font-size: 1.4rem;} 
 .tbl_wrap caption { padding:10px 0; font-weight:bold; text-align:left } 
 .tbl_head01 { margin:0 0 10px } 
 .tbl_head01 caption { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: polygon(0 0, 0 0, 0 0); } 
 .tbl_head01 thead th { padding:20px 0; font-weight:normal; text-align:center; border-bottom:var(--border); height:40px; color: var(--fontColor); } 
+.tbl_head01 thead th a { color: var(--fontColor); } 
 .tbl_head01 thead th input { vertical-align:top } /* middle 로 하면 게시판 읽기에서 목록 사용시 체크박스 라인 깨짐 */
 .tbl_head01 tfoot th, .tbl_head01 tfoot td { padding:10px 0; border-top:1px solid #c1d1d5; border-bottom:1px solid #c1d1d5; background:#d7e0e2; text-align:center } 
 .tbl_head01 tbody th { padding:8px 0; border-bottom:1px solid #e8e8e8 } 
@@ -504,7 +499,7 @@ a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:no
 .new_win .win_ul li:first-child { margin-left:0 } 
 .new_win .win_ul li a { display:block; padding:8px 0; color:var(--primaryColor) } 
 .new_win .win_ul .selected { background:var(--primaryColor); border-color:var(--primaryColor); position:relative; z-index:5 } 
-.new_win .win_ul .selected a { color:#fff; font-weight:bold } 
+.new_win .win_ul .selected a { color:#fff !important; font-weight:bold } 
 .new_win .win_desc { position:relative; margin:10px; border-radius:5px; font-size:1.2rem; background:#f2838f; color:#fff; line-height:50px; text-align:left; padding:0 20px } 
 .new_win .win_desc svg { font-size:1.4rem; vertical-align:baseline } 
 .new_win .win_desc:after { content:""; position:absolute; left:0; top:0; width:4px; height:50px; background:#da4453; border-radius:3px 0 0 3px } 
@@ -514,7 +509,7 @@ a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:no
 .new_win .new_win_con:after { display:block; visibility:hidden; clear:both; content:"" } 
 .new_win .new_win_con2 fs-5 pt-3 { margin:20px 0 } 
 .new_win .btn_confirm:after { display:block; visibility:hidden; clear:both; content:"" } 
-.new_win .win_btn { text-align:center } 
+.new_win .win_btn { text-align:center; margin: 20px 0px; } 
 .new_win .cert_btn { margin-bottom:30px; text-align:center } 
 .new_win .btn_close { padding:0 20px; height:45px; overflow:hidden; cursor:pointer } 
 .new_win .btn_submit { padding:0 20px; height:45px; font-weight:bold; font-size:1.3rem } 
@@ -543,7 +538,7 @@ a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:no
 .pagination .page:focus { background-color:var(--pgHvBg); border:1px solid var(--pgBg) }
 .pagination .current,
 .pagination .current:hover,
-.pagination .current:focus { background:var(--primaryColor); border:1px solid var(--primaryColor); color:#fff; font-weight:bold; }
+.pagination .current:focus { background:var(--primaryColor); border:1px solid var(--primaryColor); color:#fff !important; font-weight:bold; }
 
 .pg_wrap { clear:both; float:inherit; text-align: center; display:inline-block; width: 100%; } 
 .pg_wrap:after { display:block; visibility:hidden; clear:both; content:"" } 
@@ -566,12 +561,11 @@ a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:no
 #device_change { display:block; margin:0.4rem; padding:0.6rem 0; border:1px solid #eee; border-radius:2.4rem; background:#fff; color:#000; font-size:2.4rem; text-decoration:none; text-align:center } 
 .errors { color:#ff0000; }
 
-
 .dynamic_layer { position: absolute; background-color: #ffffff; /* 흰색 배경 */
  border: 1px solid #e0e0e0; /* 회색 테두리 */
  padding: 15px; /* 내부 패딩 */
  box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.2); /* 그림자 효과 */
- border-radius: 8px; /* 모서리 둥글게 */
+ border-radius: 8px; /* 모서리 둥글게 *=
  font-family: 'Arial', sans-serif; /* 폰트 설정 */
  max-width: 300px; /* 최대 너비 설정 */
  z-index: 1000; /* 다른 요소 위에 올라오게 설정 */
@@ -582,7 +576,7 @@ a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:no
 #bo_list .td_board { width:120px; text-align:center }
 #bo_list .td_chk { width:30px; text-align:center; border-top:var(--border); border-bottom:var(--border) }
 #bo_list .td_date { width:60px; text-align:center }
-#bo_list .td_datetime { width:60px; text-align:center }
+#bo_list .td_datetime { width:80px; text-align:center }
 #bo_list .td_group { width:100px; text-align:center }
 #bo_list .td_mb_id { width:100px; text-align:center }
 #bo_list .td_mng { width:80px; text-align:center }
@@ -1197,8 +1191,7 @@ html.remodal-is-locked {overflow-y:scroll !important}
   #hd_qnb, #aside #ol_after, #aside #ol_before,#sns_login, #aside #gnb, #tnb { display: none; } 
   #aside { width: 100%; margin: 0px 20px 20px 0px; } 
   #visit { margin-top: 0px; } 
-  #container { width: 100%; margin: 20px 0 15px; padding: 0 10px; } 
-  #logo { position: absolute; left: 50%; transform: translateX(-50%); width: 48px; } 
+  #container { width: 100%; margin: 20px 0 15px; padding: 0 10px; }  
   .profile_wrap { display: none; } 
   #ft_wr .ft_cnt { margin-bottom: 40px; } 
   #ft_wr .ft_cnt:last-child { margin-bottom: 0px; } 
@@ -1239,7 +1232,10 @@ html.remodal-is-locked {overflow-y:scroll !important}
   #sns-link-pnl.remodal {max-width:400px;padding:50px}
 }
 
-@media all and (max-width: 768px) { /* board */
+@media all and (max-width: 768px) {
+
+  #logo { position: absolute; left: 50%; transform: translateX(-50%); width: 48px; }
+
   .bo_v_nb { flex-direction: column; }
   .bo_v_nb li { width: 100%; }
   .bo_v_nb li.btn_prv { margin-bottom: 15px; }

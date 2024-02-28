@@ -14,10 +14,10 @@
         {{ qa_config.qa_content_head|safe }}
     {% endif %}
 
-    <div id="bo_list">
+    <div id="bo_list" class="position-relative">
         <!-- 카테고리 시작 { -->
         <nav id="bo_cate" class="my-5">
-            <h2>{{ qa_config.qa_title }} 카테고리</h2>
+            <h2 class="blind">{{ qa_config.qa_title }} 카테고리</h2>
             <ul id="bo_cate_ul">
                 <li class="d-inline-block p-1 main-font fs-5"><a href="{{ request.url.replace_query_params() }}" {% if not query_params.sca %}id="bo_cate_on" class="main-bg text-white"{% endif %}>전체</a></li>
                 {% for category in categories %}
@@ -25,8 +25,7 @@
                 {% endfor %}
             </ul>
         </nav>
-        <!-- } 카테고리 끝 -->
-        
+        <!-- } 카테고리 끝 -->                                                          
         <!-- 게시판 페이지 정보 및 버튼 시작 { -->
         <div id="bo_btn_top" class="my-3">
             <div id="bo_list_total">
