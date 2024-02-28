@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}투표 관리{% endblock title %}
-{% block subtitle %}투표 관리{% endblock subtitle %}
+{% block title %}설문조사 관리{% endblock title %}
+{% block subtitle %}설문조사 관리{% endblock subtitle %}
 
 {% block content %}
     {% set sfl = request.query_params.get("sfl", "") %}
@@ -10,7 +10,7 @@
     <div class="local_ov01 local_ov">
         <a href="{{ url_for('poll_list') }}" class="ov_listall">전체목록</a>
         <span class="btn_ov01">
-            <span class="ov_txt">투표 수</span>
+            <span class="ov_txt">설문조사 수</span>
             <span class="ov_num">{{ total_count|number_format }}개</span>
         </span>
     </div>
@@ -33,7 +33,7 @@
         <input type="hidden" name="token" value="">
         <div class="tbl_head01 tbl_wrap">
             <table>
-                <caption>투표 관리 목록</caption>
+                <caption>설문조사 관리 목록</caption>
                 <thead>
                     <tr>
                         <th scope="col">
@@ -53,7 +53,7 @@
                     {% for poll in polls %}
                         <tr class="bg{{ loop.cycle('0', '1') }}">
                             <td class="td_chk">
-                                <label for="chk_{{ loop.index0 }}" class="blind">{{ poll.po_subject[:70] }} 투표</label>
+                                <label for="chk_{{ loop.index0 }}" class="blind">{{ poll.po_subject[:70] }} 설문조사</label>
                                 <input type="checkbox" name="chk[]" value="{{ poll .po_id }}" id="chk_{{ loop.index0 }}">
                             </td>
                             <td class="td_num">{{ poll.po_id }}</td>
