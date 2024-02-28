@@ -3,13 +3,13 @@
 {% block title %}{{ request.state.title }}{% endblock title %}
 
 {% block content %}
-    <div id="container_wr" class="w-100 d-flex">
-        <div id="container" style="width: calc(100% - 240px);">
-          <div class="latest_top_wr pe-4">
+    <div id="container_wr" class="w-100 d-flex flex-column flex-md-row">
+        <div id="container" class="main_photo">
+          <div class="latest_top_wr pe-md-4">
             {{ render_latest_posts(request, 'main_list', 'notice', 4, 23)|safe }}
           </div>
         </div>
-        <div id="aside" style="width: 240px;height: 750px;">
+        <div id="aside" class="main_aside">
 
           <!-- 설문조사 -->
           {% include "/bbs/poll.html" %}

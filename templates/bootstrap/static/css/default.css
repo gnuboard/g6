@@ -227,6 +227,8 @@ input[type=text]:focus,input[type=password]:focus, textarea:focus,select:focus {
 /* 메인 배너 슬라이더 */
 .main-slider .slide-item .slide-con .img-box::after { content:''; display:block; width:100%; height:100%; position:absolute; top:0; left:0; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.4) 47.92%, rgba(0, 0, 0, 0.8) 100%); }
 .main-slider .slick-arrow { display: none !important; }
+.main_photo {width: calc(100% - 240px);}
+.main_aside {width: 240px;height: 750px;}
 
 /* 하단 레이아웃 */
 #top_btn { position:fixed; bottom:20px; right:20px; width:50px; height:50px; line-height:46px; border:var(--topBtnBorder); color:var(--primaryColor); text-align:center; font-size:1.5rem; z-index:90; background:var(--bodyBg); border-radius: 3px; } 
@@ -1181,8 +1183,6 @@ html.remodal-is-locked {overflow-y:scroll !important}
 #darkmode-toggle-switch .visible.dark { display: var(--lightVisible) }
 #darkmode-toggle-switch .visible.bright { display: var(--darkVisible) }
 
-
-
 /* 긴 문자열 ... 처리 */
 .elip { display:inline-block; width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 
@@ -1190,6 +1190,8 @@ html.remodal-is-locked {overflow-y:scroll !important}
 #hd_sch_wr.active { display: block; } 
 #hd_sch #sch_stx, #hd_sch #sch_submit { height: 60px; color: var(--fontColor); } 
 #hd_sch #sch_stx::placeholder { color: var(--fontColor); } 
+
+.content_copy {color: var(--subFontColor);}
 
 @media all and (max-width: 1100px){ 
   #hd_qnb, #aside #ol_after, #aside #ol_before,#sns_login, #aside #gnb, #tnb { display: none; } 
@@ -1226,7 +1228,7 @@ html.remodal-is-locked {overflow-y:scroll !important}
   #sch_res_detail select {width: calc(50% - 2.2px);}
   #sch_res_detail .sch_wr {width: 100%;margin-top: 5px;}
 
-  /* main_list.css */
+  /* main_list */
   .main_bn { border-radius: 0px; }
   .main-slider .slick-dots { max-width: 200px; }
   .main-slider .slick-dots { visibility: hidden; }
@@ -1237,7 +1239,7 @@ html.remodal-is-locked {overflow-y:scroll !important}
   #sns-link-pnl.remodal {max-width:400px;padding:50px}
 }
 
-@media all and (max-width: 501px) { /* board */
+@media all and (max-width: 768px) { /* board */
   .bo_v_nb { flex-direction: column; }
   .bo_v_nb li { width: 100%; }
   .bo_v_nb li.btn_prv { margin-bottom: 15px; }
@@ -1250,4 +1252,6 @@ html.remodal-is-locked {overflow-y:scroll !important}
   #sch_res_detail .frm_input {width: 100%;}
   #sch_res_detail .btn_submit {margin-top: 20px;}
 
+  /* main_list */
+  .main_photo, .main_slide {width: 100%;padding: 0 !important;}
 }
