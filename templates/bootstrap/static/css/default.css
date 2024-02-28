@@ -404,7 +404,7 @@ a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:no
 
 
 /* 기본테이블 */
-.tbl_wrap table { width:100%; border-collapse:collapse; border-spacing:0 5px; background:var(--contBg); border-top:var(--border); border-bottom:var(--border); font-size: 1.4rem;} 
+.tbl_wrap table { width:100%; border-collapse:collapse; border-spacing:0 5px; border-top:var(--border); border-bottom:var(--border); font-size: 1.4rem;} 
 .tbl_wrap caption { padding:10px 0; font-weight:bold; text-align:left } 
 .tbl_head01 { margin:0 0 10px } 
 .tbl_head01 caption { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: polygon(0 0, 0 0, 0 0); } 
@@ -891,26 +891,20 @@ html.no-overflowscrolling #autosave_pop { height:auto; max-height:10000px !impor
 .chk_box input[type="checkbox"] + label span {float:left;width:15px;height:15px;display:block;background:#fff;border:1px solid #d0d4df;border-radius:3px}
 
 /* 자기소개 */
-#profile h1 a {}
 #profile table {margin-bottom:0}
 #profile table th {text-align:left;padding:10px;width:100px}
 
 
 /* new.css */
 /* 최근게시물 스킨 (new) */
-#new_sch {background:var(--newBg);padding:30px;text-align:center;margin:0 0 10px}
 #new_sch select {background: var(--inputBg);border:var(--inputBorder);color: var(--fontColor);width:175px;height:45px;padding:0 5px;border-radius:3px}
-#new_sch .frm_input {border:var(--inputBorder);width:calc(100% - 451px);height:45px;border-radius:0;border-radius:3px}
+#new_sch .d {border:var(--inputBorder);width:calc(100% - 470px);height:45px;border-radius:0;border-radius:3px}
 #new_sch .sch_wr {position:relative;display:inline-block}
 #new_sch .btn_submit {padding:0 10px;height:45px;width:88px;font-size:1.3rem;font-weight:bold;color:#fff;background:#434a54}
 #new_sch p {padding:10px 0 0;font-size:1.1rem;text-align:center;letter-spacing:-0.1rem;color: var(--fontColor);}
-
 #fnewlist .profile_img img {border-radius:50%}
 #fnewlist .td_group a {background:#edfbde;color:#8cc152;padding:3px 4px;border-radius:5px;font-weight:normal}
 #fnewlist .td_board a {background:#eeeaf8;color:#ac92ec;padding:3px 4px;border-radius:5px;font-weight:normal}
-
-.admin_new_btn {float:right;margin-bottom:10px}
-
 .chk_box input[type="checkbox"]:checked + label span {background:url(./img/chk.png) no-repeat 50% 50% var(--primaryColor);border-color:#1471f6;border-radius:3px}
 
 /* outlogin.css */
@@ -946,11 +940,9 @@ transition:all 0.1s ease-in-out}
 .switch_field label:last-of-type {border-radius:0 4px 4px 0}
 
 #sch_res_ov {text-align:center;height:55px;line-height:55px;background:var(--pointBg);border-radius:5px;border:var(--border);margin-bottom:15px;padding:0 20px}
-#sch_res_ov:after {display:block;visibility:hidden;clear:both;content:""}
-#sch_res_ov h2 {float:left;display:inline-block;margin:0;padding:0;font-size:1.5rem;color:var(--fontColor);font-weight:normal}
+#sch_res_ov h2 {margin:0;padding:0;font-size:1.5rem;color:var(--fontColor);font-weight:normal}
 #sch_res_ov h2 strong {color:#ff005a}
-#sch_res_ov ul {display:inline-block;float:right;line-height:12px;font-size:1.1rem;color:var(--primaryColor);margin-top:20px}
-#sch_res_ov ul:after {display:block;visibility:hidden;clear:both;content:""}
+#sch_res_ov ul {line-height:12px;font-size:1.1rem;color:var(--primaryColor);}
 #sch_res_ov li {float:left;margin-right:5px;padding-right:5px;border-right:1px solid var(--primaryColor)}
 #sch_res_ov li:last-child {margin:0;padding:0;border:0}
 

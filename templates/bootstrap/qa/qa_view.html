@@ -19,9 +19,9 @@
     <!-- 게시물 읽기 시작 { -->
     <article id="bo_v" class="mb-4">
         <header>
-            <h2 id="bo_v_title" class="m-0 p-0"><span class="bo_v_cate d-inline-block main-font px-3 rounded-2" style="line-height: 20px;">{{ qa.qa_category }}</span> {{ qa.qa_subject }}</h2>
+            <h2 id="bo_v_title" class="m-0 px-0 py-3"><span class="bo_v_cate d-inline-block main-font px-3 rounded-2" style="line-height: 20px;">{{ qa.qa_category }}</span> {{ qa.qa_subject }}</h2>
         </header>
-        <section id="bo_v_info fs-5" class="d-flex justify-content-between align-items-center main-bb mt-5 pb-5">
+        <section id="bo_v_info fs-5" class="d-flex justify-content-between align-items-center main-bb sub-font cont-bg main-border py-5 px-3">
             <h2 class="blind">페이지 정보</h2>
             <span class="blind">작성자</span>
             <strong class="d-inline-block me-3 fw-normal"> {{ qa.qa_name }}</strong>
@@ -117,7 +117,7 @@
               {% if prev %}
                 <li class="col-md-6">
                   <a href="{{ url_for('qa_view', qa_id=prev.qa_id) }}?{{ request.query_params }}" class="btn_prv rounded-3 text-decoration-none sub-font">
-                    <i class="fa fa-chevron-left" aria-hidden="true"></i>
+                    <i class="fa fa-chevron-up" aria-hidden="true"></i>
                     <span class="fs-4 fw-bold">이전글</span>
                   </a>
                 </li>
@@ -126,7 +126,7 @@
                 <li class="col-md-6">
                   <a href="{{ url_for('qa_view', qa_id=next.qa_id) }}?{{ request.query_params }}" class="btn_next rounded-3 text-decoration-none text-light">
                     <span class="fs-4 fw-bold">다음글</span>
-                    <i class="fa fa-chevron-right" aria-hidden="true"></i>
+                    <i class="fa fa-chevron-down" aria-hidden="true"></i>     
                   </a>
                 </li>
               {% endif %}
