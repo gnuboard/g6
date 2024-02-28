@@ -6,7 +6,7 @@
 
 {% block content %}
 <!-- 전체게시물 검색 시작 { -->
-<fieldset id="new_sch">
+<fieldset id="new_sch" class="py-5 text-center mb-3 fs-5">
     <legend>상세검색</legend>
     <form name="fnew" method="get">
         <label for="gr_id" class="blind">그룹</label>
@@ -33,8 +33,8 @@
     <input type="hidden" name="view" value="{{ query_params.view }}">
     <input type="hidden" name="token" value="">
 
-    <div class="admin_new_btn">
-        <button type="submit" title="선택삭제" class="btn_b01 btn">
+    <div class="admin_new_btn text-end">
+        <button type="submit" title="선택삭제" class="btn_b01 btn fs-4">
             <i class="fa fa-regular fa-trash-can" aria-hidden="true"></i>
             <span class="blind">선택삭제</span>
         </button>
@@ -74,7 +74,7 @@
                         <a href="/board/{{ board_new.bo_table }}">{{ board_new.board.bo_subject }}</a>
                     </td>
                     <td>
-                        <a href="{{ board_new.link }}" class="new_tit">{{ board_new.subject }}</a>
+                        <a href="{{ board_new.link }}" class="new_tit main-font">{{ board_new.subject }}</a>
                     </td>
                     <td class="td_name">{{ board_new.name }}</td>
                     <td class="td_date">{{ board_new.datetime }}</td>
@@ -85,13 +85,6 @@
     </div>
 
     {{ paging|safe }}
-
-    <div class="admin_new_btn">
-        <button type="submit" title="선택삭제" class="btn_b01 btn">
-            <i class="fa fa-regular fa-trash-can" aria-hidden="true"></i>
-            <span class="blind">선택삭제</span>
-        </button>
-    </div>
 </form>
 
 <script>
