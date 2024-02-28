@@ -10,25 +10,25 @@
           <strong class="d-block fs-4 mt-1 mb-2 main-font">{{ member.mb_nick if member is defined else '' }}님</strong>
           <a href="/bbs/member_confirm" id="ol_after_info" class="d-inline-block main-border px-3 py-2 main-font text-decoration-none" title="정보수정">정보수정</a>
           {% if request.state.is_super_admin %}
-          <a href="/admin" class="btn d-inline-block px-3 text-decoration-none align-middle" style="height: 25px;line-height:25px;" title="관리자"><i class="fa fa-cog fa-spin fa-fw"></i><span class="blind">관리자</span></a>
+          <a href="/admin" class="btn_admin btn d-inline-block px-3 text-decoration-none align-middle" style="height: 25px;line-height:25px;" title="관리자"><i class="fa fa-cog fa-spin fa-fw"></i><span class="blind">관리자</span></a>
           {% endif %}
         </div>
     </header>
     <ul id="ol_after_private" class="p-0">
         <li>
-            <a href="/bbs/point" target="_blank" id="ol_after_pt" class="d-flex justify-content-between align-items-center py-4 px-5 text-decoration-none sub-font">
+            <a href="/bbs/point" target="_blank" id="ol_after_pt" onclick="win_point(this.href); return false;" class="d-flex justify-content-between align-items-center py-4 px-5 text-decoration-none sub-font">
                 <span><i class="fa fa-database me-4" aria-hidden="true"></i>포인트</span>
                 <strong class="em-font">{{ member.mb_point|number_format if member else '' }}</strong>
             </a>
         </li>
         <li>
-            <a href="{{ url_for('memo_list') }}" target="_blank" id="ol_after_memo" class="d-flex justify-content-between align-items-center py-4 px-5 text-decoration-none sub-font">
+            <a href="{{ url_for('memo_list') }}" target="_blank" id="ol_after_memo" onclick="win_memo(this.href); return false;" class="d-flex justify-content-between align-items-center py-4 px-5 text-decoration-none sub-font">
                 <span><i class="fa fa-regular fa-envelope me-4" aria-hidden="true"></i><span class="blind">안 읽은 </span>쪽지</span>
                 <strong class="em-font">{{ member.mb_memo_cnt if member is defined else '' }}</strong>
             </a>
         </li>
         <li>
-            <a href="{{ url_for('scrap_list') }}" target="_blank" id="ol_after_scrap" class="d-flex justify-content-between align-items-center py-4 px-5 text-decoration-none sub-font">
+            <a href="{{ url_for('scrap_list') }}" target="_blank" id="ol_after_scrap" onclick="win_scrap(this.href); return false;" class="d-flex justify-content-between align-items-center py-4 px-5 text-decoration-none sub-font">
                 <span><i class="fa fa-thumb-tack me-4" aria-hidden="true"></i>스크랩</span>
                 <strong class="scrap em-font">{{ member.mb_scrap_cnt if member is defined else '' }}</strong>
             </a>
