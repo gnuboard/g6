@@ -1,7 +1,6 @@
 {% extends "base_sub.html" %}
 
 {% block body_html %}
-<!-- 상단 시작 { -->
 <div id="hd">
 
     <h1 id="hd_h1"></h1>
@@ -11,59 +10,20 @@
 
     <div id="hd_wrapper">
 
-        <div id="logo">
-            <a href="/"><img src="/static/img/logo_gnuboard6.png" alt="그누보드6"></a>
-        </div>
-
-        <button type="button" id="gnb_open" class="hd_opener">
+        <button type="button" id="opener_aside" class="opener">
             <i class="fa fa-bars" aria-hidden="true"></i>
             <span class="blind">열기</span>
         </button>
 
-        <div id="gnb_mo" class="gnb_mo">
-            <button type="button" id="gnb_close" class="hd_closer">
-                <span class="blind">메뉴 닫기</span>
-                <i class="fa fa-xmark" aria-hidden="true"></i>
-            </button>
+        <a href="/" id="logo"><img src="/static/img/logo_gnuboard6.png" alt="그누보드6"></a>
 
-            <!-- 아웃 로그인 -->
-            {% if request.state.login_member %}
-                {% include "mobile/bbs/outlogin_after.html" ignore missing %}
-            {% else %}
-                {% include "mobile/bbs/outlogin_before.html" ignore missing %}
-            {% endif %}
+        <button type="button" id="opener_header_search" class="opener">
+            <i class="fa fa-search" aria-hidden="true"></i>
+            <span class="blind">사용자메뉴</span>
+        </button>
 
-            <!-- 메뉴 -->
-            {% include "mobile/bbs/menu.html" ignore missing %}
-
-            <ul id="hd_nb">
-                <li class="hd_nb1">
-                    <a href="/bbs/faq" id="snb_faq">
-                        <i class="fa fa-question" aria-hidden="true"></i>FAQ
-                    </a>
-                </li>
-                <li class="hd_nb2">
-                    <a href="/bbs/qalist" id="snb_qa">
-                        <i class="fa fa-comments" aria-hidden="true"></i>1:1문의
-                    </a>
-                </li>
-                <li class="hd_nb3">
-                    <a href="/bbs/current_connect" id="snb_cnt">
-                        <i class="fa fa-users" aria-hidden="true"></i>접속자
-                        <span>{{ current_login_count[0]|number_format }}</span>
-                    </a>
-                </li>
-                <li class="hd_nb4">
-                    <a href="/bbs/new" id="snb_new">
-                        <i class="fa fa-history" aria-hidden="true"></i>새글
-                    </a>
-                </li>
-            </ul>
-        </div>
-
-        <!-- 검색영역 -->
-        <div class="hd_sch_wr">
-            <fieldset id="hd_sch">
+        <div id="header_search">
+            <fieldset>
                 <legend>사이트 내 전체검색</legend>
 
                 <form name="fsearchbox" method="get" action="/bbs/search" onsubmit="return fsearchbox_submit(this);">
@@ -85,7 +45,6 @@
                         return false;
                     }
 
-                    // 검색에 많은 부하가 걸리는 경우 이 주석을 제거하세요.
                     var cnt = 0;
                     for (var i = 0; i < stx.length; i++) {
                         if (stx.charAt(i) == ' ')
@@ -105,40 +64,51 @@
                 </script>
             </fieldset>
 
-            <!-- 인기검색어 시작 { -->
             {% include "/bbs/popular.html" %}
-            <!-- } 인기검색어 끝 -->
         </div>
 
-        <!-- 모바일 검색 버튼 -->
-        <button type="button" id="user_btn" class="hd_opener"><i class="fa fa-search" aria-hidden="true"></i><span class="blind">사용자메뉴</span></button>
-
         <script>
-            var gnb_opener = document.querySelector("#gnb_open");
-            var sch_opener = document.querySelector("#user_btn");
-            var close_btn = document.querySelector("#gnb_close");
-            var hd_sch_wr = document.querySelector(".hd_sch_wr");
-            var hd_gnb_wr = document.querySelector("#gnb_mo");
+        $(function() {
+            var openerAside = $("#opener_aside");
+            var openerHeaderSearch = $("#opener_header_search");
+            var closerAside = $("#closer_aside");
+            var headerSearch = $("#header_search");
+            var aside = $("#aside");
 
-            function handleSearchClick() {
-                hd_sch_wr.classList.toggle("active");
-            }
-            function handleGnbClick() {
-                hd_gnb_wr.classList.add("active");
-            }
-            function delGnbClick() {
-                hd_gnb_wr.classList.remove("active");
-            }
+            openerHeaderSearch.on("click", function() {
+                headerSearch.toggleClass("active");
+            });
 
-            sch_opener.addEventListener("click", handleSearchClick);
-            gnb_opener.addEventListener("click", handleGnbClick);
-            close_btn.addEventListener("click", delGnbClick);
+            openerAside.on("click", function() {
+                aside.show();
+            });
+
+            closerAside.on("click", function() {
+                aside.hide();
+            });
+
+        });
         </script>
 
     </div>
 
+    <script>
+        var profileImg = document.querySelector(".profile_wrap .profile_img");
+        var mypageBox = document.querySelector(".hd_login");
+
+        function handleProfileClick() {
+        mypageBox.classList.add("active");
+        }
+
+        function handleProfileFocusout() {
+        mypageBox.classList.remove("active");
+        }
+
+        profileImg.addEventListener("click", handleProfileClick);
+        profileImg.addEventListener("focusout", handleProfileFocusout);
+    </script>
+
 </div>
-<!-- } 상단 끝 -->
 
 {% if errors %}
 <ul>
@@ -150,27 +120,42 @@
 
 <hr>
 
-<!-- 콘텐츠 시작 { -->
 <div id="wrapper">
-    <div id="container_wr">
 
-        <div id="container">
-            <h2 id="container_title"><span>{% block subtitle %}{% endblock subtitle %}</span></h2>
-            {% block content %}
-            {% endblock content %}
-        </div>
+    <div id="container">
+        <h2 id="container_title"><span>{% block subtitle %}{% endblock subtitle %}</span></h2>
+        {% block content %}
+        {% endblock content %}
+    </div>
+
+    <div id="aside">
+        <button type="button" id="closer_aside">
+            <i class="fa fa-xmark" aria-hidden="true"></i>
+            <span class="blind">전체보기 닫기</span>
+        </button>
+
+        {% if request.state.login_member %}
+            {% include "mobile/bbs/outlogin_after.html" %}
+        {% else %}
+            {% include "mobile/bbs/outlogin_before.html" %}
+        {% endif %}
+
+        {% set menus = get_menus() %}
+        {% if menus -%}
+            {% include "mobile/bbs/menu.html" ignore missing %}
+        {%- endif %}
+
+        {% include "mobile/bbs/poll.html" %}
 
         {% if render_visit_statistics %}
             {{ render_visit_statistics(request)|safe }}
         {% endif %}
-
     </div>
+
 </div>
-<!-- } 콘텐츠 끝 -->
 
 <hr>
 
-<!-- 하단 시작 { -->
 <div id="ft">
 
     <div id="ft_wr">
@@ -204,11 +189,8 @@
     {{ request.state.config.cf_analytics|safe }}
 {% endif %}
 
-<!-- } 하단 끝 -->
-
 <script>
 
-  // 상단 스크롤 버튼
     $(function() {
         $("#top_btn").on("click", function() {
             $("html, body").animate({scrollTop:0}, '500');
