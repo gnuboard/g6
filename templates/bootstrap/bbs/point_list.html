@@ -18,7 +18,7 @@
             <li class="{% if not point.is_positive %}point_use bov-bg{% endif %} position-relative main-bb cont-bg py-4 px-5 list-unstyled">
                 <div class="point_top py-2 mb-2">
                     <span class="point_tit d-block fw-bold fs-5 main-font">{{ point.po_content }}</span>
-                    <span class="point_num position-absolute fs-5 em-font fw-bold" style="right: 30px;top: 25px;">
+                    <span class="point_num position-absolute fs-4 em-font fw-bold translate-middle-y top-50" style="right: 30px;">
                         {% if point.is_positive -%}
                             +
                         {%- endif -%}
@@ -43,7 +43,7 @@
             </li>
         {% endfor %}
             
-            <li class="point_status border-0 text-white fw-bold fs-5 text-start" style="background: #737373;">
+            <li class="point_status border-0 text-white fw-bold fs-5 text-start py-4 px-5" style="background: #737373;">
                 소계
                 <span>+{{ sum_positive|number_format }}</span>
                 <span>{{ sum_negative|number_format }}</span>
@@ -51,6 +51,6 @@
         </ul>
     </div>
     {{ paging|safe }}
-    <button type="button" onclick="javascript:window.close();" class="btn_close">창닫기</button>
+    <button type="button" onclick="javascript:window.close();" class="btn_close d-block">창닫기</button>
 </div>
 {% endblock content %}
