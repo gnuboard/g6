@@ -18,7 +18,7 @@
             </div>
         </h1>
         <div class="new_win_con2 fs-5 pt-3">
-            <ul class="win_ul pb-3">
+            <ul class="win_ul pb-3 px-4">
                 <li class="{% if kind == "recv" %}selected{% endif %}"><a href="{{ url_for('memo_list') }}?kind=recv">받은쪽지</a></li>
                 <li class="{% if kind == "send" %}selected{% endif %}"><a href="{{ url_for('memo_list') }}?kind=send">보낸쪽지</a></li>
                 <li><a href="{{ url_for('memo_form') }}">쪽지쓰기</a></li>
@@ -56,7 +56,7 @@
     
             {{ paging|safe }}
 
-            <p class="win_desc">
+            <p class="win_desc mx-4">
                 <i class="fa fa-info-circle" aria-hidden="true"></i>
                 쪽지 보관일수는 최장 <strong>{{ request.state.config.cf_memo_del|number_format }}</strong>일 입니다.
             </p>

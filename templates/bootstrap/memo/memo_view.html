@@ -14,7 +14,7 @@
         </h1>
         <div class="new_win_con2 fs-5 pt-3">
             <!-- 쪽지함 선택 시작 { -->
-            <ul class="win_ul pb-3">
+            <ul class="win_ul pb-3 px-4">
                 <li class="{% if kind == "recv" %}selected{% endif %}"><a href="{{ url_for('memo_list') }}?kind=recv">받은쪽지</a></li>
                 <li class="{% if kind == "send" %}selected{% endif %}"><a href="{{ url_for('memo_list') }}?kind=send">보낸쪽지</a></li>
                 <li><a href="{{ url_for('memo_form') }}">쪽지쓰기</a></li>

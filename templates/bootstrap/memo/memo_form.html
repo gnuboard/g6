@@ -7,7 +7,7 @@
         <h1 id="win_title"><i class="fa fa-regular fa-envelope" aria-hidden="true"></i> 쪽지 보내기</h1>
         <div class="new_win_con2 fs-5 pt-3">
             <!-- 쪽지함 선택 시작 { -->
-            <ul class="win_ul pb-3">
+            <ul class="win_ul pb-3 px-4">
                 <li><a href="{{ url_for('memo_list') }}?kind=recv">받은쪽지</a></li>
                 <li><a href="{{ url_for('memo_list') }}?kind=send">보낸쪽지</a></li>
                 <li class="selected"><a href="{{ url_for('memo_form') }}">쪽지쓰기</a></li>
@@ -16,7 +16,7 @@
 
             <form name="fmemoform" action="{{ url_for('memo_form_update') }}" onsubmit="return fmemoform_submit(this);" method="post" autocomplete="off">
                 <input type="hidden" name="token" value="">
-                <div class="form_01 py-4 main-bt">
+                <div class="form_01 p-4 main-bt">
                     <h2 class="blind">쪽지쓰기</h2>
                     <ul>
                         <li>
