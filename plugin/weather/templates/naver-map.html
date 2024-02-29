@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}네이버 날씨 지도{% endblock %}
+{% block head %}
+<script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId={{ncpClientId}}&callback=initMap"></script>
+<style>
+    #map {
+        width: 100%;
+        height: 700px;
+    }
+    .info-window-content {
+        color: #000; /* 글자색 */
+        padding: 5px; /* 패딩 */
+        border-radius: 5px; /* 경계 모서리 둥글게 */
+    }
+    .custom-overlay {
+        z-index: 100; /* 다른 지도 요소보다 높은 값을 설정 */
+        position: absolute;
+        color: #000000;
+        background-color: #F2F0EA;
+        border: 2px solid #6C483B;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div id="map"></div>
+<script>
+async function initMap() {    
+    var mapOptions = {
+        center: { lat: 36.1196, lng: 128.3446 }, // 구미시의 위도와 경도, 지도의 초기 중심 좌표
+        zoom: 7 // 지도의 초기 줌 레벨
+    };
+
+    var map = new naver.maps.Map('map', mapOptions);
+
+    const cities = [
+        { name: "서울", lat: 37.5665, lng: 126.9780 },
+        { name: "부산", lat: 35.1796, lng: 129.0756 },
+        { name: "대구", lat: 35.8714, lng: 128.6014 },
+        { name: "광주", lat: 35.1595, lng: 126.8526 },
+        { name: "대전", lat: 36.3504, lng: 127.3845 },
+        { name: "울산", lat: 35.5384, lng: 129.3114 },
+        { name: "속초", lat: 38.2044, lng: 128.5911 },
+        { name: "동해", lat: 37.5262, lng: 129.1142 },
+        { name: "제천", lat: 37.1499, lng: 128.2122 },
+        { name: "여수", lat: 34.7604, lng: 127.6622 },
+        { name: "제주", lat: 33.4890, lng: 126.4983 },
+        { name: "독도", lat: 37.2420, lng: 131.8690 },
+        { name: "울릉도", lat: 37.4840, lng: 130.8980 },
+    ];
+
+    var CustomOverlay = function(options) {
+        this._element = document.createElement('div');
+        this._element.className = 'custom-overlay';
+        this._element.innerHTML = options.content.name + ' ' + options.content.temp;
+
+        this.setPosition(options.position);
+        this.setMap(options.map || null);
+    };
+
+    CustomOverlay.prototype = new naver.maps.OverlayView();
+    CustomOverlay.prototype.constructor = CustomOverlay;
+
+    CustomOverlay.prototype.setPosition = function(position) {
+        this._position = position;
+        this.draw();
+    };
+
+    CustomOverlay.prototype.getPosition = function() {
+        return this._position;
+    };
+
+    CustomOverlay.prototype.onAdd = function() {
+        var overlayLayer = this.getPanes().overlayLayer;
+        overlayLayer.appendChild(this._element);
+    };
+
+    CustomOverlay.prototype.draw = function() {
+        if (!this.getMap()) return;
+
+        var projection = this.getProjection(),
+            position = this.getPosition(),
+            pixelPosition = projection.fromCoordToOffset(position);
+
+        this._element.style.left = pixelPosition.x + 15 + 'px';
+        this._element.style.top = pixelPosition.y - 35 + 'px';
+    };
+
+    CustomOverlay.prototype.onRemove = function() {
+        this._element.parentNode.removeChild(this._element);
+    };
+
+    // 날씨 데이터 요청 프로미스를 저장할 배열
+    const weatherPromises = cities.map(city => 
+        fetch(`/weather/get-info/${city.lat}/${city.lng}`).then(response => {
+            if (!response.ok) throw new Error('Weather data fetch failed');
+            return response.json().then(data => ({ city, data }));
+        })
+    );
+
+    try {
+        // 모든 날씨 데이터 요청을 병렬로 실행
+        const results = await Promise.all(weatherPromises);
+
+        // 각 도시에 대한 결과 처리
+        results.forEach(({ city, data }) => {
+            // 마커 생성
+            const marker = new naver.maps.Marker({
+                position: new naver.maps.LatLng(city.lat, city.lng),
+                map: map,
+                title: city.name
+            });
+
+            // 사용자 정의 오버레이 생성
+            new CustomOverlay({
+                map: map,
+                position: new naver.maps.LatLng(city.lat, city.lng),
+                content: { name: city.name, temp: data.main.temp + '°C' }
+            });
+        });
+    } catch (error) {
+        console.error('Error fetching weather data:', error);
+    }
+}
+</script>
+{% endblock %}
+```

@@ -1,0 +1,5 @@
+# config 디렉토리 내 모든 파일 무시
+*
+# .gitignore 파일 자체는 제외
+!.gitignore
+!example.keys.py

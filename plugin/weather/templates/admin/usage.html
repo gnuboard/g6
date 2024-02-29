@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block head %}
+    {# /plugin/플러그인 모듈이름/static/css/admin.css #}
+    {# css, js 경로 /plugin/플러그인 모듈이름/static/파일경로 #}
+
+{% endblock %}
+
+{% block title %}
+    {{ title }}
+{% endblock %}
+
+{% block subtitle %}
+    {{ title }}
+{% endblock %}
+
+{% block content %}
+    <p>한국 대도시의 현재 날씨를 알려줍니다.</p>
+    <p>&nbsp;</p>
+    <div>
+        <h3>구글 지도</h3>
+        <p><a href="{{ url_for('show_google_map') }}" target="_blank">{{ url_for('show_google_map') }}</a></p>
+    </div>
+    <p>&nbsp;</p>
+    <p>plugin/weather/config 디렉토리의 example.keys.py를 keys.py로 복사한후 GOOGLE_MAPS_API_KEY, OPENWEATHERMAP_API_KEY를 입력합니다.</p>
+    
+{% endblock %}
