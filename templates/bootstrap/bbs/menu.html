@@ -1,4 +1,4 @@
-<ul id="gnb_1dul" class="d-flex fs-4 d-none d-md-flex">
+<ul id="gnb_1dul" class="d-md-flex fs-4">
     <li class="position-relative p-0">
         <button type="button" class="d-none" title="전체메뉴">
             <i class="fa fa-bars" aria-hidden="true"></i>
@@ -12,10 +12,10 @@
             <a href="{{ menu.me_link }}" target="_{{ menu.me_target }}" class="d-block fw-bold p-4 sub-font text-decoration-none fs-4 {% if is_submenu %}dropdown-toggle{% endif %}" data-mdb-toggle="dropdown" aria-expanded="false" >{{ menu.me_name }}</a>
             {% if is_submenu %}
                 <span class="blind">하위분류</span>
-                    <ul class="dropdown-menu start-50 translate-middle-x" aria-labelledby="dropdownMenuButton">
+                    <ul class="dropdown-menu start-50 translate-middle-x flex-column main-bg rounded-3 overflow-hidden" aria-labelledby="dropdownMenuButton">
                         {% for sub in menu.sub %}
                             <li>
-                                <a href="{{ sub.me_link }}" target="_{{ sub.me_target }}" class="dropdown-item cont-bg main-font p-4 fs-4">{{ sub.me_name }}</a>
+                                <a href="{{ sub.me_link }}" target="_{{ sub.me_target }}" class="dropdown-item main-bg text-white p-4 fs-4">{{ sub.me_name }}</a>
                             </li>
                         {% endfor %}
                     </ul>

@@ -26,7 +26,7 @@
     <!-- 메뉴 -->
     <nav id="gnb">
       <h2 class="blind">메인메뉴</h2>
-      <div>
+      <div class="d-none d-md-block">
         {% include "/bbs/menu.html" ignore missing %}
       </div>
     </nav>
@@ -47,7 +47,7 @@
       {% endif %}
 
       <!-- 메뉴 -->
-      {% include "mobile/bbs/menu.html" ignore missing %}
+      {% include "/bbs/menu.html" ignore missing %}
 
       <ul id="hd_nb">
         <li class="hd_nb1">
