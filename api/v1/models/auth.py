@@ -2,8 +2,9 @@ from pydantic import BaseModel
 
 
 class Token(BaseModel):
-    """JWT access 또는 refresh 토큰 모델"""
+    """JWT 모델"""
     access_token: str
+    refresh_token: str
     token_type: str
 
 

@@ -10,7 +10,7 @@ from api.v1.models.auth import TokenPayload
 # TODO: JWT 관련 설정을 환경변수로 관리하도록 수정
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
+REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 14  # 14 days
 # to get a string like this run:
 # openssl rand -hex 32
 ACCESS_TOKEN_SECRET_KEY = "80133c954b2fb41713585cf8a7f723b6b9f3d77dd0477a5a23ac8fb1ddc52f36"
@@ -19,6 +19,8 @@ REFRESH_TOKEN_SECRET_KEY = "f94742864fa5d227eb9fdc002bed87449edd277528d4f2c3da8d
 
 class JWT:
     """JWT 관련 작업을 처리하는 클래스입니다."""
+
+    JWT_TYPE = "Bearer"
 
     def _encode_jwt(
             self,
