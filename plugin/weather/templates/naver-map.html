@@ -1,31 +1,29 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>네이버 날씨 지도</title>
-    <meta charset="utf-8">
-    <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId={{ncpClientId}}&callback=initMap"></script>
-    <style>
-        #map {
-            width: 100%;
-            height: 1200px;
-        }
-        .info-window-content {
-            color: #000; /* 글자색 */
-            padding: 5px; /* 패딩 */
-            border-radius: 5px; /* 경계 모서리 둥글게 */
-        }
-        .custom-overlay {
-            z-index: 100; /* 다른 지도 요소보다 높은 값을 설정 */
-            position: absolute;
-            background-color: #F2F0EA;
-            border: 2px solid #6C483B;
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}네이버 날씨 지도{% endblock %}
+{% block head %}
+<script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId={{ncpClientId}}&callback=initMap"></script>
+<style>
+    #map {
+        width: 100%;
+        height: 700px;
+    }
+    .info-window-content {
+        color: #000; /* 글자색 */
+        padding: 5px; /* 패딩 */
+        border-radius: 5px; /* 경계 모서리 둥글게 */
+    }
+    .custom-overlay {
+        z-index: 100; /* 다른 지도 요소보다 높은 값을 설정 */
+        position: absolute;
+        color: #000000;
+        background-color: #F2F0EA;
+        border: 2px solid #6C483B;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+{% block content %}
 <div id="map"></div>
-
 <script>
 async function initMap() {    
     var mapOptions = {
@@ -125,6 +123,5 @@ async function initMap() {
     }
 }
 </script>
-
-</body>
-</html>
+{% endblock %}
+```
