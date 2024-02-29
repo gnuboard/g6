@@ -31,6 +31,7 @@ from core.models import (
     Auth, BoardNew, Config, Login, Member, Memo, Menu, NewWin, Poll, Popular,
     UniqId, Visit, VisitSum, WriteBaseModel
 )
+from core.plugin import get_admin_menu_id_by_path
 from lib.captcha.recaptch_v2 import ReCaptchaV2
 from lib.captcha.recaptch_inv import ReCaptchaInvisible
 
@@ -1236,10 +1237,18 @@ def get_current_admin_menu_id(request: Request) -> Optional[str]:
                             return item.get("id")
                 break
 
+        # 플러그인 관리자는 경로 기반으로 검색
+        for route in routes:
+            if route.path_regex.match(path):
+                path = route.path
+                modified_path = '/' + path.lstrip('/admin')
+                if result_menu_id := get_admin_menu_id_by_path(modified_path):
+                    return result_menu_id
+
         raise Exception("관리자 메뉴 아이디를 찾을 수 없습니다.")
 
     except Exception as e:
-        print(e)
+        logging.warning(e)
         return None
 
 
