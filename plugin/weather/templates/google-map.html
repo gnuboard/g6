@@ -34,15 +34,18 @@
             { name: "울릉도", lat: 37.4840, lng: 130.8980 },
         ];
 
-        cities.forEach(async (city) => {
-            const response = await fetch(`/weather/get-info/${city.lat}/${city.lng}`);
-            const data = await response.json();
-            const weatherInfo = `<div class="info-window-content">${city.name} ${data.main.temp}°C</div>`;
-            const infowindow = new google.maps.InfoWindow({
-                content: weatherInfo,
-                position: { lat: city.lat, lng: city.lng },
+        const weatherPromises = cities.map(city => fetch(`/weather/get-info/${city.lat}/${city.lng}`).then(response => response.json()));
+
+        Promise.all(weatherPromises).then(results => {
+            results.forEach((data, index) => {
+                const city = cities[index];
+                const weatherInfo = `<div class="info-window-content">${city.name} ${data.main.temp}°C</div>`;
+                const infowindow = new google.maps.InfoWindow({
+                    content: weatherInfo,
+                    position: { lat: city.lat, lng: city.lng },
+                });
+                infowindow.open(map);
             });
-            infowindow.open(map);
         });
     }
 </script>
