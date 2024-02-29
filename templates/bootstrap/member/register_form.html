@@ -183,7 +183,7 @@
 
             <div class="tbl_frm01 tbl_wrap register_form_inner w-100" style="max-width: 500px;">
                 <h2 class="m-0 pt-5 pb-4 px-0 main-font fw-bold">기타 개인설정</h2>
-                <ul class="fs-5">
+                <ul class="fs-5 main-font">
                     
                     {% if config.cf_use_signature %}
                     <li>
@@ -322,8 +322,8 @@
                 </ul>
             </div>
         </div>
-        <div class="btn_confirm d-flex justify-content-start align-items-center fs-5">
-            <a href="/" class="btn_close px-3 me-2" style="height: 45px;">취소</a>
+        <div class="btn_confirm d-flex justify-content-center align-items-center w-100 fs-5">
+            <a href="/" class="btn_close px-5 me-2" style="height: 45px;">취소</a>
             <button type="submit" id="btn_submit" class="btn_submit" accesskey="s">{% if is_register %}회원가입{% else %}정보수정{% endif %}</button>
         </div>
     </form>
