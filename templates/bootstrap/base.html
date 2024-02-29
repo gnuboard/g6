@@ -2,12 +2,12 @@
 
 {% block body_html %}
 <!-- 상단 시작 { -->
-<header id="hd" class="wrapper-bg pb-3 sticky-top main-bb">
+<header id="hd" class="wrapper-bg pb-3 pt-3 pt-md-0 sticky-top main-bb">
   <div id="skip_to_container"><a href="#container">본문 바로가기</a></div>
 
   {% include "/bbs/newwin.inc.html" %}
 
-  <div id="tnb" class="card-bg fs-5 mb-3 py-3">
+  <div id="tnb" class="d-md-block d-none card-bg fs-5 mb-3 py-3">
       <ul id="hd_qnb" class="container-xxl d-md-flex justify-content-end">
           <li><a href="{{ url_for('faq_view') }}" class="sub-font px-2">FAQ</a></li>
           <li><a href="{{ url_for('qa_list') }}" class="sub-font px-2">Q&A</a></li>
@@ -30,7 +30,7 @@
         {% include "/bbs/menu.html" ignore missing %}
       </div>
     </nav>
-    <button type="button" id="gnb_open" class="d-block d-md-none fs-1 sub-font">
+    <button type="button" id="gnb_open" class="d-block d-md-none fs-1 sub-font bg-transparent me-auto border-0" style="width: 50px;height: 50px;">
       <i class="fa fa-bars" aria-hidden="true"></i>
       <span class="blind">열기</span>
     </button>
@@ -164,7 +164,7 @@
 <hr>
 
 <!-- 콘텐츠 시작 { -->
-<div id="wrapper" class="container-xxl pt-5">
+<div id="wrapper" class="container-xxl pt-md-5">
   <h2 id="container_title" class="pb-3"><span class="fs-4 main-font">{% block subtitle %}{% endblock subtitle %}</span></h2>
     {% block content %}
     {% endblock content %}
@@ -177,15 +177,15 @@
 <!-- 하단 시작 { -->
 <div id="ft" class="my-0 mx-auto text-center main-bt">
   <div id="ft_wr" class="container-xxl position-relative d-flex flex-column text-start" style="padding: 40px 0;margin: 0 auto;">
-    <div id="ft_link" class="d-flex gap-3 px-4 text-start">
-      <a class="d-block sub-font py-3 fw-bold fs-4 text-decoration-none" href="{{ url_for('content_view', co_id='company') }}">회사소개</a>
-      <a class="d-block sub-font py-3 fw-bold fs-4 text-decoration-none" href="{{ url_for('content_view', co_id='privacy') }}">개인정보처리방침</a>
-      <a class="d-block sub-font py-3 fw-bold fs-4 text-decoration-none" href="{{ url_for('content_view', co_id='provision') }}">서비스이용약관</a>
+    <div id="ft_link" class="d-flex flex-column flex-md-row gap-3 px-4 text-start">
+      <a class="d-block sub-font fw-bold fs-4 text-decoration-none py-3 px-2" href="{{ url_for('content_view', co_id='company') }}">회사소개</a>
+      <a class="d-block sub-font fw-bold fs-4 text-decoration-none py-3 px-2" href="{{ url_for('content_view', co_id='privacy') }}">개인정보처리방침</a>
+      <a class="d-block sub-font fw-bold fs-4 text-decoration-none py-3 px-2" href="{{ url_for('content_view', co_id='provision') }}">서비스이용약관</a>
       {% if not request.state.is_responsive %}
       {% if request.state.is_mobile %}
-      <a class="d-block sub-font py-3 fw-bold fs-4 text-decoration-none" href="{{ url_for('device_change', device='pc') }}">PC버전</a>
+      <a class="d-block sub-font fw-bold fs-4 text-decoration-none py-3 px-2" href="{{ url_for('device_change', device='pc') }}">PC버전</a>
       {% else %}
-      <a class="d-block sub-font py-3 fw-bold fs-4 text-decoration-none" href="{{ url_for('device_change', device='mobile') }}">모바일버전</a>
+      <a class="d-block sub-font fw-bold fs-4 text-decoration-none py-3 px-2" href="{{ url_for('device_change', device='mobile') }}">모바일버전</a>
       {% endif %}
       {% endif %}
     </div>
