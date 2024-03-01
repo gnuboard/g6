@@ -44,6 +44,7 @@ async def board_list(
 
     result = select_query(
         request,
+        db,
         Board,
         search_params,
         same_search_fields=["gr_id", "bo_table"],

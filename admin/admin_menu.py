@@ -159,7 +159,7 @@ async def menu_list_update(
             db.commit()
 
         # 기존캐시 삭제
-        lfu_cache.update({"menus": None})
+        get_menus.cache_clear()
 
     except Exception as e:
         db.rollback()

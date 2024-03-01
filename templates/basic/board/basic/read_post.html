@@ -5,6 +5,8 @@
 
 {% block head %}
     <script src="/static/js/viewimageresize.js"></script>
+    <link rel="stylesheet" href="{{ theme_asset(request, 'css/board_common.css?ver=1.0.0') }}">
+    <link rel="stylesheet" href="{{ theme_asset(request, 'css/board_skin_basic.css?ver=1.0.0') }}">
 {% endblock head %}
 
 {% block title %}{{ write.wr_subject|truncate(20, False, '...', 0) }} > {{ board.subject }}{% endblock title %}
@@ -144,9 +146,11 @@
         </div>
 
         <div id="article_img">
-            {% for image in images %}
+        {% for image in images %}
+            <a href="/{{ image.bf_file }}" target="_blank" class="view_image">
                 <img src="/{{ image.bf_file }}" width="{{ board_config.image_width }}" alt="" title="">
-            {% endfor %}
+            </a>
+        {% endfor %}
         </div>
 
         <div id="article_contents" class="{{ request.state.editor }}">
@@ -614,11 +618,6 @@
     $(function() {
         // 이미지 리사이즈
         $("#view_article").viewimageresize();
-
-        $("a.view_image").click(function() {
-            window.open(this.href, "large_image", "location=yes,links=no,toolbar=no,top=10,left=10,width=10,height=10,resizable=yes,scrollbars=no,status=no");
-            return false;
-        });
 
         // 추천, 비추천
         $(".btn_react").click(function() {

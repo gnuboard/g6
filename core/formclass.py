@@ -337,6 +337,17 @@ class WriteForm:
     wr_link1: str = Form(None)
     wr_link2: str = Form(None)
 
+    wr_1: str = Form("")
+    wr_2: str = Form("")
+    wr_3: str = Form("")
+    wr_4: str = Form("")
+    wr_5: str = Form("")
+    wr_6: str = Form("")
+    wr_7: str = Form("")
+    wr_8: str = Form("")
+    wr_9: str = Form("")
+    wr_10: str = Form("")
+
 
 @dataclass
 class WriteCommentForm:
@@ -468,6 +479,12 @@ class QaContentForm:
     qa_html: int = Form(None)
     qa_subject: str = Form(...)
     qa_content: str = Form("")
+
+    qa_1: str = Form("")
+    qa_2: str = Form("")
+    qa_3: str = Form("")
+    qa_4: str = Form("")
+    qa_5: str = Form("")
 
 
 @dataclass

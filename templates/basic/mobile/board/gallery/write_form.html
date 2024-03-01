@@ -9,8 +9,8 @@
 
 {% block head %}
     {{ editor.head() }}
-    <link rel="stylesheet" href="{{ theme_asset(request, 'css/board_common.css?ver=1.0.0') }}">
-    <link rel="stylesheet" href="{{ theme_asset(request, 'css/board_skin_basic.css?ver=1.0.0') }}">
+    <link rel="stylesheet" href="{{ theme_asset(request, 'mobile/css/board_common.css?ver=1.0.0') }}">
+    <link rel="stylesheet" href="{{ theme_asset(request, 'mobile/css/board_skin_gallery.css?ver=1.0.0') }}">
 {% endblock head %}
 
 {% block title %}{{ board.subject }} 글{{ action }}{% endblock title %}
@@ -20,7 +20,7 @@
 {% set login_member=request.state.login_member %}
 {% set is_admin=get_admin_type(request, login_member.mb_id, board=board) %}
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
-<div id="bo_basic_write" class="bo_common bo_write">
+<div id="bo_gallery_write" class="bo_common bo_write">
 
     <form name="fwrite" id="fwrite" action="/board/write_update/{{ board.bo_table }}" method="post" enctype="multipart/form-data" onsubmit="return fwrite_submit(this);" autocomplete="off" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
         <input type="hidden" name="uid" value="{{ get_unique_id(request) }}">

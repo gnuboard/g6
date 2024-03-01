@@ -106,6 +106,8 @@ async def install(
 
         # 데이터베이스 연결 설정
         db = DBConnect()
+        db.set_connect_infomation()
+        db.create_url()
         if not db.supported_engines.get(form.db_engine.lower()):
             raise Exception("지원가능한 데이터베이스 엔진을 선택해주세요.")
 
@@ -188,6 +190,7 @@ async def install_process(request: Request):
         except Exception as e:
             os.remove(ENV_PATH)
             yield f"[error] 설치가 실패했습니다. {e}"
+            raise
 
     # 설치 진행 이벤트 스트림 실행
     return EventSourceResponse(install_event())

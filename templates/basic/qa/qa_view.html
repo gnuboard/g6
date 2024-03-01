@@ -2,7 +2,8 @@
 {% import editor_macro(request) as editor %}
 
 {% block head %}
-    <link rel="stylesheet" href="{{ theme_asset(request, 'css/qa.css') }}">
+    <link rel="stylesheet" href="{{ theme_asset(request, 'css/board_common.css?ver=1.0.0') }}">
+    <link rel="stylesheet" href="{{ theme_asset(request, 'css/qa.css?ver=1.0.0') }}">
     <script rel="stylesheet" src="/static/js/viewimageresize.js"></script>
     {{ editor.head() }}
 {% endblock head %}
@@ -95,7 +96,7 @@
 
             <div id="article_img">
                 {% for image in qa.image %}
-                    <a href="javascrip:;" target="_blank" class="view_image">
+                    <a href="/{{ image }}" target="_blank" class="view_image">
                         <img src="/{{ image }}" max-width="{{ qa_config.qa_image_width }}">
                     </a>
                 {% endfor %}
@@ -189,7 +190,7 @@
         <div id="answer_view_contents">
             <div id="contents_img">
                 {% for image in answer.image %}
-                    <a href="javascrip:;" target="_blank" class="view_image">
+                    <a href="/{{ image }}" target="_blank" class="view_image">
                         <img src="/{{ image }}">
                     </a>
                 {% endfor %}
@@ -327,11 +328,6 @@
     <script>
     $(function() {
         $("#view_article").viewimageresize();
-
-        $("a.view_image").click(function() {
-            window.open(this.href, "large_image", "location=yes,links=no,toolbar=no,top=10,left=10,width=10,height=10,resizable=yes,scrollbars=no,status=no");
-            return false;
-        });
     });
     </script>
 

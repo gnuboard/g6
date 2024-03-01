@@ -1,7 +1,10 @@
-from dotenv import dotenv_values, load_dotenv
+from typing import AsyncGenerator
+
+from dotenv import dotenv_values
 from fastapi import Depends
-from sqlalchemy import create_engine, URL
-from sqlalchemy.engine import Engine
+from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine, URL
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
@@ -19,7 +22,6 @@ class MySQLCharsetMixin:
 class DBSetting:
     """
     데이터베이스 설정 클래스
-    - 매번 설정이 불러와지는 문제점 해결해야함..
     """
 
     _table_prefix: Annotated[str, ""]
@@ -31,6 +33,8 @@ class DBSetting:
     _name: Annotated[str, ""]
     _url: Annotated[str, ""]
     _charset: Annotated[str, ""]
+    _instance: Annotated['DBSetting', None] = None
+    _setting_init: Annotated[bool, False]
 
     supported_engines = {
         "mysql": "mysql+pymysql",
@@ -38,9 +42,17 @@ class DBSetting:
         "sqlite": "sqlite:///sqlite3.db"
     }
 
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
     def __init__(self) -> None:
-        self.set_connect_infomation()
-        self.create_url()
+        super().__init__()
+        if not hasattr(DBSetting, "_setting_init"):
+            DBSetting._setting_init = True
+            self.set_connect_infomation()
+            self.create_url()
 
     @property
     def charset(self) -> str:
@@ -63,7 +75,6 @@ class DBSetting:
         self._table_prefix = prefix
 
     def set_connect_infomation(self) -> None:
-        load_dotenv()
         env_values = dotenv_values()
         port = env_values.get("DB_PORT", "3306")
 
@@ -164,7 +175,7 @@ db_connect.create_engine()
 
 
 # 데이터베이스 세션을 가져오는 의존성 함수
-async def get_db() -> Session:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     db = DBConnect().sessionLocal()
     try:
         yield db

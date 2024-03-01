@@ -3,8 +3,9 @@ import bleach
 
 from datetime import datetime, timedelta
 from fastapi import Request
-from sqlalchemy import and_, insert, or_, Select, select
+from sqlalchemy import and_, insert, or_
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import Select
 
 from core.database import DBConnect
 from core.exception import AlertException
@@ -492,6 +493,9 @@ class BoardFileManager():
         self.wr_id = wr_id
         self.db = DBConnect().sessionLocal()
 
+    def __del__(self):
+        self.db.close()
+
     def is_exist(self, bo_table: str = None, wr_id: int = None):
         """게시글에 파일이 있는지 확인
 
@@ -834,7 +838,6 @@ def write_search_filter(
     Returns:
         Select: 필터가 적용된 쿼리.
     """
-    db = DBConnect().sessionLocal()
     fields = []
     is_comment = False
 
@@ -861,7 +864,8 @@ def write_search_filter(
         for word in words:
             if not word.strip():
                 continue
-            word_filters.append(or_(*[getattr(model, field).like(f"%{word}%") for field in fields]))
+            word_filters.append(or_(
+                *[getattr(model, field).like(f"%{word}%") for field in fields if hasattr(model, field)]))
 
             # 단어별 인기검색어 등록
             insert_popular(request, fields, word)
@@ -876,7 +880,8 @@ def write_search_filter(
     if is_comment:
         query = query.where(model.wr_is_comment == 1)
         # 원글만 조회해야하므로, wr_parent 목록을 가져와서 in조건으로 재필터링
-        parents = db.scalars(query.add_columns(model)).all()
+        with DBConnect().sessionLocal() as db:
+            parents = db.scalars(query.add_columns(model)).all()
         query = select().where(model.wr_id.in_([row.wr_parent for row in parents]))
 
     return query
@@ -990,6 +995,8 @@ def generate_reply_character(board: Board, write):
     else:
         reply_char = chr(ord(last_reply_char) + char_increase)
 
+    db.close()
+
     return origin_reply + reply_char
 
 
@@ -1089,7 +1096,7 @@ def get_list_thumbnail(request: Request, board: Board, write: WriteBaseModel, th
     config = request.state.config
     images, files = BoardFileManager(board, write.wr_id).get_board_files_by_type(request)
     source_file = None
-    result = {"src": "", "alt": ""}
+    result = {"src": "", "alt": "", "noimg":""}
 
     if images:
         # TODO : 게시글의 파일정보를 캐시된 데이터에서 조회한다.
@@ -1128,6 +1135,7 @@ def get_list_thumbnail(request: Request, board: Board, write: WriteBaseModel, th
         result["src"] = thumbnail("./static/img/dummy-donotremove.png",
                         target_path="./data/thumbnail_tmp",
                         width=thumb_width, height=thumb_height, **kwargs)
+        result["noimg"] = "img_not_found"
 
     return result
 
@@ -1250,6 +1258,7 @@ def delete_write(request: Request, bo_table: str, origin_write: WriteBaseModel) 
     board.bo_count_comment -= delete_comment_count
 
     db.commit()
+    db.close()
 
     # 최신글 캐시 삭제
     FileCache().delete_prefix(f'latest-{bo_table}')
@@ -1388,6 +1397,8 @@ def render_latest_posts(request: Request, skin_name: str = 'basic', bo_table: st
     for write in writes:
         write = get_list(request, write, board_config, subject_len)
     
+    db.close()
+
     context = {
         "request": request,
         "board": board,

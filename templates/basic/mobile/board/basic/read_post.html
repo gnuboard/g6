@@ -5,8 +5,8 @@
 
 {% block head %}
     <script src="/static/js/viewimageresize.js"></script>
-    <link rel="stylesheet" href="{{ theme_asset(request, 'css/board_common.css?ver=1.0.0') }}">
-    <link rel="stylesheet" href="{{ theme_asset(request, 'css/board_skin_gallery.css?ver=1.0.0') }}">
+    <link rel="stylesheet" href="{{ theme_asset(request, 'mobile/css/board_common.css?ver=1.0.0') }}">
+    <link rel="stylesheet" href="{{ theme_asset(request, 'mobile/css/board_skin_basic.css?ver=1.0.0') }}">
 {% endblock head %}
 
 {% block title %}{{ write.wr_subject|truncate(20, False, '...', 0) }} > {{ board.subject }}{% endblock title %}
@@ -17,7 +17,7 @@
 {% set login_member=request.state.login_member %}
 {% set is_admin=get_admin_type(request, login_member.mb_id, board=board) %}
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
-<div id="bo_gallery_view" class="bo_common bo_view" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
+<div id="bo_basic_view" class="bo_common bo_view" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
 
     <h2 id="view_subject">
         {% if board.bo_use_category and write.ca_name %}

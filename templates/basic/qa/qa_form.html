@@ -2,7 +2,8 @@
 {% import editor_macro(request) as editor %}
 
 {% block head %}
-    <link rel="stylesheet" href="{{ theme_asset(request, 'css/qa.css') }}">
+    <link rel="stylesheet" href="{{ theme_asset(request, 'css/board_common.css?ver=1.0.0') }}">
+    <link rel="stylesheet" href="{{ theme_asset(request, 'css/qa.css?ver=1.0.0') }}">
     {{ editor.head() }}
 {% endblock head %}
 

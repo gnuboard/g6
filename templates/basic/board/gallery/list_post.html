@@ -6,6 +6,11 @@
 {% block title %}{{ board.subject }} {{ current_page }} 페이지{% endblock title %}
 {% block subtitle %}{{ board.subject }}{% endblock subtitle %}
 
+{% block head %}
+    <link rel="stylesheet" href="{{ theme_asset(request, 'css/board_common.css?ver=1.0.0') }}">
+    <link rel="stylesheet" href="{{ theme_asset(request, 'css/board_skin_gallery.css?ver=1.0.0') }}">
+{% endblock head %}
+
 {% block content %}
 {% set is_admin=get_admin_type(request, request.state.login_member.mb_id, board=board) %}
 {% set sca=request.query_params.sca %}
@@ -129,8 +134,11 @@
                     {% set thumbnail=get_list_thumbnail(request, board, write, gallery_width, gallery_height) %}
                     {% if thumbnail.src %}
                     <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}">
+                    {% if thumbnail.noimg %}
+                    <span class="is_label is_noimage">No Image</span>
+                    {% endif %}
                     {% else %}
-                    <span class="is_label is_noimage">NO IMAGE</span>
+                    <span class="is_label is_noimage">No Image</span>
                     <img src="{{ url_for('static', path='/img/dummy-donotremove.png?ver=1.0.0') }}" alt="" width="{{ gallery_width }}" height="{{ gallery_height }}">
                     {% endif %}
                 </a>

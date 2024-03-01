@@ -34,6 +34,7 @@ async def auth_list(
 
     result = select_query(
         request,
+        db,
         Auth,
         search_params,
         same_search_fields=["mb_id"],
@@ -55,6 +56,9 @@ async def auth_list(
     for row in result['rows']:
         row.mb_nick = row.member.mb_nick
         row.au_name = auth_child_menu.get(row.au_menu, '')
+
+    # auth_child_menu 키값으로 정렬
+    auth_child_menu = dict(sorted(auth_child_menu.items()))
 
     # 권한 옵션 생성
     auth_options = []

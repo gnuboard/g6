@@ -1,0 +1,46 @@
+@charset "utf-8";
+
+/* 게시판 목록: 리스트형 */
+.bo_list .list_table { margin:0 0 20px; }
+.bo_list .list_table .is_notice { background:var(--boNoticeBg) !important; border-bottom:1px solid #f8e6ee; }
+.bo_list .list_table .is_notice .table_subject a { font-weight:bold; }
+.bo_list .list_table .is_notice .table_wrid { font-weight:bold; color:#f9267f }
+
+@media (min-width:1101px) {
+    .bo_list .list_table { width:100%; border-collapse:collapse; border-spacing:0 5px; background:var(--contBg); border-top:var(--border); border-bottom:var(--border) }
+    .bo_list .list_table thead th { padding:20px 0; font-weight:normal; text-align:center; border-bottom:var(--border); height:40px; color: var(--fontColor); }
+    .bo_list .list_table tfoot th,
+    .bo_list .list_table tfoot td { padding:10px 0; border-top:1px solid #c1d1d5; border-bottom:1px solid #c1d1d5; background:#d7e0e2; text-align:center }
+    .bo_list .list_table tbody th { padding:8px 0; border-bottom:1px solid #e8e8e8 }
+    .bo_list .list_table tbody tr { border-left:2px solid transparent }
+    .bo_list .list_table tbody tr:hover { border-left:2px solid var(--primaryColor) }
+    .bo_list .list_table tbody .even td { background:var(--evenTdBg) }
+    .bo_list .list_table td { color:var(--tdColor); padding:10px 5px; border-top:var(--border); border-bottom:var(--border); line-height:1.6rem; height:60px; word-break:break-all }
+    .bo_list .list_table tbody tr:hover td { background:var(--bovHover) }
+    .bo_list .list_table a:hover { text-decoration:underline }
+    .bo_list .list_table .table_check { width:40px; text-align:center; }
+    .bo_list .list_table .table_wrid { width:40px; text-align:center; }
+    .bo_list .list_table .table_category { width:100px; text-align:center; }
+    .bo_list .list_table .table_writer { width:100px; }
+    .bo_list .list_table .table_hit { width: 80px; text-align:center; }
+    .bo_list .list_table .table_good,
+    .bo_list .list_table .table_nogood { width: 50px; text-align: center; }
+    .bo_list .list_table .table_datetime { width: 80px; text-align: center; }
+    .bo_list .list_table .table_status { width: 80px; text-align: center; }
+}
+
+@media (max-width:1100px) {
+    .bo_list .list_table { display:block; }
+    .bo_list .list_table thead { display:none; }
+    .bo_list .list_table tbody { display:block; }
+    .bo_list .list_table tr { display:block; padding:10px; border-bottom: var(--border); }
+    .bo_list .list_table td { display:inline-block; position: relative; line-height: 22px; vertical-align:middle; }
+    .bo_list .list_table .table_subject { display:block; margin:5px 0; font-size:1.6rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bo_list .list_table .table_hit::before,
+    .bo_list .list_table .table_good::before,
+    .bo_list .list_table .table_nogood::before { display:inline-block; margin:0 3px; content:attr(data-label); }
+    .bo_list .list_table .is_notice .table_check { display:none; }
+}
+
+/* 게시판 읽기 커스터마이징 */
+#bo_basic_view #view_header { grid-template-columns: 50px 1fr 170px; }

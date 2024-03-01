@@ -2,26 +2,34 @@
 
 {% block title %}{{ title }}{% endblock title %}
 
+{% block head %}
+    <link rel="stylesheet" href="{{ theme_asset(request, 'css/contents_skin_basic.css?ver=1.0.0') }}">
+{% endblock head %}
+
 {% block content %}
+
+<div id="contents_{{ content.co_id }}" class="contents_page">
+
     {% if co_himg_url %}
-        <div id="ctt_himg">
-            <img src="{{ co_himg_url }}" alt="" />
-        </div>
+    <div class="page_header_img">
+        <img src="{{ co_himg_url }}" alt="" />
+    </div>
     {% endif %}
 
-    <article id="ctt" class="ctt_{{ content.co_id }}">
-        <header>
-            <h1>{{ title }}</h1>
-        </header>
+    <div class="page_header">
+        <h1>{{ title }}</h1>
+    </div>
 
-        <div id="ctt_con">
-            {{ content.co_content|safe }} 
-        </div>
-    </article>
+    <div class="page_contents">
+        {{ content.co_content|safe }}
+    </div>
 
     {% if co_timg_url %}
-        <div id="ctt_timg">
-            <img src="{{ co_timg_url }}" alt="" />
-        </div>
+    <div class="page_footer_img">
+        <img src="{{ co_timg_url }}" alt="" />
+    </div>
     {% endif %}
+
+</div>
+
 {% endblock content %}
