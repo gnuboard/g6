@@ -318,7 +318,7 @@ html.remodal-is-locked {overflow-y:scroll !important}
 
     #hd .opener { display: none; }
 
-    #wrapper { display:grid; gap: 20px; grid-template-columns: 270px 1fr; width: 1200px; }
+    #wrapper { display:grid; gap: 20px; grid-template-columns: 270px 910px; width: 1200px; }
 
     #container { order: 1; margin:0 0 50px; padding: 20px; }
 
