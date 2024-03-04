@@ -6,9 +6,11 @@ from sqlalchemy import insert, update
 
 from core.database import db_session
 from core.models import Member
+
+from api.settings import SETTINGS
 from api.v1.models import MemberRefreshToken
 from api.v1.auth.auth import authenticate_member, authenticate_refresh_token
-from api.v1.auth.jwt import JWT, REFRESH_TOKEN_EXPIRE_MINUTES
+from api.v1.auth.jwt import JWT
 from api.v1.models.auth import Token
 
 router = APIRouter()
@@ -37,7 +39,8 @@ async def login_for_access_token(
         .values(
             mb_id=member.mb_id,
             refresh_token=refresh_token,
-            expires_at=datetime.now() + timedelta(minutes=REFRESH_TOKEN_EXPIRE_MINUTES)
+            expires_at=datetime.now() + timedelta(
+                minutes=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES)
         )
     )
     db.commit()
@@ -71,7 +74,8 @@ async def refresh_access_token(
         update(MemberRefreshToken)
         .values(
             refresh_token=new_refresh_token,
-            expires_at=datetime.now() + timedelta(minutes=REFRESH_TOKEN_EXPIRE_MINUTES),
+            expires_at=datetime.now() + timedelta(
+                minutes=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES),
             updated_at=datetime.now()
         )
         .where(MemberRefreshToken.mb_id == mb_id)

@@ -9,8 +9,9 @@ from sqlalchemy.sql import select
 from core.database import db_session
 from core.models import Member
 
+from api.settings import SETTINGS
 from api.v1.auth import oauth2_scheme
-from api.v1.auth.jwt import JWT, ACCESS_TOKEN_SECRET_KEY
+from api.v1.auth.jwt import JWT
 from api.v1.models.auth import TokenPayload
 
 router = APIRouter()
@@ -45,7 +46,10 @@ async def get_current_member(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    payload: TokenPayload = JWT.decode_token(token, ACCESS_TOKEN_SECRET_KEY)
+    payload: TokenPayload = JWT.decode_token(
+        token,
+        SETTINGS.ACCESS_TOKEN_SECRET_KEY
+    )
 
     mb_id: str = payload.sub
     if mb_id is None:
@@ -82,7 +86,7 @@ def check_email_certified_member(
     return True
 
 
-@router.get("/members/me/",
+@router.get("/me",
             summary="현재 로그인한 회원 정보 조회",
             description="JWT을 통해 현재 로그인한 회원 정보를 조회합니다. \
                 <br>- 탈퇴 또는 차단된 회원은 조회할 수 없습니다. \
@@ -100,3 +104,11 @@ async def read_members_me(
         Member: 현재 로그인한 회원 정보
     """
     return current_member
+
+
+@router.post("/items/{item_id}")
+async def update_item(
+    item_id: int,
+):
+    results = {"item_id": item_id}
+    return results

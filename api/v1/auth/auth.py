@@ -9,8 +9,9 @@ from sqlalchemy.sql import exists
 from core.database import db_session
 from lib.pbkdf2 import validate_password
 
+from api.settings import SETTINGS
 from api.v1.models import MemberRefreshToken
-from api.v1.auth.jwt import JWT, REFRESH_TOKEN_SECRET_KEY
+from api.v1.auth.jwt import JWT
 from api.v1.models.auth import TokenPayload
 from api.v1.routers.member import (
     get_member,
@@ -84,7 +85,7 @@ def authenticate_refresh_token(
 
     try:
         payload: TokenPayload = JWT.decode_token(
-            refresh_token, REFRESH_TOKEN_SECRET_KEY)
+            refresh_token, SETTINGS.REFRESH_TOKEN_SECRET_KEY)
         mb_id = payload.sub
 
         exists_refresh_token = db.scalar(
