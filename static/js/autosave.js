@@ -73,11 +73,19 @@ $(function () {
                                 hour: "2-digit",
                                 minute: "numeric"
                             });
-                            list.append('<li data-as_id=' + item.as_id + '>' +
-                                '<a href="#none" class="autosave_load">' + item.as_subject + '</a>' +
-                                '<span>' + datetime + ' <button type="button" name="as_id" value="' +
-                                item.as_id + '" class="autosave_del">삭제</input></span></li>'
-                            );
+                            let appendStr = '<li data-as_id=' + item.as_id + '>';
+                            appendStr += '<a href="#none" class="autosave_load">' + item.as_subject + '</a>'
+                            appendStr += '<div>';
+                            appendStr += datetime;
+                            appendStr += '<button type="button" name="as_id" value="' + item.as_id + '" class="autosave_del">';
+                            appendStr += '<i class="fa fa-close"></i>';
+                            appendStr += '<span class="blind">삭제</span>';
+                            appendStr += '</button>';
+                            appendStr += '</div>';
+                            appendStr += '</li>';
+
+                            list.append(appendStr);
+
                         });
                     }
                 }
