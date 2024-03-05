@@ -217,7 +217,7 @@
 
     <ul id="bo_v_nb" class="position-relative row mt-3 mb-5 p-0">
         {% if prev %}
-        <li class="col-md-6">
+        <li class="me-auto col-md-6 mb-3 mb-md-0">
           <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=prev.wr_id )|set_query_params(request) }}" class="btn_prv rounded-3 text-decoration-none sub-font">
             <i class="fa fa-chevron-up" aria-hidden="true"></i>
             <div class="fs-5" style="width: calc(100% - 40px);">
@@ -229,7 +229,7 @@
         </li>
         {% endif %}
         {% if next %}
-        <li class="col-md-6">
+        <li class="ms-auto col-md-6">
           <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=next.wr_id )|set_query_params(request) }}" class="btn_next rounded-3 text-decoration-none text-light">
             <div class="fs-5" style="width: calc(100% - 40px);">
               <p class="mb-0">다음글</p>

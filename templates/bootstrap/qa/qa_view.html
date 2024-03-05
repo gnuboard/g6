@@ -115,7 +115,7 @@
         </section>
         <ul id="bo_v_nb" class="position-relative row mt-3 mb-5 p-0">
               {% if prev %}
-                <li class="col-md-6">
+                <li class="me-auto col-md-6 mb-3 mb-md-0">
                   <a href="{{ url_for('qa_view', qa_id=prev.qa_id) }}?{{ request.query_params }}" class="btn_prv rounded-3 text-decoration-none sub-font">
                     <i class="fa fa-chevron-up" aria-hidden="true"></i>
                     <span class="fs-4 fw-bold">이전글</span>
@@ -123,7 +123,7 @@
                 </li>
               {% endif %}
               {% if next %}
-                <li class="col-md-6">
+                <li class="ms-auto col-md-6">
                   <a href="{{ url_for('qa_view', qa_id=next.qa_id) }}?{{ request.query_params }}" class="btn_next rounded-3 text-decoration-none text-light">
                     <span class="fs-4 fw-bold">다음글</span>
                     <i class="fa fa-chevron-down" aria-hidden="true"></i>     
