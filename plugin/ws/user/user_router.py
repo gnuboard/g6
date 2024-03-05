@@ -65,12 +65,9 @@ connections: List[WebSocket] = []
 import logging
 from fastapi import WebSocketDisconnect
 
-# 로깅 설정: 기본 수준은 INFO이며, 로그는 'app.log' 파일에 기록됩니다.
-logging.basicConfig(level=logging.INFO, filename='test.log', filemode='a',
-                    format='%(asctime)s - %(levelname)s - %(message)s')
-
-# 로거를 사용하여 로그 메시지 기록
-logging.info("This is an info message")
+# 로깅 설정: 기본 수준은 INFO이며, 로그는 'test.log' 파일에 기록됩니다.
+logging.basicConfig(level=logging.INFO, filename='test.log', filemode='a', format='%(asctime)s - %(levelname)s - %(message)s')
+logging.info("This is a test log message.")
 
 @router.websocket("/message")
 async def websocket_endpoint(websocket: WebSocket):
