@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock title %}
+
+{% block content %}
+    {% if co_himg_url %}
+        <div id="ctt_himg">
+            <img src="{{ co_himg_url }}" alt="" />
+        </div>
+    {% endif %}
+
+    <article id="ctt" class="ctt_{{ content.co_id }}">
+        <header>
+            <h1 class="fs-4 main-font">{{ title }}</h1>
+        </header>
+
+        <div id="ctt_con" class="fs-5 sub-font">
+            {{ content.co_content|safe }} 
+        </div>
+    </article>
+
+    {% if co_timg_url %}
+        <div id="ctt_timg">
+            <img src="{{ co_timg_url }}" alt="" />
+        </div>
+    {% endif %}
+{% endblock content %}
