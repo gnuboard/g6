@@ -14,7 +14,7 @@
 ### 그누보드6 커뮤니티
 - [https://sir.kr/main/g6](https://sir.kr/main/g6)
 
-### 그누보드6 유튜브 채널
+### 그누보드 유튜브 채널
 - [https://www.youtube.com/@gnuboard-official](https://www.youtube.com/@gnuboard-official)
 
 ## 시작하기
@@ -36,7 +36,14 @@ cd g6
 ```bash
 # 가상환경을 만듭니다. 필수 설치 요소는 아닙니다.
 python -m venv venv
+또는
+python3 -m venv venv
+
+# Linux
 source venv/bin/activate
+
+# Windows
+source venv/Scripts/activate
 ```
 
 ```bash
@@ -48,17 +55,17 @@ pip install -r requirements.txt
 # uvicorn을 이용하여 그누보드6을 실행합니다.
 # 기본적으로 8000번 포트를 사용합니다.
 
-# Window
-uvicorn main:app --reload
+# 외부서버(Linux)
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
-# 외부서버
-uvicorn main:app --reload --host {서버IP}
+# Windows
+uvicorn main:app --reload
 ```
 
 #### 그누보드6 데이터베이스 설정 방법
 1. 웹브라우저를 열고 **http://127.0.0.1:8000** 로 접속합니다.
-   - Windows의 경우: 브라우저에서 http://127.0.0.1:8000 으로 접속
-   - 외부서버의 경우: 브라우저에서 http://IP주소:8000 으로 접속
+   - Windows의 경우: 브라우저에서 http://127.0.0.1:8000 또는 http://localhost:8000 으로 접속
+   - 외부서버(Linux)의 경우: 브라우저에서 http://IP주소:8000 으로 접속
       - 외부서버의 아이피가 49.247.14.5 인 경우 http://49.247.14.5:8000 으로 접속하세요.
 
 2. `.env 파일이 없습니다. 설치를 진행해 주세요.` 라는 경고창과 함께 설치 페이지로 이동합니다.
@@ -76,7 +83,7 @@ uvicorn main:app --reload --host {서버IP}
       - 기본값은 `g6_` 입니다(예: gnuboard6_)
    - 재설치 여부를 체크합니다. (선택)
       > **Warning**  
-      > 재설치는 테이블을 삭제 후 재생성합니다. 기존 데이터가 망실될 수 있으니 주의하시기 바랍니다.
+      > 재설치는 테이블을 삭제 후 재생성합니다. 기존 데이터가 사라질 수 있으니 주의하시기 바랍니다.
 
 6. 관리자 정보를 입력합니다. 입력한 정보를 바탕으로 관리자 계정이 생성됩니다.
 
