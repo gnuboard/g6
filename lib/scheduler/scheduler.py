@@ -50,41 +50,41 @@ class Scheduler:
         for trigger_type in Scheduler.total_trigger_jobs.keys():
             self.add_jobs(trigger_type=trigger_type)
 
-    @staticmethod
-    def is_flag_exist() -> bool:
+    @classmethod
+    def is_flag_exist(cls) -> bool:
         """
         스케줄러 등록 확인용 파일의 유뮤를 확인합니다.
         """
-        return os.path.exists(Scheduler.flag_file_path)
+        return os.path.exists(cls.flag_file_path)
     
-    @staticmethod
-    def is_flag_valid() -> bool:
+    @classmethod
+    def is_flag_valid(cls) -> bool:
         """
         파일 생성 시간과 삭제 예정 시간을 비교하여 스케줄러 등록 확인용 파일이 유효한지 확인합니다.
         - 삭제 예정 시간: Scheduler.FLAG_DELETE_TIME (단위: second)
         - 삭제 예정 시간을 초과한 경우 False를 반환합니다.
         """
-        file_creation_time = os.path.getmtime(Scheduler.flag_file_path)
+        file_creation_time = os.path.getmtime(cls.flag_file_path)
         current_time = time.time()
-        if current_time - file_creation_time > Scheduler.FLAG_DELETE_TIME:
+        if current_time - file_creation_time > cls.FLAG_DELETE_TIME:
             return False
         return True
 
-    @staticmethod
-    def create_flag() -> None:
+    @classmethod
+    def create_flag(cls) -> None:
         """
         스케줄러 등록 확인용 파일을 생성합니다.
         """
-        with open(Scheduler.flag_file_path, "w") as f:
+        with open(cls.flag_file_path, "w") as f:
             f.write("스케줄 작업이 등록되었습니다.")
 
-    @staticmethod
-    def remove_flag() -> None:
+    @classmethod
+    def remove_flag(cls) -> None:
         """
         스케줄러 등록 확인용 파일을 삭제합니다.
         """
-        if os.path.exists(Scheduler.flag_file_path):
-            os.remove(Scheduler.flag_file_path)
+        if os.path.exists(cls.flag_file_path):
+            os.remove(cls.flag_file_path)
 
     def run_scheduler(self) -> None:
         """
