@@ -1,0 +1,85 @@
+2024-03-05 14:02:01,984 - INFO - This is an info message
+2024-03-05 14:04:03,232 - INFO - This is an info message
+2024-03-05 14:04:03,233 - INFO - This is an info message
+2024-03-05 14:04:08,654 - INFO - This is an info message
+2024-03-05 14:04:14,958 - INFO - This is an info message
+2024-03-05 14:04:37,624 - INFO - This is an info message
+2024-03-05 14:04:38,885 - INFO - WebSocket connection established: Address(host='59.10.38.107', port=5434)
+2024-03-05 14:04:46,633 - INFO - Received message: ddd from Address(host='59.10.38.107', port=5434)
+2024-03-05 14:05:04,097 - INFO - Received message: sdfsdf from Address(host='59.10.38.107', port=5434)
+2024-03-05 14:05:09,704 - INFO - Received message: aa from Address(host='59.10.38.107', port=5434)
+2024-03-05 14:06:59,213 - ERROR - Error in WebSocket connection: (1012, None)
+2024-03-05 14:06:59,213 - INFO - WebSocket connection closed: Address(host='59.10.38.107', port=5434)
+2024-03-05 14:07:00,122 - INFO - This is an info message
+2024-03-05 14:07:02,621 - INFO - WebSocket connection established: Address(host='59.10.38.107', port=5547)
+2024-03-05 14:07:07,768 - INFO - Received message: sssss from Address(host='59.10.38.107', port=5547)
+2024-03-05 14:08:09,683 - INFO - Received message: sdfsdf from Address(host='59.10.38.107', port=5547)
+2024-03-05 14:10:34,336 - ERROR - Error in WebSocket connection: (1012, None)
+2024-03-05 14:10:34,336 - INFO - WebSocket connection closed: Address(host='59.10.38.107', port=5547)
+2024-03-05 14:10:35,244 - INFO - This is an info message
+2024-03-05 14:10:48,895 - INFO - This is an info message
+2024-03-05 14:10:51,518 - INFO - WebSocket connection established: Address(host='59.10.38.107', port=5705)
+2024-03-05 14:10:53,701 - INFO - Received message: dsdfsdf from Address(host='59.10.38.107', port=5705)
+2024-03-05 14:10:53,701 - INFO - Current connections: 1
+2024-03-05 14:10:53,702 - INFO - Message sent to Address(host='59.10.38.107', port=5705)
+2024-03-05 14:11:18,728 - ERROR - Error in WebSocket connection: (1001, None)
+2024-03-05 14:11:18,728 - INFO - WebSocket connection closed: Address(host='59.10.38.107', port=5705)
+2024-03-05 14:11:18,763 - INFO - WebSocket connection established: Address(host='59.10.38.107', port=5733)
+2024-03-05 14:11:25,009 - INFO - Received message: Hi from Address(host='59.10.38.107', port=5733)
+2024-03-05 14:11:25,010 - INFO - Current connections: 1
+2024-03-05 14:11:25,010 - INFO - Message sent to Address(host='59.10.38.107', port=5733)
+2024-03-05 14:11:25,716 - INFO - WebSocket connection established: Address(host='59.10.38.107', port=64611)
+2024-03-05 14:11:26,971 - ERROR - Error in WebSocket connection: (1001, None)
+2024-03-05 14:11:26,972 - INFO - WebSocket connection closed: Address(host='59.10.38.107', port=64611)
+2024-03-05 14:11:26,998 - INFO - WebSocket connection established: Address(host='59.10.38.107', port=64615)
+2024-03-05 14:11:29,145 - INFO - Received message:  from Address(host='59.10.38.107', port=64615)
+2024-03-05 14:11:29,145 - INFO - Current connections: 2
+2024-03-05 14:11:29,145 - INFO - Message sent to Address(host='59.10.38.107', port=5733)
+2024-03-05 14:11:29,145 - INFO - Message sent to Address(host='59.10.38.107', port=64615)
+2024-03-05 14:11:31,672 - INFO - Received message: ㅁㄴㅇ from Address(host='59.10.38.107', port=64615)
+2024-03-05 14:11:31,672 - INFO - Current connections: 2
+2024-03-05 14:11:31,672 - INFO - Message sent to Address(host='59.10.38.107', port=5733)
+2024-03-05 14:11:31,673 - INFO - Message sent to Address(host='59.10.38.107', port=64615)
+2024-03-05 14:11:34,364 - INFO - Received message: ㄴㅁㅇㅇㅁㄴㅇㅋㅌㅊㅋㅌ from Address(host='59.10.38.107', port=64615)
+2024-03-05 14:11:34,364 - INFO - Current connections: 2
+2024-03-05 14:11:34,364 - INFO - Message sent to Address(host='59.10.38.107', port=5733)
+2024-03-05 14:11:34,365 - INFO - Message sent to Address(host='59.10.38.107', port=64615)
+2024-03-05 14:11:35,783 - ERROR - Error in WebSocket connection: (1001, None)
+2024-03-05 14:11:35,783 - INFO - WebSocket connection closed: Address(host='59.10.38.107', port=64615)
+2024-03-05 14:11:35,810 - INFO - WebSocket connection established: Address(host='59.10.38.107', port=64621)
+2024-03-05 14:11:36,358 - ERROR - Error in WebSocket connection: (1001, None)
+2024-03-05 14:11:36,358 - INFO - WebSocket connection closed: Address(host='59.10.38.107', port=64621)
+2024-03-05 14:11:36,368 - INFO - WebSocket connection established: Address(host='59.10.38.107', port=64622)
+2024-03-05 14:11:43,932 - ERROR - Error in WebSocket connection: (1001, None)
+2024-03-05 14:11:43,932 - INFO - WebSocket connection closed: Address(host='59.10.38.107', port=64622)
+2024-03-05 14:11:43,975 - INFO - WebSocket connection established: Address(host='59.10.38.107', port=64629)
+2024-03-05 14:11:44,968 - ERROR - Error in WebSocket connection: (1001, None)
+2024-03-05 14:11:44,968 - INFO - WebSocket connection closed: Address(host='59.10.38.107', port=64629)
+2024-03-05 14:11:44,991 - INFO - WebSocket connection established: Address(host='59.10.38.107', port=64630)
+2024-03-05 14:11:45,585 - ERROR - Error in WebSocket connection: (1001, None)
+2024-03-05 14:11:45,585 - INFO - WebSocket connection closed: Address(host='59.10.38.107', port=64630)
+2024-03-05 14:11:45,596 - INFO - WebSocket connection established: Address(host='59.10.38.107', port=64631)
+2024-03-05 14:11:45,850 - ERROR - Error in WebSocket connection: (1001, None)
+2024-03-05 14:11:45,850 - INFO - WebSocket connection closed: Address(host='59.10.38.107', port=64631)
+2024-03-05 14:11:45,872 - INFO - WebSocket connection established: Address(host='59.10.38.107', port=64632)
+2024-03-05 14:11:46,087 - ERROR - Error in WebSocket connection: (1001, None)
+2024-03-05 14:11:46,087 - INFO - WebSocket connection closed: Address(host='59.10.38.107', port=64632)
+2024-03-05 14:11:46,097 - INFO - WebSocket connection established: Address(host='59.10.38.107', port=64633)
+2024-03-05 14:11:46,271 - ERROR - Error in WebSocket connection: (1001, None)
+2024-03-05 14:11:46,271 - INFO - WebSocket connection closed: Address(host='59.10.38.107', port=64633)
+2024-03-05 14:11:46,281 - INFO - WebSocket connection established: Address(host='59.10.38.107', port=64634)
+2024-03-05 14:11:46,476 - ERROR - Error in WebSocket connection: (1001, None)
+2024-03-05 14:11:46,476 - INFO - WebSocket connection closed: Address(host='59.10.38.107', port=64634)
+2024-03-05 14:11:46,500 - INFO - WebSocket connection established: Address(host='59.10.38.107', port=64635)
+2024-03-05 14:11:57,637 - INFO - Received message: aa from Address(host='59.10.38.107', port=64635)
+2024-03-05 14:11:57,637 - INFO - Current connections: 2
+2024-03-05 14:11:57,637 - INFO - Message sent to Address(host='59.10.38.107', port=5733)
+2024-03-05 14:11:57,638 - INFO - Message sent to Address(host='59.10.38.107', port=64635)
+2024-03-05 14:12:12,091 - INFO - Received message: 저기 말이야. 일단 feat/bootstrap 는 push 한 상태지? from Address(host='59.10.38.107', port=5733)
+2024-03-05 14:12:12,092 - INFO - Current connections: 2
+2024-03-05 14:12:12,092 - INFO - Message sent to Address(host='59.10.38.107', port=5733)
+2024-03-05 14:12:12,092 - INFO - Message sent to Address(host='59.10.38.107', port=64635)
+2024-03-05 14:13:05,174 - ERROR - Error in WebSocket connection: (1012, None)
+2024-03-05 14:13:05,174 - INFO - WebSocket connection closed: Address(host='59.10.38.107', port=5733)
+2024-03-05 14:13:05,174 - ERROR - Error in WebSocket connection: (1012, None)
+2024-03-05 14:13:05,174 - INFO - WebSocket connection closed: Address(host='59.10.38.107', port=64635)
