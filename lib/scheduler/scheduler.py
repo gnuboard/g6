@@ -30,24 +30,24 @@ class Scheduler:
         스케줄러를 생성하고 시작합니다.
         기본적으로 BackgroundScheduler를 사용합니다.
         """
-        self.background_scheduler = BackgroundScheduler(timezone=Scheduler.TIME_ZONE)
+        self.background_scheduler = BackgroundScheduler(timezone=self.TIME_ZONE)
         self.background_scheduler.start()
 
     def add_jobs(self, trigger_type: str) -> None:
         """
         트리거별 작업을 스케줄러에 등록합니다.
         """
-        trigger_jobs = Scheduler.total_trigger_jobs[trigger_type]
+        trigger_jobs = self.total_trigger_jobs[trigger_type]
         for job_info in trigger_jobs:
             job_id, job_func, expression = job_info.values()
             self.background_scheduler.add_job(trigger=trigger_type, func=job_func, **expression)
-            Scheduler.job_ids.add(job_id)
+            self.job_ids.add(job_id)
 
     def add_all_jobs(self) -> None:
         """
         모든 트리거들의 작업을 스케줄러에 모두 등록합니다.
         """
-        for trigger_type in Scheduler.total_trigger_jobs.keys():
+        for trigger_type in self.total_trigger_jobs.keys():
             self.add_jobs(trigger_type=trigger_type)
 
     @classmethod
@@ -94,12 +94,12 @@ class Scheduler:
         - flag 파일 생성 여부와 파일의 유효성을 확인하여 스케줄 작업 등록 여부를 결정합니다.
         """
         time.sleep(0.1)
-        if Scheduler.is_flag_exist() and Scheduler.is_flag_valid():
+        if self.is_flag_exist() and self.is_flag_valid():
             return
 
-        run_date = datetime.now() + timedelta(seconds=Scheduler.FLAG_DELETE_TIME)
+        run_date = datetime.now() + timedelta(seconds=self.FLAG_DELETE_TIME)
         self.add_all_jobs()
         self.background_scheduler.add_job(
-            trigger="date", func=Scheduler.remove_flag, run_date=run_date
+            trigger="date", func=self.remove_flag, run_date=run_date
         )
-        Scheduler.create_flag()
+        self.create_flag()
