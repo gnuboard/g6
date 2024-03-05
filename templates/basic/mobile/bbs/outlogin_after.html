@@ -1,0 +1,65 @@
+{% set member=request.state.login_member %}
+<div id="member_signed_in" class="member_sign">
+
+    <div class="sign_info">
+        <h2>나의 회원정보</h2>
+
+        <a href="/bbs/member_confirm" class="profile_img">
+            <img src="{{ get_member_image(request, request.state.login_member.mb_id)|safe }}" alt="">
+            <span class="blind">정보수정</span>
+        </a>
+
+        <strong>{{ member.mb_nick if member is defined else '' }}님</strong>
+
+        {% if request.state.is_super_admin %}
+        <a href="/admin" class="btn_admin btn" title="관리자">
+            <i class="fa fa-cog fa-spin fa-fw"></i>
+            <span class="blind">관리자</span>
+        </a>
+        {% endif %}
+
+        <div>
+            <a href="/bbs/logout" class="info_link">로그아웃</a>
+        </div>
+    </div>
+
+    <ul class="sign_menu">
+        <li>
+            <a href="/bbs/point" target="_blank" class="win_point">
+                <span>
+                    <i class="fa fa-database" aria-hidden="true"></i>
+                    포인트
+                </span>
+                <strong>{{ member.mb_point|number_format if member else '' }}</strong>
+            </a>
+        </li>
+        <li>
+            <a href="{{ url_for('memo_list') }}" target="_blank" class="win_memo">
+                <span>
+                    <i class="fa fa-regular fa-envelope" aria-hidden="true"></i>
+                    <span class="blind">안 읽은 </span>쪽지
+                </span>
+                <strong>{{ member.mb_memo_cnt if member is defined else '' }}</strong>
+            </a>
+        </li>
+        <li>
+            <a href="{{ url_for('scrap_list') }}" target="_blank" class="win_scrap">
+                <span>
+                    <i class="fa fa-thumb-tack" aria-hidden="true"></i>
+                    스크랩
+                </span>
+                <strong class="scrap">{{ member.mb_scrap_cnt if member is defined else '' }}</strong>
+            </a>
+        </li>
+    </ul>
+
+</div>
+
+<script>
+// 탈퇴의 경우 아래 코드를 연동하시면 됩니다.
+function member_leave()
+{
+    if (confirm("정말 회원에서 탈퇴 하시겠습니까?"))
+        location.href = g6_url + "bbs/member_leave";
+}
+</script>

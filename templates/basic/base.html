@@ -1,0 +1,234 @@
+{% extends "base_sub.html" %}
+
+{% block body_html %}
+<div id="hd">
+
+    <h1 id="hd_h1"></h1>
+    <div id="skip_to_container"><a href="#container">본문 바로가기</a></div>
+
+    {% include "/bbs/newwin.inc.html" %}
+
+    <div id="tnb">
+        <div class="inner">
+            <ul id="hd_qnb">
+                <li><a href="{{ url_for('faq_view') }}">FAQ</a></li>
+                <li><a href="{{ url_for('qa_list') }}">Q&A</a></li>
+                <li><a href="/bbs/new">새글</a></li>
+                <li><a href="/bbs/current_connect" class="visit">
+                    접속자<strong class="visit-num">{{ current_login_count[0] }}</strong></a>
+                    <!-- current_login_count[1]은 회원 수 -->
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="hd_wrapper">
+
+        <button type="button" id="opener_aside" class="opener">
+            <i class="fa fa-bars" aria-hidden="true"></i>
+            <span class="blind">열기</span>
+        </button>
+
+        <a href="/" id="logo"><img src="/static/img/logo_gnuboard6.png" alt="그누보드6"></a>
+
+        <button type="button" id="opener_header_search" class="opener">
+            <i class="fa fa-search" aria-hidden="true"></i>
+            <span class="blind">사용자메뉴</span>
+        </button>
+
+        <div id="header_search">
+            <fieldset>
+                <legend>사이트 내 전체검색</legend>
+
+                <form name="fsearchbox" method="get" action="/bbs/search" onsubmit="return fsearchbox_submit(this);">
+                    <input type="hidden" name="sfl" value="wr_subject||wr_content">
+                    <input type="hidden" name="sop" value="and">
+                    <label for="sch_stx" class="blind">검색어 필수</label>
+                    <input type="text" name="stx" id="sch_stx" maxlength="20" placeholder="검색어를 입력해주세요">
+                    <button type="submit" id="sch_submit" value="검색"><i class="fa fa-search" aria-hidden="true"></i><span class="blind">검색</span></button>
+                </form>
+
+                <script>
+                function fsearchbox_submit(f)
+                {
+                    var stx = f.stx.value.trim();
+                    if (stx.length < 2) {
+                        alert("검색어는 두글자 이상 입력하십시오.");
+                        f.stx.select();
+                        f.stx.focus();
+                        return false;
+                    }
+
+                    var cnt = 0;
+                    for (var i = 0; i < stx.length; i++) {
+                        if (stx.charAt(i) == ' ')
+                            cnt++;
+                    }
+
+                    if (cnt > 1) {
+                        alert("빠른 검색을 위하여 검색어에 공백은 한개만 입력할 수 있습니다.");
+                        f.stx.select();
+                        f.stx.focus();
+                        return false;
+                    }
+                    f.stx.value = stx;
+
+                    return true;
+                }
+                </script>
+            </fieldset>
+
+            {% include "/bbs/popular.html" %}
+        </div>
+
+        <script>
+        $(function() {
+            var openerAside = $("#opener_aside");
+            var openerHeaderSearch = $("#opener_header_search");
+            var closerAside = $("#closer_aside");
+            var headerSearch = $("#header_search");
+            var aside = $("#aside");
+
+            openerHeaderSearch.on("click", function() {
+                headerSearch.toggleClass("active");
+            });
+
+            openerAside.on("click", function() {
+                aside.show();
+            });
+
+            closerAside.on("click", function() {
+                aside.hide();
+            });
+
+        });
+        </script>
+
+        <div class="profile_wrap">
+            <span class="profile_img" tabindex="0">
+                <img src="{{ get_member_image(request, request.state.login_member.mb_id)|safe }}" alt="profile_image">
+            </span>
+            <ul class="hd_login">
+                {% if request.state.login_member %}
+                <li><a href="/bbs/member_confirm?url=/bbs/register_form">정보수정</a></li>
+                {% if request.state.is_super_admin %}
+                <li class="tnb_admin"><a href="/admin">관리자</a></li>
+                {% endif %}
+                <li><a href="/bbs/logout">로그아웃</a></li>
+                {% else %}
+                <li><a href="/bbs/register">회원가입</a></li>
+                <li><a href="/bbs/login">로그인</a></li>
+                {% endif %}
+            </ul>
+        </div>
+
+    </div>
+
+    <script>
+        var profileImg = document.querySelector(".profile_wrap .profile_img");
+        var mypageBox = document.querySelector(".hd_login");
+
+        function handleProfileClick() {
+        mypageBox.classList.add("active");
+        }
+
+        function handleProfileFocusout() {
+        mypageBox.classList.remove("active");
+        }
+
+        profileImg.addEventListener("click", handleProfileClick);
+        profileImg.addEventListener("focusout", handleProfileFocusout);
+    </script>
+
+</div>
+
+{% if errors %}
+<ul>
+    {% for error in errors %}
+    <li>{{ error }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+<hr>
+
+<div id="wrapper">
+
+    <div id="container">
+        <h2 id="container_title"><span>{% block subtitle %}{% endblock subtitle %}</span></h2>
+        {% block content %}
+        {% endblock content %}
+    </div>
+
+    <div id="aside">
+        <button type="button" id="closer_aside">
+            <i class="fa fa-xmark" aria-hidden="true"></i>
+            <span class="blind">전체보기 닫기</span>
+        </button>
+
+        {% if request.state.login_member %}
+            {% include "bbs/outlogin_after.html" %}
+        {% else %}
+            {% include "bbs/outlogin_before.html" %}
+        {% endif %}
+
+        {% set menus = get_menus() %}
+        {% if menus -%}
+            {% include "/bbs/menu.html" ignore missing %}
+        {%- endif %}
+
+        {% include "/bbs/poll.html" %}
+
+        {% if render_visit_statistics %}
+            {{ render_visit_statistics(request)|safe }}
+        {% endif %}
+    </div>
+
+</div>
+
+<hr>
+
+<div id="ft">
+
+    <div id="ft_wr">
+        <div id="ft_link" class="ft_cnt">
+            <a href="{{ url_for('content_view', co_id='company') }}">회사소개</a>
+            <a href="{{ url_for('content_view', co_id='privacy') }}">개인정보처리방침</a>
+            <a href="{{ url_for('content_view', co_id='provision') }}">서비스이용약관</a>
+            {% if not request.state.is_responsive %}
+                {% if request.state.is_mobile %}
+                    <a href="{{ url_for('device_change', device='pc') }}">PC버전</a>
+                {% else %}
+                    <a href="{{ url_for('device_change', device='mobile') }}">모바일버전</a>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <div id="ft_copy">Copyright &copy; <b>{{ request.url.hostname }}.</b> All rights reserved.</div>
+
+    <button type="button" id="top_btn">
+        <i class="fa fa-arrow-up" aria-hidden="true"></i><span class="blind">상단으로</span>
+    </button>
+    <button type="button" class="darkmode-toggle-switch">
+      <i class="fa-solid fa-moon visible bright"></i>
+      <i class="fa-solid fa-sun visible dark"></i>
+    </button>
+
+</div>
+
+{% if request.state.config.cf_analytics %}
+    {{ request.state.config.cf_analytics|safe }}
+{% endif %}
+
+<script>
+
+    $(function() {
+        $("#top_btn").on("click", function() {
+            $("html, body").animate({scrollTop:0}, '500');
+            return false;
+        });
+    });
+
+</script>
+{% endblock body_html %}

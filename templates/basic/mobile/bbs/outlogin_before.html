@@ -1,0 +1,21 @@
+<div id="member_signed_out" class="member_sign">
+
+    <div class="sign_tab">
+        <h2><span class="blind">회원</span>로그인</h2>
+        <a href="/bbs/login" class="in">로그인</a>
+        <a href="/bbs/register" class="join">회원가입</a>
+    </div>
+
+</div>
+
+{% include "social/social_login.html" %}
+
+<script>
+function fhead_submit(f)
+{
+    if( $( document.body ).triggerHandler( 'outlogin1', [f, 'foutlogin'] ) !== false ){
+        return true;
+    }
+    return false;
+}
+</script>

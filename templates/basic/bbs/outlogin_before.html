@@ -1,0 +1,69 @@
+<div id="member_signed_out" class="member_sign">
+
+    <div class="sign_tab">
+        <h2><span class="blind">회원</span>로그인</h2>
+        <a href="/bbs/login" class="in">로그인</a>
+        <a href="/bbs/register" class="join">회원가입</a>
+    </div>
+
+    <form name="foutlogin" action="/bbs/login" onsubmit="return fhead_submit(this);" method="post" autocomplete="off">
+        <input type="hidden" name="url" value="{{ request.url }}">
+
+        <div class="sign_form">
+            <label for="ol_id" id="ol_idlabel" class="blind">회원아이디<strong>필수</strong></label>
+            <input type="text" id="ol_id" name="mb_id" required class="required alnum_" maxlength="20" placeholder="아이디">
+
+            <label for="ol_pw" id="ol_pwlabel" class="blind">비밀번호<strong>필수</strong></label>
+            <input type="password" name="mb_password" id="ol_pw" required class="required" maxlength="20" placeholder="비밀번호">
+
+            <input type="submit" id="ol_submit" value="로그인" class="btn_b02">
+        </div>
+
+        <div class="sign_option">
+            <div class="chk_box">
+                <input type="checkbox" name="auto_login" id="auto_login">
+                <label for="auto_login"><span></span>자동로그인</label>
+            </div>
+
+            <div>
+                <a href="/bbs/id_lost">ID 찾기</a> / 
+                <a href="/bbs/password_lost">PW 찾기</a>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+{% include "social/social_login.html" %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    const omi = document.querySelector('#ol_id'),
+        omp = document.querySelector('#ol_pw'),
+        omi_label = document.querySelector('#ol_idlabel'),
+        omp_label = document.querySelector('#ol_pwlabel');
+
+    omp_label.classList.add('ol_pwlabel');
+    omi_label.classList.add('ol_idlabel');
+    
+    const autoLogin = document.querySelector('#auto_login');
+    autoLogin.addEventListener('click', function() {
+        if (this.checked) {
+        const confirm_result  = confirm("자동로그인을 사용하시면 다음부터 회원아이디와 비밀번호를 입력하실 필요가 없습니다.\n\n공공장소에서는 개인정보가 유출될 수 있으니 사용을 자제하여 주십시오.\n\n자동로그인을 사용하시겠습니까?")
+            if (!confirm_result) {
+                return this.checked = false;
+            }
+        }
+    });
+});
+
+function fhead_submit(f)
+{
+    if( $( document.body ).triggerHandler( 'outlogin1', [f, 'foutlogin'] ) !== false ){
+        return true;
+    }
+    return false;
+}
+
+</script>

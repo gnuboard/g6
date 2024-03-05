@@ -1,0 +1,31 @@
+@charset "utf-8";
+
+/* 게시판 목록: 갤러리형 */
+.bo_list .list_all_check { margin:0 0 10px; }
+.bo_list .list_grid { display: grid; row-gap: 30px; margin:0 0 20px; }
+.bo_list .list_grid .grid_empty { display:flex; align-items:center; height:200px; justify-content:center; }
+.bo_list .grid_item { border: var(--border); }
+.bo_list .grid_item .item_chk { display:flex; justify-content: left; gap:10px; padding:10px; border-bottom: var(--border); }
+.bo_list .grid_item .item_link { display:flex; position:relative; border-bottom: var(--border); }
+.bo_list .grid_item .item_link .is_label { display:flex; position:absolute; top:0; left:0; width:100%; height:100%; align-items: center; justify-content: center; }
+.bo_list .grid_item .item_img { justify-content: center; background:var(--contBg); }
+.bo_list .grid_item .item_img img { max-width:100%; height:auto; }
+.bo_list .grid_item .item_icon { z-index:2; position:relative; }
+.bo_list .grid_item .item_icon > div { display:flex; gap:5px; position:absolute; top:-25px; left:10px; }
+.bo_list .grid_item .item_subject { gap:5px; align-items: center; padding:15px; font-size:1.6rem; font-weight:bold; }
+.bo_list .grid_item .item_footer { display:flex; flex-direction: column; gap:10px; padding:15px; }
+.bo_list .grid_item .item_writer { display: flex; flex-direction: column; gap:5px; }
+.bo_list .grid_item .item_info { display: flex; justify-content:space-between; }
+.bo_list .grid_item .item_info > div { display:flex; gap:10px; align-items:center; }
+
+/* 게시판 읽기 커스터마이징 */
+#bo_gallery_view #view_header { grid-template-columns: 50px 1fr 170px; }
+
+@media (min-width:641px) {
+    .bo_list .list_grid { column-gap: 12px; }
+}
+
+@media (max-width:640px) {
+    .bo_list .list_grid { column-gap: 5px; }
+    .bo_list .grid_item .item_info { flex-direction:column; gap:10px; }
+}
