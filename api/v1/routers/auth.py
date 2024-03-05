@@ -10,7 +10,7 @@ from core.models import Member
 from api.settings import SETTINGS
 from api.v1.models import MemberRefreshToken
 from api.v1.auth.auth import authenticate_member, authenticate_refresh_token
-from api.v1.auth.jwt import JWT
+from api.v1.auth.jwt import JWT, TokenType
 from api.v1.models.auth import Token
 
 router = APIRouter()
@@ -30,8 +30,12 @@ async def login_for_access_token(
         Token: Access Token
     """
     # Access Token과 Refresh Token을 생성
-    access_token = JWT.create_access_token(data={"sub": member.mb_id})
-    refresh_token = JWT.create_refresh_token(data={"sub": member.mb_id})
+    access_token = JWT.create_token(
+        data={"sub": member.mb_id}, token_type=TokenType.ACCESS
+    )
+    refresh_token = JWT.create_token(
+        data={"sub": member.mb_id}, token_type=TokenType.REFRESH
+    )
 
     # 데이터베이스에 refresh_token 저장
     db.execute(
