@@ -274,7 +274,7 @@ def validate_nickname(mb_nick: str, prohibit_id: str) -> Dict[str, str]:
         return message
 
     if mb_nick in prohibit_id:
-        message["msg"] = "닉네임으로 정할 수없는 단어입니다."
+        message["msg"] = "닉네임으로 정할 수 없는 단어입니다."
         return message
 
     db.close()

@@ -165,6 +165,7 @@ async def post_register_form(
     if result["msg"]:
         raise AlertException(status_code=400, detail=result["msg"])
 
+    # 본인인증
     if mb_certify_case and member_form.mb_certify:
         member_form.mb_certify = mb_certify_case
         member_form.mb_adult = member_form.mb_adult
@@ -204,14 +205,6 @@ async def post_register_form(
     else:
         # 메일인증을 사용하지 않을 경우 바로 인증처리
         new_member.mb_email_certify = datetime.now()
-
-    # 본인인증
-    if mb_certify_case and member_form.mb_certify:
-        new_member.mb_certify = mb_certify_case
-        new_member.mb_adult = member_form.mb_adult
-    else:
-        new_member.mb_certify = ""
-        new_member.mb_adult = 0
 
     db.add(new_member)
     db.commit()
