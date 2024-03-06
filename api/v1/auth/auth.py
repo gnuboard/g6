@@ -1,4 +1,6 @@
-""" This module contains the authentication logic for the API."""
+""" 
+회원 인증 관련 함수를 정의합니다.
+"""
 from typing_extensions import Annotated
 
 from jose import ExpiredSignatureError, JWTError
@@ -13,7 +15,7 @@ from api.settings import SETTINGS
 from api.v1.models import MemberRefreshToken
 from api.v1.auth.jwt import JWT
 from api.v1.models.auth import TokenPayload
-from api.v1.routers.member import (
+from api.v1.lib.member import (
     get_member,
     check_active_member, check_email_certified_member
 )

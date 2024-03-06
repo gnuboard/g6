@@ -1,5 +1,10 @@
+"""
+API에서 필요한 기본적인 모델을 정의합니다.
+TODO: 역할에 따른 재구성 작업이 필요.
+"""
 from datetime import datetime
 
+from pydantic import BaseModel
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 
 from core.database import DBConnect
@@ -7,6 +12,7 @@ from core.models import Base, DB_TABLE_PREFIX
 
 
 class MemberRefreshToken(Base):
+    """회원 Refresh Token 테이블 모델"""
     __tablename__ = DB_TABLE_PREFIX + "member_refresh_token"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -23,3 +29,13 @@ class MemberRefreshToken(Base):
 #       - API사용 옵션을 두어서 설정할 때 만들것인지 등등..
 #   2. 만료된 Refresh Token을 주기적으로 삭제하는 작업이 필요함
 MemberRefreshToken.__table__.create(bind=DBConnect().engine, checkfirst=True)
+
+
+class Message(BaseModel):
+    """메시지 응답 모델 (API Docs)"""
+    detail: str
+
+responses = {
+    403: {"model": Message},
+    409: {"model": Message}
+}

@@ -11,4 +11,4 @@ class Tags(Enum):
 # API 버전 1 라우터를 정의합니다.
 router = APIRouter(prefix="/api/v1")
 router.include_router(auth.router, prefix="", tags=[Tags.auth])
-router.include_router(member.router, prefix="/member", tags=[Tags.members])
+router.include_router(member.router, prefix="/members", tags=[Tags.members])

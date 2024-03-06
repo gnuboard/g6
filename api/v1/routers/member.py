@@ -1,89 +1,24 @@
+import secrets
+
 from datetime import datetime
-from typing import Union
+from typing import Any
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy.orm import Session
-from sqlalchemy.sql import select
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
+from fastapi.templating import Jinja2Templates
 
-from core.database import db_session
-from core.models import Member
 
-from api.settings import SETTINGS
-from api.v1.auth import oauth2_scheme
-from api.v1.auth.jwt import JWT
-from api.v1.models.auth import TokenPayload
+from core.database import db_session, DBConnect
+from core.models import Config, Member
+from core.template import TemplateService
+from lib.common import get_client_ip, mailer
+from lib.point import insert_point
+
+from api.v1.models import responses
+from api.v1.dependencies.member import get_current_member, validate_create_member
+from api.v1.models.member import CreateMemberModel, ResponseMemberModel
 
 router = APIRouter()
-
-
-def get_member(db: Session, mb_id: str) -> Union[Member, None]:
-    """회원 정보를 조회합니다."""
-    return db.scalar(select(Member).where(Member.mb_id == mb_id))
-
-
-async def get_current_member(
-    request: Request,
-    db: db_session,
-    token: Annotated[str, Depends(oauth2_scheme)]
-) -> Member:
-    """현재 로그인한 회원 정보를 조회합니다.
-
-    Args:
-        request (Request): Request 객체
-        db (db_session): 데이터베이스 세션
-        token (Annotated[str, Depends(oauth2_scheme)]): JWT
-
-    Raises:
-        HTTPException: 회원아이디가 없거나 회원 정보가 없을 경우 발생하는 예외
-
-    Returns:
-        Member: 현재 로그인한 회원 정보
-    """
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    payload: TokenPayload = JWT.decode_token(
-        token,
-        SETTINGS.ACCESS_TOKEN_SECRET_KEY
-    )
-
-    mb_id: str = payload.sub
-    if mb_id is None:
-        raise credentials_exception
-
-    member = get_member(db, mb_id=mb_id)
-    if member is None:
-        raise credentials_exception
-    if not check_active_member(member):
-        credentials_exception.detail = "탈퇴 또는 차단된 회원입니다."
-        raise credentials_exception
-    if not check_email_certified_member(request, member):
-        credentials_exception.detail = f"{member.mb_email} 메일로 메일인증을 받으셔야 로그인 가능합니다."
-        raise credentials_exception
-
-    return member
-
-
-def check_active_member(member: Member) -> bool:
-    """활성화된 회원인지 확인합니다."""
-    if member.mb_leave_date or member.mb_intercept_date:
-        return False
-    return True
-
-
-def check_email_certified_member(
-    request: Request,
-    member: Member,
-) -> bool:
-    """이메일 인증이 완료된 회원인지 확인합니다."""
-    config = request.state.config
-    if config.cf_use_email_certify and member.mb_email_certify == datetime(1, 1, 1, 0, 0, 0):
-        raise False
-    return True
 
 
 @router.get("/me",
@@ -106,9 +41,123 @@ async def read_members_me(
     return current_member
 
 
-@router.post("/items/{item_id}")
-async def update_item(
-    item_id: int,
-):
-    results = {"item_id": item_id}
-    return results
+@router.post("",
+             summary="회원 가입",
+             response_model=ResponseMemberModel,
+             responses={**responses})
+async def create_member(
+    request: Request,
+    db: db_session,
+    background_tasks: BackgroundTasks,
+    data: Annotated[CreateMemberModel, Depends(validate_create_member)]
+) -> Any:
+    """
+    회원 가입을 처리합니다.
+
+    #### 회원가입과 함께 처리되는 작업
+    - 회원가입 포인트 지급
+    - 회원가입 메일 발송 (메일발송 설정 시)
+    - 관리자에게 회원가입 메일 발송 (메일발송 설정 시)
+    """
+
+    config = request.state.config
+    # TODO: 인증은 아직 구현하지 않으므로 삭제예정
+    # if mb_certify_case and member.mb_certify:
+    #     member.mb_certify = mb_certify_case
+    #     member.mb_adult = member.mb_adult
+    # else:
+    #     member.mb_certify = ""
+    #     member.mb_adult = 0
+    # TODO: 회원 이미지 업로드 API는 별도로 구현 예정
+    # # 이미지 검사 & 업로드
+    # validate_and_update_member_image(request, mb_img, mb_icon, mb_id, None, None)
+
+    # TODO: mb_sex 정규식으로 검사하므로 삭제예정
+    # if member_form.mb_sex not in {"m", "f"}:
+    #     member_form.mb_sex = ""
+
+    # TODO: 레벨 입력방지 => 모델에서선언되지 않으므로 삭제예정
+    # del member_form.mb_level
+
+    member = Member(**data.__dict__)
+    # member.mb_datetime = datetime.now()   # TODO: Model 기본값 설정으로 변경, 삭제예정
+    # member.mb_lost_certify = ""   # TODO: 필요없음, 삭제예정
+    # # DB 스키마 호환성을 위해 null 대신 최저년도를 사용.
+    # member.mb_nick_date = datetime(1, 1, 1, 0, 0, 0)  # TODO: 필요없음, 삭제예정
+    # member.mb_open_date = datetime(1, 1, 1, 0, 0, 0)  # TODO: 필요없음, 삭제예정
+    # member.mb_today_login = datetime.now()  # Model 기본값 설정으로 변경, 삭제예정
+
+    # 추가 회원정보 설정
+    member.mb_level = getattr(config, "cf_register_level", data.mb_level)
+    member.mb_login_ip = get_client_ip(request)
+
+    # 메일인증
+    if getattr(config, "cf_use_email_certify", False):
+        member.mb_email_certify2 = secrets.token_hex(16)  # 일회용 인증키
+    else:
+        member.mb_email_certify = datetime.now()  # 인증완료 처리
+
+    db.add(member)
+    db.commit()
+
+    # 회원가입 포인트 지급
+    insert_point(request, member.mb_id, config.cf_register_point, 
+                 "회원가입 축하", "@member", member.mb_id, "회원가입")
+
+    # 추천인 포인트 지급
+    mb_recommend = data.mb_recommend
+    if getattr(config, "cf_use_recommend", False) and mb_recommend:
+        insert_point(request, mb_recommend, getattr(config, "cf_use_recommend", 0),
+                     f"{member.mb_id}의 추천인", "@member", mb_recommend, f"{member.mb_id} 추천")
+        
+    # 회원가입메일 발송 처리(백그라운드)
+    background_tasks.add_task(send_register_mail, request, member)
+        
+    return member
+
+
+def send_register_mail(request: Request, member: Member) -> None:
+    """background task > 회원가입 메일 발송 처리
+
+    Args:
+        request (Request): Request 객체
+        member (Member): 신규가입한 회원 객체
+    """
+    # background에서 Session 공유 문제로 인해 DBConnect().sessionLocal() 사용
+    with DBConnect().sessionLocal() as db:
+        request.state.config = config = db.query(Config).first()
+    context = {
+        "request": request,
+        "member": member,
+    }
+    try:
+        templates = Jinja2Templates(directory=TemplateService.get_templates_dir())
+
+        # 회원에게 인증메일 발송
+        if config.cf_use_email_certify:
+            subject = f"[{config.cf_title}] 회원가입 인증메일 발송"
+            cntx = context + {"certify_href": f"{request.base_url.__str__()}bbs/email_certify/{member.mb_id}?certify={member.mb_email_certify2}"}
+            body = templates.TemplateResponse(
+                "bbs/mail_form/register_certify_mail.html",
+                cntx
+            ).body.decode("utf-8")
+            mailer(member.mb_email, subject, body)
+        # 회원에게 회원가입 메일 발송
+        elif config.cf_email_mb_member:
+            subject = f"[{config.cf_title}] 회원가입을 축하드립니다."
+            body = templates.TemplateResponse(
+                "bbs/mail_form/register_send_member_mail.html",
+                context
+            ).body.decode("utf-8")
+            mailer(member.mb_email, subject, body)
+
+        # 최고관리자에게 회원가입 메일 발송
+        if config.cf_email_mb_super_admin:
+            subject = f"[{config.cf_title}] {member.mb_nick} 님께서 회원으로 가입하셨습니다."
+            body = templates.TemplateResponse(
+                "bbs/mail_form/register_send_admin_mail.html",
+                context
+            ).body.decode("utf-8")
+            mailer(config.cf_admin_email, subject, body)
+    except Exception as e:
+        print(e)
