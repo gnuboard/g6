@@ -24,11 +24,11 @@ async def poll_list(
     search_params: dict = Depends(common_search_query_params)
 ):
     """
-    투표 목록
+    설문조사 목록
     """
     request.session["menu_key"] = POLL_MENU_KEY
 
-    # 투표 목록 데이터 출력
+    # 설문조사 목록 데이터 출력
     polls = select_query(
         request,
         db,
@@ -38,7 +38,7 @@ async def poll_list(
         default_sod="desc",
     )
     for poll in polls['rows']:
-        # 투표 항목별 투표수 합계
+        # 설문조사 항목별 투표수 합계
         for i in range(1, 10):
             poll.sum_po_cnt = getattr(poll, "sum_po_cnt", 0) + getattr(poll, f"po_cnt{i}", 0)
 
@@ -59,7 +59,7 @@ async def poll_list_delete(
     checks: List[int] = Form(..., alias="chk[]")
 ):
     """
-    투표 목록 삭제
+    설문조사 목록 삭제
     """
     # in 조건을 사용해서 일괄 삭제
     db.execute(delete(Poll).where(Poll.po_id.in_(checks)))
@@ -77,7 +77,7 @@ async def poll_list_delete(
 @router.get("/poll_form")
 async def poll_form_add(request: Request):
     """
-    투표 등록 폼
+    설문조사 등록 폼
     """
     context = {"request": request, "poll": None}
     return templates.TemplateResponse("poll_form.html", context)
@@ -90,7 +90,7 @@ async def poll_form_edit(
     po_id: int = Path(...)
 ):
     """
-    투표 수정 폼
+    설문조사 수정 폼
     """
     poll = db.get(Poll, po_id)
     context = {"request": request, "poll": poll}
@@ -105,14 +105,14 @@ async def poll_form_update(
     form_data: PollForm = Depends()
 ):
     """
-    투표등록 및 수정 처리
+    설문조사 등록 및 수정 처리
     """
-    
-    # 투표 수정
+
+    # 설문조사 수정
     if po_id:
         poll = db.get(Poll, po_id)
         if not poll:
-            raise AlertException("투표가 존재하지 않습니다.", 404)
+            raise AlertException("설문조사가 존재하지 않습니다.", 404)
 
         # 데이터 수정 후 commit
         for field, value in form_data.__dict__.items():
@@ -121,7 +121,7 @@ async def poll_form_update(
             setattr(poll, field, value)
         db.commit()
 
-    # 투표 등록
+    # 설문조사 등록
     else:
         poll = Poll(**form_data.__dict__)
         db.add(poll)

@@ -516,7 +516,7 @@ def insert_popular(request: Request, fields: str, word: str):
 @cached(LFUCache(maxsize=1))
 def get_recent_poll():
     """
-    최근 투표 정보 1건을 가져오는 함수
+    최근 설문조사 정보 1건을 가져오는 함수
     """
     db = DBConnect().sessionLocal()
     poll = db.scalar(
