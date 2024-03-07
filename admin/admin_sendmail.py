@@ -17,11 +17,13 @@ async def visit_search(request: Request):
     메일 테스트
     """
     request.session["menu_key"] = SENDMAIL_MENU_KEY
+    config = request.state.config
+    login_member = request.state.login_member
 
     context = {
         "request": request,
-        "config": request.state.config,
-        "member": request.state.login_member,
+        "from_email": getattr(config, "cf_admin_email", ""),
+        "to_email": getattr(login_member, "mb_email", "")
     }
     return templates.TemplateResponse("sendmail_test.html", context)
 
@@ -46,8 +48,6 @@ async def sendmail_test_result(
 
     context = {
         "request": request,
-        "config": request.state.config,
-        "member": request.state.login_member,
         "real_emails": real_emails,
     }
     return templates.TemplateResponse("sendmail_test_result.html", context)
