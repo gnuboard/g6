@@ -1065,7 +1065,6 @@ def send_write_mail(request: Request, board: Board, write: WriteBaseModel, origi
     # 중복 이메일 제거
     send_email_list = list(set(send_email_list))
     for email in send_email_list:
-        # TODO: 내용 HTML 처리 필요
         subject = f"[{config.cf_title}] {board.bo_subject} 게시판에 {act}이 등록되었습니다."
         body = templates.TemplateResponse(
             "bbs/mail_form/write_update_mail.html", {
@@ -1078,7 +1077,7 @@ def send_write_mail(request: Request, board: Board, write: WriteBaseModel, origi
                 "link_url": link_url,
             }
         ).body.decode("utf-8")
-        mailer(email, subject, body)
+        mailer(get_admin_email(request), email, subject, body)
 
     db.close()
 

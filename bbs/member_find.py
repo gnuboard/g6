@@ -126,7 +126,7 @@ async def find_member_password(
             "datetime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
     ).body.decode("utf-8")
-    mailer(mb_email, subject, body)
+    mailer(get_admin_email(request), mb_email, subject, body)
 
     raise AlertException(f"{mb_email} 메일로 비밀번호를 변경할 수 있는 메일이 발송 되었습니다.\\n\\n메일을 확인하여 주십시오.", 303, "/")
 

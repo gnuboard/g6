@@ -17,12 +17,11 @@ async def visit_search(request: Request):
     메일 테스트
     """
     request.session["menu_key"] = SENDMAIL_MENU_KEY
-    config = request.state.config
     login_member = request.state.login_member
 
     context = {
         "request": request,
-        "from_email": getattr(config, "cf_admin_email", ""),
+        "from_email": get_admin_email(request),
         "to_email": getattr(login_member, "mb_email", "")
     }
     return templates.TemplateResponse("sendmail_test.html", context)
@@ -41,10 +40,10 @@ async def sendmail_test_result(
     body = f'<span style="font-size:9pt;">[메일검사] 내용\
         <p>이 내용이 제대로 보인다면 보내는 메일 서버에는 이상이 없는것입니다.<p>\
         {datetime.now()}<p>이 메일 주소로는 회신되지 않습니다.</span>'
-
-    mailer(to_email, subject, body)
-
+    from_email = get_admin_email(request)
     real_emails = to_email.split(',') if ',' in to_email else [to_email]
+    for to_email in real_emails:
+        mailer(from_email, to_email, subject, body)
 
     context = {
         "request": request,
