@@ -155,7 +155,7 @@ plugin
    ├─ models.py  # 데이터베이스 모델
    ├─ plugin_config.py  # 플러그인 설정 파일
    ├─ readme.txt  # 플러그인 상세정보
-   ├─ screenshot.png  # 대표 이미지
+   ├─ screenshot.png 또는 webp  # 대표 이미지
 ├─ {플러그인2}
 ...
 └─ plugin_states.json  # 전체 플러그인 정보 파일
