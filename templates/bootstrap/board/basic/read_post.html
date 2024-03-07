@@ -660,8 +660,8 @@
     </script>
     <script>
       window.addEventListener('pageshow', function(event) {
-    document.getElementById('loading').style.display = 'none';
-});
+      document.getElementById('loading').style.display = 'none';
+    });
     var swiper = new Swiper('.post-swiper', {
         simulateTouch: true,
         initialSlide: 1, // "현재 페이지 내용" 슬라이드를 초기 슬라이드로 설정
@@ -682,14 +682,25 @@
                 nextUrl = "{{ url_for('read_post', bo_table=board.bo_table, wr_id=next.wr_id) }}"
             {% endif %}
 
-            if ((activeIndex === 0 && prevUrl) || (activeIndex === 2 && nextUrl)) {
-                // 로딩 이미지 표시
-                document.getElementById('loading').style.display = 'block';
-
-                // 페이지 이동
-                window.location.href = activeIndex === 0 ? prevUrl : nextUrl;
+            if (activeIndex === 0) {
+                if (prevUrl) {
+                    // 로딩 이미지 표시 및 이전 페이지로 이동
+                    document.getElementById('loading').style.display = 'block';
+                    window.location.href = prevUrl;
+                } else {
+                    // 이전 글이 없을 때의 경고문구 표시
+                    alert("이전 글이 존재하지 않습니다.");    
+                }
+            } else if (activeIndex === 2) {
+                if (nextUrl) {
+                    // 로딩 이미지 표시 및 다음 페이지로 이동
+                    document.getElementById('loading').style.display = 'block';
+                    window.location.href = nextUrl;
+                } else {
+                    // 다음 글이 없을 때의 경고문구 표시
+                    alert("다음 글이 존재하지 않습니다.");
+                }
             }
-         
             this.slideTo(1, 0); // 2번째 슬라이드로 돌아가기
           }
         }
