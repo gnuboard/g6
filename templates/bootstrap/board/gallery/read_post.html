@@ -16,7 +16,11 @@
 {% set is_admin=get_admin_type(request, login_member.mb_id, board=board) %}
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
     <!-- 게시물 읽기 시작 { -->
-    <article id="bo_v" class="mb-4" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
+      <div id="loading" class="loading position-fixed top-0 start-0 w-100 h-100 bg-black bg-opacity-50" style="z-index: 1000;"><i class="fa-solid fa-spinner position-absolute top-50 start-50 translate-middle text-white" style="font-size: 5rem;"></i></div>
+      <div class="post-swiper">
+  <div class="swiper-wrapper">
+    <div class="swiper-slide"></div>
+    <article id="bo_v" class="swiper-slide mb-4" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
         <header>
             <h2 id="bo_v_title" class="m-0 p-0">
                 {% if board.bo_use_category and write.ca_name %}
@@ -560,6 +564,9 @@
     });
     </script>
     </article>
+    <div class="swiper-slide"></div>
+  </div>
+</div>
     <!-- } 게시판 읽기 끝 -->
 
     <script>
@@ -648,7 +655,44 @@
         }
     }
     </script>
-    <!-- } 게시글 읽기 끝 -->
+      <script>
+        window.addEventListener('pageshow', function(event) {
+      document.getElementById('loading').style.display = 'none';
+  });
+      var swiper = new Swiper('.post-swiper', {
+          simulateTouch: true,
+          initialSlide: 1, // "현재 페이지 내용" 슬라이드를 초기 슬라이드로 설정
+          threshold: 60, // 스와이프가 인식되기 위한 최소 이동 거리를 60px로 설정
+          on: {
+              slideChange: function() {
+              let activeIndex = this.activeIndex;
+              let prevUrl = ""
+              let nextUrl = ""
+  
+              // 이전 페이지 URL
+              {% if prev %}
+                  prevUrl = "{{ url_for('read_post', bo_table=board.bo_table, wr_id=prev.wr_id) }}"
+              {% endif %}
+  
+              // 다음 페이지 URL
+              {% if next %}
+                  nextUrl = "{{ url_for('read_post', bo_table=board.bo_table, wr_id=next.wr_id) }}"
+              {% endif %}
+  
+              if ((activeIndex === 0 && prevUrl) || (activeIndex === 2 && nextUrl)) {
+                  // 로딩 이미지 표시
+                  document.getElementById('loading').style.display = 'block';
+  
+                  // 페이지 이동
+                  window.location.href = activeIndex === 0 ? prevUrl : nextUrl;
+              }
+           
+              this.slideTo(1, 0); // 2번째 슬라이드로 돌아가기
+            }
+          }
+        });
+      </script>
+    <!-- 게시글 읽기 끝 -->
 <form name="fwrite_copy" id="fwrite_copy" action="{{ url_for('move_post', bo_table=board.bo_table) }}" method="post">
     <input type="hidden" name="sw" value="">
     <input type="hidden" name="chk_wr_id[]" value="{{ write.wr_id }}">
