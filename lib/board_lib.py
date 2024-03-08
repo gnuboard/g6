@@ -1077,7 +1077,7 @@ def send_write_mail(request: Request, board: Board, write: WriteBaseModel, origi
                 "link_url": link_url,
             }
         ).body.decode("utf-8")
-        mailer(get_admin_email(request), email, subject, body)
+        mailer(get_admin_email(request), email, subject, body, get_admin_email_name(request))
 
     db.close()
 

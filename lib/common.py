@@ -9,8 +9,10 @@ import shutil
 import smtplib
 import httpx
 from datetime import datetime, timedelta, date
+from email.header import Header
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.utils import formataddr
 from time import sleep
 from typing import Any, List, Optional, Union
 from urllib.parse import urlencode
@@ -793,7 +795,8 @@ SMTP_USERNAME = os.getenv("SMTP_USERNAME")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
 
-def mailer(from_email: str, to_email: str, subject: str, body: str) -> None:
+def mailer(from_email: str, to_email: str, subject: str, body: str,
+           from_name: str = None, to_name: str = None) -> None:
     """메일 발송 함수
 
     Args:
@@ -801,7 +804,14 @@ def mailer(from_email: str, to_email: str, subject: str, body: str) -> None:
         email (str): 받는 사람 이메일 (,로 구분하여 여러명에게 보낼 수 있음)
         subject (str): 제목
         body (str): 내용
+        from_name (str, optional): 보내는 사람 이름. Defaults to None.
+        to_name (str, optional): 받는 사람 이름. Defaults to None.
 
+    Raises:
+        SMTPAuthenticationError: SMTP 인증정보가 잘못되었을 때
+        SMTPServerDisconnected: SMTP 서버에 연결하지 못했거나 연결이 끊어졌을 때
+        SMTPException: 메일을 보내는 중에 오류가 발생했을 때
+        Exception: 기타 오류
     """
     try:
         # Daum, Naver 메일은 SMTP_SSL을 사용합니다.
@@ -813,10 +823,10 @@ def mailer(from_email: str, to_email: str, subject: str, body: str) -> None:
 
         if SMTP_USERNAME and SMTP_PASSWORD:
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
-        
+
         msg = MIMEMultipart()
-        msg['From'] = from_email
-        msg['To'] = to_email
+        msg['From'] = formataddr((str(Header(from_name, 'utf-8')), from_email))
+        msg['To'] = formataddr((str(Header(to_name, 'utf-8')), to_email))
         msg['Subject'] = subject
         # Assuming body is HTML, if not change 'html' to 'plain'
         msg.attach(MIMEText(body, 'html'))
@@ -848,6 +858,18 @@ def get_admin_email(request: Request):
         str: 환경설정에서 설정된 관리자 이메일 주소
     """
     return getattr(request.state.config, "cf_admin_email", "")
+
+
+def get_admin_email_name(request: Request):
+    """관리자 이메일 발송이름을 반환하는 함수
+
+    Args:
+        request (Request): Request 객체
+
+    Returns:
+        str: 환경설정에서 설정된 관리자 이메일 주소
+    """
+    return getattr(request.state.config, "cf_admin_email_name", "")
 
 
 def is_none_datetime(input_date: Union[date, str]) -> bool:

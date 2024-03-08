@@ -225,6 +225,7 @@ async def post_register_form(
         insert_point(request, mb_recommend, config.cf_recommend_point, f"{new_member.mb_id}의 추천인", "@member", mb_recommend, f"{new_member.mb_id} 추천")
 
     from_email = get_admin_email(request)
+    from_name = get_admin_email_name(request)
     # 회원에게 인증메일 발송
     if config.cf_use_email_certify:
         subject = f"[{config.cf_title}] 회원가입 인증메일 발송"
@@ -236,7 +237,7 @@ async def post_register_form(
                 "certify_href": f"{request.base_url.__str__()}bbs/email_certify/{new_member.mb_id}?certify={new_member.mb_email_certify2}",
             }
         ).body.decode("utf-8")
-        mailer(from_email, new_member.mb_email, subject, body)
+        mailer(from_email, new_member.mb_email, subject, body, from_name)
     # 회원에게 회원가입 메일 발송
     elif config.cf_email_mb_member:
         subject = f"[{config.cf_title}] 회원가입을 축하드립니다."
@@ -247,7 +248,7 @@ async def post_register_form(
                 "member": new_member,
             }
         ).body.decode("utf-8")
-        mailer(from_email, new_member.mb_email, subject, body)
+        mailer(from_email, new_member.mb_email, subject, body, from_name)
 
     # 최고관리자에게 회원가입 메일 발송
     if config.cf_email_mb_super_admin:
@@ -259,7 +260,7 @@ async def post_register_form(
                 "member": new_member,
             }
         ).body.decode("utf-8")
-        mailer(from_email, config.cf_admin_email, subject, body)
+        mailer(from_email, config.cf_admin_email, subject, body, from_name)
 
     if not config.cf_use_email_certify:
         request.session["ss_mb_id"] = new_member.mb_id
