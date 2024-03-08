@@ -1271,8 +1271,9 @@ def get_current_admin_menu_id(request: Request) -> Optional[str]:
         # 플러그인 관리자는 경로 기반으로 검색
         for route in routes:
             if route.path_regex.match(path):
-                path = route.path
-                modified_path = '/' + path.lstrip('/admin')
+                # 사용자가 정의하는 관리자 접두사는 접근이 복잡하므로 삭제후 비교
+                parts = route.path.split('/')
+                modified_path = '/' + '/'.join(parts[2:])
                 if result_menu_id := get_admin_menu_id_by_path(modified_path):
                     return result_menu_id
 

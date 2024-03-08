@@ -50,12 +50,12 @@ def get_all_plugin_admin_menu_id_name():
 
 def get_admin_menu_id_by_path(current_path: str):
     plugin_list = get_admin_plugin_menus()
+ 
     for plugin_dict in plugin_list:
         for plugin_items in plugin_dict.values():
             for item in plugin_items:
 
                 if 'url' in item and 'id' in item:
-                    print(item)
                     if item.get('url') == current_path:
                         return item.get('id')
     return None
