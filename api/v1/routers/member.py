@@ -15,8 +15,8 @@ from lib.common import get_client_ip, mailer
 from lib.point import insert_point
 
 from api.v1.models import responses
-from api.v1.dependencies.member import get_current_member, validate_create_member
-from api.v1.models.member import CreateMemberModel, ResponseMemberModel
+from api.v1.dependencies.member import get_current_member, validate_create_member, validate_update_member
+from api.v1.models.member import CreateMemberModel, ResponseMemberModel, UpdateMemberModel
 
 router = APIRouter()
 
@@ -101,7 +101,7 @@ async def create_member(
     db.commit()
 
     # 회원가입 포인트 지급
-    insert_point(request, member.mb_id, config.cf_register_point, 
+    insert_point(request, member.mb_id, config.cf_register_point,
                  "회원가입 축하", "@member", member.mb_id, "회원가입")
 
     # 추천인 포인트 지급
@@ -109,11 +109,30 @@ async def create_member(
     if getattr(config, "cf_use_recommend", False) and mb_recommend:
         insert_point(request, mb_recommend, getattr(config, "cf_use_recommend", 0),
                      f"{member.mb_id}의 추천인", "@member", mb_recommend, f"{member.mb_id} 추천")
-        
+
     # 회원가입메일 발송 처리(백그라운드)
     background_tasks.add_task(send_register_mail, request, member)
-        
+
     return member
+
+
+@router.put("/{mb_id}",
+            summary="회원 정보 수정",
+            response_model=ResponseMemberModel,
+            responses={**responses})
+async def update_member(
+    db: db_session,
+    current_member: Annotated[Member, Depends(get_current_member)],
+    data: Annotated[UpdateMemberModel, Depends(validate_update_member)],
+):
+    """회원 정보를 수정합니다."""
+    member_data = data.model_dump().items()
+    for key, value in member_data:
+        if hasattr(current_member, key) and value is not None:
+            setattr(current_member, key, value)
+    db.commit()
+
+    return current_member
 
 
 def send_register_mail(request: Request, member: Member) -> None:
@@ -131,12 +150,14 @@ def send_register_mail(request: Request, member: Member) -> None:
         "member": member,
     }
     try:
-        templates = Jinja2Templates(directory=TemplateService.get_templates_dir())
+        templates = Jinja2Templates(
+            directory=TemplateService.get_templates_dir())
 
         # 회원에게 인증메일 발송
         if config.cf_use_email_certify:
             subject = f"[{config.cf_title}] 회원가입 인증메일 발송"
-            cntx = context + {"certify_href": f"{request.base_url.__str__()}bbs/email_certify/{member.mb_id}?certify={member.mb_email_certify2}"}
+            cntx = context + \
+                {"certify_href": f"{request.base_url.__str__()}bbs/email_certify/{member.mb_id}?certify={member.mb_email_certify2}"}
             body = templates.TemplateResponse(
                 "bbs/mail_form/register_certify_mail.html",
                 cntx
