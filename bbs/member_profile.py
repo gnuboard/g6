@@ -172,8 +172,7 @@ async def member_profile_save(
                 raise AlertException("이미 존재하는 이메일 입니다.", 400)
 
     # 닉네임변경 검사.
-    is_nickname_changed = exists_member.mb_nick != member_form.mb_nick
-    if is_nickname_changed:
+    if exists_member.mb_nick != member_form.mb_nick:
         result = validate_nickname(member_form.mb_nick, config.cf_prohibit_id)
         if result["msg"]:
             raise AlertException(result["msg"], 400)
@@ -182,6 +181,8 @@ async def member_profile_save(
             result = validate_nickname_change_date(exists_member.mb_nick_date, config.cf_nick_modify)
             if result["msg"]:
                 raise AlertException(result["msg"], 400)
+
+        member_form.mb_nick_date = datetime.now()
 
     # 이미지 검사 & 이미지 수정(삭제 포함)
     validate_and_update_member_image(request, mb_img, mb_icon, mb_id, del_mb_img, del_mb_icon)
@@ -234,20 +235,14 @@ def validate_nickname_change_date(before_nick_date: date, nick_modify_date) -> D
         Raises:
             ValidationError: 닉네임 변경 가능일 안내
     """
-    message = {
-        "msg": ""
-    }
+    message = {"msg": ""}
     if nick_modify_date == 0:
         return message
-    change_date = timedelta(days=nick_modify_date)
 
-    if is_none_datetime(before_nick_date):
-        before_nick_date = datetime.now().date()
-
-    available_date = before_nick_date + change_date
-
-    if datetime.now().date() < available_date:
-        message["msg"] = f"{available_date.strftime('%Y-%m-%d')} 이후 닉네임을 변경할 수있습니다."
+    if not is_none_datetime(before_nick_date):
+        available_date = before_nick_date + timedelta(days=nick_modify_date)
+        if datetime.now().date() < available_date:
+            message["msg"] = f"{available_date.strftime('%Y-%m-%d')} 이후 닉네임을 변경할 수 있습니다."
 
     return message
 
