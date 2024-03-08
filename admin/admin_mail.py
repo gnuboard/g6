@@ -183,7 +183,7 @@ async def mail_test(
     content = content + f'<p>더 이상 정보 수신을 원치 않으시면 [<a href="/bbs/email_stop/{mb_id}&mb_md5={mb_md5}" target="_blank">수신거부</a>] 해 주십시오.</p>' 
 
     # 메일 발송
-    mailer(email, subject, content)
+    mailer(get_admin_email(request), email, subject, content)
 
     raise AlertException(f"{nick}({email})님께 테스트 메일을 발송하였습니다. 확인하여 주십시오.")
 
@@ -375,7 +375,7 @@ async def mail_select_send(
             content = content + f"<hr size=0><p><span style='font-size:10pt; font-family:돋움'>▶ 더 이상 정보 수신을 원치 않으시면 [<a href='/bbs/email_stop/{mb_id}&mb_md5={mb_md5}' target='_blank'>수신거부</a>] 해 주십시오.</span></p>"           
             
             # 메일 발송
-            mailer(mb_email, subject, content)
+            mailer(get_admin_email(request), mb_email, subject, content)
             count += 1
 
             # 10명마다 1초씩 쉬어줍니다.

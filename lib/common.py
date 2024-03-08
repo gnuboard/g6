@@ -517,7 +517,7 @@ def insert_popular(request: Request, fields: str, word: str):
 @cached(LFUCache(maxsize=1))
 def get_recent_poll():
     """
-    최근 투표 정보 1건을 가져오는 함수
+    최근 설문조사 정보 1건을 가져오는 함수
     """
     db = DBConnect().sessionLocal()
     poll = db.scalar(
@@ -788,36 +788,67 @@ class FileCache():
                 os.remove(os.path.join(self.cache_dir, file))
 
 
-SMTP_SERVER = os.getenv("SMTP_SERVER")
-SMTP_PORT = os.getenv("SMTP_PORT")
+SMTP_SERVER = os.getenv("SMTP_SERVER", "localhost")
+SMTP_PORT = int(os.getenv("SMTP_PORT", 25))
 SMTP_USERNAME = os.getenv("SMTP_USERNAME")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
-# 메일 발송
-# return 은 수정 필요
-def mailer(email: str, subject: str, body: str):
-    to_emails = email.split(',') if ',' in email else [email]
-    for to_email in to_emails:
+
+def mailer(from_email: str, to_email: str, subject: str, body: str) -> None:
+    """메일 발송 함수
+
+    Args:
+        from_email (str): 보내는 사람 이메일
+        email (str): 받는 사람 이메일 (,로 구분하여 여러명에게 보낼 수 있음)
+        subject (str): 제목
+        body (str): 내용
+
+    """
+    try:
+        # Daum, Naver 메일은 SMTP_SSL을 사용합니다.
+        if SMTP_PORT == 465:
+            server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, timeout=10)
+        else: # port: 587
+            server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=10)
+            server.starttls()
+
+        if SMTP_USERNAME and SMTP_PASSWORD:
+            server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        
+        msg = MIMEMultipart()
+        msg['From'] = from_email
+        msg['To'] = to_email
+        msg['Subject'] = subject
+        # Assuming body is HTML, if not change 'html' to 'plain'
+        msg.attach(MIMEText(body, 'html'))
+
+        server.sendmail(from_email, to_email, msg.as_string())
+
+    except smtplib.SMTPAuthenticationError as e:
+        print(f"SMTP 인증정보가 잘못되었습니다. {e}")
+    except smtplib.SMTPServerDisconnected as e:
+        print(f"SMTP 서버에 연결하지 못했거나 연결이 끊어졌습니다. {e}")
+    except smtplib.SMTPException as e:
+        print(f"메일을 보내는 중에 오류가 발생했습니다. {e}")
+    except Exception as e:
+        print(e)
+    finally:
         try:
-            msg = MIMEMultipart()
-            msg['From'] = SMTP_USERNAME
-            msg['To'] = to_email
-            msg['Subject'] = subject
-            
-            # Assuming body is HTML, if not change 'html' to 'plain'
-            msg.attach(MIMEText(body, 'html'))  
-
-            with smtplib.SMTP(SMTP_SERVER, int(SMTP_PORT)) as server:
-                if SMTP_USERNAME and SMTP_PASSWORD:
-                    server.starttls()
-                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
-                text = msg.as_string()
-                server.sendmail(SMTP_USERNAME, to_email, text)
-
+            server.quit()
         except Exception as e:
-            print(f"Error sending email to {to_email}: {e}")
+            pass
 
-    return {"message": f"Emails sent successfully to {', '.join(to_emails)}"}
+
+def get_admin_email(request: Request):
+    """관리자 이메일 주소를 반환하는 함수
+
+    Args:
+        request (Request): Request 객체
+
+    Returns:
+        str: 환경설정에서 설정된 관리자 이메일 주소
+    """
+    return getattr(request.state.config, "cf_admin_email", "")
 
 
 def is_none_datetime(input_date: Union[date, str]) -> bool:

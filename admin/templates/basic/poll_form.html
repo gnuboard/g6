@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% set action='생성' if not poll else '수정' %}
 
-{% block title %}투표 {{ action }}{% endblock title %}
-{% block subtitle %}투표 {{ action }}{% endblock subtitle %}
+{% block title %}설문조사 {{ action }}{% endblock title %}
+{% block subtitle %}설문조사 {{ action }}{% endblock subtitle %}
 
 {% block content %}
     <form name="fpoll" id="fpoll" action="{{ url_for('poll_form_update') }}?{{ request.query_params }}" method="post"
@@ -12,10 +12,10 @@
 
         <div class="tbl_frm01 tbl_wrap">
             <table>
-                <caption>투표 {{ action }}</caption>
+                <caption>설문조사 {{ action }}</caption>
                 <tbody>
                     <tr>
-                        <th scope="row"><label for="po_subject">투표 제목<strong class="blind">필수</strong></label></th>
+                        <th scope="row"><label for="po_subject">설문조사 제목<strong class="blind">필수</strong></label></th>
                         <td><input type="text" name="po_subject" value="{{ poll.po_subject }}" id="po_subject" required="" class="required frm_input" size="80" maxlength="125"></td>
                     </tr>
                     {% for i in range(1, 10) %}
@@ -39,7 +39,7 @@
                     <tr>
                         <th scope="row"><label for="po_level">투표가능 회원레벨</label></th>
                         <td>
-                            <span class="frm_info">레벨을 1로 설정하면 손님도 투표할 수 있습니다.</span>     
+                            <span class="frm_info">레벨을 1로 설정하면 손님도 투표할 수 있습니다.</span>
                             {{ get_member_level_select('po_level', 1, 10, poll.po_level)|safe }}
                             이상 투표할 수 있음
                         </td>
@@ -53,18 +53,18 @@
                     </tr>
                     {% if poll %}
                         <tr>
-                            <th scope="row">투표사용</th>
+                            <th scope="row">설문조사 사용</th>
                             <td>
                                 <input type="checkbox" name="po_use" id="po_use" value="1" {{ "checked" if poll.po_use else "" }}>
                                 <label for="po_use">사용</label>
                             </td>
                         </tr>
                         <tr>
-                            <th scope="row">투표등록일</th>
+                            <th scope="row">설문조사 등록일</th>
                             <td>{{ poll.po_date }}</td>
                         </tr>
                         <tr>
-                            <th scope="row"><label for="po_ips">투표참가 IP</label></th>
+                            <th scope="row"><label for="po_ips">투표 참가 IP</label></th>
                             <td>
                                 <textarea name="po_ips" id="po_ips" readonly="" rows="10">
                                     {{- poll.po_ips -}}
@@ -72,7 +72,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <th scope="row"><label for="mb_ids">투표참가 회원</label></th>
+                            <th scope="row"><label for="mb_ids">투표 참가 회원</label></th>
                             <td>
                                 <textarea name="mb_ids" id="mb_ids" readonly="" rows="10">
                                     {{- poll.mb_ids -}}

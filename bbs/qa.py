@@ -291,6 +291,7 @@ async def qa_write_update(
 
         # 답변글
         # TODO : 메일 발송 템플릿 적용필요
+        from_email = get_admin_email(request)
         if qa_parent:
             parent = db.get(QaContent, qa_parent)
             # 원본글의 답변여부를 1로 변경
@@ -299,13 +300,13 @@ async def qa_write_update(
             if parent.qa_email_recv and parent.qa_email:
                 subject = f"[{config.cf_title}] {qa_config.qa_title} 답변 알림 메일"
                 content = form_data.qa_subject + "<br><br>" + form_data.qa_content
-                mailer(parent.qa_email, subject, content)
+                mailer(from_email, parent.qa_email, subject, content)
         else:
             # 문의 등록메일 발송
             if qa_config.qa_admin_email:
                 subject = f"[{config.cf_title}] {qa_config.qa_title} 질문 알림 메일"
                 content = form_data.qa_subject + "<br><br>" + form_data.qa_content
-                mailer(qa_config.qa_admin_email, subject, content)
+                mailer(from_email, qa_config.qa_admin_email, subject, content)
 
         db.commit()
 
