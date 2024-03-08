@@ -1378,25 +1378,26 @@ def render_latest_posts(request: Request, skin_name: str = 'basic', bo_table: st
     # 캐시된 파일이 있으면 파일을 읽어서 반환
     if os.path.exists(cache_file):
         return file_cache.get(cache_file)
-    
-    db = DBConnect().sessionLocal()
-    # 게시판 설정
-    board = db.get(Board, bo_table)
-    board_config = BoardConfig(request, board)
-    board.subject = board_config.subject
 
-    #게시글 목록 조회
-    write_model = dynamic_create_write_table(bo_table)
-    writes = db.scalars(
-        select(write_model)
-        .where(write_model.wr_is_comment == 0)
-        .order_by(write_model.wr_num)
-        .limit(rows)
-    ).all()
-    for write in writes:
-        write = get_list(request, write, board_config, subject_len)
-    
-    db.close()
+    with DBConnect().sessionLocal() as db:
+        # 게시판 설정
+        board = db.get(Board, bo_table)
+        if not board: 
+            return ""
+
+        board_config = BoardConfig(request, board)
+        board.subject = board_config.subject
+
+        #게시글 목록 조회
+        write_model = dynamic_create_write_table(bo_table)
+        writes = db.scalars(
+            select(write_model)
+            .where(write_model.wr_is_comment == 0)
+            .order_by(write_model.wr_num)
+            .limit(rows)
+        ).all()
+        for write in writes:
+            write = get_list(request, write, board_config, subject_len)
 
     context = {
         "request": request,
