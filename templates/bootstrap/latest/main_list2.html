@@ -22,7 +22,7 @@
                     {% if thumbnail.src %}
                     <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}" class="w-100 h-100 object-fit-cover">
                     {% else %}
-                    <img src="{{ url_for('static', path='/img/no_img.png') }}" class="w-100 h-100 object-fit-cover" alt="이미지가 없습니다." class="w-100 h-100 object-fit-cover">
+                    <img src="{{ theme_asset(request, 'img/no_img.png') }}" class="w-100 h-100 object-fit-cover" alt="이미지가 없습니다." class="w-100 h-100 object-fit-cover">
                     {% endif %}
                     </a>
                 </picture>
@@ -36,7 +36,7 @@
           </div>
           <picture class="img-box">
             <a href="#" class="lt_img d-block">
-              <img src="{{ url_for('static', path='/img/no_img.png') }}" class="w-100 h-100 object-fit-cover" alt="이미지가 없습니다.">
+              <img src="{{ theme_asset(request, 'img/no_img.png') }}" class="w-100 h-100 object-fit-cover" alt="이미지가 없습니다.">
             </a>
           </picture>
           </div>

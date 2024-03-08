@@ -14,7 +14,7 @@
                 {% if thumbnail.src %}
                 <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}">
                 {% else %}
-                <img src="{{ url_for('static', path='/img/no_img.png') }}" alt="이미지가 없습니다." width="{{ thumb_width }}" height="{{ thumb_height }}">
+                <img src="{{ theme_asset(request, 'img/no_img.png') }}" alt="이미지가 없습니다." width="{{ thumb_width }}" height="{{ thumb_height }}">
                 {% endif %}
             </a>
             {% endif %}
