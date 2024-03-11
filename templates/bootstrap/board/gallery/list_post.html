@@ -98,7 +98,7 @@
             {% set line_height_style="line-height:" ~ gallery_height ~ "px" if gallery_height > 0 else "" %}
             {% for write in writes %}
             <!-- TODO: 열람 중일 경우 class에 gall_now 추가 -->
-            <li class="col-3 col-gn-{{ board.bo_gallery_cols|default(1) }}">
+            <li class="col-md-3 col-6 col-gn-{{ board.bo_gallery_cols|default(1) }}">
                 <div class="position-relative" style="margin: 0 0 50ox 0;border-radius: 0 0 2px 2px;">
                     <div class="chk_box position-absolute top-0 start-0 p-2" style="z-index: 1;">
                         <input type="checkbox" name="chk_wr_id[]" value="{{ write.wr_id }}" id="chk_wr_id_{{ loop.index }}" class="selec_chk">
