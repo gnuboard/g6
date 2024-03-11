@@ -1,12 +1,10 @@
 import secrets
-
 from datetime import datetime
 from typing import Any
 from typing_extensions import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from fastapi.templating import Jinja2Templates
-
 
 from core.database import db_session, DBConnect
 from core.models import Config, Member

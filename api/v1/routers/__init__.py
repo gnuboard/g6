@@ -2,7 +2,7 @@ from enum import Enum
 
 from fastapi import APIRouter
 
-from api.v1.routers import auth, member
+from api.v1.routers import auth, member, memo, point, scrap
 
 class Tags(Enum):
     auth = "auth"
@@ -12,3 +12,6 @@ class Tags(Enum):
 router = APIRouter(prefix="/api/v1")
 router.include_router(auth.router, prefix="", tags=[Tags.auth])
 router.include_router(member.router, prefix="/members", tags=[Tags.members])
+router.include_router(memo.router, prefix="/members", tags=["memos"])
+router.include_router(point.router, prefix="/members", tags=["points"])
+router.include_router(scrap.router, prefix="/members", tags=["scraps"])

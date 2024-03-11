@@ -239,10 +239,10 @@ class Member(Base):
 
     auths: Mapped[List["Auth"]] = relationship("Auth", back_populates="member")
     groups: Mapped[List["GroupMember"]] = relationship(back_populates="member")
-    points: Mapped[List["Point"]] = relationship("Point", back_populates="member")
+    points: DynamicMapped["Point"] = relationship("Point", back_populates="member", lazy="dynamic")
     socials: Mapped[List["MemberSocialProfiles"]] = relationship("MemberSocialProfiles", back_populates="member")
-    recv_memos: Mapped[List["Memo"]] = relationship("Memo", back_populates="recv_member", foreign_keys="Memo.me_recv_mb_id")
-    send_memos: Mapped[List["Memo"]] = relationship("Memo", back_populates="send_member", foreign_keys="Memo.me_send_mb_id")
+    recv_memos: DynamicMapped["Memo"] = relationship("Memo", back_populates="recv_member", lazy="dynamic", foreign_keys="Memo.me_recv_mb_id")
+    send_memos: DynamicMapped["Memo"] = relationship("Memo", back_populates="send_member", lazy="dynamic", foreign_keys="Memo.me_send_mb_id")
     scraps: DynamicMapped["Scrap"] = relationship("Scrap", back_populates="member", lazy="dynamic")
 
 
@@ -680,7 +680,7 @@ class Point(Base):
     po_rel_id = Column(String(20), nullable=False, default="")
     po_rel_action = Column(String(100), nullable=False, default="")
 
-    member: Mapped["Member"] = relationship("Member", back_populates="points", lazy="joined")
+    member: Mapped["Member"] = relationship("Member", back_populates="points")
 
 
 class Memo(Base):
@@ -703,6 +703,10 @@ class Memo(Base):
     # 종속관계
     recv_member: Mapped["Member"] = relationship("Member", back_populates="recv_memos", foreign_keys=[me_recv_mb_id])
     send_member: Mapped["Member"] = relationship("Member", back_populates="send_memos", foreign_keys=[me_send_mb_id])
+
+    __mapper_args__ = {
+        'confirm_deleted_rows': False
+    }
 
 
 class Popular(Base):
