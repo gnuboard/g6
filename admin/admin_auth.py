@@ -7,6 +7,7 @@ from sqlalchemy import select, update
 from core.database import db_session
 from core.exception import AlertException
 from core.models import Auth, Member
+from core.plugin import get_all_plugin_admin_menu_id_name
 from core.template import AdminTemplates
 from lib.dependencies import (
     common_search_query_params, validate_token, validate_captcha
@@ -66,6 +67,9 @@ async def auth_list(
         # id와 name 값이 비어 있지 않은 경우 그들을 옵션으로 출력
         if id and name and id[-3:] != '000':
             auth_options.append(f'<option value="{id}">{id} {name}</option>')
+
+    for id, name in get_all_plugin_admin_menu_id_name():
+        auth_options.append(f'<option value="{id}">{id} {name}</option>')
 
     context = {
         "request": request,
