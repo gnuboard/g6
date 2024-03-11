@@ -13,7 +13,7 @@
         <form name="flogin" action="/bbs/login" onsubmit="return flogin_submit(this);" method="post">
             <input type="hidden" name="url" value="{{ url }}">
             <fieldset id="login_fs" class="p-5">
-                <legend>회원로그인</legend>
+                <legend class="blind">회원로그인</legend>
                 <label for="login_id" class="blind">회원아이디<strong class="blind"> 필수</strong></label>
                 <input type="text" name="mb_id" id="login_id" required value="{{ mb_id }}" class="frm_input w-100 fs-4 mb-2 required alnum_" size="20" maxLength="20" placeholder="아이디">
                 <label for="login_pw" class="blind">비밀번호<strong class="blind"> 필수</strong></label>
