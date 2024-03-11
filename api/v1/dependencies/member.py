@@ -3,11 +3,13 @@
 from typing_extensions import Annotated
 
 from fastapi import Depends, HTTPException, Path, Request, status
-from sqlalchemy import exists
 
 from core.database import db_session
 from core.models import Member
-from bbs.member_profile import validate_nickname, validate_userid, is_prohibit_email, validate_nickname_change_date
+from lib.member_lib import (
+    validate_email, validate_mb_id,
+    validate_nickname, validate_nickname_change_date
+)
 
 from api.settings import SETTINGS
 from api.v1.auth import oauth2_scheme
@@ -66,36 +68,23 @@ async def get_current_member(
 
 def validate_create_member(
     request: Request,
-    db: db_session,
     data: CreateMemberModel
 ):
     """회원 가입시 회원 정보의 유효성을 검사합니다."""
-    config = request.state.config
     # 아이디 유효성 검사
-    exists_mb_id = db.scalar(
-        exists(Member).where(Member.mb_id == data.mb_id).select()
-    )
-    if exists_mb_id:
-        raise HTTPException(status_code=409, detail='이미 존재하는 아이디 입니다.')
-    result = validate_userid(data.mb_id, config.cf_prohibit_id)
-    if result["msg"]:
-        raise HTTPException(status_code=403, detail=result["msg"])
+    is_valid, message = validate_mb_id(request, data.mb_id)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=message)
 
     # 닉네임 유효성 검사
-    result = validate_nickname(data.mb_nick, config.cf_prohibit_id)
-    if result["msg"]:
-        raise HTTPException(status_code=403, detail=result["msg"])
+    is_valid, message = validate_nickname(request, data.mb_nick)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=message)
 
     # 이메일 유효성 검사
-    exists_email = db.scalar(
-        exists(Member.mb_email)
-        .where(Member.mb_email == data.mb_email).select()
-    )
-    if exists_email:
-        raise HTTPException(status_code=409, detail='이미 존재하는 이메일 입니다.')
-    if is_prohibit_email(request, data.mb_email):
-        raise HTTPException(
-            status_code=403, detail=f"{data.mb_email} 메일은 사용할 수 없습니다.")
+    is_valid, message = validate_email(request, data.mb_email)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=message)
 
     return data
 
@@ -115,27 +104,21 @@ def validate_update_member(
 
     # 이메일 변경 유효성 검사
     if current_member.mb_email != data.mb_email:
-        exists_email = db.scalar(
-            exists(Member.mb_email)
-            .where(Member.mb_email == data.mb_email).select()
-        )
-        if exists_email:
-            raise HTTPException(status_code=409, detail='이미 존재하는 이메일 입니다.')
-        if is_prohibit_email(request, data.mb_email):
-            raise HTTPException(
-                status_code=403, detail=f"{data.mb_email} 메일은 사용할 수 없습니다.")
+        is_valid, message = validate_email(request, data.mb_email)
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=message)
 
     # 닉네임 변경시 유효성 검사
     if current_member.mb_nick != data.mb_nick:
-        result = validate_nickname(data.mb_nick, config.cf_prohibit_id)
-        if result["msg"]:
-            raise HTTPException(status_code=403, detail=result["msg"])
+        is_valid, message = validate_nickname(request, data.mb_nick)
+        if not is_valid:
+            raise HTTPException(status_code=403, detail=message)
 
         if current_member.mb_nick_date:
-            result = validate_nickname_change_date(
+            is_valid, message = validate_nickname_change_date(
                 current_member.mb_nick_date, config.cf_nick_modify)
-            if result["msg"]:
-                raise HTTPException(status_code=403, detail=result["msg"])
+            if not is_valid:
+                raise HTTPException(status_code=403, detail=message)
     else:
         del data.mb_nick_date
 

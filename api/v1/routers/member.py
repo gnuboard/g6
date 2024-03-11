@@ -74,7 +74,7 @@ async def create_member(
     # if member_form.mb_sex not in {"m", "f"}:
     #     member_form.mb_sex = ""
 
-    # TODO: 레벨 입력방지 => 모델에서선언되지 않으므로 삭제예정
+    # TODO: 레벨 입력방지 => 모델에서 선언되지 않으므로 삭제예정
     # del member_form.mb_level
 
     member = Member(**data.__dict__)

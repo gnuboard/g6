@@ -1,19 +1,18 @@
 import secrets
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, Depends, Form, File, Path, Query, UploadFile
+from fastapi import APIRouter, Depends, Form, File, Query, UploadFile
 from fastapi.responses import RedirectResponse, Response
 
-from bbs.member_profile import (
-    is_prohibit_email, validate_nickname, validate_userid
-)
 from core.database import db_session
 from core.exception import AlertException
 from core.formclass import MemberForm
 from core.models import Member
 from core.template import UserTemplates
 from lib.common import *
-from lib.member_lib import validate_and_update_member_image
+from lib.member_lib import (
+    validate_and_update_member_image, validate_email, validate_mb_id, validate_nickname
+)
 from lib.dependencies import get_member, validate_token, validate_captcha
 from lib.pbkdf2 import create_hash
 from lib.point import insert_point
@@ -119,14 +118,14 @@ async def post_register_form(
 
     config = request.state.config
 
-    # 유효성 검사
-    exists_member = db.scalar(select(Member).where(Member.mb_id == mb_id))
-    if exists_member:
-        raise AlertException(status_code=400, detail="이미 존재하는 회원아이디 입니다.")
+    # 회원 아이디 검사
     if len(mb_id) < 3 or len(mb_id) > 20:
         raise AlertException("회원아이디는 3~20자 이어야 합니다.", 400)
     if not re.match(r"^[a-zA-Z0-9_]+$", mb_id):
         raise AlertException("회원아이디는 영문자, 숫자, _ 만 사용할 수 있습니다.", 400)
+    is_valid, message = validate_mb_id(request, mb_id)
+    if not is_valid:
+        raise AlertException(status_code=400, detail=message)
 
     if not (mb_password and mb_password_re):
         raise AlertException(status_code=400, detail="비밀번호를 입력해 주세요.")
@@ -136,34 +135,16 @@ async def post_register_form(
 
     if not member_form.mb_name:
         raise AlertException(status_code=400, detail="이름을 입력해 주세요.")
-    if not member_form.mb_nick:
-        raise AlertException(status_code=400, detail="닉네임을 입력해 주세요.")
 
-    if config.cf_use_email_certify:
-        if not member_form.mb_email:
-            raise AlertException(status_code=400, detail="이메일을 입력해 주세요.")
-
-        elif not valid_email(member_form.mb_email):
-            raise AlertException(status_code=400, detail="이메일 양식이 올바르지 않습니다.")
-
-        else:
-            exists_email = db.scalar(
-                exists(Member.mb_email)
-                .where(Member.mb_email == member_form.mb_email).select()
-            )
-            if exists_email:
-                raise AlertException(status_code=400, detail="이미 존재하는 이메일 입니다.")
-    # 이메일 검사
-    if is_prohibit_email(request, member_form.mb_email):
-        raise AlertException(f"{member_form.mb_email} 메일은 사용할 수 없습니다.", 400)
     # 닉네임 검사
-    result = validate_nickname(member_form.mb_nick, config.cf_prohibit_id)
-    if result["msg"]:
-        raise AlertException(status_code=400, detail=result["msg"])
-    # 회원 아이디 검사
-    result = validate_userid(mb_id, config.cf_prohibit_id)
-    if result["msg"]:
-        raise AlertException(status_code=400, detail=result["msg"])
+    is_valid, message = validate_nickname(request, member_form.mb_nick)
+    if not is_valid:
+        raise AlertException(status_code=400, detail=message)
+
+    # 이메일 검사
+    is_valid, message = validate_email(request, member_form.mb_email)
+    if not is_valid:
+        raise AlertException(message, 400)
 
     # 본인인증
     if mb_certify_case and member_form.mb_certify:

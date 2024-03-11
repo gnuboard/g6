@@ -6,7 +6,7 @@ from sqlalchemy import select, update
 from starlette.responses import RedirectResponse
 
 
-from core.database import DBConnect, db_session
+from core.database import db_session
 from core.exception import AlertException
 from core.formclass import MemberForm
 from core.models import Member, MemberSocialProfiles
@@ -15,7 +15,10 @@ from lib.common import *
 from lib.dependencies import (
     get_login_member, validate_token, validate_captcha
 )
-from lib.member_lib import get_member_icon, get_member_image, validate_and_update_member_image
+from lib.member_lib import (
+    get_member_icon, get_member_image, validate_email, validate_nickname,
+    validate_nickname_change_date, validate_and_update_member_image
+)
 from lib.pbkdf2 import validate_password, create_hash
 from lib.template_filters import default_if_none
 
@@ -154,33 +157,20 @@ async def member_profile_save(
 
     # 이메일 변경
     if exists_member.mb_email != member_form.mb_email:
-        if not member_form.mb_email:
-            raise AlertException("이메일을 입력해 주세요.", 400)
+        is_valid, message = validate_email(request, member_form.mb_email)
+        if not is_valid:
+            raise AlertException(message, 400)
 
-        elif not valid_email(member_form.mb_email):
-            raise AlertException("이메일 양식이 올바르지 않습니다.", 400)
-
-        elif is_prohibit_email(request, member_form.mb_email):
-            raise AlertException(f"{member_form.mb_email} 메일은 사용할 수 없습니다.", 400)
-
-        else:
-            exists_email = db.scalar(
-                exists(Member.mb_email)
-                .where(Member.mb_email == member_form.mb_email).select()
-            )
-            if exists_email:
-                raise AlertException("이미 존재하는 이메일 입니다.", 400)
-
-    # 닉네임변경 검사.
+    # 닉네임변경 검사
     if exists_member.mb_nick != member_form.mb_nick:
-        result = validate_nickname(member_form.mb_nick, config.cf_prohibit_id)
-        if result["msg"]:
-            raise AlertException(result["msg"], 400)
+        is_valid, message = validate_nickname(request, member_form.mb_nick)
+        if not is_valid:
+            raise AlertException(message, 400)
 
         if exists_member.mb_nick_date:
-            result = validate_nickname_change_date(exists_member.mb_nick_date, config.cf_nick_modify)
-            if result["msg"]:
-                raise AlertException(result["msg"], 400)
+            is_valid, message = validate_nickname_change_date(exists_member.mb_nick_date, config.cf_nick_modify)
+            if not is_valid:
+                raise AlertException(message, 400)
 
         member_form.mb_nick_date = datetime.now()
 
@@ -224,102 +214,3 @@ def get_is_phone_certify(member: Member, config: Config) -> bool:
     return (config.cf_cert_use and config.cf_cert_req and
             (config.cf_cert_hp or config.cf_cert_simple) and
             member.mb_certify != "ipin")
-
-
-def validate_nickname_change_date(before_nick_date: date, nick_modify_date) -> Dict[str, str]:
-    """
-        닉네임 변경 가능한지 날짜 검사
-        Args:
-            before_nick_date (datetime) : 이전 닉네임 변경한 날짜
-            nick_modify_date (int) : 닉네임 수정가능일
-        Raises:
-            ValidationError: 닉네임 변경 가능일 안내
-    """
-    message = {"msg": ""}
-    if nick_modify_date == 0:
-        return message
-
-    if not is_none_datetime(before_nick_date):
-        available_date = before_nick_date + timedelta(days=nick_modify_date)
-        if datetime.now().date() < available_date:
-            message["msg"] = f"{available_date.strftime('%Y-%m-%d')} 이후 닉네임을 변경할 수 있습니다."
-
-    return message
-
-
-def validate_nickname(mb_nick: str, prohibit_id: str) -> Dict[str, str]:
-    """ 등록가능한 닉네임인지 검사
-    Args:
-        mb_nick : 등록할 닉네임
-        prohibit_id : 금지된 닉네임
-    Return:
-        가능한 닉네임이면 True 아니면 에러메시지 배열
-    """
-    message = {
-        "msg": ""
-    }
-    if mb_nick is None or mb_nick.strip() == "":
-        message["msg"] = "닉네임을 입력해주세요."
-        return message
-
-    db = DBConnect().sessionLocal()
-    result = db.scalar(select(Member).filter(Member.mb_nick == mb_nick))
-    if result:
-        message["msg"] = "해당 닉네임이 존재합니다."
-        return message
-
-    if mb_nick in prohibit_id:
-        message["msg"] = "닉네임으로 정할 수 없는 단어입니다."
-        return message
-
-    db.close()
-
-    return message
-
-
-def validate_userid(user_id: str, prohibit_id: str):
-    """
-    ID 로 사용 불가인 단어 검사
-    Args:
-        user_id (str): ID
-        prohibit_id (str): 사용불가 아이디
-    Raises:
-        ValueError 정할 수없는 ID
-    """
-    message = {
-        "msg": ""
-    }
-    if not user_id or user_id.strip() == "":
-        message["msg"] = "ID를 입력해주세요."
-        return message
-
-    if user_id in prohibit_id.strip():
-        message["msg"] = "ID로 정할 수없는 단어입니다."
-        return message
-
-    return message
-
-
-def is_prohibit_email(request: Request, email: str):
-    """금지된 메일인지 검사
-
-    Args:
-        request (Request): request 객체
-        email (str): 이메일 주소
-
-    Returns:
-        bool: 금지된 메일이면 True, 아니면 False
-    """
-    config = request.state.config
-    _, domain = email.split("@")
-
-    # config에서 금지된 도메인 목록 가져오기
-    cf_prohibit_email = getattr(config, "cf_prohibit_email", "")
-    if cf_prohibit_email:
-        prohibited_domains = [d.lower().strip() for d in cf_prohibit_email.split('\n')]
-
-        # 주어진 도메인이 금지된 도메인 목록에 있는지 확인
-        if domain.lower() in prohibited_domains:
-            return True
-
-    return False

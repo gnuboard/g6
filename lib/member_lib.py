@@ -1,10 +1,11 @@
 import os
 import re
-from typing import Union, Optional
+from datetime import date, datetime, timedelta
+from typing import Union, Optional, Tuple
 from PIL import Image, UnidentifiedImageError
 
 from fastapi import Request, UploadFile
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.orm import Session
 
 from core.models import Board, Config, Group, Member as MemberModel, Member
@@ -266,21 +267,148 @@ def is_super_admin(request: Request, mb_id: str = None) -> bool:
     return False
 
 
-def check_exist_member_email(email_address: str, mb_id: str = None):
-    """이메일 중복 확인"""
-    filters = []
+def is_email_registered(email: str, mb_id: str = None) -> bool:
+    """이메일이 이미 등록되어 있는지 확인
 
+    Args:
+        email (str): 이메일 주소
+        mb_id (str, optional): 회원 아이디. Defaults to None.
+            회원정보 수정시 자신의 이메일을 제외하기 위해 사용
+
+    Returns:
+        bool: 이미 등록된 이메일이면 True, 아니면 False
+    """
+    query = exists(Member).where(Member.mb_email == email).select()
     if mb_id:
-        filters.append(Member.mb_id != mb_id)
+        query = query.where(Member.mb_id != mb_id)
 
     with DBConnect().sessionLocal() as db:
-        exists_member = db.scalar(
-            select(Member)
-            .where(Member.mb_email == email_address)
-            .filter(*filters)
-        )
+        exists_member = db.scalar(query)
 
     if exists_member:
         return True
     else:
         return False
+
+
+def is_prohibit_email(request: Request, email: str):
+    """금지된 메일인지 검사
+
+    Args:
+        request (Request): request 객체
+        email (str): 이메일 주소
+
+    Returns:
+        bool: 금지된 메일이면 True, 아니면 False
+    """
+    config = request.state.config
+    _, domain = email.split("@")
+
+    # config에서 금지된 도메인 목록 가져오기
+    cf_prohibit_email = getattr(config, "cf_prohibit_email", "")
+    if cf_prohibit_email:
+        prohibited_domains = [d.lower().strip() for d in cf_prohibit_email.split('\n')]
+
+        # 주어진 도메인이 금지된 도메인 목록에 있는지 확인
+        if domain.lower() in prohibited_domains:
+            return True
+
+    return False
+
+
+def validate_mb_id(request: Request, mb_id: str) -> Tuple[bool, str]:
+    """ 회원가입이 가능한 아이디인지 검사
+
+    Args:
+        request (Request): request 객체
+        mb_id (str): 가입할 아이디
+
+    Returns:
+        Tuple[bool, str]: (검사 결과, 메시지)
+    """
+    config = request.state.config
+
+    if not mb_id or mb_id.strip() == "":
+        return False, "아이디를 입력해주세요."
+
+    with DBConnect().sessionLocal() as db:
+        exists_id = db.scalar(
+            exists(Member).where(Member.mb_id == mb_id).select()
+        )
+    if exists_id:
+        return False, "이미 가입된 아이디입니다."
+
+    prohibited_ids = [id.strip() for id in getattr(config, "cf_prohibit_id", "").split(",")]
+    if mb_id in prohibited_ids:
+        return False, "사용할 수 없는 아이디입니다."
+
+    return True, "사용 가능한 아이디입니다."
+
+
+def validate_nickname(request: Request, mb_nick: str) -> Tuple[bool, str]:
+    """ 등록 가능한 닉네임인지 검사
+
+    Args:
+        mb_nick : 등록할 닉네임
+        prohibit_id : 금지된 닉네임
+
+    Return:
+        가능한 닉네임이면 True 아니면 에러메시지 배열
+
+    """
+    config = request.state.config
+
+    if not mb_nick or mb_nick.strip() == "":
+        return False, "닉네임을 입력해주세요."
+
+    with DBConnect().sessionLocal() as db:
+        exists_nickname = db.scalar(
+            exists(Member).where(Member.mb_nick == mb_nick).select()
+        )
+    if exists_nickname:
+        return False, "해당 닉네임이 존재합니다."
+
+    if mb_nick in getattr(config, "cf_prohibit_id", "").strip():
+        return False, "닉네임으로 정할 수 없는 단어입니다."
+
+    return True, "사용 가능한 닉네임입니다."
+
+
+def validate_nickname_change_date(before_nick_date: date, nick_modify_date: int) -> Tuple[bool, str]:
+    """
+        닉네임 변경 가능한지 날짜 검사
+        Args:
+            before_nick_date (datetime) : 이전 닉네임 변경한 날짜
+            nick_modify_date (int) : 닉네임 수정가능일
+        Raises:
+            ValidationError: 닉네임 변경 가능일 안내
+    """
+    if not is_none_datetime(before_nick_date) and nick_modify_date != 0:
+        available_date = before_nick_date + timedelta(days=nick_modify_date)
+        if datetime.now().date() < available_date:
+            return False, f"{available_date.strftime('%Y-%m-%d')} 이후 닉네임을 변경할 수 있습니다."
+
+    return True, "닉네임을 변경할 수 있습니다."
+
+
+def validate_email(request: Request, email: str) -> Tuple[bool, str]:
+    """ 등록 가능한 이메일인지 검사
+
+    Args:
+        Request: request 객체
+        email (str): 이메일 주소
+
+    Returns:
+        Tuple[bool, str]: (검사 결과, 메시지)
+
+    """
+    if not email or email.strip() == "":
+        return False, "이메일을 입력해주세요."
+    
+    if not is_email_registered(email):
+        return False, "이미 가입된 이메일입니다."
+    
+    if not is_prohibit_email(request, email):
+        return False, "사용할 수 없는 이메일입니다."
+
+    return True, "사용 가능한 이메일입니다."

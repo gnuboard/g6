@@ -6,14 +6,16 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends
 from starlette.responses import RedirectResponse
 
-from bbs.member_profile import validate_nickname, validate_userid
 from core.database import db_session
 from core.exception import AlertException
 from core.formclass import MemberForm
 from core.models import MemberSocialProfiles
 from core.template import UserTemplates
 from lib.common import *
-from lib.member_lib import check_exist_member_email
+from lib.member_lib import (
+    is_email_registered,
+    validate_email, validate_mb_id, validate_nickname
+)
 from lib.pbkdf2 import create_hash
 from lib.point import insert_point
 from lib.social import providers
@@ -180,7 +182,7 @@ async def get_social_register_form(request: Request):
                              url=request.url_for('login').__str__())
     social_email = request.session.get('ss_social_email', None)
     if social_email:
-        is_exists_email = check_exist_member_email(social_email, None)
+        is_exists_email = is_email_registered(social_email, None)
     else:
         is_exists_email = False
 
@@ -240,30 +242,21 @@ async def post_social_register(
         raise AlertException(status_code=400, detail="유효하지 않은 요청입니다. 관리자에게 문의하십시오.",
                              url=request.url_for('login').__str__())
 
+    # 소셜 아이디 검사
     gnu_social_id = SocialAuthService.g6_convert_social_id(identifier, provider_name)
-    exists_social_member = db.scalar(select(Member).where(Member.mb_id == gnu_social_id))
-    # 유효성 검증
-    if exists_social_member:
-        raise AlertException(status_code=400, detail="이미 소셜로그인으로 가입된 회원아이디 입니다.",
-                             url=request.url_for('login').__str__())
+    is_valid, message = validate_mb_id(request, gnu_social_id)
+    if not is_valid:
+        raise AlertException(status_code=400, detail=message)
 
-    result = validate_userid(gnu_social_id, config.cf_prohibit_id)
-    if result["msg"]:
-        raise AlertException(status_code=400, detail=result["msg"])
-
-    if not valid_email(member_form.mb_email):
-        raise AlertException(status_code=400, detail="이메일 양식이 올바르지 않습니다.")
-
-    exists_email = db.scalar(
-        exists(Member.mb_email)
-        .where(Member.mb_email == member_form.mb_email).select()
-    )
-    if exists_email:
-        raise AlertException(status_code=400, detail="이미 존재하는 이메일 입니다.")
-
-    result = validate_nickname(member_form.mb_nick, config.cf_prohibit_id)
-    if result["msg"]:
-        raise AlertException(status_code=400, detail=result["msg"])
+    # 이메일 유효성 검사
+    is_valid, message = validate_email(request, member_form.mb_email)
+    if not is_valid:
+        raise AlertException(message, 400)
+    
+    # 닉네임 유효성 검사
+    is_valid, message = validate_nickname(request, member_form.mb_nick)
+    if not is_valid:
+        raise AlertException(status_code=400, detail=message)
 
     # nick
     mb_nick = member_form.mb_nick
