@@ -167,7 +167,7 @@
         {% endif %}
         <!-- Captcha End -->
 
-        <div class="btn_confirm position-relative my-3">
+        <div class="btn_confirm position-relative my-3 text-end">
             <a href="{{ url_for('list_post', bo_table=board.bo_table)|set_query_params(request, remove=['parent_id']) }}" class="btn px-4 fs-4 rounded-2 bg-secondary text-white">취소</a>
             <button type="submit" id="btn_submit" accesskey="s" class="btn px-4 fs-4 rounded-2 main-bg text-white">작성완료</button>
         </div>
