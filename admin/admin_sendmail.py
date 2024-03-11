@@ -41,9 +41,10 @@ async def sendmail_test_result(
         <p>이 내용이 제대로 보인다면 보내는 메일 서버에는 이상이 없는것입니다.<p>\
         {datetime.now()}<p>이 메일 주소로는 회신되지 않습니다.</span>'
     from_email = get_admin_email(request)
+    from_name = get_admin_email_name(request)
     real_emails = to_email.split(',') if ',' in to_email else [to_email]
     for to_email in real_emails:
-        mailer(from_email, to_email, subject, body)
+        mailer(from_email, to_email, subject, body, from_name)
 
     context = {
         "request": request,

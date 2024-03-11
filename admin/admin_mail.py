@@ -183,7 +183,7 @@ async def mail_test(
     content = content + f'<p>더 이상 정보 수신을 원치 않으시면 [<a href="/bbs/email_stop/{mb_id}&mb_md5={mb_md5}" target="_blank">수신거부</a>] 해 주십시오.</p>' 
 
     # 메일 발송
-    mailer(get_admin_email(request), email, subject, content)
+    mailer(get_admin_email(request), email, subject, content, get_admin_email_name(request))
 
     raise AlertException(f"{nick}({email})님께 테스트 메일을 발송하였습니다. 확인하여 주십시오.")
 
@@ -351,44 +351,48 @@ async def mail_select_send(
     db: db_session,
     ma_id: int = Query(...),
 ):
+    from_mail = get_admin_email(request)
+    from_name = get_admin_email_name(request)
     """
     회원메일발송 처리
     """
     async def send_events(members: list, mail_subject: str, mail_content: str):
         count = 0
         sleepsec = 1  # 1초 간격으로 조정
+        try:
+            for member in members:
+                mb_name, mb_nick, mb_id, mb_email = member.split("||")
 
-        for member in members:
-            mb_name, mb_nick, mb_id, mb_email = member.split("||")
+                if not mb_email:
+                    continue
+                
+                mb_md5 = hashlib.md5(f"{mb_id}{mb_email}{datetime.now()}".encode()).hexdigest()
 
-            if not mb_email:
-                continue
-            
-            mb_md5 = hashlib.md5(f"{mb_id}{mb_email}{datetime.now()}".encode()).hexdigest()
+                subject = mail_subject
+                content = mail_content
+                content = content.replace("{이름}", mb_name)
+                content = content.replace("{닉네임}", mb_nick)
+                content = content.replace("{회원아이디}", mb_id)
+                content = content.replace("{이메일}", mb_email)
+                content = content + f"<hr size=0><p><span style='font-size:10pt; font-family:돋움'>▶ 더 이상 정보 수신을 원치 않으시면 [<a href='/bbs/email_stop/{mb_id}&mb_md5={mb_md5}' target='_blank'>수신거부</a>] 해 주십시오.</span></p>"           
+                
+                # 메일 발송
+                mailer(from_mail, mb_email, subject, content, from_name)
+                count += 1
 
-            subject = mail_subject
-            content = mail_content
-            content = content.replace("{이름}", mb_name)
-            content = content.replace("{닉네임}", mb_nick)
-            content = content.replace("{회원아이디}", mb_id)
-            content = content.replace("{이메일}", mb_email)
-            content = content + f"<hr size=0><p><span style='font-size:10pt; font-family:돋움'>▶ 더 이상 정보 수신을 원치 않으시면 [<a href='/bbs/email_stop/{mb_id}&mb_md5={mb_md5}' target='_blank'>수신거부</a>] 해 주십시오.</span></p>"           
-            
-            # 메일 발송
-            mailer(get_admin_email(request), mb_email, subject, content)
-            count += 1
+                # 10명마다 1초씩 쉬어줍니다.
+                if count % 10 == 0:
+                    await asyncio.sleep(sleepsec)  # 비동기 sleep 사용
 
-            # 10명마다 1초씩 쉬어줍니다.
-            if count % 10 == 0:
-                await asyncio.sleep(sleepsec)  # 비동기 sleep 사용
+                # 발송 상태를 'yield'를 사용하여 전송합니다.
+                # 전송시 필히 data: 로 시작하고 \n\n으로 끝나야 합니다.
+                yield f"data: {count}. {mb_name}({mb_email})님께 메일을 보내고 있습니다.\n\n"
 
-            # 발송 상태를 'yield'를 사용하여 전송합니다.
-            # 전송시 필히 data: 로 시작하고 \n\n으로 끝나야 합니다.
-            yield f"data: {count}. {mb_name}({mb_email})님께 메일을 보내고 있습니다.\n\n"
-
-        # 멤버 리스트 메일발송 완료 후 함수 종료
-        # 종료 메시지 전송
-        yield "data: [끝]\n\n"
+            # 멤버 리스트 메일발송 완료 후 함수 종료
+            # 종료 메시지 전송
+            yield "data: [끝]\n\n"
+        except Exception as e:
+            yield f"data: [오류] {e}\n\n"
 
     async def send_error_events(message: str):
         yield "data: 메일발송 중 오류가 발생하였습니다.\n\n"

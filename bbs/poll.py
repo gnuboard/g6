@@ -163,7 +163,7 @@ async def poll_etc_update(
                 "content": pc_idea
             }
         ).body.decode("utf-8")
-        mailer(get_admin_email(request), email, subject, body)
+        mailer(get_admin_email(request), email, subject, body, get_admin_email_name(request))
 
     return RedirectResponse(url=f"/bbs/poll_result/{po_id}", status_code=302)
 
