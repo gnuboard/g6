@@ -26,7 +26,10 @@ class Kakao(SocialProvider):
             access_token_params=None,
             authorize_url="https://kauth.kakao.com/oauth/authorize",
             authorize_params=None,
-            client_kwargs={"scope": "account_email, profile_image"},
+            client_kwargs={
+                "scope": "account_email, profile_image",
+                "token_endpoint_auth_method": "client_secret_post"
+            },
             api_base_url="https://kapi.kakao.com/v2/user/me",
             # api_base_url="https://kapi.kakao.com/v2/user/me?property_keys=['kakao_account.profile', 'kakao_account.email']",
         )

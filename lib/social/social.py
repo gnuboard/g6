@@ -18,7 +18,7 @@ def register_social_provider(config: Config):
     Args:
         config (Config): 기본환경설정 객체
     Examples:
-        서버 재시작 후 인증 객체가 등록되지 않아서 등록에 사용.
+        서버 재시작 후 인증 객체가 등록되지 않아서 사용.
     """
     if not config.cf_social_login_use:
         return
@@ -35,7 +35,7 @@ def register_social_provider(config: Config):
                 provider_class.register(oauth, config.cf_naver_clientid.strip(), config.cf_naver_secret.strip())
 
         elif provider_name == 'kakao':
-            if not config.cf_kakao_rest_key:
+            if config.cf_kakao_rest_key:
                 # 카카오 client_secret 은 선택사항
                 provider_class.register(oauth, config.cf_kakao_rest_key.strip(), config.cf_kakao_client_secret.strip())
 
