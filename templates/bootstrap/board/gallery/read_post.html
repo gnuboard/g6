@@ -188,10 +188,12 @@
         {% for file in files %}
             <li class="position-relative d-flex align-items-center file-border rounded-3 transition-effect p-4 mt-3" style="color: #b2b2b2;">
                 <i class="fa fa-folder-open fs-1 me-4" aria-hidden="true"></i>
-                <a href="/board/{{ board.bo_table }}/{{ write.wr_id }}/download/{{ file.bf_no }}" class="d-block text-decoration-none break-word main-font fs-5"> 
+                <div>
+                  <a href="/board/{{ board.bo_table }}/{{ write.wr_id }}/download/{{ file.bf_no }}" class="d-block text-decoration-none break-word main-font fs-5"> 
                     <strong>{{ file.bf_source }}</strong>  ({{ file.bf_filesize|filesizeformat }})
-                </a>
-                <span class="fs-5">{{ file.bf_download }}회 다운로드 | DATE : {{ file.bf_datetime }}</span>
+                  </a>
+                  <span class="fs-5">{{ file.bf_download }}회 다운로드 | DATE : {{ file.bf_datetime }}</span>
+                </div>
             </li>
         {% endfor %}
         </ul>
@@ -404,7 +406,7 @@
                             </label>
                         </span>
                     </div>
-                    <div class="btn_confirm">
+                    <div class="btn_confirm text-end">
                         <button type="submit" id="btn_submit" class="btn_submit">댓글등록</button>
                     </div>
                 </div>
