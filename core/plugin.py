@@ -112,16 +112,14 @@ def get_plugin_info(module_name, plugin_dir=PLUGIN_DIR):
     path = os.path.join(plugin_dir, module_name)
 
     if os.path.isdir(path):
-        screenshot = os.path.join(path, 'screenshot.png')
         screenshot_url = ''
-        if os.path.isfile(screenshot):
-            try:
-                from PIL import Image
-                with Image.open(screenshot) as img:
-                    if img.format == "PNG":
-                        screenshot_url = f"/admin/plugin/screenshot/{module_name}"
-            except:
-                pass
+
+        if os.path.exists(os.path.join(path, 'screenshot.webp')):
+            screenshot_url = f"/admin/plugin/screenshot/{module_name}"
+
+        elif os.path.exists(os.path.join(path, 'screenshot.png')):
+            screenshot_url = f"/admin/plugin/screenshot/{module_name}"
+
         info['screenshot'] = screenshot_url
         info['module_name'] = module_name
 

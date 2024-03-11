@@ -330,10 +330,10 @@ def get_theme_list():
             continue
 
         theme_path = os.path.join(dirname, file)
-        file_list = ['readme.txt', 'screenshot.png', 'index.html']
+        require_file_list = ['readme.txt', 'index.html']
         if (os.path.isdir(theme_path)
-                and all(os.path.isfile(os.path.join(theme_path, fname)) for fname in file_list)):
-            result_array.append(file)
+                and all(os.path.isfile(os.path.join(theme_path, fname)) for fname in require_file_list)):
+                result_array.append(file)
 
     result_array.sort()  # Using Python's default sort which is similar to natsort for strings
 
@@ -353,15 +353,12 @@ def get_theme_info(theme_name: str) -> dict:
     path = os.path.join(TEMPLATES, theme_name)
 
     if os.path.isdir(path):
-        screenshot = os.path.join(path, 'screenshot.png')
         screenshot_url = ''
-        if os.path.isfile(screenshot):
-            try:
-                with Image.open(screenshot) as img:
-                    if img.format == "PNG":
-                        screenshot_url = f"/admin/screenshot/{theme_name}"
-            except:
-                pass
+        if os.path.exists(os.path.join(path, 'screenshot.webp')):
+            screenshot_url = f"/admin/screenshot/{theme_name}"
+
+        elif os.path.exists(os.path.join(path, 'screenshot.png')):
+            screenshot_url = f"/admin/screenshot/{theme_name}"
 
         info['screenshot'] = screenshot_url
 
