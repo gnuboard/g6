@@ -16,8 +16,8 @@ from lib.dependencies import common_search_query_params, get_write
 from lib.member_lib import get_admin_type, get_member_level
 from lib.template_filters import number_format
 from lib.point import insert_point, delete_point
-from api.v1.dependencies.board import get_member_info, get_board, get_group, validate_write
-from api.v1.models.board import WriteModel
+from api.v1.dependencies.board import get_member_info, get_board, get_group, validate_write, validate_comment
+from api.v1.models.board import WriteModel, CommentModel
 
 
 router = APIRouter()
@@ -585,3 +585,85 @@ async def api_delete_post(
     FileCache().delete_prefix(f'latest-{bo_table}')
 
     return {"result": "deleted"}
+
+
+@router.post("/{bo_table}/{wr_parent}/comment")
+async def api_create_comment(
+    request: Request,
+    db: db_session,
+    member_info: Annotated[Dict, Depends(get_member_info)],
+    board: Annotated[Board, Depends(get_board)],
+    comment_data: Annotated[CommentModel, Depends(validate_comment)],
+    bo_table: str = Path(...),
+    wr_parent: str = Path(...),
+):
+    """
+    댓글 등록
+    """
+    config = request.state.config
+    board_config = BoardConfig(request, board)
+    member = member_info["member"]
+    mb_id = member_info["mb_id"] or ""
+    write_model = dynamic_create_write_table(bo_table)
+
+    # 글쓰기 간격 검증
+    if not is_write_delay(request):
+        raise HTTPException(status_code=400, detail="너무 빠른 시간내에 댓글을 연속해서 올릴 수 없습니다.")
+
+    # 댓글 작성 권한 검증
+    if not board_config.is_comment_level():
+        raise HTTPException(status_code=403, detail="댓글을 작성할 권한이 없습니다.")
+    
+    # 포인트 검사
+    comment_point = board.bo_comment_point
+    if config.cf_use_point:
+        if not board_config.is_comment_point():
+            point = number_format(abs(comment_point))
+            message = f"댓글 작성에 필요한 포인트({point})가 부족합니다."
+            if not member:
+                message += f"\\n로그인 후 다시 시도해주세요."
+            raise HTTPException(status_code=403, detail=message)
+
+    # 댓글 객체 생성
+    comment = write_model()
+
+    if comment_data.comment_id:
+        parent_comment = db.get(write_model, comment_data.comment_id)
+        if not parent_comment:
+            raise HTTPException(status_code=404, detail=f"{comment_data.comment_id} : 존재하지 않는 댓글입니다.")
+
+        comment.wr_comment_reply = generate_reply_character(board, parent_comment)
+        comment.wr_comment = parent_comment.wr_comment
+    else:
+        comment.wr_comment = db.scalar(
+            select(func.coalesce(func.max(write_model.wr_comment), 0) + 1)
+            .where(
+                write_model.wr_parent == wr_parent,
+                write_model.wr_is_comment == 1
+            )
+        )
+
+    comment_data_dict = comment_data.model_dump()
+    for key, value in comment_data_dict.items():
+        setattr(comment, key, value)
+
+    db.add(comment)
+
+    write = db.get(write_model, wr_parent)
+
+    # 게시글에 댓글 수 증가
+    write.wr_comment = write.wr_comment + 1
+    db.commit()
+
+    # 새글 추가
+    insert_board_new(bo_table, comment)
+
+    # 포인트 처리
+    if member:
+        insert_point(request, mb_id, comment_point, f"{board.bo_subject} {wr_parent}-{comment.wr_id} 댓글쓰기", board.bo_table, comment.wr_id, "댓글")
+
+    # 메일 발송
+    if board_config.use_email:
+        send_write_mail(request, board, comment, write)
+
+    return {"result": "created"}

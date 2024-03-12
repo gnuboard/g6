@@ -5,16 +5,17 @@ from sqlalchemy import select
 
 from core.database import db_session
 from core.models import Member, Board, Group
-from lib.common import filter_words
+from lib.common import filter_words, dynamic_create_write_table
 from lib.board_lib import BoardConfig
 from lib.html_sanitizer import content_sanitizer
 from lib.pbkdf2 import create_hash
+from lib.g5_compatibility import G5Compatibility
 from api.settings import SETTINGS
 from api.v1.auth import oauth2_scheme
 from api.v1.auth.jwt import JWT
 from api.v1.lib.member import MemberService
 from api.v1.models.auth import TokenPayload
-from api.v1.models.board import WriteModel
+from api.v1.models.board import WriteModel, CommentModel
 
 
 def get_current_member(
@@ -148,3 +149,55 @@ def validate_write(
     write.wr_homepage = getattr(member, "mb_homepage", write.wr_homepage)
 
     return write
+
+
+def validate_comment(
+    request: Request,
+    db: db_session,
+    comment: CommentModel,
+    member_info: Annotated[Dict, Depends(get_member_info)],
+    board: Board = Depends(get_board),
+    bo_table: str = Path(...),
+    wr_parent: int = Path,
+):
+    board_config = BoardConfig(request, board)
+    compatible_instance = G5Compatibility(db)
+    member = member_info['member']
+    mb_id = member_info['mb_id'] or ""
+
+    # 비회원 글쓰기 시 비밀번호 입력 확인
+    if not mb_id and not comment.wr_password:
+        raise HTTPException(status_code=400, detail="비밀번호를 입력해주세요.")
+
+    write_model = dynamic_create_write_table(bo_table)
+    now = compatible_instance.get_wr_last_now(write_model.__tablename__)
+
+    filter_word = filter_words(request, comment.wr_content)
+    if filter_word:
+        raise HTTPException(status_code=400, detail=f"내용에 금지단어({filter_word})가 포함되어 있습니다.")
+
+    write = db.get(write_model, wr_parent)
+
+    # 작성자명(wr_name) 설정
+    if member:
+        if board_config.board.bo_use_name:
+            comment.wr_name =  member.mb_name
+        else:
+            comment.wr_name =  member.mb_nick
+    elif not comment.wr_name:
+        raise HTTPException(status_code=400, detail="로그인 세션 만료, 비회원 글쓰기시 작성자 이름 미기재 등의 비정상적인 접근입니다.")
+    
+    comment.ca_name = write.ca_name
+    comment.wr_option = comment.wr_secret
+    comment.wr_num = write.wr_num
+    comment.wr_parent = wr_parent
+    # Stored XSS 방지
+    comment.wr_content = content_sanitizer.get_cleaned_data(comment.wr_content)
+    comment.mb_id = mb_id
+    comment.wr_password = create_hash(comment.wr_password) if comment.wr_password else ""
+    comment.wr_email = getattr(member, "mb_email", "")
+    comment.wr_homepage = getattr(member, "mb_homepage", "")
+    comment.wr_datetime = comment.wr_last = now
+    comment.wr_ip = request.client.host
+
+    return comment

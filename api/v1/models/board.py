@@ -34,3 +34,22 @@ class WriteModel(BaseModel):
         """WriteModel에서 선언되지 않은 필드를 초기화"""
         self.wr_datetime: datetime = datetime.now()
         return self
+
+
+class CommentModel(BaseModel):
+    """게시판 댓글 모델"""
+
+    # 추가 필드 허용
+    model_config = ConfigDict(extra='allow')
+
+    wr_content: Annotated[str, Body(..., description="내용")]
+    wr_name: Annotated[str, Body("", description="작성자")]
+    wr_password: Annotated[str, Body("", description="비밀번호")]
+    wr_secret: Annotated[str, Body("html1", description="비밀글 여부")]
+    comment_id: Annotated[int, Body(None, description="부모댓글 ID")]
+
+    @model_validator(mode='after')
+    def init_fields(self) -> 'WriteModel':
+        """CommentModel에서 선언되지 않은 필드를 초기화"""
+        self.wr_is_comment: int = 1
+        return self
