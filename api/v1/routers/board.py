@@ -2,7 +2,7 @@ from typing_extensions import Annotated, Dict
 
 from fastapi import APIRouter, Depends, Request, Path, Query, HTTPException, status
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import asc, desc, func, select, exists, inspect
+from sqlalchemy import asc, desc, func, select, update, exists, inspect
 
 from core.database import db_session
 from core.models import Board, Group, BoardGood, Scrap
@@ -12,7 +12,7 @@ from lib.board_lib import (
     is_owner, BoardFileManager
 )
 from lib.common import dynamic_create_write_table, FileCache, cut_name
-from lib.dependencies import common_search_query_params
+from lib.dependencies import common_search_query_params, get_write
 from lib.member_lib import get_admin_type
 from lib.template_filters import number_format
 from lib.point import insert_point
@@ -417,3 +417,57 @@ async def api_create_post(
     FileCache().delete_prefix(f'latest-{bo_table}')
 
     return {"result": "created"}
+    
+
+@router.put("/{bo_table}/{wr_id}")
+async def api_update_post(
+    request: Request,
+    db: db_session,
+    member_info: Annotated[Dict, Depends(get_member_info)],
+    wr_data: Annotated[WriteModel, Depends(validate_write)],
+    bo_table: str = Path(...),
+    board: Board = Depends(get_board),
+    wr_id: str = Path(...),
+) -> Dict:
+    """
+    지정된 게시판의 글을 수정합니다.
+    """
+    board_config = BoardConfig(request, board)
+    mb_id = member_info["mb_id"]
+    admin_type = get_admin_type(request, mb_id, board=board)
+
+    # 비밀글 사용여부 체크
+    if not admin_type:
+        if not board.bo_use_secret and "secret" in wr_data.secret and "secret" in wr_data.html and "secret" in wr_data.mail:
+            raise HTTPException(status_code=403, detail="비밀글 미사용 게시판 이므로 비밀글로 등록할 수 없습니다.")
+        # 비밀글 옵션에 따라 비밀글 설정
+        if board.bo_use_secret == 2:
+            wr_data.secret = "secret"
+
+    # 게시글 테이블 정보 조회
+    write_model = dynamic_create_write_table(bo_table)
+
+    # 공지글 설정
+    board.bo_notice = board_config.set_board_notice(wr_id, wr_data.notice)
+
+    FileCache().delete_prefix(f'latest-{bo_table}')
+
+    if not board_config.is_modify_by_comment(wr_id):
+        raise HTTPException(status_code=403, detail=f"이 글과 관련된 댓글이 {board.bo_count_modify}건 이상 존재하므로 수정 할 수 없습니다.")
+
+    write = get_write(db, bo_table, wr_id)
+    wr_data_dict = wr_data.model_dump()
+    for key, value in wr_data_dict.items():
+        setattr(write, key, value)
+
+    write.wr_ip = request.client.host
+    db.commit()
+
+    # 분류 수정 시 댓글/답글도 같이 수정
+    if wr_data.ca_name:
+        db.execute(
+            update(write_model).where(write_model.wr_parent == wr_id)
+            .values(ca_name=wr_data.ca_name)
+        )
+        db.commit()
+    return {"result": "updated"}
