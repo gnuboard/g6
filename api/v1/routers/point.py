@@ -13,7 +13,7 @@ from api.v1.models.point import ResponsePointModel
 router = APIRouter()
 
 
-@router.get("/{mb_id}/points",
+@router.get("/points",
             summary="회원 포인트 내역 목록 조회",
             response_model=List[ResponsePointModel],
             responses={**responses})

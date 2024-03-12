@@ -111,15 +111,11 @@ def validate_create_member(
 
 def validate_update_member(
     request: Request,
-    mb_id: Annotated[str, Path(...)],
     current_member: Annotated[Member, Depends(get_current_member)],
     data: UpdateMemberModel,
 ):
     """회원 정보 수정시 회원 정보의 유효성을 검사합니다."""
     config = request.state.config
-
-    if mb_id != current_member.mb_id:
-        raise HTTPException(status_code=403, detail="본인의 회원정보만 수정할 수 있습니다.")
 
     # 이메일 변경 유효성 검사
     if current_member.mb_email != data.mb_email:

@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Any
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Path, Request
 
 from core.database import db_session
 from core.models import Member
@@ -15,18 +15,19 @@ from api.v1.dependencies.member import (
     get_current_member, validate_create_member,
     validate_update_member, validate_email_non_certify_member
 )
+from api.v1.lib.member import get_member
 from api.v1.models.member import CreateMemberModel, ResponseMemberModel, UpdateMemberModel
 
 router = APIRouter()
 
 
-@router.get("/me",
+@router.get("/member",
             summary="현재 로그인한 회원 정보 조회",
             description="JWT을 통해 현재 로그인한 회원 정보를 조회합니다. \
                 <br>- 탈퇴 또는 차단된 회원은 조회할 수 없습니다. \
                 <br>- 이메일 인증이 완료되지 않은 회원은 조회할 수 없습니다.",
             response_description="로그인한 회원 정보를 반환합니다.")
-async def read_members_me(
+async def read_member_me(
     current_member: Annotated[Member, Depends(get_current_member)]
 ):
     """현재 로그인한 회원 정보를 조회합니다.
@@ -40,7 +41,23 @@ async def read_members_me(
     return current_member
 
 
-@router.post("",
+@router.get("/members/{mb_id}",
+            summary="회원 정보 조회",
+            response_model=ResponseMemberModel,
+            responses={**responses})
+async def read_member(
+    db: db_session,
+    mb_id: Annotated[str, Path(..., title="회원아이디")],
+    current_member: Annotated[Member, Depends(get_current_member)]
+):
+    """회원 정보를 조회합니다."""
+    member = get_member(db, mb_id)
+    if member.mb_open == 0 and member.mb_id != current_member.mb_id:
+        raise HTTPException(status_code=403, detail="회원정보를 공개하지 않은 회원입니다.")
+    return member
+
+
+@router.post("/member",
              summary="회원 가입",
              response_model=ResponseMemberModel,
              responses={**responses})
@@ -88,7 +105,7 @@ async def create_member(
     return member
 
 
-@router.put("/{mb_id}",
+@router.put("/member",
             summary="회원 정보 수정",
             response_model=ResponseMemberModel,
             responses={**responses})
@@ -107,7 +124,7 @@ async def update_member(
     return current_member
 
 
-@router.put("{mb_id}/email-certification/{key}",
+@router.put("/members/{mb_id}/email-certification/{key}",
             summary="회원가입 메일인증 처리")
 async def certificate_email(
     db: db_session,
