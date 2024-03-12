@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, Request, status, Path
 from sqlalchemy import select
 
 from core.database import db_session
-from core.models import Member, Group
+from core.models import Member, Board, Group
 from api.settings import SETTINGS
 from api.v1.auth import oauth2_scheme
 from api.v1.auth.jwt import JWT
@@ -70,6 +70,19 @@ def get_member_info(
         'member_level': member.mb_level if member else 1,
     }
     return result
+
+
+def get_board(
+    db: db_session,
+    bo_table: str = Path(...),
+) -> Board:
+    """
+    게시판 정보를 조회합니다.
+    """
+    board = db.get(Board, bo_table)
+    if not board:
+        raise HTTPException(status_code=404, detail="존재하지 않는 게시판입니다.")
+    return board
 
 
 def get_group(
