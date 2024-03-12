@@ -667,3 +667,33 @@ async def api_create_comment(
         send_write_mail(request, board, comment, write)
 
     return {"result": "created"}
+
+
+@router.put("/{bo_table}/{wr_parent}/comment/{wr_id}")
+async def api_update_comment(
+    db: db_session,
+    comment_data: Annotated[CommentModel, Depends(validate_comment)],
+    bo_table: str = Path(...),
+    wr_id: str = Path(...),
+) -> Dict:
+    """
+    댓글 수정
+    """
+    write_model = dynamic_create_write_table(bo_table)
+
+    # 댓글 수정
+    comment = db.get(write_model, wr_id)
+    if not comment:
+        raise HTTPException(status_code=404, detail=f"{wr_id} : 존재하지 않는 댓글입니다.")
+
+    comment_data_dict = comment_data.model_dump()
+
+    # 수정시 작성자명이 변경되지 않도록 wr_name 제거
+    del comment_data_dict["wr_name"]
+
+    for key, value in comment_data_dict.items():
+        setattr(comment, key, value)
+
+    db.commit()
+
+    return {"result": "updated"}
