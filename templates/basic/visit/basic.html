@@ -1,27 +1,31 @@
-<div id="visit" class="ft_cnt">
+<div id="visit">
+
     <h2>접속자집계</h2>
+
     <ul>
-      <li>
-        <span>오늘</span>
-        <strong>{{ today|number_format }}</strong>
-      </li>
-      <li>
-        <span>어제</span>
-        <strong>{{ yesterday|number_format }}</strong>
-      </li>
-      <li>
-        <span>최대</span>
-        <strong>{{ max|number_format }}</strong>
-      </li>
-      <li>
-        <span>전체</span>
-        <strong>{{ total|number_format }}</strong>
-      </li>
+        <li>
+            <span>오늘</span>
+            <strong>{{ today|number_format }}</strong>
+        </li>
+        <li>
+            <span>어제</span>
+            <strong>{{ yesterday|number_format }}</strong>
+        </li>
+        <li>
+            <span>최대</span>
+            <strong>{{ max|number_format }}</strong>
+        </li>
+        <li>
+            <span>전체</span>
+            <strong>{{ total|number_format }}</strong>
+        </li>
     </ul>
+
     {% if request.state.is_super_admin %}
-        <a href="/admin/visit_list" class="btn_admin btn">
-            <i class="fa fa-cog fa-spin fa-fw"></i>
-            <span class="blind">관리자</span>
-        </a>
+    <a href="/admin/visit_list" class="btn_admin">
+        <i class="fa fa-cog fa-spin fa-fw"></i>
+        <span class="blind">관리자</span>
+    </a>
     {% endif %}
+
 </div>

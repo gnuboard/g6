@@ -104,7 +104,7 @@
         },
         {
             "id": "200900",
-            "name": "투표관리",
+            "name": "설문조사관리",
             "url": "/poll_list",
             "tag": "admin_poll"
         }

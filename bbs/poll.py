@@ -36,13 +36,13 @@ async def poll_update(
     member_level = get_member_level(request)
 
     if not poll:
-        raise AlertCloseException(status_code=404, detail="존재하지 않는 투표입니다.")
+        raise AlertCloseException(status_code=404, detail="존재하지 않는 설문조사입니다.")
 
     if poll.po_level > 1 and member_level < poll.po_level:
         raise AlertCloseException(status_code=403, detail=f"권한 {poll.po_level} 이상의 회원만 투표하실 수 있습니다.")
     
     if request.client.host in poll.po_ips or (member and member.mb_id in poll.mb_ids):
-        raise AlertException(status_code=403, detail=f"{poll.po_subject} 투표에 이미 참여하셨습니다.", url=f"/bbs/poll_result/{po_id}")
+        raise AlertException(status_code=403, detail=f"{poll.po_subject} 설문조사에 이미 참여하셨습니다.", url=f"/bbs/poll_result/{po_id}")
 
     if member:
         poll.mb_ids = ",".join([poll.mb_ids, member.mb_id]) if poll.mb_ids else member.mb_id
@@ -55,7 +55,7 @@ async def poll_update(
 
     # 포인트 지급
     if member:
-        insert_point(request, member.mb_id, poll.po_point,  f'{poll.po_id}. {poll.po_subject[:20]} 투표 참여 ', '@poll', poll.po_id, '투표')
+        insert_point(request, member.mb_id, poll.po_point,  f'{poll.po_id}. {poll.po_subject[:20]} 설문조사 참여 ', '@poll', poll.po_id, '투표')
 
     return RedirectResponse(url=f"/bbs/poll_result/{po_id}", status_code=302)
 
@@ -67,13 +67,13 @@ async def poll_result(
     po_id: int = Path(...)
 ):
     """
-    투표 결과
+    설문조사 결과
     """
     poll = db.get(Poll, po_id)
     member_level = get_member_level(request)
 
     if not poll:
-        raise AlertCloseException(status_code=404, detail="존재하지 않는 투표입니다.")
+        raise AlertCloseException(status_code=404, detail="존재하지 않는 설문조사입니다.")
 
     if poll.po_level > 1 and member_level < poll.po_level:
         raise AlertCloseException(status_code=403, detail=f"권한 {poll.po_level} 이상의 회원만 결과를 보실 수 있습니다.")
@@ -94,7 +94,7 @@ async def poll_result(
 
     # 기타의견 목록
     etcs = poll.etcs
-    # 다른 투표결과 목록
+    # 다른 설문조사 결과 목록
     other_list = db.scalars(
         select(Poll)
         .where(Poll.po_id != po_id)
@@ -163,7 +163,7 @@ async def poll_etc_update(
                 "content": pc_idea
             }
         ).body.decode("utf-8")
-        mailer(email, subject, body)
+        mailer(get_admin_email(request), email, subject, body, get_admin_email_name(request))
 
     return RedirectResponse(url=f"/bbs/poll_result/{po_id}", status_code=302)
 

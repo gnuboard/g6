@@ -1065,7 +1065,6 @@ def send_write_mail(request: Request, board: Board, write: WriteBaseModel, origi
     # 중복 이메일 제거
     send_email_list = list(set(send_email_list))
     for email in send_email_list:
-        # TODO: 내용 HTML 처리 필요
         subject = f"[{config.cf_title}] {board.bo_subject} 게시판에 {act}이 등록되었습니다."
         body = templates.TemplateResponse(
             "bbs/mail_form/write_update_mail.html", {
@@ -1078,7 +1077,7 @@ def send_write_mail(request: Request, board: Board, write: WriteBaseModel, origi
                 "link_url": link_url,
             }
         ).body.decode("utf-8")
-        mailer(email, subject, body)
+        mailer(get_admin_email(request), email, subject, body, get_admin_email_name(request))
 
     db.close()
 
@@ -1188,7 +1187,7 @@ def delete_write(request: Request, bo_table: str, origin_write: WriteBaseModel) 
             raise AlertException("자신의 게시글만 삭제할 수 있습니다.", 403)
         elif not origin_write.mb_id and not request.session.get(f"ss_delete_{bo_table}_{origin_write.wr_id}"):
             url = f"/bbs/password/delete/{bo_table}/{origin_write.wr_id}"
-            query_params = request.query_params
+            query_params = remove_query_params(request, "token")
             raise AlertException("비회원 글을 삭제할 권한이 없습니다.", 403, set_url_query_params(url, query_params))
     
     # 답변글이 있을 때 삭제 불가
@@ -1379,25 +1378,26 @@ def render_latest_posts(request: Request, skin_name: str = 'basic', bo_table: st
     # 캐시된 파일이 있으면 파일을 읽어서 반환
     if os.path.exists(cache_file):
         return file_cache.get(cache_file)
-    
-    db = DBConnect().sessionLocal()
-    # 게시판 설정
-    board = db.get(Board, bo_table)
-    board_config = BoardConfig(request, board)
-    board.subject = board_config.subject
 
-    #게시글 목록 조회
-    write_model = dynamic_create_write_table(bo_table)
-    writes = db.scalars(
-        select(write_model)
-        .where(write_model.wr_is_comment == 0)
-        .order_by(write_model.wr_num)
-        .limit(rows)
-    ).all()
-    for write in writes:
-        write = get_list(request, write, board_config, subject_len)
-    
-    db.close()
+    with DBConnect().sessionLocal() as db:
+        # 게시판 설정
+        board = db.get(Board, bo_table)
+        if not board: 
+            return ""
+
+        board_config = BoardConfig(request, board)
+        board.subject = board_config.subject
+
+        #게시글 목록 조회
+        write_model = dynamic_create_write_table(bo_table)
+        writes = db.scalars(
+            select(write_model)
+            .where(write_model.wr_is_comment == 0)
+            .order_by(write_model.wr_num)
+            .limit(rows)
+        ).all()
+        for write in writes:
+            write = get_list(request, write, board_config, subject_len)
 
     context = {
         "request": request,

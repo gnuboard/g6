@@ -1,3 +1,5 @@
+import os.path
+
 from typing_extensions import Annotated
 
 from jinja2 import FileSystemLoader
@@ -121,13 +123,16 @@ async def theme_update(
 @router.get("/screenshot/{theme}")
 async def screenshot(theme: str = Path(...)):
     try:
+        file_path = f"{TEMPLATES}/{theme}/screenshot.webp"
+        if os.path.exists(file_path):
+            return FileResponse(file_path)
+
         file_path = f"{TEMPLATES}/{theme}/screenshot.png"
+        if os.path.exists(file_path):
+            return FileResponse(file_path)
 
-        if not os.path.exists(file_path):
-            logger.error(f"File not found: {file_path}")
-            raise HTTPException(status_code=404, detail="File not found")
-
-        return FileResponse(file_path)
+        logger.error(f"File not found: {file_path}")
+        raise HTTPException(status_code=404, detail="File not found")
     except Exception as e:
         logger.error(f"An error occurred while serving the file: {e}")
         raise HTTPException(status_code=500, detail=str(e))

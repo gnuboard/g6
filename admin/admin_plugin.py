@@ -1,6 +1,7 @@
 # 플러그인을 관리하는 메뉴
 # 플러그인을 활성/비활성하고 플러그인의 신규 플러그인을 등록한다.
 import logging
+import os
 
 from fastapi import APIRouter, Depends
 from fastapi import HTTPException
@@ -112,10 +113,15 @@ async def update_plugin_state(
 @router.get("/plugin/screenshot/{module_name}")
 async def show_screenshot(module_name: str):
     try:
-        file_path = f"{PLUGIN_DIR}/{module_name}/screenshot.png"
+        file_path = f"{PLUGIN_DIR}/{module_name}/screenshot.webp"
+        if os.path.exists(file_path):
+            return FileResponse(file_path)
 
-        return FileResponse(file_path)
+        file_path = f"{PLUGIN_DIR}/{module_name}/screenshot.png"
+        if os.path.exists(file_path):
+            return FileResponse(file_path)
+
+        raise FileNotFoundError
     except Exception as e:
         logging.error(f"An error occurred while serving the file: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise HTTPException(status_code=400, detail=str(e))

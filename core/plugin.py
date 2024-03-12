@@ -24,6 +24,7 @@ cache_plugin_menu = cachetools.Cache(maxsize=1)
 # info: 플러그인 상태파일을 읽어서 저장한 플러그인 정보
 cache_plugin_state = cachetools.Cache(maxsize=2)
 
+
 # 활성화된 플러그인의 모듈정보를 저장
 
 
@@ -32,6 +33,32 @@ class PluginState:
     plugin_name: str  # 관리자 정보 표시 이름
     module_name: str  # 플러그인의 모듈이름
     is_enable: field(default=False)  # bool on/off 상태
+
+
+def get_all_plugin_admin_menu_id_name():
+    extracted_tuples = []
+    plugin_list = get_admin_plugin_menus()
+    for plugin_dict in plugin_list:
+        # 각 플러그인 메뉴
+        for plugin_items in plugin_dict.values():
+            for item in plugin_items:
+
+                if 'id' in item and 'name' in item:
+                    extracted_tuples.append((item['id'], item['name']))
+    return extracted_tuples
+
+
+def get_admin_menu_id_by_path(current_path: str):
+    plugin_list = get_admin_plugin_menus()
+ 
+    for plugin_dict in plugin_list:
+        for plugin_items in plugin_dict.values():
+            for item in plugin_items:
+
+                if 'url' in item and 'id' in item:
+                    if item.get('url') == current_path:
+                        return item.get('id')
+    return None
 
 
 def get_all_plugin_info(plugin_dir=PLUGIN_DIR):
@@ -112,16 +139,14 @@ def get_plugin_info(module_name, plugin_dir=PLUGIN_DIR):
     path = os.path.join(plugin_dir, module_name)
 
     if os.path.isdir(path):
-        screenshot = os.path.join(path, 'screenshot.png')
         screenshot_url = ''
-        if os.path.isfile(screenshot):
-            try:
-                from PIL import Image
-                with Image.open(screenshot) as img:
-                    if img.format == "PNG":
-                        screenshot_url = f"/admin/plugin/screenshot/{module_name}"
-            except:
-                pass
+
+        if os.path.exists(os.path.join(path, 'screenshot.webp')):
+            screenshot_url = f"/admin/plugin/screenshot/{module_name}"
+
+        elif os.path.exists(os.path.join(path, 'screenshot.png')):
+            screenshot_url = f"/admin/plugin/screenshot/{module_name}"
+
         info['screenshot'] = screenshot_url
         info['module_name'] = module_name
 
