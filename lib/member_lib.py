@@ -405,10 +405,10 @@ def validate_email(request: Request, email: str) -> Tuple[bool, str]:
     if not email or email.strip() == "":
         return False, "이메일을 입력해주세요."
     
-    if not is_email_registered(email):
+    if is_email_registered(email):
         return False, "이미 가입된 이메일입니다."
     
-    if not is_prohibit_email(request, email):
+    if is_prohibit_email(request, email):
         return False, "사용할 수 없는 이메일입니다."
 
     return True, "사용 가능한 이메일입니다."

@@ -3,17 +3,18 @@ from datetime import datetime
 from typing import Any
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Request
-from fastapi.templating import Jinja2Templates
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 
-from core.database import db_session, DBConnect
-from core.models import Config, Member
-from core.template import TemplateService
-from lib.common import get_client_ip, mailer
+from core.database import db_session
+from core.models import Member
+from lib.common import get_client_ip
+from lib.mail import send_register_mail
 from lib.point import insert_point
-
 from api.v1.models import responses
-from api.v1.dependencies.member import get_current_member, validate_create_member, validate_update_member
+from api.v1.dependencies.member import (
+    get_current_member, validate_create_member,
+    validate_update_member, validate_email_non_certify_member
+)
 from api.v1.models.member import CreateMemberModel, ResponseMemberModel, UpdateMemberModel
 
 router = APIRouter()
@@ -57,38 +58,11 @@ async def create_member(
     - 회원가입 메일 발송 (메일발송 설정 시)
     - 관리자에게 회원가입 메일 발송 (메일발송 설정 시)
     """
-
     config = request.state.config
-    # TODO: 인증은 아직 구현하지 않으므로 삭제예정
-    # if mb_certify_case and member.mb_certify:
-    #     member.mb_certify = mb_certify_case
-    #     member.mb_adult = member.mb_adult
-    # else:
-    #     member.mb_certify = ""
-    #     member.mb_adult = 0
-    # TODO: 회원 이미지 업로드 API는 별도로 구현 예정
-    # # 이미지 검사 & 업로드
-    # validate_and_update_member_image(request, mb_img, mb_icon, mb_id, None, None)
-
-    # TODO: mb_sex 정규식으로 검사하므로 삭제예정
-    # if member_form.mb_sex not in {"m", "f"}:
-    #     member_form.mb_sex = ""
-
-    # TODO: 레벨 입력방지 => 모델에서 선언되지 않으므로 삭제예정
-    # del member_form.mb_level
 
     member = Member(**data.__dict__)
-    # member.mb_datetime = datetime.now()   # TODO: Model 기본값 설정으로 변경, 삭제예정
-    # member.mb_lost_certify = ""   # TODO: 필요없음, 삭제예정
-    # # DB 스키마 호환성을 위해 null 대신 최저년도를 사용.
-    # member.mb_nick_date = datetime(1, 1, 1, 0, 0, 0)  # TODO: 필요없음, 삭제예정
-    # member.mb_open_date = datetime(1, 1, 1, 0, 0, 0)  # TODO: 필요없음, 삭제예정
-    # member.mb_today_login = datetime.now()  # Model 기본값 설정으로 변경, 삭제예정
-
-    # 추가 회원정보 설정
     member.mb_level = getattr(config, "cf_register_level", data.mb_level)
     member.mb_login_ip = get_client_ip(request)
-
     # 메일인증
     if getattr(config, "cf_use_email_certify", False):
         member.mb_email_certify2 = secrets.token_hex(16)  # 일회용 인증키
@@ -133,50 +107,18 @@ async def update_member(
     return current_member
 
 
-def send_register_mail(request: Request, member: Member) -> None:
-    """background task > 회원가입 메일 발송 처리
-
-    Args:
-        request (Request): Request 객체
-        member (Member): 신규가입한 회원 객체
+@router.put("{mb_id}/email-certification/{key}",
+            summary="회원가입 메일인증 처리")
+async def certificate_email(
+    db: db_session,
+    member: Annotated[Member, Depends(validate_email_non_certify_member)]
+):
     """
-    # background에서 Session 공유 문제로 인해 DBConnect().sessionLocal() 사용
-    with DBConnect().sessionLocal() as db:
-        request.state.config = config = db.query(Config).first()
-    context = {
-        "request": request,
-        "member": member,
-    }
-    try:
-        templates = Jinja2Templates(
-            directory=TemplateService.get_templates_dir())
+    회원가입 시, 메일인증을 처리합니다.  
+    '기본환경설정'에서 메일인증을 사용하지 않을 경우 바로 인증처리됩니다.
+    """
+    member.mb_email_certify = datetime.now()
+    member.mb_email_certify2 = ""
+    db.commit()
 
-        # 회원에게 인증메일 발송
-        if config.cf_use_email_certify:
-            subject = f"[{config.cf_title}] 회원가입 인증메일 발송"
-            cntx = context + \
-                {"certify_href": f"{request.base_url.__str__()}bbs/email_certify/{member.mb_id}?certify={member.mb_email_certify2}"}
-            body = templates.TemplateResponse(
-                "bbs/mail_form/register_certify_mail.html",
-                cntx
-            ).body.decode("utf-8")
-            mailer(member.mb_email, subject, body)
-        # 회원에게 회원가입 메일 발송
-        elif config.cf_email_mb_member:
-            subject = f"[{config.cf_title}] 회원가입을 축하드립니다."
-            body = templates.TemplateResponse(
-                "bbs/mail_form/register_send_member_mail.html",
-                context
-            ).body.decode("utf-8")
-            mailer(member.mb_email, subject, body)
-
-        # 최고관리자에게 회원가입 메일 발송
-        if config.cf_email_mb_super_admin:
-            subject = f"[{config.cf_title}] {member.mb_nick} 님께서 회원으로 가입하셨습니다."
-            body = templates.TemplateResponse(
-                "bbs/mail_form/register_send_admin_mail.html",
-                context
-            ).body.decode("utf-8")
-            mailer(config.cf_admin_email, subject, body)
-    except Exception as e:
-        print(e)
+    return HTTPException(status_code=200, detail="메일인증이 완료되었습니다.")

@@ -126,6 +126,7 @@ class UpdateMemberModel(BaseModel):
     def init_update_fields(self) -> 'UpdateMemberModel':
         """UpdateMemberModel에서 선언되지 않은 필드를 초기화"""
         self.mb_nick_date = datetime.now()
+        self.mb_open_date = datetime.now()
         # 회원가입에 필요 없는 필드 삭제
         del self.mb_password_re
         del self.mb_zip

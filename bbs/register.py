@@ -1,7 +1,7 @@
 import secrets
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, Depends, Form, File, Query, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, File, Query, UploadFile
 from fastapi.responses import RedirectResponse, Response
 
 from core.database import db_session
@@ -10,6 +10,7 @@ from core.formclass import MemberForm
 from core.models import Member
 from core.template import UserTemplates
 from lib.common import *
+from lib.mail import send_register_mail
 from lib.member_lib import (
     validate_and_update_member_image, validate_email, validate_mb_id, validate_nickname
 )
@@ -30,8 +31,10 @@ async def get_register(
     request: Request,
     response: Response
 ):
+    """
+    회원가입 약관 동의 페이지
+    """
     # 캐시 제어 헤더 설정 (캐시된 페이지를 보여주지 않고 새로운 페이지를 보여줌)
-
     response.headers["Cache-Control"] = "no-store"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
@@ -48,9 +51,12 @@ async def get_register(
 @router.post("/register")
 async def post_register(
     request: Request,
-    agree: str = Form(...),
-    agree2: str = Form(...)
+    agree: str = Form(None),
+    agree2: str = Form(None)
 ):
+    """
+    회원가입 약관 동의 처리
+    """
     if not agree:
         raise AlertException(status_code=400, detail="회원가입약관에 동의해 주세요.")
     if not agree2:
@@ -63,12 +69,13 @@ async def post_register(
 
 @router.get("/register_form", name='register_form')
 async def get_register_form(request: Request):
+    """
+    회원가입 폼 페이지
+    """
     # 약관에 동의를 하지 않았다면
-    agree = request.session.get("ss_agree", None)
-    agree2 = request.session.get("ss_agree2", None)
-    if not agree:
+    if not request.session.get("ss_agree", None):
         return RedirectResponse(url="/bbs/register", status_code=302)
-    if not agree2:
+    if not request.session.get("ss_agree2", None):
         return RedirectResponse(url="/bbs/register", status_code=302)
 
     config = request.state.config
@@ -78,17 +85,15 @@ async def get_register_form(request: Request):
     form_context = {
         # https 의 경우 http 경로가 넘어와서 제대로 전송이 되지 않음
         # "action_url": f"{request.base_url.__str__()}bbs{router.url_path_for('register_form_save')}",
-        "agree": agree,
-        "agree2": agree2,
-        "is_profile_open": check_profile_open(open_date=None, config=request.state.config),
-        "next_profile_open_date": get_next_profile_openable_date(open_date=None, config=request.state.config),
+        "is_profile_open": check_profile_open(open_date=None, config=config),
+        "next_profile_open_date": get_next_profile_openable_date(open_date=None, config=config),
     }
     context = {
         "is_register": True,
         "request": request,
         "member": member,
         "form": form_context,
-        "config": request.state.config,
+        "config": config,
     }
     return templates.TemplateResponse("/member/register_form.html", context)
 
@@ -99,6 +104,7 @@ async def get_register_form(request: Request):
 async def post_register_form(
     request: Request,
     db: db_session,
+    background_tasks: BackgroundTasks,
     mb_id: str = Form(None),
     mb_password: str = Form(None),
     mb_password_re: str = Form(None),
@@ -108,15 +114,16 @@ async def post_register_form(
     mb_zip: str = Form(default=""),
     member_form: MemberForm = Depends()
 ):
-    # 약관 동의 체크
-    agree = request.session.get("ss_agree", "")
-    agree2 = request.session.get("ss_agree", "")
-    if not agree:
-        return RedirectResponse(url="/bbs/register", status_code=302)
-    if not agree2:
-        return RedirectResponse(url="/bbs/register", status_code=302)
-
+    """
+    회원가입 처리
+    """
     config = request.state.config
+
+    # 약관 동의 체크
+    if not request.session.get("ss_agree", None):
+        return RedirectResponse(url="/bbs/register", status_code=302)
+    if not request.session.get("ss_agree2", None):
+        return RedirectResponse(url="/bbs/register", status_code=302)
 
     # 회원 아이디 검사
     if len(mb_id) < 3 or len(mb_id) > 20:
@@ -127,12 +134,13 @@ async def post_register_form(
     if not is_valid:
         raise AlertException(status_code=400, detail=message)
 
+    # 비밀번호 검사
     if not (mb_password and mb_password_re):
         raise AlertException(status_code=400, detail="비밀번호를 입력해 주세요.")
-
     elif mb_password != mb_password_re:
         raise AlertException(status_code=400, detail="비밀번호와 비밀번호 확인이 일치하지 않습니다.")
 
+    # 이름 검사
     if not member_form.mb_name:
         raise AlertException(status_code=400, detail="이름을 입력해 주세요.")
 
@@ -169,15 +177,9 @@ async def post_register_form(
     del member_form.mb_level
 
     new_member = Member(mb_id=mb_id, **member_form.__dict__)
-    new_member.mb_datetime = datetime.now()
     new_member.mb_password = create_hash(mb_password)
     new_member.mb_level = config.cf_register_level
-    new_member.mb_login_ip = request.client.host
-    new_member.mb_lost_certify = ""
-    # DB 스키마 호환성을 위해 null 대신 최저년도를 사용.
-    new_member.mb_nick_date = datetime(1, 1, 1, 0, 0, 0)
-    new_member.mb_open_date = datetime(1, 1, 1, 0, 0, 0)
-    new_member.mb_today_login = datetime.now()
+    new_member.mb_login_ip = get_client_ip(request)
 
     # 메일인증
     if config.cf_use_email_certify:
@@ -198,44 +200,10 @@ async def post_register_form(
     if config.cf_use_recommend and mb_recommend:
         insert_point(request, mb_recommend, config.cf_recommend_point, f"{new_member.mb_id}의 추천인", "@member", mb_recommend, f"{new_member.mb_id} 추천")
 
-    from_email = get_admin_email(request)
-    from_name = get_admin_email_name(request)
-    # 회원에게 인증메일 발송
-    if config.cf_use_email_certify:
-        subject = f"[{config.cf_title}] 회원가입 인증메일 발송"
-        body = templates.TemplateResponse(
-            "bbs/mail_form/register_certify_mail.html",
-            {
-                "request": request,
-                "member": new_member,
-                "certify_href": f"{request.base_url.__str__()}bbs/email_certify/{new_member.mb_id}?certify={new_member.mb_email_certify2}",
-            }
-        ).body.decode("utf-8")
-        mailer(from_email, new_member.mb_email, subject, body, from_name)
-    # 회원에게 회원가입 메일 발송
-    elif config.cf_email_mb_member:
-        subject = f"[{config.cf_title}] 회원가입을 축하드립니다."
-        body = templates.TemplateResponse(
-            "bbs/mail_form/register_send_member_mail.html",
-            {
-                "request": request,
-                "member": new_member,
-            }
-        ).body.decode("utf-8")
-        mailer(from_email, new_member.mb_email, subject, body, from_name)
+    # 회원가입메일 발송 처리(백그라운드)
+    background_tasks.add_task(send_register_mail, request, new_member)
 
-    # 최고관리자에게 회원가입 메일 발송
-    if config.cf_email_mb_super_admin:
-        subject = f"[{config.cf_title}] {new_member.mb_nick} 님께서 회원으로 가입하셨습니다."
-        body = templates.TemplateResponse(
-            "bbs/mail_form/register_send_admin_mail.html",
-            {
-                "request": request,
-                "member": new_member,
-            }
-        ).body.decode("utf-8")
-        mailer(from_email, config.cf_admin_email, subject, body, from_name)
-
+    # 회원가입 이후 세션 처리
     if not config.cf_use_email_certify:
         request.session["ss_mb_id"] = new_member.mb_id
         request.session["ss_mb_key"] = session_member_key(request, new_member)
@@ -249,6 +217,9 @@ async def register_result(
     request: Request,
     db: db_session
 ):
+    """
+    회원가입 결과 페이지
+    """
     register_mb_id = request.session.get("ss_mb_reg", "")
     if "ss_mb_reg" in request.session:
         request.session.pop("ss_mb_reg")
@@ -276,6 +247,9 @@ async def email_certify(
     member: Annotated[Member, Depends(get_member)],
     certify: str = Query(...),
 ):
+    """
+    회원가입 메일인증 처리
+    """
     if member.mb_leave_date or member.mb_intercept_date:
         raise AlertException("탈퇴한 회원이거나 차단된 회원입니다.", 403, "/")
     elif member.mb_email_certify != datetime(1, 1, 1, 0, 0, 0):

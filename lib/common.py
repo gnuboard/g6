@@ -599,25 +599,27 @@ def get_unique_id(request) -> Optional[str]:
 
 def check_profile_open(open_date: Optional[date], config) -> bool:
     """변경일이 지나서 프로필 공개가능 여부를 반환
+
     Args:
-        open_date (datetime): 프로필 공개일
+        open_date (date): 프로필 공개일
         config (Config): config 모델
+
     Returns:
         bool: 프로필 공개 가능 여부
     """
     if not open_date or is_none_datetime(open_date):
         return True
 
-    else:
-        opend_date_time = datetime(open_date.year, open_date.month, open_date.day)
-        return opend_date_time < (datetime.now() - timedelta(days=config.cf_open_modify))
+    return open_date < (date.today() - timedelta(days=config.cf_open_modify))
 
 
-def get_next_profile_openable_date(open_date: Optional[date], config):
+def get_next_profile_openable_date(open_date: Optional[date], config) -> str:
     """다음 프로필 공개 가능일을 반환
+
     Args:
-        open_date (datetime): 프로필 공개일
+        open_date (date): 프로필 공개일
         config (Config): config 모델
+
     Returns:
         datetime: 다음 프로필 공개 가능일
     """

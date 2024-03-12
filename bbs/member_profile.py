@@ -196,6 +196,9 @@ async def member_profile_save(
         member_form.mb_certify = ""
         member_form.mb_adult = 0
 
+    if member_form.mb_open != exists_member.mb_open:
+        member_form.mb_open_date = datetime.now()
+
     db.execute(
         update(Member).values(member_form.__dict__)
         .where(Member.mb_id == mb_id)
