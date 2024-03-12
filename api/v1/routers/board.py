@@ -2,14 +2,16 @@ from typing_extensions import Annotated, Dict
 
 from fastapi import APIRouter, Depends, Request, Path, Query, HTTPException, status
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import asc, desc, func, select
+from sqlalchemy import asc, desc, func, select, exists
 
 from core.database import db_session
-from core.models import Board, Group
-from lib.board_lib import BoardConfig, get_list, write_search_filter
-from lib.common import dynamic_create_write_table
+from core.models import Board, Group, BoardGood, Scrap
+from lib.board_lib import BoardConfig, get_list, write_search_filter, is_owner, BoardFileManager
+from lib.common import dynamic_create_write_table, cut_name
 from lib.dependencies import common_search_query_params
 from lib.member_lib import get_admin_type
+from lib.template_filters import number_format
+from lib.point import insert_point
 from api.v1.dependencies.board import get_member_info, get_board, get_group
 
 
@@ -157,4 +159,148 @@ async def api_list_post(
         "next_spt": next_spt,
     })
 
+    return contents
+
+
+@router.get("/{bo_table}/{wr_id}")
+async def api_read_post(
+    request: Request,
+    db: db_session,
+    member_info: Annotated[Dict, Depends(get_member_info)],
+    bo_table: str = Path(...),
+    board: Board = Depends(get_board),
+    wr_id: str = Path(...),
+) -> Dict:
+    """
+    지정된 게시판의 글을 개별 조회합니다.
+    """
+    config = request.state.config
+    board_config = BoardConfig(request, board)
+    
+    if not wr_id.isdigit():
+        raise HTTPException(status_code=404, detail=f"{wr_id} : 올바르지 않은 게시글 번호입니다.")
+
+    write_model = dynamic_create_write_table(bo_table)
+    write = db.get(write_model, wr_id)
+    if not write:
+        raise HTTPException(status_code=404, detail=f"{wr_id} : 존재하지 않는 게시글입니다.")
+
+    member = member_info["member"]
+    mb_id = member_info["mb_id"]
+    member_level = member_info["member_level"]
+    admin_type = get_admin_type(request, mb_id, board=board)
+
+    if not admin_type and (member_level and member_level < board.bo_read_level):
+        raise HTTPException(status_code=403, detail="글을 읽을 권한이 없습니다.")
+
+    # 댓글은 개별조회 할 수 없도록 예외처리
+    if write.wr_is_comment:
+        raise HTTPException(status_code=404, detail=f"{wr_id} : 존재하지 않는 게시글입니다.")
+    
+    if ("secret" in write.wr_option
+            and not admin_type
+            and not is_owner(write, mb_id)):
+        owner = False
+        if write.wr_reply and mb_id:
+            parent_write = db.scalar(
+                select(write_model).filter_by(
+                    wr_num=write.wr_num,
+                    wr_reply="",
+                    wr_is_comment=0
+                )
+            )
+            if parent_write.mb_id == mb_id:
+                owner = True
+        if not owner:
+            raise HTTPException(status_code=403, detail="비밀글로 보호된 글입니다.")
+        
+    # 게시글 정보 설정
+    write.ip = board_config.get_display_ip(write.wr_ip)
+    write.name = cut_name(request, write.wr_name)
+
+    if config.cf_use_point:
+        read_point = board.bo_read_point
+        if not board_config.is_read_point(write):
+            point = number_format(abs(read_point))
+            message = f"게시글 읽기에 필요한 포인트({point})가 부족합니다."
+            if not member:
+                message += f" 로그인 후 다시 시도해주세요."
+
+            raise HTTPException(status_code=403, detail=message)
+        else:
+            insert_point(request, mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table, write.wr_id, "읽기")
+
+    # 조회수 증가
+    write.wr_hit = write.wr_hit + 1
+    db.commit()
+
+    if member:
+        # 스크랩 여부 확인
+        exists_scrap = db.scalar(
+            exists(Scrap)
+            .where(
+                Scrap.mb_id == member.mb_id,
+                Scrap.bo_table == bo_table,
+                Scrap.wr_id == wr_id
+            ).select()
+        )
+        if exists_scrap:
+            write.is_scrap = True
+
+        # 추천/비추천 여부 확인
+        good_data = db.scalar(
+            select(BoardGood)
+            .filter_by(bo_table=bo_table, wr_id=wr_id, mb_id=member.mb_id)
+        )
+        if good_data:
+            setattr(write, f"is_{good_data.bg_flag}", True)
+
+    # 파일정보 조회
+    images, normal_files = BoardFileManager(board, wr_id).get_board_files_by_type(request)
+
+    # 링크정보 조회
+    links = []
+    for i in range(1, 3):
+        url = getattr(write, f"wr_link{i}")
+        hit = getattr(write, f"wr_link{i}_hit")
+        if url:
+            links.append({"no": i, "url": url, "hit": hit})
+
+    # 댓글 목록 조회
+    comments = db.scalars(
+        select(write_model).filter_by(
+            wr_parent=wr_id,
+            wr_is_comment=1
+        ).order_by(write_model.wr_comment, write_model.wr_comment_reply)
+    ).all()
+
+    for comment in comments:
+        comment.name = cut_name(request, comment.wr_name)
+        comment.ip = board_config.get_display_ip(comment.wr_ip)
+        comment.is_reply = len(comment.wr_comment_reply) < 5 and board.bo_comment_level <= member_level
+        comment.is_edit = admin_type or (member and comment.mb_id == member.mb_id)
+        comment.is_del = admin_type or (member and comment.mb_id == member.mb_id) or not comment.mb_id 
+        comment.is_secret = "secret" in comment.wr_option
+
+        # 비밀댓글 처리
+        session_secret_comment_name = f"ss_secret_comment_{bo_table}_{comment.wr_id}"
+        parent_write = db.get(write_model, comment.wr_parent)
+        if (comment.is_secret
+                and not admin_type
+                and not is_owner(comment, mb_id)
+                and not is_owner(parent_write, mb_id)
+                and not request.session.get(session_secret_comment_name)):
+            comment.is_secret_content = True
+            comment.save_content = "비밀글 입니다."
+        else:
+            comment.is_secret_content = False
+            comment.save_content = comment.wr_content
+
+    contents = jsonable_encoder(write)
+    contents.update({
+        "images": images,
+        "normal_files": normal_files,
+        "links": links,
+        "comments": comments,
+    })
     return contents
