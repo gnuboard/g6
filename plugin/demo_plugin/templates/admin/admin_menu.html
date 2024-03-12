@@ -1,8 +1,8 @@
-{# <link rel="stylesheet" href="/plugin/플러그인 모듈이름/static/css/admin.css"> #}
 {# 템플릿 주석 #}
+{# 
+    파이썬 템플릿 변수 {{ module_name }} 을 사용하여 메뉴와 이미지 경로를 지정합니다
+    content: '\f0c8' 는 fontawesome에서 제공하는 아이콘 유니코드입니다
+#}
 <style>
-    /* gnb - admin global navigation bar  menu icon*/
-    /*.btn_op.menu-플러그인폴더이름   */
-    #gnb .gnb_li .btn_op.menu-{{ module_name }} {background:url(/plugin/{{ module_name }}/static/img/img-off.png)20px 50% no-repeat}
-    #gnb .on .btn_op.menu-{{ module_name }} {background:url(/plugin/{{ module_name }}/static/img/img-on.png)20px 50% no-repeat #ffd343}
+    .gnb_li .menu_{{ module_name }}::before { content: '\f0c8'; }
 </style>

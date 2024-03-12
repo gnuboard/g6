@@ -9,8 +9,10 @@ import shutil
 import smtplib
 import httpx
 from datetime import datetime, timedelta, date
+from email.header import Header
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.utils import formataddr
 from time import sleep
 from typing import Any, List, Optional, Union
 from urllib.parse import urlencode
@@ -31,6 +33,7 @@ from core.models import (
     Auth, BoardNew, Config, Login, Member, Memo, Menu, NewWin, Poll, Popular,
     UniqId, Visit, VisitSum, WriteBaseModel
 )
+from core.plugin import get_admin_menu_id_by_path
 from lib.captcha.recaptch_v2 import ReCaptchaV2
 from lib.captcha.recaptch_inv import ReCaptchaInvisible
 
@@ -787,36 +790,87 @@ class FileCache():
                 os.remove(os.path.join(self.cache_dir, file))
 
 
-SMTP_SERVER = os.getenv("SMTP_SERVER")
-SMTP_PORT = os.getenv("SMTP_PORT")
+SMTP_SERVER = os.getenv("SMTP_SERVER", "localhost")
+SMTP_PORT = int(os.getenv("SMTP_PORT", 25))
 SMTP_USERNAME = os.getenv("SMTP_USERNAME")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
-# 메일 발송
-# return 은 수정 필요
-def mailer(email: str, subject: str, body: str):
-    to_emails = email.split(',') if ',' in email else [email]
-    for to_email in to_emails:
+
+def mailer(from_email: str, to_email: str, subject: str, body: str,
+           from_name: str = None, to_name: str = None) -> None:
+    """메일 발송 함수
+
+    Args:
+        from_email (str): 보내는 사람 이메일
+        email (str): 받는 사람 이메일 (,로 구분하여 여러명에게 보낼 수 있음)
+        subject (str): 제목
+        body (str): 내용
+        from_name (str, optional): 보내는 사람 이름. Defaults to None.
+        to_name (str, optional): 받는 사람 이름. Defaults to None.
+
+    Raises:
+        SMTPAuthenticationError: SMTP 인증정보가 잘못되었을 때
+        SMTPServerDisconnected: SMTP 서버에 연결하지 못했거나 연결이 끊어졌을 때
+        SMTPException: 메일을 보내는 중에 오류가 발생했을 때
+        Exception: 기타 오류
+    """
+    try:
+        # Daum, Naver 메일은 SMTP_SSL을 사용합니다.
+        if SMTP_PORT == 465:
+            server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, timeout=10)
+        else: # port: 587
+            server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=10)
+            server.starttls()
+
+        if SMTP_USERNAME and SMTP_PASSWORD:
+            server.login(SMTP_USERNAME, SMTP_PASSWORD)
+
+        msg = MIMEMultipart()
+        msg['From'] = formataddr((str(Header(from_name, 'utf-8')), from_email))
+        msg['To'] = formataddr((str(Header(to_name, 'utf-8')), to_email))
+        msg['Subject'] = subject
+        # Assuming body is HTML, if not change 'html' to 'plain'
+        msg.attach(MIMEText(body, 'html'))
+
+        server.sendmail(from_email, to_email, msg.as_string())
+
+    except smtplib.SMTPAuthenticationError as e:
+        print(f"SMTP 인증정보가 잘못되었습니다. {e}")
+    except smtplib.SMTPServerDisconnected as e:
+        print(f"SMTP 서버에 연결하지 못했거나 연결이 끊어졌습니다. {e}")
+    except smtplib.SMTPException as e:
+        print(f"메일을 보내는 중에 오류가 발생했습니다. {e}")
+    except Exception as e:
+        print(e)
+    finally:
         try:
-            msg = MIMEMultipart()
-            msg['From'] = SMTP_USERNAME
-            msg['To'] = to_email
-            msg['Subject'] = subject
-            
-            # Assuming body is HTML, if not change 'html' to 'plain'
-            msg.attach(MIMEText(body, 'html'))  
-
-            with smtplib.SMTP(SMTP_SERVER, int(SMTP_PORT)) as server:
-                if SMTP_USERNAME and SMTP_PASSWORD:
-                    server.starttls()
-                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
-                text = msg.as_string()
-                server.sendmail(SMTP_USERNAME, to_email, text)
-
+            server.quit()
         except Exception as e:
-            print(f"Error sending email to {to_email}: {e}")
+            pass
 
-    return {"message": f"Emails sent successfully to {', '.join(to_emails)}"}
+
+def get_admin_email(request: Request):
+    """관리자 이메일 주소를 반환하는 함수
+
+    Args:
+        request (Request): Request 객체
+
+    Returns:
+        str: 환경설정에서 설정된 관리자 이메일 주소
+    """
+    return getattr(request.state.config, "cf_admin_email", "")
+
+
+def get_admin_email_name(request: Request):
+    """관리자 이메일 발송이름을 반환하는 함수
+
+    Args:
+        request (Request): Request 객체
+
+    Returns:
+        str: 환경설정에서 설정된 관리자 이메일 주소
+    """
+    return getattr(request.state.config, "cf_admin_email_name", "")
 
 
 def is_none_datetime(input_date: Union[date, str]) -> bool:
@@ -1236,10 +1290,19 @@ def get_current_admin_menu_id(request: Request) -> Optional[str]:
                             return item.get("id")
                 break
 
+        # 플러그인 관리자는 경로 기반으로 검색
+        for route in routes:
+            if route.path_regex.match(path):
+                # 사용자가 정의하는 관리자 접두사는 접근이 복잡하므로 삭제후 비교
+                parts = route.path.split('/')
+                modified_path = '/' + '/'.join(parts[2:])
+                if result_menu_id := get_admin_menu_id_by_path(modified_path):
+                    return result_menu_id
+
         raise Exception("관리자 메뉴 아이디를 찾을 수 없습니다.")
 
     except Exception as e:
-        print(e)
+        logging.warning(e)
         return None
 
 
