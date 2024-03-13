@@ -12,7 +12,7 @@
     /* background */
     --inputBg: #fff;
     --inputBgGray: #f6f6f6;
-    --bodyBg: #fff;
+    --bodyBg: #f6f6f6;
     --wrapperBg: #f6f6f6;
     --contBg: #fff;
     --gnbBg: rgba(0,0,0,0.1);
@@ -1444,4 +1444,8 @@ html.remodal-is-locked {overflow-y:scroll !important}
 .darkmode-toggle-switch .visible.bright { display: var(--darkVisible) }
 
 /* 긴 문자열 ... 처리 */
-.elip { display:inline-block; width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.elip { display: inline-block; min-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media ( max-width: 1100px ) {
+    .elip { max-width: 100px; }
+}
