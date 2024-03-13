@@ -83,7 +83,7 @@ async def api_list_post(
     config = request.state.config
     board_config = BoardConfig(request, board)
 
-    if not is_possible_level(request, member_info, board):
+    if not is_possible_level(request, member_info, board, "bo_list_level"):
         raise HTTPException(status_code=403, detail=f"접근 권한이 없습니다.")
 
     board.subject = board_config.subject
@@ -195,7 +195,7 @@ async def api_read_post(
     member_level = member_info["member_level"]
     admin_type = get_admin_type(request, mb_id, board=board)
 
-    if not admin_type and (member_level and member_level < board.bo_read_level):
+    if not is_possible_level(request, member_info, board, "bo_read_level"):
         raise HTTPException(status_code=403, detail="글을 읽을 권한이 없습니다.")
 
     # 댓글은 개별조회 할 수 없도록 예외처리
@@ -607,7 +607,7 @@ async def api_upload_file(
     write_model = dynamic_create_write_table(bo_table)
     write = db.get(write_model, wr_id)
 
-    if is_possible_level(request, member_info, board):
+    if is_possible_level(request, member_info, board, "bo_upload_level"):
         file_manager = BoardFileManager(board, write.wr_id)
         directory = os.path.join(FILE_DIRECTORY, bo_table)
         wr_file = write.wr_file
