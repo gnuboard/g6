@@ -12,10 +12,9 @@ from lib.mail import send_register_mail
 from lib.point import insert_point
 from api.v1.models import responses
 from api.v1.dependencies.member import (
-    get_current_member, validate_create_member,
-    validate_update_member, validate_email_non_certify_member
+    get_current_member, validate_create_data, validate_update_data
 )
-from api.v1.lib.member import get_member
+from api.v1.lib.member import MemberServiceAPI
 from api.v1.models.member import CreateMemberModel, ResponseMemberModel, UpdateMemberModel
 
 router = APIRouter()
@@ -46,15 +45,11 @@ async def read_member_me(
             response_model=ResponseMemberModel,
             responses={**responses})
 async def read_member(
-    db: db_session,
-    mb_id: Annotated[str, Path(..., title="회원아이디")],
+    member_service: Annotated[MemberServiceAPI, Depends()],
     current_member: Annotated[Member, Depends(get_current_member)]
 ):
     """회원 정보를 조회합니다."""
-    member = get_member(db, mb_id)
-    if member.mb_open == 0 and member.mb_id != current_member.mb_id:
-        raise HTTPException(status_code=403, detail="회원정보를 공개하지 않은 회원입니다.")
-    return member
+    return member_service.get_member_profile(current_member)
 
 
 @router.post("/member",
@@ -65,7 +60,7 @@ async def create_member(
     request: Request,
     db: db_session,
     background_tasks: BackgroundTasks,
-    data: Annotated[CreateMemberModel, Depends(validate_create_member)]
+    data: Annotated[CreateMemberModel, Depends(validate_create_data)]
 ) -> Any:
     """
     회원 가입을 처리합니다.
@@ -112,7 +107,7 @@ async def create_member(
 async def update_member(
     db: db_session,
     current_member: Annotated[Member, Depends(get_current_member)],
-    data: Annotated[UpdateMemberModel, Depends(validate_update_member)],
+    data: Annotated[UpdateMemberModel, Depends(validate_update_data)],
 ):
     """회원 정보를 수정합니다."""
     member_data = data.model_dump().items()
@@ -128,12 +123,14 @@ async def update_member(
             summary="회원가입 메일인증 처리")
 async def certificate_email(
     db: db_session,
-    member: Annotated[Member, Depends(validate_email_non_certify_member)]
+    member_service: Annotated[MemberServiceAPI, Depends()],
+    key: str = Path(...)
 ):
     """
     회원가입 시, 메일인증을 처리합니다.  
     '기본환경설정'에서 메일인증을 사용하지 않을 경우 바로 인증처리됩니다.
     """
+    member = member_service.get_email_non_certify_member(key)
     member.mb_email_certify = datetime.now()
     member.mb_email_certify2 = ""
     db.commit()

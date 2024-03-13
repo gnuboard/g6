@@ -9,16 +9,12 @@ from fastapi.security import OAuth2PasswordRequestFormStrict
 from sqlalchemy.sql import exists
 
 from core.database import db_session
-from lib.pbkdf2 import validate_password
 
 from api.settings import SETTINGS
 from api.v1.models import MemberRefreshToken
 from api.v1.auth.jwt import JWT
 from api.v1.models.auth import TokenPayload
-from api.v1.lib.member import (
-    get_member,
-    check_active_member, check_email_certified_member
-)
+from api.v1.lib.member import MemberServiceAPI
 
 
 def authenticate_member(
@@ -39,26 +35,8 @@ def authenticate_member(
     Returns:
         Member: 회원 객체
     """
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Incorrect username or password",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    member = get_member(db, form_data.username)
-
-    if not member:
-        raise credentials_exception
-    if not validate_password(form_data.password, member.mb_password):
-        raise credentials_exception
-    if not check_active_member(member):
-        credentials_exception.detail = "탈퇴 또는 차단된 회원입니다."
-        raise credentials_exception
-    if not check_email_certified_member(request, member):
-        credentials_exception.detail = f"{member.mb_email} 메일로 메일인증을 받으셔야 로그인 가능합니다."
-        raise credentials_exception
-
-    return member
+    member_service = MemberServiceAPI(request, db, form_data.username)
+    return member_service.authenticate_member(form_data.password)
 
 
 def authenticate_refresh_token(
