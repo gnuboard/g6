@@ -17,6 +17,7 @@ from api.v1.auth.jwt import JWT
 from api.v1.lib.member import MemberService
 from api.v1.models.auth import TokenPayload
 from api.v1.models.board import WriteModel, CommentModel
+from api.v1.lib.board import is_possible_level
 
 
 def get_current_member(
@@ -148,6 +149,33 @@ def validate_write(
 
     write.wr_email = getattr(member, "mb_email", write.wr_email)
     write.wr_homepage = getattr(member, "mb_homepage", write.wr_homepage)
+
+    return write
+
+
+def validate_upload_file_write(
+    request: Request,
+    db: db_session,
+    member_info: Annotated[Dict, Depends(get_member_info)],
+    board: Board = Depends(get_board),
+    bo_table: str = Path(...),
+    wr_id: str = Path(...),
+):
+    mb_id = member_info["mb_id"]
+    write_model = dynamic_create_write_table(bo_table)
+    write = db.get(write_model, wr_id)
+
+    if not write:
+        raise HTTPException(status_code=404, detail=f"{wr_id}: 존재하지 않는 게시글입니다.")
+
+    if not mb_id:
+        raise HTTPException(status_code=403, detail="로그인 후 이용해주세요.")
+
+    if mb_id != write.mb_id:
+        raise HTTPException(status_code=403, detail="자신의 글에만 파일을 업로드할 수 있습니다.")
+
+    if not is_possible_level(request, member_info, board, "bo_upload_level"):
+        raise HTTPException(status_code=403, detail="파일 업로드 권한이 없습니다.")
 
     return write
 

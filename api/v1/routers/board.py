@@ -18,7 +18,8 @@ from lib.member_lib import get_admin_type, get_member_level
 from lib.template_filters import number_format
 from lib.point import insert_point, delete_point
 from api.v1.dependencies.board import (
-    get_member_info, get_board, get_group, validate_write, validate_comment, validate_delete_comment
+    get_member_info, get_board, get_group, validate_write, validate_comment, validate_delete_comment,
+    validate_upload_file_write
 )
 from api.v1.models.board import WriteModel, CommentModel
 from api.v1.lib.board import is_possible_level
@@ -594,7 +595,7 @@ async def api_upload_file(
     member_info: Annotated[Dict, Depends(get_member_info)],
     bo_table: str = Path(...),
     board: Board = Depends(get_board),
-    wr_id: str = Path(...),
+    write: WriteBaseModel = Depends(validate_upload_file_write),
     files: List[UploadFile] = File(..., alias="bf_file[]"),
     file_content: list = Form(None, alias="bf_content[]"),
 ) -> Dict:
@@ -604,52 +605,48 @@ async def api_upload_file(
     FILE_DIRECTORY = "data/file/"
     mb_id = member_info["mb_id"]
     admin_type = get_admin_type(request, mb_id, board=board)
-    write_model = dynamic_create_write_table(bo_table)
-    write = db.get(write_model, wr_id)
+    file_manager = BoardFileManager(board, write.wr_id)
+    directory = os.path.join(FILE_DIRECTORY, bo_table)
+    wr_file = write.wr_file
+    exclude_file = {"size": [], "ext": []}
+    for file in files:
+        index = files.index(file)
+        if file.filename:
+            # 관리자가 아니면서 설정한 업로드 사이즈보다 크거나 업로드 가능 확장자가 아니면 업로드하지 않음
+            if not admin_type:
+                if not file_manager.is_upload_size(file):
+                    exclude_file["size"].append(file.filename)
+                    continue
+                if not file_manager.is_upload_extension(request, file):
+                    exclude_file["ext"].append(file.filename)
+                    continue
 
-    if is_possible_level(request, member_info, board, "bo_upload_level"):
-        file_manager = BoardFileManager(board, write.wr_id)
-        directory = os.path.join(FILE_DIRECTORY, bo_table)
-        wr_file = write.wr_file
-        exclude_file = {"size": [], "ext": []}
-        for file in files:
-            index = files.index(file)
-            if file.filename:
-                # 관리자가 아니면서 설정한 업로드 사이즈보다 크거나 업로드 가능 확장자가 아니면 업로드하지 않음
-                if not admin_type:
-                    if not file_manager.is_upload_size(file):
-                        exclude_file["size"].append(file.filename)
-                        continue
-                    if not file_manager.is_upload_extension(request, file):
-                        exclude_file["ext"].append(file.filename)
-                        continue
+            board_file = file_manager.get_board_file(index)
+            filename = file_manager.get_filename(file.filename)
+            bf_content = file_content[index] if file_content else ""
+            if board_file:
+                # 기존파일 삭제
+                file_manager.remove_file(board_file.bf_file)
+                # 파일 업로드 및 정보 업데이트
+                file_manager.upload_file(directory, filename, file)
+                file_manager.update_board_file(board_file, directory, filename, file, bf_content)
+            else:
+                # 파일 업로드 및 정보 추가
+                file_manager.upload_file(directory, filename, file)
+                file_manager.insert_board_file(index, directory, filename, file, bf_content)
+                wr_file += 1
+    # 파일 개수 업데이트
+    write.wr_file = wr_file
+    db.commit()
 
-                board_file = file_manager.get_board_file(index)
-                filename = file_manager.get_filename(file.filename)
-                bf_content = file_content[index] if file_content else ""
-                if board_file:
-                    # 기존파일 삭제
-                    file_manager.remove_file(board_file.bf_file)
-                    # 파일 업로드 및 정보 업데이트
-                    file_manager.upload_file(directory, filename, file)
-                    file_manager.update_board_file(board_file, directory, filename, file, bf_content)
-                else:
-                    # 파일 업로드 및 정보 추가
-                    file_manager.upload_file(directory, filename, file)
-                    file_manager.insert_board_file(index, directory, filename, file, bf_content)
-                    wr_file += 1
-        # 파일 개수 업데이트
-        write.wr_file = wr_file
-        db.commit()
-
-        if exclude_file:
-            msg = ""
-        if exclude_file.get("size"):
-            msg += f"{','.join(exclude_file['size'])} 파일은 업로드 용량({board.bo_upload_size}byte)을 초과하였습니다.\\n"
-        if exclude_file.get("ext"):
-            msg += f"{','.join(exclude_file['ext'])} 파일은 업로드 가능 확장자가 아닙니다.\\n"
-        if msg:
-            raise HTTPException(status_code=400, detail=msg)
+    if exclude_file:
+        msg = ""
+    if exclude_file.get("size"):
+        msg += f"{','.join(exclude_file['size'])} 파일은 업로드 용량({board.bo_upload_size}byte)을 초과하였습니다.\\n"
+    if exclude_file.get("ext"):
+        msg += f"{','.join(exclude_file['ext'])} 파일은 업로드 가능 확장자가 아닙니다.\\n"
+    if msg:
+        raise HTTPException(status_code=400, detail=msg)
     return {"result": "uploaded"}
 
 
