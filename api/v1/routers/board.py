@@ -6,7 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy import asc, desc, func, select, update, exists, inspect, delete
 
 from core.database import db_session
-from core.models import Board, Group, BoardGood, Scrap, Member, BoardNew
+from core.models import Board, Group, BoardGood, Scrap, Member, BoardNew, WriteBaseModel
 from lib.board_lib import (
     BoardConfig, get_list, write_search_filter, is_write_delay, set_write_delay,
     get_next_num, generate_reply_character, insert_board_new, send_write_mail,
@@ -17,7 +17,9 @@ from lib.dependencies import common_search_query_params, get_write
 from lib.member_lib import get_admin_type, get_member_level
 from lib.template_filters import number_format
 from lib.point import insert_point, delete_point
-from api.v1.dependencies.board import get_member_info, get_board, get_group, validate_write, validate_comment
+from api.v1.dependencies.board import (
+    get_member_info, get_board, get_group, validate_write, validate_comment, validate_delete_comment
+)
 from api.v1.models.board import WriteModel, CommentModel
 from api.v1.lib.board import is_possible_level
 
@@ -761,3 +763,28 @@ async def api_update_comment(
     db.commit()
 
     return {"result": "updated"}
+
+
+@router.delete("/{bo_table}/{wr_parent}/comment/{wr_id}")
+async def api_delete_comment(
+    db: db_session,
+    comment: Annotated[WriteBaseModel, Depends(validate_delete_comment)],
+    bo_table: str = Path(...),
+):
+    """
+    댓글 삭제
+    """
+    write_model = dynamic_create_write_table(bo_table)
+
+    # 댓글 삭제
+    db.delete(comment)
+
+    # 게시글에 댓글 수 감소
+    db.execute(
+        update(write_model).values(wr_comment=write_model.wr_comment - 1)
+        .where(write_model.wr_id == comment.wr_parent)
+    )
+
+    db.commit()
+
+    return {"result": "deleted"}

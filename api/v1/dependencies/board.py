@@ -6,7 +6,8 @@ from sqlalchemy import select
 from core.database import db_session
 from core.models import Member, Board, Group
 from lib.common import filter_words, dynamic_create_write_table
-from lib.board_lib import BoardConfig
+from lib.board_lib import BoardConfig, is_owner
+from lib.member_lib import get_admin_type
 from lib.html_sanitizer import content_sanitizer
 from lib.pbkdf2 import create_hash
 from lib.g5_compatibility import G5Compatibility
@@ -199,5 +200,34 @@ def validate_comment(
     comment.wr_homepage = getattr(member, "mb_homepage", "")
     comment.wr_datetime = comment.wr_last = now
     comment.wr_ip = request.client.host
+
+    return comment
+
+
+def validate_delete_comment(
+    request: Request,
+    db: db_session,
+    member_info: Annotated[Dict, Depends(get_member_info)],
+    board: Annotated[Board, Depends(get_board)],
+    bo_table: str = Path(...),
+    wr_parent: str = Path(...),
+    wr_id: str = Path(...),
+):
+    write_model = dynamic_create_write_table(bo_table)
+    write = db.get(write_model, wr_parent)
+    comment = db.get(write_model, wr_id)
+    if not comment:
+        raise HTTPException(status_code=404, detail=f"{wr_id} : 존재하지 않는 댓글입니다.")
+    
+    if not comment.wr_is_comment:
+        raise HTTPException(status_code=400, detail=f"{wr_id} : 댓글이 아닌 게시글입니다.")
+
+    # 게시판관리자 검증
+    mb_id = member_info["mb_id"]
+    admin_type = get_admin_type(request, mb_id, board=board)
+
+    # 게시글 삭제 권한 검증
+    if not any([admin_type, is_owner(write, mb_id), is_owner(comment, mb_id)]):
+        raise HTTPException(status_code=403, detail="댓글을 삭제할 권한이 없습니다.")
 
     return comment
