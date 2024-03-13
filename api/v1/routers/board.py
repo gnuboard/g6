@@ -18,6 +18,7 @@ from lib.template_filters import number_format
 from lib.point import insert_point, delete_point
 from api.v1.dependencies.board import get_member_info, get_board, get_group, validate_write, validate_comment
 from api.v1.models.board import WriteModel, CommentModel
+from api.v1.lib.board import is_possible_level
 
 
 router = APIRouter()
@@ -79,11 +80,7 @@ async def api_list_post(
     config = request.state.config
     board_config = BoardConfig(request, board)
 
-    mb_id = member_info["mb_id"]
-    member_level = member_info["member_level"]
-    admin_type = get_admin_type(request, mb_id, board=board)
-    
-    if not admin_type and member_level < board.bo_list_level:
+    if not is_possible_level(request, member_info, board):
         raise HTTPException(status_code=403, detail=f"접근 권한이 없습니다.")
 
     board.subject = board_config.subject
