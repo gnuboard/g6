@@ -1,0 +1,34 @@
+{% if board.bo_use_sideview %}
+    {% import "/sideview/macros.html" as sideview %}
+{% endif %}
+{% set thumb_width, thumb_height = 350, 350 %}
+
+<div id="notice-main" class="main-border rounded-4 overflow-hidden position-relative card-bg" style="width: 100%;height: 240px;">
+  <h2 class="position-absolute start-50 translate-middle-x mt-5 p-3 main-bg fs-5 rounded-2"><a href="{{ url_for('list_post', bo_table=bo_table) }}" class="text-white text-decoration-none" >{{ board.subject }}</a></h2>
+  <div id="carouselExampleFade" class="carousel slide carousel-fade d-flex justify-content-center align-items-center text-center w-100 h-100">
+    <div class="carousel-inner">
+      {% for write in writes -%}
+      <div class="carousel-item {% if loop.first %}active{% endif %}">
+        <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}" class="d-block w-100 fs-1 text-decoration-none main-font px-5">
+            {% if write|string in board.bo_notice %}
+                <strong>{{ write.subject }}</strong>
+            {% else %}
+                {{ write.subject }}
+            {% endif %}
+            {% if write.wr_comment %}{{ write.wr_comment }}{% endif  %}
+        </a>
+      </div>
+      {% else %}
+          <div class="empty_li sub-font fs-4">게시물이 없습니다.</div>
+      {% endfor -%}
+    </div>
+    <button class="carousel-control-prev btn-invert" type="button" data-bs-target="#carouselExampleFade" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next btn-invert" type="button" data-bs-target="#carouselExampleFade" data-bs-slide="next">
+      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Next</span>
+    </button>
+  </div>
+</div>

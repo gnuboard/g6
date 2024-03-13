@@ -56,7 +56,7 @@ $(function () {
     }
     const autosavePop = $("#autosave_pop");
     // 임시저장된 글목록을 가져옴
-    $("#btn_autosave_list").click(function () {
+    $("#btn_autosave").click(function () {
         if (autosavePop.is(":hidden")) {
             $.ajax(g6_bbs_url + "/ajax/autosave_list", {
                 headers: {
@@ -133,7 +133,7 @@ $(function () {
         });
     });
 
-    $("#autosave_close").click(function () {
+    $(".autosave_close").click(function () {
         $("#autosave_pop").hide();
     });
 });

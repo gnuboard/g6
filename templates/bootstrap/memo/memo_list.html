@@ -1,0 +1,69 @@
+{% extends "base_sub.html" %}
+{% import "/sideview/macros.html" as sideview %}
+
+{% block title %}내 쪽지함{% endblock title %}
+
+{% block content %}
+    <div id="memo_list" class="new_win">
+        <h1 id="win_title">
+            내 쪽지함
+            <div class="win_total">
+                {% if kind == "recv" %}
+                    전체 받은쪽지 
+                {% else %}
+                    전체 보낸쪽지 
+                {% endif %}
+                {{ total_records|number_format }}통
+                <br>
+            </div>
+        </h1>
+        <div class="new_win_con2 fs-5 pt-3">
+            <ul class="win_ul pb-3 px-4">
+                <li class="{% if kind == "recv" %}selected{% endif %}"><a href="{{ url_for('memo_list') }}?kind=recv">받은쪽지</a></li>
+                <li class="{% if kind == "send" %}selected{% endif %}"><a href="{{ url_for('memo_list') }}?kind=send">보낸쪽지</a></li>
+                <li><a href="{{ url_for('memo_form') }}">쪽지쓰기</a></li>
+            </ul>
+            <div class="memo_list main-bt main-font list-unstyled">
+                <ul class="p-0">
+                {% for memo in memos %}
+                    {% set is_read=(False if is_none_datetime(memo.me_read_datetime) else True) %}
+                    {% set target_member=memo.target_member %}
+                    <li class="{% if is_read %}read{% endif %} position-relative d-flex main-bb py-3 px-4">
+                        <div class="memo_li position-relative me-4">
+                            {% if not is_read %}
+                                <span class="no_read ">안 읽은 쪽지</span>
+                            {% endif %}
+                        </div>
+                        <div class="memo_li memo_name pt-2">
+                            {{ sideview.get(request, target_member.mb_id, target_member.mb_nick|default_if_none("[회원정보 없음]"))|safe }}
+                            <span class="fs-5" style="color: #888d92;">
+                                <i class="fa fa-regular fa-clock" aria-hidden="true"></i>
+                                {{ memo.me_send_datetime }}
+                            </span>
+                            <div class="memo_preview">
+                                <a href="{{ url_for('memo_view', me_id=memo.me_id) }}?{{ request.query_params }}" class="d-block me-5 pt-3 fw-normal fs-5 main-font">
+                                    {{ memo.me_memo|truncate(50, True, '...') }}
+                                </a>
+                            </div>
+                        </div>	
+                        <a href="{{ url_for('memo_delete', me_id=memo.me_id) }}?page={{ page }}" onclick="del(this.href); return false;" class="memo_del"><i class="fa fa-regular fa-trash-can" aria-hidden="true"></i> <span class="blind">삭제</span></a>
+                    </li>
+                {% else %}
+                    <li class="empty_table">쪽지가 없습니다.</li>
+                {% endfor %}
+                </ul>
+            </div>
+    
+            {{ paging|safe }}
+
+            <p class="win_desc mx-4">
+                <i class="fa fa-info-circle" aria-hidden="true"></i>
+                쪽지 보관일수는 최장 <strong>{{ request.state.config.cf_memo_del|number_format }}</strong>일 입니다.
+            </p>
+    
+            <div class="win_btn">
+                <button type="button" onclick="window.close();" class="btn_close">창닫기</button>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

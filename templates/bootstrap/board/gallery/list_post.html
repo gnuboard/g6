@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+{% if board.bo_use_sideview %}
+    {% import "/sideview/macros.html" as sideview %}
+{% endif %}
+
+{% block title %}{{ board.subject }} {{ current_page }} 페이지{% endblock title %}
+{% block subtitle %}{{ board.subject }}{% endblock subtitle %}
+
+{% block content %}
+{% set is_admin=get_admin_type(request, request.state.login_member.mb_id, board=board) %}
+{% set sca=request.query_params.sca %}
+{% set sod_reverse="asc" if request.query_params.sod == "desc" else "desc" %}
+
+<!-- 게시판 목록 시작 { -->
+<div id="bo_gall" class="position-relative mb-4" style="width:{{ table_width }}">
+    {% if board.bo_use_category %}
+    <!-- 게시판 카테고리 시작 { -->
+        <nav id="bo_cate" class="my-5">
+            <h2 class="blind">{{ board.bo_subject }} 카테고리</h2>
+            <ul id="bo_cate_ul">
+                <li class="d-inline-block p-1 main-font fs-5"><a href="{{ request.url.replace_query_params() }}" {% if not sca %}id="bo_cate_on" class="main-bg text-white"{% endif %}>전체</a></li>
+                {% for category in categories %}
+                <li class="d-inline-block p-1 main-font fs-5"><a href="{{ request.url.replace_query_params(sca=category) }}" {% if sca == category %}id="bo_cate_on" class="main-bg text-white"{% endif %}>{{ category }}</a></li>
+                {% endfor %}
+            </ul>
+        </nav>
+    <!-- } 게시판 카테고리 끝 -->
+    {% endif %}
+
+    <form name="fboardlist" id="fboardlist" action="" onsubmit="return fboardlist_submit(this);" method="post">
+        <input type="hidden" name="bo_table" value="{{ board.bo_table }}">
+        <input type="hidden" name="sw" value="">
+        <input type="hidden" name="sfl" value="{{ request.query_params.sfl }}">
+        <input type="hidden" name="stx" value="{{ request.query_params.stx }}">
+        <input type="hidden" name="spt" value="{{ request.query_params.spt }}">
+        <input type="hidden" name="sca" value="{{ request.query_params.sca }}">
+        <input type="hidden" name="sst" value="{{ request.query_params.sst }}">
+        <input type="hidden" name="sod" value="{{ request.query_params.sod }}">
+        <input type="hidden" name="page" value="{{ current_page }}">
+        <input type="hidden" name="token" value="">
+        <input type="hidden" name="act_button" value="">
+        <!-- 게시판 페이지 정보 및 버튼 시작 { -->
+        <div id="bo_btn_top" class="d-flex justify-content-between align-items-center my-3">
+            <div id="bo_list_total" class="fs-6 sub-font">
+                <span>Total {{ total_count|number_format }}건</span>
+                {{ current_page|number_format }} 페이지
+            </div>
+
+            <ul class="row gx-1">
+                <li class="col text-center ml-1" style="width: 40px;">
+                    <button type="button" id="btn_bo_sch" class="btn_b01 btn fs-4" title="게시판 검색">
+                        <i class="fa fa-search" aria-hidden="true"></i>
+                        <span class="blind">게시판 검색</span>
+                    </button>
+                </li>
+                {% if is_write %}
+                <li class="col text-center ml-1" style="width: 40px;">
+                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_b01 btn" title="글쓰기">
+                        <i class="fa fa-pencil" aria-hidden="true"></i>
+                        <span class="blind">글쓰기</span>
+                    </a>
+                </li>
+                {% endif %}
+                {% if is_admin %}
+                <li class="col text-center ml-1" style="width: 40px;">
+                    <button type="button" class="btn_more_opt is_list_btn btn_b01 btn fs-4" title="게시판 리스트 옵션">
+                        <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
+                        <span class="blind">게시판 리스트 옵션</span>
+                    </button>
+                    <ul class="more_opt is_list_btn p-0">
+                        <li><button type="submit" name="btn_submit" value="선택삭제" onclick="document.pressed=this.value"><i class="fa fa-regular fa-trash-can" aria-hidden="true"></i> 선택삭제</button></li>
+                        <li><button type="submit" name="btn_submit" value="선택복사" onclick="document.pressed=this.value"><i class="fa fa-regular fa-file" aria-hidden="true"></i> 선택복사</button></li>
+                        <li><button type="submit" name="btn_submit" value="선택이동" onclick="document.pressed=this.value"><i class="fa fa-arrows" aria-hidden="true"></i> 선택이동</button></li>
+                    </ul>
+                </li>
+                <li class="col text-center ml-1" style="width: 40px;">
+                    <a href="{{ url_for('board_form', bo_table=board.bo_table) }}" class="btn_admin btn" title="관리자">
+                        <i class="fa fa-cog fa-spin fa-fw"></i>
+                        <span class="blind">관리자</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        <!-- } 게시판 페이지 정보 및 버튼 끝 -->
+
+        {% if is_admin %}
+            <div id="gall_allchk" class="all_chk chk_box pb-3">
+                <input type="checkbox" id="chkall" onclick="if (this.checked) all_checked(true); else all_checked(false);" class="selec_chk">
+                <label for="chkall">
+                    <span></span>
+                    <b class="blind">현재 페이지 게시물 </b> 전체선택
+                </label>
+            </div>
+        {% endif %}
+
+        <ul id="gall_ul" class="row gy-4 p-0">
+            {% set line_height_style="line-height:" ~ gallery_height ~ "px" if gallery_height > 0 else "" %}
+            {% for write in writes %}
+            <!-- TODO: 열람 중일 경우 class에 gall_now 추가 -->
+            <li class="col-md-3 col-6 col-gn-{{ board.bo_gallery_cols|default(1) }}">
+                <div class="position-relative" style="margin: 0 0 50ox 0;border-radius: 0 0 2px 2px;">
+                    <div class="chk_box position-absolute top-0 start-0 p-2" style="z-index: 1;">
+                        <input type="checkbox" name="chk_wr_id[]" value="{{ write.wr_id }}" id="chk_wr_id_{{ loop.index }}" class="selec_chk">
+                        <label for="chk_wr_id_{{ loop.index }}">
+                            <span>&nbsp;</span>
+                            <b class="blind">{{ write.subject }}</b>
+                        </label>
+                        <span class="blind">
+                            <!-- TODO: 열람중 -->
+                            {{ write.num }}
+                        </span>
+                    </div>
+                    <div class="position-relative card-bg main-border overflow-hidden rounded-4">
+                        <div class="gall_img text-center overflow-hidden" style="height: 200px;">
+                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}">
+                                {% if write.wr_id|string in board.bo_notice %}
+                                    <span class="is_notice" style="{{ line_height_style }}">공지</span>
+                                {% else %}
+                                    {% set thumbnail=get_list_thumbnail(request, board, write, gallery_width, gallery_height) %}
+                                    {% if thumbnail.src %}
+                                        <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}">
+                                    {% else %}
+                                        <span class="no_image" style="{{ line_height_style }}">no image</span>
+                                    {% endif %}
+                                {% endif %}
+                            </a>
+                        </div>
+                        <div class="my-3 px-3">
+                            {% if write.ca_name %}
+                                <a href="{{ request.url.replace_query_params(sca=write.ca_name) }}" class="bo_cate_link fw-bold" style="color: #ff3061;">{{ write.ca_name }}</a>
+                            {% endif %}
+
+                            <a href="{{ url_for('read_post', bo_table=board.bo_table, wr_id=write.wr_id)|set_query_params(request) }}" class="d-block main-font fw-bold fs-3 text-decoration-none text-truncate" style="color: #ff3061;">
+                                {% if write.wr_reply %}
+                                    <img src="{{ url_for('static', path="/img/icon_reply.gif") }}" class="icon_reply ms-2" alt="답변글">
+                                {% endif %}
+                                {{ write.subject }}
+                                {% if write.icon_new %}<span class="new_icon">N<span class="blind">새글</span></span>{% endif %}
+                                {% if write.icon_hot %}<i class="fa fa-heart" aria-hidden="true"></i>{% endif %}
+                                <!-- TODO: 비밀글 아이콘 -->
+                                {% if write.wr_comment %}<span class="blind">댓글</span><span class="cnt_cmt">{{ write.wr_comment }}</span><span class="blind">개</span>{% endif %}
+                            </a>
+                        </div>
+
+                        <div class="px-3 pb-4 lh-base sub-font fs-5">
+                            <span class="blind">작성자 </span>
+                            {% if board.bo_use_sideview %}
+                                {{ sideview.get(request, write.mb_id, write.name, write.wr_email, write.wr_homepage)|safe }}
+                            {% else %}
+                                <span class="{% if write.mb_id %}sv_member{% else %}sv_guest{% endif %}">
+                                    {{ write.name }}
+                                </span>
+                            {% endif %}
+                            <span class="d-inline-block"><span class="blind">작성일 </span><i class="fa fa-regular fa-clock" aria-hidden="true"></i> {{ write.wr_datetime|datetime_format('%y-%m-%d') }}</span>
+                            <span class="d-inline-block"><span class="blind">조회 </span><i class="fa fa-eye" aria-hidden="true"></i> {{ write.wr_hit|number_format }}</span>
+                        </div>
+                        <div class="position-absolute" style="top: 10px;right: 10px;">
+                            {% if board.bo_use_good %}
+                            <span class="blind">추천</span><strong class="py-2 px-3 rounded-3 main-border fs-4"><i class="fa fa-regular fa-thumbs-up" aria-hidden="true"></i> {{ write.wr_good|number_format }}</strong>
+                            {% endif %}
+                            {% if board.bo_use_nogood %}
+                            <span class="blind">비추천</span><strong class="py-2 px-3 rounded-3 main-border fs-4"><i class="fa fa-regular fa-thumbs-down" aria-hidden="true"></i> {{ write.wr_nogood|number_format }}</strong>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </li>
+            {% else %}
+            <li class="main-font fs-4 text-center" style="padding: 80px 0;">게시글이 없습니다.</li>
+            {% endfor %}
+        </ul>
+      <div class="d-flex justify-content-between align-items-center py-5">
+        <!-- 페이지 -->
+        <div class="mx-auto d-inline-block">
+          {{ paging|safe }}
+        </div>
+        <!-- 페이지 -->
+        <div class="d-inline-block">
+            {% if prev_spt %}
+                <a href="{{ request.url.include_query_params(spt=prev_spt) }}" class="btn02">이전검색</a>
+            {% endif %}
+            {% if next_spt %}
+                <a href="{{ request.url.include_query_params(spt=next_spt) }}" class="btn02">다음검색</a>
+            {% endif %}
+            <ul class="d-flex">
+                {% if is_admin %}
+                <li>
+                    <a href="{{ url_for('board_form', bo_table=board.bo_table) }}" class="btn_admin btn" title="관리자">
+                        <i class="fa fa-cog fa-spin fa-fw"></i><span class="blind">관리자</span>
+                    </a>
+                </li>
+                {% endif %}
+                {% if board.bo_use_rss_view %}
+                <li>
+                    <a href="" class="btn_b01 btn" title="RSS">
+                        <i class="fa fa-rss" aria-hidden="true"></i><span class="blind">RSS</span>
+                    </a>
+                </li>
+                {% endif %}
+                {% if is_write %}
+                <li>
+                    <a href="{{ url_for('write_form_add', bo_table=board.bo_table)|set_query_params(request) }}" class="btn_b01 btn" title="글쓰기">
+                        <i class="fa fa-pencil" aria-hidden="true"></i><span class="blind">글쓰기</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+      </div>
+    </form>
+
+    <!-- 게시판 검색 시작 { -->
+    <div class="bo_sch_wrap w-100 h-100 fixed-top" style="z-index:9999;">
+      <fieldset class="bo_sch position-absolute top-50 start-50 translate-middle wrapper-bg shadow-lg main-border rounded-4 overflow-y-auto" style="width:330px; max-height:300px;">
+            <h3 class="m-0 p-4 main-bb main-font fs-4">검색</h3>
+            <form name="fsearch" method="get" class="d-block p-4">
+                <input type="hidden" name="sca" value="{{ request.query_params.sca }}">
+                <input type="hidden" name="sop" value="{{ request.query_params.sop }}">
+                <label for="sfl" class="blind">검색대상</label>
+                <select name="sfl" id="sfl" class="w-100 input-border input-bg main-font rounded-1 fs-5" style="height: 40px;">
+                    <option value="wr_subject" {{ get_selected(request.query_params.sfl, "wr_subject")|safe }}>제목</option>
+                    <option value="wr_content" {{ get_selected(request.query_params.sfl, "wr_content")|safe }}>내용</option>
+                    <option value="wr_subject||wr_content" {{ get_selected(request.query_params.sfl, "wr_subject||wr_content")|safe }}>제목+내용</option>
+                    <option value="wr_name,1" {{ get_selected(request.query_params.sfl, "wr_name,1")|safe }}>글쓴이</option>
+                    <option value="wr_name,0" {{ get_selected(request.query_params.sfl, "wr_name,0")|safe }}>글쓴이(코)</option>
+                </select>
+                <label for="stx" class="blind">검색어<strong class="blind"> 필수</strong></label>
+                <div class="sch_bar d-inline-block w-100 mt-4 input-border input-bg main-font rounded-1 fs-5">
+                    <input type="text" name="stx" value="{{ request.query_params.stx }}" required id="stx" class="sch_input border-0 bg-transparent px-1 main-font" style="width: 250px;height: 38px;" size="25" maxlength="20" placeholder=" 검색어를 입력해주세요">
+                    <button type="submit" value="검색" class="sch_btn sub-font bg-transparent border-0 fs-4" style="width: 40px;height: 38px;">
+                        <i class="fa fa-search" aria-hidden="true"></i><span class="blind">검색</span>
+                    </button>
+                </div>
+                <button type="button" class="bo_sch_cls position-absolute top-0 end-0 sub-font fs-2 bg-transparent border-0 px-4 py-3" title="닫기">
+                    <i class="fa fa-xmark" aria-hidden="true"></i><span class="blind">닫기</span>
+                </button>
+            </form>
+        </fieldset>
+        <div class="bo_sch_bg bg-black bg-opacity-10 w-100 h-100"></div>
+    </div>
+    <script>
+    jQuery(function($){
+        // 게시판 검색
+        $("#btn_bo_sch").on("click", function() {
+            $(".bo_sch_wrap").toggle();
+        })
+        $('.bo_sch_bg, .bo_sch_cls').click(function(){
+            $('.bo_sch_wrap').hide();
+        });
+    });
+    </script>
+    <!-- } 게시판 검색 끝 -->
+</div>
+{% if is_admin %}
+    <noscript>
+        <p>자바스크립트를 사용하지 않는 경우<br>별도의 확인 절차 없이 바로 선택삭제 처리하므로 주의하시기 바랍니다.</p>
+    </noscript>
+    <script>
+    function all_checked(sw) {
+        var f = document.fboardlist;
+    
+        for (var i = 0; i < f.length; i++) {
+            if (f.elements[i].name == "chk_wr_id[]")
+                f.elements[i].checked = sw;
+        }
+    }
+    
+    function fboardlist_submit(f) {
+        var chk_count = 0;
+    
+        for (var i = 0; i < f.length; i++) {
+            if (f.elements[i].name == "chk_wr_id[]" && f.elements[i].checked)
+                chk_count++;
+        }
+    
+        if (!chk_count) {
+            alert(document.pressed + "할 게시물을 하나 이상 선택하세요.");
+            return false;
+        }
+    
+        if(document.pressed == "선택복사") {
+            select_copy("copy");
+            return;
+        }
+    
+        if(document.pressed == "선택이동") {
+            select_copy("move");
+            return;
+        }
+    
+        if(document.pressed == "선택삭제") {
+            if (!confirm("선택한 게시물을 정말 삭제하시겠습니까?\n\n한번 삭제한 자료는 복구할 수 없습니다\n\n답변글이 있는 게시글을 선택하신 경우\n답변글도 선택하셔야 게시글이 삭제됩니다."))
+                return false;
+    
+            f.removeAttribute("target");
+            f.action = "{{ url_for('list_delete', bo_table=board.bo_table)|set_query_params(request)|safe }}";
+        }
+
+        f.token.value = generate_token();
+
+        return true;
+    }
+    
+    // 선택한 게시물 복사 및 이동
+    function select_copy(sw) {
+        var f = document.fboardlist;
+        var sub_win = window.open("", "move", "left=50, top=50, width=500, height=550, scrollbars=1");
+    
+        f.sw.value = sw;
+        f.target = "move";
+        f.action = "{{ url_for('move_post', bo_table=board.bo_table)|safe }}";
+        f.submit();
+    }
+    
+    // 게시판 리스트 관리자 옵션
+    jQuery(function($){
+        $(".btn_more_opt.is_list_btn").on("click", function(e) {
+            e.stopPropagation();
+            $(".more_opt.is_list_btn").toggle();
+        });
+        $(document).on("click", function (e) {
+            if(!$(e.target).closest('.is_list_btn').length) {
+                $(".more_opt.is_list_btn").hide();
+            }
+        });
+    });
+    </script>
+{% endif %}
+<!-- } 게시판 목록 끝 -->
+{% endblock content %}

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}회원가입약관{% endblock title %}
+{% block subtitle %}회원가입약관{% endblock subtitle %}
+
+{% block content %}
+<div class="register mx-auto pb-5">
+    <form  name="fregister" id="fregister" action="/bbs/register" onsubmit="return fregister_submit(this);" method="post" autocomplete="off">
+    <p class="position-relative text-start text-white fs-5 rounded-3 fw-bold bg-danger bg-opacity-75 py-4 px-3 mb-3"><i class="fa fa-check-circle" aria-hidden="true"></i> 회원가입약관 및 개인정보 수집 및 이용의 내용에 동의하셔야 회원가입 하실 수 있습니다.</p>
+        <section id="fregister_term" class="position-relative mt-3 mx-auto mb-4">
+        <h2 class="fs-4 fw-bold main-font py-4 m-0">회원가입약관</h2>
+        <textarea class="d-block p-3 w-100 input-bg main-border main-font fs-5" readonly>{{ request.state.config.cf_stipulation }}</textarea>
+        <fieldset class="fregister_agree ">
+            <input type="checkbox" name="agree" value="1" id="agree11" class="selec_chk">
+            <label for="agree11"><span></span><b class="blind">회원가입약관의 내용에 동의합니다.</b></label>
+        </fieldset>
+    </section>
+
+    <section id="fregister_private" class="position-relative">
+        <h2 class="fs-4 fw-bold main-font py-4 m-0">개인정보 수집 및 이용</h2>
+        <div>
+            <table class="fs-5">
+                <caption class="blind">개인정보 수집 및 이용</caption>
+                <thead>
+                <tr>
+                    <th>목적</th>
+                    <th>항목</th>
+                    <th>보유기간</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>이용자 식별 및 본인여부 확인</td>
+                    <td>아이디, 이름, 비밀번호</td>
+                    <td>회원 탈퇴 시까지</td>
+                </tr>
+                <tr>
+                    <td>고객서비스 이용에 관한 통지,<br>CS대응을 위한 이용자 식별</td>
+                    <td>연락처 (이메일, 휴대전화번호)</td>
+                    <td>회원 탈퇴 시까지</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <fieldset class="fregister_agree">
+            <input type="checkbox" name="agree2" value="1" id="agree21" class="selec_chk">
+            <label for="agree21"><span></span><b class="blind">개인정보 수집 및 이용의 내용에 동의합니다.</b></label>
+       </fieldset>
+    </section>
+	
+	<div id="fregister_chkall" class="chk_all fregister_agree position-relative text-center mb-4">
+        <input type="checkbox" name="chk_all" id="chk_all" class="selec_chk">
+        <label for="chk_all" class="fs-5 fw-bold"><span></span>회원가입 약관에 모두 동의합니다</label>
+    </div>
+	    
+    <div class="d-flex justify-content-between fs-4">
+        <a href="/" class="btn_close w-100 me-3 fw-bold text-decoration-none">취소</a>
+        <button type="submit" class="btn_submit w-100 fw-bold">회원가입</button>
+    </div>
+
+    </form>
+
+    <script>
+    function fregister_submit(f)
+    {
+        if (!f.agree.checked) {
+            alert("회원가입약관의 내용에 동의하셔야 회원가입 하실 수 있습니다.");
+            f.agree.focus();
+            return false;
+        }
+
+        if (!f.agree2.checked) {
+            alert("개인정보 수집 및 이용의 내용에 동의하셔야 회원가입 하실 수 있습니다.");
+            f.agree2.focus();
+            return false;
+        }
+
+        return true;
+    }
+    
+    jQuery(function($){
+        // 모두선택
+        $("input[name=chk_all]").click(function() {
+            if ($(this).prop('checked')) {
+                $("input[name^=agree]").prop('checked', true);
+            } else {
+                $("input[name^=agree]").prop("checked", false);
+            }
+        });
+    });
+
+    </script>
+</div>
+{% endblock content %}
