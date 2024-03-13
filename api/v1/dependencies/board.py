@@ -186,7 +186,7 @@ def validate_comment(
         else:
             comment.wr_name =  member.mb_nick
     elif not comment.wr_name:
-        raise HTTPException(status_code=400, detail="로그인 세션 만료, 비회원 글쓰기시 작성자 이름 미기재 등의 비정상적인 접근입니다.")
+        raise HTTPException(status_code=400, detail="wr_name: 비회원 글쓰기시 작성자 이름을 기재해야 합니다.")
     
     comment.ca_name = write.ca_name
     comment.wr_option = comment.wr_secret
