@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, Form, Path, Query, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy import desc, exists, func, select, update
 
-from core.database import DBConnect, db_session
-from core.exception import AlertCloseException, AlertException
+from core.database import db_session
+from core.exception import AlertException
 from core.models import Scrap
 from core.template import UserTemplates
 from lib.board_lib import *
@@ -137,7 +137,7 @@ async def scrap_form_update(
     db.execute(
         update(Member)
         .where(Member.mb_id == member.mb_id)
-        .values(mb_scrap_cnt=get_scrap_totals(member.mb_id) + 1)
+        .values(mb_scrap_cnt=get_total_scrap_count(member.mb_id) + 1)
     )
     db.commit()
 
@@ -210,7 +210,7 @@ async def scrap_delete(
     db.execute(
         update(Member)
         .where(Member.mb_id == member.mb_id)
-        .values(mb_scrap_cnt=get_scrap_totals(member.mb_id) - 1)
+        .values(mb_scrap_cnt=get_total_scrap_count(db, member.mb_id) - 1)
     )
     db.commit()
 
@@ -219,20 +219,17 @@ async def scrap_delete(
     return RedirectResponse(set_url_query_params(url, query_params), 302)
 
 
-def get_scrap_totals(mb_id: str) -> int:
+def get_total_scrap_count(db: Session, mb_id: str) -> int:
     """회원의 전체 스크랩 수를 구한다.
 
     Args:
+        db (Session): DB 세션
         mb_id (str): 회원 아이디
     
     Returns:
         int: 스크랩 수
     """
-    db = DBConnect().sessionLocal()
-    count = db.scalar(
+    return db.scalar(
         select(func.count(Scrap.ms_id))
         .where(Scrap.mb_id == mb_id)
     )
-    db.close()
-
-    return count
