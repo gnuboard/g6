@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Path, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import TypeAdapter
-from sqlalchemy import select, insert, inspect
+from sqlalchemy import select, insert
 from sqlalchemy.exc import ProgrammingError
 from starlette.staticfiles import StaticFiles
 
@@ -23,7 +23,7 @@ from core.plugin import (
 )
 from core.template import register_theme_statics, TemplateService, UserTemplates
 from lib.common import *
-from lib.member_lib import is_super_admin, MemberService
+from lib.member_lib import MemberServiceTemplate, is_super_admin
 from lib.point import insert_point
 from lib.template_filters import default_if_none
 from lib.token import create_session_token
@@ -179,25 +179,38 @@ async def main_middleware(request: Request, call_next):
     cookie_mb_id = request.cookies.get("ck_mb_id", "")
     current_ip = get_client_ip(request)
 
-    # 로그인 세션 유지 중이라면
-    if session_mb_id:
-        member = MemberService.create_by_id(db, session_mb_id)
-        if member.is_intercept_or_leave():
-            request.session.clear()
-            member = None
-    # 자동 로그인 쿠키가 있다면
-    elif cookie_mb_id:
-        mb_id = re.sub("[^a-zA-Z0-9_]", "", cookie_mb_id)[:20]
-        member = MemberService.create_by_id(db, mb_id)
-        # 최고관리자는 보안상 자동로그인 기능을 사용하지 않는다.
-        if (not is_super_admin(request, mb_id)
-                and member.is_email_certify(bool(config.cf_use_email_certify))
-                and not member.is_intercept_or_leave()):
-            # 쿠키에 저장된 키와 여러가지 정보를 조합하여 만든 키가 일치한다면 로그인으로 간주
-            ss_mb_key = session_member_key(request, member)
-            if request.cookies.get("ck_auto") == ss_mb_key:
-                request.session["ss_mb_id"] = cookie_mb_id
-                is_autologin = True
+    try:
+        # 로그인 세션 유지 중이라면
+        if session_mb_id:
+            member_service = MemberServiceTemplate(request, db, session_mb_id)
+            member = member_service.get_current_member()
+            # 회원 정보가 없거나 탈퇴한 회원이라면 세션을 초기화
+            if not member_service.is_activated(member)[0]:
+                request.session.clear()
+                member = None
+
+        # 자동 로그인 쿠키가 있다면
+        elif cookie_mb_id:
+            mb_id = re.sub("[^a-zA-Z0-9_]", "", cookie_mb_id)[:20]
+            member_service = MemberServiceTemplate(request, db, mb_id)
+            member = member_service.get_current_member()
+
+            # 최고관리자는 보안상 자동로그인 기능을 사용하지 않는다.
+            if (not is_super_admin(request, mb_id)
+                    and member_service.is_member_email_certified(member)[0]
+                    and member_service.is_activated(member)[0]):
+                # 쿠키에 저장된 키와 서버에서 생성한 키가 일치하는지 검사
+                ss_mb_key = session_member_key(member)
+                if request.cookies.get("ck_auto") == ss_mb_key:
+                    request.session["ss_mb_id"] = cookie_mb_id
+                    is_autologin = True
+    except AlertException as e:
+        context = {"request": request, "errors": e.detail, "url": "/"}
+        response = template_response("alert.html", context, e.status_code)
+        response.delete_cookie("ck_auto")
+        response.delete_cookie("ck_mb_id")
+        request.session.clear()
+        return response
 
     if member:
         # 오늘 처음 로그인 이라면 포인트 지급 및 로그인 정보 업데이트

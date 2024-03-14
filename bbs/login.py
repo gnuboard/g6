@@ -2,11 +2,9 @@ from fastapi import APIRouter, Form, Query
 from fastapi.responses import RedirectResponse
 
 from core.database import db_session
-from core.exception import AlertException
 from core.template import UserTemplates
 from lib.common import *
-from lib.member_lib import is_super_admin
-from lib.pbkdf2 import validate_password
+from lib.member_lib import MemberServiceTemplate, is_super_admin
 from lib.social import providers
 from lib.social.social import SocialProvider, oauth
 
@@ -19,9 +17,7 @@ async def login_form(
         request: Request,
         url: str = Query(default="/")
 ):
-    """
-    로그인 폼을 보여준다.
-    """
+    """로그인 폼을 보여준다."""
     context = {
         "request": request,
         "url": url
@@ -38,20 +34,9 @@ async def login(
         auto_login: bool = Form(default=False),
         url: str = Form(default="/")
 ):
-    """
-    로그인 폼화면에서 로그인
-    """
-    config = request.state.config
-
-    member = db.scalar(select(Member).where(Member.mb_id == mb_id))
-    if not member:
-        raise AlertException(status_code=404, detail="회원정보가 존재하지 않습니다.")
-    elif not validate_password(password=mb_password, hash=member.mb_password):
-        raise AlertException(status_code=404, detail="아이디 또는 패스워드가 일치하지 않습니다.")
-    elif member.mb_leave_date or member.mb_intercept_date:
-        raise AlertException("탈퇴 또는 차단된 회원입니다.", 404)
-    elif config.cf_use_email_certify and member.mb_email_certify == datetime(1, 1, 1, 0, 0, 0):
-        raise AlertException(f"{member.mb_email} 메일로 메일인증을 받으셔야 로그인 가능합니다.", 404)
+    """로그인 폼화면에서 로그인"""
+    member_service = MemberServiceTemplate(request, db, mb_id)
+    member = member_service.authenticate_member(mb_password)
 
     ss_mb_key = session_member_key(request, member)
     # 로그인 성공시 세션에 저장
@@ -75,9 +60,13 @@ async def login(
 
 @router.get("/logout")
 async def logout(request: Request):
-    """로그아웃 - 세션/자동로그인 쿠키를 초기화.
+    """
+    로그아웃 
+    - 세션/자동로그인 쿠키를 초기화.
+
     Args:
         request (Request): request
+
     Returns:
         Response: RedirectResponse
     """

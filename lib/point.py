@@ -1,3 +1,4 @@
+import re
 import uuid
 from datetime import datetime, timedelta
 
@@ -6,7 +7,7 @@ from sqlalchemy import delete, desc, exists, func, select, update
 
 from core.database import DBConnect
 from core.models import Member, Point
-from lib.member_lib import get_member
+from lib.member_lib import MemberService
 
 
 def insert_point(request: Request,
@@ -125,54 +126,54 @@ def get_expire_point(request: Request, mb_id: str) -> int:
 def get_point_sum(request: Request, mb_id: str) -> int:
     """포인트 내역 합계"""
     config = request.state.config
-    db = DBConnect().sessionLocal()
-    current_time = datetime.now()
+    with DBConnect().sessionLocal() as db:
+        member_service = MemberService(request, db, mb_id)
+        current_time = datetime.now()
 
-    if config.cf_point_term > 0:
-        expire_point = get_expire_point(request, mb_id)
-        if expire_point > 0:
-            member = get_member(mb_id)
-            point = expire_point * (-1)
-            new_point = Point(
-                mb_id=mb_id,
-                po_datetime=current_time.strftime("%Y-%m-%d %H:%M:%S"),
-                po_content='포인트 소멸',
-                po_point=expire_point * (-1),
-                po_use_point=0,
-                po_mb_point=member.mb_point + point,
-                po_expired=1,
-                po_expire_date=current_time,
-                po_rel_table='@expire',
-                po_rel_id=str(mb_id),
-                po_rel_action='expire-' + str(uuid.uuid4()),
+        if config.cf_point_term > 0:
+            expire_point = get_expire_point(request, mb_id)
+            if expire_point > 0:
+                member = member_service.fetch_member()
+                point = expire_point * (-1)
+                new_point = Point(
+                    mb_id=mb_id,
+                    po_datetime=current_time.strftime("%Y-%m-%d %H:%M:%S"),
+                    po_content='포인트 소멸',
+                    po_point=expire_point * (-1),
+                    po_use_point=0,
+                    po_mb_point=member.mb_point + point,
+                    po_expired=1,
+                    po_expire_date=current_time,
+                    po_rel_table='@expire',
+                    po_rel_id=str(mb_id),
+                    po_rel_action='expire-' + str(uuid.uuid4()),
+                )
+                db.add(new_point)
+                db.commit()
+
+                # 포인트를 사용한 경우 포인트 내역에 사용금액 기록
+                # TODO: 주석처리된 이유를 확인해야 함
+                if point < 0:
+                    # insert_use_point(mb_id, point)
+                    pass
+
+            # 유효기간이 있을 때 기간이 지난 포인트 expired 체크
+            db.execute(
+                update(Point).values(po_expired=1)
+                .where(
+                    Point.mb_id == mb_id,
+                    Point.po_expired != 1,
+                    Point.po_expire_date != '9999-12-31',
+                    Point.po_expire_date < current_time
+                )
             )
-            db.add(new_point)
             db.commit()
 
-            # 포인트를 사용한 경우 포인트 내역에 사용금액 기록
-            # TODO: 주석처리된 이유를 확인해야 함
-            if point < 0:
-                # insert_use_point(mb_id, point)
-                pass
-
-        # 유효기간이 있을 때 기간이 지난 포인트 expired 체크
-        db.execute(
-            update(Point).values(po_expired=1)
-            .where(
-                Point.mb_id == mb_id,
-                Point.po_expired != 1,
-                Point.po_expire_date != '9999-12-31',
-                Point.po_expire_date < current_time
-            )
+        # 포인트합
+        point_sum = db.scalar(
+            select(func.sum(Point.po_point))
+            .filter_by(mb_id=mb_id)
         )
-        db.commit()
-
-    # 포인트합
-    point_sum = db.scalar(
-        select(func.sum(Point.po_point))
-        .filter_by(mb_id=mb_id)
-    )
-    db.close()
 
     return int(point_sum) if point_sum else 0
 

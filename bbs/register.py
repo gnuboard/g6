@@ -12,9 +12,10 @@ from core.template import UserTemplates
 from lib.common import *
 from lib.mail import send_register_mail
 from lib.member_lib import (
+    MemberServiceTemplate,
     validate_and_update_member_image, validate_email, validate_mb_id, validate_nickname
 )
-from lib.dependencies import get_member, validate_token, validate_captcha
+from lib.dependencies import validate_token, validate_captcha
 from lib.pbkdf2 import create_hash
 from lib.point import insert_point
 from lib.template_filters import default_if_none
@@ -244,21 +245,14 @@ async def register_result(
 async def email_certify(
     request: Request,
     db: db_session,
-    member: Annotated[Member, Depends(get_member)],
+    member_service: Annotated[MemberServiceTemplate, Depends()],
     certify: str = Query(...),
 ):
-    """
-    회원가입 메일인증 처리
-    """
-    if member.mb_leave_date or member.mb_intercept_date:
-        raise AlertException("탈퇴한 회원이거나 차단된 회원입니다.", 403, "/")
-    elif member.mb_email_certify != datetime(1, 1, 1, 0, 0, 0):
-        raise AlertException("이미 인증된 회원입니다.", 403, "/")
-    elif member.mb_email_certify2 != certify:
-        raise AlertException("메일인증 요청 정보가 올바르지 않습니다.", 403, "/")
-
+    """회원가입 메일인증 처리"""
+    member = member_service.get_email_non_certify_member(certify)
     member.mb_email_certify = datetime.now()
     member.mb_email_certify2 = ""
     db.commit()
 
-    raise AlertException(f"메일인증 처리를 완료 하였습니다. \\n\\n지금부터 {member.mb_id} 아이디로 로그인 가능합니다", 200, "/")
+    raise AlertException(f"메일인증 처리를 완료 하였습니다.\
+                         \\n\\n지금부터 {member.mb_id} 아이디로 로그인 가능합니다", 200, "/")

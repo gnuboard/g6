@@ -1,67 +1,163 @@
+import abc
 import os
 import re
 from datetime import date, datetime, timedelta
-from typing import Union, Optional, Tuple
 from PIL import Image, UnidentifiedImageError
+from typing import Union, Optional, Tuple
+from typing_extensions import Annotated
 
-from fastapi import Request, UploadFile
+from fastapi import HTTPException, Path, Request, UploadFile
 from sqlalchemy import exists, select
-from sqlalchemy.orm import Session
 
-from core.models import Board, Config, Group, Member as MemberModel, Member
-from core.database import DBConnect
+from core.database import DBConnect, db_session
+from core.models import Board, Config, Group, Member
 from lib.common import is_none_datetime, get_img_path, delete_image
+from lib.pbkdf2 import validate_password
 
 
-class MemberService(MemberModel):
-    @classmethod
-    def create_by_id(cls, db: Session, mb_id: str) -> MemberModel:
-        query = select(cls).where(cls.mb_id == mb_id)
-
-        return db.scalar(query)
-
-    def is_intercept_or_leave(self) -> bool:
-        """차단 또는 탈퇴한 회원인지 확인합니다.
-
-        Returns:
-            bool: 차단 또는 탈퇴한 회원이면 True, 아니거나 회원정보가 없으면 False
-        """
-        if not self.mb_id:
-            return False
-
-        return self.mb_leave_date or self.mb_intercept_date
-
-    def is_email_certify(self, use_email_certify: bool) -> bool:
-        """이메일 인증을 받았는지 확인합니다.
-        Args:
-            use_email_certify (bool): 이메일 인증을 사용하는지 여부
-
-        Returns:
-            bool: 이메일 인증을 받았으면 True, 아니면 False
-        """
-        if not use_email_certify:
-            return True
-
-        if not self.mb_id:
-            return False
-
-        return not is_none_datetime(self.mb_email_certify)
+class BaseService(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def raise_exception(self, status_code: int, detail: str = None):
+        pass
 
 
-def get_member(mb_id: str) -> MemberModel:
-    """회원 레코드 얻기
-    -  fields: str = '*' # fields : 가져올 필드, 예) "mb_id, mb_name, mb_nick"
-
-    Args:
-        mb_id (str): 회원아이디
-
-    Returns:
-        Member: 회원 레코드
+class MemberService(BaseService):
     """
-    with DBConnect().sessionLocal() as db:
-        member = db.scalar(select(MemberModel).filter_by(mb_id=mb_id))
+    회원 관련 서비스를 제공하는 종속성 주입 클래스입니다.
+    - 회원 정보 조회, 인증, 상태 검증 등의 기능을 포함합니다.
+    """
+    def __init__(self, request: Request, db: db_session, mb_id: Annotated[str, Path(...)]):
+        self.request = request
+        self.db = db
+        self.mb_id = mb_id
+        self.member = None
 
-    return member
+    def raise_exception(self, status_code: int = 400, detail: str = None):
+        raise HTTPException(status_code=status_code, detail=detail)
+
+    def fetch_member(self) -> Member:
+        """회원 정보를 조회합니다."""
+        if self.member is None:
+            member = self._fetch_member_by_id()
+            if not member:
+                self.raise_exception(status_code=404, detail=f"{self.mb_id} : 회원정보가 없습니다.")
+            self.member = member
+        return self.member
+    
+    def authenticate_member(self, password: str) -> Member:
+        """
+        비밀번호를 검증하여 회원 인증을 수행합니다.
+        - 회원 정보가 없거나 탈퇴 또는 차단된 회원은 조회할 수 없습니다.
+        - 이메일 인증이 완료되지 않은 회원은 조회할 수 없습니다.
+        """
+        # 아이디, 비밀번호 중 어떤 것이 틀렸는지 알려주지 않도록 하기 위해
+        # self.fetch_member()를 호출하지 않고 바로 쿼리를 실행합니다.
+        member = self._fetch_member_by_id()
+        if not member or not validate_password(password, member.mb_password):
+            self.raise_exception(status_code=403, detail="아이디 또는 비밀번호가 올바르지 않습니다.")
+
+        is_active, message = self.is_activated(member)
+        if not is_active:
+            self.raise_exception(status_code=403, detail=message)
+
+        is_certified, message = self.is_member_email_certified(member)
+        if not is_certified:
+            self.raise_exception(status_code=403, detail=message)
+
+        return member
+    
+    def get_current_member(self) -> Member:
+        """
+        현재 회원 정보를 조회합니다.
+        - 회원 정보가 없거나 탈퇴 또는 차단된 회원은 조회할 수 없습니다.
+        - 이메일 인증이 완료되지 않은 회원은 조회할 수 없습니다.
+        """
+        member = self.fetch_member()
+        is_active, message = self.is_activated(member)
+        if not is_active:
+            self.raise_exception(status_code=403, detail=message)
+
+        is_certified, message = self.is_member_email_certified(member)
+        if not is_certified:
+            self.raise_exception(status_code=403, detail=message)
+
+        return member
+    
+    def get_email_non_certify_member(self, key: str) -> Member:
+        """
+        이메일 인증처리가 안된 회원 정보를 조회합니다.
+        - 회원 정보가 없거나 탈퇴 또는 차단된 회원은 조회할 수 없습니다.
+        - 이미 인증된 회원은 조회할 수 없습니다.
+        - 메일인증 요청 정보(key)가 올바르지 않으면 조회할 수 없습니다.
+        """
+        member = self.fetch_member()
+
+        is_active, message = self.is_activated(member)
+        if not is_active:
+            self.raise_exception(status_code=403, detail=message)
+
+        if not is_none_datetime(member.mb_email_certify):
+            raise HTTPException(status_code=409, detail="이미 인증된 회원입니다.")
+
+        if member.mb_email_certify2 != key:
+            raise HTTPException(status_code=400, detail="메일인증 요청 정보가 올바르지 않습니다.")
+
+        return member
+    
+    def get_member_profile(self, current_member: Member) -> Member:
+        """
+        회원 프로필 정보를 조회합니다.
+        - 최고관리자 또는 자신의 정보는 정보공개 여부를 확인하지 않습니다.
+        - 정보공개 여부가 설정되어 있지 않은 회원은 조회할 수 없습니다.
+        """
+        member = self.fetch_member()
+        # 최고관리자도 아니고 자신의 정보가 아니면 정보공개 여부를 확인합니다.
+        if not (self.request.state.is_super_admin or current_member.mb_id == self.mb_id):
+            if not current_member.mb_open:
+                self.raise_exception(status_code=403, detail="자신의 정보를 공개하지 않으면 다른분의 정보를 조회할 수 없습니다.\\n\\n정보공개 설정은 회원정보수정에서 하실 수 있습니다.")
+            if not member.mb_open:
+                self.raise_exception(status_code=403, detail="회원정보를 공개하지 않은 회원입니다.")
+
+        return member
+    
+    def is_activated(self, member: Member) -> Tuple[bool, str]:
+        """활성화된 회원인지 확인합니다."""
+        if member.mb_leave_date or member.mb_intercept_date:
+            return False, "현재 로그인 회원은 탈퇴 또는 차단된 회원입니다."
+        return True, "정상 회원입니다."
+    
+    def is_member_email_certified(self, member: Member) -> Tuple[bool, str]:
+        """이메일 인증이 완료된 회원인지 확인합니다."""
+        config = self.request.state.config
+
+        if config.cf_use_email_certify and is_none_datetime(member.mb_email_certify):
+            return False, f"{member.mb_email} 메일로 메일인증을 받으셔야 로그인 가능합니다."
+        return True, "이메일 인증을 완료한 회원입니다."
+    
+    def _fetch_member_by_id(self) -> Member:
+        """회원 정보를 데이터베이스에서 조회합니다."""
+        return self.db.scalar(select(Member).where(Member.mb_id == self.mb_id))
+
+
+class MemberServiceTemplate(MemberService):
+    """
+    템플릿 렌더링에 사용되는 MemberService 구현 클래스.  
+    - 이 클래스는 템플릿과 관련된 예외 처리(AlertException 사용)를 구현합니다.
+
+    ### Example
+
+    ```python
+        @router.get("/members/{mb_id}")
+        async def read_member(
+            member_service: Annotated[MemberServiceTemplate, Depends()],
+            current_member: Annotated[Member, Depends(get_current_member)]
+        ):
+            return member_service.get_member_profile(current_member)
+    ```
+    """
+    def raise_exception(self, status_code: int, detail: str = None):
+        from core.exception import AlertException
+        raise AlertException(detail, status_code)
 
 
 def get_member_icon(request: Request, mb_id: str = None) -> str:
@@ -208,7 +304,7 @@ def validate_and_update_member_image(
 
 def get_member_level(request: Request) -> int:
     """request에서 회원 레벨 정보를 가져오는 함수"""
-    member: MemberModel = request.state.login_member
+    member: Member = request.state.login_member
 
     return int(member.mb_level) if member else 1
 

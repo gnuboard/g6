@@ -224,15 +224,6 @@ def get_write(db: db_session,
     return write
 
 
-def get_member(db: db_session, mb_id: str = Path(...)):
-    """회원 존재 여부 검사 & 반환"""
-    member = db.scalar(select(Member).where(Member.mb_id == mb_id))
-    if not member:
-        raise AlertException(f"{mb_id} : 존재하지 않는 회원입니다.", 404)
-
-    return member
-
-
 def get_login_member(request: Request):
     """로그인 여부 검사 & 반환"""
     member: Member = request.state.login_member

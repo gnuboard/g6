@@ -13,8 +13,8 @@ from core.models import MemberSocialProfiles
 from core.template import UserTemplates
 from lib.common import *
 from lib.member_lib import (
-    is_email_registered,
-    validate_email, validate_mb_id, validate_nickname
+    MemberServiceTemplate, 
+    is_email_registered, validate_email, validate_mb_id, validate_nickname
 )
 from lib.pbkdf2 import create_hash
 from lib.point import insert_point
@@ -131,19 +131,8 @@ async def authorize_social_login(
     # 가입된 소셜 서비스 아이디가 존재하는지 확인
     social_profile = SocialAuthService.get_profile_by_identifier(identifier, provider_name)
     if social_profile:
-        config = request.state.config
-        # 이미 가입된 회원이라면 로그인
-        member = db.scalar(
-            select(Member).where(Member.mb_id == social_profile.mb_id)
-        )
-        if not member:
-            raise AlertException(
-                status_code=400, detail="유효하지 않은 요청입니다.",
-                url=request.url_for('login').__str__())
-        elif member.mb_leave_date or member.mb_intercept_date:
-            raise AlertException("탈퇴 또는 차단된 회원입니다.", 404)
-        elif config.cf_use_email_certify and member.mb_email_certify == datetime(1, 1, 1, 0, 0, 0):
-            raise AlertException(f"{member.mb_email} 메일로 메일인증을 받으셔야 로그인 가능합니다.", 404)
+        member_service = MemberServiceTemplate(request, db, social_profile.mb_id)
+        member = member_service.get_current_member()
 
         # 로그인
         request.session["ss_mb_id"] = member.mb_id
