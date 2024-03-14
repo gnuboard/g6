@@ -36,9 +36,9 @@ class JWT:
         secret_key = token_type.value["secret_key"]
         expires_minute = token_type.value["expires_minute"]
         to_encode = data.copy()
-        expire = datetime.now() + timedelta(minutes=expires_minute)
-        to_encode.update({"exp": expire})
-        print(f"Settings.{token_type.name.lower()}_token_secret_key", secret_key)
+        iat = int(datetime.now().timestamp())
+        exp = datetime.now() + timedelta(minutes=expires_minute)
+        to_encode.update({"iss": SETTINGS.AUTH_ISSUER, "iat": iat, "exp": exp})
 
         return jwt.encode(to_encode, secret_key, algorithm=SETTINGS.AUTH_ALGORITHM)
 
@@ -59,7 +59,10 @@ class JWT:
         """
 
         try:
-            payload = jwt.decode(token, secret_key, algorithms=[SETTINGS.AUTH_ALGORITHM])
+            # JWT decode함수는 UTC 시간을 기준으로 만료시간을 계산합니다.
+            # 따라서, 서버의 시간과 UTC 시간의 차이를 계산하여 leeway로 설정합니다.
+            leeway = datetime.utcnow().timestamp() - datetime.now().timestamp()
+            payload = jwt.decode(token, secret_key, algorithms=[SETTINGS.AUTH_ALGORITHM], options={"leeway": leeway})
             return TokenPayload(**payload)
         except ExpiredSignatureError:
             raise HTTPException(

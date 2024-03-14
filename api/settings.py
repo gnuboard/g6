@@ -13,6 +13,7 @@ class ApiSetting(BaseModel):
     REST_API_VERSION: str = "v1"
 
     AUTH_ALGORITHM: str = "HS256"
+    AUTH_ISSUER: str = "g6_rest_api"  # JWT 발급자
 
     ACCESS_TOKEN_EXPIRE_MINUTES: float = 30
     REFRESH_TOKEN_EXPIRE_MINUTES: float = 60 * 24 * 14  # 14 days
