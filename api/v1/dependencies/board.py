@@ -294,7 +294,7 @@ def validate_comment(
     if filter_word:
         raise HTTPException(status_code=400, detail=f"내용에 금지단어({filter_word})가 포함되어 있습니다.")
 
-    # 작성자명(wr_name) 설정
+    # 작성자명(wr_name), 비밀번호(wr_password) 설정
     if member:
         if board_config.board.bo_use_name:
             comment.wr_name =  member.mb_name
@@ -302,6 +302,8 @@ def validate_comment(
             comment.wr_name =  member.mb_nick
     elif not comment.wr_name:
         raise HTTPException(status_code=400, detail="wr_name: 비회원 글쓰기시 작성자 이름을 기재해야 합니다.")
+    elif not comment.wr_password:
+        raise HTTPException(status_code=400, detail="wr_password: 비회원 글쓰기시 비밀번호를 기재해야 합니다.")
     
     comment.ca_name = parent_write.ca_name
     comment.wr_option = comment.wr_secret
