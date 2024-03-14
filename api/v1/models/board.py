@@ -13,21 +13,23 @@ class WriteModel(BaseModel):
     # 추가 필드 허용
     model_config = ConfigDict(extra='allow')
 
-    wr_subject: Annotated[str, Body(..., max_length=255, description="제목")]
-    wr_content: Annotated[str, Body("", description="내용")]
-    wr_name: Annotated[str, Body("", max_length=255, description="작성자")]
-    wr_password: Annotated[str, Body("", max_length=255, description="비밀번호")]
-    wr_email: Annotated[str, Body("", max_length=255, description="이메일")]
-    wr_homepage: Annotated[str, Body("", max_length=255, description="홈페이지")]
-    wr_link1: Annotated[str, Body("", description="링크1")]
-    wr_link2: Annotated[str, Body("", description="링크2")]
-    wr_option: Annotated[str, Body("", description="옵션")]
-    html: Annotated[str, Body("", description="HTML 여부")]
-    mail: Annotated[str, Body("", description="메일링 여부")]
-    secret: Annotated[str, Body("", description="비밀글 여부")]
-    ca_name: Annotated[str, Body("", description="카테고리")]
-    notice: Annotated[bool, Body(False, description="공지글 여부")]
-    parent_id: Annotated[int, Body(None, description="부모글 ID")]
+    wr_subject: Annotated[str, Body(..., max_length=255, title="제목")]
+    wr_content: Annotated[str, Body("", title="내용")]
+    wr_name: Annotated[str, Body("", max_length=255, title="작성자", 
+                                 description="비회원일 경우 작성자 이름")]
+    wr_password: Annotated[str, Body("", max_length=255, title="비밀번호",
+                                     description="비회원일 경우 비밀번호")]
+    wr_email: Annotated[str, Body("", max_length=255, title="이메일")]
+    wr_homepage: Annotated[str, Body("", max_length=255, title="홈페이지")]
+    wr_link1: Annotated[str, Body("", title="링크1")]
+    wr_link2: Annotated[str, Body("", title="링크2")]
+    wr_option: Annotated[str, Body("", title="옵션")]
+    html: Annotated[str, Body("", title="HTML 여부")]
+    mail: Annotated[str, Body("", title="메일링 여부")]
+    secret: Annotated[str, Body("", title="비밀글 여부")]
+    ca_name: Annotated[str, Body("", title="카테고리")]
+    notice: Annotated[bool, Body(False, title="공지글 여부")]
+    parent_id: Annotated[int, Body(None, title="부모글 ID")]
 
     @model_validator(mode='after')
     def init_fields(self) -> 'WriteModel':
@@ -42,11 +44,14 @@ class CommentModel(BaseModel):
     # 추가 필드 허용
     model_config = ConfigDict(extra='allow')
 
-    wr_content: Annotated[str, Body(..., description="내용")]
-    wr_name: Annotated[str, Body("", description="작성자")]
-    wr_password: Annotated[str, Body("", description="비밀번호")]
-    wr_option: Annotated[str, Body("html1", description="비밀글 여부")]
-    comment_id: Annotated[int, Body(None, description="부모댓글 ID")]
+    wr_content: Annotated[str, Body(..., title="내용")]
+    wr_name: Annotated[str, Body("", title="작성자",
+                                  description="비회원일 경우 작성자 이름")]
+    wr_password: Annotated[str, Body("", title="비밀번호",
+                                     description="비회원일 경우 비밀번호")]
+    wr_option: Annotated[str, Body("html1", title="비밀글 여부",
+                                   description="secret: 비밀글, html1: HTML 사용")]
+    comment_id: Annotated[int, Body(None, title="부모댓글 ID")]
 
     @model_validator(mode='after')
     def init_fields(self) -> 'WriteModel':
