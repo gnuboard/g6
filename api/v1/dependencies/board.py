@@ -67,7 +67,7 @@ def get_current_member(
 
 
 def get_member_info(
-    member: Member = Depends(get_current_member),
+    member: Annotated[Member, Depends(get_current_member)]
 ) -> Dict:
     """
     회원 정보를 딕셔너리 형태로 반환합니다.
@@ -98,7 +98,7 @@ def get_write(
     request: Request,
     db: db_session,
     member_info: Annotated[Dict, Depends(get_member_info)],
-    board: Board = Depends(get_board),
+    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
 ):
@@ -175,8 +175,8 @@ def get_group(
 def validate_write(
     request: Request,
     write: WriteModel,
-    member: Member = Depends(get_current_member),
-    board: Board = Depends(get_board),
+    member: Annotated[Member, Depends(get_current_member)],
+    board: Annotated[Board, Depends(get_board)],
 ):
     """
     게시글 작성시 게시글 정보의 유효성을 검사합니다.
@@ -237,7 +237,7 @@ def validate_delete_write(
     request: Request,
     member_info: Annotated[Dict, Depends(get_member_info)],
     write: Annotated[WriteBaseModel, Depends(get_write)],
-    board: Board = Depends(get_board),
+    board: Annotated[Board, Depends(get_board)],
 ):
     mb_id = member_info["mb_id"]
     if not mb_id:
@@ -257,7 +257,7 @@ def validate_upload_file_write(
     request: Request,
     member_info: Annotated[Dict, Depends(get_member_info)],
     write: Annotated[WriteBaseModel, Depends(get_write)],
-    board: Board = Depends(get_board),
+    board: Annotated[Board, Depends(get_board)],
 ):
     mb_id = member_info["mb_id"]
 
@@ -291,7 +291,7 @@ def validate_comment(
     comment: CommentModel,
     member_info: Annotated[Dict, Depends(get_member_info)],
     parent_write: Annotated[WriteBaseModel, Depends(get_parent_write)],
-    board: Board = Depends(get_board),
+    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
     wr_parent: int = Path,
 ):

@@ -40,8 +40,8 @@ async def api_group_board_list(
     request: Request,
     db: db_session,
     member_info: Annotated[Dict, Depends(get_member_info)],
+    group: Annotated[Group, Depends(get_group)],
     gr_id: str = Path(...),
-    group: Group = Depends(get_group),
 ) -> Dict:
     """
     게시판그룹의 모든 게시판 목록을 보여줍니다.
@@ -73,10 +73,10 @@ async def api_list_post(
     request: Request,
     db: db_session,
     member_info: Annotated[Dict, Depends(get_member_info)],
+    board: Annotated[Board, Depends(get_board)],
+    search_params: Annotated[dict, Depends(common_search_query_params)],
     bo_table: str = Path(...),
-    board: Board = Depends(get_board),
     spt: int = Query(None),
-    search_params: dict = Depends(common_search_query_params),
 ) -> Dict:
     """
     지정된 게시판의 글 목록을 보여준다.
@@ -176,8 +176,8 @@ async def api_read_post(
     db: db_session,
     member_info: Annotated[Dict, Depends(get_member_info)],
     write: Annotated[WriteBaseModel, Depends(get_write)],
+    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
-    board: Board = Depends(get_board),
     wr_id: str = Path(...),
 ) -> Dict:
     """
@@ -280,8 +280,8 @@ async def api_create_post(
     db: db_session,
     member_info: Annotated[Dict, Depends(get_member_info)],
     wr_data: Annotated[WriteModel, Depends(validate_write)],
+    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
-    board: Board = Depends(get_board),
 ) -> Dict:
     """
     지정된 게시판에 새 글을 작성합니다.
@@ -380,9 +380,9 @@ async def api_update_post(
     db: db_session,
     member_info: Annotated[Dict, Depends(get_member_info)],
     wr_data: Annotated[WriteModel, Depends(validate_write)],
+    board: Annotated[Board, Depends(get_board)],
     write: Annotated[WriteBaseModel, Depends(validate_update_write)],
     bo_table: str = Path(...),
-    board: Board = Depends(get_board),
     wr_id: str = Path(...),
 ) -> Dict:
     """
@@ -433,9 +433,9 @@ async def api_delete_post(
     request: Request,
     db: db_session,
     member_info: Annotated[Dict, Depends(get_member_info)],
+    board: Annotated[Board, Depends(get_board)],
     write: Annotated[WriteBaseModel, Depends(validate_delete_write)],
     bo_table: str = Path(...),
-    board: Board = Depends(get_board),
     wr_id: str = Path(...),
 ) -> Dict:
     """
@@ -545,9 +545,9 @@ async def api_upload_file(
     request: Request,
     db: db_session,
     member_info: Annotated[Dict, Depends(get_member_info)],
+    board: Annotated[Board, Depends(get_board)],
+    write: Annotated[WriteBaseModel, Depends(validate_upload_file_write)],
     bo_table: str = Path(...),
-    board: Board = Depends(get_board),
-    write: WriteBaseModel = Depends(validate_upload_file_write),
     files: List[UploadFile] = File(..., alias="bf_file[]"),
     file_content: list = Form(None, alias="bf_content[]"),
 ) -> Dict:
