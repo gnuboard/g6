@@ -284,7 +284,7 @@ def validate_comment(
             point = number_format(abs(comment_point))
             message = f"댓글 작성에 필요한 포인트({point})가 부족합니다."
             if not member:
-                message += f"\\n로그인 후 다시 시도해주세요."
+                message += f"로그인 후 다시 시도해주세요."
             raise HTTPException(status_code=403, detail=message)
 
     write_model = dynamic_create_write_table(bo_table)
@@ -341,7 +341,11 @@ def validate_delete_comment(
     admin_type = get_admin_type(request, mb_id, board=board)
 
     # 게시글 삭제 권한 검증
-    if not any([admin_type, is_owner(parent_write, mb_id), is_owner(comment, mb_id)]):
+    if not any([
+        admin_type,
+        is_owner(parent_write, mb_id),
+        is_owner(comment, mb_id),
+    ]):
         raise HTTPException(status_code=403, detail="댓글을 삭제할 권한이 없습니다.")
 
     return comment
