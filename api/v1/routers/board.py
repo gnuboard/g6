@@ -303,12 +303,13 @@ async def api_read_post(
             comment.save_content = comment.wr_content
 
     contents = jsonable_encoder(write)
-    contents.update({
+    additional_info = jsonable_encoder({
         "images": images,
         "normal_files": normal_files,
         "links": links,
         "comments": comments,
     })
+    contents.update(additional_info)
     return contents
 
 
