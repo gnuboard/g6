@@ -235,23 +235,52 @@ def validate_upload_file_write(
     return write
 
 
+def get_parent_write(
+    db: db_session,
+    wr_parent: int = Path(...),
+    bo_table: str = Path(...),
+):
+    write_model = dynamic_create_write_table(bo_table)
+    parent_write = db.get(write_model, wr_parent)
+    if not parent_write:
+        raise HTTPException(status_code=404, detail=f"{wr_parent} : 존재하지 않는 게시글입니다.")
+    return parent_write
+
+
 def validate_comment(
     request: Request,
     db: db_session,
     comment: CommentModel,
     member_info: Annotated[Dict, Depends(get_member_info)],
+    parent_write: Annotated[WriteBaseModel, Depends(get_parent_write)],
     board: Board = Depends(get_board),
     bo_table: str = Path(...),
     wr_parent: int = Path,
 ):
+    config = request.state.config
     board_config = BoardConfig(request, board)
     compatible_instance = G5Compatibility(db)
     member = member_info['member']
     mb_id = member_info['mb_id'] or ""
+    admin_type = get_admin_type(request, mb_id, board=board)
+
+    if not any([admin_type, member.mb_level >= board.bo_comment_level]):
+        raise HTTPException(status_code=403, detail="댓글을 작성할 권한이 없습니다.")
 
     # 비회원 글쓰기 시 비밀번호 입력 확인
     if not mb_id and not comment.wr_password:
         raise HTTPException(status_code=400, detail="비밀번호를 입력해주세요.")
+    
+    # 포인트 검사
+    comment_point = board.bo_comment_point
+    if config.cf_use_point:
+        # if not board_config.is_comment_point():
+        if not any([admin_type, member.mb_point + comment_point >= 0]):
+            point = number_format(abs(comment_point))
+            message = f"댓글 작성에 필요한 포인트({point})가 부족합니다."
+            if not member:
+                message += f"\\n로그인 후 다시 시도해주세요."
+            raise HTTPException(status_code=403, detail=message)
 
     write_model = dynamic_create_write_table(bo_table)
     now = compatible_instance.get_wr_last_now(write_model.__tablename__)
@@ -259,8 +288,6 @@ def validate_comment(
     filter_word = filter_words(request, comment.wr_content)
     if filter_word:
         raise HTTPException(status_code=400, detail=f"내용에 금지단어({filter_word})가 포함되어 있습니다.")
-
-    write = db.get(write_model, wr_parent)
 
     # 작성자명(wr_name) 설정
     if member:
@@ -271,9 +298,9 @@ def validate_comment(
     elif not comment.wr_name:
         raise HTTPException(status_code=400, detail="wr_name: 비회원 글쓰기시 작성자 이름을 기재해야 합니다.")
     
-    comment.ca_name = write.ca_name
+    comment.ca_name = parent_write.ca_name
     comment.wr_option = comment.wr_secret
-    comment.wr_num = write.wr_num
+    comment.wr_num = parent_write.wr_num
     comment.wr_parent = wr_parent
     # Stored XSS 방지
     comment.wr_content = content_sanitizer.get_cleaned_data(comment.wr_content)
@@ -291,13 +318,12 @@ def validate_delete_comment(
     request: Request,
     db: db_session,
     member_info: Annotated[Dict, Depends(get_member_info)],
+    parent_write: Annotated[WriteBaseModel, Depends(get_parent_write)],
     board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
-    wr_parent: str = Path(...),
     wr_id: str = Path(...),
 ):
     write_model = dynamic_create_write_table(bo_table)
-    write = db.get(write_model, wr_parent)
     comment = db.get(write_model, wr_id)
     if not comment:
         raise HTTPException(status_code=404, detail=f"{wr_id} : 존재하지 않는 댓글입니다.")
@@ -310,7 +336,7 @@ def validate_delete_comment(
     admin_type = get_admin_type(request, mb_id, board=board)
 
     # 게시글 삭제 권한 검증
-    if not any([admin_type, is_owner(write, mb_id), is_owner(comment, mb_id)]):
+    if not any([admin_type, is_owner(parent_write, mb_id), is_owner(comment, mb_id)]):
         raise HTTPException(status_code=403, detail="댓글을 삭제할 권한이 없습니다.")
 
     return comment

@@ -18,7 +18,7 @@ from lib.template_filters import number_format
 from lib.point import insert_point, delete_point
 from api.v1.dependencies.board import (
     get_member_info, get_board, get_group, validate_write, validate_comment, validate_delete_comment,
-    validate_upload_file_write, get_write
+    validate_upload_file_write, get_write, get_parent_write
 )
 from api.v1.models.board import WriteModel, CommentModel
 from api.v1.lib.board import is_possible_level
@@ -606,31 +606,17 @@ async def api_create_comment(
     member_info: Annotated[Dict, Depends(get_member_info)],
     board: Annotated[Board, Depends(get_board)],
     comment_data: Annotated[CommentModel, Depends(validate_comment)],
+    parent_write: Annotated[WriteBaseModel, Depends(get_parent_write)],
     bo_table: str = Path(...),
     wr_parent: str = Path(...),
 ):
     """
     댓글 등록
     """
-    config = request.state.config
     board_config = BoardConfig(request, board)
     member = member_info["member"]
     mb_id = member_info["mb_id"] or ""
     write_model = dynamic_create_write_table(bo_table)
-
-    # 댓글 작성 권한 검증
-    if not board_config.is_comment_level():
-        raise HTTPException(status_code=403, detail="댓글을 작성할 권한이 없습니다.")
-    
-    # 포인트 검사
-    comment_point = board.bo_comment_point
-    if config.cf_use_point:
-        if not board_config.is_comment_point():
-            point = number_format(abs(comment_point))
-            message = f"댓글 작성에 필요한 포인트({point})가 부족합니다."
-            if not member:
-                message += f"\\n로그인 후 다시 시도해주세요."
-            raise HTTPException(status_code=403, detail=message)
 
     # 댓글 객체 생성
     comment = write_model()
@@ -657,10 +643,8 @@ async def api_create_comment(
 
     db.add(comment)
 
-    write = db.get(write_model, wr_parent)
-
     # 게시글에 댓글 수 증가
-    write.wr_comment = write.wr_comment + 1
+    parent_write.wr_comment += 1
     db.commit()
 
     # 새글 추가
@@ -668,11 +652,11 @@ async def api_create_comment(
 
     # 포인트 처리
     if member:
-        insert_point(request, mb_id, comment_point, f"{board.bo_subject} {wr_parent}-{comment.wr_id} 댓글쓰기", board.bo_table, comment.wr_id, "댓글")
+        insert_point(request, mb_id, board.bo_comment_point, f"{board.bo_subject} {wr_parent}-{comment.wr_id} 댓글쓰기", board.bo_table, comment.wr_id, "댓글")
 
     # 메일 발송
     if board_config.use_email:
-        send_write_mail(request, board, comment, write)
+        send_write_mail(request, board, comment, parent_write)
 
     return {"result": "created"}
 
