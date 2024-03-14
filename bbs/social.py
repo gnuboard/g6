@@ -13,7 +13,7 @@ from core.models import MemberSocialProfiles
 from core.template import UserTemplates
 from lib.common import *
 from lib.member_lib import (
-    MemberServiceTemplate, 
+    MemberService, 
     is_email_registered, validate_email, validate_mb_id, validate_nickname
 )
 from lib.pbkdf2 import create_hash
@@ -131,7 +131,7 @@ async def authorize_social_login(
     # 가입된 소셜 서비스 아이디가 존재하는지 확인
     social_profile = SocialAuthService.get_profile_by_identifier(identifier, provider_name)
     if social_profile:
-        member_service = MemberServiceTemplate(request, db, social_profile.mb_id)
+        member_service = MemberService(request, db, social_profile.mb_id)
         member = member_service.get_current_member()
 
         # 로그인

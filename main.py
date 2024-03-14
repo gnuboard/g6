@@ -23,7 +23,7 @@ from core.plugin import (
 )
 from core.template import register_theme_statics, TemplateService, UserTemplates
 from lib.common import *
-from lib.member_lib import MemberServiceTemplate, is_super_admin
+from lib.member_lib import MemberService, is_super_admin
 from lib.point import insert_point
 from lib.template_filters import default_if_none
 from lib.token import create_session_token
@@ -182,7 +182,7 @@ async def main_middleware(request: Request, call_next):
     try:
         # 로그인 세션 유지 중이라면
         if session_mb_id:
-            member_service = MemberServiceTemplate(request, db, session_mb_id)
+            member_service = MemberService(request, db, session_mb_id)
             member = member_service.get_current_member()
             # 회원 정보가 없거나 탈퇴한 회원이라면 세션을 초기화
             if not member_service.is_activated(member)[0]:
@@ -192,7 +192,7 @@ async def main_middleware(request: Request, call_next):
         # 자동 로그인 쿠키가 있다면
         elif cookie_mb_id:
             mb_id = re.sub("[^a-zA-Z0-9_]", "", cookie_mb_id)[:20]
-            member_service = MemberServiceTemplate(request, db, mb_id)
+            member_service = MemberService(request, db, mb_id)
             member = member_service.get_current_member()
 
             # 최고관리자는 보안상 자동로그인 기능을 사용하지 않는다.

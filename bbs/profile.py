@@ -6,7 +6,7 @@ from starlette.requests import Request
 
 from core.template import UserTemplates
 from lib.common import *
-from lib.member_lib import MemberServiceTemplate
+from lib.member_lib import MemberService
 
 router = APIRouter()
 templates = UserTemplates()
@@ -15,7 +15,7 @@ templates = UserTemplates()
 @router.get('/profile/{mb_id}')
 async def get_profile(
     request: Request,
-    member_service: Annotated[MemberServiceTemplate, Depends()],
+    member_service: Annotated[MemberService, Depends()],
 ):
     member_profile = member_service.get_member_profile(request.state.login_member)
     member_profile.mb_profile = member_profile.mb_profile or "소개 내용이 없습니다."

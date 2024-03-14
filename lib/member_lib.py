@@ -25,6 +25,17 @@ class MemberService(BaseService):
     """
     회원 관련 서비스를 제공하는 종속성 주입 클래스입니다.
     - 회원 정보 조회, 인증, 상태 검증 등의 기능을 포함합니다.
+
+    ### Example
+
+    ```python
+        @router.get("/members/{mb_id}")
+        async def read_member(
+            member_service: Annotated[MemberService, Depends()],
+            current_member: Annotated[Member, Depends(get_current_member)]
+        ):
+            return member_service.get_member_profile(current_member)
+    ```
     """
     def __init__(self, request: Request, db: db_session, mb_id: Annotated[str, Path(...)]):
         self.request = request
@@ -33,7 +44,8 @@ class MemberService(BaseService):
         self.member = None
 
     def raise_exception(self, status_code: int = 400, detail: str = None):
-        raise HTTPException(status_code=status_code, detail=detail)
+        from core.exception import AlertException
+        raise AlertException(detail, status_code)
 
     def fetch_member(self) -> Member:
         """회원 정보를 조회합니다."""
@@ -137,27 +149,6 @@ class MemberService(BaseService):
     def _fetch_member_by_id(self) -> Member:
         """회원 정보를 데이터베이스에서 조회합니다."""
         return self.db.scalar(select(Member).where(Member.mb_id == self.mb_id))
-
-
-class MemberServiceTemplate(MemberService):
-    """
-    템플릿 렌더링에 사용되는 MemberService 구현 클래스.  
-    - 이 클래스는 템플릿과 관련된 예외 처리(AlertException 사용)를 구현합니다.
-
-    ### Example
-
-    ```python
-        @router.get("/members/{mb_id}")
-        async def read_member(
-            member_service: Annotated[MemberServiceTemplate, Depends()],
-            current_member: Annotated[Member, Depends(get_current_member)]
-        ):
-            return member_service.get_member_profile(current_member)
-    ```
-    """
-    def raise_exception(self, status_code: int, detail: str = None):
-        from core.exception import AlertException
-        raise AlertException(detail, status_code)
 
 
 def get_member_icon(request: Request, mb_id: str = None) -> str:

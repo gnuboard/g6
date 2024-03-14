@@ -12,7 +12,7 @@ from core.template import UserTemplates
 from lib.common import *
 from lib.mail import send_register_mail
 from lib.member_lib import (
-    MemberServiceTemplate,
+    MemberService,
     validate_and_update_member_image, validate_email, validate_mb_id, validate_nickname
 )
 from lib.dependencies import validate_token, validate_captcha
@@ -245,7 +245,7 @@ async def register_result(
 async def email_certify(
     request: Request,
     db: db_session,
-    member_service: Annotated[MemberServiceTemplate, Depends()],
+    member_service: Annotated[MemberService, Depends()],
     certify: str = Query(...),
 ):
     """회원가입 메일인증 처리"""
