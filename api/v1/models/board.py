@@ -45,7 +45,7 @@ class CommentModel(BaseModel):
     wr_content: Annotated[str, Body(..., description="내용")]
     wr_name: Annotated[str, Body("", description="작성자")]
     wr_password: Annotated[str, Body("", description="비밀번호")]
-    wr_secret: Annotated[str, Body("html1", description="비밀글 여부")]
+    wr_option: Annotated[str, Body("html1", description="비밀글 여부")]
     comment_id: Annotated[int, Body(None, description="부모댓글 ID")]
 
     @model_validator(mode='after')

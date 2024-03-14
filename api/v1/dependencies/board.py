@@ -340,7 +340,6 @@ def validate_comment(
         raise HTTPException(status_code=400, detail="wr_password: 비회원 글쓰기시 비밀번호를 기재해야 합니다.")
     
     comment.ca_name = parent_write.ca_name
-    comment.wr_option = comment.wr_secret
     comment.wr_num = parent_write.wr_num
     comment.wr_parent = wr_parent
     # Stored XSS 방지
