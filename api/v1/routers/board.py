@@ -8,9 +8,8 @@ from sqlalchemy import asc, desc, func, select, update, exists, inspect, delete
 from core.database import db_session
 from core.models import Board, Group, BoardGood, Scrap, Member, BoardNew, WriteBaseModel
 from lib.board_lib import (
-    BoardConfig, get_list, write_search_filter, is_write_delay, set_write_delay,
-    get_next_num, generate_reply_character, insert_board_new, send_write_mail,
-    is_owner, BoardFileManager
+    BoardConfig, get_list, write_search_filter, get_next_num, generate_reply_character,
+    insert_board_new, send_write_mail, is_owner, BoardFileManager
 )
 from lib.common import dynamic_create_write_table, FileCache, cut_name
 from lib.dependencies import common_search_query_params
@@ -301,11 +300,6 @@ async def api_create_post(
 
     # 게시글 테이블 정보 조회
     write_model = dynamic_create_write_table(bo_table)
-    
-
-    # 글쓰기 간격 검증
-    if not is_write_delay(request):
-        raise HTTPException(status_code=400, detail="너무 빠른 시간내에 게시글을 연속해서 올릴 수 없습니다.")
 
     # 글 작성 권한 검증
     if wr_data.parent_id:
@@ -354,9 +348,6 @@ async def api_create_post(
     board.bo_count_write = board.bo_count_write + 1  # 게시판 글 갯수 1 증가
 
     db.commit()
-
-    # 글 작성 시간 기록
-    set_write_delay(request)
 
     # 새글 추가
     insert_board_new(bo_table, write)
@@ -626,10 +617,6 @@ async def api_create_comment(
     member = member_info["member"]
     mb_id = member_info["mb_id"] or ""
     write_model = dynamic_create_write_table(bo_table)
-
-    # 글쓰기 간격 검증
-    if not is_write_delay(request):
-        raise HTTPException(status_code=400, detail="너무 빠른 시간내에 댓글을 연속해서 올릴 수 없습니다.")
 
     # 댓글 작성 권한 검증
     if not board_config.is_comment_level():
