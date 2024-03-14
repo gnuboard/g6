@@ -18,7 +18,7 @@ from api.v1.auth.jwt import JWT
 from api.v1.lib.member import MemberService
 from api.v1.models.auth import TokenPayload
 from api.v1.models.board import WriteModel, CommentModel
-from api.v1.lib.board import is_possible_level
+from api.v1.lib.board import is_possible_level, is_possible_point
 
 
 def get_current_member(
@@ -145,7 +145,11 @@ def get_write(
     
     if config.cf_use_point:
         read_point = board.bo_read_point
-        if not any([admin_type, is_owner(write, mb_id), member.mb_point + read_point >= 0]):
+        if not any([
+            admin_type,
+            is_owner(write, mb_id),
+            is_possible_point(member_info, read_point),
+        ]):
             point = number_format(abs(read_point))
             message = f"게시글 읽기에 필요한 포인트({point})가 부족합니다."
             if not member:
@@ -264,18 +268,19 @@ def validate_comment(
     mb_id = member_info['mb_id'] or ""
     admin_type = get_admin_type(request, mb_id, board=board)
 
-    if not any([admin_type, member.mb_level >= board.bo_comment_level]):
+    if not any([
+        admin_type,
+        is_possible_level(request, member_info, board, "bo_comment_level"),
+    ]):
         raise HTTPException(status_code=403, detail="댓글을 작성할 권한이 없습니다.")
-
-    # 비회원 글쓰기 시 비밀번호 입력 확인
-    if not mb_id and not comment.wr_password:
-        raise HTTPException(status_code=400, detail="비밀번호를 입력해주세요.")
     
     # 포인트 검사
     comment_point = board.bo_comment_point
     if config.cf_use_point:
-        # if not board_config.is_comment_point():
-        if not any([admin_type, member.mb_point + comment_point >= 0]):
+        if not any([
+            admin_type,
+            is_possible_point(member_info, comment_point),
+        ]):
             point = number_format(abs(comment_point))
             message = f"댓글 작성에 필요한 포인트({point})가 부족합니다."
             if not member:

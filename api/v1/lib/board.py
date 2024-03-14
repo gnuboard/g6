@@ -20,3 +20,17 @@ def is_possible_level(
     if admin_type:
         return True
     return member_level >= board_level
+
+
+def is_possible_point(
+    member_info: Dict,
+    action_point: int,
+):
+    member = member_info["member"]
+    if not action_point:
+        return True
+    
+    if not member:
+        return False
+
+    return member.mb_point + action_point >= 0    
