@@ -219,6 +219,40 @@ def validate_write(
     return write
 
 
+def validate_update_write(
+    member_info: Annotated[Dict, Depends(get_member_info)],
+    write: Annotated[WriteBaseModel, Depends(get_write)],
+):
+    mb_id = member_info["mb_id"]
+    if not mb_id:
+        raise HTTPException(status_code=403, detail="로그인 후 이용해주세요.")
+    
+    if not is_owner(write, mb_id):
+        raise HTTPException(status_code=403, detail="글을 수정할 권한이 없습니다.")
+
+    return write
+
+
+def validate_delete_write(
+    request: Request,
+    member_info: Annotated[Dict, Depends(get_member_info)],
+    write: Annotated[WriteBaseModel, Depends(get_write)],
+    board: Board = Depends(get_board),
+):
+    mb_id = member_info["mb_id"]
+    if not mb_id:
+        raise HTTPException(status_code=403, detail="로그인 후 이용해주세요.")
+    
+    admin_type = get_admin_type(request, mb_id, board=board)
+    if not any([
+        admin_type,
+        is_owner(write, mb_id),
+    ]):
+        raise HTTPException(status_code=403, detail="글을 삭제할 권한이 없습니다.")
+
+    return write
+
+
 def validate_upload_file_write(
     request: Request,
     member_info: Annotated[Dict, Depends(get_member_info)],
@@ -319,6 +353,39 @@ def validate_comment(
     comment.wr_ip = request.client.host
 
     return comment
+
+
+def validate_update_comment(
+    request: Request,
+    db: db_session,
+    comment_data: CommentModel,
+    member_info: Annotated[Dict, Depends(get_member_info)],
+    bo_table: str = Path(...),
+    wr_id: int = Path,
+):
+    member = member_info['member']
+
+    write_model = dynamic_create_write_table(bo_table)
+
+    filter_word = filter_words(request, comment_data.wr_content)
+    if filter_word:
+        raise HTTPException(status_code=400, detail=f"내용에 금지단어({filter_word})가 포함되어 있습니다.")
+
+    # 작성자명(wr_name), 비밀번호(wr_password) 설정
+    if not member:
+        raise HTTPException(status_code=400, detail="wr_name: 비회원은 댓글 수정이 불가능합니다.")
+    
+    comment = db.get(write_model, wr_id)
+    if not comment:
+        raise HTTPException(status_code=404, detail=f"{wr_id} : 존재하지 않는 댓글입니다.")
+    
+    writer_id = comment.mb_id
+    if member.mb_id != writer_id:
+        raise HTTPException(status_code=403, detail="댓글을 수정할 권한이 없습니다.")
+    
+    comment_data.wr_content = content_sanitizer.get_cleaned_data(comment_data.wr_content)
+
+    return comment_data
 
 
 def validate_delete_comment(

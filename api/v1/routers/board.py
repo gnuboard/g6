@@ -16,8 +16,11 @@ from lib.dependencies import common_search_query_params
 from lib.member_lib import get_admin_type, get_member_level
 from lib.template_filters import number_format
 from lib.point import insert_point, delete_point
+from lib.g5_compatibility import G5Compatibility
 from api.v1.dependencies.board import (
-    get_member_info, get_board, get_group, validate_write, validate_comment, validate_delete_comment,
+    get_member_info, get_board, get_group,
+    validate_write, validate_update_write, validate_delete_write,
+    validate_comment, validate_update_comment, validate_delete_comment,
     validate_upload_file_write, get_write, get_parent_write
 )
 from api.v1.models.board import WriteModel, CommentModel
@@ -377,7 +380,7 @@ async def api_update_post(
     db: db_session,
     member_info: Annotated[Dict, Depends(get_member_info)],
     wr_data: Annotated[WriteModel, Depends(validate_write)],
-    write: Annotated[WriteBaseModel, Depends(get_write)],
+    write: Annotated[WriteBaseModel, Depends(validate_update_write)],
     bo_table: str = Path(...),
     board: Board = Depends(get_board),
     wr_id: str = Path(...),
@@ -430,7 +433,7 @@ async def api_delete_post(
     request: Request,
     db: db_session,
     member_info: Annotated[Dict, Depends(get_member_info)],
-    write: Annotated[WriteBaseModel, Depends(get_write)],
+    write: Annotated[WriteBaseModel, Depends(validate_delete_write)],
     bo_table: str = Path(...),
     board: Board = Depends(get_board),
     wr_id: str = Path(...),
@@ -663,8 +666,9 @@ async def api_create_comment(
 
 @router.put("/{bo_table}/{wr_parent}/comment/{wr_id}")
 async def api_update_comment(
+    request: Request,
     db: db_session,
-    comment_data: Annotated[CommentModel, Depends(validate_comment)],
+    comment_data: Annotated[CommentModel, Depends(validate_update_comment)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
 ) -> Dict:
@@ -685,6 +689,13 @@ async def api_update_comment(
 
     for key, value in comment_data_dict.items():
         setattr(comment, key, value)
+
+    # 댓글 wr_last의 경우 gnuboard5와의 호환성을 위해 아래와 같이 now를 받아옴
+    compatible_instance = G5Compatibility(db)
+    now = compatible_instance.get_wr_last_now(write_model.__tablename__)
+    comment.wr_last = now
+
+    comment.wr_ip = request.client.host
 
     db.commit()
 
