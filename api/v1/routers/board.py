@@ -13,13 +13,13 @@ from lib.board_lib import (
     is_owner, BoardFileManager
 )
 from lib.common import dynamic_create_write_table, FileCache, cut_name
-from lib.dependencies import common_search_query_params, get_write
+from lib.dependencies import common_search_query_params
 from lib.member_lib import get_admin_type, get_member_level
 from lib.template_filters import number_format
 from lib.point import insert_point, delete_point
 from api.v1.dependencies.board import (
     get_member_info, get_board, get_group, validate_write, validate_comment, validate_delete_comment,
-    validate_upload_file_write
+    validate_upload_file_write, get_write
 )
 from api.v1.models.board import WriteModel, CommentModel
 from api.v1.lib.board import is_possible_level
@@ -173,6 +173,7 @@ async def api_read_post(
     request: Request,
     db: db_session,
     member_info: Annotated[Dict, Depends(get_member_info)],
+    write: Annotated[WriteBaseModel, Depends(get_write)],
     bo_table: str = Path(...),
     board: Board = Depends(get_board),
     wr_id: str = Path(...),
@@ -180,61 +181,19 @@ async def api_read_post(
     """
     지정된 게시판의 글을 개별 조회합니다.
     """
-    config = request.state.config
     board_config = BoardConfig(request, board)
-    
-    if not wr_id.isdigit():
-        raise HTTPException(status_code=404, detail=f"{wr_id} : 올바르지 않은 게시글 번호입니다.")
-
     write_model = dynamic_create_write_table(bo_table)
-    write = db.get(write_model, wr_id)
-    if not write:
-        raise HTTPException(status_code=404, detail=f"{wr_id} : 존재하지 않는 게시글입니다.")
-
     member = member_info["member"]
     mb_id = member_info["mb_id"]
     member_level = member_info["member_level"]
     admin_type = get_admin_type(request, mb_id, board=board)
-
-    if not is_possible_level(request, member_info, board, "bo_read_level"):
-        raise HTTPException(status_code=403, detail="글을 읽을 권한이 없습니다.")
-
-    # 댓글은 개별조회 할 수 없도록 예외처리
-    if write.wr_is_comment:
-        raise HTTPException(status_code=404, detail=f"{wr_id} : 존재하지 않는 게시글입니다.")
-    
-    if ("secret" in write.wr_option
-            and not admin_type
-            and not is_owner(write, mb_id)):
-        owner = False
-        if write.wr_reply and mb_id:
-            parent_write = db.scalar(
-                select(write_model).filter_by(
-                    wr_num=write.wr_num,
-                    wr_reply="",
-                    wr_is_comment=0
-                )
-            )
-            if parent_write.mb_id == mb_id:
-                owner = True
-        if not owner:
-            raise HTTPException(status_code=403, detail="비밀글로 보호된 글입니다.")
         
     # 게시글 정보 설정
     write.ip = board_config.get_display_ip(write.wr_ip)
     write.name = cut_name(request, write.wr_name)
 
-    if config.cf_use_point:
-        read_point = board.bo_read_point
-        if not board_config.is_read_point(write):
-            point = number_format(abs(read_point))
-            message = f"게시글 읽기에 필요한 포인트({point})가 부족합니다."
-            if not member:
-                message += f" 로그인 후 다시 시도해주세요."
-
-            raise HTTPException(status_code=403, detail=message)
-        else:
-            insert_point(request, mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table, write.wr_id, "읽기")
+    read_point = board.bo_read_point
+    insert_point(request, mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table, write.wr_id, "읽기")
 
     # 조회수 증가
     write.wr_hit = write.wr_hit + 1
@@ -427,6 +386,7 @@ async def api_update_post(
     db: db_session,
     member_info: Annotated[Dict, Depends(get_member_info)],
     wr_data: Annotated[WriteModel, Depends(validate_write)],
+    write: Annotated[WriteBaseModel, Depends(get_write)],
     bo_table: str = Path(...),
     board: Board = Depends(get_board),
     wr_id: str = Path(...),
@@ -457,7 +417,6 @@ async def api_update_post(
     if not board_config.is_modify_by_comment(wr_id):
         raise HTTPException(status_code=403, detail=f"이 글과 관련된 댓글이 {board.bo_count_modify}건 이상 존재하므로 수정 할 수 없습니다.")
 
-    write = get_write(db, bo_table, wr_id)
     wr_data_dict = wr_data.model_dump()
     for key, value in wr_data_dict.items():
         setattr(write, key, value)
@@ -480,6 +439,7 @@ async def api_delete_post(
     request: Request,
     db: db_session,
     member_info: Annotated[Dict, Depends(get_member_info)],
+    write: Annotated[WriteBaseModel, Depends(get_write)],
     bo_table: str = Path(...),
     board: Board = Depends(get_board),
     wr_id: str = Path(...),
@@ -495,9 +455,6 @@ async def api_delete_post(
     mb_id = member_info["mb_id"]
 
     write_model = dynamic_create_write_table(bo_table)
-    write = db.get(write_model, wr_id)
-    if not write:
-        raise HTTPException(status_code=404, detail=f"{wr_id} : 존재하지 않는 게시글입니다.")
 
     member_level = get_member_level(request)
     member_admin_type = get_admin_type(request, mb_id, board=board)
