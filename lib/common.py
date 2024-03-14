@@ -426,24 +426,6 @@ def domain_mail_host(request: Request, is_at: bool = True):
         domain_host = domain_host[4:]
     
     return f"@{domain_host}" if is_at else domain_host
-        
-
-def get_memo_not_read(mb_id: str) -> int:
-    """
-    메모를 읽지 않은 개수를 반환하는 함수
-    """
-    db = DBConnect().sessionLocal()
-    count = db.scalar(
-        select(func.count(Memo.me_id))
-        .where(
-            Memo.me_recv_mb_id == mb_id,
-            Memo.me_read_datetime == datetime(1, 1, 1, 0, 0, 0),
-            Memo.me_type == 'recv'
-        )
-    )
-    db.close()
-
-    return count
 
 
 def nl2br(value) -> str:

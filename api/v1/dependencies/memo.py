@@ -1,16 +1,23 @@
-"""회원 관련 의존성을 정의합니다."""
-# TODO: 회원 관련 함수, 클래스를 공통으로 사용할 수 있도록 처리가 필요
 from typing_extensions import Annotated
 
-from fastapi import Request
+from fastapi import Depends
 
-from core.database import db_session
-from api.v1.models.memo import CreateMemoModel
+from core.models import Member
+
+from api.v1.dependencies.member import get_current_member
+from api.v1.models.memo import SendMemoModel
+from api.v1.lib.memo import MemoServiceAPI
 
 
-def validate_create_memo(
-    request: Request,
-    db: db_session,
-    data: CreateMemoModel
+def validate_send_memo(
+    memo_service: Annotated[MemoServiceAPI, Depends()],
+    current_member: Annotated[Member, Depends(get_current_member)],
+    data: SendMemoModel
 ):
+    send_members = memo_service.get_send_members(data._send_mb_ids)
+    data._send_members = send_members
+
+    send_point = memo_service.get_send_point(current_member, len(send_members))
+    data._send_point = send_point
+
     return data

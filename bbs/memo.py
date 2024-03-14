@@ -2,16 +2,16 @@ from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends, Form, Path, Query, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy import select, update, func
+from sqlalchemy import select, func
 
 from core.database import db_session
-from core.exception import AlertException
 from core.models import Member, Memo
 from core.template import UserTemplates
 from lib.common import *
 from lib.dependencies import (
     get_login_member, validate_token, validate_captcha
 )
+from lib.memo import MemoService
 from lib.point import insert_point
 from lib.template_filters import default_if_none
 from lib.template_functions import get_paging
@@ -65,24 +65,18 @@ async def memo_list(
 async def memo_view(
     request: Request,
     db: db_session,
+    memo_service: Annotated[MemoService, Depends()],
     login_member: Annotated[Member, Depends(get_login_member)],
     me_id: int = Path(...)
 ):
     """
     쪽지 상세
     """
-    # 본인 쪽지 조회
-    memo = db.get(Memo, me_id)
-    if not memo:
-        raise AlertException(status_code=404, detail="쪽지가 존재하지 않습니다.", url="/bbs/memo")
+    memo = memo_service.read_memo(me_id, login_member)
     
     kind = memo.me_type
     target_mb_id = memo.me_send_mb_id if kind == "recv" else memo.me_recv_mb_id
-    memo_mb_id = memo.me_recv_mb_id if kind == "recv" else memo.me_send_mb_id
     memo_mb_column = Memo.me_recv_mb_id if kind == "recv" else Memo.me_send_mb_id
-
-    if not memo_mb_id == login_member.mb_id:
-        raise AlertException(status_code=403, detail="본인의 쪽지만 조회 가능합니다.", url="/bbs/memo")
 
     # 상대방 정보 조회
     target = db.scalar(select(Member).where(Member.mb_id == target_mb_id))
@@ -112,13 +106,8 @@ async def memo_view(
             send_memo.me_read_datetime = now
         db.commit()
 
-        # 안읽은쪽지 갯수 갱신
-        db.execute(
-            update(Member)
-            .values(mb_memo_cnt=get_memo_not_read(login_member.mb_id))
-            .where(Member.mb_id == login_member.mb_id)
-        )
-        db.commit()
+        # 읽지 않은 쪽지 갯수 갱신
+        memo_service.update_not_read_memos(login_member.mb_id)
 
     context = {
         "request": request,
@@ -161,104 +150,53 @@ async def memo_form(
 async def memo_form_update(
     request: Request,
     db: db_session,
-    member: Annotated[Member, Depends(get_login_member)],
+    memo_service: Annotated[MemoService, Depends()],
+    login_member: Annotated[Member, Depends(get_login_member)],
     me_recv_mb_id: str = Form(...),
     me_memo: str = Form(...)
 ):
     """
     쪽지 전송
     """
-    config = request.state.config
-
     # me_recv_mb_id 공백 제거
     mb_id_list = me_recv_mb_id.replace(" ", "").split(',')
-    target_list = []
-    error_list = []
-    for mb_id in mb_id_list:
-        # 쪽지를 전송할 회원 정보 조회
-        target = db.scalar(select(Member).filter(Member.mb_id == mb_id))
-        if target and target.mb_open and not (target.mb_leave_date or target.mb_intercept_date):
-            target_list.append(target)
-        else:
-            error_list.append(mb_id)
+    send_members = memo_service.get_send_members(mb_id_list)
+    send_point = memo_service.get_send_point(login_member, len(send_members))
 
-    if error_list:
-        raise AlertException(f"{','.join(error_list)} : 존재(또는 정보공개)하지 않는 회원이거나 탈퇴/차단된 회원입니다.\\n쪽지를 발송하지 않았습니다.", 404)
-
-    # 총 사용 포인트 체크
-    use_point = int(config.cf_memo_send_point)
-    total_use_point = use_point * len(target_list)
-    if total_use_point > 0:
-        if member.mb_point < total_use_point:
-            raise AlertException(f"보유하신 포인트({member.mb_point})가 부족합니다.\\n쪽지를 발송하지 않았습니다.", 403)
-
-    # 전송대상의 목록을 순회하며 쪽지 전송
-    for target in target_list:
-        memo_dict = {
-            "me_send_mb_id": member.mb_id,
-            "me_recv_mb_id": target.mb_id,
-            "me_memo": me_memo,
-            "me_send_ip": request.client.host,
-        }
-        memo_send = Memo(me_type='send', **memo_dict)
-        db.add(memo_send)
-        db.commit()
-        memo_recv = Memo(me_type='recv', me_send_id=memo_send.me_id, **memo_dict)
-        db.add(memo_recv)
-        db.commit()
+    # 쪽지 전송 처리
+    for target in send_members:
+        memo_service.send_memo(login_member, target, me_memo)
 
         # 실시간 쪽지 알림
-        target.mb_memo_call = member.mb_id
-        target.mb_memo_cnt = get_memo_not_read(target.mb_id)
+        target.mb_memo_call = login_member.mb_id
+        target.mb_memo_cnt = memo_service.fetch_non_read_memo(target.mb_id)
         db.commit()
 
         # 포인트 소진
-        insert_point(request, member.mb_id, use_point * (-1), f"{target.mb_nick}({target.mb_id})님에게 쪽지 발송", "@memo", target.mb_id, "쪽지전송")
+        insert_point(request, login_member.mb_id, send_point * (-1), f"{target.mb_nick}({target.mb_id})님에게 쪽지 발송", "@memo", target.mb_id, "쪽지전송")
 
     return RedirectResponse(url=f"/bbs/memo?kind=send", status_code=302)
 
 
 @router.get("/memo_delete/{me_id}", dependencies=[Depends(validate_token)])
 async def memo_delete(
-    request: Request,
     db: db_session,
-    member: Annotated[Member, Depends(get_login_member)],
-    me_id: int = Path(...),
-    page: int = Query(default=1)
+    memo_service: Annotated[MemoService, Depends()],
+    login_member: Annotated[Member, Depends(get_login_member)],
+    me_id: Annotated[int, Path()],
+    page: Annotated[int, Query()] = 1
 ):
     """
     쪽지 삭제
     """
-    memo = db.get(Memo, me_id)
-    if not memo:
-        raise AlertException(status_code=403, detail="쪽지가 존재하지 않습니다.", url="/bbs/memo")
-    
-    kind = memo.me_type
-    memo_mb_id = memo.me_recv_mb_id if kind == "recv" else memo.me_send_mb_id
-    if not memo_mb_id == member.mb_id:
-        raise AlertException(status_code=403, detail="본인의 쪽지만 삭제 가능합니다.", url="/bbs/memo")
-    
-    # 실시간 알림 삭제(업데이트)
-    if is_none_datetime(memo.me_read_datetime):
-        target_member = db.scalar(
-            select(Member).where(
-                Member.mb_id == memo.me_recv_mb_id,
-                Member.mb_memo_call == memo.me_send_mb_id
-            )
-        )
-        if target_member:
-            target_member.mb_memo_call = ''
-            db.commit()
-
+    memo = memo_service.read_memo(me_id, login_member)
     db.delete(memo)
     db.commit()
 
-    # 안읽은쪽지 갯수 갱신
-    db.execute(
-        update(Member)
-        .values(mb_memo_cnt=get_memo_not_read(member.mb_id))
-        .where(Member.mb_id == member.mb_id)
-    )
-    db.commit()
+    # 쪽지알림 삭제
+    memo_service.update_memo_call(memo)
 
-    return RedirectResponse(url=f"/bbs/memo?kind={kind}&page={page}", status_code=302)
+    # 읽지 않은 쪽지 갯수 갱신
+    memo_service.update_not_read_memos(login_member.mb_id)
+
+    return RedirectResponse(url=f"/bbs/memo?kind={memo.me_type}&page={page}", status_code=302)

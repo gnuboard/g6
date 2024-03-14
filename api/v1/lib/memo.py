@@ -1,11 +1,11 @@
 from fastapi import HTTPException
 
-from lib.member_lib import MemberService
+from lib.memo import MemoService
 
 
-class MemberServiceAPI(MemberService):
+class MemoServiceAPI(MemoService):
     """
-    API 요청에 사용되는 MemberService 구현 클래스.  
+    API 요청에 사용되는 MemoService 구현 클래스.  
     - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
     """
 
