@@ -1,0 +1,56 @@
+{% extends "base_sub.html" %}
+
+{% block title %}로그인{% endblock title %}
+
+{% block content %}
+<div id="mb_login" class="mbskin position-relative mt-5 mx-auto mb-0 text-center" style="max-width: 360px;width: 100%;">
+    <div class="main-border main-font overflow-hidden">
+        <h1 class="blind">로그인</h1>
+        <div class="row">
+            <h2 class="col-6 text-center fs-4 fw-bold py-4"><span class="blind">회원</span>로그인</h2>
+            <a href="/bbs/register" class="col-6 text-center bov-bg fs-4 sub-font text-decoration-none py-4">회원가입</a>
+        </div>
+        <form name="flogin" action="/bbs/login" onsubmit="return flogin_submit(this);" method="post">
+            <input type="hidden" name="url" value="{{ url }}">
+            <fieldset id="login_fs" class="p-5">
+                <legend class="blind">회원로그인</legend>
+                <label for="login_id" class="blind">회원아이디<strong class="blind"> 필수</strong></label>
+                <input type="text" name="mb_id" id="login_id" required value="{{ mb_id }}" class="frm_input w-100 fs-4 mb-2 required alnum_" size="20" maxLength="20" placeholder="아이디">
+                <label for="login_pw" class="blind">비밀번호<strong class="blind"> 필수</strong></label>
+                <input type="password" name="mb_password" id="login_pw" required class="frm_input w-100 fs-4 required" size="20" maxLength="20" placeholder="비밀번호">
+                <button type="submit" class="btn_submit w-100 fw-bold fs-4 mt-3 py-3 mb-3">로그인</button>
+                <div id="login_info" class="d-flex justify-content-between">
+                    <div class="login_if_auto chk_box">
+                        <input type="checkbox" name="auto_login" id="login_auto_login" class="selec_chk">
+                        <label for="login_auto_login" class="ps-0 fs-5" ><span class="me-2"></span> 자동로그인</label>  
+                    </div>
+                    <div class="login_if_lpl">
+                        <a href="/bbs/id_lost" class="text-decoration-none sub-font fs-5">아이디 찾기</a> |
+                        <a href="/bbs/password_lost" class="text-decoration-none sub-font fs-5">비밀번호 찾기</a>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+    {% include "social/social_login.html" %}
+</div>
+
+<script>
+    jQuery(function($){
+        $("#login_auto_login").click(function(){
+            if (this.checked) {
+                this.checked = confirm("자동로그인을 사용하시면 다음부터 회원아이디와 비밀번호를 입력하실 필요가 없습니다.\n\n공공장소에서는 개인정보가 유출될 수 있으니 사용을 자제하여 주십시오.\n\n자동로그인을 사용하시겠습니까?");
+            }
+        });
+    });
+
+    function flogin_submit(f)
+    {
+        if( $( document.body ).triggerHandler( 'login_sumit', [f, 'flogin'] ) !== false ){
+            return true;
+        }
+        return false;
+    }
+
+</script>
+{% endblock content %}

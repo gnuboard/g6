@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <link rel="stylesheet" href="{{ theme_asset(request, 'css/qa.css') }}">
+{% endblock head %}
+
+{% block title %}{{ qa_config.qa_title }}{% endblock title %}
+
+{% block subtitle %}{{ qa_config.qa_title }}{% endblock subtitle %}
+
+{% block content %}
+{% set query_params = request.query_params %}
+    {% if qa_config.qa_content_head %}
+        {{ qa_config.qa_content_head|safe }}
+    {% endif %}
+
+    <div id="bo_list" class="position-relative">
+        <!-- 카테고리 시작 { -->
+        <nav id="bo_cate" class="my-5">
+            <h2 class="blind">{{ qa_config.qa_title }} 카테고리</h2>
+            <ul id="bo_cate_ul">
+                <li class="d-inline-block p-1 main-font fs-5"><a href="{{ request.url.replace_query_params() }}" {% if not query_params.sca %}id="bo_cate_on" class="main-bg text-white"{% endif %}>전체</a></li>
+                {% for category in categories %}
+                <li class="d-inline-block p-1 main-font fs-5"><a href="{{ request.url.replace_query_params(sca=category) }}" {% if query_params.sca == category %}id="bo_cate_on" class="main-bg text-white"{% endif %}>{{ category }}</a></li>
+                {% endfor %}
+            </ul>
+        </nav>
+        <!-- } 카테고리 끝 -->                                                          
+        <!-- 게시판 페이지 정보 및 버튼 시작 { -->
+        <div id="bo_btn_top" class="my-3">
+            <div id="bo_list_total">
+                <span>Total {{ total_count|number_format }}건</span>
+                {{ current_page|number_format }} 페이지
+            </div>
+            <ul class="btn_bo_user">
+                {% if request.state.is_super_admin %}
+                <li>
+                    <a href="{{ url_for('qa_config_form') }}" class="btn_admin btn" title="관리자">
+                        <i class="fa fa-cog fa-spin fa-fw"></i>
+                        <span class="blind">관리자</span>
+                    </a>
+                </li>
+                {% endif %}
+                <li>
+                    <button type="button" class="btn_bo_sch btn_b01 btn fs-4" title="게시판 검색">
+                        <i class="fa fa-search" aria-hidden="true"></i>
+                        <span class="blind">게시판 검색</span>
+                    </button>
+                    <!-- 게시판 검색 시작 -->
+                    <div class="bo_sch_wrap w-100 h-100 fixed-top" style="z-index:9999;">
+                      <fieldset class="bo_sch position-absolute top-50 start-50 wrapper-bg shadow-lg main-border rounded-4 overflow-y-auto" style="width:330px; max-height:300px;">
+                            <h3>검색</h3>
+                            <legend class="bg-danger">게시물 검색</legend>
+                            <form name="fsearch" method="get" class="d-block p-4">
+                                <input type="hidden" name="sca" value="{{ query_params.sca }}">
+                                <input type="hidden" name="sop" value="{{ query_params.sop|default("or") }}">
+                                <label for="sfl" class="blind">검색대상</label>
+                                <select name="sfl" id="sfl" class="w-100 input-border input-bg main-font rounded-1 fs-5" style="height: 40px;">
+                                    <option value="qa_subject" {{ get_selected(query_params.sfl, 'qa_subject') }}>제목</option>
+                                    <option value="qa_content" {{ get_selected(query_params.sfl, 'qa_content') }}>내용</option>
+                                    <option value="qa_name" {{ get_selected(query_params.sfl, 'qa_name') }}>글쓴이</option>
+                                    <option value="mb_id" {{ get_selected(query_params.sfl, 'mb_id') }}>회원아이디</option>
+                                </select>
+                                <label for="stx" class="blind">검색어<strong class="blind"> 필수</strong></label>
+                                <div class="sch_bar d-inline-block w-100 mt-4 input-border input-bg main-font rounded-1 fs-5">
+                                    <input type="text" name="stx" value="{{ query_params.get("stx", "") }}" id="stx" required="" class="sch_input border-0 bg-transparent px-1 main-font" style="width: 250px;height: 38px;" size="25" maxlength="15" placeholder=" 검색어를 입력해주세요">
+                                    <button type="submit" value="검색" class="sch_btn sub-font bg-transparent border-0 fs-4" style="width: 40px;height: 38px;" title="검색">
+                                        <i class="fa fa-search" aria-hidden="true"></i>
+                                        <span class="blind">검색</span>
+                                    </button>
+                                </div>
+                                <button type="button" class="bo_sch_cls">
+                                    <i class="fa fa-xmark" aria-hidden="true"></i>
+                                    <span class="blind">닫기</span>
+                                </button>
+                            </form>
+                        </fieldset>
+                        <div class="bo_sch_bg bg-black bg-opacity-10 w-100 h-100"></div>
+                    </div>
+                    <!-- 게시판 검색 끝 -->
+                </li>
+                <li>
+                    <a href="{{ url_for('qa_form_write') }}?{{ query_params }}" class="btn_b01 btn" title="문의등록">
+                        <i class="fa fa-pencil" aria-hidden="true"></i>
+                        <span class="blind">문의등록</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <!-- } 게시판 페이지 정보 및 버튼 끝 -->
+        <form name="fqalist" id="fqalist" action="{{ url_for('qa_delete_list') }}?{{ query_params }}" onsubmit="return fqalist_submit(this);" method="post">
+            <input type="hidden" name="token" value="">
+                    
+            <div class="tbl_head01 tbl_wrap">
+                <table>
+                <caption>목록</caption>
+                <thead>
+                <tr>
+                    <th scope="col" class="all_chk chk_box">
+                        <input type="checkbox" id="chkall" onclick="if (this.checked) all_checked(true); else all_checked(false);" class="selec_chk">
+                        <label for="chkall">
+                            <span>&nbsp;</span>
+                            <b class="blind">현재 페이지 게시물 전체선택</b>
+                        </label>
+                    </th>
+                    <th scope="col">번호</th>
+                    <th scope="col">제목</th>
+                    <th scope="col">글쓴이</th>
+                    <th scope="col">등록일</th>
+                    <th scope="col">상태</th>
+                </tr>
+                </thead>
+                    <tbody>
+                    {% for qa in qa_list %}
+                        <tr class="{{ loop.cycle('', 'even') }}">
+                            <td class="td_chk chk_box">
+                                <input type="checkbox" name="chk_qa_id[]" value="{{ qa.qa_id }}" id="chk_qa_id_{{ loop.index }}" class="selec_chk">
+                                <label for="chk_qa_id_{{ loop.index }}">
+                                    <span>&nbsp;</span>
+                                    <b class="blind">{{ qa.subject }}</b>
+                                </label>
+                            </td>
+                            <td class="td_num">{{ qa.num }}</td>
+                            <td class="td_subject">
+                                <span class="bo_cate_link">{{ qa.qa_category }}</span>
+                                <a href="{{ url_for('qa_view', qa_id=qa.qa_id) }}?{{ query_params }}" class="bo_tit d-block main-font fw-bold">
+                                    {{ qa.subject|search_font(query_params.get("stx", ""))|safe }}
+                                    {% if qa.icon_file %}<i class="fa fa-download" aria-hidden="true"></i>{% endif %}
+                                </a>
+                            </td>
+                            <td class="td_name">{{ qa.qa_name }}</td>
+                            <td class="td_date">{{ qa.qa_datetime }}</td>
+                            <td class="td_stat">
+                                {% if qa.qa_status %}
+                                    <span class="txt_done">답변완료</span>
+                                {% else %}
+                                    <span class="txt_rdy">답변대기</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="6" class="empty_table">Q&A목록이 없습니다.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- 페이지 -->
+            {{ paging|safe }}
+            <!-- 페이지 -->
+            <div class="bo_fx">
+                <ul class="btn_bo_user">
+                    {% if request.state.is_super_admin %}
+                    <li>
+                        <button type="submit" name="btn_submit" value="선택삭제" title="선택삭제" onclick="document.pressed=this.value" class="btn btn_b01 btn_admin fs-4">
+                            <i class="fa fa-regular fa-trash-can" aria-hidden="true"></i>
+                            <span class="blind">선택삭제</span>
+                        </button>
+                    </li>
+                    {% endif %}
+                    <li>
+                        <a href="{{ url_for('qa_list') }}" class="btn_b01 btn" title="목록">
+                            <i class="fa fa-list" aria-hidden="true"></i>
+                            <span class="blind">목록</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('qa_form_write') }}" class="btn_b01 btn" title="문의등록">
+                            <i class="fa fa-pencil" aria-hidden="true"></i>
+                            <span class="blind">문의등록</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </form>
+    </div>
+    <script>
+        // 게시판 검색
+        $(".bo_sch_wrap").hide();
+
+        $(".btn_bo_sch").on("click", function() {
+            $(".bo_sch_wrap").toggle();
+        })
+        $('.bo_sch_bg, .bo_sch_cls').click(function(){
+            $('.bo_sch_wrap').hide();
+        });
+
+        function all_checked(sw) {
+            var f = document.fqalist;
+        
+            for (var i=0; i<f.length; i++) {
+                if (f.elements[i].name == "chk_qa_id[]")
+                    f.elements[i].checked = sw;
+            }
+        }
+
+        function fqalist_submit(f) {
+            var chk_count = 0;
+        
+            for (var i=0; i<f.length; i++) {
+                if (f.elements[i].name == "chk_qa_id[]" && f.elements[i].checked)
+                    chk_count++;
+            }
+        
+            if (!chk_count) {
+                alert(document.pressed + "할 게시물을 하나 이상 선택하세요.");
+                return false;
+            }
+        
+            if(document.pressed == "선택삭제") {
+                if (!confirm("선택한 게시물을 정말 삭제하시겠습니까?\n\n한번 삭제한 자료는 복구할 수 없습니다"))
+                    return false;
+            }
+
+            f.token.value = generate_token();
+
+            return true;
+        }
+    </script>
+
+    {% if qa_config.qa_content_tail %}
+        {{ qa_config.qa_content_tail|safe }}
+    {% endif %}
+{% endblock content %}

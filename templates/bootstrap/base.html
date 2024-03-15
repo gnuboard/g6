@@ -1,0 +1,262 @@
+{% extends "base_sub.html" %}
+
+{% block body_html %}
+<!-- 상단 시작 { -->
+<header id="hd" class="wrapper-bg pb-3 pt-3 pt-md-0 sticky-top main-bb">
+  <div id="skip_to_container"><a href="#container">본문 바로가기</a></div>
+
+  {% include "/bbs/newwin.inc.html" %}
+
+  <div id="tnb" class="d-md-block d-none card-bg fs-5 mb-3 py-3">
+      <ul id="hd_qnb" class="container-xxl d-md-flex justify-content-end">
+          <li><a href="{{ url_for('faq_view') }}" class="sub-font px-2">FAQ</a></li>
+          <li><a href="{{ url_for('qa_list') }}" class="sub-font px-2">Q&A</a></li>
+          <li><a href="/bbs/new" class="sub-font px-2">새글</a></li>
+          <li><a href="/bbs/current_connect" class="visit sub-font px-2">
+              접속자<strong class="visit-num">{{ current_login_count[0] }}</strong></a>
+              <!-- current_login_count[1]은 회원 수 -->
+          </li>
+      </ul>
+  </div>
+
+  <div id="hd_wrapper" class="container-xxl d-flex justify-content-between align-items-center">
+    <div id="logo">
+      <a href="/"><img src="{{ theme_asset(request, 'img/logo.png') }}" width="48" height="48" alt="그누보드6"></a>
+    </div>
+    <!-- 메뉴 -->
+    <nav id="gnb">
+      <h2 class="blind">메인메뉴</h2>
+      <div class="d-none d-md-block">
+        {% include "/bbs/menu.html" ignore missing %}
+      </div>
+    </nav>
+    <button type="button" id="gnb_open" class="d-block d-md-none fs-1 sub-font bg-transparent me-auto border-0" style="width: 50px;height: 50px;">
+      <i class="fa fa-bars" aria-hidden="true"></i>
+      <span class="blind">열기</span>
+    </button>
+    <div id="gnb_mo" class="gnb_mo fs-5">
+      <button type="button" id="gnb_close" class="hhd_defined_closer">
+        <span class="blind">메뉴 닫기</span>
+        <i class="fa fa-xmark" aria-hidden="true"></i>
+      </button>
+      <!-- 아웃 로그인 -->
+      {% if request.state.login_member %}
+      {% include "mobile/bbs/outlogin_after.html" ignore missing %}
+      {% else %}
+      {% include "mobile/bbs/outlogin_before.html" ignore missing %}
+      {% endif %}
+
+      <!-- 메뉴 -->
+      {% include "/bbs/menu.html" ignore missing %}
+
+      <ul id="hd_nb">
+        <li class="hd_nb1">
+          <a href="/bbs/faq" id="snb_faq">
+            <i class="fa fa-question" aria-hidden="true"></i>FAQ
+          </a>
+        </li>
+        <li class="hd_nb2">
+          <a href="/bbs/qalist" id="snb_qa">
+            <i class="fa fa-comments" aria-hidden="true"></i>1:1문의
+          </a>
+        </li>
+        <li class="hd_nb3">
+          <a href="/bbs/current_connect" id="snb_cnt">
+            <i class="fa fa-users" aria-hidden="true"></i>접속자
+            <span>{{ current_login_count[0]|number_format }}</span>
+          </a>
+        </li>
+        <li class="hd_nb4">
+          <a href="/bbs/new" id="snb_new">
+            <i class="fa fa-history" aria-hidden="true"></i>새글
+          </a>
+        </li>
+      </ul>
+    </div>
+       <!-- 검색영역 -->
+       <div id="hd_sch_wr" class="position-fixed start-0 top-0 bg-black bg-opacity-75 w-100 h-100" style="z-index: 999;">
+        <fieldset id="hd_sch" class="position-absolute start-50 container-xxl translate-middle-x text-end" style="top: 20px;">
+          <div id="sch_close_btn" class="d-inline-block text-white cursor-pointer fs-1 mb-2 me-2"><i class="fa fa-xmark" aria-hidden="true"></i></div>
+          <span class="blind">사이트 내 전체검색</span>
+          <form name="fsearchbox" method="get" action="/bbs/search" onsubmit="return fsearchbox_submit(this);" class="position-relative h-100" >
+            <input type="hidden" name="sfl" value="wr_subject||wr_content">
+            <input type="hidden" name="sop" value="and">
+            <label for="sch_stx" class="blind">검색어 필수</label>
+            <input type="text" name="stx" id="sch_stx" maxlength="20" placeholder="검색어를 입력해주세요" class="form-control form-control-lg card-bg fs-4 rounded-4 overflow-hidden main-border shadow-lg px-3" style="border-radius: 3px 0px 0px 3px;" >
+            <button type="submit" id="sch_submit" class="position-absolute top-0 end-0 main-font bg-transparent border-0 fs-4" style="width: 60px; height: 60px;" value="검색">
+              <i class="fa fa-search" aria-hidden="true" ></i>
+              <span class="blind">검색</span>
+            </button>
+          </form>
+          <script>
+            function fsearchbox_submit(f) {
+              var stx = f.stx.value.trim();
+              if (stx.length < 2) {
+                alert("검색어는 두글자 이상 입력하십시오.");
+                f.stx.select();
+                f.stx.focus();
+                return false;
+              }
+  
+              // 검색에 많은 부하가 걸리는 경우 이 주석을 제거하세요.
+              var cnt = 0;
+              for (var i = 0; i < stx.length; i++) {
+                if (stx.charAt(i) == ' ')
+                  cnt++;
+              }
+  
+              if (cnt > 1) {
+                alert("빠른 검색을 위하여 검색어에 공백은 한개만 입력할 수 있습니다.");
+                f.stx.select();
+                f.stx.focus();
+                return false;
+              }
+              f.stx.value = stx;
+  
+              return true;
+            }
+          </script>
+        </fieldset>
+        <!-- 인기검색어 시작 { -->
+        {% include "/bbs/popular.html" %}
+        <!-- } 인기검색어 끝 -->
+      </div>
+
+    <div id="util_box" class="d-flex">
+      <!-- 검색 버튼 -->
+      <button type="button" id="user_btn" class="overflow-hidden border-0 bg-transparent fs-2 sub-font me-1" style="width: 48px; height: 48px;">
+        <i class="fa fa-search" aria-hidden="true"></i>
+        <span class="blind">사용자메뉴</span>
+      </button>
+      <!-- 다크모드 버튼 -->
+      <button type="button" id="darkmode-toggle-switch" class="overflow-hidden border-0 bg-transparent fs-4 sub-font me-3" style="width: 48px; height: 48px;">
+        <i class="fa-solid fa-regular fa-moon visible bright"></i>
+        <i class="fa-solid fa-regular fa-sun visible dark"></i>
+      </button>
+      <!-- 프로필 -->
+      <div id="profile" class="dropdown d-none d-md-block bg-transparent">
+        <span id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false" class="d-inline-block rounded-circle overflow-hidden cursor-pointer" style="width: 48px; height: 48px;" tabindex="0">
+          <img src="{{ get_member_image(request, request.state.login_member.mb_id)|safe }}" style="width: 100%;" alt="profile_image">
+        </span>
+        <div class="dropdown-menu cont-bg rounded-4 main-border overflow-hidden" aria-labelledby="profileDropdown">
+          {% if request.state.login_member %}
+          {% include "bbs/outlogin_after.html" %}
+          {% else %}
+          {% include "bbs/outlogin_before.html" %}
+          {% endif %}
+          {% if menus -%}
+          {%- endif %}
+        </div>
+      </div>
+    </div> 
+  </div>
+</header>
+<!-- } 상단 끝 -->
+
+{% if errors %}
+<ul>
+  {% for error in errors %}
+  <li>{{ error }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<hr>
+
+<!-- 콘텐츠 시작 { -->
+<div id="wrapper" class="container-xxl w-100 overflow-hidden pt-md-5">
+  <h2 id="container_title" class="pb-3"><span class="fs-4 main-font">{% block subtitle %}{% endblock subtitle %}</span></h2>
+    {% block content %}
+    {% endblock content %}
+</div>
+<!-- } 콘텐츠 끝 -->
+
+
+<hr>
+
+<!-- 하단 시작 { -->
+<div id="ft" class="my-0 mx-auto text-center main-bt">
+  <div id="ft_wr" class="container-xxl position-relative d-flex flex-column text-start" style="padding: 40px 0;margin: 0 auto;">
+    <div id="ft_link" class="d-flex flex-column flex-md-row gap-3 px-4 text-start">
+      <a class="d-block sub-font fw-bold fs-4 text-decoration-none py-3 px-2" href="{{ url_for('content_view', co_id='company') }}">회사소개</a>
+      <a class="d-block sub-font fw-bold fs-4 text-decoration-none py-3 px-2" href="{{ url_for('content_view', co_id='privacy') }}">개인정보처리방침</a>
+      <a class="d-block sub-font fw-bold fs-4 text-decoration-none py-3 px-2" href="{{ url_for('content_view', co_id='provision') }}">서비스이용약관</a>
+      {% if not request.state.is_responsive %}
+      {% if request.state.is_mobile %}
+      <a class="d-block sub-font fw-bold fs-4 text-decoration-none py-3 px-2" href="{{ url_for('device_change', device='pc') }}">PC버전</a>
+      {% else %}
+      <a class="d-block sub-font fw-bold fs-4 text-decoration-none py-3 px-2" href="{{ url_for('device_change', device='mobile') }}">모바일버전</a>
+      {% endif %}
+      {% endif %}
+    </div>
+  </div>
+  <div id="ft_copy" class="ft-copy-bg text-center my-0 mx-auto py-4 fs-5 fw-bold" style="color: #999999;">Copyright &copy; <b>{{ request.url.hostname }}.</b> All rights reserved.</div>
+
+  <button type="button" id="top_btn">
+    <i class="fa fa-arrow-up" aria-hidden="true"></i><span class="blind">상단으로</span>
+  </button>
+</div>
+
+{% if request.state.config.cf_analytics %}
+{{ request.state.config.cf_analytics|safe }}
+{% endif %}
+
+<!-- } 하단 끝 -->
+
+<script>
+  // 프로필 이미지 클릭 이벤트
+  var profileImg = document.querySelector("#profile");
+  var mypageBox = document.querySelector(".hd_login");
+
+  function handleProfileClick() {
+    mypageBox.classList.add("active");
+  }
+
+  function handleProfileFocusout() {
+    mypageBox.classList.remove("active");
+  }
+
+  profileImg.addEventListener("click", handleProfileClick);
+  profileImg.addEventListener("focusout", handleProfileFocusout);
+
+  // util box내 메뉴,검색바 이벤트리스너
+  var gnb_opener = document.querySelector("#gnb_open");
+  var sch_opener = document.querySelector("#user_btn");
+  var close_btn = document.querySelector("#gnb_close");
+  var hd_sch_wr = document.querySelector("#hd_sch_wr");
+  var hd_gnb_wr = document.querySelector("#gnb_mo");
+  var sch_close_btn = document.querySelector("#sch_close_btn");
+
+  function handleSearchClick() {
+    hd_sch_wr.classList.add("active");
+  }
+
+  function delSearchClick() {
+    hd_sch_wr.classList.remove("active");
+  }
+
+  function handleGnbClick() {
+    hd_gnb_wr.classList.add("active");
+  }
+
+  function delGnbClick() {
+    hd_gnb_wr.classList.remove("active");
+  }
+
+  sch_opener.addEventListener("click", handleSearchClick);
+  sch_close_btn.addEventListener("click", delSearchClick);
+  gnb_opener.addEventListener("click", handleGnbClick);
+  close_btn.addEventListener("click", delGnbClick);
+
+  // 상단 스크롤 버튼
+  $(function () {
+    $("#top_btn").on("click", function () {
+      $("html, body").animate({
+        scrollTop: 0
+      }, '500');
+      return false;
+    });
+  });
+  </script>
+  
+{% endblock body_html %}
