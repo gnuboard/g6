@@ -1,5 +1,5 @@
 """게시글 모델"""
-from typing_extensions import Annotated
+from typing_extensions import Annotated, List
 from datetime import datetime
 
 from fastapi import Body
@@ -58,3 +58,51 @@ class CommentModel(BaseModel):
         """CommentModel에서 선언되지 않은 필드를 초기화"""
         self.wr_is_comment: int = 1
         return self
+
+
+class ResponseFileModel(BaseModel):
+    """게시글 파일 모델중 response에 필요한 속성 정의"""
+    bf_source: str
+    bf_filesize: int
+    bf_download: int
+    bf_datetime: datetime
+
+
+class ResponseCommentModel(BaseModel):
+    """게시글 댓글 모델중 response에 필요한 속성 정의"""
+    wr_id: int
+    wr_parent: int
+    wr_name: str
+    mb_id: str
+    save_content: str
+    wr_datetime: datetime
+    wr_last: datetime
+    wr_option: str
+    wr_email: str
+    wr_comment: int
+    is_reply: bool
+    is_edit: str
+    is_del: str
+    is_secret: bool
+    is_secret_content: bool
+
+
+class ResponseWriteModel(BaseModel):
+    """게시글 모델중 response에 필요한 속성 정의"""
+    wr_id: int
+    wr_num: int
+    wr_reply: str
+    wr_subject: str
+    wr_name: str
+    mb_id: str
+    wr_datetime: datetime
+    wr_option: str
+    wr_email: str
+    wr_content: str
+    wr_link1: str
+    wr_link2: str
+    wr_comment: int
+    wr_hit: int
+    images: List[ResponseFileModel]
+    normal_files: List[ResponseFileModel]
+    comments: List[ResponseCommentModel]

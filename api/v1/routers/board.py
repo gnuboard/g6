@@ -23,7 +23,7 @@ from api.v1.dependencies.board import (
     validate_comment, validate_update_comment, validate_delete_comment,
     validate_upload_file_write, get_write, get_parent_write
 )
-from api.v1.models.board import WriteModel, CommentModel
+from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel
 from api.v1.lib.board import is_possible_level
 
 
@@ -178,7 +178,8 @@ async def api_list_post(
 
 @router.get("/{bo_table}/{wr_id}",
             summary="게시판 개별 글 조회",
-            response_description="게시판 개별 글을 반환합니다."
+            response_description="게시판 개별 글을 반환합니다.",
+            response_model=ResponseWriteModel,
             )
 async def api_read_post(
     request: Request,
