@@ -25,14 +25,15 @@ router = APIRouter()
             description="JWT을 통해 현재 로그인한 회원 정보를 조회합니다. \
                 <br>- 탈퇴 또는 차단된 회원은 조회할 수 없습니다. \
                 <br>- 이메일 인증이 완료되지 않은 회원은 조회할 수 없습니다.",
-            response_description="로그인한 회원 정보를 반환합니다.")
+            response_description="로그인한 회원 정보를 반환합니다.",
+            response_model=ResponseMemberModel)
 async def read_member_me(
     current_member: Annotated[Member, Depends(get_current_member)]
 ):
     """현재 로그인한 회원 정보를 조회합니다.
 
     Args:
-        current_member (Annotated[Member, Depends(get_current_member)]): 현재 로그인한 회원 정보
+        current_member (Member): 현재 로그인한 회원 정보
 
     Returns:
         Member: 현재 로그인한 회원 정보

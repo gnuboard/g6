@@ -27,6 +27,7 @@ templates.env.globals["is_none_datetime"] = is_none_datetime
 async def memo_list(
     request: Request,
     db: db_session,
+    memo_service: Annotated[MemoService, Depends()],
     member: Annotated[Member, Depends(get_login_member)],
     kind: str = Query(default="recv"),
     current_page: int = Query(default=1, alias="page")
@@ -34,18 +35,11 @@ async def memo_list(
     """
     쪽지 목록
     """
-    mb_column = Memo.me_recv_mb_id if kind == "recv" else Memo.me_send_mb_id
-    query = (
-        select()
-        .where(mb_column == member.mb_id, Memo.me_type == kind)
-        .order_by(Memo.me_id.desc())
-    )
-
-    # 페이징 처리
     records_per_page = request.state.config.cf_page_rows
-    total_records = db.scalar(query.add_columns(func.count()).select_from(Memo).order_by(None))
-    offset = (current_page - 1) * records_per_page
-    memos = db.scalars(query.add_columns(Memo).offset(offset).limit(records_per_page)).all()
+
+    total_records = memo_service.fetch_total_records(kind, member)
+    paging_info = get_paging_info(current_page, records_per_page, total_records)
+    memos = memo_service.fetch_memos(kind, member, paging_info["offset"], records_per_page)
 
     for memo in memos:
         memo.target_member = memo.send_member if kind == "recv" else memo.recv_member

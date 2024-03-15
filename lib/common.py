@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import json
+import math
 import logging
 import os
 import random
@@ -1357,3 +1358,24 @@ def is_integer_format(s):
     if s[0] == "-":
         s = s[1:]
     return s.isdigit()
+
+
+def get_paging_info(current_page: int, records_per_page: int, total_records: int) -> dict:
+    """페이징 정보를 반환하는 함수
+
+    Args:
+        current_page (int): 현재 페이지
+        records_per_page (int): 페이지당 레코드 수
+        total_records (int): 전체 레코드 수
+
+    Returns:
+        dict: 페이징 정보
+    """
+
+    offset = (current_page - 1) * records_per_page
+    return {
+        "offset": offset,
+        "total_records": total_records,
+        "current_page": current_page,
+        "total_pages": math.ceil(total_records / records_per_page),
+    }

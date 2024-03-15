@@ -1,13 +1,15 @@
+from pyexpat import model
 from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends, Path, Request
 
 from core.database import db_session
-from core.models import Member, Memo
+from core.models import Member
+from lib.common import get_paging_info
 from lib.point import insert_point
 
 from api.v1.dependencies.member import get_current_member
-from api.v1.models import responses
+from api.v1.models import responses, responses_403
 from api.v1.models.memo import (
     SendMemoModel, ViewMemoListModel,
     ResponseMemoModel, ResponseMemoListModel
@@ -20,27 +22,21 @@ router = APIRouter()
 
 @router.get("/memos",
             summary="회원 메시지 목록 조회",
-            response_model=ResponseMemoListModel,
-            responses={**responses})
+            responses={**responses_403},
+            response_model=ResponseMemoListModel)
 async def read_member_memos(
+    memo_service: Annotated[MemoServiceAPI, Depends()],
     current_member: Annotated[Member, Depends(get_current_member)],
     data: Annotated[ViewMemoListModel, Depends()]
 ):
     """회원 메시지 목록을 조회합니다."""
-    
-    query = current_member.send_memos if data.me_type == "send" else current_member.recv_memos
-    query = query.where(Memo.me_type == data.me_type)
-    # Pagination
-    total_records = query.count()
-    offset = (data.page - 1) * data.per_page
-    memos = (query.order_by(Memo.me_id.desc())
-                 .offset(offset)
-                 .limit(data.per_page)
-                 .all())
+    total_records = memo_service.fetch_total_records(data.me_type, current_member)
+    paging_info = get_paging_info(data.page, data.per_page, total_records)
+    memos = memo_service.fetch_memos(data.me_type, current_member, paging_info["offset"], data.per_page)
 
     return {
         "total_records": total_records,
-        "page": data.page,
+        "total_pages": paging_info["total_pages"],
         "memos": memos
     }
 

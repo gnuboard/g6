@@ -35,6 +35,9 @@ class Message(BaseModel):
     """메시지 응답 모델 (API Docs)"""
     detail: str
 
+responses_403 = {
+    403: {"model": Message}
+}
 responses = {
     403: {"model": Message},
     409: {"model": Message}

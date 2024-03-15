@@ -35,7 +35,7 @@ class ViewMemoListModel(BaseModel):
 
 class ResponseMemoListModel(BaseModel):
     total_records: int
-    page: int
+    total_pages: int
     memos: List[ResponseMemoModel]
 
     class Config:

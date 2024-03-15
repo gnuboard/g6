@@ -44,6 +44,31 @@ class MemoService(BaseService):
                 self.raise_exception(404, "쪽지가 존재하지 않습니다.")
             self.memo = memo
         return self.memo
+    
+    def _base_memos_query(self, member: Member, me_type: str):
+        """
+        쪽지 목록을 조회하는 기본 쿼리를 반환합니다.        
+        """
+        mb_column = Memo.me_recv_mb_id if me_type == "recv" else Memo.me_send_mb_id
+        return select().where(mb_column == member.mb_id, Memo.me_type == me_type)
+    
+    def fetch_total_records(self, me_type: str, member: Member) -> int:
+        """
+        쪽지 목록의 총 개수를 데이터베이스에서 조회합니다.
+        """
+        query = self._base_memos_query(member, me_type)
+        return self.db.scalar(query.add_columns(func.count()).select_from(Memo))
+    
+    def fetch_memos(self, me_type: str, member: Member, offset: int = 0, records_per_page: int = 10):
+        """
+        쪽지 목록을 조회합니다.
+        """
+        query = self._base_memos_query(member, me_type)
+        return self.db.scalars(
+                query.add_columns(Memo)
+                .order_by(Memo.me_id.desc())
+                .offset(offset).limit(records_per_page)
+            ).all()
 
     def fetch_non_read_memo(self, mb_id: str) -> int:
         """
