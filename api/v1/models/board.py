@@ -81,8 +81,8 @@ class ResponseCommentModel(BaseModel):
     wr_email: str
     wr_comment: int
     is_reply: bool
-    is_edit: str
-    is_del: str
+    is_edit: bool
+    is_del: bool
     is_secret: bool
     is_secret_content: bool
 
@@ -106,3 +106,6 @@ class ResponseWriteModel(BaseModel):
     images: List[ResponseFileModel]
     normal_files: List[ResponseFileModel]
     comments: List[ResponseCommentModel]
+
+    class Config:
+        from_attributes = True

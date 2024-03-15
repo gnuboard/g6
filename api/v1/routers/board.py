@@ -255,8 +255,8 @@ async def api_read_post(
         comment.name = cut_name(request, comment.wr_name)
         comment.ip = board_config.get_display_ip(comment.wr_ip)
         comment.is_reply = len(comment.wr_comment_reply) < 5 and board.bo_comment_level <= member_level
-        comment.is_edit = admin_type or (member and comment.mb_id == member.mb_id)
-        comment.is_del = admin_type or (member and comment.mb_id == member.mb_id) or not comment.mb_id 
+        comment.is_edit = bool(admin_type) or (member and comment.mb_id == member.mb_id)
+        comment.is_del = bool(admin_type) or (member and comment.mb_id == member.mb_id) or not comment.mb_id 
         comment.is_secret = "secret" in comment.wr_option
 
         # 비밀댓글 처리
@@ -281,6 +281,7 @@ async def api_read_post(
         "comments": comments,
     })
     contents.update(additional_info)
+    contents = ResponseWriteModel.model_validate(contents)
     return contents
 
 
