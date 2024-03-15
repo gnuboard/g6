@@ -24,7 +24,7 @@ class JWT:
     JWT_TYPE = "Bearer"
 
     @staticmethod
-    def create_token(data: dict, token_type: TokenType) -> str:
+    def create_token(token_type: TokenType, data: dict = {}) -> str:
         """JWT를 생성합니다.
 
         Args:

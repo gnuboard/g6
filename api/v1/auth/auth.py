@@ -6,7 +6,7 @@ from typing_extensions import Annotated
 from jose import ExpiredSignatureError, JWTError
 from fastapi import Depends, Form, Request, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestFormStrict
-from sqlalchemy.sql import exists
+from sqlalchemy.sql import select
 
 from core.database import db_session
 
@@ -55,7 +55,7 @@ def authenticate_refresh_token(
         credentials_exception: refresh Token이 유효하지 않을 때 발생하는 예외
 
     Returns:
-        str: 회원 아이디
+        MemberRefreshToken: refresh Token 객체
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -64,20 +64,18 @@ def authenticate_refresh_token(
     )
 
     try:
+        # 토큰 유효성 검사
         payload: TokenPayload = JWT.decode_token(
             refresh_token, SETTINGS.REFRESH_TOKEN_SECRET_KEY)
-        mb_id = payload.sub
 
-        exists_refresh_token = db.scalar(
-            exists(MemberRefreshToken.refresh_token)
-            .where(MemberRefreshToken.mb_id == mb_id,
-                   MemberRefreshToken.refresh_token == refresh_token)
-            .select()
+        member_refresh_token = db.scalar(
+            select(MemberRefreshToken).where(
+                MemberRefreshToken.refresh_token == refresh_token)
         )
-        if not exists_refresh_token:
+        if not member_refresh_token:
             raise credentials_exception
 
-        return mb_id
+        return member_refresh_token
 
     except ExpiredSignatureError:
         credentials_exception.detail = "Refresh Token has expired"
