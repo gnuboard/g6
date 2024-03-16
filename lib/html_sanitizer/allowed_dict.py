@@ -26,7 +26,7 @@ subject_private_allowed_attrs_dict: Dict[str, Set[str]] = {'None': {''}}
 
 # ContentSanitizer
 content_private_allowed_tags_dict: Dict[str, Set[str]] = {
-    'text': {'span', 'p', 'em', 'i', 'b', 'u', 'small', 'mark', 'del', 'ins', 'sub', 'sup'},
+    'text': {'b', 'del', 'em', 'i', 'ins', 'mark', 'p', 's', 'small', 'span', 'strong', 'sub', 'sup', 'u'},
     'h_tags': {'h1', 'h2', 'h3', 'h4', 'h5', 'h6'},
     'list': {'ul', 'ol', 'li', 'dl', 'dt', 'dd'},
     'table': {'table', 'th', 'tr', 'td', 'thead', 'tbody', 'tfoot', 'caption', 'col', 'colgroup'},

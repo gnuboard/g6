@@ -19,7 +19,7 @@
   <li><a href="#anc_cf_mail">기본메일환경</a></li>
   <li><a href="#anc_cf_article_mail">글작성메일</a></li>
   <li><a href="#anc_cf_join_mail">가입메일</a></li>
-  <li><a href="#anc_cf_poll_mail">투표메일</a></li>
+  <li><a href="#anc_cf_poll_mail">설문조사메일</a></li>
   <li><a href="#anc_cf_sns">SNS</a></li>
   <li><a href="#anc_cf_lay">레이아웃 추가설정</a></li>
   <li><a href="#anc_cf_sms">SMS</a></li>
@@ -57,7 +57,9 @@
                     <td colspan="3">
                         <span class="frm_info">관리자가 보내고 받는 용도로 사용하는 메일 주소를 입력합니다. (회원가입, 인증메일, 테스트, 회원메일발송 등에서 사용)</span>                            
                         <input type="text" name="cf_admin_email" value="{{ config.cf_admin_email }}" id="cf_admin_email" class="required email frm_input" size="40">
-                        <span class="frm_info">외부메일설정이나 기타 설정을 하지 않았다면, 도메인과 다른 헤더로 여겨 스팸이나 차단될 가능성이 있습니다.<br>name@49.247.41.166 과 같은 도메인 형식으로 설정할것을 권장합니다.</span>                                                    </td>
+                        <span class="frm_info">1) 외부메일 설정을 사용 중이시라면, 외부메일 설정에서 사용 중인 메일 주소를 입력해야 메일이 정상적으로 발송됩니다.</span>
+                        <span class="frm_info">2) 외부메일 설정이나 기타 설정을 하지 않았다면, 도메인과 다른 헤더로 여겨 스팸이나 차단될 가능성이 있습니다.<br>name@49.247.41.166 과 같은 도메인 형식으로 설정할것을 권장합니다.</span>
+                    </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="cf_admin_email_name">관리자 메일 발송이름<strong class="blind">필수</strong></label></th>
@@ -694,11 +696,11 @@
 </section>
 
 <section id="anc_cf_poll_mail">
-    <h2 class="h2_frm">투표 기타의견 작성 시 메일 설정</h2>
+    <h2 class="h2_frm">설문조사 기타의견 작성 시 메일 설정</h2>
 
     <div class="tbl_frm01 tbl_wrap">
         <table>
-            <caption>투표 기타의견 작성 시 메일 설정</caption>
+            <caption>설문조사 기타의견 작성 시 메일 설정</caption>
             <colgroup>
                 <col class="grid_4">
                 <col>
@@ -707,7 +709,7 @@
                 <tr>
                     <th scope="row"><label for="cf_email_po_super_admin">최고관리자 메일발송</label></th>
                     <td>
-                        <span class="frm_info">최고관리자에게 메일을 발송합니다.</span>                            
+                        <span class="frm_info">최고관리자에게 메일을 발송합니다.</span>
                         <input type="checkbox" name="cf_email_po_super_admin" value="1" id="cf_email_po_super_admin" {{ 'checked' if config.cf_email_po_super_admin else '' }}> 사용
                     </td>
                 </tr>

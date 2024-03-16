@@ -94,4 +94,4 @@ async def formmail_send(
     # to_emails = decrypted_to_email.split(',') if ',' in decrypted_to_email else [decrypted_to_email]
     # print(to_emails[0], subject, body)
     # mailer(to_emails, subject, body)
-    mailer(decrypted_to_email, subject, content)
+    mailer(fmail, decrypted_to_email, subject, content, name)

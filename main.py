@@ -1,6 +1,6 @@
 import datetime
 
-from apscheduler.schedulers.background import BackgroundScheduler
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Path, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import TypeAdapter
@@ -27,6 +27,8 @@ from lib.member_lib import is_super_admin, MemberService
 from lib.point import insert_point
 from lib.template_filters import default_if_none
 from lib.token import create_session_token
+from lib.scheduler import scheduler
+
 
 from admin.admin import router as admin_router
 from bbs.board import router as board_router
@@ -62,8 +64,18 @@ load_dotenv()
 # TypeAdapter는 값을 특정 타입으로 변환하는 데 사용되는 유틸리티 클래스입니다.
 APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    앱의 시작과 종료 시점에 실행되는 코드를 정의합니다.
+    - yield 이전의 코드: 서버가 시작될 때 실행
+    - yield 이후의 코드: 서버가 종료될 때 실행
+    """
+    yield
+    scheduler.remove_flag()
+
 # APP_IS_DEBUG 값이 True일 경우, 디버그 모드가 활성화됩니다.
-app = FastAPI(debug=APP_IS_DEBUG)
+app = FastAPI(debug=APP_IS_DEBUG, lifespan=lifespan)
 
 templates = UserTemplates()
 templates.env.filters["default_if_none"] = default_if_none
@@ -274,14 +286,8 @@ regist_core_middleware(app)
 regist_core_exception_handler(app)
 
 
-# 예약 작업을 관리할 스케줄러 생성
-# https://apscheduler.readthedocs.io/en/3.x/modules/triggers/cron.html
-scheduler = BackgroundScheduler(timezone='Asia/Seoul')
-@scheduler.scheduled_job('cron', hour=10, id='remove_data_by_config')
-def job():
-    delete_old_records()
-# FastAPI 앱 시작 시 스케줄러 시작
-scheduler.start()
+# 스케줄러 등록 및 실행
+scheduler.run_scheduler()
 
 
 @app.get("/", response_class=HTMLResponse)

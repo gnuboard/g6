@@ -56,7 +56,7 @@ $(function () {
     }
     const autosavePop = $("#autosave_pop");
     // 임시저장된 글목록을 가져옴
-    $("#btn_autosave_list").click(function () {
+    $("#btn_autosave").click(function () {
         if (autosavePop.is(":hidden")) {
             $.ajax(g6_bbs_url + "/ajax/autosave_list", {
                 headers: {
@@ -73,11 +73,19 @@ $(function () {
                                 hour: "2-digit",
                                 minute: "numeric"
                             });
-                            list.append('<li data-as_id=' + item.as_id + '>' +
-                                '<a href="#none" class="autosave_load">' + item.as_subject + '</a>' +
-                                '<span>' + datetime + ' <button type="button" name="as_id" value="' +
-                                item.as_id + '" class="autosave_del">삭제</input></span></li>'
-                            );
+                            let appendStr = '<li data-as_id=' + item.as_id + '>';
+                            appendStr += '<a href="#none" class="autosave_load">' + item.as_subject + '</a>'
+                            appendStr += '<div>';
+                            appendStr += datetime;
+                            appendStr += '<button type="button" name="as_id" value="' + item.as_id + '" class="autosave_del">';
+                            appendStr += '<i class="fa fa-close"></i>';
+                            appendStr += '<span class="blind">삭제</span>';
+                            appendStr += '</button>';
+                            appendStr += '</div>';
+                            appendStr += '</li>';
+
+                            list.append(appendStr);
+
                         });
                     }
                 }
@@ -125,7 +133,7 @@ $(function () {
         });
     });
 
-    $("#autosave_close").click(function () {
+    $(".autosave_close").click(function () {
         $("#autosave_pop").hide();
     });
 });

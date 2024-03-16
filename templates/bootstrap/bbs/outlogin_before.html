@@ -1,0 +1,67 @@
+<!-- 로그인 전 아웃로그인 시작 { -->
+<section id="ol_before" class="position-relative fs-5" style="width: 320px;">
+    <div class="d-flex">
+        <h2 class="col-6 text-center py-4 fs-5 main-font"><span class="blind">회원</span>로그인</h2>
+        <a href="/bbs/register" class="col-6 text-center bov-bg py-4 fs-5 main-font text-decoration-none">회원가입</a>
+    </div>
+    <form name="foutlogin" action="/bbs/login" onsubmit="return fhead_submit(this);" method="post" autocomplete="off" class="p-5">
+    <fieldset>
+        <div class="position-relative mb-2">
+            <input type="hidden" name="url" value="{{ request.url }}">
+            <label for="ol_id" id="ol_idlabel" class="blind">회원아이디<strong>필수</strong></label>
+            <input type="text" id="ol_id" class="d-block w-100 input-bg input-border main-font fs-4 rounded-1 mb-2 px-3 py-2" name="mb_id" required class="required alnum_" maxlength="20" placeholder="아이디">
+            <label for="ol_pw" id="ol_pwlabel" class="blind">비밀번호<strong>필수</strong></label>
+            <input type="password" name="mb_password" id="ol_pw" class="d-block w-100 input-bg input-border main-font fs-4 rounded-1 mb-2 px-3 py-2" required class="required" maxlength="20" placeholder="비밀번호">
+            <input type="submit" id="ol_submit" value="로그인" class="main-bg text-white w-100 text-center fs-4 py-3 border-0">
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-3"> 
+            <div id="ol_auto" class="chk_box">
+                <input type="checkbox" name="auto_login" id="auto_login" class="selec_chk">
+                <label for="auto_login" class="fs-4"><span></span>자동로그인</label>
+            </div>
+            <div id="ol_svc" class="main-font fs-5">
+                <a href="/bbs/id_lost" class="d-inline-block main-border em-font rounded-1 py-2 px-3 fs-5 text-decoration-none">ID 찾기</a>
+                /
+                <a href="/bbs/password_lost" class="d-inline-block main-border em-font rounded-1 py-2 px-3 fs-5 text-decoration-none">PW 찾기</a>
+            </div>
+        </div>
+        
+    </fieldset>
+    </form>
+</section>
+
+{% include "social/social_login.html" %}
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    const omi = document.querySelector('#ol_id'),
+        omp = document.querySelector('#ol_pw'),
+        omi_label = document.querySelector('#ol_idlabel'),
+        omp_label = document.querySelector('#ol_pwlabel');
+
+    omp_label.classList.add('ol_pwlabel');
+    omi_label.classList.add('ol_idlabel');
+    
+    const autoLogin = document.querySelector('#auto_login');
+    autoLogin.addEventListener('click', function() {
+        if (this.checked) {
+        const confirm_result  = confirm("자동로그인을 사용하시면 다음부터 회원아이디와 비밀번호를 입력하실 필요가 없습니다.\n\n공공장소에서는 개인정보가 유출될 수 있으니 사용을 자제하여 주십시오.\n\n자동로그인을 사용하시겠습니까?")
+            if (!confirm_result) {
+                return this.checked = false;
+            }
+        }
+    });
+});
+
+function fhead_submit(f)
+{
+    if( $( document.body ).triggerHandler( 'outlogin1', [f, 'foutlogin'] ) !== false ){
+        return true;
+    }
+    return false;
+}
+
+</script>
+<!-- } 로그인 전 아웃로그인 끝 -->

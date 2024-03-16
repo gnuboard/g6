@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}{{ faq_master.fm_subject }}{% endblock title %}
+{% block subtitle %}{{ faq_master.fm_subject }}{% endblock subtitle %}
+
+{% block content %}
+    {% set stx = request.query_params.get("stx", "") %}
+
+    <!-- FAQ 시작 { -->
+    {% if fm_himg_url %}
+        <div id="faq_himg" class="faq_img">
+            <img src="{{ fm_himg_url }}" alt="">
+        </div>
+    {% endif %}
+    <div id="faq_hhtml">{{ faq_master.fm_head_html|default('', true)|safe }}</div>
+
+    <fieldset id="faq_sch" class="rounded-3 p-5 text-center fs-5">
+        <legend>FAQ 검색</legend>
+        <form name="faq_search_form" method="get">
+            <span class="blind">FAQ 검색</span>
+            <label for="stx" class="blind">검색어<strong class="blind"> 필수</strong></label>
+            <input type="text" name="stx" value="{{ stx }}" required="" id="stx" class="frm_input" size="15" maxlength="15">
+            <button type="submit" value="검색" class="btn_submit">
+                <i class="fa fa-search" aria-hidden="true"></i>
+                검색
+            </button>
+        </form>
+    </fieldset>
+
+    <nav id="bo_cate" class="my-5">
+        <h2 class="blind">자주하시는 질문 분류</h2>
+        <ul id="bo_cate_ul" class="p-0">
+        {% for master in faq_masters %} 
+            <li class="d-inline-block p-1 main-font fs-5">
+                <a href="{{ url_for('faq_view', fm_id=master.fm_id) }}" class="d-block py-2 px-4 rounded-3 sub-border text-whtie fs-4 text-decoration-none" {% if master.fm_id == faq_master.fm_id %}id="bo_cate_on" class="main-bg text-white"{% endif %}>
+                    {% if master.fm_id == faq_master.fm_id %}<span class="blind">열린 분류 </span>{% endif %}
+                    {{ master.fm_subject }}
+                </a>
+            </li>
+        {% endfor %}
+        </ul>
+    </nav>
+
+    <div id="faq_wrap" class="faq_{{ faq_master.fm_id }} mt-3 mb-5">
+    {% for faq in faqs %}
+        <section id="faq_con">
+            <h2 class="blind">{{ faq_master.subject }} 목록</h2>
+            <ol class="m-0 p-0 list-unstyled">
+                <li class="position-relative main-border card-bg rounded-3 mb-3">
+                    <h3 class="d-flex justify-content-between align-items-center fs-2 p-4">
+                        <div class="d-flex align-items-center">
+                          <span class="d-inline-block em-font fw-bold me-3">Q</span>
+                          <a href="#none" class="text-decoration-none main-font" onclick="return faq_open(this);">{{ faq.fa_subject|safe }}</a>
+                        </div>
+                        <button class="tit_btn sub-font bg-transparent border-0" onclick="return faq_open(this);">
+                            <i class="fa fa-plus" aria-hidden="true"></i>
+                            <span class="blind">열기</span>
+                        </button>
+                    </h3>
+                    <div class="con_inner fs-5" style="display: none;">
+                        {{ faq.fa_content|safe }}
+                        <button type="button" class="closer_btn sub-font card-bg border-0 fs-2">
+                            <i class="fa fa-minus" aria-hidden="true"></i>
+                            <span class="blind">닫기</span>
+                        </button>
+                    </div>
+                </li>
+            </ol>
+        </section>
+    {% else %}
+        <div class="empty_list main-font fs-4">
+            등록된 FAQ가 없습니다.
+            {% if request.state.is_super_admin %}
+                <br>
+                <a href="{{ url_for('faq_master_list') }}">FAQ를 새로 등록하시려면 FAQ관리</a> 메뉴를 이용하십시오.
+            {% endif %}
+        </div>
+    {% endfor %}
+    </div>
+
+    <div id="faq_thtml">{{ faq_master.fm_tail_html|default('', true)|safe }}</div>
+    {% if fm_timg_url %}
+        <div id="faq_timg" class="faq_img">
+            <img src="{{ fm_timg_url }}" alt="">
+        </div>
+    {% endif %}
+
+    {% if request.state.is_super_admin %}
+        <div class="faq_admin text-start">
+            <a href="{{ url_for('faq_master_update_form', fm_id=faq_master.fm_id) }}" class="btn_admin btn" title="FAQ 수정">
+                <i class="fa fa-cog fa-spin fa-fw"></i>
+                <span class="blind">FAQ 수정</span>
+            </a>
+        </div>
+    {% endif %}
+    <!-- } FAQ 끝 -->
+
+    <script src="/static/js/viewimageresize.js"></script>
+    <script>
+    jQuery(function() {
+        $(".closer_btn").on("click", function() {
+            $(this).closest(".con_inner").slideToggle('slow', function() {
+                var $h3 = $(this).closest("li").find("h3");
+
+                $("#faq_con li h3").removeClass("faq_li_open");
+                if ($(this).is(":visible")) {
+                    $h3.addClass("faq_li_open");
+                }
+            });
+        });
+    });
+
+    function faq_open(el)
+    {	
+        var $con = $(el).closest("li").find(".con_inner"),
+            $h3 = $(el).closest("li").find("h3");
+
+        if ($con.is(":visible")) {
+            $con.slideUp();
+            $h3.removeClass("faq_li_open");
+        } else {
+            $("#faq_con .con_inner:visible").css("display", "none");
+
+            $con.slideDown(
+                function() {
+                    // 이미지 리사이즈
+                    $con.viewimageresize2();
+                    $("#faq_con li h3").removeClass("faq_li_open");
+
+                    $h3.addClass("faq_li_open");
+                }
+            );
+        }
+
+        return false;
+    }
+    </script>
+{% endblock content %}
