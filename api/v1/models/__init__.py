@@ -3,7 +3,9 @@ API에서 필요한 기본적인 모델을 정의합니다.
 TODO: 역할에 따른 재구성 작업이 필요.
 """
 from datetime import datetime
+from typing_extensions import Annotated
 
+from fastapi import Query
 from pydantic import BaseModel
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 
@@ -42,3 +44,11 @@ responses = {
     403: {"model": Message},
     409: {"model": Message}
 }
+
+class ViewPageModel(BaseModel):
+    page: Annotated[int, Query(title="페이지 번호")] = 1
+    per_page: Annotated[int, Query(title="페이지 당 쪽지 수")] = 10
+
+class ResponsePageListModel(BaseModel):
+    total_records: int
+    total_pages: int

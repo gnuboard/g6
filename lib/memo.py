@@ -22,7 +22,6 @@ class BaseService(metaclass=abc.ABCMeta):
 class MemoService(BaseService):
     """
     회원 쪽지 관련 서비스를 제공하는 종속성 주입 클래스입니다.
-    - TODO: 쪽지 조회, 읽음처리 기능을 작업할 예정 (API, 기존코드 통합)
     """
 
     def __init__(self, request: Request, db: db_session):

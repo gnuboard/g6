@@ -1,12 +1,11 @@
 from datetime import datetime
+from typing import List
 from typing_extensions import Annotated
 
 from fastapi import Body
 from pydantic import BaseModel
 
-
-class CreateScrapModel(BaseModel):
-    wr_content: Annotated[str, Body("")]
+from api.v1.models import ResponsePageListModel
 
 
 class ResponseScrapModel(BaseModel):
@@ -21,3 +20,11 @@ class ResponseScrapModel(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ResponseScrapListModel(ResponsePageListModel):
+    scraps: List[ResponseScrapModel]
+
+
+class CreateScrapModel(BaseModel):
+    wr_content: Annotated[str, Body("")]

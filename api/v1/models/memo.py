@@ -7,6 +7,8 @@ from pydantic import BaseModel, PrivateAttr, field_validator
 
 from core.models import Member
 
+from api.v1.models import ViewPageModel, ResponsePageListModel
+
 
 class ResponseMemoModel(BaseModel):
     me_id: int
@@ -25,21 +27,16 @@ class ResponseMemoModel(BaseModel):
         from_attributes = True
 
 
-class ViewMemoListModel(BaseModel):
+class ViewMemoListModel(ViewPageModel):
     me_type: Annotated[str, Path(title="쪽지 유형",
                                  description="recv: 받은 쪽지, send: 보낸 쪽지",
                                  pattern="^(recv|send)?$")] = "recv"
-    page: Annotated[int, Query(title="페이지 번호")] = 1
-    per_page: Annotated[int, Query(title="페이지 당 쪽지 수")] = 10
 
 
-class ResponseMemoListModel(BaseModel):
+class ResponseMemoListModel(ResponsePageListModel):
     total_records: int
     total_pages: int
     memos: List[ResponseMemoModel]
-
-    class Config:
-        from_attributes = True
 
 
 class SendMemoModel(BaseModel):
