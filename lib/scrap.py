@@ -7,15 +7,7 @@ from sqlalchemy import exists, update
 from core.database import db_session
 from core.models import Member, Scrap
 from lib.common import dynamic_create_write_table
-
-
-class BaseService(metaclass=abc.ABCMeta):
-    """
-    TODO: 다른 곳에서 사용되는 BaseService 클래스와 통합할 예정입니다.
-    """
-    @abc.abstractmethod
-    def raise_exception(self, status_code: int, detail: str = None):
-        pass
+from lib.service import BaseService
 
 
 class ScrapService(BaseService):

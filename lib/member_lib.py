@@ -1,4 +1,3 @@
-import abc
 import os
 import re
 from datetime import date, datetime, timedelta
@@ -13,12 +12,7 @@ from core.database import DBConnect, db_session
 from core.models import Board, Config, Group, Member
 from lib.common import is_none_datetime, get_img_path, delete_image
 from lib.pbkdf2 import validate_password
-
-
-class BaseService(metaclass=abc.ABCMeta):
-    @abc.abstractmethod
-    def raise_exception(self, status_code: int, detail: str = None):
-        pass
+from lib.service import BaseService
 
 
 class MemberService(BaseService):
