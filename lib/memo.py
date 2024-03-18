@@ -82,6 +82,18 @@ class MemoService(BaseService):
                 Memo.me_type == 'recv'
             )
         )
+    
+    def update_read_datetime(self, me_id: int) -> None:
+        """
+        쪽지 읽음 처리를 합니다.
+        """
+        memo = self.fetch_memo(me_id)
+        if memo.me_type == 'recv' and is_none_datetime(memo.me_read_datetime):
+            memo.me_read_datetime = datetime.now()
+            send_memo = self.fetch_memo(memo.me_send_id)
+            if send_memo:
+                send_memo.me_read_datetime = datetime.now()
+            self.db.commit()
 
     def update_not_read_memos(self, mb_id: str) -> None:
         """

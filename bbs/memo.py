@@ -92,16 +92,8 @@ async def memo_view(
     ).first()
 
     # 받은 쪽지 읽음처리
-    if kind == "recv" and is_none_datetime(memo.me_read_datetime):
-        now = datetime.now()
-        memo.me_read_datetime = now
-        send_memo = db.scalar(select(Memo).where(Memo.me_id==memo.me_send_id))
-        if send_memo:
-            send_memo.me_read_datetime = now
-        db.commit()
-
-        # 읽지 않은 쪽지 갯수 갱신
-        memo_service.update_not_read_memos(login_member.mb_id)
+    memo_service.update_read_datetime(me_id)
+    memo_service.update_not_read_memos(login_member.mb_id)
 
     context = {
         "request": request,
@@ -187,10 +179,7 @@ async def memo_delete(
     db.delete(memo)
     db.commit()
 
-    # 쪽지알림 삭제
     memo_service.update_memo_call(memo)
-
-    # 읽지 않은 쪽지 갯수 갱신
     memo_service.update_not_read_memos(login_member.mb_id)
 
     return RedirectResponse(url=f"/bbs/memo?kind={memo.me_type}&page={page}", status_code=302)
