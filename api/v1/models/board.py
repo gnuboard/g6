@@ -103,6 +103,7 @@ class ResponseWriteModel(BaseModel):
     wr_link2: str
     wr_comment: int
     wr_hit: int
+    wr_ip: str
     images: List[ResponseFileModel]
     normal_files: List[ResponseFileModel]
     comments: List[ResponseCommentModel]
