@@ -1,13 +1,38 @@
-import re
 import uuid
 from datetime import datetime, timedelta
 
 from fastapi import Request
 from sqlalchemy import delete, desc, exists, func, select, update
 
-from core.database import DBConnect
+from core.database import DBConnect, db_session
+from core.exception import AlertException
 from core.models import Member, Point
 from lib.member_lib import MemberService
+from lib.service import BaseService
+
+
+class PointService(BaseService):
+    def __init__(self, request: Request, db: db_session):
+        self.request = request
+        self.db = db
+
+    def raise_exception(self, status_code: int, detail: str = None, url: str = None):
+        raise AlertException(status_code=status_code, detail=detail, url=url)
+
+    def fetch_points(self, member: Member, offset: int = 0, records_per_page: int = 10):
+        """
+        스크랩 목록을 조회합니다.
+        """
+        return (member.points
+                .order_by(Point.po_id.desc())
+                .offset(offset).limit(records_per_page)
+                .all())
+
+    def fetch_total_records(self, member: Member) -> int:
+        """
+        스크랩 목록의 총 개수를 데이터베이스에서 조회합니다.
+        """
+        return member.points.count()
 
 
 def insert_point(request: Request,

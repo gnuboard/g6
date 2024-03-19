@@ -1,4 +1,8 @@
+from typing import List
+
 from pydantic import BaseModel
+
+from api.v1.models import ResponsePageListModel
 
 
 class ResponsePointModel(BaseModel):
@@ -10,3 +14,7 @@ class ResponsePointModel(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ResponsePointListModel(ResponsePageListModel):
+    points: List[ResponsePointModel]
