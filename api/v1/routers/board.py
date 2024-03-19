@@ -6,12 +6,12 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy import func, select, update, exists, inspect, delete
 
 from core.database import db_session
-from core.models import Board, Group, BoardGood, Scrap, Member, BoardNew, WriteBaseModel
+from core.models import Board, Group, Scrap, Member, BoardNew, WriteBaseModel
 from lib.board_lib import (
     BoardConfig, get_next_num, generate_reply_character,
     insert_board_new, send_write_mail, is_owner, BoardFileManager
 )
-from lib.common import dynamic_create_write_table, FileCache, cut_name
+from lib.common import dynamic_create_write_table, FileCache
 from lib.dependencies import common_search_query_params
 from lib.member_lib import get_admin_type, get_member_level
 from lib.template_filters import number_format
@@ -24,7 +24,7 @@ from api.v1.dependencies.board import (
     validate_upload_file_write, get_write, get_parent_write
 )
 from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel
-from routers.board import ListPostAPI
+from routers.board import ListPostAPI, ReadPostAPI
 
 
 router = APIRouter()
@@ -110,96 +110,10 @@ async def api_read_post(
     """
     지정된 게시판의 글을 개별 조회합니다.
     """
-    board_config = BoardConfig(request, board)
-    write_model = dynamic_create_write_table(bo_table)
-    member = member_info["member"]
-    mb_id = member_info["mb_id"]
-    member_level = member_info["member_level"]
-    admin_type = get_admin_type(request, mb_id, board=board)
-        
-    # 게시글 정보 설정
-    write.ip = board_config.get_display_ip(write.wr_ip)
-    write.name = cut_name(request, write.wr_name)
-
-    read_point = board.bo_read_point
-    insert_point(request, mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table, write.wr_id, "읽기")
-
-    # 조회수 증가
-    write.wr_hit = write.wr_hit + 1
-    db.commit()
-
-    if member:
-        # 스크랩 여부 확인
-        exists_scrap = db.scalar(
-            exists(Scrap)
-            .where(
-                Scrap.mb_id == member.mb_id,
-                Scrap.bo_table == bo_table,
-                Scrap.wr_id == wr_id
-            ).select()
-        )
-        if exists_scrap:
-            write.is_scrap = True
-
-        # 추천/비추천 여부 확인
-        good_data = db.scalar(
-            select(BoardGood)
-            .filter_by(bo_table=bo_table, wr_id=wr_id, mb_id=member.mb_id)
-        )
-        if good_data:
-            setattr(write, f"is_{good_data.bg_flag}", True)
-
-    # 파일정보 조회
-    images, normal_files = BoardFileManager(board, wr_id).get_board_files_by_type(request)
-
-    # 링크정보 조회
-    links = []
-    for i in range(1, 3):
-        url = getattr(write, f"wr_link{i}")
-        hit = getattr(write, f"wr_link{i}_hit")
-        if url:
-            links.append({"no": i, "url": url, "hit": hit})
-
-    # 댓글 목록 조회
-    comments = db.scalars(
-        select(write_model).filter_by(
-            wr_parent=wr_id,
-            wr_is_comment=1
-        ).order_by(write_model.wr_comment, write_model.wr_comment_reply)
-    ).all()
-
-    for comment in comments:
-        comment.name = cut_name(request, comment.wr_name)
-        comment.ip = board_config.get_display_ip(comment.wr_ip)
-        comment.is_reply = len(comment.wr_comment_reply) < 5 and board.bo_comment_level <= member_level
-        comment.is_edit = bool(admin_type) or (member and comment.mb_id == member.mb_id)
-        comment.is_del = bool(admin_type) or (member and comment.mb_id == member.mb_id) or not comment.mb_id 
-        comment.is_secret = "secret" in comment.wr_option
-
-        # 비밀댓글 처리
-        session_secret_comment_name = f"ss_secret_comment_{bo_table}_{comment.wr_id}"
-        parent_write = db.get(write_model, comment.wr_parent)
-        if (comment.is_secret
-                and not admin_type
-                and not is_owner(comment, mb_id)
-                and not is_owner(parent_write, mb_id)
-                and not request.session.get(session_secret_comment_name)):
-            comment.is_secret_content = True
-            comment.save_content = "비밀글 입니다."
-        else:
-            comment.is_secret_content = False
-            comment.save_content = comment.wr_content
-
-    contents = jsonable_encoder(write)
-    additional_info = jsonable_encoder({
-        "images": images,
-        "normal_files": normal_files,
-        "links": links,
-        "comments": comments,
-    })
-    contents.update(additional_info)
-    contents = ResponseWriteModel.model_validate(contents)
-    return contents
+    read_post_api = ReadPostAPI(
+        request, db, bo_table, board, wr_id, write, member_info["member"]
+    )
+    return read_post_api.response()
 
 
 @router.post("/{bo_table}",

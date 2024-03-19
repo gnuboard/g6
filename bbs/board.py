@@ -9,7 +9,7 @@ from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends, Request, File, Form, Path, Query
 from fastapi.responses import FileResponse, RedirectResponse
-from sqlalchemy import asc, desc, exists, func, select, update
+from sqlalchemy import exists, func, select, update
 
 from core.database import db_session
 from core.exception import AlertException
@@ -27,7 +27,7 @@ from lib.point import delete_point, insert_point
 from lib.template_filters import datetime_format, number_format
 from lib.g5_compatibility import G5Compatibility
 from lib.html_sanitizer import content_sanitizer
-from routers.board import ListPostTemplate
+from routers.board import ListPostTemplate, ReadPostTemplate
 
 
 router = APIRouter()
@@ -701,214 +701,10 @@ async def read_post(
     bo_table: str = Path(...),
     wr_id: int = Path(...)
 ):
-    """
-    게시글을 1개 읽는다.
-    """
-    config = request.state.config
-    board_config = BoardConfig(request, board)
-    
-    # 게시판 설정
-    board.subject = board_config.subject
-    write_model = dynamic_create_write_table(bo_table)
-
-    # 게시판 에디터 설정
-    request.state.editor = board_config.select_editor
-
-    # 게시판 관리자 확인
-    member: Member = request.state.login_member
-    mb_id = getattr(member, "mb_id", None)
-    member_level = get_member_level(request)
-    admin_type = get_admin_type(request, mb_id, board=board)
-
-    # 댓글은 개별조회 할 수 없도록 예외처리
-    if write.wr_is_comment:
-        raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
-
-    # 읽기 권한 검증
-    if not board_config.is_read_level():
-        raise AlertException("글을 읽을 권한이 없습니다.", 403)
-
-    # 비밀글 검증
-    session_secret_name = f"ss_secret_{bo_table}_{wr_id}"
-    if ("secret" in write.wr_option
-            and not admin_type
-            and not is_owner(write, mb_id)
-            and not request.session.get(session_secret_name)):
-        # 부모글이 본인글이라면 열람 가능
-        owner = False
-        if write.wr_reply and mb_id:
-            parent_write = db.scalar(
-                select(write_model).filter_by(
-                    wr_num=write.wr_num,
-                    wr_reply="",
-                    wr_is_comment=0
-                )
-            )
-            if parent_write.mb_id == mb_id:
-                owner = True
-        if not owner:
-            query_params = request.query_params
-            url = f"/bbs/password/view/{bo_table}/{write.wr_id}"
-            return RedirectResponse(
-                set_url_query_params(url, query_params), status_code=303)
-
-        request.session[session_secret_name] = True
-
-    # 게시글 정보 설정
-    write.ip = board_config.get_display_ip(write.wr_ip)
-    write.name = cut_name(request, write.wr_name)
-
-    # 세션 체크
-    # 한번 읽은 게시글은 세션만료까지 조회수, 포인트 처리를 하지 않는다.
-    session_name = f"ss_view_{bo_table}_{wr_id}"
-    if not request.session.get(session_name) and mb_id != write.mb_id:
-        # 포인트 검사
-        if config.cf_use_point:
-            read_point = board.bo_read_point
-            if not board_config.is_read_point(write):
-                point = number_format(abs(read_point))
-                message = f"게시글 읽기에 필요한 포인트({point})가 부족합니다."
-                if not member:
-                    message += f"\\n로그인 후 다시 시도해주세요."
-
-                raise AlertException(message, 403)
-            else:
-                insert_point(request, mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table, write.wr_id, "읽기")
-
-        # 조회수 증가
-        write.wr_hit = write.wr_hit + 1
-        db.commit()
-
-        request.session[session_name] = True
-
-    if member:
-        # 스크랩 여부 확인
-        exists_scrap = db.scalar(
-            exists(Scrap)
-            .where(
-                Scrap.mb_id == member.mb_id,
-                Scrap.bo_table == bo_table,
-                Scrap.wr_id == wr_id
-            ).select()
-        )
-        if exists_scrap:
-            write.is_scrap = True
-
-        # 추천/비추천 여부 확인
-        good_data = db.scalar(
-            select(BoardGood)
-            .filter_by(bo_table=bo_table, wr_id=wr_id, mb_id=member.mb_id)
-        )
-        if good_data:
-            setattr(write, f"is_{good_data.bg_flag}", True)
-
-    # 이전글 다음글 조회
-    prev = None
-    next = None
-    sca = request.query_params.get("sca")
-    sfl = request.query_params.get("sfl")
-    stx = request.query_params.get("stx")
-    if not board.bo_use_list_view:
-        query = select(write_model).where(write_model.wr_is_comment == 0)
-        if sca:
-            query = query.where(write_model.ca_name == sca)
-        if sfl and stx and hasattr(write_model, sfl):
-            query = query.where(getattr(write_model, sfl).like(f"%{stx}%"))
-         # 같은 wr_num 내에서 이전글 조회
-        prev = db.scalar(
-            query.where(
-                write_model.wr_num == write.wr_num,
-                write_model.wr_reply < write.wr_reply,
-            ).order_by(desc(write_model.wr_reply))
-        )
-        if not prev:
-            prev = db.scalar(
-                query.where(write_model.wr_num < write.wr_num)
-                .order_by(desc(write_model.wr_num))
-            )
-        # 같은 wr_num 내에서 다음글 조회
-        next = db.scalar(
-            query.where(
-                write_model.wr_num == write.wr_num,
-                write_model.wr_reply > write.wr_reply,
-            ).order_by(asc(write_model.wr_reply))
-        )
-        if not next:
-            next = db.scalar(
-                query.where(write_model.wr_num > write.wr_num)
-                .order_by(asc(write_model.wr_num))
-            )
-
-    # 파일정보 조회
-    images, normal_files = BoardFileManager(board, wr_id).get_board_files_by_type(request)
-
-    # 링크정보 조회
-    links = []
-    for i in range(1, 3):
-        url = getattr(write, f"wr_link{i}")
-        hit = getattr(write, f"wr_link{i}_hit")
-        if url:
-            links.append({"no": i, "url": url, "hit": hit})
-
-    # 댓글 목록 조회
-    comments = db.scalars(
-        select(write_model).filter_by(
-            wr_parent=wr_id,
-            wr_is_comment=1
-        ).order_by(write_model.wr_comment, write_model.wr_comment_reply)
-    ).all()
-
-    for comment in comments:
-        comment.name = cut_name(request, comment.wr_name)
-        comment.ip = board_config.get_display_ip(comment.wr_ip)
-        comment.is_reply = len(comment.wr_comment_reply) < 5 and board.bo_comment_level <= member_level
-        comment.is_edit = admin_type or (member and comment.mb_id == member.mb_id)
-        comment.is_del = admin_type or (member and comment.mb_id == member.mb_id) or not comment.mb_id 
-        comment.is_secret = "secret" in comment.wr_option
-
-        # 비밀댓글 처리
-        session_secret_comment_name = f"ss_secret_comment_{bo_table}_{comment.wr_id}"
-        parent_write = db.get(write_model, comment.wr_parent)
-        if (comment.is_secret
-                and not admin_type
-                and not is_owner(comment, mb_id)
-                and not is_owner(parent_write, mb_id)
-                and not request.session.get(session_secret_comment_name)):
-            comment.is_secret_content = True
-            comment.save_content = "비밀글 입니다."
-        else:
-            comment.is_secret_content = False
-            comment.save_content = comment.wr_content
-
-    # TODO: 전체목록보이기 사용 => 게시글 목록 부분을 분리해야함
-    write_list = None
-    # if member_level >= board.bo_list_level and board.bo_use_list_view:
-    #     write_list = list_post(request, db, bo_table, search_params={
-    #         "current_page": 1,
-    #         "sca": request.query_params.get("sca"),
-    #         "sfl": request.query_params.get("sfl"),
-    #         "stx": request.query_params.get("stx"),
-    #         "sst": request.query_params.get("sst"),
-    #         "sod": request.query_params.get("sod"),
-    #     }).body.decode("utf-8")
-
-    context = {
-        "request": request,
-        "board": board,
-        "write": write,
-        "write_list": write_list,
-        "comments": comments,
-        "prev": prev,
-        "next": next,
-        "images": images,
-        "files": images + normal_files,
-        "links": links,
-        "is_write": board_config.is_write_level(),
-        "is_reply": board_config.is_reply_level(),
-        "is_comment_write": board_config.is_comment_level(),
-    }
-    return templates.TemplateResponse(
-        f"/board/{board.bo_skin}/read_post.html", context)
+    read_post_template = ReadPostTemplate(
+        request, db, bo_table, board, wr_id, write, request.state.login_member
+    )
+    return read_post_template.response()
 
 
 # 게시글 삭제
