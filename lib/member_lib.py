@@ -1,5 +1,6 @@
 import os
 import re
+from glob import glob
 from datetime import date, datetime, timedelta
 from PIL import Image, UnidentifiedImageError
 from typing import Union, Optional, Tuple
@@ -10,7 +11,7 @@ from sqlalchemy import exists, select
 
 from core.database import DBConnect, db_session
 from core.models import Board, Config, Group, Member
-from lib.common import is_none_datetime, get_img_path, delete_image
+from lib.common import is_none_datetime, delete_image
 from lib.pbkdf2 import validate_password
 from lib.service import BaseService
 
@@ -145,7 +146,7 @@ class MemberService(BaseService):
         return self.db.scalar(select(Member).where(Member.mb_id == self.mb_id))
 
 
-def get_member_icon(request: Request, mb_id: str = None) -> str:
+def get_member_icon(mb_id: str = None) -> str:
     """회원 아이콘 경로를 반환하는 함수
 
     Args:
@@ -155,11 +156,10 @@ def get_member_icon(request: Request, mb_id: str = None) -> str:
         str: 회원 아이콘 경로
     """
     icon_dir = "data/member"
-    image_path = get_img_path(request, icon_dir, mb_id)
-    return image_path
+    return get_image_path_for_member(icon_dir, mb_id)
 
 
-def get_member_image(request: Request, mb_id: str = None) -> str:
+def get_member_image(mb_id: str = None) -> str:
     """회원 이미지 경로를 반환하는 함수
 
     Args:
@@ -169,7 +169,28 @@ def get_member_image(request: Request, mb_id: str = None) -> str:
         str: 회원 이미지 경로
     """
     image_dir = "data/member_image"
-    image_path = get_img_path(request, image_dir, mb_id)
+    return get_image_path_for_member(image_dir, mb_id)
+
+
+def get_image_path_for_member(dir: str, mb_id: str = None) -> str:
+    """이미지 경로를 반환하는 함수
+    Args:
+        dir (str): 상위 경로
+        mb_id (str, optional): 회원아이디.
+    Returns:
+        str: 이미지 경로
+    """
+
+    image_path = "/static/img/no_profile.gif"
+    if not mb_id:
+        return image_path
+
+    member_dir = os.path.join(dir, mb_id[:2])
+    image_files = glob(os.path.join(member_dir, f"{mb_id}.*"))
+    if image_files:
+        mtime = os.path.getmtime(image_files[0])        # 캐시를 위해 파일수정시간을 추가
+        image_path = f"/{image_files[0]}?{int(mtime)}"
+
     return image_path
 
 

@@ -30,7 +30,7 @@
         <h2 class="blind">페이지 정보</h2>
 
         <div class="header_profile_img">
-            <img src="{{ get_member_image(request, write.mb_id) }}" alt="">
+            <img src="{{ get_member_image(write.mb_id) }}" alt="">
         </div>
 
         <div class="header_info">
@@ -270,7 +270,7 @@
             {% endif %}
 
             <div class="comment_profile_img">
-                <img src="{{ get_member_image(request, comment.mb_id) }}" alt="">
+                <img src="{{ get_member_image(comment.mb_id) }}" alt="">
             </div>
 
             <div class="comment_contents">
