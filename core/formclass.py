@@ -1,8 +1,62 @@
+import inspect
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, Type
+from typing_extensions import Annotated
 
-from fastapi import Form
+from fastapi import Form, Request
+from pydantic import BaseModel
+
+from core.exception import AlertException
+
+
+def as_form(cls):
+    """
+    폼 데이터 처리를 위한 데코레이터
+    - BaseModel을 상속받는 클래스에 대해 동작합니다.
+    """
+    new_params = [
+        # 모델의 각 필드를 순회하며 새로운 파라미터 목록을 생성합니다.
+        inspect.Parameter(
+            field_name,
+            inspect.Parameter.POSITIONAL_ONLY,
+            default=model_field.default,
+            annotation=Annotated[model_field.rebuild_annotation(), Form()]
+        )
+        for field_name, model_field in cls.model_fields.items()
+    ]
+
+    cls.__signature__ = cls.__signature__.replace(parameters=new_params)
+    # 생성된 새로운 파라미터 목록으로 클래스의 __signature__ 속성을 교체하여,
+    # 클래스가 초기화될 때 이를 반영하도록 합니다.
+
+    return cls
+
+
+async def convert_form_to_model(model: Type[BaseModel], request: Request):
+    """
+    Request 객체로부터 폼 데이터를 추출하고, 이를 주어진 Pydantic 모델 타입으로 변환합니다.
+
+    Parameters:
+    - model: Type[BaseModel] - 변환할 대상 Pydantic 모델의 타입.
+    - request: Request - FastAPI의 Request 객체, 폼 데이터를 포함.
+
+    Returns:
+    - BaseModel의 인스턴스: 폼 데이터를 기반으로 생성된 Pydantic 모델 인스턴스.
+
+    Raises:
+    - AlertException: 폼 데이터 변환 중 ValueError가 발생할 경우,
+                      사용자 정의 예외로 변환하여 상태 코드 422와 함께 발생.
+    """
+    try:
+        # Request 객체를 사용하여 요청 Form을 추출합니다.
+        form_data = await request.form()
+        # 추출된 데이터로 Pydantic 모델 인스턴스를 생성합니다.
+        convert_data = model(**form_data)
+    except ValueError as e:
+        # Pydantic의 ValidationError가 발생하면 다른 예외를 발생시킵니다.
+        raise AlertException(status_code=422, detail=str(e))
+    return convert_data
 
 
 @dataclass
@@ -385,6 +439,7 @@ class FaqForm:
     fa_subject: str = Form(default="")
     fa_content: str = Form(default="")
     fa_order: int = Form(default=1)
+
 
 @dataclass
 class PollForm:
