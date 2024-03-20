@@ -27,7 +27,7 @@ from lib.point import delete_point, insert_point
 from lib.template_filters import datetime_format, number_format
 from lib.g5_compatibility import G5Compatibility
 from lib.html_sanitizer import content_sanitizer
-from routers.board import ListPostTemplate, ReadPostTemplate
+from routers.board import ListPostTemplate, ReadPostTemplate, DeletePostTemplate
 
 
 router = APIRouter()
@@ -720,18 +720,10 @@ async def delete_post(
     """
     게시글을 삭제한다.
     """
-    board_config = BoardConfig(request, board)
-
-    if not board_config.is_delete_by_comment(wr_id):
-        raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_delete}건 이상 존재하므로 삭제 할 수 없습니다.", 403)
-
-    # 게시글 삭제 처리
-    delete_write(request, bo_table, write)
-
-    # request.query_params에서 token 제거
-    query_params = remove_query_params(request, "token")
-    return RedirectResponse(
-        set_url_query_params(f"/board/{bo_table}", query_params), status_code=303)
+    delete_post_template = DeletePostTemplate(
+        request, db, bo_table, board, wr_id, write, request.state.login_member
+    )
+    return delete_post_template.response()
 
 
 @router.get("/{bo_table}/{wr_id}/download/{bf_no}", dependencies=[Depends(check_group_access)])

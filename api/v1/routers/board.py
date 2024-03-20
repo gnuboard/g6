@@ -3,28 +3,28 @@ from typing_extensions import Annotated, Dict, List
 
 from fastapi import APIRouter, Depends, Request, Path, HTTPException, status, UploadFile, File, Form
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import func, select, update, exists, inspect, delete
+from sqlalchemy import func, select, update, inspect
 
 from core.database import db_session
-from core.models import Board, Group, Scrap, Member, BoardNew, WriteBaseModel
+from core.models import Board, Group, WriteBaseModel
 from lib.board_lib import (
     BoardConfig, get_next_num, generate_reply_character,
-    insert_board_new, send_write_mail, is_owner, BoardFileManager
+    insert_board_new, send_write_mail, BoardFileManager
 )
 from lib.common import dynamic_create_write_table, FileCache
 from lib.dependencies import common_search_query_params
-from lib.member_lib import get_admin_type, get_member_level
+from lib.member_lib import get_admin_type
 from lib.template_filters import number_format
-from lib.point import insert_point, delete_point
+from lib.point import insert_point
 from lib.g5_compatibility import G5Compatibility
 from api.v1.dependencies.board import (
     get_member_info, get_board, get_group,
-    validate_write, validate_update_write, validate_delete_write,
+    validate_write, validate_update_write,
     validate_comment, validate_update_comment, validate_delete_comment,
     validate_upload_file_write, get_write, get_parent_write
 )
 from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel
-from routers.board import ListPostAPI, ReadPostAPI
+from routers.board import ListPostAPI, ReadPostAPI, DeletePostAPI
 
 
 router = APIRouter()
@@ -285,110 +285,17 @@ async def api_delete_post(
     db: db_session,
     member_info: Annotated[Dict, Depends(get_member_info)],
     board: Annotated[Board, Depends(get_board)],
-    write: Annotated[WriteBaseModel, Depends(validate_delete_write)],
+    write: Annotated[WriteBaseModel, Depends(get_write)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
 ) -> Dict:
     """
     지정된 게시판의 글을 삭제합니다.
     """
-    board_config = BoardConfig(request, board)
-    
-    if not board_config.is_delete_by_comment(wr_id):
-        raise HTTPException(status_code=403, detail=f"이 글과 관련된 댓글이 {board.bo_count_delete}건 이상 존재하므로 삭제 할 수 없습니다.")
-
-    mb_id = member_info["mb_id"]
-
-    write_model = dynamic_create_write_table(bo_table)
-
-    member_level = get_member_level(request)
-    member_admin_type = get_admin_type(request, mb_id, board=board)
-    write_member_mb_no = db.scalar(select(Member.mb_no).where(Member.mb_id == write.mb_id))
-    write_member = db.get(Member, write_member_mb_no)
-    write_member_level = getattr(write_member, "mb_level", 1)
-
-    # 권한 체크
-    if member_admin_type != "super":
-        if member_admin_type and write_member_level > member_level:
-            raise HTTPException(status_code=403, detail="자신보다 높은 권한의 게시글은 삭제할 수 없습니다.")
-        elif write.mb_id and not is_owner(write, mb_id):
-            raise HTTPException(status_code=403, detail="자신의 게시글만 삭제할 수 있습니다.")
-        elif not write.mb_id and not request.session.get(f"ss_delete_{bo_table}_{write.wr_id}"):
-            raise HTTPException(status_code=403, detail="비회원 글을 삭제할 권한이 없습니다.")
-    
-    # 답변글이 있을 때 삭제 불가
-    write_model = dynamic_create_write_table(bo_table)
-    exists_reply = db.scalar(
-        exists(write_model)
-        .where(
-            write_model.wr_reply.like(f"{write.wr_reply}%"),
-            write_model.wr_num == write.wr_num,
-            write_model.wr_is_comment == 0,
-            write_model.wr_id != write.wr_id
-        )
-        .select()
+    delete_post_api = DeletePostAPI(
+        request, db, bo_table, board, wr_id, write, member_info["member"]
     )
-    if exists_reply:
-        raise HTTPException(status_code=403, detail="답변이 있는 글은 삭제할 수 없습니다. 우선 답변글부터 삭제하여 주십시오.")
-
-    if not board_config.is_delete_by_comment(write.wr_id):
-        raise HTTPException(status_code=403, detail=f"이 글과 관련된 댓글이 {board.bo_count_delete}건 이상 존재하므로 삭제 할 수 없습니다.")
-
-    # 원글 + 댓글
-    delete_write_count = 0
-    delete_comment_count = 0
-    writes = db.scalars(
-        select(write_model)
-        .filter_by(wr_parent=write.wr_id)
-        .order_by(write_model.wr_id)
-    ).all()
-
-    for write in writes:
-        # 원글 삭제
-        if not write.wr_is_comment:
-            # 원글 포인트 삭제
-            if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
-                insert_point(request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
-            # 파일+섬네일 삭제
-            BoardFileManager(board, write.wr_id).delete_board_files()
-
-            delete_write_count += 1
-            # TODO: 에디터 섬네일 삭제
-        else:
-            # 댓글 포인트 삭제
-            if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "댓글"):
-                insert_point(request, write.mb_id, board.bo_comment_point * (-1), f"{board.bo_subject} {write.wr_id} 댓글 삭제")
-
-            delete_comment_count += 1
-
-    # 원글+댓글 삭제
-    db.execute(delete(write_model).filter_by(wr_parent=write.wr_id))
-
-    # 최근 게시물 삭제
-    db.execute(delete(BoardNew).where(
-        BoardNew.bo_table == bo_table,
-        BoardNew.wr_parent == write.wr_id
-    ))
-
-    # 스크랩 삭제
-    db.execute(delete(Scrap).filter_by(
-        bo_table=bo_table,
-        wr_id=write.wr_id
-    ))
-
-    # 공지사항 삭제
-    board.bo_notice = board_config.set_board_notice(write.wr_id, False)
-
-    # 게시글 갯수 업데이트
-    board.bo_count_write -= delete_write_count
-    board.bo_count_comment -= delete_comment_count
-
-    db.commit()
-
-    # 최신글 캐시 삭제
-    FileCache().delete_prefix(f'latest-{bo_table}')
-
-    return {"result": "deleted"}
+    return delete_post_api.response()
 
 
 @router.post("/uploadfile/{bo_table}/{wr_id}",

@@ -233,26 +233,6 @@ def validate_update_write(
     return write
 
 
-def validate_delete_write(
-    request: Request,
-    member_info: Annotated[Dict, Depends(get_member_info)],
-    write: Annotated[WriteBaseModel, Depends(get_write)],
-    board: Annotated[Board, Depends(get_board)],
-):
-    mb_id = member_info["mb_id"]
-    if not mb_id:
-        raise HTTPException(status_code=403, detail="로그인 후 이용해주세요.")
-    
-    admin_type = get_admin_type(request, mb_id, board=board)
-    if not any([
-        admin_type,
-        is_owner(write, mb_id),
-    ]):
-        raise HTTPException(status_code=403, detail="글을 삭제할 권한이 없습니다.")
-
-    return write
-
-
 def validate_upload_file_write(
     request: Request,
     member_info: Annotated[Dict, Depends(get_member_info)],
