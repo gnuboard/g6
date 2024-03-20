@@ -152,13 +152,13 @@ def get_point_sum(request: Request, mb_id: str) -> int:
     """포인트 내역 합계"""
     config = request.state.config
     with DBConnect().sessionLocal() as db:
-        member_service = MemberService(request, db, mb_id)
+        member_service = MemberService(request, db)
         current_time = datetime.now()
 
         if config.cf_point_term > 0:
             expire_point = get_expire_point(request, mb_id)
             if expire_point > 0:
-                member = member_service.fetch_member()
+                member = member_service.fetch_member(mb_id)
                 point = expire_point * (-1)
                 new_point = Point(
                     mb_id=mb_id,

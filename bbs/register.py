@@ -1,7 +1,6 @@
-import secrets
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Form, File, Query, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, File, Path, Query, UploadFile
 from fastapi.responses import RedirectResponse, Response
 
 from core.database import db_session
@@ -12,11 +11,10 @@ from core.template import UserTemplates
 from lib.common import *
 from lib.mail import send_register_mail
 from lib.member_lib import (
-    MemberService,
-    validate_and_update_member_image, validate_email, validate_mb_id, validate_nickname
+    MemberService, validate_and_update_member_image
 )
-from lib.dependencies import validate_token, validate_captcha
-from lib.pbkdf2 import create_hash
+from lib.dependencies import validate_regist_agree, validate_token, validate_captcha
+from lib.dependency.member import validate_register_member
 from lib.point import insert_point
 from lib.template_filters import default_if_none
 
@@ -68,17 +66,13 @@ async def post_register(
     return RedirectResponse(url="/bbs/register_form", status_code=302)
 
 
-@router.get("/register_form", name='register_form')
+@router.get("/register_form",
+            dependencies=[Depends(validate_regist_agree)],
+            name='register_form')
 async def get_register_form(request: Request):
     """
     회원가입 폼 페이지
     """
-    # 약관에 동의를 하지 않았다면
-    if not request.session.get("ss_agree", None):
-        return RedirectResponse(url="/bbs/register", status_code=302)
-    if not request.session.get("ss_agree2", None):
-        return RedirectResponse(url="/bbs/register", status_code=302)
-
     config = request.state.config
     member = Member()
     member.mb_level = config.cf_register_level
@@ -100,115 +94,46 @@ async def get_register_form(request: Request):
 
 
 @router.post("/register_form",
-             dependencies=[Depends(validate_token), Depends(validate_captcha)],
+             dependencies=[Depends(validate_token),
+                           Depends(validate_captcha),
+                           Depends(validate_regist_agree)],
              name='register_form_save')
 async def post_register_form(
     request: Request,
-    db: db_session,
+    member_service: Annotated[MemberService, Depends()],
+    member_form: Annotated[MemberForm, Depends(validate_register_member)],
     background_tasks: BackgroundTasks,
     mb_id: str = Form(None),
-    mb_password: str = Form(None),
-    mb_password_re: str = Form(None),
-    mb_certify_case: str = Form(default=""),
     mb_img: UploadFile = File(None),
     mb_icon: UploadFile = File(None),
-    mb_zip: str = Form(default=""),
-    member_form: MemberForm = Depends()
 ):
     """
     회원가입 처리
     """
     config = request.state.config
-
-    # 약관 동의 체크
-    if not request.session.get("ss_agree", None):
-        return RedirectResponse(url="/bbs/register", status_code=302)
-    if not request.session.get("ss_agree2", None):
-        return RedirectResponse(url="/bbs/register", status_code=302)
-
-    # 회원 아이디 검사
-    if len(mb_id) < 3 or len(mb_id) > 20:
-        raise AlertException("회원아이디는 3~20자 이어야 합니다.", 400)
-    if not re.match(r"^[a-zA-Z0-9_]+$", mb_id):
-        raise AlertException("회원아이디는 영문자, 숫자, _ 만 사용할 수 있습니다.", 400)
-    is_valid, message = validate_mb_id(request, mb_id)
-    if not is_valid:
-        raise AlertException(status_code=400, detail=message)
-
-    # 비밀번호 검사
-    if not (mb_password and mb_password_re):
-        raise AlertException(status_code=400, detail="비밀번호를 입력해 주세요.")
-    elif mb_password != mb_password_re:
-        raise AlertException(status_code=400, detail="비밀번호와 비밀번호 확인이 일치하지 않습니다.")
-
-    # 이름 검사
-    if not member_form.mb_name:
-        raise AlertException(status_code=400, detail="이름을 입력해 주세요.")
-
-    # 닉네임 검사
-    is_valid, message = validate_nickname(request, member_form.mb_nick)
-    if not is_valid:
-        raise AlertException(status_code=400, detail=message)
-
-    # 이메일 검사
-    is_valid, message = validate_email(request, member_form.mb_email)
-    if not is_valid:
-        raise AlertException(message, 400)
-
-    # 본인인증
-    if mb_certify_case and member_form.mb_certify:
-        member_form.mb_certify = mb_certify_case
-        member_form.mb_adult = member_form.mb_adult
-    else:
-        member_form.mb_certify = ""
-        member_form.mb_adult = 0
-
-    # 이미지 검사 & 업로드
-    validate_and_update_member_image(request, mb_img, mb_icon, mb_id, None, None)
-
-    if member_form.mb_sex not in {"m", "f"}:
-        member_form.mb_sex = ""
-
-    # 한국 우편번호 (postalcode)
-    if mb_zip:
-        member_form.mb_zip1 = mb_zip[:3]
-        member_form.mb_zip2 = mb_zip[3:]
-
-    # 레벨 입력방지
-    del member_form.mb_level
-
-    new_member = Member(mb_id=mb_id, **member_form.__dict__)
-    new_member.mb_password = create_hash(mb_password)
-    new_member.mb_level = config.cf_register_level
-    new_member.mb_login_ip = get_client_ip(request)
-
-    # 메일인증
-    if config.cf_use_email_certify:
-        # 일회용 인증키 생성
-        new_member.mb_email_certify2 = secrets.token_hex(16)
-    else:
-        # 메일인증을 사용하지 않을 경우 바로 인증처리
-        new_member.mb_email_certify = datetime.now()
-
-    db.add(new_member)
-    db.commit()
+    member = member_service.create_member(member_form)
 
     # 회원가입 포인트 지급
-    insert_point(request, new_member.mb_id, config.cf_register_point,  "회원가입 축하", "@member", new_member.mb_id, "회원가입")
+    insert_point(request, member.mb_id, config.cf_register_point,
+                "회원가입 축하", "@member", member.mb_id, "회원가입")
 
     # 추천인 포인트 지급
     mb_recommend = member_form.mb_recommend
     if config.cf_use_recommend and mb_recommend:
-        insert_point(request, mb_recommend, config.cf_recommend_point, f"{new_member.mb_id}의 추천인", "@member", mb_recommend, f"{new_member.mb_id} 추천")
+        insert_point(request, mb_recommend, config.cf_recommend_point,
+                    f"{member.mb_id}의 추천인", "@member", mb_recommend, f"{member.mb_id} 추천")
 
     # 회원가입메일 발송 처리(백그라운드)
-    background_tasks.add_task(send_register_mail, request, new_member)
+    background_tasks.add_task(send_register_mail, request, member)
+
+    # 이미지 검사 & 업로드
+    validate_and_update_member_image(request, mb_img, mb_icon, mb_id, None, None)
 
     # 회원가입 이후 세션 처리
     if not config.cf_use_email_certify:
-        request.session["ss_mb_id"] = new_member.mb_id
-        request.session["ss_mb_key"] = session_member_key(request, new_member)
-    request.session["ss_mb_reg"] = new_member.mb_id
+        request.session["ss_mb_id"] = member.mb_id
+        request.session["ss_mb_key"] = session_member_key(request, member)
+    request.session["ss_mb_reg"] = member.mb_id
 
     return RedirectResponse(url="/bbs/register_result", status_code=302)
 
@@ -243,13 +168,13 @@ async def register_result(
 
 @router.get("/email_certify/{mb_id}")
 async def email_certify(
-    request: Request,
     db: db_session,
     member_service: Annotated[MemberService, Depends()],
-    certify: str = Query(...),
+    mb_id: Annotated[str, Path(...)],
+    certify: Annotated[str, Query(...)]
 ):
     """회원가입 메일인증 처리"""
-    member = member_service.get_email_non_certify_member(certify)
+    member = member_service.get_email_non_certify_member(mb_id, certify)
     member.mb_email_certify = datetime.now()
     member.mb_email_certify2 = ""
     db.commit()

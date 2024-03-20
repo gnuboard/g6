@@ -1,7 +1,7 @@
 from typing_extensions import Annotated
 
 from datetime import datetime
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Path
 from starlette.requests import Request
 
 from core.template import UserTemplates
@@ -16,8 +16,9 @@ templates = UserTemplates()
 async def get_profile(
     request: Request,
     member_service: Annotated[MemberService, Depends()],
+    mb_id: Annotated[str, Path(...)]
 ):
-    member_profile = member_service.get_member_profile(request.state.login_member)
+    member_profile = member_service.get_member_profile(mb_id, request.state.login_member)
     member_profile.mb_profile = member_profile.mb_profile or "소개 내용이 없습니다."
     mb_datetime = member_profile.mb_datetime if not is_none_datetime(member_profile.mb_datetime) else datetime.now()
     member_after_regdate = (datetime.now() - mb_datetime).days + 1

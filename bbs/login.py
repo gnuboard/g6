@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Form, Query
+from typing_extensions import Annotated
+
+from fastapi import APIRouter, Depends, Form, Query
 from fastapi.responses import RedirectResponse
 
 from core.database import db_session
@@ -28,15 +30,14 @@ async def login_form(
 @router.post("/login")
 async def login(
         request: Request,
-        db: db_session,
+        member_service: Annotated[MemberService, Depends()],
         mb_id: str = Form(...),
         mb_password: str = Form(...),
         auto_login: bool = Form(default=False),
         url: str = Form(default="/")
 ):
     """로그인 폼화면에서 로그인"""
-    member_service = MemberService(request, db, mb_id)
-    member = member_service.authenticate_member(mb_password)
+    member = member_service.authenticate_member(mb_id, mb_password)
 
     ss_mb_key = session_member_key(request, member)
     # 로그인 성공시 세션에 저장

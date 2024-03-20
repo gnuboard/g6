@@ -2,6 +2,7 @@ import os
 from typing_extensions import Annotated
 
 from fastapi import Depends, Form, Path, Query, Request
+from fastapi.responses import RedirectResponse
 from sqlalchemy import exists, inspect, select
 
 from core.database import DBConnect, db_session
@@ -233,3 +234,9 @@ def get_login_member(request: Request):
         raise AlertException(f"로그인 후 이용 가능합니다.", 403, url=url)
 
     return member
+
+
+def validate_regist_agree(request: Request):
+    """약관 동의 여부 검사"""
+    if not request.session.get("ss_agree", None) or not request.session.get("ss_agree2", None):
+        return RedirectResponse(url="/bbs/register", status_code=302)

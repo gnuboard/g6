@@ -1,5 +1,6 @@
 import secrets
 import zlib
+from typing_extensions import Annotated
 from urllib.parse import parse_qs
 from uuid import uuid4
 
@@ -94,7 +95,8 @@ async def social_login(request: Request):
 @router.get('/social/login/callback')
 async def authorize_social_login(
         request: Request,
-        db: db_session
+        db: db_session,
+        member_service: Annotated[MemberService, Depends()]
 ):
     """소셜 로그인 인증 콜백
     Args:
@@ -131,8 +133,7 @@ async def authorize_social_login(
     # 가입된 소셜 서비스 아이디가 존재하는지 확인
     social_profile = SocialAuthService.get_profile_by_identifier(identifier, provider_name)
     if social_profile:
-        member_service = MemberService(request, db, social_profile.mb_id)
-        member = member_service.get_current_member()
+        member = member_service.get_member(social_profile.mb_id)
 
         # 로그인
         request.session["ss_mb_id"] = member.mb_id

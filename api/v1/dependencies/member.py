@@ -5,7 +5,6 @@ from typing_extensions import Annotated
 
 from fastapi import Depends, HTTPException, Request, status
 
-from core.database import db_session
 from core.models import Member
 from lib.common import check_profile_open
 from lib.member_lib import (
@@ -22,9 +21,8 @@ from api.v1.models.member import CreateMemberModel, UpdateMemberModel
 
 
 async def get_current_member(
-    request: Request,
-    db: db_session,
-    token: Annotated[str, Depends(oauth2_scheme)]
+    token: Annotated[str, Depends(oauth2_scheme)],
+    member_service: Annotated[MemberServiceAPI, Depends()]
 ) -> Member:
     """현재 로그인한 회원 정보를 조회합니다.
 
@@ -52,8 +50,7 @@ async def get_current_member(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    member_service = MemberServiceAPI(request, db, mb_id)
-    member = member_service.get_current_member()
+    member = member_service.get_member(mb_id)
 
     return member
 
