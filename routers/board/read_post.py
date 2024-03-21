@@ -28,10 +28,10 @@ class ReadPostCommon(BoardRouter):
     ):
         super().__init__(request, db, bo_table, board, member)
         self.wr_id = wr_id
-        self.board.subject = self.board_config.subject
+        self.board.subject = self.subject
 
         # 게시글 정보 설정
-        write.ip = self.board_config.get_display_ip(write.wr_ip)
+        write.ip = self.get_display_ip(write.wr_ip)
         write.name = cut_name(request, write.wr_name)
         self.write = write
 
@@ -89,7 +89,7 @@ class ReadPostCommon(BoardRouter):
 
         for comment in comments:
             comment.name = cut_name(self.request, comment.wr_name)
-            comment.ip = self.board_config.get_display_ip(comment.wr_ip)
+            comment.ip = self.get_display_ip(comment.wr_ip)
             comment.is_reply = len(comment.wr_comment_reply) < 5 and self.board.bo_comment_level <= self.member_level
             comment.is_edit = bool(self.admin_type) or (self.member and comment.mb_id == self.member.mb_id)
             comment.is_del = bool(self.admin_type) or (self.member and comment.mb_id == self.member.mb_id) or not comment.mb_id
@@ -128,7 +128,7 @@ class ReadPostTemplate(ReadPostCommon):
         self.template_url: str = f"/board/{self.board.bo_skin}/read_post.html"
         self.admin_type = get_admin_type(request, self.mb_id, board=board)
         self.session_name = f"ss_view_{bo_table}_{wr_id}"
-        self.request.state.editor = self.board_config.select_editor
+        self.request.state.editor = self.select_editor
         self.prev, self.next = self.get_prev_next()
 
         # TODO: 전체목록보이기 사용 => 게시글 목록 부분을 분리해야함
@@ -154,9 +154,9 @@ class ReadPostTemplate(ReadPostCommon):
             "files": self.images + self.normal_files,
             "links": self.links,
             "comments": self.comments,
-            "is_write": self.board_config.is_write_level(),
-            "is_reply": self.board_config.is_reply_level(),
-            "is_comment_write": self.board_config.is_comment_level(),
+            "is_write": self.is_write_level(),
+            "is_reply": self.is_reply_level(),
+            "is_comment_write": self.is_comment_level(),
         }
 
     def validate_read_post(self):
@@ -165,7 +165,7 @@ class ReadPostTemplate(ReadPostCommon):
             raise AlertException(f"{self.write.wr_id} : 존재하지 않는 게시글입니다.", 404)
         
         # 읽기 권한 검증
-        if not self.board_config.is_read_level():
+        if not self.is_read_level():
             raise AlertException("글을 읽을 권한이 없습니다.", 403)
 
         # 비밀글 검증
@@ -199,7 +199,7 @@ class ReadPostTemplate(ReadPostCommon):
             # 포인트 검사
             if self.config.cf_use_point:
                 read_point = self.board.bo_read_point
-                if not self.board_config.is_read_point(self.write):
+                if not self.is_read_point(self.write):
                     point = number_format(abs(read_point))
                     message = f"게시글 읽기에 필요한 포인트({point})가 부족합니다."
                     if not self.member:

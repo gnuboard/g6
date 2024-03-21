@@ -42,7 +42,7 @@ class ListPostCommon(BoardRouter):
             else:
                 self.query = self.query.order_by(asc(sst))
         else:
-            self.query = self.board_config.get_list_sort_query(self.write_model, self.query)
+            self.query = self.get_list_sort_query(self.write_model, self.query)
 
         if sst and hasattr(self.write_model, sst):
             if sod == "desc":
@@ -50,7 +50,7 @@ class ListPostCommon(BoardRouter):
             else:
                 self.query = self.query.order_by(asc(sst))
         else:
-            self.query = self.board_config.get_list_sort_query(self.write_model, self.query)
+            self.query = self.get_list_sort_query(self.write_model, self.query)
 
         if (sca or (sfl and stx)):  # 검색일 경우
             search_part = int(self.config.cf_search_part) or 10000
@@ -76,7 +76,7 @@ class ListPostCommon(BoardRouter):
         search_params: dict,
     ):
         current_page = search_params.get('current_page')
-        page_rows = self.board_config.page_rows
+        page_rows = self.page_rows
 
         # 페이지 번호에 따른 offset 계산
         offset = (current_page - 1) * page_rows
@@ -91,7 +91,7 @@ class ListPostCommon(BoardRouter):
         # 게시글 정보 수정
         for write in writes:
             write.num = total_count - offset - writes.index(write)
-            write = get_list(self.request, write, self.board_config)
+            write = get_list(self.request, write, self)
 
         return writes
     
@@ -103,11 +103,11 @@ class ListPostCommon(BoardRouter):
         sca = self.request.query_params.get("sca")
         notice_writes = []
         if current_page == 1:
-            notice_ids = self.board_config.get_notice_list()
+            notice_ids = self.get_notice_list()
             notice_query = select(self.write_model).where(self.write_model.wr_id.in_(notice_ids))
             if sca:
                 notice_query = notice_query.where(self.write_model.ca_name == sca)
-            notice_writes = [get_list(self.request, write, self.board_config) for write in self.db.scalars(notice_query).all()]
+            notice_writes = [get_list(self.request, write, self) for write in self.db.scalars(notice_query).all()]
         return notice_writes
 
     def get_total_count(self):
@@ -127,7 +127,7 @@ class ListPostTemplate(ListPostCommon):
         search_params: dict,
     ):
         super().__init__(request, db, bo_table, board, member, search_params)
-        if not self.board_config.is_list_level():
+        if not self.is_list_level():
             raise AlertException("목록을 볼 권한이 없습니다.", 403)
 
         self.template_url: str = f"/board/{self.board.bo_skin}/list_post.html"
@@ -135,16 +135,16 @@ class ListPostTemplate(ListPostCommon):
             "request": request,
             "categories": self.categories,
             "board": self.board,
-            "board_config": self.board_config,
+            "board_config": self,
             "notice_writes": self.get_notice_writes(search_params),
             "writes": self.get_writes(search_params),
             "total_count": self.get_total_count(),
             "current_page": search_params['current_page'],
-            "paging": get_paging(request, search_params['current_page'], self.get_total_count(), self.board_config.page_rows),
-            "is_write": self.board_config.is_write_level(),
-            "table_width": self.board_config.get_table_width,
-            "gallery_width": self.board_config.gallery_width,
-            "gallery_height": self.board_config.gallery_height,
+            "paging": get_paging(request, search_params['current_page'], self.get_total_count(), self.page_rows),
+            "is_write": self.is_write_level(),
+            "table_width": self.get_table_width,
+            "gallery_width": self.gallery_width,
+            "gallery_height": self.gallery_height,
             "prev_spt": self.prev_spt,
             "next_spt": self.next_spt,
         }
