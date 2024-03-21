@@ -1,10 +1,15 @@
+from enum import Enum
 from fastapi import Request
 
 from core.database import db_session
 from core.models import Board, Member
 from lib.board_lib import BoardConfig, get_admin_type
+from lib.template_filters import number_format
 from lib.common import dynamic_create_write_table
 
+
+class PointEnum(Enum):
+    WRITE = {"attr": "bo_write_point", "func": "is_write_point", "action": "글 작성"}
 
 class BoardRouter(BoardConfig):
 
@@ -48,3 +53,17 @@ class BoardRouter(BoardConfig):
             return default_name
         else:
             raise self.ClassException(detail="로그인 세션 만료, 비회원 글쓰기시 작성자 이름 미기재 등의 비정상적인 접근입니다.", status_code=400)
+
+    def validate_possible_point(self, point_type: PointEnum):
+        if not self.config.cf_use_point:
+            return
+
+        point = getattr(self.board, point_type.value["attr"])
+        validate_func = getattr(self, point_type.value["func"])
+    
+        if not validate_func():
+            point = number_format(abs(point))
+            message = f"{point_type.value['action']}에 필요한 포인트({point})가 부족합니다. "
+            if not self.member:
+                message += "로그인 후 다시 시도해주세요."
+            raise self.ClassException(status_code=403, detail=message)

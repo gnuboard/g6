@@ -3,28 +3,27 @@ from typing_extensions import Annotated, Dict, List
 
 from fastapi import APIRouter, Depends, Request, Path, HTTPException, status, UploadFile, File, Form
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import func, select, update, inspect
+from sqlalchemy import func, select, update
 
 from core.database import db_session
 from core.models import Board, Group, WriteBaseModel
 from lib.board_lib import (
-    BoardConfig, get_next_num, generate_reply_character,
+    BoardConfig, generate_reply_character,
     insert_board_new, send_write_mail, BoardFileManager
 )
-from lib.common import dynamic_create_write_table, FileCache
+from lib.common import dynamic_create_write_table
 from lib.dependencies import common_search_query_params
 from lib.member_lib import get_admin_type
-from lib.template_filters import number_format
 from lib.point import insert_point
 from lib.g5_compatibility import G5Compatibility
 from api.v1.dependencies.board import (
     get_member_info, get_board, get_group,
-    validate_write, validate_update_write,
+    validate_write,
     validate_comment, validate_update_comment, validate_delete_comment,
     validate_upload_file_write, get_write, get_parent_write
 )
 from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel
-from routers.board import ListPostAPI, ReadPostAPI, DeletePostAPI
+from routers.board import ListPostAPI, CreatePostAPI, ReadPostAPI, UpdatePostAPI, DeletePostAPI
 
 
 router = APIRouter()
@@ -131,92 +130,10 @@ async def api_create_post(
     """
     지정된 게시판에 새 글을 작성합니다.
     """
-
-    config = request.state.config
-    board_config = BoardConfig(request, board)
-
-    # 게시판 관리자 확인
-
-    member = member_info["member"]
-    mb_id = member_info["mb_id"]
-    admin_type = get_admin_type(request, mb_id, board=board)
-
-    # 비밀글 사용여부 체크
-    if not admin_type:
-        if not board.bo_use_secret and "secret" in wr_data.secret and "secret" in wr_data.html and "secret" in wr_data.mail:
-            raise HTTPException(status_code=403, detail="비밀글 미사용 게시판 이므로 비밀글로 등록할 수 없습니다.")
-
-    # 게시글 테이블 정보 조회
-    write_model = dynamic_create_write_table(bo_table)
-
-    # 글 작성 권한 검증
-    if wr_data.parent_id:
-        if not board_config.is_reply_level():
-            raise HTTPException(status_code=403, detail="답변글을 작성할 권한이 없습니다.")
-        parent_write = db.get(write_model, wr_data.parent_id)
-        if not parent_write:
-            raise HTTPException(status_code=404, detail="답변할 글이 존재하지 않습니다.")
-    else:
-        if not board_config.is_write_level():
-            raise HTTPException(status_code=403, detail="글을 작성할 권한이 없습니다.")
-        parent_write = None
-    
-    # 포인트 검사
-    if config.cf_use_point:
-        write_point = board.bo_write_point
-        if not board_config.is_write_point():
-            point = number_format(abs(write_point))
-            message = f"글 작성에 필요한 포인트({point})가 부족합니다."
-            if not member:
-                message += f"\\n로그인 후 다시 시도해주세요."
-
-            raise HTTPException(status_code=403, detail=message)
-
-    category_list = board.bo_category_list.split("|") if board.bo_category_list else []
-    if wr_data.ca_name and category_list and wr_data.ca_name not in category_list:
-        raise HTTPException(
-            status_code=400,
-            detail=f"ca_name: {wr_data.ca_name}, 잘못된 분류입니다. 분류는 {','.join(category_list)} 중 하나여야 합니다."
-        )
-
-    wr_data_dict = wr_data.model_dump()
-    model_fields = inspect(write_model).c.keys()
-    filtered_wr_data = {key: value for key, value in wr_data_dict.items() if key in model_fields}
-
-    write = write_model(**filtered_wr_data)
-    write.wr_num = parent_write.wr_num if parent_write else get_next_num(bo_table)
-    write.wr_reply = generate_reply_character(board, parent_write) if parent_write else ""
-    write.mb_id = mb_id if mb_id else ''
-    write.wr_ip = request.client.host
-
-    db.add(write)
-    db.commit()
-
-    write.wr_parent = write.wr_id  # 부모아이디 설정
-    board.bo_count_write = board.bo_count_write + 1  # 게시판 글 갯수 1 증가
-
-    db.commit()
-
-    # 새글 추가
-    insert_board_new(bo_table, write)
-
-    # 글작성 포인트 부여(답변글은 댓글 포인트로 부여)
-    if member:
-        point = board.bo_comment_point if parent_write else board.bo_write_point
-        content = f"{board.bo_subject} {write.wr_id} 글" + ("답변" if parent_write else "쓰기")
-        insert_point(request, member.mb_id, point, content, board.bo_table, write.wr_id, "쓰기")
-
-    # 메일 발송
-    if board_config.use_email:
-        send_write_mail(request, board, write, parent_write)
-
-    # 공지글 설정
-    board.bo_notice = board_config.set_board_notice(write.wr_id, wr_data.notice)
-    db.commit()
-
-    FileCache().delete_prefix(f'latest-{bo_table}')
-
-    return {"result": "created"}
+    create_post_api = CreatePostAPI(
+        request, db, bo_table, board, member=member_info["member"], wr_data=wr_data 
+    )
+    return create_post_api.response()
     
 
 @router.put("/{bo_table}/{wr_id}",
@@ -229,51 +146,16 @@ async def api_update_post(
     member_info: Annotated[Dict, Depends(get_member_info)],
     wr_data: Annotated[WriteModel, Depends(validate_write)],
     board: Annotated[Board, Depends(get_board)],
-    write: Annotated[WriteBaseModel, Depends(validate_update_write)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
 ) -> Dict:
     """
     지정된 게시판의 글을 수정합니다.
     """
-    board_config = BoardConfig(request, board)
-    mb_id = member_info["mb_id"]
-    admin_type = get_admin_type(request, mb_id, board=board)
-
-    # 비밀글 사용여부 체크
-    if not admin_type:
-        if not board.bo_use_secret and "secret" in wr_data.secret and "secret" in wr_data.html and "secret" in wr_data.mail:
-            raise HTTPException(status_code=403, detail="비밀글 미사용 게시판 이므로 비밀글로 등록할 수 없습니다.")
-        # 비밀글 옵션에 따라 비밀글 설정
-        if board.bo_use_secret == 2:
-            wr_data.secret = "secret"
-
-    # 게시글 테이블 정보 조회
-    write_model = dynamic_create_write_table(bo_table)
-
-    # 공지글 설정
-    board.bo_notice = board_config.set_board_notice(wr_id, wr_data.notice)
-
-    FileCache().delete_prefix(f'latest-{bo_table}')
-
-    if not board_config.is_modify_by_comment(wr_id):
-        raise HTTPException(status_code=403, detail=f"이 글과 관련된 댓글이 {board.bo_count_modify}건 이상 존재하므로 수정 할 수 없습니다.")
-
-    wr_data_dict = wr_data.model_dump()
-    for key, value in wr_data_dict.items():
-        setattr(write, key, value)
-
-    write.wr_ip = request.client.host
-    db.commit()
-
-    # 분류 수정 시 댓글/답글도 같이 수정
-    if wr_data.ca_name:
-        db.execute(
-            update(write_model).where(write_model.wr_parent == wr_id)
-            .values(ca_name=wr_data.ca_name)
-        )
-        db.commit()
-    return {"result": "updated"}
+    update_post_api = UpdatePostAPI(
+        request, db, bo_table, board, wr_data, member_info["member"], wr_id
+    )
+    return update_post_api.response()
 
 
 @router.delete("/{bo_table}/{wr_id}",

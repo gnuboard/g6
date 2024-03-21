@@ -22,7 +22,7 @@
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
 <div id="bo_gallery_write" class="bo_common bo_write">
 
-    <form name="fwrite" id="fwrite" action="/board/write_update/{{ board.bo_table }}" method="post" enctype="multipart/form-data" onsubmit="return fwrite_submit(this);" autocomplete="off" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
+    <form name="fwrite" id="fwrite" action="/board/write_update/{{ board.bo_table }}{% if write.wr_id %}/{{write.wr_id}}{% endif %}" method="post" enctype="multipart/form-data" onsubmit="return fwrite_submit(this);" autocomplete="off" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
         <input type="hidden" name="uid" value="{{ get_unique_id(request) }}">
         <input type="hidden" name="wr_id" value="{{ write.wr_id }}">
         <input type="hidden" name="parent_id" value="{{ request.query_params.parent_id }}">
