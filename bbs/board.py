@@ -470,16 +470,8 @@ async def update_post(
 
 @router.get("/{bo_table}/{wr_id}", dependencies=[Depends(check_group_access)])
 async def read_post(
-    request: Request,
-    db: db_session,
-    board: Annotated[Board, Depends(get_board)],
-    write: Annotated[WriteBaseModel, Depends(get_write)],
-    bo_table: str = Path(...),
-    wr_id: int = Path(...)
+    read_post_template: Annotated[ReadPostTemplate, Depends()]
 ):
-    read_post_template = ReadPostTemplate(
-        request, db, bo_table, board, wr_id, write, request.state.login_member
-    )
     return read_post_template.response()
 
 

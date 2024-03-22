@@ -98,20 +98,11 @@ async def api_list_post(
             response_model=ResponseWriteModel,
             )
 async def api_read_post(
-    request: Request,
-    db: db_session,
-    member_info: Annotated[Dict, Depends(get_member_info)],
-    write: Annotated[WriteBaseModel, Depends(get_write)],
-    board: Annotated[Board, Depends(get_board)],
-    bo_table: str = Path(...),
-    wr_id: str = Path(...),
+    read_post_api: Annotated[ReadPostAPI, Depends()]
 ) -> Dict:
     """
     지정된 게시판의 글을 개별 조회합니다.
     """
-    read_post_api = ReadPostAPI(
-        request, db, bo_table, board, wr_id, write, member_info["member"]
-    )
     return read_post_api.response()
 
 

@@ -95,18 +95,13 @@ def get_board(
 
 
 def get_write(
-    request: Request,
     db: db_session,
-    member_info: Annotated[Dict, Depends(get_member_info)],
-    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
 ):
     """
     게시글 정보를 조회합니다.
     """
-    config = request.state.config
-
     if not wr_id.isdigit():
         raise HTTPException(status_code=404, detail=f"{wr_id} : 올바르지 않은 게시글 번호입니다.")
 
@@ -114,47 +109,6 @@ def get_write(
     write = db.get(write_model, wr_id)
     if not write:
         raise HTTPException(status_code=404, detail="존재하지 않는 게시글입니다.")
-
-    member = member_info["member"]
-    mb_id = member_info["mb_id"]
-    admin_type = get_admin_type(request, mb_id, board=board)
-
-    if not is_possible_level(request, member_info, board, "bo_read_level"):
-        raise HTTPException(status_code=403, detail="글을 읽을 권한이 없습니다.")
-
-    # 댓글은 개별조회 할 수 없도록 예외처리
-    if write.wr_is_comment:
-        raise HTTPException(status_code=404, detail=f"{wr_id} : 존재하지 않는 게시글입니다.")
-    
-    if ("secret" in write.wr_option
-            and not admin_type
-            and not is_owner(write, mb_id)):
-        owner = False
-        if write.wr_reply and mb_id:
-            parent_write = db.scalar(
-                select(write_model).filter_by(
-                    wr_num=write.wr_num,
-                    wr_reply="",
-                    wr_is_comment=0
-                )
-            )
-            if parent_write.mb_id == mb_id:
-                owner = True
-        if not owner:
-            raise HTTPException(status_code=403, detail="비밀글로 보호된 글입니다.")
-    
-    if config.cf_use_point:
-        read_point = board.bo_read_point
-        if not any([
-            admin_type,
-            is_owner(write, mb_id),
-            is_possible_point(member_info, read_point),
-        ]):
-            point = number_format(abs(read_point))
-            message = f"게시글 읽기에 필요한 포인트({point})가 부족합니다."
-            if not member:
-                message += f" 로그인 후 다시 시도해주세요."
-            raise HTTPException(status_code=403, detail=message)
 
     return write
 

@@ -1,5 +1,6 @@
-from fastapi import Request, HTTPException
-from fastapi.responses import RedirectResponse
+from typing_extensions import Annotated
+
+from fastapi import Request, HTTPException, Depends, Path
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import asc, desc, select, exists
 
@@ -7,10 +8,20 @@ from core.database import db_session
 from core.models import Board, BoardGood, WriteBaseModel, Scrap, Member
 from lib.board_lib import (
     UserTemplates, AlertException, BoardFileManager, get_admin_type,
-    insert_point, set_url_query_params, is_owner, cut_name
+    insert_point, is_owner, cut_name
+)
+from lib.dependencies import (
+    check_login_member,
+    get_board as get_board_template,
+    get_write as get_write_template
 )
 from lib.template_filters import number_format
 from api.v1.models.board import ResponseWriteModel
+from api.v1.dependencies.board import (
+    get_current_member,
+    get_write as get_write_api,
+    get_board as get_board_api,
+)
 from .base import BoardRouter
 
 
@@ -39,6 +50,75 @@ class ReadPostCommon(BoardRouter):
         # 파일정보 조회
         self.images, self.normal_files = BoardFileManager(board, wr_id).get_board_files_by_type(request)
         self.links = self.get_links()
+
+    def block_read_comment(self):
+        """댓글은 개별조회 할 수 없도록 예외처리"""
+        if self.write.wr_is_comment:
+            raise self.ClassException(detail=f"{self.write.wr_id} : 존재하지 않는 게시글입니다.", status_code=404)
+
+    def validate_read_level(self):
+        """읽기 권한 검증"""
+        if not self.is_read_level():
+            raise self.ClassException(detail="글을 읽을 권한이 없습니다.", status_code=403)
+
+    def validate_secret(self):
+        """비밀글 검증"""
+        block_conditions = [
+            "secret" in self.write.wr_option,
+            not self.admin_type,
+            not is_owner(self.write, self.mb_id),
+        ]
+
+        if isinstance(self, ReadPostTemplate):
+            session_secret_name = f"ss_secret_{self.bo_table}_{self.wr_id}"
+            block_conditions.append(not self.request.session.get(session_secret_name))
+    
+        if not all(block_conditions):
+            return
+
+        owner = False
+        if self.write.wr_reply and self.mb_id:
+            parent_write = self.db.scalar(
+                select(self.write_model).filter_by(
+                    wr_num=self.write.wr_num,
+                    wr_reply="",
+                    wr_is_comment=0
+                )
+            )
+            if parent_write.mb_id == self.mb_id:
+                owner = True
+                if isinstance(self, ReadPostTemplate):
+                    self.request.session[session_secret_name] = True
+        if not owner:
+            raise self.ClassException(detail="비밀글 입니다.", status_code=403)
+
+    def validate_repeat(self):
+        """한번 읽은 게시글은 세션만료까지 조회수, 포인트 처리를 하지 않는다."""
+        conditions = [self.mb_id != self.write.mb_id]
+        if isinstance(self, ReadPostTemplate):
+            conditions.append(not self.request.session.get(self.session_name))
+
+        if not all(conditions):
+            return
+
+        # 포인트 검사
+        if self.config.cf_use_point:
+            read_point = self.board.bo_read_point
+            if not self.is_read_point(self.write):
+                point = number_format(abs(read_point))
+                message = f"게시글 읽기에 필요한 포인트({point})가 부족합니다."
+                if not self.member:
+                    message += f" 로그인 후 다시 시도해주세요."
+                raise self.ClassException(detail=message, status_code=403)
+            else:
+                insert_point(self.request, self.mb_id, read_point, f"{self.board.bo_subject} {self.write.wr_id} 글읽기", self.board.bo_table, self.write.wr_id, "읽기")
+        
+        if isinstance(self, ReadPostTemplate):
+            self.request.session[self.session_name] = True
+        
+        # 조회수 증가
+        self.write.wr_hit += 1
+        self.db.commit()
 
     def check_scrap(self):
         # 스크랩 확인
@@ -118,11 +198,11 @@ class ReadPostTemplate(ReadPostCommon):
         self,
         request: Request,
         db: db_session,
-        bo_table: str,
-        board: Board,
-        wr_id: int,
-        write: WriteBaseModel,
-        member: Member
+        board: Annotated[Board, Depends(get_board_template)],
+        write: Annotated[WriteBaseModel, Depends(get_write_template)],
+        member: Annotated[Member, Depends(check_login_member)],
+        bo_table: str = Path(...),
+        wr_id: int = Path(...),
     ):
         super().__init__(request, db, bo_table, board, wr_id, write, member)
         self.template_url: str = f"/board/{self.board.bo_skin}/read_post.html"
@@ -159,59 +239,6 @@ class ReadPostTemplate(ReadPostCommon):
             "is_reply": self.is_reply_level(),
             "is_comment_write": self.is_comment_level(),
         }
-
-    def validate_read_post(self):
-        # 댓글은 개별조회 할 수 없도록 예외처리
-        if self.write.wr_is_comment:
-            raise AlertException(f"{self.write.wr_id} : 존재하지 않는 게시글입니다.", 404)
-        
-        # 읽기 권한 검증
-        if not self.is_read_level():
-            raise AlertException("글을 읽을 권한이 없습니다.", 403)
-
-        # 비밀글 검증
-        session_secret_name = f"ss_secret_{self.bo_table}_{self.wr_id}"
-        if ("secret" in self.write.wr_option
-                and not self.admin_type
-                and not is_owner(self.write, self.mb_id)
-                and not self.request.session.get(session_secret_name)):
-            # 부모글이 본인글이라면 열람 가능
-            owner = False
-            if self.write.wr_reply and self.mb_id:
-                parent_write = self.db.scalar(
-                    select(self.write_model).filter_by(
-                        wr_num=self.write.wr_num,
-                        wr_reply="",
-                        wr_is_comment=0
-                    )
-                )
-                if parent_write.mb_id == self.mb_id:
-                    owner = True
-            if not owner:
-                query_params = self.request.query_params
-                url = f"/bbs/password/view/{self.bo_table}/{self.write.wr_id}"
-                return RedirectResponse(
-                    set_url_query_params(url, query_params), status_code=303)
-
-            self.request.session[session_secret_name] = True
-        
-        # 한번 읽은 게시글은 세션만료까지 조회수, 포인트 처리를 하지 않는다.
-        if not self.request.session.get(self.session_name) and self.mb_id != self.write.mb_id:
-            # 포인트 검사
-            if self.config.cf_use_point:
-                read_point = self.board.bo_read_point
-                if not self.is_read_point(self.write):
-                    point = number_format(abs(read_point))
-                    message = f"게시글 읽기에 필요한 포인트({point})가 부족합니다."
-                    if not self.member:
-                        message += f"\\n로그인 후 다시 시도해주세요."
-
-                    raise AlertException(message, 403)
-                else:
-                    insert_point(self.request, self.mb_id, read_point, f"{self.board.bo_subject} {self.write.wr_id} 글읽기", self.board.bo_table, self.write.wr_id, "읽기")
-            #조회수 증가
-            self.write.wr_hit += 1
-            self.db.commit()
 
     def get_prev_next(self):
         # 이전글 다음글 조회
@@ -253,9 +280,13 @@ class ReadPostTemplate(ReadPostCommon):
         return prev, next
 
     def response(self):
-        self.validate_read_post()
+        self.block_read_comment()
+        self.validate_read_level()
+        self.validate_secret()
+        self.validate_repeat()
         self.check_scrap()
         self.check_is_good()
+        self.db.commit()
         return UserTemplates().TemplateResponse(self.template_url, self.context)
     
 
@@ -265,11 +296,11 @@ class ReadPostAPI(ReadPostCommon):
         self,
         request: Request,
         db: db_session,
-        bo_table: str,
-        board: Board,
-        wr_id: int,
-        write: WriteBaseModel,
-        member: Member
+        write: Annotated[WriteBaseModel, Depends(get_write_api)],
+        board: Annotated[Board, Depends(get_board_api)],
+        member: Annotated[Member, Depends(get_current_member)],
+        bo_table: str = Path(...),
+        wr_id: str = Path(...),
     ):
         super().__init__(request, db, bo_table, board, wr_id, write, member)
         
@@ -289,7 +320,10 @@ class ReadPostAPI(ReadPostCommon):
 
     def response(self):
         content = ResponseWriteModel.model_validate(self.content)
-        self.write.wr_hit += 1
+        self.block_read_comment()
+        self.validate_read_level()
+        self.validate_secret()
+        self.validate_repeat()
         self.check_scrap()
         self.check_is_good()
         self.db.commit()
