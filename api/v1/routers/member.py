@@ -3,12 +3,14 @@ from typing import Any
 from typing_extensions import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Path, Request
+from sqlalchemy import delete
 
+from bbs.social import SocialAuthService
 from core.database import db_session
 from core.models import Member
 from lib.mail import send_register_mail
 from lib.point import insert_point
-from api.v1.models import responses
+from api.v1.models import MemberRefreshToken, responses
 from api.v1.dependencies.member import (
     get_current_member, validate_create_data, validate_update_data
 )
@@ -122,3 +124,25 @@ async def certificate_email(
     db.commit()
 
     return HTTPException(status_code=200, detail="메일인증이 완료되었습니다.")
+
+
+@router.patch("/member/leave",
+              summary="회원 탈퇴",
+              responses={**responses})
+async def leave_member(
+    db: db_session,
+    member_service: Annotated[MemberServiceAPI, Depends()],
+    current_member: Annotated[Member, Depends(get_current_member)]
+):
+    """현재 로그인한 회원을 탈퇴 처리합니다."""
+    member_service.leave_member(current_member)
+
+    # 소셜로그인 연동 해제
+    SocialAuthService.unlink_social_login(current_member.mb_id)
+
+    # 토큰 삭제
+    db.execute(delete(MemberRefreshToken)
+               .where(MemberRefreshToken.mb_id == current_member.mb_id))
+    db.commit()
+
+    return HTTPException(status_code=200, detail="회원탈퇴가 처리되었습니다.")

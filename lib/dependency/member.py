@@ -145,3 +145,15 @@ def validate_update_member(
         data.mb_open_date = datetime.now()
 
     return data
+
+
+def validate_leave_member(
+    request: Request,
+    member: Annotated[Member, Depends(get_login_member)],
+    mb_password: str = Form(...),
+):
+    """회원 탈퇴시 회원 정보의 유효성을 검사합니다."""
+    if request.state.is_super_admin:
+        raise AlertException("최고관리자는 탈퇴할 수 없습니다.", 400)
+    if not validate_password(mb_password, member.mb_password):
+        raise AlertException("비밀번호가 일치하지 않습니다.", 400)

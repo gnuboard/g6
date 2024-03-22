@@ -35,8 +35,9 @@ def authenticate_member(
     Returns:
         Member: 회원 객체
     """
-    member_service = MemberServiceAPI(request, db, form_data.username)
-    return member_service.authenticate_member(form_data.password)
+    member_service = MemberServiceAPI(request, db)
+    return member_service.authenticate_member(form_data.username,
+                                              form_data.password)
 
 
 def authenticate_refresh_token(

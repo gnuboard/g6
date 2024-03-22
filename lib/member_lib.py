@@ -168,6 +168,16 @@ class MemberService(BaseService):
         self.db.commit()
 
         return member
+    
+    def leave_member(self, member: Member):
+        """
+        회원을 탈퇴 처리합니다
+        - 회원 정보를 탈퇴 처리하고 탈퇴일자를 기록합니다.
+        - 실제 데이터는 삭제되지 않습니다.
+        """
+        member.mb_leave_date = datetime.now().strftime("%Y%m%d")
+        member.mb_memo = f"{member.mb_memo}\n{datetime.now().strftime('%Y-%m-%d')}탈퇴함"
+        self.db.commit()
 
     def _fetch_member_by_id(self, mb_id: str) -> Member:
         """회원 정보를 데이터베이스에서 조회합니다."""
