@@ -134,6 +134,36 @@ class UpdateMemberModel(BaseModel):
         return self
 
 
+class FindMemberIdModel(BaseModel):
+    """회원 ID 찾기 모델"""
+    mb_name: Annotated[str, Body(..., title="이름")]
+    mb_email: Annotated[str, Body(..., title="이메일")]
+
+
+class FindMemberPasswordModel(BaseModel):
+    """회원 비밀번호 찾기 모델"""
+    mb_id: Annotated[str, Body(..., title="아이디")]
+    mb_email: Annotated[str, Body(..., title="이메일")]
+
+
+class ResetMemberPasswordModel(BaseModel):
+    """회원 비밀번호 재설정 모델"""
+    password: Annotated[str, Body(..., title="비밀번호")]
+    password_confirm: Annotated[str, Body(..., title="비밀번호 확인")]
+
+    @model_validator(mode='after')
+    def check_passwords_match(self) -> 'ResetMemberPasswordModel':
+        """비밀번호와 비밀번호 확인이 일치하는지 검사"""
+        pw1 = self.password
+        pw2 = self.password_confirm
+        if pw1 != pw2:
+            raise ValueError('비밀번호가 일치하지 않습니다.')
+
+        self.password = create_hash(pw1)
+
+        return self
+
+
 class ResponseMemberModel(BaseModel):
     """회원 정보 응답 모델(임시)"""
     mb_id: str

@@ -1,3 +1,4 @@
+import math
 import os
 import re
 import secrets
@@ -5,9 +6,8 @@ from glob import glob
 from datetime import date, datetime, timedelta
 from PIL import Image, UnidentifiedImageError
 from typing import Union, Optional, Tuple
-from typing_extensions import Annotated
 
-from fastapi import HTTPException, Path, Request, UploadFile
+from fastapi import HTTPException, Request, UploadFile
 from sqlalchemy import exists, select
 
 from core.database import DBConnect, db_session
@@ -179,6 +179,81 @@ class MemberService(BaseService):
         member.mb_memo = f"{member.mb_memo}\n{datetime.now().strftime('%Y-%m-%d')}탈퇴함"
         self.db.commit()
 
+    def find_id(self, mb_name: str, mb_email: str) -> Member:
+        """
+        회원 아이디를 찾습니다.
+        - 최고관리자는 제외합니다.
+        - 소셜로그인으로 가입한 회원은 아이디를 찾을 수 없습니다.
+        """
+        from bbs.social import SocialAuthService
+
+        config = self.request.state.config
+        member = self.db.scalar(
+            select(Member).where(
+                Member.mb_name == mb_name,
+                Member.mb_email == mb_email,
+                Member.mb_id != getattr(config, "cf_admin", "admin")  # 최고관리자는 제외
+            )
+        )
+        if not member:
+            self.raise_exception(status_code=400, detail="입력하신 정보와 일치하는 회원이 없습니다.")
+        if SocialAuthService.check_exists_by_member_id(member.mb_id):
+            self.raise_exception(status_code=400, detail="소셜로그인으로 가입하신 회원은 아이디를 찾을 수 없습니다.")
+
+        return hide_member_id(member.mb_id), member.mb_datetime.strftime("%Y-%m-%d %H:%M:%S")
+    
+
+    def find_member_from_password_info(self, mb_id: str, mb_email: str) -> Member:
+        """
+        비밀번호 찾기 정보로 회원을 찾습니다.
+        - 최고관리자는 제외합니다.
+        - 소셜로그인으로 가입한 회원은 비밀번호를 찾을 수 없습니다.
+        """
+        from bbs.social import SocialAuthService
+
+        config = self.request.state.config
+        member = self.db.scalar(
+            select(Member).where(
+                Member.mb_id == mb_id,
+                Member.mb_email == mb_email,
+                Member.mb_id != config.cf_admin  # 최고관리자는 제외
+            )
+        )
+        if not member:
+            self.raise_exception(status_code=400, detail="입력하신 정보와 일치하는 회원이 없습니다.")
+
+        if SocialAuthService.check_exists_by_member_id(member.mb_id):
+            self.raise_exception(status_code=400, detail="소셜로그인으로 가입하신 회원은 비밀번호를 찾을 수 없습니다.")
+
+        # 비밀번호 재설정 토큰 저장
+        member.mb_lost_certify = secrets.token_hex(16)
+        self.db.commit()
+        self.db.refresh(member)
+
+        return member
+
+    def reset_password(self, mb_id: str, token: str, mb_password: str):
+        """비밀번호를 재설정합니다."""
+        from bbs.social import SocialAuthService
+
+        config = self.request.state.config
+        member = self.db.scalar(
+            select(Member).where(
+                Member.mb_id == mb_id,
+                Member.mb_lost_certify == token,
+                Member.mb_id != config.cf_admin  # 최고관리자는 제외
+            )
+        )
+        if not member:
+            self.raise_exception(status_code=403, detail="유효하지 않은 요청입니다.")
+
+        if SocialAuthService.check_exists_by_member_id(member.mb_id):
+            self.raise_exception(status_code=400, detail="소셜로그인으로 가입하신 회원은 비밀번호를 재설정할 수 없습니다.")
+
+        member.mb_password = mb_password
+        member.mb_lost_certify = ""
+        self.db.commit()
+    
     def _fetch_member_by_id(self, mb_id: str) -> Member:
         """회원 정보를 데이터베이스에서 조회합니다."""
         return self.db.scalar(select(Member).where(Member.mb_id == mb_id))
@@ -552,3 +627,20 @@ def validate_email(request: Request, email: str) -> Tuple[bool, str]:
         return False, "사용할 수 없는 이메일입니다."
 
     return True, "사용 가능한 이메일입니다."
+
+
+def hide_member_id(mb_id: str):
+    """아이디를 가리기 위한 함수
+    - 아이디의 절반을 가리고, 가려진 부분은 *로 표시한다.
+
+    Args:
+        mb_id (str): 회원 아이디
+
+    Returns:
+        str: 가려진 회원 아이디
+    """
+    id_len = len(mb_id)
+    hide_len = math.floor(id_len / 2)
+    start_len = math.ceil((id_len - hide_len) / 2)
+    end_len = math.floor((id_len - hide_len) / 2)
+    return mb_id[:start_len] + "*" * hide_len + mb_id[-end_len:]

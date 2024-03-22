@@ -8,14 +8,17 @@ from sqlalchemy import delete
 from bbs.social import SocialAuthService
 from core.database import db_session
 from core.models import Member
-from lib.mail import send_register_mail
+from lib.mail import send_register_mail, send_password_reset_mail
 from lib.point import insert_point
 from api.v1.models import MemberRefreshToken, responses
 from api.v1.dependencies.member import (
     get_current_member, validate_create_data, validate_update_data
 )
 from api.v1.lib.member import MemberServiceAPI
-from api.v1.models.member import CreateMemberModel, ResponseMemberModel, UpdateMemberModel
+from api.v1.models.member import (
+    CreateMemberModel, ResponseMemberModel, UpdateMemberModel,
+    FindMemberIdModel, FindMemberPasswordModel, ResetMemberPasswordModel
+)
 
 router = APIRouter()
 
@@ -146,3 +149,53 @@ async def leave_member(
     db.commit()
 
     return HTTPException(status_code=200, detail="회원탈퇴가 처리되었습니다.")
+
+
+@router.post("/member/find/id",
+            summary="회원아이디 찾기",
+            responses={**responses})
+async def find_member_id(
+    member_service: Annotated[MemberServiceAPI, Depends()],
+    data: FindMemberIdModel
+):
+    """회원아이디를 찾습니다."""
+    member_id, register_date = member_service.find_id(data.mb_name, data.mb_email)
+
+    return {
+        "member_id": member_id,
+        "register_date": register_date
+    }
+
+
+@router.post("/member/find/password",
+            summary="비밀번호 재설정 메일 발송",
+            responses={**responses})
+async def find_member_password(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    member_service: Annotated[MemberServiceAPI, Depends()],
+    data: FindMemberPasswordModel
+):
+    """비밀번호를 재설정할 수 있는 링크를 메일로 발송합니다."""
+    # 회원정보 조회
+    member = member_service.find_member_from_password_info(data.mb_id, data.mb_email)
+    # 비밀번호 재설정 메일 발송 처리(백그라운드)
+    background_tasks.add_task(send_password_reset_mail, request, member)
+    
+    return HTTPException(status_code=200, detail="비밀번호 찾기 메일이 발송되었습니다.")
+
+
+@router.patch("/member/{mb_id}/password-reset/{token}",
+               name="reset_password_api",
+               summary="비밀번호 재설정",
+               responses={**responses})
+async def reset_password(
+    member_service: Annotated[MemberServiceAPI, Depends()],
+    mb_id: Annotated[str, Path(..., title="아이디")],
+    token: Annotated[str, Path(..., title="토큰")],
+    data: ResetMemberPasswordModel
+):
+    """비밀번호를 재설정합니다."""
+    member_service.reset_password(mb_id, token, data.password)
+
+    return HTTPException(status_code=200, detail="비밀번호가 재설정되었습니다.")
