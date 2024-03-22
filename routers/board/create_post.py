@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing_extensions import Annotated, List
+from typing_extensions import Annotated, List, Union
 from fastapi import Request, HTTPException, Depends, Form, Path, File, UploadFile
 from fastapi.responses import RedirectResponse
 from sqlalchemy import delete, inspect
@@ -73,6 +73,33 @@ class CreatePostCommon(BoardRouter):
         if not parent_write:
             raise self.ClassException("답변할 글이 존재하지 않습니다.", 404)
         return parent_write
+
+    def arrange_data(self, data: Union[WriteForm, WriteModel]):
+        category_list = self.board.bo_category_list.split("|") if self.board.bo_category_list else []
+        if category_list:
+            if not data.ca_name or data.ca_name not in category_list:
+                raise self.ClassException(
+                    status_code=400,
+                    detail=f"ca_name: {data.ca_name}, 잘못된 분류입니다. 분류는 {','.join(category_list)} 중 하나여야 합니다."
+                )
+        else:
+            data.ca_name = ""
+        data.wr_password = create_hash(data.wr_password) if data.wr_password else ""
+        data.wr_name = self.set_wr_name(self.member, data.wr_name)
+        data.wr_email = getattr(self.member, "mb_email", data.wr_email)
+        data.wr_homepage = getattr(self.member, "mb_homepage", data.wr_homepage)
+
+        # 옵션 설정
+        options = [opt for opt in [self.html, self.secret, self.mail] if opt]
+        data.wr_option = ",".join(map(str, options))
+
+        # 링크 설정
+        if not self.is_link_level():
+            data.wr_link1 = ""
+            data.wr_link2 = ""
+
+        # Stored XSS 방지
+        data.wr_content = self.get_cleaned_data(data.wr_content)
 
     ## create 전용
     def add_point(self, write, parent_write: WriteBaseModel = None):
@@ -203,24 +230,6 @@ class CreatePostTemplate(CreatePostCommon):
         if self.use_captcha:
             await validate_captcha(self.request, self.recaptcha_response)
 
-    def arrange_form_data(self):
-        self.form_data.wr_password = create_hash(self.form_data.wr_password) if self.form_data.wr_password else ""
-        self.form_data.wr_name = self.set_wr_name(self.member, self.form_data.wr_name)
-        self.form_data.wr_email = getattr(self.member, "mb_email", self.form_data.wr_email)
-        self.form_data.wr_homepage = getattr(self.member, "mb_homepage", self.form_data.wr_homepage)
-
-        # 옵션 설정
-        options = [opt for opt in [self.html, self.secret, self.mail] if opt]
-        self.form_data.wr_option = ",".join(map(str, options))
-
-        # 링크 설정
-        if not self.is_link_level():
-            self.form_data.wr_link1 = ""
-            self.form_data.wr_link2 = ""
-
-        # Stored XSS 방지
-        self.form_data.wr_content = self.get_cleaned_data(self.form_data.wr_content)
-
     def save_write(self, parent_id):
         parent_write = self.get_parent_post(parent_id)
         write = self.write_model(
@@ -260,7 +269,7 @@ class CreatePostTemplate(CreatePostCommon):
         self.validate_secret_board()
         self.validate_post_content(self.form_data.wr_subject, self.form_data.wr_content)
         self.validate_possible_point(PointEnum.WRITE)
-        self.arrange_form_data()
+        self.arrange_data(self.form_data)
         write = self.save_write(self.parent_id)
         # 글 작성 시간 기록
         set_write_delay(self.request)
@@ -311,24 +320,6 @@ class CreatePostAPI(CreatePostCommon):
         self.wr_datetime = wr_data.wr_datetime
         self.wr_data = wr_data
 
-    def arrange_body_data(self):
-        self.wr_password = create_hash(self.wr_password) if self.wr_password else ""
-        self.wr_name = self.set_wr_name(self.member, self.wr_name)
-        self.wr_email = getattr(self.member, "mb_email", self.wr_email)
-        self.wr_homepage = getattr(self.member, "mb_homepage", self.wr_homepage)
-
-        # 옵션 설정
-        options = [opt for opt in [self.html, self.secret, self.mail] if opt]
-        self.wr_option = ",".join(map(str, options))
-
-        # 링크 설정
-        if not self.is_link_level():
-            self.wr_link1 = ""
-            self.wr_link2 = ""
-        
-        # Stored XSS 방지
-        self.wr_content = self.get_cleaned_data(self.wr_content)
-
     def save_write(self):
         parent_write = self.get_parent_post(self.parent_id)
         wr_data_dict = self.wr_data.model_dump()
@@ -351,7 +342,7 @@ class CreatePostAPI(CreatePostCommon):
         self.validate_secret_board()
         self.validate_post_content(self.wr_subject, self.wr_content)
         self.validate_possible_point(PointEnum.WRITE)
-        self.arrange_body_data()
+        self.arrange_data(self.wr_data)
         write = self.save_write()
         insert_board_new(self.bo_table, write)
         self.add_point(write)

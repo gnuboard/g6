@@ -73,7 +73,7 @@ class UpdatePostTemplate(CreatePostTemplate, UpdatePostCommon):
         
         self.validate_secret_board()
         self.validate_post_content(self.form_data.wr_subject, self.form_data.wr_content)
-        self.arrange_form_data()
+        self.arrange_data(self.form_data)
         self.save_secret_session(self.wr_id)
         self.save_write(write)
         self.set_notice(write.wr_id, self.notice)
@@ -136,7 +136,7 @@ class UpdatePostAPI(CreatePostAPI, UpdatePostCommon):
         self.validate_restrict_comment_count() # only update
         self.validate_secret_board()
         self.validate_post_content(self.wr_data.wr_subject, self.wr_data.wr_content)
-        self.arrange_body_data()
+        self.arrange_data(self.wr_data)
         write = self.save_write()
         self.set_notice(self.wr_id, self.notice)
         self.update_children_category(self.wr_data) # only update
