@@ -27,8 +27,6 @@ class DeletePostCommon(BoardRouter):
         self.write = write
 
     def delete_write(self):
-
-        ClassException = self.ClassException
         origin_write = self.write
         member_id = self.mb_id
         write_model = self.write_model
@@ -70,10 +68,10 @@ class DeletePostCommon(BoardRouter):
             .select()
         )
         if exists_reply:
-            raise ClassException(detail="답변이 있는 글은 삭제할 수 없습니다. \\n\\n우선 답변글부터 삭제하여 주십시오.", status_code=403)
+            raise self.ClassException(detail="답변이 있는 글은 삭제할 수 없습니다. \\n\\n우선 답변글부터 삭제하여 주십시오.", status_code=403)
 
         if not self.is_delete_by_comment(origin_write.wr_id):
-            raise ClassException(detail=f"이 글과 관련된 댓글이 {board.bo_count_delete}건 이상 존재하므로 삭제 할 수 없습니다.", status_code=403)
+            raise self.ClassException(detail=f"이 글과 관련된 댓글이 {board.bo_count_delete}건 이상 존재하므로 삭제 할 수 없습니다.", status_code=403)
 
         # 원글 + 댓글
         delete_write_count = 0
