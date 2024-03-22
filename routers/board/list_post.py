@@ -127,6 +127,7 @@ class ListPostTemplate(ListPostCommon):
         search_params: dict,
     ):
         super().__init__(request, db, bo_table, board, member, search_params)
+        self.set_exception_type(AlertException)
         if not self.is_list_level():
             raise AlertException("목록을 볼 권한이 없습니다.", 403)
 
@@ -164,6 +165,7 @@ class ListPostAPI(ListPostCommon):
         search_params: dict,
     ):
         super().__init__(request, db, bo_table, board, member, search_params)
+        self.set_exception_type(HTTPException)
 
         if not self.admin_type and self.member_level < self.board.bo_list_level:
             raise HTTPException(status_code=403, detail=f"목록을 볼 권한이 없습니다.")

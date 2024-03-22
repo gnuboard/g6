@@ -1,8 +1,10 @@
 from enum import Enum
-from fastapi import Request
+from typing_extensions import Union
+from fastapi import Request, HTTPException
 
 from core.database import db_session
 from core.models import Board, Member
+from core.exception import AlertException
 from lib.board_lib import BoardConfig, get_admin_type
 from lib.template_filters import number_format
 from lib.common import dynamic_create_write_table
@@ -33,6 +35,11 @@ class BoardRouter(BoardConfig):
         self.login_member = self.member
         self.login_member_id = self.mb_id
         self.login_member_admin_type = self.admin_type
+        self.ClassException = None  # 템플릿, API 클래스에서 인스턴스 생성시 set_exception_type 메소드를 통해 정의합니다.
+
+    def set_exception_type(self, exception_type: Union[HTTPException, AlertException]):
+        """예외처리 클래스를 설정합니다."""
+        self.ClassException = exception_type
 
     def set_wr_name(self, member: Member = None, default_name: str = None) -> str:
         """실명사용 여부를 확인 후 실명이면 이름을, 아니면 닉네임을 반환한다.

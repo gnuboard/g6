@@ -143,6 +143,7 @@ class DeletePostTemplate(DeletePostCommon):
         member: Member,
     ):
         super().__init__(request, db, bo_table, board, wr_id, write, member)
+        self.set_exception_type(AlertException)
 
     def response(self):
         self.delete_write()
@@ -163,6 +164,7 @@ class DeletePostAPI(DeletePostCommon):
         member: Member,
     ):
         super().__init__(request, db, bo_table, board, wr_id, write, member)
+        self.set_exception_type(HTTPException)
 
     def response(self):
         self.delete_write()

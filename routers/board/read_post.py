@@ -1,4 +1,4 @@
-from fastapi import Request
+from fastapi import Request, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import asc, desc, select, exists
@@ -130,6 +130,7 @@ class ReadPostTemplate(ReadPostCommon):
         self.session_name = f"ss_view_{bo_table}_{wr_id}"
         self.request.state.editor = self.select_editor
         self.prev, self.next = self.get_prev_next()
+        self.set_exception_type(AlertException)
 
         # TODO: 전체목록보이기 사용 => 게시글 목록 부분을 분리해야함
         self.write_list = None
@@ -284,6 +285,7 @@ class ReadPostAPI(ReadPostCommon):
         })
         content.update(additional_content)
         self.content = content
+        self.set_exception_type(HTTPException)
 
     def response(self):
         content = ResponseWriteModel.model_validate(self.content)

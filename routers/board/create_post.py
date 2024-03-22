@@ -188,8 +188,6 @@ class CreatePostCommon(BoardRouter):
 
 class CreatePostTemplate(CreatePostCommon):
 
-    ClassException = AlertException
-
     def __init__(
         self,
         request: Request,
@@ -219,6 +217,7 @@ class CreatePostTemplate(CreatePostCommon):
         self.file_content = file_content
         self.file_dels = file_dels
         self.recaptcha_response = recaptcha_response
+        self.set_exception_type(AlertException)
 
     def validate_write_delay(self):
         """글쓰기 간격 검증"""
@@ -293,8 +292,6 @@ class CreatePostTemplate(CreatePostCommon):
 
 class CreatePostAPI(CreatePostCommon):
 
-    ClassException = HTTPException
-
     def __init__(
         self,
         request: Request,
@@ -319,6 +316,7 @@ class CreatePostAPI(CreatePostCommon):
         self.wr_link2 = wr_data.wr_link2
         self.wr_datetime = wr_data.wr_datetime
         self.wr_data = wr_data
+        self.set_exception_type(HTTPException)
 
     def save_write(self):
         parent_write = self.get_parent_post(self.parent_id)
