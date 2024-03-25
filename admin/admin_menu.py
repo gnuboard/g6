@@ -12,6 +12,7 @@ from core.models import Board, Content, Group, Menu
 from core.template import AdminTemplates
 from lib.common import *
 from lib.dependencies import validate_token
+from lib.menu import get_menus
 
 router = APIRouter()
 templates = AdminTemplates()

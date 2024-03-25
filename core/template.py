@@ -13,6 +13,7 @@ from core.plugin import (
 )
 from lib.common import *
 from lib.member_lib import get_member_icon, get_member_image
+from lib.menu import get_menus
 from lib.template_filters import (
     datetime_format, number_format, set_query_params
 )
