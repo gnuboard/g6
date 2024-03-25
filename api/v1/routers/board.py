@@ -1,4 +1,3 @@
-import os
 from typing_extensions import Annotated, Dict, List
 
 from fastapi import APIRouter, Depends, Request, Path, HTTPException, status, UploadFile, File, Form
@@ -9,7 +8,7 @@ from core.database import db_session
 from core.models import Board, Group, WriteBaseModel
 from lib.board_lib import (
     BoardConfig, generate_reply_character,
-    insert_board_new, send_write_mail, BoardFileManager
+    insert_board_new, send_write_mail
 )
 from lib.common import dynamic_create_write_table
 from lib.dependencies import common_search_query_params
@@ -24,7 +23,8 @@ from api.v1.dependencies.board import (
 )
 from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel
 from response_handlers.board import(
-     ListPostAPI, CreatePostAPI, ReadPostAPI, UpdatePostAPI, DeletePostAPI
+     ListPostAPI, CreatePostAPI, ReadPostAPI, UpdatePostAPI, DeletePostAPI,
+     CreatePostCommon
 )
 
 
@@ -186,55 +186,16 @@ async def api_upload_file(
     bo_table: str = Path(...),
     files: List[UploadFile] = File(..., alias="bf_file[]"),
     file_content: list = Form(None, alias="bf_content[]"),
+    file_dels: list = Form(None, alias="bf_file_del[]"),
 ) -> Dict:
     """
     파일 업로드
     """
-    FILE_DIRECTORY = "data/file/"
-    mb_id = member_info["mb_id"]
-    admin_type = get_admin_type(request, mb_id, board=board)
-    file_manager = BoardFileManager(board, write.wr_id)
-    directory = os.path.join(FILE_DIRECTORY, bo_table)
-    wr_file = write.wr_file
-    exclude_file = {"size": [], "ext": []}
-    for file in files:
-        index = files.index(file)
-        if file.filename:
-            # 관리자가 아니면서 설정한 업로드 사이즈보다 크거나 업로드 가능 확장자가 아니면 업로드하지 않음
-            if not admin_type:
-                if not file_manager.is_upload_size(file):
-                    exclude_file["size"].append(file.filename)
-                    continue
-                if not file_manager.is_upload_extension(request, file):
-                    exclude_file["ext"].append(file.filename)
-                    continue
-
-            board_file = file_manager.get_board_file(index)
-            filename = file_manager.get_filename(file.filename)
-            bf_content = file_content[index] if file_content else ""
-            if board_file:
-                # 기존파일 삭제
-                file_manager.remove_file(board_file.bf_file)
-                # 파일 업로드 및 정보 업데이트
-                file_manager.upload_file(directory, filename, file)
-                file_manager.update_board_file(board_file, directory, filename, file, bf_content)
-            else:
-                # 파일 업로드 및 정보 추가
-                file_manager.upload_file(directory, filename, file)
-                file_manager.insert_board_file(index, directory, filename, file, bf_content)
-                wr_file += 1
-    # 파일 개수 업데이트
-    write.wr_file = wr_file
-    db.commit()
-
-    if exclude_file:
-        msg = ""
-    if exclude_file.get("size"):
-        msg += f"{','.join(exclude_file['size'])} 파일은 업로드 용량({board.bo_upload_size}byte)을 초과하였습니다.\\n"
-    if exclude_file.get("ext"):
-        msg += f"{','.join(exclude_file['ext'])} 파일은 업로드 가능 확장자가 아닙니다.\\n"
-    if msg:
-        raise HTTPException(status_code=400, detail=msg)
+    create_post_common = CreatePostCommon(
+        request, db, board, bo_table, member_info["member"], write
+    )
+    create_post_common.set_exception_type(HTTPException)
+    create_post_common.upload_files(write, files, file_content, file_dels)
     return {"result": "uploaded"}
 
 
