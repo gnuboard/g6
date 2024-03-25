@@ -10,6 +10,10 @@ from .base_handler import BoardBase
 
 
 class ListPostCommon(BoardBase):
+    """
+    게시글 목록 공통 클래스
+    Template, API 클래스에서 상속받아 사용
+    """
 
     def __init__(
         self,
@@ -26,6 +30,7 @@ class ListPostCommon(BoardBase):
         self.next_spt = None
 
     def get_query(self, search_params: dict):
+        """쿼리를 생성합니다."""
         sca = self.request.query_params.get("sca")
         sfl = search_params.get('sfl')
         stx = search_params.get('stx')
@@ -75,6 +80,7 @@ class ListPostCommon(BoardBase):
         self,
         search_params: dict,
     ):
+        """게시글 목록을 가져옵니다."""
         current_page = search_params.get('current_page')
         page_rows = self.page_rows
 
@@ -99,6 +105,7 @@ class ListPostCommon(BoardBase):
         self,
         search_params: dict,
     ):
+        """게시글 중 공지사항 목록을 가져옵니다."""
         current_page = search_params.get('current_page')
         sca = self.request.query_params.get("sca")
         notice_writes = []
@@ -111,12 +118,14 @@ class ListPostCommon(BoardBase):
         return notice_writes
 
     def get_total_count(self):
+        """쿼리문을 통해 불러오는 게시글의 수"""
         total_count = self.db.scalar(self.query.add_columns(func.count()).order_by(None))
         return total_count
 
 
 class ListPostTemplate(ListPostCommon):
-    
+    """Template용 게시판 생성 클래스"""
+
     def __init__(
         self,
         request: Request,
@@ -151,10 +160,12 @@ class ListPostTemplate(ListPostCommon):
         }
 
     def response(self):
+        """최종 응답 처리"""
         return UserTemplates().TemplateResponse(self.template_url, self.context)
 
 
 class ListPostAPI(ListPostCommon):
+    """API용 게시판 생성 클래스"""
 
     def __init__(
         self, request: Request,
@@ -181,4 +192,5 @@ class ListPostAPI(ListPostCommon):
         }
 
     def response(self):
+        """최종 응답 처리"""
         return jsonable_encoder(self.content)

@@ -13,6 +13,11 @@ from .create_post import CreatePostTemplate, CreatePostAPI
 
 
 class UpdatePostCommon:
+    """
+    게시글 수정시 필요한 공통 로직을 정의
+      - Template과 API 클래스에서 사용되는 공통 메소드 중, 
+        상속받을 CreatePostTemplate, CreatePostAPI 클래스 메소드에 없는 공통 로직을 정의
+    """
 
     def validate_restrict_comment_count(self):
         if not self.is_modify_by_comment(self.wr_id):
@@ -28,6 +33,11 @@ class UpdatePostCommon:
 
 
 class UpdatePostTemplate(CreatePostTemplate, UpdatePostCommon):
+    """
+    Template용 게시글 수정 클래스
+    - Template response를 위한 로직 > CreatePostTemplate의 클래스 변수와 메소드를 상속, 오버라이딩하여 사용
+    - API response와 공통된 로직 > UpdatePostCommon의 메소드를 사용
+    """
 
     def __init__(
         self,
@@ -62,12 +72,14 @@ class UpdatePostTemplate(CreatePostTemplate, UpdatePostCommon):
         self.recaptcha_response = recaptcha_response
 
     def save_write(self, write):
+        """게시글 수정 사항을 저장"""
         for field, value in self.form_data.__dict__.items():
             if value:
                 setattr(write, field, value)
         self.db.commit()
 
     def update_post(self):
+        """게시글 수정 통합 처리"""
         self.validate_restrict_comment_count() # only update
         write = get_write(self.db, self.bo_table, self.wr_id)
         
@@ -85,12 +97,18 @@ class UpdatePostTemplate(CreatePostTemplate, UpdatePostCommon):
         return write
 
     def response(self):
+        """최종 응답 처리"""
         write = self.update_post()
         redirect_url = self.get_redirect_url(write)
         return RedirectResponse(redirect_url, status_code=303)
 
 
 class UpdatePostAPI(CreatePostAPI, UpdatePostCommon):
+    """
+    API용 게시글 수정 클래스
+    - API response를 위한 로직 > CreatePostAPI의 클래스 변수와 메소드를 상속, 오버라이딩하여 사용
+    - Template response와 공통된 로직 > UpdatePostCommon의 메소드를 사용
+    """
 
     def __init__(
         self,
@@ -119,6 +137,7 @@ class UpdatePostAPI(CreatePostAPI, UpdatePostCommon):
         self.wr_data = wr_data
 
     def save_write(self):
+        """게시글 수정 사항을 저장"""
         bo_table = self.bo_table
         request = self.request
         db = self.db
@@ -133,6 +152,7 @@ class UpdatePostAPI(CreatePostAPI, UpdatePostCommon):
         return write
 
     def update_post(self):
+        """게시글 수정 통합 처리"""
         self.validate_restrict_comment_count() # only update
         self.validate_secret_board()
         self.validate_post_content(self.wr_data.wr_subject, self.wr_data.wr_content)
@@ -144,5 +164,6 @@ class UpdatePostAPI(CreatePostAPI, UpdatePostCommon):
         return write
 
     def response(self):
+        """최종 응답 처리"""
         self.update_post()
         return {"result": "updated"}

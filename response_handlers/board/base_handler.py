@@ -14,6 +14,7 @@ class PointEnum(Enum):
     WRITE = {"attr": "bo_write_point", "func": "is_write_point", "action": "글 작성"}
 
 class BoardBase(BoardConfig):
+    """게시판 관련 router 함수에 사용될 기본 클래스"""
 
     def __init__(
         self,
@@ -38,7 +39,10 @@ class BoardBase(BoardConfig):
         self.ClassException = None  # 템플릿, API 클래스에서 인스턴스 생성시 set_exception_type 메소드를 통해 정의합니다.
 
     def set_exception_type(self, exception_type: Union[HTTPException, AlertException]):
-        """예외처리 클래스를 설정합니다."""
+        """
+        예외처리 클래스를 설정합니다.
+        - 템플릿, API 클래스에서 인스턴스 생성시 해당 메소드를 통해 정의합니다.
+        """
         self.ClassException = exception_type
 
     def set_wr_name(self, member: Member = None, default_name: str = None) -> str:
@@ -62,6 +66,7 @@ class BoardBase(BoardConfig):
             raise self.ClassException(detail="로그인 세션 만료, 비회원 글쓰기시 작성자 이름 미기재 등의 비정상적인 접근입니다.", status_code=400)
 
     def validate_possible_point(self, point_type: PointEnum):
+        """포인트에 따른 접근 권한을 검사합니다."""
         if not self.config.cf_use_point:
             return
 

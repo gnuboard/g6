@@ -26,6 +26,10 @@ from .base_handler import BoardBase
 
 
 class ReadPostCommon(BoardBase):
+    """
+    게시글 읽기 공통 클래스
+    Template, API 클래스에서 상속받아 사용
+    """
 
     def __init__(
         self,
@@ -121,7 +125,7 @@ class ReadPostCommon(BoardBase):
         self.db.commit()
 
     def check_scrap(self):
-        # 스크랩 확인
+        """스크랩 여부 확인"""
         if not self.member:
             return
         
@@ -138,7 +142,7 @@ class ReadPostCommon(BoardBase):
             self.write.is_scrap = True
 
     def check_is_good(self):
-        # 추천/비추천 확인
+        """추천/비추천 확인"""
         if not self.member:
             return
 
@@ -150,7 +154,7 @@ class ReadPostCommon(BoardBase):
             setattr(self.write, f"is_{good_data.bg_flag}", True)
 
     def get_links(self):
-        # 링크 목록 조회
+        """링크 목록 조회""""
         links = []
         for i in range(1, 3):
             url = getattr(self.write, f"wr_link{i}")
@@ -159,7 +163,7 @@ class ReadPostCommon(BoardBase):
                 links.append({"no": i, "url": url, "hit": hit})
 
     def get_comments(self):
-        # 댓글 목록 조회
+        """댓글 목록 조회"""
         comments = self.db.scalars(
             select(self.write_model).filter_by(
                 wr_parent=self.wr_id,
@@ -193,6 +197,9 @@ class ReadPostCommon(BoardBase):
 
 
 class ReadPostTemplate(ReadPostCommon):
+    """
+    Template용 게시글 읽기 클래스
+    """
 
     def __init__(
         self,
@@ -241,7 +248,7 @@ class ReadPostTemplate(ReadPostCommon):
         }
 
     def get_prev_next(self):
-        # 이전글 다음글 조회
+        """이전글 다음글 조회"""
         prev = None
         next = None
         sca = self.request.query_params.get("sca")
@@ -280,6 +287,7 @@ class ReadPostTemplate(ReadPostCommon):
         return prev, next
 
     def response(self):
+        """최종 응답 처리"""
         self.block_read_comment()
         self.validate_read_level()
         self.validate_secret()
@@ -291,6 +299,9 @@ class ReadPostTemplate(ReadPostCommon):
     
 
 class ReadPostAPI(ReadPostCommon):
+    """
+    API용 게시글 읽기 클래스
+    """
 
     def __init__(
         self,
@@ -319,6 +330,7 @@ class ReadPostAPI(ReadPostCommon):
         self.set_exception_type(HTTPException)
 
     def response(self):
+        """최종 응답 처리"""
         content = ResponseWriteModel.model_validate(self.content)
         self.block_read_comment()
         self.validate_read_level()

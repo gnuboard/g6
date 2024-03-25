@@ -11,6 +11,10 @@ from .base_handler import BoardBase
 
 
 class DeletePostCommon(BoardBase):
+    """
+    게시글 삭제 공통 처리 클래스
+    Template, API 클래스에서 상속받아 사용
+    """
 
     def __init__(
         self,
@@ -27,6 +31,7 @@ class DeletePostCommon(BoardBase):
         self.write = write
 
     def delete_write(self):
+        """게시글 삭제 처리"""
         origin_write = self.write
         member_id = self.mb_id
         write_model = self.write_model
@@ -129,6 +134,9 @@ class DeletePostCommon(BoardBase):
 
 
 class DeletePostTemplate(DeletePostCommon):
+    """
+    Template용 게시글 삭제 클래스
+    """
 
     def __init__(
         self,
@@ -144,12 +152,16 @@ class DeletePostTemplate(DeletePostCommon):
         self.set_exception_type(AlertException)
 
     def response(self):
+        """최종 응답 처리"""
         self.delete_write()
         query_params = remove_query_params(self.request, "token")
         return RedirectResponse(set_url_query_params(f"/board/{self.bo_table}", query_params), status_code=303)
 
 
 class DeletePostAPI(DeletePostCommon):
+    """
+    API용 게시글 삭제 클래스
+    """
 
     def __init__(
         self,
@@ -165,5 +177,6 @@ class DeletePostAPI(DeletePostCommon):
         self.set_exception_type(HTTPException)
 
     def response(self):
+        """최종 응답 처리"""
         self.delete_write()
         return {"result": "deleted"}
