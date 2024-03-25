@@ -22,10 +22,10 @@ from api.v1.dependencies.board import (
     get_write as get_write_api,
     get_board as get_board_api,
 )
-from .base import BoardRouter
+from .base_handler import BoardBase
 
 
-class ReadPostCommon(BoardRouter):
+class ReadPostCommon(BoardBase):
 
     def __init__(
         self,

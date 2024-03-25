@@ -6,10 +6,10 @@ from core.database import db_session
 from core.models import Board, Member
 from lib.board_lib import write_search_filter, get_list, AlertException, UserTemplates
 from lib.template_functions import get_paging
-from .base import BoardRouter
+from .base_handler import BoardBase
 
 
-class ListPostCommon(BoardRouter):
+class ListPostCommon(BoardBase):
 
     def __init__(
         self,

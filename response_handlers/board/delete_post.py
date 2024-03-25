@@ -7,10 +7,10 @@ from core.database import db_session
 from core.models import Board, Member, WriteBaseModel, BoardNew, Scrap
 from lib.board_lib import AlertException, is_owner, insert_point, delete_point, BoardFileManager, FileCache
 from lib.common import remove_query_params, set_url_query_params
-from .base import BoardRouter
+from .base_handler import BoardBase
 
 
-class DeletePostCommon(BoardRouter):
+class DeletePostCommon(BoardBase):
 
     def __init__(
         self,

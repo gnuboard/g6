@@ -23,7 +23,9 @@ from api.v1.dependencies.board import (
     validate_upload_file_write, get_write, get_parent_write
 )
 from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel
-from routers.board import ListPostAPI, CreatePostAPI, ReadPostAPI, UpdatePostAPI, DeletePostAPI
+from response_handlers.board import(
+     ListPostAPI, CreatePostAPI, ReadPostAPI, UpdatePostAPI, DeletePostAPI
+)
 
 
 router = APIRouter()

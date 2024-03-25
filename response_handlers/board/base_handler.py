@@ -13,7 +13,7 @@ from lib.common import dynamic_create_write_table
 class PointEnum(Enum):
     WRITE = {"attr": "bo_write_point", "func": "is_write_point", "action": "글 작성"}
 
-class BoardRouter(BoardConfig):
+class BoardBase(BoardConfig):
 
     def __init__(
         self,

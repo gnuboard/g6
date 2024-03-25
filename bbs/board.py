@@ -25,7 +25,10 @@ from lib.point import delete_point, insert_point
 from lib.template_filters import datetime_format, number_format
 from lib.g5_compatibility import G5Compatibility
 from lib.html_sanitizer import content_sanitizer
-from routers.board import ListPostTemplate, CreatePostTemplate, ReadPostTemplate, UpdatePostTemplate, DeletePostTemplate
+from response_handlers.board import (
+    ListPostTemplate, CreatePostTemplate, ReadPostTemplate,
+    UpdatePostTemplate, DeletePostTemplate
+)
 
 
 router = APIRouter()

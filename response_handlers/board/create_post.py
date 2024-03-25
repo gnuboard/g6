@@ -19,10 +19,10 @@ from lib.dependencies import validate_captcha, get_board, check_login_member
 from lib.pbkdf2 import create_hash
 from api.v1.models.board import WriteModel
 from api.v1.dependencies.board import get_current_member, validate_write
-from .base import BoardRouter, PointEnum
+from .base_handler import BoardBase, PointEnum
 
 
-class CreatePostCommon(BoardRouter):
+class CreatePostCommon(BoardBase):
 
     FILE_DIRECTORY = "data/file/"
 
