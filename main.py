@@ -1,7 +1,7 @@
 import datetime
 
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Path, Request, Response
+from fastapi import Depends, FastAPI, Path, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import TypeAdapter
 from sqlalchemy import select, insert
@@ -21,39 +21,16 @@ from core.plugin import (
     import_plugin_by_states, read_plugin_state, register_plugin,
     register_plugin_admin_menu, register_statics
 )
+from core.routers import router as template_router
 from core.template import register_theme_statics, TemplateService, UserTemplates
 from lib.common import *
+from lib.dependencies import check_use_template
 from lib.member_lib import MemberService, is_super_admin
 from lib.point import insert_point
 from lib.template_filters import default_if_none
 from lib.token import create_session_token
 from lib.scheduler import scheduler
 
-
-from admin.admin import router as admin_router
-from bbs.board import router as board_router
-from bbs.login import router as login_router
-from bbs.register import router as register_router
-from bbs.content import router as content_router
-from bbs.faq import router as faq_router
-from bbs.qa import router as qa_router
-from bbs.member_profile import router as user_profile_router
-from bbs.profile import router as profile_router
-from bbs.memo import router as memo_router
-from bbs.poll import router as poll_router
-from bbs.point import router as point_router
-from bbs.scrap import router as scrap_router
-from bbs.board_new import router as board_new_router
-from bbs.ajax_good import router as good_router
-from bbs.ajax_autosave import router as autosave_router
-from bbs.member_leave import router as member_leave_router
-from bbs.member_find import router as member_find_router
-from bbs.social import router as social_router
-from bbs.password import router as password_router
-from bbs.search import router as search_router
-from bbs.current_connect import router as current_connect_router
-from install.router import router as install_router
-from lib.editor.ckeditor4 import router as editor_router
 from api.v1.routers import router as api_router
 
 # .env 파일로부터 환경 변수를 로드합니다.
@@ -100,30 +77,7 @@ cache_plugin_state.__setitem__('info', plugin_states)
 cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
 cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(plugin_states))
 
-app.include_router(admin_router, prefix="/admin", tags=["admin"], include_in_schema=False)
-app.include_router(install_router, prefix="/install", tags=["install"], include_in_schema=False)
-app.include_router(board_router, prefix="/board", tags=["board"], include_in_schema=False)
-app.include_router(login_router, prefix="/bbs", tags=["login"], include_in_schema=False)
-app.include_router(register_router, prefix="/bbs", tags=["register"], include_in_schema=False)
-app.include_router(user_profile_router, prefix="/bbs", tags=["profile"], include_in_schema=False)
-app.include_router(profile_router, prefix="/bbs", tags=["profile"], include_in_schema=False)
-app.include_router(member_leave_router, prefix="/bbs", tags=["member_leave"], include_in_schema=False)
-app.include_router(member_find_router, prefix="/bbs", tags=["member_find"], include_in_schema=False)
-app.include_router(content_router, prefix="/bbs", tags=["content"], include_in_schema=False)
-app.include_router(faq_router, prefix="/bbs", tags=["faq"], include_in_schema=False)
-app.include_router(qa_router, prefix="/bbs", tags=["qa"], include_in_schema=False)
-app.include_router(memo_router, prefix="/bbs", tags=["memo"], include_in_schema=False)
-app.include_router(poll_router, prefix="/bbs", tags=["poll"], include_in_schema=False)
-app.include_router(point_router, prefix="/bbs", tags=["point"], include_in_schema=False)
-app.include_router(scrap_router, prefix="/bbs", tags=["scrap"], include_in_schema=False)
-app.include_router(board_new_router, prefix="/bbs", tags=["board_new"], include_in_schema=False)
-app.include_router(good_router, prefix="/bbs/ajax", tags=["good"], include_in_schema=False)
-app.include_router(autosave_router, prefix="/bbs/ajax", tags=["autosave"], include_in_schema=False)
-app.include_router(social_router, prefix="/bbs", tags=["social"], include_in_schema=False)
-app.include_router(password_router, prefix="/bbs", tags=["password"], include_in_schema=False)
-app.include_router(search_router, prefix="/bbs", tags=["search"], include_in_schema=False)
-app.include_router(current_connect_router, prefix="/bbs", tags=["current_connect"], include_in_schema=False)
-app.include_router(editor_router, prefix="/editor", tags=["editor"], include_in_schema=False)
+app.include_router(template_router)
 app.include_router(api_router)
 
 
@@ -305,7 +259,10 @@ regist_core_exception_handler(app)
 scheduler.run_scheduler()
 
 
-@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+@app.get("/",
+         dependencies=[Depends(check_use_template)],
+         response_class=HTMLResponse,
+         include_in_schema=False)
 async def index(request: Request, db: db_session):
     """
     메인 페이지
@@ -336,7 +293,9 @@ async def index(request: Request, db: db_session):
     return templates.TemplateResponse("/index.html", context)
 
 
-@app.post("/generate_token", include_in_schema=False)
+@app.post("/generate_token",
+          dependencies=[Depends(check_use_template)],
+          include_in_schema=False)
 async def generate_token(request: Request) -> JSONResponse:
     """세션 토큰 생성 후 반환
 
@@ -351,7 +310,9 @@ async def generate_token(request: Request) -> JSONResponse:
     return JSONResponse(content={"success": True, "token": token})
 
 
-@app.get("/device/change/{device}", include_in_schema=False)
+@app.get("/device/change/{device}",
+         dependencies=[Depends(check_use_template)],
+         include_in_schema=False)
 async def device_change(
     request: Request,
     device: str = Path(...)

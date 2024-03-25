@@ -31,6 +31,20 @@ class AlertCloseException(HTTPException):
         super().__init__(status_code=status_code, detail=detail, headers=headers)
 
 
+# 템플릿 미사용 시 예외처리 핸들러 등록
+class TemplateDisabledException(HTTPException):
+    """템플릿 사용 불가 예외 클래스"""
+
+    def __init__(
+        self,
+        detail: Any = None,
+        status_code: int = 200,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> None:
+        super().__init__(status_code=status_code, detail=detail, headers=headers)
+        self.status_code = status_code
+        self.detail = detail
+
 def regist_core_exception_handler(app: FastAPI) -> None:
     """애플리케이션 인스턴스에 예외처리 핸들러를 등록합니다."""
 
@@ -54,6 +68,16 @@ def regist_core_exception_handler(app: FastAPI) -> None:
             "errors": exc.detail
         }
         return template_response("alert_close.html", context, exc.status_code)
+    
+    @app.exception_handler(TemplateDisabledException)
+    async def template_disabled_exception_handler(
+            request: Request, exc: TemplateDisabledException):
+        """템플릿 사용 불가 예외처리 handler 등록"""
+        context = {
+            "request": request,
+            "errors": exc.detail
+        }
+        return template_response("503.html", context, exc.status_code)
 
 
 def template_response(

@@ -1,12 +1,13 @@
 import os
 from typing_extensions import Annotated
 
-from fastapi import Depends, Form, Path, Query, Request
+from fastapi import Depends, Form, HTTPException, Path, Query, Request
 from fastapi.responses import RedirectResponse
+from pydantic import TypeAdapter
 from sqlalchemy import exists, inspect, select
 
 from core.database import DBConnect, db_session
-from core.exception import AlertException
+from core.exception import AlertException, TemplateDisabledException
 from core.models import Auth, Board, GroupMember, Member
 from core.template import get_theme_list
 from lib.common import (
@@ -240,3 +241,19 @@ def validate_regist_agree(request: Request):
     """약관 동의 여부 검사"""
     if not request.session.get("ss_agree", None) or not request.session.get("ss_agree2", None):
         return RedirectResponse(url="/bbs/register", status_code=302)
+
+
+def check_use_template():
+    """템플릿 사용 여부 검사"""
+    use_template = (TypeAdapter(bool)
+                    .validate_python(os.getenv("USE_TEMPLATE", "True")))
+    if not use_template:
+        raise TemplateDisabledException(detail="템플릿 사용이 불가능합니다.")
+
+
+def check_use_api():
+    """API 사용 여부 검사"""
+    use_api = (TypeAdapter(bool)
+               .validate_python(os.getenv("USE_API", "True")))
+    if not use_api:
+        raise HTTPException(status_code=404, detail="API 사용이 불가능합니다.")
