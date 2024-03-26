@@ -12,6 +12,7 @@ from lib.common import *
 from lib.dependencies import (
     get_login_member, validate_token, validate_captcha
 )
+from lib.html_sanitizer import content_sanitizer
 from lib.point import insert_point
 from lib.template_filters import default_if_none
 from lib.template_functions import get_paging
@@ -197,7 +198,7 @@ async def memo_form_update(
         memo_dict = {
             "me_send_mb_id": member.mb_id,
             "me_recv_mb_id": target.mb_id,
-            "me_memo": me_memo,
+            "me_memo": content_sanitizer.get_cleaned_data(me_memo),
             "me_send_ip": request.client.host,
         }
         memo_send = Memo(me_type='send', **memo_dict)

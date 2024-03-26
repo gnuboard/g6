@@ -76,7 +76,7 @@ class Scheduler:
         스케줄러 등록 확인용 파일을 생성합니다.
         """
         with open(cls.flag_file_path, "w") as f:
-            f.write("스케줄 작업이 등록되었습니다.")
+            f.write("Scheduler task has been registered.")
 
     @classmethod
     def remove_flag(cls) -> None:
