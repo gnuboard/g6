@@ -16,6 +16,7 @@ from lib.dependencies import common_search_query_params
 from lib.member_lib import get_admin_type
 from lib.point import insert_point
 from lib.g5_compatibility import G5Compatibility
+from api.v1.models import responses
 from api.v1.dependencies.board import (
     get_current_member, get_member_info, get_board, get_group,
     validate_write,
@@ -39,7 +40,8 @@ credentials_exception = HTTPException(
 
 @router.get("/group/{gr_id}",
             summary="게시판그룹 목록 조회",
-            response_description="게시판그룹 목록을 반환합니다."
+            response_description="게시판그룹 목록을 반환합니다.",
+            responses={**responses}
             )
 async def api_group_board_list(
     request: Request,
@@ -75,7 +77,8 @@ async def api_group_board_list(
 
 @router.get("/{bo_table}",
             summary="게시판 조회",
-            response_description="게시판 정보, 글 목록을 반환합니다."
+            response_description="게시판 정보, 글 목록을 반환합니다.",
+            responses={**responses}
             )
 async def api_list_post(
     request: Request,
@@ -110,6 +113,7 @@ async def api_list_post(
             summary="게시판 개별 글 조회",
             response_description="게시판 개별 글을 반환합니다.",
             response_model=ResponseWriteModel,
+            responses={**responses}
             )
 async def api_read_post(
     request: Request,
@@ -147,7 +151,8 @@ async def api_read_post(
 
 @router.post("/{bo_table}",
              summary="게시판 글 작성",
-             response_description="글 작성 성공 여부를 반환합니다."
+             response_description="글 작성 성공 여부를 반환합니다.",
+             responses={**responses}
              )
 async def api_create_post(
     request: Request,
@@ -182,7 +187,8 @@ async def api_create_post(
 
 @router.put("/{bo_table}/{wr_id}",
             summary="게시판 글 수정",
-            response_description="글 수정 성공 여부를 반환합니다."
+            response_description="글 수정 성공 여부를 반환합니다.",
+            responses={**responses}
             )
 async def api_update_post(
     request: Request,
@@ -216,7 +222,8 @@ async def api_update_post(
 
 @router.delete("/{bo_table}/{wr_id}",
                 summary="게시판 글 삭제",
-                response_description="글 삭제 성공 여부를 반환합니다."
+                response_description="글 삭제 성공 여부를 반환합니다.",
+                responses={**responses}
                )
 async def api_delete_post(
     request: Request,
@@ -239,7 +246,8 @@ async def api_delete_post(
 
 @router.post("/uploadfile/{bo_table}/{wr_id}",
             summary="파일 업로드",
-            response_description="파일 업로드 성공 여부를 반환합니다."
+            response_description="파일 업로드 성공 여부를 반환합니다.",
+            responses={**responses}
             )
 async def api_upload_file(
     request: Request,
@@ -264,7 +272,8 @@ async def api_upload_file(
 
 @router.post("/{bo_table}/{wr_parent}/comment",
             summary="댓글 작성",
-            response_description="댓글 작성 성공 여부를 반환합니다."
+            response_description="댓글 작성 성공 여부를 반환합니다.",
+            responses={**responses}
             )
 async def api_create_comment(
     request: Request,
@@ -329,7 +338,8 @@ async def api_create_comment(
 
 @router.put("/{bo_table}/{wr_parent}/comment/{wr_id}",
             summary="댓글 수정",
-            response_description="댓글 수정 성공 여부를 반환합니다."
+            response_description="댓글 수정 성공 여부를 반환합니다.",
+            responses={**responses}
             )
 async def api_update_comment(
     request: Request,
@@ -370,7 +380,8 @@ async def api_update_comment(
 
 @router.delete("/{bo_table}/{wr_parent}/comment/{wr_id}",
                 summary="댓글 삭제",
-                response_description="댓글 삭제 성공 여부를 반환합니다."
+                response_description="댓글 삭제 성공 여부를 반환합니다.",
+                responses={**responses}
                )
 async def api_delete_comment(
     db: db_session,
