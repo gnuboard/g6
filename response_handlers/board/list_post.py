@@ -1,15 +1,13 @@
 from fastapi import Request, HTTPException
-from fastapi.encoders import jsonable_encoder
 from sqlalchemy import asc, desc, func, select
 
 from core.database import db_session
 from core.models import Board, Member
-from lib.board_lib import write_search_filter, get_list, AlertException, UserTemplates
-from lib.template_functions import get_paging
+from lib.board_lib import write_search_filter, get_list
 from .base_handler import BoardService
 
 
-class ListPostCommon(BoardService):
+class ListPostService(BoardService):
     """
     게시글 목록 공통 클래스
     Template, API 클래스에서 상속받아 사용
@@ -25,6 +23,10 @@ class ListPostCommon(BoardService):
         search_params: dict
     ):
         super().__init__(request, db, bo_table, board, member)
+
+        if not self.is_list_level():
+            self.raise_exception(detail="목록을 볼 권한이 없습니다.", status_code=403)
+
         self.query = self.get_query(search_params)
         self.prev_spt = None
         self.next_spt = None
@@ -123,74 +125,7 @@ class ListPostCommon(BoardService):
         return total_count
 
 
-class ListPostTemplate(ListPostCommon):
-    """Template용 게시판 생성 클래스"""
+class ListPostServiceAPI(ListPostService):
 
-    def __init__(
-        self,
-        request: Request,
-        db: db_session,
-        bo_table: str,
-        board: Board,
-        member: Member,
-        search_params: dict,
-    ):
-        super().__init__(request, db, bo_table, board, member, search_params)
-        self.set_exception_type(AlertException)
-        if not self.is_list_level():
-            raise AlertException("목록을 볼 권한이 없습니다.", 403)
-
-        self.template_url: str = f"/board/{self.board.bo_skin}/list_post.html"
-        self.context = {
-            "request": request,
-            "categories": self.categories,
-            "board": self.board,
-            "board_config": self,
-            "notice_writes": self.get_notice_writes(search_params),
-            "writes": self.get_writes(search_params),
-            "total_count": self.get_total_count(),
-            "current_page": search_params['current_page'],
-            "paging": get_paging(request, search_params['current_page'], self.get_total_count(), self.page_rows),
-            "is_write": self.is_write_level(),
-            "table_width": self.get_table_width,
-            "gallery_width": self.gallery_width,
-            "gallery_height": self.gallery_height,
-            "prev_spt": self.prev_spt,
-            "next_spt": self.next_spt,
-        }
-
-    def response(self):
-        """최종 응답 처리"""
-        return UserTemplates().TemplateResponse(self.template_url, self.context)
-
-
-class ListPostAPI(ListPostCommon):
-    """API용 게시판 생성 클래스"""
-
-    def __init__(
-        self, request: Request,
-        db: db_session,
-        bo_table: str,
-        board: Board,
-        member: Member,
-        search_params: dict,
-    ):
-        super().__init__(request, db, bo_table, board, member, search_params)
-        self.set_exception_type(HTTPException)
-
-        if not self.admin_type and self.member_level < self.board.bo_list_level:
-            raise HTTPException(status_code=403, detail=f"목록을 볼 권한이 없습니다.")
-
-        self.content = {
-            "categories": self.categories,
-            "board": self.board,
-            "writes": self.get_writes(search_params),
-            "total_count": self.get_total_count(),
-            "current_page": search_params['current_page'],
-            "prev_spt": self.prev_spt,
-            "next_spt": self.next_spt,
-        }
-
-    def response(self):
-        """최종 응답 처리"""
-        return jsonable_encoder(self.content)
+    def raise_exception(self, status_code: int, detail: str = None):
+        raise HTTPException(status_code=status_code, detail=detail)

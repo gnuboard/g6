@@ -24,7 +24,8 @@ from api.v1.dependencies.board import (
 )
 from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel
 from response_handlers.board import(
-    ListPostAPI, CreatePostServiceAPI, ReadPostServiceAPI, UpdatePostServiceAPI, DeletePostAPI,
+    ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
+    UpdatePostServiceAPI, DeletePostAPI
 )
 
 
@@ -87,10 +88,21 @@ async def api_list_post(
     """
     지정된 게시판의 글 목록을 보여줍니다.
     """
-    list_post_api = ListPostAPI(
+    list_post_service = ListPostServiceAPI(
         request, db, bo_table, board, member_info["member"], search_params
     )
-    return list_post_api.response()
+
+    content = {
+        "categories": list_post_service.categories,
+        "board": list_post_service.board,
+        "writes": list_post_service.get_writes(search_params),
+        "total_count": list_post_service.get_total_count(),
+        "current_page": search_params['current_page'],
+        "prev_spt": list_post_service.prev_spt,
+        "next_spt": list_post_service.next_spt,
+    }
+    
+    return jsonable_encoder(content)
 
 
 

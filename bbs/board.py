@@ -24,10 +24,11 @@ from lib.dependencies import (
 from lib.pbkdf2 import create_hash
 from lib.point import delete_point, insert_point
 from lib.template_filters import datetime_format, number_format
+from lib.template_functions import get_paging
 from lib.g5_compatibility import G5Compatibility
 from lib.html_sanitizer import content_sanitizer
 from response_handlers.board import (
-    ListPostTemplate, CreatePostService, ReadPostService,
+    ListPostService, CreatePostService, ReadPostService,
     UpdatePostService, DeletePostTemplate
 )
 
@@ -103,10 +104,29 @@ async def list_post(
     board: Annotated[Board, Depends(get_board)],
     search_params: Annotated[dict, Depends(common_search_query_params)],
 ):
-    list_post_template = ListPostTemplate(
+    list_post_service = ListPostService(
         request, db, bo_table, board, request.state.login_member, search_params
     )
-    return list_post_template.response()
+
+    context = {
+        "request": request,
+        "categories": list_post_service.categories,
+        "board": board,
+        "board_config": list_post_service,
+        "notice_writes": list_post_service.get_notice_writes(search_params),
+        "writes": list_post_service.get_writes(search_params),
+        "total_count": list_post_service.get_total_count(),
+        "current_page": search_params['current_page'],
+        "paging": get_paging(request, search_params['current_page'], list_post_service.get_total_count(), list_post_service.page_rows),
+        "is_write": list_post_service.is_write_level(),
+        "table_width": list_post_service.get_table_width,
+        "gallery_width": list_post_service.gallery_width,
+        "gallery_height": list_post_service.gallery_height,
+        "prev_spt": list_post_service.prev_spt,
+        "next_spt": list_post_service.next_spt,
+    }
+
+    return templates.TemplateResponse(f"/board/{board.bo_skin}/list_post.html", context)
 
 
 @router.post("/list_delete/{bo_table}", dependencies=[Depends(validate_token)])
