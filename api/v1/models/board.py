@@ -96,7 +96,6 @@ class ResponseWriteModel(BaseModel):
     wr_name: str
     mb_id: str
     wr_datetime: datetime
-    wr_option: str
     wr_email: str
     wr_content: str
     wr_link1: str
@@ -104,9 +103,10 @@ class ResponseWriteModel(BaseModel):
     wr_comment: int
     wr_hit: int
     wr_ip: str
-    images: List[ResponseFileModel]
-    normal_files: List[ResponseFileModel]
-    comments: List[ResponseCommentModel]
+    wr_option: str = "",
+    images: List[ResponseFileModel] = []
+    normal_files: List[ResponseFileModel] = []
+    comments: List[ResponseCommentModel] = []
 
     class Config:
         from_attributes = True

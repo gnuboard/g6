@@ -6,10 +6,10 @@ from core.database import db_session
 from core.models import Board, Member
 from lib.board_lib import write_search_filter, get_list, AlertException, UserTemplates
 from lib.template_functions import get_paging
-from .base_handler import BoardBase
+from .base_handler import BoardService
 
 
-class ListPostCommon(BoardBase):
+class ListPostCommon(BoardService):
     """
     게시글 목록 공통 클래스
     Template, API 클래스에서 상속받아 사용

@@ -1,31 +1,14 @@
-from typing_extensions import Annotated
-
-from fastapi import Request, HTTPException, Depends, Path
-from fastapi.encoders import jsonable_encoder
+from fastapi import Request, HTTPException
 from sqlalchemy import asc, desc, select, exists
 
 from core.database import db_session
-from core.models import Board, BoardGood, WriteBaseModel, Scrap, Member
-from lib.board_lib import (
-    UserTemplates, AlertException, BoardFileManager, get_admin_type,
-    insert_point, is_owner, cut_name
-)
-from lib.dependencies import (
-    check_login_member,
-    get_board as get_board_template,
-    get_write as get_write_template
-)
+from core.models import Board, Member, WriteBaseModel, BoardGood, Scrap
+from lib.board_lib import BoardFileManager, insert_point, is_owner, cut_name
 from lib.template_filters import number_format
-from api.v1.models.board import ResponseWriteModel
-from api.v1.dependencies.board import (
-    get_current_member,
-    get_write as get_write_api,
-    get_board as get_board_api,
-)
-from .base_handler import BoardBase
+from .base_handler import BoardService
 
 
-class ReadPostCommon(BoardBase):
+class ReadPostService(BoardService):
     """
     게시글 읽기 공통 클래스
     Template, API 클래스에서 상속받아 사용
@@ -50,20 +33,30 @@ class ReadPostCommon(BoardBase):
         write.name = cut_name(request, write.wr_name)
         self.write = write
 
-        self.comments = self.get_comments()
         # 파일정보 조회
         self.images, self.normal_files = BoardFileManager(board, wr_id).get_board_files_by_type(request)
-        self.links = self.get_links()
+
+        # TODO: 전체목록보이기 사용 => 게시글 목록 부분을 분리해야함
+        self.write_list = None
+        # if member_level >= board.bo_list_level and board.bo_use_list_view:
+        #     write_list = list_post(request, db, bo_table, search_params={
+        #         "current_page": 1,
+        #         "sca": request.query_params.get("sca"),
+        #         "sfl": request.query_params.get("sfl"),
+        #         "stx": request.query_params.get("stx"),
+        #         "sst": request.query_params.get("sst"),
+        #         "sod": request.query_params.get("sod"),
+        #     }).body.decode("utf-8")
 
     def block_read_comment(self):
         """댓글은 개별조회 할 수 없도록 예외처리"""
         if self.write.wr_is_comment:
-            raise self.ClassException(detail=f"{self.write.wr_id} : 존재하지 않는 게시글입니다.", status_code=404)
+            self.raise_exception(detail=f"{self.write.wr_id} : 존재하지 않는 게시글입니다.", status_code=404)
 
     def validate_read_level(self):
         """읽기 권한 검증"""
         if not self.is_read_level():
-            raise self.ClassException(detail="글을 읽을 권한이 없습니다.", status_code=403)
+            self.raise_exception(detail="글을 읽을 권한이 없습니다.", status_code=403)
 
     def validate_secret(self):
         """비밀글 검증"""
@@ -72,10 +65,6 @@ class ReadPostCommon(BoardBase):
             not self.admin_type,
             not is_owner(self.write, self.mb_id),
         ]
-
-        if isinstance(self, ReadPostTemplate):
-            session_secret_name = f"ss_secret_{self.bo_table}_{self.wr_id}"
-            block_conditions.append(not self.request.session.get(session_secret_name))
     
         if not all(block_conditions):
             return
@@ -91,18 +80,21 @@ class ReadPostCommon(BoardBase):
             )
             if parent_write.mb_id == self.mb_id:
                 owner = True
-                if isinstance(self, ReadPostTemplate):
-                    self.request.session[session_secret_name] = True
+
         if not owner:
-            raise self.ClassException(detail="비밀글 입니다.", status_code=403)
+            raise self.raise_exception(detail="비밀글 입니다.", status_code=403)
+
+    def validate_secret_with_session(self):
+        """비밀글 검증(secret session 검증 추가)"""
+        session_name = f"ss_secret_{self.bo_table}_{self.wr_id}"
+        if self.request.session.get(session_name):
+            return
+        self.validate_secret()
+        self.request.session[session_name] = True
 
     def validate_repeat(self):
-        """한번 읽은 게시글은 세션만료까지 조회수, 포인트 처리를 하지 않는다."""
-        conditions = [self.mb_id != self.write.mb_id]
-        if isinstance(self, ReadPostTemplate):
-            conditions.append(not self.request.session.get(self.session_name))
-
-        if not all(conditions):
+        """게시글 작성자는 조회수, 포인트 처리를 하지 않는다."""
+        if self.mb_id == self.write.mb_id:
             return
 
         # 포인트 검사
@@ -113,16 +105,25 @@ class ReadPostCommon(BoardBase):
                 message = f"게시글 읽기에 필요한 포인트({point})가 부족합니다."
                 if not self.member:
                     message += f" 로그인 후 다시 시도해주세요."
-                raise self.ClassException(detail=message, status_code=403)
+                raise self.raise_exception(detail=message, status_code=403)
             else:
                 insert_point(self.request, self.mb_id, read_point, f"{self.board.bo_subject} {self.write.wr_id} 글읽기", self.board.bo_table, self.write.wr_id, "읽기")
-        
-        if isinstance(self, ReadPostTemplate):
-            self.request.session[self.session_name] = True
-        
+
         # 조회수 증가
         self.write.wr_hit += 1
         self.db.commit()
+
+    def validate_repeat_with_session(self):
+        """
+        게시글 작성자 확인(validate_repeat())과 세션여부를 확인하여
+        한번 읽은 게시글은 조회수, 포인트 처리를 하지 않는다.
+        """
+        session_name = f"ss_view_{self.bo_table}_{self.wr_id}"
+        if self.request.session.get(session_name):
+            return
+
+        self.validate_repeat()
+        self.request.session[session_name] = True
 
     def check_scrap(self):
         """스크랩 여부 확인"""
@@ -154,13 +155,14 @@ class ReadPostCommon(BoardBase):
             setattr(self.write, f"is_{good_data.bg_flag}", True)
 
     def get_links(self):
-        """링크 목록 조회""""
+        """링크 목록 조회"""
         links = []
         for i in range(1, 3):
             url = getattr(self.write, f"wr_link{i}")
             hit = getattr(self.write, f"wr_link{i}_hit")
             if url:
                 links.append({"no": i, "url": url, "hit": hit})
+        return links
 
     def get_comments(self):
         """댓글 목록 조회"""
@@ -194,58 +196,6 @@ class ReadPostCommon(BoardBase):
                 comment.save_content = comment.wr_content
 
         return comments
-
-
-class ReadPostTemplate(ReadPostCommon):
-    """
-    Template용 게시글 읽기 클래스
-    """
-
-    def __init__(
-        self,
-        request: Request,
-        db: db_session,
-        board: Annotated[Board, Depends(get_board_template)],
-        write: Annotated[WriteBaseModel, Depends(get_write_template)],
-        member: Annotated[Member, Depends(check_login_member)],
-        bo_table: str = Path(...),
-        wr_id: int = Path(...),
-    ):
-        super().__init__(request, db, bo_table, board, wr_id, write, member)
-        self.template_url: str = f"/board/{self.board.bo_skin}/read_post.html"
-        self.admin_type = get_admin_type(request, self.mb_id, board=board)
-        self.session_name = f"ss_view_{bo_table}_{wr_id}"
-        self.request.state.editor = self.select_editor
-        self.prev, self.next = self.get_prev_next()
-        self.set_exception_type(AlertException)
-
-        # TODO: 전체목록보이기 사용 => 게시글 목록 부분을 분리해야함
-        self.write_list = None
-        # if member_level >= board.bo_list_level and board.bo_use_list_view:
-        #     write_list = list_post(request, db, bo_table, search_params={
-        #         "current_page": 1,
-        #         "sca": request.query_params.get("sca"),
-        #         "sfl": request.query_params.get("sfl"),
-        #         "stx": request.query_params.get("stx"),
-        #         "sst": request.query_params.get("sst"),
-        #         "sod": request.query_params.get("sod"),
-        #     }).body.decode("utf-8")
-
-        self.context = {
-            "request": self.request,
-            "board": self.board,
-            "write": self.write,
-            "write_list": self.write_list,
-            "prev": self.prev,
-            "next": self.next,
-            "images": self.images,
-            "files": self.images + self.normal_files,
-            "links": self.links,
-            "comments": self.comments,
-            "is_write": self.is_write_level(),
-            "is_reply": self.is_reply_level(),
-            "is_comment_write": self.is_comment_level(),
-        }
 
     def get_prev_next(self):
         """이전글 다음글 조회"""
@@ -286,57 +236,8 @@ class ReadPostTemplate(ReadPostCommon):
                 )
         return prev, next
 
-    def response(self):
-        """최종 응답 처리"""
-        self.block_read_comment()
-        self.validate_read_level()
-        self.validate_secret()
-        self.validate_repeat()
-        self.check_scrap()
-        self.check_is_good()
-        self.db.commit()
-        return UserTemplates().TemplateResponse(self.template_url, self.context)
-    
 
-class ReadPostAPI(ReadPostCommon):
-    """
-    API용 게시글 읽기 클래스
-    """
+class ReadPostServiceAPI(ReadPostService):
 
-    def __init__(
-        self,
-        request: Request,
-        db: db_session,
-        write: Annotated[WriteBaseModel, Depends(get_write_api)],
-        board: Annotated[Board, Depends(get_board_api)],
-        member: Annotated[Member, Depends(get_current_member)],
-        bo_table: str = Path(...),
-        wr_id: str = Path(...),
-    ):
-        super().__init__(request, db, bo_table, board, wr_id, write, member)
-        
-        self.admin_type = get_admin_type(request, self.mb_id, board=board)
-        self.comments = self.get_comments()
-
-        content = jsonable_encoder(self.write)
-        additional_content = jsonable_encoder({
-            "images": self.images,
-            "normal_files": self.normal_files,
-            "links": self.links,
-            "comments": self.comments,
-        })
-        content.update(additional_content)
-        self.content = content
-        self.set_exception_type(HTTPException)
-
-    def response(self):
-        """최종 응답 처리"""
-        content = ResponseWriteModel.model_validate(self.content)
-        self.block_read_comment()
-        self.validate_read_level()
-        self.validate_secret()
-        self.validate_repeat()
-        self.check_scrap()
-        self.check_is_good()
-        self.db.commit()
-        return content
+    def raise_exception(self, status_code: int, detail: str = None):
+        return HTTPException(status_code=status_code, detail=detail)

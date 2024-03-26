@@ -5,20 +5,21 @@ import datetime
 from datetime import datetime
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, Depends, Request, Form, Path, Query
+from fastapi import APIRouter, Depends, Request, Form, Path, Query, File
 from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy import func, select, update
 
 from core.database import db_session
 from core.exception import AlertException
-from core.formclass import WriteCommentForm
-from core.models import Board, BoardGood, Group, Scrap
+from core.formclass import WriteForm, WriteCommentForm
+from core.models import Board, BoardGood, Group, Scrap, Member
 from core.template import UserTemplates
 from lib.board_lib import *
 from lib.common import *
 from lib.dependencies import (
-    check_group_access, common_search_query_params, get_board, get_write,
-    validate_captcha, validate_token
+    check_group_access, common_search_query_params,
+    validate_captcha, validate_token, check_login_member,
+    get_board, get_write, get_login_member
 )
 from lib.pbkdf2 import create_hash
 from lib.point import delete_point, insert_point
@@ -26,8 +27,8 @@ from lib.template_filters import datetime_format, number_format
 from lib.g5_compatibility import G5Compatibility
 from lib.html_sanitizer import content_sanitizer
 from response_handlers.board import (
-    ListPostTemplate, CreatePostTemplate, ReadPostTemplate,
-    UpdatePostTemplate, DeletePostTemplate
+    ListPostTemplate, CreatePostService, ReadPostService,
+    UpdatePostService, DeletePostTemplate
 )
 
 
@@ -459,23 +460,122 @@ async def write_form_edit(
 
 @router.post("/write_update/{bo_table}", dependencies=[Depends(validate_token), Depends(check_group_access)])
 async def create_post(
-    create_post_template: Annotated[CreatePostTemplate, Depends()],
+    request: Request,
+    db: db_session,
+    form_data: Annotated[WriteForm, Depends()],
+    member: Annotated[Member, Depends(check_login_member)],
+    board: Annotated[Board, Depends(get_board)],
+    bo_table: str = Path(...),
+    parent_id: int = Form(None),
+    notice: bool = Form(False),
+    secret: str = Form(""),
+    html: str = Form(""),
+    mail: str = Form(""),
+    uid: str = Form(None),
+    files: List[UploadFile] = File(None, alias="bf_file[]"),
+    file_content: list = Form(None, alias="bf_content[]"),
+    file_dels: list = Form(None, alias="bf_file_del[]"),
+    recaptcha_response: str = Form("", alias="g-recaptcha-response"),
 ):
-    return create_post_template.response()
+    create_post_service = CreatePostService(
+        request, db, bo_table, board, member
+    )
+    create_post_service.validate_captcha(recaptcha_response)
+    create_post_service.validate_write_delay()
+    create_post_service.validate_secret_board(secret, html, mail)
+    create_post_service.validate_post_content(form_data.wr_subject, form_data.wr_content)
+    create_post_service.is_write_level()
+    create_post_service.arrange_data(form_data, secret, html, mail)
+    write = create_post_service.save_write(parent_id, form_data)
+    insert_board_new(bo_table, write)
+    create_post_service.add_point(write)
+    create_post_service.send_write_mail_(write, parent_id)
+    create_post_service.set_notice(write.wr_id, notice)
+    set_write_delay(create_post_service.request)
+    create_post_service.delete_auto_save(uid)
+    create_post_service.save_secret_session(write.wr_id, secret)
+    create_post_service.upload_files(write, files, file_content, file_dels)
+    create_post_service.delete_cache()
+    redirect_url = create_post_service.get_redirect_url(write)
+    db.commit()
+    return RedirectResponse(redirect_url, status_code=303)
 
 
 @router.post("/write_update/{bo_table}/{wr_id}", dependencies=[Depends(validate_token), Depends(check_group_access)])
 async def update_post(
-    update_post_template: Annotated[UpdatePostTemplate, Depends()],
+    request: Request,
+    db: db_session,
+    member: Annotated[Member, Depends(get_login_member)],
+    board: Annotated[Board, Depends(get_board)],
+    bo_table: str = Path(...),
+    wr_id: str = Path(...),
+    notice: bool = Form(False),
+    secret: str = Form(""),
+    html: str = Form(""),
+    mail: str = Form(""),
+    form_data: WriteForm = Depends(),
+    uid: str = Form(None),
+    files: List[UploadFile] = File(None, alias="bf_file[]"),
+    file_content: list = Form(None, alias="bf_content[]"),
+    file_dels: list = Form(None, alias="bf_file_del[]"),
 ):
-    return update_post_template.response()
+    update_post_service = UpdatePostService(
+        request, db, bo_table, board, member, wr_id,
+    )
+    write = get_write(db, bo_table, wr_id)
+    update_post_service.validate_restrict_comment_count()
+    update_post_service.validate_secret_board(secret, html, mail)
+    update_post_service.validate_post_content(form_data.wr_subject, form_data.wr_content)
+    update_post_service.arrange_data(form_data, secret, html, mail)
+    update_post_service.save_secret_session(wr_id, secret)
+    update_post_service.save_write(write, form_data)
+    update_post_service.set_notice(write.wr_id, notice)
+    update_post_service.delete_auto_save(uid)
+    update_post_service.upload_files(write, files, file_content, file_dels)
+    update_post_service.update_children_category(form_data)
+    update_post_service.delete_cache()
+    redirect_url = update_post_service.get_redirect_url(write)
+    db.commit()
+
+    return RedirectResponse(redirect_url, status_code=303)
 
 
 @router.get("/{bo_table}/{wr_id}", dependencies=[Depends(check_group_access)])
 async def read_post(
-    read_post_template: Annotated[ReadPostTemplate, Depends()]
+    request: Request,
+    db: db_session,
+    board: Annotated[Board, Depends(get_board)],
+    write: Annotated[WriteBaseModel, Depends(get_write)],
+    member: Annotated[Member, Depends(check_login_member)],
+    bo_table: str = Path(...),
+    wr_id: int = Path(...),
 ):
-    return read_post_template.response()
+    read_post_service = ReadPostService(request, db, bo_table, board, wr_id, write, member)
+    read_post_service.request.state.editor = read_post_service.select_editor
+    read_post_service.validate_secret_with_session()
+    read_post_service.validate_repeat_with_session()
+    read_post_service.block_read_comment()
+    read_post_service.validate_read_level()
+    read_post_service.check_scrap()
+    read_post_service.check_is_good()
+    prev, next = read_post_service.get_prev_next()
+    db.commit()
+    context = {
+        "request": read_post_service.request,
+        "board": board,
+        "write": write,
+        "write_list": read_post_service.write_list,
+        "prev": prev,
+        "next": next,
+        "images": read_post_service.images,
+        "files": read_post_service.images + read_post_service.normal_files,
+        "links": read_post_service.get_links(),
+        "comments": read_post_service.get_comments(),
+        "is_write": read_post_service.is_write_level(),
+        "is_reply": read_post_service.is_reply_level(),
+        "is_comment_write": read_post_service.is_comment_level(),
+    }
+    return templates.TemplateResponse(f"/board/{board.bo_skin}/read_post.html", context)
 
 
 # 게시글 삭제

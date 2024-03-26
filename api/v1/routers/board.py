@@ -1,14 +1,15 @@
 from typing_extensions import Annotated, Dict, List
 
 from fastapi import APIRouter, Depends, Request, Path, HTTPException, status, UploadFile, File, Form
+from fastapi.responses import RedirectResponse
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import func, select, update
 
 from core.database import db_session
-from core.models import Board, Group, WriteBaseModel
+from core.models import Board, Group, WriteBaseModel, Member
 from lib.board_lib import (
     BoardConfig, generate_reply_character,
-    insert_board_new, send_write_mail
+    insert_board_new, send_write_mail, set_write_delay
 )
 from lib.common import dynamic_create_write_table
 from lib.dependencies import common_search_query_params
@@ -16,15 +17,14 @@ from lib.member_lib import get_admin_type
 from lib.point import insert_point
 from lib.g5_compatibility import G5Compatibility
 from api.v1.dependencies.board import (
-    get_member_info, get_board, get_group,
+    get_current_member, get_member_info, get_board, get_group,
     validate_write,
     validate_comment, validate_update_comment, validate_delete_comment,
     validate_upload_file_write, get_write, get_parent_write
 )
 from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel
 from response_handlers.board import(
-     ListPostAPI, CreatePostAPI, ReadPostAPI, UpdatePostAPI, DeletePostAPI,
-     CreatePostCommon
+    ListPostAPI, CreatePostServiceAPI, ReadPostServiceAPI, UpdatePostServiceAPI, DeletePostAPI,
 )
 
 
@@ -100,12 +100,37 @@ async def api_list_post(
             response_model=ResponseWriteModel,
             )
 async def api_read_post(
-    read_post_api: Annotated[ReadPostAPI, Depends()]
+    request: Request,
+    db: db_session,
+    write: Annotated[WriteBaseModel, Depends(get_write)],
+    board: Annotated[Board, Depends(get_board)],
+    member: Annotated[Member, Depends(get_current_member)],
+    bo_table: str = Path(...),
+    wr_id: str = Path(...),
 ) -> Dict:
     """
     지정된 게시판의 글을 개별 조회합니다.
     """
-    return read_post_api.response()
+    read_post_service = ReadPostServiceAPI(
+        request, db, bo_table, board, wr_id, write, member
+    )
+    content = jsonable_encoder(read_post_service.write)
+    additional_content = jsonable_encoder({
+        "images": read_post_service.images,
+        "normal_files": read_post_service.normal_files,
+        "links": read_post_service.get_links(),
+        "comments": read_post_service.get_comments(),
+    })
+    content.update(additional_content)
+    read_post_service.validate_secret()
+    read_post_service.validate_repeat()
+    read_post_service.block_read_comment()
+    read_post_service.validate_read_level()
+    read_post_service.check_scrap()
+    read_post_service.check_is_good()
+    model_validated_content = ResponseWriteModel.model_validate(content)
+    db.commit()
+    return model_validated_content
 
 
 @router.post("/{bo_table}",
@@ -123,10 +148,24 @@ async def api_create_post(
     """
     지정된 게시판에 새 글을 작성합니다.
     """
-    create_post_api = CreatePostAPI(
-        request, db, bo_table, board, member=member_info["member"], wr_data=wr_data 
+    create_post_service = CreatePostServiceAPI(
+        request, db, bo_table, board, member_info["member"]
     )
-    return create_post_api.response()
+    create_post_service.validate_secret_board(wr_data.secret, wr_data.html, wr_data.mail)
+    create_post_service.validate_post_content(wr_data.wr_subject, wr_data.wr_content)
+    create_post_service.is_write_level()
+    create_post_service.arrange_data(wr_data, wr_data.secret, wr_data.html, wr_data.mail)
+    write = create_post_service.save_write(wr_data.parent_id, wr_data)
+    insert_board_new(bo_table, write)
+    create_post_service.add_point(write)
+    create_post_service.send_write_mail_(write, wr_data.parent_id)
+    create_post_service.set_notice(write.wr_id, wr_data.notice)
+    set_write_delay(create_post_service.request)
+    create_post_service.save_secret_session(write.wr_id, wr_data.secret)
+    create_post_service.delete_cache()
+    redirect_url = create_post_service.get_redirect_url(write)
+    db.commit()
+    return RedirectResponse(redirect_url, status_code=303)
     
 
 @router.put("/{bo_table}/{wr_id}",
@@ -145,10 +184,22 @@ async def api_update_post(
     """
     지정된 게시판의 글을 수정합니다.
     """
-    update_post_api = UpdatePostAPI(
-        request, db, bo_table, board, wr_data, member_info["member"], wr_id
+    update_post_service = UpdatePostServiceAPI(
+        request, db, bo_table, board, member_info["member"], wr_id
     )
-    return update_post_api.response()
+    update_post_service.validate_restrict_comment_count()
+    write = get_write(update_post_service.db, update_post_service.bo_table, update_post_service.wr_id)
+    
+    update_post_service.validate_secret_board(wr_data.secret, wr_data.html, wr_data.mail)
+    update_post_service.validate_post_content(wr_data.wr_subject, wr_data.wr_content)
+    update_post_service.arrange_data(wr_data, wr_data.secret, wr_data.html, wr_data.mail)
+    update_post_service.save_secret_session(wr_id, wr_data.secret)
+    update_post_service.save_write(write, wr_data)
+    update_post_service.set_notice(write.wr_id, wr_data.notice)
+    update_post_service.update_children_category(wr_data)
+    update_post_service.delete_cache()
+    db.commit()
+    return {"result": "updated"}
 
 
 @router.delete("/{bo_table}/{wr_id}",
@@ -191,11 +242,10 @@ async def api_upload_file(
     """
     파일 업로드
     """
-    create_post_common = CreatePostCommon(
-        request, db, board, bo_table, member_info["member"], write
+    create_post_service = CreatePostServiceAPI(
+        request, db, bo_table, board, member_info["member"]
     )
-    create_post_common.set_exception_type(HTTPException)
-    create_post_common.upload_files(write, files, file_content, file_dels)
+    create_post_service.upload_files(write, files, file_content, file_dels)
     return {"result": "uploaded"}
 
 

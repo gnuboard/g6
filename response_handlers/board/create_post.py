@@ -1,28 +1,25 @@
 import os
 from datetime import datetime
-from typing_extensions import Annotated, List, Union
-from fastapi import Request, HTTPException, Depends, Form, Path, File, UploadFile
-from fastapi.responses import RedirectResponse
+from typing_extensions import List, Union
+from fastapi import Request, HTTPException, UploadFile
 from sqlalchemy import delete, inspect
 
 from core.database import db_session
 from core.models import Board, Member, WriteBaseModel, AutoSave
 from core.formclass import WriteForm
 from lib.board_lib import (
-    is_write_delay, AlertException, insert_point, BoardFileManager,
+    is_write_delay,insert_point, BoardFileManager,
     FileCache, get_next_num, generate_reply_character, send_write_mail,
-    set_write_delay, insert_board_new
 )
 from lib.common import remove_query_params, set_url_query_params, filter_words, make_directory
 from lib.html_sanitizer import content_sanitizer
-from lib.dependencies import validate_captcha, get_board, check_login_member
+from lib.dependencies import validate_captcha as lib_validate_captcha
 from lib.pbkdf2 import create_hash
 from api.v1.models.board import WriteModel
-from api.v1.dependencies.board import get_current_member, validate_write
-from .base_handler import BoardBase, PointEnum
+from .base_handler import BoardService
 
 
-class CreatePostCommon(BoardBase):
+class CreatePostService(BoardService):
     """
     게시글 생성 공통 클래스
     Template, API 클래스에서 상속받아 사용
@@ -30,24 +27,17 @@ class CreatePostCommon(BoardBase):
 
     FILE_DIRECTORY = "data/file/"
 
-    def __init__(self, request: Request, db: db_session, board: Board, bo_table: str,
-                member: Member, parent_id: int = None, notice: bool = False,
-                secret: str = "", html: str = "", mail: str = ""):
+    def __init__(self, request: Request, db: db_session, bo_table: str, board: Board, member: Member):
         super().__init__(request, db, bo_table, board, member)
-        self.parent_id = parent_id
-        self.notice = notice
-        self.secret = secret
-        self.html = html
-        self.mail = mail
 
-    def validate_secret_board(self):
+    def validate_secret_board(self, secret: str, html: str, mail: str):
         """게시판의 비밀글 사용여부 검증"""
         if self.admin_type:
             return
 
         # 비밀글 사용여부 체크
-        if not self.board.bo_use_secret and "secret" in self.secret and "secret" in self.html and "secret" in self.mail:
-            raise self.ClassException(status_code=403, detail="비밀글 미사용 게시판 이므로 비밀글로 등록할 수 없습니다.")
+        if not self.board.bo_use_secret and "secret" in secret and "secret" in html and "secret" in mail:
+            self.raise_exception(status_code=403, detail="비밀글 미사용 게시판 이므로 비밀글로 등록할 수 없습니다.")
 
         # 비밀글 옵션에 따라 비밀글 설정
         if self.board.bo_use_secret == 2:
@@ -59,7 +49,7 @@ class CreatePostCommon(BoardBase):
         content_filter_word = filter_words(self.request, wr_content)
         if subject_filter_word or content_filter_word:
             word = subject_filter_word if subject_filter_word else content_filter_word
-            raise self.ClassException(detail=f"제목/내용에 금지단어({word})가 포함되어 있습니다.", status_code=400)
+            self.raise_exception(detail=f"제목/내용에 금지단어({word})가 포함되어 있습니다.", status_code=400)
 
     def get_cleaned_data(self, content):
         """Stored XSS 방지용 데이터 정제"""
@@ -72,15 +62,15 @@ class CreatePostCommon(BoardBase):
 
         # 답변 권한 검증
         if not self.is_reply_level():
-            raise self.ClassException(detail="답변글을 작성할 권한이 없습니다.", status_code=403)
+            self.raise_exception(detail="답변글을 작성할 권한이 없습니다.", status_code=403)
 
         # 부모글 호출
         parent_write = self.db.get(self.write_model, parent_id)
         if not parent_write:
-            raise self.ClassException("답변할 글이 존재하지 않습니다.", 404)
+            self.raise_exception("답변할 글이 존재하지 않습니다.", 404)
         return parent_write
 
-    def arrange_data(self, data: Union[WriteForm, WriteModel]):
+    def arrange_data(self, data: Union[WriteForm, WriteModel], secret: str, html: str, mail: str):
         """
         form 또는 body 형태로 들어오는 데이터를 양식에 맞게 정리
           - 항목: ca_name, wr_password, wr_name, wr_email, wr_homepage, wr_option, wr_link1, wr_link2, wr_content
@@ -88,7 +78,7 @@ class CreatePostCommon(BoardBase):
         category_list = self.board.bo_category_list.split("|") if self.board.bo_category_list else []
         if category_list:
             if not data.ca_name or data.ca_name not in category_list:
-                raise self.ClassException(
+                self.raise_exception(
                     status_code=400,
                     detail=f"ca_name: {data.ca_name}, 잘못된 분류입니다. 분류는 {','.join(category_list)} 중 하나여야 합니다."
                 )
@@ -100,7 +90,7 @@ class CreatePostCommon(BoardBase):
         data.wr_homepage = getattr(self.member, "mb_homepage", data.wr_homepage)
 
         # 옵션 설정
-        options = [opt for opt in [self.html, self.secret, self.mail] if opt]
+        options = [opt for opt in [html, secret, mail] if opt]
         data.wr_option = ",".join(map(str, options))
 
         # 링크 설정
@@ -127,9 +117,9 @@ class CreatePostCommon(BoardBase):
         """공지글 설정"""
         self.board.bo_notice = self.set_board_notice(wr_id, notice)
 
-    def upload_files(self, write, files, file_content, file_dels):
+    def upload_files(self, write, files: List[UploadFile], file_content: list = None, file_dels: list = None):
         """파일 업로드"""
-        if not self.is_upload_level():
+        if not self.is_upload_level() or not files:
             return
 
         file_manager = BoardFileManager(self.board, write.wr_id)
@@ -181,11 +171,7 @@ class CreatePostCommon(BoardBase):
         if exclude_file.get("ext"):
             msg += f"{','.join(exclude_file['ext'])} 파일은 업로드 가능 확장자가 아닙니다.\\n"
         if msg:
-            if isinstance(self.ClassException, AlertException):
-                redirect_url = self.get_redirect_url(write)
-                raise self.ClassException(detail=msg, status_code=400, url=redirect_url)
-
-            raise self.ClassException(detail=msg, status_code=400)
+            self.raise_exception(detail=msg, status_code=400)
 
         # 파일 개수 업데이트
         write.wr_file = wr_file
@@ -195,52 +181,7 @@ class CreatePostCommon(BoardBase):
         """최신글 캐시 삭제"""
         FileCache().delete_prefix(f"latest-{self.bo_table}")
 
-
-class CreatePostTemplate(CreatePostCommon):
-    """Template용 게시판 생성 클래스"""
-
-    def __init__(
-        self,
-        request: Request,
-        db: db_session,
-        member: Annotated[Member, Depends(check_login_member)],
-        board: Annotated[Board, Depends(get_board)],
-        bo_table: str = Path(...),
-        parent_id: int = Form(None),
-        notice: bool = Form(False),
-        secret: str = Form(""),
-        html: str = Form(""),
-        mail: str = Form(""),
-        form_data: WriteForm = Depends(), # only Template
-        uid: str = Form(None), # only Template
-        files: List[UploadFile] = File(None, alias="bf_file[]"), # only Template
-        file_content: list = Form(None, alias="bf_content[]"), # only Template
-        file_dels: list = Form(None, alias="bf_file_del[]"), # only Template
-        recaptcha_response: str = Form("", alias="g-recaptcha-response"), # only Template
-    ):
-        super().__init__(
-            request=request, db=db, bo_table=bo_table, board=board, member=member,
-            parent_id=parent_id, notice=notice, secret=secret, html=html, mail=mail
-        )
-        self.uid = uid
-        self.form_data = form_data
-        self.files = files
-        self.file_content = file_content
-        self.file_dels = file_dels
-        self.recaptcha_response = recaptcha_response
-        self.set_exception_type(AlertException)
-
-    def validate_write_delay(self):
-        """글쓰기 간격 검증"""
-        if not is_write_delay(self.request):
-            raise self.ClassException(status_code=400, detail="너무 빠른 시간내에 게시글을 연속해서 올릴 수 없습니다.")
-
-    async def validate_captcha_(self):
-        """캡차 검증"""
-        if self.use_captcha:
-            await validate_captcha(self.request, self.recaptcha_response)
-
-    def save_write(self, parent_id):
+    def save_write(self, parent_id, data: Union[WriteForm, WriteModel]):
         """게시글을 저장"""
         parent_write = self.get_parent_post(parent_id)
         write = self.write_model(
@@ -249,7 +190,7 @@ class CreatePostTemplate(CreatePostCommon):
             wr_datetime=datetime.now(),
             mb_id=self.mb_id or "",
             wr_ip=self.request.client.host,
-            **self.form_data.__dict__
+            **data.__dict__
         )
         self.db.add(write)
         self.db.commit()
@@ -259,15 +200,25 @@ class CreatePostTemplate(CreatePostCommon):
         self.db.commit()
         return write
 
-    def save_secret_session(self, wr_id: int):
-        """세션을 request에 저장"""
-        if self.secret:
-            self.request.session[f"ss_secret_{self.bo_table}_{wr_id}"] = True
+    async def validate_captcha(self, recaptcha_response: str):
+        """캡차 검증"""
+        if self.use_captcha:
+            await lib_validate_captcha(self.request, recaptcha_response)
+
+    def validate_write_delay(self):
+        """글쓰기 간격 검증"""
+        if not is_write_delay(self.request):
+            self.raise_exception(status_code=400, detail="너무 빠른 시간내에 게시글을 연속해서 올릴 수 없습니다.")
 
     def delete_auto_save(self, uid: str):
         """자동저장 글 삭제"""
         if uid:
             self.db.execute(delete(AutoSave).where(AutoSave.as_uid == uid))
+
+    def save_secret_session(self, wr_id: int, secret: str):
+        """세션을 request에 저장"""
+        if secret == "secret":
+            self.request.session[f"ss_secret_{self.bo_table}_{wr_id}"] = True
 
     def get_redirect_url(self, write):
         """리다이렉트 URL 생성"""
@@ -275,68 +226,16 @@ class CreatePostTemplate(CreatePostCommon):
         url = f"/board/{self.bo_table}/{write.wr_id}"
         return set_url_query_params(url, query_params)
 
-    def create_post(self):
-        """게시글 생성 통합 처리"""
-        self.validate_write_delay()
-        self.validate_captcha_()
-        self.validate_secret_board()
-        self.validate_post_content(self.form_data.wr_subject, self.form_data.wr_content)
-        self.validate_possible_point(PointEnum.WRITE)
-        self.arrange_data(self.form_data)
-        write = self.save_write(self.parent_id)
-        # 글 작성 시간 기록
-        set_write_delay(self.request)
-        self.save_secret_session(write.wr_id)
-        insert_board_new(self.bo_table, write)
-        self.add_point(write)
-        self.send_write_mail_(write, self.parent_id)
-        self.set_notice(write.wr_id, self.notice)
-        self.delete_auto_save(self.uid)
-        if self.files:
-            self.upload_files(write, self.files, self.file_content, self.file_dels)
-        self.delete_cache()
-        self.db.commit()
-        return write
 
-    def response(self):
-        """최종 응답 처리"""
-        write = self.create_post()
-        redirect_url = self.get_redirect_url(write)
-        return RedirectResponse(redirect_url, status_code=303)
+class CreatePostServiceAPI(CreatePostService):
 
-
-class CreatePostAPI(CreatePostCommon):
-    """API용 게시판 생성 클래스"""
-    def __init__(
-        self,
-        request: Request,
-        db: db_session,
-        bo_table: Annotated[str, Path(...)],
-        board: Annotated[Board, Depends(get_board)],
-        wr_data: Annotated[WriteModel, Depends(validate_write)],
-        member: Annotated[Member, Depends(get_current_member)],
-    ):
-        super().__init__(
-            request=request, db=db, bo_table=bo_table, board=board,
-            parent_id=wr_data.parent_id, notice=wr_data.notice, secret=wr_data.secret,
-            html=wr_data.html, mail=wr_data.mail, member=member
-        )
-        self.wr_subject = wr_data.wr_subject
-        self.wr_content = wr_data.wr_content
-        self.wr_password = wr_data.wr_password
-        self.wr_name = wr_data.wr_name
-        self.wr_email = wr_data.wr_email
-        self.wr_homepage = wr_data.wr_homepage
-        self.wr_link1 = wr_data.wr_link1
-        self.wr_link2 = wr_data.wr_link2
-        self.wr_datetime = wr_data.wr_datetime
-        self.wr_data = wr_data
-        self.set_exception_type(HTTPException)
-
-    def save_write(self):
+    def raise_exception(self, status_code: int, detail: str = None):
+        raise HTTPException(status_code=status_code, detail=detail)
+    
+    def save_write(self, parent_id, wr_data):
         """게시글을 저장"""
-        parent_write = self.get_parent_post(self.parent_id)
-        wr_data_dict = self.wr_data.model_dump()
+        parent_write = self.get_parent_post(parent_id)
+        wr_data_dict = wr_data.model_dump()
         model_fields = inspect(self.write_model).columns.keys()
         filtered_wr_data = {key: value for key, value in wr_data_dict.items() if key in model_fields}
         write = self.write_model(**filtered_wr_data)
@@ -351,23 +250,3 @@ class CreatePostAPI(CreatePostCommon):
         self.board.bo_count_write = self.board.bo_count_write + 1  # 게시판 글 갯수 1 증가
         self.db.commit()
         return write
-
-    def create_post(self):
-        """게시글 생성 통합 처리"""
-        self.validate_secret_board()
-        self.validate_post_content(self.wr_subject, self.wr_content)
-        self.validate_possible_point(PointEnum.WRITE)
-        self.arrange_data(self.wr_data)
-        write = self.save_write()
-        insert_board_new(self.bo_table, write)
-        self.add_point(write)
-        self.send_write_mail_(write, self.parent_id)
-        self.set_notice(write.wr_id, self.notice)
-        self.delete_cache()
-        self.db.commit()
-        return write
-
-    def response(self):
-        """최종 응답 처리"""
-        self.create_post()
-        return {"result": "created"}
