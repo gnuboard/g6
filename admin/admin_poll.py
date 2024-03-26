@@ -8,6 +8,7 @@ from core.models import Poll, PollEtc
 from core.template import AdminTemplates
 from lib.common import *
 from lib.dependencies import common_search_query_params, validate_token
+from lib.poll import get_latest_poll
 from lib.template_functions import get_member_level_select, get_paging
 
 router = APIRouter()
@@ -67,7 +68,7 @@ async def poll_list_delete(
     db.commit()
 
     # 기존캐시 삭제
-    get_recent_poll.cache_clear()
+    get_latest_poll.cache_clear()
 
     url = "/admin/poll_list"
     query_params = request.query_params
@@ -128,7 +129,7 @@ async def poll_form_update(
         db.commit()
 
     # 기존캐시 삭제
-    get_recent_poll.cache_clear()
+    get_latest_poll.cache_clear()
 
     url = f"/admin/poll_form/{poll.po_id}"
     query_params = request.query_params

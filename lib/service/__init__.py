@@ -1,3 +1,4 @@
+"""서비스 클래스에서 필요한 기능을 제공하는 모듈입니다."""
 import abc
 
 
@@ -14,4 +15,3 @@ class BaseService(metaclass=abc.ABCMeta):
             status_code (int): HTTP 상태 코드를 나타내는 정수입니다.
             detail (str, optional): 예외 상황에 대한 추가적인 설명을 제공하는 문자열입니다. Defaults to None.
         """
-        pass

@@ -11,20 +11,18 @@
             <section id="poll_result_list">
                 <h2>{{ poll_result.po_subject }} 결과</h2>
                 <ol>
-                    {% for item in items %}
-                        {% set rate = ((item.count / total_count * 100)|round(1)) if total_count > 0 else 0 %}
-                        {% if not item %}{% continue %}{% endif %}
-                        <li class="{{ 'poll_1st' if max_count == item.count }}">
-                            <span>{{ item.subject }}</span>
-                            <div class="poll_result_graph">
-                                <span style="width:{{ rate }}%"></span>
-                            </div>
-                            <div class="poll_numerical">
-                                <strong class="poll_cnt">{{ item.count|number_format }} 표</strong>
-                                <span class="poll_percent">{{ rate }} %</span>
-                            </div>
-                        </li>
-                    {% endfor %}
+                {% for item in items %}
+                    <li class="{{ 'poll_1st' if item.rank == 1 }}">
+                        <span>{{ item.subject }}</span>
+                        <div class="poll_result_graph">
+                            <span style="width:{{ item.rate }}%"></span>
+                        </div>
+                        <div class="poll_numerical">
+                            <strong class="poll_cnt">{{ item.count|number_format }} 표</strong>
+                            <span class="poll_percent">{{ item.rate }} %</span>
+                        </div>
+                    </li>
+                {% endfor %}
                 </ol>
             </section>
             <!-- } 설문조사 결과 그래프 끝 -->
@@ -41,7 +39,8 @@
                                 <span class="poll_datetime">{{ etc.pc_datetime|safe }}</span>
                                 {% if etc.mb_id == request.state.login_member.mb_id or request.state.login_member.mb_level == 10 %}
                                     <span class="poll_cmt_del">
-                                        <a href="{{ url_for('poll_etc_delete', pc_id=etc.pc_id) }}" class="poll_delete" onclick="del(this.href); return false;">
+                                        <a href="{{ url_for('poll_etc_delete', po_id=etc.po_id, pc_id=etc.pc_id) }}"
+                                            class="poll_delete" onclick="del(this.href); return false;">
                                             <i class="fa fa-circle-xmark" aria-hidden="true"></i>
                                             <span class="blind">삭제</span>
                                         </a>

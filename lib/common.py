@@ -471,21 +471,6 @@ def insert_popular(request: Request, fields: str, word: str):
         print(f"인기검색어 입력 오류: {e}")
 
 
-@cached(LFUCache(maxsize=1))
-def get_recent_poll():
-    """
-    최근 설문조사 정보 1건을 가져오는 함수
-    """
-    db = DBConnect().sessionLocal()
-    poll = db.scalar(
-        select(Poll)
-        .where(Poll.po_use == 1)
-        .order_by(Poll.po_id.desc())
-    )
-    db.close()
-    return poll
-
-
 def get_unique_id(request) -> Optional[str]:
     """고유키 생성 함수
     그누보드 5의 get_uniqid

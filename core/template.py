@@ -14,6 +14,7 @@ from core.plugin import (
 from lib.common import *
 from lib.member_lib import get_member_icon, get_member_image
 from lib.menu import get_menus
+from lib.poll import get_latest_poll
 from lib.template_filters import (
     datetime_format, number_format, set_query_params
 )
@@ -156,7 +157,7 @@ class UserTemplates(Jinja2Templates):
             self.env.globals["get_member_image"] = get_member_image
             self.env.globals["theme_asset"] = theme_asset
             self.env.globals["get_populars"] = get_populars
-            self.env.globals["get_recent_poll"] = get_recent_poll
+            self.env.globals["get_latest_poll"] = get_latest_poll
             self.env.globals["get_menus"] = get_menus
 
             # 템플릿 컨텍스트 프로세서 설정
