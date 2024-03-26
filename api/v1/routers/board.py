@@ -23,7 +23,7 @@ from api.v1.dependencies.board import (
     validate_comment, validate_update_comment, validate_delete_comment,
     validate_upload_file_write, get_write, get_parent_write
 )
-from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel
+from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel
 from response_handlers.board import(
     ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
     UpdatePostServiceAPI, DeletePostServiceAPI
@@ -72,7 +72,12 @@ async def api_group_board_list(
         query = query.filter_by(bo_use_cert="")
 
     boards = db.scalars(query).all()
-    return jsonable_encoder({"group": group, "boards": boards})
+    filtered_boards = []
+    for board in boards:
+        board_json = jsonable_encoder(board)
+        board_api = ResponseBoardModel.model_validate(board_json)
+        filtered_boards.append(board_api)
+    return jsonable_encoder({"group": group, "boards": filtered_boards})
 
 
 @router.get("/{bo_table}",
@@ -95,9 +100,12 @@ async def api_list_post(
         request, db, bo_table, board, member_info["member"], search_params
     )
 
+    board_json = jsonable_encoder(board)
+    board = ResponseBoardModel.model_validate(board_json)
+
     content = {
         "categories": list_post_service.categories,
-        "board": list_post_service.board,
+        "board": board,
         "writes": list_post_service.get_writes(search_params),
         "total_count": list_post_service.get_total_count(),
         "current_page": search_params['current_page'],
