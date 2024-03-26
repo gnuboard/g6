@@ -1,26 +1,65 @@
+# Git 저장소 설정 파일을 무시하지 않도록 설정
 !.gitignore
+
+# Visual Studio Code 설정 디렉토리 무시
 .vscode
+
+# Visual Studio Code 서버 설정 디렉토리 무시
 .vscode-server
+
+# Python 컴파일 캐시 무시
 __pycache__
+
+# Python 컴파일된 파일 무시
 *.pyc
 *.pyo
+
+# Vim 정보 파일 무시
 .viminfo
+
+# 캐시 디렉토리 무시
 .cache
+
+# 로컬 디렉토리 무시
 .local
+
+# .bash로 시작하는 파일 무시
 .bash*
+
+# 데이터 디렉토리 무시
 data/
+
+# test로 시작하고 어떤 확장자로 끝나는 파일 무시
 test.*
+
+# IntelliJ IDEA 설정 디렉토리 무시
 .idea
+
+# 환경 설정 파일 무시
 .env
 prod.env
 dev.env
+
+# 로컬 개발용 SSL 인증서 무시
 localhost.crt
 localhost.key
+
+# SQLite 데이터베이스 파일 무시
 sqlite3.db
 *.db
+
+# 가상 환경 디렉토리 무시
 venv/
+
+# PyCharm 플러그인 상태 파일 무시
 plugin_states.json
 plugin_states.json.lock
+
+# 로그 설정 파일 무시
 log_config.ini
+
+# Uvicorn 로그 파일 무시
 uvicorn.log
+
+# 로그 디렉토리 무시
 log/
