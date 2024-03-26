@@ -240,4 +240,4 @@ class ReadPostService(BoardService):
 class ReadPostServiceAPI(ReadPostService):
 
     def raise_exception(self, status_code: int, detail: str = None):
-        return HTTPException(status_code=status_code, detail=detail)
+        raise HTTPException(status_code=status_code, detail=detail)

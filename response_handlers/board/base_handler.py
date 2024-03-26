@@ -32,6 +32,7 @@ class BoardService(BaseService, BoardConfig):
         self.login_member = self.member
         self.login_member_id = self.mb_id
         self.login_member_admin_type = self.admin_type
+        self.login_member_level = self.member_level
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise AlertException(status_code=status_code, detail=detail)
