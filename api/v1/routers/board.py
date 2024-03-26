@@ -25,7 +25,7 @@ from api.v1.dependencies.board import (
 from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel
 from response_handlers.board import(
     ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
-    UpdatePostServiceAPI, DeletePostAPI
+    UpdatePostServiceAPI, DeletePostServiceAPI
 )
 
 
@@ -230,10 +230,11 @@ async def api_delete_post(
     """
     지정된 게시판의 글을 삭제합니다.
     """
-    delete_post_api = DeletePostAPI(
+    delete_post_api = DeletePostServiceAPI(
         request, db, bo_table, board, wr_id, write, member_info["member"]
     )
-    return delete_post_api.response()
+    delete_post_api.delete_write()
+    return {"result": "deleted"}
 
 
 @router.post("/uploadfile/{bo_table}/{wr_id}",

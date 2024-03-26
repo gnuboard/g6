@@ -1,6 +1,5 @@
 
 from fastapi import Request, HTTPException
-from fastapi.responses import RedirectResponse
 from sqlalchemy import select, exists, delete
 
 from core.database import db_session
@@ -10,7 +9,7 @@ from lib.common import remove_query_params, set_url_query_params
 from .base_handler import BoardService
 
 
-class DeletePostCommon(BoardService):
+class DeletePostService(BoardService):
     """
     게시글 삭제 공통 처리 클래스
     Template, API 클래스에서 상속받아 사용
@@ -133,50 +132,7 @@ class DeletePostCommon(BoardService):
         FileCache().delete_prefix(f'latest-{bo_table}')
 
 
-class DeletePostTemplate(DeletePostCommon):
-    """
-    Template용 게시글 삭제 클래스
-    """
+class DeletePostServiceAPI(DeletePostService):
 
-    def __init__(
-        self,
-        request: Request,
-        db: db_session,
-        bo_table: str,
-        board: Board,
-        wr_id: int,
-        write: WriteBaseModel,
-        member: Member,
-    ):
-        super().__init__(request, db, bo_table, board, wr_id, write, member)
-        self.set_exception_type(AlertException)
-
-    def response(self):
-        """최종 응답 처리"""
-        self.delete_write()
-        query_params = remove_query_params(self.request, "token")
-        return RedirectResponse(set_url_query_params(f"/board/{self.bo_table}", query_params), status_code=303)
-
-
-class DeletePostAPI(DeletePostCommon):
-    """
-    API용 게시글 삭제 클래스
-    """
-
-    def __init__(
-        self,
-        request: Request,
-        db: db_session,
-        bo_table: str,
-        board: Board,
-        wr_id: int,
-        write: WriteBaseModel,
-        member: Member,
-    ):
-        super().__init__(request, db, bo_table, board, wr_id, write, member)
-        self.set_exception_type(HTTPException)
-
-    def response(self):
-        """최종 응답 처리"""
-        self.delete_write()
-        return {"result": "deleted"}
+    def raise_exception(self, status_code: int, detail: str = None):
+        HTTPException(status_code, detail)

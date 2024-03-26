@@ -29,7 +29,7 @@ from lib.g5_compatibility import G5Compatibility
 from lib.html_sanitizer import content_sanitizer
 from response_handlers.board import (
     ListPostService, CreatePostService, ReadPostService,
-    UpdatePostService, DeletePostTemplate
+    UpdatePostService, DeletePostService
 )
 
 
@@ -611,10 +611,12 @@ async def delete_post(
     """
     게시글을 삭제한다.
     """
-    delete_post_template = DeletePostTemplate(
+    delete_post_service = DeletePostService(
         request, db, bo_table, board, wr_id, write, request.state.login_member
     )
-    return delete_post_template.response()
+    delete_post_service.delete_write()
+    query_params = remove_query_params(request, "token")
+    return RedirectResponse(set_url_query_params(f"/board/{bo_table}", query_params), status_code=303)
 
 
 @router.get("/{bo_table}/{wr_id}/download/{bf_no}", dependencies=[Depends(check_group_access)])
