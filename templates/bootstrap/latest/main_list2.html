@@ -1,0 +1,63 @@
+{% if board.bo_use_sideview %}
+    {% import "/sideview/macros.html" as sideview %}
+{% endif %}
+{% set thumb_width, thumb_height = 500, 350 %}
+
+<div class="swiper mySwiper mx-auto rounded-4 overflow-hidden main-border" data-slick-autoplay-status="Y">
+    <div class="swiper-wrapper main-slider mx-auto">
+      {% for write in writes -%}
+        <div class="swiper-slide">
+            <div class="slide-con position-relative" style="height: 750px;" data-dot-title="{{ write.subject }}" data-dot-content="{{ write.wr_content }}" data-dot-bo-table="{{ bo_table }}" data-dot-wr-id="{{ write.wr_id }}">
+                <div class="slide-dummy"></div>
+                <div class="position-absolute w-100 text-white" style="max-width: 500px;bottom: 5%;left: 5%;z-index: 50;">
+                    <h2 class="m-0 p-0 fs-1"><a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}" class="text-white text-decoration-none">{{ write.subject }}</a></h2>
+                    <p class="fs-4 fw-light mt-4 w-100">{{ write.wr_content|striptags }}</p>
+                    <div class="txt-btn mt-4 pointer">
+                        <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}" class="d-inline-block px-4 py-2 text-white text-decoration-none fs-4 rounded-2" style="border: 1px solid #eeeeee60; transition: all 0.3s;">바로가기</a>
+                    </div>
+                </div>
+                <picture class="img-box">
+                    <a href="{{ url_for('read_post', bo_table=bo_table, wr_id=write.wr_id) }}">
+                    {% set thumbnail=get_list_thumbnail(request, board, write, thumb_width, thumb_height) %}
+                    {% if thumbnail.src %}
+                    <img src="/{{ thumbnail.src }}" alt="{{ thumbnail.alt }}" class="w-100 h-100 object-fit-cover">
+                    {% else %}
+                    <img src="{{ theme_asset(request, 'img/no_img.png') }}" class="w-100 h-100 object-fit-cover" alt="이미지가 없습니다." class="w-100 h-100 object-fit-cover">
+                    {% endif %}
+                    </a>
+                </picture>
+            </div>
+        </div>   
+        {% else -%}
+        <div class="slide-item">
+          <div class="slide-con position-relative" style="height: 750px;" data-dot-title="게시물이 없습니다.">
+            <div class="position-absolute w-100 text-white" style="max-width: 500px;bottom: 5%;left: 5%;z-index: 50;">
+              <h2 class="m-0 p-0 fs-1">게시물이 없습니다.</h2>
+          </div>
+          <picture class="img-box">
+            <a href="#" class="lt_img d-block">
+              <img src="{{ theme_asset(request, 'img/no_img.png') }}" class="w-100 h-100 object-fit-cover" alt="이미지가 없습니다.">
+            </a>
+          </picture>
+          </div>
+        </div>
+        {%- endfor %}
+    </div>
+    <div class="swiper-button-next text-white"></div>
+    <div class="swiper-button-prev text-white"></div>
+</div>
+
+<script>
+  var mySwiper = new Swiper('.mySwiper', {
+    // 옵션 설정
+    loop: true,
+    effect : 'fade', // 페이드 효과 사용 
+    autoplay: {
+      delay: 4000,
+    },
+    navigation: {
+      nextEl: '.swiper-button-next',
+      prevEl: '.swiper-button-prev',
+    },
+  });
+</script>

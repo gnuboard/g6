@@ -11,6 +11,7 @@ from lib.common import *
 from lib.dependencies import (
     get_login_member, validate_token, validate_captcha
 )
+from lib.html_sanitizer import content_sanitizer
 from lib.memo import MemoService
 from lib.point import insert_point
 from lib.template_filters import default_if_none
@@ -151,7 +152,7 @@ async def memo_form_update(
 
     # 쪽지 전송 처리
     for target in send_members:
-        memo_service.send_memo(login_member, target, me_memo)
+        memo_service.send_memo(login_member, target, content_sanitizer.get_cleaned_data(me_memo))
 
         # 실시간 쪽지 알림
         target.mb_memo_call = login_member.mb_id
