@@ -506,6 +506,7 @@ class Content(Base):
 
 
 class FaqMaster(Base):
+    """FAQ 분류 테이블"""
     __tablename__ = DB_TABLE_PREFIX + "faq_master"
 
     fm_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -517,12 +518,13 @@ class FaqMaster(Base):
     fm_order = Column(Integer, nullable=False, default=0)
 
     # 연관관계
-    faqs = relationship(
-        "Faq", back_populates="faq_master", cascade="all, delete-orphan"
+    related_faqs: DynamicMapped[List["Faq"]] = relationship(
+        "Faq", back_populates="faq_master", lazy="dynamic", cascade="all, delete-orphan"
     )
 
 
 class Faq(Base):
+    """FAQ 테이블"""
     __tablename__ = DB_TABLE_PREFIX + "faq"
 
     fa_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -537,7 +539,9 @@ class Faq(Base):
     fa_order = Column(Integer, nullable=False, default=0)
 
     # 연관관계
-    faq_master = relationship("FaqMaster", back_populates="faqs", foreign_keys=[fm_id])
+    faq_master: Mapped["FaqMaster"] = relationship(
+        "FaqMaster", back_populates="related_faqs", foreign_keys=[fm_id]
+    )
 
 
 class Visit(Base):

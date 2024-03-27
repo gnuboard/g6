@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 
 from lib.dependencies import check_use_api
 from api.v1.routers import (
-    auth, board, content, member, memo, menu, point, poll, scrap
+    auth, board, content, faq, member, memo, menu, point, poll, scrap
 )
 
 
@@ -14,6 +14,7 @@ class Tags(Enum):
     AUTH = "인증"
     BOARD = "게시판"
     CONTENT = "컨텐츠"
+    FAQ = "FAQ"
     MEMBER = "회원"
     MEMO = "쪽지"
     MENU = "메뉴"
@@ -27,6 +28,7 @@ router = APIRouter(prefix="/api/v1", dependencies=[Depends(check_use_api)])
 router.include_router(auth.router, tags=[Tags.AUTH])
 router.include_router(board.router, prefix="/board", tags=[Tags.BOARD])
 router.include_router(content.router, tags=[Tags.CONTENT])
+router.include_router(faq.router, tags=[Tags.FAQ])
 router.include_router(member.router, tags=[Tags.MEMBER])
 router.include_router(memo.router, prefix="/member", tags=[Tags.MEMO])
 router.include_router(menu.router, tags=[Tags.MENU])

@@ -1,12 +1,11 @@
 """FAQ Template Router"""
-from fastapi import APIRouter, Request
-from sqlalchemy import select
+from typing_extensions import Annotated
 
-from core.database import db_session
-from core.exception import AlertException
-from core.models import Faq, FaqMaster
+from fastapi import APIRouter, Depends, Query, Request
+
 from core.template import UserTemplates
 from lib.common import get_head_tail_img
+from lib.service.faq_service import FaqService
 
 router = APIRouter()
 templates = UserTemplates()
@@ -14,27 +13,24 @@ templates = UserTemplates()
 
 @router.get("/faq")
 @router.get("/faq/{fm_id}")
-async def faq_view(request: Request, db: db_session, fm_id: int = None):
-    '''
-    FAQ 보기
-    '''
+async def faq_view(
+    request: Request,
+    faq_service: Annotated[FaqService, Depends()],
+    fm_id: int = None,
+    stx: Annotated[str, Query()] = None
+):
+    """
+    FAQ 조회
+    """
+    # faq_master 목록
+    faq_masters = faq_service.read_faq_masters()
+
     # fm_id가 없으면 제일 첫번째 FAQ 카테고리를 가져온다.
     if not fm_id:
-        faq_master = db.scalar(select(FaqMaster).order_by(FaqMaster.fm_order.asc()))
-    else:
-        faq_master = db.scalar(select(FaqMaster).where(FaqMaster.fm_id == fm_id))
-    if not faq_master:
-        raise AlertException(status_code=404, detail="FAQ 카테고리가 없습니다.")
+        fm_id = faq_masters[0].fm_id
 
-    # faq_master 목록
-    faq_masters = db.scalars(select(FaqMaster).order_by(FaqMaster.fm_order.asc()))
-    # faq_master에 속한 faq 목록
-    query = select(Faq).where(Faq.fa_id.in_([faq.fa_id for faq in faq_master.faqs]))
-    # 제목과 내용 중 검색어가 있으면 검색한다.
-    stx = request.query_params.get("stx", None)
-    if stx:
-        query = query.where(Faq.fa_subject.like(f"%{stx}%") | Faq.fa_content.like(f"%{stx}%"))
-    faqs = db.scalars(query.order_by(Faq.fa_order.asc())).all()
+    faq_master = faq_service.read_faq_master(fm_id)
+    faqs = faq_service.read_faqs(faq_master, stx)
 
     himg_data = get_head_tail_img('faq', f"{faq_master.fm_id}_h")
     timg_data = get_head_tail_img('faq', f"{faq_master.fm_id}_t")
