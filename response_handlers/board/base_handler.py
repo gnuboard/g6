@@ -5,7 +5,7 @@ from core.database import db_session
 from core.models import Board, Member
 from core.exception import AlertException
 from lib.service import BaseService
-from lib.board_lib import BoardConfig, AlertException, get_admin_type
+from lib.board_lib import BoardConfig, get_admin_type
 from lib.common import dynamic_create_write_table
 
 
