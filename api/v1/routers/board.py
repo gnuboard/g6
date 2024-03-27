@@ -105,7 +105,6 @@ async def api_list_post(
     return jsonable_encoder(content)
 
 
-
 @router.get("/{bo_table}/{wr_id}",
             summary="게시판 개별 글 조회",
             response_description="게시판 개별 글을 반환합니다.",

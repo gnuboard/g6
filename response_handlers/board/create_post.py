@@ -55,19 +55,26 @@ class CreatePostService(BoardService):
         """Stored XSS 방지용 데이터 정제"""
         return content_sanitizer.get_cleaned_data(content)
 
-    def get_parent_post(self, parent_id: int):
+    def get_parent_post(self, parent_id: int, is_reply: bool = True):
         """부모글 호출"""
         if not parent_id:
             return None
 
-        # 답변 권한 검증
-        if not self.is_reply_level():
-            self.raise_exception(detail="답변글을 작성할 권한이 없습니다.", status_code=403)
+        if is_reply:    # 답변글
+            validate_func = self.is_reply_level
+            target_expr = "답변글"
+        else:           # 댓글
+            validate_func = self.is_comment_level
+            target_expr = "댓글"
+
+        # 답변/댓글 권한 검증
+        if not validate_func():
+            self.raise_exception(detail=f"{target_expr}을 작성할 권한이 없습니다.", status_code=403)
 
         # 부모글 호출
         parent_write = self.db.get(self.write_model, parent_id)
         if not parent_write:
-            self.raise_exception("답변할 글이 존재하지 않습니다.", 404)
+            self.raise_exception("답변글(댓글)을 쓸 원본 글이 존재하지 않습니다.", 404)
         return parent_write
 
     def arrange_data(self, data: Union[WriteForm, WriteModel], secret: str, html: str, mail: str):
