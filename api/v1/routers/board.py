@@ -3,29 +3,24 @@ from typing_extensions import Annotated, Dict, List
 from fastapi import APIRouter, Depends, Request, Path, HTTPException, status, UploadFile, File, Form
 from fastapi.responses import RedirectResponse
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import func, select, update
+from sqlalchemy import update
 
 from core.database import db_session
 from core.models import Board, Group, WriteBaseModel, Member
-from lib.board_lib import (
-    BoardConfig, generate_reply_character,
-    insert_board_new, send_write_mail, set_write_delay
-)
+from lib.board_lib import insert_board_new, set_write_delay
 from lib.common import dynamic_create_write_table
 from lib.dependencies import common_search_query_params
-from lib.point import insert_point
-from lib.g5_compatibility import G5Compatibility
 from api.v1.models import responses
 from api.v1.dependencies.board import (
     get_current_member, get_member_info, get_board, get_group,
-    validate_write,
-    validate_comment, validate_update_comment, validate_delete_comment,
-    validate_upload_file_write, get_write, get_parent_write
+    validate_write, validate_delete_comment,
+    validate_upload_file_write, get_write
 )
 from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel
 from response_handlers.board import(
     ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
-    UpdatePostServiceAPI, DeletePostServiceAPI, GroupBoardListServiceAPI
+    UpdatePostServiceAPI, DeletePostServiceAPI, GroupBoardListServiceAPI,
+    CreateCommentServiceAPI
 )
 
 
@@ -276,61 +271,27 @@ async def api_upload_file(
 async def api_create_comment(
     request: Request,
     db: db_session,
-    member_info: Annotated[Dict, Depends(get_member_info)],
+    member: Annotated[Member, Depends(get_current_member)],
     board: Annotated[Board, Depends(get_board)],
-    comment_data: Annotated[CommentModel, Depends(validate_comment)],
-    parent_write: Annotated[WriteBaseModel, Depends(get_parent_write)],
+    comment_data: CommentModel,
     bo_table: str = Path(...),
     wr_parent: str = Path(...),
 ):
     """
     댓글 등록
     """
-    board_config = BoardConfig(request, board)
-    member = member_info["member"]
-    mb_id = member_info["mb_id"] or ""
-    write_model = dynamic_create_write_table(bo_table)
-
-    # 댓글 객체 생성
-    comment = write_model()
-
-    if comment_data.comment_id:
-        parent_comment = db.get(write_model, comment_data.comment_id)
-        if not parent_comment:
-            raise HTTPException(status_code=404, detail=f"{comment_data.comment_id} : 존재하지 않는 댓글입니다.")
-
-        comment.wr_comment_reply = generate_reply_character(board, parent_comment)
-        comment.wr_comment = parent_comment.wr_comment
-    else:
-        comment.wr_comment = db.scalar(
-            select(func.coalesce(func.max(write_model.wr_comment), 0) + 1)
-            .where(
-                write_model.wr_parent == wr_parent,
-                write_model.wr_is_comment == 1
-            )
-        )
-
-    comment_data_dict = comment_data.model_dump()
-    for key, value in comment_data_dict.items():
-        setattr(comment, key, value)
-
-    db.add(comment)
-
-    # 게시글에 댓글 수 증가
-    parent_write.wr_comment += 1
-    db.commit()
-
-    # 새글 추가
+    create_comment_service = CreateCommentServiceAPI(
+        request, db, bo_table, board, member
+    )
+    parent_write = create_comment_service.get_parent_post(wr_parent, is_reply=False)
+    create_comment_service.validate_comment_level()
+    create_comment_service.validate_point()
+    create_comment_service.validate_post_content(comment_data.wr_content)
+    comment = create_comment_service.save_comment(comment_data, parent_write)
+    create_comment_service.add_point(comment)
+    create_comment_service.send_write_mail_(comment, parent_write)
     insert_board_new(bo_table, comment)
-
-    # 포인트 처리
-    if member:
-        insert_point(request, mb_id, board.bo_comment_point, f"{board.bo_subject} {wr_parent}-{comment.wr_id} 댓글쓰기", board.bo_table, comment.wr_id, "댓글")
-
-    # 메일 발송
-    if board_config.use_email:
-        send_write_mail(request, board, comment, parent_write)
-
+    db.commit()
     return {"result": "created"}
 
 
@@ -342,35 +303,28 @@ async def api_create_comment(
 async def api_update_comment(
     request: Request,
     db: db_session,
-    comment_data: Annotated[CommentModel, Depends(validate_update_comment)],
+    comment_data: CommentModel,
+    board: Annotated[Board, Depends(get_board)],
+    member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
 ) -> Dict:
     """
     댓글 수정
     """
-    write_model = dynamic_create_write_table(bo_table)
-
-    # 댓글 수정
-    comment = db.get(write_model, wr_id)
+    create_comment_service = CreateCommentServiceAPI(
+        request, db, bo_table, board, member
+    )
+    write_model = create_comment_service.write_model
+    create_comment_service.get_parent_post(wr_id, is_reply=False)
+    comment = db.get(write_model, comment_data.comment_id)
     if not comment:
         raise HTTPException(status_code=404, detail=f"{wr_id} : 존재하지 않는 댓글입니다.")
 
-    comment_data_dict = comment_data.model_dump()
-
-    # 수정시 작성자명이 변경되지 않도록 wr_name 제거
-    del comment_data_dict["wr_name"]
-
-    for key, value in comment_data_dict.items():
-        setattr(comment, key, value)
-
-    # 댓글 wr_last의 경우 gnuboard5와의 호환성을 위해 아래와 같이 now를 받아옴
-    compatible_instance = G5Compatibility(db)
-    now = compatible_instance.get_wr_last_now(write_model.__tablename__)
-    comment.wr_last = now
-
-    comment.wr_ip = request.client.host
-
+    create_comment_service.validate_post_content(comment_data.wr_content)
+    comment.wr_content = create_comment_service.get_cleaned_data(comment_data.wr_content)
+    comment.wr_option = comment_data.wr_option or "html1"
+    comment.wr_last = create_comment_service.g5_instance.get_wr_last_now(write_model.__tablename__)
     db.commit()
 
     return {"result": "updated"}

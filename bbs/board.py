@@ -7,7 +7,7 @@ from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends, Request, Form, Path, Query, File
 from fastapi.responses import FileResponse, RedirectResponse
-from sqlalchemy import func, select, update
+from sqlalchemy import select, update
 
 from core.database import db_session
 from core.exception import AlertException
@@ -21,15 +21,13 @@ from lib.dependencies import (
     validate_captcha, validate_token, check_login_member,
     get_board, get_write, get_login_member
 )
-from lib.pbkdf2 import create_hash
 from lib.point import delete_point, insert_point
 from lib.template_filters import datetime_format, number_format
 from lib.template_functions import get_paging
-from lib.g5_compatibility import G5Compatibility
-from lib.html_sanitizer import content_sanitizer
 from response_handlers.board import (
     ListPostService, CreatePostService, ReadPostService,
-    UpdatePostService, DeletePostService, GroupBoardListService
+    UpdatePostService, DeletePostService, GroupBoardListService,
+    CreateCommentService
 )
 
 
@@ -678,112 +676,42 @@ async def write_comment_update(
     recaptcha_response: str = Form("", alias="g-recaptcha-response"),
 ):
     """
-    댓글 등록
+    댓글 등록/수정
     """
-    config = request.state.config
-    board_config = BoardConfig(request, board)
     member = request.state.login_member
-    mb_id = getattr(member, "mb_id", None)
-    write_model = dynamic_create_write_table(bo_table)
-    compatible_instance = G5Compatibility(db)
-    now = compatible_instance.get_wr_last_now(write_model.__tablename__)
 
-    # 댓글 내용 검증
-    filter_word = filter_words(request, form.wr_content)
-    if filter_word:
-        raise AlertException(f"내용에 금지단어({filter_word})가 포함되어 있습니다.", 400)
+    create_comment_service = CreateCommentService(
+        request, db, bo_table, board, member
+    )
 
     if form.w == "c":
-        # 글쓰기 간격 검증
-        if not is_write_delay(request):
-            raise AlertException("너무 빠른 시간내에 댓글을 연속해서 올릴 수 없습니다.", 400)
-
-        # 비회원은 Captcha 유효성 검사
+        #댓글 생성
         if not member:
+            # 비회원은 Captcha 유효성 검사
             await validate_captcha(request, recaptcha_response)
-
-        # 댓글 작성 권한 검증
-        if not board_config.is_comment_level():
-            raise AlertException("댓글을 작성할 권한이 없습니다.", 403)
-        
-        # 포인트 검사
-        comment_point = board.bo_comment_point
-        if config.cf_use_point:
-            if not board_config.is_comment_point():
-                point = number_format(abs(comment_point))
-                message = f"댓글 작성에 필요한 포인트({point})가 부족합니다."
-                if not member:
-                    message += f"\\n로그인 후 다시 시도해주세요."
-
-                raise AlertException(message, 403)
-
-        # 댓글 객체 생성
-        comment = write_model()
-
-        if form.comment_id:
-            parent_comment = db.get(write_model, form.comment_id)
-            if not parent_comment:
-                raise AlertException(f"{form.comment_id} : 존재하지 않는 댓글입니다.", 404)
-
-            comment.wr_comment_reply = generate_reply_character(board, parent_comment)
-            comment.wr_comment = parent_comment.wr_comment
-        else:
-            comment.wr_comment = db.scalar(
-                select(func.coalesce(func.max(write_model.wr_comment), 0) + 1)
-                .where(
-                    write_model.wr_parent == form.wr_id,
-                    write_model.wr_is_comment == 1
-                ))
-
-        # 댓글 추가정보 등록
-        comment.ca_name = write.ca_name
-        comment.wr_option = form.wr_secret
-        comment.wr_num = write.wr_num
-        comment.wr_parent = form.wr_id
-        comment.wr_is_comment = 1
-        comment.wr_content = content_sanitizer.get_cleaned_data(form.wr_content)
-        comment.mb_id = getattr(member, "mb_id", "")
-        comment.wr_password = create_hash(form.wr_password) if form.wr_password else ""
-        comment.wr_name = board_config.set_wr_name(member, form.wr_name)
-        comment.wr_email = getattr(member, "mb_email", "")
-        comment.wr_homepage = getattr(member, "mb_homepage", "")
-        comment.wr_datetime = comment.wr_last = now
-        comment.wr_ip = request.client.host
-        db.add(comment)
-
-        # 글 작성 시간 기록
-        set_write_delay(request)
-
-        # 게시글에 댓글 수 증가
-        write.wr_comment = write.wr_comment + 1
-        db.commit()
-
-        # 새글 추가
+        create_comment_service.validate_write_delay()
+        create_comment_service.validate_comment_level()
+        create_comment_service.validate_point()
+        create_comment_service.validate_post_content(form.wr_content)
+        comment = create_comment_service.save_comment(form, write)
+        create_comment_service.add_point(comment)
+        create_comment_service.send_write_mail_(comment, write)
         insert_board_new(bo_table, comment)
-
-        # 포인트 처리
-        if member:
-            insert_point(request, mb_id, comment_point, f"{board.bo_subject} {comment.wr_parent}-{comment.wr_id} 댓글쓰기", board.bo_table, comment.wr_id, "댓글")
-
-        # 메일 발송
-        if board_config.use_email:
-            send_write_mail(request, board, comment, write)
-
+        set_write_delay(request)
     elif form.w == "cu":
         # 댓글 수정
+        write_model = create_comment_service.write_model
         comment = db.get(write_model, form.comment_id)
         if not comment:
             raise AlertException(f"{form.comment_id} : 존재하지 않는 댓글입니다.", 404)
 
-        comment.wr_content = content_sanitizer.get_cleaned_data(form.wr_content)
+        create_comment_service.validate_post_content(form.wr_content)
+        comment.wr_content = create_comment_service.get_cleaned_data(form.wr_content)
         comment.wr_option = form.wr_secret or "html1"
-        comment.wr_last = now
-        db.commit()
-
-    query_params = request.query_params
-    url = f"/board/{bo_table}/{form.wr_id}"
-    return RedirectResponse(
-        set_url_query_params(url, query_params), status_code=303)
+        comment.wr_last = create_comment_service.g5_instance.get_wr_last_now(write_model.__tablename__)
+    db.commit()
+    redirect_url = create_comment_service.get_redirect_url(write)
+    return RedirectResponse(redirect_url, status_code=303)
 
 
 @router.get("/delete_comment/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
