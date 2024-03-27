@@ -43,13 +43,11 @@ class CreatePostService(BoardService):
         if self.board.bo_use_secret == 2:
             self.secret = "secret"
 
-    def validate_post_content(self, wr_subject, wr_content):
+    def validate_post_content(self, content):
         """게시글 내용 검증"""
-        subject_filter_word = filter_words(self.request, wr_subject)
-        content_filter_word = filter_words(self.request, wr_content)
-        if subject_filter_word or content_filter_word:
-            word = subject_filter_word if subject_filter_word else content_filter_word
-            self.raise_exception(detail=f"제목/내용에 금지단어({word})가 포함되어 있습니다.", status_code=400)
+        filtered_word = filter_words(self.request, content)
+        if filtered_word:
+            self.raise_exception(detail=f"내용에 금지단어({filtered_word})가 포함되어 있습니다.", status_code=400)
 
     def get_cleaned_data(self, content):
         """Stored XSS 방지용 데이터 정제"""

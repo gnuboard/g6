@@ -165,7 +165,8 @@ async def api_create_post(
         request, db, bo_table, board, member_info["member"]
     )
     create_post_service.validate_secret_board(wr_data.secret, wr_data.html, wr_data.mail)
-    create_post_service.validate_post_content(wr_data.wr_subject, wr_data.wr_content)
+    create_post_service.validate_post_content(wr_data.wr_subject)
+    create_post_service.validate_post_content(wr_data.wr_content)
     create_post_service.is_write_level()
     create_post_service.arrange_data(wr_data, wr_data.secret, wr_data.html, wr_data.mail)
     write = create_post_service.save_write(wr_data.parent_id, wr_data)
@@ -205,7 +206,8 @@ async def api_update_post(
     write = get_write(update_post_service.db, update_post_service.bo_table, update_post_service.wr_id)
     
     update_post_service.validate_secret_board(wr_data.secret, wr_data.html, wr_data.mail)
-    update_post_service.validate_post_content(wr_data.wr_subject, wr_data.wr_content)
+    update_post_service.validate_post_content(wr_data.wr_subject)
+    update_post_service.validate_post_content(wr_data.wr_content)
     update_post_service.arrange_data(wr_data, wr_data.secret, wr_data.html, wr_data.mail)
     update_post_service.save_secret_session(wr_id, wr_data.secret)
     update_post_service.save_write(write, wr_data)
