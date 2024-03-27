@@ -1,3 +1,5 @@
+"""FAQ 관리 Template Router"""
+import os
 import shutil
 
 from fastapi import APIRouter, Depends, File, Form, Path, Request, UploadFile
@@ -5,15 +7,14 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy import select
 
 from core.database import db_session
-from core.formclass import FaqMasterForm, FaqForm
-from core.models import FaqMaster, Faq
+from core.formclass import FaqForm, FaqMasterForm
+from core.models import Faq, FaqMaster
 from core.template import AdminTemplates
-from lib.common import *
+from lib.common import get_head_tail_img
 from lib.dependencies import validate_token
 
 router = APIRouter()
 templates = AdminTemplates()
-templates.env.globals["get_head_tail_img"] = get_head_tail_img
 
 FAQ_MENU_KEY = "300700"
 FAQ_FILE_PATH = "data/faq"
@@ -42,14 +43,15 @@ async def faq_master_add_form(request: Request):
 
     context = {
         "request": request,
-        "faq_master": None
+        "faq_master": None,
+        "head_image": None,
+        "tail_image": None
     }
     return templates.TemplateResponse("faq_master_form.html", context)
 
 
 @router.post("/faq_master_form_update", dependencies=[Depends(validate_token)])
 async def faq_master_add(
-    request: Request,
     db: db_session,
     form: FaqMasterForm = Depends(),
     fm_himg: UploadFile = File(None),
@@ -87,17 +89,20 @@ async def faq_master_update_form(
     request.session["menu_key"] = FAQ_MENU_KEY
 
     faq_master = db.get(FaqMaster, fm_id)
+    head_image = get_head_tail_img('faq', str(faq_master.fm_id) + "_h")
+    tail_image = get_head_tail_img('faq', str(faq_master.fm_id) + "_t")
 
     context = {
         "request": request,
-        "faq_master": faq_master
+        "faq_master": faq_master,
+        "head_image": head_image,
+        "tail_image": tail_image
     }
     return templates.TemplateResponse("faq_master_form.html", context)
 
 
 @router.post("/faq_master_form_update/{fm_id}", dependencies=[Depends(validate_token)])
 async def faq_master_update(
-    request: Request,
     db: db_session,
     fm_id: int = Path(...),
     form: FaqMasterForm = Depends(),
@@ -138,7 +143,6 @@ async def faq_master_update(
 
 @router.delete("/faq_master_form_delete/{fm_id}", dependencies=[Depends(validate_token)])
 async def faq_master_delete(
-    request: Request,
     db: db_session,
     fm_id: int = Path(...),
 ):
@@ -191,7 +195,6 @@ async def faq_add_form(
 
 @router.post("/faq_form_update/{fm_id}", dependencies=[Depends(validate_token)])
 async def faq_add(
-    request: Request,
     db: db_session,
     fm_id: int = Path(...),
     form: FaqForm = Depends(),
@@ -223,7 +226,6 @@ async def faq_update_form(fa_id: int, request: Request, db: db_session):
 
 @router.post("/faq_form_update/{fm_id}/{fa_id}", dependencies=[Depends(validate_token)])
 async def faq_update(
-    request: Request,
     db: db_session,
     fm_id: int = Path(...),
     fa_id: int = Path(...),
@@ -240,7 +242,6 @@ async def faq_update(
 
 @router.delete("/faq_form_delete/{fa_id}", dependencies=[Depends(validate_token)])
 async def faq_delete(
-    request: Request,
     db: db_session,
     fa_id: int = Path(...),
 ):

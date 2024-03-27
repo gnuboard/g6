@@ -1,3 +1,4 @@
+"""컨텐츠 관리 Template Router"""
 from fastapi import APIRouter, Depends, File, Form, Path, Request, UploadFile
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
@@ -7,16 +8,13 @@ from core.exception import AlertException
 from core.formclass import ContentForm
 from core.models import Content
 from core.template import AdminTemplates
-from lib.common import *
+from lib.common import delete_image, get_head_tail_img, make_directory, save_image
 from lib.dependencies import validate_token
-from lib.template_functions import (
-    get_skin_select
-)
+from lib.template_functions import get_skin_select
 
 router = APIRouter()
 templates = AdminTemplates()
 templates.env.globals["get_skin_select"] = get_skin_select
-templates.env.globals["get_head_tail_img"] = get_head_tail_img
 
 MENU_KEY = "300600"
 IMAGE_DIRECTORY = "data/content/"
@@ -46,6 +44,8 @@ async def content_form_add(request: Request):
     context = {
         "request": request,
         "content": None,
+        "head_image": None,
+        "tail_image": None,
     }
     return templates.TemplateResponse("content_form.html", context)
 
@@ -62,9 +62,14 @@ async def content_form_edit(
     if not content:
         raise AlertException(f"{co_id} : 내용 아이디가 존재하지 않습니다.", 404)
 
+    head_image = get_head_tail_img('content', content.co_id + "_h")
+    tail_image = get_head_tail_img('content', content.co_id + "_t")
+
     context = {
         "request": request,
         "content": content,
+        "head_image": head_image,
+        "tail_image": tail_image,
     }
     return templates.TemplateResponse("content_form.html", context)
 
@@ -109,7 +114,7 @@ async def content_form_update(
         exists_content = db.scalar(select(Content).where(Content.co_id == co_id))
         if exists_content:
             raise AlertException(status_code=400, detail=f"{co_id} : 내용 아이디가 이미 존재합니다.")
-        
+
         # 내용 등록
         content = Content(co_id=co_id, **form_data.__dict__)
         db.add(content)
@@ -140,13 +145,13 @@ async def content_form_update(
 
 @router.get("/content_delete/{co_id}", dependencies=[Depends(validate_token)])
 async def content_delete(
-    request: Request, 
+    request: Request,
     db: db_session,
     co_id: str = Path(...)
 ):
     """
     내용 삭제
-    """    
+    """
     content = db.get(Content, co_id)
     if not content:
         raise AlertException(status_code=404, detail=f"{co_id}: 내용 아이디가 존재하지 않습니다.")

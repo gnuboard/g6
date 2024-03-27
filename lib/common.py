@@ -16,7 +16,6 @@ from email.mime.multipart import MIMEMultipart
 from email.utils import formataddr
 from time import sleep
 from typing import Any, List, Optional, Union
-from urllib.parse import urlencode
 
 from cachetools import cached, LFUCache, TTLCache
 from dotenv import load_dotenv
@@ -31,7 +30,7 @@ from user_agents import parse
 
 from core.database import DBConnect, db_session, MySQLCharsetMixin
 from core.models import (
-    BoardNew, Config, Login, Member, Memo, NewWin, Poll, Popular,
+    BoardNew, Config, Login, Member, Memo, NewWin, Popular,
     UniqId, Visit, VisitSum, WriteBaseModel
 )
 from core.plugin import get_admin_menu_id_by_path
@@ -133,29 +132,36 @@ def get_admin_menus():
     return menus
 
 
-def get_head_tail_img(dir: str, filename: str):
-    '''
-    게시판의 head, tail 이미지를 반환하는 함수
-    '''
-    img_path = os.path.join('data', dir, filename)  # 변수명 변경
+def get_head_tail_img(directory: str, filename: str, width: int = 750) -> dict:
+    """
+    디렉토리/파일 이름에 해당하는 이미지를 찾아,
+    해당 이미지가 존재하는 경우 이미지의 URL과 너비를 반환합니다.
+    - 이미지 너비는 기본적으로 최대 750px로 제한됩니다.
+
+    Args:
+        directory (str): 이미지 디렉토리
+        filename (str): 이미지 파일 이름
+
+    Returns:
+        dict: 이미지 존재 여부, 이미지 URL, 이미지 너비
+        
+    """
+    img_path = os.path.join('data', directory, filename)
     img_exists = os.path.exists(img_path)
-    width = None
-    
+    img_width = 0
+
     if img_exists:
         try:
             with Image.open(img_path) as img_file:
-                width = img_file.width
-                if width > 750:
-                    width = 750
+                img_width = min(img_file.width, width)  # 이미지 너비를 750px로 제한
         except UnidentifiedImageError:
-            # 이미지를 열 수 없을 때의 처리
-            img_exists = False
             print(f"Error: Cannot identify image file '{img_path}'")
-    
+            img_exists = False
+
     return {
-        "img_exists": img_exists,
-        "img_url": os.path.join('/data', dir, filename) if img_exists else None,
-        "width": width
+        "exists": img_exists,
+        "url": f"/{img_path}" if img_exists else "",
+        "width": img_width
     }
 
 
