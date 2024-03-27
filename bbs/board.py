@@ -29,7 +29,7 @@ from lib.g5_compatibility import G5Compatibility
 from lib.html_sanitizer import content_sanitizer
 from response_handlers.board import (
     ListPostService, CreatePostService, ReadPostService,
-    UpdatePostService, DeletePostService
+    UpdatePostService, DeletePostService, GroupBoardListService
 )
 
 
@@ -56,36 +56,12 @@ async def group_board_list(
     게시판그룹의 모든 게시판 목록을 보여준다.
     """
     # 게시판 그룹 정보 조회
-    group = db.get(Group, gr_id)
-    if not group:
-        raise AlertException(f"{gr_id} : 존재하지 않는 게시판그룹입니다.", 404)
-
-    # 게시판관리자 검증
-    # TODO: 이 부분을 간단하게 개선 => 회원 클래스??
-    member = request.state.login_member
-    mb_id = getattr(member, "mb_id", None)
-    member_level = get_member_level(request)
-    admin_type = get_admin_type(request, mb_id, group=group)
-
-    # FIXME: 모바일/PC 분기처리
-    if not admin_type and request.state.device == 'mobile':
-        raise AlertException(f"{group.gr_subject} 그룹은 모바일에서만 접근할 수 있습니다.", 400, url="/")
-    
-    # 그룹별 게시판 목록 조회
-    query = (
-        select(Board)
-        .where(
-            Board.gr_id == gr_id,
-            Board.bo_list_level <= member_level,
-            Board.bo_device != 'mobile'
-        )
-        .order_by(Board.bo_order)
+    group_board_list_service = GroupBoardListService(
+        request, db, gr_id, request.state.login_member
     )
-    # 인증게시판 제외
-    if not admin_type:
-        query = query.filter_by(bo_use_cert="")
-
-    boards = db.scalars(query).all()
+    group = group_board_list_service.group
+    group_board_list_service.check_mobile_only()
+    boards = group_board_list_service.get_boards_in_group()
 
     context = {
         "request": request,

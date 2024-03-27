@@ -13,7 +13,6 @@ from lib.board_lib import (
 )
 from lib.common import dynamic_create_write_table
 from lib.dependencies import common_search_query_params
-from lib.member_lib import get_admin_type
 from lib.point import insert_point
 from lib.g5_compatibility import G5Compatibility
 from api.v1.models import responses
@@ -26,7 +25,7 @@ from api.v1.dependencies.board import (
 from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel
 from response_handlers.board import(
     ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
-    UpdatePostServiceAPI, DeletePostServiceAPI
+    UpdatePostServiceAPI, DeletePostServiceAPI, GroupBoardListServiceAPI
 )
 
 
@@ -46,37 +45,27 @@ credentials_exception = HTTPException(
 async def api_group_board_list(
     request: Request,
     db: db_session,
-    member_info: Annotated[Dict, Depends(get_member_info)],
+    member: Annotated[Member, Depends(get_current_member)],
     group: Annotated[Group, Depends(get_group)],
     gr_id: str = Path(...),
 ) -> Dict:
     """
     게시판그룹의 모든 게시판 목록을 보여줍니다.
     """
-    mb_id = member_info["mb_id"]
-    member_level = member_info["member_level"]
-    admin_type = get_admin_type(request, mb_id, group=group)
-
-    # 그룹별 게시판 목록 조회
-    query = (
-        select(Board)
-        .where(
-            Board.gr_id == gr_id,
-            Board.bo_list_level <= member_level,
-            Board.bo_device != 'mobile'
-        )
-        .order_by(Board.bo_order)
+    group_board_list_service = GroupBoardListServiceAPI(
+        request, db, gr_id, member
     )
-    # 인증게시판 제외
-    if not admin_type:
-        query = query.filter_by(bo_use_cert="")
+    group = group_board_list_service.group
+    group_board_list_service.check_mobile_only()
+    boards = group_board_list_service.get_boards_in_group()
 
-    boards = db.scalars(query).all()
+    # 데이터 유효성 검증 및 불필요한 데이터 제거한 게시판 목록 얻기
     filtered_boards = []
     for board in boards:
         board_json = jsonable_encoder(board)
         board_api = ResponseBoardModel.model_validate(board_json)
         filtered_boards.append(board_api)
+
     return jsonable_encoder({"group": group, "boards": filtered_boards})
 
 
