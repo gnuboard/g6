@@ -553,7 +553,7 @@ tfoot th {}
     .theme_dt_if, .plugin_dt_if {float: none;padding: 20px !important;width: 100% !important;}
     .theme_dt_img img, .plugin_dt_img img {width: 100%;}
     .anchor .active a {background: var(--mainBg) !important;color: var(--anchorColor) !important;}
-    .darkmode-toggle-switch::after {display: none;}
+    #darkmode-toggle-switch::after {display: none;}
     .scroll_top {right: 10px;}
     .btn_fixed_top {right: 70px;top: auto;bottom: 10px;}
     .container_title.top {position: relative;top: auto;}
