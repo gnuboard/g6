@@ -34,8 +34,8 @@ class BoardService(BaseService, BoardConfig):
         self.login_member_admin_type = self.admin_type
         self.login_member_level = self.member_level
 
-    def raise_exception(self, status_code: int, detail: str = None):
-        raise AlertException(status_code=status_code, detail=detail)
+    def raise_exception(self, status_code: int, detail: str = None, url: str = None):
+        raise AlertException(status_code=status_code, detail=detail, url=url)
 
     def set_wr_name(self, member: Member = None, default_name: str = None) -> str:
         """실명사용 여부를 확인 후 실명이면 이름을, 아니면 닉네임을 반환한다.
