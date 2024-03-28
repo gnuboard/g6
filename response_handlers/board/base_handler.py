@@ -56,3 +56,8 @@ class BoardService(BaseService, BoardConfig):
             return default_name
         else:
             self.raise_exception(detail="로그인 세션 만료, 비회원 글쓰기시 작성자 이름 미기재 등의 비정상적인 접근입니다.", status_code=400)
+
+    def validate_admin_authority(self):
+        """게시판 관리자 검증"""
+        if not self.admin_type:
+            self.raise_exception(detail="게시판 관리자 이상 접근이 가능합니다.", status_code=403)

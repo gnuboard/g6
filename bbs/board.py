@@ -27,7 +27,7 @@ from lib.template_functions import get_paging
 from response_handlers.board import (
     ListPostService, CreatePostService, ReadPostService,
     UpdatePostService, DeletePostService, GroupBoardListService,
-    CreateCommentService, DeleteCommentService
+    CreateCommentService, DeleteCommentService, ListDeleteService
 )
 
 
@@ -114,35 +114,11 @@ async def list_delete(
     """
     게시글을 일괄 삭제한다.
     """
-    # 게시판 관리자 검증
-    member = request.state.login_member
-    mb_id = getattr(member, "mb_id", None)
-    admin_type = get_admin_type(request, mb_id, board=board)
-    if not admin_type:
-        raise AlertException("게시판 관리자 이상 접근이 가능합니다.", 403)
-
-    # 게시글 조회
-    write_model = dynamic_create_write_table(bo_table)
-    writes = db.scalars(
-        select(write_model)
-        .where(write_model.wr_id.in_(wr_ids))
-    ).all()
-    for write in writes:
-        db.delete(write)
-        # 원글 포인트 삭제
-        if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
-            insert_point(request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
-        
-        # 파일 삭제
-        BoardFileManager(board, write.wr_id).delete_board_files()
-
-        # TODO: 댓글 삭제
-    db.commit()
-
-    # 최신글 캐시 삭제
-    FileCache().delete_prefix(f'latest-{bo_table}')
-
-    # TODO: 게시글 삭제시 같이 삭제해야할 것들 추가
+    list_delete_service = ListDeleteService(
+        request, db, bo_table, board, request.state.login_member
+    )
+    list_delete_service.validate_admin_authority()
+    list_delete_service.delete_writes(wr_ids)
 
     query_params = request.query_params
     url = f"/board/{bo_table}"

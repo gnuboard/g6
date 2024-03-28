@@ -1,6 +1,9 @@
 from typing_extensions import Annotated, Dict, List
 
-from fastapi import APIRouter, Depends, Request, Path, HTTPException, status, UploadFile, File, Form
+from fastapi import (
+    APIRouter, Depends, Request, Path,HTTPException,
+    status, UploadFile, File, Form, Body
+)
 from fastapi.responses import RedirectResponse
 from fastapi.encoders import jsonable_encoder
 
@@ -18,7 +21,7 @@ from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel, Re
 from response_handlers.board import(
     ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
     UpdatePostServiceAPI, DeletePostServiceAPI, GroupBoardListServiceAPI,
-    CreateCommentServiceAPI, DeleteCommentServiceAPI
+    CreateCommentServiceAPI, DeleteCommentServiceAPI, ListDeleteServiceAPI
 )
 
 
@@ -234,6 +237,31 @@ async def api_delete_post(
     delete_post_api.delete_write()
     return {"result": "deleted"}
 
+
+@router.post("/list_delete/{bo_table}",
+            summary="게시글 일괄 삭제",
+            response_description="글 일괄 삭제 성공 여부를 반환합니다.",
+            responses={**responses}
+            )
+async def api_list_delete(
+    request: Request,
+    db: db_session,
+    member: Annotated[Member, Depends(get_current_member)],
+    wr_ids: Annotated[list, Body(..., alias="chk_wr_id[]")],
+    board: Annotated[Board, Depends(get_board)],
+    bo_table: str = Path(...),
+):
+    """
+    게시글을 일괄 삭제합니다.
+    - wr_ids: 삭제할 게시글 wr_id 리스트
+    """
+    list_delete_service = ListDeleteServiceAPI(
+        request, db, bo_table, board, member
+    )
+    list_delete_service.validate_admin_authority()
+    list_delete_service.delete_writes(wr_ids)
+    return {"result": "deleted"}
+ 
 
 @router.post("/uploadfile/{bo_table}/{wr_id}",
             summary="파일 업로드",

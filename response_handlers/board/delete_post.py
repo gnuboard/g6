@@ -208,3 +208,48 @@ class DeleteCommentServiceAPI(DeleteCommentService):
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code, detail)
+
+
+class ListDeleteService(BoardService):
+
+    def __init__(
+        self,
+        request: Request,
+        db: db_session,
+        bo_table: str,
+        board: Board,
+        member: Member,
+    ):
+        super().__init__(request, db, bo_table, board, member)
+
+    def delete_writes(self, wr_ids: list):
+        """게시글 목록 삭제"""
+        write_model = self.write_model
+        writes = self.db.scalars(
+            select(write_model)
+            .where(write_model.wr_id.in_(wr_ids))
+        ).all()
+        for write in writes:
+            self.db.delete(write)
+            # 원글 포인트 삭제
+            if not delete_point(self.request, write.mb_id, self.bo_table, write.wr_id, "쓰기"):
+                insert_point(self.request, write.mb_id, self.board.bo_write_point * (-1), f"{self.board.bo_subject} {write.wr_id} 글 삭제")
+            
+            # 파일 삭제
+            BoardFileManager(self.board, write.wr_id).delete_board_files()
+
+            # TODO: 댓글 삭제
+        self.db.commit()
+
+        # 최신글 캐시 삭제
+        FileCache().delete_prefix(f'latest-{self.bo_table}')
+
+        # TODO: 게시글 삭제시 같이 삭제해야할 것들 추가
+
+
+class ListDeleteServiceAPI(ListDeleteService):
+
+    def raise_exception(self, status_code: int, detail: str = None):
+        raise HTTPException(status_code, detail)
+
+
