@@ -3,12 +3,10 @@ from typing_extensions import Annotated, Dict, List
 from fastapi import APIRouter, Depends, Request, Path, HTTPException, status, UploadFile, File, Form
 from fastapi.responses import RedirectResponse
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import update
 
 from core.database import db_session
 from core.models import Board, Group, WriteBaseModel, Member
 from lib.board_lib import insert_board_new, set_write_delay
-from lib.common import dynamic_create_write_table
 from lib.dependencies import common_search_query_params
 from api.v1.models import responses
 from api.v1.dependencies.board import (
@@ -20,7 +18,7 @@ from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel, Re
 from response_handlers.board import(
     ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
     UpdatePostServiceAPI, DeletePostServiceAPI, GroupBoardListServiceAPI,
-    CreateCommentServiceAPI
+    CreateCommentServiceAPI, DeleteCommentServiceAPI
 )
 
 
@@ -336,24 +334,20 @@ async def api_update_comment(
                 responses={**responses}
                )
 async def api_delete_comment(
+    request: Request,
     db: db_session,
+    member: Annotated[Member, Depends(get_current_member)],
     comment: Annotated[WriteBaseModel, Depends(validate_delete_comment)],
+    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
+    wr_id: str = Path(...),
 ):
     """
     댓글 삭제
     """
-    write_model = dynamic_create_write_table(bo_table)
-
-    # 댓글 삭제
-    db.delete(comment)
-
-    # 게시글에 댓글 수 감소
-    db.execute(
-        update(write_model).values(wr_comment=write_model.wr_comment - 1)
-        .where(write_model.wr_id == comment.wr_parent)
+    delete_comment_service = DeleteCommentServiceAPI(
+        request, db, bo_table, board, wr_id, comment, member
     )
-
-    db.commit()
-
+    delete_comment_service.check_authority(with_session=False)
+    delete_comment_service.delete_comment()
     return {"result": "deleted"}

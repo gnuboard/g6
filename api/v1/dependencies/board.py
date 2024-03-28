@@ -322,11 +322,7 @@ def validate_update_comment(
 
 
 def validate_delete_comment(
-    request: Request,
     db: db_session,
-    member_info: Annotated[Dict, Depends(get_member_info)],
-    parent_write: Annotated[WriteBaseModel, Depends(get_parent_write)],
-    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
 ):
@@ -337,17 +333,5 @@ def validate_delete_comment(
     
     if not comment.wr_is_comment:
         raise HTTPException(status_code=400, detail=f"{wr_id} : 댓글이 아닌 게시글입니다.")
-
-    # 게시판관리자 검증
-    mb_id = member_info["mb_id"]
-    admin_type = get_admin_type(request, mb_id, board=board)
-
-    # 게시글 삭제 권한 검증
-    if not any([
-        admin_type,
-        is_owner(parent_write, mb_id),
-        is_owner(comment, mb_id),
-    ]):
-        raise HTTPException(status_code=403, detail="댓글을 삭제할 권한이 없습니다.")
 
     return comment

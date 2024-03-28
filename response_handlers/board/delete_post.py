@@ -1,6 +1,6 @@
 
 from fastapi import Request, HTTPException
-from sqlalchemy import select, exists, delete
+from sqlalchemy import select, exists, delete, update
 
 from core.database import db_session
 from core.models import Board, Member, WriteBaseModel, BoardNew, Scrap
@@ -135,4 +135,76 @@ class DeletePostService(BoardService):
 class DeletePostServiceAPI(DeletePostService):
 
     def raise_exception(self, status_code: int, detail: str = None):
-        HTTPException(status_code, detail)
+        raise HTTPException(status_code=status_code, detail=detail)
+
+
+class DeleteCommentService(DeletePostService):
+    """댓글 삭제 처리 클래스"""
+
+    def __init__(
+        self,
+        request: Request,
+        db: db_session,
+        bo_table: str,
+        board: Board,
+        wr_id: int,
+        write: WriteBaseModel,
+        member: Member,
+    ):
+        super().__init__(request, db, bo_table, board, wr_id, write, member)
+        self.wr_id = wr_id
+        self.comment = write
+
+    def check_authority(self, with_session: bool = True):
+        """
+        게시글 삭제 권한 검증
+        - Template 용으로 사용하는 경우 with_session 인자는 True 값으로 하며
+          익명 댓글일 경우 session을 통해 권한을 검증합니다.
+        - API 용으로 사용하는 경우 with_session 인자는 False 값으로 사용합니다.
+        """
+        if self.admin_type:
+            return
+
+        # 익명 댓글
+        if not self.comment.mb_id:
+
+            # API 요청일때
+            if not with_session:
+                self.raise_exception(detail="삭제할 권한이 없습니다.", status_code=403)
+
+            # 템플릿 요청일때
+            session_name = f"ss_delete_comment_{self.bo_table}_{self.wr_id}"
+            if self.request.session.get(session_name):
+                return
+            url = f"/bbs/password/comment-delete/{self.bo_table}/{self.wr_id}"
+            query_params = remove_query_params(self.request, "token")
+            self.raise_exception(detail="삭제할 권한이 없습니다.", status_code=403, url=set_url_query_params(url, query_params))
+
+        # 회원 댓글
+        if not is_owner(self.comment, self.mb_id):
+            self.raise_exception(detail="자신의 댓글만 삭제할 수 있습니다.", status_code=403)
+
+    def delete_comment(self):
+        """댓글 삭제 처리"""
+        write_model= self.write_model
+
+        # 댓글 삭제
+        self.db.delete(self.comment)
+
+        # 게시글에 댓글 수 감소
+        self.db.execute(
+            update(write_model).values(wr_comment=write_model.wr_comment - 1)
+            .where(write_model.wr_id == self.comment.wr_parent)
+        )
+
+        self.db.commit()
+
+
+class DeleteCommentServiceAPI(DeleteCommentService):
+    """
+    댓글 삭제 처리 API 클래스, 
+    상속받은 클래스에서 예외처리 함수를 오버라이딩 하여 사용합니다.
+    """
+
+    def raise_exception(self, status_code: int, detail: str = None):
+        raise HTTPException(status_code, detail)

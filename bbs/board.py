@@ -27,7 +27,7 @@ from lib.template_functions import get_paging
 from response_handlers.board import (
     ListPostService, CreatePostService, ReadPostService,
     UpdatePostService, DeletePostService, GroupBoardListService,
-    CreateCommentService
+    CreateCommentService, DeleteCommentService
 )
 
 
@@ -726,39 +726,14 @@ async def delete_comment(
     """
     댓글 삭제
     """
-    write_model = dynamic_create_write_table(bo_table)
-
-    # 게시판관리자 검증
-    member = request.state.login_member
-    mb_id = getattr(member, "mb_id", None)
-    admin_type = get_admin_type(request, mb_id, board=board)
+    delete_comment_service = DeleteCommentService(
+        request, db, bo_table, board, comment_id, comment, request.state.login_member
+    )
+    delete_comment_service.check_authority()
+    delete_comment_service.delete_comment()
 
     # request.query_params에서 token 제거
     query_params = remove_query_params(request, "token")
-
-    # 게시글 삭제 권한 검증
-    if not admin_type:
-        # 익명 댓글
-        if not comment.mb_id:
-            if not request.session.get(f"ss_delete_comment_{bo_table}_{comment_id}"):
-                url = f"/bbs/password/comment-delete/{bo_table}/{comment_id}"
-                raise AlertException("삭제할 권한이 없습니다.", 403,
-                                     set_url_query_params(url, query_params))
-        # 회원 댓글
-        elif comment.mb_id and not is_owner(comment, mb_id):
-            raise AlertException("본인 댓글만 삭제할 수 있습니다.", 403)
-
-    # 댓글 삭제
-    db.delete(comment)
-    db.commit()
-
-    # 게시글에 댓글 수 감소
-    db.execute(
-        update(write_model).values(wr_comment=write_model.wr_comment - 1)
-        .where(write_model.wr_id == comment.wr_parent)
-    )
-    db.commit()
-
     url = f"/board/{bo_table}/{comment.wr_parent}"
     return RedirectResponse(
         set_url_query_params(url, query_params), status_code=303)
