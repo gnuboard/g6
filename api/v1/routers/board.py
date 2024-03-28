@@ -21,7 +21,8 @@ from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel, Re
 from response_handlers.board import(
     ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
     UpdatePostServiceAPI, DeletePostServiceAPI, GroupBoardListServiceAPI,
-    CreateCommentServiceAPI, DeleteCommentServiceAPI, ListDeleteServiceAPI
+    CreateCommentServiceAPI, DeleteCommentServiceAPI, ListDeleteServiceAPI,
+    MoveUpdateServiceAPI
 )
 
 
@@ -261,6 +262,34 @@ async def api_list_delete(
     list_delete_service.validate_admin_authority()
     list_delete_service.delete_writes(wr_ids)
     return {"result": "deleted"}
+
+
+@router.post("/move_update/{bo_table}",
+            summary="게시글 복사/이동",
+            response_description="게시글 복사/이동 성공 여부를 반환합니다.",
+            responses={**responses}
+            )
+async def api_move_update(
+    request: Request,
+    db: db_session,
+    member: Annotated[Member, Depends(get_current_member)],
+    board: Annotated[Board, Depends(get_board)],
+    bo_table: str = Path(...),
+    sw: str = Body(...),
+    wr_ids: str = Body(...),
+    target_bo_tables: list = Body(...),
+):
+    """
+    게시글을 복사/이동합니다.
+    - Scrap, File등 연관된 데이터들도 함께 수정합니다.
+    """
+    move_update_service = MoveUpdateServiceAPI(
+        request, db, bo_table, board, member, sw
+    )
+    move_update_service.validate_admin_authority()
+    origin_writes = move_update_service.get_origin_writes(wr_ids)
+    move_update_service.move_copy_post(target_bo_tables, origin_writes)
+    return {"result": f"해당 게시물을 선택한 게시판으로 {move_update_service.act} 하였습니다."}
  
 
 @router.post("/uploadfile/{bo_table}/{wr_id}",

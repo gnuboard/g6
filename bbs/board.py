@@ -1,18 +1,16 @@
 # 여기에서 write 와 post 는 글 한개라는 개념으로 사용합니다.
 # 게시판 테이블을 write 로 사용하여 테이블명을 바꾸지 못하는 관계로
 # 테이블명은 write 로, 글 한개에 대한 의미는 write 와 post 를 혼용하여 사용합니다.
-import datetime
-from datetime import datetime
 from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends, Request, Form, Path, Query, File
 from fastapi.responses import FileResponse, RedirectResponse
-from sqlalchemy import select, update
+from sqlalchemy import select
 
 from core.database import db_session
 from core.exception import AlertException
 from core.formclass import WriteForm, WriteCommentForm
-from core.models import Board, BoardGood, Group, Scrap, Member
+from core.models import Board, Group, Member
 from core.template import UserTemplates
 from lib.board_lib import *
 from lib.common import *
@@ -21,13 +19,14 @@ from lib.dependencies import (
     validate_captcha, validate_token, check_login_member,
     get_board, get_write, get_login_member
 )
-from lib.point import delete_point, insert_point
-from lib.template_filters import datetime_format, number_format
+from lib.point import insert_point
+from lib.template_filters import number_format
 from lib.template_functions import get_paging
 from response_handlers.board import (
     ListPostService, CreatePostService, ReadPostService,
     UpdatePostService, DeletePostService, GroupBoardListService,
-    CreateCommentService, DeleteCommentService, ListDeleteService
+    CreateCommentService, DeleteCommentService, ListDeleteService,
+    MoveUpdateService
 )
 
 
@@ -178,106 +177,16 @@ async def move_update(
     """
     게시글 복사/이동
     """
-    config = request.state.config
-    act = "이동" if sw == "move" else "복사"
-
-    # 게시판관리자 검증
     member = request.state.login_member
-    mb_id = getattr(member, "mb_id", None)
-    admin_type = get_admin_type(request, mb_id, board=origin_board)
-    if not admin_type:
-        raise AlertException("게시판 관리자 이상 접근이 가능합니다.", 403)
-
-    # 입력받은 정보를 토대로 게시글을 복사한다.
-    write_model = dynamic_create_write_table(origin_bo_table)
-    origin_writes = db.scalars(
-        select(write_model)
-        .where(write_model.wr_id.in_(wr_ids.split(',')))
-    ).all()
-
-    # 게시글 복사/이동 작업 반복
-    file_cache = FileCache()
-    for target_bo_table in target_bo_tables:
-        for origin_write in origin_writes:
-            target_write_model = dynamic_create_write_table(target_bo_table)
-            target_write = target_write_model()
-
-            # 복사/이동 로그 기록
-            if not origin_write.wr_is_comment and config.cf_use_copy_log:
-                nick = cut_name(request, member.mb_nick)
-                log_msg = f"[이 게시물은 {nick}님에 의해 {datetime_format(datetime.now()) } {origin_board.bo_subject}에서 {act} 됨]"
-                if "html" in origin_write.wr_option:
-                    log_msg = f'<div class="content_{sw}">' + log_msg + '</div>'
-                else:
-                    log_msg = '\n' + log_msg
-
-            # 게시글 복사
-            initial_field = ["wr_id", "wr_parent"]
-            for field in origin_write.__table__.columns.keys():
-                if field in initial_field:
-                    continue
-                elif field == 'wr_content':
-                    target_write.wr_content = origin_write.wr_content + log_msg
-                elif field == 'wr_num':
-                    target_write.wr_num = get_next_num(target_bo_table)
-                else:
-                    setattr(target_write, field, getattr(origin_write, field))
-
-            if sw == "copy":
-                target_write.wr_good = 0
-                target_write.wr_nogood = 0
-                target_write.wr_hit = 0
-                target_write.wr_datetime = datetime.now()
-
-            # 게시글 추가
-            db.add(target_write)
-            db.commit()
-            # 부모아이디 설정
-            target_write.wr_parent = target_write.wr_id
-            db.commit()
-
-            if sw == "move":
-                # 최신글 이동
-                db.execute(
-                    update(BoardNew)
-                    .where(BoardNew.bo_table == origin_board.bo_table, BoardNew.wr_id == origin_write.wr_id)
-                    .values(bo_table=target_bo_table, wr_id=target_write.wr_id, wr_parent=target_write.wr_id)
-                )
-                # 게시글
-                if not origin_write.wr_is_comment:
-                    # 추천데이터 이동
-                    db.execute(
-                        update(BoardGood)
-                        .where(BoardGood.bo_table == target_bo_table, BoardGood.wr_id == target_write.wr_id)
-                        .values(bo_table=target_bo_table, wr_id=target_write.wr_id)
-                    )
-                    # 스크랩 이동
-                    db.execute(
-                        update(Scrap)
-                        .where(Scrap.bo_table == target_bo_table, Scrap.wr_id == target_write.wr_id)
-                        .values(bo_table=target_bo_table, wr_id=target_write.wr_id)
-                    )
-                # 기존 데이터 삭제
-                db.delete(origin_write)
-                db.commit()
-
-            # 파일이 존재할 경우
-            file_manager = BoardFileManager(origin_board, origin_write.wr_id)
-            if file_manager.is_exist():
-                if sw == "move":
-                    file_manager.move_board_files(FILE_DIRECTORY, target_bo_table, target_write.wr_id)
-                else:
-                    file_manager.copy_board_files(FILE_DIRECTORY, target_bo_table, target_write.wr_id)
-
-        # 최신글 캐시 삭제
-        file_cache.delete_prefix(f'latest-{target_bo_table}')
-
-    # 원본 게시판 최신글 캐시 삭제
-    file_cache.delete_prefix(f'latest-{origin_bo_table}')
-
+    move_update_service = MoveUpdateService(
+        request, db, origin_bo_table, origin_board, member, sw
+    )
+    move_update_service.validate_admin_authority()
+    origin_writes = move_update_service.get_origin_writes(wr_ids)
+    move_update_service.move_copy_post(target_bo_tables, origin_writes)
     context = {
         "request": request,
-        "errors": f"해당 게시물을 선택한 게시판으로 {act} 하였습니다."
+        "errors": f"해당 게시물을 선택한 게시판으로 {move_update_service.act} 하였습니다."
     }
     return templates.TemplateResponse("alert_close.html", context)
 

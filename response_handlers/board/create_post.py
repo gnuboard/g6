@@ -2,21 +2,21 @@ import os
 from datetime import datetime
 from typing_extensions import List, Union
 from fastapi import Request, HTTPException, UploadFile
-from sqlalchemy import delete, inspect, select, func
+from sqlalchemy import delete, inspect, select, func, update
 
 from core.database import db_session
-from core.models import Board, Member, WriteBaseModel, AutoSave
+from core.models import Board, Member, WriteBaseModel, AutoSave, BoardNew, BoardGood, Scrap
 from core.formclass import WriteForm
 from lib.board_lib import (
     is_write_delay,insert_point, BoardFileManager,
     FileCache, get_next_num, generate_reply_character, send_write_mail,
 )
-from lib.common import remove_query_params, set_url_query_params, filter_words, make_directory
+from lib.common import remove_query_params, set_url_query_params, filter_words, make_directory, dynamic_create_write_table, cut_name
 from lib.html_sanitizer import content_sanitizer
 from lib.dependencies import validate_captcha as lib_validate_captcha
 from lib.pbkdf2 import create_hash
 from lib.g5_compatibility import G5Compatibility
-from lib.template_filters import number_format
+from lib.template_filters import number_format, datetime_format
 from api.v1.models.board import WriteModel
 from .base_handler import BoardService
 
@@ -348,6 +348,126 @@ class CreateCommentServiceAPI(CreateCommentService):
     """
     댓글 생성을 위한 API 클래스
       - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
+    """
+
+    def raise_exception(self, status_code: int, detail: str = None):
+        raise HTTPException(status_code=status_code, detail=detail)
+
+
+class MoveUpdateService(BoardService):
+    """게시글을 이동/복사하는 클래스입니다."""
+
+    def __init__(
+        self,
+        request: Request,
+        db: db_session,
+        bo_table: str,
+        board: Board,
+        member: Member,
+        sw: str,
+    ):
+        super().__init__(request, db, bo_table, board, member)
+        self.sw = sw
+        self.act = "이동" if sw == "move" else "복사"
+
+    def get_origin_writes(self, wr_ids):
+        """선택된 원본 글들을 가져옵니다."""
+        origin_writes = self.db.scalars(
+            select(self.write_model)
+            .where(self.write_model.wr_id.in_(wr_ids.split(',')))
+        ).all()
+        return origin_writes
+
+    def move_copy_post(self, target_bo_tables: list, origin_writes: WriteBaseModel):
+        """게시글들을 복사/이동 합니다."""
+        origin_board = self.board
+        origin_bo_table = self.bo_table
+
+        # 게시글 복사/이동 작업 반복
+        file_cache = FileCache()
+        for target_bo_table in target_bo_tables:
+            for origin_write in origin_writes:
+                target_write_model = dynamic_create_write_table(target_bo_table)
+                target_write = target_write_model()
+
+                # 복사/이동 로그 기록
+                if not origin_write.wr_is_comment and self.config.cf_use_copy_log:
+                    nick = cut_name(self.request, self.member.mb_nick)
+                    log_msg = f"[이 게시물은 {nick}님에 의해 {datetime_format(datetime.now()) } {origin_board.bo_subject}에서 {self.act} 됨]"
+                    if "html" in origin_write.wr_option:
+                        log_msg = f'<div class="content_{self.sw}">' + log_msg + '</div>'
+                    else:
+                        log_msg = '\n' + log_msg
+
+                # 게시글 복사
+                initial_field = ["wr_id", "wr_parent"]
+                for field in origin_write.__table__.columns.keys():
+                    if field in initial_field:
+                        continue
+                    elif field == 'wr_content':
+                        target_write.wr_content = origin_write.wr_content + log_msg
+                    elif field == 'wr_num':
+                        target_write.wr_num = get_next_num(target_bo_table)
+                    else:
+                        setattr(target_write, field, getattr(origin_write, field))
+
+                if self.sw == "copy":
+                    target_write.wr_good = 0
+                    target_write.wr_nogood = 0
+                    target_write.wr_hit = 0
+                    target_write.wr_datetime = datetime.now()
+
+                # 게시글 추가
+                self.db.add(target_write)
+                self.db.commit()
+                # 부모아이디 설정
+                target_write.wr_parent = target_write.wr_id
+                self.db.commit()
+
+                if self.sw == "move":
+                    # 최신글 이동
+                    self.db.execute(
+                        update(BoardNew)
+                        .where(BoardNew.bo_table == origin_board.bo_table, BoardNew.wr_id == origin_write.wr_id)
+                        .values(bo_table=target_bo_table, wr_id=target_write.wr_id, wr_parent=target_write.wr_id)
+                    )
+                    # 게시글
+                    if not origin_write.wr_is_comment:
+                        # 추천데이터 이동
+                        self.db.execute(
+                            update(BoardGood)
+                            .where(BoardGood.bo_table == target_bo_table, BoardGood.wr_id == target_write.wr_id)
+                            .values(bo_table=target_bo_table, wr_id=target_write.wr_id)
+                        )
+                        # 스크랩 이동
+                        self.db.execute(
+                            update(Scrap)
+                            .where(Scrap.bo_table == target_bo_table, Scrap.wr_id == target_write.wr_id)
+                            .values(bo_table=target_bo_table, wr_id=target_write.wr_id)
+                        )
+                    # 기존 데이터 삭제
+                    self.db.delete(origin_write)
+                    self.db.commit()
+
+                # 파일이 존재할 경우
+                file_manager = BoardFileManager(origin_board, origin_write.wr_id)
+                if file_manager.is_exist():
+                    if self.sw == "move":
+                        file_manager.move_board_files(CreatePostService.FILE_DIRECTORY, target_bo_table, target_write.wr_id)
+                    else:
+                        file_manager.copy_board_files(CreatePostService.FILE_DIRECTORY, target_bo_table, target_write.wr_id)
+
+            # 최신글 캐시 삭제
+            file_cache.delete_prefix(f'latest-{target_bo_table}')
+
+        # 원본 게시판 최신글 캐시 삭제
+        file_cache.delete_prefix(f'latest-{origin_bo_table}')
+
+
+class MoveUpdateServiceAPI(MoveUpdateService):
+    """
+    게시글을 이동/복사하는 API 클래스입니다.
+    상위클래스의 예외 처리 함수를 오버라이딩 하여 사용합니다.
     """
 
     def raise_exception(self, status_code: int, detail: str = None):
