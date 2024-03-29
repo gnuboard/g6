@@ -4,7 +4,7 @@ from fastapi import (
     APIRouter, Depends, Request, Path,HTTPException,
     status, UploadFile, File, Form, Body
 )
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse
 from fastapi.encoders import jsonable_encoder
 
 from core.database import db_session
@@ -22,7 +22,7 @@ from response_handlers.board import(
     ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
     UpdatePostServiceAPI, DeletePostServiceAPI, GroupBoardListServiceAPI,
     CreateCommentServiceAPI, DeleteCommentServiceAPI, ListDeleteServiceAPI,
-    MoveUpdateServiceAPI
+    MoveUpdateServiceAPI, DownloadFileServiceAPI
 )
 
 
@@ -316,6 +316,35 @@ async def api_upload_file(
     )
     create_post_service.upload_files(write, files, file_content, file_dels)
     return {"result": "uploaded"}
+
+
+@router.post("/{bo_table}/{wr_id}/download/{bf_no}",
+            summary="파일 다운로드",
+            response_description="게시글의 파일을 다운로드 합니다.",
+            responses={**responses}
+            )
+async def api_download_file(
+    request: Request,
+    db: db_session,
+    board: Annotated[Board, Depends(get_board)],
+    write: Annotated[WriteBaseModel, Depends(get_write)],
+    bo_table: str = Path(...),
+    wr_id: int = Path(...),
+    bf_no: int = Path(...),
+):
+    """
+    게시글의 파일을 다운로드합니다.
+    bo_table: 게시글 테이블명
+    wr_id: 게시글 아이디
+    bf_no: 첨부된 파일의 순번
+    """
+    download_file_service = DownloadFileServiceAPI(
+        request, db, bo_table, board, request.state.login_member, write, wr_id, bf_no
+    )
+    download_file_service.validate_download_level()
+    board_file = download_file_service.get_board_file()
+    download_file_service.validate_point(board_file)
+    return FileResponse(board_file.bf_file, filename=board_file.bf_source)
 
 
 @router.post("/{bo_table}/{wr_parent}/comment",

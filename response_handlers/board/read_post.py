@@ -241,3 +241,87 @@ class ReadPostServiceAPI(ReadPostService):
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)
+
+
+class DownloadFileService(BoardService):
+    """파일 다운로드 클래스"""
+
+    def __init__(
+        self,
+        request: Request,
+        db: db_session,
+        bo_table: str,
+        board: Board,
+        member: Member,
+        write: WriteBaseModel,
+        wr_id: int,
+        bf_no: int,
+    ):
+        super().__init__(request, db, bo_table, board, member)
+        self.write = write
+        self.wr_id = wr_id
+        self.bf_no = bf_no
+        self.file_manager = BoardFileManager(board, wr_id)
+
+    def validate_download_level(self):
+        """다운로드 권한 검증"""
+        if not self.is_download_level():
+            self.raise_exception(detail="다운로드 권한이 없습니다.", status_code=403)
+
+    def get_board_file(self):
+        """파일 정보 조회"""
+        board_file = self.file_manager.get_board_file(self.bf_no)
+        if not board_file:
+            self.raise_exception(detail="파일이 존재하지 않습니다.", status_code=404)
+        return board_file
+
+    def validate_point_session(self, board_file):
+        # 게시물당 포인트가 한번만 차감되도록 세션 설정
+        session_name = f"ss_down_{self.bo_table}_{self.wr_id}"
+        if not self.request.session.get(session_name):
+            # 포인트 검사
+            if self.config.cf_use_point:
+                download_point = self.board.bo_download_point
+                if not self.is_download_point(self.write):
+                    point = number_format(abs(download_point))
+                    message = f"파일 다운로드에 필요한 포인트({point})가 부족합니다."
+                    if not self.member:
+                        message += f"\\n로그인 후 다시 시도해주세요."
+                    self.raise_exception(detail=message, status_code=403)
+                else:
+                    insert_point(self.request, self.mb_id, download_point, f"{self.board.bo_subject} {self.wr_id} 파일 다운로드", self.bo_table, self.wr_id, "다운로드")
+
+            self.request.session[session_name] = True
+
+        download_session_name = f"ss_down_{self.bo_table}_{self.wr_id}_{board_file.bf_no}"
+        if not self.request.session.get(download_session_name):
+            # 다운로드 횟수 증가
+            self.file_manager.update_download_count(board_file)
+            # 파일 다운로드 세션 설정
+            self.request.session[download_session_name] = True
+
+
+class DownloadFileServiceAPI(DownloadFileService):
+    """
+    API용 파일 다운로드 클래스
+    상위 클래스의 예외처리를 오버라이딩 하여 사용
+    """
+
+    def raise_exception(self, status_code: int, detail: str = None):
+        raise HTTPException(status_code=status_code, detail=detail)
+
+    def validate_point(self, board_file):
+        """다운로드 포인트 검사"""
+        if not self.config.cf_use_point:
+            return
+
+        download_point = self.board.bo_download_point
+        if self.is_download_point(self.write):
+            insert_point(self.request, self.mb_id, download_point, f"{self.board.bo_subject} {self.wr_id} 파일 다운로드", self.bo_table, self.wr_id, "다운로드")
+            # 다운로드 횟수 증가
+            self.file_manager.update_download_count(board_file)
+            return
+        
+        point = number_format(abs(download_point))
+        message = f"파일 다운로드에 필요한 포인트({point})가 부족합니다."
+        self.raise_exception(detail=message, status_code=403)

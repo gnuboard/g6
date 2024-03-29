@@ -4,7 +4,10 @@ from .create_post import (
     CreatePostService, CreatePostServiceAPI, CreateCommentService,
     CreateCommentServiceAPI, MoveUpdateService, MoveUpdateServiceAPI
 )
-from .read_post import ReadPostService, ReadPostServiceAPI
+from .read_post import (
+    ReadPostService, ReadPostServiceAPI, DownloadFileService,
+    DownloadFileServiceAPI
+)
 from .update_post import UpdatePostService, UpdatePostServiceAPI
 from .delete_post import (
     DeletePostService, DeletePostServiceAPI, DeleteCommentService,

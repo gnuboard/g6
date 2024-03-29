@@ -19,14 +19,12 @@ from lib.dependencies import (
     validate_captcha, validate_token, check_login_member,
     get_board, get_write, get_login_member
 )
-from lib.point import insert_point
-from lib.template_filters import number_format
 from lib.template_functions import get_paging
 from response_handlers.board import (
     ListPostService, CreatePostService, ReadPostService,
     UpdatePostService, DeletePostService, GroupBoardListService,
     CreateCommentService, DeleteCommentService, ListDeleteService,
-    MoveUpdateService
+    MoveUpdateService, DownloadFileService
 )
 
 
@@ -504,47 +502,12 @@ async def download_file(
     Returns:
         FileResponse: 파일 다운로드
     """
-    config = request.state.config
-    board_config = BoardConfig(request, board)
-
-    if not board_config.is_download_level():
-        raise AlertException("다운로드 권한이 없습니다.", 403)
-
-    # 파일 정보 조회
-    file_manager = BoardFileManager(board, wr_id)
-    board_file = file_manager.get_board_file(bf_no)
-    if not board_file:
-        raise AlertException("파일이 존재하지 않습니다.", 404)
-
-    # 회원 정보
-    member = request.state.login_member
-    mb_id = getattr(member, "mb_id", None)
-
-    # 게시물당 포인트가 한번만 차감되도록 세션 설정
-    session_name = f"ss_down_{bo_table}_{wr_id}"
-    if not request.session.get(session_name):
-        # 포인트 검사
-        if config.cf_use_point:
-            download_point = board.bo_download_point
-            if not board_config.is_download_point(write):
-                point = number_format(abs(download_point))
-                message = f"파일 다운로드에 필요한 포인트({point})가 부족합니다."
-                if not member:
-                    message += f"\\n로그인 후 다시 시도해주세요."
-
-                raise AlertException(message, 403)
-            else:
-                insert_point(request, mb_id, download_point, f"{board.bo_subject} {write.wr_id} 파일 다운로드", board.bo_table, write.wr_id, "다운로드")
-
-        request.session[session_name] = True
-
-    download_session_name = f"ss_down_{bo_table}_{wr_id}_{board_file.bf_no}"
-    if not request.session.get(download_session_name):
-        # 다운로드 횟수 증가
-        file_manager.update_download_count(board_file)
-        # 파일 다운로드 세션 설정
-        request.session[download_session_name] = True
-
+    download_file_service = DownloadFileService(
+        request, db, bo_table, board, request.state.login_member, write, wr_id, bf_no
+    )
+    download_file_service.validate_download_level()
+    board_file = download_file_service.get_board_file()
+    download_file_service.validate_point_session(board_file)
     return FileResponse(board_file.bf_file, filename=board_file.bf_source)
 
 
