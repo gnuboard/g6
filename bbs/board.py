@@ -135,12 +135,13 @@ async def move_post(
     """
     게시글 복사/이동
     """
+    move_update_service = MoveUpdateService(
+        request, db, bo_table, board, request.state.login_member, sw
+    )
     # 게시판 관리자 검증
-    member = request.state.login_member
-    mb_id = getattr(member, "mb_id", None)
-    admin_type = get_admin_type(request, mb_id, board=board)
-    if not admin_type:
-        raise AlertException("게시판 관리자 이상 접근이 가능합니다.", 403)
+    mb_id = move_update_service.mb_id
+    admin_type = move_update_service.admin_type
+    move_update_service.validate_admin_authority()
 
     # 게시판 목록 조회
     query = select(Board).join(Group).order_by(Board.gr_id, Board.bo_order, Board.bo_table)
@@ -154,7 +155,7 @@ async def move_post(
     context = {
         "request": request,
         "sw": sw,
-        "act": "이동" if sw == "move" else "복사",
+        "act": move_update_service.act,
         "boards": boards,
         "current_board": board,
         "wr_ids": ','.join(wr_ids)
