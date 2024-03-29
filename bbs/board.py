@@ -200,57 +200,47 @@ async def write_form_add(
     """
     게시글을 작성하는 form을 보여준다.
     """
-    # 게시판 정보 조회
-    board_config = BoardConfig(request, board)
+    create_post_service = CreatePostService(
+        request, db, bo_table, board, request.state.login_member
+    )
 
     parent_write = None
     if parent_id:
-        # 답글 작성권한 검증
-        if not board_config.is_reply_level():
-            raise AlertException("답변글을 작성할 권한이 없습니다.", 403)
-
-        # 답글 생성가능여부 검증
-        write_model = dynamic_create_write_table(bo_table)
-        parent_write = db.get(write_model, parent_id)
-        if not parent_write:
-            raise AlertException("답변할 글이 존재하지 않습니다.", 404)
-
+        parent_write = create_post_service.get_parent_post(parent_id)
         generate_reply_character(board, parent_write)
     else:
-        if not board_config.is_write_level():
+        if not create_post_service.is_write_level():
             raise AlertException("글을 작성할 권한이 없습니다.", 403)
 
     # TODO: 포인트 검증
 
     # 게시판 제목 설정
-    board.subject = board_config.subject
+    board.subject = create_post_service.subject
     # 게시판 에디터 설정
     request.state.use_editor = board.bo_use_dhtml_editor
-    request.state.editor = board_config.select_editor
+    request.state.editor = create_post_service.select_editor
 
     # 게시판 관리자 확인
-    member = request.state.login_member
-    mb_id = getattr(member, "mb_id", None)
-    admin_type = get_admin_type(request, mb_id, board=board)
+    admin_type = create_post_service.admin_type
 
     context = {
         "request": request,
-        "categories": board_config.get_category_list(),
+        "categories": create_post_service.get_category_list(),
         "board": board,
         "write": None,
         "is_notice": True if admin_type and not parent_id else False,
-        "is_html": board_config.is_html_level(),
+        "is_html": create_post_service.is_html_level(),
         "is_secret": 1 if is_secret_write(parent_write) else board.bo_use_secret,
         "secret_checked": "checked" if is_secret_write(parent_write) else "",
-        "is_mail": board_config.use_email,
+        "is_mail": create_post_service.use_email,
         "recv_email_checked": "checked",
-        "is_link": board_config.is_link_level(),
-        "is_file": board_config.is_upload_level(),
+        "is_link": create_post_service.is_link_level(),
+        "is_file": create_post_service.is_upload_level(),
         "is_file_content": bool(board.bo_use_file_content),
         "files": BoardFileManager(board).get_board_files_by_form(),
-        "is_use_captcha": board_config.use_captcha,
-        "write_min": board_config.write_min,
-        "write_max": board_config.write_max,
+        "is_use_captcha": create_post_service.use_captcha,
+        "write_min": create_post_service.write_min,
+        "write_max": create_post_service.write_max,
     }
     return templates.TemplateResponse(
         f"/board/{board.bo_skin}/write_form.html", context)
