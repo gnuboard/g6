@@ -9,7 +9,7 @@ from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
 from core.database import DBConnect
-from core.models import Config, Member, PollEtc
+from core.models import Config, Member, PollEtc, QaConfig, QaContent
 from core.template import TemplateService
 from lib.common import cut_name, get_admin_email, get_admin_email_name, mailer
 
@@ -123,3 +123,34 @@ def send_poll_etc_mail(request: Request, poll_etc: PollEtc) -> None:
             mailer(email, email, subject, body, from_name)
     except Exception as e:
         print(e)
+
+
+def send_qa_mail(request: Request, qa: QaContent) -> None:
+    """
+    Q&A 등록 시 메일 발송 처리
+    - Q&A 등록 시, 설정에 등록된 관리자 이메일 주소로 메일 발송
+    - 답변글 등록 시, 메일/메일 수신여부 설정에 따라 사용자에게 메일 발송
+    
+    Args:
+        request (Request): Request 객체
+        poll_etc (PollEtc): 기타의견 객체
+
+    TODO : 메일 발송 템플릿 적용이 필요하다.
+    """
+    with DBConnect().sessionLocal() as db:
+        request.state.config = config = db.query(Config).first()
+        qa_config = db.query(QaConfig).first()
+
+    from_email = get_admin_email(request)
+    from_name = get_admin_email_name(request)
+    subject = f"[{config.cf_title}] {qa_config.qa_title} 질문 알림 메일"
+    content = qa.qa_subject + "<br><br>" + qa.qa_content
+
+    if qa.qa_parent:
+        question = db.get(QaContent, qa.qa_parent)
+        if question.qa_email_recv and question.qa_email:
+            subject = f"{subject} 에 대한 답변이 등록되었습니다."
+            mailer(from_email, question.qa_email, subject, content, from_name)
+    else:
+        if qa_config.qa_admin_email:
+            mailer(from_email, qa_config.qa_admin_email, subject, content, from_name)

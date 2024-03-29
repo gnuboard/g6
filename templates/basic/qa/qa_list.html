@@ -20,9 +20,9 @@
         <div class="list_category">
             <h2 class="blind">{{ qa_config.qa_title }} 카테고리</h2>
             <ul>
-                <li><a href="{{ request.url.replace_query_params() }}" {% if not query_params.sca %}id="bo_cate_on"{% endif %}>전체</a></li>
+                <li><a href="{{ request.url.replace_query_params() }}" {% if not query_params.sca %}class="active"{% endif %}>전체</a></li>
                 {% for category in categories %}
-                <li><a href="{{ request.url.replace_query_params(sca=category) }}" {% if query_params.sca == category %}id="bo_cate_on"{% endif %}>{{ category }}</a></li>
+                <li><a href="{{ request.url.replace_query_params(sca=category) }}" {% if query_params.sca == category %}class="active"{% endif %}>{{ category }}</a></li>
                 {% endfor %}
             </ul>
         </div>

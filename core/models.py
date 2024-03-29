@@ -640,7 +640,7 @@ class QaContent(Base):
     qa_file2 = Column(String(255), nullable=False, default="")
     qa_source2 = Column(String(255), nullable=False, default="")
     qa_ip = Column(String(255), nullable=False, default="")
-    qa_datetime = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
+    qa_datetime = Column(DateTime, nullable=False, default=datetime.now())
     qa_1 = Column(String(255), nullable=False, default="")
     qa_2 = Column(String(255), nullable=False, default="")
     qa_3 = Column(String(255), nullable=False, default="")

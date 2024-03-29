@@ -39,16 +39,16 @@ class PollService(BaseService):
         if member:
             kwargs.update(pc_name=member.mb_name)
 
-        self.db.execute(
-            insert(PollEtc).values(
-                po_id=poll.po_id,
-                mb_id=(member.mb_id if member else ''),
-                **kwargs
-            )
+        poll_etc = PollEtc(
+            po_id=po_id,
+            mb_id=(member.mb_id if member else ''),
+            **kwargs
         )
+        self.db.add(poll_etc)
         self.db.commit()
+        self.db.refresh(poll_etc)
 
-        return poll
+        return poll_etc
 
     def update_poll(self, po_id: int, item: int, member: Member = None) -> Poll:
         """설문조사 참여하기
