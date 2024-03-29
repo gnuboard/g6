@@ -209,8 +209,7 @@ async def write_form_add(
         parent_write = create_post_service.get_parent_post(parent_id)
         generate_reply_character(board, parent_write)
     else:
-        if not create_post_service.is_write_level():
-            raise AlertException("글을 작성할 권한이 없습니다.", 403)
+        create_post_service.validate_write_level()
 
     # TODO: 포인트 검증
 
@@ -349,6 +348,7 @@ async def create_post(
     )
     create_post_service.validate_captcha(recaptcha_response)
     create_post_service.validate_write_delay()
+    create_post_service.validate_write_level()
     create_post_service.validate_secret_board(secret, html, mail)
     create_post_service.validate_post_content(form_data.wr_subject)
     create_post_service.validate_post_content(form_data.wr_content)

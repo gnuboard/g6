@@ -32,6 +32,10 @@ class CreatePostService(BoardService):
     def __init__(self, request: Request, db: db_session, bo_table: str, board: Board, member: Member):
         super().__init__(request, db, bo_table, board, member)
 
+    def validate_write_level(self):
+        if not self.is_write_level():
+            self.raise_exception(detail="글을 작성할 권한이 없습니다.", status_code=403)
+
     def validate_secret_board(self, secret: str, html: str, mail: str):
         """게시판의 비밀글 사용여부 검증"""
         if self.admin_type:
