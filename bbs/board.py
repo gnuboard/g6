@@ -257,19 +257,16 @@ async def write_form_edit(
     """
     게시글을 작성하는 form을 보여준다.
     """
-    board_config = BoardConfig(request, board)
-
-    # 게시판 관리자 확인
-    member = request.state.login_member
-    mb_id = getattr(member, "mb_id", None)
-    admin_type = get_admin_type(request, mb_id, board=board)
+    update_post_service = UpdatePostService(
+        request, db, bo_table, board, request.state.login_member, wr_id,
+    )
 
     # 게시판 수정 권한
-    if not board_config.is_write_level():
-        raise AlertException("글을 수정할 권한이 없습니다.", 403)
-    if not board_config.is_modify_by_comment(wr_id):
-        raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_modify}건 이상 존재하므로 수정 할 수 없습니다.", 403)
+    update_post_service.validate_write_level()
+    update_post_service.validate_restrict_comment_count()
 
+    # 게시판 관리자 확인
+    admin_type = update_post_service.admin_type
     if not admin_type:
         # 익명 글
         if not write.mb_id:
@@ -279,14 +276,14 @@ async def write_form_edit(
                 return RedirectResponse(
                     set_url_query_params(url, query_params), status_code=303)
         # 회원 글
-        elif write.mb_id and not is_owner(write, mb_id):
+        elif write.mb_id and not is_owner(write, update_post_service.mb_id):
             raise AlertException("본인 글만 수정할 수 있습니다.", 403)
 
     # 게시판 제목 설정
-    board.subject = board_config.subject
+    board.subject = update_post_service.subject
     # 게시판 에디터 설정
     request.state.use_editor = board.bo_use_dhtml_editor
-    request.state.editor = board_config.select_editor
+    request.state.editor = update_post_service.select_editor
 
     # HTML 설정
     html_checked = ""
@@ -300,25 +297,25 @@ async def write_form_edit(
 
     context = {
         "request": request,
-        "categories": board_config.get_category_list(),
+        "categories": update_post_service.get_category_list(),
         "board": board,
         "write": write,
         "is_notice": True if not write.wr_reply and admin_type else False,
-        "notice_checked": "checked" if board_config.is_board_notice(wr_id) else "",
-        "is_html": board_config.is_html_level(),
+        "notice_checked": "checked" if update_post_service.is_board_notice(wr_id) else "",
+        "is_html": update_post_service.is_html_level(),
         "html_checked": html_checked,
         "html_value": html_value,
         "is_secret": 1 if is_secret_write(write) else board.bo_use_secret,
         "secret_checked": "checked" if is_secret_write(write) else "",
-        "is_mail": board_config.use_email,
+        "is_mail": update_post_service.use_email,
         "recv_email_checked": "checked" if "mail" in write.wr_option else "",
-        "is_link": board_config.is_link_level(),
-        "is_file": board_config.is_upload_level(),
+        "is_link": update_post_service.is_link_level(),
+        "is_file": update_post_service.is_upload_level(),
         "is_file_content": bool(board.bo_use_file_content),
         "files": BoardFileManager(board, wr_id).get_board_files_by_form(),
         "is_use_captcha": False,
-        "write_min": board_config.write_min,
-        "write_max": board_config.write_max,
+        "write_min": update_post_service.write_min,
+        "write_max": update_post_service.write_max,
     }
     return templates.TemplateResponse(
         f"/board/{board.bo_skin}/write_form.html", context)
