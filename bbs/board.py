@@ -461,6 +461,9 @@ async def delete_post(
     delete_post_service = DeletePostService(
         request, db, bo_table, board, wr_id, write, request.state.login_member
     )
+    delete_post_service.validate_level()
+    delete_post_service.validate_exists_reply()
+    delete_post_service.validate_exists_comment()
     delete_post_service.delete_write()
     query_params = remove_query_params(request, "token")
     return RedirectResponse(set_url_query_params(f"/board/{bo_table}", query_params), status_code=303)

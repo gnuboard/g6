@@ -235,6 +235,9 @@ async def api_delete_post(
     delete_post_api = DeletePostServiceAPI(
         request, db, bo_table, board, wr_id, write, member_info["member"]
     )
+    delete_post_api.validate_level(with_session=False)
+    delete_post_api.validate_exists_reply()
+    delete_post_api.validate_exists_comment()
     delete_post_api.delete_write()
     return {"result": "deleted"}
 

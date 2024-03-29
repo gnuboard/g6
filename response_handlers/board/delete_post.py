@@ -4,7 +4,7 @@ from sqlalchemy import select, exists, delete, update
 
 from core.database import db_session
 from core.models import Board, Member, WriteBaseModel, BoardNew, Scrap
-from lib.board_lib import AlertException, is_owner, insert_point, delete_point, BoardFileManager, FileCache
+from lib.board_lib import is_owner, insert_point, delete_point, BoardFileManager, FileCache
 from lib.common import remove_query_params, set_url_query_params
 from .base_handler import BoardService
 
@@ -28,54 +28,55 @@ class DeletePostService(BoardService):
         super().__init__(request, db, bo_table, board, member)
         self.wr_id = wr_id
         self.write = write
+        self.write_member_mb_no = self.db.scalar(select(Member.mb_no).where(Member.mb_id == write.mb_id))
+        self.write_member = self.db.get(Member, self.write_member_mb_no)
+        self.write_member_level = getattr(self.write_member, "mb_level", 1)
+
+    def validate_level(self, with_session: bool = True):
+        if self.admin_type == "super":
+            return
+
+        if self.admin_type and self.write_member_level > self.member_level:
+            self.raise_exception(status_code=403, detail="자신보다 높은 권한의 게시글은 삭제할 수 없습니다.")
+        elif self.write.mb_id and not is_owner(self.write, self.mb_id):
+            self.raise_exception(status_code=403, detail="자신의 게시글만 삭제할 수 있습니다.", )
+
+        if not self.write.mb_id:
+            if with_session and not self.request.session.get(f"ss_delete_{self.bo_table}_{self.wr_id}"):
+                url = f"/bbs/password/delete/{self.bo_table}/{self.wr_id}"
+                query_params = remove_query_params(self.request, "token")
+                self.raise_exception(status_code=403, detail="비회원 글을 삭제할 권한이 없습니다.", url=set_url_query_params(url, query_params))
+            elif not with_session:
+                self.raise_exception(status_code=403, detail="비회원 글을 삭제할 권한이 없습니다.")
+        
+    def validate_exists_reply(self):
+        """답변글이 있을 때 삭제 불가"""
+        exists_reply = self.db.scalar(
+            exists(self.write_model)
+            .where(
+                self.write_model.wr_reply.like(f"{self.write.wr_reply}%"),
+                self.write_model.wr_num == self.write.wr_num,
+                self.write_model.wr_is_comment == 0,
+                self.write_model.wr_id != self.wr_id
+            )
+            .select()
+        )
+        if exists_reply:
+            self.raise_exception(detail="답변이 있는 글은 삭제할 수 없습니다. 우선 답변글부터 삭제하여 주십시오.", status_code=403)
+
+    def validate_exists_comment(self):
+         """게시판 설정에서 정해놓은 댓글 개수 이상일 때 삭제 불가"""
+         if not self.is_delete_by_comment(self.wr_id):
+            self.raise_exception(detail=f"이 글과 관련된 댓글이 {self.board.bo_count_delete}건 이상 존재하므로 삭제 할 수 없습니다.", status_code=403)
 
     def delete_write(self):
         """게시글 삭제 처리"""
         origin_write = self.write
-        member_id = self.mb_id
         write_model = self.write_model
         db = self.db
         bo_table = self.bo_table
         board = self.board
         request = self.request
-
-        write_member_mb_no = db.scalar(select(Member.mb_no).where(Member.mb_id == origin_write.mb_id))
-        write_member = db.get(Member, write_member_mb_no)
-        write_member_level = getattr(write_member, "mb_level", 1)
-
-        # 권한 체크
-        if self.admin_type != "super":
-            if self.admin_type and write_member_level > self.member_level:
-                self.raise_exception(status_code=403, detail="자신보다 높은 권한의 게시글은 삭제할 수 없습니다.")
-            elif origin_write.mb_id and not is_owner(self.write, member_id):
-                self.raise_exception(status_code=403, detail="자신의 게시글만 삭제할 수 있습니다.", )
-
-            if isinstance(self.ClassException, AlertException):
-                url = f"/bbs/password/delete/{self.bo_table}/{origin_write.wr_id}"
-                if not origin_write.mb_id and not self.request.session.get(f"ss_delete_{self.bo_table}_{origin_write.wr_id}"):
-                    query_params = remove_query_params(self.request, "token")
-                    self.raise_exception(status_code=403, detail="비회원 글을 삭제할 권한이 없습니다.", url=set_url_query_params(url, query_params))
-            else:
-                if not origin_write.mb_id:
-                    self.raise_exception(status_code=403, detail="비회원 글을 삭제할 권한이 없습니다.")
-        
-        # 답변글이 있을 때 삭제 불가
-
-        exists_reply = db.scalar(
-            exists(write_model)
-            .where(
-                write_model.wr_reply.like(f"{origin_write.wr_reply}%"),
-                write_model.wr_num == origin_write.wr_num,
-                write_model.wr_is_comment == 0,
-                write_model.wr_id != origin_write.wr_id
-            )
-            .select()
-        )
-        if exists_reply:
-            self.raise_exception(detail="답변이 있는 글은 삭제할 수 없습니다. \\n\\n우선 답변글부터 삭제하여 주십시오.", status_code=403)
-
-        if not self.is_delete_by_comment(origin_write.wr_id):
-            self.raise_exception(detail=f"이 글과 관련된 댓글이 {board.bo_count_delete}건 이상 존재하므로 삭제 할 수 없습니다.", status_code=403)
 
         # 원글 + 댓글
         delete_write_count = 0
