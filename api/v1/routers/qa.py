@@ -8,9 +8,9 @@ from lib.common import get_paging_info
 from lib.mail import send_qa_mail
 from api.v1.dependencies.member import get_current_member
 from api.v1.dependencies.qa import validate_data, validate_upload_file
-from api.v1.lib.qa import QaServiceAPI
+from api.v1.lib.qa import QaFileServiceAPI, QaServiceAPI
 from api.v1.models import responses
-from api.v1.models.qa import QaContentModel, ReadQaContentListModel
+from api.v1.models.qa import QaContentModel, SearchQaContentModel
 
 router = APIRouter()
 
@@ -21,18 +21,20 @@ router = APIRouter()
             responses={**responses})
 async def read_qa_contents(
     qa_service: Annotated[QaServiceAPI, Depends()],
-    current_member: Annotated[Member, Depends(get_current_member)],
-    data: Annotated[ReadQaContentListModel, Depends()]
+    member: Annotated[Member, Depends(get_current_member)],
+    search_data: Annotated[SearchQaContentModel, Depends()]
 ):
     """Q&A 목록을 조회합니다."""
-    total_records = qa_service.fetch_total_records(
-        current_member, **data.__dict__)
-    paging_info = get_paging_info(data.page, data.per_page, total_records)
+    total_records = qa_service.fetch_total_records(member, **search_data.__dict__)
+    paging_info = get_paging_info(search_data.page, search_data.per_page, total_records)
     qa_contents = qa_service.read_qa_contents(
-        current_member, paging_info["offset"], data.per_page, **data.__dict__,
-    )
+        member, paging_info["offset"], search_data.per_page, **search_data.__dict__)
 
-    return qa_contents
+    return {
+        "total_records": total_records,
+        "total_pages": paging_info["total_pages"],
+        "qa_contents": qa_contents
+    }
 
 
 @router.get("/qas/{qa_id}",
@@ -41,18 +43,22 @@ async def read_qa_contents(
             responses={**responses})
 async def read_qa(
     qa_service: Annotated[QaServiceAPI, Depends()],
-    current_member: Annotated[Member, Depends(get_current_member)],
-    qa_id: Annotated[int, Path(..., title="Q&A ID")]
+    member: Annotated[Member, Depends(get_current_member)],
+    qa_id: Annotated[int, Path(..., title="Q&A ID")],
+    search_data: Annotated[SearchQaContentModel, Depends()]
 ):
     """Q&A 1건을 조회합니다."""
-    qa_content = qa_service.read_qa_content(current_member, qa_id)
-
-    # Q&A 답변글 조회
+    qa_content = qa_service.read_qa_content(member, qa_id)
     answer = qa_service.fetch_qa_answer(qa_id)
+    prev_qa, next_qa = qa_service.fetch_prev_next_qa(member, qa_id, **search_data)
+    related_qa_contents = qa_service.fetch_related_qa_contents(member, qa_id)
 
     return {
         "qa_content": qa_content,
-        "answer": answer
+        "answer": answer,
+        "prev": prev_qa,
+        "next": next_qa,
+        "related": related_qa_contents,
     }
 
 
@@ -109,11 +115,13 @@ async def update_qa_content(
 async def upload_qa_file(
     member: Annotated[Member, Depends(get_current_member)],
     qa_service: Annotated[QaServiceAPI, Depends()],
+    file_service: Annotated[QaFileServiceAPI, Depends()],
     qa_id: Annotated[int, Path(..., title="Q&A ID")],
     data: Annotated[dict, Depends(validate_upload_file)],
 ):
     """Q&A에 파일을 업로드합니다."""
-    qa_service.upload_qa_file(qa_id, member, data)
+    qa_content = qa_service.read_qa_content(member, qa_id)
+    file_service.upload_qa_file(qa_content, data)
 
     return HTTPException(status_code=200, detail="Q&A 파일 업로드가 완료되었습니다.")
 

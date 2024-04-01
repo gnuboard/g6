@@ -1,122 +1,168 @@
 """Q&A 관련 기능을 제공하는 모듈입니다."""
 import os
-
-from typing import List
+from typing import List, Tuple
 from typing_extensions import Annotated
 
 from fastapi import Depends, Request, UploadFile
-from sqlalchemy import func, select, Select
+from sqlalchemy import delete, func, select, Select
 
 from core.database import db_session
 from core.exception import AlertException
 from core.models import Member, QaConfig, QaContent
-from lib.common import delete_image, get_client_ip, make_directory, save_image
+from lib.common import get_client_ip, make_directory, save_image
 from lib.service import BaseService
 from api.v1.models.qa import QaContentModel
 
+# 상수 정의
+DEFAULT_EDITOR = "textarea"
+SEPARATOR = "|"
 FILE_DIRECTORY = "data/qa/"
 
 
 class QaConfigService(BaseService):
-    """Q&A 설정 서비스 클래스"""
-    _instance = None
-    qa_config: QaConfig = None
-
-    def __new__(cls, request: Request, db: db_session) -> "QaConfigService":
-        if cls._instance:
-            return cls._instance
-        cls._instance = super(QaConfigService, cls).__new__(cls)
-        return cls._instance
+    """Q&A 설정 서비스 클래스."""
 
     def __init__(self, request: Request, db: db_session):
         self.db = db
         self.request = request
         self.config = request.state.config
         self.is_mobile = request.state.is_mobile
-        self.qa_config = self.get()
+        self.qa_config = self.get_qa_config()
 
     def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None):
+        """예외 발생 메소드. 주어진 상태 코드와 상세 내용으로 예외를 발생시킨다."""
         raise AlertException(detail, status_code, url)
 
     @property
     def page_rows(self) -> int:
-        """Q&A 페이지당 출력할 행의 수를 반환.
-
-        Returns:
-            int: Q&A 페이지당 출력할 행의 수.
-        """
+        """Q&A 페이지당 출력할 행의 수를 반환한다"""
         qa_page_rows = self.qa_config.qa_page_rows
         page_rows = self.config.cf_page_rows
-        # 모바일 여부 확인
         if self.is_mobile:
             qa_page_rows = self.qa_config.qa_mobile_page_rows
             page_rows = self.config.cf_mobile_page_rows
 
-        return qa_page_rows if qa_page_rows else page_rows
+        return qa_page_rows or page_rows
 
     @property
     def select_editor(self) -> str:
-        """게시판에 사용할 에디터를 반환.
-
-        Returns:
-            str: 게시판에 사용할 에디터.
-        """
+        """Q&A에서 사용할 에디터를 반환합니다."""
         if not self.qa_config.qa_use_editor or not self.config.cf_editor:
-            return "textarea"
+            return DEFAULT_EDITOR
 
         return self.config.cf_editor
 
-    def get(self):
-        """Q&A 설정 조회
+    @property
+    def subject_len(self) -> int:
+        """Q&A 제목 길이를 반환합니다."""
+        if self.is_mobile:
+            return int(self.qa_config.qa_mobile_subject_len)
+        return int(self.qa_config.qa_subject_len)
 
-        Returns:
-            QaConfig: Q&A 설정
-        """
+    def get_qa_config(self) -> QaConfig:
+        """Q&A 설정 조회."""
         qa_config = self.db.scalar(select(QaConfig).order_by(QaConfig.id))
         if not qa_config:
-            raise self.raise_exception(404, "Q&A 설정이 존재하지 않습니다.")
+            self.raise_exception(404, "Q&A 설정이 존재하지 않습니다.")
 
         return qa_config
 
-    def get_category_list(self) -> list:
-        """Q&A 설정 카테고리 목록을 반환.
+    def get_category_list(self) -> List[str]:
+        """카테고리 목록 조회."""
+        return (self.qa_config.qa_category.split(SEPARATOR)
+                if self.qa_config.qa_category else [])
 
-        Returns:
-            list: Q&A 설정 카테고리 목록.
+
+class QaFileService(BaseService):
+    """Q&A 파일 서비스 클래스"""
+
+    def __init__(self, request: Request, db: db_session):
+        self.request = request
+        self.db = db
+        self.directory = FILE_DIRECTORY
+
+    def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None):
+        raise AlertException(detail, status_code, url)
+
+    def upload_qa_file(self, qa: QaContent, data: dict) -> str:
         """
-        return self.qa_config.qa_category.split("|") if self.qa_config.qa_category else []
+        Q&A 업로드 파일을 처리합니다.
+        """
+        self._process_file(qa, data, "1")
+        self._process_file(qa, data, "2")
+        self.db.commit()
 
-    def cut_write_subject(self, subject, cut_length: int = 0) -> str:
-        """주어진 cut_length에 기반하여 subject 문자열을 자르고 필요한 경우 "..."을 추가합니다.
+    def _process_file(self, qa: QaContent, data: dict, key: str):
+        """단일 파일 처리 로직"""
+        file: UploadFile = data.get(f"file{key}")
+        file_del = data.get(f"file_del{key}", False)
+
+        # 파일 경로체크 및 생성
+        make_directory(self.directory)
+
+        # 파일 삭제
+        if file_del:
+            self._delete_file(getattr(qa, f"qa_file{key}"))
+            setattr(qa, f"qa_file{key}", None)
+            setattr(qa, f"qa_source{key}", None)
+
+        if file and file.filename:
+            self._validate_file(file)
+            filename = self._generate_filename(file.filename)
+            save_image(self.directory, filename, file)
+            setattr(qa, f"qa_file{key}", str(self.directory + filename))
+            setattr(qa, f"qa_source{key}", file.filename)
+
+    def set_file_list(self, qa: QaContent = None) -> Tuple[List[str], List[dict]]:
+        """이미지 파일과 첨부파일 목록을 설정
 
         Args:
-            - subject: 자를 대상인 주제 문자열.
-            - cut_length: subject 문자열의 최대 길이. Default: 0
+            request (Request): Request 객체
+            qa (QaContent, optional): Q&A 객체. Defaults to None.
 
         Returns:
-            - str : 수정된 subject 문자열.
+            list, list: 이미지, 첨부파일 목록
         """
-        cut_length = cut_length or (
-            self.qa_config.qa_mobile_subject_len if self.is_mobile else self.qa_config.qa_subject_len)
+        image_extensions = self.request.state.config.cf_image_extension.split(SEPARATOR)
+        images, files = [], []
 
-        if not cut_length:
-            return subject
+        for i in range(1, 3):
+            file_source = getattr(qa, f"qa_source{i}", None)
+            if file_source:
+                extension = file_source.split('.')[-1]
+                file_path = getattr(qa, f"qa_file{i}", None)
+                if extension in image_extensions:
+                    images.append(file_path)
+                else:
+                    files.append({"name": file_source, "path": file_path})
 
-        return subject[:cut_length] + "..." if len(subject) > cut_length else subject
+        return images, files
+
+    def _validate_file(self, file: UploadFile):
+        """파일 유효성 검증"""
+        # 여기에 파일 크기, 타입 검증 로직 추가
+
+    def _generate_filename(self, original_filename: str) -> str:
+        """안전한 파일명 생성"""
+        extension = original_filename.split('.')[-1]
+        return f"{os.urandom(16).hex()}.{extension}"
+
+    def _delete_file(self, filepath: str):
+        """파일 삭제"""
+        if os.path.exists(filepath):
+            os.remove(filepath)
 
 
 class QaService(BaseService):
-    """
-    FAQ 관련 서비스를 제공하는 종속성 주입 클래스입니다.
-    """
+    """Q&A 종속성 주입 서비스 클래스"""
 
-    def __init__(self,
-                 request: Request,
-                 db: db_session,
-                 config_service: Annotated[QaConfigService, Depends()]):
+    def __init__(self, request: Request, db: db_session,
+                 config_service: Annotated[QaConfigService, Depends()],
+                 file_service: Annotated[QaFileService, Depends()]):
         self.request = request
         self.db = db
         self.config_service = config_service
+        self.file_service = file_service
 
     def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None):
         raise AlertException(detail, status_code, url)
@@ -125,10 +171,8 @@ class QaService(BaseService):
         """
         Q&A를 등록합니다.
         """
-        config = self.request.state.config
         if data.qa_parent:
-            if member.mb_level != 10 or config.cf_admin != member.mb_id:
-                return self.raise_exception(400, "답변글은 관리자만 작성할 수 있습니다.")
+            self._validate_create_permission(member)
 
         qa = QaContent(**data.__dict__)
         qa.qa_ip = get_client_ip(self.request)
@@ -153,12 +197,10 @@ class QaService(BaseService):
             offset: int = 0, records_per_page: int = 10, **kwargs) -> List[QaContent]:
         """
         Q&A 목록을 데이터베이스에서 조회합니다.
-        TODO : QaConfig 적용해야함
         """
         query = self._base_qa_contents_query(member, **kwargs)
         return self.db.scalars(
             query.add_columns(QaContent)
-            .order_by(QaContent.qa_id.desc())
             .offset(offset).limit(records_per_page)
         ).all()
 
@@ -167,7 +209,7 @@ class QaService(BaseService):
         Q&A 1건을 데이터베이스에서 조회합니다.
         """
         return self.db.get(QaContent, qa_id)
-    
+
     def fetch_qa_answer(self, qa_id: int) -> QaContent:
         """
         Q&A 답변글을 데이터베이스에서 조회합니다.
@@ -175,17 +217,31 @@ class QaService(BaseService):
         return self.db.scalar(
             select(QaContent).where(QaContent.qa_parent == qa_id))
 
-    def read_qa_content(self, member: Member, qa_id: int) -> QaContent:
+    def fetch_prev_next_qa(self, member: Member,
+                           qa_id: int, **kwargs) -> Tuple[QaContent, QaContent]:
         """
-        Q&A 1건을 조회합니다.
+        이전/다음 Q&A를 데이터베이스에서 조회합니다.
         """
-        qa_content = self.fetch_qa_content(qa_id)
-        if not qa_content:
-            self.raise_exception(404, f"{qa_id} : Q&A가 존재하지 않습니다.")
-        if not member.mb_id == self.request.state.config.cf_admin:
-            if not qa_content.mb_id == member.mb_id:
-                self.raise_exception(403, "접근 권한이 없습니다.")
-        return qa_content
+        query = self._base_qa_contents_query(member, **kwargs)
+        query = query.add_columns(QaContent).where(QaContent.qa_parent != 0)
+        prev_qa = self.db.scalar(query.where(QaContent.qa_id < qa_id))
+        next_qa = self.db.scalar(query.where(QaContent.qa_id > qa_id))
+        return prev_qa, next_qa
+
+    def fetch_related_qa_contents(self, member: Member, qa_id: int) -> List[QaContent]:
+        """
+        연관 Q&A 목록을 데이터베이스에서 조회합니다.
+        """
+        config = self.request.state.config
+        query = select(QaContent).where(
+            QaContent.qa_parent != 0,
+            QaContent.qa_related == qa_id
+        ).order_by(QaContent.qa_id.desc())
+
+        if not member.mb_id == config.cf_admin:
+            query = query.where(QaContent.mb_id == member.mb_id)
+
+        return self.db.scalars(query).all()
 
     def read_qa_contents(self, member: Member,
                          offset: int, records_per_page: int, **kwargs) -> List[QaContent]:
@@ -194,7 +250,32 @@ class QaService(BaseService):
         """
         return self.fetch_qa_contents(member, offset, records_per_page, **kwargs)
 
-    def update_qa_content(self, member: Member, qa_id: int, data: QaContentModel) -> QaContent:
+    def read_qa_content(self, member: Member, qa_id: int) -> QaContent:
+        """
+        Q&A 1건을 조회합니다.
+        """
+        qa = self.fetch_qa_content(qa_id)
+        if not qa:
+            self.raise_exception(404, f"{qa_id} : Q&A가 존재하지 않습니다.")
+        self._validate_access_permission(member, qa)
+
+        qa.image, qa.file = self.file_service.set_file_list(qa)
+        return qa
+
+    def read_qa_answer(self, qa_id: int) -> QaContent:
+        """
+        Q&A 답변글을 조회합니다.
+        """
+        answer = self.fetch_qa_answer(qa_id)
+        if not answer:
+            self.raise_exception(404, f"{qa_id} : 답변글이 존재하지 않습니다.")
+
+        answer.image, answer.file = self.file_service.set_file_list(answer)
+
+        return answer
+
+    def update_qa_content(self, member: Member,
+                          qa_id: int, data: QaContentModel) -> QaContent:
         """
         Q&A를 수정합니다.
         """
@@ -203,15 +284,24 @@ class QaService(BaseService):
             setattr(qa, key, value)
         self.db.commit()
         return qa
-    
-    def delete_qa_content(self, member: Member, qa_id: int) -> QaContent:
+
+    def delete_qa_content(self, member: Member, qa_id: int) -> None:
         """
         Q&A를 삭제합니다.
         """
         qa = self.read_qa_content(member, qa_id)
         self.db.delete(qa)
         self.db.commit()
-        return qa
+
+    def delete_qa_contents(self, qa_ids: List[int]) -> None:
+        """
+        Q&A 목록을 삭제합니다.
+        """
+        self._validate_delete_permission()
+
+        query = delete(QaContent).where(QaContent.qa_id.in_(qa_ids))
+        self.db.execute(query)
+        self.db.commit()
 
     def init_qa_content(self, member: Member, qa_related: int = None) -> str:
         """
@@ -229,7 +319,7 @@ class QaService(BaseService):
             content = contour + related.qa_content
 
         return content
-    
+
     def _base_qa_contents_query(self, member: Member, **kwargs) -> Select:
         """
         Q&A 목록을 조회하는 기본 쿼리를 반환합니다.
@@ -239,54 +329,36 @@ class QaService(BaseService):
         search_params = {
             "sca": kwargs.get("sca", None),
             "stx": kwargs.get("stx", None),
-            "sfl": kwargs.get("sfl", None)
-        }
+            "sfl": kwargs.get("sfl", None)}
 
-        query = select().where(QaContent.qa_type == 0)
+        query = (select()
+                 .where(QaContent.qa_parent == 0)
+                 .order_by(QaContent.qa_id.desc()))
         if not member.mb_id == config.cf_admin:
             query = query.where(QaContent.mb_id == member.mb_id)
 
         if search_params["sca"]:
             query = query.where(QaContent.qa_category == search_params["sca"])
         if search_params["stx"] and search_params["sfl"] in search_fields:
-            query = query.where(getattr(QaContent, search_params["sfl"]).like(
-                f"%{search_params['stx']}%"))
+            query = query.where(
+                getattr(QaContent, search_params["sfl"])
+                .like(f"%{search_params['stx']}%"))
 
         return query
 
-    def upload_qa_file(self, qa_id: int, member: Member, data: dict) -> str:
-        """
-        Q&A 업로드 파일을 처리합니다.
-        """
-        qa = self.read_qa_content(member, qa_id)
-        file1: UploadFile = data.get("file1", None)
-        file2: UploadFile = data.get("file2", None)
-        file_del1: int = data.get("qa_file_del1", 0)
-        file_del2: int = data.get("qa_file_del2", 0)
+    def _validate_access_permission(self, member: Member, qa_content: QaContent):
+        """Q&A 접근 권한을 검증합니다."""
+        config = self.request.state.config
+        if config.cf_admin != member.mb_id and not qa_content.mb_id == member.mb_id:
+            self.raise_exception(403, "접근 권한이 없습니다.")
 
-        # 파일 경로체크 및 생성
-        make_directory(FILE_DIRECTORY)
-        # 파일 삭제
-        filename1 = qa.qa_file1.split("/")[-1] if qa.qa_file1 else None
-        filename2 = qa.qa_file2.split("/")[-1] if qa.qa_file2 else None
-        delete_image(FILE_DIRECTORY, f"{filename1}", file_del1)
-        delete_image(FILE_DIRECTORY, f"{filename2}", file_del2)
+    def _validate_create_permission(self, member: Member):
+        """Q&A 작성 권한을 검증합니다."""
+        config = self.request.state.config
+        if member.mb_level != 10 or config.cf_admin != member.mb_id:
+            self.raise_exception(400, "답변글은 관리자만 작성할 수 있습니다.")
 
-        # 파일 및 데이터 저장
-        if file1.size > 0:
-            filename1 = os.urandom(16).hex() + "." + file1.filename.split(".")[-1]
-            qa.qa_file1 = FILE_DIRECTORY + filename1
-            qa.qa_source1 = file1.filename
-            save_image(FILE_DIRECTORY, f"{filename1}", file1)
-        elif file_del1:
-            qa.qa_source1 = None
-            qa.qa_file1 = None
-        if file2.size > 0:
-            filename2 = os.urandom(16).hex() + "." + file2.filename.split(".")[-1]
-            qa.qa_file2 = FILE_DIRECTORY + filename2
-            qa.qa_source2 = file2.filename
-            save_image(FILE_DIRECTORY, f"{filename2}", file2)
-        elif file_del2:
-            qa.qa_source2 = None
-            qa.qa_file2 = None
-        self.db.commit()
+    def _validate_delete_permission(self):
+        """Q&A 삭제 권한을 검증합니다."""
+        if not self.request.state.is_super_admin:
+            self.raise_exception(403, "최고관리자만 접근할 수 있습니다.")
