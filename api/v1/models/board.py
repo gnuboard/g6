@@ -87,6 +87,23 @@ class ResponseCommentModel(BaseModel):
     is_secret_content: bool
 
 
+class ResponseWriteSearchModel(BaseModel):
+    """게시글 모델중 response에 필요한 속성 정의"""
+    wr_id: int
+    wr_num: int
+    wr_reply: str
+    wr_subject: str
+    wr_name: str
+    wr_datetime: datetime
+    wr_content: str
+    wr_comment: int
+    wr_hit: int
+    wr_option: str = "",
+
+    class Config:
+        from_attributes = True
+
+
 class ResponseWriteModel(BaseModel):
     """게시글 모델중 response에 필요한 속성 정의"""
     wr_id: int

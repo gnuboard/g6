@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 
 from lib.dependencies import check_use_api
 from api.v1.routers import (
-    auth, board, content, faq, member, memo, menu, point, poll, qa, scrap
+    auth, board, content, faq, member, memo, menu, point, poll, qa, scrap, search
 )
 
 
@@ -22,6 +22,7 @@ class Tags(Enum):
     POLL = "설문조사"
     QA = "Q&A"
     SCRAP = "스크랩"
+    SEARCH = "검색"
 
 
 # API 버전 1 라우터를 정의합니다.
@@ -37,3 +38,4 @@ router.include_router(point.router, prefix="/member", tags=[Tags.POINT])
 router.include_router(poll.router, tags=[Tags.POLL])
 router.include_router(qa.router, tags=[Tags.QA])
 router.include_router(scrap.router, prefix="/member", tags=[Tags.SCRAP])
+router.include_router(search.router, prefix="/search", tags=[Tags.SEARCH])
