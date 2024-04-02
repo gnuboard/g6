@@ -1,3 +1,4 @@
+"""API 환경설정 관련 파일"""
 import os
 from typing import Any, Dict
 
@@ -5,11 +6,14 @@ from pydantic import BaseModel
 
 
 class EnvLoader:
+    """환경변수 로더"""
     def load(self) -> Dict[str, Any]:
+        """환경변수를 로드합니다."""
         return dict(os.environ)
 
 
 class ApiSetting(BaseModel):
+    """API 설정 모델"""
     REST_API_VERSION: str = "v1"
 
     AUTH_ALGORITHM: str = "HS256"
@@ -26,4 +30,3 @@ class ApiSetting(BaseModel):
 
 # .env 파일을 읽어서 환경변수를 설정합니다.
 SETTINGS = ApiSetting.model_validate(EnvLoader().load())
-

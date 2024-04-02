@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+"""JWT 관련 작업을 처리하는 클래스입니다."""
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 
 from fastapi import HTTPException, status
@@ -9,22 +10,31 @@ from api.v1.models.auth import TokenPayload
 
 
 class TokenType(Enum):
-    ACCESS = {
-        "secret_key": SETTINGS.ACCESS_TOKEN_SECRET_KEY,
-        "expires_minute": SETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES
-    }
-    REFRESH = {
-        "secret_key": SETTINGS.REFRESH_TOKEN_SECRET_KEY,
-        "expires_minute": SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES
-    }
+    """JWT 토큰의 종류별 설정을 관리하는 Enum 클래스입니다."""
+    ACCESS = "access"
+    REFRESH = "refresh"
+
+    @property
+    def secret_key(self):
+        """JWT 암호화 키를 반환합니다."""
+        if self == TokenType.REFRESH:
+            return SETTINGS.REFRESH_TOKEN_SECRET_KEY
+        return SETTINGS.ACCESS_TOKEN_SECRET_KEY
+
+    @property
+    def expires_minute(self):
+        """JWT 만료 시간을 반환합니다."""
+        if self == TokenType.REFRESH:
+            return SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES
+        return SETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES
+
 
 class JWT:
     """JWT 관련 작업을 처리하는 클래스입니다."""
-
     JWT_TYPE = "Bearer"
 
     @staticmethod
-    def create_token(token_type: TokenType, data: dict = {}) -> str:
+    def create_token(token_type: TokenType, data: dict = None) -> str:
         """JWT를 생성합니다.
 
         Args:
@@ -33,8 +43,12 @@ class JWT:
         Returns:
             str: JWT
         """
-        secret_key = token_type.value["secret_key"]
-        expires_minute = token_type.value["expires_minute"]
+        if data is None:
+            data = {}
+
+        secret_key = token_type.secret_key
+        expires_minute = token_type.expires_minute
+
         to_encode = data.copy()
         iat = int(datetime.now().timestamp())
         exp = datetime.now() + timedelta(minutes=expires_minute)
@@ -57,22 +71,33 @@ class JWT:
         Returns:
             TokenPayload: JWT Payload
         """
+        http_exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="",
+            headers={"WWW-Authenticate": JWT.JWT_TYPE},
+        )
 
         try:
             # JWT decode함수는 UTC 시간을 기준으로 만료시간을 계산합니다.
-            # 따라서, 서버의 시간과 UTC 시간의 차이를 계산하여 leeway로 설정합니다.
-            leeway = datetime.utcnow().timestamp() - datetime.now().timestamp()
-            payload = jwt.decode(token, secret_key, algorithms=[SETTINGS.AUTH_ALGORITHM], options={"leeway": leeway})
+            # 따라서, 서버의 시간과 UTC 시간의 차이를 초 단위로 계산하여 leeway로 설정합니다.
+            now = datetime.now()
+            utc_now = datetime.now(timezone.utc).replace(tzinfo=None)
+            diff = utc_now - now
+            leeway = diff.total_seconds()
+
+            payload = jwt.decode(
+                token,
+                secret_key,
+                algorithms=[SETTINGS.AUTH_ALGORITHM],
+                options={"leeway": leeway}
+            )
             return TokenPayload(**payload)
-        except ExpiredSignatureError:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token has expired",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        except JWTError:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        except ExpiredSignatureError as e:
+            http_exception.detail = "Token has expired"
+            raise http_exception from e
+        except JWTError as e:
+            http_exception.detail = "Could not validate credentials"
+            raise http_exception from e
+        except Exception as e:
+            http_exception.detail = str(e)
+            raise http_exception from e

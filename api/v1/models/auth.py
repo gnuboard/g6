@@ -1,10 +1,15 @@
+"""JWT 모델 정의 파일"""
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
 class Token(BaseModel):
     """JWT 모델"""
     access_token: str
+    access_token_expire_at: datetime
     refresh_token: str
+    refresh_token_expire_at: datetime
     token_type: str
 
 

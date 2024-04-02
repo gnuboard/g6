@@ -1,16 +1,17 @@
+"""인증 관련 API Router"""
 from datetime import datetime, timedelta
+from typing import Tuple
 from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import insert, update
+from sqlalchemy import insert
 
 from core.database import db_session
 from core.models import Member
 
-from api.settings import SETTINGS
-from api.v1.models import MemberRefreshToken
 from api.v1.auth.auth import authenticate_member, authenticate_refresh_token
 from api.v1.auth.jwt import JWT, TokenType
+from api.v1.models import MemberRefreshToken
 from api.v1.models.auth import Token
 
 router = APIRouter()
@@ -27,25 +28,27 @@ async def login_for_access_token(
     로그인한 회원에게 Access Token, Refresh Token을 발급합니다.
     - Refresh Token은 데이터베이스에 저장됩니다.
     """
-    # Access Token과 Refresh Token을 생성
-    data = {"sub": member.mb_id}
-    access_token = JWT.create_token(token_type=TokenType.ACCESS, data=data)
-    refresh_token = JWT.create_token(token_type=TokenType.REFRESH)
+    # Access Token, Refresh Token 생성
+    access_token, access_token_expire_at = create_token_and_expiration(
+        TokenType.ACCESS, member.mb_id)
+    refresh_token, refresh_token_expire_at = create_token_and_expiration(
+        TokenType.REFRESH)
 
     # 데이터베이스에 refresh_token 저장
     db.execute(
         insert(MemberRefreshToken).values(
             mb_id=member.mb_id,
             refresh_token=refresh_token,
-            expires_at=datetime.now() + timedelta(
-                minutes=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES)
+            expires_at= refresh_token_expire_at
         )
     )
     db.commit()
 
     return Token(
         access_token=access_token,
+        access_token_expire_at=access_token_expire_at,
         refresh_token=refresh_token,
+        refresh_token_expire_at=refresh_token_expire_at,
         token_type=JWT.JWT_TYPE
     )
 
@@ -63,19 +66,33 @@ async def refresh_access_token(
     - Refresh Token도 함께 갱신합니다.
     """
     # 새로운 Access Token과 Refresh Token을 생성
-    data = {"sub": member_refresh_token.mb_id}
-    new_access_token = JWT.create_token(token_type=TokenType.ACCESS, data=data)
-    new_refresh_token = JWT.create_token(token_type=TokenType.REFRESH)
+    access_token, access_token_expire_at = create_token_and_expiration(
+        TokenType.ACCESS, member_refresh_token.mb_id)
+    refresh_token, refresh_token_expire_at = create_token_and_expiration(
+        TokenType.REFRESH)
 
     # 데이터베이스의 refresh_token 갱신
     member_refresh_token.updated_at = datetime.now()
-    member_refresh_token.expires_at = datetime.now() + timedelta(
-        minutes=SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES),
-    member_refresh_token.refresh_token = new_refresh_token
+    member_refresh_token.expires_at = refresh_token_expire_at
+    member_refresh_token.refresh_token = refresh_token
     db.commit()
 
     return Token(
-        access_token=new_access_token,
-        refresh_token=new_refresh_token,
+        access_token=access_token,
+        access_token_expire_at=access_token_expire_at,
+        refresh_token=refresh_token,
+        refresh_token_expire_at=refresh_token_expire_at,
         token_type=JWT.JWT_TYPE
     )
+
+
+def create_token_and_expiration(
+        token_type: TokenType, member_id: str = None) -> Tuple[str, datetime]:
+    """토큰과 해당 토큰의 만료 시간을 생성합니다."""
+    data = {}
+    if member_id:
+        data = {"sub": member_id}
+
+    token = JWT.create_token(token_type=token_type, data=data)
+    expiration_time = datetime.now() + timedelta(minutes=token_type.expires_minute)
+    return token, expiration_time
