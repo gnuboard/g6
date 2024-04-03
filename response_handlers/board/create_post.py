@@ -89,7 +89,7 @@ class CreatePostService(BoardService):
         # 부모글 호출
         parent_write = self.db.get(self.write_model, parent_id)
         if not parent_write:
-            self.raise_exception("답변글(댓글)을 쓸 원본 글이 존재하지 않습니다.", 404)
+            self.raise_exception(f"{target_expr}을 쓸 원본 글이 존재하지 않습니다.", 404)
         return parent_write
 
     def arrange_data(self, data: Union[WriteForm, WriteModel], secret: str, html: str, mail: str):
