@@ -13,10 +13,7 @@ from core.template import UserTemplates
 from lib.common import captcha_widget, check_profile_open, get_next_profile_openable_date
 from lib.dependencies import get_login_member, validate_captcha, validate_token
 from lib.dependency.member import validate_update_member
-from lib.member_lib import (
-    MemberService, get_member_icon, get_member_image,
-    validate_and_update_member_image
-)
+from lib.member_lib import MemberImageService, MemberService
 from lib.pbkdf2 import validate_password
 from lib.template_filters import default_if_none
 
@@ -95,12 +92,12 @@ async def member_profile(
         "action_url": request.url_for("member_profile_save").path,
         "name_readonly": "readonly",
         "hp_readonly": "readonly" if get_is_phone_certify(member, config) else "",
-        "mb_icon_url": get_member_icon(member.mb_id),
-        "mb_img_url": get_member_image(member.mb_id),
+        "mb_icon_url": MemberImageService.get_icon_path(member.mb_id),
+        "mb_img_url": MemberImageService.get_image_path(member.mb_id),
         "is_profile_open": check_profile_open(open_date=member.mb_open_date,
                                               config=request.state.config),
         "profile_open_date": get_next_profile_openable_date(
-            open_date=member.mb_open_date, 
+            open_date=member.mb_open_date,
             config=config
         ),
     }
@@ -119,6 +116,7 @@ async def member_profile(
 async def member_profile_save(
     request: Request,
     member_service: Annotated[MemberService, Depends()],
+    file_service: Annotated[MemberImageService, Depends()],
     login_member: Annotated[Member, Depends(get_login_member)],
     member_form: Annotated[MemberForm, Depends(validate_update_member)],
     del_mb_img: int = Form(None),
@@ -130,14 +128,15 @@ async def member_profile_save(
     회원정보 수정 처리
     """
     if not request.session.get("ss_profile_change", False):
-        raise AlertException("잘못된 접근입니다.", 403, url=request.url_for("member_password").path)
+        raise AlertException(
+            "잘못된 접근입니다.", 403, url=request.url_for("member_password").path)
 
     member = member_service.read_member(login_member.mb_id)
     member_service.update_member(member, member_form.__dict__)
 
     # 이미지 검사 & 이미지 수정(삭제 포함)
-    validate_and_update_member_image(request, mb_img, mb_icon,
-                                     member.mb_id, del_mb_img, del_mb_icon)
+    file_service.update_image_file(member.mb_id, 'image', mb_img, del_mb_img)
+    file_service.update_image_file(member.mb_id, 'icon', mb_icon, del_mb_icon)
 
     if "ss_profile_change" in request.session:
         del request.session["ss_profile_change"]

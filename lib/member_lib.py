@@ -35,6 +35,7 @@ class MemberService(BaseService):
             return member_service.get_member_profile(current_member)
     ```
     """
+
     def __init__(self, request: Request, db: db_session):
         self.request = request
         self.db = db
@@ -66,11 +67,12 @@ class MemberService(BaseService):
         if self.member is None:
             member = self._fetch_member_by_id(mb_id)
             if not member:
-                self.raise_exception(status_code=404, detail=f"{mb_id} : 회원정보가 없습니다.")
+                self.raise_exception(
+                    status_code=404, detail=f"{mb_id} : 회원정보가 없습니다.")
             self.member = member
         return self.member
 
-    def authenticate_member(self, mb_id:str, password: str) -> Member:
+    def authenticate_member(self, mb_id: str, password: str) -> Member:
         """
         비밀번호를 검증하여 회원 인증을 수행합니다.
         - 회원 정보가 없거나 탈퇴 또는 차단된 회원은 조회할 수 없습니다.
@@ -80,7 +82,8 @@ class MemberService(BaseService):
         # self.fetch_member()를 호출하지 않습니다.
         member = self._fetch_member_by_id(mb_id)
         if not member or not validate_password(password, member.mb_password):
-            self.raise_exception(status_code=403, detail="아이디 또는 비밀번호가 올바르지 않습니다.")
+            self.raise_exception(
+                status_code=403, detail="아이디 또는 비밀번호가 올바르지 않습니다.")
 
         is_active, message = self.is_activated(member)
         if not is_active:
@@ -126,7 +129,8 @@ class MemberService(BaseService):
             self.raise_exception(status_code=409, detail="이미 인증된 회원입니다.")
 
         if member.mb_email_certify2 != key:
-            self.raise_exception(status_code=400, detail="메일인증 요청 정보가 올바르지 않습니다.")
+            self.raise_exception(
+                status_code=400, detail="메일인증 요청 정보가 올바르지 않습니다.")
 
         return member
 
@@ -140,9 +144,11 @@ class MemberService(BaseService):
         # 최고관리자도 아니고 자신의 정보가 아니면 정보공개 여부를 확인합니다.
         if not (self.request.state.is_super_admin or current_member.mb_id == mb_id):
             if not current_member.mb_open:
-                self.raise_exception(status_code=403, detail="자신의 정보를 공개하지 않으면 다른분의 정보를 조회할 수 없습니다.\\n\\n정보공개 설정은 회원정보수정에서 하실 수 있습니다.")
+                self.raise_exception(
+                    status_code=403, detail="자신의 정보를 공개하지 않으면 다른분의 정보를 조회할 수 없습니다.\\n\\n정보공개 설정은 회원정보수정에서 하실 수 있습니다.")
             if not member.mb_open:
-                self.raise_exception(status_code=403, detail="회원정보를 공개하지 않은 회원입니다.")
+                self.raise_exception(
+                    status_code=403, detail="회원정보를 공개하지 않은 회원입니다.")
 
         return member
 
@@ -193,13 +199,16 @@ class MemberService(BaseService):
             select(Member).where(
                 Member.mb_name == mb_name,
                 Member.mb_email == mb_email,
-                Member.mb_id != getattr(config, "cf_admin", "admin")  # 최고관리자는 제외
+                Member.mb_id != getattr(
+                    config, "cf_admin", "admin")  # 최고관리자는 제외
             )
         )
         if not member:
-            self.raise_exception(status_code=400, detail="입력하신 정보와 일치하는 회원이 없습니다.")
+            self.raise_exception(
+                status_code=400, detail="입력하신 정보와 일치하는 회원이 없습니다.")
         if SocialAuthService.check_exists_by_member_id(member.mb_id):
-            self.raise_exception(status_code=400, detail="소셜로그인으로 가입하신 회원은 아이디를 찾을 수 없습니다.")
+            self.raise_exception(
+                status_code=400, detail="소셜로그인으로 가입하신 회원은 아이디를 찾을 수 없습니다.")
 
         return hide_member_id(member.mb_id), member.mb_datetime.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -220,10 +229,12 @@ class MemberService(BaseService):
             )
         )
         if not member:
-            self.raise_exception(status_code=400, detail="입력하신 정보와 일치하는 회원이 없습니다.")
+            self.raise_exception(
+                status_code=400, detail="입력하신 정보와 일치하는 회원이 없습니다.")
 
         if SocialAuthService.check_exists_by_member_id(member.mb_id):
-            self.raise_exception(status_code=400, detail="소셜로그인으로 가입하신 회원은 비밀번호를 찾을 수 없습니다.")
+            self.raise_exception(
+                status_code=400, detail="소셜로그인으로 가입하신 회원은 비밀번호를 찾을 수 없습니다.")
 
         # 비밀번호 재설정 토큰 저장
         member.mb_lost_certify = secrets.token_hex(16)
@@ -248,7 +259,8 @@ class MemberService(BaseService):
             self.raise_exception(status_code=403, detail="유효하지 않은 요청입니다.")
 
         if SocialAuthService.check_exists_by_member_id(member.mb_id):
-            self.raise_exception(status_code=400, detail="소셜로그인으로 가입하신 회원은 비밀번호를 재설정할 수 없습니다.")
+            self.raise_exception(
+                status_code=400, detail="소셜로그인으로 가입하신 회원은 비밀번호를 재설정할 수 없습니다.")
 
         member.mb_password = mb_password
         member.mb_lost_certify = ""
@@ -259,167 +271,188 @@ class MemberService(BaseService):
         return self.db.scalar(select(Member).where(Member.mb_id == mb_id))
 
 
-def get_member_icon(mb_id: str = None) -> str:
-    """회원 아이콘 경로를 반환하는 함수
-
-    Args:
-        mb_id (str, optional): 회원아이디. Defaults to None.
-
-    Returns:
-        str: 회원 아이콘 경로
+class MemberImageService(BaseService):
     """
-    icon_dir = "data/member"
-    return get_image_path_for_member(icon_dir, mb_id)
-
-
-def get_member_image(mb_id: str = None) -> str:
-    """회원 이미지 경로를 반환하는 함수
-
-    Args:
-        mb_id (str, optional): 회원아이디. Defaults to None.
-
-    Returns:
-        str: 회원 이미지 경로
+    회원 이미지 관련 서비스를 제공하는 종속성 주입 클래스입니다.
     """
-    image_dir = "data/member_image"
-    return get_image_path_for_member(image_dir, mb_id)
+    ICON_DIR = "data/member"
+    IMAGE_DIR = "data/member_image"
+    NO_IMAGE_PATH = "/static/img/no_profile.gif"
 
+    def __init__(self, request: Request, db: db_session):
+        self.request = request
+        self.db = db
 
-def get_image_path_for_member(dir: str, mb_id: str = None) -> str:
-    """이미지 경로를 반환하는 함수
-    Args:
-        dir (str): 상위 경로
-        mb_id (str, optional): 회원아이디.
-    Returns:
-        str: 이미지 경로
-    """
+    def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None):
+        raise AlertException(detail, status_code, url)
 
-    image_path = "/static/img/no_profile.gif"
-    if not mb_id:
-        return image_path
+    @staticmethod
+    def get_icon_path(mb_id: str) -> str:
+        """회원 아이콘 이미지 경로를 반환합니다.
 
-    member_dir = os.path.join(dir, mb_id[:2])
-    image_files = glob(os.path.join(member_dir, f"{mb_id}.*"))
-    if image_files:
-        mtime = os.path.getmtime(image_files[0])        # 캐시를 위해 파일수정시간을 추가
-        image_path = f"/{image_files[0]}?{int(mtime)}"
+        Args:
+            mb_id (str, optional): 회원아이디. Defaults to None.
 
-    return image_path
+        Returns:
+            str: 회원 아이콘 경로
+        """
+        directory = MemberImageService.ICON_DIR
+        return MemberImageService._get_image_path(directory, mb_id)
 
+    @staticmethod
+    def get_image_path(mb_id: str) -> str:
+        """회원 이미지 경로를 반환합니다.
 
-def validate_member_image(request: Request, img_file: UploadFile,
-                          img_type: str) -> Optional[Image.Image]:
-    """
-    멤버 이미지, 아이콘 파일 유효성 검사
-    Args:
-        request: FastAPI Request 객체
-        img_file: 업로드할 이미지 파일
-        img_type: 이미지 타입 (img, icon)
-    Returns:
-        Image.Image: PIL.Image.open()을 통해 얻어진 이미지 객체
-    """
+        Args:
+            mb_id (str, optional): 회원아이디. Defaults to None.
 
-    if not img_file or not img_file.filename:
-        return None
+        Returns:
+            str: 회원 이미지 경로
+        """
+        directory = MemberImageService.IMAGE_DIR
+        return MemberImageService._get_image_path(directory, mb_id)
 
-    config = request.state.config
+    @staticmethod
+    def _get_image_path(directory: str, mb_id: str = None) -> str:
+        """이미지 경로를 반환하는 함수
+        - 회원 아이콘/이미지는 아이디의 앞 2자리 디렉토리에 저장됩니다.
 
-    img_type_dict = {
-        'icon': {
-            'cf_size': 'cf_member_icon_size',
-            'cf_width': 'cf_member_icon_width',
-            'cf_height': 'cf_member_icon_height',
-            'expr': '아이콘'
-        },
-        'img': {
-            'cf_size': 'cf_member_img_size',
-            'cf_width': 'cf_member_img_width',
-            'cf_height': 'cf_member_img_height',
-            'expr': '이미지'
-        },
-    }
+        Args:
+            directory (str): 이미지 경로
+            mb_id (str, optional): 회원아이디.
 
-    img_ext_regex = config.cf_image_extension
-    img_ext_str = img_ext_regex.replace("|", ", ")
+        Returns:
+            str: 이미지 경로
+        """
+        if not mb_id:
+            return MemberImageService.NO_IMAGE_PATH
 
-    try:
-        img_file_info = Image.open(img_file.file)
-    except UnidentifiedImageError as e:
-        raise AlertException("이미지 파일이 아닙니다.", 400) from e
+        member_directory = os.path.join(directory, mb_id[:2])
+        image_files = glob(os.path.join(member_directory, f"{mb_id}.*"))
+        if image_files:
+            mtime = os.path.getmtime(image_files[0])  # 캐시를 위해 파일 수정시간을 추가
+            return f"/{image_files[0]}?{int(mtime)}"
 
-    width, height = img_file_info.size
-    expr = img_type_dict[img_type]['expr']
-    cf_size = getattr(config, img_type_dict[img_type]['cf_size'])
-    cf_width = getattr(config, img_type_dict[img_type]['cf_width'])
-    cf_height = getattr(config, img_type_dict[img_type]['cf_height'])
+        return MemberImageService.NO_IMAGE_PATH
 
-    if 0 < config.cf_member_img_size < img_file.size:
-        raise AlertException(f"{expr} 용량은 {cf_size} 이하로 업로드 해주세요.", 400)
+    def update_image_file(
+            self,
+            mb_id: str,
+            image_type: str,
+            file: Optional[UploadFile],
+            is_delete: Optional[int]) -> None:
+        """
+        회원 아이콘/이미지 파일 저장 및 삭제 처리
 
-    if cf_width and cf_height:
-        if width > cf_width or height > cf_height:
-            raise AlertException(f"{expr} 크기는 {cf_width}x{cf_height} 이하로 업로드 해주세요.", 400)
+        Args:
+            request: FastAPI Request 객체
+            mb_id: 회원 아이디
+            file: 업로드할 아이콘/이미지 파일
+            is_delete: 아이콘/이미지 삭제 여부
+        """
+        directory = self.IMAGE_DIR if image_type == "image" else self.ICON_DIR
+        sub_directory = mb_id[:2]
+        image_directory = os.path.join(directory, sub_directory)
+        
+        if is_delete or file:
+            self._delete_existing_images(image_directory, mb_id)
 
-    if not re.match(fr".*\.({img_ext_regex})$", img_file.filename, re.IGNORECASE):
-        raise AlertException(f"{img_ext_str} 파일만 업로드 가능합니다.", 400)
+        image_obj = self._validate_and_open_image(file, image_type)
+        if image_obj:
+            # 이미지 저장 경로 생성
+            os.makedirs(image_directory, exist_ok=True)
+            # 이미지 저장
+            file_ext = image_obj.format.lower()
+            save_path = os.path.join(image_directory, f"{mb_id}.{file_ext}")
 
-    return img_file_info
+            image_obj.save(save_path)
+            image_obj.close()
 
+    def _delete_existing_images(self, directory: str, mb_id: str):
+        """기존 이미지 파일 삭제 처리"""
+        existing_images = glob(os.path.join(directory, f"{mb_id}.*"))
+        for image in existing_images:
+            os.remove(image)
 
-def update_member_image(request: Request, upload_object: Optional[Image.Image],
-                        directory: str, filename: str, is_delete: Optional[int]):
-    """멤버 이미지, 아이콘 파일 업데이트(업로드/수정/삭제)
-    Args:
-        request: FastAPI Request 객체)
-        upload_object: 업로드할 이미지 객체 (Image.Image, PIL.Image.open()으로 얻어진 이미지 객체)
-        filename: 저장할 파일명 (확장자 제외)
-        is_delete: 이미지 삭제 여부
-    """
-    if is_delete or upload_object:
-        # 기존 이미지 삭제
-        img_ext_list = request.state.config.cf_image_extension.split("|")
-        for ext in img_ext_list:
-            delete_image(directory, f"{filename}.{ext}", True)
-        if is_delete:
-            return
-    else:
-        return
+    def _save_image_file(self, file: UploadFile, directory: str, mb_id: str, image_type: str):
+        """이미지 파일 저장 처리"""
+        image_obj = self._validate_and_open_image(file, image_type)
+        if image_obj:
+            # 이미지 저장 경로
+            file_ext = image_obj.format.lower()
+            save_path = os.path.join(directory, mb_id[:2], f"{mb_id}.{file_ext}")
+            # 이미지 저장 경로 생성
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            # 이미지 저장
+            image_obj.save(save_path)
+            image_obj.close()
 
-    # 이미지 저장 경로 생성
-    os.makedirs(directory, exist_ok=True)
+    def _validate_and_open_image(
+            self,
+            file: Optional[UploadFile],
+            image_type: str) -> Optional[Image.Image]:
+        """
+        회원 이미지 파일 유효성 검사
 
-    # 이미지 저장 경로
-    file_ext = upload_object.format.lower()
-    save_path = os.path.join(directory, f"{filename}.{file_ext}")
-    # 이미지 저장
-    upload_object.save(save_path)
-    upload_object.close()
+        Args:
+            file: 업로드할 이미지 파일
+            image_type: 이미지 타입 (img, icon)
 
+        Raises:
+            self.raise_exception: 이미지 파일이 아닌 경우
+        """
 
-def validate_and_update_member_image(
-    request: Request,
-    img_file: UploadFile,
-    icon_file: UploadFile,
-    filename: str,
-    is_delete_img: Optional[int],
-    is_delete_icon: Optional[int],
-):
-    """
-    멤버 이미지, 아이콘 파일 유효성 검사 및 업데이트 통합 함수(업로드/수정/삭제)
-    Args:
-        request: FastAPI Request 객체
-        img_file: 업로드할 이미지 파일
-        icon_file: 업로드할 아이콘 파일
-        filename: 저장할 파일명 (확장자 제외)
-        is_delete_img: 이미지 삭제 여부
-        is_delete_icon: 아이콘 삭제 여부
-    """
-    member_image_path = f"data/member_image/{filename[:2]}"
-    member_icon_path = f"data/member/{filename[:2]}"
-    mb_img_info = validate_member_image(request, img_file, 'img')
-    mb_icon_info = validate_member_image(request, icon_file, 'icon')
-    update_member_image(request, mb_img_info, member_image_path, filename, is_delete_img)
-    update_member_image(request, mb_icon_info, member_icon_path, filename, is_delete_icon)
+        if not file or not file.filename:
+            return None
+
+        config = self.request.state.config
+        img_ext_regex = getattr(config, "cf_image_extension", "")
+        image_config = self._get_image_type_config(image_type)
+
+        try:
+            image_obj = Image.open(file.file)
+        except UnidentifiedImageError:
+            self.raise_exception(400, "이미지 파일이 아닙니다.")
+
+        width, height = image_obj.size
+        type_name = image_config['name']
+        cf_size = image_config['cf_size']
+        cf_width = image_config['cf_width']
+        cf_height = image_config['cf_height']
+
+        if cf_size and file.size > cf_size:
+            self.raise_exception(
+                400, f"{type_name} 용량은 {cf_size} 이하로 업로드 해주세요.")
+
+        if (cf_width and width > cf_width) or (cf_height and height > cf_height):
+            self.raise_exception(
+                400, f"{type_name} 크기는 {cf_width}x{cf_height} 이하로 업로드 해주세요.")
+
+        if img_ext_regex:
+            if not re.match(fr".*\.({img_ext_regex})$", file.filename, re.IGNORECASE):
+                img_ext_str = img_ext_regex.replace("|", ", ")
+                self.raise_exception(400, f"{img_ext_str} 파일만 업로드 가능합니다.")
+
+        return image_obj
+
+    def _get_image_type_config(self, image_type: str) -> dict:
+        """이미지 타입에 따른 설정을 반환합니다."""
+        config = self.request.state.config
+        img_type_dict = {
+            'icon': {
+                'name': '아이콘',
+                'cf_size': config.cf_member_icon_size,
+                'cf_width': config.cf_member_icon_width,
+                'cf_height': config.cf_member_icon_height,
+            },
+            'image': {
+                'name': '이미지',
+                'cf_size': config.cf_member_img_size,
+                'cf_width': config.cf_member_img_width,
+                'cf_height': config.cf_member_img_height,
+            },
+        }
+        return img_type_dict[image_type]
 
 
 def get_member_level(request: Request) -> int:

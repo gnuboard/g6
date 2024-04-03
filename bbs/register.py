@@ -20,7 +20,7 @@ from lib.dependencies import (
 )
 from lib.dependency.member import validate_register_member
 from lib.mail import send_register_mail
-from lib.member_lib import MemberService, validate_and_update_member_image
+from lib.member_lib import MemberImageService, MemberService
 from lib.point import insert_point
 from lib.template_filters import default_if_none
 
@@ -88,6 +88,7 @@ async def get_register_form(request: Request):
 async def post_register_form(
     request: Request,
     member_service: Annotated[MemberService, Depends()],
+    file_service: Annotated[MemberImageService, Depends()],
     member_form: Annotated[MemberForm, Depends(validate_register_member)],
     background_tasks: BackgroundTasks,
     mb_id: str = Form(None),
@@ -102,19 +103,20 @@ async def post_register_form(
 
     # 회원가입 포인트 지급
     insert_point(request, member.mb_id, config.cf_register_point,
-                "회원가입 축하", "@member", member.mb_id, "회원가입")
+                 "회원가입 축하", "@member", member.mb_id, "회원가입")
 
     # 추천인 포인트 지급
     mb_recommend = member_form.mb_recommend
     if config.cf_use_recommend and mb_recommend:
         insert_point(request, mb_recommend, config.cf_recommend_point,
-                    f"{member.mb_id}의 추천인", "@member", mb_recommend, f"{member.mb_id} 추천")
+                     f"{member.mb_id}의 추천인", "@member", mb_recommend, f"{member.mb_id} 추천")
 
     # 회원가입메일 발송 처리(백그라운드)
     background_tasks.add_task(send_register_mail, request, member)
 
     # 이미지 검사 & 업로드
-    validate_and_update_member_image(request, mb_img, mb_icon, mb_id, None, None)
+    file_service.update_image_file(mb_id, 'icon', mb_icon)
+    file_service.update_image_file(mb_id, 'image', mb_img)
 
     # 회원가입 이후 세션 처리
     if not config.cf_use_email_certify:

@@ -13,7 +13,7 @@ from bbs.social import SocialAuthService
 from core.database import db_session
 from core.models import Member
 from lib.mail import send_register_mail, send_password_reset_mail
-from lib.member_lib import get_member_icon, get_member_image, validate_and_update_member_image
+from lib.member_lib import MemberImageService
 from lib.point import insert_point
 from api.v1.models import MemberRefreshToken, responses
 from api.v1.dependencies.member import (
@@ -41,6 +41,7 @@ async def read_member_policy(request: Request):
         "privacy": config.cf_privacy,
     }
 
+
 @router.get("/member/config",
             summary="회원가입 설정 조회",
             response_model=ResponseRegisterConfigModel,
@@ -54,7 +55,7 @@ async def read_member_config(request: Request):
 
 @router.post("/member",
              summary="회원 가입",
-            #  response_model=ResponseMemberModel,
+             #  response_model=ResponseMemberModel,
              responses={**responses})
 async def create_member(
     request: Request,
@@ -117,8 +118,8 @@ async def read_member_me(
     if base_url.endswith("/"):
         base_url = base_url[:-1]
 
-    member.mb_image_path = base_url + get_member_image(member.mb_id)
-    member.mb_icon_path = base_url + get_member_icon(member.mb_id)
+    member.mb_image_path = base_url + MemberImageService.get_image_path(member.mb_id)
+    member.mb_icon_path = base_url + MemberImageService.get_icon_path(member.mb_id)
     return member
 
 
@@ -154,7 +155,7 @@ async def update_member(
             summary="회원 이미지 수정",
             responses={**responses})
 async def update_member_image(
-    request: Request,
+    file_service: Annotated[MemberImageService, Depends()],
     member: Annotated[Member, Depends(get_current_member)],
     mb_img: Annotated[UploadFile, File(title="첨부파일1")] = None,
     mb_icon: Annotated[UploadFile, File(title="첨부파일2")] = None,
@@ -162,8 +163,8 @@ async def update_member_image(
     del_mb_icon: Annotated[int, Form(title="첨부파일2 삭제 여부")] = 0,
 ):
     """회원 이미지를 수정합니다."""
-    validate_and_update_member_image(request, mb_img, mb_icon,
-                                     member.mb_id, del_mb_img, del_mb_icon)
+    file_service.update_image_file(member.mb_id, 'image', mb_img, del_mb_img)
+    file_service.update_image_file(member.mb_id, 'icon', mb_icon, del_mb_icon)
 
     return HTTPException(status_code=200, detail="회원 이미지가 수정되었습니다.")
 
@@ -211,8 +212,8 @@ async def leave_member(
 
 
 @router.post("/member/find/id",
-            summary="회원아이디 찾기",
-            responses={**responses})
+             summary="회원아이디 찾기",
+             responses={**responses})
 async def find_member_id(
     member_service: Annotated[MemberServiceAPI, Depends()],
     data: FindMemberIdModel
@@ -227,8 +228,8 @@ async def find_member_id(
 
 
 @router.post("/member/find/password",
-            summary="비밀번호 재설정 메일 발송",
-            responses={**responses})
+             summary="비밀번호 재설정 메일 발송",
+             responses={**responses})
 async def find_member_password(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -245,9 +246,9 @@ async def find_member_password(
 
 
 @router.patch("/member/{mb_id}/password-reset/{token}",
-               name="reset_password_api",
-               summary="비밀번호 재설정",
-               responses={**responses})
+              name="reset_password_api",
+              summary="비밀번호 재설정",
+              responses={**responses})
 async def reset_password(
     member_service: Annotated[MemberServiceAPI, Depends()],
     mb_id: Annotated[str, Path(..., title="아이디")],

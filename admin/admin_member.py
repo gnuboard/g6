@@ -1,7 +1,9 @@
-import datetime
+"""회원 관리 Template Router"""
+from datetime import datetime
 from typing import List, Optional
+from typing_extensions import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, Path, Request
+from fastapi import APIRouter, Depends, File, Form, Path, Request, UploadFile
 from fastapi.responses import RedirectResponse
 from sqlalchemy import delete, func, select, update
 
@@ -11,9 +13,11 @@ from core.exception import AlertException
 from core.formclass import MemberForm
 from core.models import Member, Point, GroupMember, Memo, Scrap, Auth, Group, Board
 from core.template import AdminTemplates
-from lib.common import *
+from lib.common import (
+    get_from_list, is_none_datetime, select_query, set_url_query_params
+)
 from lib.dependencies import common_search_query_params, validate_token
-from lib.member_lib import get_member_icon, get_member_image, validate_and_update_member_image
+from lib.member_lib import MemberImageService
 from lib.pbkdf2 import create_hash
 from lib.template_functions import get_member_level_select, get_paging
 
@@ -128,6 +132,7 @@ async def member_list_update(
 async def member_list_delete(
     request: Request,
     db: db_session,
+    file_service: Annotated[MemberImageService, Depends()],
     checks: List[int] = Form(None, alias="chk[]"),
     mb_id: List[str] = Form(None, alias="mb_id[]"),
 ):
@@ -172,7 +177,7 @@ async def member_list_delete(
 
             # 그룹접근가능 테이블에서 삭제
             db.execute(delete(GroupMember).where(GroupMember.mb_id == member.mb_id))
-            
+
             # 쪽지 테이블에서 삭제
             db.execute(delete(Memo).where(Memo.me_send_mb_id == member.mb_id))
 
@@ -191,7 +196,10 @@ async def member_list_delete(
             # 소셜로그인에서 삭제 또는 해제
             if SocialAuthService.check_exists_by_member_id(member.mb_id):
                 SocialAuthService.unlink_social_login(member.mb_id)
-            validate_and_update_member_image(request, None, None, member.mb_id, 1, 1)
+
+            # 아이콘/이미지 삭제
+            file_service.update_image_file(member.mb_id, 'icon', None, 1)
+            file_service.update_image_file(member.mb_id, 'image', None, 1)
 
             db.commit()
 
@@ -218,8 +226,8 @@ async def member_form(
         if not exists_member:
             raise AlertException("회원아이디가 존재하지 않습니다.")
 
-        exists_member.mb_icon = get_member_icon(mb_id)
-        exists_member.mb_img = get_member_image(mb_id)
+        exists_member.mb_img = MemberImageService.get_image_path(mb_id)
+        exists_member.mb_icon = MemberImageService.get_icon_path(mb_id)
 
     context = {
         "request": request, "member": exists_member}
@@ -231,6 +239,7 @@ async def member_form(
 async def member_form_update(
     request: Request,
     db: db_session,
+    file_service: Annotated[MemberImageService, Depends()],
     mb_id: str = Form(...),
     mb_password: str = Form(default=""),
     mb_certify_case: Optional[str] = Form(default=""),
@@ -297,7 +306,8 @@ async def member_form_update(
         db.commit()
 
     # 이미지 검사 -> 이미지 수정(삭제 포함)
-    validate_and_update_member_image(request, mb_img, mb_icon, mb_id, del_mb_img, del_mb_icon)
+    file_service.update_image_file(mb_id, 'image', mb_img, del_mb_img)
+    file_service.update_image_file(mb_id, 'icon', mb_icon, del_mb_icon)
 
     url = f"/admin/member_form/{mb_id}"
     query_params = request.query_params

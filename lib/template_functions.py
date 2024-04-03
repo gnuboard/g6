@@ -1,5 +1,4 @@
-# Jinja2 Templates 관련 HTML 출력 함수
-# ============================================================================
+"""Jinja2 Templates 관련 함수 모듈"""
 import os
 from typing import Union
 
@@ -8,6 +7,7 @@ from sqlalchemy import select
 
 from core.database import DBConnect
 from core.models import Group, Member
+from lib.member_lib import MemberImageService
 
 
 def editor_macro(request: Request) -> str:
@@ -398,3 +398,12 @@ def subject_sort_link(request: Request,
 
     # qstr을 쿼리 문자열로 사용하여 링크를 생성하고 반환한다.
     return f'<a href="?{qstr}">'
+
+
+def get_member_icon(mb_id: str) -> str:
+    """회원 아이콘 경로를 반환하는 Template 함수"""
+    return MemberImageService.get_icon_path(mb_id)
+
+def get_member_image(mb_id: str) -> str:
+    """회원 이미지 경로를 반환하는 Template 함수"""
+    return MemberImageService.get_image_path(mb_id)
