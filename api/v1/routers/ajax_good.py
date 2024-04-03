@@ -1,17 +1,23 @@
 from typing_extensions import Annotated
-from fastapi import APIRouter, Form, Path, Request, Depends
+from fastapi import APIRouter, Path, Depends
 from fastapi.responses import JSONResponse
 
+from core.models import Member
 from response_handlers.ajax_good import AjaxGoodService
+from api.v1.dependencies.board import get_current_member
+from api.v1.models import responses
+
 
 router = APIRouter()
 
 
-@router.post("/good/{bo_table}/{wr_id}/{type}")
+@router.get("/good/{bo_table}/{wr_id}/{type}",
+            summary="좋아요/싫어요",
+            responses={**responses}
+            )
 async def ajax_good(
-    request: Request,
     ajax_good_service: Annotated[AjaxGoodService, Depends()],
-    token: str = Form(...),
+    member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(...),
     wr_id: int = Path(...),
     type: str = Path(...)
@@ -19,9 +25,7 @@ async def ajax_good(
     """
     게시글 좋아요/싫어요 처리
     """
-    member = request.state.login_member
     ajax_good_service.validate_member(member)
-    ajax_good_service.validate_token(token)
     board = ajax_good_service.get_board(bo_table)
     ajax_good_service.validate_board_good_use(board, type)
     write = ajax_good_service.get_write(bo_table, wr_id)
