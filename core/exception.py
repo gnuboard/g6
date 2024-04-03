@@ -1,11 +1,9 @@
-
+"""예외처리 Core 모듈"""
 from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from starlette.templating import _TemplateResponse
-
-from core.template import TemplateService, theme_asset
 
 
 class AlertException(HTTPException):
@@ -45,6 +43,7 @@ class TemplateDisabledException(HTTPException):
         self.status_code = status_code
         self.detail = detail
 
+
 def regist_core_exception_handler(app: FastAPI) -> None:
     """애플리케이션 인스턴스에 예외처리 핸들러를 등록합니다."""
 
@@ -68,7 +67,7 @@ def regist_core_exception_handler(app: FastAPI) -> None:
             "errors": exc.detail
         }
         return template_response("alert_close.html", context, exc.status_code)
-    
+
     @app.exception_handler(TemplateDisabledException)
     async def template_disabled_exception_handler(
             request: Request, exc: TemplateDisabledException):
@@ -94,6 +93,8 @@ def template_response(
     Returns:
         _TemplateResponse: 템플릿 응답 객체
     """
+    from core.template import TemplateService, theme_asset
+
     # 새로운 템플릿 응답 객체를 생성합니다.
     # - UserTemplates, AdminTemplates 클래스는 기본 컨텍스트 설정 시 DB를 조회하는데,
     #   처음 설치 시에는 DB가 없으므로 새로운 템플릿 응답 객체를 생성합니다.

@@ -1,14 +1,19 @@
+"""회원 관련 API Router"""
 from datetime import datetime
 from typing import Any
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Path, Request
+from fastapi import (
+    APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Path,
+    Request, UploadFile
+)
 from sqlalchemy import delete
 
 from bbs.social import SocialAuthService
 from core.database import db_session
 from core.models import Member
 from lib.mail import send_register_mail, send_password_reset_mail
+from lib.member_lib import get_member_icon, get_member_image, validate_and_update_member_image
 from lib.point import insert_point
 from api.v1.models import MemberRefreshToken, responses
 from api.v1.dependencies.member import (
@@ -17,49 +22,39 @@ from api.v1.dependencies.member import (
 from api.v1.lib.member import MemberServiceAPI
 from api.v1.models.member import (
     CreateMemberModel, ResponseMemberModel, UpdateMemberModel,
-    FindMemberIdModel, FindMemberPasswordModel, ResetMemberPasswordModel
+    FindMemberIdModel, FindMemberPasswordModel, ResetMemberPasswordModel,
+    ResponseRegisterConfigModel
 )
 
 router = APIRouter()
 
 
-@router.get("/member",
-            summary="현재 로그인한 회원 정보 조회",
-            description="JWT을 통해 현재 로그인한 회원 정보를 조회합니다. \
-                <br>- 탈퇴 또는 차단된 회원은 조회할 수 없습니다. \
-                <br>- 이메일 인증이 완료되지 않은 회원은 조회할 수 없습니다.",
-            response_description="로그인한 회원 정보를 반환합니다.",
-            response_model=ResponseMemberModel)
-async def read_member_me(
-    current_member: Annotated[Member, Depends(get_current_member)]
-):
-    """현재 로그인한 회원 정보를 조회합니다.
-
-    Args:
-        current_member (Member): 현재 로그인한 회원 정보
-
-    Returns:
-        Member: 현재 로그인한 회원 정보
-    """
-    return current_member
-
-
-@router.get("/members/{mb_id}",
-            summary="회원 정보 조회",
-            response_model=ResponseMemberModel,
+@router.get("/member/policy",
+            summary="회원가입 약관 조회",
             responses={**responses})
-async def read_member(
-    member_service: Annotated[MemberServiceAPI, Depends()],
-    current_member: Annotated[Member, Depends(get_current_member)],
-    mb_id: Annotated[str, Path(...)]
-):
-    """회원 정보를 조회합니다."""
-    return member_service.get_member_profile(mb_id, current_member)
+async def read_member_policy(request: Request):
+    """회원가입 약관을 조회합니다."""
+    config = request.state.config
+
+    return {
+        "stipulation": config.cf_stipulation,
+        "privacy": config.cf_privacy,
+    }
+
+@router.get("/member/config",
+            summary="회원가입 설정 조회",
+            response_model=ResponseRegisterConfigModel,
+            responses={**responses})
+async def read_member_config(request: Request):
+    """회원가입 설정 정보를 조회합니다."""
+    config = request.state.config
+
+    return config
 
 
 @router.post("/member",
              summary="회원 가입",
-             response_model=ResponseMemberModel,
+            #  response_model=ResponseMemberModel,
              responses={**responses})
 async def create_member(
     request: Request,
@@ -91,12 +86,58 @@ async def create_member(
     # 회원가입메일 발송 처리(백그라운드)
     background_tasks.add_task(send_register_mail, request, member)
 
+    return {
+        "mb_id": member.mb_id,
+        "mb_name": member.mb_name,
+        "mb_nick": member.mb_nick,
+        "detail": "회원가입이 완료되었습니다."
+    }
+
+
+@router.get("/member",
+            summary="현재 로그인한 회원 정보 조회",
+            description="JWT을 통해 현재 로그인한 회원 정보를 조회합니다. \
+                <br>- 탈퇴 또는 차단된 회원은 조회할 수 없습니다. \
+                <br>- 이메일 인증이 완료되지 않은 회원은 조회할 수 없습니다.",
+            response_description="로그인한 회원 정보를 반환합니다.",
+            response_model=ResponseMemberModel)
+async def read_member_me(
+    request: Request,
+    member: Annotated[Member, Depends(get_current_member)]
+):
+    """현재 로그인한 회원 정보를 조회합니다.
+
+    Args:
+        current_member (Member): 현재 로그인한 회원 정보
+
+    Returns:
+        Member: 현재 로그인한 회원 정보
+    """
+    base_url = str(request.base_url)
+    if base_url.endswith("/"):
+        base_url = base_url[:-1]
+
+    member.mb_image_path = base_url + get_member_image(member.mb_id)
+    member.mb_icon_path = base_url + get_member_icon(member.mb_id)
     return member
+
+
+@router.get("/members/{mb_id}",
+            summary="회원 정보 조회",
+            response_model=ResponseMemberModel,
+            responses={**responses})
+async def read_member(
+    member_service: Annotated[MemberServiceAPI, Depends()],
+    current_member: Annotated[Member, Depends(get_current_member)],
+    mb_id: Annotated[str, Path(...)]
+):
+    """회원 정보를 조회합니다."""
+    return member_service.get_member_profile(mb_id, current_member)
 
 
 @router.put("/member",
             summary="회원 정보 수정",
-            response_model=ResponseMemberModel,
+            # response_model=ResponseMemberModel,
             responses={**responses})
 async def update_member(
     member_service: Annotated[MemberServiceAPI, Depends()],
@@ -106,7 +147,25 @@ async def update_member(
     """회원 정보를 수정합니다."""
     member_service.update_member(current_member, data.model_dump())
 
-    return current_member
+    return HTTPException(status_code=200, detail="회원정보 수정이 완료되었습니다.")
+
+
+@router.put("/member/image",
+            summary="회원 이미지 수정",
+            responses={**responses})
+async def update_member_image(
+    request: Request,
+    member: Annotated[Member, Depends(get_current_member)],
+    mb_img: Annotated[UploadFile, File(title="첨부파일1")] = None,
+    mb_icon: Annotated[UploadFile, File(title="첨부파일2")] = None,
+    del_mb_img: Annotated[int, Form(title="첨부파일1 삭제 여부")] = 0,
+    del_mb_icon: Annotated[int, Form(title="첨부파일2 삭제 여부")] = 0,
+):
+    """회원 이미지를 수정합니다."""
+    validate_and_update_member_image(request, mb_img, mb_icon,
+                                     member.mb_id, del_mb_img, del_mb_icon)
+
+    return HTTPException(status_code=200, detail="회원 이미지가 수정되었습니다.")
 
 
 @router.put("/members/{mb_id}/email-certification/{key}",
@@ -121,7 +180,7 @@ async def certificate_email(
     회원가입 시, 메일인증을 처리합니다.  
     '기본환경설정'에서 메일인증을 사용하지 않을 경우 바로 인증처리됩니다.
     """
-    member = member_service.get_email_non_certify_member(mb_id, key)
+    member = member_service.read_email_non_certify_member(mb_id, key)
     member.mb_email_certify = datetime.now()
     member.mb_email_certify2 = ""
     db.commit()
@@ -181,7 +240,7 @@ async def find_member_password(
     member = member_service.find_member_from_password_info(data.mb_id, data.mb_email)
     # 비밀번호 재설정 메일 발송 처리(백그라운드)
     background_tasks.add_task(send_password_reset_mail, request, member)
-    
+
     return HTTPException(status_code=200, detail="비밀번호 찾기 메일이 발송되었습니다.")
 
 

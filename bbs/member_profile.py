@@ -1,23 +1,21 @@
+"""회원정보 수정 Template Router"""
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, Form, File, Depends
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from sqlalchemy import select
 from starlette.responses import RedirectResponse
-
 
 from core.database import db_session
 from core.exception import AlertException
 from core.formclass import MemberForm
-from core.models import Member, MemberSocialProfiles
+from core.models import Config, Member, MemberSocialProfiles
 from core.template import UserTemplates
-from lib.common import *
+from lib.common import captcha_widget, check_profile_open, get_next_profile_openable_date
+from lib.dependencies import get_login_member, validate_captcha, validate_token
 from lib.dependency.member import validate_update_member
-from lib.dependencies import (
-    get_login_member, validate_token, validate_captcha
-)
 from lib.member_lib import (
-    MemberService,
-    get_member_icon, get_member_image, validate_and_update_member_image
+    MemberService, get_member_icon, get_member_image,
+    validate_and_update_member_image
 )
 from lib.pbkdf2 import validate_password
 from lib.template_filters import default_if_none
@@ -48,7 +46,7 @@ async def check_member_form(
         )
         if social_member:
             request.session["ss_profile_change"] = True
-            return RedirectResponse(url=f"/bbs/member_profile", status_code=302)
+            return RedirectResponse(url="/bbs/member_profile", status_code=302)
 
     context = {
         "request": request,
@@ -72,7 +70,7 @@ async def check_member(
 
     request.session["ss_profile_change"] = True
 
-    return RedirectResponse(url=f"/bbs/member_profile", status_code=302)
+    return RedirectResponse(url="/bbs/member_profile", status_code=302)
 
 
 @router.get("/member_profile", name='member_profile')
@@ -81,6 +79,9 @@ async def member_profile(
     db: db_session,
     member: Annotated[Member, Depends(get_login_member)],
 ):
+    """
+    회원프로필 수정 폼
+    """
     config = request.state.config
 
     if not request.session.get("ss_profile_change", False):
@@ -96,7 +97,12 @@ async def member_profile(
         "hp_readonly": "readonly" if get_is_phone_certify(member, config) else "",
         "mb_icon_url": get_member_icon(member.mb_id),
         "mb_img_url": get_member_image(member.mb_id),
-        "is_profile_open": check_profile_open(open_date=member.mb_open_date, config=request.state.config)
+        "is_profile_open": check_profile_open(open_date=member.mb_open_date,
+                                              config=request.state.config),
+        "profile_open_date": get_next_profile_openable_date(
+            open_date=member.mb_open_date, 
+            config=config
+        ),
     }
 
     context = {
@@ -125,12 +131,13 @@ async def member_profile_save(
     """
     if not request.session.get("ss_profile_change", False):
         raise AlertException("잘못된 접근입니다.", 403, url=request.url_for("member_password").path)
-    
-    member = member_service.fetch_member(login_member.mb_id)
+
+    member = member_service.read_member(login_member.mb_id)
     member_service.update_member(member, member_form.__dict__)
 
     # 이미지 검사 & 이미지 수정(삭제 포함)
-    validate_and_update_member_image(request, mb_img, mb_icon, member.mb_id, del_mb_img, del_mb_icon)
+    validate_and_update_member_image(request, mb_img, mb_icon,
+                                     member.mb_id, del_mb_img, del_mb_icon)
 
     if "ss_profile_change" in request.session:
         del request.session["ss_profile_change"]
@@ -139,8 +146,8 @@ async def member_profile_save(
 
 
 def get_is_phone_certify(member: Member, config: Config) -> bool:
-    """휴대폰 본인인증 사용여부 확인
-    """
-    return (config.cf_cert_use and config.cf_cert_req and
-            (config.cf_cert_hp or config.cf_cert_simple) and
-            member.mb_certify != "ipin")
+    """휴대폰 본인인증 사용여부 확인"""
+    return (config.cf_cert_use
+            and config.cf_cert_req
+            and (config.cf_cert_hp or config.cf_cert_simple)
+            and member.mb_certify != "ipin")

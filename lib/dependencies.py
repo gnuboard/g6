@@ -1,8 +1,9 @@
 import os
 from typing_extensions import Annotated
 
-from fastapi import Depends, Form, HTTPException, Path, Query, Request
-from fastapi.responses import RedirectResponse
+from fastapi import (
+    Depends, Form, HTTPException, Path, Query, Request, Response
+)
 from pydantic import TypeAdapter
 from sqlalchemy import exists, inspect, select
 
@@ -237,10 +238,11 @@ def get_login_member(request: Request):
     return member
 
 
-def validate_regist_agree(request: Request):
+def validate_policy_agree(request: Request):
     """약관 동의 여부 검사"""
-    if not request.session.get("ss_agree", None) or not request.session.get("ss_agree2", None):
-        return RedirectResponse(url="/bbs/register", status_code=302)
+    if (not request.session.get("ss_agree", None)
+            or not request.session.get("ss_agree2", None)):
+        raise AlertException("회원가입 약관에 동의해 주세요.", 400, url="/bbs/register")
 
 
 def check_use_template():
@@ -257,3 +259,10 @@ def check_use_api():
                .validate_python(os.getenv("USE_API", "True")))
     if not use_api:
         raise HTTPException(status_code=404, detail="API 사용이 불가능합니다.")
+
+
+async def no_cache_response(response: Response):
+    """캐시 제어 헤더를 설정하는 의존성 함수"""
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"

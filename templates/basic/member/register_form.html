@@ -211,8 +211,8 @@
                             <button type="button" class="tooltip_icon">
                               <i class="fa fa-regular fa-question-circle" aria-hidden="true"></i>
                               <span class="blind">설명보기</span>
-                              <span class="tooltip">이미지 크기는 가로 {{ config.cf_user_img_width }} 픽셀, 세로 {{ config.cf_user_img_height }}픽셀로 리사이즈 됩니다.<br>
-                                gif, jpg, png파일만 가능하며 용량 {{ config.cf_user_img_size }}바이트 이하만 등록됩니다.</span>
+                              <span class="tooltip">이미지 크기는 가로 {{ config.cf_member_img_width }} 픽셀, 세로 {{ config.cf_member_img_height }}픽셀로 리사이즈 됩니다.<br>
+                                gif, jpg, png파일만 가능하며 용량 {{ config.cf_member_img_size }}바이트 이하만 등록됩니다.</span>
                             </button>
                         </label>
                         <input type="file" name="mb_img" accept="image/*" id="id_mb_img">
@@ -229,13 +229,13 @@
                             <button type="button" class="tooltip_icon">
                               <i class="fa fa-regular fa-question-circle" aria-hidden="true"></i>
                               <span class="blind">설명보기</span>
-                              <span class="tooltip">이미지 크기는 가로 {{ config.cf_user_icon_width }} 픽셀, 세로 {{ config.cf_user_icon_height }}픽셀로 리사이즈 됩니다.<br>
-                                gif, jpg, png파일만 가능하며 용량 {{ config.cf_user_icon_size }}바이트 이하만 등록됩니다.</span>
+                              <span class="tooltip">이미지 크기는 가로 {{ config.cf_member_icon_width }} 픽셀, 세로 {{ config.cf_member_icon_height }}픽셀로 리사이즈 됩니다.<br>
+                                gif, jpg, png파일만 가능하며 용량 {{ config.cf_member_icon_size }}바이트 이하만 등록됩니다.</span>
                             </button>
                         </label>
                         <input type="file" name="mb_icon" accept="image/*" id="id_mb_icon">
                         {% if not is_register and form.mb_icon_url %}
-                            <img src="{{ form.mb_icon_url }}" alt="" width="{{ config.cf_user_icon_width }}" height="{{ config.cf_user_icon_height }}">
+                            <img src="{{ form.mb_icon_url }}" alt="" width="{{ config.cf_member_icon_width }}" height="{{ config.cf_member_icon_height }}">
                             <input type="checkbox" name="del_mb_icon" value="1" id="del_mb_icon">
                             <label for="del_mb_icon" class="inline">삭제</label>
                         {% endif %}
@@ -281,9 +281,9 @@
                         <input type="hidden" name="mb_open" value="{{ member.mb_open }}">
 
                         <span class="frm_info">
-                                정보공개는 수정후 앞으로 {{ config.cf_open_modify|default("0") }} 일 이내, 
-                                {{ form.next_profile_open_date }} 까지는 변경이 안됩니다.<br>
-                                이렇게 하는 이유는 잦은 정보공개 수정으로 인하여 쪽지를 보낸 후 받지 않는 경우를 막기 위해서 입니다.
+                            정보공개는 수정후 앞으로 {{ config.cf_open_modify|default("0") }} 일 이내, 
+                            {{ form.profile_open_date }} 까지는 변경이 안됩니다.<br>
+                            이렇게 하는 이유는 잦은 정보공개 수정으로 인하여 쪽지를 보낸 후 받지 않는 경우를 막기 위해서 입니다.
                         </span>
                          
                     </li>

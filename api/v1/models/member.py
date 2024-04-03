@@ -169,3 +169,33 @@ class ResponseMemberModel(BaseModel):
     mb_id: str
     mb_name: str
     mb_nick: str
+    mb_point: int
+    mb_memo_cnt: int
+    mb_scrap_cnt: int
+    mb_profile: str
+    mb_icon_path: str
+    mb_image_path: str
+
+
+class ResponseRegisterConfigModel(BaseModel):
+    """회원가입 환경설정 모델"""
+    cf_use_email_certify: int
+    cf_use_homepage: int
+    cf_req_homepage: int
+    cf_use_tel: int
+    cf_req_tel: int
+    cf_use_hp: int
+    cf_req_hp: int
+    cf_use_addr: int
+    cf_req_addr: int
+    cf_use_signature: int
+    cf_use_profile: int
+    cf_icon_level: int
+    cf_member_img_width: int
+    cf_member_img_height: int
+    cf_member_img_size: int
+    cf_member_icon_width: int
+    cf_member_icon_height: int
+    cf_member_icon_size: int
+    cf_open_modify: int
+    cf_use_recommend: int

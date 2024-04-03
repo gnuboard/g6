@@ -1,11 +1,11 @@
+"""로그인/로그아웃 Template Router"""
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, Depends, Form, Query
+from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import RedirectResponse
 
-from core.database import db_session
 from core.template import UserTemplates
-from lib.common import *
+from lib.common import session_member_key
 from lib.member_lib import MemberService, is_super_admin
 from lib.social import providers
 from lib.social.social import SocialProvider, oauth
@@ -39,10 +39,9 @@ async def login(
     """로그인 폼화면에서 로그인"""
     member = member_service.authenticate_member(mb_id, mb_password)
 
-    ss_mb_key = session_member_key(request, member)
-    # 로그인 성공시 세션에 저장
     request.session["ss_mb_id"] = member.mb_id
     # XSS 공격에 대응하기 위하여 회원의 고유키를 생성해 놓는다.
+    ss_mb_key = session_member_key(request, member)
     request.session["ss_mb_key"] = ss_mb_key
 
     # 자동로그인
@@ -71,12 +70,20 @@ async def logout(request: Request):
     Returns:
         Response: RedirectResponse
     """
+    # 소셜로그인 연동 로그아웃
     if 'ss_social_access' in request.session:
-        social_provider_name = request.session.get('ss_social_provider', None)
+        social_provider_name: str = request.session.get('ss_social_provider', None)
         if social_provider_name:
             provider_module_name = getattr(providers, f"{social_provider_name}")
-            provider_class: SocialProvider = getattr(provider_module_name, f"{social_provider_name.capitalize()}")
-            await provider_class.logout(oauth_instance=oauth, auth_token=request.session.get('ss_social_access'))
+            provider_class: SocialProvider = getattr(
+                provider_module_name,
+                f"{social_provider_name.capitalize()}"
+            )
+
+            await provider_class.logout(
+                oauth_instance=oauth,
+                auth_token=request.session.get('ss_social_access')
+            )
 
     request.session.clear()
 

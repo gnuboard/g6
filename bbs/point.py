@@ -1,9 +1,11 @@
+"""포인트 Template Router"""
 from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends, Query, Request
 
+from core.models import Member
 from core.template import UserTemplates
-from lib.common import *
+from lib.common import get_paging_info
 from lib.dependencies import get_login_member
 from lib.point import PointService
 from lib.template_functions import get_paging

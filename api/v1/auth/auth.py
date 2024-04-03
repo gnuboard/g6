@@ -78,9 +78,9 @@ def authenticate_refresh_token(
 
         return member_refresh_token
 
-    except ExpiredSignatureError:
+    except ExpiredSignatureError as e:
         credentials_exception.detail = "Refresh Token has expired"
-        raise credentials_exception
-    except JWTError:
+        raise credentials_exception from e
+    except JWTError as e:
         credentials_exception.detail = "Could not validate credentials"
-        raise credentials_exception
+        raise credentials_exception from e

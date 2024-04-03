@@ -1,20 +1,26 @@
+"""회원가입 Template Router"""
+from datetime import datetime
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Form, File, Path, Query, UploadFile
-from fastapi.responses import RedirectResponse, Response
+from fastapi import (
+    APIRouter, BackgroundTasks, Depends, File, Form, Path, Query, Request,
+    UploadFile
+)
+from fastapi.responses import RedirectResponse
+from sqlalchemy.sql import select
 
 from core.database import db_session
 from core.exception import AlertException
 from core.formclass import MemberForm
 from core.models import Member
 from core.template import UserTemplates
-from lib.common import *
-from lib.mail import send_register_mail
-from lib.member_lib import (
-    MemberService, validate_and_update_member_image
+from lib.common import captcha_widget, check_profile_open, session_member_key
+from lib.dependencies import (
+    validate_captcha, validate_policy_agree, validate_token, no_cache_response
 )
-from lib.dependencies import validate_regist_agree, validate_token, validate_captcha
 from lib.dependency.member import validate_register_member
+from lib.mail import send_register_mail
+from lib.member_lib import MemberService, validate_and_update_member_image
 from lib.point import insert_point
 from lib.template_filters import default_if_none
 
@@ -25,26 +31,15 @@ templates.env.globals["captcha_widget"] = captcha_widget
 templates.env.globals["check_profile_open"] = check_profile_open
 
 
-@router.get("/register")
-async def get_register(
-    request: Request,
-    response: Response
-):
+@router.get("/register",
+            dependencies=[Depends(no_cache_response)])
+async def get_register(request: Request):
     """
     회원가입 약관 동의 페이지
     """
-    # 캐시 제어 헤더 설정 (캐시된 페이지를 보여주지 않고 새로운 페이지를 보여줌)
-    response.headers["Cache-Control"] = "no-store"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
-
     request.session["ss_agree"] = ""
     request.session["ss_agree2"] = ""
-
-    context = {
-        "request": request
-    }
-    return templates.TemplateResponse("/bbs/register.html", context)
+    return templates.TemplateResponse("/bbs/register.html", {"request": request})
 
 
 @router.post("/register")
@@ -56,18 +51,13 @@ async def post_register(
     """
     회원가입 약관 동의 처리
     """
-    if not agree:
-        raise AlertException(status_code=400, detail="회원가입약관에 동의해 주세요.")
-    if not agree2:
-        raise AlertException(status_code=400, detail="개인정보 수집 및 이용에 동의해 주세요.")
-
     request.session["ss_agree"] = agree
     request.session["ss_agree2"] = agree2
     return RedirectResponse(url="/bbs/register_form", status_code=302)
 
 
 @router.get("/register_form",
-            dependencies=[Depends(validate_regist_agree)],
+            dependencies=[Depends(validate_policy_agree)],
             name='register_form')
 async def get_register_form(request: Request):
     """
@@ -78,10 +68,7 @@ async def get_register_form(request: Request):
     member.mb_level = config.cf_register_level
 
     form_context = {
-        # https 의 경우 http 경로가 넘어와서 제대로 전송이 되지 않음
-        # "action_url": f"{request.base_url.__str__()}bbs{router.url_path_for('register_form_save')}",
-        "is_profile_open": check_profile_open(open_date=None, config=config),
-        "next_profile_open_date": get_next_profile_openable_date(open_date=None, config=config),
+        "is_profile_open": True,
     }
     context = {
         "is_register": True,
@@ -96,7 +83,7 @@ async def get_register_form(request: Request):
 @router.post("/register_form",
              dependencies=[Depends(validate_token),
                            Depends(validate_captcha),
-                           Depends(validate_regist_agree)],
+                           Depends(validate_policy_agree)],
              name='register_form_save')
 async def post_register_form(
     request: Request,
@@ -174,7 +161,7 @@ async def email_certify(
     certify: Annotated[str, Query(...)]
 ):
     """회원가입 메일인증 처리"""
-    member = member_service.get_email_non_certify_member(mb_id, certify)
+    member = member_service.read_email_non_certify_member(mb_id, certify)
     member.mb_email_certify = datetime.now()
     member.mb_email_certify2 = ""
     db.commit()

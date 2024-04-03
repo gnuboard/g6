@@ -40,7 +40,7 @@ async def member_leave(
     """
     회원탈퇴 처리
     """
-    member = member_service.fetch_member(login_member.mb_id)
+    member = member_service.read_member(login_member.mb_id)
     member_service.leave_member(member)
 
     # 소셜로그인 연동 해제

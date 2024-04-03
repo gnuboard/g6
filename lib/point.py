@@ -1,3 +1,4 @@
+"""포인트 관련 기능을 제공하는 모듈입니다."""
 import uuid
 from datetime import datetime, timedelta
 
@@ -12,6 +13,7 @@ from lib.service import BaseService
 
 
 class PointService(BaseService):
+    """포인트 서비스 클래스"""
     def __init__(self, request: Request, db: db_session):
         self.request = request
         self.db = db
@@ -21,7 +23,7 @@ class PointService(BaseService):
 
     def fetch_points(self, member: Member, offset: int = 0, records_per_page: int = 10):
         """
-        스크랩 목록을 조회합니다.
+        포인트 목록을 조회합니다.
         """
         return (member.points
                 .order_by(Point.po_id.desc())
@@ -30,7 +32,7 @@ class PointService(BaseService):
 
     def fetch_total_records(self, member: Member) -> int:
         """
-        스크랩 목록의 총 개수를 데이터베이스에서 조회합니다.
+        포인트 목록의 총 개수를 데이터베이스에서 조회합니다.
         """
         return member.points.count()
 
@@ -158,7 +160,7 @@ def get_point_sum(request: Request, mb_id: str) -> int:
         if config.cf_point_term > 0:
             expire_point = get_expire_point(request, mb_id)
             if expire_point > 0:
-                member = member_service.fetch_member(mb_id)
+                member = member_service.read_member(mb_id)
                 point = expire_point * (-1)
                 new_point = Point(
                     mb_id=mb_id,

@@ -1,16 +1,18 @@
+"""회원 관련 기능을 제공하는 모듈입니다."""
 import math
 import os
 import re
 import secrets
 from glob import glob
 from datetime import date, datetime, timedelta
-from PIL import Image, UnidentifiedImageError
 from typing import Union, Optional, Tuple
 
-from fastapi import HTTPException, Request, UploadFile
+from fastapi import Request, UploadFile
+from PIL import Image, UnidentifiedImageError
 from sqlalchemy import exists, select
 
 from core.database import DBConnect, db_session
+from core.exception import AlertException
 from core.models import Board, Config, Group, Member
 from lib.common import is_none_datetime, delete_image, get_client_ip
 from lib.pbkdf2 import validate_password
@@ -39,9 +41,8 @@ class MemberService(BaseService):
         self.member = None
 
     def raise_exception(self, status_code: int = 400, detail: str = None):
-        from core.exception import AlertException
         raise AlertException(detail, status_code)
-    
+
     def create_member(self, data) -> Member:
         """회원 정보를 생성합니다."""
         config = self.request.state.config
@@ -60,7 +61,7 @@ class MemberService(BaseService):
 
         return member
 
-    def fetch_member(self, mb_id: str) -> Member:
+    def read_member(self, mb_id: str) -> Member:
         """회원 정보를 조회합니다."""
         if self.member is None:
             member = self._fetch_member_by_id(mb_id)
@@ -68,7 +69,7 @@ class MemberService(BaseService):
                 self.raise_exception(status_code=404, detail=f"{mb_id} : 회원정보가 없습니다.")
             self.member = member
         return self.member
-    
+
     def authenticate_member(self, mb_id:str, password: str) -> Member:
         """
         비밀번호를 검증하여 회원 인증을 수행합니다.
@@ -76,7 +77,7 @@ class MemberService(BaseService):
         - 이메일 인증이 완료되지 않은 회원은 조회할 수 없습니다.
         """
         # 아이디, 비밀번호 중 어떤 것이 틀렸는지 알려주지 않도록 하기 위해
-        # self.fetch_member()를 호출하지 않고 바로 쿼리를 실행합니다.
+        # self.fetch_member()를 호출하지 않습니다.
         member = self._fetch_member_by_id(mb_id)
         if not member or not validate_password(password, member.mb_password):
             self.raise_exception(status_code=403, detail="아이디 또는 비밀번호가 올바르지 않습니다.")
@@ -90,14 +91,14 @@ class MemberService(BaseService):
             self.raise_exception(status_code=403, detail=message)
 
         return member
-    
+
     def get_member(self, mb_id: str) -> Member:
         """
         현재 회원 정보를 조회합니다.
         - 회원 정보가 없거나 탈퇴 또는 차단된 회원은 조회할 수 없습니다.
         - 이메일 인증이 완료되지 않은 회원은 조회할 수 없습니다.
         """
-        member = self.fetch_member(mb_id)
+        member = self.read_member(mb_id)
         is_active, message = self.is_activated(member)
         if not is_active:
             self.raise_exception(status_code=403, detail=message)
@@ -107,35 +108,35 @@ class MemberService(BaseService):
             self.raise_exception(status_code=403, detail=message)
 
         return member
-    
-    def get_email_non_certify_member(self, mb_id: str, key: str) -> Member:
+
+    def read_email_non_certify_member(self, mb_id: str, key: str) -> Member:
         """
         이메일 인증처리가 안된 회원 정보를 조회합니다.
         - 회원 정보가 없거나 탈퇴 또는 차단된 회원은 조회할 수 없습니다.
         - 이미 인증된 회원은 조회할 수 없습니다.
         - 메일인증 요청 정보(key)가 올바르지 않으면 조회할 수 없습니다.
         """
-        member = self.fetch_member(mb_id)
+        member = self.read_member(mb_id)
 
         is_active, message = self.is_activated(member)
         if not is_active:
             self.raise_exception(status_code=403, detail=message)
 
         if not is_none_datetime(member.mb_email_certify):
-            raise HTTPException(status_code=409, detail="이미 인증된 회원입니다.")
+            self.raise_exception(status_code=409, detail="이미 인증된 회원입니다.")
 
         if member.mb_email_certify2 != key:
-            raise HTTPException(status_code=400, detail="메일인증 요청 정보가 올바르지 않습니다.")
+            self.raise_exception(status_code=400, detail="메일인증 요청 정보가 올바르지 않습니다.")
 
         return member
-    
+
     def get_member_profile(self, mb_id: str, current_member: Member) -> Member:
         """
         회원 프로필 정보를 조회합니다.
         - 최고관리자 또는 자신의 정보는 정보공개 여부를 확인하지 않습니다.
         - 정보공개 여부가 설정되어 있지 않은 회원은 조회할 수 없습니다.
         """
-        member = self.fetch_member(mb_id)
+        member = self.read_member(mb_id)
         # 최고관리자도 아니고 자신의 정보가 아니면 정보공개 여부를 확인합니다.
         if not (self.request.state.is_super_admin or current_member.mb_id == mb_id):
             if not current_member.mb_open:
@@ -144,13 +145,13 @@ class MemberService(BaseService):
                 self.raise_exception(status_code=403, detail="회원정보를 공개하지 않은 회원입니다.")
 
         return member
-    
+
     def is_activated(self, member: Member) -> Tuple[bool, str]:
         """활성화된 회원인지 확인합니다."""
         if member.mb_leave_date or member.mb_intercept_date:
             return False, "현재 로그인 회원은 탈퇴 또는 차단된 회원입니다."
         return True, "정상 회원입니다."
-    
+
     def is_member_email_certified(self, member: Member) -> Tuple[bool, str]:
         """이메일 인증이 완료된 회원인지 확인합니다."""
         config = self.request.state.config
@@ -168,7 +169,7 @@ class MemberService(BaseService):
         self.db.commit()
 
         return member
-    
+
     def leave_member(self, member: Member):
         """
         회원을 탈퇴 처리합니다
@@ -201,7 +202,6 @@ class MemberService(BaseService):
             self.raise_exception(status_code=400, detail="소셜로그인으로 가입하신 회원은 아이디를 찾을 수 없습니다.")
 
         return hide_member_id(member.mb_id), member.mb_datetime.strftime("%Y-%m-%d %H:%M:%S")
-    
 
     def find_member_from_password_info(self, mb_id: str, mb_email: str) -> Member:
         """
@@ -253,7 +253,7 @@ class MemberService(BaseService):
         member.mb_password = mb_password
         member.mb_lost_certify = ""
         self.db.commit()
-    
+
     def _fetch_member_by_id(self, mb_id: str) -> Member:
         """회원 정보를 데이터베이스에서 조회합니다."""
         return self.db.scalar(select(Member).where(Member.mb_id == mb_id))
@@ -307,7 +307,8 @@ def get_image_path_for_member(dir: str, mb_id: str = None) -> str:
     return image_path
 
 
-def validate_member_image(request: Request, img_file: UploadFile, img_type: str) -> Optional[Image.Image]:
+def validate_member_image(request: Request, img_file: UploadFile,
+                          img_type: str) -> Optional[Image.Image]:
     """
     멤버 이미지, 아이콘 파일 유효성 검사
     Args:
@@ -320,8 +321,7 @@ def validate_member_image(request: Request, img_file: UploadFile, img_type: str)
 
     if not img_file or not img_file.filename:
         return None
-    
-    from core.exception import AlertException
+
     config = request.state.config
 
     img_type_dict = {
@@ -341,11 +341,11 @@ def validate_member_image(request: Request, img_file: UploadFile, img_type: str)
 
     img_ext_regex = config.cf_image_extension
     img_ext_str = img_ext_regex.replace("|", ", ")
-    
+
     try:
         img_file_info = Image.open(img_file.file)
-    except UnidentifiedImageError:
-        raise AlertException("이미지 파일이 아닙니다.", 400)
+    except UnidentifiedImageError as e:
+        raise AlertException("이미지 파일이 아닙니다.", 400) from e
 
     width, height = img_file_info.size
     expr = img_type_dict[img_type]['expr']
@@ -362,11 +362,12 @@ def validate_member_image(request: Request, img_file: UploadFile, img_type: str)
 
     if not re.match(fr".*\.({img_ext_regex})$", img_file.filename, re.IGNORECASE):
         raise AlertException(f"{img_ext_str} 파일만 업로드 가능합니다.", 400)
-    
+
     return img_file_info
 
 
-def update_member_image(request: Request, upload_object: Optional[Image.Image], directory: str, filename: str, is_delete: Optional[int]):
+def update_member_image(request: Request, upload_object: Optional[Image.Image],
+                        directory: str, filename: str, is_delete: Optional[int]):
     """멤버 이미지, 아이콘 파일 업데이트(업로드/수정/삭제)
     Args:
         request: FastAPI Request 객체)
@@ -589,7 +590,8 @@ def validate_nickname(request: Request, mb_nick: str) -> Tuple[bool, str]:
     return True, "사용 가능한 닉네임입니다."
 
 
-def validate_nickname_change_date(before_nick_date: date, nick_modify_date: int) -> Tuple[bool, str]:
+def validate_nickname_change_date(before_nick_date: date,
+                                  nick_modify_date: int) -> Tuple[bool, str]:
     """
         닉네임 변경 가능한지 날짜 검사
         Args:
@@ -619,10 +621,10 @@ def validate_email(request: Request, email: str) -> Tuple[bool, str]:
     """
     if not email or email.strip() == "":
         return False, "이메일을 입력해주세요."
-    
+
     if is_email_registered(email):
         return False, "이미 가입된 이메일입니다."
-    
+
     if is_prohibit_email(request, email):
         return False, "사용할 수 없는 이메일입니다."
 
