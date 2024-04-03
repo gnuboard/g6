@@ -37,6 +37,11 @@ class CreatePostService(BoardService):
     def __init__(self, request: Request, db: db_session, bo_table: str, board: Board, member: Member):
         super().__init__(request, db, bo_table, board, member)
 
+    def validate_anonymous_password(self, data):
+        """비회원 글쓰기시 비밀번호 검증"""
+        if not self.member and not data.wr_password:
+            self.raise_exception(detail="비회원 글쓰기시 비밀번호를 기재해야 합니다.", status_code=400)
+
     def validate_write_level(self):
         """글쓰기 레벨 비교 검증"""
         if not self.is_write_level():
@@ -338,6 +343,7 @@ class CreateCommentService(CreatePostService):
         comment.mb_id = getattr(self.member, "mb_id", "")
         comment.wr_password = create_hash(data.wr_password) if data.wr_password else ""
         comment.wr_name = self.set_wr_name(self.member, data.wr_name)
+        self.validate_anonymous_password(data)
         comment.wr_email = getattr(self.member, "mb_email", "")
         comment.wr_homepage = getattr(self.member, "mb_homepage", "")
         comment.wr_datetime = comment.wr_last = self.g5_instance.get_wr_last_now(self.write_model.__tablename__)
