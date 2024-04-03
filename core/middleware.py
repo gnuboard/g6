@@ -1,7 +1,9 @@
+"""애플리케이션에 사용되는 미들웨어를 정의합니다."""
 import os
 from user_agents import parse
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -77,6 +79,14 @@ def regist_core_middleware(app: FastAPI) -> None:
     # 클라이언트가 사용할 프로토콜을 결정하는 미들웨어를 추가합니다.
     app.add_middleware(BaseSchemeMiddleware)
 
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
 
 async def should_run_middleware(request: Request) -> bool:
     """미들웨어의 실행 여부를 결정합니다.
@@ -104,7 +114,7 @@ async def should_run_middleware(request: Request) -> bool:
 
 
 class BaseSchemeMiddleware(BaseHTTPMiddleware):
+    """X-Forwarded-Proto 헤더를 통해 클라이언트가 사용하는 실제 프로토콜을 결정합니다."""
     async def dispatch(self, request: Request, call_next):
-        # X-Forwarded-Proto 헤더를 통해 클라이언트가 사용하는 실제 프로토콜을 결정합니다.
         request.scope["scheme"] = request.headers.get("X-Forwarded-Proto", "http")
         return await call_next(request)
