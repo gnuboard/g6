@@ -12,7 +12,7 @@ from lib.board_lib import insert_board_new, set_write_delay
 from lib.dependencies import common_search_query_params
 from api.v1.models import responses
 from api.v1.dependencies.board import (
-    get_current_member, get_member_info, get_board, get_group,
+    get_current_member, get_board, get_group,
     validate_write, validate_delete_comment,
     validate_upload_file_write, get_write
 )
@@ -71,7 +71,7 @@ async def api_group_board_list(
 async def api_list_post(
     request: Request,
     db: db_session,
-    member_info: Annotated[Dict, Depends(get_member_info)],
+    member: Annotated[Member, Depends(get_current_member)],
     board: Annotated[Board, Depends(get_board)],
     search_params: Annotated[dict, Depends(common_search_query_params)],
     bo_table: str = Path(...),
@@ -80,7 +80,7 @@ async def api_list_post(
     게시판 정보, 글 목록을 반환합니다.
     """
     list_post_service = ListPostServiceAPI(
-        request, db, bo_table, board, member_info["member"], search_params
+        request, db, bo_table, board, member, search_params
     )
 
     board_json = jsonable_encoder(board)
@@ -145,7 +145,7 @@ async def api_read_post(
 async def api_create_post(
     request: Request,
     db: db_session,
-    member_info: Annotated[Dict, Depends(get_member_info)],
+    member: Annotated[Member, Depends(get_current_member)],
     wr_data: Annotated[WriteModel, Depends(validate_write)],
     board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
@@ -154,7 +154,7 @@ async def api_create_post(
     지정된 게시판에 새 글을 작성합니다.
     """
     create_post_service = CreatePostServiceAPI(
-        request, db, bo_table, board, member_info["member"]
+        request, db, bo_table, board, member
     )
     create_post_service.validate_secret_board(wr_data.secret, wr_data.html, wr_data.mail)
     create_post_service.validate_post_content(wr_data.wr_subject)
@@ -181,7 +181,7 @@ async def api_create_post(
 async def api_update_post(
     request: Request,
     db: db_session,
-    member_info: Annotated[Dict, Depends(get_member_info)],
+    member: Annotated[Member, Depends(get_current_member)],
     wr_data: Annotated[WriteModel, Depends(validate_write)],
     board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
@@ -191,7 +191,7 @@ async def api_update_post(
     지정된 게시판의 글을 수정합니다.
     """
     update_post_service = UpdatePostServiceAPI(
-        request, db, bo_table, board, member_info["member"], wr_id
+        request, db, bo_table, board, member, wr_id
     )
     update_post_service.validate_restrict_comment_count()
     write = get_write(update_post_service.db, update_post_service.bo_table, update_post_service.wr_id)
@@ -216,7 +216,7 @@ async def api_update_post(
 async def api_delete_post(
     request: Request,
     db: db_session,
-    member_info: Annotated[Dict, Depends(get_member_info)],
+    member: Annotated[Member, Depends(get_current_member)],
     board: Annotated[Board, Depends(get_board)],
     write: Annotated[WriteBaseModel, Depends(get_write)],
     bo_table: str = Path(...),
@@ -226,7 +226,7 @@ async def api_delete_post(
     지정된 게시판의 글을 삭제합니다.
     """
     delete_post_api = DeletePostServiceAPI(
-        request, db, bo_table, board, wr_id, write, member_info["member"]
+        request, db, bo_table, board, wr_id, write, member
     )
     delete_post_api.validate_level(with_session=False)
     delete_post_api.validate_exists_reply()
@@ -293,7 +293,7 @@ async def api_move_update(
 async def api_upload_file(
     request: Request,
     db: db_session,
-    member_info: Annotated[Dict, Depends(get_member_info)],
+    member: Annotated[Member, Depends(get_current_member)],
     board: Annotated[Board, Depends(get_board)],
     write: Annotated[WriteBaseModel, Depends(validate_upload_file_write)],
     bo_table: str = Path(...),
@@ -305,7 +305,7 @@ async def api_upload_file(
     파일을 업로드합니다.
     """
     create_post_service = CreatePostServiceAPI(
-        request, db, bo_table, board, member_info["member"]
+        request, db, bo_table, board, member
     )
     create_post_service.upload_files(write, files, file_content, file_dels)
     return {"result": "uploaded"}
