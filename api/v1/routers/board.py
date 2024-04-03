@@ -381,6 +381,7 @@ async def api_update_comment(
     board: Annotated[Board, Depends(get_board)],
     member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(...),
+    wr_parent: str = Path(...),
     wr_id: str = Path(...),
 ) -> Dict:
     """
@@ -390,8 +391,8 @@ async def api_update_comment(
         request, db, bo_table, board, member
     )
     write_model = create_comment_service.write_model
-    create_comment_service.get_parent_post(wr_id, is_reply=False)
-    comment = db.get(write_model, comment_data.comment_id)
+    create_comment_service.get_parent_post(wr_parent, is_reply=False)
+    comment = db.get(write_model, wr_id)
     if not comment:
         raise HTTPException(status_code=404, detail=f"{wr_id} : 존재하지 않는 댓글입니다.")
 

@@ -51,7 +51,7 @@ class CommentModel(BaseModel):
                                      description="비회원일 경우 비밀번호")]
     wr_option: Annotated[str, Body("html1", title="비밀글 여부",
                                    description="secret: 비밀글, html1: HTML 사용")]
-    comment_id: Annotated[int, Body(None, title="댓글 생성일 경우: 부모댓글 ID/댓글 수정일 경우: 수정될 댓글 ID")]
+    comment_id: Annotated[int, Body(None, title="댓글 ID")]
 
     @model_validator(mode='after')
     def init_fields(self) -> 'WriteModel':
