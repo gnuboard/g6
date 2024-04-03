@@ -5,26 +5,31 @@ from fastapi import Request, HTTPException, UploadFile
 from sqlalchemy import delete, inspect, select, func, update
 
 from core.database import db_session
-from core.models import Board, Member, WriteBaseModel, AutoSave, BoardNew, BoardGood, Scrap
+from core.models import (
+    Board, Member, WriteBaseModel, AutoSave,
+    BoardNew, BoardGood, Scrap
+)
 from core.formclass import WriteForm
 from lib.board_lib import (
-    is_write_delay,insert_point, BoardFileManager,
-    FileCache, get_next_num, generate_reply_character, send_write_mail,
+    is_write_delay,insert_point, BoardFileManager, FileCache,
+    get_next_num, generate_reply_character, send_write_mail
 )
-from lib.common import remove_query_params, set_url_query_params, filter_words, make_directory, dynamic_create_write_table, cut_name
+from lib.common import (
+    remove_query_params, set_url_query_params, cut_name,
+    filter_words, make_directory, dynamic_create_write_table
+)
 from lib.html_sanitizer import content_sanitizer
 from lib.dependencies import validate_captcha as lib_validate_captcha
 from lib.pbkdf2 import create_hash
 from lib.g5_compatibility import G5Compatibility
 from lib.template_filters import number_format, datetime_format
 from api.v1.models.board import WriteModel
-from .base_handler import BoardService
+from . import BoardService
 
 
 class CreatePostService(BoardService):
     """
-    게시글 생성 공통 클래스
-    Template, API 클래스에서 상속받아 사용
+    게시글 생성 클래스
     """
 
     FILE_DIRECTORY = "data/file/"
@@ -33,6 +38,7 @@ class CreatePostService(BoardService):
         super().__init__(request, db, bo_table, board, member)
 
     def validate_write_level(self):
+        """글쓰기 레벨 비교 검증"""
         if not self.is_write_level():
             self.raise_exception(detail="글을 작성할 권한이 없습니다.", status_code=403)
 
@@ -239,6 +245,10 @@ class CreatePostService(BoardService):
 
 
 class CreatePostServiceAPI(CreatePostService):
+    """
+    API 요청에 사용되는 게시글 생성 클래스
+    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
+    """
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)

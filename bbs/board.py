@@ -1,19 +1,26 @@
 # 여기에서 write 와 post 는 글 한개라는 개념으로 사용합니다.
 # 게시판 테이블을 write 로 사용하여 테이블명을 바꾸지 못하는 관계로
 # 테이블명은 write 로, 글 한개에 대한 의미는 write 와 post 를 혼용하여 사용합니다.
-from typing_extensions import Annotated
+from typing_extensions import Annotated, List
 
-from fastapi import APIRouter, Depends, Request, Form, Path, Query, File
+from fastapi import APIRouter, Depends, Request, Form, Path, Query, File, UploadFile
 from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy import select
 
 from core.database import db_session
 from core.exception import AlertException
 from core.formclass import WriteForm, WriteCommentForm
-from core.models import Board, Group, Member
+from core.models import Board, Group, Member, WriteBaseModel
 from core.template import UserTemplates
-from lib.board_lib import *
-from lib.common import *
+from lib.member_lib import get_admin_type
+from lib.board_lib import (
+    set_image_width, url_auto_link, BoardConfig, get_list_thumbnail,
+    render_latest_posts, generate_reply_character, is_secret_write,
+    BoardFileManager, is_owner, insert_board_new, set_write_delay
+)
+from lib.common import (
+    set_url_query_params, get_unique_id, captcha_widget, remove_query_params
+)
 from lib.dependencies import (
     check_group_access, common_search_query_params,
     validate_captcha, validate_token, check_login_member,
@@ -37,8 +44,6 @@ templates.env.globals["get_unique_id"] = get_unique_id
 templates.env.globals["board_config"] = BoardConfig
 templates.env.globals["get_list_thumbnail"] = get_list_thumbnail
 templates.env.globals["captcha_widget"] = captcha_widget
-
-FILE_DIRECTORY = "data/file/"
 
 
 @router.get("/group/{gr_id}")
@@ -75,6 +80,7 @@ async def list_post(
     board: Annotated[Board, Depends(get_board)],
     search_params: Annotated[dict, Depends(common_search_query_params)],
 ):
+    """해당 게시판의 게시글 목록을 보여준다."""
     list_post_service = ListPostService(
         request, db, bo_table, board, request.state.login_member, search_params
     )
@@ -341,6 +347,7 @@ async def create_post(
     file_dels: list = Form(None, alias="bf_file_del[]"),
     recaptcha_response: str = Form("", alias="g-recaptcha-response"),
 ):
+    """게시글을 작성한다."""
     create_post_service = CreatePostService(
         request, db, bo_table, board, member
     )
@@ -385,6 +392,7 @@ async def update_post(
     file_content: list = Form(None, alias="bf_content[]"),
     file_dels: list = Form(None, alias="bf_file_del[]"),
 ):
+    """게시글을 수정한다."""
     update_post_service = UpdatePostService(
         request, db, bo_table, board, member, wr_id,
     )
@@ -417,6 +425,7 @@ async def read_post(
     bo_table: str = Path(...),
     wr_id: int = Path(...),
 ):
+    """게시글을 읽는다."""
     read_post_service = ReadPostService(request, db, bo_table, board, wr_id, write, member)
     read_post_service.request.state.editor = read_post_service.select_editor
     read_post_service.validate_secret_with_session()
@@ -445,7 +454,6 @@ async def read_post(
     return templates.TemplateResponse(f"/board/{board.bo_skin}/read_post.html", context)
 
 
-# 게시글 삭제
 @router.get("/delete/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
 async def delete_post(
     request: Request,
@@ -582,7 +590,6 @@ async def delete_comment(
 async def link_url(
     request: Request,
     db: db_session,
-    board: Annotated[Board, Depends(get_board)],
     write: Annotated[WriteBaseModel, Depends(get_write)],
     bo_table: str = Path(...),
     wr_id: int = Path(...),

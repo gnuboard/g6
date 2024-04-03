@@ -2,8 +2,6 @@ from fastapi import APIRouter, Request, Query
 
 from core.database import db_session
 from core.template import UserTemplates
-from lib.board_lib import *
-from lib.common import *
 from lib.template_filters import search_font
 from response_handlers.search import SearchService
 

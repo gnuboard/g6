@@ -4,15 +4,17 @@ from sqlalchemy import select, exists, delete, update
 
 from core.database import db_session
 from core.models import Board, Member, WriteBaseModel, BoardNew, Scrap
-from lib.board_lib import is_owner, insert_point, delete_point, BoardFileManager, FileCache
+from lib.board_lib import (
+    is_owner, insert_point, delete_point,
+    BoardFileManager, FileCache
+)
 from lib.common import remove_query_params, set_url_query_params
 from .base_handler import BoardService
 
 
 class DeletePostService(BoardService):
     """
-    게시글 삭제 공통 처리 클래스
-    Template, API 클래스에서 상속받아 사용
+    게시글 삭제 처리 클래스
     """
 
     def __init__(
@@ -33,6 +35,7 @@ class DeletePostService(BoardService):
         self.write_member_level = getattr(self.write_member, "mb_level", 1)
 
     def validate_level(self, with_session: bool = True):
+        """권한 검증"""
         if self.admin_type == "super":
             return
 
@@ -132,6 +135,10 @@ class DeletePostService(BoardService):
 
 
 class DeletePostServiceAPI(DeletePostService):
+    """
+    API 요청에 사용되는 게시글 삭제 클래스
+    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
+    """
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)
@@ -202,7 +209,7 @@ class DeleteCommentService(DeletePostService):
 class DeleteCommentServiceAPI(DeleteCommentService):
     """
     댓글 삭제 처리 API 클래스, 
-    상속받은 클래스에서 예외처리 함수를 오버라이딩 하여 사용합니다.
+    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
     """
 
     def raise_exception(self, status_code: int, detail: str = None):
@@ -210,6 +217,9 @@ class DeleteCommentServiceAPI(DeleteCommentService):
 
 
 class ListDeleteService(BoardService):
+    """
+    여러 게시글을 한번에 삭제하기 위한 클래스
+    """
 
     def __init__(
         self,
@@ -247,6 +257,10 @@ class ListDeleteService(BoardService):
 
 
 class ListDeleteServiceAPI(ListDeleteService):
+    """
+    API 요청에 사용되는 게시글 목록 삭제 클래스
+    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
+    """
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code, detail)

@@ -4,13 +4,12 @@ from sqlalchemy import asc, desc, func, select
 from core.database import db_session
 from core.models import Board, Member
 from lib.board_lib import write_search_filter, get_list
-from .base_handler import BoardService
+from . import BoardService
 
 
 class ListPostService(BoardService):
     """
-    게시글 목록 공통 클래스
-    Template, API 클래스에서 상속받아 사용
+    게시글 목록 클래스
     """
 
     def __init__(
@@ -78,10 +77,7 @@ class ListPostService(BoardService):
 
         return self.query
 
-    def get_writes(
-        self,
-        search_params: dict,
-    ):
+    def get_writes(self,search_params: dict):
         """게시글 목록을 가져옵니다."""
         current_page = search_params.get('current_page')
         page_rows = self.page_rows
@@ -103,10 +99,7 @@ class ListPostService(BoardService):
 
         return writes
     
-    def get_notice_writes(
-        self,
-        search_params: dict,
-    ):
+    def get_notice_writes(self,search_params: dict):
         """게시글 중 공지사항 목록을 가져옵니다."""
         current_page = search_params.get('current_page')
         sca = self.request.query_params.get("sca")
@@ -126,6 +119,10 @@ class ListPostService(BoardService):
 
 
 class ListPostServiceAPI(ListPostService):
+    """
+    API 요청에 사용되는 게시글 목록 클래스
+    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
+    """
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)

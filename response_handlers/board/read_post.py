@@ -5,13 +5,12 @@ from core.database import db_session
 from core.models import Board, Member, WriteBaseModel, BoardGood, Scrap
 from lib.board_lib import BoardFileManager, insert_point, is_owner, cut_name
 from lib.template_filters import number_format
-from .base_handler import BoardService
+from . import BoardService
 
 
 class ReadPostService(BoardService):
     """
-    게시글 읽기 공통 클래스
-    Template, API 클래스에서 상속받아 사용
+    게시글 읽기 클래스
     """
 
     def __init__(
@@ -238,6 +237,10 @@ class ReadPostService(BoardService):
 
 
 class ReadPostServiceAPI(ReadPostService):
+    """
+    API 요청에 사용되는 게시글 읽기 클래스
+    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
+    """
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)
@@ -276,7 +279,7 @@ class DownloadFileService(BoardService):
         return board_file
 
     def validate_point_session(self, board_file):
-        # 게시물당 포인트가 한번만 차감되도록 세션 설정
+        """게시물당 포인트가 한번만 차감되도록 세션 설정"""
         session_name = f"ss_down_{self.bo_table}_{self.wr_id}"
         if not self.request.session.get(session_name):
             # 포인트 검사
@@ -304,7 +307,7 @@ class DownloadFileService(BoardService):
 class DownloadFileServiceAPI(DownloadFileService):
     """
     API용 파일 다운로드 클래스
-    상위 클래스의 예외처리를 오버라이딩 하여 사용
+    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
     """
 
     def raise_exception(self, status_code: int, detail: str = None):

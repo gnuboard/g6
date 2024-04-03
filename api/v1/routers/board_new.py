@@ -1,5 +1,4 @@
 from typing_extensions import Annotated
-
 from fastapi import APIRouter, Depends, Query, Body
 
 from api.v1.models import responses
@@ -38,7 +37,7 @@ async def api_board_new_list(
 
 
 @router.post("/new_delete",
-            summary="게시글을 삭제한다.",
+            summary="최신 게시글을 삭제",
             responses={**responses}
              )
 async def api_new_delete(

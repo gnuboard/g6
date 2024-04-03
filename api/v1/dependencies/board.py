@@ -22,7 +22,6 @@ from api.v1.lib.board import is_possible_level, is_possible_point
 
 
 def get_current_member(
-    request: Request,
     db: db_session,
     member_service: Annotated[MemberService, Depends()],
     token: Annotated[str, Depends(oauth2_scheme)]

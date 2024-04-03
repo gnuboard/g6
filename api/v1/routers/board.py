@@ -1,7 +1,6 @@
 from typing_extensions import Annotated, Dict, List
-
 from fastapi import (
-    APIRouter, Depends, Request, Path,HTTPException,
+    APIRouter, Depends, Request, Path, HTTPException,
     status, UploadFile, File, Form, Body
 )
 from fastapi.responses import RedirectResponse, FileResponse
@@ -36,7 +35,6 @@ credentials_exception = HTTPException(
 
 @router.get("/group/{gr_id}",
             summary="게시판그룹 목록 조회",
-            response_description="게시판그룹 목록을 반환합니다.",
             responses={**responses}
             )
 async def api_group_board_list(
@@ -68,7 +66,6 @@ async def api_group_board_list(
 
 @router.get("/{bo_table}",
             summary="게시판 조회",
-            response_description="게시판 정보, 글 목록을 반환합니다.",
             responses={**responses}
             )
 async def api_list_post(
@@ -80,7 +77,7 @@ async def api_list_post(
     bo_table: str = Path(...),
 ) -> Dict:
     """
-    지정된 게시판의 글 목록을 보여줍니다.
+    게시판 정보, 글 목록을 반환합니다.
     """
     list_post_service = ListPostServiceAPI(
         request, db, bo_table, board, member_info["member"], search_params
@@ -104,7 +101,6 @@ async def api_list_post(
 
 @router.get("/{bo_table}/{wr_id}",
             summary="게시판 개별 글 조회",
-            response_description="게시판 개별 글을 반환합니다.",
             response_model=ResponseWriteModel,
             responses={**responses}
             )
@@ -144,7 +140,6 @@ async def api_read_post(
 
 @router.post("/{bo_table}",
              summary="게시판 글 작성",
-             response_description="글 작성 성공 여부를 반환합니다.",
              responses={**responses}
              )
 async def api_create_post(
@@ -181,7 +176,6 @@ async def api_create_post(
 
 @router.put("/{bo_table}/{wr_id}",
             summary="게시판 글 수정",
-            response_description="글 수정 성공 여부를 반환합니다.",
             responses={**responses}
             )
 async def api_update_post(
@@ -217,7 +211,6 @@ async def api_update_post(
 
 @router.delete("/{bo_table}/{wr_id}",
                 summary="게시판 글 삭제",
-                response_description="글 삭제 성공 여부를 반환합니다.",
                 responses={**responses}
                )
 async def api_delete_post(
@@ -244,7 +237,6 @@ async def api_delete_post(
 
 @router.post("/list_delete/{bo_table}",
             summary="게시글 일괄 삭제",
-            response_description="글 일괄 삭제 성공 여부를 반환합니다.",
             responses={**responses}
             )
 async def api_list_delete(
@@ -269,7 +261,6 @@ async def api_list_delete(
 
 @router.post("/move_update/{bo_table}",
             summary="게시글 복사/이동",
-            response_description="게시글 복사/이동 성공 여부를 반환합니다.",
             responses={**responses}
             )
 async def api_move_update(
@@ -297,7 +288,6 @@ async def api_move_update(
 
 @router.post("/uploadfile/{bo_table}/{wr_id}",
             summary="파일 업로드",
-            response_description="파일 업로드 성공 여부를 반환합니다.",
             responses={**responses}
             )
 async def api_upload_file(
@@ -312,7 +302,7 @@ async def api_upload_file(
     file_dels: list = Form(None, alias="bf_file_del[]"),
 ) -> Dict:
     """
-    파일 업로드
+    파일을 업로드합니다.
     """
     create_post_service = CreatePostServiceAPI(
         request, db, bo_table, board, member_info["member"]
@@ -323,7 +313,6 @@ async def api_upload_file(
 
 @router.post("/{bo_table}/{wr_id}/download/{bf_no}",
             summary="파일 다운로드",
-            response_description="게시글의 파일을 다운로드 합니다.",
             responses={**responses}
             )
 async def api_download_file(
@@ -352,7 +341,6 @@ async def api_download_file(
 
 @router.post("/{bo_table}/{wr_parent}/comment",
             summary="댓글 작성",
-            response_description="댓글 작성 성공 여부를 반환합니다.",
             responses={**responses}
             )
 async def api_create_comment(
@@ -384,7 +372,6 @@ async def api_create_comment(
 
 @router.put("/{bo_table}/{wr_parent}/comment/{wr_id}",
             summary="댓글 수정",
-            response_description="댓글 수정 성공 여부를 반환합니다.",
             responses={**responses}
             )
 async def api_update_comment(
@@ -397,7 +384,7 @@ async def api_update_comment(
     wr_id: str = Path(...),
 ) -> Dict:
     """
-    댓글 수정
+    댓글을 수정합니다.
     """
     create_comment_service = CreateCommentServiceAPI(
         request, db, bo_table, board, member
@@ -419,7 +406,6 @@ async def api_update_comment(
 
 @router.delete("/{bo_table}/{wr_parent}/comment/{wr_id}",
                 summary="댓글 삭제",
-                response_description="댓글 삭제 성공 여부를 반환합니다.",
                 responses={**responses}
                )
 async def api_delete_comment(
@@ -432,7 +418,7 @@ async def api_delete_comment(
     wr_id: str = Path(...),
 ):
     """
-    댓글 삭제
+    댓글을 삭제합니다.
     """
     delete_comment_service = DeleteCommentServiceAPI(
         request, db, bo_table, board, wr_id, comment, member

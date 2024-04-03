@@ -1,5 +1,4 @@
-from typing_extensions import Union
-from fastapi import Request, HTTPException
+from fastapi import Request
 
 from core.database import db_session
 from core.models import Board, Member
@@ -10,7 +9,7 @@ from lib.common import dynamic_create_write_table
 
 
 class BoardService(BaseService, BoardConfig):
-    """게시판 관련 router 함수에 사용될 기본 클래스"""
+    """게시판 관련 기반 서비스 클래스"""
 
     def __init__(
         self,

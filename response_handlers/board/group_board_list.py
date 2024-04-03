@@ -4,7 +4,7 @@ from sqlalchemy import select
 from core.database import db_session
 from core.models import Board, Group, Member
 from lib.board_lib import get_admin_type
-from .base_handler import BoardService
+from . import BoardService
 
 
 class GroupBoardListService(BoardService):
