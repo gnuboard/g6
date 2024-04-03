@@ -1,6 +1,6 @@
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Body
 
 from api.v1.models import responses
 from response_handlers.board_new import BoardNewServiceAPI
@@ -35,3 +35,18 @@ async def api_board_new_list(
         "current_page": current_page,
     }
     return content
+
+
+@router.post("/new_delete",
+            summary="게시글을 삭제한다.",
+            responses={**responses}
+             )
+async def api_new_delete(
+    board_new_service: Annotated[BoardNewServiceAPI, Depends()],
+    bn_ids: list = Body(...),
+):
+    """
+    최신 게시글을 삭제한다.
+    """
+    board_new_service.delete_board_news(bn_ids)
+    return {"result": "deleted"}

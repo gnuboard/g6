@@ -7,7 +7,9 @@ from core.models import Board, BoardNew
 from core.database import db_session
 from core.exception import AlertException
 from lib.service import BaseService
-from lib.common import dynamic_create_write_table, cut_name
+from lib.common import dynamic_create_write_table, cut_name, FileCache
+from lib.point import delete_point, insert_point
+from lib.board_lib import BoardFileManager
 
 
 class BoardNewService(BaseService):
@@ -88,6 +90,41 @@ class BoardNewService(BaseService):
                 # 시간설정
                 new.datetime = self.format_datetime(write.wr_datetime)
 
+    def delete_board_news(self, bn_ids: list):
+        """최신글 삭제"""
+        # 새글 정보 조회
+        board_news = self.db.scalars(select(BoardNew).where(BoardNew.bn_id.in_(bn_ids))).all()
+        for new in board_news:
+            board = self.db.get(Board, new.bo_table)
+            write_model = dynamic_create_write_table(new.bo_table)
+            write = self.db.get(write_model, new.wr_id)
+            if write:
+                if write.wr_is_comment == 0:
+                    # 게시글 삭제
+                    # TODO: 게시글 삭제 공용함수 추가
+                    self.db.delete(write)
+
+                    # 원글 포인트 삭제
+                    if not delete_point(self.request, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
+                        insert_point(self.request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
+                else:
+                    # 댓글 삭제
+                    # TODO: 댓글 삭제 공용함수 추가
+                    self.db.delete(write)
+
+                    # 댓글 포인트 삭제
+                    if not delete_point(self.request, write.mb_id, board.bo_table, write.wr_id, "댓글"):
+                        insert_point(self.request, write.mb_id, board.bo_comment_point * (-1), f"{board.bo_subject} {write.wr_parent}-{write.wr_id} 댓글 삭제")
+                # 파일 삭제
+                BoardFileManager(board, write.wr_id).delete_board_files()
+
+            # 최신글 삭제
+            self.db.delete(new)
+
+            # 최신글 캐시 삭제
+            FileCache().delete_prefix(f'latest-{new.bo_table}')
+
+        self.db.commit()
 
 class BoardNewServiceAPI(BoardNewService):
     """
