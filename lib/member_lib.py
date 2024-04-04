@@ -353,11 +353,11 @@ class MemberImageService(BaseService):
         directory = self.IMAGE_DIR if image_type == "image" else self.ICON_DIR
         sub_directory = mb_id[:2]
         image_directory = os.path.join(directory, sub_directory)
-        
-        if is_delete or file:
+        image_obj = self._validate_and_open_image(file, image_type)
+
+        if is_delete or image_obj:
             self._delete_existing_images(image_directory, mb_id)
 
-        image_obj = self._validate_and_open_image(file, image_type)
         if image_obj:
             # 이미지 저장 경로 생성
             os.makedirs(image_directory, exist_ok=True)
