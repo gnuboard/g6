@@ -2,7 +2,7 @@ from typing_extensions import Annotated
 from fastapi import APIRouter, Form, Path, Request, Depends
 from fastapi.responses import JSONResponse
 
-from service.ajax_good import AjaxGoodService
+from service.ajax import AjaxGoodService
 
 router = APIRouter()
 
