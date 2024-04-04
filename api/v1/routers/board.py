@@ -16,7 +16,7 @@ from api.v1.dependencies.board import (
     validate_write
 )
 from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel
-from response_handlers.board import(
+from service.board import(
     ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
     UpdatePostServiceAPI, DeletePostServiceAPI, GroupBoardListServiceAPI,
     CommentServiceAPI, DeleteCommentServiceAPI, ListDeleteServiceAPI,

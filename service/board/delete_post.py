@@ -9,7 +9,7 @@ from lib.board_lib import (
     BoardFileManager, FileCache
 )
 from lib.common import remove_query_params, set_url_query_params
-from .base_handler import BoardService
+from .board import BoardService
 
 
 class DeletePostService(BoardService):

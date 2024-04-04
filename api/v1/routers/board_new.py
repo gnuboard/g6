@@ -2,7 +2,7 @@ from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, Query, Body
 
 from api.v1.models import responses
-from response_handlers.board_new import BoardNewServiceAPI
+from service.board_new import BoardNewServiceAPI
 
 
 router = APIRouter()

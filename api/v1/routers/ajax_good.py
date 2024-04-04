@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from core.models import Member
 from api.v1.dependencies.board import get_current_member
 from api.v1.models import responses
-from response_handlers.ajax_good import AjaxGoodService
+from service.ajax_good import AjaxGoodService
 
 
 router = APIRouter()

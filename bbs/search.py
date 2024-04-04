@@ -3,7 +3,7 @@ from fastapi import APIRouter, Request, Query
 from core.database import db_session
 from core.template import UserTemplates
 from lib.template_filters import search_font
-from response_handlers.search import SearchService
+from service.search import SearchService
 
 
 router = APIRouter()

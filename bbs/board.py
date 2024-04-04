@@ -27,7 +27,7 @@ from lib.dependencies import (
     get_board, get_write, get_login_member
 )
 from lib.template_functions import get_paging
-from response_handlers.board import (
+from service.board import (
     ListPostService, CreatePostService, ReadPostService,
     UpdatePostService, DeletePostService, GroupBoardListService,
     CommentService, DeleteCommentService, ListDeleteService,

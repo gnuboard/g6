@@ -6,7 +6,7 @@ from core.models import Member
 from api.v1.models import responses
 from api.v1.dependencies.board import get_current_member
 from api.v1.models.board import ResponseBoardModel, ResponseWriteSearchModel
-from response_handlers.search import SearchServiceAPI
+from service.search import SearchServiceAPI
 
 
 router = APIRouter()

@@ -1,4 +1,4 @@
-from .base_handler import BoardService
+from .board import BoardService
 from .list_post import ListPostService, ListPostServiceAPI
 from .create_post import (
     CreatePostService, CreatePostServiceAPI,
