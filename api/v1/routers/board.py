@@ -20,7 +20,7 @@ from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel, Re
 from response_handlers.board import(
     ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
     UpdatePostServiceAPI, DeletePostServiceAPI, GroupBoardListServiceAPI,
-    CreateCommentServiceAPI, DeleteCommentServiceAPI, ListDeleteServiceAPI,
+    CommentServiceAPI, DeleteCommentServiceAPI, ListDeleteServiceAPI,
     MoveUpdateServiceAPI, DownloadFileServiceAPI
 )
 
@@ -355,16 +355,16 @@ async def api_create_comment(
     """
     댓글 등록
     """
-    create_comment_service = CreateCommentServiceAPI(
+    comment_service = CommentServiceAPI(
         request, db, bo_table, board, member
     )
-    parent_write = create_comment_service.get_parent_post(wr_parent, is_reply=False)
-    create_comment_service.validate_comment_level()
-    create_comment_service.validate_point()
-    create_comment_service.validate_post_content(comment_data.wr_content)
-    comment = create_comment_service.save_comment(comment_data, parent_write)
-    create_comment_service.add_point(comment)
-    create_comment_service.send_write_mail_(comment, parent_write)
+    parent_write = comment_service.get_parent_post(wr_parent, is_reply=False)
+    comment_service.validate_comment_level()
+    comment_service.validate_point()
+    comment_service.validate_post_content(comment_data.wr_content)
+    comment = comment_service.save_comment(comment_data, parent_write)
+    comment_service.add_point(comment)
+    comment_service.send_write_mail_(comment, parent_write)
     insert_board_new(bo_table, comment)
     db.commit()
     return {"result": "created"}
@@ -387,19 +387,19 @@ async def api_update_comment(
     """
     댓글을 수정합니다.
     """
-    create_comment_service = CreateCommentServiceAPI(
-        request, db, bo_table, board, member
+    comment_service = CommentServiceAPI(
+        request, db, bo_table, board, member, wr_id
     )
-    write_model = create_comment_service.write_model
-    create_comment_service.get_parent_post(wr_parent, is_reply=False)
+    write_model = comment_service.write_model
+    comment_service.get_parent_post(wr_parent, is_reply=False)
     comment = db.get(write_model, wr_id)
     if not comment:
         raise HTTPException(status_code=404, detail=f"{wr_id} : 존재하지 않는 댓글입니다.")
 
-    create_comment_service.validate_post_content(comment_data.wr_content)
-    comment.wr_content = create_comment_service.get_cleaned_data(comment_data.wr_content)
+    comment_service.validate_post_content(comment_data.wr_content)
+    comment.wr_content = comment_service.get_cleaned_data(comment_data.wr_content)
     comment.wr_option = comment_data.wr_option or "html1"
-    comment.wr_last = create_comment_service.g5_instance.get_wr_last_now(write_model.__tablename__)
+    comment.wr_last = comment_service.g5_instance.get_wr_last_now(write_model.__tablename__)
     db.commit()
 
     return {"result": "updated"}

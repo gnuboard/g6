@@ -30,7 +30,7 @@ from lib.template_functions import get_paging
 from response_handlers.board import (
     ListPostService, CreatePostService, ReadPostService,
     UpdatePostService, DeletePostService, GroupBoardListService,
-    CreateCommentService, DeleteCommentService, ListDeleteService,
+    CommentService, DeleteCommentService, ListDeleteService,
     MoveUpdateService, DownloadFileService
 )
 
@@ -527,8 +527,8 @@ async def write_comment_update(
     """
     member = request.state.login_member
 
-    create_comment_service = CreateCommentService(
-        request, db, bo_table, board, member
+    comment_service = CommentService(
+        request, db, bo_table, board, member, form.comment_id
     )
 
     if form.w == "c":
@@ -536,28 +536,28 @@ async def write_comment_update(
         if not member:
             # 비회원은 Captcha 유효성 검사
             await validate_captcha(request, recaptcha_response)
-        create_comment_service.validate_write_delay()
-        create_comment_service.validate_comment_level()
-        create_comment_service.validate_point()
-        create_comment_service.validate_post_content(form.wr_content)
-        comment = create_comment_service.save_comment(form, write)
-        create_comment_service.add_point(comment)
-        create_comment_service.send_write_mail_(comment, write)
+        comment_service.validate_write_delay()
+        comment_service.validate_comment_level()
+        comment_service.validate_point()
+        comment_service.validate_post_content(form.wr_content)
+        comment = comment_service.save_comment(form, write)
+        comment_service.add_point(comment)
+        comment_service.send_write_mail_(comment, write)
         insert_board_new(bo_table, comment)
         set_write_delay(request)
     elif form.w == "cu":
         # 댓글 수정
-        write_model = create_comment_service.write_model
+        write_model = comment_service.write_model
         comment = db.get(write_model, form.comment_id)
         if not comment:
             raise AlertException(f"{form.comment_id} : 존재하지 않는 댓글입니다.", 404)
 
-        create_comment_service.validate_post_content(form.wr_content)
-        comment.wr_content = create_comment_service.get_cleaned_data(form.wr_content)
+        comment_service.validate_post_content(form.wr_content)
+        comment.wr_content = comment_service.get_cleaned_data(form.wr_content)
         comment.wr_option = form.wr_secret or "html1"
-        comment.wr_last = create_comment_service.g5_instance.get_wr_last_now(write_model.__tablename__)
+        comment.wr_last = comment_service.g5_instance.get_wr_last_now(write_model.__tablename__)
     db.commit()
-    redirect_url = create_comment_service.get_redirect_url(write)
+    redirect_url = comment_service.get_redirect_url(write)
     return RedirectResponse(redirect_url, status_code=303)
 
 
