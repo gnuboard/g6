@@ -138,10 +138,16 @@ class CreatePostService(BoardService):
         """공지글 설정"""
         self.board.bo_notice = self.set_board_notice(wr_id, notice)
 
-    def upload_files(self, write, files: List[UploadFile], file_content: list = None, file_dels: list = None):
+    def upload_files(self, write: WriteBaseModel, files: List[UploadFile], file_content: list = None, file_dels: list = None):
         """파일 업로드"""
-        if not self.is_upload_level() or not files:
+        if not files:
             return
+
+        if self.mb_id != write.mb_id:
+            self.raise_exception(status_code=403, detail="자신의 글에만 파일을 업로드할 수 있습니다.")
+
+        if not self.is_upload_level():
+            self.raise_exception(status_code=403, detail="파일 업로드 권한이 없습니다.")
 
         file_manager = BoardFileManager(self.board, write.wr_id)
         directory = os.path.join(self.FILE_DIRECTORY, self.bo_table)
