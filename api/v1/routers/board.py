@@ -3,7 +3,7 @@ from fastapi import (
     APIRouter, Depends, Request, Path, HTTPException,
     status, UploadFile, File, Form, Body
 )
-from fastapi.responses import RedirectResponse, FileResponse
+from fastapi.responses import FileResponse
 from fastapi.encoders import jsonable_encoder
 
 from core.database import db_session
@@ -169,9 +169,8 @@ async def api_create_post(
     set_write_delay(create_post_service.request)
     create_post_service.save_secret_session(write.wr_id, wr_data.secret)
     create_post_service.delete_cache()
-    redirect_url = create_post_service.get_redirect_url(write)
     db.commit()
-    return RedirectResponse(redirect_url, status_code=303)
+    return {"result": "created"}
     
 
 @router.put("/{bo_table}/{wr_id}",
