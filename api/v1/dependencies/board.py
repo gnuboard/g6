@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, status, Path
 from sqlalchemy import select
 
 from core.database import db_session
-from core.models import Member, Board, Group
+from core.models import Member, Board
 from lib.common import dynamic_create_write_table
 from api.settings import SETTINGS
 from api.v1.auth import oauth2_scheme
@@ -87,16 +87,3 @@ def get_write(
         raise HTTPException(status_code=404, detail="존재하지 않는 게시글입니다.")
 
     return write
-
-
-def get_group(
-    db: db_session,
-    gr_id: str = Path(...),
-) -> Group:
-    """
-    게시판그룹 정보를 조회합니다.
-    """
-    group = db.get(Group, gr_id)
-    if not group:
-        raise HTTPException(status_code=404, detail="존재하지 않는 게시판그룹입니다.")
-    return group

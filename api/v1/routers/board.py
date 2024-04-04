@@ -7,11 +7,11 @@ from fastapi.responses import FileResponse
 from fastapi.encoders import jsonable_encoder
 
 from core.database import db_session
-from core.models import Group, Member
+from core.models import Member
 from lib.board_lib import insert_board_new, set_write_delay
 from lib.dependencies import common_search_query_params
 from api.v1.models import responses
-from api.v1.dependencies.board import get_current_member, get_group
+from api.v1.dependencies.board import get_current_member
 from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel
 from service.board import(
     ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
@@ -37,7 +37,6 @@ async def api_group_board_list(
     request: Request,
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
-    group: Annotated[Group, Depends(get_group)],
     gr_id: str = Path(...),
 ) -> Dict:
     """
