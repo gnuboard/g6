@@ -196,6 +196,7 @@ async def api_update_post(
     update_post_service.validate_restrict_comment_count()
     write = get_write(update_post_service.db, update_post_service.bo_table, update_post_service.wr_id)
     
+    update_post_service.validate_author(write)
     update_post_service.validate_secret_board(wr_data.secret, wr_data.html, wr_data.mail)
     update_post_service.validate_post_content(wr_data.wr_subject)
     update_post_service.validate_post_content(wr_data.wr_content)
@@ -396,6 +397,7 @@ async def api_update_comment(
     if not comment:
         raise HTTPException(status_code=404, detail=f"{wr_id} : 존재하지 않는 댓글입니다.")
 
+    comment_service.validate_author(comment)
     comment_service.validate_post_content(comment_data.wr_content)
     comment.wr_content = comment_service.get_cleaned_data(comment_data.wr_content)
     comment.wr_option = comment_data.wr_option or "html1"

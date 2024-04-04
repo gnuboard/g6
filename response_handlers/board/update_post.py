@@ -5,7 +5,7 @@ from sqlalchemy import update, select, func
 from core.database import db_session
 from core.models import Board, Member
 from core.formclass import WriteForm
-from lib.board_lib import generate_reply_character, insert_point
+from lib.board_lib import generate_reply_character, insert_point, is_owner
 from lib.g5_compatibility import G5Compatibility
 from lib.template_filters import number_format
 from lib.html_sanitizer import content_sanitizer
@@ -29,6 +29,11 @@ class UpdatePostService(CreatePostService):
     ):
         super().__init__(request, db, bo_table, board, member)
         self.wr_id = wr_id
+
+    def validate_author(self, write):
+        """작성자 확인"""
+        if not is_owner(write, self.mb_id):
+            self.raise_exception(detail="작성자만 수정할 수 있습니다.", status_code=403)
 
     def validate_restrict_comment_count(self):
         """글 삭제 시 댓글 수를 확인하여 삭제 여부를 결정"""

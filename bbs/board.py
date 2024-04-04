@@ -397,6 +397,7 @@ async def update_post(
         request, db, bo_table, board, member, wr_id,
     )
     write = get_write(db, bo_table, wr_id)
+    update_post_service.validate_author(write)
     update_post_service.validate_restrict_comment_count()
     update_post_service.validate_secret_board(secret, html, mail)
     update_post_service.validate_post_content(form_data.wr_subject)
@@ -552,6 +553,7 @@ async def write_comment_update(
         if not comment:
             raise AlertException(f"{form.comment_id} : 존재하지 않는 댓글입니다.", 404)
 
+        comment_service.validate_author(comment)
         comment_service.validate_post_content(form.wr_content)
         comment.wr_content = comment_service.get_cleaned_data(form.wr_content)
         comment.wr_option = form.wr_secret or "html1"
