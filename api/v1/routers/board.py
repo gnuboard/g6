@@ -11,7 +11,7 @@ from core.models import Group, Member
 from lib.board_lib import insert_board_new, set_write_delay
 from lib.dependencies import common_search_query_params
 from api.v1.models import responses
-from api.v1.dependencies.board import get_current_member, get_group, validate_write
+from api.v1.dependencies.board import get_current_member, get_group
 from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel
 from service.board import(
     ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
@@ -139,7 +139,7 @@ async def api_create_post(
     request: Request,
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
-    wr_data: Annotated[WriteModel, Depends(validate_write)],
+    wr_data: WriteModel,
     bo_table: str = Path(...),
 ) -> Dict:
     """
@@ -173,7 +173,7 @@ async def api_update_post(
     request: Request,
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
-    wr_data: Annotated[WriteModel, Depends(validate_write)],
+    wr_data: WriteModel,
     bo_table: str = Path(...),
     wr_id: str = Path(...),
 ) -> Dict:

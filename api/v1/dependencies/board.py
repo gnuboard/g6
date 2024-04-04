@@ -1,20 +1,16 @@
 """게시판 관련 의존성을 정의합니다."""
 from typing_extensions import Annotated
-from fastapi import Depends, HTTPException, Request, status, Path
+from fastapi import Depends, HTTPException, status, Path
 from sqlalchemy import select
 
 from core.database import db_session
 from core.models import Member, Board, Group
-from lib.common import filter_words, dynamic_create_write_table
-from lib.board_lib import BoardConfig
-from lib.html_sanitizer import content_sanitizer
-from lib.pbkdf2 import create_hash
+from lib.common import dynamic_create_write_table
 from api.settings import SETTINGS
 from api.v1.auth import oauth2_scheme
 from api.v1.auth.jwt import JWT
 from api.v1.lib.member import MemberService
 from api.v1.models.auth import TokenPayload
-from api.v1.models.board import WriteModel
 
 
 def get_current_member(
@@ -104,50 +100,3 @@ def get_group(
     if not group:
         raise HTTPException(status_code=404, detail="존재하지 않는 게시판그룹입니다.")
     return group
-
-
-def validate_write(
-    request: Request,
-    write: WriteModel,
-    member: Annotated[Member, Depends(get_current_member)],
-    board: Annotated[Board, Depends(get_board)],
-):
-    """
-    게시글 작성시 게시글 정보의 유효성을 검사합니다.
-    """
-    board_config = BoardConfig(request, board)
-    
-    # 게시글 내용 검증
-    subject_filter_word = filter_words(request, write.wr_subject)
-    content_filter_word = filter_words(request, write.wr_content)
-    if subject_filter_word or content_filter_word:
-        word = subject_filter_word if subject_filter_word else content_filter_word
-        raise HTTPException(status_code=400, detail=f"제목/내용에 금지단어({word})가 포함되어 있습니다.")
-
-    # Stored XSS 방지
-    write.wr_content = content_sanitizer.get_cleaned_data(write.wr_content)
-
-    # 옵션 설정
-    options = [opt for opt in [write.html, write.secret, write.mail] if opt]
-    write.wr_option = ",".join(map(str, options))
-
-    # 링크 설정
-    if not member or board_config.board.bo_link_level > member.mb_level:
-        write.wr_link1 = ""
-        write.wr_link2 = ""
-
-    write.wr_password = create_hash(write.wr_password) if write.wr_password else ""
-
-    # 작성자명(wr_name) 설정
-    if member:
-        if board_config.board.bo_use_name:
-            write.wr_name =  member.mb_name
-        else:
-            write.wr_name =  member.mb_nick
-    elif not write.wr_name:
-        raise HTTPException(status_code=400, detail="로그인 세션 만료, 비회원 글쓰기시 작성자 이름 미기재 등의 비정상적인 접근입니다.")
-
-    write.wr_email = getattr(member, "mb_email", write.wr_email)
-    write.wr_homepage = getattr(member, "mb_homepage", write.wr_homepage)
-
-    return write
