@@ -6,7 +6,7 @@ from sqlalchemy import delete, inspect, select, update
 
 from core.database import db_session
 from core.models import (
-    Board, Member, WriteBaseModel, AutoSave,
+    Member, WriteBaseModel, AutoSave,
     BoardNew, BoardGood, Scrap
 )
 from core.formclass import WriteForm
@@ -33,8 +33,8 @@ class CreatePostService(BoardService):
 
     FILE_DIRECTORY = "data/file/"
 
-    def __init__(self, request: Request, db: db_session, bo_table: str, board: Board, member: Member):
-        super().__init__(request, db, bo_table, board, member)
+    def __init__(self, request: Request, db: db_session, bo_table: str, member: Member):
+        super().__init__(request, db, bo_table, member)
 
     def validate_anonymous_password(self, data):
         """비회원 글쓰기시 비밀번호 검증"""
@@ -291,11 +291,10 @@ class MoveUpdateService(BoardService):
         request: Request,
         db: db_session,
         bo_table: str,
-        board: Board,
         member: Member,
         sw: str,
     ):
-        super().__init__(request, db, bo_table, board, member)
+        super().__init__(request, db, bo_table, member)
         self.sw = sw
         self.act = "이동" if sw == "move" else "복사"
 

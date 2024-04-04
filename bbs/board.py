@@ -24,7 +24,7 @@ from lib.common import (
 from lib.dependencies import (
     check_group_access, common_search_query_params,
     validate_captcha, validate_token, check_login_member,
-    get_board, get_write, get_login_member
+    get_write, get_login_member
 )
 from lib.template_functions import get_paging
 from service.board import (
@@ -77,13 +77,13 @@ async def list_post(
     request: Request,
     db: db_session,
     bo_table: Annotated[str, Path(...)],
-    board: Annotated[Board, Depends(get_board)],
     search_params: Annotated[dict, Depends(common_search_query_params)],
 ):
     """해당 게시판의 게시글 목록을 보여준다."""
     list_post_service = ListPostService(
-        request, db, bo_table, board, request.state.login_member, search_params
+        request, db, bo_table, request.state.login_member, search_params
     )
+    board = list_post_service.board
 
     context = {
         "request": request,
@@ -110,7 +110,6 @@ async def list_post(
 async def list_delete(
     request: Request,
     db: db_session,
-    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
     wr_ids: list = Form(..., alias="chk_wr_id[]"),
 ):
@@ -118,7 +117,7 @@ async def list_delete(
     게시글을 일괄 삭제한다.
     """
     list_delete_service = ListDeleteService(
-        request, db, bo_table, board, request.state.login_member
+        request, db, bo_table, request.state.login_member
     )
     list_delete_service.validate_admin_authority()
     list_delete_service.delete_writes(wr_ids)
@@ -133,7 +132,6 @@ async def list_delete(
 async def move_post(
     request: Request,
     db: db_session,
-    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
     sw: str = Form(...),
     wr_ids: list = Form(..., alias="chk_wr_id[]"),
@@ -142,7 +140,7 @@ async def move_post(
     게시글 복사/이동
     """
     move_update_service = MoveUpdateService(
-        request, db, bo_table, board, request.state.login_member, sw
+        request, db, bo_table, request.state.login_member, sw
     )
     # 게시판 관리자 검증
     mb_id = move_update_service.mb_id
@@ -163,7 +161,7 @@ async def move_post(
         "sw": sw,
         "act": move_update_service.act,
         "boards": boards,
-        "current_board": board,
+        "current_board": move_update_service.board,
         "wr_ids": ','.join(wr_ids)
     }
     return templates.TemplateResponse("/board/move.html", context)
@@ -173,7 +171,6 @@ async def move_post(
 async def move_update(
     request: Request,
     db: db_session,
-    origin_board: Annotated[Board, Depends(get_board)],
     origin_bo_table: str = Form(..., alias="bo_table"),
     sw: str = Form(...),
     wr_ids: str = Form(..., alias="wr_id_list"),
@@ -184,7 +181,7 @@ async def move_update(
     """
     member = request.state.login_member
     move_update_service = MoveUpdateService(
-        request, db, origin_bo_table, origin_board, member, sw
+        request, db, origin_bo_table, member, sw
     )
     move_update_service.validate_admin_authority()
     origin_writes = move_update_service.get_origin_writes(wr_ids)
@@ -200,7 +197,6 @@ async def move_update(
 async def write_form_add(
     request: Request,
     db: db_session,
-    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
     parent_id: int = Query(None)
 ):
@@ -208,9 +204,10 @@ async def write_form_add(
     게시글을 작성하는 form을 보여준다.
     """
     create_post_service = CreatePostService(
-        request, db, bo_table, board, request.state.login_member
+        request, db, bo_table, request.state.login_member
     )
 
+    board = create_post_service.board
     parent_write = None
     if parent_id:
         parent_write = create_post_service.get_parent_post(parent_id)
@@ -256,7 +253,6 @@ async def write_form_add(
 async def write_form_edit(
     request: Request,
     db: db_session,
-    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
     wr_id: int = Path(...)
 ):
@@ -264,9 +260,10 @@ async def write_form_edit(
     게시글을 작성하는 form을 보여준다.
     """
     update_post_service = UpdatePostService(
-        request, db, bo_table, board, request.state.login_member, wr_id,
+        request, db, bo_table, request.state.login_member, wr_id,
     )
 
+    board = update_post_service.board
     write = update_post_service.get_write(wr_id)
 
     # 게시판 수정 권한
@@ -335,7 +332,6 @@ async def create_post(
     db: db_session,
     form_data: Annotated[WriteForm, Depends()],
     member: Annotated[Member, Depends(check_login_member)],
-    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
     parent_id: int = Form(None),
     notice: bool = Form(False),
@@ -350,7 +346,7 @@ async def create_post(
 ):
     """게시글을 작성한다."""
     create_post_service = CreatePostService(
-        request, db, bo_table, board, member
+        request, db, bo_table, member
     )
     create_post_service.validate_captcha(recaptcha_response)
     create_post_service.validate_write_delay()
@@ -380,7 +376,6 @@ async def update_post(
     request: Request,
     db: db_session,
     member: Annotated[Member, Depends(get_login_member)],
-    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
     notice: bool = Form(False),
@@ -395,7 +390,7 @@ async def update_post(
 ):
     """게시글을 수정한다."""
     update_post_service = UpdatePostService(
-        request, db, bo_table, board, member, wr_id,
+        request, db, bo_table, member, wr_id,
     )
     write = get_write(db, bo_table, wr_id)
     update_post_service.validate_author(write)
@@ -421,14 +416,14 @@ async def update_post(
 async def read_post(
     request: Request,
     db: db_session,
-    board: Annotated[Board, Depends(get_board)],
     write: Annotated[WriteBaseModel, Depends(get_write)],
     member: Annotated[Member, Depends(check_login_member)],
     bo_table: str = Path(...),
     wr_id: int = Path(...),
 ):
     """게시글을 읽는다."""
-    read_post_service = ReadPostService(request, db, bo_table, board, wr_id, member)
+    read_post_service = ReadPostService(request, db, bo_table, wr_id, member)
+    board = read_post_service.board
     read_post_service.request.state.editor = read_post_service.select_editor
     read_post_service.validate_secret_with_session()
     read_post_service.validate_repeat_with_session()
@@ -460,7 +455,6 @@ async def read_post(
 async def delete_post(
     request: Request,
     db: db_session,
-    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
     wr_id: int = Path(...),
 ):
@@ -468,7 +462,7 @@ async def delete_post(
     게시글을 삭제한다.
     """
     delete_post_service = DeletePostService(
-        request, db, bo_table, board, wr_id, request.state.login_member
+        request, db, bo_table, wr_id, request.state.login_member
     )
     delete_post_service.validate_level()
     delete_post_service.validate_exists_reply()
@@ -482,7 +476,6 @@ async def delete_post(
 async def download_file(
     request: Request,
     db: db_session,
-    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
     wr_id: int = Path(...),
     bf_no: int = Path(...),
@@ -502,7 +495,7 @@ async def download_file(
         FileResponse: 파일 다운로드
     """
     download_file_service = DownloadFileService(
-        request, db, bo_table, board, request.state.login_member, wr_id, bf_no
+        request, db, bo_table, request.state.login_member, wr_id, bf_no
     )
     download_file_service.validate_download_level()
     board_file = download_file_service.get_board_file()
@@ -516,7 +509,6 @@ async def download_file(
 async def write_comment_update(
     request: Request,
     db: db_session,
-    board: Annotated[Board, Depends(get_board)],
     write: Annotated[WriteBaseModel, Depends(get_write)],
     bo_table: str = Path(...),
     form: WriteCommentForm = Depends(),
@@ -528,7 +520,7 @@ async def write_comment_update(
     member = request.state.login_member
 
     comment_service = CommentService(
-        request, db, bo_table, board, member, form.comment_id
+        request, db, bo_table, member, form.comment_id
     )
 
     if form.w == "c":
@@ -566,7 +558,6 @@ async def write_comment_update(
 async def delete_comment(
     request: Request,
     db: db_session,
-    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
     comment_id: int = Path(..., alias="wr_id"),
 ):
@@ -574,7 +565,7 @@ async def delete_comment(
     댓글 삭제
     """
     delete_comment_service = DeleteCommentService(
-        request, db, bo_table, board, comment_id, request.state.login_member
+        request, db, bo_table, comment_id, request.state.login_member
     )
     comment = delete_comment_service.get_comment()
     delete_comment_service.check_authority()

@@ -17,11 +17,11 @@ class BoardService(BaseService, BoardConfig):
         request: Request,
         db: db_session,
         bo_table: str,
-        board: Board,
         member: Member
     ):
-        super().__init__(request, board)
         self.db = db
+        board = self.get_board(bo_table)
+        super().__init__(request, board)
         self.bo_table = bo_table
         self.write_model = dynamic_create_write_table(bo_table)
         self.categories = self.get_category_list()
@@ -61,6 +61,13 @@ class BoardService(BaseService, BoardConfig):
         """게시판 관리자 검증"""
         if not self.admin_type:
             self.raise_exception(detail="게시판 관리자 이상 접근이 가능합니다.", status_code=403)
+
+    def get_board(self, bo_table: str) -> Board:
+        """게시판 정보를 가져온다."""
+        board = self.db.get(Board, bo_table)
+        if not board:
+            self.raise_exception(detail="존재하지 않는 게시판입니다.", status_code=404)
+        return board
 
     def get_write(self, wr_id: Union[int, str]) -> WriteBaseModel:
         """게시글(댓글)을 가져온다."""

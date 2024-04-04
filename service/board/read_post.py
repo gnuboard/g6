@@ -2,7 +2,7 @@ from fastapi import Request, HTTPException
 from sqlalchemy import asc, desc, select, exists
 
 from core.database import db_session
-from core.models import Board, Member, WriteBaseModel, BoardGood, Scrap
+from core.models import Member, BoardGood, Scrap
 from lib.board_lib import BoardFileManager, insert_point, is_owner, cut_name
 from lib.template_filters import number_format
 from . import BoardService
@@ -18,11 +18,10 @@ class ReadPostService(BoardService):
         request: Request,
         db: db_session,
         bo_table: str,
-        board: Board,
         wr_id: int,
         member: Member
     ):
-        super().__init__(request, db, bo_table, board, member)
+        super().__init__(request, db, bo_table, member)
         self.wr_id = wr_id
         self.board.subject = self.subject
 
@@ -33,7 +32,7 @@ class ReadPostService(BoardService):
         self.write = write
 
         # 파일정보 조회
-        self.images, self.normal_files = BoardFileManager(board, wr_id).get_board_files_by_type(request)
+        self.images, self.normal_files = BoardFileManager(self.board, wr_id).get_board_files_by_type(request)
 
         # TODO: 전체목록보이기 사용 => 게시글 목록 부분을 분리해야함
         self.write_list = None
@@ -254,16 +253,15 @@ class DownloadFileService(BoardService):
         request: Request,
         db: db_session,
         bo_table: str,
-        board: Board,
         member: Member,
         wr_id: int,
         bf_no: int,
     ):
-        super().__init__(request, db, bo_table, board, member)
+        super().__init__(request, db, bo_table, member)
         self.write = self.get_write(wr_id)
         self.wr_id = wr_id
         self.bf_no = bf_no
-        self.file_manager = BoardFileManager(board, wr_id)
+        self.file_manager = BoardFileManager(self.board, wr_id)
 
     def validate_download_level(self):
         """다운로드 권한 검증"""

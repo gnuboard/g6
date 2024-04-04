@@ -7,14 +7,11 @@ from fastapi.responses import FileResponse
 from fastapi.encoders import jsonable_encoder
 
 from core.database import db_session
-from core.models import Board, Group, Member
+from core.models import Group, Member
 from lib.board_lib import insert_board_new, set_write_delay
 from lib.dependencies import common_search_query_params
 from api.v1.models import responses
-from api.v1.dependencies.board import (
-    get_current_member, get_board, get_group,
-    validate_write
-)
+from api.v1.dependencies.board import get_current_member, get_group, validate_write
 from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel
 from service.board import(
     ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
@@ -71,7 +68,6 @@ async def api_list_post(
     request: Request,
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
-    board: Annotated[Board, Depends(get_board)],
     search_params: Annotated[dict, Depends(common_search_query_params)],
     bo_table: str = Path(...),
 ) -> Dict:
@@ -79,10 +75,10 @@ async def api_list_post(
     게시판 정보, 글 목록을 반환합니다.
     """
     list_post_service = ListPostServiceAPI(
-        request, db, bo_table, board, member, search_params
+        request, db, bo_table, member, search_params
     )
 
-    board_json = jsonable_encoder(board)
+    board_json = jsonable_encoder(list_post_service.board)
     board = ResponseBoardModel.model_validate(board_json)
 
     content = {
@@ -106,7 +102,6 @@ async def api_list_post(
 async def api_read_post(
     request: Request,
     db: db_session,
-    board: Annotated[Board, Depends(get_board)],
     member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
@@ -115,7 +110,7 @@ async def api_read_post(
     지정된 게시판의 글을 개별 조회합니다.
     """
     read_post_service = ReadPostServiceAPI(
-        request, db, bo_table, board, wr_id, member
+        request, db, bo_table, wr_id, member
     )
     content = jsonable_encoder(read_post_service.write)
     additional_content = jsonable_encoder({
@@ -145,14 +140,13 @@ async def api_create_post(
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
     wr_data: Annotated[WriteModel, Depends(validate_write)],
-    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
 ) -> Dict:
     """
     지정된 게시판에 새 글을 작성합니다.
     """
     create_post_service = CreatePostServiceAPI(
-        request, db, bo_table, board, member
+        request, db, bo_table, member
     )
     create_post_service.validate_secret_board(wr_data.secret, wr_data.html, wr_data.mail)
     create_post_service.validate_post_content(wr_data.wr_subject)
@@ -180,7 +174,6 @@ async def api_update_post(
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
     wr_data: Annotated[WriteModel, Depends(validate_write)],
-    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
 ) -> Dict:
@@ -188,7 +181,7 @@ async def api_update_post(
     지정된 게시판의 글을 수정합니다.
     """
     update_post_service = UpdatePostServiceAPI(
-        request, db, bo_table, board, member, wr_id
+        request, db, bo_table, member, wr_id
     )
     update_post_service.validate_restrict_comment_count()
     write = update_post_service.get_write(update_post_service.wr_id)
@@ -215,7 +208,6 @@ async def api_delete_post(
     request: Request,
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
-    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
 ) -> Dict:
@@ -223,7 +215,7 @@ async def api_delete_post(
     지정된 게시판의 글을 삭제합니다.
     """
     delete_post_api = DeletePostServiceAPI(
-        request, db, bo_table, board, wr_id, member
+        request, db, bo_table, wr_id, member
     )
     delete_post_api.validate_level(with_session=False)
     delete_post_api.validate_exists_reply()
@@ -241,7 +233,6 @@ async def api_list_delete(
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
     wr_ids: Annotated[list, Body(..., alias="chk_wr_id[]")],
-    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
 ):
     """
@@ -249,7 +240,7 @@ async def api_list_delete(
     - wr_ids: 삭제할 게시글 wr_id 리스트
     """
     list_delete_service = ListDeleteServiceAPI(
-        request, db, bo_table, board, member
+        request, db, bo_table, member
     )
     list_delete_service.validate_admin_authority()
     list_delete_service.delete_writes(wr_ids)
@@ -264,7 +255,6 @@ async def api_move_update(
     request: Request,
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
-    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
     sw: str = Body(...),
     wr_ids: str = Body(...),
@@ -274,9 +264,7 @@ async def api_move_update(
     게시글을 복사/이동합니다.
     - Scrap, File등 연관된 데이터들도 함께 수정합니다.
     """
-    move_update_service = MoveUpdateServiceAPI(
-        request, db, bo_table, board, member, sw
-    )
+    move_update_service = MoveUpdateServiceAPI(request, db, bo_table, member, sw)
     move_update_service.validate_admin_authority()
     origin_writes = move_update_service.get_origin_writes(wr_ids)
     move_update_service.move_copy_post(target_bo_tables, origin_writes)
@@ -291,7 +279,6 @@ async def api_upload_file(
     request: Request,
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
-    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
     files: List[UploadFile] = File(...),
@@ -304,9 +291,7 @@ async def api_upload_file(
     if not member:
         raise HTTPException(status_code=403, detail="로그인 후 이용해주세요.")
 
-    create_post_service = CreatePostServiceAPI(
-        request, db, bo_table, board, member
-    )
+    create_post_service = CreatePostServiceAPI(request, db, bo_table, member)
     write = create_post_service.get_write(wr_id)
     create_post_service.upload_files(write, files, file_content, file_dels)
     return {"result": "uploaded"}
@@ -319,7 +304,6 @@ async def api_upload_file(
 async def api_download_file(
     request: Request,
     db: db_session,
-    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
     wr_id: int = Path(...),
     bf_no: int = Path(...),
@@ -331,7 +315,7 @@ async def api_download_file(
     bf_no: 첨부된 파일의 순번
     """
     download_file_service = DownloadFileServiceAPI(
-        request, db, bo_table, board, request.state.login_member, wr_id, bf_no
+        request, db, bo_table, request.state.login_member, wr_id, bf_no
     )
     download_file_service.validate_download_level()
     board_file = download_file_service.get_board_file()
@@ -347,7 +331,6 @@ async def api_create_comment(
     request: Request,
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
-    board: Annotated[Board, Depends(get_board)],
     comment_data: CommentModel,
     bo_table: str = Path(...),
     wr_parent: str = Path(...),
@@ -355,9 +338,7 @@ async def api_create_comment(
     """
     댓글 등록
     """
-    comment_service = CommentServiceAPI(
-        request, db, bo_table, board, member
-    )
+    comment_service = CommentServiceAPI(request, db, bo_table, member)
     parent_write = comment_service.get_parent_post(wr_parent, is_reply=False)
     comment_service.validate_comment_level()
     comment_service.validate_point()
@@ -378,7 +359,6 @@ async def api_update_comment(
     request: Request,
     db: db_session,
     comment_data: CommentModel,
-    board: Annotated[Board, Depends(get_board)],
     member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(...),
     wr_parent: str = Path(...),
@@ -387,9 +367,7 @@ async def api_update_comment(
     """
     댓글을 수정합니다.
     """
-    comment_service = CommentServiceAPI(
-        request, db, bo_table, board, member, wr_id
-    )
+    comment_service = CommentServiceAPI(request, db, bo_table, member, wr_id)
     write_model = comment_service.write_model
     comment_service.get_parent_post(wr_parent, is_reply=False)
     comment = db.get(write_model, wr_id)
@@ -414,7 +392,6 @@ async def api_delete_comment(
     request: Request,
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
-    board: Annotated[Board, Depends(get_board)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
 ):
@@ -422,7 +399,7 @@ async def api_delete_comment(
     댓글을 삭제합니다.
     """
     delete_comment_service = DeleteCommentServiceAPI(
-        request, db, bo_table, board, wr_id, member
+        request, db, bo_table, wr_id, member
     )
     delete_comment_service.check_authority(with_session=False)
     delete_comment_service.delete_comment()

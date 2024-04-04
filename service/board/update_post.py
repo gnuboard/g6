@@ -3,7 +3,7 @@ from fastapi import Request, HTTPException
 from sqlalchemy import update, select, func
 
 from core.database import db_session
-from core.models import Board, Member
+from core.models import Member
 from core.formclass import WriteForm
 from lib.board_lib import generate_reply_character, insert_point, is_owner
 from lib.g5_compatibility import G5Compatibility
@@ -23,11 +23,10 @@ class UpdatePostService(CreatePostService):
         request: Request,
         db: db_session,
         bo_table: str,
-        board: Board,
         member: Member,
         wr_id: str,
     ):
-        super().__init__(request, db, bo_table, board, member)
+        super().__init__(request, db, bo_table, member)
         self.wr_id = wr_id
 
     def validate_author(self, write):
@@ -75,11 +74,10 @@ class CommentService(UpdatePostService):
         request: Request,
         db: db_session,
         bo_table: str,
-        board: Board,
         member: Member,
         wr_id: str = None,
     ):
-        super().__init__(request, db, bo_table, board, member, wr_id)
+        super().__init__(request, db, bo_table, member, wr_id)
         self.g5_instance = G5Compatibility(db)
 
     def validate_comment_level(self):

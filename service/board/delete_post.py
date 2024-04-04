@@ -3,7 +3,7 @@ from fastapi import Request, HTTPException
 from sqlalchemy import select, exists, delete, update
 
 from core.database import db_session
-from core.models import Board, Member, WriteBaseModel, BoardNew, Scrap
+from core.models import Member, BoardNew, Scrap
 from lib.board_lib import (
     is_owner, insert_point, delete_point,
     BoardFileManager, FileCache
@@ -22,11 +22,10 @@ class DeletePostService(BoardService):
         request: Request,
         db: db_session,
         bo_table: str,
-        board: Board,
         wr_id: int,
         member: Member,
     ):
-        super().__init__(request, db, bo_table, board, member)
+        super().__init__(request, db, bo_table, member)
         self.wr_id = wr_id
         self.write = self.get_write(wr_id)
         self.write_member_mb_no = self.db.scalar(select(Member.mb_no).where(Member.mb_id == self.write.mb_id))
@@ -151,11 +150,10 @@ class DeleteCommentService(DeletePostService):
         request: Request,
         db: db_session,
         bo_table: str,
-        board: Board,
         wr_id: int,
         member: Member,
     ):
-        super().__init__(request, db, bo_table, board, wr_id, member)
+        super().__init__(request, db, bo_table, wr_id, member)
         self.wr_id = wr_id
         self.comment = self.get_comment()
 
@@ -234,10 +232,9 @@ class ListDeleteService(BoardService):
         request: Request,
         db: db_session,
         bo_table: str,
-        board: Board,
         member: Member,
     ):
-        super().__init__(request, db, bo_table, board, member)
+        super().__init__(request, db, bo_table, member)
 
     def delete_writes(self, wr_ids: list):
         """게시글 목록 삭제"""

@@ -2,7 +2,7 @@ from fastapi import Request, HTTPException
 from sqlalchemy import asc, desc, func, select
 
 from core.database import db_session
-from core.models import Board, Member
+from core.models import Member
 from lib.board_lib import write_search_filter, get_list
 from . import BoardService
 
@@ -17,11 +17,10 @@ class ListPostService(BoardService):
         request: Request,
         db: db_session,
         bo_table: str,
-        board: Board,
         member: Member,
         search_params: dict
     ):
-        super().__init__(request, db, bo_table, board, member)
+        super().__init__(request, db, bo_table, member)
 
         if not self.is_list_level():
             self.raise_exception(detail="목록을 볼 권한이 없습니다.", status_code=403)
