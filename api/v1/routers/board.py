@@ -297,9 +297,9 @@ async def api_upload_file(
     board: Annotated[Board, Depends(get_board)],
     write: Annotated[WriteBaseModel, Depends(validate_upload_file_write)],
     bo_table: str = Path(...),
-    files: List[UploadFile] = File(..., alias="bf_file[]"),
-    file_content: list = Form(None, alias="bf_content[]"),
-    file_dels: list = Form(None, alias="bf_file_del[]"),
+    files: List[UploadFile] = File(...),
+    file_content: list = Form(None),
+    file_dels: list = Form(None),
 ) -> Dict:
     """
     파일을 업로드합니다.
