@@ -177,8 +177,14 @@ class ResponseMemberModel(BaseModel):
     mb_image_path: str
 
 
-class ResponseRegisterConfigModel(BaseModel):
-    """회원가입 환경설정 모델"""
+class ResponseRegistPolicy(BaseModel):
+    """회원가입 약관 응답 모델"""
+    cf_stipulation: str
+    cf_privacy: str
+
+
+class ResponseRegistConfig(BaseModel):
+    """회원가입 환경설정 응답 모델"""
     cf_use_email_certify: int
     cf_use_homepage: int
     cf_req_homepage: int
@@ -199,3 +205,11 @@ class ResponseRegisterConfigModel(BaseModel):
     cf_member_icon_size: int
     cf_open_modify: int
     cf_use_recommend: int
+
+
+class ResponseRegistMember(BaseModel):
+    """회원가입 응답 모델"""
+    message: str
+    mb_id: str
+    mb_name: str
+    mb_nick: str

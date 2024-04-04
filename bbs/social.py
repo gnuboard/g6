@@ -1,29 +1,36 @@
+"""소셜 로그인 Template Router"""
+import hashlib
+import logging
 import secrets
 import zlib
-from typing_extensions import Annotated
+from datetime import datetime
+from typing import List, Optional
 from urllib.parse import parse_qs
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
+from sqlalchemy import delete, exists, select
 from starlette.responses import RedirectResponse
+from typing_extensions import Annotated
 
-from core.database import db_session
+from core.database import db_session, DBConnect
 from core.exception import AlertException
 from core.formclass import MemberForm
-from core.models import MemberSocialProfiles
+from core.models import Config, Member, MemberSocialProfiles
 from core.template import UserTemplates
-from lib.common import *
+from lib.common import get_admin_email, get_admin_email_name, mailer, session_member_key
 from lib.member_lib import (
-    MemberService, 
-    is_email_registered, validate_email, validate_mb_id, validate_nickname
+    MemberService, is_email_registered, validate_email, validate_mb_id,
+    validate_nickname
 )
 from lib.pbkdf2 import create_hash
 from lib.point import insert_point
 from lib.social import providers
 from lib.social.social import (
-    get_social_profile, get_social_login_token, oauth, SocialProvider,
+    get_social_login_token, get_social_profile, oauth, SocialProvider
 )
 from lib.template_filters import default_if_none
+
 
 router = APIRouter()
 templates = UserTemplates()
@@ -242,7 +249,7 @@ async def post_social_register(
     is_valid, message = validate_email(request, member_form.mb_email)
     if not is_valid:
         raise AlertException(message, 400)
-    
+
     # 닉네임 유효성 검사
     is_valid, message = validate_nickname(request, member_form.mb_nick)
     if not is_valid:

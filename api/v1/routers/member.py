@@ -1,6 +1,5 @@
 """회원 관련 API Router"""
 from datetime import datetime
-from typing import Any
 from typing_extensions import Annotated
 
 from fastapi import (
@@ -23,7 +22,7 @@ from api.v1.lib.member import MemberServiceAPI
 from api.v1.models.member import (
     CreateMemberModel, ResponseMemberModel, UpdateMemberModel,
     FindMemberIdModel, FindMemberPasswordModel, ResetMemberPasswordModel,
-    ResponseRegisterConfigModel
+    ResponseRegistConfig, ResponseRegistPolicy, ResponseRegistMember
 )
 
 router = APIRouter()
@@ -32,37 +31,29 @@ router = APIRouter()
 @router.get("/member/policy",
             summary="회원가입 약관 조회",
             responses={**responses})
-async def read_member_policy(request: Request):
+async def read_member_policy(request: Request) -> ResponseRegistPolicy:
     """회원가입 약관을 조회합니다."""
-    config = request.state.config
-
-    return {
-        "stipulation": config.cf_stipulation,
-        "privacy": config.cf_privacy,
-    }
+    return request.state.config
 
 
 @router.get("/member/config",
             summary="회원가입 설정 조회",
-            response_model=ResponseRegisterConfigModel,
             responses={**responses})
-async def read_member_config(request: Request):
+async def read_member_config(request: Request) -> ResponseRegistConfig:
     """회원가입 설정 정보를 조회합니다."""
-    config = request.state.config
-
-    return config
+    return request.state.config
 
 
 @router.post("/member",
              summary="회원 가입",
-             #  response_model=ResponseMemberModel,
+             status_code=201,
              responses={**responses})
 async def create_member(
     request: Request,
-    member_service: Annotated[MemberServiceAPI, Depends()],
     background_tasks: BackgroundTasks,
+    member_service: Annotated[MemberServiceAPI, Depends()],
     data: Annotated[CreateMemberModel, Depends(validate_create_data)]
-) -> Any:
+) -> ResponseRegistMember:
     """
     회원 가입을 처리합니다.
 
@@ -81,38 +72,30 @@ async def create_member(
     # 추천인 포인트 지급
     mb_recommend = data.mb_recommend
     if getattr(config, "cf_use_recommend", False) and mb_recommend:
-        insert_point(request, mb_recommend, getattr(config, "cf_use_recommend", 0),
+        insert_point(request, mb_recommend, getattr(config, "cf_recommend_point", 0),
                      f"{member.mb_id}의 추천인", "@member", mb_recommend, f"{member.mb_id} 추천")
 
     # 회원가입메일 발송 처리(백그라운드)
     background_tasks.add_task(send_register_mail, request, member)
 
     return {
+        "message": "회원가입이 완료되었습니다.",
         "mb_id": member.mb_id,
         "mb_name": member.mb_name,
         "mb_nick": member.mb_nick,
-        "detail": "회원가입이 완료되었습니다."
     }
 
 
 @router.get("/member",
             summary="현재 로그인한 회원 정보 조회",
-            description="JWT을 통해 현재 로그인한 회원 정보를 조회합니다. \
-                <br>- 탈퇴 또는 차단된 회원은 조회할 수 없습니다. \
-                <br>- 이메일 인증이 완료되지 않은 회원은 조회할 수 없습니다.",
-            response_description="로그인한 회원 정보를 반환합니다.",
-            response_model=ResponseMemberModel)
+            responses={**responses})
 async def read_member_me(
     request: Request,
     member: Annotated[Member, Depends(get_current_member)]
-):
-    """현재 로그인한 회원 정보를 조회합니다.
-
-    Args:
-        current_member (Member): 현재 로그인한 회원 정보
-
-    Returns:
-        Member: 현재 로그인한 회원 정보
+) -> ResponseMemberModel:
+    """JWT을 통해 현재 로그인한 회원 정보를 조회합니다.
+    - 탈퇴 또는 차단된 회원은 조회할 수 없습니다.
+    - 이메일 인증이 완료되지 않은 회원은 조회할 수 없습니다.
     """
     base_url = str(request.base_url)
     if base_url.endswith("/"):
@@ -125,20 +108,23 @@ async def read_member_me(
 
 @router.get("/members/{mb_id}",
             summary="회원 정보 조회",
-            response_model=ResponseMemberModel,
             responses={**responses})
 async def read_member(
     member_service: Annotated[MemberServiceAPI, Depends()],
     current_member: Annotated[Member, Depends(get_current_member)],
     mb_id: Annotated[str, Path(...)]
-):
+) -> ResponseMemberModel:
     """회원 정보를 조회합니다."""
-    return member_service.get_member_profile(mb_id, current_member)
+
+    member = member_service.get_member_profile(mb_id, current_member)
+    member.mb_image_path = MemberImageService.get_image_path(member.mb_id)
+    member.mb_icon_path = MemberImageService.get_icon_path(member.mb_id)
+
+    return member
 
 
 @router.put("/member",
             summary="회원 정보 수정",
-            # response_model=ResponseMemberModel,
             responses={**responses})
 async def update_member(
     member_service: Annotated[MemberServiceAPI, Depends()],
@@ -148,7 +134,7 @@ async def update_member(
     """회원 정보를 수정합니다."""
     member_service.update_member(current_member, data.model_dump())
 
-    return HTTPException(status_code=200, detail="회원정보 수정이 완료되었습니다.")
+    return HTTPException(200, "회원정보 수정이 완료되었습니다.")
 
 
 @router.put("/member/image",

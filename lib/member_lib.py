@@ -14,7 +14,7 @@ from sqlalchemy import exists, select
 from core.database import DBConnect, db_session
 from core.exception import AlertException
 from core.models import Board, Config, Group, Member
-from lib.common import is_none_datetime, delete_image, get_client_ip
+from lib.common import is_none_datetime, get_client_ip
 from lib.pbkdf2 import validate_password
 from lib.service import BaseService
 

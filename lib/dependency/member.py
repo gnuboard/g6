@@ -1,15 +1,23 @@
+"""회원 관련 유효성 검사를 위한 의존성 함수를 정의합니다."""
 import re
 from datetime import datetime
 from typing_extensions import Annotated
 
-from fastapi import Depends, Form, Request
+from fastapi import Depends, Form, Path, Request, status
+from fastapi.responses import RedirectResponse
+from sqlalchemy import select
 
+from bbs.social import SocialAuthService
+from core.database import db_session
 from core.exception import AlertException
 from core.formclass import MemberForm
 from core.models import Member
 from lib.dependencies import get_login_member
-from lib.member_lib import validate_email, validate_mb_id, validate_nickname, validate_nickname_change_date
+from lib.member_lib import (
+    validate_email, validate_mb_id, validate_nickname, validate_nickname_change_date
+)
 from lib.pbkdf2 import create_hash, validate_password
+
 
 def validate_register_member(
     request: Request,
@@ -157,3 +165,46 @@ def validate_leave_member(
         raise AlertException("최고관리자는 탈퇴할 수 없습니다.", 400)
     if not validate_password(mb_password, member.mb_password):
         raise AlertException("비밀번호가 일치하지 않습니다.", 400)
+
+
+def redirect_if_logged_in(request: Request) -> None:
+    """로그인 상태에서는 메인 페이지로 리다이렉트합니다."""
+    member = request.state.login_member
+    if member:
+        return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
+    return None
+
+
+def get_member_by_lost_certify(
+    request: Request,
+    db: db_session,
+    mb_id: Annotated[str, Path()],
+    token: Annotated[str, Path()],
+) -> Member:
+    """비밀번호 재설정을 위한 회원 정보를 조회합니다."""
+    config = request.state.config
+    member = db.scalar(
+        select(Member).where(
+            Member.mb_id == mb_id,
+            Member.mb_lost_certify == token,
+            Member.mb_id != config.cf_admin  # 최고관리자는 제외
+        )
+    )
+    if not member:
+        raise AlertException("유효하지 않은 요청입니다.", 403)
+
+    if SocialAuthService.check_exists_by_member_id(member.mb_id):
+        raise AlertException("소셜로그인으로 가입하신 회원은 비밀번호를 재설정할 수 없습니다.", 400)
+
+    return member
+
+
+def validate_password_reset(
+    mb_password: str = Form(..., min_length=4, max_length=20),
+    mb_password_confirm: str = Form(..., min_length=4, max_length=20)
+) -> str:
+    """비밀번호 재설정시 비밀번호가 일치하는지 검사합니다."""
+    if mb_password != mb_password_confirm:
+        raise AlertException("비밀번호가 일치하지 않습니다.", 400)
+
+    return mb_password
