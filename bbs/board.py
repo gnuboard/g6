@@ -257,7 +257,6 @@ async def write_form_edit(
     request: Request,
     db: db_session,
     board: Annotated[Board, Depends(get_board)],
-    write: Annotated[WriteBaseModel, Depends(get_write)],
     bo_table: str = Path(...),
     wr_id: int = Path(...)
 ):
@@ -267,6 +266,8 @@ async def write_form_edit(
     update_post_service = UpdatePostService(
         request, db, bo_table, board, request.state.login_member, wr_id,
     )
+
+    write = update_post_service.get_write(wr_id)
 
     # 게시판 수정 권한
     update_post_service.validate_write_level()
@@ -427,7 +428,7 @@ async def read_post(
     wr_id: int = Path(...),
 ):
     """게시글을 읽는다."""
-    read_post_service = ReadPostService(request, db, bo_table, board, wr_id, write, member)
+    read_post_service = ReadPostService(request, db, bo_table, board, wr_id, member)
     read_post_service.request.state.editor = read_post_service.select_editor
     read_post_service.validate_secret_with_session()
     read_post_service.validate_repeat_with_session()
@@ -460,7 +461,6 @@ async def delete_post(
     request: Request,
     db: db_session,
     board: Annotated[Board, Depends(get_board)],
-    write: Annotated[WriteBaseModel, Depends(get_write)],
     bo_table: str = Path(...),
     wr_id: int = Path(...),
 ):
@@ -468,7 +468,7 @@ async def delete_post(
     게시글을 삭제한다.
     """
     delete_post_service = DeletePostService(
-        request, db, bo_table, board, wr_id, write, request.state.login_member
+        request, db, bo_table, board, wr_id, request.state.login_member
     )
     delete_post_service.validate_level()
     delete_post_service.validate_exists_reply()
@@ -483,7 +483,6 @@ async def download_file(
     request: Request,
     db: db_session,
     board: Annotated[Board, Depends(get_board)],
-    write: Annotated[WriteBaseModel, Depends(get_write)],
     bo_table: str = Path(...),
     wr_id: int = Path(...),
     bf_no: int = Path(...),
@@ -503,7 +502,7 @@ async def download_file(
         FileResponse: 파일 다운로드
     """
     download_file_service = DownloadFileService(
-        request, db, bo_table, board, request.state.login_member, write, wr_id, bf_no
+        request, db, bo_table, board, request.state.login_member, wr_id, bf_no
     )
     download_file_service.validate_download_level()
     board_file = download_file_service.get_board_file()
@@ -568,7 +567,6 @@ async def delete_comment(
     request: Request,
     db: db_session,
     board: Annotated[Board, Depends(get_board)],
-    comment: Annotated[WriteBaseModel, Depends(get_write)],
     bo_table: str = Path(...),
     comment_id: int = Path(..., alias="wr_id"),
 ):
@@ -576,8 +574,9 @@ async def delete_comment(
     댓글 삭제
     """
     delete_comment_service = DeleteCommentService(
-        request, db, bo_table, board, comment_id, comment, request.state.login_member
+        request, db, bo_table, board, comment_id, request.state.login_member
     )
+    comment = delete_comment_service.get_comment()
     delete_comment_service.check_authority()
     delete_comment_service.delete_comment()
 

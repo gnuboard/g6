@@ -20,7 +20,6 @@ class ReadPostService(BoardService):
         bo_table: str,
         board: Board,
         wr_id: int,
-        write: WriteBaseModel,
         member: Member
     ):
         super().__init__(request, db, bo_table, board, member)
@@ -28,6 +27,7 @@ class ReadPostService(BoardService):
         self.board.subject = self.subject
 
         # 게시글 정보 설정
+        write = self.get_write(wr_id)
         write.ip = self.get_display_ip(write.wr_ip)
         write.name = cut_name(request, write.wr_name)
         self.write = write
@@ -256,12 +256,11 @@ class DownloadFileService(BoardService):
         bo_table: str,
         board: Board,
         member: Member,
-        write: WriteBaseModel,
         wr_id: int,
         bf_no: int,
     ):
         super().__init__(request, db, bo_table, board, member)
-        self.write = write
+        self.write = self.get_write(wr_id)
         self.wr_id = wr_id
         self.bf_no = bf_no
         self.file_manager = BoardFileManager(board, wr_id)

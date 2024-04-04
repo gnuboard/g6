@@ -24,13 +24,12 @@ class DeletePostService(BoardService):
         bo_table: str,
         board: Board,
         wr_id: int,
-        write: WriteBaseModel,
         member: Member,
     ):
         super().__init__(request, db, bo_table, board, member)
         self.wr_id = wr_id
-        self.write = write
-        self.write_member_mb_no = self.db.scalar(select(Member.mb_no).where(Member.mb_id == write.mb_id))
+        self.write = self.get_write(wr_id)
+        self.write_member_mb_no = self.db.scalar(select(Member.mb_no).where(Member.mb_id == self.write.mb_id))
         self.write_member = self.db.get(Member, self.write_member_mb_no)
         self.write_member_level = getattr(self.write_member, "mb_level", 1)
 
@@ -154,12 +153,21 @@ class DeleteCommentService(DeletePostService):
         bo_table: str,
         board: Board,
         wr_id: int,
-        write: WriteBaseModel,
         member: Member,
     ):
-        super().__init__(request, db, bo_table, board, wr_id, write, member)
+        super().__init__(request, db, bo_table, board, wr_id, member)
         self.wr_id = wr_id
-        self.comment = write
+        self.comment = self.get_comment()
+
+    def get_comment(self):
+        comment = self.db.get(self.write_model, self.wr_id)
+        if not comment:
+            raise HTTPException(status_code=404, detail=f"{self.wr_id} : 존재하지 않는 댓글입니다.")
+        
+        if not comment.wr_is_comment:
+            raise HTTPException(status_code=400, detail=f"{self.wr_id} : 댓글이 아닌 게시글입니다.")
+
+        return comment
 
     def check_authority(self, with_session: bool = True):
         """

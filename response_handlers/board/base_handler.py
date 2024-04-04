@@ -1,7 +1,8 @@
+from typing_extensions import Union
 from fastapi import Request
 
 from core.database import db_session
-from core.models import Board, Member
+from core.models import Board, Member, WriteBaseModel
 from core.exception import AlertException
 from lib.service import BaseService
 from lib.board_lib import BoardConfig, get_admin_type
@@ -60,3 +61,14 @@ class BoardService(BaseService, BoardConfig):
         """게시판 관리자 검증"""
         if not self.admin_type:
             self.raise_exception(detail="게시판 관리자 이상 접근이 가능합니다.", status_code=403)
+
+    def get_write(self, wr_id: Union[int, str]) -> WriteBaseModel:
+        """게시글(댓글)을 가져온다."""
+        if not isinstance(wr_id, int) and not wr_id.isdigit():
+            self.raise_exception(detail="올바르지 않은 게시글 번호입니다.", status_code=400)
+
+        write = self.db.get(self.write_model, wr_id)
+        if not write:
+            self.raise_exception(detail="존재하지 않는 게시글(댓글)입니다.", status_code=404)
+
+        return write
