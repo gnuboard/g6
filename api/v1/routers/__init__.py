@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 from lib.dependencies import check_use_api
 from api.v1.routers import (
     auth, board, content, faq, member, memo, menu, point, poll, qa, scrap,
-    search, board_new, ajax_good
+    search, board_new, ajax_good, ajax_autosave
 )
 
 
@@ -25,6 +25,7 @@ class Tags(Enum):
     SCRAP = "스크랩"
     SEARCH = "검색"
     BOARD_NEW = "최신글"
+    AJAX_AUTOSAVE = "자동저장"
     AJAX_GOOD = "좋아요/싫어요"
 
 
@@ -44,3 +45,4 @@ router.include_router(scrap.router, prefix="/member", tags=[Tags.SCRAP])
 router.include_router(search.router, prefix="/search", tags=[Tags.SEARCH])
 router.include_router(board_new.router, prefix="/board_new", tags=[Tags.BOARD_NEW])
 router.include_router(ajax_good.router, prefix="/ajax", tags=[Tags.AJAX_GOOD])
+router.include_router(ajax_autosave.router, prefix="/ajax", tags=[Tags.AJAX_AUTOSAVE])
