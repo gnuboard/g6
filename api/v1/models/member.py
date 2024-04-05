@@ -6,6 +6,7 @@ from typing_extensions import Annotated
 from fastapi import Body
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
+from lib.member_lib import set_zip_code
 from lib.pbkdf2 import create_hash
 
 
@@ -43,8 +44,7 @@ class CreateMemberModel(BaseModel):
     @classmethod
     def divide_zip(cls, v: str) -> str:
         """우편번호를 앞자리와 뒷자리 각각 3자리로 분리"""
-        cls.mb_zip1 = v[:3]
-        cls.mb_zip2 = v[3:6]
+        cls.mb_zip1, cls.mb_zip2 = set_zip_code(v)
         return v
 
     @model_validator(mode='after')
@@ -57,7 +57,6 @@ class CreateMemberModel(BaseModel):
 
         # convert to hash password
         self.mb_password = create_hash(pw1)
-
         return self
 
     @model_validator(mode='after')
@@ -103,8 +102,7 @@ class UpdateMemberModel(BaseModel):
     @classmethod
     def divide_zip(cls, v: str) -> str:
         """우편번호를 앞자리와 뒷자리 각각 3자리로 분리"""
-        cls.mb_zip1 = v[:3]
-        cls.mb_zip2 = v[3:6]
+        cls.mb_zip1, cls.mb_zip2 = set_zip_code(v)
         return v
 
     @model_validator(mode='after')

@@ -1,9 +1,13 @@
+import re
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
 
 from fastapi import Form
 
+from core.exception import AlertException
+from lib.member_lib import set_zip_code
+from lib.pbkdf2 import create_hash
 
 @dataclass
 class ConfigForm:
@@ -157,21 +161,19 @@ class ConfigForm:
 
 @dataclass
 class MemberForm:
-    # mb_password: Optional[str] = Form(default="")
-    mb_name: str = Form(None)
-    mb_birth: Optional[str] = Form(default="")
+    """회원 정보 기본 폼 데이터"""
+    mb_password: str = Form(None)
     mb_nick: str = Form(None)
-    # mb_nick_date: Optional[str] = Form(default=None)
-    mb_level: Optional[int] = Form(default=0)
     mb_email: Optional[str] = Form(default="")
     mb_homepage: Optional[str] = Form(default="")
     mb_sex: Optional[str] = Form(default="")
     mb_recommend: Optional[str] = Form(default="")
     mb_hp: Optional[str] = Form(default="")
     mb_tel: Optional[str] = Form(default="")
-    mb_certify: Optional[int] = Form(default=0)
+    mb_certify: Optional[str] = Form(default="")
     mb_adult: Optional[int] = Form(default=0)
     mb_addr_jibeon: Optional[str] = Form(default="")
+    mb_zip: Optional[str] = Form(default="")
     mb_zip1: Optional[str] = Form(default="")
     mb_zip2: Optional[str] = Form(default="")
     mb_addr1: Optional[str] = Form(default="")
@@ -183,8 +185,6 @@ class MemberForm:
     mb_signature: Optional[str] = Form(default="")
     mb_profile: Optional[str] = Form(default="")
     mb_memo: Optional[str] = Form(default="")
-    # mb_intercept_date: Optional[str] = Form(default="")
-    # mb_leave_date: Optional[str] = Form(default="")
     mb_1: Optional[str] = Form(default="")
     mb_2: Optional[str] = Form(default="")
     mb_3: Optional[str] = Form(default="")
@@ -195,6 +195,100 @@ class MemberForm:
     mb_8: Optional[str] = Form(default="")
     mb_9: Optional[str] = Form(default="")
     mb_10: Optional[str] = Form(default="")
+
+
+    def __post_init__(self) -> None:
+        # 우편번호 분리
+        self.mb_zip1, self.mb_zip2 = set_zip_code(self.mb_zip)
+
+        # 성별
+        if self.mb_sex not in {"m", "f"}:
+            self.mb_sex = ""
+        # 본인인증 및 성인인증 여부 체크
+        if not self.mb_certify:
+            self.mb_adult = 0
+
+        # 필요없는 변수 삭제
+        del self.mb_zip
+
+@dataclass
+class AdminMemberForm(MemberForm):
+    """관리자 회원 정보 등록/수정 폼 데이터"""
+    mb_name: str = Form(None)
+    mb_level: int = Form(default=1)
+    mb_intercept_date: str = Form(default="")
+    mb_leave_date: str = Form(default="")
+
+    def __post_init__(self) -> None:
+        # 회원 이름 검사
+        if not self.mb_name:
+            raise AlertException("이름을 입력해 주세요.", 400)
+
+        # 비밀번호 암호화
+        if self.mb_password:
+            self.mb_password = create_hash(self.mb_password)
+        else:
+            del self.mb_password
+
+        super().__post_init__()
+
+
+@dataclass
+class RegisterMemberForm(MemberForm):
+    """회원 가입 폼 데이터"""
+    mb_id: str = Form(None)
+    mb_name: str = Form(None)
+    mb_password_re: str = Form(None)
+
+    def __post_init__(self) -> None:
+        # 회원 아이디 검사
+        if len(self.mb_id) < 3 or len(self.mb_id) > 20:
+            raise AlertException("회원아이디는 3~20자 이어야 합니다.", 400)
+        if not re.match(r"^[a-zA-Z0-9_]+$", self.mb_id):
+            raise AlertException("회원아이디는 영문자, 숫자, _ 만 사용할 수 있습니다.", 400)
+
+        # 비밀번호 검사
+        if not (self.mb_password and self.mb_password_re):
+            raise AlertException("비밀번호를 입력해 주세요.", 400)
+        if self.mb_password != self.mb_password_re:
+            raise AlertException("비밀번호와 비밀번호 확인이 일치하지 않습니다.", 400)
+
+        if not self.mb_nick:
+            raise AlertException("닉네임을 입력해 주세요.", 400)
+
+        if not self.mb_name:
+            raise AlertException("이름을 입력해 주세요.", 400)
+
+        if not self.mb_email:
+            raise AlertException("이메일을 입력해 주세요.", 400)
+
+        # 비밀번호 암호화
+        self.mb_password = create_hash(self.mb_password)
+
+        del self.mb_password_re
+
+        super().__post_init__()
+
+
+@dataclass
+class UpdateMemberForm(MemberForm):
+    """회원 정보 수정 폼 데이터"""
+    mb_nick_date: datetime = datetime.now()
+    mb_open_date: datetime = datetime.now()
+    mb_password_re: str = Form(None)
+
+    def __post_init__(self) -> None:
+        # 비밀번호 변경
+        if self.mb_password and self.mb_password_re:
+            if self.mb_password != self.mb_password_re:
+                raise AlertException("비밀번호와 비밀번호 확인이 일치하지 않습니다.", 400)
+            self.mb_password = create_hash(self.mb_password)
+        else:
+            del self.mb_password
+
+        del self.mb_password_re
+
+        super().__post_init__()
 
 
 @dataclass

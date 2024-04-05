@@ -1,21 +1,15 @@
 """회원 관련 의존성을 정의합니다."""
-from datetime import timedelta
 from typing import Optional
 from typing_extensions import Annotated
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, status
 
 from core.models import Member
-from lib.common import check_profile_open
-from lib.member_lib import (
-    validate_email, validate_mb_id,
-    validate_nickname, validate_nickname_change_date
-)
 
 from api.settings import SETTINGS
-from api.v1.auth import oauth2_scheme, oauth2_optional
+from api.v1.auth import oauth2_optional, oauth2_scheme
 from api.v1.auth.jwt import JWT
-from api.v1.lib.member import MemberServiceAPI
+from api.v1.lib.member import MemberServiceAPI, ValidateMemberAPI
 from api.v1.models.auth import TokenPayload
 from api.v1.models.member import CreateMemberModel, UpdateMemberModel
 
@@ -74,63 +68,37 @@ async def get_current_member_optional(
 
 
 def validate_create_data(
-    request: Request,
+    validate: Annotated[ValidateMemberAPI, Depends()],
     data: CreateMemberModel
 ):
     """회원 가입시 회원 정보의 유효성을 검사합니다."""
-    # 아이디 유효성 검사
-    is_valid, message = validate_mb_id(request, data.mb_id)
-    if not is_valid:
-        raise HTTPException(status_code=400, detail=message)
-
-    # 닉네임 유효성 검사
-    is_valid, message = validate_nickname(request, data.mb_nick)
-    if not is_valid:
-        raise HTTPException(status_code=400, detail=message)
-
-    # 이메일 유효성 검사
-    is_valid, message = validate_email(request, data.mb_email)
-    if not is_valid:
-        raise HTTPException(status_code=400, detail=message)
+    validate.valid_id(data.mb_id)
+    validate.valid_nickname(data.mb_nick)
+    validate.valid_email(data.mb_email)
 
     return data
 
 
 def validate_update_data(
-    request: Request,
+    validate: Annotated[ValidateMemberAPI, Depends()],
     member: Annotated[Member, Depends(get_current_member)],
     data: UpdateMemberModel,
 ):
     """회원 정보 수정시 회원 정보의 유효성을 검사합니다."""
-    config = request.state.config
-
-    # 이메일 변경 유효성 검사
-    if member.mb_email != data.mb_email:
-        is_valid, message = validate_email(request, data.mb_email)
-        if not is_valid:
-            raise HTTPException(status_code=400, detail=message)
-
     # 닉네임 변경 유효성 검사
     if member.mb_nick != data.mb_nick:
-        is_valid, message = validate_nickname(request, data.mb_nick)
-        if not is_valid:
-            raise HTTPException(status_code=403, detail=message)
-
-        if member.mb_nick_date:
-            is_valid, message = validate_nickname_change_date(
-                member.mb_nick_date, config.cf_nick_modify)
-            if not is_valid:
-                raise HTTPException(status_code=403, detail=message)
+        validate.valid_nickname(data.mb_nick)
+        validate.valid_nickname_change_date(member.mb_nick_date)
     else:
         del data.mb_nick_date
 
-    # 회원정보 공개 유효성 검사
+    # 이메일 변경 유효성 검사
+    if member.mb_email != data.mb_email:
+        validate.valid_email(data.mb_email)
+
+    # 회원정보 공개 변경 유효성 검사
     if member.mb_open != data.mb_open:
-        if not check_profile_open(member.mb_open_date, config):
-            open_day = getattr(config, "cf_open_modify", 0)
-            available_date = member.mb_open_date + timedelta(days=open_day)
-            raise HTTPException(status_code=403,
-                                detail=f"회원정보 변경은 {available_date} 이후 가능합니다.")
+        validate.valid_open_change_date(member.mb_open_date)
     else:
         del data.mb_open_date
 

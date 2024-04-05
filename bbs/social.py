@@ -13,16 +13,13 @@ from sqlalchemy import delete, exists, select
 from starlette.responses import RedirectResponse
 from typing_extensions import Annotated
 
-from core.database import db_session, DBConnect
+from core.database import DBConnect, db_session
 from core.exception import AlertException
 from core.formclass import MemberForm
 from core.models import Config, Member, MemberSocialProfiles
 from core.template import UserTemplates
 from lib.common import get_admin_email, get_admin_email_name, mailer, session_member_key
-from lib.member_lib import (
-    MemberService, is_email_registered, validate_email, validate_mb_id,
-    validate_nickname
-)
+from lib.member_lib import MemberService, ValidateMember
 from lib.pbkdf2 import create_hash
 from lib.point import insert_point
 from lib.social import providers
@@ -165,7 +162,10 @@ async def authorize_social_login(
 
 
 @router.get('/social/register')
-async def get_social_register_form(request: Request):
+async def get_social_register_form(
+    request: Request,
+    validate: Annotated[ValidateMember, Depends()]
+):
     """
     소셜 회원가입 폼
     """
@@ -179,7 +179,7 @@ async def get_social_register_form(request: Request):
                              url=request.url_for('login').__str__())
     social_email = request.session.get('ss_social_email', None)
     if social_email:
-        is_exists_email = is_email_registered(social_email, None)
+        is_exists_email = validate.is_exists_email(social_email)
     else:
         is_exists_email = False
 
@@ -208,6 +208,7 @@ async def get_social_register_form(request: Request):
 async def post_social_register(
         request: Request,
         db: db_session,
+        validate: Annotated[ValidateMember, Depends()],
         member_form: MemberForm = Depends(),
 ):
     """
@@ -241,19 +242,13 @@ async def post_social_register(
 
     # 소셜 아이디 검사
     gnu_social_id = SocialAuthService.g6_convert_social_id(identifier, provider_name)
-    is_valid, message = validate_mb_id(request, gnu_social_id)
-    if not is_valid:
-        raise AlertException(status_code=400, detail=message)
+    validate.valid_id(gnu_social_id)
 
     # 이메일 유효성 검사
-    is_valid, message = validate_email(request, member_form.mb_email)
-    if not is_valid:
-        raise AlertException(message, 400)
+    validate.valid_email(member_form.mb_email)
 
     # 닉네임 유효성 검사
-    is_valid, message = validate_nickname(request, member_form.mb_nick)
-    if not is_valid:
-        raise AlertException(status_code=400, detail=message)
+    validate.valid_nickname(member_form.mb_nick)
 
     # nick
     mb_nick = member_form.mb_nick

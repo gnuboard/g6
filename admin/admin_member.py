@@ -10,8 +10,8 @@ from sqlalchemy import delete, func, select, update
 from bbs.social import SocialAuthService
 from core.database import db_session
 from core.exception import AlertException
-from core.formclass import MemberForm
-from core.models import Member, Point, GroupMember, Memo, Scrap, Auth, Group, Board
+from core.formclass import AdminMemberForm
+from core.models import Auth, Board, Group, GroupMember, Member, Memo, Point, Scrap
 from core.template import AdminTemplates
 from lib.common import (
     get_from_list, is_none_datetime, select_query, set_url_query_params
@@ -163,10 +163,9 @@ async def member_list_delete(
             member.mb_addr3 = ""
             member.mb_point = 0
             member.mb_profile = ""
-            member.mb_birth = ""
             member.mb_sex = ""
             member.mb_signature = ""
-            member.mb_memo = (f"{delete_time} 삭제함\n{member.mb_memo}")
+            member.mb_memo = f"{delete_time} 삭제함\n{member.mb_memo}"
             member.mb_certify = ""
             member.mb_adult = 0
             member.mb_dupinfo = ""
@@ -215,9 +214,7 @@ async def member_form(
     db: db_session,
     mb_id: Optional[str] = None
 ):
-    """
-    회원추가, 수정 폼
-    """
+    """회원추가, 수정 페이지"""
     request.session["menu_key"] = MEMBER_MENU_KEY
 
     exists_member = None
@@ -230,48 +227,31 @@ async def member_form(
         exists_member.mb_icon = MemberImageService.get_icon_path(mb_id)
 
     context = {
-        "request": request, "member": exists_member}
+        "request": request,
+        "member": exists_member
+    }
     return templates.TemplateResponse("member_form.html", context)
 
 
-# DB등록 및 수정
 @router.post("/member_form_update", dependencies=[Depends(validate_token)])
 async def member_form_update(
     request: Request,
     db: db_session,
     file_service: Annotated[MemberImageService, Depends()],
+    form_data: Annotated[AdminMemberForm, Depends()],
     mb_id: str = Form(...),
-    mb_password: str = Form(default=""),
-    mb_certify_case: Optional[str] = Form(default=""),
-    mb_intercept_date: Optional[str] = Form(default=""),
-    mb_leave_date: Optional[str] = Form(default=""),
-    mb_zip: Optional[str] = Form(default=""),
-    form_data: MemberForm = Depends(),
     mb_icon: UploadFile = File(None),
-    del_mb_icon: int = Form(None),
     mb_img: UploadFile = File(None),
+    del_mb_icon: int = Form(None),
     del_mb_img: int = Form(None),
 ):
-    # 한국 우편번호 (postalcode)
-    form_data.mb_zip1 = mb_zip[:3]
-    form_data.mb_zip2 = mb_zip[3:]
-
+    """회원 추가, 수정 처리"""
     exists_member = db.scalar(select(Member).filter_by(mb_id=mb_id))
     if not exists_member:  # 등록 (회원아이디가 존재하지 않으면)
 
         new_member = Member(mb_id=mb_id, **form_data.__dict__)
-        new_member.mb_datetime = datetime.now()
 
-        if mb_certify_case and form_data.mb_certify:
-            new_member.mb_certify = mb_certify_case
-            new_member.mb_adult = form_data.mb_adult
-        else:
-            new_member.mb_certify = ""
-            new_member.mb_adult = 0
-
-        if mb_password:
-            new_member.mb_password = create_hash(mb_password)
-        else:
+        if not form_data.mb_password:
             # 비밀번호가 없다면 현재시간으로 해시값을 만든후 다시 해시 (알수없게 만드는게 목적)
             time_ymdhis = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             new_member.mb_password = create_hash(create_hash(time_ymdhis))
@@ -281,27 +261,14 @@ async def member_form_update(
 
     else:  # 수정 (회원아이디가 존재하면)
 
-        if (request.state.config.cf_admin == mb_id) or (request.state.login_member.mb_id == mb_id):
-            # 관리자와 로그인된 본인은 차단일자, 탈퇴일자를 설정했다면 수정불가
-            if mb_intercept_date:
-                raise AlertException("로그인된 관리자의 차단일자를 설정할 수 없습니다.")
-            if mb_leave_date:
-                raise AlertException("로그인된 관리자의 탈퇴일자를 설정할 수 없습니다.")
+        # 관리자와 로그인된 본인은 차단일자, 탈퇴일자를 설정했다면 수정불가
+        if mb_id in (request.state.config.cf_admin, request.state.login_member.mb_id):
+            if form_data.mb_intercept_date or form_data.mb_leave_date:
+                raise AlertException("로그인된 관리자의 차단/탈퇴일자를 설정할 수 없습니다.")
 
         # 폼 데이터 반영 후 commit
         for field, value in form_data.__dict__.items():
             setattr(exists_member, field, value)
-
-        # 수정시 비밀번호를 입력했다면 (수정에서는 비밀번호를 입력하지 않아도 됨)
-        if mb_password:
-            exists_member.mb_password = create_hash(mb_password)
-
-        if mb_certify_case and form_data.mb_certify:
-            exists_member.mb_certify = mb_certify_case
-            exists_member.mb_adult = form_data.mb_adult
-
-        exists_member.mb_intercept_date = mb_intercept_date
-        exists_member.mb_leave_date = mb_leave_date
 
         db.commit()
 
@@ -316,7 +283,6 @@ async def member_form_update(
 
 @router.get("/check_member_id/{mb_id}")
 async def check_member_id(
-    request: Request,
     db: db_session,
     mb_id: str = Path(...)
 ):
@@ -332,7 +298,6 @@ async def check_member_id(
 
 @router.get("/check_member_email/{mb_email}/{mb_id}")
 async def check_member_email(
-    request: Request,
     db: db_session,
     mb_email: str = Path(...),
     mb_id: str = Path(...),
@@ -353,7 +318,6 @@ async def check_member_email(
 
 @router.get("/check_member_nick/{mb_nick}/{mb_id}")
 async def check_member_nick(
-    request: Request,
     db: db_session,
     mb_nick: str = Path(),
     mb_id: str = Path(),

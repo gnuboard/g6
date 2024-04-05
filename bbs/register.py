@@ -11,14 +11,14 @@ from sqlalchemy.sql import select
 
 from core.database import db_session
 from core.exception import AlertException
-from core.formclass import MemberForm
+from core.formclass import RegisterMemberForm
 from core.models import Member
 from core.template import UserTemplates
-from lib.common import captcha_widget, check_profile_open, session_member_key
+from lib.common import captcha_widget, session_member_key
 from lib.dependencies import (
     validate_captcha, validate_policy_agree, validate_token, no_cache_response
 )
-from lib.dependency.member import validate_register_member
+from lib.dependency.member import validate_register_data
 from lib.mail import send_register_mail
 from lib.member_lib import MemberImageService, MemberService
 from lib.point import insert_point
@@ -28,7 +28,6 @@ router = APIRouter()
 templates = UserTemplates()
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals["captcha_widget"] = captcha_widget
-templates.env.globals["check_profile_open"] = check_profile_open
 
 
 @router.get("/register",
@@ -64,18 +63,17 @@ async def get_register_form(request: Request):
     회원가입 폼 페이지
     """
     config = request.state.config
-    member = Member()
-    member.mb_level = config.cf_register_level
+    member = Member(mb_level=config.cf_register_level)
 
-    form_context = {
-        "is_profile_open": True,
-    }
     context = {
-        "is_register": True,
         "request": request,
-        "member": member,
-        "form": form_context,
         "config": config,
+        "member": member,
+        "form": {
+            "is_profile_open": True,
+        },
+        "is_register": True,
+        
     }
     return templates.TemplateResponse("/member/register_form.html", context)
 
@@ -89,7 +87,7 @@ async def post_register_form(
     request: Request,
     member_service: Annotated[MemberService, Depends()],
     file_service: Annotated[MemberImageService, Depends()],
-    member_form: Annotated[MemberForm, Depends(validate_register_member)],
+    form_data: Annotated[RegisterMemberForm, Depends(validate_register_data)],
     background_tasks: BackgroundTasks,
     mb_id: str = Form(None),
     mb_img: UploadFile = File(None),
@@ -99,14 +97,14 @@ async def post_register_form(
     회원가입 처리
     """
     config = request.state.config
-    member = member_service.create_member(member_form)
+    member = member_service.create_member(form_data)
 
     # 회원가입 포인트 지급
     insert_point(request, member.mb_id, config.cf_register_point,
                  "회원가입 축하", "@member", member.mb_id, "회원가입")
 
     # 추천인 포인트 지급
-    mb_recommend = member_form.mb_recommend
+    mb_recommend = form_data.mb_recommend
     if config.cf_use_recommend and mb_recommend:
         insert_point(request, mb_recommend, config.cf_recommend_point,
                      f"{member.mb_id}의 추천인", "@member", mb_recommend, f"{member.mb_id} 추천")

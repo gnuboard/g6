@@ -1,29 +1,32 @@
 import base64
 import hashlib
 import json
-import math
 import logging
+import math
 import os
 import random
 import re
 import shutil
 import smtplib
-import httpx
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 from email.header import Header
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from email.utils import formataddr
 from time import sleep
 from typing import Any, List, Optional, Union
 
-from cachetools import cached, LFUCache, TTLCache
+import httpx
+from cachetools import LFUCache, TTLCache, cached
 from dotenv import load_dotenv
 from fastapi import Request, UploadFile
 from markupsafe import Markup, escape
-from PIL import Image, ImageOps, UnidentifiedImageError
 from passlib.context import CryptContext
-from sqlalchemy import Index, asc, case, desc, func, select, delete, between, exists, cast, String, DateTime
+from PIL import Image, ImageOps, UnidentifiedImageError
+from sqlalchemy import (
+    Index, asc, between, case, cast, delete, desc, exists, func, select,
+    String, DateTime
+)
 from sqlalchemy.exc import IntegrityError
 from starlette.datastructures import URL
 from user_agents import parse
@@ -34,9 +37,8 @@ from core.models import (
     UniqId, Visit, VisitSum, WriteBaseModel
 )
 from core.plugin import get_admin_menu_id_by_path
-from lib.captcha.recaptch_v2 import ReCaptchaV2
 from lib.captcha.recaptch_inv import ReCaptchaInvisible
-
+from lib.captcha.recaptch_v2 import ReCaptchaV2
 
 load_dotenv()
 
@@ -51,7 +53,7 @@ def hash_password(password: str):
     비밀번호를 해시화하여 반환하는 함수
     '''
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    return pwd_context.hash(password)  
+    return pwd_context.hash(password)
 
 
 def verify_password(plain_password, hashed_passwd):
@@ -59,9 +61,9 @@ def verify_password(plain_password, hashed_passwd):
     입력한 비밀번호와 해시화된 비밀번호를 비교하여 일치 여부를 반환하는 함수
     '''
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    return pwd_context.verify(plain_password, hashed_passwd)  
+    return pwd_context.verify(plain_password, hashed_passwd)
 
-# 동적 모델 캐싱: 모델이 이미 생성되었는지 확인하고, 생성되지 않았을 경우에만 새로 생성하는 방법입니다. 
+# 동적 모델 캐싱: 모델이 이미 생성되었는지 확인하고, 생성되지 않았을 경우에만 새로 생성하는 방법입니다.
 # 이를 위해 간단한 전역 딕셔너리를 사용하여 이미 생성된 모델을 추적할 수 있습니다.
 _created_models = {}
 
@@ -78,16 +80,16 @@ def dynamic_create_write_table(
     # 이미 생성된 모델 반환
     if table_name in _created_models:
         return _created_models[table_name]
-    
+
     if isinstance(table_name, int):
         table_name = str(table_name)
-    
+
     class_name = "Write" + table_name.capitalize()
     db_connect = DBConnect()
     DynamicModel = type(
-        class_name, 
-        (WriteBaseModel,), 
-        {   
+        class_name,
+        (WriteBaseModel,),
+        {
             "__tablename__": db_connect.table_prefix + 'write_' + table_name,
             "__table_args__": (
                 Index(f'idx_wr_num_reply_{table_name}', 'wr_num', 'wr_reply'),
@@ -279,7 +281,7 @@ def record_visit(request: Request):
             vi_agent=user_agent,
             vi_browser=browser,
             vi_os=os,
-            vi_device=device,   
+            vi_device=device,
         )
         db.add(visit)
         db.commit()
@@ -331,7 +333,7 @@ def render_visit_statistics(request: Request):
     return visit_template.body.decode("utf-8")
 
 
-def select_query(request: Request, db: db_session, table_model, search_params: dict, 
+def select_query(request: Request, db: db_session, table_model, search_params: dict,
         same_search_fields: Optional[List[str]] = "", # 값이 완전히 같아야지만 필터링 '검색어'
         prefix_search_fields: Optional[List[str]] = "", # 뒤에 %를 붙여서 필터링 '검색어%'
         default_sod: str = "asc",
@@ -372,8 +374,8 @@ def select_query(request: Request, db: db_session, table_model, search_params: d
                 query = query.order_by(desc(getattr(table_model, sst)))
             else:
                 query = query.order_by(asc(getattr(table_model, sst)))
-        
-            
+
+
     # sfl과 stx가 제공되면, 해당 열과 값으로 추가 필터링을 합니다.
     if search_params['sfl'] is not None and search_params['stx'] is not None:
         if hasattr(table_model, search_params['sfl']):  # sfl이 Table에 존재하는지 확인
@@ -400,10 +402,10 @@ def select_query(request: Request, db: db_session, table_model, search_params: d
 
 def domain_mail_host(request: Request, is_at: bool = True):
     domain_host = request.base_url.hostname
-    
+
     if domain_host.startswith("www."):
         domain_host = domain_host[4:]
-    
+
     return f"@{domain_host}" if is_at else domain_host
 
 
@@ -511,55 +513,6 @@ def get_unique_id(request) -> Optional[str]:
                 return None
 
 
-def check_profile_open(open_date: Optional[date], config) -> bool:
-    """변경일이 지나서 프로필 공개가능 여부를 반환
-
-    Args:
-        open_date (date): 프로필 공개일
-        config (Config): config 모델
-
-    Returns:
-        bool: 프로필 공개 가능 여부
-    """
-    if not open_date or is_none_datetime(open_date):
-        return True
-
-    return open_date < (date.today() - timedelta(days=config.cf_open_modify))
-
-
-def get_next_profile_openable_date(open_date: Optional[date], config) -> str:
-    """다음 프로필 공개 가능일을 반환
-
-    Args:
-        open_date (date): 프로필 공개일
-        config (Config): config 모델
-
-    Returns:
-        datetime: 다음 프로필 공개 가능일
-    """
-    cf_open_modify = config.cf_open_modify
-    if cf_open_modify == 0:
-        return ""
-
-    if open_date:
-        calculated_date = datetime.strptime(open_date.strftime("%Y-%m-%d"), "%Y-%m-%d") + timedelta(days=cf_open_modify)
-    else:
-        calculated_date = datetime.now() + timedelta(days=cf_open_modify)
-
-    return calculated_date.strftime("%Y-%m-%d")
-
-
-def valid_email(email: str):
-    # Define a basic email address regex pattern
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-
-    # Use the regex pattern to match the email address
-    if re.match(pattern, email):
-        return True
-
-    return False
-
-
 def upload_file(upload_object, filename, path, chunck_size: int = None):
     """폼 파일 업로드
     Args:
@@ -606,7 +559,7 @@ class StringEncrypt:
             self.salt = "your_default_salt"
         else:
             self.salt = salt
-        
+
         self.length = len(self.salt)
 
     def encrypt(self, str_):
@@ -657,7 +610,7 @@ class FileCache():
         # 캐시 디렉토리가 없으면 생성
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
-        
+
     def get_cache_secret_key(self):
         """
         캐시 비밀키를 반환하는 함수
@@ -673,7 +626,7 @@ class FileCache():
         self.cache_secret_key = hashlib.md5(combined_data.encode()).hexdigest()[:6]
 
         return self.cache_secret_key
-    
+
     def get(self, cache_file: str):
         """
         캐시된 파일이 있으면 파일을 읽어서 반환
@@ -682,7 +635,7 @@ class FileCache():
             with open(cache_file, "r", encoding="utf-8") as f:
                 return f.read()
         return None
-    
+
     def create(self, data: str, cache_file: str):
         """
         cache_file을 생성하는 함수
@@ -952,7 +905,7 @@ def thumbnail(source_file: str, target_path: str = None, width: int = 200, heigh
             # source_image.save(thumbnail_file)
 
         return thumbnail_file
-    
+
     except UnidentifiedImageError as e:
         print("원본 이미지 객체 생성 실패 : ", e)
         return ""
@@ -1046,7 +999,7 @@ def delete_old_records():
                 delete(Popular).where(Popular.pp_date < base_date)
             )
             print("인기검색어 삭제 기준일 : ", base_date, f"{result.rowcount}건 삭제")
-            
+
         # 최근게시물 삭제
         if config.cf_new_del > 0:
             base_date = today - timedelta(days=config.cf_new_del)
@@ -1104,8 +1057,8 @@ def is_intercept_ip(request: Request, ip: str) -> bool:
     """
     cf_intercept_ip = request.state.config.cf_intercept_ip
     return check_ip_list(request, ip, cf_intercept_ip, allow=False)
-        
-    
+
+
 def check_ip_list(request: Request, current_ip: str, ip_list: str, allow: bool) -> bool:
     """IP가 특정 목록에 속하는지 확인하는 함수
 

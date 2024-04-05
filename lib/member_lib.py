@@ -3,18 +3,19 @@ import math
 import os
 import re
 import secrets
-from glob import glob
 from datetime import date, datetime, timedelta
-from typing import Union, Optional, Tuple
+from glob import glob
+from typing import Optional, Tuple, Union
+from typing_extensions import Annotated
 
-from fastapi import Request, UploadFile
+from fastapi import Depends, Request, UploadFile
 from PIL import Image, UnidentifiedImageError
-from sqlalchemy import exists, select
+from sqlalchemy import select
 
-from core.database import DBConnect, db_session
+from core.database import db_session
 from core.exception import AlertException
 from core.models import Board, Config, Group, Member
-from lib.common import is_none_datetime, get_client_ip
+from lib.common import get_client_ip, is_none_datetime
 from lib.pbkdf2 import validate_password
 from lib.service import BaseService
 
@@ -41,8 +42,8 @@ class MemberService(BaseService):
         self.db = db
         self.member = None
 
-    def raise_exception(self, status_code: int = 400, detail: str = None):
-        raise AlertException(detail, status_code)
+    def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None):
+        raise AlertException(detail, status_code, url)
 
     def create_member(self, data) -> Member:
         """회원 정보를 생성합니다."""
@@ -65,7 +66,7 @@ class MemberService(BaseService):
     def read_member(self, mb_id: str) -> Member:
         """회원 정보를 조회합니다."""
         if self.member is None:
-            member = self._fetch_member_by_id(mb_id)
+            member = self.fetch_member_by_id(mb_id)
             if not member:
                 self.raise_exception(
                     status_code=404, detail=f"{mb_id} : 회원정보가 없습니다.")
@@ -80,7 +81,7 @@ class MemberService(BaseService):
         """
         # 아이디, 비밀번호 중 어떤 것이 틀렸는지 알려주지 않도록 하기 위해
         # self.fetch_member()를 호출하지 않습니다.
-        member = self._fetch_member_by_id(mb_id)
+        member = self.fetch_member_by_id(mb_id)
         if not member or not validate_password(password, member.mb_password):
             self.raise_exception(
                 status_code=403, detail="아이디 또는 비밀번호가 올바르지 않습니다.")
@@ -266,9 +267,30 @@ class MemberService(BaseService):
         member.mb_lost_certify = ""
         self.db.commit()
 
-    def _fetch_member_by_id(self, mb_id: str) -> Member:
-        """회원 정보를 데이터베이스에서 조회합니다."""
+    def fetch_member_by_id(self, mb_id: str) -> Member:
+        """ID로 회원 정보를 데이터베이스에서 조회합니다."""
         return self.db.scalar(select(Member).where(Member.mb_id == mb_id))
+
+    def fetch_member_by_nick(self, mb_nick: str) -> Member:
+        """닉네임으로 회원 정보를 데이터베이스에서 조회합니다."""
+        return self.db.scalar(select(Member).where(Member.mb_nick == mb_nick))
+
+    def fetch_member_by_email(self, mb_email: str, mb_id: str = None) -> Member:
+        """
+        메일주소로 회원 정보를 데이터베이스에서 조회합니다.
+        
+        Args:
+            mb_email (str): 이메일 주소
+            mb_id (str, optional): 회원 아이디. Defaults to None.
+                회원정보 수정시 자신의 이메일을 제외하기 위해 사용
+
+        Returns:
+            Member: 회원 정보
+        """
+        query = select(Member).where(Member.mb_email == mb_email)
+        if mb_id:
+            query = query.where(Member.mb_id != mb_id)
+        return self.db.scalar(query)
 
 
 class MemberImageService(BaseService):
@@ -279,9 +301,8 @@ class MemberImageService(BaseService):
     IMAGE_DIR = "data/member_image"
     NO_IMAGE_PATH = "/static/img/no_profile.gif"
 
-    def __init__(self, request: Request, db: db_session):
+    def __init__(self, request: Request):
         self.request = request
-        self.db = db
 
     def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None):
         raise AlertException(detail, status_code, url)
@@ -339,8 +360,8 @@ class MemberImageService(BaseService):
             self,
             mb_id: str,
             image_type: str,
-            file: Optional[UploadFile],
-            is_delete: Optional[int]) -> None:
+            file: Optional[UploadFile] = None,
+            is_delete: Optional[int] = 0) -> None:
         """
         회원 아이콘/이미지 파일 저장 및 삭제 처리
 
@@ -455,6 +476,136 @@ class MemberImageService(BaseService):
         return img_type_dict[image_type]
 
 
+class ValidateMember(BaseService):
+    """
+    회원 정보 유효성 검사 서비스를 제공하는 클래스입니다.
+    """
+    def __init__(self,
+                 request: Request,
+                 db: db_session,
+                 member_service: Annotated[MemberService, Depends()]):
+        self.request = request
+        self.db = db
+        self.config = request.state.config
+        self.member_service = member_service
+
+    def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None):
+        raise AlertException(detail, status_code, url)
+
+    def valid_id(self, mb_id: str) -> None:
+        """ 회원가입이 가능한 아이디인지 검사
+
+        Args:
+            mb_id (str): 가입할 아이디
+        """
+        member = self.member_service.fetch_member_by_id(mb_id)
+        if member:
+            self.raise_exception(409, "이미 가입된 아이디입니다.")
+
+        prohibit_ids = [id.strip() for id in getattr(self.config, "cf_prohibit_id", "").split(",")]
+        if mb_id in prohibit_ids:
+            self.raise_exception(400, "사용할 수 없는 아이디입니다.")
+
+    def valid_nickname(self, mb_nick: str) -> None:
+        """ 등록 가능한 닉네임인지 검사
+
+        Args:
+            mb_nick : 등록할 닉네임
+        """
+        member = self.member_service.fetch_member_by_nick(mb_nick)
+        if member:
+            self.raise_exception(409, "이미 존재하는 닉네임입니다.")
+
+        if mb_nick in getattr(self.config, "cf_prohibit_id", "").strip():
+            self.raise_exception(400, "닉네임으로 정할 수 없는 단어입니다.")
+
+    def valid_nickname_change_date(self, change_date: date = None) -> None:
+        """ 닉네임 변경이 가능한지 검사
+
+        Args:
+            latest_date (date, optional): 닉네임 변경 날짜. Defaults to None.
+        """
+        available_days = getattr(self.config, "cf_nick_modify", 0)
+
+        if (change_date
+                and not is_none_datetime(change_date)
+                and available_days != 0):
+            available_date = change_date + timedelta(days=available_days)
+            if datetime.now().date() < available_date:
+                available_str = available_date.strftime("%Y-%m-%d")
+                self.raise_exception(400, f"{available_str} 이후 닉네임을 변경할 수 있습니다.")
+
+    def valid_email(self, email: str) -> None:
+        """ 등록 가능한 이메일인지 검사
+
+        Args:
+            email (str): 이메일 주소
+        """
+        if self.is_exists_email(email):
+            self.raise_exception(409, "이미 가입된 이메일입니다.")
+
+        if self.is_prohibit_email(email):
+            self.raise_exception(400, "사용할 수 없는 이메일입니다.")
+
+    def is_exists_email(self, email: str, mb_id: str = None) -> bool:
+        """이메일이 이미 등록되어 있는지 확인
+
+        Args:
+            email (str): 이메일 주소
+            mb_id (str, optional): 회원 아이디. Defaults to None.
+                회원정보 수정시 자신의 이메일을 제외하기 위해 사용
+
+        Returns:
+            bool: 이미 등록된 이메일이면 True, 아니면 False
+        """
+        member = self.member_service.fetch_member_by_email(email, mb_id)
+        if member:
+            return True
+        return False
+
+    def is_prohibit_email(self, email: str) -> bool:
+        """금지된 메일인지 검사
+
+        Args:
+            email (str): 이메일 주소
+
+        Returns:
+            bool: 금지된 메일이면 True, 아니면 False
+        """
+        _, domain = email.split("@")
+
+        cf_prohibit_email = getattr(self.config, "cf_prohibit_email", "")
+        if cf_prohibit_email:
+            prohibited_domains = [d.lower().strip() for d in cf_prohibit_email.split('\n')]
+            if domain.lower() in prohibited_domains:
+                return True
+
+        return False
+
+    def valid_open_change_date(self, change_date: date = None) -> None:
+        """프로필 공개 여부를 변경 가능한지 검사"""
+        if not self.is_open_change_date(change_date):
+            open_date = get_next_open_date(self.request, change_date)
+            self.raise_exception(403, f"프로필 공개 변경은 {open_date} 이후 가능합니다.")
+
+    def is_open_change_date(self, change_date: date = None) -> bool:
+        """프로필 공개 여부를 변경 가능한지 확인
+
+        Args:
+            change_date (date): 프로필 공개여부 변경 날짜
+
+        Returns:
+            bool: 프로필 공개 가능 여부
+        """
+        available_days = getattr(self.config, "cf_open_modify", 0)
+
+        if (change_date
+                and not is_none_datetime(change_date)
+                and available_days != 0):
+            return change_date < (date.today() - timedelta(days=available_days))
+        return True
+
+
 def get_member_level(request: Request) -> int:
     """request에서 회원 레벨 정보를 가져오는 함수"""
     member: Member = request.state.login_member
@@ -516,152 +667,24 @@ def is_super_admin(request: Request, mb_id: str = None) -> bool:
     return False
 
 
-def is_email_registered(email: str, mb_id: str = None) -> bool:
-    """이메일이 이미 등록되어 있는지 확인
+def get_next_open_date(request: Request, open_date: date = None) -> str:
+    """다음 프로필 공개 가능일을 반환
 
     Args:
-        email (str): 이메일 주소
-        mb_id (str, optional): 회원 아이디. Defaults to None.
-            회원정보 수정시 자신의 이메일을 제외하기 위해 사용
+        request (Request): FastAPI Request 객체
+        open_date (date): 최근 프로필 공개 변경일
 
     Returns:
-        bool: 이미 등록된 이메일이면 True, 아니면 False
+        datetime: 다음 프로필 공개 가능일
     """
-    query = exists(Member).where(Member.mb_email == email).select()
-    if mb_id:
-        query = query.where(Member.mb_id != mb_id)
+    open_days = getattr(request.state.config, "cf_open_modify", 0)
+    if open_days == 0:
+        return ""
 
-    with DBConnect().sessionLocal() as db:
-        exists_member = db.scalar(query)
+    base_date = open_date if open_date else date.today()
+    calculated_date = base_date + timedelta(days=open_days)
 
-    if exists_member:
-        return True
-    else:
-        return False
-
-
-def is_prohibit_email(request: Request, email: str):
-    """금지된 메일인지 검사
-
-    Args:
-        request (Request): request 객체
-        email (str): 이메일 주소
-
-    Returns:
-        bool: 금지된 메일이면 True, 아니면 False
-    """
-    config = request.state.config
-    _, domain = email.split("@")
-
-    # config에서 금지된 도메인 목록 가져오기
-    cf_prohibit_email = getattr(config, "cf_prohibit_email", "")
-    if cf_prohibit_email:
-        prohibited_domains = [d.lower().strip() for d in cf_prohibit_email.split('\n')]
-
-        # 주어진 도메인이 금지된 도메인 목록에 있는지 확인
-        if domain.lower() in prohibited_domains:
-            return True
-
-    return False
-
-
-def validate_mb_id(request: Request, mb_id: str) -> Tuple[bool, str]:
-    """ 회원가입이 가능한 아이디인지 검사
-
-    Args:
-        request (Request): request 객체
-        mb_id (str): 가입할 아이디
-
-    Returns:
-        Tuple[bool, str]: (검사 결과, 메시지)
-    """
-    config = request.state.config
-
-    if not mb_id or mb_id.strip() == "":
-        return False, "아이디를 입력해주세요."
-
-    with DBConnect().sessionLocal() as db:
-        exists_id = db.scalar(
-            exists(Member).where(Member.mb_id == mb_id).select()
-        )
-    if exists_id:
-        return False, "이미 가입된 아이디입니다."
-
-    prohibited_ids = [id.strip() for id in getattr(config, "cf_prohibit_id", "").split(",")]
-    if mb_id in prohibited_ids:
-        return False, "사용할 수 없는 아이디입니다."
-
-    return True, "사용 가능한 아이디입니다."
-
-
-def validate_nickname(request: Request, mb_nick: str) -> Tuple[bool, str]:
-    """ 등록 가능한 닉네임인지 검사
-
-    Args:
-        mb_nick : 등록할 닉네임
-        prohibit_id : 금지된 닉네임
-
-    Return:
-        가능한 닉네임이면 True 아니면 에러메시지 배열
-
-    """
-    config = request.state.config
-
-    if not mb_nick or mb_nick.strip() == "":
-        return False, "닉네임을 입력해주세요."
-
-    with DBConnect().sessionLocal() as db:
-        exists_nickname = db.scalar(
-            exists(Member).where(Member.mb_nick == mb_nick).select()
-        )
-    if exists_nickname:
-        return False, "해당 닉네임이 존재합니다."
-
-    if mb_nick in getattr(config, "cf_prohibit_id", "").strip():
-        return False, "닉네임으로 정할 수 없는 단어입니다."
-
-    return True, "사용 가능한 닉네임입니다."
-
-
-def validate_nickname_change_date(before_nick_date: date,
-                                  nick_modify_date: int) -> Tuple[bool, str]:
-    """
-        닉네임 변경 가능한지 날짜 검사
-        Args:
-            before_nick_date (datetime) : 이전 닉네임 변경한 날짜
-            nick_modify_date (int) : 닉네임 수정가능일
-        Raises:
-            ValidationError: 닉네임 변경 가능일 안내
-    """
-    if not is_none_datetime(before_nick_date) and nick_modify_date != 0:
-        available_date = before_nick_date + timedelta(days=nick_modify_date)
-        if datetime.now().date() < available_date:
-            return False, f"{available_date.strftime('%Y-%m-%d')} 이후 닉네임을 변경할 수 있습니다."
-
-    return True, "닉네임을 변경할 수 있습니다."
-
-
-def validate_email(request: Request, email: str) -> Tuple[bool, str]:
-    """ 등록 가능한 이메일인지 검사
-
-    Args:
-        Request: request 객체
-        email (str): 이메일 주소
-
-    Returns:
-        Tuple[bool, str]: (검사 결과, 메시지)
-
-    """
-    if not email or email.strip() == "":
-        return False, "이메일을 입력해주세요."
-
-    if is_email_registered(email):
-        return False, "이미 가입된 이메일입니다."
-
-    if is_prohibit_email(request, email):
-        return False, "사용할 수 없는 이메일입니다."
-
-    return True, "사용 가능한 이메일입니다."
+    return calculated_date.strftime("%Y-%m-%d")
 
 
 def hide_member_id(mb_id: str):
@@ -679,3 +702,18 @@ def hide_member_id(mb_id: str):
     start_len = math.ceil((id_len - hide_len) / 2)
     end_len = math.floor((id_len - hide_len) / 2)
     return mb_id[:start_len] + "*" * hide_len + mb_id[-end_len:]
+
+
+def set_zip_code(zip_code: str = None) -> Tuple[str, str]:
+    """우편번호를 앞뒤 3자리로 나누는 함수
+
+    Args:
+        zip_code (str): 우편번호
+
+    Returns:
+        Tuple[str, str]: (앞 3자리, 뒤 3자리)
+    """
+    if not zip_code:
+        return "", ""
+
+    return zip_code[:3], zip_code[3:6]
