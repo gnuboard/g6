@@ -246,6 +246,30 @@ async def api_list_delete(
     return {"result": "deleted"}
 
 
+@router.get("/move/{bo_table}/{sw}",
+            summary="게시글 복사/이동 가능 목록 조회",
+            response_model=List[ResponseBoardModel],
+            responses={**responses}
+            )
+async def api_move_post(
+    request: Request,
+    db: db_session,
+    member: Annotated[Member, Depends(get_current_member)],
+    bo_table: str = Path(...),
+    sw: str = Path(...),
+):
+    """
+    게시글을 복사/이동 가능한 게시판 목록을 반환합니다.
+    sw: opy(게시글 복사) 또는 move(게시글 이동)
+    """
+    move_update_service = MoveUpdateServiceAPI(
+        request, db, bo_table, member, sw
+    )
+    move_update_service.validate_admin_authority()
+    boards = move_update_service.get_admin_board_list()
+    return boards
+
+
 @router.post("/move_update/{bo_table}",
             summary="게시글 복사/이동",
             responses={**responses}

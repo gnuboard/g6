@@ -1,8 +1,9 @@
-from typing_extensions import Union
+from typing_extensions import Union, List
 from fastapi import Request
+from sqlalchemy import select
 
 from core.database import db_session
-from core.models import Board, Member, WriteBaseModel
+from core.models import Board, Member, WriteBaseModel, Group
 from core.exception import AlertException
 from lib.service import BaseService
 from lib.board_lib import BoardConfig, get_admin_type
@@ -68,6 +69,15 @@ class BoardService(BaseService, BoardConfig):
         if not board:
             self.raise_exception(detail="존재하지 않는 게시판입니다.", status_code=404)
         return board
+
+    def get_admin_board_list(self) -> List[Board]:
+        """관리자가 속한 게시판 목록을 가져옵니다."""
+        query = select(Board).join(Group).order_by(Board.gr_id, Board.bo_order, Board.bo_table)
+        if self.admin_type == "group":
+            query = query.where(Group.gr_admin == self.mb_id)
+        elif self.admin_type == "board":
+            query = query.where(Board.bo_admin == self.mb_id)
+        return self.db.scalars(query).all()
 
     def get_write(self, wr_id: Union[int, str]) -> WriteBaseModel:
         """게시글(댓글)을 가져온다."""

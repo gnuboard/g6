@@ -5,12 +5,11 @@ from typing_extensions import Annotated, List
 
 from fastapi import APIRouter, Depends, Request, Form, Path, Query, File, UploadFile
 from fastapi.responses import FileResponse, RedirectResponse
-from sqlalchemy import select
 
 from core.database import db_session
 from core.exception import AlertException
 from core.formclass import WriteForm, WriteCommentForm
-from core.models import Board, Group, Member, WriteBaseModel
+from core.models import Member, WriteBaseModel
 from core.template import UserTemplates
 from lib.member_lib import get_admin_type
 from lib.board_lib import (
@@ -142,20 +141,8 @@ async def move_post(
     move_update_service = MoveUpdateService(
         request, db, bo_table, request.state.login_member, sw
     )
-    # 게시판 관리자 검증
-    mb_id = move_update_service.mb_id
-    admin_type = move_update_service.admin_type
     move_update_service.validate_admin_authority()
-
-    # 게시판 목록 조회
-    query = select(Board).join(Group).order_by(Board.gr_id, Board.bo_order, Board.bo_table)
-    # 관리자가 속한 게시판 목록만 조회
-    if admin_type == "group":
-        query = query.where(Group.gr_admin == mb_id)
-    elif admin_type == "board":
-        query = query.where(Board.bo_admin == mb_id)
-    boards = db.scalars(query).all()
-
+    boards = move_update_service.get_admin_board_list()
     context = {
         "request": request,
         "sw": sw,
