@@ -4,7 +4,6 @@ from fastapi.responses import JSONResponse
 
 from core.models import Member
 from api.v1.dependencies.board import get_current_member
-from api.v1.models import responses
 from service.ajax import AJAXService
 
 
@@ -13,7 +12,7 @@ router = APIRouter()
 
 @router.get("/good/{bo_table}/{wr_id}/{type}",
             summary="좋아요/싫어요",
-            responses={**responses}
+            responses={**AJAXService.responses}
             )
 async def ajax_good(
     ajax_service: Annotated[AJAXService, Depends()],
