@@ -2,7 +2,7 @@ from typing_extensions import Annotated
 from fastapi import APIRouter, Form, Path, Request, Depends
 from fastapi.responses import JSONResponse
 
-from service.ajax import AjaxGoodService
+from service.ajax import AJAXService
 
 router = APIRouter()
 
@@ -10,7 +10,7 @@ router = APIRouter()
 @router.post("/good/{bo_table}/{wr_id}/{type}")
 async def ajax_good(
     request: Request,
-    ajax_good_service: Annotated[AjaxGoodService, Depends()],
+    ajax_good_service: Annotated[AJAXService, Depends()],
     token: str = Form(...),
     bo_table: str = Path(...),
     wr_id: int = Path(...),

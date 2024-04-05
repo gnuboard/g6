@@ -8,7 +8,7 @@ from lib.common import dynamic_create_write_table
 from lib.token import check_token
 
 
-class AjaxGoodService:
+class AJAXService:
 
     def __init__(
         self,

@@ -1,1 +1,1 @@
-from .ajax_good import AjaxGoodService
+from .ajax import AJAXService
