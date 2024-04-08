@@ -1,17 +1,15 @@
+"""스크랩 Template Router"""
 from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends, Form, Path, Query, Request
 from fastapi.responses import RedirectResponse
 
-from core.database import db_session
-from core.exception import AlertException
+from core.models import Board, Member, WriteBaseModel
 from core.template import UserTemplates
-from lib.board_lib import *
-from lib.common import *
-from lib.dependencies import (
-    get_board, get_login_member, get_write, validate_token
-)
-from lib.scrap import ScrapService
+from lib.common import get_paging_info, remove_query_params, set_url_query_params
+from lib.dependencies import get_board, get_login_member, get_write, validate_token
+from lib.dependency.scrap import validate_create_scrap
+from lib.service.scrap_service import ScrapService
 from lib.template_filters import datetime_format
 from lib.template_functions import get_paging
 
@@ -20,33 +18,29 @@ templates = UserTemplates()
 templates.env.filters["datetime_format"] = datetime_format
 
 
-@router.get("/scrap_popin/{bo_table}/{wr_id}", dependencies=[Depends(get_board)])
+@router.get("/scrap_popin/{bo_table}/{wr_id}",
+            dependencies=[Depends(validate_create_scrap)])
 async def scrap_form(
     request: Request,
-    member: Annotated[Member, Depends(get_login_member)],
     board: Annotated[Board, Depends(get_board)],
     write: Annotated[WriteBaseModel, Depends(get_write)],
-    scrap_service: Annotated[ScrapService, Depends()]
 ):
     """
     스크랩 등록 폼(팝업창)
     """
-    exists, message = scrap_service.check_scrap_exists(member.mb_id, board.bo_table, write.wr_id)
-    if exists:
-        raise AlertException(message, 302, request.url_for('scrap_list'))
-
     context = {
         "request": request,
         "bo_table": board.bo_table,
         "write": write,
     }
     return templates.TemplateResponse("bbs/scrap_popin.html", context)
-    
 
-@router.post("/scrap_popin_update/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
+
+@router.post("/scrap_popin_update/{bo_table}/{wr_id}",
+             dependencies=[Depends(validate_create_scrap),
+                           Depends(validate_token)])
 async def scrap_form_update(
     request: Request,
-    db: db_session,
     member: Annotated[Member, Depends(get_login_member)],
     board: Annotated[Board, Depends(get_board)],
     write: Annotated[WriteBaseModel, Depends(get_write)],
@@ -54,12 +48,12 @@ async def scrap_form_update(
     wr_content: str = Form(None),
 ):
     """
-    스크랩 등록
+    회원 스크랩 등록
     """
     bo_table = board.bo_table
     wr_id = write.wr_id
 
-    scrap_service.create_scrap(member.mb_id, bo_table, wr_id)
+    scrap_service.create_scrap(member, bo_table, wr_id)
     scrap_service.update_scrap_count(member)
 
     # # 댓글 추가 => 공용 코드로 분리
@@ -105,7 +99,9 @@ async def scrap_form_update(
     #     insert_board_new(bo_table, comment)
 
     #     # 포인트 부여
-    #     insert_point(request, member.mb_id, board.bo_comment_point, f"{board.bo_subject} {write.wr_id}-{comment.wr_id} 댓글쓰기(스크랩)", board.bo_table, comment.wr_id, '댓글')
+    #     content = f"{board.bo_subject} {write.wr_id}-{comment.wr_id} 댓글쓰기(스크랩)"
+    #     insert_point(request, member.mb_id, board.bo_comment_point,
+    #                  content, board.bo_table, comment.wr_id, '댓글')
 
     #     db.commit()
 
@@ -118,22 +114,26 @@ async def scrap_form_update(
 @router.get("/scrap")
 async def scrap_list(
     request: Request,
-    login_member: Annotated[Member, Depends(get_login_member)],
     scrap_service: Annotated[ScrapService, Depends()],
+    member: Annotated[Member, Depends(get_login_member)],
     current_page: int = Query(default=1, alias="page")
 ):
     """
     스크랩 목록
     """
     config = request.state.config
+    page_rows = getattr(config, "cf_page_rows", 10)
 
-    total_records = scrap_service.fetch_total_records(login_member)
-    paging_info = get_paging_info(current_page, config.cf_page_rows, total_records)
-    scraps = scrap_service.fetch_scraps(login_member, paging_info["offset"], config.cf_page_rows)
+    total_records = scrap_service.fetch_total_records(member)
+    paging_info = get_paging_info(current_page, page_rows, total_records)
+    scraps = scrap_service.fetch_scraps(member,
+                                        paging_info["offset"], page_rows)
     scraps = scrap_service.set_subjects(scraps)
 
     for scrap in scraps:
-        scrap.num = total_records - paging_info["offset"] - (scraps.index(scrap))
+        scrap.num = (total_records
+                     - paging_info["offset"]
+                     - (scraps.index(scrap)))
 
     context = {
         "request": request,
@@ -155,7 +155,7 @@ async def scrap_delete(
     """
     스크랩 삭제
     """
-    scrap_service.delete_scrap(ms_id, member.mb_id)
+    scrap_service.delete_scrap(ms_id, member)
     scrap_service.update_scrap_count(member)
 
     url = request.url_for('scrap_list').path

@@ -1,16 +1,17 @@
+"""스크랩 API Router"""
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, Depends, Path, Request
+from fastapi import APIRouter, Depends, Path
 
-from core.database import db_session
 from core.models import Board, Member, WriteBaseModel
 from lib.common import get_paging_info
 
-from api.v1.models import ViewPageModel, responses
 from api.v1.dependencies.board import get_board, get_write
 from api.v1.dependencies.member import get_current_member
-from api.v1.models.scrap import CreateScrapModel, ResponseScrapListModel
+from api.v1.dependencies.scrap import validate_create_scrap
 from api.v1.lib.scrap import ScrapServiceAPI
+from api.v1.models import ViewPageModel, responses
+from api.v1.models.scrap import CreateScrapModel, ResponseScrapListModel
 
 router = APIRouter()
 
@@ -20,14 +21,15 @@ router = APIRouter()
             response_model=ResponseScrapListModel,
             responses={**responses})
 async def read_member_scraps(
-    member: Annotated[Member, Depends(get_current_member)],
     scrap_service: Annotated[ScrapServiceAPI, Depends()],
+    member: Annotated[Member, Depends(get_current_member)],
     data: Annotated[ViewPageModel, Depends()]
 ):
     """회원 스크랩 목록을 조회합니다."""
     total_records = scrap_service.fetch_total_records(member)
     paging_info = get_paging_info(data.page, data.per_page, total_records)
-    scraps = scrap_service.fetch_scraps(member, paging_info["offset"], data.per_page)
+    scraps = scrap_service.fetch_scraps(member,
+                                        paging_info["offset"], data.per_page)
     scraps = scrap_service.set_subjects(scraps)
 
     return {
@@ -37,24 +39,40 @@ async def read_member_scraps(
     }
 
 
-# TODO: 댓글 등록 프로세스를 템플릿 부분과 통합해야함 
+@router.get("/scraps/{bo_table}/{wr_id}",
+            dependencies=[Depends(validate_create_scrap)])
+async def scrap_form(
+    board: Annotated[Board, Depends(get_board)],
+    write: Annotated[WriteBaseModel, Depends(get_write)],
+):
+    """
+    스크랩 등록 페이지 설정 조회
+    """
+    return {
+        "board": board,
+        "write": write,
+    }
+
+
 @router.post("/scraps/{bo_table}/{wr_id}",
+             dependencies=[Depends(validate_create_scrap)],
              summary="회원 스크랩 등록",
              responses={**responses})
 async def create_member_scrap(
-    request: Request,
-    db: db_session,
+    scrap_service: Annotated[ScrapServiceAPI, Depends()],
     member: Annotated[Member, Depends(get_current_member)],
     board: Annotated[Board, Depends(get_board)],
     write: Annotated[WriteBaseModel, Depends(get_write)],
-    scrap_service: Annotated[ScrapServiceAPI, Depends()],
     data: Annotated[CreateScrapModel, Depends()]
 ):
-    """회원 스크랩을 등록합니다."""
+    """
+    회원 스크랩 등록
+    TODO: 댓글 등록 프로세스를 템플릿 부분과 통합해야함
+    """
     bo_table = board.bo_table
     wr_id = write.wr_id
 
-    scrap_service.create_scrap(member.mb_id, bo_table, wr_id)
+    scrap_service.create_scrap(member, bo_table, wr_id)
     scrap_service.update_scrap_count(member)
 
     # # 댓글 추가 => 공용 코드로 분리
@@ -100,7 +118,7 @@ async def create_member_scrap(
     #     insert_board_new(board.bo_table, comment)
 
     #     # 포인트 부여
-    #     insert_point(request, member.mb_id, board.bo_comment_point, 
+    #     insert_point(request, member.mb_id, board.bo_comment_point,
     #                  f"{board.bo_subject} {write.wr_id}-{comment.wr_id} 댓글쓰기(스크랩)", board.bo_table, comment.wr_id,
     #                  '댓글')
     #     db.commit()
@@ -112,15 +130,15 @@ async def create_member_scrap(
 
 
 @router.delete("/scraps/{ms_id}",
-                summary="회원 스크랩 삭제",
-                responses={**responses})
+               summary="회원 스크랩 삭제",
+               responses={**responses})
 async def delete_member_scrap(
-    member: Annotated[Member, Depends(get_current_member)],
     scrap_service: Annotated[ScrapServiceAPI, Depends()],
+    member: Annotated[Member, Depends(get_current_member)],
     ms_id: Annotated[int, Path(title="스크랩 아이디")]
 ):
     """회원 스크랩을 삭제합니다."""
-    scrap_service.delete_scrap(ms_id, member.mb_id)
+    scrap_service.delete_scrap(ms_id, member)
     scrap_service.update_scrap_count(member)
 
     return {"detail": "스크랩을 삭제하였습니다."}
