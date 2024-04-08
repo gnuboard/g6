@@ -1,3 +1,4 @@
+"""포인트 API Router"""
 from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends
@@ -18,17 +19,18 @@ router = APIRouter()
             response_model=ResponsePointListModel,
             responses={**responses})
 async def read_member_points(
-    current_member: Annotated[Member, Depends(get_current_member)],
     point_service: Annotated[PointServiceAPI, Depends()],
+    member: Annotated[Member, Depends(get_current_member)],
     data: Annotated[ViewPageModel, Depends()]
 ):
     """회원 포인트 내역을 조회합니다."""
-    total_records = point_service.fetch_total_records(current_member)
+    total_records = point_service.fetch_total_records(member)
     paging_info = get_paging_info(data.page, data.per_page, total_records)
-    points = point_service.fetch_points(current_member, paging_info["offset"], data.per_page)
+    points = point_service.fetch_points(member, paging_info["offset"], data.per_page)
 
     return {
         "total_records": total_records,
         "total_pages": paging_info["total_pages"],
+        "sum_points": point_service.calculate_sum(points),
         "points": points
     }

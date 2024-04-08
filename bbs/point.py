@@ -7,7 +7,7 @@ from core.models import Member
 from core.template import UserTemplates
 from lib.common import get_paging_info
 from lib.dependencies import get_login_member
-from lib.point import PointService
+from lib.service.point_service import PointService
 from lib.template_functions import get_paging
 
 router = APIRouter()
@@ -17,9 +17,9 @@ templates = UserTemplates()
 @router.get("/point")
 async def point_list(
     request: Request,
-    member: Annotated[Member, Depends(get_login_member)],
     point_service: Annotated[PointService, Depends()],
-    current_page: int = Query(default=1, alias="page")
+    member: Annotated[Member, Depends(get_login_member)],
+    current_page: Annotated[int, Query(alias="page")] = 1
 ):
     """
     포인트 목록
@@ -30,22 +30,14 @@ async def point_list(
     paging_info = get_paging_info(current_page, records_per_page, total_records)
     points = point_service.fetch_points(member, paging_info["offset"], records_per_page)
 
-    sum_positive = 0
-    sum_negative = 0
     for point in points:
-        # 포인트 정보
         point.num = total_records - paging_info["offset"] - (points.index(point))
-        # 포인트 합계
-        if point.po_point > 0:
-            sum_positive += point.po_point
-        else:
-            sum_negative += point.po_point
+        point.is_positive = point.po_point > 0
 
     context = {
         "request": request,
         "points": points,
-        "sum_positive": sum_positive,
-        "sum_negative": sum_negative,
+        "sum_points": point_service.calculate_sum(points),
         "total_records": total_records,
         "page": current_page,
         "paging": get_paging(request, current_page, total_records),

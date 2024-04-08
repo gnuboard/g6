@@ -1,3 +1,4 @@
+"""포인트 모델 정의 파일"""
 from typing import List
 
 from pydantic import BaseModel
@@ -6,6 +7,7 @@ from api.v1.models import ResponsePageListModel
 
 
 class ResponsePointModel(BaseModel):
+    """포인트 응답 모델"""
     po_content: str
     po_point: int
     po_rel_table: str
@@ -17,4 +19,6 @@ class ResponsePointModel(BaseModel):
 
 
 class ResponsePointListModel(ResponsePageListModel):
+    """포인트 목록 조회 응답 모델"""
+    sum_points: dict
     points: List[ResponsePointModel]
