@@ -1,3 +1,4 @@
+"""회원탈퇴 Template Router"""
 from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends, Request

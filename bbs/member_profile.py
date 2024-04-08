@@ -24,6 +24,25 @@ templates = UserTemplates()
 templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals["captcha_widget"] = captcha_widget
 
+SESSION_NAME = "ss_profile_change"
+
+
+def _check_password_confirm(request: Request) -> None:
+    if not request.session.get(SESSION_NAME, False):
+        raise AlertException(
+            detail="잘못된 접근입니다.",
+            status_code=403,
+            url=request.url_for("member_password").path
+        )
+
+
+def _get_is_phone_certify(member: Member, config: Config) -> bool:
+    """휴대폰 본인인증 사용여부 확인"""
+    return (config.cf_cert_use
+            and config.cf_cert_req
+            and (config.cf_cert_hp or config.cf_cert_simple)
+            and member.mb_certify != "ipin")
+
 
 @router.get("/member_confirm")
 async def check_member_form(
@@ -35,7 +54,7 @@ async def check_member_form(
     회원프로필 수정 전 비밀번호 확인 폼
     """
     # 회원정보를 수정할 수 있는지 확인하는 세션변수
-    request.session["ss_profile_change"] = False
+    request.session[SESSION_NAME] = False
 
     # 소셜로그인 사용중이면 소셜로그인 정보가 있는지 확인
     if request.state.config.cf_social_login_use:
@@ -43,7 +62,7 @@ async def check_member_form(
             select(MemberSocialProfiles).filter_by(mb_id=member.mb_id)
         )
         if social_member:
-            request.session["ss_profile_change"] = True
+            request.session[SESSION_NAME] = True
             return RedirectResponse(url="/bbs/member_profile", status_code=302)
 
     context = {
@@ -67,12 +86,14 @@ async def check_member(
     if not validate_password(mb_password, member.mb_password):
         raise AlertException("아이디 또는 패스워드가 일치하지 않습니다.", 404)
 
-    request.session["ss_profile_change"] = True
+    request.session[SESSION_NAME] = True
 
     return RedirectResponse(url="/bbs/member_profile", status_code=302)
 
 
-@router.get("/member_profile", name='member_profile')
+@router.get("/member_profile",
+            dependencies=[Depends(_check_password_confirm)],
+            name='member_profile')
 async def member_profile(
     request: Request,
     member_service: Annotated[MemberService, Depends()],
@@ -84,15 +105,12 @@ async def member_profile(
     """
     config = request.state.config
 
-    if not request.session.get("ss_profile_change", False):
-        raise AlertException("잘못된 접근입니다", 403, url="/")
-
     member = member_service.read_member(member.mb_id)
 
     form_context = {
         "action_url": request.url_for("member_profile_save").path,
         "name_readonly": "readonly",
-        "hp_readonly": "readonly" if get_is_phone_certify(member, config) else "",
+        "hp_readonly": "readonly" if _get_is_phone_certify(member, config) else "",
         "mb_icon_url": MemberImageService.get_icon_path(member.mb_id),
         "mb_img_url": MemberImageService.get_image_path(member.mb_id),
         "is_profile_open": validate.is_open_change_date(member.mb_open_date),
@@ -109,7 +127,8 @@ async def member_profile(
 
 @router.post("/member_profile",
              dependencies=[Depends(validate_token),
-                           Depends(validate_captcha)],
+                           Depends(validate_captcha),
+                           Depends(_check_password_confirm)],
             name='member_profile_save')
 async def member_profile_save(
     request: Request,
@@ -125,10 +144,6 @@ async def member_profile_save(
     """
     회원정보 수정 처리
     """
-    if not request.session.get("ss_profile_change", False):
-        raise AlertException(
-            "잘못된 접근입니다.", 403, url=request.url_for("member_password").path)
-
     member = member_service.read_member(member.mb_id)
     member_service.update_member(member, form_data.__dict__)
 
@@ -136,15 +151,7 @@ async def member_profile_save(
     file_service.update_image_file(member.mb_id, 'image', mb_img, del_mb_img)
     file_service.update_image_file(member.mb_id, 'icon', mb_icon, del_mb_icon)
 
-    if "ss_profile_change" in request.session:
-        del request.session["ss_profile_change"]
+    if SESSION_NAME in request.session:
+        del request.session[SESSION_NAME]
 
     raise AlertException("회원정보가 수정되었습니다.", 302, "/")
-
-
-def get_is_phone_certify(member: Member, config: Config) -> bool:
-    """휴대폰 본인인증 사용여부 확인"""
-    return (config.cf_cert_use
-            and config.cf_cert_req
-            and (config.cf_cert_hp or config.cf_cert_simple)
-            and member.mb_certify != "ipin")

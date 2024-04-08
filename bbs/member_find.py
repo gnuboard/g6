@@ -4,16 +4,12 @@ from typing_extensions import Annotated
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, Path, Request
 
 from core.exception import AlertException
-from core.models import Member
 from core.template import UserTemplates
 from lib.common import captcha_widget
 from lib.dependencies import validate_captcha, validate_token
-from lib.dependency.member import (
-    get_member_by_lost_certify, redirect_if_logged_in, validate_password_reset
-)
+from lib.dependency.member import redirect_if_logged_in, validate_password_reset
 from lib.mail import send_password_reset_mail
 from lib.member_lib import MemberService
-from lib.pbkdf2 import create_hash
 
 router = APIRouter(dependencies=[Depends(redirect_if_logged_in)])
 templates = UserTemplates()
@@ -91,11 +87,14 @@ async def find_member_password(
 @router.get("/password_reset/{mb_id}/{token}")
 async def reset_password_form(
     request: Request,
-    member: Annotated[Member, Depends(get_member_by_lost_certify)]
+    member_service: Annotated[MemberService, Depends()],
+    mb_id: Annotated[str, Path()],
+    token: Annotated[str, Path()],
 ):
     """
     비밀번호 재설정 링크를 클릭한 후 비밀번호 재설정 폼을 보여준다.
     """
+    member = member_service.read_member_by_lost_certify(mb_id, token)
     context = {
         "request": request,
         "member": member
@@ -108,13 +107,13 @@ async def reset_password_form(
                            Depends(validate_token)])
 async def reset_password(
     member_service: Annotated[MemberService, Depends()],
-    mb_password: Annotated[str, Depends(validate_password_reset)],
+    password_hash: Annotated[str, Depends(validate_password_reset)],
     mb_id: Annotated[str, Path()],
     token: Annotated[str, Path()],
 ):
     """
-    비밀번호를 재설정한다.
+    비밀번호 재설정 처리
     """
-    member_service.reset_password(mb_id, token, create_hash(mb_password))
+    member_service.reset_password(mb_id, token, password_hash)
 
     raise AlertException("비밀번호가 변경되었습니다.", 303, "/bbs/login")

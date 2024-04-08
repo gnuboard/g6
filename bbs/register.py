@@ -7,7 +7,6 @@ from fastapi import (
     UploadFile
 )
 from fastapi.responses import RedirectResponse
-from sqlalchemy.sql import select
 
 from core.database import db_session
 from core.exception import AlertException
@@ -73,7 +72,6 @@ async def get_register_form(request: Request):
             "is_profile_open": True,
         },
         "is_register": True,
-        
     }
     return templates.TemplateResponse("/member/register_form.html", context)
 
@@ -128,22 +126,14 @@ async def post_register_form(
 @router.get("/register_result")
 async def register_result(
     request: Request,
-    db: db_session
+    member_service: Annotated[MemberService, Depends()]
 ):
     """
     회원가입 결과 페이지
     """
-    register_mb_id = request.session.get("ss_mb_reg", "")
-    if "ss_mb_reg" in request.session:
-        request.session.pop("ss_mb_reg")
-
-    # 회원가입이 아닐때.
-    if not register_mb_id:
-        return RedirectResponse(url="/bbs/register", status_code=302)
-
-    member = db.scalar(select(Member).where(Member.mb_id == register_mb_id))
+    mb_id = request.session.pop("ss_mb_reg", "")
+    member = member_service.fetch_member_by_id(mb_id)
     if not member:
-        # 가입실패
         return RedirectResponse(url="/bbs/register", status_code=302)
 
     context = {

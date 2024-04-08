@@ -40,6 +40,7 @@ class MemberService(BaseService):
     def __init__(self, request: Request, db: db_session):
         self.request = request
         self.db = db
+        self.config = request.state.config
         self.member = None
 
     def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None):
@@ -47,13 +48,11 @@ class MemberService(BaseService):
 
     def create_member(self, data) -> Member:
         """회원 정보를 생성합니다."""
-        config = self.request.state.config
-
         member = Member(**data.__dict__)
-        member.mb_level = getattr(config, "cf_register_level", 1)
+        member.mb_level = getattr(self.config, "cf_register_level", 1)
         member.mb_login_ip = get_client_ip(self.request)
         # 메일인증
-        if getattr(config, "cf_use_email_certify", False):
+        if getattr(self.config, "cf_use_email_certify", False):
             member.mb_email_certify2 = secrets.token_hex(16)  # 일회용 인증키
         else:
             member.mb_email_certify = datetime.now()  # 인증완료
@@ -146,7 +145,9 @@ class MemberService(BaseService):
         if not (self.request.state.is_super_admin or current_member.mb_id == mb_id):
             if not current_member.mb_open:
                 self.raise_exception(
-                    status_code=403, detail="자신의 정보를 공개하지 않으면 다른분의 정보를 조회할 수 없습니다.\\n\\n정보공개 설정은 회원정보수정에서 하실 수 있습니다.")
+                    status_code=403,
+                    detail="자신의 정보를 공개하지 않으면 다른분의 정보를 조회할 수 없습니다.\
+                            \\n\\n정보공개 설정은 회원정보수정에서 하실 수 있습니다.")
             if not member.mb_open:
                 self.raise_exception(
                     status_code=403, detail="회원정보를 공개하지 않은 회원입니다.")
@@ -161,9 +162,7 @@ class MemberService(BaseService):
 
     def is_member_email_certified(self, member: Member) -> Tuple[bool, str]:
         """이메일 인증이 완료된 회원인지 확인합니다."""
-        config = self.request.state.config
-
-        if config.cf_use_email_certify and is_none_datetime(member.mb_email_certify):
+        if self.config.cf_use_email_certify and is_none_datetime(member.mb_email_certify):
             return False, f"{member.mb_email} 메일로 메일인증을 받으셔야 로그인 가능합니다."
         return True, "이메일 인증을 완료한 회원입니다."
 
@@ -195,13 +194,12 @@ class MemberService(BaseService):
         """
         from bbs.social import SocialAuthService
 
-        config = self.request.state.config
+        admin_id = getattr(self.config, "cf_admin", "admin")
         member = self.db.scalar(
             select(Member).where(
                 Member.mb_name == mb_name,
                 Member.mb_email == mb_email,
-                Member.mb_id != getattr(
-                    config, "cf_admin", "admin")  # 최고관리자는 제외
+                Member.mb_id != admin_id  # 최고관리자는 제외
             )
         )
         if not member:
@@ -221,12 +219,12 @@ class MemberService(BaseService):
         """
         from bbs.social import SocialAuthService
 
-        config = self.request.state.config
+        admin_id = getattr(self.config, "cf_admin", "admin")
         member = self.db.scalar(
             select(Member).where(
                 Member.mb_id == mb_id,
                 Member.mb_email == mb_email,
-                Member.mb_id != config.cf_admin  # 최고관리자는 제외
+                Member.mb_id != admin_id  # 최고관리자는 제외
             )
         )
         if not member:
@@ -244,16 +242,23 @@ class MemberService(BaseService):
 
         return member
 
-    def reset_password(self, mb_id: str, token: str, mb_password: str):
+    def reset_password(self, mb_id: str, token: str, hash_password: str):
         """비밀번호를 재설정합니다."""
+        member = self.read_member_by_lost_certify(mb_id, token)
+        member.mb_password = hash_password
+        member.mb_lost_certify = ""
+        self.db.commit()
+
+    def read_member_by_lost_certify(self, mb_id: str, token: str) -> Member:
+        """비밀번호 재설정을 위한 회원 정보를 조회합니다."""
         from bbs.social import SocialAuthService
 
-        config = self.request.state.config
+        admin_id = getattr(self.config, "cf_admin", "admin")
         member = self.db.scalar(
             select(Member).where(
                 Member.mb_id == mb_id,
                 Member.mb_lost_certify == token,
-                Member.mb_id != config.cf_admin  # 최고관리자는 제외
+                Member.mb_id != admin_id  # 최고관리자는 제외
             )
         )
         if not member:
@@ -263,9 +268,7 @@ class MemberService(BaseService):
             self.raise_exception(
                 status_code=400, detail="소셜로그인으로 가입하신 회원은 비밀번호를 재설정할 수 없습니다.")
 
-        member.mb_password = mb_password
-        member.mb_lost_certify = ""
-        self.db.commit()
+        return member
 
     def fetch_member_by_id(self, mb_id: str) -> Member:
         """ID로 회원 정보를 데이터베이스에서 조회합니다."""
