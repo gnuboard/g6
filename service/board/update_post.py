@@ -3,7 +3,7 @@ from fastapi import Request, HTTPException
 from sqlalchemy import update, select, func
 
 from core.database import db_session
-from core.models import Member
+from core.models import Member, WriteBaseModel
 from core.formclass import WriteForm
 from lib.board_lib import generate_reply_character, insert_point, is_owner
 from lib.g5_compatibility import G5Compatibility
@@ -29,7 +29,7 @@ class UpdatePostService(CreatePostService):
         super().__init__(request, db, bo_table, member)
         self.wr_id = wr_id
 
-    def validate_author(self, write):
+    def validate_author(self, write: WriteBaseModel):
         """작성자 확인"""
         if not is_owner(write, self.mb_id):
             self.raise_exception(detail="작성자만 수정할 수 있습니다.", status_code=403)
@@ -99,7 +99,9 @@ class CommentService(UpdatePostService):
             message += "로그인 후 다시 시도해주세요."
         self.raise_exception(detail=message, status_code=403)
 
-    def save_comment(self, data, write):
+    def save_comment(
+            self, data: Union[WriteForm, WriteModel], write: WriteBaseModel
+    ) -> WriteBaseModel:
         """댓글을 저장하고 댓글 ORM 객체를 반환"""
         comment = self.write_model()
 
@@ -144,7 +146,7 @@ class CommentService(UpdatePostService):
         self.db.commit()
         return comment
 
-    def add_point(self, comment):
+    def add_point(self, comment: WriteBaseModel):
         """포인트 추가"""
         if self.mb_id:
             point = self.board.bo_comment_point

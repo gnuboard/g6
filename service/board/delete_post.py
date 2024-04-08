@@ -1,9 +1,10 @@
+from typing_extensions import List
 
 from fastapi import Request, HTTPException
 from sqlalchemy import select, exists, delete, update
 
 from core.database import db_session
-from core.models import Member, BoardNew, Scrap
+from core.models import Member, BoardNew, Scrap, WriteBaseModel
 from lib.board_lib import (
     is_owner, insert_point, delete_point,
     BoardFileManager, FileCache
@@ -80,7 +81,7 @@ class DeletePostService(BoardService):
         # 원글 + 댓글
         delete_write_count = 0
         delete_comment_count = 0
-        writes = db.scalars(
+        writes: List[WriteBaseModel] = db.scalars(
             select(write_model)
             .filter_by(wr_parent=self.wr_id)
             .order_by(write_model.wr_id)
@@ -157,8 +158,8 @@ class DeleteCommentService(DeletePostService):
         self.wr_id = wr_id
         self.comment = self.get_comment()
 
-    def get_comment(self):
-        comment = self.db.get(self.write_model, self.wr_id)
+    def get_comment(self) -> WriteBaseModel:
+        comment: WriteBaseModel = self.db.get(self.write_model, self.wr_id)
         if not comment:
             raise HTTPException(status_code=404, detail=f"{self.wr_id} : 존재하지 않는 댓글입니다.")
         
@@ -239,7 +240,7 @@ class ListDeleteService(BoardService):
     def delete_writes(self, wr_ids: list):
         """게시글 목록 삭제"""
         write_model = self.write_model
-        writes = self.db.scalars(
+        writes: List[WriteBaseModel] = self.db.scalars(
             select(write_model)
             .where(write_model.wr_id.in_(wr_ids))
         ).all()

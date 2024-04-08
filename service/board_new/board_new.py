@@ -29,7 +29,7 @@ class BoardNewService(BaseService):
     def raise_exception(self):
         raise AlertException(status_code=400, detail="검색 결과가 없습니다.")
 
-    def format_datetime(self, wr_datetime: datetime):
+    def format_datetime(self, wr_datetime: datetime) -> str:
         """
         당일인 경우 시간표시
         """
@@ -40,7 +40,9 @@ class BoardNewService(BaseService):
         else:
             return wr_datetime.strftime("%y-%m-%d")
 
-    def get_query(self, gr_id=None, mb_id=None, view=None) -> select:
+    def get_query(
+            self, gr_id: str = None, mb_id: str = None, view: str = None
+    ) -> select:
         """검색 조건에 따라 query를 반환"""
         query = select().join(BoardNew.board).order_by(BoardNew.bn_id.desc())
         

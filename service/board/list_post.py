@@ -1,8 +1,9 @@
+from typing_extensions import List
 from fastapi import Request, HTTPException
 from sqlalchemy import asc, desc, func, select
 
 from core.database import db_session
-from core.models import Member
+from core.models import Member, WriteBaseModel
 from lib.board_lib import write_search_filter, get_list
 from . import BoardService
 
@@ -29,7 +30,7 @@ class ListPostService(BoardService):
         self.prev_spt = None
         self.next_spt = None
 
-    def get_query(self, search_params: dict):
+    def get_query(self, search_params: dict) -> select:
         """쿼리를 생성합니다."""
         sca = self.request.query_params.get("sca")
         sfl = search_params.get('sfl')
@@ -76,7 +77,7 @@ class ListPostService(BoardService):
 
         return self.query
 
-    def get_writes(self,search_params: dict):
+    def get_writes(self,search_params: dict) -> List[WriteBaseModel]:
         """게시글 목록을 가져옵니다."""
         current_page = search_params.get('current_page')
         page_rows = self.page_rows
@@ -98,7 +99,7 @@ class ListPostService(BoardService):
 
         return writes
     
-    def get_notice_writes(self,search_params: dict):
+    def get_notice_writes(self,search_params: dict) -> List[WriteBaseModel]:
         """게시글 중 공지사항 목록을 가져옵니다."""
         current_page = search_params.get('current_page')
         sca = self.request.query_params.get("sca")
@@ -111,7 +112,7 @@ class ListPostService(BoardService):
             notice_writes = [get_list(self.request, write, self) for write in self.db.scalars(notice_query).all()]
         return notice_writes
 
-    def get_total_count(self):
+    def get_total_count(self) -> int:
         """쿼리문을 통해 불러오는 게시글의 수"""
         total_count = self.db.scalar(self.query.add_columns(func.count()).order_by(None))
         return total_count

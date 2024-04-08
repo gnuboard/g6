@@ -298,7 +298,7 @@ class MoveUpdateService(BoardService):
         self.sw = sw
         self.act = "이동" if sw == "move" else "복사"
 
-    def get_origin_writes(self, wr_ids):
+    def get_origin_writes(self, wr_ids: str) -> List[WriteBaseModel]:
         """선택된 원본 글들을 가져옵니다."""
         origin_writes = self.db.scalars(
             select(self.write_model)

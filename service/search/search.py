@@ -62,7 +62,7 @@ class SearchService(BaseService, BoardConfig):
         boards = self.db.scalars(boards_query).all()
         return boards
 
-    def search(self, boards, sfl: str, stx: str, sop: str) -> dict:
+    def search(self, boards: List[Board], sfl: str, stx: str, sop: str) -> dict:
         """게시판 검색 데이터"""
         remove_boards = []
         total_search_count = 0

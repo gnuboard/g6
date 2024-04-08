@@ -1,3 +1,5 @@
+from typing_extensions import List
+
 from fastapi import Request, HTTPException
 from sqlalchemy import select
 
@@ -32,7 +34,7 @@ class GroupBoardListService(BoardService):
         self.login_member_admin_type = self.admin_type
         self.login_member_level = self.member_level
 
-    def get_group(self):
+    def get_group(self) -> Group:
         """게시판 그룹 정보 조회"""
         group = self.db.get(Group, self.gr_id)
         if not group:
@@ -47,7 +49,7 @@ class GroupBoardListService(BoardService):
         if self.request.state.device == "mobile":
             self.raise_exception(detail=f"{self.group.gr_subject} 그룹은 모바일에서만 접근할 수 있습니다.", status_code=403)
 
-    def get_boards_in_group(self):
+    def get_boards_in_group(self) -> List[Board]:
         """게시판 그룹에 속한 게시판 목록 조회"""
         # 그룹별 게시판 목록 조회
         query = (

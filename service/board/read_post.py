@@ -1,8 +1,10 @@
+from typing_extensions import List, Tuple
+
 from fastapi import Request, HTTPException
 from sqlalchemy import asc, desc, select, exists
 
 from core.database import db_session
-from core.models import Member, BoardGood, Scrap
+from core.models import Member, BoardGood, Scrap, WriteBaseModel, BoardFile
 from lib.board_lib import BoardFileManager, insert_point, is_owner, cut_name
 from lib.template_filters import number_format
 from . import BoardService
@@ -152,7 +154,7 @@ class ReadPostService(BoardService):
         if good_data:
             setattr(self.write, f"is_{good_data.bg_flag}", True)
 
-    def get_links(self):
+    def get_links(self) -> list:
         """링크 목록 조회"""
         links = []
         for i in range(1, 3):
@@ -162,9 +164,9 @@ class ReadPostService(BoardService):
                 links.append({"no": i, "url": url, "hit": hit})
         return links
 
-    def get_comments(self):
+    def get_comments(self) -> List[WriteBaseModel]:
         """댓글 목록 조회"""
-        comments = self.db.scalars(
+        comments: List[WriteBaseModel] = self.db.scalars(
             select(self.write_model).filter_by(
                 wr_parent=self.wr_id,
                 wr_is_comment=1
@@ -195,7 +197,7 @@ class ReadPostService(BoardService):
 
         return comments
 
-    def get_prev_next(self):
+    def get_prev_next(self) -> Tuple[WriteBaseModel, WriteBaseModel]:
         """이전글 다음글 조회"""
         prev = None
         next = None
@@ -268,7 +270,7 @@ class DownloadFileService(BoardService):
         if not self.is_download_level():
             self.raise_exception(detail="다운로드 권한이 없습니다.", status_code=403)
 
-    def get_board_file(self):
+    def get_board_file(self) -> BoardFile:
         """파일 정보 조회"""
         board_file = self.file_manager.get_board_file(self.bf_no)
         if not board_file:
