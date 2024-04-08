@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 
-from lib.memo import MemoService
+from lib.service.memo_service import MemoService
 
 
 class MemoServiceAPI(MemoService):

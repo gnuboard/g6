@@ -1,3 +1,4 @@
+"""쪽지 관련 의존성을 정의합니다."""
 from typing_extensions import Annotated
 
 from fastapi import Depends
@@ -14,10 +15,8 @@ def validate_send_memo(
     current_member: Annotated[Member, Depends(get_current_member)],
     data: SendMemoModel
 ):
-    send_members = memo_service.get_send_members(data._send_mb_ids)
-    data._send_members = send_members
-
-    send_point = memo_service.get_send_point(current_member, len(send_members))
-    data._send_point = send_point
+    """쪽지 전송 시 필요한 정보를 검증합니다."""
+    data.send_members = memo_service.get_send_members(data.send_mb_ids)
+    data.send_point = memo_service.calculate_send_point(current_member, len(data.send_members))
 
     return data
