@@ -234,6 +234,12 @@ def validate_policy_agree(request: Request):
         raise AlertException("회원가입 약관에 동의해 주세요.", 400, url="/bbs/register")
 
 
+def check_login_member(request: Request):
+    """현재 로그인 멤버를 반환한다. 로그인이 되어 있지 않으면 None을 반환한다."""
+    member: Member = request.state.login_member
+    return member
+
+
 def check_use_template():
     """템플릿 사용 여부 검사"""
     use_template = (TypeAdapter(bool)

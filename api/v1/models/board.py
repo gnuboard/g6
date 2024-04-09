@@ -51,7 +51,7 @@ class CommentModel(BaseModel):
                                      description="비회원일 경우 비밀번호")]
     wr_option: Annotated[str, Body("html1", title="비밀글 여부",
                                    description="secret: 비밀글, html1: HTML 사용")]
-    comment_id: Annotated[int, Body(None, title="부모댓글 ID")]
+    comment_id: Annotated[int, Body(None, title="댓글 ID")]
 
     @model_validator(mode='after')
     def init_fields(self) -> 'WriteModel':
@@ -81,10 +81,27 @@ class ResponseCommentModel(BaseModel):
     wr_email: str
     wr_comment: int
     is_reply: bool
-    is_edit: str
-    is_del: str
+    is_edit: bool
+    is_del: bool
     is_secret: bool
     is_secret_content: bool
+
+
+class ResponseWriteSearchModel(BaseModel):
+    """게시글 모델중 response에 필요한 속성 정의"""
+    wr_id: int
+    wr_num: int
+    wr_reply: str
+    wr_subject: str
+    wr_name: str
+    wr_datetime: datetime
+    wr_content: str
+    wr_comment: int
+    wr_hit: int
+    wr_option: str = "",
+
+    class Config:
+        from_attributes = True
 
 
 class ResponseWriteModel(BaseModel):
@@ -96,13 +113,122 @@ class ResponseWriteModel(BaseModel):
     wr_name: str
     mb_id: str
     wr_datetime: datetime
-    wr_option: str
     wr_email: str
     wr_content: str
     wr_link1: str
     wr_link2: str
     wr_comment: int
     wr_hit: int
-    images: List[ResponseFileModel]
-    normal_files: List[ResponseFileModel]
-    comments: List[ResponseCommentModel]
+    wr_ip: str
+    wr_option: str = "",
+    images: List[ResponseFileModel] = []
+    normal_files: List[ResponseFileModel] = []
+    comments: List[ResponseCommentModel] = []
+
+    class Config:
+        from_attributes = True
+
+
+class ResponseBoardModel(BaseModel):
+    """
+    게시판 모델중 response에 필요한 속성 정의
+    model_validate 메소드에 의해서 데이터 타입 검증
+    타입 검증과 함께 정의되지 않은 속성은 제거하는 필터링 기능도 포함
+    주석된 부분을 풀거나 추가하여 API response에서 보여지는 데이터를 변경할 수 있습니다.
+    """
+    bo_table: str
+    gr_id: str
+    bo_subject: str
+    bo_mobile_subject: str
+    bo_device: str
+    bo_admin: str
+    bo_list_level: int
+    bo_read_level: int
+    bo_write_level: int
+    bo_reply_level: int
+    bo_comment_level: int
+    bo_upload_level: int
+    bo_download_level: int
+    bo_html_level: int
+    bo_link_level: int
+    bo_count_delete: int
+    bo_count_modify: int
+    bo_read_point: int
+    bo_write_point: int
+    bo_comment_point: int
+    bo_download_point: int
+    bo_use_category: int
+    bo_category_list: str
+    # bo_use_sideview: int
+    # bo_use_file_content: int
+    # bo_use_secret: int
+    # bo_use_dhtml_editor: int
+    # bo_select_editor: str
+    # bo_use_rss_view: int
+    # bo_use_good: int
+    # bo_use_nogood: int
+    # bo_use_name: int
+    # bo_use_signature: int
+    # bo_use_ip_view: int
+    # bo_use_list_view: int
+    # bo_use_list_file: int
+    # bo_use_list_content: int
+    # bo_table_width: int
+    # bo_subject_len: int
+    # bo_mobile_subject_len: int
+    # bo_page_rows: int
+    # bo_mobile_page_rows: int
+    # bo_new: int
+    # bo_hot: int
+    # bo_image_width: int
+    # bo_skin: str
+    # bo_mobile_skin: str
+    # bo_include_head: str
+    # bo_include_tail: str
+    # bo_content_head: str
+    # bo_mobile_content_head: str
+    # bo_content_tail: str
+    # bo_mobile_content_tail: str
+    # bo_insert_content: str
+    # bo_gallery_cols: int
+    # bo_gallery_width: int
+    # bo_gallery_height: int
+    # bo_mobile_gallery_width: int
+    # bo_mobile_gallery_height: int
+    # bo_upload_size: int
+    # bo_reply_order: int
+    # bo_use_search: int
+    # bo_order: int
+    # bo_count_write: int
+    # bo_count_comment: int
+    # bo_write_min: int
+    # bo_write_max: int
+    # bo_comment_min: int
+    # bo_comment_max: int
+    # bo_notice: str
+    # bo_upload_count: int
+    # bo_use_email: int
+    # bo_use_cert: str
+    # bo_use_sns: int
+    # bo_use_captcha: int
+    # bo_sort_field: str
+    # bo_1_subj: str
+    # bo_2_subj: str
+    # bo_3_subj: str
+    # bo_4_subj: str
+    # bo_5_subj: str
+    # bo_6_subj: str
+    # bo_7_subj: str
+    # bo_8_subj: str
+    # bo_9_subj: str
+    # bo_10_subj: str
+    # bo_1: str
+    # bo_2: str
+    # bo_3: str
+    # bo_4: str
+    # bo_5: str
+    # bo_6: str
+    # bo_7: str
+    # bo_8: str
+    # bo_9: str
+    # bo_10: str

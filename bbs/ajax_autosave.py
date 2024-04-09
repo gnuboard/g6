@@ -1,16 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException, Path
+from typing_extensions import Annotated
+from fastapi import Request, APIRouter, Depends, Path
 from starlette.responses import JSONResponse
 
-from core.database import db_session
 from core.formclass import AutoSaveForm
-from core.models import AutoSave
-from lib.common import *
+from core.models import Member
+from service.ajax import AJAXService
 
 router = APIRouter()
 
 
 @router.get("/autosave_list")
-async def autosave_list(request: Request, db: db_session):
+async def autosave_list(
+    request: Request,
+    ajax_service: Annotated[AJAXService, Depends()],
+):
     """자동저장 목록을 반환한다.
     Args:
         request (Request): Request 객체
@@ -19,19 +22,16 @@ async def autosave_list(request: Request, db: db_session):
         AutoSave[list]: 자동저장 목록
     """
     member: Member = request.state.login_member
-    if not member:
-        raise HTTPException(status_code=403, detail="로그인 후 이용 가능합니다.")
-
-    save_list = db.scalars(
-        select(AutoSave)
-        .where(AutoSave.mb_id == member.mb_id)
-        .order_by(AutoSave.as_datetime.desc())
-    ).all()
+    ajax_service.validate_login(member)
+    save_list = ajax_service.get_autosave_list(member)
     return save_list
 
 
 @router.get("/autosave_count")
-async def autosave_count(request: Request):
+async def autosave_count(
+    request: Request,
+    ajax_service: Annotated[AJAXService, Depends()]
+):
     """자동저장글 개수를 반환한다.
     Args:
         request (Request): Request 객체
@@ -39,16 +39,14 @@ async def autosave_count(request: Request):
         dict: 자동저장글 개수
     """
     member: Member = request.state.login_member
-    if not member:
-        raise HTTPException(status_code=403, detail="로그인 후 이용 가능합니다.")
-
-    return {"count": get_autosave_count(member.mb_id)}
+    ajax_service.validate_login(member)
+    return {"count": ajax_service.get_autosave_count(member.mb_id)}
 
 
 @router.get("/autosave_load/{as_id}")
 async def autosave_load(
         request: Request,
-        db: db_session,
+        ajax_service: Annotated[AJAXService, Depends()],
         as_id: int = Path(..., title="자동저장 ID")
 ):
     """자동저장 내용을 불러온다.
@@ -59,27 +57,20 @@ async def autosave_load(
     Returns:
         AutoSave: 자동저장 데이터
     Raises:
-        HTTPException:  로그인이 필요합니다
-        HTTPException: 저장된 글이 없을 경우
-        HTTPException: 접근 권한이 없을 경우
+        JSONException: 로그인이 필요합니다
+        JSONException: 저장된 글이 없을 경우
+        JSONException: 접근 권한이 없을 경우
     """
     member: Member = request.state.login_member
-    if not member:
-        raise HTTPException(status_code=403, detail="로그인 후 이용 가능합니다.")
-
-    save_data = db.get(AutoSave, as_id)
-    if not save_data:
-        raise HTTPException(status_code=404, detail="저장된 글이 없습니다.")
-    if save_data.mb_id != member.mb_id:
-        raise HTTPException(status_code=403, detail="접근 권한이 없습니다.")
-
+    ajax_service.validate_login(member)
+    save_data = ajax_service.get_autosave_content(as_id, member)
     return save_data
 
 
 @router.post("/autosave")
 async def autosave(
         request: Request,
-        db: db_session,
+        ajax_service: Annotated[AJAXService, Depends()],
         form_data: AutoSaveForm = Depends()
 ):
     """글 임시저장
@@ -90,34 +81,19 @@ async def autosave(
     Returns:
         JSONResponse: 임시저장글 개수
     Raises:
-        HTTPException:  로그인이 필요합니다
+        JSONException: 로그인이 필요합니다
     """
-    member = request.state.login_member
-    if not member:
-        raise HTTPException(status_code=403, detail="로그인 후 이용 가능합니다.")
-
-    # 임시저장 데이터가 있는지 확인 후 수정 또는 추가
-    save_data = db.scalar(
-        select(AutoSave)
-        .where(AutoSave.mb_id == member.mb_id, AutoSave.as_uid == form_data.as_uid)
-    )
-    if save_data:
-        save_data.as_subject = form_data.as_subject
-        save_data.as_content = form_data.as_content
-        save_data.as_datetime = datetime.now()
-    else:
-        db.add(AutoSave(mb_id=member.mb_id, **form_data.__dict__))
-    db.commit()
-
-    # 자동저장글 개수 반환
-    count = get_autosave_count(member.mb_id)
+    member: Member = request.state.login_member
+    ajax_service.validate_login(member)
+    ajax_service.autosave_save(member, form_data)
+    count = ajax_service.get_autosave_count(member.mb_id)
     return JSONResponse(status_code=201, content={"count": count})
 
 
 @router.delete("/autosave/{as_id}")
 async def autosave(
         request: Request,
-        db: db_session,
+        ajax_service: Annotated[AJAXService, Depends()],
         as_id: int = Path(..., title="자동저장 ID")
 ):
     """임시저장글 삭제
@@ -128,38 +104,11 @@ async def autosave(
     Returns:
         JSONResponse: 삭제되었습니다.
     Raises:
-    HTTPException:  로그인이 필요합니다, 저장된 글이 없을 경우, 접근 권한이 없을 경우
-    HTTPException: 저장된 글이 없을 경우
-    HTTPException: 접근 권한이 없을 경우
+        JSONException: 로그인이 필요합니다, 저장된 글이 없을 경우, 접근 권한이 없을 경우
+        JSONException: 저장된 글이 없을 경우
+        JSONException: 접근 권한이 없을 경우
     """
-    member = request.state.login_member
-    if not member:
-        raise HTTPException(status_code=403, detail="로그인 후 이용 가능합니다.")
-
-    save_data = db.get(AutoSave, as_id)
-    if not save_data:
-        raise HTTPException(status_code=404, detail="저장된 글이 없습니다.")
-    if save_data.mb_id != member.mb_id:
-        raise HTTPException(status_code=403, detail="접근 권한이 없습니다.")
-
-    db.delete(save_data)
-    db.commit()
-
+    member: Member = request.state.login_member
+    ajax_service.validate_login(member)
+    ajax_service.autosave_delete(as_id, member)
     return JSONResponse(status_code=200, content="삭제되었습니다.")
-
-
-def get_autosave_count(mb_id: str):
-    """임시저장된 글 개수를 반환한다.
-    Args:
-        mb_id (str): 회원 아이디
-    Returns:
-        int: 임시저장된 글 개수
-    """
-    db = DBConnect().sessionLocal()
-    count = db.scalar(
-        select(func.count(AutoSave.as_id))
-        .where(AutoSave.mb_id == mb_id)
-    )
-    db.close()
-
-    return count

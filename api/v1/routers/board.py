@@ -1,30 +1,24 @@
-import os
 from typing_extensions import Annotated, Dict, List
-
-from fastapi import APIRouter, Depends, Request, Path, Query, HTTPException, status, UploadFile, File, Form
+from fastapi import (
+    APIRouter, Depends, Request, Path, HTTPException,
+    status, UploadFile, File, Form, Body
+)
+from fastapi.responses import FileResponse
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import asc, desc, func, select, update, exists, inspect, delete
 
 from core.database import db_session
-from core.models import Board, Group, BoardGood, Scrap, Member, BoardNew, WriteBaseModel
-from lib.board_lib import (
-    BoardConfig, get_list, write_search_filter, get_next_num, generate_reply_character,
-    insert_board_new, send_write_mail, is_owner, BoardFileManager
-)
-from lib.common import dynamic_create_write_table, FileCache, cut_name
+from core.models import Member
+from lib.board_lib import insert_board_new, set_write_delay
 from lib.dependencies import common_search_query_params
-from lib.member_lib import get_admin_type, get_member_level
-from lib.template_filters import number_format
-from lib.point import insert_point, delete_point
-from lib.g5_compatibility import G5Compatibility
-from api.v1.dependencies.board import (
-    get_member_info, get_board, get_group,
-    validate_write, validate_update_write, validate_delete_write,
-    validate_comment, validate_update_comment, validate_delete_comment,
-    validate_upload_file_write, get_write, get_parent_write
+from api.v1.models import responses
+from api.v1.dependencies.board import get_current_member
+from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel
+from service.board import(
+    ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
+    UpdatePostServiceAPI, DeletePostServiceAPI, GroupBoardListServiceAPI,
+    CommentServiceAPI, DeleteCommentServiceAPI, ListDeleteServiceAPI,
+    MoveUpdateServiceAPI, DownloadFileServiceAPI
 )
-from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel
-from api.v1.lib.board import is_possible_level
 
 
 router = APIRouter()
@@ -37,694 +31,377 @@ credentials_exception = HTTPException(
 
 @router.get("/group/{gr_id}",
             summary="게시판그룹 목록 조회",
-            response_description="게시판그룹 목록을 반환합니다."
+            responses={**responses}
             )
 async def api_group_board_list(
     request: Request,
     db: db_session,
-    member_info: Annotated[Dict, Depends(get_member_info)],
-    group: Annotated[Group, Depends(get_group)],
+    member: Annotated[Member, Depends(get_current_member)],
     gr_id: str = Path(...),
 ) -> Dict:
     """
     게시판그룹의 모든 게시판 목록을 보여줍니다.
     """
-    mb_id = member_info["mb_id"]
-    member_level = member_info["member_level"]
-    admin_type = get_admin_type(request, mb_id, group=group)
-
-    # 그룹별 게시판 목록 조회
-    query = (
-        select(Board)
-        .where(
-            Board.gr_id == gr_id,
-            Board.bo_list_level <= member_level,
-            Board.bo_device != 'mobile'
-        )
-        .order_by(Board.bo_order)
+    group_board_list_service = GroupBoardListServiceAPI(
+        request, db, gr_id, member
     )
-    # 인증게시판 제외
-    if not admin_type:
-        query = query.filter_by(bo_use_cert="")
+    group = group_board_list_service.group
+    group_board_list_service.check_mobile_only()
+    boards = group_board_list_service.get_boards_in_group()
 
-    boards = db.scalars(query).all()
-    return jsonable_encoder({"group": group, "boards": boards})
+    # 데이터 유효성 검증 및 불필요한 데이터 제거한 게시판 목록 얻기
+    filtered_boards = []
+    for board in boards:
+        board_json = jsonable_encoder(board)
+        board_api = ResponseBoardModel.model_validate(board_json)
+        filtered_boards.append(board_api)
+
+    return jsonable_encoder({"group": group, "boards": filtered_boards})
 
 
 @router.get("/{bo_table}",
             summary="게시판 조회",
-            response_description="게시판 정보, 글 목록을 반환합니다."
+            responses={**responses}
             )
 async def api_list_post(
     request: Request,
     db: db_session,
-    member_info: Annotated[Dict, Depends(get_member_info)],
-    board: Annotated[Board, Depends(get_board)],
+    member: Annotated[Member, Depends(get_current_member)],
     search_params: Annotated[dict, Depends(common_search_query_params)],
     bo_table: str = Path(...),
-    spt: int = Query(None),
 ) -> Dict:
     """
-    지정된 게시판의 글 목록을 보여줍니다.
+    게시판 정보, 글 목록을 반환합니다.
     """
+    list_post_service = ListPostServiceAPI(
+        request, db, bo_table, member, search_params
+    )
 
-    # 게시판 정보 조회
-    config = request.state.config
-    board_config = BoardConfig(request, board)
+    board_json = jsonable_encoder(list_post_service.board)
+    board = ResponseBoardModel.model_validate(board_json)
 
-    if not is_possible_level(request, member_info, board, "bo_list_level"):
-        raise HTTPException(status_code=403, detail=f"접근 권한이 없습니다.")
-
-    board.subject = board_config.subject
-    sca = request.query_params.get("sca")
-    sfl = search_params['sfl']
-    stx = search_params['stx']
-    sst = search_params['sst']
-    sod = search_params['sod']
-    current_page = search_params['current_page']
-    page_rows = board_config.page_rows
-
-    # 게시판 테이블 모델 생성
-    write_model = dynamic_create_write_table(bo_table)
-
-    # 공지 게시글 목록 조회
-    notice_writes = []
-    if current_page == 1:
-        notice_ids = board_config.get_notice_list()
-        notice_query = select(write_model).where(write_model.wr_id.in_(notice_ids))
-        if sca:
-            notice_query = notice_query.where(write_model.ca_name == sca)
-        notice_writes = [get_list(request, write, board_config) for write in db.scalars(notice_query).all()]
-
-    # 게시글 목록 조회
-    query = write_search_filter(request, write_model, sca, sfl, stx)
-    # 정렬
-    if sst and hasattr(write_model, sst):
-        if sod == "desc":
-            query = query.order_by(desc(sst))
-        else:
-            query = query.order_by(asc(sst))
-    else:
-        query = board_config.get_list_sort_query(write_model, query)
-
-    # 검색일 경우 검색단위 갯수 설정
-    prev_spt = None
-    next_spt = None
-    if (sca or (sfl and stx)):  # 검색일 경우
-        search_part = int(config.cf_search_part) or 10000
-        min_spt = db.scalar(
-            select(func.coalesce(func.min(write_model.wr_num), 0)))
-        spt = int(request.query_params.get("spt", min_spt))
-        prev_spt = spt - search_part if spt > min_spt else None
-        next_spt = spt + search_part if spt + search_part < 0 else None
-
-        # wr_num 컬럼을 기준으로 검색단위를 구분합니다. (wr_num은 음수)
-        query = query.where(write_model.wr_num.between(spt, spt + search_part))
-
-        # 검색 내용에 댓글이 잡히는 경우 부모 글을 가져오기 위해 wr_parent를 불러오는 subquery를 이용합니다.
-        subquery = select(query.add_columns(write_model.wr_parent).distinct().order_by(None).subquery().alias("subquery"))
-        query = select().where(write_model.wr_id.in_(subquery))
-    else:   # 검색이 아닌 경우
-        query = query.where(write_model.wr_is_comment == 0)
-
-    # 페이지 번호에 따른 offset 계산
-    offset = (current_page - 1) * page_rows
-    # 최종 쿼리 결과를 가져옵니다.
-    writes = db.scalars(
-        query.add_columns(write_model)
-        .offset(offset).limit(page_rows)
-    ).all()
-    # 전체 게시글 갯수 조회
-    total_count = db.scalar(query.add_columns(func.count()).order_by(None))
-
-    # 게시글 정보 수정
-    for write in writes:
-        write.num = total_count - offset - (writes.index(write))
-        write = get_list(request, write, board_config)
-
-    contents = jsonable_encoder({
-        "categories": board_config.get_category_list(),
+    content = {
+        "categories": list_post_service.categories,
         "board": board,
-        "notice_writes": notice_writes,
-        "writes": writes,
-        "total_count": total_count,
+        "writes": list_post_service.get_writes(search_params),
+        "total_count": list_post_service.get_total_count(),
         "current_page": search_params['current_page'],
-        "prev_spt": prev_spt,
-        "next_spt": next_spt,
-    })
-
-    return contents
+        "prev_spt": list_post_service.prev_spt,
+        "next_spt": list_post_service.next_spt,
+    }
+    
+    return jsonable_encoder(content)
 
 
 @router.get("/{bo_table}/{wr_id}",
             summary="게시판 개별 글 조회",
-            response_description="게시판 개별 글을 반환합니다.",
             response_model=ResponseWriteModel,
+            responses={**responses}
             )
 async def api_read_post(
     request: Request,
     db: db_session,
-    member_info: Annotated[Dict, Depends(get_member_info)],
-    write: Annotated[WriteBaseModel, Depends(get_write)],
-    board: Annotated[Board, Depends(get_board)],
+    member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
 ) -> Dict:
     """
     지정된 게시판의 글을 개별 조회합니다.
     """
-    board_config = BoardConfig(request, board)
-    write_model = dynamic_create_write_table(bo_table)
-    member = member_info["member"]
-    mb_id = member_info["mb_id"]
-    member_level = member_info["member_level"]
-    admin_type = get_admin_type(request, mb_id, board=board)
-        
-    # 게시글 정보 설정
-    write.ip = board_config.get_display_ip(write.wr_ip)
-    write.name = cut_name(request, write.wr_name)
-
-    read_point = board.bo_read_point
-    insert_point(request, mb_id, read_point, f"{board.bo_subject} {write.wr_id} 글읽기", board.bo_table, write.wr_id, "읽기")
-
-    # 조회수 증가
-    write.wr_hit = write.wr_hit + 1
-    db.commit()
-
-    if member:
-        # 스크랩 여부 확인
-        exists_scrap = db.scalar(
-            exists(Scrap)
-            .where(
-                Scrap.mb_id == member.mb_id,
-                Scrap.bo_table == bo_table,
-                Scrap.wr_id == wr_id
-            ).select()
-        )
-        if exists_scrap:
-            write.is_scrap = True
-
-        # 추천/비추천 여부 확인
-        good_data = db.scalar(
-            select(BoardGood)
-            .filter_by(bo_table=bo_table, wr_id=wr_id, mb_id=member.mb_id)
-        )
-        if good_data:
-            setattr(write, f"is_{good_data.bg_flag}", True)
-
-    # 파일정보 조회
-    images, normal_files = BoardFileManager(board, wr_id).get_board_files_by_type(request)
-
-    # 링크정보 조회
-    links = []
-    for i in range(1, 3):
-        url = getattr(write, f"wr_link{i}")
-        hit = getattr(write, f"wr_link{i}_hit")
-        if url:
-            links.append({"no": i, "url": url, "hit": hit})
-
-    # 댓글 목록 조회
-    comments = db.scalars(
-        select(write_model).filter_by(
-            wr_parent=wr_id,
-            wr_is_comment=1
-        ).order_by(write_model.wr_comment, write_model.wr_comment_reply)
-    ).all()
-
-    for comment in comments:
-        comment.name = cut_name(request, comment.wr_name)
-        comment.ip = board_config.get_display_ip(comment.wr_ip)
-        comment.is_reply = len(comment.wr_comment_reply) < 5 and board.bo_comment_level <= member_level
-        comment.is_edit = admin_type or (member and comment.mb_id == member.mb_id)
-        comment.is_del = admin_type or (member and comment.mb_id == member.mb_id) or not comment.mb_id 
-        comment.is_secret = "secret" in comment.wr_option
-
-        # 비밀댓글 처리
-        session_secret_comment_name = f"ss_secret_comment_{bo_table}_{comment.wr_id}"
-        parent_write = db.get(write_model, comment.wr_parent)
-        if (comment.is_secret
-                and not admin_type
-                and not is_owner(comment, mb_id)
-                and not is_owner(parent_write, mb_id)
-                and not request.session.get(session_secret_comment_name)):
-            comment.is_secret_content = True
-            comment.save_content = "비밀글 입니다."
-        else:
-            comment.is_secret_content = False
-            comment.save_content = comment.wr_content
-
-    contents = jsonable_encoder(write)
-    additional_info = jsonable_encoder({
-        "images": images,
-        "normal_files": normal_files,
-        "links": links,
-        "comments": comments,
+    read_post_service = ReadPostServiceAPI(
+        request, db, bo_table, wr_id, member
+    )
+    content = jsonable_encoder(read_post_service.write)
+    additional_content = jsonable_encoder({
+        "images": read_post_service.images,
+        "normal_files": read_post_service.normal_files,
+        "links": read_post_service.get_links(),
+        "comments": read_post_service.get_comments(),
     })
-    contents.update(additional_info)
-    return contents
+    content.update(additional_content)
+    read_post_service.validate_secret()
+    read_post_service.validate_repeat()
+    read_post_service.block_read_comment()
+    read_post_service.validate_read_level()
+    read_post_service.check_scrap()
+    read_post_service.check_is_good()
+    model_validated_content = ResponseWriteModel.model_validate(content)
+    db.commit()
+    return model_validated_content
 
 
 @router.post("/{bo_table}",
              summary="게시판 글 작성",
-             response_description="글 작성 성공 여부를 반환합니다."
+             responses={**responses}
              )
 async def api_create_post(
     request: Request,
     db: db_session,
-    member_info: Annotated[Dict, Depends(get_member_info)],
-    wr_data: Annotated[WriteModel, Depends(validate_write)],
-    board: Annotated[Board, Depends(get_board)],
+    member: Annotated[Member, Depends(get_current_member)],
+    wr_data: WriteModel,
     bo_table: str = Path(...),
 ) -> Dict:
     """
     지정된 게시판에 새 글을 작성합니다.
     """
-
-    config = request.state.config
-    board_config = BoardConfig(request, board)
-
-    # 게시판 관리자 확인
-
-    member = member_info["member"]
-    mb_id = member_info["mb_id"]
-    admin_type = get_admin_type(request, mb_id, board=board)
-
-    # 비밀글 사용여부 체크
-    if not admin_type:
-        if not board.bo_use_secret and "secret" in wr_data.secret and "secret" in wr_data.html and "secret" in wr_data.mail:
-            raise HTTPException(status_code=403, detail="비밀글 미사용 게시판 이므로 비밀글로 등록할 수 없습니다.")
-
-    # 게시글 테이블 정보 조회
-    write_model = dynamic_create_write_table(bo_table)
-
-    # 글 작성 권한 검증
-    if wr_data.parent_id:
-        if not board_config.is_reply_level():
-            raise HTTPException(status_code=403, detail="답변글을 작성할 권한이 없습니다.")
-        parent_write = db.get(write_model, wr_data.parent_id)
-        if not parent_write:
-            raise HTTPException(status_code=404, detail="답변할 글이 존재하지 않습니다.")
-    else:
-        if not board_config.is_write_level():
-            raise HTTPException(status_code=403, detail="글을 작성할 권한이 없습니다.")
-        parent_write = None
-    
-    # 포인트 검사
-    if config.cf_use_point:
-        write_point = board.bo_write_point
-        if not board_config.is_write_point():
-            point = number_format(abs(write_point))
-            message = f"글 작성에 필요한 포인트({point})가 부족합니다."
-            if not member:
-                message += f"\\n로그인 후 다시 시도해주세요."
-
-            raise HTTPException(status_code=403, detail=message)
-
-    category_list = board.bo_category_list.split("|") if board.bo_category_list else []
-    if wr_data.ca_name and category_list and wr_data.ca_name not in category_list:
-        raise HTTPException(
-            status_code=400,
-            detail=f"ca_name: {wr_data.ca_name}, 잘못된 분류입니다. 분류는 {','.join(category_list)} 중 하나여야 합니다."
-        )
-
-    wr_data_dict = wr_data.model_dump()
-    model_fields = inspect(write_model).c.keys()
-    filtered_wr_data = {key: value for key, value in wr_data_dict.items() if key in model_fields}
-
-    write = write_model(**filtered_wr_data)
-    write.wr_num = parent_write.wr_num if parent_write else get_next_num(bo_table)
-    write.wr_reply = generate_reply_character(board, parent_write) if parent_write else ""
-    write.mb_id = mb_id if mb_id else ''
-    write.wr_ip = request.client.host
-
-    db.add(write)
-    db.commit()
-
-    write.wr_parent = write.wr_id  # 부모아이디 설정
-    board.bo_count_write = board.bo_count_write + 1  # 게시판 글 갯수 1 증가
-
-    db.commit()
-
-    # 새글 추가
+    create_post_service = CreatePostServiceAPI(
+        request, db, bo_table, member
+    )
+    create_post_service.validate_secret_board(wr_data.secret, wr_data.html, wr_data.mail)
+    create_post_service.validate_post_content(wr_data.wr_subject)
+    create_post_service.validate_post_content(wr_data.wr_content)
+    create_post_service.is_write_level()
+    create_post_service.arrange_data(wr_data, wr_data.secret, wr_data.html, wr_data.mail)
+    write = create_post_service.save_write(wr_data.parent_id, wr_data)
     insert_board_new(bo_table, write)
-
-    # 글작성 포인트 부여(답변글은 댓글 포인트로 부여)
-    if member:
-        point = board.bo_comment_point if parent_write else board.bo_write_point
-        content = f"{board.bo_subject} {write.wr_id} 글" + ("답변" if parent_write else "쓰기")
-        insert_point(request, member.mb_id, point, content, board.bo_table, write.wr_id, "쓰기")
-
-    # 메일 발송
-    if board_config.use_email:
-        send_write_mail(request, board, write, parent_write)
-
-    # 공지글 설정
-    board.bo_notice = board_config.set_board_notice(write.wr_id, wr_data.notice)
+    create_post_service.add_point(write)
+    create_post_service.send_write_mail_(write, wr_data.parent_id)
+    create_post_service.set_notice(write.wr_id, wr_data.notice)
+    set_write_delay(create_post_service.request)
+    create_post_service.save_secret_session(write.wr_id, wr_data.secret)
+    create_post_service.delete_cache()
     db.commit()
-
-    FileCache().delete_prefix(f'latest-{bo_table}')
-
     return {"result": "created"}
     
 
 @router.put("/{bo_table}/{wr_id}",
             summary="게시판 글 수정",
-            response_description="글 수정 성공 여부를 반환합니다."
+            responses={**responses}
             )
 async def api_update_post(
     request: Request,
     db: db_session,
-    member_info: Annotated[Dict, Depends(get_member_info)],
-    wr_data: Annotated[WriteModel, Depends(validate_write)],
-    board: Annotated[Board, Depends(get_board)],
-    write: Annotated[WriteBaseModel, Depends(validate_update_write)],
+    member: Annotated[Member, Depends(get_current_member)],
+    wr_data: WriteModel,
     bo_table: str = Path(...),
     wr_id: str = Path(...),
 ) -> Dict:
     """
     지정된 게시판의 글을 수정합니다.
     """
-    board_config = BoardConfig(request, board)
-    mb_id = member_info["mb_id"]
-    admin_type = get_admin_type(request, mb_id, board=board)
-
-    # 비밀글 사용여부 체크
-    if not admin_type:
-        if not board.bo_use_secret and "secret" in wr_data.secret and "secret" in wr_data.html and "secret" in wr_data.mail:
-            raise HTTPException(status_code=403, detail="비밀글 미사용 게시판 이므로 비밀글로 등록할 수 없습니다.")
-        # 비밀글 옵션에 따라 비밀글 설정
-        if board.bo_use_secret == 2:
-            wr_data.secret = "secret"
-
-    # 게시글 테이블 정보 조회
-    write_model = dynamic_create_write_table(bo_table)
-
-    # 공지글 설정
-    board.bo_notice = board_config.set_board_notice(wr_id, wr_data.notice)
-
-    FileCache().delete_prefix(f'latest-{bo_table}')
-
-    if not board_config.is_modify_by_comment(wr_id):
-        raise HTTPException(status_code=403, detail=f"이 글과 관련된 댓글이 {board.bo_count_modify}건 이상 존재하므로 수정 할 수 없습니다.")
-
-    wr_data_dict = wr_data.model_dump()
-    for key, value in wr_data_dict.items():
-        setattr(write, key, value)
-
-    write.wr_ip = request.client.host
+    update_post_service = UpdatePostServiceAPI(
+        request, db, bo_table, member, wr_id
+    )
+    update_post_service.validate_restrict_comment_count()
+    write = update_post_service.get_write(update_post_service.wr_id)
+    
+    update_post_service.validate_author(write)
+    update_post_service.validate_secret_board(wr_data.secret, wr_data.html, wr_data.mail)
+    update_post_service.validate_post_content(wr_data.wr_subject)
+    update_post_service.validate_post_content(wr_data.wr_content)
+    update_post_service.arrange_data(wr_data, wr_data.secret, wr_data.html, wr_data.mail)
+    update_post_service.save_secret_session(wr_id, wr_data.secret)
+    update_post_service.save_write(write, wr_data)
+    update_post_service.set_notice(write.wr_id, wr_data.notice)
+    update_post_service.update_children_category(wr_data)
+    update_post_service.delete_cache()
     db.commit()
-
-    # 분류 수정 시 댓글/답글도 같이 수정
-    if wr_data.ca_name:
-        db.execute(
-            update(write_model).where(write_model.wr_parent == wr_id)
-            .values(ca_name=wr_data.ca_name)
-        )
-        db.commit()
     return {"result": "updated"}
 
 
 @router.delete("/{bo_table}/{wr_id}",
                 summary="게시판 글 삭제",
-                response_description="글 삭제 성공 여부를 반환합니다."
+                responses={**responses}
                )
 async def api_delete_post(
     request: Request,
     db: db_session,
-    member_info: Annotated[Dict, Depends(get_member_info)],
-    board: Annotated[Board, Depends(get_board)],
-    write: Annotated[WriteBaseModel, Depends(validate_delete_write)],
+    member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
 ) -> Dict:
     """
     지정된 게시판의 글을 삭제합니다.
     """
-    board_config = BoardConfig(request, board)
-    
-    if not board_config.is_delete_by_comment(wr_id):
-        raise HTTPException(status_code=403, detail=f"이 글과 관련된 댓글이 {board.bo_count_delete}건 이상 존재하므로 삭제 할 수 없습니다.")
-
-    mb_id = member_info["mb_id"]
-
-    write_model = dynamic_create_write_table(bo_table)
-
-    member_level = get_member_level(request)
-    member_admin_type = get_admin_type(request, mb_id, board=board)
-    write_member_mb_no = db.scalar(select(Member.mb_no).where(Member.mb_id == write.mb_id))
-    write_member = db.get(Member, write_member_mb_no)
-    write_member_level = getattr(write_member, "mb_level", 1)
-
-    # 권한 체크
-    if member_admin_type != "super":
-        if member_admin_type and write_member_level > member_level:
-            raise HTTPException(status_code=403, detail="자신보다 높은 권한의 게시글은 삭제할 수 없습니다.")
-        elif write.mb_id and not is_owner(write, mb_id):
-            raise HTTPException(status_code=403, detail="자신의 게시글만 삭제할 수 있습니다.")
-        elif not write.mb_id and not request.session.get(f"ss_delete_{bo_table}_{write.wr_id}"):
-            raise HTTPException(status_code=403, detail="비회원 글을 삭제할 권한이 없습니다.")
-    
-    # 답변글이 있을 때 삭제 불가
-    write_model = dynamic_create_write_table(bo_table)
-    exists_reply = db.scalar(
-        exists(write_model)
-        .where(
-            write_model.wr_reply.like(f"{write.wr_reply}%"),
-            write_model.wr_num == write.wr_num,
-            write_model.wr_is_comment == 0,
-            write_model.wr_id != write.wr_id
-        )
-        .select()
+    delete_post_api = DeletePostServiceAPI(
+        request, db, bo_table, wr_id, member
     )
-    if exists_reply:
-        raise HTTPException(status_code=403, detail="답변이 있는 글은 삭제할 수 없습니다. 우선 답변글부터 삭제하여 주십시오.")
-
-    if not board_config.is_delete_by_comment(write.wr_id):
-        raise HTTPException(status_code=403, detail=f"이 글과 관련된 댓글이 {board.bo_count_delete}건 이상 존재하므로 삭제 할 수 없습니다.")
-
-    # 원글 + 댓글
-    delete_write_count = 0
-    delete_comment_count = 0
-    writes = db.scalars(
-        select(write_model)
-        .filter_by(wr_parent=write.wr_id)
-        .order_by(write_model.wr_id)
-    ).all()
-
-    for write in writes:
-        # 원글 삭제
-        if not write.wr_is_comment:
-            # 원글 포인트 삭제
-            if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
-                insert_point(request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
-            # 파일+섬네일 삭제
-            BoardFileManager(board, write.wr_id).delete_board_files()
-
-            delete_write_count += 1
-            # TODO: 에디터 섬네일 삭제
-        else:
-            # 댓글 포인트 삭제
-            if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "댓글"):
-                insert_point(request, write.mb_id, board.bo_comment_point * (-1), f"{board.bo_subject} {write.wr_id} 댓글 삭제")
-
-            delete_comment_count += 1
-
-    # 원글+댓글 삭제
-    db.execute(delete(write_model).filter_by(wr_parent=write.wr_id))
-
-    # 최근 게시물 삭제
-    db.execute(delete(BoardNew).where(
-        BoardNew.bo_table == bo_table,
-        BoardNew.wr_parent == write.wr_id
-    ))
-
-    # 스크랩 삭제
-    db.execute(delete(Scrap).filter_by(
-        bo_table=bo_table,
-        wr_id=write.wr_id
-    ))
-
-    # 공지사항 삭제
-    board.bo_notice = board_config.set_board_notice(write.wr_id, False)
-
-    # 게시글 갯수 업데이트
-    board.bo_count_write -= delete_write_count
-    board.bo_count_comment -= delete_comment_count
-
-    db.commit()
-
-    # 최신글 캐시 삭제
-    FileCache().delete_prefix(f'latest-{bo_table}')
-
+    delete_post_api.validate_level(with_session=False)
+    delete_post_api.validate_exists_reply()
+    delete_post_api.validate_exists_comment()
+    delete_post_api.delete_write()
     return {"result": "deleted"}
 
 
+@router.post("/list_delete/{bo_table}",
+            summary="게시글 일괄 삭제",
+            responses={**responses}
+            )
+async def api_list_delete(
+    request: Request,
+    db: db_session,
+    member: Annotated[Member, Depends(get_current_member)],
+    wr_ids: Annotated[list, Body(..., alias="chk_wr_id[]")],
+    bo_table: str = Path(...),
+):
+    """
+    게시글을 일괄 삭제합니다.
+    - wr_ids: 삭제할 게시글 wr_id 리스트
+    """
+    list_delete_service = ListDeleteServiceAPI(
+        request, db, bo_table, member
+    )
+    list_delete_service.validate_admin_authority()
+    list_delete_service.delete_writes(wr_ids)
+    return {"result": "deleted"}
+
+
+@router.get("/move/{bo_table}/{sw}",
+            summary="게시글 복사/이동 가능 목록 조회",
+            response_model=List[ResponseBoardModel],
+            responses={**responses}
+            )
+async def api_move_post(
+    request: Request,
+    db: db_session,
+    member: Annotated[Member, Depends(get_current_member)],
+    bo_table: str = Path(...),
+    sw: str = Path(...),
+):
+    """
+    게시글을 복사/이동 가능한 게시판 목록을 반환합니다.
+    sw: opy(게시글 복사) 또는 move(게시글 이동)
+    """
+    move_update_service = MoveUpdateServiceAPI(
+        request, db, bo_table, member, sw
+    )
+    move_update_service.validate_admin_authority()
+    boards = move_update_service.get_admin_board_list()
+    return boards
+
+
+@router.post("/move_update/{bo_table}",
+            summary="게시글 복사/이동",
+            responses={**responses}
+            )
+async def api_move_update(
+    request: Request,
+    db: db_session,
+    member: Annotated[Member, Depends(get_current_member)],
+    bo_table: str = Path(...),
+    sw: str = Body(...),
+    wr_ids: str = Body(...),
+    target_bo_tables: list = Body(...),
+):
+    """
+    게시글을 복사/이동합니다.
+    - Scrap, File등 연관된 데이터들도 함께 수정합니다.
+    """
+    move_update_service = MoveUpdateServiceAPI(request, db, bo_table, member, sw)
+    move_update_service.validate_admin_authority()
+    origin_writes = move_update_service.get_origin_writes(wr_ids)
+    move_update_service.move_copy_post(target_bo_tables, origin_writes)
+    return {"result": f"해당 게시물을 선택한 게시판으로 {move_update_service.act} 하였습니다."}
+ 
+
 @router.post("/uploadfile/{bo_table}/{wr_id}",
             summary="파일 업로드",
-            response_description="파일 업로드 성공 여부를 반환합니다."
+            responses={**responses}
             )
 async def api_upload_file(
     request: Request,
     db: db_session,
-    member_info: Annotated[Dict, Depends(get_member_info)],
-    board: Annotated[Board, Depends(get_board)],
-    write: Annotated[WriteBaseModel, Depends(validate_upload_file_write)],
+    member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(...),
-    files: List[UploadFile] = File(..., alias="bf_file[]"),
-    file_content: list = Form(None, alias="bf_content[]"),
+    wr_id: str = Path(...),
+    files: List[UploadFile] = File(...),
+    file_content: list = Form(None),
+    file_dels: list = Form(None),
 ) -> Dict:
     """
-    파일 업로드
+    파일을 업로드합니다.
     """
-    FILE_DIRECTORY = "data/file/"
-    mb_id = member_info["mb_id"]
-    admin_type = get_admin_type(request, mb_id, board=board)
-    file_manager = BoardFileManager(board, write.wr_id)
-    directory = os.path.join(FILE_DIRECTORY, bo_table)
-    wr_file = write.wr_file
-    exclude_file = {"size": [], "ext": []}
-    for file in files:
-        index = files.index(file)
-        if file.filename:
-            # 관리자가 아니면서 설정한 업로드 사이즈보다 크거나 업로드 가능 확장자가 아니면 업로드하지 않음
-            if not admin_type:
-                if not file_manager.is_upload_size(file):
-                    exclude_file["size"].append(file.filename)
-                    continue
-                if not file_manager.is_upload_extension(request, file):
-                    exclude_file["ext"].append(file.filename)
-                    continue
+    if not member:
+        raise HTTPException(status_code=403, detail="로그인 후 이용해주세요.")
 
-            board_file = file_manager.get_board_file(index)
-            filename = file_manager.get_filename(file.filename)
-            bf_content = file_content[index] if file_content else ""
-            if board_file:
-                # 기존파일 삭제
-                file_manager.remove_file(board_file.bf_file)
-                # 파일 업로드 및 정보 업데이트
-                file_manager.upload_file(directory, filename, file)
-                file_manager.update_board_file(board_file, directory, filename, file, bf_content)
-            else:
-                # 파일 업로드 및 정보 추가
-                file_manager.upload_file(directory, filename, file)
-                file_manager.insert_board_file(index, directory, filename, file, bf_content)
-                wr_file += 1
-    # 파일 개수 업데이트
-    write.wr_file = wr_file
-    db.commit()
-
-    if exclude_file:
-        msg = ""
-    if exclude_file.get("size"):
-        msg += f"{','.join(exclude_file['size'])} 파일은 업로드 용량({board.bo_upload_size}byte)을 초과하였습니다.\\n"
-    if exclude_file.get("ext"):
-        msg += f"{','.join(exclude_file['ext'])} 파일은 업로드 가능 확장자가 아닙니다.\\n"
-    if msg:
-        raise HTTPException(status_code=400, detail=msg)
+    create_post_service = CreatePostServiceAPI(request, db, bo_table, member)
+    write = create_post_service.get_write(wr_id)
+    create_post_service.upload_files(write, files, file_content, file_dels)
     return {"result": "uploaded"}
+
+
+@router.post("/{bo_table}/{wr_id}/download/{bf_no}",
+            summary="파일 다운로드",
+            responses={**responses}
+            )
+async def api_download_file(
+    request: Request,
+    db: db_session,
+    bo_table: str = Path(...),
+    wr_id: int = Path(...),
+    bf_no: int = Path(...),
+):
+    """
+    게시글의 파일을 다운로드합니다.
+    bo_table: 게시글 테이블명
+    wr_id: 게시글 아이디
+    bf_no: 첨부된 파일의 순번
+    """
+    download_file_service = DownloadFileServiceAPI(
+        request, db, bo_table, request.state.login_member, wr_id, bf_no
+    )
+    download_file_service.validate_download_level()
+    board_file = download_file_service.get_board_file()
+    download_file_service.validate_point(board_file)
+    return FileResponse(board_file.bf_file, filename=board_file.bf_source)
 
 
 @router.post("/{bo_table}/{wr_parent}/comment",
             summary="댓글 작성",
-            response_description="댓글 작성 성공 여부를 반환합니다."
+            responses={**responses}
             )
 async def api_create_comment(
     request: Request,
     db: db_session,
-    member_info: Annotated[Dict, Depends(get_member_info)],
-    board: Annotated[Board, Depends(get_board)],
-    comment_data: Annotated[CommentModel, Depends(validate_comment)],
-    parent_write: Annotated[WriteBaseModel, Depends(get_parent_write)],
+    member: Annotated[Member, Depends(get_current_member)],
+    comment_data: CommentModel,
     bo_table: str = Path(...),
     wr_parent: str = Path(...),
 ):
     """
     댓글 등록
     """
-    board_config = BoardConfig(request, board)
-    member = member_info["member"]
-    mb_id = member_info["mb_id"] or ""
-    write_model = dynamic_create_write_table(bo_table)
-
-    # 댓글 객체 생성
-    comment = write_model()
-
-    if comment_data.comment_id:
-        parent_comment = db.get(write_model, comment_data.comment_id)
-        if not parent_comment:
-            raise HTTPException(status_code=404, detail=f"{comment_data.comment_id} : 존재하지 않는 댓글입니다.")
-
-        comment.wr_comment_reply = generate_reply_character(board, parent_comment)
-        comment.wr_comment = parent_comment.wr_comment
-    else:
-        comment.wr_comment = db.scalar(
-            select(func.coalesce(func.max(write_model.wr_comment), 0) + 1)
-            .where(
-                write_model.wr_parent == wr_parent,
-                write_model.wr_is_comment == 1
-            )
-        )
-
-    comment_data_dict = comment_data.model_dump()
-    for key, value in comment_data_dict.items():
-        setattr(comment, key, value)
-
-    db.add(comment)
-
-    # 게시글에 댓글 수 증가
-    parent_write.wr_comment += 1
-    db.commit()
-
-    # 새글 추가
+    comment_service = CommentServiceAPI(request, db, bo_table, member)
+    parent_write = comment_service.get_parent_post(wr_parent, is_reply=False)
+    comment_service.validate_comment_level()
+    comment_service.validate_point()
+    comment_service.validate_post_content(comment_data.wr_content)
+    comment = comment_service.save_comment(comment_data, parent_write)
+    comment_service.add_point(comment)
+    comment_service.send_write_mail_(comment, parent_write)
     insert_board_new(bo_table, comment)
-
-    # 포인트 처리
-    if member:
-        insert_point(request, mb_id, board.bo_comment_point, f"{board.bo_subject} {wr_parent}-{comment.wr_id} 댓글쓰기", board.bo_table, comment.wr_id, "댓글")
-
-    # 메일 발송
-    if board_config.use_email:
-        send_write_mail(request, board, comment, parent_write)
-
+    db.commit()
     return {"result": "created"}
 
 
 @router.put("/{bo_table}/{wr_parent}/comment/{wr_id}",
             summary="댓글 수정",
-            response_description="댓글 수정 성공 여부를 반환합니다."
+            responses={**responses}
             )
 async def api_update_comment(
     request: Request,
     db: db_session,
-    comment_data: Annotated[CommentModel, Depends(validate_update_comment)],
+    comment_data: CommentModel,
+    member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(...),
+    wr_parent: str = Path(...),
     wr_id: str = Path(...),
 ) -> Dict:
     """
-    댓글 수정
+    댓글을 수정합니다.
     """
-    write_model = dynamic_create_write_table(bo_table)
-
-    # 댓글 수정
+    comment_service = CommentServiceAPI(request, db, bo_table, member, wr_id)
+    write_model = comment_service.write_model
+    comment_service.get_parent_post(wr_parent, is_reply=False)
     comment = db.get(write_model, wr_id)
     if not comment:
         raise HTTPException(status_code=404, detail=f"{wr_id} : 존재하지 않는 댓글입니다.")
 
-    comment_data_dict = comment_data.model_dump()
-
-    # 수정시 작성자명이 변경되지 않도록 wr_name 제거
-    del comment_data_dict["wr_name"]
-
-    for key, value in comment_data_dict.items():
-        setattr(comment, key, value)
-
-    # 댓글 wr_last의 경우 gnuboard5와의 호환성을 위해 아래와 같이 now를 받아옴
-    compatible_instance = G5Compatibility(db)
-    now = compatible_instance.get_wr_last_now(write_model.__tablename__)
-    comment.wr_last = now
-
-    comment.wr_ip = request.client.host
-
+    comment_service.validate_author(comment)
+    comment_service.validate_post_content(comment_data.wr_content)
+    comment.wr_content = comment_service.get_cleaned_data(comment_data.wr_content)
+    comment.wr_option = comment_data.wr_option or "html1"
+    comment.wr_last = comment_service.g5_instance.get_wr_last_now(write_model.__tablename__)
     db.commit()
 
     return {"result": "updated"}
@@ -732,27 +409,21 @@ async def api_update_comment(
 
 @router.delete("/{bo_table}/{wr_parent}/comment/{wr_id}",
                 summary="댓글 삭제",
-                response_description="댓글 삭제 성공 여부를 반환합니다."
+                responses={**responses}
                )
 async def api_delete_comment(
+    request: Request,
     db: db_session,
-    comment: Annotated[WriteBaseModel, Depends(validate_delete_comment)],
+    member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(...),
+    wr_id: str = Path(...),
 ):
     """
-    댓글 삭제
+    댓글을 삭제합니다.
     """
-    write_model = dynamic_create_write_table(bo_table)
-
-    # 댓글 삭제
-    db.delete(comment)
-
-    # 게시글에 댓글 수 감소
-    db.execute(
-        update(write_model).values(wr_comment=write_model.wr_comment - 1)
-        .where(write_model.wr_id == comment.wr_parent)
+    delete_comment_service = DeleteCommentServiceAPI(
+        request, db, bo_table, wr_id, member
     )
-
-    db.commit()
-
+    delete_comment_service.check_authority(with_session=False)
+    delete_comment_service.delete_comment()
     return {"result": "deleted"}
