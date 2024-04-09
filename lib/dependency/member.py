@@ -7,7 +7,7 @@ from fastapi.responses import RedirectResponse
 from core.exception import AlertException
 from core.formclass import RegisterMemberForm, UpdateMemberForm
 from core.models import Member
-from lib.dependencies import get_login_member
+from lib.dependency.auth import get_login_member
 from lib.member_lib import ValidateMember
 from lib.pbkdf2 import create_hash, validate_password
 

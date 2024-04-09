@@ -9,7 +9,7 @@
             <!-- 설문조사 결과 그래프 시작 { -->
             <span class="poll_all position-absolute d-inline-block fs-5 em-font wrapper-bg rounded-2 px-3 py-2" style="top: 10px;right: 10px;">전체 {{ total_count|number_format }}표</span>
             <section id="poll_result_list" class="m-4 main-border cont-bg rounded-2 overflow-hidden">
-                <h2 class="fs-5 p-4 mb-4 text-center point-bg main-font">{{ poll_result.po_subject }} 결과</h2>
+                <h2 class="fs-5 p-4 mb-4 text-center point-bg main-font">{{ poll.po_subject }} 결과</h2>
                 <ol class="m-0 px-4">
                     {% for item in items %}
                         {% set rate = ((item.count / total_count * 100)|round(1)) if total_count > 0 else 0 %}
@@ -30,7 +30,7 @@
             <!-- } 설문조사 결과 그래프 끝 -->
 
             <!-- 설문조사 기타의견 시작 { -->
-            {% if poll_result.po_etc %}
+            {% if poll.po_etc %}
                 <section id="poll_result_cmt" class="m-4">
                     <h2 class="blind">이 설문에 대한 기타의견</h2>
                     {% for etc in etcs %}
@@ -51,14 +51,14 @@
                             <p class="py-3 main-font">{{ etc.pc_idea[:255]|safe }}</p>
                         </article>
                     {% endfor %}
-                    {% if get_member_level(request) >= poll_result.po_level %}
-                        <form name="fpollresult" action="{{ url_for('poll_etc_update', po_id=poll_result.po_id) }}" onsubmit="return fpollresult_submit(this);" method="post" autocomplete="off" id="poll_other_q" class="m-0 fs-5 main-font text-start">
+                    {% if get_member_level(request) >= poll.po_level %}
+                        <form name="fpollresult" action="{{ url_for('poll_etc_update', po_id=poll.po_id) }}" onsubmit="return fpollresult_submit(this);" method="post" autocomplete="off" id="poll_other_q" class="m-0 fs-5 main-font text-start">
                             <input type="hidden" name="token" value="">
                             {% if request.state.login_member.mb_id %}
                                 <input type="hidden" name="pc_name" value="{{ request.state.login_member.mb_nick }}">
                             {% endif %}
                             <div id="poll_result_wcmt" class="innput-border mb-3">
-                                <h3 class="m-0 p-3 main-border border-bottom-0 fw-bold"><span class="p-2 d-inline-block rounded-2 me-2 fw-normal fs-5" style="background:#f7f8e3;color:#c97600;">기타의견</span>{{ poll_result.po_etc|safe }}</h3>
+                                <h3 class="m-0 p-3 main-border border-bottom-0 fw-bold"><span class="p-2 d-inline-block rounded-2 me-2 fw-normal fs-5" style="background:#f7f8e3;color:#c97600;">기타의견</span>{{ poll.po_etc|safe }}</h3>
                                 <div>
                                     <label for="pc_idea" class="blind">의견<strong>필수</strong></label>
                                     <input type="text" id="pc_idea" class="w-100 bg-transparent main-font main-border p-3" style="height: 80px;" name="pc_idea" required="" class="full_input required" size="47" maxlength="100" placeholder="의견을 입력해주세요">

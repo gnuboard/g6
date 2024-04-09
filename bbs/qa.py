@@ -15,9 +15,9 @@ from core.models import Member
 from core.template import UserTemplates
 from lib.common import filter_words, get_paging_info, set_url_query_params
 from lib.dependencies import (
-    common_search_query_params, get_login_member,
-    validate_super_admin, validate_token
+    common_search_query_params, validate_super_admin, validate_token
 )
+from lib.dependency.auth import get_login_member
 from lib.html_sanitizer import content_sanitizer, subject_sanitizer
 from lib.mail import send_qa_mail
 from lib.service.qa_service import QaConfigService, QaFileService, QaService

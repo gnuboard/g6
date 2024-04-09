@@ -7,7 +7,7 @@ from starlette.requests import Request
 
 from core.models import Member
 from core.template import UserTemplates
-from lib.dependencies import get_login_member
+from lib.dependency.auth import get_login_member
 from lib.common import is_none_datetime
 from lib.member_lib import MemberService
 

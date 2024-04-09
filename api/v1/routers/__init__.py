@@ -19,7 +19,7 @@ class Tags(Enum):
     MEMO = "쪽지"
     MENU = "메뉴"
     POINT = "포인트"
-    POLL = "투표"
+    POLL = "설문조사"
     QA = "Q&A"
     SCRAP = "스크랩"
 

@@ -227,17 +227,6 @@ def get_write(db: db_session,
     return write
 
 
-def get_login_member(request: Request):
-    """로그인 여부 검사 & 반환"""
-    member: Member = request.state.login_member
-    if not member:
-        path = request.url.path
-        url = request.url_for("login_form").replace_query_params(url=path)
-        raise AlertException(f"로그인 후 이용 가능합니다.", 403, url=url)
-
-    return member
-
-
 def validate_policy_agree(request: Request):
     """약관 동의 여부 검사"""
     if (not request.session.get("ss_agree", None)

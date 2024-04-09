@@ -1,4 +1,4 @@
-"""투표 관련 모델 클래스를 정의한 파일입니다."""
+"""설문조사 관련 모델 클래스를 정의한 파일입니다."""
 from typing_extensions import Annotated
 
 from fastapi import Body, Path
@@ -8,9 +8,9 @@ from lib.html_sanitizer import content_sanitizer
 
 
 class PatchPollModel(BaseModel):
-    """투표 참여 요청 모델 클래스입니다."""
-    po_id: Annotated[int, Path(..., title="투표 ID")]
-    item: Annotated[int, Path(..., title="투표 항목 번호")]
+    """설문조사 참여 요청 모델 클래스입니다."""
+    po_id: Annotated[int, Path(..., title="설문조사 ID")]
+    item: Annotated[int, Path(..., title="설문항목 번호")]
 
 
 class CreatePollEtcModel(BaseModel):

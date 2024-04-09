@@ -1,17 +1,22 @@
-"""투표 Template Router."""
+"""설문조사 Template Router."""
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, Depends, Form, Path, Request
+from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 
-from core.models import Member
+from core.models import Member, Poll, PollEtc
 from core.template import UserTemplates
 from lib.common import captcha_widget
-from lib.dependencies import get_login_member, validate_token, validate_captcha
+from lib.dependencies import validate_token
+from lib.dependency.auth import get_login_member_optional
+from lib.dependency.poll import (
+    get_poll, get_poll_etc, validate_poll_etc_create,
+    validate_poll_etc_delete, validate_poll_read, validate_poll_update
+)
 from lib.mail import send_poll_etc_mail
 from lib.member_lib import get_member_level
 from lib.point import insert_point
-from lib.poll import PollService
+from lib.service.poll_service import PollService
 
 router = APIRouter()
 templates = UserTemplates()
@@ -20,18 +25,19 @@ templates.env.globals["captcha_widget"] = captcha_widget
 
 
 @router.post("/poll_update/{po_id}",
-             dependencies=[Depends(validate_token)])
+             dependencies=[Depends(validate_token),
+                           Depends(validate_poll_update)])
 async def poll_update(
     request: Request,
-    poll_service: Annotated[PollService, Depends()],
-    po_id: int = Path(...),
+    service: Annotated[PollService, Depends()],
+    member: Annotated[Member, Depends(get_login_member_optional)],
+    poll: Annotated[Poll, Depends(get_poll)],
     gb_poll: int = Form(...)
 ):
     """
-    투표하기
+    설문조사 참여
     """
-    member = request.state.login_member
-    poll = poll_service.update_poll(po_id, gb_poll, member)
+    poll = service.update_poll(poll, gb_poll, member)
 
     # 포인트 지급
     if member:
@@ -39,70 +45,64 @@ async def poll_update(
         insert_point(request, member.mb_id, poll.po_point,
                      content, '@poll', poll.po_id, '투표')
 
-    return RedirectResponse(url=f"/bbs/poll_result/{po_id}", status_code=302)
+    return RedirectResponse(url=f"/bbs/poll_result/{poll.po_id}", status_code=302)
 
 
-@router.get("/poll_result/{po_id}")
+@router.get("/poll_result/{po_id}",
+            dependencies=[Depends(validate_poll_read)])
 async def poll_result(
     request: Request,
-    poll_service: Annotated[PollService, Depends()],
-    login_member: Annotated[Member, Depends(get_login_member)],
-    po_id: int = Path(...)
+    service: Annotated[PollService, Depends()],
+    poll: Annotated[Poll, Depends(get_poll)],
 ):
     """
-    설문조사 결과
+    설문조사 결과 페이지
     """
-    poll = poll_service.fetch_poll(po_id, login_member)
-    total_count, items = poll_service.get_poll_result(poll)
-    other_polls = poll_service.fetch_other_polls(po_id)
+    total_count, items = service.calculate_poll_result(poll)
+    other_polls = service.fetch_other_polls(poll.po_id)
 
     context = {
         "request": request,
-        "poll_result": poll,
+        "poll": poll,
         "total_count": total_count,
         "items": items,
-        "etcs": poll.etcs,
         "other_list": other_polls
     }
     return templates.TemplateResponse("/bbs/poll_result.html", context)
 
 
-@router.post("/poll_etc_update/{po_id}",
-             dependencies=[Depends(validate_token)])
+@router.post("/poll/{po_id}/etc_update",
+             dependencies=[Depends(validate_token),
+                           Depends(validate_poll_etc_create)])
 async def poll_etc_update(
     request: Request,
-    poll_service: Annotated[PollService, Depends()],
-    member: Annotated[Member, Depends(get_login_member)],
-    po_id: int = Path(...),
+    service: Annotated[PollService, Depends()],
+    member: Annotated[Member, Depends(get_login_member_optional)],
+    poll: Annotated[Poll, Depends(get_poll)],
     pc_name: str = Form(...),
     pc_idea: str = Form(...),
-    recaptcha_response: str = Form("", alias="g-recaptcha-response"),
 ):
     """
-    기타의견 등록
+    설문조사 기타의견 등록
     """
-    if not member:
-        await validate_captcha(request, recaptcha_response)
-
-    poll_etc = poll_service.create_poll_etc(
-        po_id, member, pc_name=pc_name, pc_idea=pc_idea)
-
+    poll_etc = service.create_poll_etc(poll, member,
+                                       pc_name=pc_name, pc_idea=pc_idea)
+    # 관리자에게 메일 발송
     send_poll_etc_mail(request, poll_etc)
 
-    return RedirectResponse(url=f"/bbs/poll_result/{po_id}", status_code=302)
+    return RedirectResponse(url=f"/bbs/poll_result/{poll.po_id}", status_code=302)
 
 
 @router.get("/poll/{po_id}/etc_delete/{pc_id}",
-            dependencies=[Depends(validate_token)])
+            dependencies=[Depends(validate_token),
+                          Depends(validate_poll_etc_delete)])
 async def poll_etc_delete(
-    member: Annotated[Member, Depends(get_login_member)],
-    poll_service: Annotated[PollService, Depends()],
-    po_id: int = Path(...),
-    pc_id: int = Path(...)
+    service: Annotated[PollService, Depends()],
+    poll_etc: Annotated[PollEtc, Depends(get_poll_etc)]
 ):
     """
     기타의견 삭제
     """
-    poll_service.delete_poll_etc(po_id, pc_id, member)
+    service.delete_poll_etc(poll_etc)
 
-    return RedirectResponse(url=f"/bbs/poll_result/{po_id}", status_code=302)
+    return RedirectResponse(url=f"/bbs/poll_result/{poll_etc.po_id}", status_code=302)

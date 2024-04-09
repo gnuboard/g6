@@ -8,7 +8,8 @@ from core.exception import AlertException
 from core.models import Member
 from core.template import UserTemplates
 from lib.dependency.member import validate_leave_member
-from lib.dependencies import get_login_member, validate_token
+from lib.dependencies import validate_token
+from lib.dependency.auth import get_login_member
 from lib.member_lib import MemberService
 
 router = APIRouter()
