@@ -2,7 +2,7 @@
 from cachetools import cached, LFUCache
 
 from core.database import DBConnect
-from lib.service.poll_service import PollService
+from service.poll_service import PollService
 
 
 @cached(LFUCache(maxsize=1))

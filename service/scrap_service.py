@@ -9,7 +9,7 @@ from core.database import db_session
 from core.exception import AlertException
 from core.models import Member, Scrap
 from lib.common import dynamic_create_write_table
-from lib.service import BaseService
+from service import BaseService
 
 
 class ScrapService(BaseService):

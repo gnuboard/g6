@@ -1,7 +1,7 @@
 """API Q&A 관련 기능 구현 모듈"""
 from fastapi import HTTPException
 
-from lib.service.qa_service import QaConfigService, QaFileService, QaService
+from service.qa_service import QaConfigService, QaFileService, QaService
 
 
 class QaConfigServiceAPI(QaConfigService):

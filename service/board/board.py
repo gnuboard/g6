@@ -5,9 +5,9 @@ from sqlalchemy import select
 from core.database import db_session
 from core.models import Board, Member, WriteBaseModel, Group
 from core.exception import AlertException
-from lib.service import BaseService
 from lib.board_lib import BoardConfig, get_admin_type
 from lib.common import dynamic_create_write_table
+from service import BaseService
 
 
 class BoardService(BaseService, BoardConfig):

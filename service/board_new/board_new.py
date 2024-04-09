@@ -6,10 +6,10 @@ from sqlalchemy import select, func
 from core.models import Board, BoardNew
 from core.database import db_session
 from core.exception import AlertException
-from lib.service import BaseService
 from lib.common import dynamic_create_write_table, cut_name, FileCache
 from lib.point import delete_point, insert_point
 from lib.board_lib import BoardFileManager
+from service import BaseService
 
 
 class BoardNewService(BaseService):

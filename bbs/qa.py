@@ -20,9 +20,9 @@ from lib.dependencies import (
 from lib.dependency.auth import get_login_member
 from lib.html_sanitizer import content_sanitizer, subject_sanitizer
 from lib.mail import send_qa_mail
-from lib.service.qa_service import QaConfigService, QaFileService, QaService
 from lib.template_filters import search_font
 from lib.template_functions import get_paging
+from service.qa_service import QaConfigService, QaFileService, QaService
 
 router = APIRouter()
 templates = UserTemplates()

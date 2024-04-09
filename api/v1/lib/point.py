@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 
-from lib.service.point_service import PointService
+from service.point_service import PointService
 
 
 class PointServiceAPI(PointService):

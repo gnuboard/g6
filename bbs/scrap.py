@@ -10,9 +10,9 @@ from lib.common import get_paging_info, remove_query_params, set_url_query_param
 from lib.dependencies import get_board, get_write, validate_token
 from lib.dependency.auth import get_login_member
 from lib.dependency.scrap import validate_create_scrap
-from lib.service.scrap_service import ScrapService
 from lib.template_filters import datetime_format
 from lib.template_functions import get_paging
+from service.scrap_service import ScrapService
 
 router = APIRouter()
 templates = UserTemplates()

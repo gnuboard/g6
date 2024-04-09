@@ -1,7 +1,7 @@
 """API 컨텐츠 관련 기능 구현 모듈"""
 from fastapi import HTTPException
 
-from lib.service.content_service import ContentService
+from service.content_service import ContentService
 
 
 class ContentServiceAPI(ContentService):

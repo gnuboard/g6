@@ -16,7 +16,7 @@ from lib.dependency.poll import (
 from lib.mail import send_poll_etc_mail
 from lib.member_lib import get_member_level
 from lib.point import insert_point
-from lib.service.poll_service import PollService
+from service.poll_service import PollService
 
 router = APIRouter()
 templates = UserTemplates()

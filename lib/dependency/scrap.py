@@ -6,7 +6,7 @@ from fastapi import Depends
 from core.models import Board, Member, WriteBaseModel
 from lib.dependencies import get_board, get_write
 from lib.dependency.auth import get_login_member
-from lib.service.scrap_service import ValidateScrapService
+from service.scrap_service import ValidateScrapService
 
 
 def validate_create_scrap(

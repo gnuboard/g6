@@ -5,9 +5,9 @@ from sqlalchemy import select, func
 from core.models import Member, Board, Group, GroupMember
 from core.database import db_session
 from core.exception import AlertException
-from lib.service import BaseService
 from lib.board_lib import BoardConfig, get_admin_type, write_search_filter, get_list
 from lib.common import dynamic_create_write_table
+from service import BaseService
 
 
 class SearchService(BaseService, BoardConfig):

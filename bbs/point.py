@@ -7,8 +7,8 @@ from core.models import Member
 from core.template import UserTemplates
 from lib.common import get_paging_info
 from lib.dependency.auth import get_login_member
-from lib.service.point_service import PointService
 from lib.template_functions import get_paging
+from service.point_service import PointService
 
 router = APIRouter()
 templates = UserTemplates()

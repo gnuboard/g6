@@ -1,7 +1,7 @@
 """API 스크랩 관련 기능 구현 모듈"""
 from fastapi import HTTPException
 
-from lib.service.scrap_service import ScrapService, ValidateScrapService
+from service.scrap_service import ScrapService, ValidateScrapService
 
 
 class ScrapServiceAPI(ScrapService):

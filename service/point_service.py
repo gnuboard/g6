@@ -6,7 +6,7 @@ from fastapi import Request
 from core.database import db_session
 from core.exception import AlertException
 from core.models import Member, Point
-from lib.service import BaseService
+from service import BaseService
 
 
 class PointService(BaseService):

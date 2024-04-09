@@ -1,7 +1,7 @@
 """API FAQ 관련 기능 구현 모듈"""
 from fastapi import HTTPException
 
-from lib.service.faq_service import FaqService
+from service.faq_service import FaqService
 
 
 class FaqServiceAPI(FaqService):

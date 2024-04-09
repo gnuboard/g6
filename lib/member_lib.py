@@ -17,7 +17,7 @@ from core.exception import AlertException
 from core.models import Board, Config, Group, Member
 from lib.common import get_client_ip, is_none_datetime
 from lib.pbkdf2 import validate_password
-from lib.service import BaseService
+from service import BaseService
 
 
 class MemberService(BaseService):

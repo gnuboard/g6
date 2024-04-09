@@ -1,7 +1,7 @@
 """API 요청에 사용되는 설문조사 관련 기능 모듈"""
 from fastapi import HTTPException
 
-from lib.service.poll_service import PollService, ValidatePollService
+from service.poll_service import PollService, ValidatePollService
 
 
 class PollServiceAPI(PollService):

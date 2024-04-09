@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Path, Request
 
 from core.template import UserTemplates
 from lib.common import get_head_tail_img
-from lib.service.content_service import ContentService
+from service.content_service import ContentService
 
 router = APIRouter()
 templates = UserTemplates()
