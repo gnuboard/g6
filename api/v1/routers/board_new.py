@@ -2,7 +2,7 @@ from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, Query, Body
 
 from api.v1.models.response import responses
-from api.v1.models.board import ResponseNormalModel
+from api.v1.models.board import ResponseNormalModel, ResponseBoardNewListModel
 from service.board_new import BoardNewServiceAPI
 
 
@@ -19,7 +19,7 @@ async def api_board_new_list(
     view: str = Query(None),
     mb_id: str = Query(None),
     current_page: int = Query(1, alias="page")
-):
+) -> ResponseBoardNewListModel:
     """
     최신 게시글 목록
     """

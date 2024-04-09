@@ -263,3 +263,24 @@ class ResponseGroupBoardsModel(BaseModel):
     """게시판 그룹, 게시판 목록 모델"""
     group: ResponseGroupModel
     boards: List[ResponseBoardModel]
+
+
+class ResponseBoardNewModel(BaseModel):
+    """최신글 모델"""
+    bo_table: str
+    wr_id: int
+    wr_parent: int
+    bn_datetime: datetime
+    mb_id: str
+    num: int
+    subject: str
+    link: str
+    name: str
+    datetime: str
+
+
+class ResponseBoardNewListModel(BaseModel):
+    """최신글 목록 모델"""
+    total_count: int
+    board_news: List[ResponseBoardNewModel]
+    current_page: int
