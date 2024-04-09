@@ -1,5 +1,5 @@
 """게시글 모델"""
-from typing_extensions import Annotated, List
+from typing_extensions import Annotated, List, Union
 from datetime import datetime
 
 from fastapi import Body
@@ -232,3 +232,14 @@ class ResponseBoardModel(BaseModel):
     # bo_8: str
     # bo_9: str
     # bo_10: str
+
+
+class ResponseBoardListModel(BaseModel):
+    """게시판 목록 모델"""
+    categories: list
+    board: ResponseBoardModel
+    writes: List[ResponseWriteModel]
+    total_count: int
+    current_page: int
+    prev_spt: Union[int, None]
+    next_spt: Union[int, None]

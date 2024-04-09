@@ -12,7 +12,10 @@ from lib.board_lib import insert_board_new, set_write_delay
 from lib.dependency.dependencies import common_search_query_params
 from api.v1.models.response import responses
 from api.v1.dependencies.board import get_current_member
-from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel
+from api.v1.models.board import (
+    WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel,
+    ResponseBoardListModel
+)
 from service.board import(
     ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
     UpdatePostServiceAPI, DeletePostServiceAPI, GroupBoardListServiceAPI,
@@ -69,7 +72,7 @@ async def api_list_post(
     member: Annotated[Member, Depends(get_current_member)],
     search_params: Annotated[dict, Depends(common_search_query_params)],
     bo_table: str = Path(...),
-) -> Dict:
+) -> ResponseBoardListModel:
     """
     게시판 정보, 글 목록을 반환합니다.
     """
