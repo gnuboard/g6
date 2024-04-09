@@ -16,7 +16,7 @@ from core.template import AdminTemplates
 from lib.common import (
     get_from_list, is_none_datetime, select_query, set_url_query_params
 )
-from lib.dependencies import common_search_query_params, validate_token
+from lib.dependency.dependencies import common_search_query_params, validate_token
 from lib.pbkdf2 import create_hash
 from lib.template_functions import get_member_level_select, get_paging
 from service.member_service import MemberImageService

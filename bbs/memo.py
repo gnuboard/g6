@@ -7,7 +7,7 @@ from fastapi.responses import RedirectResponse
 from core.models import Member
 from core.template import UserTemplates
 from lib.common import captcha_widget, get_paging_info, is_none_datetime
-from lib.dependencies import validate_captcha, validate_token
+from lib.dependency.dependencies import validate_captcha, validate_token
 from lib.dependency.auth import get_login_member
 from lib.html_sanitizer import content_sanitizer as sanitizer
 from lib.point import insert_point

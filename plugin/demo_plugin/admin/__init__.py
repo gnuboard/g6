@@ -1,6 +1,6 @@
 from fastapi.params import Depends
 
-from lib.dependencies import check_admin_access
+from lib.dependency.dependencies import check_admin_access
 from main import app
 from .. import plugin_config
 from ..admin.admin_router import admin_router

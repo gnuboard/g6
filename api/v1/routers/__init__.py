@@ -3,7 +3,7 @@ from enum import Enum
 
 from fastapi import APIRouter, Depends
 
-from lib.dependencies import check_use_api
+from lib.dependency.dependencies import check_use_api
 from api.v1.routers import (
     auth, board, content, faq, member, memo, menu, point, poll, qa, scrap,
     search, board_new, ajax_good, ajax_autosave

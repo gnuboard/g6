@@ -12,7 +12,7 @@ from core.formclass import FaqForm, FaqMasterForm
 from core.models import Faq, FaqMaster
 from core.template import AdminTemplates
 from lib.common import get_head_tail_img
-from lib.dependencies import validate_token
+from lib.dependency.dependencies import validate_token
 
 router = APIRouter()
 templates = AdminTemplates()

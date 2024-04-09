@@ -11,6 +11,14 @@ from lib.dependency.auth import get_login_member
 from lib.pbkdf2 import create_hash, validate_password
 from service.member_service import ValidateMember
 
+
+def validate_policy_agree(request: Request):
+    """약관 동의 여부 검사"""
+    if (not request.session.get("ss_agree", None)
+            or not request.session.get("ss_agree2", None)):
+        raise AlertException("회원가입 약관에 동의해 주세요.", 400, url="/bbs/register")
+
+
 def validate_register_data(
     validate: Annotated[ValidateMember, Depends()],
     data: Annotated[RegisterMemberForm, Depends()],

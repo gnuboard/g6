@@ -20,12 +20,12 @@ from lib.board_lib import (
 from lib.common import (
     set_url_query_params, get_unique_id, captcha_widget, remove_query_params
 )
-from lib.dependencies import (
+from lib.dependency.board import get_write
+from lib.dependency.dependencies import (
     check_group_access, common_search_query_params,
-    validate_captcha, validate_token, check_login_member,
-    get_write
+    validate_captcha, validate_token
 )
-from lib.dependency.auth import get_login_member
+from lib.dependency.auth import get_login_member, get_login_member_optional
 from lib.template_functions import get_paging
 from service.board import (
     ListPostService, CreatePostService, ReadPostService,
@@ -319,7 +319,7 @@ async def create_post(
     request: Request,
     db: db_session,
     form_data: Annotated[WriteForm, Depends()],
-    member: Annotated[Member, Depends(check_login_member)],
+    member: Annotated[Member, Depends(get_login_member_optional)],
     bo_table: str = Path(...),
     parent_id: int = Form(None),
     notice: bool = Form(False),
@@ -405,7 +405,7 @@ async def read_post(
     request: Request,
     db: db_session,
     write: Annotated[WriteBaseModel, Depends(get_write)],
-    member: Annotated[Member, Depends(check_login_member)],
+    member: Annotated[Member, Depends(get_login_member_optional)],
     bo_table: str = Path(...),
     wr_id: int = Path(...),
 ):

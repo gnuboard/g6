@@ -9,7 +9,7 @@ from core.formclass import ContentForm
 from core.models import Content
 from core.template import AdminTemplates
 from lib.common import delete_image, get_head_tail_img, make_directory, save_image
-from lib.dependencies import validate_token
+from lib.dependency.dependencies import validate_token
 from lib.template_functions import get_skin_select
 
 router = APIRouter()

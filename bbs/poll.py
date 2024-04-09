@@ -7,7 +7,7 @@ from fastapi.responses import RedirectResponse
 from core.models import Member, Poll, PollEtc
 from core.template import UserTemplates
 from lib.common import captcha_widget
-from lib.dependencies import validate_token
+from lib.dependency.dependencies import validate_token
 from lib.dependency.auth import get_login_member_optional
 from lib.dependency.poll import (
     get_poll, get_poll_etc, validate_poll_etc_create,

@@ -4,14 +4,13 @@ from typing import List
 import bleach
 from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy import func
+from sqlalchemy import delete, func, select
 
 from core.database import db_session
 from core.exception import AlertException
 from core.models import Board, Content, Group, Menu
 from core.template import AdminTemplates
-from lib.common import *
-from lib.dependencies import validate_token
+from lib.dependency.dependencies import validate_token
 from lib.menu import get_menus
 
 router = APIRouter()

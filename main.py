@@ -26,7 +26,7 @@ from lib.common import (
     ENV_PATH, get_client_ip, get_newwins_except_cookie, is_intercept_ip,
     is_possible_ip, record_visit, session_member_key,
 )
-from lib.dependencies import check_use_template
+from lib.dependency.dependencies import check_use_template
 from lib.member import is_super_admin
 from lib.point import insert_point
 from lib.scheduler import scheduler

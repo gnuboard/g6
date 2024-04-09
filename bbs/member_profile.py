@@ -11,7 +11,7 @@ from core.formclass import UpdateMemberForm
 from core.models import Config, Member, MemberSocialProfiles
 from core.template import UserTemplates
 from lib.common import captcha_widget
-from lib.dependencies import validate_captcha, validate_token
+from lib.dependency.dependencies import validate_captcha, validate_token
 from lib.dependency.auth import get_login_member
 from lib.dependency.member import validate_update_data
 from lib.member import get_next_open_date

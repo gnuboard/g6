@@ -1,8 +1,6 @@
-from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, Request
 
 from core.template import AdminTemplates
-from lib.common import *
 
 router = APIRouter()
 templates = AdminTemplates()

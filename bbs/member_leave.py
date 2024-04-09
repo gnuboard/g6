@@ -8,7 +8,7 @@ from core.exception import AlertException
 from core.models import Member
 from core.template import UserTemplates
 from lib.dependency.member import validate_leave_member
-from lib.dependencies import validate_token
+from lib.dependency.dependencies import validate_token
 from lib.dependency.auth import get_login_member
 from service.member_service import MemberService
 

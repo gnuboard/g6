@@ -19,7 +19,7 @@ from lib.common import (
     filter_words, make_directory, dynamic_create_write_table
 )
 from lib.html_sanitizer import content_sanitizer
-from lib.dependencies import validate_captcha as lib_validate_captcha
+from lib.dependency.dependencies import validate_captcha as lib_validate_captcha
 from lib.pbkdf2 import create_hash
 from lib.template_filters import datetime_format
 from api.v1.models.board import WriteModel

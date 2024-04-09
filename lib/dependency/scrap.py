@@ -4,8 +4,8 @@ from typing_extensions import Annotated
 from fastapi import Depends
 
 from core.models import Board, Member, WriteBaseModel
-from lib.dependencies import get_board, get_write
 from lib.dependency.auth import get_login_member
+from lib.dependency.board import get_board, get_write
 from service.scrap_service import ValidateScrapService
 
 

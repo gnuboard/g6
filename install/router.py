@@ -26,7 +26,7 @@ from install.default_values import (
     default_group, default_member, default_qa_config, default_version
 )
 from lib.common import ENV_PATH, dynamic_create_write_table, read_license
-from lib.dependencies import validate_install, validate_token
+from lib.dependency.dependencies import validate_install, validate_token
 from lib.pbkdf2 import create_hash
 
 

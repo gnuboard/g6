@@ -14,7 +14,7 @@ from core.formclass import QaContentForm
 from core.models import Member
 from core.template import UserTemplates
 from lib.common import filter_words, get_paging_info, set_url_query_params
-from lib.dependencies import (
+from lib.dependency.dependencies import (
     common_search_query_params, validate_super_admin, validate_token
 )
 from lib.dependency.auth import get_login_member

@@ -4,7 +4,7 @@ from typing_extensions import Annotated
 from fastapi import Depends, Form, Path, Request
 
 from core.models import Member, Poll
-from lib.dependencies import validate_captcha
+from lib.dependency.dependencies import validate_captcha
 from lib.dependency.auth import get_login_member_optional
 from service.poll_service import PollService, ValidatePollService
 

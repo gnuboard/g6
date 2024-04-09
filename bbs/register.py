@@ -14,10 +14,10 @@ from core.formclass import RegisterMemberForm
 from core.models import Member
 from core.template import UserTemplates
 from lib.common import captcha_widget, session_member_key
-from lib.dependencies import (
-    validate_captcha, validate_policy_agree, validate_token, no_cache_response
+from lib.dependency.dependencies import (
+    validate_captcha, validate_token, no_cache_response
 )
-from lib.dependency.member import validate_register_data
+from lib.dependency.member import validate_policy_agree, validate_register_data
 from lib.mail import send_register_mail
 from service.member_service import MemberImageService, MemberService
 from lib.point import insert_point

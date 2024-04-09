@@ -4,7 +4,7 @@ from fastapi.responses import RedirectResponse
 
 from core.template import UserTemplates
 from lib.common import set_url_query_params
-from lib.dependencies import validate_token
+from lib.dependency.dependencies import validate_token
 from lib.template_functions import get_group_select, get_paging
 from service.board_new import BoardNewService
 

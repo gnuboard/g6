@@ -24,7 +24,7 @@ from bbs.password import router as password_router
 from bbs.search import router as search_router
 from bbs.current_connect import router as current_connect_router
 from install.router import router as install_router
-from lib.dependencies import check_use_template
+from lib.dependency.dependencies import check_use_template
 from lib.editor.ckeditor4 import router as editor_router
 
 router = APIRouter(dependencies=[Depends(check_use_template)],
