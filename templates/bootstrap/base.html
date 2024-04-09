@@ -136,7 +136,7 @@
       <!-- 프로필 -->
       <div id="profile" class="dropdown d-none d-md-block bg-transparent">
         <span id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false" class="d-inline-block rounded-circle overflow-hidden cursor-pointer" style="width: 48px; height: 48px;" tabindex="0">
-          <img src="{{ get_member_image(request, request.state.login_member.mb_id)|safe }}" style="width: 100%;" alt="profile_image">
+          <img src="{{ get_member_image(request.state.login_member.mb_id)|safe }}" style="width: 100%;" alt="profile_image">
         </span>
         <div class="dropdown-menu cont-bg rounded-4 main-border overflow-hidden" aria-labelledby="profileDropdown">
           {% if request.state.login_member %}

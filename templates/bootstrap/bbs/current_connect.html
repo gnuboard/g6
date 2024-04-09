@@ -10,7 +10,7 @@
         {% for login, member in logins %}
             <li class="position-relative row align-items-center main-bb fs-5 py-4 ms-0" style="box-sizing: border-box;">
                 <span class="col-1 fw-bold main-font text-center">{{ loop.index }}</span>
-                <span class="col-1 text-start"><img src="{{ get_member_image(request, login.mb_id) }}" class="rounded-circle" style="width: 45px;height: 45px;" alt="profile_image"></span>
+                <span class="col-1 text-start"><img src="{{ get_member_image(login.mb_id) }}" class="rounded-circle" style="width: 45px;height: 45px;" alt="profile_image"></span>
                 <div class="col-10">
                     <span class="d-block main-font">
                     {% if login.mb_id %}
