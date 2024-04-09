@@ -2,6 +2,7 @@ from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, Query, Body
 
 from api.v1.models.response import responses
+from api.v1.models.board import ResponseNormalModel
 from service.board_new import BoardNewServiceAPI
 
 
@@ -43,7 +44,7 @@ async def api_board_new_list(
 async def api_new_delete(
     board_new_service: Annotated[BoardNewServiceAPI, Depends()],
     bn_ids: list = Body(...),
-):
+) -> ResponseNormalModel:
     """
     최신 게시글을 삭제한다.
     """

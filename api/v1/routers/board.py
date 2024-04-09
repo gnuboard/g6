@@ -14,7 +14,7 @@ from api.v1.models.response import responses
 from api.v1.dependencies.board import get_current_member
 from api.v1.models.board import (
     WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel,
-    ResponseBoardListModel, ResponseGroupBoardsModel
+    ResponseBoardListModel, ResponseGroupBoardsModel, ResponseNormalModel
 )
 from service.board import(
     ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
@@ -143,7 +143,7 @@ async def api_create_post(
     member: Annotated[Member, Depends(get_current_member)],
     wr_data: WriteModel,
     bo_table: str = Path(...),
-) -> Dict:
+) -> ResponseNormalModel:
     """
     지정된 게시판에 새 글을 작성합니다.
     """
@@ -178,7 +178,7 @@ async def api_update_post(
     wr_data: WriteModel,
     bo_table: str = Path(...),
     wr_id: str = Path(...),
-) -> Dict:
+) -> ResponseNormalModel:
     """
     지정된 게시판의 글을 수정합니다.
     """
@@ -212,7 +212,7 @@ async def api_delete_post(
     member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
-) -> Dict:
+) -> ResponseNormalModel:
     """
     지정된 게시판의 글을 삭제합니다.
     """
@@ -236,7 +236,7 @@ async def api_list_delete(
     member: Annotated[Member, Depends(get_current_member)],
     wr_ids: Annotated[list, Body(..., alias="chk_wr_id[]")],
     bo_table: str = Path(...),
-):
+) -> ResponseNormalModel:
     """
     게시글을 일괄 삭제합니다.
     - wr_ids: 삭제할 게시글 wr_id 리스트
@@ -285,7 +285,7 @@ async def api_move_update(
     sw: str = Body(...),
     wr_ids: str = Body(...),
     target_bo_tables: list = Body(...),
-):
+) -> ResponseNormalModel:
     """
     게시글을 복사/이동합니다.
     - Scrap, File등 연관된 데이터들도 함께 수정합니다.
@@ -310,7 +310,7 @@ async def api_upload_file(
     files: List[UploadFile] = File(...),
     file_content: list = Form(None),
     file_dels: list = Form(None),
-) -> Dict:
+) -> ResponseNormalModel:
     """
     파일을 업로드합니다.
     """
@@ -360,7 +360,7 @@ async def api_create_comment(
     comment_data: CommentModel,
     bo_table: str = Path(...),
     wr_parent: str = Path(...),
-):
+) -> ResponseNormalModel:
     """
     댓글 등록
     """
@@ -389,7 +389,7 @@ async def api_update_comment(
     bo_table: str = Path(...),
     wr_parent: str = Path(...),
     wr_id: str = Path(...),
-) -> Dict:
+) -> ResponseNormalModel:
     """
     댓글을 수정합니다.
     """
@@ -420,7 +420,7 @@ async def api_delete_comment(
     member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
-):
+) -> ResponseNormalModel:
     """
     댓글을 삭제합니다.
     """

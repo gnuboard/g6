@@ -60,6 +60,10 @@ class CommentModel(BaseModel):
         return self
 
 
+class ResponseNormalModel(BaseModel):
+    result: str
+
+
 class ResponseFileModel(BaseModel):
     """게시글 파일 모델중 response에 필요한 속성 정의"""
     bf_source: str
