@@ -71,7 +71,7 @@ class BoardNewService(BaseService):
         total_count = self.db.scalar(query.add_columns(func.count(BoardNew.bn_id)).order_by(None))
         return total_count
 
-    def arrange_borad_news_data(self, board_news: list[BoardNew], total_count: int, offset: int):
+    def arrange_borad_news_data(self, board_news: List[BoardNew], total_count: int, offset: int):
         """최신글 결과 데이터 설정"""
         for new in board_news:
             new.num = total_count - offset - (board_news.index((new)))

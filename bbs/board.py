@@ -23,8 +23,9 @@ from lib.common import (
 from lib.dependencies import (
     check_group_access, common_search_query_params,
     validate_captcha, validate_token, check_login_member,
-    get_write, get_login_member
+    get_write
 )
+from lib.dependency.auth import get_login_member
 from lib.template_functions import get_paging
 from service.board import (
     ListPostService, CreatePostService, ReadPostService,
