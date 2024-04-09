@@ -243,3 +243,19 @@ class ResponseBoardListModel(BaseModel):
     current_page: int
     prev_spt: Union[int, None]
     next_spt: Union[int, None]
+
+
+class ResponseGroupModel(BaseModel):
+    """게시판 그룹 모델"""
+    gr_id: str
+    gr_subject: str
+    gr_device: str
+    gr_admin: str
+    gr_use_access: int
+    gr_order: int
+
+
+class ResponseGroupBoardsModel(BaseModel):
+    """게시판 그룹, 게시판 목록 모델"""
+    group: ResponseGroupModel
+    boards: List[ResponseBoardModel]

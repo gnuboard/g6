@@ -14,7 +14,7 @@ from api.v1.models.response import responses
 from api.v1.dependencies.board import get_current_member
 from api.v1.models.board import (
     WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel,
-    ResponseBoardListModel
+    ResponseBoardListModel, ResponseGroupBoardsModel
 )
 from service.board import(
     ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
@@ -41,7 +41,7 @@ async def api_group_board_list(
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
     gr_id: str = Path(...),
-) -> Dict:
+) -> ResponseGroupBoardsModel:
     """
     게시판그룹의 모든 게시판 목록을 보여줍니다.
     """
