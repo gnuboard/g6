@@ -7,7 +7,7 @@ from sqlalchemy import delete, desc, exists, func, select, update
 
 from core.database import DBConnect
 from core.models import Member, Point
-from lib.member_lib import MemberService
+from service.member_service import MemberService
 
 
 def insert_point(request: Request,

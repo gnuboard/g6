@@ -6,9 +6,10 @@ from fastapi.responses import RedirectResponse
 
 from core.template import UserTemplates
 from lib.common import session_member_key
-from lib.member_lib import MemberService, is_super_admin
+from lib.member import is_super_admin
 from lib.social import providers
 from lib.social.social import SocialProvider, oauth
+from service.member_service import MemberService
 
 router = APIRouter()
 templates = UserTemplates()

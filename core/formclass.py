@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi import Form
 
 from core.exception import AlertException
-from lib.member_lib import set_zip_code
+from lib.member import set_zip_code
 from lib.pbkdf2 import create_hash
 
 @dataclass

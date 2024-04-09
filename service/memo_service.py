@@ -11,8 +11,8 @@ from core.database import db_session
 from core.exception import AlertException
 from core.models import Member, Memo
 from lib.common import get_client_ip, is_none_datetime
-from lib.member_lib import MemberService
 from service import BaseService
+from service.member_service import MemberService
 
 
 class MemoService(BaseService):

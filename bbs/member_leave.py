@@ -10,7 +10,7 @@ from core.template import UserTemplates
 from lib.dependency.member import validate_leave_member
 from lib.dependencies import validate_token
 from lib.dependency.auth import get_login_member
-from lib.member_lib import MemberService
+from service.member_service import MemberService
 
 router = APIRouter()
 templates = UserTemplates()

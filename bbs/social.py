@@ -19,7 +19,6 @@ from core.formclass import MemberForm
 from core.models import Config, Member, MemberSocialProfiles
 from core.template import UserTemplates
 from lib.common import get_admin_email, get_admin_email_name, mailer, session_member_key
-from lib.member_lib import MemberService, ValidateMember
 from lib.pbkdf2 import create_hash
 from lib.point import insert_point
 from lib.social import providers
@@ -27,6 +26,7 @@ from lib.social.social import (
     get_social_login_token, get_social_profile, oauth, SocialProvider
 )
 from lib.template_filters import default_if_none
+from service.member_service import MemberService, ValidateMember
 
 
 router = APIRouter()

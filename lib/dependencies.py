@@ -15,7 +15,7 @@ from lib.common import (
     dynamic_create_write_table, ENV_PATH, get_current_admin_menu_id,
     get_current_captcha_cls,
 )
-from lib.member_lib import get_admin_type
+from lib.member import get_admin_type
 from lib.token import check_token
 
 

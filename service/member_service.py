@@ -1,11 +1,10 @@
-"""회원 관련 기능을 제공하는 모듈입니다."""
-import math
+"""회원 관련 기능을 제공하는 서비스 모듈입니다."""
 import os
 import re
 import secrets
 from datetime import date, datetime, timedelta
 from glob import glob
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 from typing_extensions import Annotated
 
 from fastapi import Depends, Request, UploadFile
@@ -14,8 +13,9 @@ from sqlalchemy import select
 
 from core.database import db_session
 from core.exception import AlertException
-from core.models import Board, Config, Group, Member
+from core.models import Member
 from lib.common import get_client_ip, is_none_datetime
+from lib.member import get_next_open_date, hide_member_id
 from lib.pbkdf2 import validate_password
 from service import BaseService
 
@@ -607,116 +607,3 @@ class ValidateMember(BaseService):
                 and available_days != 0):
             return change_date < (date.today() - timedelta(days=available_days))
         return True
-
-
-def get_member_level(request: Request) -> int:
-    """request에서 회원 레벨 정보를 가져오는 함수"""
-    member: Member = request.state.login_member
-
-    return int(member.mb_level) if member else 1
-
-
-def get_admin_type(request: Request, mb_id: str = None,
-                   group: Group = None, board: Board = None) -> Union[str, None]:
-    """게시판 관리자 여부 확인 후 관리자 타입 반환
-    - 그누보드5의 is_admin 함수를 참고하여 작성하려고 했으나, 이미 is_admin가 있어서 함수 이름을 변경함
-
-    Args:
-        request (Request): FastAPI Request 객체
-        mb_id (str, optional): 회원 아이디. Defaults to None.
-        group (Group, optional): 게시판 그룹 정보. Defaults to None.
-        board (Board, optional): 게시판 정보. Defaults to None.
-
-    Returns:
-        Union[str, None]: 관리자 타입 (super, group, board, None)
-    """
-    if not mb_id:
-        return None
-
-    config = request.state.config
-    group = group or (board.group if board else None)
-
-    is_authority = None
-    if config.cf_admin == mb_id:
-        is_authority = "super"
-    elif group and group.gr_admin == mb_id:
-        is_authority = "group"
-    elif board and board.bo_admin == mb_id:
-        is_authority = "board"
-
-    return is_authority
-
-
-def is_super_admin(request: Request, mb_id: str = None) -> bool:
-    """최고관리자 여부 확인
-
-    Args:
-        request (Request): FastAPI Request 객체
-        mb_id (str, optional): 회원 아이디. Defaults to None.
-
-    Returns:
-        bool: 최고관리자이면 True, 아니면 False
-    """
-    config: Config = request.state.config
-    cf_admin = str(config.cf_admin).lower().strip()
-
-    if not cf_admin:
-        return False
-
-    mb_id = mb_id or request.session.get("ss_mb_id", "")
-    if mb_id and mb_id.lower().strip() == cf_admin:
-        return True
-
-    return False
-
-
-def get_next_open_date(request: Request, open_date: date = None) -> str:
-    """다음 프로필 공개 가능일을 반환
-
-    Args:
-        request (Request): FastAPI Request 객체
-        open_date (date): 최근 프로필 공개 변경일
-
-    Returns:
-        datetime: 다음 프로필 공개 가능일
-    """
-    open_days = getattr(request.state.config, "cf_open_modify", 0)
-    if open_days == 0:
-        return ""
-
-    base_date = open_date if open_date else date.today()
-    calculated_date = base_date + timedelta(days=open_days)
-
-    return calculated_date.strftime("%Y-%m-%d")
-
-
-def hide_member_id(mb_id: str):
-    """아이디를 가리기 위한 함수
-    - 아이디의 절반을 가리고, 가려진 부분은 *로 표시한다.
-
-    Args:
-        mb_id (str): 회원 아이디
-
-    Returns:
-        str: 가려진 회원 아이디
-    """
-    id_len = len(mb_id)
-    hide_len = math.floor(id_len / 2)
-    start_len = math.ceil((id_len - hide_len) / 2)
-    end_len = math.floor((id_len - hide_len) / 2)
-    return mb_id[:start_len] + "*" * hide_len + mb_id[-end_len:]
-
-
-def set_zip_code(zip_code: str = None) -> Tuple[str, str]:
-    """우편번호를 앞뒤 3자리로 나누는 함수
-
-    Args:
-        zip_code (str): 우편번호
-
-    Returns:
-        Tuple[str, str]: (앞 3자리, 뒤 3자리)
-    """
-    if not zip_code:
-        return "", ""
-
-    return zip_code[:3], zip_code[3:6]

@@ -27,11 +27,12 @@ from lib.common import (
     is_possible_ip, record_visit, session_member_key,
 )
 from lib.dependencies import check_use_template
-from lib.member_lib import MemberService, is_super_admin
+from lib.member import is_super_admin
 from lib.point import insert_point
 from lib.scheduler import scheduler
 from lib.template_filters import default_if_none
 from lib.token import create_session_token
+from service.member_service import MemberService
 
 from api.v1.routers import router as api_router
 

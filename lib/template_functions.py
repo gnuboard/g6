@@ -7,7 +7,7 @@ from sqlalchemy import select
 
 from core.database import DBConnect
 from core.models import Group, Member
-from lib.member_lib import MemberImageService
+from service.member_service import MemberImageService
 
 
 def editor_macro(request: Request) -> str:

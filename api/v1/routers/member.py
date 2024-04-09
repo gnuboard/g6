@@ -12,13 +12,15 @@ from bbs.social import SocialAuthService
 from core.database import db_session
 from core.models import Member
 from lib.mail import send_password_reset_mail, send_register_mail
-from lib.member_lib import MemberImageService
 from lib.point import insert_point
 
 from api.v1.dependencies.member import (
     get_current_member, validate_create_data, validate_update_data
 )
-from api.v1.lib.member import MemberServiceAPI, MemberImageServiceAPI
+from api.v1.lib.member import (
+    MemberServiceAPI,
+    MemberImageServiceAPI as ImageService
+)
 from api.v1.models import MemberRefreshToken, responses
 from api.v1.models.member import (
     CreateMemberModel, FindMemberIdModel, FindMemberPasswordModel,
@@ -102,8 +104,8 @@ async def read_member_me(
     if base_url.endswith("/"):
         base_url = base_url[:-1]
 
-    member.mb_image_path = base_url + MemberImageService.get_image_path(member.mb_id)
-    member.mb_icon_path = base_url + MemberImageService.get_icon_path(member.mb_id)
+    member.mb_image_path = base_url + ImageService.get_image_path(member.mb_id)
+    member.mb_icon_path = base_url + ImageService.get_icon_path(member.mb_id)
     return member
 
 
@@ -118,8 +120,8 @@ async def read_member(
     """회원 정보를 조회합니다."""
 
     member = member_service.get_member_profile(mb_id, current_member)
-    member.mb_image_path = MemberImageService.get_image_path(member.mb_id)
-    member.mb_icon_path = MemberImageService.get_icon_path(member.mb_id)
+    member.mb_image_path = ImageService.get_image_path(member.mb_id)
+    member.mb_icon_path = ImageService.get_icon_path(member.mb_id)
 
     return member
 
@@ -142,7 +144,7 @@ async def update_member(
             summary="회원 이미지 수정",
             responses={**responses})
 async def update_member_image(
-    file_service: Annotated[MemberImageServiceAPI, Depends()],
+    file_service: Annotated[ImageService, Depends()],
     member: Annotated[Member, Depends(get_current_member)],
     mb_img: Annotated[UploadFile, File(title="첨부파일1")] = None,
     mb_icon: Annotated[UploadFile, File(title="첨부파일2")] = None,

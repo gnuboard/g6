@@ -1,6 +1,8 @@
 from fastapi import HTTPException
 
-from lib.member_lib import MemberImageService, MemberService, ValidateMember
+from service.member_service import (
+    MemberImageService, MemberService, ValidateMember
+)
 
 
 class MemberServiceAPI(MemberService):

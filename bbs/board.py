@@ -11,7 +11,7 @@ from core.exception import AlertException
 from core.formclass import WriteForm, WriteCommentForm
 from core.models import Member, WriteBaseModel
 from core.template import UserTemplates
-from lib.member_lib import get_admin_type
+from lib.member import get_admin_type
 from lib.board_lib import (
     set_image_width, url_auto_link, BoardConfig, get_list_thumbnail,
     render_latest_posts, generate_reply_character, is_secret_write,

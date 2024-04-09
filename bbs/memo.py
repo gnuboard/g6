@@ -10,10 +10,10 @@ from lib.common import captcha_widget, get_paging_info, is_none_datetime
 from lib.dependencies import validate_captcha, validate_token
 from lib.dependency.auth import get_login_member
 from lib.html_sanitizer import content_sanitizer as sanitizer
-from lib.member_lib import MemberService
 from lib.point import insert_point
 from lib.template_filters import default_if_none
 from lib.template_functions import get_paging
+from service.member_service import MemberService
 from service.memo_service import MemoService
 
 router = APIRouter()

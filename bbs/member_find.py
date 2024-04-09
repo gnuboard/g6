@@ -9,7 +9,7 @@ from lib.common import captcha_widget
 from lib.dependencies import validate_captcha, validate_token
 from lib.dependency.member import redirect_if_logged_in, validate_password_reset
 from lib.mail import send_password_reset_mail
-from lib.member_lib import MemberService
+from service.member_service import MemberService
 
 router = APIRouter(dependencies=[Depends(redirect_if_logged_in)])
 templates = UserTemplates()

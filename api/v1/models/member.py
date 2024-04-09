@@ -6,7 +6,7 @@ from typing_extensions import Annotated
 from fastapi import Body
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
-from lib.member_lib import set_zip_code
+from lib.member import set_zip_code
 from lib.pbkdf2 import create_hash
 
 

@@ -19,7 +19,7 @@ from lib.dependencies import (
 )
 from lib.dependency.member import validate_register_data
 from lib.mail import send_register_mail
-from lib.member_lib import MemberImageService, MemberService
+from service.member_service import MemberImageService, MemberService
 from lib.point import insert_point
 from lib.template_filters import default_if_none
 

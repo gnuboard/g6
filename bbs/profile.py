@@ -9,7 +9,7 @@ from core.models import Member
 from core.template import UserTemplates
 from lib.dependency.auth import get_login_member
 from lib.common import is_none_datetime
-from lib.member_lib import MemberService
+from service.member_service import MemberService
 
 router = APIRouter()
 templates = UserTemplates()

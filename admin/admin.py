@@ -5,7 +5,7 @@ from core.models import Member, Point
 from core.template import AdminTemplates
 from lib.common import *
 from lib.dependencies import check_admin_access
-from lib.member_lib import get_member_level
+from lib.member import get_member_level
 
 router = APIRouter(dependencies=[Depends(check_admin_access)])
 templates = AdminTemplates()

@@ -14,11 +14,12 @@ from lib.common import captcha_widget
 from lib.dependencies import validate_captcha, validate_token
 from lib.dependency.auth import get_login_member
 from lib.dependency.member import validate_update_data
-from lib.member_lib import (
-    MemberService, MemberImageService, ValidateMember, get_next_open_date
-)
+from lib.member import get_next_open_date
 from lib.pbkdf2 import validate_password
 from lib.template_filters import default_if_none
+from service.member_service import (
+    MemberService, MemberImageService, ValidateMember
+)
 
 router = APIRouter()
 templates = UserTemplates()

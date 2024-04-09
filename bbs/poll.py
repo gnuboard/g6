@@ -14,7 +14,7 @@ from lib.dependency.poll import (
     validate_poll_etc_delete, validate_poll_read, validate_poll_update
 )
 from lib.mail import send_poll_etc_mail
-from lib.member_lib import get_member_level
+from lib.member import get_member_level
 from lib.point import insert_point
 from service.poll_service import PollService
 

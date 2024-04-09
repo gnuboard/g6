@@ -19,7 +19,7 @@ from lib.common import (
     get_admin_email_name, get_editor_image, insert_popular, mailer, make_directory,
     remove_query_params, set_url_query_params, thumbnail
 )
-from lib.member_lib import get_admin_type, get_member_level
+from lib.member import get_admin_type, get_member_level
 from lib.point import delete_point, insert_point
 
 

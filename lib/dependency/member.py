@@ -8,9 +8,8 @@ from core.exception import AlertException
 from core.formclass import RegisterMemberForm, UpdateMemberForm
 from core.models import Member
 from lib.dependency.auth import get_login_member
-from lib.member_lib import ValidateMember
 from lib.pbkdf2 import create_hash, validate_password
-
+from service.member_service import ValidateMember
 
 def validate_register_data(
     validate: Annotated[ValidateMember, Depends()],
