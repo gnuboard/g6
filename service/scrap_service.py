@@ -3,13 +3,14 @@ from typing import List
 from typing_extensions import Annotated
 
 from fastapi import Depends, Request
-from sqlalchemy import select, update
+from sqlalchemy import select
 
 from core.database import db_session
 from core.exception import AlertException
 from core.models import Member, Scrap
 from lib.common import dynamic_create_write_table
 from service import BaseService
+from service.member_service import MemberService
 
 
 class ScrapService(BaseService):
@@ -17,9 +18,14 @@ class ScrapService(BaseService):
     회원 스크랩 관련 서비스를 제공하는 종속성 주입 클래스입니다.
     """
 
-    def __init__(self, request: Request, db: db_session) -> None:
+    def __init__(self,
+                 request: Request,
+                 db: db_session,
+                 member_servce: Annotated[MemberService, Depends()]
+                 ) -> None:
         self.request = request
         self.db = db
+        self.member_servce = member_servce
 
     def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None) -> None:
         raise AlertException(detail, status_code, url)
@@ -28,6 +34,9 @@ class ScrapService(BaseService):
         """
         스크랩 목록의 총 개수를 데이터베이스에서 조회합니다.
         """
+        # request.state.login_member로 받는 경우
+        # 세션이 달라져서 현재 세션으로 재 연결해야함
+        member = self.member_servce.fetch_member_by_id(member.mb_id)
         return member.scraps.count()
 
     def fetch_scraps(self, member: Member, offset: int = 0, records_per_page: int = 10):
@@ -65,33 +74,26 @@ class ScrapService(BaseService):
         self.db.add(scrap)
         self.db.commit()
 
-    def read_scrap(self, ms_id: int, member: Member) -> Scrap:
+    def read_scrap(self, ms_id: int) -> Scrap:
         """
         스크랩 정보를 조회합니다.
         """
         scrap = self.fetch_scrap(ms_id)
         if not scrap:
             self.raise_exception(404, "스크랩이 존재하지 않습니다.")
-        if scrap.mb_id != member.mb_id:
-            self.raise_exception(403, "권한이 없습니다.")
         return scrap
 
     def update_scrap_count(self, member: Member) -> None:
         """
         회원 테이블의 스크랩 수를 업데이트합니다.
         """
-        count = self.fetch_total_records(member)
-        self.db.execute(
-            update(Member).values(mb_scrap_cnt=count)
-            .where(Member.mb_id == member.mb_id)
-        )
+        member.mb_scrap_cnt = self.fetch_total_records(member)
         self.db.commit()
 
-    def delete_scrap(self, ms_id: int, member: Member) -> None:
+    def delete_scrap(self, scrap: Scrap) -> None:
         """
         스크랩을 삭제합니다.
         """
-        scrap = self.read_scrap(ms_id, member)
         self.db.delete(scrap)
         self.db.commit()
 
@@ -140,4 +142,14 @@ class ValidateScrapService(BaseService):
             self.raise_exception(
                 status_code=409,
                 detail="이미 스크랩하신 글 입니다.",
+                url=self.request.url_for('scrap_list'))
+
+    def is_owner_scrap(self, scrap: Scrap, member: Member) -> None:
+        """
+        스크랩의 소유자인지 확인합니다.
+        """
+        if scrap.mb_id != member.mb_id:
+            self.raise_exception(
+                status_code=403,
+                detail="권한이 없습니다.",
                 url=self.request.url_for('scrap_list'))
