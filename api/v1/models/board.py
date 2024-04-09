@@ -284,3 +284,15 @@ class ResponseBoardNewListModel(BaseModel):
     total_count: int
     board_news: List[ResponseBoardNewModel]
     current_page: int
+
+
+class ResponseSearchBoardModel(ResponseBoardModel):
+    """검색 결과 게시판 모델"""
+    writes: List[ResponseWriteSearchModel]
+
+
+class ResponseSearchModel(BaseModel):
+    """검색 결과 모델"""
+    total_search_count: int
+    onetable: Union[str, None]
+    boards: List[ResponseSearchBoardModel]
