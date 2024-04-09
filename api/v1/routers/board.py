@@ -1,4 +1,4 @@
-from typing_extensions import Annotated, Dict, List
+from typing_extensions import Annotated, List
 from fastapi import (
     APIRouter, Depends, Request, Path, HTTPException,
     status, UploadFile, File, Form, Body
@@ -98,7 +98,6 @@ async def api_list_post(
 
 @router.get("/{bo_table}/{wr_id}",
             summary="게시판 개별 글 조회",
-            response_model=ResponseWriteModel,
             responses={**responses}
             )
 async def api_read_post(
@@ -107,7 +106,7 @@ async def api_read_post(
     member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
-) -> Dict:
+) -> ResponseWriteModel:
     """
     지정된 게시판의 글을 개별 조회합니다.
     """
@@ -251,7 +250,6 @@ async def api_list_delete(
 
 @router.get("/move/{bo_table}/{sw}",
             summary="게시글 복사/이동 가능 목록 조회",
-            response_model=List[ResponseBoardModel],
             responses={**responses}
             )
 async def api_move_post(
@@ -260,7 +258,7 @@ async def api_move_post(
     member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(...),
     sw: str = Path(...),
-):
+) -> List[ResponseBoardModel]:
     """
     게시글을 복사/이동 가능한 게시판 목록을 반환합니다.
     sw: opy(게시글 복사) 또는 move(게시글 이동)
