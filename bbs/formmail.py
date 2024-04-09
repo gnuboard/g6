@@ -1,11 +1,13 @@
 import re
 
-from fastapi import APIRouter, Depends, Request, Form, Path
+from fastapi import APIRouter, Depends, Form, Path, Request
+from sqlalchemy import select
 
 from core.database import db_session
 from core.exception import AlertException
+from core.models import Member
 from core.template import UserTemplates
-from lib.common import *
+from lib.common import captcha_widget, mailer, StringEncrypt
 from lib.dependencies import validate_token
 
 router = APIRouter()
@@ -29,7 +31,7 @@ async def formmail(
 
     if not config.cf_email_use:
         raise AlertException(status_code=400, detail='환경설정에서 "메일발송 사용"에 체크하셔야 메일을 발송할 수 있습니다.\n\n관리자에게 문의하시기 바랍니다.')
-    
+
     if config.cf_formmail_is_member and not login_member:
         raise AlertException(status_code=400, detail="회원만 이용 가능합니다.")
 
@@ -49,7 +51,7 @@ async def formmail(
     sendmail_count = request.session.get('ss_sendmail_count', 0) + 1
     if sendmail_count > 3:
         raise AlertException(status_code=400, detail="한번 접속후 일정수의 메일만 발송할 수 있습니다.\n\n계속해서 메일을 보내시려면 다시 로그인 또는 접속하여 주십시오.")
-    
+
     enc = StringEncrypt()
     decrypted_email = enc.decrypt(email)
 
@@ -73,7 +75,7 @@ async def formmail(
         "to_email": email,
     }
 
-    return templates.TemplateResponse(f"bbs/formmail.html", context)
+    return templates.TemplateResponse("bbs/formmail.html", context)
 
 
 @router.post("/formmail_send", dependencies=[Depends(validate_token)])

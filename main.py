@@ -1,35 +1,37 @@
-import datetime
+import os
+import re
+from datetime import datetime, timedelta
 
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Path, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import TypeAdapter
-from sqlalchemy import select, insert
+from sqlalchemy import delete, insert, select
 from sqlalchemy.exc import ProgrammingError
 from starlette.staticfiles import StaticFiles
 
-import core.models as models
+from core import models
 from core.database import DBConnect, db_session
-from core.exception import (
-    AlertException,
-    regist_core_exception_handler,
-    template_response
-)
-from core.middleware import should_run_middleware, regist_core_middleware
+from core.exception import AlertException, regist_core_exception_handler, template_response
+from core.middleware import regist_core_middleware, should_run_middleware
 from core.plugin import (
-    cache_plugin_state, cache_plugin_menu, get_plugin_state_change_time,
+    cache_plugin_menu, cache_plugin_state, get_plugin_state_change_time,
     import_plugin_by_states, read_plugin_state, register_plugin,
-    register_plugin_admin_menu, register_statics
+    register_plugin_admin_menu, register_statics,
 )
 from core.routers import router as template_router
-from core.template import register_theme_statics, TemplateService, UserTemplates
-from lib.common import *
+from core.template import TemplateService, UserTemplates, register_theme_statics
+from lib.common import (
+    ENV_PATH, get_client_ip, get_newwins_except_cookie, is_intercept_ip,
+    is_possible_ip, record_visit, session_member_key,
+)
 from lib.dependencies import check_use_template
 from lib.member_lib import MemberService, is_super_admin
 from lib.point import insert_point
+from lib.scheduler import scheduler
 from lib.template_filters import default_if_none
 from lib.token import create_session_token
-from lib.scheduler import scheduler
 
 from api.v1.routers import router as api_router
 
@@ -99,7 +101,7 @@ async def main_middleware(request: Request, call_next):
             if not os.path.exists(ENV_PATH):
                 raise AlertException(".env 파일이 없습니다. 설치를 진행해 주세요.", 400, "/install")
             # 기본환경설정 테이블 조회
-            config = db.scalar(select(Config))
+            config = db.scalar(select(models.Config))
         else:
             return await call_next(request)
 
@@ -146,7 +148,6 @@ async def main_middleware(request: Request, call_next):
         # 자동 로그인 쿠키가 있다면
         elif cookie_mb_id:
             mb_id = re.sub("[^a-zA-Z0-9_]", "", cookie_mb_id)[:20]
-            
             member = member_service.get_member(session_mb_id)
 
             # 최고관리자는 보안상 자동로그인 기능을 사용하지 않는다.
@@ -154,7 +155,7 @@ async def main_middleware(request: Request, call_next):
                     and member_service.is_member_email_certified(member)[0]
                     and member_service.is_activated(member)[0]):
                 # 쿠키에 저장된 키와 서버에서 생성한 키가 일치하는지 검사
-                ss_mb_key = session_member_key(member)
+                ss_mb_key = session_member_key(request, member)
                 if request.cookies.get("ck_auto") == ss_mb_key:
                     request.session["ss_mb_id"] = cookie_mb_id
                     is_autologin = True
@@ -170,7 +171,8 @@ async def main_middleware(request: Request, call_next):
         # 오늘 처음 로그인 이라면 포인트 지급 및 로그인 정보 업데이트
         ymd_str = datetime.now().strftime("%Y-%m-%d")
         if member.mb_today_login.strftime("%Y-%m-%d") != ymd_str:
-            insert_point(request, member.mb_id, config.cf_login_point, ymd_str + " 첫로그인", "@login", member.mb_id, ymd_str)
+            insert_point(request, member.mb_id, config.cf_login_point,
+                         ymd_str + " 첫로그인", "@login", member.mb_id, ymd_str)
 
             member.mb_today_login = datetime.now()
             member.mb_login_ip = request.client.host
@@ -327,7 +329,7 @@ async def device_change(
     Returns:
         RedirectResponse: 이전 페이지로 리디렉션
     """
-    if (device in ["pc", "mobile"] 
+    if (device in ["pc", "mobile"]
             and not TemplateService.get_responsive()):
         if device == "pc":
             request.session["is_mobile"] = False

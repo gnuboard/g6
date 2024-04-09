@@ -1,26 +1,34 @@
+import os
 import secrets
+import shutil
 import sys
+
+import fastapi
 from cachetools import TTLCache
 from dotenv import set_key
 from fastapi import APIRouter, Depends, Form, Request
-import fastapi
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import exists, insert, MetaData, Table
+from sqlalchemy import exists, insert, MetaData, select, Table
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
 
-import core.models as models
-from .default_values import *
+from core import models
 from core.database import DBConnect
 from core.exception import AlertException
 from core.formclass import InstallFrom
 from core.plugin import read_plugin_state, write_plugin_state
 from core.template import TemplateService
-from lib.common import *
+from install.default_values import (
+    default_board_data, default_boards, default_cache_directory, default_config,
+    default_contents, default_data_directory, default_faq_master, default_gr_id,
+    default_group, default_member, default_qa_config, default_version
+)
+from lib.common import ENV_PATH, dynamic_create_write_table, read_license
 from lib.dependencies import validate_install, validate_token
 from lib.pbkdf2 import create_hash
+
 
 INSTALL_TEMPLATES = "install/templates"
 
@@ -64,9 +72,7 @@ async def form(request: Request):
 
 
 @router.post("/form", name="install_form", dependencies=[Depends(validate_install)])
-async def form(request: Request, 
-    agree: str = Form(None),
-):
+async def form(request: Request, agree: str = Form(None)):
     """설치 폼 페이지"""
     if agree != "동의함":
         raise AlertException("라이선스에 동의하셔야 설치 가능합니다.", 400)
@@ -141,7 +147,6 @@ async def install(
 
 @router.get("/process", dependencies=[Depends(validate_token)])
 async def install_process(request: Request):
-    
     async def install_event():
         db_connect = DBConnect()
         engine = db_connect.engine
@@ -186,7 +191,7 @@ async def install_process(request: Request):
             yield "데이터 경로 생성 완료"
 
             yield f"[success] 축하합니다. {default_version} 설치가 완료되었습니다."
-        
+
         except Exception as e:
             os.remove(ENV_PATH)
             yield f"[error] 설치가 실패했습니다. {e}"
