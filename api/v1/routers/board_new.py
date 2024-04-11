@@ -1,7 +1,7 @@
 from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, Query, Body
 
-from api.v1.models import responses
+from api.v1.models.response import responses
 from service.board_new import BoardNewServiceAPI
 
 

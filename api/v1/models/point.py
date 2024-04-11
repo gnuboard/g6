@@ -3,7 +3,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from api.v1.models import ResponsePageListModel
+from api.v1.models.pagination import PaginationResponse
 
 
 class ResponsePointModel(BaseModel):
@@ -18,7 +18,7 @@ class ResponsePointModel(BaseModel):
         from_attributes = True
 
 
-class ResponsePointListModel(ResponsePageListModel):
+class ResponsePointListModel(PaginationResponse):
     """포인트 목록 조회 응답 모델"""
     sum_points: dict
     points: List[ResponsePointModel]

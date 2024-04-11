@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-class Token(BaseModel):
+class TokenResponse(BaseModel):
     """JWT 모델"""
     access_token: str
     access_token_expire_at: datetime

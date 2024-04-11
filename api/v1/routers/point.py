@@ -7,7 +7,8 @@ from core.models import Member
 from lib.common import get_paging_info
 
 from api.v1.dependencies.member import get_current_member
-from api.v1.models import ViewPageModel, responses
+from api.v1.models.response import responses
+from api.v1.models.pagination import PagenationRequest
 from api.v1.models.point import ResponsePointListModel
 from api.v1.lib.point import PointServiceAPI
 
@@ -21,7 +22,7 @@ router = APIRouter()
 async def read_member_points(
     point_service: Annotated[PointServiceAPI, Depends()],
     member: Annotated[Member, Depends(get_current_member)],
-    data: Annotated[ViewPageModel, Depends()]
+    data: Annotated[PagenationRequest, Depends()]
 ):
     """회원 포인트 내역을 조회합니다."""
     total_records = point_service.fetch_total_records(member)

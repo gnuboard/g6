@@ -9,7 +9,7 @@ from lib.common import get_paging_info
 from lib.point import insert_point
 
 from api.v1.dependencies.member import get_current_member
-from api.v1.models import responses, responses_403
+from api.v1.models.response import responses, response_403
 from api.v1.models.memo import SendMemoModel, ViewMemoListModel, ResponseMemoListModel
 from api.v1.dependencies.memo import validate_send_memo
 from api.v1.lib.memo import MemoServiceAPI
@@ -19,7 +19,7 @@ router = APIRouter()
 
 @router.get("/memos",
             summary="쪽지 목록 조회",
-            responses={**responses_403},
+            responses={**response_403},
             response_model=ResponseMemoListModel)
 async def read_memos(
     memo_service: Annotated[MemoServiceAPI, Depends()],

@@ -1,31 +1,32 @@
 """컨텐츠 API Router"""
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends
 
-from lib.common import get_head_tail_img, get_paging_info
+from core.models import Content
+from lib.common import get_paging_info
 
+from api.v1.dependencies.content import get_content
 from api.v1.lib.content import ContentServiceAPI
-from api.v1.models import ViewPageModel, responses, responses_403
+from api.v1.models.content import ContentListResponse, ContentResponse
+from api.v1.models.pagination import PagenationRequest
+from api.v1.models.response import response_404, response_422
 
 router = APIRouter()
 
 
 @router.get("/contents",
             summary="컨텐츠 목록 조회",
-            # response_model=ResponseMemoListModel
-            responses={**responses_403})
+            response_model=ContentListResponse,
+            responses={**response_422})
 async def read_contents(
-    content_service: Annotated[ContentServiceAPI, Depends()],
-    data: Annotated[ViewPageModel, Depends()]
+    service: Annotated[ContentServiceAPI, Depends()],
+    data: Annotated[PagenationRequest, Depends()]
 ):
     """컨텐츠 목록을 조회합니다."""
-    total_records = content_service.fetch_total_records()
+    total_records = service.fetch_total_records()
     paging_info = get_paging_info(data.page, data.per_page, total_records)
-    contents = content_service.read_contents(
-        paging_info["offset"],
-        data.per_page
-    )
+    contents = service.read_contents(data.offset, data.per_page)
 
     return {
         "total_records": total_records,
@@ -36,19 +37,10 @@ async def read_contents(
 
 @router.get("/contents/{co_id}",
             summary="컨텐츠 조회",
-            # response_model=ResponseMemoModel,
-            responses={**responses})
+            response_model=ContentResponse,
+            responses={**response_404, **response_422})
 async def read_content(
-    content_service: Annotated[ContentServiceAPI, Depends()],
-    co_id: Annotated[str, Path(..., title="컨텐츠 ID")]
+    content: Annotated[Content, Depends(get_content)]
 ):
     """컨텐츠를 조회합니다."""
-    content = content_service.read_content(co_id)
-    head_img = get_head_tail_img('content', content.co_id + '_h')
-    tail_img = get_head_tail_img('content', content.co_id + '_t')
-
-    return {
-        "content": content,
-        "co_himg_url": head_img['url'],
-        "co_timg_url": tail_img['url'],
-    }
+    return content

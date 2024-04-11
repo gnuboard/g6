@@ -21,12 +21,13 @@ from api.v1.lib.member import (
     MemberServiceAPI,
     MemberImageServiceAPI as ImageService
 )
-from api.v1.models import MemberRefreshToken, responses
+from api.v1.models import MemberRefreshToken
 from api.v1.models.member import (
     CreateMemberModel, FindMemberIdModel, FindMemberPasswordModel,
     ResetMemberPasswordModel, ResponseMemberModel, ResponseRegistConfig,
     ResponseRegistMember, ResponseRegistPolicy, UpdateMemberModel
 )
+from api.v1.models.response import responses
 
 router = APIRouter()
 

@@ -5,7 +5,7 @@ from typing_extensions import Annotated
 from fastapi import Body
 from pydantic import BaseModel
 
-from api.v1.models import ResponsePageListModel
+from api.v1.models.pagination import PaginationResponse
 
 
 class ResponseScrapModel(BaseModel):
@@ -22,7 +22,7 @@ class ResponseScrapModel(BaseModel):
         from_attributes = True
 
 
-class ResponseScrapListModel(ResponsePageListModel):
+class ResponseScrapListModel(PaginationResponse):
     scraps: List[ResponseScrapModel]
 
 

@@ -13,7 +13,7 @@ from api.v1.dependencies.poll import (
     validate_poll_read, validate_poll_update
 )
 from api.v1.lib.poll import PollServiceAPI
-from api.v1.models import responses
+from api.v1.models.response import responses
 from api.v1.models.poll import CreatePollEtcModel, PatchPollModel
 
 router = APIRouter()

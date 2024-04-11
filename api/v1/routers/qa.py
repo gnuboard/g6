@@ -9,7 +9,7 @@ from lib.mail import send_qa_mail
 from api.v1.dependencies.member import get_current_member
 from api.v1.dependencies.qa import validate_data, validate_upload_file
 from api.v1.lib.qa import QaFileServiceAPI, QaServiceAPI
-from api.v1.models import responses
+from api.v1.models.response import responses
 from api.v1.models.qa import QaContentModel, SearchQaContentModel
 
 router = APIRouter()

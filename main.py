@@ -55,8 +55,12 @@ async def lifespan(app: FastAPI):
     yield
     scheduler.remove_flag()
 
-# APP_IS_DEBUG 값이 True일 경우, 디버그 모드가 활성화됩니다.
-app = FastAPI(debug=APP_IS_DEBUG, lifespan=lifespan)
+app = FastAPI(
+    debug=APP_IS_DEBUG,  # 디버그 모드가 활성화 설정
+    lifespan=lifespan,
+    title="그누보드6",
+    description=""
+)
 
 templates = UserTemplates()
 templates.env.filters["default_if_none"] = default_if_none

@@ -4,7 +4,7 @@ from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, Path, Query
 
 from api.v1.lib.faq import FaqServiceAPI
-from api.v1.models import responses
+from api.v1.models.response import responses
 
 router = APIRouter()
 

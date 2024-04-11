@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 
 from lib.menu import get_menus
-from api.v1.models import responses
+from api.v1.models.response import responses
 
 router = APIRouter()
 

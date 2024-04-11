@@ -9,7 +9,7 @@ from pydantic import BaseModel, PrivateAttr, field_validator
 from core.models import Member
 from lib.html_sanitizer import content_sanitizer as sanitizer
 
-from api.v1.models import ViewPageModel, ResponsePageListModel
+from api.v1.models.pagination import PagenationRequest, PaginationResponse
 
 
 class ResponseMemoModel(BaseModel):
@@ -29,13 +29,13 @@ class ResponseMemoModel(BaseModel):
         from_attributes = True
 
 
-class ViewMemoListModel(ViewPageModel):
+class ViewMemoListModel(PagenationRequest):
     me_type: Annotated[str, Path(title="쪽지 유형",
                                  description="recv: 받은 쪽지, send: 보낸 쪽지",
                                  pattern="^(recv|send)?$")] = "recv"
 
 
-class ResponseMemoListModel(ResponsePageListModel):
+class ResponseMemoListModel(PaginationResponse):
     total_records: int
     total_pages: int
     memos: List[ResponseMemoModel]

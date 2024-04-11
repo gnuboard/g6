@@ -15,7 +15,8 @@ from api.v1.dependencies.scrap import (
     get_scrap, validate_create_scrap, validate_delete_scrap
 )
 from api.v1.lib.scrap import ScrapServiceAPI
-from api.v1.models import ViewPageModel, responses
+from api.v1.models.response import responses
+from api.v1.models.pagination import PagenationRequest
 from api.v1.models.scrap import CreateScrapModel, ResponseScrapListModel
 from service.board.update_post import CommentServiceAPI
 
@@ -29,7 +30,7 @@ router = APIRouter()
 async def read_member_scraps(
     scrap_service: Annotated[ScrapServiceAPI, Depends()],
     member: Annotated[Member, Depends(get_current_member)],
-    data: Annotated[ViewPageModel, Depends()]
+    data: Annotated[PagenationRequest, Depends()]
 ):
     """회원 스크랩 목록을 조회합니다."""
     total_records = scrap_service.fetch_total_records(member)

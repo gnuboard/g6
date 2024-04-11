@@ -3,7 +3,7 @@ from typing_extensions import Annotated
 
 from jose import ExpiredSignatureError, JWTError
 from fastapi import Depends, Form, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestFormStrict
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.sql import select
 
 from core.database import db_session
@@ -17,13 +17,13 @@ from api.v1.lib.member import MemberServiceAPI
 
 def authenticate_member(
     service: Annotated[MemberServiceAPI, Depends()],
-    form: Annotated[OAuth2PasswordRequestFormStrict, Depends()]
+    form: Annotated[OAuth2PasswordRequestForm, Depends()]
 ) -> Member:
     """회원 인증을 수행합니다.
 
     Args:
         service (Annotated[MemberServiceAPI, Depends]): 회원 서비스
-        form_data (Annotated[OAuth2PasswordRequestFormStrict, Depends): 
+        form_data (Annotated[OAuth2PasswordRequestForm, Depends): 
 
     Raises:
         HTTPException: 회원 인증 실패시 발생하는 예외

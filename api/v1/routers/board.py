@@ -10,7 +10,7 @@ from core.database import db_session
 from core.models import Member
 from lib.board_lib import insert_board_new, set_write_delay
 from lib.dependency.dependencies import common_search_query_params
-from api.v1.models import responses
+from api.v1.models.response import responses
 from api.v1.dependencies.board import get_current_member
 from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel
 from service.board import(

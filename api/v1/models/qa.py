@@ -5,10 +5,10 @@ from fastapi import Body, Query
 from pydantic import BaseModel, field_validator
 
 from lib.html_sanitizer import content_sanitizer, subject_sanitizer
-from api.v1.models import ViewPageModel
+from api.v1.models.pagination import PagenationRequest
 
 
-class SearchQaContentModel(ViewPageModel):
+class SearchQaContentModel(PagenationRequest):
     """Q&A 목록 조회 모델"""
     sca: Annotated[str, Query(default="", title="분류")]
     stx: Annotated[str, Query(default="", title="검색어")]

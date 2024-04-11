@@ -3,7 +3,7 @@ from fastapi.encoders import jsonable_encoder
 
 from core.database import db_session
 from core.models import Member
-from api.v1.models import responses
+from api.v1.models.response import responses
 from api.v1.dependencies.board import get_current_member
 from api.v1.models.board import ResponseBoardModel, ResponseWriteSearchModel
 from service.search import SearchServiceAPI
