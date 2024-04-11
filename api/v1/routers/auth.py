@@ -9,7 +9,7 @@ from sqlalchemy import insert
 from core.database import db_session
 from core.models import Member
 
-from api.v1.auth.auth import authenticate_member, authenticate_refresh_token
+from api.v1.dependencies.auth import authenticate_member, authenticate_refresh_token
 from api.v1.auth.jwt import JWT, TokenType
 from api.v1.models import MemberRefreshToken
 from api.v1.models.auth import Token

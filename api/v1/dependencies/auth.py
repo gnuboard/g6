@@ -1,32 +1,28 @@
-""" 
-회원 인증 관련 함수를 정의합니다.
-"""
+"""API 인증 관련 의존성 함수를 정의합니다."""
 from typing_extensions import Annotated
 
 from jose import ExpiredSignatureError, JWTError
-from fastapi import Depends, Form, Request, HTTPException, status
+from fastapi import Depends, Form, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestFormStrict
 from sqlalchemy.sql import select
 
 from core.database import db_session
 
+from core.models import Member
 from api.settings import SETTINGS
 from api.v1.models import MemberRefreshToken
 from api.v1.auth.jwt import JWT
-from api.v1.models.auth import TokenPayload
 from api.v1.lib.member import MemberServiceAPI
 
 
 def authenticate_member(
-    request: Request,
-    db: db_session,
-    form_data: Annotated[OAuth2PasswordRequestFormStrict, Depends()]
-):
+    service: Annotated[MemberServiceAPI, Depends()],
+    form: Annotated[OAuth2PasswordRequestFormStrict, Depends()]
+) -> Member:
     """회원 인증을 수행합니다.
 
     Args:
-        request (Request): Request 객체
-        db (db_session): 데이터베이스 세션
+        service (Annotated[MemberServiceAPI, Depends]): 회원 서비스
         form_data (Annotated[OAuth2PasswordRequestFormStrict, Depends): 
 
     Raises:
@@ -35,9 +31,7 @@ def authenticate_member(
     Returns:
         Member: 회원 객체
     """
-    member_service = MemberServiceAPI(request, db)
-    return member_service.authenticate_member(form_data.username,
-                                              form_data.password)
+    return service.authenticate_member(form.username, form.password)
 
 
 def authenticate_refresh_token(
@@ -66,12 +60,11 @@ def authenticate_refresh_token(
 
     try:
         # 토큰 유효성 검사
-        payload: TokenPayload = JWT.decode_token(
-            refresh_token, SETTINGS.REFRESH_TOKEN_SECRET_KEY)
+        JWT.decode_token(refresh_token, SETTINGS.REFRESH_TOKEN_SECRET_KEY)
 
         member_refresh_token = db.scalar(
-            select(MemberRefreshToken).where(
-                MemberRefreshToken.refresh_token == refresh_token)
+            select(MemberRefreshToken)
+            .where(MemberRefreshToken.refresh_token == refresh_token)
         )
         if not member_refresh_token:
             raise credentials_exception
