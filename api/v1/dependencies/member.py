@@ -11,7 +11,7 @@ from api.v1.auth import oauth2_optional, oauth2_scheme
 from api.v1.auth.jwt import JWT
 from api.v1.lib.member import MemberServiceAPI, ValidateMemberAPI
 from api.v1.models.auth import TokenPayload
-from api.v1.models.member import CreateMemberModel, UpdateMemberModel
+from api.v1.models.member import CreateMember, UpdateMember
 
 
 async def get_current_member(
@@ -69,7 +69,7 @@ async def get_current_member_optional(
 
 def validate_create_data(
     validate: Annotated[ValidateMemberAPI, Depends()],
-    data: CreateMemberModel
+    data: CreateMember
 ):
     """회원 가입시 회원 정보의 유효성을 검사합니다."""
     validate.valid_id(data.mb_id)
@@ -82,14 +82,15 @@ def validate_create_data(
 def validate_update_data(
     validate: Annotated[ValidateMemberAPI, Depends()],
     member: Annotated[Member, Depends(get_current_member)],
-    data: UpdateMemberModel,
+    data: UpdateMember,
 ):
     """회원 정보 수정시 회원 정보의 유효성을 검사합니다."""
     # 닉네임 변경 유효성 검사
-    if member.mb_nick != data.mb_nick:
+    if data.mb_nick and member.mb_nick != data.mb_nick:
         validate.valid_nickname(data.mb_nick)
         validate.valid_nickname_change_date(member.mb_nick_date)
     else:
+        del data.mb_nick
         del data.mb_nick_date
 
     # 이메일 변경 유효성 검사

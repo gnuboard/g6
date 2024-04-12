@@ -76,7 +76,7 @@ async def memo_view(
     prev_memo, next_memo = memo_service.fetch_prev_next_qa(me_id, member)
 
     # 받은 쪽지 읽음처리
-    memo_service.update_read_datetime(me_id, member)
+    memo_service.update_read_datetime(memo)
     memo_service.update_not_read_memos(member)
 
     context = {
@@ -127,7 +127,7 @@ async def memo_form_update(
     """
     # me_recv_mb_id 공백 제거
     mb_id_list = me_recv_mb_id.replace(" ", "").split(',')
-    send_members = memo_service.get_send_members(mb_id_list)
+    send_members = memo_service.get_receive_members(mb_id_list)
     send_point = memo_service.calculate_send_point(member, len(send_members))
 
     # 쪽지 전송 처리
@@ -147,7 +147,7 @@ async def memo_form_update(
 @router.get("/memo_delete/{me_id}",
             dependencies=[Depends(validate_token)])
 async def memo_delete(
-    memo_service: Annotated[MemoService, Depends()],
+    service: Annotated[MemoService, Depends()],
     member: Annotated[Member, Depends(get_login_member)],
     me_id: Annotated[int, Path()],
     page: Annotated[int, Query()] = 1
@@ -155,9 +155,9 @@ async def memo_delete(
     """
     쪽지 삭제
     """
-    memo = memo_service.delete_memo(me_id, member)
-
-    memo_service.delete_memo_call(memo)
-    memo_service.update_not_read_memos(member)
+    memo = service.read_memo(me_id)
+    service.delete_memo_call(memo)
+    service.delete_memo(memo)
+    service.update_not_read_memos(member)
 
     return RedirectResponse(url=f"/bbs/memo?kind={memo.me_type}&page={page}", status_code=302)

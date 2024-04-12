@@ -1,5 +1,4 @@
-"""회원 모델"""
-# TODO: 공통으로 사용하는 속성, 메서드는 상위 클래스로 분리
+"""회원 모델 클래스를 정의한 파일입니다."""
 from datetime import datetime
 from typing_extensions import Annotated
 
@@ -9,8 +8,10 @@ from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 from lib.member import set_zip_code
 from lib.pbkdf2 import create_hash
 
+from api.v1.lib.member import MemberImageServiceAPI as ImageService
+from api.v1.models.response import MessageResponse
 
-class CreateMemberModel(BaseModel):
+class CreateMember(BaseModel):
     """회원 가입 정보 모델"""
     # 추가 필드 허용
     model_config = ConfigDict(extra='allow')
@@ -48,7 +49,7 @@ class CreateMemberModel(BaseModel):
         return v
 
     @model_validator(mode='after')
-    def check_passwords_match(self) -> 'CreateMemberModel':
+    def check_passwords_match(self) -> 'CreateMember':
         """비밀번호와 비밀번호 확인이 일치하는지 검사"""
         pw1 = self.mb_password
         pw2 = self.mb_password_re
@@ -60,7 +61,7 @@ class CreateMemberModel(BaseModel):
         return self
 
     @model_validator(mode='after')
-    def init_fields(self) -> 'CreateMemberModel':
+    def init_fields(self) -> 'CreateMember':
         """CreateMemberModel에서 선언되지 않은 필드를 초기화"""
         self.mb_level: int = 1
         self.mb_login_ip: str = ""
@@ -71,15 +72,14 @@ class CreateMemberModel(BaseModel):
         return self
 
 
-class UpdateMemberModel(BaseModel):
+class UpdateMember(BaseModel):
     """회원 정보 수정 모델"""
     # 추가 필드 허용
     model_config = ConfigDict(extra='allow')
 
     mb_password: Annotated[str, Body(title="비밀번호")] = None
     mb_password_re: Annotated[str, Body(title="비밀번호 확인")] = None
-    mb_nick: Annotated[str, Body(..., title="닉네임")]
-    mb_name: Annotated[str, Body(..., title="이름")]
+    mb_nick: Annotated[str, Body(title="닉네임")] = None
     mb_sex: Annotated[str, Body(pattern=r"^[mf]?$", title="성별")] = None
     mb_email: Annotated[str, Body(..., pattern=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
                                   title="이메일", description="이메일 형식에 맞게 입력해주세요.")]
@@ -106,7 +106,7 @@ class UpdateMemberModel(BaseModel):
         return v
 
     @model_validator(mode='after')
-    def check_passwords_match(self) -> 'UpdateMemberModel':
+    def check_passwords_match(self) -> 'UpdateMember':
         """비밀번호와 비밀번호 확인이 일치하는지 검사"""
         pw1 = self.mb_password
         pw2 = self.mb_password_re
@@ -121,7 +121,7 @@ class UpdateMemberModel(BaseModel):
         return self
 
     @model_validator(mode='after')
-    def init_update_fields(self) -> 'UpdateMemberModel':
+    def init_update_fields(self) -> 'UpdateMember':
         """UpdateMemberModel에서 선언되지 않은 필드를 초기화"""
         self.mb_nick_date = datetime.now()
         self.mb_open_date = datetime.now()
@@ -132,56 +132,13 @@ class UpdateMemberModel(BaseModel):
         return self
 
 
-class FindMemberIdModel(BaseModel):
-    """회원 ID 찾기 모델"""
-    mb_name: Annotated[str, Body(..., title="이름")]
-    mb_email: Annotated[str, Body(..., title="이메일")]
-
-
-class FindMemberPasswordModel(BaseModel):
-    """회원 비밀번호 찾기 모델"""
-    mb_id: Annotated[str, Body(..., title="아이디")]
-    mb_email: Annotated[str, Body(..., title="이메일")]
-
-
-class ResetMemberPasswordModel(BaseModel):
-    """회원 비밀번호 재설정 모델"""
-    password: Annotated[str, Body(..., title="비밀번호")]
-    password_confirm: Annotated[str, Body(..., title="비밀번호 확인")]
-
-    @model_validator(mode='after')
-    def check_passwords_match(self) -> 'ResetMemberPasswordModel':
-        """비밀번호와 비밀번호 확인이 일치하는지 검사"""
-        pw1 = self.password
-        pw2 = self.password_confirm
-        if pw1 != pw2:
-            raise ValueError('비밀번호가 일치하지 않습니다.')
-
-        self.password = create_hash(pw1)
-
-        return self
-
-
-class ResponseMemberModel(BaseModel):
-    """회원 정보 응답 모델(임시)"""
-    mb_id: str
-    mb_name: str
-    mb_nick: str
-    mb_point: int
-    mb_memo_cnt: int
-    mb_scrap_cnt: int
-    mb_profile: str
-    mb_icon_path: str
-    mb_image_path: str
-
-
-class ResponseRegistPolicy(BaseModel):
+class RegisterPolicyResponse(BaseModel):
     """회원가입 약관 응답 모델"""
     cf_stipulation: str
     cf_privacy: str
 
 
-class ResponseRegistConfig(BaseModel):
+class RegisterConfigResponse(BaseModel):
     """회원가입 환경설정 응답 모델"""
     cf_use_email_certify: int
     cf_use_homepage: int
@@ -205,9 +162,67 @@ class ResponseRegistConfig(BaseModel):
     cf_use_recommend: int
 
 
-class ResponseRegistMember(BaseModel):
-    """회원가입 응답 모델"""
-    message: str
+class RegisterResponse(MessageResponse):
+    """회원가입 처리 응답 모델"""
     mb_id: str
     mb_name: str
     mb_nick: str
+
+
+class MemberResponse(BaseModel):
+    """회원 정보 응답 모델"""
+    mb_id: str
+    mb_name: str
+    mb_nick: str
+    mb_point: int
+    mb_memo_cnt: int
+    mb_scrap_cnt: int
+    mb_profile: str
+
+    mb_icon_path: str
+    mb_image_path: str
+
+    @model_validator(mode='before')
+    def init_fields(self) -> 'MemberResponse':
+        """
+        필드 초기화
+        - 회원 아이콘/이미지 경로 설정
+        """
+        self.mb_icon_path = ImageService.get_icon_path(self.mb_id)
+        self.mb_image_path = ImageService.get_image_path(self.mb_id)
+        return self
+
+
+class SearchMemberId(BaseModel):
+    """회원 아이디 찾기 모델"""
+    mb_name: Annotated[str, Body(..., title="이름", description="회원 이름")]
+    mb_email: Annotated[str, Body(..., title="이메일", description="회원 이메일")]
+
+
+class SearchMemberIdResponse(BaseModel):
+    """회원 ID 찾기 응답 모델"""
+    mb_id: str
+    register_date: datetime
+
+class SearchMemberPassword(BaseModel):
+    """회원 비밀번호 찾기 모델"""
+    mb_id: Annotated[str, Body(..., title="아이디")]
+    mb_email: Annotated[str, Body(..., title="이메일")]
+
+
+class ResetMemberPassword(BaseModel):
+    """회원 비밀번호 재설정 모델"""
+    password: Annotated[str, Body(..., title="비밀번호")]
+    password_confirm: Annotated[str, Body(..., title="비밀번호 확인")]
+
+    @model_validator(mode='after')
+    def check_passwords_match(self) -> 'ResetMemberPassword':
+        """비밀번호와 비밀번호 확인이 일치하는지 검사"""
+        pw1 = self.password
+        pw2 = self.password_confirm
+        if pw1 != pw2:
+            raise ValueError('비밀번호가 일치하지 않습니다.')
+
+        self.password = create_hash(pw1)
+
+        return self

@@ -1,10 +1,9 @@
-"""쪽지 모델"""
+"""쪽지 모델 클래스를 정의한 파일입니다."""
 from datetime import datetime
 from typing import List
-from typing_extensions import Annotated
 
-from fastapi import Path
-from pydantic import BaseModel, PrivateAttr, field_validator
+from fastapi import Query
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_validator
 
 from core.models import Member
 from lib.html_sanitizer import content_sanitizer as sanitizer
@@ -12,7 +11,21 @@ from lib.html_sanitizer import content_sanitizer as sanitizer
 from api.v1.models.pagination import PagenationRequest, PaginationResponse
 
 
-class ResponseMemoModel(BaseModel):
+class MemoList(PagenationRequest):
+    """쪽지 목록 조회 요청 모델"""
+    me_type: str = Field(
+        Query(default="recv",
+             title="쪽지 유형",
+             description="recv: 받은 쪽지, send: 보낸 쪽지",
+             pattern="^(recv|send)?$")
+    )
+
+class MemoBase(BaseModel):
+    """쪽지 응답 기본 모델"""
+    model_config = ConfigDict(
+        extra='allow',  # 추가 필드 허용
+        from_attributes=True  # 클래스 속성을 필드로 변환
+    )
     me_id: int
     me_recv_mb_id: str
     me_send_mb_id: str
@@ -23,29 +36,29 @@ class ResponseMemoModel(BaseModel):
     me_type: str
     me_send_ip: str
 
-    # target_mb_id: str
 
-    class Config:
-        from_attributes = True
-
-
-class ViewMemoListModel(PagenationRequest):
-    me_type: Annotated[str, Path(title="쪽지 유형",
-                                 description="recv: 받은 쪽지, send: 보낸 쪽지",
-                                 pattern="^(recv|send)?$")] = "recv"
+class MemoResponse(BaseModel):
+    """쪽지 조회 응답 모델"""
+    memo: MemoBase
+    prev_memo: MemoBase
+    next_memo: MemoBase
 
 
-class ResponseMemoListModel(PaginationResponse):
-    total_records: int
-    total_pages: int
-    memos: List[ResponseMemoModel]
+class MemoListResponse(PaginationResponse):
+    """쪽지 목록 조회 응답 모델"""
+    memos: List[MemoBase]
 
 
-class SendMemoModel(BaseModel):
+class SendMemo(BaseModel):
     """쪽지 전송 시 필요한 정보를 정의합니다."""
-    _send_mb_ids: List[str] = PrivateAttr()
-    _send_members: List[Member] = PrivateAttr()
-    _send_point: int = PrivateAttr()
+    model_config = ConfigDict(
+        extra='allow',  # 추가 필드 허용
+        from_attributes=True  # 클래스 속성을 필드로 변환
+    )
+
+    _mb_ids: List[str] = PrivateAttr()
+    _members: List[Member] = PrivateAttr()
+    _point: int = PrivateAttr()
 
     me_recv_mb_id: str
     me_memo: str
@@ -54,7 +67,7 @@ class SendMemoModel(BaseModel):
     @classmethod
     def check_me_recv_mb_id(cls, v: str):
         """쪽지를 보낼 회원 아이디를 분리합니다."""
-        cls._send_mb_ids = v.replace(" ", "").split(',')
+        cls._mb_ids = v.replace(" ", "").split(',')
         return v
 
     @field_validator('me_memo', mode='after')
@@ -64,24 +77,21 @@ class SendMemoModel(BaseModel):
         return sanitizer.get_cleaned_data(v)
 
     @property
-    def send_mb_ids(self):
-        return self._send_mb_ids
+    def mb_ids(self):
+        return self._mb_ids
 
     @property
-    def send_members(self):
-        return self._send_members
+    def members(self):
+        return self._members
 
-    @send_members.setter
-    def send_members(self, value):
-        self._send_members = value
+    @members.setter
+    def members(self, value):
+        self._members = value
 
     @property
-    def send_point(self):
-        return self._send_point
+    def point(self):
+        return self._point
 
-    @send_point.setter
-    def send_point(self, value):
-        self._send_point = value
-
-    class Config:
-        from_attributes = True
+    @point.setter
+    def point(self, value):
+        self._point = value

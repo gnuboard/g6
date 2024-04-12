@@ -41,7 +41,6 @@ class MemberService(BaseService):
         self.request = request
         self.db = db
         self.config = request.state.config
-        self.member = None
 
     def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None):
         raise AlertException(detail, status_code, url)
@@ -64,13 +63,11 @@ class MemberService(BaseService):
 
     def read_member(self, mb_id: str) -> Member:
         """회원 정보를 조회합니다."""
-        if self.member is None:
-            member = self.fetch_member_by_id(mb_id)
-            if not member:
-                self.raise_exception(
-                    status_code=404, detail=f"{mb_id} : 회원정보가 없습니다.")
-            self.member = member
-        return self.member
+        member = self.fetch_member_by_id(mb_id)
+        if not member:
+            self.raise_exception(
+                status_code=404, detail=f"{mb_id} : 회원정보가 없습니다.")
+        return member
 
     def authenticate_member(self, mb_id: str, password: str) -> Member:
         """
@@ -141,13 +138,14 @@ class MemberService(BaseService):
         - 정보공개 여부가 설정되어 있지 않은 회원은 조회할 수 없습니다.
         """
         member = self.read_member(mb_id)
+        admin_id = getattr(self.config, "cf_admin")
         # 최고관리자도 아니고 자신의 정보가 아니면 정보공개 여부를 확인합니다.
-        if not (self.request.state.is_super_admin or current_member.mb_id == mb_id):
+        if current_member.mb_id not in {admin_id, mb_id}:
             if not current_member.mb_open:
                 self.raise_exception(
                     status_code=403,
                     detail="자신의 정보를 공개하지 않으면 다른분의 정보를 조회할 수 없습니다.\
-                            \\n\\n정보공개 설정은 회원정보수정에서 하실 수 있습니다.")
+                            정보공개 설정은 회원정보수정에서 하실 수 있습니다.")
             if not member.mb_open:
                 self.raise_exception(
                     status_code=403, detail="회원정보를 공개하지 않은 회원입니다.")
@@ -204,7 +202,7 @@ class MemberService(BaseService):
         )
         if not member:
             self.raise_exception(
-                status_code=400, detail="입력하신 정보와 일치하는 회원이 없습니다.")
+                status_code=404, detail="입력하신 정보와 일치하는 회원이 없습니다.")
         if SocialAuthService.check_exists_by_member_id(member.mb_id):
             self.raise_exception(
                 status_code=400, detail="소셜로그인으로 가입하신 회원은 아이디를 찾을 수 없습니다.")
@@ -229,7 +227,7 @@ class MemberService(BaseService):
         )
         if not member:
             self.raise_exception(
-                status_code=400, detail="입력하신 정보와 일치하는 회원이 없습니다.")
+                status_code=404, detail="입력하신 정보와 일치하는 회원이 없습니다.")
 
         if SocialAuthService.check_exists_by_member_id(member.mb_id):
             self.raise_exception(
@@ -262,7 +260,7 @@ class MemberService(BaseService):
             )
         )
         if not member:
-            self.raise_exception(status_code=403, detail="유효하지 않은 요청입니다.")
+            self.raise_exception(status_code=404, detail="유효하지 않은 요청입니다.")
 
         if SocialAuthService.check_exists_by_member_id(member.mb_id):
             self.raise_exception(
@@ -507,7 +505,7 @@ class ValidateMember(BaseService):
 
         prohibit_ids = [id.strip() for id in getattr(self.config, "cf_prohibit_id", "").split(",")]
         if mb_id in prohibit_ids:
-            self.raise_exception(400, "사용할 수 없는 아이디입니다.")
+            self.raise_exception(403, "아이디로 사용할 수 없는 단어입니다.")
 
     def valid_nickname(self, mb_nick: str) -> None:
         """ 등록 가능한 닉네임인지 검사
@@ -520,7 +518,7 @@ class ValidateMember(BaseService):
             self.raise_exception(409, "이미 존재하는 닉네임입니다.")
 
         if mb_nick in getattr(self.config, "cf_prohibit_id", "").strip():
-            self.raise_exception(400, "닉네임으로 정할 수 없는 단어입니다.")
+            self.raise_exception(403, "닉네임으로 사용할 수 없는 단어입니다.")
 
     def valid_nickname_change_date(self, change_date: date = None) -> None:
         """ 닉네임 변경이 가능한지 검사
@@ -536,7 +534,7 @@ class ValidateMember(BaseService):
             available_date = change_date + timedelta(days=available_days)
             if datetime.now().date() < available_date:
                 available_str = available_date.strftime("%Y-%m-%d")
-                self.raise_exception(400, f"{available_str} 이후 닉네임을 변경할 수 있습니다.")
+                self.raise_exception(403, f"{available_str} 이후 닉네임을 변경할 수 있습니다.")
 
     def valid_email(self, email: str) -> None:
         """ 등록 가능한 이메일인지 검사
@@ -548,7 +546,7 @@ class ValidateMember(BaseService):
             self.raise_exception(409, "이미 가입된 이메일입니다.")
 
         if self.is_prohibit_email(email):
-            self.raise_exception(400, "사용할 수 없는 이메일입니다.")
+            self.raise_exception(403, "사용이 금지된 메일 도메인입니다.")
 
     def is_exists_email(self, email: str, mb_id: str = None) -> bool:
         """이메일이 이미 등록되어 있는지 확인

@@ -20,7 +20,6 @@ router = APIRouter()
 
 @router.post("/token",
              summary="Access/Refresh Token 발급",
-             response_model=TokenResponse,
              responses={**response_403, **response_422})
 async def login_for_access_token(
     db: db_session,
@@ -58,7 +57,6 @@ async def login_for_access_token(
 
 @router.post("/token/refresh",
              summary="Access Token 재 발급",
-             response_model=TokenResponse,
              responses={**response_422})
 async def refresh_access_token(
     db: db_session,

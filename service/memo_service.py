@@ -96,12 +96,11 @@ class MemoService(BaseService):
 
         return memo
 
-    def update_read_datetime(self, me_id: int, member: Member) -> None:
+    def update_read_datetime(self, memo: Memo) -> None:
         """
         쪽지 읽음 처리를 합니다.
         """
-        memo = self.read_memo(me_id, member)
-        if memo and memo.me_type == 'recv' and is_none_datetime(memo.me_read_datetime):
+        if memo.me_type == 'recv' and is_none_datetime(memo.me_read_datetime):
             memo.me_read_datetime = datetime.now()
             send_memo = self.fetch_memo(memo.me_send_id)
             if send_memo:
@@ -148,8 +147,8 @@ class MemoService(BaseService):
             self.db.rollback()
             self.raise_exception(500, str(e))
 
-    def get_send_members(self, mb_ids: List[int]) -> List[Member]:
-        """쪽지를 전송할 회원 목록을 조회합니다."""
+    def get_receive_members(self, mb_ids: List[int]) -> List[Member]:
+        """쪽지를 받을 회원 목록을 조회합니다."""
         members = []
         not_found_members = []
         for mb_id in mb_ids:
@@ -162,6 +161,9 @@ class MemoService(BaseService):
         if not_found_members:
             message = f"{','.join(not_found_members)} : 존재(또는 정보공개)하지 않는 회원이거나 탈퇴/차단된 회원입니다."
             self.raise_exception(status_code=400, detail=message)
+
+        if not members:
+            self.raise_exception(status_code=404, detail="쪽지를 전송할 회원이 없습니다.")
 
         return members
 
@@ -176,13 +178,10 @@ class MemoService(BaseService):
 
         return total_use_point
 
-    def delete_memo(self, me_id: int, member: Member) -> Memo:
+    def delete_memo(self, memo: Memo) -> None:
         """쪽지를 삭제합니다."""
-        memo = self.read_memo(me_id, member)
         self.db.delete(memo)
         self.db.commit()
-
-        return memo
 
     def delete_memo_call(self, memo: Memo) -> None:
         """실시간 알림을 삭제합니다."""

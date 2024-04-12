@@ -24,13 +24,13 @@ class PointService(BaseService):
         """
         return member.points.count()
 
-    def fetch_points(self, member: Member, offset: int = 0, records_per_page: int = 10):
+    def fetch_points(self, member: Member, offset: int = 0, per_page: int = 10):
         """
         포인트 목록을 데이터베이스에서 조회합니다.
         """
         return (member.points
                 .order_by(Point.po_id.desc())
-                .offset(offset).limit(records_per_page)
+                .offset(offset).limit(per_page)
                 .all())
 
     def calculate_sum(self, points: List[Point]) -> dict:

@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from api.v1.models.pagination import PaginationResponse
 
 
-class ResponsePointModel(BaseModel):
+class PointBase(BaseModel):
     """포인트 응답 모델"""
     po_content: str
     po_point: int
@@ -14,11 +14,12 @@ class ResponsePointModel(BaseModel):
     po_rel_id: str
     po_rel_action: str
 
-    class Config:
-        from_attributes = True
 
-
-class ResponsePointListModel(PaginationResponse):
+class PointListResponse(PaginationResponse):
     """포인트 목록 조회 응답 모델"""
-    sum_points: dict
-    points: List[ResponsePointModel]
+    total_points: int  # 전체 포인트 합계
+    page_sum_points: dict = {
+        "positive": 0,
+        "negative": 0
+    }  # 페이지 내 포인트 소계
+    points: List[PointBase]

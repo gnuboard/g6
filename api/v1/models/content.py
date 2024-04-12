@@ -39,6 +39,4 @@ class ContentResponse(BaseModel):
 
 class ContentListResponse(PaginationResponse):
     """컨텐츠 목록 응답 모델"""
-    total_records: int
-    total_pages: int
     contents: List[ContentResponse]
