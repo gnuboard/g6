@@ -186,7 +186,7 @@ class ValidatePollService(BaseService):
 
         if (ip in po_ip_list) or (mb_id in mb_id_list):
             self.raise_exception(
-                status_code=403,
+                status_code=409,
                 detail=f"{poll.po_subject} 설문조사에 이미 참여하셨습니다.",
                 url=f"/bbs/poll_result/{poll.po_id}"
             )

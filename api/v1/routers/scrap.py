@@ -15,9 +15,12 @@ from api.v1.dependencies.scrap import (
     get_scrap, validate_create_scrap, validate_delete_scrap
 )
 from api.v1.lib.scrap import ScrapServiceAPI
-from api.v1.models.response import responses
 from api.v1.models.pagination import PagenationRequest
-from api.v1.models.scrap import CreateScrapModel, ResponseScrapListModel
+from api.v1.models.response import (
+    MessageResponse, response_401, response_403, response_404, response_409,
+    response_422, response_500,
+)
+from api.v1.models.scrap import CreateScrapModel, ScrapFormResponse, ScrapListResponse
 from service.board.update_post import CommentServiceAPI
 
 router = APIRouter()
@@ -25,19 +28,18 @@ router = APIRouter()
 
 @router.get("/scraps",
             summary="회원 스크랩 목록 조회",
-            response_model=ResponseScrapListModel,
-            responses={**responses})
+            responses={**response_401, **response_403,
+                       **response_422, **response_500})
 async def read_member_scraps(
-    scrap_service: Annotated[ScrapServiceAPI, Depends()],
+    service: Annotated[ScrapServiceAPI, Depends()],
     member: Annotated[Member, Depends(get_current_member)],
     data: Annotated[PagenationRequest, Depends()]
-):
+) -> ScrapListResponse:
     """회원 스크랩 목록을 조회합니다."""
-    total_records = scrap_service.fetch_total_records(member)
+    total_records = service.fetch_total_records(member)
     paging_info = get_paging_info(data.page, data.per_page, total_records)
-    scraps = scrap_service.fetch_scraps(member,
-                                        paging_info["offset"], data.per_page)
-    scraps = scrap_service.set_subjects(scraps)
+    scraps = service.fetch_scraps(member,data.offset, data.per_page)
+    scraps = service.set_subjects(scraps)
 
     return {
         "total_records": total_records,
@@ -47,14 +49,18 @@ async def read_member_scraps(
 
 
 @router.get("/scraps/{bo_table}/{wr_id}",
-            dependencies=[Depends(validate_create_scrap)],
-            summary="회원 스크랩 등록 페이지 설정 조회")
+            dependencies=[Depends(get_current_member),
+                          Depends(validate_create_scrap)],
+            summary="회원 스크랩 등록 페이지 설정 조회",
+            responses={**response_403, **response_404, **response_409})
 async def scrap_form(
     board: Annotated[Board, Depends(get_board)],
     write: Annotated[WriteBaseModel, Depends(get_write)],
-):
+) -> ScrapFormResponse:
     """
     스크랩 등록 페이지의 정보를 조회합니다.
+    - 게시판 정보
+    - 게시글 정보
     """
     return {
         "board": board,
@@ -65,24 +71,30 @@ async def scrap_form(
 @router.post("/scraps/{bo_table}/{wr_id}",
              dependencies=[Depends(validate_create_scrap)],
              summary="회원 스크랩 등록",
-             responses={**responses})
+             responses={**response_401, **response_403,
+                        **response_409, **response_422})
 async def create_member_scrap(
     request: Request,
     db: db_session,
-    scrap_service: Annotated[ScrapServiceAPI, Depends()],
+    service: Annotated[ScrapServiceAPI, Depends()],
     member: Annotated[Member, Depends(get_current_member)],
     board: Annotated[Board, Depends(get_board)],
     write: Annotated[WriteBaseModel, Depends(get_write)],
     data: CreateScrapModel
-):
+) -> MessageResponse:
     """
-    회원 스크랩 등록
+    회원 스크랩을 등록합니다.
+    - 스크랩을 등록하면 스크랩 카운트가 증가합니다.
+    - 댓글을 작성하면 댓글도 함께 등록됩니다.
+
+    ### Request Body
+    - **wr_content**: 스크랩 추가 시, 함께 등록할 댓글 내용
     """
     bo_table = board.bo_table
     wr_id = write.wr_id
 
-    scrap_service.create_scrap(member, bo_table, wr_id)
-    scrap_service.update_scrap_count(member)
+    service.create_scrap(member, bo_table, wr_id)
+    service.update_scrap_count(member)
 
     #댓글 생성
     if data.wr_content:
@@ -100,20 +112,23 @@ async def create_member_scrap(
         insert_board_new(bo_table, comment)
         set_write_delay(request)
 
-    return {"detail": "스크랩을 추가하였습니다."}
+    return {"message": "스크랩을 추가하였습니다."}
 
 
 @router.delete("/scraps/{ms_id}",
                dependencies=[Depends(validate_delete_scrap)],
                summary="회원 스크랩 삭제",
-               responses={**responses})
+               responses={**response_401, **response_403, **response_404})
 async def delete_member_scrap(
-    scrap_service: Annotated[ScrapServiceAPI, Depends()],
+    service: Annotated[ScrapServiceAPI, Depends()],
     member: Annotated[Member, Depends(get_current_member)],
     scrap: Annotated[Scrap, Depends(get_scrap)]
-):
-    """회원 스크랩을 삭제합니다."""
-    scrap_service.delete_scrap(scrap)
-    scrap_service.update_scrap_count(member)
+) -> MessageResponse:
+    """
+    회원 스크랩을 삭제합니다.
+    - 스크랩을 삭제하면 스크랩 카운트가 감소합니다.
+    """
+    service.delete_scrap(scrap)
+    service.update_scrap_count(member)
 
-    return {"detail": "스크랩을 삭제하였습니다."}
+    return {"message": "스크랩을 삭제하였습니다."}

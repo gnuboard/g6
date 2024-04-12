@@ -10,7 +10,8 @@ from core.models import Member, Poll, PollEtc
 
 async def get_poll(
     service: Annotated[PollServiceAPI, Depends()],
-    po_id: Annotated[int, Path(..., title="설문조사 ID")],
+    po_id: Annotated[int, Path(title="설문조사 ID",
+                               description="설문조사 ID")],
 ):
     """설문조사 정보 조회 의존성 함수"""
     return service.read_poll(po_id)
@@ -18,7 +19,8 @@ async def get_poll(
 
 async def get_poll_etc(
     service: Annotated[PollServiceAPI, Depends()],
-    pc_id: Annotated[int, Path(..., title="설문조사 기타의견 ID")],
+    pc_id: Annotated[int, Path(title="기타의견 ID",
+                               description="설문조사 기타의견 ID")],
 ):
     """설문조사 기타의견 조회 의존성 함수"""
     return service.read_poll_etc(pc_id)

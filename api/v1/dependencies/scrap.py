@@ -12,8 +12,8 @@ from api.v1.lib.scrap import ScrapServiceAPI, ValidateScrapServiceAPI
 
 async def get_scrap(
     service: Annotated[ScrapServiceAPI, Depends()],
-    ms_id: Annotated[int, Path(..., title="스크랩 ID")],
-):
+    ms_id: Annotated[int, Path(title="스크랩 ID", description="스크랩 ID")],
+) -> Scrap:
     """설문조사 정보 조회 의존성 함수"""
     return service.read_scrap(ms_id)
 
