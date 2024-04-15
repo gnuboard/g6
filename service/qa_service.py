@@ -12,7 +12,7 @@ from core.models import Member, QaConfig, QaContent
 from lib.common import get_client_ip, make_directory, save_image
 from service import BaseService
 
-from api.v1.models.qa import QaContentModel
+from api.v1.models.qa import QaContentData
 
 # 상수 정의
 DEFAULT_EDITOR = "textarea"
@@ -168,7 +168,7 @@ class QaService(BaseService):
     def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None):
         raise AlertException(detail, status_code, url)
 
-    def create_qa_content(self, member: Member, data: QaContentModel) -> QaContent:
+    def create_qa_content(self, member: Member, data: QaContentData) -> QaContent:
         """
         Q&A를 등록합니다.
         """
@@ -275,22 +275,21 @@ class QaService(BaseService):
 
         return answer
 
-    def update_qa_content(self, member: Member,
-                          qa_id: int, data: QaContentModel) -> QaContent:
+    def update_qa_content(self, qa: QaContent,
+                          data: QaContentData) -> QaContent:
         """
         Q&A를 수정합니다.
         """
-        qa = self.read_qa_content(member, qa_id)
         for key, value in data.__dict__.items():
             setattr(qa, key, value)
         self.db.commit()
+        self.db.refresh(qa)
         return qa
 
-    def delete_qa_content(self, member: Member, qa_id: int) -> None:
+    def delete_qa_content(self, qa: QaContent) -> None:
         """
         Q&A를 삭제합니다.
         """
-        qa = self.read_qa_content(member, qa_id)
         self.db.delete(qa)
         self.db.commit()
 

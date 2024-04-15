@@ -154,7 +154,8 @@ async def qa_write_update(
 
     # 수정
     if qa_id:
-        qa = qa_service.update_qa_content(member, qa_id, form)
+        qa = qa_service.read_qa_content(member, qa_id)
+        qa = qa_service.update_qa_content(qa, form)
     # 등록
     else:
         form.qa_related = qa_related
@@ -190,7 +191,8 @@ async def qa_delete(
     """
     Q&A 삭제하기
     """
-    qa_service.delete_qa_content(member, qa_id)
+    qa = qa_service.read_qa_content(member, qa_id)
+    qa_service.delete_qa_content(qa)
 
     return RedirectResponse(
         status_code=302,

@@ -1,17 +1,28 @@
 """Q&A API의 의존성을 정의합니다."""
 from typing_extensions import Annotated
 
-from fastapi import Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import Depends, File, Form, HTTPException, Path, Request, UploadFile
 
+from core.models import Member
 from lib.common import filter_words
 from lib.template_filters import number_format
-from api.v1.lib.qa import QaConfigServiceAPI
-from api.v1.models.qa import QaContentModel
+from api.v1.dependencies.board import get_current_member
+from api.v1.lib.qa import QaConfigServiceAPI, QaServiceAPI
+from api.v1.models.qa import QaContentData
+
+
+def get_qa_content(
+    service: Annotated[QaServiceAPI, Depends()],
+    member: Annotated[Member, Depends(get_current_member)],
+    qa_id: Annotated[int, Path(..., title="Q&A 아이디", description="조회할 Q&A 아이디")],
+):
+    """Q&A 정보를 조회합니다."""
+    return service.read_qa_content(member, qa_id)
 
 
 def validate_data(
     request: Request,
-    data: QaContentModel,
+    data: QaContentData,
 ):
     """Q&A 등록/수정시 정보의 유효성을 검사합니다."""
     subject_filter_word = filter_words(request, data.qa_subject)

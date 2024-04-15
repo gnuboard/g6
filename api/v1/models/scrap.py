@@ -51,8 +51,8 @@ class ScrapFormResponse(BaseModel):
 
 class CreateScrapModel(BaseModel):
     """스크랩 생성 모델"""
-    wr_content: str = Field(
-        Body(...,
-             title="댓글",
-             description="스크랩 시 추가할 댓글 내용")
+    wr_content: str = Body(
+        default="",
+        title="댓글",
+        description="스크랩 시 추가할 댓글 내용"
     )
