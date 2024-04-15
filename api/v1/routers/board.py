@@ -10,7 +10,9 @@ from core.database import db_session
 from core.models import Member
 from lib.board_lib import insert_board_new, set_write_delay
 from lib.dependency.dependencies import common_search_query_params
-from api.v1.models.response import responses
+from api.v1.models.response import (
+    response_401, response_403, response_404, response_422
+)
 from api.v1.dependencies.board import get_current_member
 from api.v1.models.board import (
     WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel,
@@ -34,7 +36,7 @@ credentials_exception = HTTPException(
 
 @router.get("/group/{gr_id}",
             summary="게시판그룹 목록 조회",
-            responses={**responses}
+            responses={**response_401, **response_422}
             )
 async def api_group_board_list(
     request: Request,
@@ -64,7 +66,7 @@ async def api_group_board_list(
 
 @router.get("/{bo_table}",
             summary="게시판 조회",
-            responses={**responses}
+            responses={**response_401, **response_422}
             )
 async def api_list_post(
     request: Request,
@@ -98,7 +100,8 @@ async def api_list_post(
 
 @router.get("/{bo_table}/{wr_id}",
             summary="게시판 개별 글 조회",
-            responses={**responses}
+            responses={**response_401, **response_403,
+                       **response_404, **response_422}
             )
 async def api_read_post(
     request: Request,
@@ -134,7 +137,8 @@ async def api_read_post(
 
 @router.post("/{bo_table}",
              summary="게시판 글 작성",
-             responses={**responses}
+             responses={**response_401, **response_403,
+                        **response_404, **response_422}
              )
 async def api_create_post(
     request: Request,
@@ -186,7 +190,8 @@ async def api_create_post(
 
 @router.put("/{bo_table}/{wr_id}",
             summary="게시판 글 수정",
-            responses={**responses}
+            responses={**response_401, **response_403,
+                        **response_404, **response_422}
             )
 async def api_update_post(
     request: Request,
@@ -238,7 +243,8 @@ async def api_update_post(
 
 @router.delete("/{bo_table}/{wr_id}",
                 summary="게시판 글 삭제",
-                responses={**responses}
+                responses={**response_401, **response_403,
+                           **response_404, **response_422}
                )
 async def api_delete_post(
     request: Request,
@@ -262,7 +268,7 @@ async def api_delete_post(
 
 @router.post("/list_delete/{bo_table}",
             summary="게시글 일괄 삭제",
-            responses={**responses}
+            responses={**response_401, **response_403, **response_422}
             )
 async def api_list_delete(
     request: Request,
@@ -288,7 +294,8 @@ async def api_list_delete(
 
 @router.get("/move/{bo_table}/{sw}",
             summary="게시글 복사/이동 가능 목록 조회",
-            responses={**responses}
+            responses={**response_401, **response_403,
+                       **response_404, **response_422}
             )
 async def api_move_post(
     request: Request,
@@ -311,7 +318,8 @@ async def api_move_post(
 
 @router.post("/move_update/{bo_table}",
             summary="게시글 복사/이동",
-            responses={**responses}
+            responses={**response_401, **response_403,
+                       **response_404, **response_422}
             )
 async def api_move_update(
     request: Request,
@@ -340,7 +348,8 @@ async def api_move_update(
 
 @router.post("/uploadfile/{bo_table}/{wr_id}",
             summary="파일 업로드",
-            responses={**responses}
+            responses={**response_401, **response_403,
+                       **response_404, **response_422}
             )
 async def api_upload_file(
     request: Request,
@@ -367,7 +376,8 @@ async def api_upload_file(
 
 @router.post("/{bo_table}/{wr_id}/download/{bf_no}",
             summary="파일 다운로드",
-            responses={**responses}
+            responses={**response_401, **response_403,
+                       **response_404, **response_422}
             )
 async def api_download_file(
     request: Request,
@@ -393,7 +403,8 @@ async def api_download_file(
 
 @router.post("/{bo_table}/{wr_parent}/comment",
             summary="댓글 작성",
-            responses={**responses}
+            responses={**response_401, **response_403,
+                       **response_404, **response_422}
             )
 async def api_create_comment(
     request: Request,
@@ -428,7 +439,8 @@ async def api_create_comment(
 
 @router.put("/{bo_table}/{wr_parent}/comment/{wr_id}",
             summary="댓글 수정",
-            responses={**responses}
+            responses={**response_401, **response_403,
+                       **response_404, **response_422}
             )
 async def api_update_comment(
     request: Request,
@@ -468,7 +480,8 @@ async def api_update_comment(
 
 @router.delete("/{bo_table}/{wr_parent}/comment/{wr_id}",
                 summary="댓글 삭제",
-                responses={**responses}
+                responses={**response_401, **response_403,
+                           **response_404, **response_422}
                )
 async def api_delete_comment(
     request: Request,

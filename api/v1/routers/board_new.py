@@ -1,7 +1,7 @@
 from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, Query, Body
 
-from api.v1.models.response import responses
+from api.v1.models.response import response_401, response_422
 from api.v1.models.board import ResponseNormalModel, ResponseBoardNewListModel
 from service.board_new import BoardNewServiceAPI
 
@@ -11,7 +11,7 @@ router = APIRouter()
 
 @router.get("/new",
             summary="최신 게시글 목록",
-            responses={**responses}
+            responses={**response_401, **response_422}
             )
 async def api_board_new_list(
     board_new_service: Annotated[BoardNewServiceAPI, Depends()],
@@ -42,7 +42,7 @@ async def api_board_new_list(
 
 @router.post("/new_delete",
             summary="최신 게시글을 삭제",
-            responses={**responses}
+            responses={**response_401, **response_422}
              )
 async def api_new_delete(
     board_new_service: Annotated[BoardNewServiceAPI, Depends()],
