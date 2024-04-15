@@ -22,6 +22,9 @@ async def api_board_new_list(
 ) -> ResponseBoardNewListModel:
     """
     최신 게시글 목록
+
+    ### Request Body
+    - 삭제할 최신글 id 리스트 (예: [1, 2, 3]
     """
     query = board_new_service.get_query(gr_id, mb_id, view)
     offset = board_new_service.get_offset(current_page)

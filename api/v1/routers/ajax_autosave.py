@@ -68,6 +68,11 @@ async def autosave(
     """
     작성중인 게시글을 임시 저장한다.
     return: 자동저장글 개수
+
+    ### Request Body
+    - **as_uid**: 자동저장 UID
+    - **as_subject**: 자동저장 글 제목
+    - **as_content**: 자동저장 글 내용
     """
     ajax_service.validate_login(member)
     ajax_service.autosave_save(member, data)

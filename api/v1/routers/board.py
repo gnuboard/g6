@@ -145,6 +145,24 @@ async def api_create_post(
 ) -> ResponseNormalModel:
     """
     지정된 게시판에 새 글을 작성합니다.
+
+    ### Request Body
+    - **wr_subject**: 글 제목
+    - **wr_content**: 글 내용
+    - **wr_name**: 작성자 이름 (비회원일 경우)
+    - **wr_password**: 비밀번호
+    - **wr_email**: 작성자 메일
+    - **wr_homepage**: 작성자 홈페이지
+    - **wr_link1**: 링크1
+    - **wr_link2**: 링크2
+    - **wr_option**: 글 옵션
+    - **html**: HTML 사용 여부
+    - **mail**: 메일발송 여부
+    - **secret**: 비밀글 여부
+    - **ca_name"**: 카테고리명 
+    - **notice**: 공지글 여부
+    - **parent_id**: 부모글 ID (답글/댓글일 경우)
+    - **wr_comment**: 댓글 사용 여부
     """
     create_post_service = CreatePostServiceAPI(
         request, db, bo_table, member
@@ -180,6 +198,23 @@ async def api_update_post(
 ) -> ResponseNormalModel:
     """
     지정된 게시판의 글을 수정합니다.
+
+    ### Request Body
+    - **wr_subject**: 글 제목
+    - **wr_content**: 글 내용
+    - **wr_name**: 작성자 이름 (비회원일 경우)
+    - **wr_password**: 비밀번호
+    - **wr_email**: 작성자 메일
+    - **wr_homepage**: 작성자 홈페이지
+    - **wr_link1**: 링크1
+    - **wr_link2**: 링크2
+    - **wr_option**: 글 옵션
+    - **html**: HTML 사용 여부
+    - **mail**: 메일발송 여부
+    - **secret**: 비밀글 여부
+    - **ca_name"**: 카테고리명 
+    - **notice**: 공지글 여부
+    - **parent_id**: 부모글 ID (답글/댓글일 경우)
     """
     update_post_service = UpdatePostServiceAPI(
         request, db, bo_table, member, wr_id
@@ -239,6 +274,9 @@ async def api_list_delete(
     """
     게시글을 일괄 삭제합니다.
     - wr_ids: 삭제할 게시글 wr_id 리스트
+
+    ### Request Body
+    - 삭제할 게시글 리스트 (예: [1, 2, 3])
     """
     list_delete_service = ListDeleteServiceAPI(
         request, db, bo_table, member
@@ -287,6 +325,11 @@ async def api_move_update(
     """
     게시글을 복사/이동합니다.
     - Scrap, File등 연관된 데이터들도 함께 수정합니다.
+
+    ### Request Body
+    - **sw**:
+    - **wr_ids**: 복사/이동할 게시글 wr_id 목록 (예: "1,2,3")
+    - **target_bo_tables**: 복사/이동할 게시판 목록 (예: ["free", "qa"])
     """
     move_update_service = MoveUpdateServiceAPI(request, db, bo_table, member, sw)
     move_update_service.validate_admin_authority()
@@ -311,6 +354,7 @@ async def api_upload_file(
 ) -> ResponseNormalModel:
     """
     파일을 업로드합니다.
+    - multipart/form-data로 전송해야 합니다.
     """
     if not member:
         raise HTTPException(status_code=403, detail="로그인 후 이용해주세요.")
@@ -334,9 +378,9 @@ async def api_download_file(
 ):
     """
     게시글의 파일을 다운로드합니다.
-    bo_table: 게시글 테이블명
-    wr_id: 게시글 아이디
-    bf_no: 첨부된 파일의 순번
+    - bo_table: 게시글 테이블명
+    - wr_id: 게시글 아이디
+    - bf_no: 첨부된 파일의 순번
     """
     download_file_service = DownloadFileServiceAPI(
         request, db, bo_table, request.state.login_member, wr_id, bf_no
@@ -361,6 +405,13 @@ async def api_create_comment(
 ) -> ResponseNormalModel:
     """
     댓글 등록
+
+    ### Request Body
+    - **wr_content**: 댓글 내용
+    - **wr_name**: 작성자 이름 (비회원일 경우)
+    - **wr_password**: 비밀번호
+    - **wr_option**: 글 옵션
+    - **comment_id**: 부모글 ID (대댓글일 경우)
     """
     comment_service = CommentServiceAPI(request, db, bo_table, member)
     parent_write = comment_service.get_parent_post(wr_parent, is_reply=False)
@@ -390,6 +441,13 @@ async def api_update_comment(
 ) -> ResponseNormalModel:
     """
     댓글을 수정합니다.
+
+    ### Request Body
+    - **wr_content**: 댓글 내용
+    - **wr_name**: 작성자 이름 (비회원일 경우)
+    - **wr_password**: 비밀번호
+    - **wr_option**: 글 옵션
+    - **comment_id**: 부모글 ID (대댓글일 경우)
     """
     comment_service = CommentServiceAPI(request, db, bo_table, member, wr_id)
     write_model = comment_service.write_model
