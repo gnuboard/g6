@@ -124,4 +124,4 @@ async def delete_member_memo(
     memo_service.delete_memo(memo)
     memo_service.update_not_read_memos(member)
 
-    return {"detail": "쪽지를 삭제하였습니다."}
+    return {"message": "쪽지를 삭제하였습니다."}
