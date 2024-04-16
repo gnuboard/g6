@@ -24,7 +24,7 @@ from core.routers import router as template_router
 from core.template import TemplateService, UserTemplates, register_theme_statics
 from lib.common import (
     ENV_PATH, get_client_ip, get_newwins_except_cookie, is_intercept_ip,
-    is_possible_ip, record_visit, session_member_key,
+    is_possible_ip, session_member_key,
 )
 from lib.dependency.dependencies import check_use_template
 from lib.member import is_super_admin
@@ -33,6 +33,7 @@ from lib.scheduler import scheduler
 from lib.template_filters import default_if_none
 from lib.token import create_session_token
 from service.member_service import MemberService
+from service.visit_service import VisitService
 
 from api.v1.routers import router as api_router
 
@@ -208,15 +209,16 @@ async def main_middleware(request: Request, call_next):
                             max_age=age_1day * 30, domain=cookie_domain)
         response.set_cookie(key="ck_auto", value=ss_mb_key,
                             max_age=age_1day * 30, domain=cookie_domain)
-    # 접속자 기록
+    # 방문자 이력 기록
     ck_visit_ip = request.cookies.get('ck_visit_ip', None)
     if ck_visit_ip != current_ip:
         response.set_cookie(key="ck_visit_ip", value=current_ip,
                             max_age=age_1day, domain=cookie_domain)
-        record_visit(request)
+        visit_service = VisitService(request, db)
+        visit_service.create_visit_record()
 
     try:
-        # 현재 접속자 데이터 갱신
+        # 현재 방문자 데이터 갱신
         if (not request.state.is_super_admin
                 and not url_path.startswith("/admin")):
             current_login = db.scalar(

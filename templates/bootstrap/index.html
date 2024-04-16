@@ -19,11 +19,9 @@
           <!-- 공지사항 -->
           {{ render_latest_posts(request, 'main_notice', 'notice', 4, 23)|safe }}
 
-          <!-- 접속자집계 { -->
+          <!-- 방문자 수 집계 -->
           <div class="d-md-block d-none">
-            {% if render_visit_statistics %}
-              {{ render_visit_statistics(request)|safe }}
-            {% endif %}
+            {% include "/visit/basic.html" %}
           </div>
 
           <script>
@@ -72,11 +70,9 @@
       <div class="d-md-none d-block">
         {% include "/bbs/poll.html" %}
       </div>
-      <!-- 접속자집계 { -->
+      <!-- 방문자 수 집계 -->
       <div class="d-md-none d-block">
-        {% if render_visit_statistics %}
-          {{ render_visit_statistics(request)|safe }}
-        {% endif %}
+        {% include "/visit/basic.html" %}
       </div>
     </div>
 {% endblock content %}

@@ -167,9 +167,9 @@
         </button>
 
         {% if request.state.login_member %}
-            {% include "bbs/outlogin_after.html" %}
+            {% include "/bbs/outlogin_after.html" %}
         {% else %}
-            {% include "bbs/outlogin_before.html" %}
+            {% include "/bbs/outlogin_before.html" %}
         {% endif %}
 
         {% set menus = get_menus() %}
@@ -177,11 +177,11 @@
             {% include "/bbs/menu.html" ignore missing %}
         {%- endif %}
 
+        <!-- 진행 중인 최근 투표 1건 -->
         {% include "/bbs/poll.html" %}
 
-        {% if render_visit_statistics %}
-            {{ render_visit_statistics(request)|safe }}
-        {% endif %}
+        <!-- 방문자 수 집계 -->
+        {% include "/visit/basic.html" %}
     </div>
 
 </div>

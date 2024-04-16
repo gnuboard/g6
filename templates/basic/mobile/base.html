@@ -145,11 +145,11 @@
             {% include "mobile/bbs/menu.html" ignore missing %}
         {%- endif %}
 
-        {% include "bbs/poll.html" %}
+        <!-- 진행 중인 최근 투표 1건 -->
+        {% include "/bbs/poll.html" %}
 
-        {% if render_visit_statistics %}
-            {{ render_visit_statistics(request)|safe }}
-        {% endif %}
+        <!-- 방문자 수 집계 -->
+        {% include "/visit/basic.html" %}
     </div>
 
 </div>

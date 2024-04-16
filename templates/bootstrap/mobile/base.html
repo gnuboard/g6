@@ -173,13 +173,11 @@
             {% endblock content %}
         </div>
     </div>
-<!-- 투표하기 -->
+<!-- 설문조사 -->
 {% include "mobile/bbs/poll.html" ignore missing %}
 
-<!-- 접속자 집계 -->
-{% if render_visit_statistics %}
-    {{ render_visit_statistics(request)|safe }}
-{% endif %}
+<!-- 방문자 집계 -->
+{% include "mobile/visit/basic.html" ignore missing %}
 
 <div id="ft">
     <div id="ft_copy">

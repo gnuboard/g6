@@ -18,12 +18,12 @@ from core.plugin import (
     get_admin_plugin_menus, get_all_plugin_module_names, PLUGIN_DIR, get_plugin_state_cache
 )
 from lib.common import (
-    EDITOR_PATH, CAPTCHA_PATH, get_current_login_count, render_visit_statistics,
-    read_version, get_admin_menus, get_populars
+    EDITOR_PATH, CAPTCHA_PATH, get_current_login_count, read_version,
+    get_admin_menus, get_populars
 )
-# from lib.member_lib import get_member_icon, get_member_image
 from lib.menu import get_menus
 from lib.poll import get_latest_poll
+from lib.visit import get_total_visit
 from lib.template_filters import datetime_format, number_format, set_query_params
 from lib.template_functions import (
     editor_macro, get_member_icon, get_member_image, get_selected,
@@ -172,6 +172,7 @@ class UserTemplates(Jinja2Templates):
             self.env.globals["get_populars"] = get_populars
             self.env.globals["get_latest_poll"] = get_latest_poll
             self.env.globals["get_menus"] = get_menus
+            self.env.globals["get_total_visit"] = get_total_visit
 
             # 템플릿 컨텍스트 프로세서 설정
             self.context_processors.append(self._default_context)
@@ -186,7 +187,6 @@ class UserTemplates(Jinja2Templates):
         context = {
             "current_login_count": get_current_login_count(request),
             "render_latest_posts": render_latest_posts,
-            "render_visit_statistics": render_visit_statistics,
         }
         return context
 
