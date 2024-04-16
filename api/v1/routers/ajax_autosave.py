@@ -48,7 +48,7 @@ async def autosave_count(
 async def autosave_load(
     member: Annotated[Member, Depends(get_current_member)],
     ajax_service: Annotated[AJAXService, Depends()],
-    as_id: int = Path(..., title="자동저장 ID")
+    as_id: int = Path(..., title="자동저장 ID", description="자동저장 ID")
 ) -> ResponseAutoSaveModel:
     """자동저장 내용을 불러온다."""
     ajax_service.validate_login(member)
@@ -87,7 +87,7 @@ async def autosave(
 async def autosave_delete(
     member: Annotated[Member, Depends(get_current_member)],
     ajax_service: Annotated[AJAXService, Depends()],
-    as_id: int = Path(..., title="자동저장 ID")
+    as_id: int = Path(..., title="자동저장 ID", description="자동저장 ID")
 ) -> ResponseAutoSaveDeleteModel:
     """임시저장글을 삭제한다."""
     ajax_service.validate_login(member)

@@ -42,7 +42,7 @@ async def api_group_board_list(
     request: Request,
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
-    gr_id: str = Path(...),
+    gr_id: str = Path(..., title="게시판그룹 아이디", description="게시판그룹 아이디"),
 ) -> ResponseGroupBoardsModel:
     """
     게시판그룹의 모든 게시판 목록을 보여줍니다.
@@ -73,7 +73,7 @@ async def api_list_post(
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
     search_params: Annotated[dict, Depends(common_search_query_params)],
-    bo_table: str = Path(...),
+    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
 ) -> ResponseBoardListModel:
     """
     게시판 정보, 글 목록을 반환합니다.
@@ -107,8 +107,8 @@ async def api_read_post(
     request: Request,
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
-    bo_table: str = Path(...),
-    wr_id: str = Path(...),
+    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
+    wr_id: str = Path(..., title="글 아이디", description="글 아이디"),
 ) -> ResponseWriteModel:
     """
     지정된 게시판의 글을 개별 조회합니다.
@@ -145,7 +145,7 @@ async def api_create_post(
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
     wr_data: WriteModel,
-    bo_table: str = Path(...),
+    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
 ) -> ResponseNormalModel:
     """
     지정된 게시판에 새 글을 작성합니다.
@@ -198,8 +198,8 @@ async def api_update_post(
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
     wr_data: WriteModel,
-    bo_table: str = Path(...),
-    wr_id: str = Path(...),
+    bo_table: str = Path(...,  title="게시판 테이블명", description="게시판 테이블명"),
+    wr_id: str = Path(..., title="글 아이디", description="글 아이디"),
 ) -> ResponseNormalModel:
     """
     지정된 게시판의 글을 수정합니다.
@@ -250,8 +250,8 @@ async def api_delete_post(
     request: Request,
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
-    bo_table: str = Path(...),
-    wr_id: str = Path(...),
+    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
+    wr_id: str = Path(..., title="글 아이디", description="글 아이디"),
 ) -> ResponseNormalModel:
     """
     지정된 게시판의 글을 삭제합니다.
@@ -275,7 +275,7 @@ async def api_list_delete(
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
     wr_ids: Annotated[list, Body(..., alias="chk_wr_id[]")],
-    bo_table: str = Path(...),
+    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
 ) -> ResponseNormalModel:
     """
     게시글을 일괄 삭제합니다.
@@ -301,8 +301,8 @@ async def api_move_post(
     request: Request,
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
-    bo_table: str = Path(...),
-    sw: str = Path(...),
+    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
+    sw: str = Path(..., title="게시글 복사/이동", description="게시글 복사/이동", pattern="copy|move"),
 ) -> List[ResponseBoardModel]:
     """
     게시글을 복사/이동 가능한 게시판 목록을 반환합니다.
@@ -325,17 +325,17 @@ async def api_move_update(
     request: Request,
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
-    bo_table: str = Path(...),
-    sw: str = Body(...),
-    wr_ids: str = Body(...),
-    target_bo_tables: list = Body(...),
+    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
+    sw: str = Body(..., title="게시글 복사/이동", pattern="copy|move"),
+    wr_ids: str = Body(..., title="글 아이디 목록"),
+    target_bo_tables: list = Body(..., title="복사/이동할 게시판 테이블 목록"),
 ) -> ResponseNormalModel:
     """
     게시글을 복사/이동합니다.
     - Scrap, File등 연관된 데이터들도 함께 수정합니다.
 
     ### Request Body
-    - **sw**:
+    - **sw**: copy(게시글 복사) 또는 move(게시글 이동)
     - **wr_ids**: 복사/이동할 게시글 wr_id 목록 (예: "1,2,3")
     - **target_bo_tables**: 복사/이동할 게시판 목록 (예: ["free", "qa"])
     """
@@ -355,8 +355,8 @@ async def api_upload_file(
     request: Request,
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
-    bo_table: str = Path(...),
-    wr_id: str = Path(...),
+    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
+    wr_id: str = Path(..., title="글 아이디", description="글 아이디"),
     files: List[UploadFile] = File(...),
     file_content: list = Form(None),
     file_dels: list = Form(None),
@@ -382,9 +382,9 @@ async def api_upload_file(
 async def api_download_file(
     request: Request,
     db: db_session,
-    bo_table: str = Path(...),
-    wr_id: int = Path(...),
-    bf_no: int = Path(...),
+    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
+    wr_id: int = Path(..., title="글 아이디", description="글 아이디"),
+    bf_no: int = Path(..., title="파일 순번", description="파일 순번"),
 ):
     """
     게시글의 파일을 다운로드합니다.
@@ -411,8 +411,8 @@ async def api_create_comment(
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
     comment_data: CommentModel,
-    bo_table: str = Path(...),
-    wr_parent: str = Path(...),
+    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
+    wr_parent: str = Path(..., title="부모글 아이디", description="부모글 아이디"),
 ) -> ResponseNormalModel:
     """
     댓글 등록
@@ -447,9 +447,9 @@ async def api_update_comment(
     db: db_session,
     comment_data: CommentModel,
     member: Annotated[Member, Depends(get_current_member)],
-    bo_table: str = Path(...),
-    wr_parent: str = Path(...),
-    wr_id: str = Path(...),
+    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
+    wr_parent: str = Path(..., title="부모글 아이디", description="부모글 아이디"),
+    wr_id: str = Path(..., title="댓글 아이디", description="댓글 아이디"),
 ) -> ResponseNormalModel:
     """
     댓글을 수정합니다.
@@ -487,8 +487,8 @@ async def api_delete_comment(
     request: Request,
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
-    bo_table: str = Path(...),
-    wr_id: str = Path(...),
+    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
+    wr_id: str = Path(..., title="댓글 아이디", description="댓글 아이디"),
 ) -> ResponseNormalModel:
     """
     댓글을 삭제합니다.

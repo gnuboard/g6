@@ -20,10 +20,10 @@ async def api_search(
     db: db_session,
     member: Member = Depends(get_current_member),
     gr_id: str = Query(None),
-    sfl: str = Query("wr_subject||wr_content"),
-    stx: str = Query(...),
-    sop: str = Query("and"),
-    onetable: str = Query(None),
+    sfl: str = Query("wr_subject||wr_content", title="검색필드", description="검색필드"),
+    stx: str = Query(..., title="검색어", description="검색어"),
+    sop: str = Query("and", title="검색연산자", description="검색연산자", pattern="and|or"),
+    onetable: str = Query(None, title="통합검색", description="통합검색"),
 ) -> ResponseSearchModel:
     """
     게시판 검색
