@@ -2,6 +2,7 @@ from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, Query, Body
 
 from api.v1.models.response import responses
+from api.v1.models.board import ResponseNormalModel, ResponseBoardNewListModel
 from service.board_new import BoardNewServiceAPI
 
 
@@ -18,9 +19,12 @@ async def api_board_new_list(
     view: str = Query(None),
     mb_id: str = Query(None),
     current_page: int = Query(1, alias="page")
-):
+) -> ResponseBoardNewListModel:
     """
     최신 게시글 목록
+
+    ### Request Body
+    - 삭제할 최신글 id 리스트 (예: [1, 2, 3]
     """
     query = board_new_service.get_query(gr_id, mb_id, view)
     offset = board_new_service.get_offset(current_page)
@@ -43,7 +47,7 @@ async def api_board_new_list(
 async def api_new_delete(
     board_new_service: Annotated[BoardNewServiceAPI, Depends()],
     bn_ids: list = Body(...),
-):
+) -> ResponseNormalModel:
     """
     최신 게시글을 삭제한다.
     """

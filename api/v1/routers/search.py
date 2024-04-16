@@ -5,7 +5,7 @@ from core.database import db_session
 from core.models import Member
 from api.v1.models.response import responses
 from api.v1.dependencies.board import get_current_member
-from api.v1.models.board import ResponseBoardModel, ResponseWriteSearchModel
+from api.v1.models.board import ResponseBoardModel, ResponseWriteSearchModel, ResponseSearchModel
 from service.search import SearchServiceAPI
 
 
@@ -24,7 +24,7 @@ async def api_search(
     stx: str = Query(...),
     sop: str = Query("and"),
     onetable: str = Query(None),
-):
+) -> ResponseSearchModel:
     """
     게시판 검색
     - 게시판 종류와, 개별 게시판에 있는 게시글을 검색합니다.

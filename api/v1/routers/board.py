@@ -1,4 +1,4 @@
-from typing_extensions import Annotated, Dict, List
+from typing_extensions import Annotated, List
 from fastapi import (
     APIRouter, Depends, Request, Path, HTTPException,
     status, UploadFile, File, Form, Body
@@ -12,7 +12,10 @@ from lib.board_lib import insert_board_new, set_write_delay
 from lib.dependency.dependencies import common_search_query_params
 from api.v1.models.response import responses
 from api.v1.dependencies.board import get_current_member
-from api.v1.models.board import WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel
+from api.v1.models.board import (
+    WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel,
+    ResponseBoardListModel, ResponseGroupBoardsModel, ResponseNormalModel
+)
 from service.board import(
     ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
     UpdatePostServiceAPI, DeletePostServiceAPI, GroupBoardListServiceAPI,
@@ -38,7 +41,7 @@ async def api_group_board_list(
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
     gr_id: str = Path(...),
-) -> Dict:
+) -> ResponseGroupBoardsModel:
     """
     게시판그룹의 모든 게시판 목록을 보여줍니다.
     """
@@ -69,7 +72,7 @@ async def api_list_post(
     member: Annotated[Member, Depends(get_current_member)],
     search_params: Annotated[dict, Depends(common_search_query_params)],
     bo_table: str = Path(...),
-) -> Dict:
+) -> ResponseBoardListModel:
     """
     게시판 정보, 글 목록을 반환합니다.
     """
@@ -95,7 +98,6 @@ async def api_list_post(
 
 @router.get("/{bo_table}/{wr_id}",
             summary="게시판 개별 글 조회",
-            response_model=ResponseWriteModel,
             responses={**responses}
             )
 async def api_read_post(
@@ -104,7 +106,7 @@ async def api_read_post(
     member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
-) -> Dict:
+) -> ResponseWriteModel:
     """
     지정된 게시판의 글을 개별 조회합니다.
     """
@@ -140,9 +142,27 @@ async def api_create_post(
     member: Annotated[Member, Depends(get_current_member)],
     wr_data: WriteModel,
     bo_table: str = Path(...),
-) -> Dict:
+) -> ResponseNormalModel:
     """
     지정된 게시판에 새 글을 작성합니다.
+
+    ### Request Body
+    - **wr_subject**: 글 제목
+    - **wr_content**: 글 내용
+    - **wr_name**: 작성자 이름 (비회원일 경우)
+    - **wr_password**: 비밀번호
+    - **wr_email**: 작성자 메일
+    - **wr_homepage**: 작성자 홈페이지
+    - **wr_link1**: 링크1
+    - **wr_link2**: 링크2
+    - **wr_option**: 글 옵션
+    - **html**: HTML 사용 여부
+    - **mail**: 메일발송 여부
+    - **secret**: 비밀글 여부
+    - **ca_name"**: 카테고리명 
+    - **notice**: 공지글 여부
+    - **parent_id**: 부모글 ID (답글/댓글일 경우)
+    - **wr_comment**: 댓글 사용 여부
     """
     create_post_service = CreatePostServiceAPI(
         request, db, bo_table, member
@@ -175,9 +195,26 @@ async def api_update_post(
     wr_data: WriteModel,
     bo_table: str = Path(...),
     wr_id: str = Path(...),
-) -> Dict:
+) -> ResponseNormalModel:
     """
     지정된 게시판의 글을 수정합니다.
+
+    ### Request Body
+    - **wr_subject**: 글 제목
+    - **wr_content**: 글 내용
+    - **wr_name**: 작성자 이름 (비회원일 경우)
+    - **wr_password**: 비밀번호
+    - **wr_email**: 작성자 메일
+    - **wr_homepage**: 작성자 홈페이지
+    - **wr_link1**: 링크1
+    - **wr_link2**: 링크2
+    - **wr_option**: 글 옵션
+    - **html**: HTML 사용 여부
+    - **mail**: 메일발송 여부
+    - **secret**: 비밀글 여부
+    - **ca_name"**: 카테고리명 
+    - **notice**: 공지글 여부
+    - **parent_id**: 부모글 ID (답글/댓글일 경우)
     """
     update_post_service = UpdatePostServiceAPI(
         request, db, bo_table, member, wr_id
@@ -209,7 +246,7 @@ async def api_delete_post(
     member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
-) -> Dict:
+) -> ResponseNormalModel:
     """
     지정된 게시판의 글을 삭제합니다.
     """
@@ -233,10 +270,13 @@ async def api_list_delete(
     member: Annotated[Member, Depends(get_current_member)],
     wr_ids: Annotated[list, Body(..., alias="chk_wr_id[]")],
     bo_table: str = Path(...),
-):
+) -> ResponseNormalModel:
     """
     게시글을 일괄 삭제합니다.
     - wr_ids: 삭제할 게시글 wr_id 리스트
+
+    ### Request Body
+    - 삭제할 게시글 리스트 (예: [1, 2, 3])
     """
     list_delete_service = ListDeleteServiceAPI(
         request, db, bo_table, member
@@ -248,7 +288,6 @@ async def api_list_delete(
 
 @router.get("/move/{bo_table}/{sw}",
             summary="게시글 복사/이동 가능 목록 조회",
-            response_model=List[ResponseBoardModel],
             responses={**responses}
             )
 async def api_move_post(
@@ -257,7 +296,7 @@ async def api_move_post(
     member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(...),
     sw: str = Path(...),
-):
+) -> List[ResponseBoardModel]:
     """
     게시글을 복사/이동 가능한 게시판 목록을 반환합니다.
     sw: opy(게시글 복사) 또는 move(게시글 이동)
@@ -282,10 +321,15 @@ async def api_move_update(
     sw: str = Body(...),
     wr_ids: str = Body(...),
     target_bo_tables: list = Body(...),
-):
+) -> ResponseNormalModel:
     """
     게시글을 복사/이동합니다.
     - Scrap, File등 연관된 데이터들도 함께 수정합니다.
+
+    ### Request Body
+    - **sw**:
+    - **wr_ids**: 복사/이동할 게시글 wr_id 목록 (예: "1,2,3")
+    - **target_bo_tables**: 복사/이동할 게시판 목록 (예: ["free", "qa"])
     """
     move_update_service = MoveUpdateServiceAPI(request, db, bo_table, member, sw)
     move_update_service.validate_admin_authority()
@@ -307,9 +351,10 @@ async def api_upload_file(
     files: List[UploadFile] = File(...),
     file_content: list = Form(None),
     file_dels: list = Form(None),
-) -> Dict:
+) -> ResponseNormalModel:
     """
     파일을 업로드합니다.
+    - multipart/form-data로 전송해야 합니다.
     """
     if not member:
         raise HTTPException(status_code=403, detail="로그인 후 이용해주세요.")
@@ -333,9 +378,9 @@ async def api_download_file(
 ):
     """
     게시글의 파일을 다운로드합니다.
-    bo_table: 게시글 테이블명
-    wr_id: 게시글 아이디
-    bf_no: 첨부된 파일의 순번
+    - bo_table: 게시글 테이블명
+    - wr_id: 게시글 아이디
+    - bf_no: 첨부된 파일의 순번
     """
     download_file_service = DownloadFileServiceAPI(
         request, db, bo_table, request.state.login_member, wr_id, bf_no
@@ -357,9 +402,16 @@ async def api_create_comment(
     comment_data: CommentModel,
     bo_table: str = Path(...),
     wr_parent: str = Path(...),
-):
+) -> ResponseNormalModel:
     """
     댓글 등록
+
+    ### Request Body
+    - **wr_content**: 댓글 내용
+    - **wr_name**: 작성자 이름 (비회원일 경우)
+    - **wr_password**: 비밀번호
+    - **wr_option**: 글 옵션
+    - **comment_id**: 부모글 ID (대댓글일 경우)
     """
     comment_service = CommentServiceAPI(request, db, bo_table, member)
     parent_write = comment_service.get_parent_post(wr_parent, is_reply=False)
@@ -386,9 +438,16 @@ async def api_update_comment(
     bo_table: str = Path(...),
     wr_parent: str = Path(...),
     wr_id: str = Path(...),
-) -> Dict:
+) -> ResponseNormalModel:
     """
     댓글을 수정합니다.
+
+    ### Request Body
+    - **wr_content**: 댓글 내용
+    - **wr_name**: 작성자 이름 (비회원일 경우)
+    - **wr_password**: 비밀번호
+    - **wr_option**: 글 옵션
+    - **comment_id**: 부모글 ID (대댓글일 경우)
     """
     comment_service = CommentServiceAPI(request, db, bo_table, member, wr_id)
     write_model = comment_service.write_model
@@ -417,7 +476,7 @@ async def api_delete_comment(
     member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
-):
+) -> ResponseNormalModel:
     """
     댓글을 삭제합니다.
     """

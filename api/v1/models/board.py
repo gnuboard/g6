@@ -1,5 +1,5 @@
 """게시글 모델"""
-from typing_extensions import Annotated, List
+from typing_extensions import Annotated, List, Union
 from datetime import datetime
 
 from fastapi import Body
@@ -58,6 +58,10 @@ class CommentModel(BaseModel):
         """CommentModel에서 선언되지 않은 필드를 초기화"""
         self.wr_is_comment: int = 1
         return self
+
+
+class ResponseNormalModel(BaseModel):
+    result: str
 
 
 class ResponseFileModel(BaseModel):
@@ -232,3 +236,63 @@ class ResponseBoardModel(BaseModel):
     # bo_8: str
     # bo_9: str
     # bo_10: str
+
+
+class ResponseBoardListModel(BaseModel):
+    """게시판 목록 모델"""
+    categories: list
+    board: ResponseBoardModel
+    writes: List[ResponseWriteModel]
+    total_count: int
+    current_page: int
+    prev_spt: Union[int, None]
+    next_spt: Union[int, None]
+
+
+class ResponseGroupModel(BaseModel):
+    """게시판 그룹 모델"""
+    gr_id: str
+    gr_subject: str
+    gr_device: str
+    gr_admin: str
+    gr_use_access: int
+    gr_order: int
+
+
+class ResponseGroupBoardsModel(BaseModel):
+    """게시판 그룹, 게시판 목록 모델"""
+    group: ResponseGroupModel
+    boards: List[ResponseBoardModel]
+
+
+class ResponseBoardNewModel(BaseModel):
+    """최신글 모델"""
+    bo_table: str
+    wr_id: int
+    wr_parent: int
+    bn_datetime: datetime
+    mb_id: str
+    num: int
+    subject: str
+    link: str
+    name: str
+    datetime: str
+
+
+class ResponseBoardNewListModel(BaseModel):
+    """최신글 목록 모델"""
+    total_count: int
+    board_news: List[ResponseBoardNewModel]
+    current_page: int
+
+
+class ResponseSearchBoardModel(ResponseBoardModel):
+    """검색 결과 게시판 모델"""
+    writes: List[ResponseWriteSearchModel]
+
+
+class ResponseSearchModel(BaseModel):
+    """검색 결과 모델"""
+    total_search_count: int
+    onetable: Union[str, None]
+    boards: List[ResponseSearchBoardModel]
