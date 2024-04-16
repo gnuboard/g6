@@ -1,10 +1,11 @@
 """쪽지 Template Router"""
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, Depends, Form, Path, Query, Request
+from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import RedirectResponse
 
-from core.models import Member
+from api.v1.dependencies.memo import get_memo
+from core.models import Member, Memo
 from core.template import UserTemplates
 from lib.common import captcha_widget, get_paging_info, is_none_datetime
 from lib.dependency.dependencies import validate_captcha, validate_token
@@ -34,12 +35,12 @@ async def memo_list(
     """
     쪽지 목록 조회 페이지
     """
-    records_per_page = request.state.config.cf_page_rows
+    per_page = getattr(request.state.config, "cf_page_rows", 10)
 
     total_records = memo_service.fetch_total_records(kind, member.mb_id)
-    paging_info = get_paging_info(current_page, records_per_page, total_records)
+    paging_info = get_paging_info(current_page, per_page, total_records)
     memos = memo_service.fetch_memos(kind, member.mb_id,
-                                     paging_info["offset"], records_per_page)
+                                     paging_info["offset"], per_page)
 
     for memo in memos:
         memo.target_member = memo.send_member if kind == "recv" else memo.recv_member
@@ -61,19 +62,17 @@ async def memo_view(
     member_service: Annotated[MemberService, Depends()],
     memo_service: Annotated[MemoService, Depends()],
     member: Annotated[Member, Depends(get_login_member)],
-    me_id: int = Path(...)
+    memo: Annotated[Memo, Depends(get_memo)],
 ):
     """
     쪽지 조회 페이지
     """
-    memo = memo_service.read_memo(me_id, member)
-
     # 상대방 정보 조회
     target_mb_id = memo.me_send_mb_id if memo.me_type == "recv" else memo.me_recv_mb_id
     target = member_service.fetch_member_by_id(target_mb_id)
 
     # 이전,다음 쪽지 조회
-    prev_memo, next_memo = memo_service.fetch_prev_next_qa(me_id, member)
+    prev_memo, next_memo = memo_service.fetch_prev_next_qa(memo.me_id, member)
 
     # 받은 쪽지 읽음처리
     memo_service.update_read_datetime(memo)
@@ -149,13 +148,12 @@ async def memo_form_update(
 async def memo_delete(
     service: Annotated[MemoService, Depends()],
     member: Annotated[Member, Depends(get_login_member)],
-    me_id: Annotated[int, Path()],
+    memo: Annotated[Memo, Depends(get_memo)],
     page: Annotated[int, Query()] = 1
 ):
     """
     쪽지 삭제
     """
-    memo = service.read_memo(me_id)
     service.delete_memo_call(memo)
     service.delete_memo(memo)
     service.update_not_read_memos(member)

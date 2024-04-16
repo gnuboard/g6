@@ -1,6 +1,6 @@
 """쪽지 모델 클래스를 정의한 파일입니다."""
 from datetime import datetime
-from typing import List
+from typing import List, Union
 
 from fastapi import Query
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_validator
@@ -40,8 +40,8 @@ class MemoBase(BaseModel):
 class MemoResponse(BaseModel):
     """쪽지 조회 응답 모델"""
     memo: MemoBase
-    prev_memo: MemoBase
-    next_memo: MemoBase
+    prev_memo: Union[MemoBase, None]
+    next_memo: Union[MemoBase, None]
 
 
 class MemoListResponse(PaginationResponse):
