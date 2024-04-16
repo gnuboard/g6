@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List, Union
 
 from fastapi import Body
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, EmailStr, field_validator
 
 from lib.html_sanitizer import content_sanitizer, subject_sanitizer
 from api.v1.models.search import SearchRequest
@@ -67,10 +67,9 @@ class QaContentData(BaseModel):
     """Q&A 등록/수정 모델"""
     qa_subject: str = Body(..., title="제목")
     qa_content: str = Body(..., title="내용")
-    # qa_parent: int = Body(0, title="부모글 번호")
     qa_related: int = Body(0, title="연관 Q&A 번호")
-    qa_email: str = Body(None, pattern=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-                         title="이메일", description="이메일 형식에 맞게 입력해주세요.")
+    qa_email: EmailStr = Body(None,
+                              title="이메일", description="이메일 형식에 맞게 입력해주세요.")
     qa_hp: str = Body(None, title="휴대전화번호")
     qa_category: str = Body(None, title="분류")
     qa_email_recv: int = Body(0, title="이메일 수신 여부")
@@ -83,6 +82,8 @@ class QaContentData(BaseModel):
     qa_4: str = Body(None, title="여분필드4")
     qa_5: str = Body(None, title="여분필드5")
 
+    # 관리자만 답변을 등록할 수 있으므로 주석 처리
+    # qa_parent: int = Body(0, title="부모글 번호")
     # 사용 안할 예정
     # qa_type: Annotated[int, Body(0, title="Q&A 타입", description="0:일반, 1:답변글")]
 

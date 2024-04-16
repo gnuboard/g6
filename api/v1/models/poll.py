@@ -1,7 +1,6 @@
 """설문조사 관련 모델 클래스를 정의한 파일입니다."""
 from datetime import date, datetime
 from typing import List
-from typing_extensions import Annotated
 
 from fastapi import Body
 from pydantic import BaseModel, field_validator
@@ -62,8 +61,8 @@ class PollResponse(BaseModel):
 
 class CreatePollEtc(BaseModel):
     """기타의견 생성 요청 모델 클래스입니다."""
-    pc_name: Annotated[str, Body("", title="작성자")]
-    pc_idea: Annotated[str, Body(..., title="기타의견")]
+    pc_name: str = Body("", title="작성자")
+    pc_idea: str = Body(..., title="기타의견")
 
     @field_validator('pc_idea', mode='after')
     @classmethod

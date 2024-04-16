@@ -1,3 +1,4 @@
+"""검색 관련 모델 클래스를 정의한 파일입니다."""
 from fastapi import Query
 from pydantic import BaseModel, Field
 

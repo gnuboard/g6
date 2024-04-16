@@ -20,7 +20,7 @@ from api.v1.models.response import (
     MessageResponse, response_401, response_403, response_404, response_409,
     response_422, response_500,
 )
-from api.v1.models.scrap import CreateScrapModel, ScrapFormResponse, ScrapListResponse
+from api.v1.models.scrap import CreateScrap, ScrapFormResponse, ScrapListResponse
 from service.board.update_post import CommentServiceAPI
 
 router = APIRouter()
@@ -80,7 +80,7 @@ async def create_member_scrap(
     member: Annotated[Member, Depends(get_current_member)],
     board: Annotated[Board, Depends(get_board)],
     write: Annotated[WriteBaseModel, Depends(get_write)],
-    data: CreateScrapModel
+    data: CreateScrap
 ) -> MessageResponse:
     """
     회원 스크랩을 등록합니다.

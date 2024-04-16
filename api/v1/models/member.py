@@ -1,9 +1,8 @@
 """회원 모델 클래스를 정의한 파일입니다."""
 from datetime import datetime
-from typing_extensions import Annotated
 
 from fastapi import Body
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator, model_validator
 
 from lib.member import set_zip_code
 from lib.pbkdf2 import create_hash
@@ -16,30 +15,29 @@ class CreateMember(BaseModel):
     # 추가 필드 허용
     model_config = ConfigDict(extra='allow')
 
-    mb_id: Annotated[str, Body(..., min_length=3, max_length=20, pattern=r"^[a-zA-Z0-9_]+$",
-                               title="아이디", description="3~20자의 영문, 숫자, _만 사용 가능합니다.")]
-    mb_password: Annotated[str, Body(..., title="비밀번호")]
-    mb_password_re: Annotated[str, Body(..., title="비밀번호 확인")]
-    mb_nick: Annotated[str, Body(..., title="닉네임")]
-    mb_name: Annotated[str, Body(..., title="이름")]
-    mb_sex: Annotated[str, Body("", pattern=r"^[mf]?$", title="성별")]
-    mb_email: Annotated[str, Body(..., pattern=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-                                  title="이메일", description="이메일 형식에 맞게 입력해주세요.")]
-    mb_homepage: Annotated[str, Body("", title="홈페이지")]
-    mb_zip: Annotated[str, Body("", title="우편번호")]
-    mb_addr_jibeon: Annotated[str, Body("", title="지번 주소")]
-    mb_addr1: Annotated[str, Body("", title="기본 주소")]
-    mb_addr2: Annotated[str, Body("", title="나머지 주소")]
-    mb_addr3: Annotated[str, Body("", title="기타 주소")]
-    mb_tel: Annotated[str, Body("", title="전화번호")]
-    mb_hp: Annotated[str, Body("", title="휴대전화번호")]
-    mb_signature: Annotated[str, Body("", title="서명")]
-    mb_profile: Annotated[str, Body("", title="자기소개")]
-    mb_recommend: Annotated[str, Body("", title="추천인 아이디")]
+    mb_id: str = Body(..., min_length=3, max_length=20, pattern=r"^[a-zA-Z0-9_]+$",
+                      title="아이디", description="3~20자의 영문, 숫자, _만 사용 가능합니다.")
+    mb_password: str = Body(..., title="비밀번호")
+    mb_password_re: str = Body(..., title="비밀번호 확인")
+    mb_nick: str = Body(..., title="닉네임")
+    mb_name: str = Body(..., title="이름")
+    mb_sex: str = Body("", pattern=r"^[mf]?$", title="성별")
+    mb_email: EmailStr = Body(..., title="이메일", description="이메일 형식에 맞게 입력해주세요.")
+    mb_homepage: str = Body("", title="홈페이지")
+    mb_zip: str = Body("", title="우편번호")
+    mb_addr_jibeon: str = Body("", title="지번 주소")
+    mb_addr1: str = Body("", title="기본 주소")
+    mb_addr2: str = Body("", title="나머지 주소")
+    mb_addr3: str = Body("", title="기타 주소")
+    mb_tel: str = Body("", title="전화번호")
+    mb_hp: str = Body("", title="휴대전화번호")
+    mb_signature: str = Body("", title="서명")
+    mb_profile: str = Body("", title="자기소개")
+    mb_recommend: str = Body("", title="추천인 아이디")
 
-    mb_mailling: Annotated[int, Body(0, title="메일 수신 여부")]
-    mb_sms: Annotated[int, Body(0, title="SMS 수신 여부")]
-    mb_open: Annotated[int, Body(0, title="	회원정보 공개 여부")]
+    mb_mailling: int = Body(0, title="메일 수신 여부")
+    mb_sms: int = Body(0, title="SMS 수신 여부")
+    mb_open: int = Body(0, title="	회원정보 공개 여부")
 
     @field_validator('mb_zip', mode='after')
     @classmethod
@@ -77,26 +75,25 @@ class UpdateMember(BaseModel):
     # 추가 필드 허용
     model_config = ConfigDict(extra='allow')
 
-    mb_password: Annotated[str, Body(title="비밀번호")] = None
-    mb_password_re: Annotated[str, Body(title="비밀번호 확인")] = None
-    mb_nick: Annotated[str, Body(title="닉네임")] = None
-    mb_sex: Annotated[str, Body(pattern=r"^[mf]?$", title="성별")] = None
-    mb_email: Annotated[str, Body(..., pattern=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-                                  title="이메일", description="이메일 형식에 맞게 입력해주세요.")]
-    mb_homepage: Annotated[str, Body(title="홈페이지")] = None
-    mb_zip: Annotated[str, Body(title="우편번호")] = None
-    mb_addr_jibeon: Annotated[str, Body(title="지번 주소")] = None
-    mb_addr1: Annotated[str, Body(title="기본 주소")] = None
-    mb_addr2: Annotated[str, Body(title="나머지 주소")] = None
-    mb_addr3: Annotated[str, Body(title="기타 주소")] = None
-    mb_tel: Annotated[str, Body(title="전화번호")] = None
-    mb_hp: Annotated[str, Body(title="휴대전화번호")] = None
-    mb_signature: Annotated[str, Body(title="서명")] = None
-    mb_profile: Annotated[str, Body(title="자기소개")] = None
+    mb_password: str = Body(None, title="비밀번호")
+    mb_password_re: str = Body(None, title="비밀번호 확인")
+    mb_nick: str = Body(None, title="닉네임")
+    mb_sex: str = Body(None, pattern=r"^[mf]?$", title="성별")
+    mb_email: EmailStr = Body(..., title="이메일", description="이메일 형식에 맞게 입력해주세요.")
+    mb_homepage: str = Body(None, title="홈페이지")
+    mb_zip: str = Body(None, title="우편번호")
+    mb_addr_jibeon: str = Body(None, title="지번 주소")
+    mb_addr1: str = Body(None, title="기본 주소")
+    mb_addr2: str = Body(None, title="나머지 주소")
+    mb_addr3: str = Body(None, title="기타 주소")
+    mb_tel: str = Body(None, title="전화번호")
+    mb_hp: str = Body(None, title="휴대전화번호")
+    mb_signature: str = Body(None, title="서명")
+    mb_profile: str = Body(None, title="자기소개")
 
-    mb_mailling: Annotated[int, Body(title="메일 수신 여부")] = None
-    mb_sms: Annotated[int, Body(title="SMS 수신 여부")] = None
-    mb_open: Annotated[int, Body(title="회원정보 공개 여부")] = None
+    mb_mailling: int = Body(None, title="메일 수신 여부")
+    mb_sms: int = Body(None, title="SMS 수신 여부")
+    mb_open: int = Body(None, title="회원정보 공개 여부")
 
     @field_validator('mb_zip', mode='after')
     @classmethod
@@ -195,8 +192,8 @@ class MemberResponse(BaseModel):
 
 class SearchMemberId(BaseModel):
     """회원 아이디 찾기 모델"""
-    mb_name: Annotated[str, Body(..., title="이름", description="회원 이름")]
-    mb_email: Annotated[str, Body(..., title="이메일", description="회원 이메일")]
+    mb_name: str = Body(..., title="이름", description="회원 이름")
+    mb_email: EmailStr = Body(..., title="이메일", description="회원 이메일")
 
 
 class SearchMemberIdResponse(BaseModel):
@@ -206,14 +203,14 @@ class SearchMemberIdResponse(BaseModel):
 
 class SearchMemberPassword(BaseModel):
     """회원 비밀번호 찾기 모델"""
-    mb_id: Annotated[str, Body(..., title="아이디")]
-    mb_email: Annotated[str, Body(..., title="이메일")]
+    mb_id: str = Body(..., title="아이디")
+    mb_email: EmailStr = Body(..., title="이메일")
 
 
 class ResetMemberPassword(BaseModel):
     """회원 비밀번호 재설정 모델"""
-    password: Annotated[str, Body(..., title="비밀번호")]
-    password_confirm: Annotated[str, Body(..., title="비밀번호 확인")]
+    password: str = Body(..., title="비밀번호")
+    password_confirm: str = Body(..., title="비밀번호 확인")
 
     @model_validator(mode='after')
     def check_passwords_match(self) -> 'ResetMemberPassword':

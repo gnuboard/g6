@@ -73,7 +73,7 @@ class SendMemo(BaseModel):
     @field_validator('me_memo', mode='after')
     @classmethod
     def sanitize_me_memo(cls, v: str):
-        """쪽지 내용을 정제합니다."""
+        """쪽지 내용 Stored XSS 방지 필터링"""
         return sanitizer.get_cleaned_data(v)
 
     @property
