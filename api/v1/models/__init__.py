@@ -3,6 +3,7 @@ API에서 필요한 기본적인 모델을 정의합니다.
 TODO: 역할에 따른 재구성 작업이 필요.
 """
 from datetime import datetime
+from enum import Enum
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 
@@ -28,3 +29,24 @@ class MemberRefreshToken(Base):
 #       - API사용 옵션을 두어서 설정할 때 만들것인지 등등..
 #   2. 만료된 Refresh Token을 주기적으로 삭제하는 작업이 필요함
 MemberRefreshToken.__table__.create(bind=DBConnect().engine, checkfirst=True)
+
+
+class Tags(Enum):
+    """API 태그를 정의합니다."""
+    AUTH = "인증"
+    BOARD = "게시판"
+    CONFIG = "환경설정"
+    CONTENT = "컨텐츠"
+    FAQ = "FAQ"
+    MEMBER = "회원"
+    MEMO = "쪽지"
+    MENU = "메뉴"
+    POINT = "포인트"
+    POLL = "설문조사"
+    QA = "Q&A"
+    SCRAP = "스크랩"
+    SEARCH = "검색"
+    BOARD_NEW = "최신글"
+    AJAX_AUTOSAVE = "자동저장"
+    AJAX_GOOD = "좋아요/싫어요"
+    VISIT = "방문자"

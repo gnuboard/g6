@@ -129,36 +129,6 @@ class UpdateMember(BaseModel):
         return self
 
 
-class RegisterPolicyResponse(BaseModel):
-    """회원가입 약관 응답 모델"""
-    cf_stipulation: str
-    cf_privacy: str
-
-
-class RegisterConfigResponse(BaseModel):
-    """회원가입 환경설정 응답 모델"""
-    cf_use_email_certify: int
-    cf_use_homepage: int
-    cf_req_homepage: int
-    cf_use_tel: int
-    cf_req_tel: int
-    cf_use_hp: int
-    cf_req_hp: int
-    cf_use_addr: int
-    cf_req_addr: int
-    cf_use_signature: int
-    cf_use_profile: int
-    cf_icon_level: int
-    cf_member_img_width: int
-    cf_member_img_height: int
-    cf_member_img_size: int
-    cf_member_icon_width: int
-    cf_member_icon_height: int
-    cf_member_icon_size: int
-    cf_open_modify: int
-    cf_use_recommend: int
-
-
 class RegisterResponse(MessageResponse):
     """회원가입 처리 응답 모델"""
     mb_id: str

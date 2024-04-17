@@ -24,32 +24,14 @@ from api.v1.lib.member import (
 from api.v1.models import MemberRefreshToken
 from api.v1.models.member import (
     CreateMember, SearchMemberId, SearchMemberPassword,
-    ResetMemberPassword, MemberResponse, RegisterConfigResponse,
-    RegisterResponse, RegisterPolicyResponse, SearchMemberIdResponse, UpdateMember
+    ResetMemberPassword, MemberResponse, RegisterResponse,
+    SearchMemberIdResponse, UpdateMember
 )
 from api.v1.models.response import (
     MessageResponse, response_401, response_403, response_404, response_409, response_422
 )
 
 router = APIRouter()
-
-
-@router.get("/members/policy",
-            summary="회원가입 약관 조회")
-async def read_member_policy(request: Request) -> RegisterPolicyResponse:
-    """
-    회원가입 약관을 조회합니다.
-    - 회원가입 약관
-    - 개인정보 수집 및 허용 약관
-    """
-    return request.state.config
-
-
-@router.get("/members/config",
-            summary="회원가입 설정 조회")
-async def read_member_config(request: Request) -> RegisterConfigResponse:
-    """회원가입에 필요한 기본환경설정 정보를 조회합니다."""
-    return request.state.config
 
 
 @router.post("/members",
