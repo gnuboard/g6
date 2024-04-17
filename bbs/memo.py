@@ -4,12 +4,13 @@ from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import RedirectResponse
 
-from api.v1.dependencies.memo import get_memo
+
 from core.models import Member, Memo
 from core.template import UserTemplates
 from lib.common import captcha_widget, get_paging_info, is_none_datetime
-from lib.dependency.dependencies import validate_captcha, validate_token
 from lib.dependency.auth import get_login_member
+from lib.dependency.dependencies import validate_captcha, validate_token
+from lib.dependency.memo import get_memo
 from lib.html_sanitizer import content_sanitizer as sanitizer
 from lib.point import insert_point
 from lib.template_filters import default_if_none
