@@ -757,7 +757,7 @@ html.no-overflowscrolling #autosave_pop { height:auto; max-height:10000px !impor
 .bo_vc_w_info #captcha { padding-top:10px; display:block; clear:both } 
 .bo_vc_w .btn_confirm { clear:both; margin-top:10px } 
 .bo_vc_w .btn_confirm label { display:inline-block; margin-right:10px; border-radius:3px; font-size:1.8rem; text-align:center } 
-.bo_vc_w .btn_submit { height:45px; padding:0 20px; border-radius:3px; font-weight:bold; font-size:1.3rem } 
+.bo_vc_w .btn_submit, .bo_vc_w .btn_cancel { height:45px; padding:0 20px; border-radius:3px; font-weight:bold; font-size:1.3rem } 
 .bo_vc_w .btn_confirm .secret_cm label { font-size:1.2rem !important } 
 .bo_vc_w_wr:after { display:block; visibility:hidden; clear:both; content:"" } 
 .secret_cm { display:inline-block; float:left } 

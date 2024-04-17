@@ -17,7 +17,7 @@
 {% set login_member=request.state.login_member %}
 {% set is_admin=get_admin_type(request, login_member.mb_id, board=board) %}
 {% set bo_table_width=board.bo_table_width if board.bo_table_width > 0 else 100 %}
-<div id="bo_basic_view" class="bo_common bo_view" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
+<div id="bo_gallery_view" class="bo_common bo_view" style="width:{{ bo_table_width }}{% if bo_table_width <= 100 %}%{% else %}px{% endif %}">
 
     <h2 id="view_subject">
         {% if board.bo_use_category and write.ca_name %}
@@ -429,6 +429,7 @@
                     </label>
                 </div>
 
+                <button type="button" id="btn_cancel" class="btn_cancel btn">취소</button>
                 <button type="submit" id="btn_submit" class="btn_submit">댓글등록</button>
             </div>
 
@@ -449,18 +450,6 @@
     <script>
     var save_before = '';
     var save_html = document.getElementById('bo_basic_comment_write').innerHTML;
-    /*
-    function good_and_write()
-    {
-        var f = document.fviewcomment;
-        if (fviewcomment_submit(f)) {
-            f.is_good.value = 1;
-            f.submit();
-        } else {
-            f.is_good.value = 0;
-        }
-    }
-    */
 
     // 글자수 제한
     var char_min = parseInt({{ board.bo_comment_min }}); // 최소
@@ -537,12 +526,16 @@
 
         // 댓글 아이디가 넘어오면 답변, 수정
         if (comment_id) {
-            if (work == 'c')
+            if (work == 'c') {
                 el_id = 'reply_' + comment_id;
-            else
+            } else {
                 el_id = 'edit_' + comment_id;
+            }
+            // 수정, 답변 시, 취소 버튼 보이기
+            document.getElementById('btn_cancel').style.display = '';
         } else {
             el_id = 'bo_basic_comment_write';
+            document.getElementById('btn_cancel').style.display = 'none';
         }
 
         if (save_before != el_id)
@@ -600,6 +593,11 @@
             e.preventDefault();
             $(this).toggleClass("cmt_btn_op");
             $(".bo_comment").toggle();
+        });
+
+        // 댓글 수정, 답변 취소
+        $("#btn_cancel").click(function() {
+            comment_box('', 'c');
         });
     });
     </script>
