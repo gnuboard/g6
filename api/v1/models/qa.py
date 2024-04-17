@@ -10,6 +10,29 @@ from api.v1.models.search import SearchRequest
 from api.v1.models.pagination import PagenationRequest, PaginationResponse
 
 
+class QaConfigResponse(BaseModel):
+    """Q&A 설정 조회 응답 모델"""
+    qa_title: str
+    qa_category: str
+    qa_use_email: int
+    qa_req_email: int
+    qa_use_hp: int
+    qa_req_hp: int
+    qa_use_sms: int
+    qa_use_editor: int
+    qa_subject_len: int
+    qa_mobile_subject_len: int
+    qa_page_rows: int
+    qa_mobile_page_rows: int
+    qa_image_width: int
+    qa_upload_size: int
+    qa_content_head: str
+    qa_content_tail: str
+    qa_mobile_content_head: str
+    qa_mobile_content_tail: str
+    qa_insert_content: str
+
+
 class QaContentBase(BaseModel):
     """Q&A 기본 모델"""
     qa_id: int

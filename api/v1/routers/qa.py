@@ -8,13 +8,25 @@ from lib.common import get_paging_info
 from lib.mail import send_qa_mail
 from api.v1.dependencies.member import get_current_member
 from api.v1.dependencies.qa import get_qa_content, validate_data, validate_upload_file
-from api.v1.lib.qa import QaFileServiceAPI, QaServiceAPI
+from api.v1.lib.qa import QaConfigServiceAPI, QaFileServiceAPI, QaServiceAPI
 from api.v1.models.response import (
-    MessageResponse, response_401, response_403, response_404, response_422
+    MessageResponse, response_401, response_403, response_404, response_422, response_500
 )
-from api.v1.models.qa import QaContentData, QaContentListResponse, QaContentList, QaContentResponse
+from api.v1.models.qa import (
+    QaConfigResponse, QaContentData, QaContentListResponse, QaContentList, QaContentResponse
+)
 
 router = APIRouter()
+
+
+@router.get("/qa/config",
+            summary="Q&A 설정 조회",
+            responses={**response_500})
+async def read_qa_config(
+    service: Annotated[QaConfigServiceAPI, Depends()]
+) -> QaConfigResponse:
+    """Q&A 페이지에서 필요한 설정을 조회합니다."""
+    return service.qa_config
 
 
 @router.get("/qas",
