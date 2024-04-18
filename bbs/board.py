@@ -25,7 +25,7 @@ from lib.dependency.dependencies import (
     check_group_access, common_search_query_params,
     validate_captcha, validate_token
 )
-from lib.dependency.auth import get_login_member, get_login_member_optional
+from lib.dependency.auth import get_login_member_optional
 from lib.template_functions import get_paging
 from service.board import (
     ListPostService, CreatePostService, ReadPostService,
@@ -363,7 +363,7 @@ async def create_post(
 async def update_post(
     request: Request,
     db: db_session,
-    member: Annotated[Member, Depends(get_login_member)],
+    member: Annotated[Member, Depends(get_login_member_optional)],
     bo_table: str = Path(...),
     wr_id: str = Path(...),
     notice: bool = Form(False),

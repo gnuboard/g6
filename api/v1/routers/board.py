@@ -13,7 +13,7 @@ from lib.dependency.dependencies import common_search_query_params
 from api.v1.models.response import (
     response_401, response_403, response_404, response_422
 )
-from api.v1.dependencies.board import get_current_member
+from api.v1.dependencies.member import get_current_member, get_current_member_optional
 from api.v1.models.board import (
     WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel,
     ResponseBoardListModel, ResponseGroupBoardsModel, ResponseNormalModel
@@ -41,7 +41,7 @@ credentials_exception = HTTPException(
 async def api_group_board_list(
     request: Request,
     db: db_session,
-    member: Annotated[Member, Depends(get_current_member)],
+    member: Annotated[Member, Depends(get_current_member_optional)],
     gr_id: str = Path(..., title="게시판그룹 아이디", description="게시판그룹 아이디"),
 ) -> ResponseGroupBoardsModel:
     """
@@ -71,7 +71,7 @@ async def api_group_board_list(
 async def api_list_post(
     request: Request,
     db: db_session,
-    member: Annotated[Member, Depends(get_current_member)],
+    member: Annotated[Member, Depends(get_current_member_optional)],
     search_params: Annotated[dict, Depends(common_search_query_params)],
     bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
 ) -> ResponseBoardListModel:
@@ -106,7 +106,7 @@ async def api_list_post(
 async def api_read_post(
     request: Request,
     db: db_session,
-    member: Annotated[Member, Depends(get_current_member)],
+    member: Annotated[Member, Depends(get_current_member_optional)],
     bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
     wr_id: str = Path(..., title="글 아이디", description="글 아이디"),
 ) -> ResponseWriteModel:
@@ -143,7 +143,7 @@ async def api_read_post(
 async def api_create_post(
     request: Request,
     db: db_session,
-    member: Annotated[Member, Depends(get_current_member)],
+    member: Annotated[Member, Depends(get_current_member_optional)],
     wr_data: WriteModel,
     bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
 ) -> ResponseNormalModel:
@@ -196,7 +196,7 @@ async def api_create_post(
 async def api_update_post(
     request: Request,
     db: db_session,
-    member: Annotated[Member, Depends(get_current_member)],
+    member: Annotated[Member, Depends(get_current_member_optional)],
     wr_data: WriteModel,
     bo_table: str = Path(...,  title="게시판 테이블명", description="게시판 테이블명"),
     wr_id: str = Path(..., title="글 아이디", description="글 아이디"),
@@ -365,9 +365,6 @@ async def api_upload_file(
     파일을 업로드합니다.
     - multipart/form-data로 전송해야 합니다.
     """
-    if not member:
-        raise HTTPException(status_code=403, detail="로그인 후 이용해주세요.")
-
     create_post_service = CreatePostServiceAPI(request, db, bo_table, member)
     write = create_post_service.get_write(wr_id)
     create_post_service.upload_files(write, files, file_content, file_dels)
@@ -382,6 +379,7 @@ async def api_upload_file(
 async def api_download_file(
     request: Request,
     db: db_session,
+    member: Annotated[Member, Depends(get_current_member_optional)],
     bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
     wr_id: int = Path(..., title="글 아이디", description="글 아이디"),
     bf_no: int = Path(..., title="파일 순번", description="파일 순번"),
@@ -393,7 +391,7 @@ async def api_download_file(
     - bf_no: 첨부된 파일의 순번
     """
     download_file_service = DownloadFileServiceAPI(
-        request, db, bo_table, request.state.login_member, wr_id, bf_no
+        request, db, bo_table, member, wr_id, bf_no
     )
     download_file_service.validate_download_level()
     board_file = download_file_service.get_board_file()
@@ -409,7 +407,7 @@ async def api_download_file(
 async def api_create_comment(
     request: Request,
     db: db_session,
-    member: Annotated[Member, Depends(get_current_member)],
+    member: Annotated[Member, Depends(get_current_member_optional)],
     comment_data: CommentModel,
     bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
     wr_parent: str = Path(..., title="부모글 아이디", description="부모글 아이디"),
@@ -446,7 +444,7 @@ async def api_update_comment(
     request: Request,
     db: db_session,
     comment_data: CommentModel,
-    member: Annotated[Member, Depends(get_current_member)],
+    member: Annotated[Member, Depends(get_current_member_optional)],
     bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
     wr_parent: str = Path(..., title="부모글 아이디", description="부모글 아이디"),
     wr_id: str = Path(..., title="댓글 아이디", description="댓글 아이디"),
