@@ -3,7 +3,9 @@ from typing_extensions import Annotated
 
 from fastapi import Depends, Path
 
-from api.v1.dependencies.member import get_current_member_optional
+from api.v1.dependencies.member import (
+    get_current_member, get_current_member_optional
+)
 from api.v1.lib.poll import PollServiceAPI, ValidatePollServiceAPI
 from core.models import Member, Poll, PollEtc
 
@@ -63,7 +65,7 @@ async def validate_poll_etc_delete(
     validate: Annotated[ValidatePollServiceAPI, Depends()],
     poll: Annotated[Poll, Depends(get_poll)],
     poll_etc: Annotated[PollEtc, Depends(get_poll_etc)],
-    member: Annotated[Member, Depends(get_current_member_optional)]
+    member: Annotated[Member, Depends(get_current_member)]
 ):
     """설문조사 기타의견 삭제 유효성 검사 의존성 함수"""
     validate.is_used(poll)
