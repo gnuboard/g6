@@ -17,9 +17,9 @@ router = APIRouter()
 async def ajax_good(
     ajax_service: Annotated[AJAXService, Depends()],
     member: Annotated[Member, Depends(get_current_member)],
-    bo_table: str = Path(...),
-    wr_id: int = Path(...),
-    type: str = Path(...)
+    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
+    wr_id: int = Path(..., title="글 아이디", description="글 아이디"),
+    type: str = Path(..., title="좋아요/싫어요", description="좋아요/싫어요", pattern="good|nogood")
 ):
     """
     게시글 좋아요/싫어요 처리

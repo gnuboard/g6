@@ -1,7 +1,7 @@
 from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, Query, Body
 
-from api.v1.models.response import responses
+from api.v1.models.response import response_401, response_422
 from api.v1.models.board import ResponseNormalModel, ResponseBoardNewListModel
 from service.board_new import BoardNewServiceAPI
 
@@ -11,14 +11,14 @@ router = APIRouter()
 
 @router.get("/new",
             summary="최신 게시글 목록",
-            responses={**responses}
+            responses={**response_401, **response_422}
             )
 async def api_board_new_list(
     board_new_service: Annotated[BoardNewServiceAPI, Depends()],
-    gr_id: str = Query(None),
-    view: str = Query(None),
-    mb_id: str = Query(None),
-    current_page: int = Query(1, alias="page")
+    gr_id: str = Query(None, title="게시판 그룹 id", description="게시판 그룹 id"),
+    view: str = Query(None, title="게시판 view", description="게시판 view", pattern="write|comment"),
+    mb_id: str = Query(None, title="회원 id", description="회원 id"),
+    current_page: int = Query(1, alias="page", title="현재 페이지", description="현재 페이지")
 ) -> ResponseBoardNewListModel:
     """
     최신 게시글 목록
@@ -42,11 +42,11 @@ async def api_board_new_list(
 
 @router.post("/new_delete",
             summary="최신 게시글을 삭제",
-            responses={**responses}
+            responses={**response_401, **response_422}
              )
 async def api_new_delete(
     board_new_service: Annotated[BoardNewServiceAPI, Depends()],
-    bn_ids: list = Body(...),
+    bn_ids: list = Body(..., title="삭제할 최신글 id 리스트"),
 ) -> ResponseNormalModel:
     """
     최신 게시글을 삭제한다.

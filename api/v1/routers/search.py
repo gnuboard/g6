@@ -3,7 +3,7 @@ from fastapi.encoders import jsonable_encoder
 
 from core.database import db_session
 from core.models import Member
-from api.v1.models.response import responses
+from api.v1.models.response import response_401, response_403, response_422
 from api.v1.dependencies.board import get_current_member
 from api.v1.models.board import ResponseBoardModel, ResponseWriteSearchModel, ResponseSearchModel
 from service.search import SearchServiceAPI
@@ -13,17 +13,17 @@ router = APIRouter()
 
 @router.get("/search",
             summary="게시판 검색",
-            responses={**responses}
+            responses={**response_401, **response_403, **response_422}
             )
 async def api_search(
     request: Request,
     db: db_session,
     member: Member = Depends(get_current_member),
     gr_id: str = Query(None),
-    sfl: str = Query("wr_subject||wr_content"),
-    stx: str = Query(...),
-    sop: str = Query("and"),
-    onetable: str = Query(None),
+    sfl: str = Query("wr_subject||wr_content", title="검색필드", description="검색필드"),
+    stx: str = Query(..., title="검색어", description="검색어"),
+    sop: str = Query("and", title="검색연산자", description="검색연산자", pattern="and|or"),
+    onetable: str = Query(None, title="통합검색", description="통합검색"),
 ) -> ResponseSearchModel:
     """
     게시판 검색
