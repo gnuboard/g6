@@ -9,7 +9,7 @@ from lib.board_lib import generate_reply_character, insert_point, is_owner
 from lib.g5_compatibility import G5Compatibility
 from lib.template_filters import number_format
 from lib.html_sanitizer import content_sanitizer
-from lib.pbkdf2 import create_hash
+from lib.pbkdf2 import create_hash, validate_password
 from api.v1.models.board import WriteModel
 from .create_post import CreatePostService
 
@@ -29,9 +29,9 @@ class UpdatePostService(CreatePostService):
         super().__init__(request, db, bo_table, member)
         self.wr_id = wr_id
 
-    def validate_author(self, write: WriteBaseModel):
+    def validate_author(self, write: WriteBaseModel, wr_password: str = None):
         """작성자 확인"""
-        if not is_owner(write, self.mb_id):
+        if not is_owner(write, self.mb_id) and not validate_password(wr_password, write.wr_password):
             self.raise_exception(detail="작성자만 수정할 수 있습니다.", status_code=403)
 
     def validate_restrict_comment_count(self):

@@ -227,7 +227,7 @@ async def api_update_post(
     update_post_service.validate_restrict_comment_count()
     write = update_post_service.get_write(update_post_service.wr_id)
     
-    update_post_service.validate_author(write)
+    update_post_service.validate_author(write, wr_data.wr_password)
     update_post_service.validate_secret_board(wr_data.secret, wr_data.html, wr_data.mail)
     update_post_service.validate_post_content(wr_data.wr_subject)
     update_post_service.validate_post_content(wr_data.wr_content)

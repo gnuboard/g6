@@ -381,7 +381,7 @@ async def update_post(
         request, db, bo_table, member, wr_id,
     )
     write = get_write(db, bo_table, wr_id)
-    update_post_service.validate_author(write)
+    update_post_service.validate_author(write, form_data.wr_password)
     update_post_service.validate_restrict_comment_count()
     update_post_service.validate_secret_board(secret, html, mail)
     update_post_service.validate_post_content(form_data.wr_subject)
