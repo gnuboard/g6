@@ -177,8 +177,8 @@ class ReadPostService(BoardService):
             comment.name = cut_name(self.request, comment.wr_name)
             comment.ip = self.get_display_ip(comment.wr_ip)
             comment.is_reply = len(comment.wr_comment_reply) < 5 and self.board.bo_comment_level <= self.member_level
-            comment.is_edit = bool(self.admin_type) or (self.member and comment.mb_id == self.member.mb_id)
-            comment.is_del = bool(self.admin_type) or (self.member and comment.mb_id == self.member.mb_id) or not comment.mb_id
+            comment.is_edit = bool(self.admin_type or (self.member and comment.mb_id == self.member.mb_id))
+            comment.is_del = bool(self.admin_type or (self.member and comment.mb_id == self.member.mb_id) or not comment.mb_id)
             comment.is_secret = "secret" in comment.wr_option
 
             # 비밀댓글 처리
