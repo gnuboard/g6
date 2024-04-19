@@ -1,60 +1,9 @@
 """게시판 관련 의존성을 정의합니다."""
-from typing_extensions import Annotated
-from fastapi import Depends, HTTPException, status, Path
-from sqlalchemy import select
+from fastapi import HTTPException, Path
 
 from core.database import db_session
-from core.models import Member, Board
+from core.models import Board
 from lib.common import dynamic_create_write_table
-from api.settings import SETTINGS
-from api.v1.auth import oauth2_scheme
-from api.v1.auth.jwt import JWT
-from api.v1.lib.member import MemberService
-from api.v1.models.auth import TokenPayload
-
-
-def get_current_member(
-    db: db_session,
-    member_service: Annotated[MemberService, Depends()],
-    token: Annotated[str, Depends(oauth2_scheme)]
-) -> Member:
-    """
-    현재 로그인한 회원 정보를 조회합니다.
-    비회원 글쓰기의 경우 request headers를 {"Authorization": "Bearer Anonymous"}로 전송합니다.
-    """
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    if token == "Anonymous":
-        return None
-    
-    payload: TokenPayload = JWT.decode_token(
-        token,
-        SETTINGS.ACCESS_TOKEN_SECRET_KEY
-    )
-
-    mb_id: str = payload.sub
-    if mb_id is None:
-        raise credentials_exception
-
-    member = db.scalar(select(Member).where(Member.mb_id == mb_id))
-    if member is None:
-        raise credentials_exception
-
-    is_active, active_detail = member_service.is_activated(member)
-    if not is_active:
-        credentials_exception.detail = active_detail
-        raise credentials_exception
-
-    is_email_certified, email_detail = member_service.is_member_email_certified(member)
-    if not is_email_certified:
-        credentials_exception.detail = email_detail
-        raise credentials_exception
-
-    return member
 
 
 def get_board(
