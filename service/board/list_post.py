@@ -4,7 +4,7 @@ from sqlalchemy import asc, desc, func, select
 
 from core.database import db_session
 from core.models import Member, WriteBaseModel
-from lib.board_lib import write_search_filter, get_list
+from lib.board_lib import write_search_filter, get_list, cut_name, is_owner
 from . import BoardService
 
 
@@ -96,6 +96,37 @@ class ListPostService(BoardService):
         for write in writes:
             write.num = total_count - offset - writes.index(write)
             write = get_list(self.request, write, self)
+
+            # 댓글 정보를 불러와서 write에 추가합니다.
+            comments: List[WriteBaseModel] = self.db.scalars(
+            select(self.write_model).filter_by(
+                    wr_parent=write.wr_id,
+                    wr_is_comment=1
+                ).order_by(self.write_model.wr_comment, self.write_model.wr_comment_reply)
+            ).all()
+
+            for comment in comments:
+                comment.name = cut_name(self.request, comment.wr_name)
+                comment.ip = self.get_display_ip(comment.wr_ip)
+                comment.is_reply = len(comment.wr_comment_reply) < 5 and self.board.bo_comment_level <= self.member_level
+                comment.is_edit = bool(self.admin_type or (self.member and comment.mb_id == self.member.mb_id))
+                comment.is_del = bool(self.admin_type or (self.member and comment.mb_id == self.member.mb_id) or not comment.mb_id)
+                comment.is_secret = "secret" in comment.wr_option
+
+                # 비밀댓글 처리
+                session_secret_comment_name = f"ss_secret_comment_{self.bo_table}_{comment.wr_id}"
+                parent_write = self.db.get(self.write_model, comment.wr_parent)
+                if (comment.is_secret
+                        and not self.admin_type
+                        and not is_owner(comment, self.mb_id)
+                        and not is_owner(parent_write, self.mb_id)
+                        and not self.request.session.get(session_secret_comment_name)):
+                    comment.is_secret_content = True
+                    comment.save_content = "비밀글 입니다."
+                else:
+                    comment.is_secret_content = False
+                    comment.save_content = comment.wr_content
+            write.comments = comments
 
         return writes
     
