@@ -136,7 +136,6 @@ class ResponseWriteModel(BaseModel):
 class ResponseBoardModel(BaseModel):
     """
     게시판 모델중 response에 필요한 속성 정의
-    model_validate 메소드에 의해서 데이터 타입 검증
     타입 검증과 함께 정의되지 않은 속성은 제거하는 필터링 기능도 포함
     주석된 부분을 풀거나 추가하여 API response에서 보여지는 데이터를 변경할 수 있습니다.
     """

@@ -53,15 +53,7 @@ async def api_group_board_list(
     group = group_board_list_service.group
     group_board_list_service.check_mobile_only()
     boards = group_board_list_service.get_boards_in_group()
-
-    # 데이터 유효성 검증 및 불필요한 데이터 제거한 게시판 목록 얻기
-    filtered_boards = []
-    for board in boards:
-        board_json = jsonable_encoder(board)
-        board_api = ResponseBoardModel.model_validate(board_json)
-        filtered_boards.append(board_api)
-
-    return jsonable_encoder({"group": group, "boards": filtered_boards})
+    return {"group": group, "boards": boards}
 
 
 @router.get("/{bo_table}",
@@ -82,12 +74,9 @@ async def api_list_post(
         request, db, bo_table, member, search_params
     )
 
-    board_json = jsonable_encoder(list_post_service.board)
-    board = ResponseBoardModel.model_validate(board_json)
-
     content = {
         "categories": list_post_service.categories,
-        "board": board,
+        "board": list_post_service.board,
         "writes": list_post_service.get_writes(search_params),
         "total_count": list_post_service.get_total_count(),
         "current_page": search_params['current_page'],
@@ -130,9 +119,8 @@ async def api_read_post(
     read_post_service.validate_read_level()
     read_post_service.check_scrap()
     read_post_service.check_is_good()
-    model_validated_content = ResponseWriteModel.model_validate(content)
     db.commit()
-    return model_validated_content
+    return content
 
 
 @router.post("/{bo_table}",
