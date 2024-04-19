@@ -6,14 +6,14 @@ from fastapi import Depends, File, Form, HTTPException, Path, Request, UploadFil
 from core.models import Member
 from lib.common import filter_words
 from lib.template_filters import number_format
-from api.v1.dependencies.board import get_current_member
+from api.v1.dependencies.member import get_current_member_optional
 from api.v1.lib.qa import QaConfigServiceAPI, QaServiceAPI
 from api.v1.models.qa import QaContentData
 
 
 def get_qa_content(
     service: Annotated[QaServiceAPI, Depends()],
-    member: Annotated[Member, Depends(get_current_member)],
+    member: Annotated[Member, Depends(get_current_member_optional)],
     qa_id: Annotated[int, Path(..., title="Q&A 아이디", description="조회할 Q&A 아이디")],
 ):
     """Q&A 정보를 조회합니다."""

@@ -3,7 +3,7 @@ from typing_extensions import Annotated, List
 from fastapi import  APIRouter, Path, Depends
 
 from core.models import Member
-from api.v1.dependencies.board import get_current_member
+from api.v1.dependencies.member import get_current_member
 from api.v1.models.ajax import (
      AutoSaveModel, ResponseAutoSaveModel, 
      ResponseAutoSaveCountModel, ResponseAutoSaveDeleteModel,
