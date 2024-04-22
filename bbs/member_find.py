@@ -5,7 +5,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Form, Path, Request
 
 from core.exception import AlertException
 from core.template import UserTemplates
-from lib.common import captcha_widget
+from lib.captcha import captcha_widget
 from lib.dependency.dependencies import validate_captcha, validate_token
 from lib.dependency.member import redirect_if_logged_in, validate_password_reset
 from lib.mail import send_password_reset_mail

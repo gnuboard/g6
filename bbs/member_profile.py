@@ -10,7 +10,7 @@ from core.exception import AlertException
 from core.formclass import UpdateMemberForm
 from core.models import Config, Member, MemberSocialProfiles
 from core.template import UserTemplates
-from lib.common import captcha_widget
+from lib.captcha import captcha_widget
 from lib.dependency.dependencies import validate_captcha, validate_token
 from lib.dependency.auth import get_login_member
 from lib.dependency.member import validate_update_data

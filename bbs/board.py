@@ -17,9 +17,8 @@ from lib.board_lib import (
     render_latest_posts, generate_reply_character, is_secret_write,
     BoardFileManager, is_owner, insert_board_new, set_write_delay
 )
-from lib.common import (
-    set_url_query_params, get_unique_id, captcha_widget, remove_query_params
-)
+from lib.captcha import captcha_widget
+from lib.common import set_url_query_params, get_unique_id, remove_query_params
 from lib.dependency.board import get_write
 from lib.dependency.dependencies import (
     check_group_access, common_search_query_params,

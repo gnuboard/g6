@@ -13,7 +13,8 @@ from core.exception import AlertException
 from core.formclass import RegisterMemberForm
 from core.models import Member
 from core.template import UserTemplates
-from lib.common import captcha_widget, session_member_key
+from lib.captcha import captcha_widget
+from lib.common import session_member_key
 from lib.dependency.dependencies import (
     validate_captcha, validate_token, no_cache_response
 )

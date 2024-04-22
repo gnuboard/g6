@@ -11,9 +11,8 @@ from core.database import DBConnect
 from core.exception import AlertException, TemplateDisabledException
 from core.models import Auth, Board, GroupMember
 from core.template import get_theme_list
-from lib.common import (
-    ENV_PATH, get_current_admin_menu_id, get_current_captcha_cls
-)
+from lib.captcha import get_current_captcha_cls
+from lib.common import ENV_PATH, get_current_admin_menu_id
 from lib.member import get_admin_type
 from lib.token import check_token
 

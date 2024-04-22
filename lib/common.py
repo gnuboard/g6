@@ -36,8 +36,6 @@ from core.models import (
     WriteBaseModel
 )
 from core.plugin import get_admin_menu_id_by_path
-from lib.captcha.recaptch_inv import ReCaptchaInvisible
-from lib.captcha.recaptch_v2 import ReCaptchaV2
 
 load_dotenv()
 
@@ -695,36 +693,6 @@ def get_newwins_except_cookie(request: Request):
 
     # "hd_pops_" + nw_id 이름으로 선언된 쿠키가 있는지 확인하고 있다면 팝업을 제거
     return [newwin for newwin in newwins if not request.cookies.get("hd_pops_" + str(newwin.nw_id))]
-
-
-def get_current_captcha_cls(config: Config):
-    """캡챠 클래스를 반환하는 함수
-    Args:
-        config (Config) : config 모델
-    Returns:
-        Optional[class]: 캡차 클래스 or None
-    """
-    captcha_name = getattr(config, "cf_captcha", "")
-    if captcha_name == "recaptcha":
-        return ReCaptchaV2
-    elif captcha_name == "recaptcha_inv":
-        return ReCaptchaInvisible
-    else:
-        return None
-
-
-def captcha_widget(request):
-    """템플릿에서 캡차 출력
-    Args:
-        request (Request): FastAPI Request
-    Returns:
-        str: 캡차 템플릿 or ''
-    """
-    cls = get_current_captcha_cls(request.state.config)
-    if cls:
-        return cls.TEMPLATE_NAME
-
-    return ''  # 템플릿 출력시 비어있을때는 빈 문자열
 
 
 def calculator_image_resize(source_width, source_height, target_width=0, target_height=0):

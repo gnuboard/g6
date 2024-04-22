@@ -1,4 +1,4 @@
-"""메뉴 관련 기능을 제공하는 서비스 모듈입니다."""
+"""메뉴 관련 기능을 제공하는 모듈입니다."""
 from cachetools import cached, LFUCache
 from sqlalchemy import func, select
 

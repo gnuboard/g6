@@ -9,11 +9,10 @@ from core.exception import AlertException
 from core.models import Auth, Member
 from core.plugin import get_all_plugin_admin_menu_id_name
 from core.template import AdminTemplates
+from lib.captcha import captcha_widget
+from lib.common import get_admin_menus, select_query, set_url_query_params
 from lib.dependency.dependencies import (
     common_search_query_params, validate_token, validate_captcha
-)
-from lib.common import (
-    captcha_widget, get_admin_menus, select_query, set_url_query_params
 )
 from lib.template_functions import get_paging
 
