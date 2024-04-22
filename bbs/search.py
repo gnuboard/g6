@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Request, Query
+"""전체검색 Template Router"""
+from typing_extensions import Annotated
+from fastapi import APIRouter, Depends, Request, Query
 
-from core.database import db_session
 from core.template import UserTemplates
 from lib.template_filters import search_font
 from service.search import SearchService
-
 
 router = APIRouter()
 templates = UserTemplates()
@@ -14,8 +14,7 @@ templates.env.filters["search_font"] = search_font
 @router.get("/search")
 async def search(
     request: Request,
-    db: db_session,
-    gr_id: str = Query(None),
+    search_service: Annotated[SearchService, Depends()],
     sfl: str = Query("wr_subject||wr_content"),
     stx: str = Query(...),
     sop: str = Query("and"),
@@ -24,10 +23,6 @@ async def search(
     """
     게시판 검색
     """
-    member = request.state.login_member
-    search_service = SearchService(
-        request, db, member, gr_id, onetable
-    )
     groups = search_service.get_groups()
     boards = search_service.get_boards()
     searched_result = search_service.search(boards, sfl, stx, sop)

@@ -1,11 +1,100 @@
 """회원 관련 기능을 제공하는 모듈입니다."""
 import math
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Tuple, Union
 
 from fastapi import Request
 
 from core.models import Board, Config, Group, Member
+
+
+class MemberDetails:
+    mb_no: int = 0
+    mb_id: str = None
+    mb_name: str = None
+    mb_nick: str = None
+    mb_email: str = None
+    mb_homepage: str = None
+    mb_level: int = 1
+    mb_tel: str = None
+    mb_hp: str = None
+    mb_certify: str = None
+    mb_adult: int = 0
+    mb_signature: str = None
+    mb_point: int = 0
+    mb_today_login: datetime = None
+    mb_login_ip: str = None
+    mb_datetime: datetime = None
+    mb_ip: str = None
+    mb_leave_date: str = None
+    mb_intercept_date: str = None
+    mb_mailling: int = 0
+    mb_sms: int = 0
+    mb_profile: int = 0
+
+    _admin_type: str = None
+
+    def __init__(self, request: Request, member: Member):
+        super().__init__()
+
+        self.request = request
+        self.config = request.state.config
+        # member의 속성을 class 속성에 복사
+        print("__init__", member)
+        if member:
+            for key, value in member.__dict__.items():
+                setattr(self, key, value)
+
+    @property
+    def level(self) -> int:
+        """회원 레벨 정보를 가져오는 프로퍼티"""
+        return int(self.mb_level) if self.mb_id else 1
+
+    @property
+    def admin_type(self) -> str:
+        """게시판 관리자 여부 확인 후 관리자 타입 반환"""
+        return self._admin_type or self.get_admin_type()
+
+    @admin_type.setter
+    def admin_type(self, value: str):
+        """게시판 관리자 여부 확인 후 관리자 타입 설정"""
+        self._admin_type = value
+
+    def get_admin_type(self, group: Group = None, board: Board = None) -> Union[str, None]:
+        """게시판 관리자 여부 확인 후 관리자 타입 반환
+        Args:
+            group (Group, optional): 게시판 그룹 정보. Defaults to None.
+            board (Board, optional): 게시판 정보. Defaults to None.
+
+        Returns:
+            Union[str, None]: 관리자 타입 (super, group, board, None)
+        """
+        if not self.mb_id:
+            return None
+
+        group = group or (board.group if board else None)
+
+        is_authority = None
+        if self.config.cf_admin == self.mb_id:
+            is_authority = "super"
+        elif group and group.gr_admin == self.mb_id:
+            is_authority = "group"
+        elif board and board.bo_admin == self.mb_id:
+            is_authority = "board"
+
+        return is_authority
+
+    def is_super_admin(self) -> bool:
+        """최고관리자 여부 확인"""
+        cf_admin = str(self.config.cf_admin).lower().strip()
+
+        if not cf_admin:
+            return False
+
+        if self.mb_id and self.mb_id.lower().strip() == cf_admin:
+            return True
+
+        return False
 
 
 def get_member_level(request: Request) -> int:

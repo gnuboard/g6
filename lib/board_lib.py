@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 import bleach
 from fastapi import Request, UploadFile
 from sqlalchemy import and_, asc, delete, desc, exists, func, insert, or_, select
-from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import Select
 
 from core.database import DBConnect
@@ -19,7 +18,7 @@ from lib.common import (
     get_admin_email_name, get_editor_image, insert_popular, mailer, make_directory,
     remove_query_params, set_url_query_params, thumbnail
 )
-from lib.member import get_admin_type, get_member_level
+from lib.member import MemberDetails, get_admin_type, get_member_level
 from lib.point import delete_point, insert_point
 
 
@@ -31,27 +30,11 @@ class BoardConfig():
         self.config = request.state.config
         self.is_mobile = request.state.is_mobile
         self.request = request
-        group = board.group if board else None
 
-        self.login_member = request.state.login_member
-        self.login_member_id = getattr(self.login_member, "mb_id", None)
-        self.login_member_level = get_member_level(request)
-        self.login_member_admin_type = get_admin_type(self.request, self.login_member_id, board=self.board)
+        self.member = MemberDetails(request, request.state.login_member)
+        self.member.admin_type = self.member.get_admin_type(board=board)
 
-    @classmethod
-    def create_by_table(cls, request: Request, db: Session, bo_table: str):
-        """게시판 테이블명으로 BoardConfig 객체를 생성한다.
-
-        Args:
-            request (Request): Request 객체
-            db (Session): DB 세션
-            bo_table (str): 게시판 테이블명
-
-        Returns:
-            BoardConfig: BoardConfig 객체
-        """
-        board = db.get(Board, bo_table)
-        return cls(request, board)
+        print(self.member, self.member.mb_id, self.member.admin_type)
 
     @property
     def gallery_width(self) -> int:
@@ -144,10 +127,10 @@ class BoardConfig():
         Returns:
             bool: 게시판에 캡차 사용 여부.
         """
-        if self.login_member_admin_type:
+        if self.member.admin_type:
             return False
 
-        if not self.login_member or self.board.bo_use_captcha:
+        if not self.member or self.board.bo_use_captcha:
             return True
 
         return False
@@ -205,7 +188,7 @@ class BoardConfig():
         Args:
             ip (str): IP 주소
         """
-        if self.login_member_admin_type:
+        if self.member.admin_type:
             return ip
 
         if self.board.bo_use_ip_view:
@@ -398,8 +381,7 @@ class BoardConfig():
         if member:
             if self.board.bo_use_name:
                 return member.mb_name
-            else:
-                return member.mb_nick
+            return member.mb_nick
         elif default_name:
             return default_name
         else:
@@ -414,10 +396,9 @@ class BoardConfig():
         Returns:
             bool: 행동 가능 여부
         """
-        if self.login_member_admin_type:
+        if self.member.admin_type:
             return True
-        else:
-            return level <= self.login_member_level
+        return level <= self.member.mb_level
 
     def _can_action_by_comment_count(self, wr_id: int, limit: int) -> bool:
         """댓글 수에 따라 행동 가능 여부를 판단한다.
@@ -430,27 +411,23 @@ class BoardConfig():
         Returns:
             bool: 수정 가능 여부
         """
-        if self.login_member_admin_type:
+        if self.member.admin_type:
             return True
 
-        db = DBConnect().sessionLocal()
-
-        write_model = dynamic_create_write_table(self.board.bo_table)
-        comment_count = db.scalar(
-            select(func.count())
-            .select_from(write_model)
-            .where(
-                write_model.wr_parent == wr_id,
-                write_model.wr_is_comment == 1
+        with DBConnect().sessionLocal() as db:
+            write_model = dynamic_create_write_table(self.board.bo_table)
+            comment_count = db.scalar(
+                select(func.count())
+                .select_from(write_model)
+                .where(
+                    write_model.wr_parent == wr_id,
+                    write_model.wr_is_comment == 1
+                )
             )
-        )
-
-        db.close()
 
         if limit and limit <= comment_count:
             return False
-        else:
-            return True
+        return True
 
     def _can_action_by_point(self, point: int, write: WriteBaseModel = None) -> bool:
         """포인트에 따라 행동 가능 여부를 판단한다.
@@ -461,15 +438,15 @@ class BoardConfig():
         Returns:
             bool: 행동 가능 여부
         """
-        member_point = getattr(self.login_member, "mb_point", 0)
+        member_point = getattr(self.member, "mb_point", 0)
 
         # 관리자 or 포인트가 0 이상이면 통과
-        if self.login_member_admin_type or point >= 0:
+        if self.member.admin_type or point >= 0:
             return True
         # 게시글 작성자 or 게시글 작성자 IP와 현재 접속 IP가 같으면 통과
-        elif write:
-            if (is_owner(write, self.login_member_id)
-                or (not self.login_member_id
+        if write:
+            if (is_owner(write, self.member.mb_id)
+                or (not self.member.mb_id
                     and self.board.bo_read_level == 1
                     and write.wr_ip == self.request.client.host)):
                 return True
@@ -485,10 +462,9 @@ class BoardConfig():
         Returns:
             int: 게시글 작성 제한 글 수.
         """
-        if self.login_member_admin_type or self.board.bo_use_dhtml_editor:
+        if self.member.admin_type or self.board.bo_use_dhtml_editor:
             return 0
-        else:
-            return limit
+        return limit
 
 
 class BoardFileManager():

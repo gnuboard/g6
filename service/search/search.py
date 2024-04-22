@@ -1,16 +1,19 @@
-from typing_extensions import List
-from fastapi import Request, HTTPException
+"""전체검색 관련 기능을 제공하는 서비스 모듈입니다."""
+from typing_extensions import Annotated, List
+from fastapi import Depends, Query, Request, HTTPException
 from sqlalchemy import select, func
 
+from api.v1.dependencies.member import get_current_member_optional
 from core.models import Member, Board, Group, GroupMember
 from core.database import db_session
 from core.exception import AlertException
-from lib.board_lib import BoardConfig, get_admin_type, write_search_filter, get_list
+from lib.board_lib import BoardConfig, write_search_filter, get_list
 from lib.common import dynamic_create_write_table
+from lib.member import MemberDetails
 from service import BaseService
 
 
-class SearchService(BaseService, BoardConfig):
+class SearchService(BaseService):
     """
     게시판 검색 서비스 클래스
     """
@@ -19,22 +22,19 @@ class SearchService(BaseService, BoardConfig):
         self,
         request: Request,
         db: db_session,
-        member: Member,
-        gr_id: str = None,
-        onetable: str = None,
+        gr_id: Annotated[str, Query()] = None,
+        onetable: Annotated[str, Query()] = None,
     ):
         self.request = request
         self.db = db
-        self.member = member
-        self.mb_id = getattr(member, "mb_id", None)
-        self.member_level = getattr(member, "mb_level") if member else 1
-        self.admin_type = get_admin_type(request, self.mb_id, group=gr_id)
-        self.login_member = self.member
-        self.login_member_id = self.mb_id
-        self.login_member_admin_type = self.admin_type
-        self.login_member_level = self.member_level
         self.gr_id = gr_id
         self.onetable = onetable
+        self.group = None
+        if gr_id:
+            self.group = self.db.get(Group, gr_id)
+
+        self.member = MemberDetails(request, request.state.login_member)
+        self.member.admin_type = self.member.get_admin_type(group=self.group)
 
     def raise_exception(self):
         raise AlertException(status_code=400, detail="검색 결과가 없습니다.")
@@ -53,7 +53,7 @@ class SearchService(BaseService, BoardConfig):
             select(Board)
             .where(
                 Board.bo_use_search == 1,
-                Board.bo_list_level <= self.member_level,
+                Board.bo_list_level <= self.member.level,
             )
             .order_by(Board.bo_order, Board.gr_id, Board.bo_table)
         )
@@ -71,12 +71,12 @@ class SearchService(BaseService, BoardConfig):
             board.subject = board_config.subject
             # 그룹접근 사용이면서 그룹관리자도 아니고 그룹회원도 아닌 경우 boards에서 제외
             group = board.group
-            if group.gr_use_access and not self.request.state.is_super_admin:
-                is_group_admin = (group.gr_admin == self.mb_id)
+            if group.gr_use_access and not self.member.is_super_admin():
+                is_group_admin = group.gr_admin == self.member.mb_id
                 group_member = self.db.scalar(
                     select(GroupMember).where(
                         GroupMember.gr_id == group.gr_id,
-                        GroupMember.mb_id == self.mb_id
+                        GroupMember.mb_id == self.member.mb_id
                     )
                 )
                 if not (is_group_admin or group_member):
@@ -85,7 +85,8 @@ class SearchService(BaseService, BoardConfig):
 
             # 게시판 별 검색 Query 설정
             write_model = dynamic_create_write_table(board.bo_table)
-            query = write_search_filter(self.request, write_model, search_field=sfl, keyword=stx, operator=sop)
+            query = write_search_filter(self.request, write_model,
+                                        search_field=sfl, keyword=stx, operator=sop)
             query = board_config.get_list_sort_query(write_model, query)
             board.search_count = self.db.scalar(query.add_columns(func.count()).order_by(None))
 
@@ -115,13 +116,24 @@ class SearchService(BaseService, BoardConfig):
             boards.remove(board)
 
         return {"total_search_count": total_search_count, "boards": boards}
-    
+
 
 class SearchServiceAPI(SearchService):
     """
     API 요청에 사용되는 게시판 검색 클래스.
     - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
     """
+    def __init__(
+        self,
+        request: Request,
+        db: db_session,
+        member: Annotated[Member, Depends(get_current_member_optional)],
+        gr_id: str = None,
+        onetable: str = None,
+    ):
+        super().__init__(request, db, gr_id, onetable)
+        self.member = MemberDetails(request, member)
+        self.member.admin_type = self.member.get_admin_type(group=self.group)
 
     def raise_exception(self):
         raise HTTPException(status_code=400, detail="검색 결과가 없습니다.")

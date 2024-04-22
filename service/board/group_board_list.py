@@ -29,10 +29,6 @@ class GroupBoardListService(BoardService):
         self.mb_id = getattr(member, "mb_id", None)
         self.member_level = getattr(member, "mb_level") if member else 1
         self.admin_type = get_admin_type(request, self.mb_id, group=self.group)
-        self.login_member = self.member
-        self.login_member_id = self.mb_id
-        self.login_member_admin_type = self.admin_type
-        self.login_member_level = self.member_level
 
     def get_group(self) -> Group:
         """게시판 그룹 정보 조회"""

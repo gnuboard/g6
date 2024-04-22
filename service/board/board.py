@@ -30,10 +30,6 @@ class BoardService(BaseService, BoardConfig):
         self.mb_id = getattr(member, "mb_id", None)
         self.member_level = getattr(member, "mb_level") if member else 1
         self.admin_type = get_admin_type(request, self.mb_id, board=self.board)
-        self.login_member = self.member
-        self.login_member_id = self.mb_id
-        self.login_member_admin_type = self.admin_type
-        self.login_member_level = self.member_level
 
     def raise_exception(self, status_code: int, detail: str = None, url: str = None):
         raise AlertException(status_code=status_code, detail=detail, url=url)
