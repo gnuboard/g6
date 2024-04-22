@@ -12,7 +12,7 @@ from core.formclass import BoardForm
 from core.template import AdminTemplates
 from lib.common import (
     dynamic_create_write_table, FileCache, get_from_list,
-    is_integer_format, select_query, set_url_query_params
+    safe_int_convert, select_query, set_url_query_params
 )
 from lib.board_lib import BoardFileManager
 from lib.dependency.board import get_board
@@ -93,14 +93,10 @@ async def board_list_update(
             board.bo_skin = bo_skin[i]
             board.bo_mobile_skin = bo_mobile_skin[i]
             board.bo_subject = bo_subject[i]
-            board.bo_read_point = int(
-                bo_read_point[i]) if bo_read_point[i] is not None and is_integer_format(bo_read_point[i]) else 0
-            board.bo_write_point = int(
-                bo_write_point[i]) if bo_write_point[i] is not None and is_integer_format(bo_write_point[i]) else 0
-            board.bo_comment_point = int(
-                bo_comment_point[i]) if bo_comment_point[i] is not None and is_integer_format(bo_comment_point[i]) else 0
-            board.bo_download_point = int(
-                bo_download_point[i]) if bo_download_point[i] is not None and is_integer_format(bo_download_point[i]) else 0
+            board.bo_read_point = safe_int_convert(bo_read_point[i])
+            board.bo_write_point = safe_int_convert(bo_write_point[i])
+            board.bo_comment_point = safe_int_convert(bo_comment_point[i])
+            board.bo_download_point = safe_int_convert(bo_download_point[i])
             board.bo_use_sns = get_from_list(bo_use_sns, i, 0)
             board.bo_use_search = get_from_list(bo_use_search, i, 0)
             board.bo_order = int(

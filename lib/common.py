@@ -29,12 +29,11 @@ from sqlalchemy import (
 )
 from sqlalchemy.exc import IntegrityError
 from starlette.datastructures import URL
-from user_agents import parse
 
 from core.database import DBConnect, db_session, MySQLCharsetMixin
 from core.models import (
-    BoardNew, Config, Login, Member, Memo, NewWin, Popular,
-    UniqId, Visit, VisitSum, WriteBaseModel
+    BoardNew, Config, Login, Member, Memo, NewWin, Popular, UniqId, Visit,
+    WriteBaseModel
 )
 from core.plugin import get_admin_menu_id_by_path
 from lib.captcha.recaptch_inv import ReCaptchaInvisible
@@ -1150,12 +1149,12 @@ def get_current_login_count(request: Request) -> tuple:
         return result.login, result.member
 
 
-def is_integer_format(s):
-    if not s:
-        return False
-    if s[0] == "-":
-        s = s[1:]
-    return s.isdigit()
+def safe_int_convert(string: str) -> int:
+    """안전한 int 변환 함수"""
+    try:
+        return int(string)
+    except (ValueError, TypeError):
+        return 0
 
 
 def get_paging_info(current_page: int, records_per_page: int, total_records: int) -> dict:
