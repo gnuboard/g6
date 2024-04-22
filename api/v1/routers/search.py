@@ -31,21 +31,8 @@ async def api_search(
     total_search_count = searched_result["total_search_count"]
     boards = searched_result["boards"]
 
-    # board 및 write에 대해 지정해준 API 속성만 필터링
-    filtered_boards = []
-    for board in boards:
-        board_json = jsonable_encoder(board)
-        board_json_writes = board_json["writes"]
-        filtered_writes = []
-        for write in board_json_writes:
-            write_api = ResponseWriteSearchModel.model_validate(write)
-            filtered_writes.append(write_api)
-        board_api = dict(ResponseBoardModel.model_validate(board_json))
-        board_api["writes"] = filtered_writes
-        filtered_boards.append(board_api)
-
     return {
         "onetable": onetable,
         "total_search_count": total_search_count,
-        "boards": filtered_boards,
+        "boards": boards,
     }

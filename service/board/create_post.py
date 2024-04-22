@@ -140,10 +140,10 @@ class CreatePostService(BoardService):
 
     def upload_files(self, write: WriteBaseModel, files: List[UploadFile], file_content: list = None, file_dels: list = None):
         """파일 업로드"""
+        files = [file for file in files if file.size]
         if not files:
             return
-
-        if self.mb_id != write.mb_id:
+        if self.mb_id and self.mb_id != write.mb_id:
             self.raise_exception(status_code=403, detail="자신의 글에만 파일을 업로드할 수 있습니다.")
 
         if not self.is_upload_level():
