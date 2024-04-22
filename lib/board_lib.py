@@ -15,11 +15,12 @@ from core.models import Board, BoardFile, BoardNew, Member, Scrap, WriteBaseMode
 from core.template import UserTemplates
 from lib.common import (
     FileCache, StringEncrypt, cut_name, dynamic_create_write_table, get_admin_email,
-    get_admin_email_name, get_editor_image, insert_popular, mailer, make_directory,
+    get_admin_email_name, get_editor_image, mailer, make_directory,
     remove_query_params, set_url_query_params, thumbnail
 )
 from lib.member import MemberDetails, get_admin_type, get_member_level
 from lib.point import delete_point, insert_point
+from service.popular_service import PopularService
 
 
 class BoardConfig():
@@ -821,53 +822,55 @@ def write_search_filter(
     Returns:
         Select: 필터가 적용된 쿼리.
     """
-    fields = []
-    is_comment = False
+    with DBConnect().sessionLocal() as db:
+        fields = []
+        is_comment = False
 
-    query = select()
-    # 분류
-    if category:
-        query = query.where(model.ca_name == category)
+        query = select()
+        # 분류
+        if category:
+            query = query.where(model.ca_name == category)
 
-    # 검색 필드 및 단어 설정
-    # 검색어를 단어로 분리하여 operator에 따라 필터를 생성
-    word_filters = []
-    words = keyword.split(" ")
-    if search_field:
-        # search_field는 {필드명},{코멘트여부} 형식으로 전달됨 (0:댓글, 1:게시글)
-        tmp = search_field.split(",")
-        fields = tmp[0].split("||")
-        is_comment = (tmp[1] == "0") if len(tmp) > 1 else False
+        # 검색 필드 및 단어 설정
+        # 검색어를 단어로 분리하여 operator에 따라 필터를 생성
+        word_filters = []
+        words = keyword.split(" ")
+        if search_field:
+            # search_field는 {필드명},{코멘트여부} 형식으로 전달됨 (0:댓글, 1:게시글)
+            tmp = search_field.split(",")
+            fields = tmp[0].split("||")
+            is_comment = (tmp[1] == "0") if len(tmp) > 1 else False
 
-        # 패스워드 필드 제거
-        if "wr_password" in fields:
-            fields.remove("wr_password")
+            # 패스워드 필드 제거
+            if "wr_password" in fields:
+                fields.remove("wr_password")
 
-        # 필드검색 필터 생성 (or 조건)
-        for word in words:
-            if not word.strip():
-                continue
-            word_filters.append(or_(
-                *[getattr(model, field).like(f"%{word}%") for field in fields if hasattr(model, field)]))
+            # 필드검색 필터 생성 (or 조건)
+            for word in words:
+                if not word.strip():
+                    continue
+                word_filters.append(or_(
+                    *[getattr(model, field).like(f"%{word}%") for field in fields if hasattr(model, field)]))
 
-            # 단어별 인기검색어 등록
-            insert_popular(request, fields, word)
+                # 단어별 인기검색어 등록
+                # TODO: 전체 검색 > 게시판 마다 검색어가 반복 등록되므로 외부 로직으로 분리 필요
+                popular_service = PopularService(db)
+                popular_service.create_popular(request, fields, word)
 
-    # 분리된 단어 별 검색필터에 or 또는 and를 적용
-    if operator == "and":
-        query = query.where(and_(*word_filters))
-    else:
-        query = query.where(or_(*word_filters))
+        # 분리된 단어 별 검색필터에 or 또는 and를 적용
+        if operator == "and":
+            query = query.where(and_(*word_filters))
+        else:
+            query = query.where(or_(*word_filters))
 
-    # 댓글 검색
-    if is_comment:
-        query = query.where(model.wr_is_comment == 1)
-        # 원글만 조회해야하므로, wr_parent 목록을 가져와서 in조건으로 재필터링
-        with DBConnect().sessionLocal() as db:
+        # 댓글 검색
+        if is_comment:
+            query = query.where(model.wr_is_comment == 1)
+            # 원글만 조회해야하므로, wr_parent 목록을 가져와서 in조건으로 재필터링
             parents = db.scalars(query.add_columns(model)).all()
-        query = select().where(model.wr_id.in_([row.wr_parent for row in parents]))
+            query = select().where(model.wr_id.in_([row.wr_parent for row in parents]))
 
-    return query
+        return query
 
 
 def get_next_num(bo_table: str) -> int:

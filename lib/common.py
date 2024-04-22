@@ -17,25 +17,24 @@ from time import sleep
 from typing import Any, List, Optional, Union
 
 import httpx
-from cachetools import TTLCache, cached
 from dotenv import load_dotenv
 from fastapi import Request, UploadFile
 from markupsafe import Markup, escape
 from passlib.context import CryptContext
 from PIL import Image, ImageOps, UnidentifiedImageError
 from sqlalchemy import (
-    Index, asc, case, cast, delete, desc, exists, func, select,
-    String, DateTime
+    Index, asc, case, cast, delete, desc, func, select, String, DateTime
 )
 from sqlalchemy.exc import IntegrityError
 from starlette.datastructures import URL
 
 from core.database import DBConnect, db_session, MySQLCharsetMixin
 from core.models import (
-    BoardNew, Config, Login, Member, Memo, Popular, UniqId, Visit,
+    BoardNew, Config, Login, Member, Memo, UniqId, Visit,
     WriteBaseModel
 )
 from core.plugin import get_admin_menu_id_by_path
+
 
 load_dotenv()
 
@@ -324,70 +323,6 @@ def nl2br(value) -> str:
     """ \n 을 <br> 태그로 변환
     """
     return escape(value).replace('\n', Markup('<br>\n'))
-
-
-@cached(TTLCache(maxsize=10, ttl=300))
-def get_populars(limit: int = 10, day: int = 3):
-    """인기검색어 조회
-
-    Args:
-        limit (int, optional): 조회 갯수. Defaults to 7.
-        day (int, optional): 오늘부터 {day}일 전. Defaults to 3.
-
-    Returns:
-        List[Popular]: 인기검색어 리스트
-    """
-    db = DBConnect().sessionLocal()
-    # 현재 날짜와 day일 전 날짜 사이의 인기검색어를 조회한다.
-    today = datetime.now()
-    before_day = today - timedelta(days=day)
-    populars = db.execute(
-        select(Popular.pp_word, func.count(Popular.pp_word).label('count'))
-        .where(
-            Popular.pp_word != '',
-            Popular.pp_date >= before_day,
-            Popular.pp_date <= today
-        )
-        .group_by(Popular.pp_word)
-        .order_by(desc('count'), Popular.pp_word)
-        .limit(limit)
-    ).all()
-    db.close()
-
-    return populars
-
-
-def insert_popular(request: Request, fields: str, word: str):
-    """인기검색어 등록
-
-    Args:
-        request (Request): FastAPI Request 객체
-        fields (str): 검색 필드
-        word (str): 인기검색어
-    """
-    try:
-        today_date = datetime.now()
-        # 회원아이디로 검색은 제외
-        if not "mb_id" in fields:
-            with DBConnect().sessionLocal() as db:
-                # 현재 날짜의 인기검색어를 조회한다.
-                exists_popular = db.scalar(
-                    exists(Popular)
-                    .where(
-                        Popular.pp_word == word,
-                        Popular.pp_date == today_date.strftime("%Y-%m-%d")
-                    ).select()
-                )
-                # 인기검색어가 없으면 새로 등록한다.
-                if not exists_popular:
-                    popular = Popular(
-                        pp_word=word,
-                        pp_date=today_date,
-                        pp_ip=get_client_ip(request))
-                    db.add(popular)
-                    db.commit()
-    except Exception as e:
-        print(f"인기검색어 입력 오류: {e}")
 
 
 def get_unique_id(request) -> Optional[str]:
@@ -846,11 +781,13 @@ def delete_old_records():
 
         # 인기검색어 삭제
         if config.cf_popular_del > 0:
+            from service.popular_service import PopularService
+
             base_date = today - timedelta(days=config.cf_popular_del)
-            result = db.execute(
-                delete(Popular).where(Popular.pp_date < base_date)
-            )
-            print("인기검색어 삭제 기준일 : ", base_date, f"{result.rowcount}건 삭제")
+            popular_service = PopularService(db)
+            delete_count = popular_service.delete_populars(base_date.date())
+
+            print("인기검색어 삭제 기준일 : ", base_date, f"{delete_count}건 삭제")
 
         # 최근게시물 삭제
         if config.cf_new_del > 0:

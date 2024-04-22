@@ -19,10 +19,11 @@ from core.plugin import (
 )
 from lib.common import (
     EDITOR_PATH, CAPTCHA_PATH, get_current_login_count, read_version,
-    get_admin_menus, get_populars
+    get_admin_menus
 )
 from lib.menu import get_menus
 from lib.poll import get_latest_poll
+from lib.popular import get_populars
 from lib.visit import get_total_visit
 from lib.template_filters import datetime_format, number_format, set_query_params
 from lib.template_functions import (

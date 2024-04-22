@@ -10,8 +10,9 @@ from sqlalchemy.orm import aliased
 from core.database import db_session
 from core.models import Popular
 from core.template import AdminTemplates
-from lib.common import get_populars, select_query, set_url_query_params
+from lib.common import select_query, set_url_query_params
 from lib.dependency.dependencies import common_search_query_params, validate_token
+from lib.popular import get_populars
 from lib.template_functions import get_paging
 
 router = APIRouter()
