@@ -9,8 +9,8 @@ from core.exception import AlertException
 from core.formclass import NewwinForm
 from core.models import NewWin
 from core.template import AdminTemplates
-from lib.common import get_newwins
 from lib.dependency.dependencies import validate_token
+from lib.newwin import get_newwins
 
 router = APIRouter()
 templates = AdminTemplates()

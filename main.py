@@ -23,11 +23,12 @@ from core.plugin import (
 from core.routers import router as template_router
 from core.template import TemplateService, UserTemplates, register_theme_statics
 from lib.common import (
-    ENV_PATH, get_client_ip, get_newwins_except_cookie, is_intercept_ip,
-    is_possible_ip, session_member_key,
+    ENV_PATH, get_client_ip, is_intercept_ip, is_possible_ip,
+    session_member_key
 )
 from lib.dependency.dependencies import check_use_template
 from lib.member import is_super_admin
+from lib.newwin import get_newwins_except_cookie
 from lib.point import insert_point
 from lib.scheduler import scheduler
 from lib.template_filters import default_if_none

@@ -41,6 +41,7 @@ class Tags(Enum):
     MEMBER = "회원"
     MEMO = "쪽지"
     MENU = "메뉴"
+    NEWWIN = "레이어팝업"
     POINT = "포인트"
     POLL = "설문조사"
     QA = "Q&A"
