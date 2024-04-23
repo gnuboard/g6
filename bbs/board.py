@@ -401,15 +401,9 @@ async def update_post(
 
 @router.get("/{bo_table}/{wr_id}", dependencies=[Depends(check_group_access)])
 async def read_post(
-    request: Request,
-    db: db_session,
-    write: Annotated[WriteBaseModel, Depends(get_write)],
-    member: Annotated[Member, Depends(get_login_member_optional)],
-    bo_table: str = Path(...),
-    wr_id: int = Path(...),
+    read_post_service: Annotated[ReadPostService, Depends()],
 ):
     """게시글을 읽는다."""
-    read_post_service = ReadPostService(request, db, bo_table, wr_id, member)
     board = read_post_service.board
     read_post_service.request.state.editor = read_post_service.select_editor
     read_post_service.validate_secret_with_session()
@@ -419,11 +413,11 @@ async def read_post(
     read_post_service.check_scrap()
     read_post_service.check_is_good()
     prev, next = read_post_service.get_prev_next()
-    db.commit()
+    read_post_service.db.commit()
     context = {
         "request": read_post_service.request,
         "board": board,
-        "write": write,
+        "write": read_post_service.write,
         "write_list": read_post_service.write_list,
         "prev": prev,
         "next": next,
