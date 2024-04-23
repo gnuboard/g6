@@ -1,5 +1,5 @@
-from typing_extensions import Union
-from fastapi import Request, HTTPException
+from typing_extensions import Union, Annotated
+from fastapi import Request, HTTPException, Path
 from sqlalchemy import update, select, func
 
 from core.database import db_session
@@ -22,16 +22,15 @@ class UpdatePostService(CreatePostService):
         self,
         request: Request,
         db: db_session,
-        bo_table: str,
-        member: Member,
-        wr_id: str,
+        bo_table: Annotated[str, Path(...)],
+        wr_id: Annotated[str, Path(...)],
     ):
-        super().__init__(request, db, bo_table, member)
+        super().__init__(request, db, bo_table)
         self.wr_id = wr_id
 
     def validate_author(self, write: WriteBaseModel, wr_password: str = None):
         """작성자 확인"""
-        if not is_owner(write, self.mb_id) and not validate_password(wr_password, write.wr_password):
+        if not is_owner(write, self.member.mb_id) and not validate_password(wr_password, write.wr_password):
             self.raise_exception(detail="작성자만 수정할 수 있습니다.", status_code=403)
 
     def validate_restrict_comment_count(self):

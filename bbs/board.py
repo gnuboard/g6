@@ -23,7 +23,6 @@ from lib.dependency.board import get_write
 from lib.dependency.dependencies import (
     check_group_access, validate_captcha, validate_token
 )
-from lib.dependency.auth import get_login_member_optional
 from lib.template_functions import get_paging
 from service.board import (
     ListPostService, CreatePostService, ReadPostService,
@@ -231,18 +230,14 @@ async def write_form_add(
 
 @router.get("/write/{bo_table}/{wr_id}", dependencies=[Depends(check_group_access)])
 async def write_form_edit(
-    request: Request,
-    db: db_session,
-    bo_table: str = Path(...),
-    wr_id: int = Path(...)
+    update_post_service: Annotated[UpdatePostService, Depends()],
 ):
     """
     게시글을 작성하는 form을 보여준다.
     """
-    update_post_service = UpdatePostService(
-        request, db, bo_table, request.state.login_member, wr_id,
-    )
-
+    request = update_post_service.request
+    bo_table = update_post_service.bo_table
+    wr_id = update_post_service.wr_id
     board = update_post_service.board
     write = update_post_service.get_write(wr_id)
 
@@ -251,7 +246,7 @@ async def write_form_edit(
     update_post_service.validate_restrict_comment_count()
 
     # 게시판 관리자 확인
-    admin_type = update_post_service.admin_type
+    admin_type = update_post_service.member.admin_type
     if not admin_type:
         # 익명 글
         if not write.mb_id:
@@ -261,7 +256,7 @@ async def write_form_edit(
                 return RedirectResponse(
                     set_url_query_params(url, query_params), status_code=303)
         # 회원 글
-        elif write.mb_id and not is_owner(write, update_post_service.mb_id):
+        elif write.mb_id and not is_owner(write, update_post_service.member.mb_id):
             raise AlertException("본인 글만 수정할 수 있습니다.", 403)
 
     # 게시판 제목 설정
@@ -348,11 +343,7 @@ async def create_post(
 
 @router.post("/write_update/{bo_table}/{wr_id}", dependencies=[Depends(validate_token), Depends(check_group_access)])
 async def update_post(
-    request: Request,
-    db: db_session,
-    member: Annotated[Member, Depends(get_login_member_optional)],
-    bo_table: str = Path(...),
-    wr_id: str = Path(...),
+    update_post_service: Annotated[UpdatePostService, Depends()],
     notice: bool = Form(False),
     secret: str = Form(""),
     html: str = Form(""),
@@ -364,10 +355,8 @@ async def update_post(
     file_dels: list = Form(None, alias="bf_file_del[]"),
 ):
     """게시글을 수정한다."""
-    update_post_service = UpdatePostService(
-        request, db, bo_table, member, wr_id,
-    )
-    write = get_write(db, bo_table, wr_id)
+    wr_id = update_post_service.wr_id
+    write = update_post_service.get_write(wr_id)
     update_post_service.validate_author(write, form_data.wr_password)
     update_post_service.validate_restrict_comment_count()
     update_post_service.validate_secret_board(secret, html, mail)
@@ -376,13 +365,13 @@ async def update_post(
     update_post_service.arrange_data(form_data, secret, html, mail)
     update_post_service.save_secret_session(wr_id, secret)
     update_post_service.save_write(write, form_data)
-    update_post_service.set_notice(write.wr_id, notice)
+    update_post_service.set_notice(wr_id, notice)
     update_post_service.delete_auto_save(uid)
     update_post_service.upload_files(write, files, file_content, file_dels)
     update_post_service.update_children_category(form_data)
     update_post_service.delete_cache()
     redirect_url = update_post_service.get_redirect_url(write)
-    db.commit()
+    update_post_service.db.commit()
 
     return RedirectResponse(redirect_url, status_code=303)
 
