@@ -15,12 +15,12 @@ from core.models import Board, BoardFile, BoardNew, Member, Scrap, WriteBaseMode
 from core.template import UserTemplates
 from lib.common import (
     FileCache, StringEncrypt, cut_name, dynamic_create_write_table, get_admin_email,
-    get_admin_email_name, get_editor_image, mailer, make_directory,
+    get_admin_email_name, get_editor_image, make_directory,
     remove_query_params, set_url_query_params, thumbnail
 )
+from lib.mail import mailer
 from lib.member import MemberDetails, get_admin_type, get_member_level
 from lib.point import delete_point, insert_point
-from service.popular_service import PopularService
 
 
 class BoardConfig():

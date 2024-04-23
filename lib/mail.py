@@ -4,14 +4,80 @@ TODO: common.py에 있는 메일 관련 함수들을 이곳으로 이동
 
 - background에서 Session 공유 문제로 인해 DBConnect().sessionLocal()을 사용함
 """
+import os
+import smtplib
 from datetime import datetime
+from email.header import Header
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import formataddr
+
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
 from core.database import DBConnect
 from core.models import Config, Member, PollEtc, QaConfig, QaContent
 from core.template import TemplateService
-from lib.common import cut_name, get_admin_email, get_admin_email_name, mailer
+from lib.common import cut_name, get_admin_email, get_admin_email_name
+
+SMTP_SERVER = os.getenv("SMTP_SERVER", "localhost")
+SMTP_PORT = int(os.getenv("SMTP_PORT", 25))
+SMTP_USERNAME = os.getenv("SMTP_USERNAME")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+
+
+def mailer(from_email: str, to_email: str, subject: str, body: str,
+           from_name: str = None, to_name: str = None) -> None:
+    """메일 발송 함수
+
+    Args:
+        from_email (str): 보내는 사람 이메일
+        email (str): 받는 사람 이메일 (,로 구분하여 여러명에게 보낼 수 있음)
+        subject (str): 제목
+        body (str): 내용
+        from_name (str, optional): 보내는 사람 이름. Defaults to None.
+        to_name (str, optional): 받는 사람 이름. Defaults to None.
+
+    Raises:
+        SMTPAuthenticationError: SMTP 인증정보가 잘못되었을 때
+        SMTPServerDisconnected: SMTP 서버에 연결하지 못했거나 연결이 끊어졌을 때
+        SMTPException: 메일을 보내는 중에 오류가 발생했을 때
+        Exception: 기타 오류
+    """
+    try:
+        # Daum, Naver 메일은 SMTP_SSL을 사용합니다.
+        if SMTP_PORT == 465:
+            server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, timeout=10)
+        else: # port: 587
+            server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=10)
+            server.starttls()
+
+        if SMTP_USERNAME and SMTP_PASSWORD:
+            server.login(SMTP_USERNAME, SMTP_PASSWORD)
+
+        msg = MIMEMultipart()
+        msg['From'] = formataddr((str(Header(from_name, 'utf-8')), from_email))
+        msg['To'] = formataddr((str(Header(to_name, 'utf-8')), to_email))
+        msg['Subject'] = subject
+        # Assuming body is HTML, if not change 'html' to 'plain'
+        msg.attach(MIMEText(body, 'html'))
+
+        server.sendmail(from_email, to_email, msg.as_string())
+
+    except smtplib.SMTPAuthenticationError as e:
+        print(f"SMTP 인증정보가 잘못되었습니다. {e}")
+    except smtplib.SMTPServerDisconnected as e:
+        print(f"SMTP 서버에 연결하지 못했거나 연결이 끊어졌습니다. {e}")
+    except smtplib.SMTPException as e:
+        print(f"메일을 보내는 중에 오류가 발생했습니다. {e}")
+    except Exception as e:
+        print(e)
+    finally:
+        try:
+            server.quit()
+        except Exception as e:
+            pass
+
 
 
 def send_password_reset_mail(request: Request, member: Member) -> None:

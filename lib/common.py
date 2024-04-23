@@ -7,12 +7,7 @@ import os
 import random
 import re
 import shutil
-import smtplib
 from datetime import date, datetime, timedelta
-from email.header import Header
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.utils import formataddr
 from time import sleep
 from typing import Any, List, Optional, Union
 
@@ -20,7 +15,6 @@ import httpx
 from dotenv import load_dotenv
 from fastapi import Request, UploadFile
 from markupsafe import Markup, escape
-from passlib.context import CryptContext
 from PIL import Image, ImageOps, UnidentifiedImageError
 from sqlalchemy import (
     Index, asc, cast, delete, desc, func, select, String, DateTime
@@ -41,21 +35,6 @@ ENV_PATH = ".env"
 CAPTCHA_PATH = "lib/captcha/templates"
 EDITOR_PATH = "lib/editor/templates"
 
-
-def hash_password(password: str):
-    '''
-    비밀번호를 해시화하여 반환하는 함수
-    '''
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    return pwd_context.hash(password)
-
-
-def verify_password(plain_password, hashed_passwd):
-    '''
-    입력한 비밀번호와 해시화된 비밀번호를 비교하여 일치 여부를 반환하는 함수
-    '''
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    return pwd_context.verify(plain_password, hashed_passwd)
 
 # 동적 모델 캐싱: 모델이 이미 생성되었는지 확인하고, 생성되지 않았을 경우에만 새로 생성하는 방법입니다.
 # 이를 위해 간단한 전역 딕셔너리를 사용하여 이미 생성된 모델을 추적할 수 있습니다.
@@ -96,7 +75,7 @@ def dynamic_create_write_table(
         }
     )
     # 게시판 추가시 한번만 테이블 생성
-    if (create_table):
+    if create_table:
         DynamicModel.__table__.create(bind=db_connect.engine, checkfirst=True)
     # 생성된 모델 캐싱
     _created_models[table_name] = DynamicModel
@@ -107,7 +86,10 @@ def session_member_key(request: Request, member: Member):
     '''
     세션에 저장할 회원의 고유키를 생성하여 반환하는 함수
     '''
-    ss_mb_key = hashlib.md5((member.mb_datetime.strftime(format="%Y-%m-%d %H:%M:%S") + get_client_ip(request) + request.headers.get('User-Agent')).encode()).hexdigest()
+    ss_mb_key = hashlib.md5(
+        (member.mb_datetime.strftime(format="%Y-%m-%d %H:%M:%S")
+         + get_client_ip(request)
+         + request.headers.get('User-Agent')).encode()).hexdigest()
     return ss_mb_key
 
 
@@ -193,15 +175,15 @@ def make_directory(directory: str):
         os.makedirs(directory)
 
 
-def delete_image(directory: str, filename: str, delete: bool = True):
+def delete_image(directory: str, filename: str, is_delete: bool = True):
     """이미지 삭제 처리 함수
 
     Args:
         directory (str): 경로
         filename (str): 파일이름
-        delete (bool): 삭제여부. Defaults to True.
+        is_delete (bool): 삭제여부. Defaults to True.
     """
-    if delete:
+    if is_delete:
         file_path = f"{directory}/{filename}"
         if os.path.exists(file_path):
             os.remove(file_path)
@@ -228,17 +210,6 @@ def get_from_list(lst, index, default=0):
         return 1 if index in lst else default
     except (TypeError, IndexError):
         return default
-
-
-def extract_browser(user_agent):
-    # 사용자 에이전트 문자열에서 브라우저 정보 추출
-    # 여기에 필요한 정규 표현식 또는 분석 로직을 추가
-    # 예를 들어, 단순히 "Mozilla/5.0" 문자열을 추출하는 예제
-    browser_match = re.search(r"Mozilla/5.0", user_agent)
-    if browser_match:
-        return "Mozilla/5.0"
-    else:
-        return "Unknown"
 
 
 def select_query(request: Request, db: db_session, table_model, search_params: dict,
@@ -357,45 +328,6 @@ def get_unique_id(request) -> Optional[str]:
                 return None
 
 
-def upload_file(upload_object, filename, path, chunck_size: int = None):
-    """폼 파일 업로드
-    Args:
-        upload_object : form 업로드할 파일객체
-        filename (str): 확장자 포함 저장할 파일명 (with ext)
-        path (str): 저장할 경로
-        chunck_size (int, optional): 파일 저장 단위. 기본값 1MB 로 지정
-    Returns:
-        str: 저장된 파일명
-    """
-    # 파일 저장 경로 생성
-    os.makedirs(path, exist_ok=True)
-
-    # 파일 저장 경로
-    save_path = os.path.join(path, filename)
-    # 파일 저장
-    if chunck_size is None:
-        chunck_size = 1024 * 1024
-        with open(f"{save_path}", "wb") as buffer:
-            shutil.copyfileobj(upload_object.file, buffer, chunck_size)
-    else:
-        with open(f"{save_path}", "wb") as buffer:
-            shutil.copyfileobj(upload_object.file, buffer)
-
-
-def get_filetime_str(file_path) -> Union[int, str]:
-    """파일의 변경시간
-    Args:
-        file_path (str): 파일 이름포함 경로
-    Returns:
-        Union[int, str]: 파일 변경시간, 파일없을시 빈문자열
-    """
-    try:
-        file_time = os.path.getmtime(file_path)
-        return int(file_time)
-    except FileNotFoundError:
-        return ''
-
-
 class StringEncrypt:
     def __init__(self, salt=''):
         if not salt:
@@ -501,65 +433,6 @@ class FileCache():
         for file in os.listdir(self.cache_dir):
             if file.startswith(prefix):
                 os.remove(os.path.join(self.cache_dir, file))
-
-
-SMTP_SERVER = os.getenv("SMTP_SERVER", "localhost")
-SMTP_PORT = int(os.getenv("SMTP_PORT", 25))
-SMTP_USERNAME = os.getenv("SMTP_USERNAME")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-
-
-def mailer(from_email: str, to_email: str, subject: str, body: str,
-           from_name: str = None, to_name: str = None) -> None:
-    """메일 발송 함수
-
-    Args:
-        from_email (str): 보내는 사람 이메일
-        email (str): 받는 사람 이메일 (,로 구분하여 여러명에게 보낼 수 있음)
-        subject (str): 제목
-        body (str): 내용
-        from_name (str, optional): 보내는 사람 이름. Defaults to None.
-        to_name (str, optional): 받는 사람 이름. Defaults to None.
-
-    Raises:
-        SMTPAuthenticationError: SMTP 인증정보가 잘못되었을 때
-        SMTPServerDisconnected: SMTP 서버에 연결하지 못했거나 연결이 끊어졌을 때
-        SMTPException: 메일을 보내는 중에 오류가 발생했을 때
-        Exception: 기타 오류
-    """
-    try:
-        # Daum, Naver 메일은 SMTP_SSL을 사용합니다.
-        if SMTP_PORT == 465:
-            server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, timeout=10)
-        else: # port: 587
-            server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=10)
-            server.starttls()
-
-        if SMTP_USERNAME and SMTP_PASSWORD:
-            server.login(SMTP_USERNAME, SMTP_PASSWORD)
-
-        msg = MIMEMultipart()
-        msg['From'] = formataddr((str(Header(from_name, 'utf-8')), from_email))
-        msg['To'] = formataddr((str(Header(to_name, 'utf-8')), to_email))
-        msg['Subject'] = subject
-        # Assuming body is HTML, if not change 'html' to 'plain'
-        msg.attach(MIMEText(body, 'html'))
-
-        server.sendmail(from_email, to_email, msg.as_string())
-
-    except smtplib.SMTPAuthenticationError as e:
-        print(f"SMTP 인증정보가 잘못되었습니다. {e}")
-    except smtplib.SMTPServerDisconnected as e:
-        print(f"SMTP 서버에 연결하지 못했거나 연결이 끊어졌습니다. {e}")
-    except smtplib.SMTPException as e:
-        print(f"메일을 보내는 중에 오류가 발생했습니다. {e}")
-    except Exception as e:
-        print(e)
-    finally:
-        try:
-            server.quit()
-        except Exception as e:
-            pass
 
 
 def get_admin_email(request: Request):
@@ -722,6 +595,7 @@ def get_editor_image(contents: str, view: bool = True) -> list:
     matches = pattern.findall(contents)
 
     return matches
+
 
 def extract_alt_attribute(img_tag: str) -> str:
     """alt 속성 추출

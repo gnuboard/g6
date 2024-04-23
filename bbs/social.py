@@ -18,7 +18,8 @@ from core.exception import AlertException
 from core.formclass import MemberForm
 from core.models import Config, Member, MemberSocialProfiles
 from core.template import UserTemplates
-from lib.common import get_admin_email, get_admin_email_name, mailer, session_member_key
+from lib.common import get_admin_email, get_admin_email_name, session_member_key
+from lib.mail import mailer
 from lib.pbkdf2 import create_hash
 from lib.point import insert_point
 from lib.social import providers

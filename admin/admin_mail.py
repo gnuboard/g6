@@ -14,8 +14,9 @@ from core.exception import AlertException
 from core.database import db_connect
 from core.models import Group, Mail, Member
 from core.template import AdminTemplates
-from lib.common import mailer, get_admin_email, get_admin_email_name, select_query
+from lib.common import get_admin_email, get_admin_email_name, select_query
 from lib.dependency.dependencies import common_search_query_params, validate_token
+from lib.mail import mailer
 from lib.template_functions import get_group_select, get_paging
 
 router = APIRouter()
