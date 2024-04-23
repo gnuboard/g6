@@ -9,7 +9,7 @@ from .read_post import (
     DownloadFileServiceAPI
 )
 from .update_post import (
-    UpdatePostService, UpdatePostServiceAPI, CommentService,
+    UpdatePostService, CommentService,
     CommentServiceAPI
 )
 from .delete_post import (

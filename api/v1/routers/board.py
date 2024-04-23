@@ -19,10 +19,10 @@ from api.v1.models.board import (
 )
 from api.v1.lib.board import (
     GroupBoardListServiceAPI, ListPostServiceAPI, ReadPostServiceAPI,
-    CreatePostServiceAPI
+    CreatePostServiceAPI, UpdatePostServiceAPI
 )
 from service.board import(
-    UpdatePostServiceAPI, DeletePostServiceAPI,
+    DeletePostServiceAPI,
     CommentServiceAPI, DeleteCommentServiceAPI, ListDeleteServiceAPI,
     MoveUpdateServiceAPI, DownloadFileServiceAPI
 )
@@ -159,11 +159,9 @@ async def api_create_post(
                         **response_404, **response_422}
             )
 async def api_update_post(
-    request: Request,
     db: db_session,
-    member: Annotated[Member, Depends(get_current_member_optional)],
+    update_post_service: Annotated[UpdatePostServiceAPI, Depends()],
     wr_data: WriteModel,
-    bo_table: str = Path(...,  title="게시판 테이블명", description="게시판 테이블명"),
     wr_id: str = Path(..., title="글 아이디", description="글 아이디"),
 ) -> ResponseNormalModel:
     """
@@ -186,9 +184,6 @@ async def api_update_post(
     - **notice**: 공지글 여부
     - **parent_id**: 부모글 ID (답글/댓글일 경우)
     """
-    update_post_service = UpdatePostServiceAPI(
-        request, db, bo_table, member, wr_id
-    )
     update_post_service.validate_restrict_comment_count()
     write = update_post_service.get_write(update_post_service.wr_id)
     

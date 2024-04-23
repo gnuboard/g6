@@ -55,16 +55,6 @@ class UpdatePostService(CreatePostService):
         self.db.commit()
 
 
-class UpdatePostServiceAPI(UpdatePostService):
-    """
-    API 요청에 사용되는 게시글 수정 클래스
-    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
-    """
-
-    def raise_exception(self, status_code: int, detail: str = None):
-        raise HTTPException(status_code=status_code, detail=detail)
-
-
 class CommentService(UpdatePostService):
     """댓글 관리 클래스"""
 
