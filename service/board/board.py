@@ -5,7 +5,8 @@ from sqlalchemy import select
 from core.database import db_session
 from core.models import Board, Member, WriteBaseModel, Group
 from core.exception import AlertException
-from lib.board_lib import BoardConfig, get_admin_type
+from lib.board_lib import BoardConfig
+from lib.member import MemberDetails
 from lib.common import dynamic_create_write_table
 from service import BaseService
 
@@ -18,7 +19,6 @@ class BoardService(BaseService, BoardConfig):
         request: Request,
         db: db_session,
         bo_table: str,
-        member: Member
     ):
         self.db = db
         board = self.get_board(bo_table)
@@ -26,10 +26,7 @@ class BoardService(BaseService, BoardConfig):
         self.bo_table = bo_table
         self.write_model = dynamic_create_write_table(bo_table)
         self.categories = self.get_category_list()
-        self.member = member
-        self.mb_id = getattr(member, "mb_id", None)
-        self.member_level = getattr(member, "mb_level") if member else 1
-        self.admin_type = get_admin_type(request, self.mb_id, board=self.board)
+        self.member = MemberDetails(request, request.state.login_member, board=self.board)
 
     def raise_exception(self, status_code: int, detail: str = None, url: str = None):
         raise AlertException(status_code=status_code, detail=detail, url=url)
@@ -56,7 +53,7 @@ class BoardService(BaseService, BoardConfig):
 
     def validate_admin_authority(self):
         """게시판 관리자 검증"""
-        if not self.admin_type:
+        if not self.member.admin_type:
             self.raise_exception(detail="게시판 관리자 이상 접근이 가능합니다.", status_code=403)
 
     def get_board(self, bo_table: str) -> Board:
@@ -69,10 +66,10 @@ class BoardService(BaseService, BoardConfig):
     def get_admin_board_list(self) -> List[Board]:
         """관리자가 속한 게시판 목록을 가져옵니다."""
         query = select(Board).join(Group).order_by(Board.gr_id, Board.bo_order, Board.bo_table)
-        if self.admin_type == "group":
-            query = query.where(Group.gr_admin == self.mb_id)
-        elif self.admin_type == "board":
-            query = query.where(Board.bo_admin == self.mb_id)
+        if self.member.admin_type == "group":
+            query = query.where(Group.gr_admin == self.member.mb_id)
+        elif self.member.admin_type == "board":
+            query = query.where(Board.bo_admin == self.member.mb_id)
         return self.db.scalars(query).all()
 
     def get_write(self, wr_id: Union[int, str]) -> WriteBaseModel:
