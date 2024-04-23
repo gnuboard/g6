@@ -17,9 +17,11 @@ from api.v1.models.board import (
     WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel,
     ResponseBoardListModel, ResponseGroupBoardsModel, ResponseNormalModel
 )
-from api.v1.lib.board import GroupBoardListServiceAPI, ListPostServiceAPI
+from api.v1.lib.board import (
+    GroupBoardListServiceAPI, ListPostServiceAPI, ReadPostServiceAPI
+)
 from service.board import(
-    CreatePostServiceAPI, ReadPostServiceAPI,
+    CreatePostServiceAPI,
     UpdatePostServiceAPI, DeletePostServiceAPI,
     CommentServiceAPI, DeleteCommentServiceAPI, ListDeleteServiceAPI,
     MoveUpdateServiceAPI, DownloadFileServiceAPI
@@ -79,18 +81,12 @@ async def api_list_post(
                        **response_404, **response_422}
             )
 async def api_read_post(
-    request: Request,
     db: db_session,
-    member: Annotated[Member, Depends(get_current_member_optional)],
-    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
-    wr_id: str = Path(..., title="글 아이디", description="글 아이디"),
+    read_post_service: Annotated[ReadPostServiceAPI, Depends()],
 ) -> ResponseWriteModel:
     """
     지정된 게시판의 글을 개별 조회합니다.
     """
-    read_post_service = ReadPostServiceAPI(
-        request, db, bo_table, wr_id, member
-    )
     content = jsonable_encoder(read_post_service.write)
     additional_content = jsonable_encoder({
         "images": read_post_service.images,
