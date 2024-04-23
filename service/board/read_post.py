@@ -1,10 +1,10 @@
-from typing_extensions import List, Tuple
+from typing_extensions import Annotated, List, Tuple
 
 from fastapi import Request, HTTPException, Path
 from sqlalchemy import asc, desc, select, exists
 
 from core.database import db_session
-from core.models import Member, BoardGood, Scrap, WriteBaseModel, BoardFile
+from core.models import BoardGood, Scrap, WriteBaseModel, BoardFile
 from lib.board_lib import BoardFileManager, insert_point, is_owner, cut_name
 from lib.template_filters import number_format
 from . import BoardService
@@ -253,12 +253,11 @@ class DownloadFileService(BoardService):
         self,
         request: Request,
         db: db_session,
-        bo_table: str,
-        member: Member,
-        wr_id: int,
-        bf_no: int,
+        bo_table: Annotated[str, Path(...)],
+        wr_id: Annotated[int, Path(...)],
+        bf_no: Annotated[int, Path(...)],
     ):
-        super().__init__(request, db, bo_table, member)
+        super().__init__(request, db, bo_table)
         self.write = self.get_write(wr_id)
         self.wr_id = wr_id
         self.bf_no = bf_no
@@ -290,7 +289,7 @@ class DownloadFileService(BoardService):
                         message += f"\\n로그인 후 다시 시도해주세요."
                     self.raise_exception(detail=message, status_code=403)
                 else:
-                    insert_point(self.request, self.mb_id, download_point, f"{self.board.bo_subject} {self.wr_id} 파일 다운로드", self.bo_table, self.wr_id, "다운로드")
+                    insert_point(self.request, self.member.mb_id, download_point, f"{self.board.bo_subject} {self.wr_id} 파일 다운로드", self.bo_table, self.wr_id, "다운로드")
 
             self.request.session[session_name] = True
 

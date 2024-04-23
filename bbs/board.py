@@ -455,11 +455,7 @@ async def delete_post(
 
 @router.get("/{bo_table}/{wr_id}/download/{bf_no}", dependencies=[Depends(check_group_access)])
 async def download_file(
-    request: Request,
-    db: db_session,
-    bo_table: str = Path(...),
-    wr_id: int = Path(...),
-    bf_no: int = Path(...),
+    download_file_service: Annotated[DownloadFileService, Depends()],
 ):
     """첨부파일 다운로드
 
@@ -475,9 +471,6 @@ async def download_file(
     Returns:
         FileResponse: 파일 다운로드
     """
-    download_file_service = DownloadFileService(
-        request, db, bo_table, request.state.login_member, wr_id, bf_no
-    )
     download_file_service.validate_download_level()
     board_file = download_file_service.get_board_file()
     download_file_service.validate_point_session(board_file)
