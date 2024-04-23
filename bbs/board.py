@@ -407,23 +407,19 @@ async def read_post(
 
 @router.get("/delete/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
 async def delete_post(
-    request: Request,
-    db: db_session,
-    bo_table: str = Path(...),
-    wr_id: int = Path(...),
+    delete_post_service: Annotated[DeletePostService, Depends()],
 ):
     """
     게시글을 삭제한다.
     """
-    delete_post_service = DeletePostService(
-        request, db, bo_table, wr_id, request.state.login_member
-    )
     delete_post_service.validate_level()
     delete_post_service.validate_exists_reply()
     delete_post_service.validate_exists_comment()
     delete_post_service.delete_write()
-    query_params = remove_query_params(request, "token")
-    return RedirectResponse(set_url_query_params(f"/board/{bo_table}", query_params), status_code=303)
+    query_params = remove_query_params(delete_post_service.request, "token")
+    return RedirectResponse(
+        set_url_query_params(f"/board/{delete_post_service.bo_table}", query_params), status_code=303
+    )
 
 
 @router.get("/{bo_table}/{wr_id}/download/{bf_no}", dependencies=[Depends(check_group_access)])

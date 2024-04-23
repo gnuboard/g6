@@ -1,6 +1,6 @@
-from typing_extensions import List
+from typing_extensions import List, Annotated
 
-from fastapi import Request, HTTPException
+from fastapi import Request, HTTPException, Path
 from sqlalchemy import select, exists, delete, update
 
 from core.database import db_session
@@ -22,11 +22,10 @@ class DeletePostService(BoardService):
         self,
         request: Request,
         db: db_session,
-        bo_table: str,
-        wr_id: int,
-        member: Member,
+        bo_table: Annotated[str, Path(...)],
+        wr_id: Annotated[str, Path(...)],
     ):
-        super().__init__(request, db, bo_table, member)
+        super().__init__(request, db, bo_table)
         self.wr_id = wr_id
         self.write = self.get_write(wr_id)
         self.write_member_mb_no = self.db.scalar(select(Member.mb_no).where(Member.mb_id == self.write.mb_id))
@@ -35,12 +34,12 @@ class DeletePostService(BoardService):
 
     def validate_level(self, with_session: bool = True):
         """권한 검증"""
-        if self.admin_type == "super":
+        if self.member.admin_type == "super":
             return
 
-        if self.admin_type and self.write_member_level > self.member_level:
+        if self.member.admin_type and self.write_member_level > self.member.level:
             self.raise_exception(status_code=403, detail="자신보다 높은 권한의 게시글은 삭제할 수 없습니다.")
-        elif self.write.mb_id and not is_owner(self.write, self.mb_id):
+        elif self.write.mb_id and not is_owner(self.write, self.member.mb_id):
             self.raise_exception(status_code=403, detail="자신의 게시글만 삭제할 수 있습니다.", )
 
         if not self.write.mb_id:
