@@ -344,7 +344,7 @@ async def api_download_file(
     return FileResponse(board_file.bf_file, filename=board_file.bf_source)
 
 
-@router.post("/{bo_table}/{wr_parent}/comment",
+@router.post("/{bo_table}/{wr_id}/comment",
             summary="댓글 작성",
             responses={**response_401, **response_403,
                        **response_404, **response_422}
@@ -355,7 +355,7 @@ async def api_create_comment(
     member: Annotated[Member, Depends(get_current_member_optional)],
     comment_data: CommentModel,
     bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
-    wr_parent: str = Path(..., title="부모글 아이디", description="부모글 아이디"),
+    wr_id: str = Path(..., title="부모글 아이디", description="부모글 아이디"),
 ) -> ResponseNormalModel:
     """
     댓글 등록
@@ -365,10 +365,13 @@ async def api_create_comment(
     - **wr_name**: 작성자 이름 (비회원일 경우)
     - **wr_password**: 비밀번호
     - **wr_option**: 글 옵션
-    - **comment_id**: 부모글 ID (대댓글일 경우)
+    - **wr_id**: 부모글 ID
+    - **comment_id**" 댓글 ID (대댓글 작성시 댓글 id)
+    wr_id만 입력 - 댓글작성
+    wr_id, comment_id 입력 - 대댓글 작성
     """
     comment_service = CommentServiceAPI(request, db, bo_table, member)
-    parent_write = comment_service.get_parent_post(wr_parent, is_reply=False)
+    parent_write = comment_service.get_parent_post(wr_id, is_reply=False)
     comment_service.validate_comment_level()
     comment_service.validate_point()
     comment_service.validate_post_content(comment_data.wr_content)
@@ -380,7 +383,7 @@ async def api_create_comment(
     return {"result": "created"}
 
 
-@router.put("/{bo_table}/{wr_parent}/comment/{wr_id}",
+@router.put("/{bo_table}/{wr_id}/comment/{comment_id}",
             summary="댓글 수정",
             responses={**response_401, **response_403,
                        **response_404, **response_422}
@@ -391,8 +394,8 @@ async def api_update_comment(
     comment_data: CommentModel,
     member: Annotated[Member, Depends(get_current_member_optional)],
     bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
-    wr_parent: str = Path(..., title="부모글 아이디", description="부모글 아이디"),
-    wr_id: str = Path(..., title="댓글 아이디", description="댓글 아이디"),
+    wr_id: str = Path(..., title="부모글 아이디", description="부모글 아이디"),
+    comment_id: str = Path(..., title="댓글 아이디", description="댓글 아이디"),
 ) -> ResponseNormalModel:
     """
     댓글을 수정합니다.
@@ -402,14 +405,15 @@ async def api_update_comment(
     - **wr_name**: 작성자 이름 (비회원일 경우)
     - **wr_password**: 비밀번호
     - **wr_option**: 글 옵션
-    - **comment_id**: 부모글 ID (대댓글일 경우)
+    - **wr_id**: 부모글 ID
+    - **comment_id**: 댓글 ID (대댓글 수정일 경우 comment_id는 대댓글 id)
     """
     comment_service = CommentServiceAPI(request, db, bo_table, member, wr_id)
     write_model = comment_service.write_model
-    comment_service.get_parent_post(wr_parent, is_reply=False)
-    comment = db.get(write_model, wr_id)
+    comment_service.get_parent_post(wr_id, is_reply=False)
+    comment = db.get(write_model, comment_id)
     if not comment:
-        raise HTTPException(status_code=404, detail=f"{wr_id} : 존재하지 않는 댓글입니다.")
+        raise HTTPException(status_code=404, detail=f"{comment_id} : 존재하지 않는 댓글입니다.")
 
     comment_service.validate_author(comment, comment_data.wr_password)
     comment_service.validate_post_content(comment_data.wr_content)
@@ -421,7 +425,7 @@ async def api_update_comment(
     return {"result": "updated"}
 
 
-@router.delete("/{bo_table}/{wr_parent}/comment/{wr_id}",
+@router.delete("/{bo_table}/{wr_id}/comment/{comment_id}",
                 summary="댓글 삭제",
                 responses={**response_401, **response_403,
                            **response_404, **response_422}
@@ -431,13 +435,13 @@ async def api_delete_comment(
     db: db_session,
     member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
-    wr_id: str = Path(..., title="댓글 아이디", description="댓글 아이디"),
+    comment_id: str = Path(..., title="댓글 아이디", description="댓글 아이디"),
 ) -> ResponseNormalModel:
     """
     댓글을 삭제합니다.
     """
     delete_comment_service = DeleteCommentServiceAPI(
-        request, db, bo_table, wr_id, member
+        request, db, bo_table, comment_id, member
     )
     delete_comment_service.check_authority(with_session=False)
     delete_comment_service.delete_comment()

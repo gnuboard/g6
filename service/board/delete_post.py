@@ -140,11 +140,11 @@ class DeleteCommentService(DeletePostService):
         request: Request,
         db: db_session,
         bo_table: str,
-        wr_id: int,
+        comment_id: str,
         member: Member,
     ):
-        super().__init__(request, db, bo_table, wr_id, member)
-        self.wr_id = wr_id
+        super().__init__(request, db, bo_table, comment_id, member)
+        self.wr_id = comment_id
         self.comment = self.get_comment()
 
     def get_comment(self) -> WriteBaseModel:

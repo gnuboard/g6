@@ -497,12 +497,12 @@ async def write_comment_update(
     return RedirectResponse(redirect_url, status_code=303)
 
 
-@router.get("/delete_comment/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
+@router.get("/delete_comment/{bo_table}/{comment_id}", dependencies=[Depends(validate_token)])
 async def delete_comment(
     request: Request,
     db: db_session,
     bo_table: str = Path(...),
-    comment_id: int = Path(..., alias="wr_id"),
+    comment_id: str = Path(...),
 ):
     """
     댓글 삭제

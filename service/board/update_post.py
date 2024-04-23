@@ -4,13 +4,13 @@ from sqlalchemy import update, select, func
 
 from core.database import db_session
 from core.models import Member, WriteBaseModel
-from core.formclass import WriteForm
+from core.formclass import WriteForm, WriteCommentForm
 from lib.board_lib import generate_reply_character, insert_point, is_owner
 from lib.g5_compatibility import G5Compatibility
 from lib.template_filters import number_format
 from lib.html_sanitizer import content_sanitizer
 from lib.pbkdf2 import create_hash, validate_password
-from api.v1.models.board import WriteModel
+from api.v1.models.board import WriteModel, CommentModel
 from .create_post import CreatePostService
 
 
@@ -89,7 +89,7 @@ class CommentService(UpdatePostService):
         self.raise_exception(detail=message, status_code=403)
 
     def save_comment(
-            self, data: Union[WriteForm, WriteModel], write: WriteBaseModel
+            self, data: Union[WriteCommentForm, CommentModel], write: WriteBaseModel
     ) -> WriteBaseModel:
         """댓글을 저장하고 댓글 ORM 객체를 반환"""
         comment = self.write_model()
