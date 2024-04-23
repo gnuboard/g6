@@ -18,9 +18,10 @@ from api.v1.models.board import (
     WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel,
     ResponseBoardListModel, ResponseGroupBoardsModel, ResponseNormalModel
 )
+from api.v1.lib.board import GroupBoardListServiceAPI
 from service.board import(
     ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
-    UpdatePostServiceAPI, DeletePostServiceAPI, GroupBoardListServiceAPI,
+    UpdatePostServiceAPI, DeletePostServiceAPI,
     CommentServiceAPI, DeleteCommentServiceAPI, ListDeleteServiceAPI,
     MoveUpdateServiceAPI, DownloadFileServiceAPI
 )
@@ -39,17 +40,11 @@ credentials_exception = HTTPException(
             responses={**response_401, **response_422}
             )
 async def api_group_board_list(
-    request: Request,
-    db: db_session,
-    member: Annotated[Member, Depends(get_current_member_optional)],
-    gr_id: str = Path(..., title="게시판그룹 아이디", description="게시판그룹 아이디"),
+    group_board_list_service: Annotated[GroupBoardListServiceAPI, Depends()],
 ) -> ResponseGroupBoardsModel:
     """
     게시판그룹의 모든 게시판 목록을 보여줍니다.
     """
-    group_board_list_service = GroupBoardListServiceAPI(
-        request, db, gr_id, member
-    )
     group = group_board_list_service.group
     group_board_list_service.check_mobile_only()
     boards = group_board_list_service.get_boards_in_group()

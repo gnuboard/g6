@@ -1,8 +1,32 @@
-from typing_extensions import Dict
-from fastapi import Request, HTTPException
+from typing_extensions import Dict, Annotated
+from fastapi import Request, HTTPException, Path, Depends
 
-from core.models import Board
+from core.models import Board, Member
+from core.database import db_session
 from lib.board_lib import get_admin_type
+from lib.member import MemberDetails
+from service.board import GroupBoardListService
+from api.v1.dependencies.member import get_current_member_optional
+
+
+class GroupBoardListServiceAPI(GroupBoardListService):
+    """
+    그룹의 게시판 목록을 얻기 위한 API 클래스
+      - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
+    """
+
+    def __init__(
+        self,
+        request: Request,
+        db: db_session,
+        gr_id: Annotated[str, Path(...)],
+        member: Annotated[Member, Depends(get_current_member_optional)],
+    ):
+        super().__init__(request, db, gr_id)
+        self.member = MemberDetails(request, member, group=self.group)
+
+    def raise_exception(self, status_code: int, detail: str = None):
+        raise HTTPException(status_code=status_code, detail=detail)
 
 
 def is_possible_level(

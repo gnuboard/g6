@@ -16,4 +16,4 @@ from .delete_post import (
     DeletePostService, DeletePostServiceAPI, DeleteCommentService,
     DeleteCommentServiceAPI, ListDeleteService, ListDeleteServiceAPI
 )
-from .group_board_list import GroupBoardListService, GroupBoardListServiceAPI
+from .group_board_list import GroupBoardListService
