@@ -180,18 +180,12 @@ async def move_update(
 
 @router.get("/write/{bo_table}", dependencies=[Depends(check_group_access)])
 async def write_form_add(
-    request: Request,
-    db: db_session,
-    bo_table: str = Path(...),
+    create_post_service: Annotated[CreatePostService, Depends()],
     parent_id: int = Query(None)
 ):
     """
     게시글을 작성하는 form을 보여준다.
     """
-    create_post_service = CreatePostService(
-        request, db, bo_table, request.state.login_member
-    )
-
     board = create_post_service.board
     parent_write = None
     if parent_id:
@@ -205,11 +199,12 @@ async def write_form_add(
     # 게시판 제목 설정
     board.subject = create_post_service.subject
     # 게시판 에디터 설정
+    request = create_post_service.request
     request.state.use_editor = board.bo_use_dhtml_editor
     request.state.editor = create_post_service.select_editor
 
     # 게시판 관리자 확인
-    admin_type = create_post_service.admin_type
+    admin_type = create_post_service.member.admin_type
 
     context = {
         "request": request,
@@ -313,11 +308,9 @@ async def write_form_edit(
 
 @router.post("/write_update/{bo_table}", dependencies=[Depends(validate_token), Depends(check_group_access)])
 async def create_post(
-    request: Request,
     db: db_session,
     form_data: Annotated[WriteForm, Depends()],
-    member: Annotated[Member, Depends(get_login_member_optional)],
-    bo_table: str = Path(...),
+    create_post_service: Annotated[CreatePostService, Depends()],
     parent_id: int = Form(None),
     notice: bool = Form(False),
     secret: str = Form(""),
@@ -330,9 +323,6 @@ async def create_post(
     recaptcha_response: str = Form("", alias="g-recaptcha-response"),
 ):
     """게시글을 작성한다."""
-    create_post_service = CreatePostService(
-        request, db, bo_table, member
-    )
     create_post_service.validate_captcha(recaptcha_response)
     create_post_service.validate_write_delay()
     create_post_service.validate_write_level()
@@ -342,7 +332,7 @@ async def create_post(
     create_post_service.is_write_level()
     create_post_service.arrange_data(form_data, secret, html, mail)
     write = create_post_service.save_write(parent_id, form_data)
-    insert_board_new(bo_table, write)
+    insert_board_new(create_post_service.bo_table, write)
     create_post_service.add_point(write)
     create_post_service.send_write_mail_(write, parent_id)
     create_post_service.set_notice(write.wr_id, notice)

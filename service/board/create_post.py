@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
-from typing_extensions import List, Union
-from fastapi import Request, HTTPException, UploadFile
+from typing_extensions import Annotated, List, Union
+from fastapi import Request, HTTPException, UploadFile, Path
 from sqlalchemy import delete, inspect, select, update
 
 from core.database import db_session
@@ -33,8 +33,13 @@ class CreatePostService(BoardService):
 
     FILE_DIRECTORY = "data/file/"
 
-    def __init__(self, request: Request, db: db_session, bo_table: str, member: Member):
-        super().__init__(request, db, bo_table, member)
+    def __init__(
+        self,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(...)],
+    ):
+        super().__init__(request, db, bo_table)
 
     def validate_anonymous_password(self, data):
         """비회원 글쓰기시 비밀번호 검증"""
@@ -48,7 +53,7 @@ class CreatePostService(BoardService):
 
     def validate_secret_board(self, secret: str, html: str, mail: str):
         """게시판의 비밀글 사용여부 검증"""
-        if self.admin_type:
+        if self.member.admin_type:
             return
 
         # 비밀글 사용여부 체크
@@ -124,10 +129,10 @@ class CreatePostService(BoardService):
 
     def add_point(self, write, parent_write: WriteBaseModel = None):
         """포인트 추가"""
-        if self.mb_id:
+        if self.member.mb_id:
             point = self.board.bo_comment_point if parent_write else self.board.bo_write_point
             content = f"{self.board.bo_subject} {write.wr_id} 글" + ("답변" if parent_write else "쓰기")
-            insert_point(self.request, self.mb_id, point, content, self.bo_table, write.wr_id, "쓰기")
+            insert_point(self.request, self.member.mb_id, point, content, self.bo_table, write.wr_id, "쓰기")
 
     def send_write_mail_(self, write, parent_write):
         """메일 발송"""
@@ -143,7 +148,7 @@ class CreatePostService(BoardService):
         files = [file for file in files if file.size]
         if not files:
             return
-        if self.mb_id and self.mb_id != write.mb_id:
+        if self.member.mb_id and self.member.mb_id != write.mb_id:
             self.raise_exception(status_code=403, detail="자신의 글에만 파일을 업로드할 수 있습니다.")
 
         if not self.is_upload_level():
@@ -168,7 +173,7 @@ class CreatePostService(BoardService):
             index = files.index(file)
             if file.filename:
                 # 관리자가 아니면서 설정한 업로드 사이즈보다 크거나 업로드 가능 확장자가 아니면 업로드하지 않음
-                if not self.admin_type:
+                if not self.member.admin_type:
                     if not file_manager.is_upload_size(file):
                         exclude_file["size"].append(file.filename)
                         continue
@@ -215,7 +220,7 @@ class CreatePostService(BoardService):
             wr_num=parent_write.wr_num if parent_write else get_next_num(self.bo_table),
             wr_reply=generate_reply_character(self.board, parent_write) if parent_write else "",
             wr_datetime=datetime.now(),
-            mb_id=self.mb_id or "",
+            mb_id=self.member.mb_id or "",
             wr_ip=self.request.client.host,
             **data.__dict__
         )
@@ -272,7 +277,7 @@ class CreatePostServiceAPI(CreatePostService):
         write = self.write_model(**filtered_wr_data)
         write.wr_num = parent_write.wr_num if parent_write else get_next_num(self.bo_table)
         write.wr_reply = generate_reply_character(self.board, parent_write) if parent_write else ""
-        write.mb_id = self.mb_id if self.mb_id else ''
+        write.mb_id = self.member.mb_id if self.member.mb_id else ''
         write.wr_ip = self.request.client.host
         self.db.add(write)
         self.db.commit()
