@@ -46,16 +46,12 @@ templates.env.globals["captcha_widget"] = captcha_widget
 @router.get("/group/{gr_id}")
 async def group_board_list(
     request: Request,
-    db: db_session,
-    gr_id: str = Path(...)
+    group_board_list_service: Annotated[GroupBoardListService, Depends()],
 ):
     """
     게시판그룹의 모든 게시판 목록을 보여준다.
     """
     # 게시판 그룹 정보 조회
-    group_board_list_service = GroupBoardListService(
-        request, db, gr_id, request.state.login_member
-    )
     group = group_board_list_service.group
     group_board_list_service.check_mobile_only()
     boards = group_board_list_service.get_boards_in_group()

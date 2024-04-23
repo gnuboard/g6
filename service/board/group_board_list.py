@@ -1,11 +1,11 @@
-from typing_extensions import List
+from typing_extensions import Annotated,List
 
-from fastapi import Request, HTTPException
+from fastapi import Request, HTTPException, Path
 from sqlalchemy import select
 
 from core.database import db_session
-from core.models import Board, Group, Member
-from lib.board_lib import get_admin_type
+from core.models import Board, Group
+from lib.member import MemberDetails
 from . import BoardService
 
 
@@ -18,17 +18,13 @@ class GroupBoardListService(BoardService):
         self,
         request: Request,
         db: db_session,
-        gr_id: str,
-        member: Member,
+        gr_id: Annotated[str, Path(...)],
     ):
         self.request = request
         self.db = db
         self.gr_id = gr_id
         self.group = self.get_group()
-        self.member = member
-        self.mb_id = getattr(member, "mb_id", None)
-        self.member_level = getattr(member, "mb_level") if member else 1
-        self.admin_type = get_admin_type(request, self.mb_id, group=self.group)
+        self.member = MemberDetails(request, request.state.login_member, group=self.group)
 
     def get_group(self) -> Group:
         """게시판 그룹 정보 조회"""
@@ -40,7 +36,7 @@ class GroupBoardListService(BoardService):
     def check_mobile_only(self):
         """모바일 전용 게시판인지 확인"""
         # FIXME: 모바일/PC 분기처리
-        if self.admin_type:
+        if self.member.admin_type:
             return
         if self.request.state.device == "mobile":
             self.raise_exception(detail=f"{self.group.gr_subject} 그룹은 모바일에서만 접근할 수 있습니다.", status_code=403)
@@ -52,13 +48,13 @@ class GroupBoardListService(BoardService):
             select(Board)
             .where(
                 Board.gr_id == self.gr_id,
-                Board.bo_list_level <= self.member_level,
+                Board.bo_list_level <= self.member.level,
                 Board.bo_device != 'mobile'
             )
             .order_by(Board.bo_order)
         )
         # 인증게시판 제외
-        if not self.admin_type:
+        if not self.member.admin_type:
             query = query.filter_by(bo_use_cert="")
 
         boards = self.db.scalars(query).all()
