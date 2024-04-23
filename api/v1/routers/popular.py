@@ -1,9 +1,8 @@
 """인기 검색어 API Router"""
-from datetime import date
 from typing import List
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.exc import SQLAlchemyError
 
 from api.v1.lib.popular import PopularServiceAPI
@@ -51,19 +50,19 @@ async def create_popular(
     }
 
 
-@router.delete("/populars",
-                summary="인기 검색어 삭제",
-                responses={**response_422, **response_500})
-async def delete_popular(
-    service: Annotated[PopularServiceAPI, Depends()],
-    base_date: date = Query(default=date.today(),
-                            title="삭제 날짜",
-                            description="삭제 기준 일")
-) -> MessageResponse:
-    """
-    입력일 기준 이전 날짜로 등록된 인기 검색어를 삭제합니다.
-    """
-    rowconut = service.delete_populars(base_date)
-    return {
-        "message": f"인기 검색어가 {rowconut}건 삭제되었습니다."
-    }
+# @router.delete("/populars",
+#                 summary="인기 검색어 삭제",
+#                 responses={**response_422, **response_500})
+# async def delete_popular(
+#     service: Annotated[PopularServiceAPI, Depends()],
+#     base_date: date = Query(default=date.today(),
+#                             title="삭제 날짜",
+#                             description="삭제 기준 일")
+# ) -> MessageResponse:
+#     """
+#     입력일 기준 이전 날짜로 등록된 인기 검색어를 삭제합니다.
+#     """
+#     rowconut = service.delete_populars(base_date)
+#     return {
+#         "message": f"인기 검색어가 {rowconut}건 삭제되었습니다."
+#     }
