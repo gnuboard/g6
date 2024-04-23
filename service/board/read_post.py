@@ -1,6 +1,6 @@
 from typing_extensions import Annotated, List, Tuple
 
-from fastapi import Request, HTTPException, Path
+from fastapi import Request, Path
 from sqlalchemy import asc, desc, select, exists
 
 from core.database import db_session
@@ -289,29 +289,3 @@ class DownloadFileService(BoardService):
             self.file_manager.update_download_count(board_file)
             # 파일 다운로드 세션 설정
             self.request.session[download_session_name] = True
-
-
-class DownloadFileServiceAPI(DownloadFileService):
-    """
-    API용 파일 다운로드 클래스
-    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
-    """
-
-    def raise_exception(self, status_code: int, detail: str = None):
-        raise HTTPException(status_code=status_code, detail=detail)
-
-    def validate_point(self, board_file):
-        """다운로드 포인트 검사"""
-        if not self.config.cf_use_point:
-            return
-
-        download_point = self.board.bo_download_point
-        if self.is_download_point(self.write):
-            insert_point(self.request, self.mb_id, download_point, f"{self.board.bo_subject} {self.wr_id} 파일 다운로드", self.bo_table, self.wr_id, "다운로드")
-            # 다운로드 횟수 증가
-            self.file_manager.update_download_count(board_file)
-            return
-        
-        point = number_format(abs(download_point))
-        message = f"파일 다운로드에 필요한 포인트({point})가 부족합니다."
-        self.raise_exception(detail=message, status_code=403)

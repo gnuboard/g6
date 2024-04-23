@@ -5,11 +5,14 @@ from sqlalchemy import inspect
 from core.models import Board, Member
 from core.database import db_session
 from lib.dependency.dependencies import common_search_query_params
-from lib.board_lib import get_admin_type, generate_reply_character, get_next_num
+from lib.board_lib import (
+    get_admin_type, generate_reply_character, get_next_num, insert_point
+)
+from lib.template_filters import number_format
 from lib.member import MemberDetails
 from service.board import (
     GroupBoardListService, ListPostService, ReadPostService,
-    CreatePostService, UpdatePostService
+    CreatePostService, UpdatePostService, DownloadFileService
 )
 from api.v1.dependencies.member import get_current_member_optional
 
@@ -130,6 +133,43 @@ class UpdatePostServiceAPI(UpdatePostService):
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)
+
+
+class DownloadFileServiceAPI(DownloadFileService):
+    """
+    API용 파일 다운로드 클래스
+    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
+    """
+    def __init__(
+        self,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
+        wr_id: Annotated[str, Path(..., title="글 아이디", description="글 아이디")],
+        bf_no: Annotated[int, Path(..., title="파일 순번", description="파일 순번")],
+        member: Annotated[Member, Depends(get_current_member_optional)],
+    ):
+        super().__init__(request, db, bo_table, wr_id, bf_no)
+        self.member = MemberDetails(request, member, board=self.board)
+
+    def raise_exception(self, status_code: int, detail: str = None):
+        raise HTTPException(status_code=status_code, detail=detail)
+
+    def validate_point(self, board_file):
+        """다운로드 포인트 검사"""
+        if not self.config.cf_use_point:
+            return
+
+        download_point = self.board.bo_download_point
+        if self.is_download_point(self.write):
+            insert_point(self.request, self.member.mb_id, download_point, f"{self.board.bo_subject} {self.wr_id} 파일 다운로드", self.bo_table, self.wr_id, "다운로드")
+            # 다운로드 횟수 증가
+            self.file_manager.update_download_count(board_file)
+            return
+        
+        point = number_format(abs(download_point))
+        message = f"파일 다운로드에 필요한 포인트({point})가 부족합니다."
+        self.raise_exception(detail=message, status_code=403)
 
 
 def is_possible_level(

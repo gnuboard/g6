@@ -19,12 +19,12 @@ from api.v1.models.board import (
 )
 from api.v1.lib.board import (
     GroupBoardListServiceAPI, ListPostServiceAPI, ReadPostServiceAPI,
-    CreatePostServiceAPI, UpdatePostServiceAPI
+    CreatePostServiceAPI, UpdatePostServiceAPI, DownloadFileServiceAPI
 )
 from service.board import(
     DeletePostServiceAPI,
     CommentServiceAPI, DeleteCommentServiceAPI, ListDeleteServiceAPI,
-    MoveUpdateServiceAPI, DownloadFileServiceAPI
+    MoveUpdateServiceAPI
 )
 
 
@@ -337,12 +337,7 @@ async def api_upload_file(
                        **response_404, **response_422}
             )
 async def api_download_file(
-    request: Request,
-    db: db_session,
-    member: Annotated[Member, Depends(get_current_member_optional)],
-    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
-    wr_id: int = Path(..., title="글 아이디", description="글 아이디"),
-    bf_no: int = Path(..., title="파일 순번", description="파일 순번"),
+    download_file_service: Annotated[DownloadFileServiceAPI, Depends()],
 ):
     """
     게시글의 파일을 다운로드합니다.
@@ -350,9 +345,6 @@ async def api_download_file(
     - wr_id: 게시글 아이디
     - bf_no: 첨부된 파일의 순번
     """
-    download_file_service = DownloadFileServiceAPI(
-        request, db, bo_table, member, wr_id, bf_no
-    )
     download_file_service.validate_download_level()
     board_file = download_file_service.get_board_file()
     download_file_service.validate_point(board_file)

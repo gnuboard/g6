@@ -5,8 +5,7 @@ from .create_post import (
     MoveUpdateService, MoveUpdateServiceAPI
 )
 from .read_post import (
-    ReadPostService, DownloadFileService,
-    DownloadFileServiceAPI
+    ReadPostService, DownloadFileService
 )
 from .update_post import (
     UpdatePostService, CommentService,
