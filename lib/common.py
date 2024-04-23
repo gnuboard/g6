@@ -23,18 +23,16 @@ from markupsafe import Markup, escape
 from passlib.context import CryptContext
 from PIL import Image, ImageOps, UnidentifiedImageError
 from sqlalchemy import (
-    Index, asc, case, cast, delete, desc, func, select, String, DateTime
+    Index, asc, cast, delete, desc, func, select, String, DateTime
 )
 from sqlalchemy.exc import IntegrityError
 from starlette.datastructures import URL
 
 from core.database import DBConnect, db_session, MySQLCharsetMixin
 from core.models import (
-    BoardNew, Config, Login, Member, Memo, UniqId, Visit,
-    WriteBaseModel
+    BoardNew, Config, Member, Memo, UniqId, Visit, WriteBaseModel
 )
 from core.plugin import get_admin_menu_id_by_path
-
 
 load_dotenv()
 
@@ -999,30 +997,6 @@ def set_url_query_params(url: Union[str, URL], query_params: Any) -> str:
         url = URL(url)
 
     return url.replace_query_params(**query_params).__str__()
-
-
-def get_current_login_count(request: Request) -> tuple:
-    """현재 접속자수를 반환하는 함수"""
-    config = request.state.config
-
-    login_minute = getattr(config, "cf_login_minutes", 10)
-    base_date = datetime.now() - timedelta(minutes=login_minute)
-
-    with DBConnect().sessionLocal() as db:
-        result = db.execute(
-            select(
-                func.count(Login.mb_id).label("login"),
-                func.sum(case(
-                    (Login.mb_id != "", 1),
-                    else_=0
-                )).label("member"),
-            ).where(
-                Login.mb_id != config.cf_admin,
-                Login.lo_ip != "",
-                Login.lo_datetime > base_date
-            )
-        ).first()
-        return result.login, result.member
 
 
 def safe_int_convert(string: str) -> int:

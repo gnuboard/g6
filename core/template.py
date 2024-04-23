@@ -18,9 +18,9 @@ from core.plugin import (
     get_admin_plugin_menus, get_all_plugin_module_names, PLUGIN_DIR, get_plugin_state_cache
 )
 from lib.common import (
-    EDITOR_PATH, CAPTCHA_PATH, get_current_login_count, read_version,
-    get_admin_menus
+    CAPTCHA_PATH, EDITOR_PATH, get_admin_menus, read_version
 )
+from lib.current_connect import get_current_login_count
 from lib.menu import get_menus
 from lib.poll import get_latest_poll
 from lib.popular import get_populars
@@ -174,6 +174,7 @@ class UserTemplates(Jinja2Templates):
             self.env.globals["get_latest_poll"] = get_latest_poll
             self.env.globals["get_menus"] = get_menus
             self.env.globals["get_total_visit"] = get_total_visit
+            self.env.globals["get_current_login_count"] = get_current_login_count
 
             # 템플릿 컨텍스트 프로세서 설정
             self.context_processors.append(self._default_context)
@@ -186,7 +187,6 @@ class UserTemplates(Jinja2Templates):
         from lib.board_lib import render_latest_posts
 
         context = {
-            "current_login_count": get_current_login_count(request),
             "render_latest_posts": render_latest_posts,
         }
         return context

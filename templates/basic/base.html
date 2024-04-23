@@ -15,8 +15,7 @@
                 <li><a href="{{ url_for('qa_list') }}">Q&A</a></li>
                 <li><a href="/bbs/new">새글</a></li>
                 <li><a href="/bbs/current_connect" class="visit">
-                    접속자<strong class="visit-num">{{ current_login_count[0] }}</strong></a>
-                    <!-- current_login_count[1]은 회원 수 -->
+                    접속자<strong class="visit-num">{{ get_current_login_count(request)|number_format }}</strong></a>
                 </li>
             </ul>
         </div>

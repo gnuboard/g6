@@ -48,7 +48,7 @@
                     <li class="hd_nb3">
                         <a href="/bbs/current_connect" id="snb_cnt">
                             <i class="fa fa-users" aria-hidden="true"></i>접속자
-                           <span>{{ current_login_count[0]|number_format }}</span>
+                           <span>{{ get_current_login_count(request)|number_format }}</span>
                         </a>
                     </li>
                     <li class="hd_nb4">

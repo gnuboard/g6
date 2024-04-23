@@ -42,6 +42,7 @@ class Tags(Enum):
     MEMO = "쪽지"
     MENU = "메뉴"
     NEWWIN = "레이어 팝업"
+    CURRENT_CONNECT = "현재 접속자"
     POINT = "포인트"
     POLL = "설문조사"
     POPULAR = "인기 검색어"
