@@ -1,9 +1,10 @@
-from typing_extensions import List
-from fastapi import Request, HTTPException
+from typing_extensions import Annotated, List
+from fastapi import Request, HTTPException, Path, Depends
 from sqlalchemy import asc, desc, func, select
 
 from core.database import db_session
-from core.models import Member, WriteBaseModel
+from core.models import WriteBaseModel
+from lib.dependency.dependencies import common_search_query_params
 from lib.board_lib import write_search_filter, get_list, cut_name, is_owner
 from . import BoardService
 
@@ -17,16 +18,15 @@ class ListPostService(BoardService):
         self,
         request: Request,
         db: db_session,
-        bo_table: str,
-        member: Member,
-        search_params: dict
+        bo_table: Annotated[str, Path(...)],
+        search_params: Annotated[dict, Depends(common_search_query_params)],
     ):
-        super().__init__(request, db, bo_table, member)
-
+        super().__init__(request, db, bo_table)
         if not self.is_list_level():
             self.raise_exception(detail="목록을 볼 권한이 없습니다.", status_code=403)
 
         self.query = self.get_query(search_params)
+        self.search_params = search_params
         self.prev_spt = None
         self.next_spt = None
 
@@ -77,9 +77,9 @@ class ListPostService(BoardService):
 
         return self.query
 
-    def get_writes(self,search_params: dict) -> List[WriteBaseModel]:
+    def get_writes(self) -> List[WriteBaseModel]:
         """게시글 목록을 가져옵니다."""
-        current_page = search_params.get('current_page')
+        current_page = self.search_params.get('current_page')
         page_rows = self.page_rows
 
         # 페이지 번호에 따른 offset 계산
@@ -108,18 +108,18 @@ class ListPostService(BoardService):
             for comment in comments:
                 comment.name = cut_name(self.request, comment.wr_name)
                 comment.ip = self.get_display_ip(comment.wr_ip)
-                comment.is_reply = len(comment.wr_comment_reply) < 5 and self.board.bo_comment_level <= self.member_level
-                comment.is_edit = bool(self.admin_type or (self.member and comment.mb_id == self.member.mb_id))
-                comment.is_del = bool(self.admin_type or (self.member and comment.mb_id == self.member.mb_id) or not comment.mb_id)
+                comment.is_reply = len(comment.wr_comment_reply) < 5 and self.board.bo_comment_level <= self.member.level
+                comment.is_edit = bool(self.member.admin_type or (self.member and comment.mb_id == self.member.mb_id))
+                comment.is_del = bool(self.member.admin_type or (self.member and comment.mb_id == self.member.mb_id) or not comment.mb_id)
                 comment.is_secret = "secret" in comment.wr_option
 
                 # 비밀댓글 처리
                 session_secret_comment_name = f"ss_secret_comment_{self.bo_table}_{comment.wr_id}"
                 parent_write = self.db.get(self.write_model, comment.wr_parent)
                 if (comment.is_secret
-                        and not self.admin_type
-                        and not is_owner(comment, self.mb_id)
-                        and not is_owner(parent_write, self.mb_id)
+                        and not self.member.admin_type
+                        and not is_owner(comment, self.member.mb_id)
+                        and not is_owner(parent_write, self.member.mb_id)
                         and not self.request.session.get(session_secret_comment_name)):
                     comment.is_secret_content = True
                     comment.save_content = "비밀글 입니다."
@@ -130,9 +130,9 @@ class ListPostService(BoardService):
 
         return writes
     
-    def get_notice_writes(self,search_params: dict) -> List[WriteBaseModel]:
+    def get_notice_writes(self) -> List[WriteBaseModel]:
         """게시글 중 공지사항 목록을 가져옵니다."""
-        current_page = search_params.get('current_page')
+        current_page = self.search_params.get('current_page')
         sca = self.request.query_params.get("sca")
         notice_writes = []
         if current_page == 1:

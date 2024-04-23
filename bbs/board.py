@@ -21,8 +21,7 @@ from lib.captcha import captcha_widget
 from lib.common import set_url_query_params, get_unique_id, remove_query_params
 from lib.dependency.board import get_write
 from lib.dependency.dependencies import (
-    check_group_access, common_search_query_params,
-    validate_captcha, validate_token
+    check_group_access, validate_captcha, validate_token
 )
 from lib.dependency.auth import get_login_member_optional
 from lib.template_functions import get_paging
@@ -73,27 +72,26 @@ async def group_board_list(
 
 @router.get("/{bo_table}")
 async def list_post(
-    request: Request,
-    db: db_session,
-    bo_table: Annotated[str, Path(...)],
-    search_params: Annotated[dict, Depends(common_search_query_params)],
+    list_post_service: Annotated[ListPostService, Depends()],
 ):
     """해당 게시판의 게시글 목록을 보여준다."""
-    list_post_service = ListPostService(
-        request, db, bo_table, request.state.login_member, search_params
-    )
     board = list_post_service.board
-
+    paging = get_paging(
+        list_post_service.request,
+        list_post_service.search_params['current_page'],
+        list_post_service.get_total_count(),
+        list_post_service.page_rows
+    )
     context = {
-        "request": request,
+        "request": list_post_service.request,
         "categories": list_post_service.categories,
         "board": board,
         "board_config": list_post_service,
-        "notice_writes": list_post_service.get_notice_writes(search_params),
-        "writes": list_post_service.get_writes(search_params),
+        "notice_writes": list_post_service.get_notice_writes(),
+        "writes": list_post_service.get_writes(),
         "total_count": list_post_service.get_total_count(),
-        "current_page": search_params['current_page'],
-        "paging": get_paging(request, search_params['current_page'], list_post_service.get_total_count(), list_post_service.page_rows),
+        "current_page": list_post_service.search_params['current_page'],
+        "paging": paging,
         "is_write": list_post_service.is_write_level(),
         "table_width": list_post_service.get_table_width,
         "gallery_width": list_post_service.gallery_width,
