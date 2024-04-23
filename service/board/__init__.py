@@ -12,7 +12,7 @@ from .update_post import (
     CommentServiceAPI
 )
 from .delete_post import (
-    DeletePostService, DeletePostServiceAPI, DeleteCommentService,
+    DeletePostService, DeleteCommentService,
     DeleteCommentServiceAPI, ListDeleteService, ListDeleteServiceAPI
 )
 from .group_board_list import GroupBoardListService

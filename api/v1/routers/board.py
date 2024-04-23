@@ -19,10 +19,10 @@ from api.v1.models.board import (
 )
 from api.v1.lib.board import (
     GroupBoardListServiceAPI, ListPostServiceAPI, ReadPostServiceAPI,
-    CreatePostServiceAPI, UpdatePostServiceAPI, DownloadFileServiceAPI
+    CreatePostServiceAPI, UpdatePostServiceAPI, DownloadFileServiceAPI,
+    DeletePostServiceAPI
 )
 from service.board import(
-    DeletePostServiceAPI,
     CommentServiceAPI, DeleteCommentServiceAPI, ListDeleteServiceAPI,
     MoveUpdateServiceAPI
 )
@@ -207,18 +207,11 @@ async def api_update_post(
                            **response_404, **response_422}
                )
 async def api_delete_post(
-    request: Request,
-    db: db_session,
-    member: Annotated[Member, Depends(get_current_member)],
-    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
-    wr_id: str = Path(..., title="글 아이디", description="글 아이디"),
+    delete_post_api: Annotated[DeletePostServiceAPI, Depends()],
 ) -> ResponseNormalModel:
     """
     지정된 게시판의 글을 삭제합니다.
     """
-    delete_post_api = DeletePostServiceAPI(
-        request, db, bo_table, wr_id, member
-    )
     delete_post_api.validate_level(with_session=False)
     delete_post_api.validate_exists_reply()
     delete_post_api.validate_exists_comment()
