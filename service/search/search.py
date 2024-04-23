@@ -85,8 +85,8 @@ class SearchService(BaseService):
 
             # 게시판 별 검색 Query 설정
             write_model = dynamic_create_write_table(board.bo_table)
-            query = write_search_filter(self.request, write_model,
-                                        search_field=sfl, keyword=stx, operator=sop)
+            query = write_search_filter(write_model, search_field=sfl,
+                                        keyword=stx, operator=sop)
             query = board_config.get_list_sort_query(write_model, query)
             board.search_count = self.db.scalar(query.add_columns(func.count()).order_by(None))
 

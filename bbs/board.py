@@ -32,6 +32,7 @@ from service.board import (
     CommentService, DeleteCommentService, ListDeleteService,
     MoveUpdateService, DownloadFileService
 )
+from service.popular_service import PopularService
 
 
 router = APIRouter()
@@ -75,6 +76,7 @@ async def group_board_list(
 async def list_post(
     request: Request,
     db: db_session,
+    popular_service: Annotated[PopularService, Depends()],
     bo_table: Annotated[str, Path(...)],
     search_params: Annotated[dict, Depends(common_search_query_params)],
 ):
@@ -83,6 +85,11 @@ async def list_post(
         request, db, bo_table, request.state.login_member, search_params
     )
     board = list_post_service.board
+
+    # 검색 단어를 인기검색어에 등록
+    fields = search_params.get('sfl')
+    word = search_params.get('stx')
+    popular_service.create_popular(request, fields, word)
 
     context = {
         "request": request,

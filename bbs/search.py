@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Request, Query
 
 from core.template import UserTemplates
 from lib.template_filters import search_font
+from service.popular_service import PopularService
 from service.search import SearchService
 
 router = APIRouter()
@@ -15,6 +16,7 @@ templates.env.filters["search_font"] = search_font
 async def search(
     request: Request,
     search_service: Annotated[SearchService, Depends()],
+    popular_service: Annotated[PopularService, Depends()],
     sfl: str = Query("wr_subject||wr_content"),
     stx: str = Query(...),
     sop: str = Query("and"),
@@ -28,6 +30,9 @@ async def search(
     searched_result = search_service.search(boards, sfl, stx, sop)
     total_search_count = searched_result["total_search_count"]
     boards = searched_result["boards"]
+
+    # 검색 단어를 인기검색어에 등록
+    popular_service.create_popular(request, sfl, stx)
 
     context = {
         "request": request,

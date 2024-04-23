@@ -802,7 +802,6 @@ class BoardFileManager():
 
 
 def write_search_filter(
-        request: Request,
         model: WriteBaseModel,
         category: str = None,
         search_field: str = None,
@@ -812,7 +811,6 @@ def write_search_filter(
     - 그누보드5의 get_sql_search와 동일한 기능을 합니다.
 
     Args:
-        request (Request): FastAPI Request 객체.
         model (WriteBaseModel): 검색할 모델(게시글).
         category (str, optional): 검색할 분류. Defaults to None.
         fields (str, optional): 검색할 필드. Defaults to None.
@@ -851,11 +849,6 @@ def write_search_filter(
                     continue
                 word_filters.append(or_(
                     *[getattr(model, field).like(f"%{word}%") for field in fields if hasattr(model, field)]))
-
-                # 단어별 인기검색어 등록
-                # TODO: 전체 검색 > 게시판 마다 검색어가 반복 등록되므로 외부 로직으로 분리 필요
-                popular_service = PopularService(db)
-                popular_service.create_popular(request, fields, word)
 
         # 분리된 단어 별 검색필터에 or 또는 and를 적용
         if operator == "and":

@@ -13,11 +13,12 @@ from service import BaseService
 
 class PopularService(BaseService):
     """인기 검색어 관련 서비스를 제공하는 종속성 주입 클래스입니다."""
+
     def __init__(self, db: db_session):
         self.db = db
 
     def raise_exception(self, status_code: int, detail: str = None):
-        print(f"{status_code}: {detail}")
+        pass
 
     def fetch_populars(self, limit: int, day: int) -> List[Popular]:
         """
@@ -42,8 +43,13 @@ class PopularService(BaseService):
     def create_popular(self, request: Request, fields: str, word: str) -> None:
         """인기검색어를 생성합니다."""
         try:
+            if not word or not fields:
+                self.raise_exception(400, "검색어가 없습니다.")
+                return None
+
             if "mb_id" in fields:  # 회원아이디로 검색은 제외
                 self.raise_exception(400, "회원아이디로 검색은 제외합니다.")
+                return None
 
             today_date = datetime.now()
             exists_popular = self.db.scalar(
@@ -56,6 +62,7 @@ class PopularService(BaseService):
 
             if exists_popular:
                 self.raise_exception(409, "이미 등록된 검색어입니다.")
+                return None
 
             # 현재 날짜의 인기검색어가 없으면 새로 등록한다.
             popular = Popular(
@@ -66,6 +73,7 @@ class PopularService(BaseService):
             self.db.commit()
         except SQLAlchemyError:
             pass
+        return None
 
     def delete_populars(self, base_date: date) -> int:
         """기준 날짜 이전의 인기검색어를 삭제합니다."""
