@@ -19,7 +19,7 @@ from lib.board_lib import (
 )
 from lib.captcha import captcha_widget
 from lib.common import set_url_query_params, get_unique_id, remove_query_params
-from lib.dependency.board import get_write
+from lib.dependency.board import get_write, get_variery_wr_id
 from lib.dependency.dependencies import (
     check_group_access, validate_captcha, validate_token
 )
@@ -450,27 +450,20 @@ async def download_file(
         "/write_comment_update/{bo_table}",
         dependencies=[Depends(validate_token), Depends(check_group_access)])
 async def write_comment_update(
-    request: Request,
-    db: db_session,
-    write: Annotated[WriteBaseModel, Depends(get_write)],
-    bo_table: str = Path(...),
+    comment_service: Annotated[CommentService, Depends()],
     form: WriteCommentForm = Depends(),
     recaptcha_response: str = Form("", alias="g-recaptcha-response"),
 ):
     """
     댓글 등록/수정
     """
-    member = request.state.login_member
-
-    comment_service = CommentService(
-        request, db, bo_table, member, form.comment_id
-    )
+    write = comment_service.get_write(comment_service.wr_id)
 
     if form.w == "c":
         #댓글 생성
-        if not member:
+        if not comment_service.member.mb_id:
             # 비회원은 Captcha 유효성 검사
-            await validate_captcha(request, recaptcha_response)
+            await validate_captcha(comment_service.request, recaptcha_response)
         comment_service.validate_write_delay()
         comment_service.validate_comment_level()
         comment_service.validate_point()
@@ -478,12 +471,12 @@ async def write_comment_update(
         comment = comment_service.save_comment(form, write)
         comment_service.add_point(comment)
         comment_service.send_write_mail_(comment, write)
-        insert_board_new(bo_table, comment)
-        set_write_delay(request)
+        insert_board_new(comment_service.bo_table, comment)
+        set_write_delay(comment_service.request)
     elif form.w == "cu":
         # 댓글 수정
         write_model = comment_service.write_model
-        comment = db.get(write_model, form.comment_id)
+        comment = comment_service.db.get(write_model, form.comment_id)
         if not comment:
             raise AlertException(f"{form.comment_id} : 존재하지 않는 댓글입니다.", 404)
 
@@ -492,7 +485,7 @@ async def write_comment_update(
         comment.wr_content = comment_service.get_cleaned_data(form.wr_content)
         comment.wr_option = form.wr_secret or "html1"
         comment.wr_last = comment_service.g5_instance.get_wr_last_now(write_model.__tablename__)
-    db.commit()
+    comment_service.db.commit()
     redirect_url = comment_service.get_redirect_url(write)
     return RedirectResponse(redirect_url, status_code=303)
 

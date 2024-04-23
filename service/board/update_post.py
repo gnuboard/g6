@@ -1,5 +1,5 @@
 from typing_extensions import Union, Annotated
-from fastapi import Request, HTTPException, Path
+from fastapi import Request, HTTPException, Path, Depends, Form
 from sqlalchemy import update, select, func
 
 from core.database import db_session
@@ -62,11 +62,10 @@ class CommentService(UpdatePostService):
         self,
         request: Request,
         db: db_session,
-        bo_table: str,
-        member: Member,
-        wr_id: str = None,
+        bo_table: Annotated[str, Path(...)],
+        wr_id: Annotated[str, Form(...)],
     ):
-        super().__init__(request, db, bo_table, member, wr_id)
+        super().__init__(request, db, bo_table, wr_id)
         self.g5_instance = G5Compatibility(db)
 
     def validate_comment_level(self):
@@ -137,10 +136,10 @@ class CommentService(UpdatePostService):
 
     def add_point(self, comment: WriteBaseModel):
         """포인트 추가"""
-        if self.mb_id:
+        if self.member.mb_id:
             point = self.board.bo_comment_point
             content = f"{self.board.bo_subject} {comment.wr_parent}-{comment.wr_id} 댓글쓰기"
-            insert_point(self.request, self.mb_id, point, content, self.bo_table, comment.wr_id, "댓글")
+            insert_point(self.request, self.member.mb_id, point, content, self.bo_table, comment.wr_id, "댓글")
 
 
 class CommentServiceAPI(CommentService):
