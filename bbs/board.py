@@ -325,6 +325,7 @@ async def move_update(
             target_write_model = dynamic_create_write_table(target_bo_table)
             target_write = target_write_model()
 
+            log_msg = ""
             # 복사/이동 로그 기록
             if not origin_write.wr_is_comment and config.cf_use_copy_log:
                 nick = cut_name(request, member.mb_nick)

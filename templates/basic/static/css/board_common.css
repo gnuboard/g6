@@ -229,7 +229,7 @@ html.no-overflowscrolling .bo_write .write_subject #autosave_pop { height:auto; 
 .bo_comment_write .write_writer #captcha { display:block; padding-top:10px; clear:both }
 
 .bo_comment_write .btn_confirm { display:flex; gap:20px; justify-content: right; align-items: center; margin-top:10px }
-.bo_comment_write .btn_submit { height:45px; padding:0 20px; border-radius:3px; font-weight:bold; font-size:1.3rem }
+.bo_comment_write .btn_submit, .bo_comment_write .btn_cancel { height:45px; padding:0 20px; border-radius:3px; font-weight:bold; font-size:1.3rem }
 
 .bo_comment { }
 .bo_comment .comment { display:grid; grid-template-columns: 50px 1fr 40px; gap:10px; position:relative; margin:20px 0; padding-bottom: 5px; border-bottom:var(--border) }

@@ -290,7 +290,7 @@ html.no-overflowscrolling #autosave_pop {height:auto;max-height:10000px !importa
 .qa_content_wrap.smarteditor2 iframe {background:#fff}
 #bo_w .bo_w_tit {position:relative}
 #bo_w .bo_w_tit .frm_input {padding-right:120px}
-#bo_w .bo_w_tit #btn_autosave {position:absolute;top:5px;right:5px;line-height:30px;height:30px}
+#bo_w .bo_w_tit #btn_autosave_list {position:absolute;top:5px;right:5px;line-height:30px;height:30px}
 #bo_w .bo_w_link label {position:absolute;top:1px;left:1px;border-radius:3px 0 0 3px;height:38px;line-height:38px;width:40px;font-size:1.4rem;text-align:center;color:#b2b2b2}
 #bo_w .bo_w_link .frm_input, .form_01 .bo_w_link .frm_input {padding-left:50px}
 #bo_w .bo_w_flie .lb_icon, .form_01 .bo_w_flie .lb_icon {position:absolute;top:0px;left:0px;border-radius:3px 0 0 3px;height:38px;line-height:38px;width:40px;font-size:1.4rem;text-align:center;color:#b2b2b2}
