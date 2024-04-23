@@ -3,9 +3,12 @@ from fastapi import Request, HTTPException, Path, Depends
 
 from core.models import Board, Member
 from core.database import db_session
+from lib.dependency.dependencies import common_search_query_params
 from lib.board_lib import get_admin_type
 from lib.member import MemberDetails
-from service.board import GroupBoardListService
+from service.board import (
+    GroupBoardListService, ListPostService
+)
 from api.v1.dependencies.member import get_current_member_optional
 
 
@@ -24,6 +27,27 @@ class GroupBoardListServiceAPI(GroupBoardListService):
     ):
         super().__init__(request, db, gr_id)
         self.member = MemberDetails(request, member, group=self.group)
+
+    def raise_exception(self, status_code: int, detail: str = None):
+        raise HTTPException(status_code=status_code, detail=detail)
+
+
+class ListPostServiceAPI(ListPostService):
+    """
+    API 요청에 사용되는 게시글 목록 클래스
+    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
+    """
+
+    def __init__(
+        self,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(...)],
+        search_params: Annotated[Dict, Depends(common_search_query_params)],
+        member: Annotated[Member, Depends(get_current_member_optional)],
+    ):
+        super().__init__(request, db, bo_table, search_params)
+        self.member = MemberDetails(request, member, board=self.board)
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)

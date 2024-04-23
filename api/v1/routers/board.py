@@ -9,7 +9,6 @@ from fastapi.encoders import jsonable_encoder
 from core.database import db_session
 from core.models import Member
 from lib.board_lib import insert_board_new, set_write_delay
-from lib.dependency.dependencies import common_search_query_params
 from api.v1.models.response import (
     response_401, response_403, response_404, response_422
 )
@@ -18,9 +17,9 @@ from api.v1.models.board import (
     WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel,
     ResponseBoardListModel, ResponseGroupBoardsModel, ResponseNormalModel
 )
-from api.v1.lib.board import GroupBoardListServiceAPI
+from api.v1.lib.board import GroupBoardListServiceAPI, ListPostServiceAPI
 from service.board import(
-    ListPostServiceAPI, CreatePostServiceAPI, ReadPostServiceAPI,
+    CreatePostServiceAPI, ReadPostServiceAPI,
     UpdatePostServiceAPI, DeletePostServiceAPI,
     CommentServiceAPI, DeleteCommentServiceAPI, ListDeleteServiceAPI,
     MoveUpdateServiceAPI, DownloadFileServiceAPI
@@ -56,25 +55,17 @@ async def api_group_board_list(
             responses={**response_401, **response_422}
             )
 async def api_list_post(
-    request: Request,
-    db: db_session,
-    member: Annotated[Member, Depends(get_current_member_optional)],
-    search_params: Annotated[dict, Depends(common_search_query_params)],
-    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
+    list_post_service: Annotated[ListPostServiceAPI, Depends()],
 ) -> ResponseBoardListModel:
     """
     게시판 정보, 글 목록을 반환합니다.
     """
-    list_post_service = ListPostServiceAPI(
-        request, db, bo_table, member, search_params
-    )
-
     content = {
         "categories": list_post_service.categories,
         "board": list_post_service.board,
-        "writes": list_post_service.get_writes(search_params),
+        "writes": list_post_service.get_writes(),
         "total_count": list_post_service.get_total_count(),
-        "current_page": search_params['current_page'],
+        "current_page": list_post_service.search_params['current_page'],
         "prev_spt": list_post_service.prev_spt,
         "next_spt": list_post_service.next_spt,
     }

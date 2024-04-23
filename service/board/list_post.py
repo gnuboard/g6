@@ -18,7 +18,7 @@ class ListPostService(BoardService):
         self,
         request: Request,
         db: db_session,
-        bo_table: Annotated[str, Path(...)],
+        bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         search_params: Annotated[dict, Depends(common_search_query_params)],
     ):
         super().__init__(request, db, bo_table)
@@ -147,13 +147,3 @@ class ListPostService(BoardService):
         """쿼리문을 통해 불러오는 게시글의 수"""
         total_count = self.db.scalar(self.query.add_columns(func.count()).order_by(None))
         return total_count
-
-
-class ListPostServiceAPI(ListPostService):
-    """
-    API 요청에 사용되는 게시글 목록 클래스
-    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
-    """
-
-    def raise_exception(self, status_code: int, detail: str = None):
-        raise HTTPException(status_code=status_code, detail=detail)
