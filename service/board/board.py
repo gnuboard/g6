@@ -3,7 +3,7 @@ from fastapi import Request
 from sqlalchemy import select
 
 from core.database import db_session
-from core.models import Board, Member, WriteBaseModel, Group
+from core.models import Board, WriteBaseModel, Group
 from core.exception import AlertException
 from lib.board_lib import BoardConfig
 from lib.member import MemberDetails
@@ -31,17 +31,17 @@ class BoardService(BaseService, BoardConfig):
     def raise_exception(self, status_code: int, detail: str = None, url: str = None):
         raise AlertException(status_code=status_code, detail=detail, url=url)
 
-    def set_wr_name(self, member: Member = None, default_name: str = None) -> str:
+    def set_wr_name(self, member: MemberDetails = None, default_name: str = None) -> str:
         """실명사용 여부를 확인 후 실명이면 이름을, 아니면 닉네임을 반환한다.
 
         Args:
             board (Board): 게시판 object
-            member (Member): 회원 object 
+            member (MemberDetails): 회원정보 object 
 
         Returns:
             str: 이름 또는 닉네임
         """
-        if member:
+        if member.mb_id:
             if self.board.bo_use_name:
                 return member.mb_name
             else:
