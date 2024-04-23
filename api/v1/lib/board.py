@@ -1,13 +1,15 @@
 from typing_extensions import Dict, Annotated
 from fastapi import Request, HTTPException, Path, Depends
+from sqlalchemy import inspect
 
 from core.models import Board, Member
 from core.database import db_session
 from lib.dependency.dependencies import common_search_query_params
-from lib.board_lib import get_admin_type
+from lib.board_lib import get_admin_type, generate_reply_character, get_next_num
 from lib.member import MemberDetails
 from service.board import (
-    GroupBoardListService, ListPostService, ReadPostService
+    GroupBoardListService, ListPostService, ReadPostService,
+    CreatePostService
 )
 from api.v1.dependencies.member import get_current_member_optional
 
@@ -72,6 +74,43 @@ class ReadPostServiceAPI(ReadPostService):
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)
 
+
+class CreatePostServiceAPI(CreatePostService):
+    """
+    API 요청에 사용되는 게시글 생성 클래스
+    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
+    """
+    def __init__(
+        self,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
+        member: Annotated[Member, Depends(get_current_member_optional)],
+    ):
+        super().__init__(request, db, bo_table)
+        self.member = MemberDetails(request, member, board=self.board)
+
+    def raise_exception(self, status_code: int, detail: str = None):
+        raise HTTPException(status_code=status_code, detail=detail)
+    
+    def save_write(self, parent_id, wr_data):
+        """게시글을 저장"""
+        parent_write = self.get_parent_post(parent_id)
+        wr_data_dict = wr_data.model_dump()
+        model_fields = inspect(self.write_model).columns.keys()
+        filtered_wr_data = {key: value for key, value in wr_data_dict.items() if key in model_fields}
+        write = self.write_model(**filtered_wr_data)
+        write.wr_num = parent_write.wr_num if parent_write else get_next_num(self.bo_table)
+        write.wr_reply = generate_reply_character(self.board, parent_write) if parent_write else ""
+        write.mb_id = self.member.mb_id if self.member.mb_id else ''
+        write.wr_ip = self.request.client.host
+        self.db.add(write)
+        self.db.commit()
+
+        write.wr_parent = write.wr_id  # 부모아이디 설정
+        self.board.bo_count_write = self.board.bo_count_write + 1  # 게시판 글 갯수 1 증가
+        self.db.commit()
+        return write
 
 def is_possible_level(
     request: Request,

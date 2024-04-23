@@ -1,7 +1,7 @@
 from .board import BoardService
 from .list_post import ListPostService
 from .create_post import (
-    CreatePostService, CreatePostServiceAPI,
+    CreatePostService,
     MoveUpdateService, MoveUpdateServiceAPI
 )
 from .read_post import (

@@ -18,10 +18,10 @@ from api.v1.models.board import (
     ResponseBoardListModel, ResponseGroupBoardsModel, ResponseNormalModel
 )
 from api.v1.lib.board import (
-    GroupBoardListServiceAPI, ListPostServiceAPI, ReadPostServiceAPI
+    GroupBoardListServiceAPI, ListPostServiceAPI, ReadPostServiceAPI,
+    CreatePostServiceAPI
 )
 from service.board import(
-    CreatePostServiceAPI,
     UpdatePostServiceAPI, DeletePostServiceAPI,
     CommentServiceAPI, DeleteCommentServiceAPI, ListDeleteServiceAPI,
     MoveUpdateServiceAPI, DownloadFileServiceAPI
@@ -111,11 +111,9 @@ async def api_read_post(
                         **response_404, **response_422}
              )
 async def api_create_post(
-    request: Request,
     db: db_session,
-    member: Annotated[Member, Depends(get_current_member_optional)],
+    create_post_service: Annotated[CreatePostServiceAPI, Depends()],
     wr_data: WriteModel,
-    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
 ) -> ResponseNormalModel:
     """
     지정된 게시판에 새 글을 작성합니다.
@@ -138,16 +136,13 @@ async def api_create_post(
     - **parent_id**: 부모글 ID (답글/댓글일 경우)
     - **wr_comment**: 댓글 사용 여부
     """
-    create_post_service = CreatePostServiceAPI(
-        request, db, bo_table, member
-    )
     create_post_service.validate_secret_board(wr_data.secret, wr_data.html, wr_data.mail)
     create_post_service.validate_post_content(wr_data.wr_subject)
     create_post_service.validate_post_content(wr_data.wr_content)
     create_post_service.is_write_level()
     create_post_service.arrange_data(wr_data, wr_data.secret, wr_data.html, wr_data.mail)
     write = create_post_service.save_write(wr_data.parent_id, wr_data)
-    insert_board_new(bo_table, write)
+    insert_board_new(create_post_service.bo_table, write)
     create_post_service.add_point(write)
     create_post_service.send_write_mail_(write, wr_data.parent_id)
     create_post_service.set_notice(write.wr_id, wr_data.notice)
