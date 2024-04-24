@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 from typing_extensions import Annotated, List, Union
-from fastapi import Request, HTTPException, UploadFile, Path, Form, Depends
+from fastapi import Request, UploadFile, Path, Form, Depends
 from sqlalchemy import delete, select, update
 
 from core.database import db_session
@@ -368,13 +368,3 @@ class MoveUpdateService(BoardService):
 
         # 원본 게시판 최신글 캐시 삭제
         file_cache.delete_prefix(f'latest-{origin_bo_table}')
-
-
-class MoveUpdateServiceAPI(MoveUpdateService):
-    """
-    게시글을 이동/복사하는 API 클래스입니다.
-    상위클래스의 예외 처리 함수를 오버라이딩 하여 사용합니다.
-    """
-
-    def raise_exception(self, status_code: int, detail: str = None):
-        raise HTTPException(status_code=status_code, detail=detail)

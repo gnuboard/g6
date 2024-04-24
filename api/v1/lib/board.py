@@ -13,7 +13,8 @@ from lib.member import MemberDetails
 from service.board import (
     GroupBoardListService, ListPostService, ReadPostService,
     CreatePostService, UpdatePostService, DownloadFileService,
-    DeletePostService, CommentService, DeleteCommentService
+    DeletePostService, CommentService, DeleteCommentService,
+    MoveUpdateService
 )
 from api.v1.dependencies.member import get_current_member_optional, get_current_member
 
@@ -231,6 +232,26 @@ class DeleteCommentServiceAPI(DeleteCommentService):
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code, detail)
+
+
+class MoveUpdateServiceAPI(MoveUpdateService):
+    """
+    게시글을 이동/복사하는 API 클래스입니다.
+    상위클래스의 예외 처리 함수를 오버라이딩 하여 사용합니다.
+    """
+    def __init__(
+        self,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
+        sw: Annotated[str, Path(..., title="게시글 복사/이동", description="게시글 복사/이동", pattern="copy|move")],
+        member: Annotated[Member, Depends(get_current_member)],
+    ):
+        super().__init__(request, db, bo_table, sw)
+        self.member = MemberDetails(request, member, board=self.board)
+
+    def raise_exception(self, status_code: int, detail: str = None):
+        raise HTTPException(status_code=status_code, detail=detail)
 
 
 def is_possible_level(

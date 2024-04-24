@@ -12,7 +12,7 @@ from lib.board_lib import insert_board_new, set_write_delay
 from api.v1.models.response import (
     response_401, response_403, response_404, response_422
 )
-from api.v1.dependencies.member import get_current_member, get_current_member_optional
+from api.v1.dependencies.member import get_current_member
 from api.v1.models.board import (
     WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel,
     ResponseBoardListModel, ResponseGroupBoardsModel, ResponseNormalModel
@@ -20,11 +20,11 @@ from api.v1.models.board import (
 from api.v1.lib.board import (
     GroupBoardListServiceAPI, ListPostServiceAPI, ReadPostServiceAPI,
     CreatePostServiceAPI, UpdatePostServiceAPI, DownloadFileServiceAPI,
-    DeletePostServiceAPI, CommentServiceAPI, DeleteCommentServiceAPI
+    DeletePostServiceAPI, CommentServiceAPI, DeleteCommentServiceAPI,
+    MoveUpdateServiceAPI
 )
 from service.board import(
     ListDeleteServiceAPI,
-    MoveUpdateServiceAPI
 )
 
 
@@ -245,41 +245,30 @@ async def api_list_delete(
     return {"result": "deleted"}
 
 
-@router.get("/move/{bo_table}/{sw}",
+@router.post("/move/{bo_table}/{sw}",
             summary="게시글 복사/이동 가능 목록 조회",
             responses={**response_401, **response_403,
                        **response_404, **response_422}
             )
 async def api_move_post(
-    request: Request,
-    db: db_session,
-    member: Annotated[Member, Depends(get_current_member)],
-    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
-    sw: str = Path(..., title="게시글 복사/이동", description="게시글 복사/이동", pattern="copy|move"),
+    move_update_service: Annotated[MoveUpdateServiceAPI, Depends()],
 ) -> List[ResponseBoardModel]:
     """
     게시글을 복사/이동 가능한 게시판 목록을 반환합니다.
     sw: copy(게시글 복사) 또는 move(게시글 이동)
     """
-    move_update_service = MoveUpdateServiceAPI(
-        request, db, bo_table, member, sw
-    )
     move_update_service.validate_admin_authority()
     boards = move_update_service.get_admin_board_list()
     return boards
 
 
-@router.post("/move_update/{bo_table}",
+@router.post("/move_update/{bo_table}/{sw}",
             summary="게시글 복사/이동",
             responses={**response_401, **response_403,
                        **response_404, **response_422}
             )
 async def api_move_update(
-    request: Request,
-    db: db_session,
-    member: Annotated[Member, Depends(get_current_member)],
-    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
-    sw: str = Body(..., title="게시글 복사/이동", pattern="copy|move"),
+    move_update_service: Annotated[MoveUpdateServiceAPI, Depends()],
     wr_ids: str = Body(..., title="글 아이디 목록"),
     target_bo_tables: list = Body(..., title="복사/이동할 게시판 테이블 목록"),
 ) -> ResponseNormalModel:
@@ -292,7 +281,6 @@ async def api_move_update(
     - **wr_ids**: 복사/이동할 게시글 wr_id 목록 (예: "1,2,3")
     - **target_bo_tables**: 복사/이동할 게시판 목록 (예: ["free", "qa"])
     """
-    move_update_service = MoveUpdateServiceAPI(request, db, bo_table, member, sw)
     move_update_service.validate_admin_authority()
     origin_writes = move_update_service.get_origin_writes(wr_ids)
     move_update_service.move_copy_post(target_bo_tables, origin_writes)
