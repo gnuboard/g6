@@ -165,16 +165,6 @@ async def get_host_public_ip():
         return response.json()['origin']
 
 
-def make_directory(directory: str):
-    """이미지 경로 체크 및 생성
-
-    Args:
-        directory (str): 이미지 경로
-    """
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-
 def delete_image(directory: str, filename: str, is_delete: bool = True):
     """이미지 삭제 처리 함수
 
@@ -384,8 +374,7 @@ class FileCache():
 
     def __init__(self):
         # 캐시 디렉토리가 없으면 생성
-        if not os.path.exists(self.cache_dir):
-            os.makedirs(self.cache_dir)
+        os.makedirs(self.cache_dir, exist_ok=True)
 
     def get_cache_secret_key(self):
         """
@@ -532,7 +521,7 @@ def thumbnail(source_file: str, target_path: str = None, width: int = 200, heigh
         target_path = target_path or source_path
 
         # 섬네일 저장경로 생성
-        make_directory(target_path)
+        os.makedirs(target_path, exist_ok=True)
 
         # 섬네일 파일 경로
         thumbnail_file = os.path.join(target_path, f"thumbnail_{width}x{height}_{source_basename}")

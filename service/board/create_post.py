@@ -16,7 +16,7 @@ from lib.board_lib import (
 )
 from lib.common import (
     remove_query_params, set_url_query_params, cut_name,
-    filter_words, make_directory, dynamic_create_write_table
+    filter_words, dynamic_create_write_table
 )
 from lib.html_sanitizer import content_sanitizer
 from lib.dependency.dependencies import validate_captcha as lib_validate_captcha
@@ -154,7 +154,7 @@ class CreatePostService(BoardService):
         wr_file = write.wr_file
 
         # 경로 생성
-        make_directory(directory)
+        os.makedirs(directory, exist_ok=True)
 
         # 파일 삭제
         if file_dels:

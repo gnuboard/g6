@@ -15,7 +15,7 @@ from core.models import Board, BoardFile, BoardNew, Member, Scrap, WriteBaseMode
 from core.template import UserTemplates
 from lib.common import (
     FileCache, StringEncrypt, cut_name, dynamic_create_write_table, get_admin_email,
-    get_admin_email_name, get_editor_image, make_directory,
+    get_admin_email_name, get_editor_image,
     remove_query_params, set_url_query_params, thumbnail
 )
 from lib.mail import mailer
@@ -677,7 +677,7 @@ class BoardFileManager():
             target_wr_id (int): 이동할 게시글 아이디
         """
         directory = os.path.join(directory, target_bo_table)
-        make_directory(directory)
+        os.makedirs(directory, exist_ok=True)
 
         if self.wr_id and target_wr_id:
             board_files = self.get_board_files()
@@ -703,7 +703,7 @@ class BoardFileManager():
             target_wr_id (int): 복사할 게시글 아이디
         """
         directory = os.path.join(directory, target_bo_table)
-        make_directory(directory)
+        os.makedirs(directory, exist_ok=True)
 
         if self.wr_id and target_wr_id:
             board_files = self.get_board_files()

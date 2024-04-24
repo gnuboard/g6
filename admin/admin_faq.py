@@ -63,12 +63,11 @@ async def faq_master_add(
     db.add(faq_master)
     db.commit()
 
-    # 이미지 경로 검사 및 생성
-    fm_id = faq_master.fm_id
-    if not os.path.exists(FAQ_FILE_PATH):
-        os.makedirs(FAQ_FILE_PATH)
+    # 이미지 경로 생성
+    os.makedirs(FAQ_FILE_PATH, exist_ok=True)
 
     # 이미지 저장
+    fm_id = faq_master.fm_id
     if fm_himg and fm_himg.filename:
         with open(f"{FAQ_FILE_PATH}{fm_id}_h", "wb") as buffer:
             shutil.copyfileobj(fm_himg.file, buffer)
@@ -122,9 +121,8 @@ async def faq_master_update(
     file_path_h = os.path.join(FAQ_FILE_PATH, f"{fm_id}_h")
     file_path_t = os.path.join(FAQ_FILE_PATH, f"{fm_id}_t")
 
-    # 이미지 경로 검사 및 생성
-    if not os.path.exists(FAQ_FILE_PATH):
-        os.makedirs(FAQ_FILE_PATH)
+    # 이미지 경로 생성
+    os.makedirs(FAQ_FILE_PATH, exist_ok=True)
 
     # 이미지 삭제
     if fm_himg_del and os.path.exists(file_path_h):

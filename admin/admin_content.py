@@ -1,4 +1,5 @@
 """컨텐츠 관리 Template Router"""
+import os
 from fastapi import APIRouter, Depends, File, Form, Path, Request, UploadFile
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
@@ -8,7 +9,7 @@ from core.exception import AlertException
 from core.formclass import ContentForm
 from core.models import Content
 from core.template import AdminTemplates
-from lib.common import delete_image, get_head_tail_img, make_directory, save_image
+from lib.common import delete_image, get_head_tail_img, save_image
 from lib.dependency.dependencies import validate_token
 from lib.template_functions import get_skin_select
 
@@ -130,8 +131,8 @@ async def content_form_update(
             setattr(content, field, value)
         db.commit()
 
-    # 이미지 경로체크 및 생성
-    make_directory(IMAGE_DIRECTORY)
+    # 이미지 경로 생성
+    os.makedirs(IMAGE_DIRECTORY, exist_ok=True)
     # 이미지 삭제
     delete_image(IMAGE_DIRECTORY, f"{co_id}_h", co_himg_del)
     delete_image(IMAGE_DIRECTORY, f"{co_id}_t", co_timg_del)

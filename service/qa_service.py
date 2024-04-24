@@ -9,7 +9,7 @@ from sqlalchemy import delete, func, select, Select
 from core.database import db_session
 from core.exception import AlertException
 from core.models import Member, QaConfig, QaContent
-from lib.common import get_client_ip, make_directory, save_image
+from lib.common import get_client_ip, save_image
 from service import BaseService
 
 from api.v1.models.qa import QaContentData
@@ -98,8 +98,8 @@ class QaFileService(BaseService):
         file: UploadFile = data.get(f"file{key}")
         file_del = data.get(f"file_del{key}", False)
 
-        # 파일 경로체크 및 생성
-        make_directory(self.directory)
+        # 파일 경로 생성
+        os.makedirs(self.directory, exist_ok=True)
 
         # 파일 삭제
         if file_del:

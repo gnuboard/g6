@@ -296,8 +296,7 @@ def board_setup(db: Session):
 def setup_data_directory():
     """데이터 경로 초기화"""
     # 데이터 경로 생성
-    if not os.path.exists(default_data_directory):
-        os.makedirs(default_data_directory)
+    os.makedirs(default_data_directory, exist_ok=True)
     # 캐시 디렉토리 비우기
     if os.path.exists(default_cache_directory):
         shutil.rmtree(default_cache_directory)

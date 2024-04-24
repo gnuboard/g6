@@ -9,7 +9,7 @@ from pydantic import TypeAdapter
 from starlette.responses import JSONResponse
 
 from core.models import Config
-from lib.common import calculator_image_resize, make_directory
+from lib.common import calculator_image_resize
 
 router = APIRouter(prefix="/ckeditor4")
 
@@ -54,7 +54,7 @@ async def image_upload(request: Request, upload: UploadFile = File(...)):
         upload_date = datetime.now().strftime("%Y%m%d")
         upload_path = f"{editor_image_path}/{upload_date}"
         filename = f"{uuid.uuid4()}.{upload.filename.split('.')[-1]}"
-        make_directory(upload_path)
+        os.makedirs(upload_path, exist_ok=True)
 
         try:
             image: Image = Image.open(upload.file)
