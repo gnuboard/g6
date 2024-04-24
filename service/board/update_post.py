@@ -11,10 +11,10 @@ from lib.template_filters import number_format
 from lib.html_sanitizer import content_sanitizer
 from lib.pbkdf2 import create_hash, validate_password
 from api.v1.models.board import WriteModel, CommentModel
-from .create_post import CreatePostService
+from . import BoardService
 
 
-class UpdatePostService(CreatePostService):
+class UpdatePostService(BoardService):
     """
     게시글 수정 클래스
     """
