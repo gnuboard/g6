@@ -20,10 +20,10 @@ from api.v1.models.board import (
 from api.v1.lib.board import (
     GroupBoardListServiceAPI, ListPostServiceAPI, ReadPostServiceAPI,
     CreatePostServiceAPI, UpdatePostServiceAPI, DownloadFileServiceAPI,
-    DeletePostServiceAPI, CommentServiceAPI
+    DeletePostServiceAPI, CommentServiceAPI, DeleteCommentServiceAPI
 )
 from service.board import(
-    DeleteCommentServiceAPI, ListDeleteServiceAPI,
+    ListDeleteServiceAPI,
     MoveUpdateServiceAPI
 )
 
@@ -423,18 +423,11 @@ async def api_update_comment(
                            **response_404, **response_422}
                )
 async def api_delete_comment(
-    request: Request,
-    db: db_session,
-    member: Annotated[Member, Depends(get_current_member)],
-    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
-    comment_id: str = Path(..., title="댓글 아이디", description="댓글 아이디"),
+    delete_comment_service: Annotated[DeleteCommentServiceAPI, Depends()],
 ) -> ResponseNormalModel:
     """
     댓글을 삭제합니다.
     """
-    delete_comment_service = DeleteCommentServiceAPI(
-        request, db, bo_table, comment_id, member
-    )
     delete_comment_service.check_authority(with_session=False)
     delete_comment_service.delete_comment()
     return {"result": "deleted"}

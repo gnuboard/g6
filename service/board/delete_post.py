@@ -201,16 +201,6 @@ class DeleteCommentService(DeletePostService):
         self.db.commit()
 
 
-class DeleteCommentServiceAPI(DeleteCommentService):
-    """
-    댓글 삭제 처리 API 클래스, 
-    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
-    """
-
-    def raise_exception(self, status_code: int, detail: str = None):
-        raise HTTPException(status_code, detail)
-
-
 class ListDeleteService(BoardService):
     """
     여러 게시글을 한번에 삭제하기 위한 클래스
