@@ -237,15 +237,3 @@ class ListDeleteService(BoardService):
         FileCache().delete_prefix(f'latest-{self.bo_table}')
 
         # TODO: 게시글 삭제시 같이 삭제해야할 것들 추가
-
-
-class ListDeleteServiceAPI(ListDeleteService):
-    """
-    API 요청에 사용되는 게시글 목록 삭제 클래스
-    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
-    """
-
-    def raise_exception(self, status_code: int, detail: str = None):
-        raise HTTPException(status_code, detail)
-
-

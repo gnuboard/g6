@@ -21,10 +21,7 @@ from api.v1.lib.board import (
     GroupBoardListServiceAPI, ListPostServiceAPI, ReadPostServiceAPI,
     CreatePostServiceAPI, UpdatePostServiceAPI, DownloadFileServiceAPI,
     DeletePostServiceAPI, CommentServiceAPI, DeleteCommentServiceAPI,
-    MoveUpdateServiceAPI
-)
-from service.board import(
-    ListDeleteServiceAPI,
+    MoveUpdateServiceAPI, ListDeleteServiceAPI
 )
 
 
@@ -224,11 +221,8 @@ async def api_delete_post(
             responses={**response_401, **response_403, **response_422}
             )
 async def api_list_delete(
-    request: Request,
-    db: db_session,
-    member: Annotated[Member, Depends(get_current_member)],
+    list_delete_service: Annotated[ListDeleteServiceAPI, Depends()],
     wr_ids: Annotated[list, Body(..., alias="chk_wr_id[]")],
-    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
 ) -> ResponseNormalModel:
     """
     게시글을 일괄 삭제합니다.
@@ -237,9 +231,6 @@ async def api_list_delete(
     ### Request Body
     - 삭제할 게시글 리스트 (예: [1, 2, 3])
     """
-    list_delete_service = ListDeleteServiceAPI(
-        request, db, bo_table, member
-    )
     list_delete_service.validate_admin_authority()
     list_delete_service.delete_writes(wr_ids)
     return {"result": "deleted"}
