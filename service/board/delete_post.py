@@ -139,11 +139,10 @@ class DeleteCommentService(DeletePostService):
         self,
         request: Request,
         db: db_session,
-        bo_table: str,
-        comment_id: str,
-        member: Member,
+        bo_table: Annotated[str, Path(...)],
+        comment_id: Annotated[str, Path(...)],
     ):
-        super().__init__(request, db, bo_table, comment_id, member)
+        super().__init__(request, db, bo_table, comment_id)
         self.wr_id = comment_id
         self.comment = self.get_comment()
 
@@ -164,7 +163,7 @@ class DeleteCommentService(DeletePostService):
           익명 댓글일 경우 session을 통해 권한을 검증합니다.
         - API 용으로 사용하는 경우 with_session 인자는 False 값으로 사용합니다.
         """
-        if self.admin_type:
+        if self.member.admin_type:
             return
 
         # 익명 댓글
@@ -183,7 +182,7 @@ class DeleteCommentService(DeletePostService):
             self.raise_exception(detail="삭제할 권한이 없습니다.", status_code=403, url=set_url_query_params(url, query_params))
 
         # 회원 댓글
-        if not is_owner(self.comment, self.mb_id):
+        if not is_owner(self.comment, self.member.mb_id):
             self.raise_exception(detail="자신의 댓글만 삭제할 수 있습니다.", status_code=403)
 
     def delete_comment(self):

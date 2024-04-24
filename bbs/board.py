@@ -493,23 +493,18 @@ async def write_comment_update(
 @router.get("/delete_comment/{bo_table}/{comment_id}", dependencies=[Depends(validate_token)])
 async def delete_comment(
     request: Request,
-    db: db_session,
-    bo_table: str = Path(...),
-    comment_id: str = Path(...),
+    delete_comment_service: Annotated[DeleteCommentService, Depends()],
 ):
     """
     댓글 삭제
     """
-    delete_comment_service = DeleteCommentService(
-        request, db, bo_table, comment_id, request.state.login_member
-    )
     comment = delete_comment_service.get_comment()
     delete_comment_service.check_authority()
     delete_comment_service.delete_comment()
 
     # request.query_params에서 token 제거
     query_params = remove_query_params(request, "token")
-    url = f"/board/{bo_table}/{comment.wr_parent}"
+    url = f"/board/{delete_comment_service.bo_table}/{comment.wr_parent}"
     return RedirectResponse(
         set_url_query_params(url, query_params), status_code=303)
 
