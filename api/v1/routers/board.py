@@ -454,7 +454,7 @@ async def api_update_comment(
     if not comment:
         raise HTTPException(status_code=404, detail=f"{wr_id} : 존재하지 않는 댓글입니다.")
 
-    comment_service.validate_author(comment)
+    comment_service.validate_author(comment, comment_data.wr_password)
     comment_service.validate_post_content(comment_data.wr_content)
     comment.wr_content = comment_service.get_cleaned_data(comment_data.wr_content)
     comment.wr_option = comment_data.wr_option or "html1"

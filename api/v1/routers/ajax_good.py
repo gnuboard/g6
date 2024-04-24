@@ -3,7 +3,7 @@ from fastapi import APIRouter, Path, Depends
 from fastapi.responses import JSONResponse
 
 from core.models import Member
-from api.v1.dependencies.board import get_current_member
+from api.v1.dependencies.member import get_current_member
 from service.ajax import AJAXService
 
 

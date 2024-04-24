@@ -272,10 +272,6 @@ class ResponseBoardNewModel(BaseModel):
     bn_datetime: datetime
     mb_id: str
     num: int
-    subject: str
-    link: str
-    name: str
-    datetime: str
 
 
 class ResponseBoardNewListModel(BaseModel):

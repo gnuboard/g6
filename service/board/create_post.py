@@ -319,6 +319,7 @@ class MoveUpdateService(BoardService):
                 target_write = target_write_model()
 
                 # 복사/이동 로그 기록
+                log_msg = ""
                 if not origin_write.wr_is_comment and self.config.cf_use_copy_log:
                     nick = cut_name(self.request, self.member.mb_nick)
                     log_msg = f"[이 게시물은 {nick}님에 의해 {datetime_format(datetime.now()) } {origin_board.bo_subject}에서 {self.act} 됨]"
