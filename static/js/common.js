@@ -736,30 +736,30 @@ function generate_token() {
 document.addEventListener('DOMContentLoaded', function () {
   const darkmodeBtn = document.querySelector('#darkmode-toggle-switch');
   darkmodeBtn?.addEventListener('click', handleDarkMode);
-  isDarkModeEnabled();
+  isDarkModeEnabled(darkmodeBtn);
 });
 
 // Dark mode 스위치버튼 클릭 이벤트
 function handleDarkMode(e) {
-  const currentTheme = e.currentTarget.classList.contains('dark') ? 'light' : 'dark';
-  e.currentTarget.classList.toggle('dark');
-  localStorage.setItem('color-theme', currentTheme);
-  document.documentElement.setAttribute('color-theme', currentTheme);
+    const currentTheme = e.currentTarget.classList.contains('dark') ? 'light' : 'dark';
+    e.currentTarget.classList.toggle('dark');
+    localStorage.setItem('color-theme', currentTheme);
+    document.documentElement.setAttribute('color-theme', currentTheme);
 }
 
 // Dark mode 상태 확인 함수
-function isDarkModeEnabled() {
+function isDarkModeEnabled(btn) {
     const isUserColorTheme = localStorage.getItem('color-theme');
     const isOsColorTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     const getUserTheme = () => (isUserColorTheme ? isUserColorTheme : isOsColorTheme);
     const initialTheme = getUserTheme();
-    
     if (initialTheme === 'dark') {
-      document.documentElement.setAttribute('color-theme', 'dark');
+        btn.classList.add('dark');
+        document.documentElement.setAttribute('color-theme', 'dark');
     } else {
-      document.documentElement.setAttribute('color-theme', 'light');
+        document.documentElement.setAttribute('color-theme', 'light');
     }
 }
 
-// 로컬스토리지 데이터에따라 실시간 변경
+// 로컬스토리지 데이터에 따라 실시간 변경
 window.addEventListener('storage', isDarkModeEnabled);

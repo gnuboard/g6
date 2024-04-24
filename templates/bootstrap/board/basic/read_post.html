@@ -325,7 +325,7 @@
                     </ul>
                 </div>
                 <script>
-                    $(function() {			    
+                $(function() {
                     // 댓글 옵션창 열기
                     $(".btn_cm_opt").on("click", function(){
                         $(this).parent("div").children(".bo_vc_act").show();
@@ -337,11 +337,16 @@
                         if( container.has(e.target).length === 0)
                         container.hide();
                     });
+
+                    // 댓글 수정, 답변 취소
+                    $("#btn_cancel").click(function() {
+                        comment_box('', 'c');
+                    });
                 });
                 </script>
             </article>
             {% else %}
-            <p id="bo_vc_empty" class="sub-font fs-5 m-0 text-center" style="padding: 80px 0; color: #777;"">등록된 댓글이 없습니다.</p>
+            <p id="bo_vc_empty" class="sub-font fs-5 m-0 text-center" style="padding: 80px 0; color: #777;">등록된 댓글이 없습니다.</p>
             {% endfor %}
         </section>
         <!-- } 댓글 끝 -->
@@ -407,6 +412,7 @@
                             </span>
                         </div>
                         <div class="btn_confirm text-end">
+                            <button type="button" id="btn_cancel" class="btn_cancel btn">취소</button>
                             <button type="submit" id="btn_submit" class="btn_submit">댓글등록</button>
                         </div>
                     </div>
@@ -416,18 +422,7 @@
             <script>
             var save_before = '';
             var save_html = document.getElementById('bo_vc_w').innerHTML;
-            /*
-            function good_and_write()
-            {
-                var f = document.fviewcomment;
-                if (fviewcomment_submit(f)) {
-                    f.is_good.value = 1;
-                    f.submit();
-                } else {
-                    f.is_good.value = 0;
-                }
-            }
-            */
+
             function fviewcomment_submit(f)
             {
                 // 양쪽 공백 없애기
@@ -499,12 +494,16 @@
     
                 // 댓글 아이디가 넘어오면 답변, 수정
                 if (comment_id) {
-                    if (work == 'c')
+                    if (work == 'c') {
                         el_id = 'reply_' + comment_id;
-                    else
+                    } else {
                         el_id = 'edit_' + comment_id;
+                    }
+                    // 수정, 답변 시, 취소 버튼 보이기
+                    document.getElementById('btn_cancel').style.display = '';
                 } else {
                     el_id = 'bo_vc_w';
+                    document.getElementById('btn_cancel').style.display = 'none';
                 }
     
                 if (save_before != el_id)

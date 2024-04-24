@@ -1077,7 +1077,7 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 .bo_vc_w_info #captcha {display:block;clear:both}
 .bo_vc_w .btn_confirm {margin-top:5px;clear:both}
 .bo_vc_w .icon_lock {display:inline-block;font-size:1.2rem;vertical-align:baseline}
-.bo_vc_w .btn_submit {height:50px;width:100%;padding:0 20px;border-radius:3px;font-weight:bold;font-size:1.3rem}
+.bo_vc_w .btn_submit, .bo_vc_w .btn_cancel {height:50px;width:100%;padding:0 20px;border-radius:3px;font-weight:bold;font-size:1.3rem}
 .bo_vc_w_wr:after {display:block;visibility:hidden;clear:both;content:""}
 .bo_vc_w .bo_vc_secret {display:block}
 
@@ -1648,7 +1648,7 @@ box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 #visit .btn_admin {position:absolute;top:0;right:15px}
 
 /* 다크모드 설정 */
-.darkmode-toggle-switch { position:fixed; bottom:10px; right:70px; width:50px; height:50px; border: 2px solid #d2d2d2; text-align:center; border-radius: 50%; background: var(--main_color); color: #fff; display: flex; justify-content: center; align-items: center; cursor: pointer; } 
-.darkmode-toggle-switch .visible { width:24px; height:24px; vertical-align:middle; }
-.darkmode-toggle-switch .visible.dark { display: var(--lightVisible) }
-.darkmode-toggle-switch .visible.bright { display: var(--darkVisible) }
+#darkmode-toggle-switch { position:fixed; bottom:10px; right:70px; width:50px; height:50px; border: 2px solid #d2d2d2; text-align:center; border-radius: 50%; background: var(--main_color); color: #fff; display: flex; justify-content: center; align-items: center; cursor: pointer; } 
+#darkmode-toggle-switch .visible { width:24px; height:24px; vertical-align:middle; }
+#darkmode-toggle-switch .visible.dark { display: var(--lightVisible) }
+#darkmode-toggle-switch .visible.bright { display: var(--darkVisible) }

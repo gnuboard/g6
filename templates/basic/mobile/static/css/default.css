@@ -1438,10 +1438,10 @@ transition:all 0.1s ease-in-out}
 html.remodal-is-locked {overflow-y:scroll !important}
 
 /* 다크모드 설정 */
-.darkmode-toggle-switch { position:fixed; bottom:20px; right:80px; width:50px; height:50px; border:0; text-align:center; border-radius: 3px; background: var(--primaryColor); color: #fff; display: flex; justify-content: center; align-items: center; cursor: pointer; }
-.darkmode-toggle-switch .visible { width:24px; height:24px; vertical-align:middle; }
-.darkmode-toggle-switch .visible.dark { display: var(--lightVisible) }
-.darkmode-toggle-switch .visible.bright { display: var(--darkVisible) }
+#darkmode-toggle-switch { position:fixed; bottom:20px; right:80px; width:50px; height:50px; border:0; text-align:center; border-radius: 3px; background: var(--primaryColor); color: #fff; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+#darkmode-toggle-switch .visible { width:24px; height:24px; vertical-align:middle; }
+#darkmode-toggle-switch .visible.dark { display: var(--lightVisible) }
+#darkmode-toggle-switch .visible.bright { display: var(--darkVisible) }
 
 /* 긴 문자열 ... 처리 */
 .elip { display: inline-block; min-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
