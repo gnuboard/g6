@@ -144,7 +144,6 @@ async def api_create_post(
     create_post_service.send_write_mail_(write, wr_data.parent_id)
     create_post_service.set_notice(write.wr_id, wr_data.notice)
     set_write_delay(create_post_service.request)
-    create_post_service.save_secret_session(write.wr_id, wr_data.secret)
     create_post_service.delete_cache()
     db.commit()
     return {"result": "created"}
@@ -189,7 +188,6 @@ async def api_update_post(
     update_post_service.validate_post_content(wr_data.wr_subject)
     update_post_service.validate_post_content(wr_data.wr_content)
     update_post_service.arrange_data(wr_data, wr_data.secret, wr_data.html, wr_data.mail)
-    update_post_service.save_secret_session(wr_id, wr_data.secret)
     update_post_service.save_write(write, wr_data)
     update_post_service.set_notice(write.wr_id, wr_data.notice)
     update_post_service.update_children_category(wr_data)
