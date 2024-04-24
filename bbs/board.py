@@ -100,22 +100,17 @@ async def list_post(
 
 @router.post("/list_delete/{bo_table}", dependencies=[Depends(validate_token)])
 async def list_delete(
-    request: Request,
-    db: db_session,
-    bo_table: str = Path(...),
+    list_delete_service: Annotated[ListDeleteService, Depends()],
     wr_ids: list = Form(..., alias="chk_wr_id[]"),
 ):
     """
     게시글을 일괄 삭제한다.
     """
-    list_delete_service = ListDeleteService(
-        request, db, bo_table, request.state.login_member
-    )
     list_delete_service.validate_admin_authority()
     list_delete_service.delete_writes(wr_ids)
 
-    query_params = request.query_params
-    url = f"/board/{bo_table}"
+    query_params = list_delete_service.request.query_params
+    url = f"/board/{list_delete_service.bo_table}"
     return RedirectResponse(
         set_url_query_params(url, query_params), status_code=303)
 

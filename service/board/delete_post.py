@@ -210,10 +210,9 @@ class ListDeleteService(BoardService):
         self,
         request: Request,
         db: db_session,
-        bo_table: str,
-        member: Member,
+        bo_table: Annotated[str, Path(...)],
     ):
-        super().__init__(request, db, bo_table, member)
+        super().__init__(request, db, bo_table)
 
     def delete_writes(self, wr_ids: list):
         """게시글 목록 삭제"""
