@@ -8,8 +8,7 @@ from .read_post import (
     ReadPostService, DownloadFileService
 )
 from .update_post import (
-    UpdatePostService, CommentService,
-    CommentServiceAPI
+    UpdatePostService, CommentService
 )
 from .delete_post import (
     DeletePostService, DeleteCommentService,

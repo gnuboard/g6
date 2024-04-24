@@ -13,7 +13,7 @@ from lib.member import MemberDetails
 from service.board import (
     GroupBoardListService, ListPostService, ReadPostService,
     CreatePostService, UpdatePostService, DownloadFileService,
-    DeletePostService
+    DeletePostService, CommentService
 )
 from api.v1.dependencies.member import get_current_member_optional, get_current_member
 
@@ -185,6 +185,26 @@ class DeletePostServiceAPI(DeletePostService):
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         wr_id: Annotated[str, Path(..., title="글 아이디", description="글 아이디")],
         member: Annotated[Member, Depends(get_current_member)],
+    ):
+        super().__init__(request, db, bo_table, wr_id)
+        self.member = MemberDetails(request, member, board=self.board)
+
+    def raise_exception(self, status_code: int, detail: str = None):
+        raise HTTPException(status_code=status_code, detail=detail)
+
+
+class CommentServiceAPI(CommentService):
+    """
+    댓글 관리를 위한 API 클래스
+      - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
+    """
+    def __init__(
+        self,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
+        wr_id: Annotated[str, Path(..., title="부모글 아이디", description="부모글 아이디")],
+        member: Annotated[Member, Depends(get_current_member_optional)],
     ):
         super().__init__(request, db, bo_table, wr_id)
         self.member = MemberDetails(request, member, board=self.board)

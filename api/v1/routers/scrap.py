@@ -15,13 +15,13 @@ from api.v1.dependencies.scrap import (
     get_scrap, validate_create_scrap, validate_delete_scrap
 )
 from api.v1.lib.scrap import ScrapServiceAPI
+from api.v1.lib.board import CommentServiceAPI
 from api.v1.models.pagination import PagenationRequest
 from api.v1.models.response import (
     MessageResponse, response_401, response_403, response_404, response_409,
     response_422, response_500,
 )
 from api.v1.models.scrap import CreateScrap, ScrapFormResponse, ScrapListResponse
-from service.board.update_post import CommentServiceAPI
 
 router = APIRouter()
 
