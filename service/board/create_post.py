@@ -1,12 +1,12 @@
 import os
 from datetime import datetime
 from typing_extensions import Annotated, List, Union
-from fastapi import Request, HTTPException, UploadFile, Path
-from sqlalchemy import delete, inspect, select, update
+from fastapi import Request, HTTPException, UploadFile, Path, Form, Depends
+from sqlalchemy import delete, select, update
 
 from core.database import db_session
 from core.models import (
-    Member, WriteBaseModel, AutoSave,
+    WriteBaseModel, AutoSave,
     BoardNew, BoardGood, Scrap
 )
 from core.formclass import WriteForm
@@ -19,7 +19,9 @@ from lib.common import (
     filter_words, make_directory, dynamic_create_write_table
 )
 from lib.html_sanitizer import content_sanitizer
-from lib.dependency.dependencies import validate_captcha as lib_validate_captcha
+from lib.dependency.dependencies import (
+    validate_captcha as lib_validate_captcha, get_variety_bo_table
+)
 from lib.pbkdf2 import create_hash
 from lib.template_filters import datetime_format
 from api.v1.models.board import WriteModel
@@ -266,11 +268,10 @@ class MoveUpdateService(BoardService):
         self,
         request: Request,
         db: db_session,
-        bo_table: str,
-        member: Member,
-        sw: str,
+        bo_table: Annotated[str, Depends(get_variety_bo_table)],
+        sw: Annotated[str, Form(...)]
     ):
-        super().__init__(request, db, bo_table, member)
+        super().__init__(request, db, bo_table)
         self.sw = sw
         self.act = "이동" if sw == "move" else "복사"
 

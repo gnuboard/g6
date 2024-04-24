@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse, RedirectResponse
 from core.database import db_session
 from core.exception import AlertException
 from core.formclass import WriteForm, WriteCommentForm
-from core.models import Member, WriteBaseModel
+from core.models import WriteBaseModel
 from core.template import UserTemplates
 from lib.member import get_admin_type
 from lib.board_lib import (
@@ -122,23 +122,17 @@ async def list_delete(
 
 @router.post("/move/{bo_table}")
 async def move_post(
-    request: Request,
-    db: db_session,
-    bo_table: str = Path(...),
-    sw: str = Form(...),
+    move_update_service: Annotated[MoveUpdateService, Depends()],
     wr_ids: list = Form(..., alias="chk_wr_id[]"),
 ):
     """
     게시글 복사/이동
     """
-    move_update_service = MoveUpdateService(
-        request, db, bo_table, request.state.login_member, sw
-    )
     move_update_service.validate_admin_authority()
     boards = move_update_service.get_admin_board_list()
     context = {
-        "request": request,
-        "sw": sw,
+        "request": move_update_service.request,
+        "sw": move_update_service.sw,
         "act": move_update_service.act,
         "boards": boards,
         "current_board": move_update_service.board,
@@ -149,25 +143,18 @@ async def move_post(
 
 @router.post("/move_update/", dependencies=[Depends(validate_token)])
 async def move_update(
-    request: Request,
-    db: db_session,
-    origin_bo_table: str = Form(..., alias="bo_table"),
-    sw: str = Form(...),
+    move_update_service: Annotated[MoveUpdateService, Depends()],
     wr_ids: str = Form(..., alias="wr_id_list"),
     target_bo_tables: list = Form(..., alias="chk_bo_table[]"),
 ):
     """
     게시글 복사/이동
     """
-    member = request.state.login_member
-    move_update_service = MoveUpdateService(
-        request, db, origin_bo_table, member, sw
-    )
     move_update_service.validate_admin_authority()
     origin_writes = move_update_service.get_origin_writes(wr_ids)
     move_update_service.move_copy_post(target_bo_tables, origin_writes)
     context = {
-        "request": request,
+        "request": move_update_service.request,
         "errors": f"해당 게시물을 선택한 게시판으로 {move_update_service.act} 하였습니다."
     }
     return templates.TemplateResponse("alert_close.html", context)
