@@ -721,8 +721,10 @@ class BoardFileManager():
         Args:
             bf_no (int): 파일 순번
         """
-        if self.wr_id and bf_no:
+        if self.wr_id and bf_no is not None:
             board_file = self.get_board_file(bf_no)
+            if not board_file:
+                return
             self.remove_file(board_file.bf_file)
             self.db.delete(board_file)
             self.db.commit()

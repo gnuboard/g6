@@ -217,11 +217,18 @@ class BoardService(BaseService, BoardConfig):
         if uid:
             self.db.execute(delete(AutoSave).where(AutoSave.as_uid == uid))
 
-    def upload_files(self, write: WriteBaseModel, files: List[UploadFile], file_content: list = None, file_dels: list = None):
+    def upload_files(
+        self, write: WriteBaseModel,
+        file_list: List[UploadFile],
+        file_content: List[str] = None,
+        file_dels: list = None
+    ):
         """파일 업로드"""
-        files = [file for file in files if file.size]
-        if not files:
-            return
+        files = []
+        for file in file_list:
+            if getattr(file, "size", None):
+                files.append(file)
+
         if self.member.mb_id and self.member.mb_id != write.mb_id:
             self.raise_exception(status_code=403, detail="자신의 글에만 파일을 업로드할 수 있습니다.")
 
@@ -256,7 +263,7 @@ class BoardService(BaseService, BoardConfig):
                         continue
 
                 board_file = file_manager.get_board_file(index)
-                bf_content = file_content[index] if file_content else ""
+                bf_content = file_content[index] if file_content and file_content[index] else ""
                 filename = file_manager.get_filename(file.filename)
                 if board_file:
                     # 기존파일 삭제
