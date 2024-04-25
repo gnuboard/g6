@@ -1,5 +1,6 @@
 """게시판 관련 의존성을 정의합니다."""
-from fastapi import HTTPException, Path
+from typing_extensions import Annotated
+from fastapi import HTTPException, Path, UploadFile, File, Form
 
 from core.database import db_session
 from core.models import Board
@@ -36,3 +37,19 @@ def get_write(
         raise HTTPException(status_code=404, detail="존재하지 않는 게시글입니다.")
 
     return write
+
+
+def arange_file_data(
+    file1: Annotated[UploadFile, File(title="첨부파일1")] = None,
+    file2: Annotated[UploadFile, File(title="첨부파일2")] = None,
+    file_content1: Annotated[str, Form(title="첨부파일1 내용")] = None,
+    file_content2: Annotated[str, Form(title="첨부파일2 내용")] = None,
+    file_del1: Annotated[int, Form(title="첨부파일1 삭제 여부")] = None,
+    file_del2: Annotated[int, Form(title="첨부파일2 삭제 여부")] = None,
+) -> dict:
+    """업로드 파일의 데이터를 딕셔너리 형태로 반환합니다."""
+    return {
+        "files": [file1, file2],
+        "file_contents": [file_content1, file_content2],
+        "file_dels": [file_del1, file_del2],
+    }

@@ -1,18 +1,16 @@
 from typing_extensions import Annotated, List
 from fastapi import (
-    APIRouter, Depends, Request, Path, HTTPException,
-    status, UploadFile, File, Form, Body
+    APIRouter, Depends, Path, HTTPException, status, Body
 )
 from fastapi.responses import FileResponse
 from fastapi.encoders import jsonable_encoder
 
 from core.database import db_session
-from core.models import Member
 from lib.board_lib import insert_board_new, set_write_delay
 from api.v1.models.response import (
     response_401, response_403, response_404, response_422
 )
-from api.v1.dependencies.member import get_current_member
+from api.v1.dependencies.board import arange_file_data
 from api.v1.models.board import (
     WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel,
     ResponseBoardListModel, ResponseGroupBoardsModel, ResponseNormalModel
@@ -282,22 +280,18 @@ async def api_move_update(
                        **response_404, **response_422}
             )
 async def api_upload_file(
-    request: Request,
-    db: db_session,
-    member: Annotated[Member, Depends(get_current_member)],
-    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
+    create_post_service: Annotated[CreatePostServiceAPI, Depends()],
+    data: Annotated[dict, Depends(arange_file_data)],
     wr_id: str = Path(..., title="글 아이디", description="글 아이디"),
-    files: List[UploadFile] = File(...),
-    file_content: list = Form(None),
-    file_dels: list = Form(None),
 ) -> ResponseNormalModel:
     """
     파일을 업로드합니다.
     - multipart/form-data로 전송해야 합니다.
     """
-    create_post_service = CreatePostServiceAPI(request, db, bo_table, member)
     write = create_post_service.get_write(wr_id)
-    create_post_service.upload_files(write, files, file_content, file_dels)
+    create_post_service.upload_files(
+        write, data["files"], data["file_contents"], data["file_dels"]
+    )
     return {"result": "uploaded"}
 
 
