@@ -10,6 +10,7 @@ from lib.board_lib import (
 )
 from lib.template_filters import number_format
 from lib.member import MemberDetails
+from lib.pbkdf2 import validate_password
 from service.board import (
     GroupBoardListService, ListPostService, ReadPostService,
     CreatePostService, UpdatePostService, DownloadFileService,
@@ -79,6 +80,10 @@ class ReadPostServiceAPI(ReadPostService):
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)
 
+    def validate_read_wr_password(self, wr_password: str, hashed_wr_password: str):
+        """게시글 비밀번호 검사"""
+        if not validate_password(wr_password, hashed_wr_password):
+            self.raise_exception(403, "비밀번호가 일치하지 않습니다.")
 
 class CreatePostServiceAPI(CreatePostService):
     """

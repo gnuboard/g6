@@ -100,6 +100,41 @@ async def api_read_post(
     return content
 
 
+@router.post("/{bo_table}/{wr_id}",
+            summary="게시판 개별 글 조회(비밀글)",
+            responses={**response_401, **response_403,
+                       **response_404, **response_422}
+            )
+async def api_read_post(
+    db: db_session,
+    read_post_service: Annotated[ReadPostServiceAPI, Depends()],
+    wr_password: str = Body(..., title="비밀번호", description="비밀글 비밀번호")
+) -> ResponseWriteModel:
+    """
+    지정된 게시판의 비밀글을 개별 조회합니다.
+
+    ### Request Body
+    - **wr_password**: 게시글 비밀번호
+    """
+    read_post_service.validate_read_wr_password(
+        wr_password, read_post_service.write.wr_password
+    )
+    content = jsonable_encoder(read_post_service.write)
+    additional_content = jsonable_encoder({
+        "images": read_post_service.images,
+        "normal_files": read_post_service.normal_files,
+        "links": read_post_service.get_links(),
+        "comments": read_post_service.get_comments(),
+    })
+    content.update(additional_content)
+    read_post_service.validate_repeat()
+    read_post_service.block_read_comment()
+    read_post_service.check_scrap()
+    read_post_service.check_is_good()
+    db.commit()
+    return content
+
+
 @router.post("/{bo_table}",
              summary="게시판 글 작성",
              responses={**response_401, **response_403,
