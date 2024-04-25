@@ -35,8 +35,6 @@ class BoardConfig():
         self.member = MemberDetails(request, request.state.login_member)
         self.member.admin_type = self.member.get_admin_type(board=board)
 
-        print(self.member, self.member.mb_id, self.member.admin_type)
-
     @property
     def gallery_width(self) -> int:
         """갤러리 목록 이미지 가로 크기를 반환.

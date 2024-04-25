@@ -41,12 +41,13 @@ class MemberDetails:
         board: Board = None,
         group: Group = None
     ):
+        # TODO: 반복적으로 호출되는 문제 해결해야함.
+        # print("__init__", member)
         super().__init__()
 
         self.request = request
         self.config = request.state.config
         # member의 속성을 class 속성에 복사
-        print("__init__", member)
         if member:
             for key, value in member.__dict__.items():
                 setattr(self, key, value)
