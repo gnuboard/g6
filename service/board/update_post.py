@@ -87,6 +87,18 @@ class CommentService(UpdatePostService):
             message += "로그인 후 다시 시도해주세요."
         self.raise_exception(detail=message, status_code=403)
 
+    def get_parent_comment(self, comment_id: int) -> WriteBaseModel:
+        """댓글 존재 여부 확인"""
+        parent_comment = self.db.get(self.write_model, comment_id)
+        if not parent_comment:
+            self.raise_exception(detail=f"{comment_id} : 존재하지 않는 댓글입니다.", status_code=404)
+        return parent_comment
+
+    def validate_write_comment_paring(self, wr_parent: int):
+        """댓글과 게시글의 연관성 검증"""
+        if self.wr_id != wr_parent:
+            self.raise_exception(detail="작성하려는 대댓글의 댓글이, 부모글의 댓글이 아닙니다.", status_code=403)
+
     def save_comment(
             self, data: Union[WriteCommentForm, CommentModel], write: WriteBaseModel
     ) -> WriteBaseModel:
@@ -95,10 +107,8 @@ class CommentService(UpdatePostService):
 
         if data.comment_id:
             # 해당 생성 댓글이 대댓글(댓글의 댓글)인 경우의 로직
-            parent_comment = self.db.get(self.write_model, data.comment_id)
-            if not parent_comment:
-                self.raise_exception(detail=f"{data.comment_id} : 존재하지 않는 댓글입니다.", status_code=404)
-
+            parent_comment = self.get_parent_comment(data.comment_id)
+            self.validate_write_comment_paring(parent_comment.wr_parent)
             comment.wr_comment_reply = generate_reply_character(self.board, parent_comment)
             comment.wr_comment = parent_comment.wr_comment
         else:
