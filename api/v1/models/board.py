@@ -80,7 +80,7 @@ class ResponseCommentModel(BaseModel):
     mb_id: str
     save_content: str
     wr_datetime: datetime
-    wr_last: datetime
+    wr_last: str
     wr_option: str
     wr_email: str
     wr_comment: int
