@@ -23,7 +23,7 @@ class DeletePostService(BoardService):
         request: Request,
         db: db_session,
         bo_table: Annotated[str, Path(...)],
-        wr_id: Annotated[str, Path(...)],
+        wr_id: Annotated[int, Path(...)],
     ):
         super().__init__(request, db, bo_table)
         self.wr_id = wr_id

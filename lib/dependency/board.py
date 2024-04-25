@@ -41,7 +41,7 @@ def get_variery_wr_id(
 
 def get_write(db: db_session, 
               bo_table: Annotated[str, Path(...)],
-              wr_id: Annotated[str, Depends(get_variery_wr_id)]):
+              wr_id: Annotated[int, Depends(get_variery_wr_id)]):
     """게시글 존재 여부 검사 & 반환"""
     if not wr_id.isdigit():
         raise AlertException(f"{wr_id} : 올바르지 않은 게시글 번호입니다.", 404)

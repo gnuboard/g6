@@ -191,7 +191,6 @@ async def api_update_post(
     db: db_session,
     update_post_service: Annotated[UpdatePostServiceAPI, Depends()],
     wr_data: WriteModel,
-    wr_id: str = Path(..., title="글 아이디", description="글 아이디"),
 ) -> ResponseNormalModel:
     """
     지정된 게시판의 글을 수정합니다.
@@ -317,7 +316,7 @@ async def api_move_update(
 async def api_upload_file(
     create_post_service: Annotated[CreatePostServiceAPI, Depends()],
     data: Annotated[dict, Depends(arange_file_data)],
-    wr_id: str = Path(..., title="글 아이디", description="글 아이디"),
+    wr_id: int = Path(..., title="글 아이디", description="글 아이디"),
 ) -> ResponseNormalModel:
     """
     파일을 업로드합니다.
@@ -360,7 +359,7 @@ async def api_create_comment(
     comment_service: Annotated[CommentServiceAPI, Depends()],
     comment_data: CommentModel,
     bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
-    wr_id: str = Path(..., title="부모글 아이디", description="부모글 아이디"),
+    wr_id: int = Path(..., title="부모글 아이디", description="부모글 아이디"),
 ) -> ResponseNormalModel:
     """
     댓글 등록

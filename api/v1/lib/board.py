@@ -71,7 +71,7 @@ class ReadPostServiceAPI(ReadPostService):
         request: Request,
         db: db_session,
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
-        wr_id: Annotated[str, Path(..., title="글 아이디", description="글 아이디")],
+        wr_id: Annotated[int, Path(..., title="글 아이디", description="글 아이디")],
         member: Annotated[Member, Depends(get_current_member_optional)],
     ):
         super().__init__(request, db, bo_table, wr_id)
@@ -132,7 +132,7 @@ class UpdatePostServiceAPI(UpdatePostService):
         request: Request,
         db: db_session,
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
-        wr_id: Annotated[str, Path(..., title="글 아이디", description="글 아이디")],
+        wr_id: Annotated[int, Path(..., title="글 아이디", description="글 아이디")],
         member: Annotated[Member, Depends(get_current_member_optional)],
     ):
         super().__init__(request, db, bo_table, wr_id)
@@ -152,7 +152,7 @@ class DownloadFileServiceAPI(DownloadFileService):
         request: Request,
         db: db_session,
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
-        wr_id: Annotated[str, Path(..., title="글 아이디", description="글 아이디")],
+        wr_id: Annotated[int, Path(..., title="글 아이디", description="글 아이디")],
         bf_no: Annotated[int, Path(..., title="파일 순번", description="파일 순번")],
         member: Annotated[Member, Depends(get_current_member_optional)],
     ):
@@ -189,7 +189,7 @@ class DeletePostServiceAPI(DeletePostService):
         request: Request,
         db: db_session,
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
-        wr_id: Annotated[str, Path(..., title="글 아이디", description="글 아이디")],
+        wr_id: Annotated[int, Path(..., title="글 아이디", description="글 아이디")],
         member: Annotated[Member, Depends(get_current_member)],
     ):
         super().__init__(request, db, bo_table, wr_id)
@@ -209,7 +209,7 @@ class CommentServiceAPI(CommentService):
         request: Request,
         db: db_session,
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
-        wr_id: Annotated[str, Path(..., title="부모글 아이디", description="부모글 아이디")],
+        wr_id: Annotated[int, Path(..., title="부모글 아이디", description="부모글 아이디")],
         member: Annotated[Member, Depends(get_current_member_optional)],
     ):
         super().__init__(request, db, bo_table, wr_id)
@@ -229,7 +229,7 @@ class DeleteCommentServiceAPI(DeleteCommentService):
         request: Request,
         db: db_session,
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
-        comment_id: Annotated[str, Path(..., title="댓글 아이디", description="댓글 아이디")],
+        comment_id: Annotated[int, Path(..., title="댓글 아이디", description="댓글 아이디")],
         member: Annotated[Member, Depends(get_current_member)],
     ):
         super().__init__(request, db, bo_table, comment_id)

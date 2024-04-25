@@ -23,7 +23,7 @@ def get_board(
 def get_write(
     db: db_session,
     bo_table: str = Path(...),
-    wr_id: str = Path(...),
+    wr_id: int = Path(...),
 ):
     """
     게시글 정보를 조회합니다.
