@@ -22,9 +22,6 @@ async def api_board_new_list(
 ) -> ResponseBoardNewListModel:
     """
     최신 게시글 목록
-
-    ### Request Body
-    - 삭제할 최신글 id 리스트 (예: [1, 2, 3])
     """
     query = board_new_service.get_query(gr_id, mb_id, view)
     offset = board_new_service.get_offset(current_page)
@@ -50,6 +47,9 @@ async def api_new_delete(
 ) -> ResponseNormalModel:
     """
     최신 게시글을 삭제한다.
+
+    ### Request Body
+    - **bn_ids**: 삭제할 최신글 id 리스트 (예시: [1, 2, 3])
     """
     board_new_service.delete_board_news(bn_ids)
     return {"result": "deleted"}

@@ -256,10 +256,9 @@ async def api_list_delete(
 ) -> ResponseNormalModel:
     """
     게시글을 일괄 삭제합니다.
-    - wr_ids: 삭제할 게시글 wr_id 리스트
 
     ### Request Body
-    - 삭제할 게시글 리스트 (예: [1, 2, 3])
+    - **wr_ids**: 삭제할 게시글 wr_id 리스트 (예: [1, 2, 3])
     """
     list_delete_service.validate_admin_authority()
     list_delete_service.delete_writes(wr_ids)
@@ -339,9 +338,10 @@ async def api_download_file(
 ):
     """
     게시글의 파일을 다운로드합니다.
-    - bo_table: 게시글 테이블명
-    - wr_id: 게시글 아이디
-    - bf_no: 첨부된 파일의 순번
+
+    - **bo_table**: 게시글 테이블명
+    - **wr_id**: 게시글 아이디
+    - **bf_no**: 첨부된 파일의 순번
     """
     download_file_service.validate_download_level()
     board_file = download_file_service.get_board_file()
