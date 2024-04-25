@@ -1,20 +1,20 @@
-from typing_extensions import Union
-from fastapi import Request, HTTPException
+from typing_extensions import Union, Annotated
+from fastapi import Request, HTTPException, Path, Depends, Form
 from sqlalchemy import update, select, func
 
 from core.database import db_session
 from core.models import Member, WriteBaseModel
-from core.formclass import WriteForm
+from core.formclass import WriteForm, WriteCommentForm
 from lib.board_lib import generate_reply_character, insert_point, is_owner
 from lib.g5_compatibility import G5Compatibility
 from lib.template_filters import number_format
 from lib.html_sanitizer import content_sanitizer
 from lib.pbkdf2 import create_hash, validate_password
-from api.v1.models.board import WriteModel
-from .create_post import CreatePostService
+from api.v1.models.board import WriteModel, CommentModel
+from . import BoardService
 
 
-class UpdatePostService(CreatePostService):
+class UpdatePostService(BoardService):
     """
     게시글 수정 클래스
     """
@@ -22,16 +22,15 @@ class UpdatePostService(CreatePostService):
         self,
         request: Request,
         db: db_session,
-        bo_table: str,
-        member: Member,
-        wr_id: str,
+        bo_table: Annotated[str, Path(...)],
+        wr_id: Annotated[str, Path(...)],
     ):
-        super().__init__(request, db, bo_table, member)
+        super().__init__(request, db, bo_table)
         self.wr_id = wr_id
 
     def validate_author(self, write: WriteBaseModel, wr_password: str = None):
         """작성자 확인"""
-        if not is_owner(write, self.mb_id) and not validate_password(wr_password, write.wr_password):
+        if not is_owner(write, self.member.mb_id) and not validate_password(wr_password, write.wr_password):
             self.raise_exception(detail="작성자만 수정할 수 있습니다.", status_code=403)
 
     def validate_restrict_comment_count(self):
@@ -56,16 +55,6 @@ class UpdatePostService(CreatePostService):
         self.db.commit()
 
 
-class UpdatePostServiceAPI(UpdatePostService):
-    """
-    API 요청에 사용되는 게시글 수정 클래스
-    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
-    """
-
-    def raise_exception(self, status_code: int, detail: str = None):
-        raise HTTPException(status_code=status_code, detail=detail)
-
-
 class CommentService(UpdatePostService):
     """댓글 관리 클래스"""
 
@@ -73,11 +62,10 @@ class CommentService(UpdatePostService):
         self,
         request: Request,
         db: db_session,
-        bo_table: str,
-        member: Member,
-        wr_id: str = None,
+        bo_table: Annotated[str, Path(...)],
+        wr_id: Annotated[str, Form(...)],
     ):
-        super().__init__(request, db, bo_table, member, wr_id)
+        super().__init__(request, db, bo_table, wr_id)
         self.g5_instance = G5Compatibility(db)
 
     def validate_comment_level(self):
@@ -100,7 +88,7 @@ class CommentService(UpdatePostService):
         self.raise_exception(detail=message, status_code=403)
 
     def save_comment(
-            self, data: Union[WriteForm, WriteModel], write: WriteBaseModel
+            self, data: Union[WriteCommentForm, CommentModel], write: WriteBaseModel
     ) -> WriteBaseModel:
         """댓글을 저장하고 댓글 ORM 객체를 반환"""
         comment = self.write_model()
@@ -148,17 +136,7 @@ class CommentService(UpdatePostService):
 
     def add_point(self, comment: WriteBaseModel):
         """포인트 추가"""
-        if self.mb_id:
+        if self.member.mb_id:
             point = self.board.bo_comment_point
             content = f"{self.board.bo_subject} {comment.wr_parent}-{comment.wr_id} 댓글쓰기"
-            insert_point(self.request, self.mb_id, point, content, self.bo_table, comment.wr_id, "댓글")
-
-
-class CommentServiceAPI(CommentService):
-    """
-    댓글 관리를 위한 API 클래스
-      - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
-    """
-
-    def raise_exception(self, status_code: int, detail: str = None):
-        raise HTTPException(status_code=status_code, detail=detail)
+            insert_point(self.request, self.member.mb_id, point, content, self.bo_table, comment.wr_id, "댓글")

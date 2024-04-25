@@ -17,6 +17,17 @@ from lib.member import get_admin_type
 from lib.token import check_token
 
 
+async def get_variety_bo_table(
+    bo_table_path: Annotated[str, Path(alias="bo_table", title="게시판 테이블명", description="게시판 테이블명")] = None,
+    bo_table_form: Annotated[str, Form(alias="bo_table")] = None
+):
+    """
+    요청 매개변수의 유형별 게시판 테이블명을 수신, 하나의 테이블명만 반환
+    - 함수의 매개변수 순서대로 우선순위를 가짐
+    """
+    return bo_table_path or bo_table_form
+
+
 async def get_variety_tokens(
     token_form: Annotated[str, Form(alias="token")] = None,
     token_query: Annotated[str, Query(alias="token")] = None

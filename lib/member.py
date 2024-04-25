@@ -34,7 +34,13 @@ class MemberDetails:
 
     _admin_type: str = None
 
-    def __init__(self, request: Request, member: Member):
+    def __init__(
+        self,
+        request: Request,
+        member: Member,
+        board: Board = None,
+        group: Group = None
+    ):
         super().__init__()
 
         self.request = request
@@ -44,21 +50,8 @@ class MemberDetails:
         if member:
             for key, value in member.__dict__.items():
                 setattr(self, key, value)
-
-    @property
-    def level(self) -> int:
-        """회원 레벨 정보를 가져오는 프로퍼티"""
-        return int(self.mb_level) if self.mb_id else 1
-
-    @property
-    def admin_type(self) -> str:
-        """게시판 관리자 여부 확인 후 관리자 타입 반환"""
-        return self._admin_type or self.get_admin_type()
-
-    @admin_type.setter
-    def admin_type(self, value: str):
-        """게시판 관리자 여부 확인 후 관리자 타입 설정"""
-        self._admin_type = value
+        self.level: int = self.mb_level
+        self.admin_type: Union[str, None] = self.get_admin_type(group, board)
 
     def get_admin_type(self, group: Group = None, board: Board = None) -> Union[str, None]:
         """게시판 관리자 여부 확인 후 관리자 타입 반환

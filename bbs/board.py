@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse, RedirectResponse
 from core.database import db_session
 from core.exception import AlertException
 from core.formclass import WriteForm, WriteCommentForm
-from core.models import Member, WriteBaseModel
+from core.models import WriteBaseModel
 from core.template import UserTemplates
 from lib.member import get_admin_type
 from lib.board_lib import (
@@ -19,12 +19,10 @@ from lib.board_lib import (
 )
 from lib.captcha import captcha_widget
 from lib.common import set_url_query_params, get_unique_id, remove_query_params
-from lib.dependency.board import get_write
+from lib.dependency.board import get_write, get_variery_wr_id
 from lib.dependency.dependencies import (
-    check_group_access, common_search_query_params,
-    validate_captcha, validate_token
+    check_group_access, validate_captcha, validate_token
 )
-from lib.dependency.auth import get_login_member_optional
 from lib.template_functions import get_paging
 from service.board import (
     ListPostService, CreatePostService, ReadPostService,
@@ -49,16 +47,12 @@ templates.env.globals["captcha_widget"] = captcha_widget
 @router.get("/group/{gr_id}")
 async def group_board_list(
     request: Request,
-    db: db_session,
-    gr_id: str = Path(...)
+    group_board_list_service: Annotated[GroupBoardListService, Depends()],
 ):
     """
     게시판그룹의 모든 게시판 목록을 보여준다.
     """
     # 게시판 그룹 정보 조회
-    group_board_list_service = GroupBoardListService(
-        request, db, gr_id, request.state.login_member
-    )
     group = group_board_list_service.group
     group_board_list_service.check_mobile_only()
     boards = group_board_list_service.get_boards_in_group()
@@ -74,33 +68,26 @@ async def group_board_list(
 
 @router.get("/{bo_table}")
 async def list_post(
-    request: Request,
-    db: db_session,
-    popular_service: Annotated[PopularService, Depends()],
-    bo_table: Annotated[str, Path(...)],
-    search_params: Annotated[dict, Depends(common_search_query_params)],
+    list_post_service: Annotated[ListPostService, Depends()],
 ):
     """해당 게시판의 게시글 목록을 보여준다."""
-    list_post_service = ListPostService(
-        request, db, bo_table, request.state.login_member, search_params
-    )
     board = list_post_service.board
-
-    # 검색 단어를 인기검색어에 등록
-    fields = search_params.get('sfl')
-    word = search_params.get('stx')
-    popular_service.create_popular(request, fields, word)
-
+    paging = get_paging(
+        list_post_service.request,
+        list_post_service.search_params['current_page'],
+        list_post_service.get_total_count(),
+        list_post_service.page_rows
+    )
     context = {
-        "request": request,
+        "request": list_post_service.request,
         "categories": list_post_service.categories,
         "board": board,
         "board_config": list_post_service,
-        "notice_writes": list_post_service.get_notice_writes(search_params),
-        "writes": list_post_service.get_writes(search_params),
+        "notice_writes": list_post_service.get_notice_writes(),
+        "writes": list_post_service.get_writes(),
         "total_count": list_post_service.get_total_count(),
-        "current_page": search_params['current_page'],
-        "paging": get_paging(request, search_params['current_page'], list_post_service.get_total_count(), list_post_service.page_rows),
+        "current_page": list_post_service.search_params['current_page'],
+        "paging": paging,
         "is_write": list_post_service.is_write_level(),
         "table_width": list_post_service.get_table_width,
         "gallery_width": list_post_service.gallery_width,
@@ -114,45 +101,34 @@ async def list_post(
 
 @router.post("/list_delete/{bo_table}", dependencies=[Depends(validate_token)])
 async def list_delete(
-    request: Request,
-    db: db_session,
-    bo_table: str = Path(...),
+    list_delete_service: Annotated[ListDeleteService, Depends()],
     wr_ids: list = Form(..., alias="chk_wr_id[]"),
 ):
     """
     게시글을 일괄 삭제한다.
     """
-    list_delete_service = ListDeleteService(
-        request, db, bo_table, request.state.login_member
-    )
     list_delete_service.validate_admin_authority()
     list_delete_service.delete_writes(wr_ids)
 
-    query_params = request.query_params
-    url = f"/board/{bo_table}"
+    query_params = list_delete_service.request.query_params
+    url = f"/board/{list_delete_service.bo_table}"
     return RedirectResponse(
         set_url_query_params(url, query_params), status_code=303)
 
 
 @router.post("/move/{bo_table}")
 async def move_post(
-    request: Request,
-    db: db_session,
-    bo_table: str = Path(...),
-    sw: str = Form(...),
+    move_update_service: Annotated[MoveUpdateService, Depends()],
     wr_ids: list = Form(..., alias="chk_wr_id[]"),
 ):
     """
     게시글 복사/이동
     """
-    move_update_service = MoveUpdateService(
-        request, db, bo_table, request.state.login_member, sw
-    )
     move_update_service.validate_admin_authority()
     boards = move_update_service.get_admin_board_list()
     context = {
-        "request": request,
-        "sw": sw,
+        "request": move_update_service.request,
+        "sw": move_update_service.sw,
         "act": move_update_service.act,
         "boards": boards,
         "current_board": move_update_service.board,
@@ -163,25 +139,18 @@ async def move_post(
 
 @router.post("/move_update/", dependencies=[Depends(validate_token)])
 async def move_update(
-    request: Request,
-    db: db_session,
-    origin_bo_table: str = Form(..., alias="bo_table"),
-    sw: str = Form(...),
+    move_update_service: Annotated[MoveUpdateService, Depends()],
     wr_ids: str = Form(..., alias="wr_id_list"),
     target_bo_tables: list = Form(..., alias="chk_bo_table[]"),
 ):
     """
     게시글 복사/이동
     """
-    member = request.state.login_member
-    move_update_service = MoveUpdateService(
-        request, db, origin_bo_table, member, sw
-    )
     move_update_service.validate_admin_authority()
     origin_writes = move_update_service.get_origin_writes(wr_ids)
     move_update_service.move_copy_post(target_bo_tables, origin_writes)
     context = {
-        "request": request,
+        "request": move_update_service.request,
         "errors": f"해당 게시물을 선택한 게시판으로 {move_update_service.act} 하였습니다."
     }
     return templates.TemplateResponse("alert_close.html", context)
@@ -189,18 +158,12 @@ async def move_update(
 
 @router.get("/write/{bo_table}", dependencies=[Depends(check_group_access)])
 async def write_form_add(
-    request: Request,
-    db: db_session,
-    bo_table: str = Path(...),
+    create_post_service: Annotated[CreatePostService, Depends()],
     parent_id: int = Query(None)
 ):
     """
     게시글을 작성하는 form을 보여준다.
     """
-    create_post_service = CreatePostService(
-        request, db, bo_table, request.state.login_member
-    )
-
     board = create_post_service.board
     parent_write = None
     if parent_id:
@@ -214,11 +177,12 @@ async def write_form_add(
     # 게시판 제목 설정
     board.subject = create_post_service.subject
     # 게시판 에디터 설정
+    request = create_post_service.request
     request.state.use_editor = board.bo_use_dhtml_editor
     request.state.editor = create_post_service.select_editor
 
     # 게시판 관리자 확인
-    admin_type = create_post_service.admin_type
+    admin_type = create_post_service.member.admin_type
 
     context = {
         "request": request,
@@ -245,18 +209,14 @@ async def write_form_add(
 
 @router.get("/write/{bo_table}/{wr_id}", dependencies=[Depends(check_group_access)])
 async def write_form_edit(
-    request: Request,
-    db: db_session,
-    bo_table: str = Path(...),
-    wr_id: int = Path(...)
+    update_post_service: Annotated[UpdatePostService, Depends()],
 ):
     """
     게시글을 작성하는 form을 보여준다.
     """
-    update_post_service = UpdatePostService(
-        request, db, bo_table, request.state.login_member, wr_id,
-    )
-
+    request = update_post_service.request
+    bo_table = update_post_service.bo_table
+    wr_id = update_post_service.wr_id
     board = update_post_service.board
     write = update_post_service.get_write(wr_id)
 
@@ -265,7 +225,7 @@ async def write_form_edit(
     update_post_service.validate_restrict_comment_count()
 
     # 게시판 관리자 확인
-    admin_type = update_post_service.admin_type
+    admin_type = update_post_service.member.admin_type
     if not admin_type:
         # 익명 글
         if not write.mb_id:
@@ -275,7 +235,7 @@ async def write_form_edit(
                 return RedirectResponse(
                     set_url_query_params(url, query_params), status_code=303)
         # 회원 글
-        elif write.mb_id and not is_owner(write, update_post_service.mb_id):
+        elif write.mb_id and not is_owner(write, update_post_service.member.mb_id):
             raise AlertException("본인 글만 수정할 수 있습니다.", 403)
 
     # 게시판 제목 설정
@@ -322,11 +282,9 @@ async def write_form_edit(
 
 @router.post("/write_update/{bo_table}", dependencies=[Depends(validate_token), Depends(check_group_access)])
 async def create_post(
-    request: Request,
     db: db_session,
     form_data: Annotated[WriteForm, Depends()],
-    member: Annotated[Member, Depends(get_login_member_optional)],
-    bo_table: str = Path(...),
+    create_post_service: Annotated[CreatePostService, Depends()],
     parent_id: int = Form(None),
     notice: bool = Form(False),
     secret: str = Form(""),
@@ -339,9 +297,6 @@ async def create_post(
     recaptcha_response: str = Form("", alias="g-recaptcha-response"),
 ):
     """게시글을 작성한다."""
-    create_post_service = CreatePostService(
-        request, db, bo_table, member
-    )
     create_post_service.validate_captcha(recaptcha_response)
     create_post_service.validate_write_delay()
     create_post_service.validate_write_level()
@@ -351,7 +306,7 @@ async def create_post(
     create_post_service.is_write_level()
     create_post_service.arrange_data(form_data, secret, html, mail)
     write = create_post_service.save_write(parent_id, form_data)
-    insert_board_new(bo_table, write)
+    insert_board_new(create_post_service.bo_table, write)
     create_post_service.add_point(write)
     create_post_service.send_write_mail_(write, parent_id)
     create_post_service.set_notice(write.wr_id, notice)
@@ -367,11 +322,7 @@ async def create_post(
 
 @router.post("/write_update/{bo_table}/{wr_id}", dependencies=[Depends(validate_token), Depends(check_group_access)])
 async def update_post(
-    request: Request,
-    db: db_session,
-    member: Annotated[Member, Depends(get_login_member_optional)],
-    bo_table: str = Path(...),
-    wr_id: str = Path(...),
+    update_post_service: Annotated[UpdatePostService, Depends()],
     notice: bool = Form(False),
     secret: str = Form(""),
     html: str = Form(""),
@@ -383,10 +334,8 @@ async def update_post(
     file_dels: list = Form(None, alias="bf_file_del[]"),
 ):
     """게시글을 수정한다."""
-    update_post_service = UpdatePostService(
-        request, db, bo_table, member, wr_id,
-    )
-    write = get_write(db, bo_table, wr_id)
+    wr_id = update_post_service.wr_id
+    write = update_post_service.get_write(wr_id)
     update_post_service.validate_author(write, form_data.wr_password)
     update_post_service.validate_restrict_comment_count()
     update_post_service.validate_secret_board(secret, html, mail)
@@ -395,28 +344,22 @@ async def update_post(
     update_post_service.arrange_data(form_data, secret, html, mail)
     update_post_service.save_secret_session(wr_id, secret)
     update_post_service.save_write(write, form_data)
-    update_post_service.set_notice(write.wr_id, notice)
+    update_post_service.set_notice(wr_id, notice)
     update_post_service.delete_auto_save(uid)
     update_post_service.upload_files(write, files, file_content, file_dels)
     update_post_service.update_children_category(form_data)
     update_post_service.delete_cache()
     redirect_url = update_post_service.get_redirect_url(write)
-    db.commit()
+    update_post_service.db.commit()
 
     return RedirectResponse(redirect_url, status_code=303)
 
 
 @router.get("/{bo_table}/{wr_id}", dependencies=[Depends(check_group_access)])
 async def read_post(
-    request: Request,
-    db: db_session,
-    write: Annotated[WriteBaseModel, Depends(get_write)],
-    member: Annotated[Member, Depends(get_login_member_optional)],
-    bo_table: str = Path(...),
-    wr_id: int = Path(...),
+    read_post_service: Annotated[ReadPostService, Depends()],
 ):
     """게시글을 읽는다."""
-    read_post_service = ReadPostService(request, db, bo_table, wr_id, member)
     board = read_post_service.board
     read_post_service.request.state.editor = read_post_service.select_editor
     read_post_service.validate_secret_with_session()
@@ -426,11 +369,11 @@ async def read_post(
     read_post_service.check_scrap()
     read_post_service.check_is_good()
     prev, next = read_post_service.get_prev_next()
-    db.commit()
+    read_post_service.db.commit()
     context = {
         "request": read_post_service.request,
         "board": board,
-        "write": write,
+        "write": read_post_service.write,
         "write_list": read_post_service.write_list,
         "prev": prev,
         "next": next,
@@ -447,32 +390,24 @@ async def read_post(
 
 @router.get("/delete/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
 async def delete_post(
-    request: Request,
-    db: db_session,
-    bo_table: str = Path(...),
-    wr_id: int = Path(...),
+    delete_post_service: Annotated[DeletePostService, Depends()],
 ):
     """
     게시글을 삭제한다.
     """
-    delete_post_service = DeletePostService(
-        request, db, bo_table, wr_id, request.state.login_member
-    )
     delete_post_service.validate_level()
     delete_post_service.validate_exists_reply()
     delete_post_service.validate_exists_comment()
     delete_post_service.delete_write()
-    query_params = remove_query_params(request, "token")
-    return RedirectResponse(set_url_query_params(f"/board/{bo_table}", query_params), status_code=303)
+    query_params = remove_query_params(delete_post_service.request, "token")
+    return RedirectResponse(
+        set_url_query_params(f"/board/{delete_post_service.bo_table}", query_params), status_code=303
+    )
 
 
 @router.get("/{bo_table}/{wr_id}/download/{bf_no}", dependencies=[Depends(check_group_access)])
 async def download_file(
-    request: Request,
-    db: db_session,
-    bo_table: str = Path(...),
-    wr_id: int = Path(...),
-    bf_no: int = Path(...),
+    download_file_service: Annotated[DownloadFileService, Depends()],
 ):
     """첨부파일 다운로드
 
@@ -488,9 +423,6 @@ async def download_file(
     Returns:
         FileResponse: 파일 다운로드
     """
-    download_file_service = DownloadFileService(
-        request, db, bo_table, request.state.login_member, wr_id, bf_no
-    )
     download_file_service.validate_download_level()
     board_file = download_file_service.get_board_file()
     download_file_service.validate_point_session(board_file)
@@ -501,27 +433,20 @@ async def download_file(
         "/write_comment_update/{bo_table}",
         dependencies=[Depends(validate_token), Depends(check_group_access)])
 async def write_comment_update(
-    request: Request,
-    db: db_session,
-    write: Annotated[WriteBaseModel, Depends(get_write)],
-    bo_table: str = Path(...),
+    comment_service: Annotated[CommentService, Depends()],
     form: WriteCommentForm = Depends(),
     recaptcha_response: str = Form("", alias="g-recaptcha-response"),
 ):
     """
     댓글 등록/수정
     """
-    member = request.state.login_member
-
-    comment_service = CommentService(
-        request, db, bo_table, member, form.comment_id
-    )
+    write = comment_service.get_write(comment_service.wr_id)
 
     if form.w == "c":
         #댓글 생성
-        if not member:
+        if not comment_service.member.mb_id:
             # 비회원은 Captcha 유효성 검사
-            await validate_captcha(request, recaptcha_response)
+            await validate_captcha(comment_service.request, recaptcha_response)
         comment_service.validate_write_delay()
         comment_service.validate_comment_level()
         comment_service.validate_point()
@@ -529,12 +454,12 @@ async def write_comment_update(
         comment = comment_service.save_comment(form, write)
         comment_service.add_point(comment)
         comment_service.send_write_mail_(comment, write)
-        insert_board_new(bo_table, comment)
-        set_write_delay(request)
+        insert_board_new(comment_service.bo_table, comment)
+        set_write_delay(comment_service.request)
     elif form.w == "cu":
         # 댓글 수정
         write_model = comment_service.write_model
-        comment = db.get(write_model, form.comment_id)
+        comment = comment_service.db.get(write_model, form.comment_id)
         if not comment:
             raise AlertException(f"{form.comment_id} : 존재하지 않는 댓글입니다.", 404)
 
@@ -543,31 +468,26 @@ async def write_comment_update(
         comment.wr_content = comment_service.get_cleaned_data(form.wr_content)
         comment.wr_option = form.wr_secret or "html1"
         comment.wr_last = comment_service.g5_instance.get_wr_last_now(write_model.__tablename__)
-    db.commit()
+    comment_service.db.commit()
     redirect_url = comment_service.get_redirect_url(write)
     return RedirectResponse(redirect_url, status_code=303)
 
 
-@router.get("/delete_comment/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
+@router.get("/delete_comment/{bo_table}/{comment_id}", dependencies=[Depends(validate_token)])
 async def delete_comment(
     request: Request,
-    db: db_session,
-    bo_table: str = Path(...),
-    comment_id: int = Path(..., alias="wr_id"),
+    delete_comment_service: Annotated[DeleteCommentService, Depends()],
 ):
     """
     댓글 삭제
     """
-    delete_comment_service = DeleteCommentService(
-        request, db, bo_table, comment_id, request.state.login_member
-    )
     comment = delete_comment_service.get_comment()
     delete_comment_service.check_authority()
     delete_comment_service.delete_comment()
 
     # request.query_params에서 token 제거
     query_params = remove_query_params(request, "token")
-    url = f"/board/{bo_table}/{comment.wr_parent}"
+    url = f"/board/{delete_comment_service.bo_table}/{comment.wr_parent}"
     return RedirectResponse(
         set_url_query_params(url, query_params), status_code=303)
 

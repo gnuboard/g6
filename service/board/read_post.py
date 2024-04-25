@@ -1,10 +1,10 @@
-from typing_extensions import List, Tuple
+from typing_extensions import Annotated, List, Tuple
 
-from fastapi import Request, HTTPException
+from fastapi import Request, Path
 from sqlalchemy import asc, desc, select, exists
 
 from core.database import db_session
-from core.models import Member, BoardGood, Scrap, WriteBaseModel, BoardFile
+from core.models import BoardGood, Scrap, WriteBaseModel, BoardFile
 from lib.board_lib import BoardFileManager, insert_point, is_owner, cut_name
 from lib.template_filters import number_format
 from . import BoardService
@@ -19,11 +19,10 @@ class ReadPostService(BoardService):
         self,
         request: Request,
         db: db_session,
-        bo_table: str,
-        wr_id: int,
-        member: Member
+        bo_table: str = Path(...),
+        wr_id: int = Path(...),
     ):
-        super().__init__(request, db, bo_table, member)
+        super().__init__(request, db, bo_table)
         self.wr_id = wr_id
         self.board.subject = self.subject
 
@@ -62,15 +61,15 @@ class ReadPostService(BoardService):
         """비밀글 검증"""
         block_conditions = [
             "secret" in self.write.wr_option,
-            not self.admin_type,
-            not is_owner(self.write, self.mb_id),
+            not self.member.admin_type,
+            not is_owner(self.write, self.member.mb_id),
         ]
     
         if not all(block_conditions):
             return
 
         owner = False
-        if self.write.wr_reply and self.mb_id:
+        if self.write.wr_reply and self.member.mb_id:
             parent_write = self.db.scalar(
                 select(self.write_model).filter_by(
                     wr_num=self.write.wr_num,
@@ -78,7 +77,7 @@ class ReadPostService(BoardService):
                     wr_is_comment=0
                 )
             )
-            if parent_write.mb_id == self.mb_id:
+            if parent_write.mb_id == self.member.mb_id:
                 owner = True
 
         if not owner:
@@ -94,7 +93,7 @@ class ReadPostService(BoardService):
 
     def validate_repeat(self):
         """게시글 작성자는 조회수, 포인트 처리를 하지 않는다."""
-        if self.mb_id == self.write.mb_id:
+        if self.member.mb_id == self.write.mb_id:
             return
 
         # 포인트 검사
@@ -107,7 +106,7 @@ class ReadPostService(BoardService):
                     message += f" 로그인 후 다시 시도해주세요."
                 raise self.raise_exception(detail=message, status_code=403)
             else:
-                insert_point(self.request, self.mb_id, read_point, f"{self.board.bo_subject} {self.write.wr_id} 글읽기", self.board.bo_table, self.write.wr_id, "읽기")
+                insert_point(self.request, self.member.mb_id, read_point, f"{self.board.bo_subject} {self.write.wr_id} 글읽기", self.board.bo_table, self.write.wr_id, "읽기")
 
         # 조회수 증가
         self.write.wr_hit += 1
@@ -176,18 +175,18 @@ class ReadPostService(BoardService):
         for comment in comments:
             comment.name = cut_name(self.request, comment.wr_name)
             comment.ip = self.get_display_ip(comment.wr_ip)
-            comment.is_reply = len(comment.wr_comment_reply) < 5 and self.board.bo_comment_level <= self.member_level
-            comment.is_edit = bool(self.admin_type or (self.member and comment.mb_id == self.member.mb_id))
-            comment.is_del = bool(self.admin_type or (self.member and comment.mb_id == self.member.mb_id) or not comment.mb_id)
+            comment.is_reply = len(comment.wr_comment_reply) < 5 and self.board.bo_comment_level <= self.member.level
+            comment.is_edit = bool(self.member.admin_type or (self.member and comment.mb_id == self.member.mb_id))
+            comment.is_del = bool(self.member.admin_type or (self.member and comment.mb_id == self.member.mb_id) or not comment.mb_id)
             comment.is_secret = "secret" in comment.wr_option
 
             # 비밀댓글 처리
             session_secret_comment_name = f"ss_secret_comment_{self.bo_table}_{comment.wr_id}"
             parent_write = self.db.get(self.write_model, comment.wr_parent)
             if (comment.is_secret
-                    and not self.admin_type
-                    and not is_owner(comment, self.mb_id)
-                    and not is_owner(parent_write, self.mb_id)
+                    and not self.member.admin_type
+                    and not is_owner(comment, self.member.mb_id)
+                    and not is_owner(parent_write, self.member.mb_id)
                     and not self.request.session.get(session_secret_comment_name)):
                 comment.is_secret_content = True
                 comment.save_content = "비밀글 입니다."
@@ -237,16 +236,6 @@ class ReadPostService(BoardService):
         return prev, next
 
 
-class ReadPostServiceAPI(ReadPostService):
-    """
-    API 요청에 사용되는 게시글 읽기 클래스
-    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
-    """
-
-    def raise_exception(self, status_code: int, detail: str = None):
-        raise HTTPException(status_code=status_code, detail=detail)
-
-
 class DownloadFileService(BoardService):
     """파일 다운로드 클래스"""
 
@@ -254,12 +243,11 @@ class DownloadFileService(BoardService):
         self,
         request: Request,
         db: db_session,
-        bo_table: str,
-        member: Member,
-        wr_id: int,
-        bf_no: int,
+        bo_table: Annotated[str, Path(...)],
+        wr_id: Annotated[int, Path(...)],
+        bf_no: Annotated[int, Path(...)],
     ):
-        super().__init__(request, db, bo_table, member)
+        super().__init__(request, db, bo_table)
         self.write = self.get_write(wr_id)
         self.wr_id = wr_id
         self.bf_no = bf_no
@@ -291,7 +279,7 @@ class DownloadFileService(BoardService):
                         message += f"\\n로그인 후 다시 시도해주세요."
                     self.raise_exception(detail=message, status_code=403)
                 else:
-                    insert_point(self.request, self.mb_id, download_point, f"{self.board.bo_subject} {self.wr_id} 파일 다운로드", self.bo_table, self.wr_id, "다운로드")
+                    insert_point(self.request, self.member.mb_id, download_point, f"{self.board.bo_subject} {self.wr_id} 파일 다운로드", self.bo_table, self.wr_id, "다운로드")
 
             self.request.session[session_name] = True
 
@@ -301,29 +289,3 @@ class DownloadFileService(BoardService):
             self.file_manager.update_download_count(board_file)
             # 파일 다운로드 세션 설정
             self.request.session[download_session_name] = True
-
-
-class DownloadFileServiceAPI(DownloadFileService):
-    """
-    API용 파일 다운로드 클래스
-    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
-    """
-
-    def raise_exception(self, status_code: int, detail: str = None):
-        raise HTTPException(status_code=status_code, detail=detail)
-
-    def validate_point(self, board_file):
-        """다운로드 포인트 검사"""
-        if not self.config.cf_use_point:
-            return
-
-        download_point = self.board.bo_download_point
-        if self.is_download_point(self.write):
-            insert_point(self.request, self.mb_id, download_point, f"{self.board.bo_subject} {self.wr_id} 파일 다운로드", self.bo_table, self.wr_id, "다운로드")
-            # 다운로드 횟수 증가
-            self.file_manager.update_download_count(board_file)
-            return
-        
-        point = number_format(abs(download_point))
-        message = f"파일 다운로드에 필요한 포인트({point})가 부족합니다."
-        self.raise_exception(detail=message, status_code=403)

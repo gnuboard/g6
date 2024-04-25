@@ -1,6 +1,6 @@
-from typing_extensions import List
+from typing_extensions import List, Annotated
 
-from fastapi import Request, HTTPException
+from fastapi import Request, HTTPException, Path
 from sqlalchemy import select, exists, delete, update
 
 from core.database import db_session
@@ -22,11 +22,10 @@ class DeletePostService(BoardService):
         self,
         request: Request,
         db: db_session,
-        bo_table: str,
-        wr_id: int,
-        member: Member,
+        bo_table: Annotated[str, Path(...)],
+        wr_id: Annotated[str, Path(...)],
     ):
-        super().__init__(request, db, bo_table, member)
+        super().__init__(request, db, bo_table)
         self.wr_id = wr_id
         self.write = self.get_write(wr_id)
         self.write_member_mb_no = self.db.scalar(select(Member.mb_no).where(Member.mb_id == self.write.mb_id))
@@ -35,12 +34,12 @@ class DeletePostService(BoardService):
 
     def validate_level(self, with_session: bool = True):
         """권한 검증"""
-        if self.admin_type == "super":
+        if self.member.admin_type == "super":
             return
 
-        if self.admin_type and self.write_member_level > self.member_level:
+        if self.member.admin_type and self.write_member_level > self.member.level:
             self.raise_exception(status_code=403, detail="자신보다 높은 권한의 게시글은 삭제할 수 없습니다.")
-        elif self.write.mb_id and not is_owner(self.write, self.mb_id):
+        elif self.write.mb_id and not is_owner(self.write, self.member.mb_id):
             self.raise_exception(status_code=403, detail="자신의 게시글만 삭제할 수 있습니다.", )
 
         if not self.write.mb_id:
@@ -133,16 +132,6 @@ class DeletePostService(BoardService):
         FileCache().delete_prefix(f'latest-{bo_table}')
 
 
-class DeletePostServiceAPI(DeletePostService):
-    """
-    API 요청에 사용되는 게시글 삭제 클래스
-    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
-    """
-
-    def raise_exception(self, status_code: int, detail: str = None):
-        raise HTTPException(status_code=status_code, detail=detail)
-
-
 class DeleteCommentService(DeletePostService):
     """댓글 삭제 처리 클래스"""
 
@@ -150,12 +139,11 @@ class DeleteCommentService(DeletePostService):
         self,
         request: Request,
         db: db_session,
-        bo_table: str,
-        wr_id: int,
-        member: Member,
+        bo_table: Annotated[str, Path(...)],
+        comment_id: Annotated[str, Path(...)],
     ):
-        super().__init__(request, db, bo_table, wr_id, member)
-        self.wr_id = wr_id
+        super().__init__(request, db, bo_table, comment_id)
+        self.wr_id = comment_id
         self.comment = self.get_comment()
 
     def get_comment(self) -> WriteBaseModel:
@@ -175,7 +163,7 @@ class DeleteCommentService(DeletePostService):
           익명 댓글일 경우 session을 통해 권한을 검증합니다.
         - API 용으로 사용하는 경우 with_session 인자는 False 값으로 사용합니다.
         """
-        if self.admin_type:
+        if self.member.admin_type:
             return
 
         # 익명 댓글
@@ -194,7 +182,7 @@ class DeleteCommentService(DeletePostService):
             self.raise_exception(detail="삭제할 권한이 없습니다.", status_code=403, url=set_url_query_params(url, query_params))
 
         # 회원 댓글
-        if not is_owner(self.comment, self.mb_id):
+        if not is_owner(self.comment, self.member.mb_id):
             self.raise_exception(detail="자신의 댓글만 삭제할 수 있습니다.", status_code=403)
 
     def delete_comment(self):
@@ -213,16 +201,6 @@ class DeleteCommentService(DeletePostService):
         self.db.commit()
 
 
-class DeleteCommentServiceAPI(DeleteCommentService):
-    """
-    댓글 삭제 처리 API 클래스, 
-    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
-    """
-
-    def raise_exception(self, status_code: int, detail: str = None):
-        raise HTTPException(status_code, detail)
-
-
 class ListDeleteService(BoardService):
     """
     여러 게시글을 한번에 삭제하기 위한 클래스
@@ -232,10 +210,9 @@ class ListDeleteService(BoardService):
         self,
         request: Request,
         db: db_session,
-        bo_table: str,
-        member: Member,
+        bo_table: Annotated[str, Path(...)],
     ):
-        super().__init__(request, db, bo_table, member)
+        super().__init__(request, db, bo_table)
 
     def delete_writes(self, wr_ids: list):
         """게시글 목록 삭제"""
@@ -260,15 +237,3 @@ class ListDeleteService(BoardService):
         FileCache().delete_prefix(f'latest-{self.bo_table}')
 
         # TODO: 게시글 삭제시 같이 삭제해야할 것들 추가
-
-
-class ListDeleteServiceAPI(ListDeleteService):
-    """
-    API 요청에 사용되는 게시글 목록 삭제 클래스
-    - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
-    """
-
-    def raise_exception(self, status_code: int, detail: str = None):
-        raise HTTPException(status_code, detail)
-
-
