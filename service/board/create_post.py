@@ -24,8 +24,6 @@ class CreatePostService(BoardService):
     게시글 생성 클래스
     """
 
-    FILE_DIRECTORY = "data/file/"
-
     def __init__(
         self,
         request: Request,
