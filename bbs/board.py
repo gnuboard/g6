@@ -162,7 +162,7 @@ async def write_form_add(
     parent_id: int = Query(None)
 ):
     """
-    게시글을 작성하는 form을 보여준다.
+    게시글을 작성하는 form을 보여준다.(생성)
     """
     board = create_post_service.board
     parent_write = None
@@ -212,7 +212,7 @@ async def write_form_edit(
     update_post_service: Annotated[UpdatePostService, Depends()],
 ):
     """
-    게시글을 작성하는 form을 보여준다.
+    게시글을 작성하는 form을 보여준다.(수정)
     """
     request = update_post_service.request
     bo_table = update_post_service.bo_table
