@@ -45,6 +45,13 @@ class BoardService(BaseService, BoardConfig):
     def raise_exception(self, status_code: int, detail: str = None, url: str = None):
         raise AlertException(status_code=status_code, detail=detail, url=url)
 
+    def validate_wr_password(self, wr_password: str = None):
+        """비회원 글쓰기시 비밀번호 작성 여부를 검증"""
+        if self.member.mb_id:
+            return
+        if not wr_password:
+            self.raise_exception(detail="비회원 글쓰기시 비밀번호를 기재해야 합니다.", status_code=400)
+
     def set_wr_name(self, member: MemberDetails = None, default_name: str = None) -> str:
         """실명사용 여부를 확인 후 실명이면 이름을, 아니면 닉네임을 반환한다.
 
@@ -177,6 +184,7 @@ class BoardService(BaseService, BoardConfig):
                 )
         else:
             data.ca_name = ""
+        self.validate_wr_password(data.wr_password)
         data.wr_password = create_hash(data.wr_password) if data.wr_password else ""
         data.wr_name = self.set_wr_name(self.member, data.wr_name)
         data.wr_email = getattr(self.member, "mb_email", data.wr_email)
