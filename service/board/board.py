@@ -14,7 +14,7 @@ from lib.board_lib import (
 )
 from lib.member import MemberDetails
 from lib.common import (
-    dynamic_create_write_table, filter_words, make_directory,
+    dynamic_create_write_table, filter_words,
     remove_query_params, set_url_query_params
 )
 from lib.html_sanitizer import content_sanitizer
@@ -25,6 +25,8 @@ from api.v1.models.board import WriteModel
 
 class BoardService(BaseService, BoardConfig):
     """게시판 관련 기반 서비스 클래스"""
+
+    FILE_DIRECTORY = "data/file/"
 
     def __init__(
         self,
@@ -231,7 +233,7 @@ class BoardService(BaseService, BoardConfig):
         wr_file = write.wr_file
 
         # 경로 생성
-        make_directory(directory)
+        os.makedirs(directory, exist_ok=True)
 
         # 파일 삭제
         if file_dels:
