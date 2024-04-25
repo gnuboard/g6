@@ -129,6 +129,8 @@ class CommentService(UpdatePostService):
         comment.wr_is_comment = 1
         comment.wr_content = content_sanitizer.get_cleaned_data(data.wr_content)
         comment.mb_id = getattr(self.member, "mb_id", "")
+        if not comment.mb_id and not data.wr_password:
+            self.raise_exception(detail="비회원 댓글 작성 시 비밀번호는 필수입니다.", status_code=403)
         comment.wr_password = create_hash(data.wr_password) if data.wr_password else ""
         comment.wr_name = self.set_wr_name(self.member, data.wr_name)
         self.validate_anonymous_password(data)
