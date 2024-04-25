@@ -19,9 +19,9 @@ from lib.board_lib import (
 )
 from lib.captcha import captcha_widget
 from lib.common import set_url_query_params, get_unique_id, remove_query_params
-from lib.dependency.board import get_write, get_variery_wr_id
+from lib.dependency.board import get_write
 from lib.dependency.dependencies import (
-    check_group_access, validate_captcha, validate_token
+    check_group_access, common_search_query_params, validate_captcha, validate_token
 )
 from lib.template_functions import get_paging
 from service.board import (
@@ -68,7 +68,10 @@ async def group_board_list(
 
 @router.get("/{bo_table}")
 async def list_post(
+    request: Request,
     list_post_service: Annotated[ListPostService, Depends()],
+    popular_service: Annotated[PopularService, Depends()],
+    search_params: Annotated[dict, Depends(common_search_query_params)],
 ):
     """해당 게시판의 게시글 목록을 보여준다."""
     board = list_post_service.board
@@ -78,6 +81,12 @@ async def list_post(
         list_post_service.get_total_count(),
         list_post_service.page_rows
     )
+
+    # 검색 단어를 인기검색어에 등록
+    fields = search_params.get('sfl')
+    word = search_params.get('stx')
+    popular_service.create_popular(request, fields, word)
+
     context = {
         "request": list_post_service.request,
         "categories": list_post_service.categories,
