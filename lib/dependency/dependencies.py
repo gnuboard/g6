@@ -4,15 +4,15 @@ from typing_extensions import Annotated
 from fastapi import (
     Depends, Form, HTTPException, Path, Query, Request, Response
 )
-from pydantic import TypeAdapter
 from sqlalchemy import exists, inspect, select
 
 from core.database import DBConnect
 from core.exception import AlertException, TemplateDisabledException
 from core.models import Auth, Board, GroupMember
+from core.settings import ENV_PATH, settings
 from core.template import get_theme_list
 from lib.captcha import get_current_captcha_cls
-from lib.common import ENV_PATH, get_current_admin_menu_id
+from lib.common import get_current_admin_menu_id
 from lib.member import get_admin_type
 from lib.token import check_token
 
@@ -192,17 +192,13 @@ def common_search_query_params(
 
 def check_use_template():
     """템플릿 사용 여부 검사"""
-    use_template = (TypeAdapter(bool)
-                    .validate_python(os.getenv("USE_TEMPLATE", "True")))
-    if not use_template:
+    if not settings.USE_TEMPLATE:
         raise TemplateDisabledException(detail="템플릿 사용이 불가능합니다.")
 
 
 def check_use_api():
     """API 사용 여부 검사"""
-    use_api = (TypeAdapter(bool)
-               .validate_python(os.getenv("USE_API", "True")))
-    if not use_api:
+    if not settings.USE_API:
         raise HTTPException(status_code=404, detail="API 사용이 불가능합니다.")
 
 

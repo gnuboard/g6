@@ -1,12 +1,14 @@
 """API 환경설정 관련 파일"""
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from core.settings import ENV_PATH
+
 
 class ApiSettings(BaseSettings):
     """API 설정 모델"""
     # .env 파일을 읽어서 환경변수를 설정합니다.
     model_config = SettingsConfigDict(
-        env_file='.env',
+        env_file=ENV_PATH,
         env_file_encoding='utf-8',
         extra='ignore',  # extra=forbid (default)
         frozen=True  # 값을 변경할 수 없도록 설정합니다.

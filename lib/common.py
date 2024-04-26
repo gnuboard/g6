@@ -31,7 +31,6 @@ from core.plugin import get_admin_menu_id_by_path
 load_dotenv()
 
 # 전역변수 선언(global variables)
-ENV_PATH = ".env"
 CAPTCHA_PATH = "lib/captcha/templates"
 EDITOR_PATH = "lib/editor/templates"
 

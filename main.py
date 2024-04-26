@@ -6,7 +6,6 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Path, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
-from pydantic import TypeAdapter
 from sqlalchemy import delete, insert, select
 from sqlalchemy.exc import ProgrammingError
 from starlette.staticfiles import StaticFiles
@@ -21,10 +20,10 @@ from core.plugin import (
     register_plugin_admin_menu, register_statics,
 )
 from core.routers import router as template_router
-from core.template import TemplateService, UserTemplates, register_theme_statics
+from core.settings import ENV_PATH, settings
+from core.template import UserTemplates, register_theme_statics
 from lib.common import (
-    ENV_PATH, get_client_ip, is_intercept_ip, is_possible_ip,
-    session_member_key
+    get_client_ip, is_intercept_ip, is_possible_ip, session_member_key
 )
 from lib.dependency.dependencies import check_use_template
 from lib.member import is_super_admin
@@ -42,10 +41,6 @@ from api.v1.routers import router as api_router
 # 이 함수는 해당 파일 내의 키-값 쌍을 환경 변수로 로드하는 데 사용됩니다.
 load_dotenv()
 
-# 'APP_IS_DEBUG' 환경 변수를 가져와서 boolean 타입으로 변환합니다.
-# 이 환경 변수가 설정되어 있지 않은 경우, 기본값으로 False를 사용합니다.
-# TypeAdapter는 값을 특정 타입으로 변환하는 데 사용되는 유틸리티 클래스입니다.
-APP_IS_DEBUG = TypeAdapter(bool).validate_python(os.getenv("APP_IS_DEBUG", False))
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -56,9 +51,8 @@ async def lifespan(app: FastAPI):
     """
     yield
     scheduler.remove_flag()
-
 app = FastAPI(
-    debug=APP_IS_DEBUG,  # 디버그 모드가 활성화 설정
+    debug=settings.APP_IS_DEBUG,  # 디버그 모드가 활성화 설정
     lifespan=lifespan,
     title="그누보드6",
     description=""
@@ -133,7 +127,7 @@ async def main_middleware(request: Request, call_next):
     request.state.use_editor = True if config.cf_editor else False
 
     # 쿠키도메인 전역변수
-    request.state.cookie_domain = os.getenv("COOKIE_DOMAIN", "")
+    request.state.cookie_domain = cookie_domain = settings.COOKIE_DOMAIN
 
     member = None
     is_autologin = False
@@ -201,7 +195,6 @@ async def main_middleware(request: Request, call_next):
     response: Response = await call_next(request)
 
     age_1day = 60 * 60 * 24
-    cookie_domain = request.state.cookie_domain
 
     # 자동로그인 쿠키 재설정
     # is_autologin과 세션을 확인해서 로그아웃 처리 이후 쿠키가 재설정되는 것을 방지
@@ -338,7 +331,7 @@ async def device_change(
         RedirectResponse: 이전 페이지로 리디렉션
     """
     if (device in ["pc", "mobile"]
-            and not TemplateService.get_responsive()):
+            and not settings.IS_RESPONSIVE):
         if device == "pc":
             request.session["is_mobile"] = False
         else:

@@ -5,19 +5,19 @@ from datetime import datetime
 
 from fastapi import APIRouter, File, Request, UploadFile
 from PIL import Image
-from pydantic import TypeAdapter
 from starlette.responses import JSONResponse
 
 from core.models import Config
+from core.settings import settings
 from lib.common import calculator_image_resize
 
 router = APIRouter(prefix="/ckeditor4")
 
-UPLOAD_IMAGE_RESIZE = TypeAdapter(bool).validate_python(os.getenv("UPLOAD_IMAGE_RESIZE", True))
-UPLOAD_IMAGE_SIZE_LIMIT = TypeAdapter(int).validate_python(os.getenv("UPLOAD_IMAGE_SIZE_LIMIT", 20)) * 1024 * 1024  # 20 MB
-UPLOAD_IMAGE_RESIZE_WIDTH = TypeAdapter(int).validate_python(os.getenv("UPLOAD_IMAGE_RESIZE_WIDTH", 1200))  # px
-UPLOAD_IMAGE_RESIZE_HEIGHT = TypeAdapter(int).validate_python(os.getenv("UPLOAD_IMAGE_RESIZE_HEIGHT", 2800))  # px
-UPLOAD_IMAGE_QUALITY = TypeAdapter(int).validate_python(os.getenv("UPLOAD_IMAGE_QUALITY", 80))  # (0~100) default 80
+_IS_IMAGE_RESIZE = settings.UPLOAD_IMAGE_RESIZE
+_IMAGE_RESIZE_LIMIT = settings.UPLOAD_IMAGE_SIZE_LIMIT * 1024 * 1024 # MB -> Byte
+_IMAGE_RESIZE_WIDTH = settings.UPLOAD_IMAGE_RESIZE_WIDTH
+_IMAGE_RESIZE_HEIGHT = settings.UPLOAD_IMAGE_RESIZE_HEIGHT
+_IMAGE_RESIZE_QUALITY = settings.UPLOAD_IMAGE_QUALITY
 
 
 @router.post("/upload")
@@ -45,7 +45,7 @@ async def image_upload(request: Request, upload: UploadFile = File(...)):
         if ext not in config.cf_image_extension:
             return JSONResponse(status_code=400, content="허용되지 않는 파일입니다.")
 
-        if os.path.getsize(upload.file.tell()) > UPLOAD_IMAGE_SIZE_LIMIT:
+        if os.path.getsize(upload.file.tell()) > _IMAGE_RESIZE_LIMIT:
             return JSONResponse(status_code=400, content="이미지 허용된 용량보다 큽니다.")
 
         # 파일 저장
@@ -57,14 +57,18 @@ async def image_upload(request: Request, upload: UploadFile = File(...)):
         os.makedirs(upload_path, exist_ok=True)
 
         try:
-            image: Image = Image.open(upload.file)
-            if UPLOAD_IMAGE_RESIZE:
+            image: Image.Image = Image.open(upload.file)
+            if _IS_IMAGE_RESIZE:
                 width, height = image.size
-                size_result = calculator_image_resize(width, height, UPLOAD_IMAGE_RESIZE_WIDTH, UPLOAD_IMAGE_RESIZE_HEIGHT)
+                size_result = calculator_image_resize(
+                    width, height, _IMAGE_RESIZE_WIDTH, _IMAGE_RESIZE_HEIGHT)
                 if size_result:
                     image = image.resize((size_result['width'], size_result['height']), Image.LANCZOS)
                 image = image.convert("RGB")
-                image.save(f"{upload_path}/{filename}", format="JPEG", quality=UPLOAD_IMAGE_QUALITY, optimize=True)
+                image.save(f"{upload_path}/{filename}",
+                           format="JPEG",
+                           quality=_IMAGE_RESIZE_QUALITY,
+                           optimize=True)
             image.save(f"{upload_path}/{filename}")
             image.close()
 

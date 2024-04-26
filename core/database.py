@@ -1,6 +1,5 @@
 from typing import AsyncGenerator
 
-from dotenv import dotenv_values
 from fastapi import Depends
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine, URL
@@ -9,6 +8,8 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
 from typing_extensions import Annotated
+
+from core.settings import settings
 
 
 class MySQLCharsetMixin:
@@ -75,17 +76,14 @@ class DBSetting:
         self._table_prefix = prefix
 
     def set_connect_infomation(self) -> None:
-        env_values = dotenv_values()
-        port = env_values.get("DB_PORT", "3306")
-
-        self._table_prefix = env_values.get("DB_TABLE_PREFIX", "")
-        self._db_engine = env_values.get("DB_ENGINE", "").lower()
-        self._user = env_values.get("DB_USER")
-        self._password = env_values.get("DB_PASSWORD")
-        self._host = env_values.get("DB_HOST")
-        self._port = int(port) if port.isdigit() else 3306
-        self._db_name = env_values.get("DB_NAME")
-        self._charset = env_values.get("DB_CHARSET", "utf8mb4")
+        self._table_prefix = settings.DB_TABLE_PREFIX
+        self._db_engine = settings.DB_ENGINE
+        self._user = settings.DB_USER
+        self._password = settings.DB_PASSWORD
+        self._host = settings.DB_HOST
+        self._port = settings.DB_PORT
+        self._db_name = settings.DB_NAME
+        self._charset = settings.DB_CHARSET
 
     def create_url(self) -> None:
         url = None

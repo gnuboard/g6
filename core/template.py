@@ -2,11 +2,9 @@ import os
 import re
 import typing
 
-from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment, FileSystemLoader
-from pydantic import TypeAdapter
 from sqlalchemy import select
 from starlette.background import BackgroundTask
 from starlette.staticfiles import StaticFiles
@@ -17,6 +15,7 @@ from core.models import Config
 from core.plugin import (
     get_admin_plugin_menus, get_all_plugin_module_names, PLUGIN_DIR, get_plugin_state_cache
 )
+from core.settings import settings
 from lib.common import (
     CAPTCHA_PATH, EDITOR_PATH, get_admin_menus, read_version
 )
@@ -78,7 +77,7 @@ def get_admin_theme_path() -> str:
     default_theme = "basic"
     default_theme_path = f"{ADMIN_TEMPLATES}/{default_theme}"
     try:
-        theme = os.getenv("ADMIN_THEME", "basic")
+        theme = settings.ADMIN_THEME
         theme_path = f"{ADMIN_TEMPLATES}/{theme}"
 
         # 실제 테마가 존재하는지 확인
@@ -97,25 +96,9 @@ ADMIN_TEMPLATES_DIR = get_admin_theme_path()  # 관리자 템플릿 경로
 
 class TemplateService():
     """템플릿 서비스 클래스
-    - TODO: 반응형/적응형 변수 외의 다른 부분도 클래스화 해야한다.
+    - TODO: 이외의 다른 부분도 클래스화 해야한다.
     """
-    _is_responsive: bool = None  # 반응형 템플릿 여부
     _templates_dir: str = None  # 사용자 템플릿 경로
-
-    @classmethod
-    def get_responsive(cls) -> bool:
-        if cls._is_responsive is None:
-            cls.set_responsive()
-
-        return cls._is_responsive
-
-    @classmethod
-    def set_responsive(cls) -> None:
-        load_dotenv()
-        cls._is_responsive = (
-            TypeAdapter(bool)
-            .validate_python(os.getenv("IS_RESPONSIVE", True))
-        )
 
     @classmethod
     def get_templates_dir(cls) -> str:
@@ -209,7 +192,7 @@ class UserTemplates(Jinja2Templates):
         """
         request = context.get("request")
         is_mobile: bool = getattr(request.state, "is_mobile", False)
-        if (not TemplateService.get_responsive()
+        if (not settings.IS_RESPONSIVE
                 and self._is_mobile != is_mobile):
             # 경로 우선순위 변경
             mobile_dir = f"{TemplateService.get_templates_dir()}/mobile"

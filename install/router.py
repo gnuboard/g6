@@ -1,3 +1,4 @@
+"""설치 Template Router"""
 import os
 import secrets
 import shutil
@@ -19,13 +20,13 @@ from core.database import DBConnect
 from core.exception import AlertException
 from core.formclass import InstallFrom
 from core.plugin import read_plugin_state, write_plugin_state
-from core.template import TemplateService
+from core.settings import ENV_PATH, settings
 from install.default_values import (
     default_board_data, default_boards, default_cache_directory, default_config,
     default_contents, default_data_directory, default_faq_master, default_gr_id,
     default_group, default_member, default_qa_config, default_version
 )
-from lib.common import ENV_PATH, dynamic_create_write_table, read_license
+from lib.common import dynamic_create_write_table, read_license
 from lib.dependency.dependencies import validate_install, validate_token
 from lib.pbkdf2 import create_hash
 
@@ -40,7 +41,9 @@ templates.env.globals["default_version"] = default_version
 form_cache = TTLCache(maxsize=1, ttl=60)
 
 
-@router.get("/", name="install_main", dependencies=[Depends(validate_install)])
+@router.get("/",
+            name="install_main",
+            dependencies=[Depends(validate_install)])
 async def main(request: Request):
     """설치 메인 페이지"""
     # 파이썬 버전
@@ -55,8 +58,10 @@ async def main(request: Request):
     return templates.TemplateResponse("main.html", context)
 
 
-@router.get("/license", name="install_license", dependencies=[Depends(validate_install)])
-async def license(request: Request):
+@router.get("/license",
+            name="install_license",
+            dependencies=[Depends(validate_install)])
+async def install_license(request: Request):
     """라이선스 동의 페이지"""
     context = {
         "request": request,
@@ -65,14 +70,17 @@ async def license(request: Request):
     return templates.TemplateResponse("license.html", context)
 
 
-@router.get("/form", dependencies=[Depends(validate_install)])
-async def form(request: Request):
-    """설치 폼 Redirect"""
+@router.get("/form",
+            dependencies=[Depends(validate_install)])
+async def redirect_licence(request: Request):
+    """라이선스 동의 페이지로 Redirect"""
     return RedirectResponse(url=request.url_for("install_license"))
 
 
-@router.post("/form", name="install_form", dependencies=[Depends(validate_install)])
-async def form(request: Request, agree: str = Form(None)):
+@router.post("/form",
+             name="install_form",
+             dependencies=[Depends(validate_install)])
+async def install_form(request: Request, agree: str = Form(None)):
     """설치 폼 페이지"""
     if agree != "동의함":
         raise AlertException("라이선스에 동의하셔야 설치 가능합니다.", 400)
@@ -84,37 +92,45 @@ async def form(request: Request, agree: str = Form(None)):
 
 @router.post("/",
              name="install",
-             dependencies=[Depends(validate_token), Depends(validate_install)])
+             dependencies=[Depends(validate_token),
+                           Depends(validate_install)])
 async def install(
     request: Request,
-    form: InstallFrom = Depends(),
+    form_data: InstallFrom = Depends(),
 ):
+    """설치 시작 전 데이터베이스 연결 및 초기화"""
     try:
         # example.env 파일이 있는 경우 .env 파일로 복사
         if os.path.exists("example.env"):
             shutil.copyfile("example.env", ENV_PATH)
 
         # .env 파일에 데이터베이스 정보 추가
-        set_key(ENV_PATH, "DB_ENGINE", form.db_engine)
-        set_key(ENV_PATH, "DB_HOST", form.db_host)
-        set_key(ENV_PATH, "DB_PORT", form.db_port, quote_mode="never")
-        set_key(ENV_PATH, "DB_USER", form.db_user)
-        set_key(ENV_PATH, "DB_PASSWORD", form.db_password)
-        set_key(ENV_PATH, "DB_NAME", form.db_name)
-        set_key(ENV_PATH, "DB_TABLE_PREFIX", form.db_table_prefix)
+        set_key(ENV_PATH, "DB_ENGINE", form_data.db_engine)
+        set_key(ENV_PATH, "DB_HOST", form_data.db_host)
+        set_key(ENV_PATH, "DB_PORT", form_data.db_port, quote_mode="never")
+        set_key(ENV_PATH, "DB_USER", form_data.db_user)
+        set_key(ENV_PATH, "DB_PASSWORD", form_data.db_password)
+        set_key(ENV_PATH, "DB_NAME", form_data.db_name)
+        set_key(ENV_PATH, "DB_TABLE_PREFIX", form_data.db_table_prefix)
         # .env 세션 비밀키 설정
-        set_key(ENV_PATH, "SESSION_SECRET_KEY", secrets.token_urlsafe(50))
-        # .env 파일에 쿠키 도메인 추가
-        set_key(ENV_PATH, "COOKIE_DOMAIN", "")
+        session_secret_key = secrets.token_urlsafe(50)
+        set_key(ENV_PATH, "SESSION_SECRET_KEY", session_secret_key)
 
-        # .env 설정 반영 (반응형 사용여부)
-        TemplateService.set_responsive()
+        # Settings 클래스에 .env 파일 설정 적용
+        settings.DB_ENGINE = form_data.db_engine
+        settings.DB_HOST = form_data.db_host
+        settings.DB_PORT = form_data.db_port
+        settings.DB_USER = form_data.db_user
+        settings.DB_PASSWORD = form_data.db_password
+        settings.DB_NAME = form_data.db_name
+        settings.DB_TABLE_PREFIX = form_data.db_table_prefix
+        settings.SESSION_SECRET_KEY = session_secret_key
 
         # 데이터베이스 연결 설정
         db = DBConnect()
         db.set_connect_infomation()
         db.create_url()
-        if not db.supported_engines.get(form.db_engine.lower()):
+        if not db.supported_engines.get(form_data.db_engine.lower()):
             raise Exception("지원가능한 데이터베이스 엔진을 선택해주세요.")
 
         # 새로운 데이터베이스 연결 생성 및 테스트
@@ -128,7 +144,7 @@ async def install(
             plugin.is_enable = False
         write_plugin_state(plugin_list)
 
-        form_cache.update({"form": form})
+        form_cache.update({"form": form_data})
 
         # 세션 초기화
         request.session.clear()
@@ -154,16 +170,16 @@ async def install_process(request: Request):
         yield "데이터베이스 연결 완료"
 
         try:
-            form: InstallFrom = form_cache.get("form")
+            form_data: InstallFrom = form_cache.get("form")
 
-            if form.reinstall:
+            if form_data.reinstall:
                 models.Base.metadata.drop_all(bind=engine)
                 # 접두사 + 'write_' 게시판 테이블 전부 삭제
                 metadata = MetaData()
                 metadata.reflect(bind=engine)
                 table_names = metadata.tables.keys()
                 for name in table_names:
-                    if name.startswith(f"{form.db_table_prefix}write_"):
+                    if name.startswith(f"{form_data.db_table_prefix}write_"):
                         Table(name, metadata, autoload=True).drop(bind=engine)
 
                 yield "기존 데이터베이스 테이블 삭제 완료"
@@ -172,9 +188,9 @@ async def install_process(request: Request):
             yield "데이터베이스 테이블 생성 완료"
 
             with SessionLocal() as db:
-                config_setup(db, form.admin_id, form.admin_email)
-                admin_member_setup(db, form.admin_id, form.admin_name,
-                                   form.admin_password, form.admin_email)
+                config_setup(db, form_data.admin_id, form_data.admin_email)
+                admin_member_setup(db, form_data.admin_id, form_data.admin_name,
+                                   form_data.admin_password, form_data.admin_email)
                 content_setup(db)
                 qa_setup(db)
                 faq_master_setup(db)
