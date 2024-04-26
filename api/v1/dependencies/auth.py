@@ -9,7 +9,7 @@ from sqlalchemy.sql import select
 from core.database import db_session
 
 from core.models import Member
-from api.settings import SETTINGS
+from api.settings import api_settings
 from api.v1.models import MemberRefreshToken
 from api.v1.auth.jwt import JWT
 from api.v1.lib.member import MemberServiceAPI
@@ -60,7 +60,7 @@ def authenticate_refresh_token(
 
     try:
         # 토큰 유효성 검사
-        JWT.decode_token(refresh_token, SETTINGS.REFRESH_TOKEN_SECRET_KEY)
+        JWT.decode_token(refresh_token, api_settings.REFRESH_TOKEN_SECRET_KEY)
 
         member_refresh_token = db.scalar(
             select(MemberRefreshToken)

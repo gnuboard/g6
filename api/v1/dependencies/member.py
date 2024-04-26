@@ -6,7 +6,7 @@ from fastapi import Depends, HTTPException, status
 
 from core.models import Member
 
-from api.settings import SETTINGS
+from api.settings import api_settings
 from api.v1.auth import oauth2_optional, oauth2_scheme
 from api.v1.auth.jwt import JWT
 from api.v1.lib.member import MemberServiceAPI, ValidateMemberAPI
@@ -33,7 +33,7 @@ async def get_current_member(
     """
     payload: TokenPayload = JWT.decode_token(
         token,
-        SETTINGS.ACCESS_TOKEN_SECRET_KEY
+        api_settings.ACCESS_TOKEN_SECRET_KEY
     )
 
     mb_id: str = payload.sub

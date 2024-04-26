@@ -5,7 +5,7 @@ from enum import Enum
 from fastapi import HTTPException, status
 from jose import ExpiredSignatureError, JWTError, jwt
 
-from api.settings import SETTINGS
+from api.settings import api_settings
 from api.v1.models.auth import TokenPayload
 
 
@@ -18,15 +18,15 @@ class TokenType(Enum):
     def secret_key(self):
         """JWT 암호화 키를 반환합니다."""
         if self == TokenType.REFRESH:
-            return SETTINGS.REFRESH_TOKEN_SECRET_KEY
-        return SETTINGS.ACCESS_TOKEN_SECRET_KEY
+            return api_settings.REFRESH_TOKEN_SECRET_KEY
+        return api_settings.ACCESS_TOKEN_SECRET_KEY
 
     @property
     def expires_minute(self):
         """JWT 만료 시간을 반환합니다."""
         if self == TokenType.REFRESH:
-            return SETTINGS.REFRESH_TOKEN_EXPIRE_MINUTES
-        return SETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES
+            return api_settings.REFRESH_TOKEN_EXPIRE_MINUTES
+        return api_settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 
 class JWT:
@@ -52,9 +52,9 @@ class JWT:
         to_encode = data.copy()
         iat = int(datetime.now().timestamp())
         exp = datetime.now() + timedelta(minutes=expires_minute)
-        to_encode.update({"iss": SETTINGS.AUTH_ISSUER, "iat": iat, "exp": exp})
+        to_encode.update({"iss": api_settings.AUTH_ISSUER, "iat": iat, "exp": exp})
 
-        return jwt.encode(to_encode, secret_key, algorithm=SETTINGS.AUTH_ALGORITHM)
+        return jwt.encode(to_encode, secret_key, algorithm=api_settings.AUTH_ALGORITHM)
 
     @staticmethod
     def decode_token(token: str, secret_key: str) -> dict:
@@ -88,7 +88,7 @@ class JWT:
             payload = jwt.decode(
                 token,
                 secret_key,
-                algorithms=[SETTINGS.AUTH_ALGORITHM],
+                algorithms=[api_settings.AUTH_ALGORITHM],
                 options={"leeway": leeway}
             )
             return TokenPayload(**payload)
