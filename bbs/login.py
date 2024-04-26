@@ -11,7 +11,7 @@ from lib.social import providers
 from lib.social.social import SocialProvider, oauth
 from service.member_service import MemberService
 
-router = APIRouter()
+router = APIRouter(prefix="/bbs", tags=["login"], include_in_schema=False)
 templates = UserTemplates()
 
 

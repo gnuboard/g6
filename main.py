@@ -35,6 +35,10 @@ from lib.token import create_session_token
 from service.member_service import MemberService
 from service.visit_service import VisitService
 
+from admin.admin import router as admin_router
+from install.router import router as install_router
+from bbs.login import router as login_router
+
 from api.v1.routers import router as api_router
 
 # .env 파일로부터 환경 변수를 로드합니다.
@@ -80,8 +84,11 @@ cache_plugin_state.__setitem__('info', plugin_states)
 cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
 cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(plugin_states))
 
-app.include_router(template_router)
+app.include_router(admin_router)
 app.include_router(api_router)
+app.include_router(template_router)
+app.include_router(install_router)
+app.include_router(login_router)
 
 
 @app.middleware("http")
@@ -297,7 +304,6 @@ async def index(request: Request, db: db_session):
 
 
 @app.post("/generate_token",
-          dependencies=[Depends(check_use_template)],
           include_in_schema=False)
 async def generate_token(request: Request) -> JSONResponse:
     """세션 토큰 생성 후 반환

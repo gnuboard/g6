@@ -8,9 +8,6 @@ from lib.common import dynamic_create_write_table
 from lib.dependency.dependencies import check_admin_access
 from lib.member import get_member_level
 
-router = APIRouter(dependencies=[Depends(check_admin_access)])
-templates = AdminTemplates()
-
 from admin.admin_config import router as admin_config_router
 from admin.admin_member import router as admin_member_router
 from admin.admin_board  import router as admin_board_router
@@ -33,6 +30,12 @@ from admin.admin_write_count import router as admin_write_count_router
 from admin.admin_plugin import router as admin_plugin_router
 from admin.admin_cache import router as admin_cache_router
 from admin.admin_service import router as admin_service_router
+
+router = APIRouter(prefix="/admin",
+                   tags=["admin"],
+                   dependencies=[Depends(check_admin_access)],
+                   include_in_schema=False)
+templates = AdminTemplates()
 
 router.include_router(admin_config_router, tags=["admin_config"])
 router.include_router(admin_member_router, tags=["admin_member"])

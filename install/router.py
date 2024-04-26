@@ -33,8 +33,9 @@ from lib.pbkdf2 import create_hash
 
 INSTALL_TEMPLATES = "install/templates"
 
-
-router = APIRouter()
+router = APIRouter(prefix="/install",
+                   tags=["install"],
+                   include_in_schema=False)
 templates = Jinja2Templates(directory=INSTALL_TEMPLATES)
 templates.env.globals["default_version"] = default_version
 
