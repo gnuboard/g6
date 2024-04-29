@@ -10,7 +10,7 @@ router = APIRouter()
 @router.post("/good/{bo_table}/{wr_id}/{type}")
 async def ajax_good(
     request: Request,
-    ajax_good_service: Annotated[AJAXService, Depends()],
+    service: Annotated[AJAXService, Depends()],
     token: str = Form(...),
     bo_table: str = Path(...),
     wr_id: int = Path(...),
@@ -20,11 +20,11 @@ async def ajax_good(
     게시글 좋아요/싫어요 처리
     """
     member = request.state.login_member
-    ajax_good_service.validate_member(member)
-    ajax_good_service.validate_token(token)
-    board = ajax_good_service.get_board(bo_table)
-    ajax_good_service.validate_board_good_use(board, type)
-    write = ajax_good_service.get_write(bo_table, wr_id)
-    ajax_good_service.validate_write_owner(write, member, type)
-    result = ajax_good_service.get_ajax_good_result(bo_table, member, write, type)
+    service.validate_member(member)
+    service.validate_token(token)
+    board = service.get_board(bo_table)
+    service.validate_board_good_use(board, type)
+    write = service.get_write(bo_table, wr_id)
+    service.validate_write_owner(write, member, type)
+    result = service.get_ajax_good_result(bo_table, member, write, type)
     return JSONResponse(result, 200)

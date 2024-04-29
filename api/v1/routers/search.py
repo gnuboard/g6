@@ -16,7 +16,7 @@ router = APIRouter()
             responses={**response_401, **response_403, **response_422}
             )
 async def api_search(
-    search_service: Annotated[SearchServiceAPI, Depends()],
+    service: Annotated[SearchServiceAPI, Depends()],
     sfl: str = Query("wr_subject||wr_content", title="검색필드", description="검색필드"),
     stx: str = Query(..., title="검색어", description="검색어"),
     sop: str = Query("and", title="검색연산자", description="검색연산자", pattern="and|or"),
@@ -26,8 +26,8 @@ async def api_search(
     게시판 검색
     - 게시판 종류와, 개별 게시판에 있는 게시글을 검색합니다.
     """
-    boards = search_service.get_boards()
-    searched_result = search_service.search(boards, sfl, stx, sop)
+    boards = service.get_boards()
+    searched_result = service.search(boards, sfl, stx, sop)
     total_search_count = searched_result["total_search_count"]
     boards = searched_result["boards"]
 

@@ -20,11 +20,11 @@ router = APIRouter()
             )
 async def autosave_list(
     member: Annotated[Member, Depends(get_current_member)],
-    ajax_service: Annotated[AJAXService, Depends()],
+    service: Annotated[AJAXService, Depends()],
 ) -> List[ResponseAutoSaveModel]:
     """자동저장 목록을 반환한다."""
-    ajax_service.validate_login(member)
-    save_list = ajax_service.get_autosave_list(member)
+    service.validate_login(member)
+    save_list = service.get_autosave_list(member)
     return save_list
 
 
@@ -34,11 +34,11 @@ async def autosave_list(
             )
 async def autosave_count(
     member: Annotated[Member, Depends(get_current_member)],
-    ajax_service: Annotated[AJAXService, Depends()]
+    service: Annotated[AJAXService, Depends()]
 ) -> ResponseAutoSaveCountModel:
     """자동저장글 개수를 반환한다."""
-    ajax_service.validate_login(member)
-    return {"count": ajax_service.get_autosave_count(member.mb_id)}
+    service.validate_login(member)
+    return {"count": service.get_autosave_count(member.mb_id)}
 
 
 @router.get("/autosave_load/{as_id}",
@@ -47,12 +47,12 @@ async def autosave_count(
             )
 async def autosave_load(
     member: Annotated[Member, Depends(get_current_member)],
-    ajax_service: Annotated[AJAXService, Depends()],
+    service: Annotated[AJAXService, Depends()],
     as_id: int = Path(..., title="자동저장 ID", description="자동저장 ID")
 ) -> ResponseAutoSaveModel:
     """자동저장 내용을 불러온다."""
-    ajax_service.validate_login(member)
-    save_data = ajax_service.get_autosave_content(as_id, member)
+    service.validate_login(member)
+    save_data = service.get_autosave_content(as_id, member)
     return save_data
 
 
@@ -62,7 +62,7 @@ async def autosave_load(
              )
 async def autosave(
     member: Annotated[Member, Depends(get_current_member)],
-    ajax_service: Annotated[AJAXService, Depends()],
+    service: Annotated[AJAXService, Depends()],
     data: AutoSaveModel
 ) -> ResponseAutoSaveCountModel:
     """
@@ -74,9 +74,9 @@ async def autosave(
     - **as_subject**: 자동저장 글 제목
     - **as_content**: 자동저장 글 내용
     """
-    ajax_service.validate_login(member)
-    ajax_service.autosave_save(member, data)
-    count = ajax_service.get_autosave_count(member.mb_id)
+    service.validate_login(member)
+    service.autosave_save(member, data)
+    count = service.get_autosave_count(member.mb_id)
     return {"count": count}
 
 
@@ -86,10 +86,10 @@ async def autosave(
                )
 async def autosave_delete(
     member: Annotated[Member, Depends(get_current_member)],
-    ajax_service: Annotated[AJAXService, Depends()],
+    service: Annotated[AJAXService, Depends()],
     as_id: int = Path(..., title="자동저장 ID", description="자동저장 ID")
 ) -> ResponseAutoSaveDeleteModel:
     """임시저장글을 삭제한다."""
-    ajax_service.validate_login(member)
-    ajax_service.autosave_delete(as_id, member)
+    service.validate_login(member)
+    service.autosave_delete(as_id, member)
     return {"result": "deleted"}

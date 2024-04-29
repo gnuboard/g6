@@ -12,7 +12,7 @@ router = APIRouter()
 @router.get("/autosave_list")
 async def autosave_list(
     request: Request,
-    ajax_service: Annotated[AJAXService, Depends()],
+    service: Annotated[AJAXService, Depends()],
 ):
     """자동저장 목록을 반환한다.
     Args:
@@ -22,15 +22,15 @@ async def autosave_list(
         AutoSave[list]: 자동저장 목록
     """
     member: Member = request.state.login_member
-    ajax_service.validate_login(member)
-    save_list = ajax_service.get_autosave_list(member)
+    service.validate_login(member)
+    save_list = service.get_autosave_list(member)
     return save_list
 
 
 @router.get("/autosave_count")
 async def autosave_count(
     request: Request,
-    ajax_service: Annotated[AJAXService, Depends()]
+    service: Annotated[AJAXService, Depends()]
 ):
     """자동저장글 개수를 반환한다.
     Args:
@@ -39,14 +39,14 @@ async def autosave_count(
         dict: 자동저장글 개수
     """
     member: Member = request.state.login_member
-    ajax_service.validate_login(member)
-    return {"count": ajax_service.get_autosave_count(member.mb_id)}
+    service.validate_login(member)
+    return {"count": service.get_autosave_count(member.mb_id)}
 
 
 @router.get("/autosave_load/{as_id}")
 async def autosave_load(
         request: Request,
-        ajax_service: Annotated[AJAXService, Depends()],
+        service: Annotated[AJAXService, Depends()],
         as_id: int = Path(..., title="자동저장 ID")
 ):
     """자동저장 내용을 불러온다.
@@ -62,15 +62,15 @@ async def autosave_load(
         JSONException: 접근 권한이 없을 경우
     """
     member: Member = request.state.login_member
-    ajax_service.validate_login(member)
-    save_data = ajax_service.get_autosave_content(as_id, member)
+    service.validate_login(member)
+    save_data = service.get_autosave_content(as_id, member)
     return save_data
 
 
 @router.post("/autosave")
 async def autosave(
         request: Request,
-        ajax_service: Annotated[AJAXService, Depends()],
+        service: Annotated[AJAXService, Depends()],
         form_data: AutoSaveForm = Depends()
 ):
     """글 임시저장
@@ -84,16 +84,16 @@ async def autosave(
         JSONException: 로그인이 필요합니다
     """
     member: Member = request.state.login_member
-    ajax_service.validate_login(member)
-    ajax_service.autosave_save(member, form_data)
-    count = ajax_service.get_autosave_count(member.mb_id)
+    service.validate_login(member)
+    service.autosave_save(member, form_data)
+    count = service.get_autosave_count(member.mb_id)
     return JSONResponse(status_code=201, content={"count": count})
 
 
 @router.delete("/autosave/{as_id}")
 async def autosave(
         request: Request,
-        ajax_service: Annotated[AJAXService, Depends()],
+        service: Annotated[AJAXService, Depends()],
         as_id: int = Path(..., title="자동저장 ID")
 ):
     """임시저장글 삭제
@@ -109,6 +109,6 @@ async def autosave(
         JSONException: 접근 권한이 없을 경우
     """
     member: Member = request.state.login_member
-    ajax_service.validate_login(member)
-    ajax_service.autosave_delete(as_id, member)
+    service.validate_login(member)
+    service.autosave_delete(as_id, member)
     return JSONResponse(status_code=200, content="삭제되었습니다.")

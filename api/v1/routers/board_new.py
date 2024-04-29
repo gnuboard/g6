@@ -14,7 +14,7 @@ router = APIRouter()
             responses={**response_401, **response_422}
             )
 async def api_board_new_list(
-    board_new_service: Annotated[BoardNewServiceAPI, Depends()],
+    service: Annotated[BoardNewServiceAPI, Depends()],
     gr_id: str = Query(None, title="게시판 그룹 id", description="게시판 그룹 id"),
     view: str = Query(None, title="게시판 view", description="게시판 view", pattern="write|comment"),
     mb_id: str = Query(None, title="회원 id", description="회원 id"),
@@ -23,11 +23,11 @@ async def api_board_new_list(
     """
     최신 게시글 목록
     """
-    query = board_new_service.get_query(gr_id, mb_id, view)
-    offset = board_new_service.get_offset(current_page)
-    board_news = board_new_service.get_board_news(query, offset)
-    total_count = board_new_service.get_total_count(query)
-    board_new_service.arrange_borad_news_data(board_news, total_count, offset)
+    query = service.get_query(gr_id, mb_id, view)
+    offset = service.get_offset(current_page)
+    board_news = service.get_board_news(query, offset)
+    total_count = service.get_total_count(query)
+    service.arrange_borad_news_data(board_news, total_count, offset)
 
     content = {
         "total_count": total_count,
@@ -42,7 +42,7 @@ async def api_board_new_list(
             responses={**response_401, **response_422}
              )
 async def api_new_delete(
-    board_new_service: Annotated[BoardNewServiceAPI, Depends()],
+    service: Annotated[BoardNewServiceAPI, Depends()],
     bn_ids: list = Body(..., title="삭제할 최신글 id 리스트"),
 ) -> ResponseNormalModel:
     """
@@ -51,5 +51,5 @@ async def api_new_delete(
     ### Request Body
     - **bn_ids**: 삭제할 최신글 id 리스트 (예시: [1, 2, 3])
     """
-    board_new_service.delete_board_news(bn_ids)
+    service.delete_board_news(bn_ids)
     return {"result": "deleted"}

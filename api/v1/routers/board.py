@@ -36,14 +36,14 @@ credentials_exception = HTTPException(
             responses={**response_401, **response_422}
             )
 async def api_group_board_list(
-    group_board_list_service: Annotated[GroupBoardListServiceAPI, Depends()],
+    service: Annotated[GroupBoardListServiceAPI, Depends()],
 ) -> ResponseGroupBoardsModel:
     """
     게시판그룹의 모든 게시판 목록을 보여줍니다.
     """
-    group = group_board_list_service.group
-    group_board_list_service.check_mobile_only()
-    boards = group_board_list_service.get_boards_in_group()
+    group = service.group
+    service.check_mobile_only()
+    boards = service.get_boards_in_group()
     return {"group": group, "boards": boards}
 
 
@@ -52,19 +52,19 @@ async def api_group_board_list(
             responses={**response_401, **response_422}
             )
 async def api_list_post(
-    list_post_service: Annotated[ListPostServiceAPI, Depends()],
+    service: Annotated[ListPostServiceAPI, Depends()],
 ) -> ResponseBoardListModel:
     """
     게시판 정보, 글 목록을 반환합니다.
     """
     content = {
-        "categories": list_post_service.categories,
-        "board": list_post_service.board,
-        "writes": list_post_service.get_writes(),
-        "total_count": list_post_service.get_total_count(),
-        "current_page": list_post_service.search_params['current_page'],
-        "prev_spt": list_post_service.prev_spt,
-        "next_spt": list_post_service.next_spt,
+        "categories": service.categories,
+        "board": service.board,
+        "writes": service.get_writes(),
+        "total_count": service.get_total_count(),
+        "current_page": service.search_params['current_page'],
+        "prev_spt": service.prev_spt,
+        "next_spt": service.next_spt,
     }
     
     return jsonable_encoder(content)
@@ -77,25 +77,25 @@ async def api_list_post(
             )
 async def api_read_post(
     db: db_session,
-    read_post_service: Annotated[ReadPostServiceAPI, Depends()],
+    service: Annotated[ReadPostServiceAPI, Depends()],
 ) -> ResponseWriteModel:
     """
     지정된 게시판의 글을 개별 조회합니다.
     """
-    content = jsonable_encoder(read_post_service.write)
+    content = jsonable_encoder(service.write)
     additional_content = jsonable_encoder({
-        "images": read_post_service.images,
-        "normal_files": read_post_service.normal_files,
-        "links": read_post_service.get_links(),
-        "comments": read_post_service.get_comments(),
+        "images": service.images,
+        "normal_files": service.normal_files,
+        "links": service.get_links(),
+        "comments": service.get_comments(),
     })
     content.update(additional_content)
-    read_post_service.validate_secret()
-    read_post_service.validate_repeat()
-    read_post_service.block_read_comment()
-    read_post_service.validate_read_level()
-    read_post_service.check_scrap()
-    read_post_service.check_is_good()
+    service.validate_secret()
+    service.validate_repeat()
+    service.block_read_comment()
+    service.validate_read_level()
+    service.check_scrap()
+    service.check_is_good()
     db.commit()
     return content
 
@@ -107,7 +107,7 @@ async def api_read_post(
             )
 async def api_read_post(
     db: db_session,
-    read_post_service: Annotated[ReadPostServiceAPI, Depends()],
+    service: Annotated[ReadPostServiceAPI, Depends()],
     wr_password: str = Body(..., title="비밀번호", description="비밀글 비밀번호")
 ) -> ResponseWriteModel:
     """
@@ -116,21 +116,19 @@ async def api_read_post(
     ### Request Body
     - **wr_password**: 게시글 비밀번호
     """
-    read_post_service.validate_read_wr_password(
-        wr_password, read_post_service.write.wr_password
-    )
-    content = jsonable_encoder(read_post_service.write)
+    service.validate_read_wr_password(wr_password, service.write.wr_password)
+    content = jsonable_encoder(service.write)
     additional_content = jsonable_encoder({
-        "images": read_post_service.images,
-        "normal_files": read_post_service.normal_files,
-        "links": read_post_service.get_links(),
-        "comments": read_post_service.get_comments(),
+        "images": service.images,
+        "normal_files": service.normal_files,
+        "links": service.get_links(),
+        "comments": service.get_comments(),
     })
     content.update(additional_content)
-    read_post_service.validate_repeat()
-    read_post_service.block_read_comment()
-    read_post_service.check_scrap()
-    read_post_service.check_is_good()
+    service.validate_repeat()
+    service.block_read_comment()
+    service.check_scrap()
+    service.check_is_good()
     db.commit()
     return content
 
@@ -142,7 +140,7 @@ async def api_read_post(
              )
 async def api_create_post(
     db: db_session,
-    create_post_service: Annotated[CreatePostServiceAPI, Depends()],
+    service: Annotated[CreatePostServiceAPI, Depends()],
     wr_data: WriteModel,
 ) -> ResponseNormalModel:
     """
@@ -166,18 +164,18 @@ async def api_create_post(
     - **parent_id**: 부모글 ID (답글/댓글일 경우)
     - **wr_comment**: 댓글 사용 여부
     """
-    create_post_service.validate_secret_board(wr_data.secret, wr_data.html, wr_data.mail)
-    create_post_service.validate_post_content(wr_data.wr_subject)
-    create_post_service.validate_post_content(wr_data.wr_content)
-    create_post_service.is_write_level()
-    create_post_service.arrange_data(wr_data, wr_data.secret, wr_data.html, wr_data.mail)
-    write = create_post_service.save_write(wr_data.parent_id, wr_data)
-    insert_board_new(create_post_service.bo_table, write)
-    create_post_service.add_point(write)
-    create_post_service.send_write_mail_(write, wr_data.parent_id)
-    create_post_service.set_notice(write.wr_id, wr_data.notice)
-    set_write_delay(create_post_service.request)
-    create_post_service.delete_cache()
+    service.validate_secret_board(wr_data.secret, wr_data.html, wr_data.mail)
+    service.validate_post_content(wr_data.wr_subject)
+    service.validate_post_content(wr_data.wr_content)
+    service.is_write_level()
+    service.arrange_data(wr_data, wr_data.secret, wr_data.html, wr_data.mail)
+    write = service.save_write(wr_data.parent_id, wr_data)
+    insert_board_new(service.bo_table, write)
+    service.add_point(write)
+    service.send_write_mail_(write, wr_data.parent_id)
+    service.set_notice(write.wr_id, wr_data.notice)
+    set_write_delay(service.request)
+    service.delete_cache()
     db.commit()
     return {"result": "created"}
     
@@ -189,7 +187,7 @@ async def api_create_post(
             )
 async def api_update_post(
     db: db_session,
-    update_post_service: Annotated[UpdatePostServiceAPI, Depends()],
+    service: Annotated[UpdatePostServiceAPI, Depends()],
     wr_data: WriteModel,
 ) -> ResponseNormalModel:
     """
@@ -212,18 +210,18 @@ async def api_update_post(
     - **notice**: 공지글 여부
     - **parent_id**: 부모글 ID (답글/댓글일 경우)
     """
-    update_post_service.validate_restrict_comment_count()
-    write = update_post_service.get_write(update_post_service.wr_id)
+    service.validate_restrict_comment_count()
+    write = service.get_write(service.wr_id)
     
-    update_post_service.validate_author(write, wr_data.wr_password)
-    update_post_service.validate_secret_board(wr_data.secret, wr_data.html, wr_data.mail)
-    update_post_service.validate_post_content(wr_data.wr_subject)
-    update_post_service.validate_post_content(wr_data.wr_content)
-    update_post_service.arrange_data(wr_data, wr_data.secret, wr_data.html, wr_data.mail)
-    update_post_service.save_write(write, wr_data)
-    update_post_service.set_notice(write.wr_id, wr_data.notice)
-    update_post_service.update_children_category(wr_data)
-    update_post_service.delete_cache()
+    service.validate_author(write, wr_data.wr_password)
+    service.validate_secret_board(wr_data.secret, wr_data.html, wr_data.mail)
+    service.validate_post_content(wr_data.wr_subject)
+    service.validate_post_content(wr_data.wr_content)
+    service.arrange_data(wr_data, wr_data.secret, wr_data.html, wr_data.mail)
+    service.save_write(write, wr_data)
+    service.set_notice(write.wr_id, wr_data.notice)
+    service.update_children_category(wr_data)
+    service.delete_cache()
     db.commit()
     return {"result": "updated"}
 
@@ -234,15 +232,15 @@ async def api_update_post(
                            **response_404, **response_422}
                )
 async def api_delete_post(
-    delete_post_api: Annotated[DeletePostServiceAPI, Depends()],
+    service: Annotated[DeletePostServiceAPI, Depends()],
 ) -> ResponseNormalModel:
     """
     지정된 게시판의 글을 삭제합니다.
     """
-    delete_post_api.validate_level(with_session=False)
-    delete_post_api.validate_exists_reply()
-    delete_post_api.validate_exists_comment()
-    delete_post_api.delete_write()
+    service.validate_level(with_session=False)
+    service.validate_exists_reply()
+    service.validate_exists_comment()
+    service.delete_write()
     return {"result": "deleted"}
 
 
@@ -251,7 +249,7 @@ async def api_delete_post(
             responses={**response_401, **response_403, **response_422}
             )
 async def api_list_delete(
-    list_delete_service: Annotated[ListDeleteServiceAPI, Depends()],
+    service: Annotated[ListDeleteServiceAPI, Depends()],
     wr_ids: Annotated[list, Body(..., alias="chk_wr_id[]")],
 ) -> ResponseNormalModel:
     """
@@ -260,8 +258,8 @@ async def api_list_delete(
     ### Request Body
     - **wr_ids**: 삭제할 게시글 wr_id 리스트 (예: [1, 2, 3])
     """
-    list_delete_service.validate_admin_authority()
-    list_delete_service.delete_writes(wr_ids)
+    service.validate_admin_authority()
+    service.delete_writes(wr_ids)
     return {"result": "deleted"}
 
 
@@ -271,14 +269,14 @@ async def api_list_delete(
                        **response_404, **response_422}
             )
 async def api_move_post(
-    move_update_service: Annotated[MoveUpdateServiceAPI, Depends()],
+    service: Annotated[MoveUpdateServiceAPI, Depends()],
 ) -> List[ResponseBoardModel]:
     """
     게시글을 복사/이동 가능한 게시판 목록을 반환합니다.
     sw: copy(게시글 복사) 또는 move(게시글 이동)
     """
-    move_update_service.validate_admin_authority()
-    boards = move_update_service.get_admin_board_list()
+    service.validate_admin_authority()
+    boards = service.get_admin_board_list()
     return boards
 
 
@@ -288,7 +286,7 @@ async def api_move_post(
                        **response_404, **response_422}
             )
 async def api_move_update(
-    move_update_service: Annotated[MoveUpdateServiceAPI, Depends()],
+    service: Annotated[MoveUpdateServiceAPI, Depends()],
     wr_ids: str = Body(..., title="글 아이디 목록"),
     target_bo_tables: list = Body(..., title="복사/이동할 게시판 테이블 목록"),
 ) -> ResponseNormalModel:
@@ -301,10 +299,10 @@ async def api_move_update(
     - **wr_ids**: 복사/이동할 게시글 wr_id 목록 (예: "1,2,3")
     - **target_bo_tables**: 복사/이동할 게시판 목록 (예: ["free", "qa"])
     """
-    move_update_service.validate_admin_authority()
-    origin_writes = move_update_service.get_origin_writes(wr_ids)
-    move_update_service.move_copy_post(target_bo_tables, origin_writes)
-    return {"result": f"해당 게시물을 선택한 게시판으로 {move_update_service.act} 하였습니다."}
+    service.validate_admin_authority()
+    origin_writes = service.get_origin_writes(wr_ids)
+    service.move_copy_post(target_bo_tables, origin_writes)
+    return {"result": f"해당 게시물을 선택한 게시판으로 {service.act} 하였습니다."}
  
 
 @router.post("/uploadfile/{bo_table}/{wr_id}",
@@ -313,7 +311,7 @@ async def api_move_update(
                        **response_404, **response_422}
             )
 async def api_upload_file(
-    create_post_service: Annotated[CreatePostServiceAPI, Depends()],
+    service: Annotated[CreatePostServiceAPI, Depends()],
     data: Annotated[dict, Depends(arange_file_data)],
     wr_id: int = Path(..., title="글 아이디", description="글 아이디"),
 ) -> ResponseNormalModel:
@@ -321,8 +319,8 @@ async def api_upload_file(
     파일을 업로드합니다.
     - multipart/form-data로 전송해야 합니다.
     """
-    write = create_post_service.get_write(wr_id)
-    create_post_service.upload_files(
+    write = service.get_write(wr_id)
+    service.upload_files(
         write, data["files"], data["file_contents"], data["file_dels"]
     )
     return {"result": "uploaded"}
@@ -334,7 +332,7 @@ async def api_upload_file(
                        **response_404, **response_422}
             )
 async def api_download_file(
-    download_file_service: Annotated[DownloadFileServiceAPI, Depends()],
+    service: Annotated[DownloadFileServiceAPI, Depends()],
 ):
     """
     게시글의 파일을 다운로드합니다.
@@ -343,9 +341,9 @@ async def api_download_file(
     - **wr_id**: 게시글 아이디
     - **bf_no**: 첨부된 파일의 순번
     """
-    download_file_service.validate_download_level()
-    board_file = download_file_service.get_board_file()
-    download_file_service.validate_point(board_file)
+    service.validate_download_level()
+    board_file = service.get_board_file()
+    service.validate_point(board_file)
     return FileResponse(board_file.bf_file, filename=board_file.bf_source)
 
 
@@ -356,7 +354,7 @@ async def api_download_file(
             )
 async def api_create_comment(
     db: db_session,
-    comment_service: Annotated[CommentServiceAPI, Depends()],
+    service: Annotated[CommentServiceAPI, Depends()],
     comment_data: CommentModel,
     bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
     wr_id: int = Path(..., title="부모글 아이디", description="부모글 아이디"),
@@ -374,13 +372,13 @@ async def api_create_comment(
     wr_id만 입력 - 댓글작성
     wr_id, comment_id 입력 - 대댓글 작성
     """
-    parent_write = comment_service.get_parent_post(wr_id, is_reply=False)
-    comment_service.validate_comment_level()
-    comment_service.validate_point()
-    comment_service.validate_post_content(comment_data.wr_content)
-    comment = comment_service.save_comment(comment_data, parent_write)
-    comment_service.add_point(comment)
-    comment_service.send_write_mail_(comment, parent_write)
+    parent_write = service.get_parent_post(wr_id, is_reply=False)
+    service.validate_comment_level()
+    service.validate_point()
+    service.validate_post_content(comment_data.wr_content)
+    comment = service.save_comment(comment_data, parent_write)
+    service.add_point(comment)
+    service.send_write_mail_(comment, parent_write)
     insert_board_new(bo_table, comment)
     db.commit()
     return {"result": "created"}
@@ -393,7 +391,7 @@ async def api_create_comment(
             )
 async def api_update_comment(
     db: db_session,
-    comment_service: Annotated[CommentServiceAPI, Depends()],
+    service: Annotated[CommentServiceAPI, Depends()],
     comment_data: CommentModel,
 ) -> ResponseNormalModel:
     """
@@ -406,17 +404,17 @@ async def api_update_comment(
     - **wr_option**: 글 옵션
     - **comment_id**: 댓글 ID (대댓글 수정일 경우 comment_id는 대댓글 id)
     """
-    write_model = comment_service.write_model
-    comment_service.get_parent_post(comment_service.wr_id, is_reply=False)
+    write_model = service.write_model
+    service.get_parent_post(service.wr_id, is_reply=False)
     comment = db.get(write_model, comment_data.comment_id)
     if not comment:
         raise HTTPException(status_code=404, detail=f"{comment_data.comment_id} : 존재하지 않는 댓글입니다.")
 
-    comment_service.validate_author(comment, comment_data.wr_password)
-    comment_service.validate_post_content(comment_data.wr_content)
-    comment.wr_content = comment_service.get_cleaned_data(comment_data.wr_content)
+    service.validate_author(comment, comment_data.wr_password)
+    service.validate_post_content(comment_data.wr_content)
+    comment.wr_content = service.get_cleaned_data(comment_data.wr_content)
     comment.wr_option = comment_data.wr_option or "html1"
-    comment.wr_last = comment_service.g5_instance.get_wr_last_now(write_model.__tablename__)
+    comment.wr_last = service.g5_instance.get_wr_last_now(write_model.__tablename__)
     db.commit()
 
     return {"result": "updated"}
@@ -428,11 +426,11 @@ async def api_update_comment(
                            **response_404, **response_422}
                )
 async def api_delete_comment(
-    delete_comment_service: Annotated[DeleteCommentServiceAPI, Depends()],
+    service: Annotated[DeleteCommentServiceAPI, Depends()],
 ) -> ResponseNormalModel:
     """
     댓글을 삭제합니다.
     """
-    delete_comment_service.check_authority(with_session=False)
-    delete_comment_service.delete_comment()
+    service.check_authority(with_session=False)
+    service.delete_comment()
     return {"result": "deleted"}

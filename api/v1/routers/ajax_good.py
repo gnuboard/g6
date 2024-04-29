@@ -15,7 +15,7 @@ router = APIRouter()
             responses={**AJAXService.responses}
             )
 async def ajax_good(
-    ajax_service: Annotated[AJAXService, Depends()],
+    service: Annotated[AJAXService, Depends()],
     member: Annotated[Member, Depends(get_current_member)],
     bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
     wr_id: int = Path(..., title="글 아이디", description="글 아이디"),
@@ -24,10 +24,10 @@ async def ajax_good(
     """
     게시글 좋아요/싫어요 처리
     """
-    ajax_service.validate_member(member)
-    board = ajax_service.get_board(bo_table)
-    ajax_service.validate_board_good_use(board, type)
-    write = ajax_service.get_write(bo_table, wr_id)
-    ajax_service.validate_write_owner(write, member, type)
-    result = ajax_service.get_ajax_good_result(bo_table, member, write, type)
+    service.validate_member(member)
+    board = service.get_board(bo_table)
+    service.validate_board_good_use(board, type)
+    write = service.get_write(bo_table, wr_id)
+    service.validate_write_owner(write, member, type)
+    result = service.get_ajax_good_result(bo_table, member, write, type)
     return JSONResponse(result, 200)
