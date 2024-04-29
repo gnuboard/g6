@@ -155,13 +155,16 @@ def get_client_ip(request: Request) -> str:
         return request.client.host
 
 
-async def get_host_public_ip():
+async def get_host_public_ip() -> str:
     """
     호스트의 공인 IP 주소를 반환하는 함수
     """
     async with httpx.AsyncClient() as client:
-        response = await client.get('https://httpbin.org/ip')
-        return response.json()['origin']
+        try:
+            response = await client.get('https://httpbin.org/ip')
+            return response.json()['origin']
+        except httpx.TimeoutException:
+            return "IP 정보를 불러오지 못했습니다. 다시 시도해주세요."
 
 
 def delete_image(directory: str, filename: str, is_delete: bool = True):
@@ -256,7 +259,8 @@ def select_query(request: Request, db: db_session, table_model, search_params: d
                 query = query.where(cast(getattr(table_model, search_params['sfl']), String).like(f"%{search_params['stx']}%"))
 
     # 페이지 번호에 따른 offset 계산
-    offset = (search_params['current_page'] - 1) * records_per_page
+    page = search_params['current_page']
+    offset = (page - 1) * records_per_page if page > 0 else 0
     # 최종 쿼리 결과를 가져옵니다.
     rows = db.scalars(query.add_columns(table_model).offset(offset).limit(records_per_page)).all()
     # 전체 레코드 개수 계산
