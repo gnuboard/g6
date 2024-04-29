@@ -1,5 +1,4 @@
 """API 환경설정 관련 파일"""
-from cachetools import LRUCache, cached
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,10 +26,4 @@ class ApiSettings(BaseSettings):
     REFRESH_TOKEN_SECRET_KEY: str = "refresh_token_secret_key"
 
 
-@cached(LRUCache(maxsize=128))
-def get_api_settings() -> ApiSettings:
-    """캐시된 API 설정을 반환합니다."""
-    return ApiSettings()
-
-
-api_settings = get_api_settings()
+api_settings = ApiSettings()
