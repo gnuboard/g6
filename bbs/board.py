@@ -427,7 +427,7 @@ async def download_file(
         bf_no (int): 파일 순번
 
     Raises:
-        AlertException: 파일이 존재하지 않을 경우
+        AlertException: 다운로드 권한 부재 / 파일 부재 / 포인트 부족
 
     Returns:
         FileResponse: 파일 다운로드
