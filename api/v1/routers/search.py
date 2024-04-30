@@ -2,10 +2,9 @@
 from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends, Query
-from fastapi.encoders import jsonable_encoder
 
 from api.v1.models.response import response_401, response_403, response_422
-from api.v1.models.board import ResponseBoardModel, ResponseWriteSearchModel, ResponseSearchModel
+from api.v1.models.board import ResponseSearchModel
 from service.search import SearchServiceAPI
 
 router = APIRouter()

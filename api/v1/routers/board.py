@@ -66,7 +66,6 @@ async def api_list_post(
         "prev_spt": service.prev_spt,
         "next_spt": service.next_spt,
     }
-    
     return jsonable_encoder(content)
 
 
@@ -212,7 +211,6 @@ async def api_update_post(
     """
     service.validate_restrict_comment_count()
     write = service.get_write(service.wr_id)
-    
     service.validate_author(write, wr_data.wr_password)
     service.validate_secret_board(wr_data.secret, wr_data.html, wr_data.mail)
     service.validate_post_content(wr_data.wr_subject)
@@ -416,7 +414,6 @@ async def api_update_comment(
     comment.wr_option = comment_data.wr_option or "html1"
     comment.wr_last = service.g5_instance.get_wr_last_now(write_model.__tablename__)
     db.commit()
-
     return {"result": "updated"}
 
 
