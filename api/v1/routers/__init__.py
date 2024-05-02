@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends
 from lib.dependency.dependencies import check_use_api
 from api.v1.models import Tags
 from api.v1.routers import (
-    ajax_good, ajax_autosave, auth, board, board_new, config, content, current_connect,
-    faq, member, memo, menu, newwin, point, poll, popular,
+    ajax_good, ajax_autosave, auth, board, board_new, config, content,
+    current_connect, faq, member, memo, menu, newwin, point, poll, popular,
     qa, scrap, search, visit
 )
 

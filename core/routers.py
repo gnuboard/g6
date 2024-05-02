@@ -21,10 +21,13 @@ from bbs.social import router as social_router
 from bbs.password import router as password_router
 from bbs.search import router as search_router
 from bbs.current_connect import router as current_connect_router
-from lib.dependency.dependencies import check_use_template
+from lib.dependency.dependencies import (
+    check_use_template, check_visit_record
+)
 from lib.editor.ckeditor4 import router as editor_router
 
-router = APIRouter(dependencies=[Depends(check_use_template)],
+router = APIRouter(dependencies=[Depends(check_use_template),
+                                 Depends(check_visit_record)],
                    include_in_schema=False)
 router.include_router(board_router, prefix="/board", tags=["board"])
 router.include_router(register_router, prefix="/bbs", tags=["register"])

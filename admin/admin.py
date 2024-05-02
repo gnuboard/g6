@@ -5,7 +5,9 @@ from core.database import db_session
 from core.models import BoardNew, Member, Point
 from core.template import AdminTemplates
 from lib.common import dynamic_create_write_table
-from lib.dependency.dependencies import check_admin_access
+from lib.dependency.dependencies import (
+    check_admin_access, check_visit_record
+)
 from lib.member import get_member_level
 
 from admin.admin_config import router as admin_config_router
@@ -33,7 +35,8 @@ from admin.admin_service import router as admin_service_router
 
 router = APIRouter(prefix="/admin",
                    tags=["admin"],
-                   dependencies=[Depends(check_admin_access)],
+                   dependencies=[Depends(check_admin_access),
+                                 Depends(check_visit_record)],
                    include_in_schema=False)
 templates = AdminTemplates()
 

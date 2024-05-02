@@ -6,15 +6,16 @@ from fastapi import (
 )
 from sqlalchemy import exists, inspect, select
 
-from core.database import DBConnect
+from core.database import DBConnect, db_session
 from core.exception import AlertException, TemplateDisabledException
 from core.models import Auth, Board, GroupMember
 from core.settings import ENV_PATH, settings
 from core.template import get_theme_list
 from lib.captcha import get_current_captcha_cls
-from lib.common import get_current_admin_menu_id
+from lib.common import get_client_ip, get_current_admin_menu_id
 from lib.member import get_admin_type
 from lib.token import check_token
+from service.visit_service import VisitService
 
 
 async def get_variety_bo_table(
@@ -207,3 +208,9 @@ async def no_cache_response(response: Response):
     response.headers["Cache-Control"] = "no-store"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
+
+
+async def check_visit_record(request: Request, response: Response, db: db_session):
+    """방문자 이력 기록"""
+    visit_service = VisitService(request, db)
+    visit_service.create_visit_record()

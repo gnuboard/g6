@@ -25,7 +25,7 @@ from core.template import UserTemplates, register_theme_statics
 from lib.common import (
     get_client_ip, is_intercept_ip, is_possible_ip, session_member_key
 )
-from lib.dependency.dependencies import check_use_template
+from lib.dependency.dependencies import check_use_template, check_visit_record
 from lib.member import is_super_admin
 from lib.newwin import get_newwins_except_cookie
 from lib.point import insert_point
@@ -33,7 +33,6 @@ from lib.scheduler import scheduler
 from lib.template_filters import default_if_none
 from lib.token import create_session_token
 from service.member_service import MemberService
-from service.visit_service import VisitService
 
 from admin.admin import router as admin_router
 from install.router import router as install_router
@@ -84,12 +83,12 @@ cache_plugin_state.__setitem__('info', plugin_states)
 cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
 cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(plugin_states))
 
-app.include_router(admin_router)
 app.include_router(api_router)
-app.include_router(template_router)
 app.include_router(install_router)
-app.include_router(login_router)
 
+app.include_router(admin_router)
+app.include_router(login_router)
+app.include_router(template_router)
 
 @app.middleware("http")
 async def main_middleware(request: Request, call_next):
@@ -210,13 +209,6 @@ async def main_middleware(request: Request, call_next):
                             max_age=age_1day * 30, domain=cookie_domain)
         response.set_cookie(key="ck_auto", value=ss_mb_key,
                             max_age=age_1day * 30, domain=cookie_domain)
-    # 방문자 이력 기록
-    ck_visit_ip = request.cookies.get('ck_visit_ip', None)
-    if ck_visit_ip != current_ip:
-        response.set_cookie(key="ck_visit_ip", value=current_ip,
-                            max_age=age_1day, domain=cookie_domain)
-        visit_service = VisitService(request, db)
-        visit_service.create_visit_record()
 
     try:
         # 현재 방문자 데이터 갱신
@@ -270,7 +262,8 @@ scheduler.run_scheduler()
 
 
 @app.get("/",
-         dependencies=[Depends(check_use_template)],
+         dependencies=[Depends(check_use_template),
+                       Depends(check_visit_record)],
          response_class=HTMLResponse,
          include_in_schema=False)
 async def index(request: Request, db: db_session):
