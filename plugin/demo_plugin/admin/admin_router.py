@@ -5,7 +5,7 @@ from core.plugin import get_admin_plugin_menus, get_all_plugin_module_names
 from core.template import AdminTemplates
 from lib.common import get_admin_menus, get_client_ip
 from lib.template_functions import (
-    get_editor_select, get_member_id_select, get_member_level_select,
+    get_editor_select, get_member_level_select,
     get_selected, get_skin_select, option_array_checked
 )
 from . import plugin_config
@@ -15,7 +15,6 @@ templates = AdminTemplates()
 
 templates.env.globals["admin_menus"] = get_admin_menus()
 templates.env.globals["getattr"] = getattr
-templates.env.globals["get_member_id_select"] = get_member_id_select
 templates.env.globals["get_skin_select"] = get_skin_select
 templates.env.globals["get_editor_select"] = get_editor_select
 templates.env.globals["get_selected"] = get_selected

@@ -1,31 +1,24 @@
 {% extends "base.html" %}
 
 {% block title %}기본환경설정{% endblock title %}
-
 {% block subtitle %}기본환경설정{% endblock subtitle %}
 
 {% block content %}
 
-{{ pg_anchor }}
-{% set pg_anchor %}    
-
-{% endset %}
 <ul class="anchor">
-  <li><a href="#anc_cf_basic">기본환경</a></li>
-  <li><a href="#anc_cf_board">게시판기본</a></li>
-  <li><a href="#anc_cf_join">회원가입</a></li>
-  <li><a href="#anc_cf_cert">본인확인</a></li>
-  <!-- <li><a href="#anc_cf_url">짧은주소</a></li> -->
-  <li><a href="#anc_cf_mail">기본메일환경</a></li>
-  <li><a href="#anc_cf_article_mail">글작성메일</a></li>
-  <li><a href="#anc_cf_join_mail">가입메일</a></li>
-  <li><a href="#anc_cf_poll_mail">설문조사메일</a></li>
-  <li><a href="#anc_cf_sns">SNS</a></li>
-  <li><a href="#anc_cf_lay">레이아웃 추가설정</a></li>
-  <li><a href="#anc_cf_sms">SMS</a></li>
-  <li><a href="#anc_cf_extra">여분필드</a></li>
+    <li><a href="#anc_cf_basic">기본환경</a></li>
+    <li><a href="#anc_cf_board">게시판기본</a></li>
+    <li><a href="#anc_cf_join">회원가입</a></li>
+    <li><a href="#anc_cf_cert">본인확인</a></li>
+    <li><a href="#anc_cf_mail">기본메일환경</a></li>
+    <li><a href="#anc_cf_article_mail">글작성메일</a></li>
+    <li><a href="#anc_cf_join_mail">가입메일</a></li>
+    <li><a href="#anc_cf_poll_mail">설문조사메일</a></li>
+    <li><a href="#anc_cf_sns">SNS</a></li>
+    <li><a href="#anc_cf_lay">레이아웃 추가설정</a></li>
+    <li><a href="#anc_cf_sms">SMS</a></li>
+    <li><a href="#anc_cf_extra">여분필드</a></li>
 </ul>
-{{ pg_anchor }}
 <form name="fconfigform" method="post" action="/admin/config_form_update" onsubmit="return fconfigform_submit(this);" enctype="application/x-www-form-urlencoded" autocomplete="off">
  
   <input type="hidden" name="token" value="">
@@ -50,7 +43,7 @@
                 </tr>
                 <tr>
                     <th scope="row"><label for="cf_admin">최고관리자<strong class="blind">필수</strong></label></th>
-                    <td colspan="3">{{ get_member_id_select('cf_admin', 10, config.cf_admin, 'required')|safe }}</td>
+                    <td colspan="3">{{ get_select(admin_list, 'cf_admin', config.cf_admin, 'required')|safe }}</td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="cf_admin_email">관리자 메일 주소<strong class="blind">필수</strong></label></th>

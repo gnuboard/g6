@@ -4,7 +4,7 @@ import re
 import secrets
 from datetime import date, datetime, timedelta
 from glob import glob
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 from typing_extensions import Annotated
 
 from fastapi import Depends, Request, UploadFile
@@ -292,6 +292,13 @@ class MemberService(BaseService):
         if mb_id:
             query = query.where(Member.mb_id != mb_id)
         return self.db.scalar(query)
+
+    def fetch_members_by_above_level(self, mb_level: int) -> List[Member]:
+        """지정한 레벨 이상의 회원 정보를 조회합니다."""
+        return self.db.scalars(
+            select(Member)
+            .where(Member.mb_level >= mb_level)
+        ).all()
 
 
 class MemberImageService(BaseService):

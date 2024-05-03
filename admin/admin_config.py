@@ -1,6 +1,8 @@
+"""기본환경설정 관리 Template Router"""
 import re
 import socket
 from typing import List
+from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
@@ -14,40 +16,49 @@ from core.template import AdminTemplates
 from lib.common import get_client_ip, get_host_public_ip
 from lib.dependency.dependencies import validate_super_admin, validate_token
 from lib.template_functions import (
-    get_editor_select, get_member_level_select, get_skin_select,
-    get_member_id_select, 
+    get_editor_select, get_member_level_select, get_select
 )
+from service.member_service import MemberService
 
 router = APIRouter()
 templates = AdminTemplates()
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
-templates.env.globals["get_member_id_select"] = get_member_id_select
-templates.env.globals["get_skin_select"] = get_skin_select
+templates.env.globals["get_select"] = get_select
 templates.env.globals["get_editor_select"] = get_editor_select
 templates.env.globals["get_member_level_select"] = get_member_level_select
 
 CONFIG_MENU_KEY = "100100"
 
 
-@router.get("/config_form", dependencies=[Depends(validate_super_admin)])
-async def config_form(request: Request):
+@router.get("/config_form",
+            dependencies=[Depends(validate_super_admin)])
+async def config_form(
+    request: Request,
+    service: Annotated[MemberService, Depends()],
+):
     """
     기본환경설정 폼
     """
     request.session["menu_key"] = CONFIG_MENU_KEY
 
-    host_name = socket.gethostname()
-    host_ip = socket.gethostbyname(host_name)
+    config = request.state.config
+    # 현재 서버, 공인, 사설 IP 주소
+    host_ip = socket.gethostbyname(socket.gethostname())
     host_public_ip = await get_host_public_ip()
     client_ip = get_client_ip(request)
+    # 관리자 회원 목록
+    admins = service.fetch_members_by_above_level(10)
+    admin_list = {}
+    for admin in admins:
+        admin_list[admin.mb_id] = admin.mb_id
 
     context = {
         "request": request,
-        "config": request.state.config,
-        "host_name": host_name,
+        "config": config,
         "host_ip": host_ip,
         "host_public_ip": host_public_ip,
         "client_ip": client_ip,
+        "admin_list": admin_list,
     }
     return templates.TemplateResponse("config_form.html", context)
 
