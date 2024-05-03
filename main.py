@@ -1,6 +1,4 @@
 import os
-import re
-from datetime import datetime
 
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
@@ -22,19 +20,14 @@ from core.plugin import (
 from core.routers import router as template_router
 from core.settings import ENV_PATH, settings
 from core.template import UserTemplates, register_theme_statics
-from lib.common import (
-    get_client_ip, is_intercept_ip, is_possible_ip, session_member_key
-)
+from lib.dependency.auth import manage_member_authentication
 from lib.dependency.dependencies import (
-    check_use_template, check_visit_record, set_current_connect
+    check_ip, check_use_template, check_visit_record, set_current_connect
 )
-from lib.member import is_super_admin
 from lib.newwin import get_newwins_except_cookie
-from lib.point import insert_point
 from lib.scheduler import scheduler
 from lib.template_filters import default_if_none
 from lib.token import create_session_token
-from service.member_service import MemberService
 
 from admin.admin import router as admin_router
 from install.router import router as install_router
@@ -56,13 +49,15 @@ async def lifespan(app: FastAPI):
     """
     yield
     scheduler.remove_flag()
+
+
 app = FastAPI(
     debug=settings.APP_IS_DEBUG,  # 디버그 모드가 활성화 설정
     lifespan=lifespan,
     title="그누보드6",
-    description=""
+    description="",
+    # dependencies=[Depends(check_ip)],
 )
-
 templates = UserTemplates()
 templates.env.filters["default_if_none"] = default_if_none
 
@@ -85,12 +80,13 @@ cache_plugin_state.__setitem__('info', plugin_states)
 cache_plugin_state.__setitem__('change_time', get_plugin_state_change_time())
 cache_plugin_menu.__setitem__('admin_menus', register_plugin_admin_menu(plugin_states))
 
+# 라우터 등록
 app.include_router(api_router)
 app.include_router(install_router)
-
 app.include_router(admin_router)
 app.include_router(login_router)
 app.include_router(template_router)
+
 
 @app.middleware("http")
 async def main_middleware(request: Request, call_next):
@@ -135,82 +131,10 @@ async def main_middleware(request: Request, call_next):
     request.state.use_editor = True if config.cf_editor else False
 
     # 쿠키도메인 전역변수
-    request.state.cookie_domain = cookie_domain = settings.COOKIE_DOMAIN
-
-    member = None
-    is_autologin = False
-    ss_mb_key = None
-    session_mb_id = request.session.get("ss_mb_id", "")
-    cookie_mb_id = request.cookies.get("ck_mb_id", "")
-    current_ip = get_client_ip(request)
-
-    try:
-        member_service = MemberService(request, db)
-        # 로그인 세션 유지 중이라면
-        if session_mb_id:
-            member = member_service.get_member(session_mb_id)
-            # 회원 정보가 없거나 탈퇴한 회원이라면 세션을 초기화
-            if not member_service.is_activated(member)[0]:
-                request.session.clear()
-                member = None
-
-        # 자동 로그인 쿠키가 있다면
-        elif cookie_mb_id:
-            mb_id = re.sub("[^a-zA-Z0-9_]", "", cookie_mb_id)[:20]
-            member = member_service.get_member(session_mb_id)
-
-            # 최고관리자는 보안상 자동로그인 기능을 사용하지 않는다.
-            if (not is_super_admin(request, mb_id)
-                    and member_service.is_member_email_certified(member)[0]
-                    and member_service.is_activated(member)[0]):
-                # 쿠키에 저장된 키와 서버에서 생성한 키가 일치하는지 검사
-                ss_mb_key = session_member_key(request, member)
-                if request.cookies.get("ck_auto") == ss_mb_key:
-                    request.session["ss_mb_id"] = cookie_mb_id
-                    is_autologin = True
-    except AlertException as e:
-        context = {"request": request, "errors": e.detail, "url": "/"}
-        response = template_response("alert.html", context, e.status_code)
-        response.delete_cookie("ck_auto")
-        response.delete_cookie("ck_mb_id")
-        request.session.clear()
-        return response
-
-    if member:
-        # 오늘 처음 로그인 이라면 포인트 지급 및 로그인 정보 업데이트
-        ymd_str = datetime.now().strftime("%Y-%m-%d")
-        if member.mb_today_login.strftime("%Y-%m-%d") != ymd_str:
-            insert_point(request, member.mb_id, config.cf_login_point,
-                         ymd_str + " 첫로그인", "@login", member.mb_id, ymd_str)
-
-            member.mb_today_login = datetime.now()
-            member.mb_login_ip = request.client.host
-            db.commit()
-
-    # 로그인한 회원 정보
-    request.state.login_member = member
-    # 최고관리자 여부
-    request.state.is_super_admin = is_super_admin(request, getattr(member, "mb_id", None))
-
-    # 접근가능/차단 IP 체크
-    # - IP 체크 기능을 사용할 때 is_super_admin 여부를 확인하기 때문에 로그인 코드 이후에 실행
-    if not is_possible_ip(request, current_ip):
-        return HTMLResponse("<meta charset=utf-8>접근이 허용되지 않은 IP 입니다.")
-    if is_intercept_ip(request, current_ip):
-        return HTMLResponse("<meta charset=utf-8>접근이 차단된 IP 입니다.")
+    request.state.cookie_domain = settings.COOKIE_DOMAIN
 
     # 응답 객체 설정
     response: Response = await call_next(request)
-
-    age_1day = 60 * 60 * 24
-
-    # 자동로그인 쿠키 재설정
-    # is_autologin과 세션을 확인해서 로그아웃 처리 이후 쿠키가 재설정되는 것을 방지
-    if is_autologin and request.session.get("ss_mb_id"):
-        response.set_cookie(key="ck_mb_id", value=cookie_mb_id,
-                            max_age=age_1day * 30, domain=cookie_domain)
-        response.set_cookie(key="ck_auto", value=ss_mb_key,
-                            max_age=age_1day * 30, domain=cookie_domain)
 
     db.close()
 
@@ -225,13 +149,14 @@ regist_core_middleware(app)
 # 기본 예외처리 핸들러를 등록하는 함수
 regist_core_exception_handler(app)
 
-
 # 스케줄러 등록 및 실행
 scheduler.run_scheduler()
 
 
 @app.get("/",
          dependencies=[Depends(check_use_template),
+                       Depends(manage_member_authentication),
+                       Depends(check_ip),
                        Depends(check_visit_record),
                        Depends(set_current_connect)],
          response_class=HTMLResponse,

@@ -4,16 +4,19 @@ from typing_extensions import Annotated
 from fastapi import (
     Depends, Form, HTTPException, Path, Query, Request, Response
 )
+from fastapi.responses import HTMLResponse
 from sqlalchemy import exists, inspect, select
 from sqlalchemy.exc import ProgrammingError
 
-from core.database import DBConnect, db_session
+from core.database import DBConnect
 from core.exception import AlertException, TemplateDisabledException
 from core.models import Auth, Board, GroupMember, Member
 from core.settings import ENV_PATH, settings
 from core.template import get_theme_list
 from lib.captcha import get_current_captcha_cls
-from lib.common import get_client_ip, get_current_admin_menu_id
+from lib.common import (
+    get_client_ip, get_current_admin_menu_id, is_intercept_ip, is_possible_ip
+)
 from lib.dependency.auth import get_login_member_optional
 from lib.member import get_admin_type
 from lib.token import check_token
@@ -216,6 +219,7 @@ async def no_cache_response(response: Response):
 async def check_visit_record(
         service: Annotated[VisitService, Depends()]):
     """방문자 이력 기록"""
+    # TODO: 기존 코드에서 쿠키 값 체크가 빠짐
     service.create_visit_record()
 
 
@@ -241,3 +245,15 @@ async def set_current_connect(
 
     except ProgrammingError as e:
         print(e)
+
+
+async def check_ip(request: Request):
+    """
+    접근가능/차단 IP 체크
+    - IP 체크 기능을 사용할 때 is_super_admin 여부를 확인하기 때문에 로그인 코드 이후에 실행
+    """
+    current_ip = get_client_ip(request)
+    if not is_possible_ip(request, current_ip):
+        return HTMLResponse("<meta charset=utf-8>접근이 허용되지 않은 IP 입니다.")
+    if is_intercept_ip(request, current_ip):
+        return HTMLResponse("<meta charset=utf-8>접근이 차단된 IP 입니다.")
