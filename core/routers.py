@@ -23,11 +23,12 @@ from bbs.search import router as search_router
 from bbs.current_connect import router as current_connect_router
 from lib.dependency.auth import manage_member_authentication
 from lib.dependency.dependencies import (
-    check_use_template, check_visit_record, set_current_connect
+    check_use_template, check_visit_record, set_current_connect, validate_installed
 )
 from lib.editor.ckeditor4 import router as editor_router
 
 router = APIRouter(dependencies=[Depends(check_use_template),
+                                 Depends(validate_installed),
                                  Depends(manage_member_authentication),
                                  Depends(check_visit_record),
                                  Depends(set_current_connect)],

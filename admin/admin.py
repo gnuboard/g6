@@ -7,7 +7,7 @@ from core.template import AdminTemplates
 from lib.common import dynamic_create_write_table
 from lib.dependency.auth import manage_member_authentication
 from lib.dependency.dependencies import (
-    check_admin_access, check_visit_record
+    check_admin_access, check_visit_record, validate_installed
 )
 from lib.member import get_member_level
 
@@ -36,7 +36,8 @@ from admin.admin_service import router as admin_service_router
 
 router = APIRouter(prefix="/admin",
                    tags=["admin"],
-                   dependencies=[Depends(manage_member_authentication),
+                   dependencies=[Depends(validate_installed),
+                                 Depends(manage_member_authentication),
                                  Depends(check_admin_access),
                                  Depends(check_visit_record)],
                    include_in_schema=False)

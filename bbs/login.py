@@ -7,7 +7,7 @@ from fastapi.responses import RedirectResponse
 from core.template import UserTemplates
 from lib.common import session_member_key
 from lib.dependency.auth import manage_member_authentication
-from lib.dependency.dependencies import check_visit_record, set_current_connect
+from lib.dependency.dependencies import check_visit_record, set_current_connect, validate_installed
 from lib.member import is_super_admin
 from lib.social import providers
 from lib.social.social import SocialProvider, oauth
@@ -15,7 +15,8 @@ from service.member_service import MemberService
 
 router = APIRouter(prefix="/bbs",
                    tags=["login"],
-                   dependencies=[Depends(manage_member_authentication),
+                   dependencies=[Depends(validate_installed),
+                                 Depends(manage_member_authentication),
                                  Depends(check_visit_record),
                                  Depends(set_current_connect)],
                    include_in_schema=False)

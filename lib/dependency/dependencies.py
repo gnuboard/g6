@@ -8,9 +8,9 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy import exists, inspect, select
 from sqlalchemy.exc import ProgrammingError
 
-from core.database import DBConnect
+from core.database import DBConnect, db_session
 from core.exception import AlertException, TemplateDisabledException
-from core.models import Auth, Board, GroupMember, Member
+from core.models import Auth, Board, Config, GroupMember, Member
 from core.settings import ENV_PATH, settings
 from core.template import get_theme_list
 from lib.captcha import get_current_captcha_cls
@@ -97,7 +97,23 @@ async def validate_install():
             and inspect(engine).has_table(prefix + "config")):
         raise AlertException(
             "이미 설치가 완료되었습니다.\\n재설치하시려면 .env파일을 삭제 후 다시 시도해주세요.", 400, "/")
+    
 
+async def validate_installed(request: Request, db: db_session):
+    url_path = request.url.path
+
+    try:
+        if not url_path.startswith("/install"):
+            if not os.path.exists(ENV_PATH):
+                raise AlertException(".env 파일이 없습니다. 설치를 진행해 주세요.", 400, "/install")
+            # 기본환경설정 테이블 조회
+            config = db.scalar(select(Config))
+
+    except ProgrammingError as e:
+        raise AlertException(
+            "DB 테이블 또는 설정정보가 존재하지 않습니다. 설치를 다시 진행해 주세요.",
+            400,
+            "/install") from e
 
 async def validate_theme(
         theme: Annotated[str, Depends(get_variety_theme)]):
@@ -257,3 +273,18 @@ async def check_ip(request: Request):
         return HTMLResponse("<meta charset=utf-8>접근이 허용되지 않은 IP 입니다.")
     if is_intercept_ip(request, current_ip):
         return HTMLResponse("<meta charset=utf-8>접근이 차단된 IP 입니다.")
+
+
+async def get_config(request: Request, db: db_session):
+    """환경설정 정보를 반환"""
+    config = db.scalar(select(Config))
+    # 기본환경설정 조회 및 설정
+    request.state.config = config
+    request.state.title = config.cf_title
+
+    # 에디터 전역변수
+    request.state.editor = config.cf_editor
+    request.state.use_editor = True if config.cf_editor else False
+
+    # 쿠키도메인 전역변수
+    request.state.cookie_domain = settings.COOKIE_DOMAIN

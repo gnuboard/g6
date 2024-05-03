@@ -1,16 +1,16 @@
 import os
 
 from contextlib import asynccontextmanager
+from wsgiref import validate
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Path, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy import select
-from sqlalchemy.exc import ProgrammingError
 from starlette.staticfiles import StaticFiles
 
 from core import models
-from core.database import DBConnect, db_session
-from core.exception import AlertException, regist_core_exception_handler, template_response
+from core.database import db_session
+from core.exception import regist_core_exception_handler
 from core.middleware import regist_core_middleware, should_run_middleware
 from core.plugin import (
     cache_plugin_menu, cache_plugin_state, get_plugin_state_change_time,
@@ -18,11 +18,11 @@ from core.plugin import (
     register_plugin_admin_menu, register_statics,
 )
 from core.routers import router as template_router
-from core.settings import ENV_PATH, settings
+from core.settings import settings
 from core.template import UserTemplates, register_theme_statics
 from lib.dependency.auth import manage_member_authentication
 from lib.dependency.dependencies import (
-    check_ip, check_use_template, check_visit_record, set_current_connect
+    check_ip, check_use_template, check_visit_record, get_config, set_current_connect, validate_installed
 )
 from lib.newwin import get_newwins_except_cookie
 from lib.scheduler import scheduler
@@ -56,7 +56,8 @@ app = FastAPI(
     lifespan=lifespan,
     title="그누보드6",
     description="",
-    # dependencies=[Depends(check_ip)],
+    dependencies=[Depends(get_config),
+                  Depends(check_ip)],
 )
 templates = UserTemplates()
 templates.env.filters["default_if_none"] = default_if_none
@@ -95,48 +96,7 @@ async def main_middleware(request: Request, call_next):
     if not await should_run_middleware(request):
         return await call_next(request)
 
-    # 데이터베이스 설치여부 체크
-    db_connect = DBConnect()
-    db = db_connect.sessionLocal()
-    url_path = request.url.path
-    config = None
-
-    try:
-        if not url_path.startswith("/install"):
-            if not os.path.exists(ENV_PATH):
-                raise AlertException(".env 파일이 없습니다. 설치를 진행해 주세요.", 400, "/install")
-            # 기본환경설정 테이블 조회
-            config = db.scalar(select(models.Config))
-        else:
-            return await call_next(request)
-
-    except AlertException as e:
-        context = {"request": request, "errors": e.detail, "url": e.url}
-        return template_response("alert.html", context, e.status_code)
-
-    except ProgrammingError as e:
-        context = {
-            "request": request,
-            "errors": "DB 테이블 또는 설정정보가 존재하지 않습니다. 설치를 다시 진행해 주세요.",
-            "url": "/install"
-        }
-        return template_response("alert.html", context, 400)
-
-    # 기본환경설정 조회 및 설정
-    request.state.config = config
-    request.state.title = config.cf_title
-
-    # 에디터 전역변수
-    request.state.editor = config.cf_editor
-    request.state.use_editor = True if config.cf_editor else False
-
-    # 쿠키도메인 전역변수
-    request.state.cookie_domain = settings.COOKIE_DOMAIN
-
-    # 응답 객체 설정
     response: Response = await call_next(request)
-
-    db.close()
 
     return response
 
@@ -154,9 +114,9 @@ scheduler.run_scheduler()
 
 
 @app.get("/",
-         dependencies=[Depends(check_use_template),
+         dependencies=[Depends(validate_installed),
+                       Depends(check_use_template),
                        Depends(manage_member_authentication),
-                       Depends(check_ip),
                        Depends(check_visit_record),
                        Depends(set_current_connect)],
          response_class=HTMLResponse,
