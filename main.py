@@ -1,12 +1,12 @@
 import os
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Path, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
-from sqlalchemy import delete, insert, select
+from sqlalchemy import select
 from sqlalchemy.exc import ProgrammingError
 from starlette.staticfiles import StaticFiles
 
@@ -25,7 +25,9 @@ from core.template import UserTemplates, register_theme_statics
 from lib.common import (
     get_client_ip, is_intercept_ip, is_possible_ip, session_member_key
 )
-from lib.dependency.dependencies import check_use_template, check_visit_record
+from lib.dependency.dependencies import (
+    check_use_template, check_visit_record, set_current_connect
+)
 from lib.member import is_super_admin
 from lib.newwin import get_newwins_except_cookie
 from lib.point import insert_point
@@ -210,39 +212,6 @@ async def main_middleware(request: Request, call_next):
         response.set_cookie(key="ck_auto", value=ss_mb_key,
                             max_age=age_1day * 30, domain=cookie_domain)
 
-    try:
-        # 현재 방문자 데이터 갱신
-        if (not request.state.is_super_admin
-                and not url_path.startswith("/admin")):
-            current_login = db.scalar(
-                select(models.Login)
-                .where(models.Login.lo_ip == current_ip)
-            )
-            if current_login:
-                current_login.mb_id = getattr(member, "mb_id", "")
-                current_login.lo_datetime = datetime.now()
-                current_login.lo_location = url_path
-                current_login.lo_url = url_path
-            else:
-                db.execute(
-                    insert(models.Login).values(
-                        lo_ip=current_ip,
-                        mb_id=getattr(member, "mb_id", ""),
-                        lo_datetime=datetime.now(),
-                        lo_location=url_path,
-                        lo_url=url_path)
-                )
-            db.commit()
-
-        # 현재 로그인한 이력 삭제
-        config_time = timedelta(minutes=int(config.cf_login_minutes))
-        db.execute(delete(models.Login)
-                .where(models.Login.lo_datetime < datetime.now() - config_time))
-        db.commit()
-
-    except Exception as e:
-        print(e)
-
     db.close()
 
     return response
@@ -263,7 +232,8 @@ scheduler.run_scheduler()
 
 @app.get("/",
          dependencies=[Depends(check_use_template),
-                       Depends(check_visit_record)],
+                       Depends(check_visit_record),
+                       Depends(set_current_connect)],
          response_class=HTMLResponse,
          include_in_schema=False)
 async def index(request: Request, db: db_session):

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from fastapi import Request
-from sqlalchemy import Row, Select, Sequence, func, select
+from sqlalchemy import Row, Select, Sequence, delete, func, insert, select
 
 from core.database import db_session
 from core.exception import AlertException
@@ -13,7 +13,6 @@ from service import BaseService
 
 class CurrentConnectService(BaseService):
     """
-    
     현재 접속자 관련 서비스를 제공하는 종속성 주입 클래스입니다.
     """
 
@@ -44,6 +43,40 @@ class CurrentConnectService(BaseService):
             .order_by(Login.lo_datetime.desc())
             .offset(offset).limit(per_page)
         ).all()
+
+    def fetch_current_connect(self, ip: str) -> Login:
+        """특정 IP의 현재 접속자 정보를 반환합니다."""
+        return self.db.scalar(select(Login).where(Login.lo_ip == ip))
+
+    def create_current_connect(self, ip: str,
+                               path: str, mb_id: str = "") -> None:
+        """현재 접속자 정보를 생성합니다."""
+        self.db.execute(
+            insert(Login).values(
+                lo_ip=ip,
+                mb_id=mb_id,
+                lo_location=path,
+                lo_url=path
+            )
+        )
+        self.db.commit()
+
+    def update_current_connect(self, login: Login,
+                               path: str, mb_id: str = "") -> None:
+        """현재 접속자 정보를 갱신합니다."""
+        login.mb_id = mb_id
+        login.lo_datetime = datetime.now()
+        login.lo_location = path
+        login.lo_url = path
+
+        self.db.commit()
+
+    def delete_current_connect(self) -> None:
+        """설정 시간 이전의 현재 접속자 정보를 삭제합니다."""
+        self.db.execute(
+            delete(Login).where(Login.lo_datetime < self.base_date)
+        )
+        self.db.commit()
 
     def _base_query(self, only_member: bool = False) -> Select:
         """기본 쿼리를 반환합니다."""

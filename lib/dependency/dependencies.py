@@ -5,16 +5,19 @@ from fastapi import (
     Depends, Form, HTTPException, Path, Query, Request, Response
 )
 from sqlalchemy import exists, inspect, select
+from sqlalchemy.exc import ProgrammingError
 
 from core.database import DBConnect, db_session
 from core.exception import AlertException, TemplateDisabledException
-from core.models import Auth, Board, GroupMember
+from core.models import Auth, Board, GroupMember, Member
 from core.settings import ENV_PATH, settings
 from core.template import get_theme_list
 from lib.captcha import get_current_captcha_cls
 from lib.common import get_client_ip, get_current_admin_menu_id
+from lib.dependency.auth import get_login_member_optional
 from lib.member import get_admin_type
 from lib.token import check_token
+from service.current_connect_service import CurrentConnectService
 from service.visit_service import VisitService
 
 
@@ -210,7 +213,31 @@ async def no_cache_response(response: Response):
     response.headers["Expires"] = "0"
 
 
-async def check_visit_record(request: Request, response: Response, db: db_session):
+async def check_visit_record(
+        service: Annotated[VisitService, Depends()]):
     """방문자 이력 기록"""
-    visit_service = VisitService(request, db)
-    visit_service.create_visit_record()
+    service.create_visit_record()
+
+
+async def set_current_connect(
+        request: Request,
+        service: Annotated[CurrentConnectService, Depends()],
+        member: Annotated[Member, Depends(get_login_member_optional)]):
+    """현재 접속자 정보 설정"""
+    try:
+        current_ip = get_client_ip(request)
+        path = request.url.path
+        mb_id = getattr(member, "mb_id", "")
+
+        if not request.state.is_super_admin:
+            current_login = service.fetch_current_connect(current_ip)
+            if current_login:
+                service.update_current_connect(current_login, path, mb_id)
+            else:
+                service.create_current_connect(current_ip, path, mb_id)
+
+        # 현재 로그인한 이력 삭제
+        service.delete_current_connect()
+
+    except ProgrammingError as e:
+        print(e)
