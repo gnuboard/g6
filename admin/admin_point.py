@@ -92,7 +92,7 @@ async def point_update(
 
     # 포인트 내역 저장
     rel_action = exist_member.mb_id + '-' + str(uuid.uuid4())
-    insert_point(request, mb_id, po_point, po_content, "@passive", mb_id, rel_action, po_expire_term)
+    insert_point(request, db, mb_id, po_point, po_content, "@passive", mb_id, rel_action, po_expire_term)
 
     url = "/admin/point_list"
     query_params = request.query_params
@@ -118,12 +118,12 @@ async def point_list_delete(
             abs_po_point = abs(point.po_point)
 
             if point.po_rel_table == "@expire":
-                delete_expire_point(request, point.mb_id, abs_po_point)
+                delete_expire_point(request, db, point.mb_id, abs_po_point)
             else:
-                delete_use_point(request, point.mb_id, abs_po_point)
+                delete_use_point(request, db, point.mb_id, abs_po_point)
         elif point.po_use_point > 0:
-            insert_use_point(request, point.mb_id, point.po_use_point, point.po_id)
-            
+            insert_use_point(request, db, point.mb_id, point.po_use_point, point.po_id)
+
         # 포인트 내역 삭제
         db.delete(point)
         db.commit()
@@ -137,7 +137,7 @@ async def point_list_delete(
         db.commit()
 
         # 포인트 UPDATE
-        sum_point = get_point_sum(request, point.mb_id)
+        sum_point = get_point_sum(request, db, point.mb_id)
         db.execute(
             update(Member)
             .values(mb_point=sum_point)

@@ -4,6 +4,7 @@ from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 
+from core.database import db_session
 from core.models import Member, Poll, PollEtc
 from core.template import UserTemplates
 from lib.captcha import captcha_widget
@@ -29,6 +30,7 @@ templates.env.globals["captcha_widget"] = captcha_widget
                            Depends(validate_poll_update)])
 async def poll_update(
     request: Request,
+    db: db_session,
     service: Annotated[PollService, Depends()],
     member: Annotated[Member, Depends(get_login_member_optional)],
     poll: Annotated[Poll, Depends(get_poll)],
@@ -42,7 +44,7 @@ async def poll_update(
     # 포인트 지급
     if member:
         content = f'{poll.po_id}. {poll.po_subject[:20]} 설문조사 참여'
-        insert_point(request, member.mb_id, poll.po_point,
+        insert_point(request, db, member.mb_id, poll.po_point,
                      content, '@poll', poll.po_id, '투표')
 
     return RedirectResponse(url=f"/bbs/poll_result/{poll.po_id}", status_code=302)

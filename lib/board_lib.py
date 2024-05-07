@@ -1199,8 +1199,8 @@ def delete_write(request: Request, bo_table: str, origin_write: WriteBaseModel) 
         # 원글 삭제
         if not write.wr_is_comment:
             # 원글 포인트 삭제
-            if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
-                insert_point(request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
+            if not delete_point(request, db, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
+                insert_point(request, db, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
             # 파일+섬네일 삭제
             BoardFileManager(board, write.wr_id).delete_board_files()
 
@@ -1208,8 +1208,8 @@ def delete_write(request: Request, bo_table: str, origin_write: WriteBaseModel) 
             # TODO: 에디터 섬네일 삭제
         else:
             # 댓글 포인트 삭제
-            if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "댓글"):
-                insert_point(request, write.mb_id, board.bo_comment_point * (-1), f"{board.bo_subject} {write.wr_id} 댓글 삭제")
+            if not delete_point(request, db, write.mb_id, board.bo_table, write.wr_id, "댓글"):
+                insert_point(request, db, write.mb_id, board.bo_comment_point * (-1), f"{board.bo_subject} {write.wr_id} 댓글 삭제")
 
             delete_comment_count += 1
 

@@ -5,12 +5,12 @@ from datetime import datetime, timedelta
 from fastapi import Request
 from sqlalchemy import delete, desc, exists, func, select, update
 
-from core.database import DBConnect
+from core.database import db_session
 from core.models import Member, Point
 from service.member_service import MemberService
 
 
-def insert_point(request: Request,
+def insert_point(request: Request, db: db_session,
                  mb_id: str, point: int, content: str = '',
                  rel_table: str = '', rel_id: str = '', rel_action: str = '',
                  expire: int = 0) -> int:
@@ -29,7 +29,6 @@ def insert_point(request: Request,
     Returns:
         int: 성공시 1, 실패시 0
     """
-    db = DBConnect().sessionLocal()
     config = request.state.config
 
     # 포인트를 사용하지 않는다면 종료
@@ -71,7 +70,7 @@ def insert_point(request: Request,
         after_datetime = timedelta(days=expire_days - 1)
         po_expire_date = (current_time + after_datetime).strftime('%Y-%m-%d')
 
-    mb_point = get_point_sum(request, mb_id)
+    mb_point = get_point_sum(request, db, mb_id)
     po_expired = 0
     if point < 0:
         po_expired = 1
@@ -98,19 +97,17 @@ def insert_point(request: Request,
         .where(Member.mb_id == mb_id)
     )
     db.commit()
-    db.close()
 
     return 1
 
 
-def get_expire_point(request: Request, mb_id: str) -> int:
+def get_expire_point(request: Request, db: db_session, mb_id: str) -> int:
     """소멸 포인트 얻기"""
     config = request.state.config
 
     if config.cf_point_term <= 0:
         return 0
 
-    db = DBConnect().sessionLocal()
     point_sum = db.scalar(
         select(func.sum(Point.po_point - Point.po_use_point))
         .where(
@@ -119,66 +116,65 @@ def get_expire_point(request: Request, mb_id: str) -> int:
             Point.po_expire_date < datetime.now()
         )
     )
-    db.close()
+
     return int(point_sum) if point_sum else 0
 
 
-def get_point_sum(request: Request, mb_id: str) -> int:
+def get_point_sum(request: Request, db: db_session, mb_id: str) -> int:
     """포인트 내역 합계"""
     config = request.state.config
-    with DBConnect().sessionLocal() as db:
-        member_service = MemberService(request, db)
-        current_time = datetime.now()
+    member_service = MemberService(request, db)
+    current_time = datetime.now()
 
-        if config.cf_point_term > 0:
-            expire_point = get_expire_point(request, mb_id)
-            if expire_point > 0:
-                member = member_service.read_member(mb_id)
-                point = expire_point * (-1)
-                new_point = Point(
-                    mb_id=mb_id,
-                    po_datetime=current_time.strftime("%Y-%m-%d %H:%M:%S"),
-                    po_content='포인트 소멸',
-                    po_point=expire_point * (-1),
-                    po_use_point=0,
-                    po_mb_point=member.mb_point + point,
-                    po_expired=1,
-                    po_expire_date=current_time,
-                    po_rel_table='@expire',
-                    po_rel_id=str(mb_id),
-                    po_rel_action='expire-' + str(uuid.uuid4()),
-                )
-                db.add(new_point)
-                db.commit()
-
-                # 포인트를 사용한 경우 포인트 내역에 사용금액 기록
-                # TODO: 주석처리된 이유를 확인해야 함
-                if point < 0:
-                    # insert_use_point(mb_id, point)
-                    pass
-
-            # 유효기간이 있을 때 기간이 지난 포인트 expired 체크
-            db.execute(
-                update(Point).values(po_expired=1)
-                .where(
-                    Point.mb_id == mb_id,
-                    Point.po_expired != 1,
-                    Point.po_expire_date != '9999-12-31',
-                    Point.po_expire_date < current_time
-                )
+    if config.cf_point_term > 0:
+        expire_point = get_expire_point(request, db, mb_id)
+        if expire_point > 0:
+            member = member_service.read_member(mb_id)
+            point = expire_point * (-1)
+            new_point = Point(
+                mb_id=mb_id,
+                po_datetime=current_time.strftime("%Y-%m-%d %H:%M:%S"),
+                po_content='포인트 소멸',
+                po_point=expire_point * (-1),
+                po_use_point=0,
+                po_mb_point=member.mb_point + point,
+                po_expired=1,
+                po_expire_date=current_time,
+                po_rel_table='@expire',
+                po_rel_id=str(mb_id),
+                po_rel_action='expire-' + str(uuid.uuid4()),
             )
+            db.add(new_point)
             db.commit()
 
-        # 포인트합
-        point_sum = db.scalar(
-            select(func.sum(Point.po_point))
-            .filter_by(mb_id=mb_id)
+            # 포인트를 사용한 경우 포인트 내역에 사용금액 기록
+            # TODO: 주석처리된 이유를 확인해야 함
+            if point < 0:
+                # insert_use_point(mb_id, point)
+                pass
+
+        # 유효기간이 있을 때 기간이 지난 포인트 expired 체크
+        db.execute(
+            update(Point).values(po_expired=1)
+            .where(
+                Point.mb_id == mb_id,
+                Point.po_expired != 1,
+                Point.po_expire_date != '9999-12-31',
+                Point.po_expire_date < current_time
+            )
         )
+        db.commit()
+
+    # 포인트합
+    point_sum = db.scalar(
+        select(func.sum(Point.po_point))
+        .filter_by(mb_id=mb_id)
+    )
 
     return int(point_sum) if point_sum else 0
 
 
-def insert_use_point(request: Request,
+def insert_use_point(request: Request, db: db_session,
                      mb_id: str, point: int, po_id: str = "") -> None:
     """사용포인트 입력
 
@@ -189,7 +185,6 @@ def insert_use_point(request: Request,
         po_id (str, optional): 포인트 내역 ID. Defaults to "".
     """
     config = request.state.config
-    db = DBConnect().sessionLocal()
     point1 = abs(point)
 
     query = (
@@ -231,16 +226,14 @@ def insert_use_point(request: Request,
             db.commit()
             point1 = point1 - point4
 
-    db.close()
 
-
-def delete_point(request: Request,
-                 mb_id: str,
-                 rel_table: str, rel_id: str, rel_action: str) -> bool:
+def delete_point(request: Request, db: db_session,
+                 mb_id: str, rel_table: str, rel_id: str, rel_action: str) -> bool:
     """포인트 삭제
 
     Args:
         request (Request): FastAPI Request 객체
+        DB (db_session): DB 세션
         mb_id (str): 회원아이디
         rel_table (str): 포인트 관련 테이블.
         rel_id (str): 포인트 관련 테이블의 ID.
@@ -249,7 +242,6 @@ def delete_point(request: Request,
     Returns:
         bool: 성공시 True, 실패시 False
     """
-    db = DBConnect().sessionLocal()
     result = False
 
     if rel_table or rel_id or rel_action:
@@ -266,10 +258,10 @@ def delete_point(request: Request,
         if row:
             if row.po_point and row.po_point > 0:
                 abs_po_point = abs(row.po_point)
-                delete_use_point(request, row.mb_id, abs_po_point)
+                delete_use_point(request, db, row.mb_id, abs_po_point)
             else:
                 if row.po_use_point and row.po_use_point > 0:
-                    insert_use_point(request, row.mb_id,
+                    insert_use_point(request, db, row.mb_id,
                                      row.po_use_point, row.po_id)
 
             delete_result = db.execute(
@@ -297,7 +289,7 @@ def delete_point(request: Request,
                     db.commit()
 
                 # 포인트 내역의 합을 구하고
-                sum_point = get_point_sum(request, mb_id)
+                sum_point = get_point_sum(request, db, mb_id)
 
                 # 포인트 UPDATE
                 db.execute(
@@ -305,21 +297,21 @@ def delete_point(request: Request,
                     .where(Member.mb_id == mb_id)
                 )
                 db.commit()
-    db.close()
 
     return result
 
 
-def delete_use_point(request: Request, mb_id: str, point: int):
+def delete_use_point(request: Request, db: db_session,
+                     mb_id: str, point: int):
     """사용포인트 삭제
 
     Args:
         request (Request): FastAPI Request 객체
+        db (db_session): DB 세션
         mb_id (str): 회원아이디
         point (int): 사용포인트
     """
     config = request.state.config
-    db = DBConnect().sessionLocal()
     current_time = datetime.now()
 
     point1 = abs(point)
@@ -336,7 +328,8 @@ def delete_use_point(request: Request, mb_id: str, point: int):
 
     for row in rows:
         point2 = row.po_use_point
-        if row.po_expired == 100 and (row.po_expire_date == '9999-12-31' or row.po_expire_date >= current_time):
+        if (row.po_expired == 100
+            and (row.po_expire_date == '9999-12-31' or row.po_expire_date >= current_time)):
             po_expired = 0
         else:
             po_expired = row.po_expired
@@ -350,7 +343,6 @@ def delete_use_point(request: Request, mb_id: str, point: int):
                 .where(Point.po_id == row.po_id)
             )
             db.commit()
-            break
         else:
             db.execute(
                 update(Point).values(
@@ -362,19 +354,18 @@ def delete_use_point(request: Request, mb_id: str, point: int):
             db.commit()
             point1 = point1 - point2
 
-    db.close()
 
-
-def delete_expire_point(request: Request, mb_id: str, point: int):
+def delete_expire_point(request: Request, db: db_session,
+                        mb_id: str, point: int):
     """소멸포인트 삭제
 
     Args:
         request (Request): FastAPI Request 객체
+        db (db_session): DB 세션
         mb_id (str): 회원아이디
         point (int): 소멸포인트
     """
     config = request.state.config
-    db = DBConnect().sessionLocal()
     current_time = datetime.now()
 
     point1 = abs(point)
@@ -386,6 +377,7 @@ def delete_expire_point(request: Request, mb_id: str, point: int):
             Point.po_use_point > 0
         ).order_by(desc(Point.po_expire_date), desc(Point.po_id))
     ).all()
+
     for row in rows:
         point2 = row.po_use_point
         po_expired = 0
@@ -393,7 +385,7 @@ def delete_expire_point(request: Request, mb_id: str, point: int):
         if config.cf_point_term > 0:
             expired = timedelta(days=config.cf_point_term - 1)
             po_expire_date = (current_time + expired).strftime('%Y-%m-%d')
-    
+
         if point2 > point1:
             db.execute(
                 update(Point).values(
@@ -404,7 +396,6 @@ def delete_expire_point(request: Request, mb_id: str, point: int):
                 .where(Point.po_id == row.po_id)
             )
             db.commit()
-            break
         else:
             db.execute(
                 update(Point).values(
@@ -416,5 +407,3 @@ def delete_expire_point(request: Request, mb_id: str, point: int):
             )
             db.commit()
             point1 = point1 - point2
-
-    db.close()

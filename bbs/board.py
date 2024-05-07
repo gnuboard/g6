@@ -39,7 +39,6 @@ templates = UserTemplates()
 templates.env.filters["set_image_width"] = set_image_width
 templates.env.filters["url_auto_link"] = url_auto_link
 templates.env.globals["get_admin_type"] = get_admin_type
-templates.env.globals["get_unique_id"] = get_unique_id
 templates.env.globals["board_config"] = BoardConfig
 templates.env.globals["get_list_thumbnail"] = get_list_thumbnail
 templates.env.globals["captcha_widget"] = captcha_widget
@@ -169,6 +168,7 @@ async def move_update(
 
 @router.get("/write/{bo_table}", dependencies=[Depends(check_group_access)])
 async def write_form_add(
+    db: db_session,
     service: Annotated[CreatePostService, Depends()],
     parent_id: int = Query(None)
 ):
@@ -213,6 +213,7 @@ async def write_form_add(
         "is_use_captcha": service.use_captcha,
         "write_min": service.write_min,
         "write_max": service.write_max,
+        "unique_id": get_unique_id(request, db)
     }
     return templates.TemplateResponse(
         f"/board/{board.bo_skin}/write_form.html", context)
@@ -220,6 +221,7 @@ async def write_form_add(
 
 @router.get("/write/{bo_table}/{wr_id}", dependencies=[Depends(check_group_access)])
 async def write_form_edit(
+    db: db_session,
     service: Annotated[UpdatePostService, Depends()],
 ):
     """
@@ -286,6 +288,7 @@ async def write_form_edit(
         "is_use_captcha": False,
         "write_min": service.write_min,
         "write_max": service.write_max,
+        "unique_id": get_unique_id(request, db)
     }
     return templates.TemplateResponse(
         f"/board/{board.bo_skin}/write_form.html", context)

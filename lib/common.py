@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 from fastapi import Request, UploadFile
 from markupsafe import Markup, escape
 from PIL import Image, ImageOps, UnidentifiedImageError
+from regex import D
 from sqlalchemy import (
     Index, asc, cast, delete, desc, func, select, String, DateTime
 )
@@ -287,7 +288,7 @@ def nl2br(value) -> str:
     return escape(value).replace('\n', Markup('<br>\n'))
 
 
-def get_unique_id(request) -> Optional[str]:
+def get_unique_id(request: Request, db: db_session) -> Optional[str]:
     """고유키 생성 함수
     그누보드 5의 get_uniqid
 
@@ -295,6 +296,7 @@ def get_unique_id(request) -> Optional[str]:
     년(4) 월(2) 일(2) 시(2) 분(2) 초(2) 100만분의 1초(2)
     Args:
         request (Request): FastAPI Request 객체
+        db (db_session): DB 세션
     Returns:
         Optional[str]: 고유 아이디, DB 오류시 None
     """
@@ -306,19 +308,18 @@ def get_unique_id(request) -> Optional[str]:
         ten_milli_sec = str(current.microsecond)[:2].zfill(2)
         key = f"{current.strftime('%Y%m%d%H%M%S')}{ten_milli_sec}"
 
-        with DBConnect().sessionLocal() as session:
-            try:
-                session.add(UniqId(uq_id=key, uq_ip=ip))
-                session.commit()
-                return key
+        try:
+            db.add(UniqId(uq_id=key, uq_ip=ip))
+            db.commit()
+            return key
 
-            except IntegrityError:
-                # key 중복 에러가 발생하면 다시 시도
-                session.rollback()
-                sleep(random.uniform(0.01, 0.02))
-            except Exception as e:
-                logging.log(logging.CRITICAL, 'unique table insert error', exc_info=e)
-                return None
+        except IntegrityError:
+            # key 중복 에러가 발생하면 다시 시도
+            db.rollback()
+            sleep(random.uniform(0.01, 0.02))
+        except Exception as e:
+            logging.log(logging.CRITICAL, 'unique table insert error', exc_info=e)
+            return None
 
 
 class StringEncrypt:

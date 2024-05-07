@@ -151,4 +151,4 @@ class CommentService(UpdatePostService):
         if self.member.mb_id:
             point = self.board.bo_comment_point
             content = f"{self.board.bo_subject} {comment.wr_parent}-{comment.wr_id} 댓글쓰기"
-            insert_point(self.request, self.member.mb_id, point, content, self.bo_table, comment.wr_id, "댓글")
+            insert_point(self.request, self.db, self.member.mb_id, point, content, self.bo_table, comment.wr_id, "댓글")

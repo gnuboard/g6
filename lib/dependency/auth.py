@@ -81,7 +81,7 @@ def manage_member_authentication(
         # 오늘 처음 로그인 이라면 포인트 지급 및 로그인 정보 업데이트
         ymd_str = datetime.now().strftime("%Y-%m-%d")
         if member.mb_today_login.strftime("%Y-%m-%d") != ymd_str:
-            insert_point(request, member.mb_id, request.state.config.cf_login_point,
+            insert_point(request, db, member.mb_id, request.state.config.cf_login_point,
                          ymd_str + " 첫로그인", "@login", member.mb_id, ymd_str)
 
             member.mb_today_login = datetime.now()

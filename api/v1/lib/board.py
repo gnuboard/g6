@@ -166,7 +166,7 @@ class DownloadFileServiceAPI(DownloadFileService):
 
         download_point = self.board.bo_download_point
         if self.is_download_point(self.write):
-            insert_point(self.request, self.member.mb_id, download_point, f"{self.board.bo_subject} {self.wr_id} 파일 다운로드", self.bo_table, self.wr_id, "다운로드")
+            insert_point(self.request, self.db, self.member.mb_id, download_point, f"{self.board.bo_subject} {self.wr_id} 파일 다운로드", self.bo_table, self.wr_id, "다운로드")
             # 다운로드 횟수 증가
             self.file_manager.update_download_count(board_file)
             return

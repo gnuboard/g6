@@ -292,7 +292,7 @@ async def post_social_register(
     db.commit()
 
     # 회원가입 포인트 부여
-    insert_point(request, member.mb_id, config.cf_register_point, "회원가입 축하", "@member", member.mb_id, "회원가입")
+    insert_point(request, db, member.mb_id, config.cf_register_point, "회원가입 축하", "@member", member.mb_id, "회원가입")
 
     from_email = get_admin_email(request)
     from_name = get_admin_email_name(request)

@@ -40,6 +40,7 @@ router = APIRouter()
              responses={**response_403, **response_409, **response_422})
 async def create_member(
     request: Request,
+    db: db_session,
     background_tasks: BackgroundTasks,
     service: Annotated[MemberServiceAPI, Depends()],
     data: Annotated[CreateMember, Depends(validate_create_data)]
@@ -57,14 +58,14 @@ async def create_member(
 
     # 회원가입 포인트 지급
     register_point = getattr(config, "cf_register_point", 0)
-    insert_point(request, member.mb_id, register_point,
+    insert_point(request, db, member.mb_id, register_point,
                  "회원가입 축하", "@member", member.mb_id, "회원가입")
 
     # 추천인 포인트 지급
     mb_recommend = data.mb_recommend
     if getattr(config, "cf_use_recommend", False) and mb_recommend:
         recommend_point = getattr(config, "cf_recommend_point", 0)
-        insert_point(request, mb_recommend, recommend_point,
+        insert_point(request, db, mb_recommend, recommend_point,
                      f"{member.mb_id}의 추천인", "@member", mb_recommend, f"{member.mb_id} 추천")
 
     # 회원가입메일 발송 처리(백그라운드)

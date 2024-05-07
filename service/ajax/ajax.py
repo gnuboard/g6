@@ -149,7 +149,7 @@ class AJAXService:
     def autosave_save(self, member: Member, data: Union[AutoSaveForm, AutoSaveModel]):
         """임시저장 데이터가 있는지 확인 후 수정 또는 추가"""
         if not data.as_uid:
-            data.as_uid = get_unique_id(self.request)
+            data.as_uid = get_unique_id(self.request, self.db)
 
         save_data = self.db.scalar(
             select(AutoSave)

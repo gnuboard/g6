@@ -2,6 +2,7 @@
 from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, Path, Request
 
+from core.database import db_session
 from core.models import Member, Poll, PollEtc
 from lib.mail import send_poll_etc_mail
 from lib.point import insert_point
@@ -64,6 +65,7 @@ async def read_poll(
               responses={**response_403, **response_404, **response_409})
 async def update_poll(
     request: Request,
+    db: db_session,
     service: Annotated[PollServiceAPI, Depends()],
     member: Annotated[Member, Depends(get_current_member_optional)],
     poll: Annotated[Poll, Depends(get_poll)],
@@ -79,7 +81,7 @@ async def update_poll(
     # 포인트 지급
     if member:
         content = f'{poll.po_id}. {poll.po_subject[:20]} 설문조사 참여'
-        insert_point(request, member.mb_id, poll.po_point,
+        insert_point(request, db, member.mb_id, poll.po_point,
                      content, '@poll', poll.po_id, '투표')
 
     return {"message": "설문조사 참여가 완료되었습니다."}

@@ -37,7 +37,7 @@ class CreatePostService(BoardService):
         if self.member.mb_id:
             point = self.board.bo_comment_point if parent_write else self.board.bo_write_point
             content = f"{self.board.bo_subject} {write.wr_id} 글" + ("답변" if parent_write else "쓰기")
-            insert_point(self.request, self.member.mb_id, point, content, self.bo_table, write.wr_id, "쓰기")
+            insert_point(self.request, self.db, self.member.mb_id, point, content, self.bo_table, write.wr_id, "쓰기")
 
     def save_write(self, parent_id, data: Union[WriteForm, WriteModel]):
         """게시글을 저장"""

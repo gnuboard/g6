@@ -4,7 +4,7 @@ from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import RedirectResponse
 
-
+from core.database import db_session
 from core.models import Member, Memo
 from core.template import UserTemplates
 from lib.captcha import captcha_widget
@@ -118,6 +118,7 @@ async def memo_form(
 @router.post("/memo_form_update", dependencies=[Depends(validate_token), Depends(validate_captcha)])
 async def memo_form_update(
     request: Request,
+    db: db_session,
     memo_service: Annotated[MemoService, Depends()],
     member: Annotated[Member, Depends(get_login_member)],
     me_recv_mb_id: str = Form(...),
@@ -139,7 +140,7 @@ async def memo_form_update(
         memo_service.update_memo_call(member, target)
 
         # 포인트 소진
-        insert_point(request, member.mb_id, send_point * (-1),
+        insert_point(request, db, member.mb_id, send_point * (-1),
                      f"{target.mb_nick}({target.mb_id})님에게 쪽지 발송", "@memo", target.mb_id, "쪽지전송")
 
     return RedirectResponse(url="/bbs/memo?kind=send", status_code=302)

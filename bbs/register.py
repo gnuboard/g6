@@ -84,6 +84,7 @@ async def get_register_form(request: Request):
              name='register_form_save')
 async def post_register_form(
     request: Request,
+    db: db_session,
     member_service: Annotated[MemberService, Depends()],
     file_service: Annotated[MemberImageService, Depends()],
     form_data: Annotated[RegisterMemberForm, Depends(validate_register_data)],
@@ -99,13 +100,13 @@ async def post_register_form(
     member = member_service.create_member(form_data)
 
     # 회원가입 포인트 지급
-    insert_point(request, member.mb_id, config.cf_register_point,
+    insert_point(request, db, member.mb_id, config.cf_register_point,
                  "회원가입 축하", "@member", member.mb_id, "회원가입")
 
     # 추천인 포인트 지급
     mb_recommend = form_data.mb_recommend
     if config.cf_use_recommend and mb_recommend:
-        insert_point(request, mb_recommend, config.cf_recommend_point,
+        insert_point(request, db, mb_recommend, config.cf_recommend_point,
                      f"{member.mb_id}의 추천인", "@member", mb_recommend, f"{member.mb_id} 추천")
 
     # 회원가입메일 발송 처리(백그라운드)
