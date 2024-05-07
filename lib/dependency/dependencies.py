@@ -21,6 +21,10 @@ from lib.dependency.auth import get_login_member_optional
 from lib.member import get_admin_type
 from lib.token import check_token
 from service.current_connect_service import CurrentConnectService
+from service.menu_service import MenuService
+from service.newwin_service import NewWinService
+from service.poll_service import PollService
+from service.popular_service import PopularService
 from service.visit_service import VisitService
 
 
@@ -129,72 +133,72 @@ async def validate_theme(
 
 async def check_group_access(
         request: Request,
+        db: db_session,
+        member: Annotated[Member, Depends(get_login_member_optional)],
         bo_table: Annotated[str, Path(...)]):
     """그룹 접근권한 체크"""
+    board = db.get(Board, bo_table)
+    if not board:
+        raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
 
-    with DBConnect().sessionLocal() as db:
-        board = db.get(Board, bo_table)
-        if not board:
-            raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
+    group = board.group
 
-        group = board.group
-        member = request.state.login_member
+    # 그룹 접근 사용할때만 체크
+    if group.gr_use_access:
+        if not member:
+            raise AlertException("비회원은 이 게시판에 접근할 권한이 없습니다.\
+                                 \\n\\n회원이시라면 로그인 후 이용해 보십시오.", 403)
 
-        # 그룹 접근 사용할때만 체크
-        if group.gr_use_access:
-            if not member:
-                raise AlertException(
-                    f"비회원은 이 게시판에 접근할 권한이 없습니다.\
-                    \\n\\n회원이시라면 로그인 후 이용해 보십시오.", 403)
-
-            # 최고관리자 또는 그룹관리자는 접근권한 체크 안함
-            if not get_admin_type(request, member.mb_id, group=group):
-                exists_group_member = db.scalar(
-                    exists(GroupMember)
-                    .where(GroupMember.gr_id == group.gr_id, GroupMember.mb_id == member.mb_id).select()
-                )
-                if not exists_group_member:
-                    raise AlertException(
-                        f"`{board.bo_subject}` 게시판에 대한 접근 권한이 없습니다.\
-                        \\n\\n궁금하신 사항은 관리자에게 문의 바랍니다.", 403)
+        # 최고관리자 또는 그룹관리자는 접근권한 체크 안함
+        if not get_admin_type(request, member.mb_id, group=group):
+            exists_group_member = db.scalar(
+                exists(GroupMember)
+                .where(
+                    GroupMember.gr_id == group.gr_id,
+                    GroupMember.mb_id == member.mb_id
+                ).select()
+            )
+            if not exists_group_member:
+                raise AlertException(f"`{board.bo_subject}` 게시판에 대한 접근 권한이 없습니다.\
+                                     \\n\\n궁금하신 사항은 관리자에게 문의 바랍니다.", 403)
 
 
-async def check_admin_access(request: Request):
+async def check_admin_access(request: Request, db: db_session):
     """관리자페이지 접근권한 체크"""
 
-    with DBConnect().sessionLocal() as db:
-        path = request.url.path
-        ss_mb_id = request.session.get("ss_mb_id", "")
+    path = request.url.path
+    ss_mb_id = request.session.get("ss_mb_id", "")
 
-        if not ss_mb_id:
-            raise AlertException("로그인이 필요합니다.", 302, url="/bbs/login?url=" + path)
-        elif not request.state.is_super_admin:
-            method = request.method
-            admin_menu_id = get_current_admin_menu_id(request)
+    if not ss_mb_id:
+        raise AlertException("로그인이 필요합니다.", 302, url="/bbs/login?url=" + path)
 
-            # 관리자 메뉴에 대한 권한 체크
-            if admin_menu_id:
-                au_auth = db.scalar(
-                    select(Auth.au_auth)
-                    .where(Auth.mb_id == ss_mb_id, Auth.au_menu == admin_menu_id)
-                ) or ""
-                # 각 요청 별 권한 체크
-                # delete 요청은 GET 요청으로 처리되므로, 요청에 "delete"를 포함하는지 확인하여 처리
-                if ("delete" in path and not "d" in au_auth):
-                    raise AlertException("삭제 권한이 없습니다.", 302, url="/")
-                elif (method == "POST" and not "w" in au_auth):
-                    raise AlertException("수정 권한이 없습니다.", 302, url="/")
-                elif (method == "GET" and not "r" in au_auth):
-                    raise AlertException("읽기 권한이 없습니다.", 302, url="/")
-            # 관리자메인은 메뉴ID가 없으므로, 다른 메뉴의 권한이 있는지 확인
-            else:
-                exists_auth = db.scalar(
-                    exists(Auth)
-                    .where(Auth.mb_id == ss_mb_id).select()
-                )
-                if not exists_auth:
-                    raise AlertException(
-                        "최고관리자 또는 관리권한이 있는 회원만 접근 가능합니다.", 302, url="/")
+    if not request.state.is_super_admin:
+        method = request.method
+        admin_menu_id = get_current_admin_menu_id(request)
+
+        # 관리자 메뉴에 대한 권한 체크
+        if admin_menu_id:
+            au_auth = db.scalar(
+                select(Auth.au_auth)
+                .where(Auth.mb_id == ss_mb_id, Auth.au_menu == admin_menu_id)
+            ) or ""
+            # 각 요청 별 권한 체크
+            # delete 요청은 GET 요청으로 처리되므로, 요청에 "delete"를 포함하는지 확인하여 처리
+            if ("delete" in path and not "d" in au_auth):
+                raise AlertException("삭제 권한이 없습니다.", 302, url="/")
+            if (method == "POST" and not "w" in au_auth):
+                raise AlertException("수정 권한이 없습니다.", 302, url="/")
+            if (method == "GET" and not "r" in au_auth):
+                raise AlertException("읽기 권한이 없습니다.", 302, url="/")
+        # 관리자메인은 메뉴ID가 없으므로, 다른 메뉴의 권한이 있는지 확인
+        else:
+            exists_auth = db.scalar(
+                exists(Auth)
+                .where(Auth.mb_id == ss_mb_id).select()
+            )
+            if not exists_auth:
+                raise AlertException(
+                    "최고관리자 또는 관리권한이 있는 회원만 접근 가능합니다.", 302, url="/")
 
 
 def common_search_query_params(
@@ -284,7 +288,26 @@ async def get_config(request: Request, db: db_session):
 
     # 에디터 전역변수
     request.state.editor = config.cf_editor
-    request.state.use_editor = True if config.cf_editor else False
+    request.state.use_editor = bool(config.cf_editor)
 
     # 쿠키도메인 전역변수
     request.state.cookie_domain = settings.COOKIE_DOMAIN
+
+
+async def set_template_basic_data(
+    request: Request,
+    current_connect_service: Annotated[CurrentConnectService, Depends()],
+    menu_service: Annotated[MenuService, Depends()],
+    newwin_service: Annotated[NewWinService, Depends()],
+    poll_service: Annotated[PollService, Depends()],
+    popular_service: Annotated[PopularService, Depends()]
+):
+    """템플릿 기본 조회 데이터 설정"""
+    template_data = {
+        "current_login_couunt": current_connect_service.fetch_total_records(),
+        "menus": menu_service.fetch_menus(),
+        "newwins": newwin_service.get_newwins_except_cookie(),
+        "poll": poll_service.fetch_latest_poll(),
+        "populars": popular_service.fetch_populars(),
+    }
+    request.state.template_data = template_data

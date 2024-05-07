@@ -891,3 +891,9 @@ def get_paging_info(current_page: int, records_per_page: int, total_records: int
         "current_page": current_page,
         "total_pages": math.ceil(total_records / records_per_page),
     }
+
+
+def hide_ip_address(ip: str) -> str:
+    """IP 주소를 가려주는 함수"""
+    return re.sub(r"([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)",
+                  "\\1.#.#.\\4", ip)

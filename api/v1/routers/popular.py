@@ -2,15 +2,14 @@
 from typing import List
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy.exc import SQLAlchemyError
+from fastapi import APIRouter, Depends, Request
 
 from api.v1.lib.popular import PopularServiceAPI
 from api.v1.models.popular import (
     CreatePopularRequest, PopularRequest, PopularResponse
 )
 from api.v1.models.response import MessageResponse, response_409, response_422, response_500
-from lib.popular import get_populars
+from service.popular_service import PopularService
 
 
 router = APIRouter()
@@ -20,16 +19,14 @@ router = APIRouter()
             summary="인기 검색어 목록 조회",
             responses={**response_422, **response_500})
 async def read_populars(
+    service: Annotated[PopularService, Depends()],
     data: Annotated[PopularRequest, Depends()]
 ) -> List[PopularResponse]:
     """
     인기 검색어 목록을 조회합니다.
     - TTLCache(Time-To-Live) 캐시를 사용하여 조회합니다.
     """
-    try:
-        return get_populars(data.limit, data.day)
-    except SQLAlchemyError as e:
-        return HTTPException(status_code=500, detail=str(e))
+    return service.fetch_populars(data.limit, data.day)
 
 
 @router.post("/populars",

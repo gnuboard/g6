@@ -1,9 +1,10 @@
 """설문조사 관련 기능을 제공하는 서비스 모듈입니다."""
 from typing import List, Tuple
 
+from cachetools import LRUCache, cached
+from cachetools.keys import hashkey
 from fastapi import Request
 from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 from core.database import db_session
 from core.exception import AlertException, AlertCloseException
@@ -130,12 +131,12 @@ class PollService(BaseService):
         self.db.delete(poll_etc)
         self.db.commit()
 
-    @staticmethod
-    def fetch_latest_poll(db: Session):
+    @cached(LRUCache(maxsize=1), key=lambda _: hashkey("latest_poll"))
+    def fetch_latest_poll(self):
         """
         사용 설정된 최신 설문조사 1건을 조회합니다.
         """
-        latest_poll = db.scalar(
+        latest_poll = self.db.scalar(
             select(Poll)
             .where(Poll.po_use == 1)
             .order_by(Poll.po_id.desc())

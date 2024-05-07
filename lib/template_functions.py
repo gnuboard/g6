@@ -4,11 +4,7 @@ from html import escape
 from typing import Union
 
 from fastapi import Request
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
-from core.database import DBConnect
-from core.models import Group, Member
 from service.member_service import MemberImageService
 
 

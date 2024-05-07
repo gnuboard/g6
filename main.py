@@ -3,12 +3,9 @@ import os
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Path, Request, Response
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
-from sqlalchemy import select
+from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.staticfiles import StaticFiles
 
-from core import models
-from core.database import db_session
 from core.exception import regist_core_exception_handler
 from core.middleware import regist_core_middleware, should_run_middleware
 from core.plugin import (
@@ -18,21 +15,17 @@ from core.plugin import (
 )
 from core.routers import router as template_router
 from core.settings import settings
-from core.template import UserTemplates, register_theme_statics
-from lib.dependency.auth import manage_member_authentication
+from core.template import register_theme_statics
 from lib.dependency.dependencies import (
-    check_ip, check_use_template, check_visit_record, get_config, set_current_connect, validate_installed
+    check_ip, check_use_template, get_config
 )
-from lib.newwin import get_newwins_except_cookie
 from lib.scheduler import scheduler
-from lib.template_filters import default_if_none
 from lib.token import create_session_token
 
-from admin.admin import router as admin_router
-from install.router import router as install_router
-from bbs.login import router as login_router
-
 from api.v1.routers import router as api_router
+from admin.admin import router as admin_router
+from bbs.login import router as login_router
+from install.router import router as install_router
 
 # .env 파일로부터 환경 변수를 로드합니다.
 # 이 함수는 해당 파일 내의 키-값 쌍을 환경 변수로 로드하는 데 사용됩니다.
@@ -58,8 +51,6 @@ app = FastAPI(
     dependencies=[Depends(get_config),
                   Depends(check_ip)],
 )
-templates = UserTemplates()
-templates.env.filters["default_if_none"] = default_if_none
 
 # git clone으로 소스를 받은 경우에는 data디렉토리가 없으므로 생성해야 함
 if not os.path.exists("data"):
@@ -110,44 +101,6 @@ regist_core_exception_handler(app)
 
 # 스케줄러 등록 및 실행
 scheduler.run_scheduler()
-
-
-@app.get("/",
-         dependencies=[Depends(validate_installed),
-                       Depends(check_use_template),
-                       Depends(manage_member_authentication),
-                       Depends(check_visit_record),
-                       Depends(set_current_connect)],
-         response_class=HTMLResponse,
-         include_in_schema=False)
-async def index(request: Request, db: db_session):
-    """
-    메인 페이지
-    """
-    # 게시판 목록 조회
-    query_boards = (
-        select(models.Board)
-        .join(models.Board.group)
-        .where(models.Board.bo_device != 'mobile')
-        .order_by(
-            models.Group.gr_order,
-            models.Board.bo_order
-        )
-    )
-    # 최고관리자가 아니라면 인증게시판 및 갤러리/공지사항 게시판은 제외
-    if not request.state.is_super_admin:
-        query_boards = query_boards.where(
-            models.Board.bo_use_cert == '',
-            models.Board.bo_table.notin_(['notice', 'gallery'])
-        )
-    boards = db.scalars(query_boards).all()
-
-    context = {
-        "request": request,
-        "newwins": get_newwins_except_cookie(request),
-        "boards": boards,
-    }
-    return templates.TemplateResponse("/index.html", context)
 
 
 @app.post("/generate_token",

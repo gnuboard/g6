@@ -4,7 +4,7 @@ from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, Request
 
 from core.template import UserTemplates
-from lib.current_connect import hide_ip_address
+from lib.common import hide_ip_address
 from service.current_connect_service import CurrentConnectService
 
 router = APIRouter()
