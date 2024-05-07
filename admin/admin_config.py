@@ -16,14 +16,13 @@ from core.template import AdminTemplates
 from lib.common import get_client_ip, get_host_public_ip
 from lib.dependency.dependencies import validate_super_admin, validate_token
 from lib.template_functions import (
-    get_editor_select, get_member_level_select, get_select
+    get_editor_select, get_member_level_select
 )
 from service.member_service import MemberService
 
 router = APIRouter()
 templates = AdminTemplates()
 # 파이썬 함수 및 변수를 jinja2 에서 사용할 수 있도록 등록
-templates.env.globals["get_select"] = get_select
 templates.env.globals["get_editor_select"] = get_editor_select
 templates.env.globals["get_member_level_select"] = get_member_level_select
 

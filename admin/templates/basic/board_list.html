@@ -61,7 +61,7 @@
                             <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
                         </td>
                         <td>
-                            {{ get_group_select('gr_id[]', board.gr_id, 'required')|safe }}
+                            {{ get_selectbox(groups, 'gr_id[]', board.gr_id, 'required')|safe }}
                         </td>
                         <td>
                             <input type="hidden" name="bo_table[]" value="{{ board.bo_table }}">

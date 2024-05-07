@@ -3,6 +3,7 @@ import hashlib
 import re
 from datetime import datetime
 from typing import List
+from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends, Query, Request, Form, Path
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -17,11 +18,11 @@ from core.template import AdminTemplates
 from lib.common import get_admin_email, get_admin_email_name, select_query
 from lib.dependency.dependencies import common_search_query_params, validate_token
 from lib.mail import mailer
-from lib.template_functions import get_group_select, get_paging
+from lib.template_functions import get_paging
+from service.board.group_board_list import GroupService
 
 router = APIRouter()
 templates = AdminTemplates()
-templates.env.globals["get_group_select"] = get_group_select
 
 MAIL_MENU_KEY = "200300"
 
@@ -197,6 +198,7 @@ async def mail_test(
 async def mail_select_form(
     request: Request,
     db: db_session,
+    group_service: Annotated[GroupService, Depends()],
     ma_id: int = Path(...),
     mb_id1: int = Query(1),
     mb_level_from: str = Query(1),
@@ -219,7 +221,8 @@ async def mail_select_form(
 
     cleaned_host = re.sub(r'^(www[^\.]*\.)', '', request.client.host)
 
-    groups = db.scalars(select(Group).order_by(Group.gr_subject)).all()
+    # 게시판 그룹 목록 (dict)
+    groups = {group.gr_id: group.gr_subject for group in group_service.get_groups()}
 
     # 전체/탈퇴 회원수
     member_count = db.scalar(select(func.count(Member.mb_id)))

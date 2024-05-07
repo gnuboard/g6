@@ -20,15 +20,14 @@ from lib.dependency.dependencies import (
     common_search_query_params, validate_token
 )
 from lib.template_functions import (
-    get_editor_select, get_group_select, 
-    get_member_level_select, get_paging, get_skin_select, 
+    get_editor_select, get_member_level_select, get_paging, get_skin_select
 )
+from service.board.group_board_list import GroupService
 
 
 router = APIRouter()
 templates = AdminTemplates()
 templates.env.globals['get_editor_select'] = get_editor_select
-templates.env.globals['get_group_select'] = get_group_select
 templates.env.globals['get_skin_select'] = get_skin_select
 templates.env.globals['get_member_level_select'] = get_member_level_select
 
@@ -40,6 +39,7 @@ FILE_DIRECTORY = "data/file/"
 async def board_list(
     request: Request,
     db: db_session,
+    group_service: Annotated[GroupService, Depends()],
     search_params: dict = Depends(common_search_query_params)
 ):
     """
@@ -54,9 +54,12 @@ async def board_list(
         search_params,
         same_search_fields=["gr_id", "bo_table"],
     )
+    # 게시판 그룹 목록 (dict)
+    groups = {group.gr_id: group.gr_subject for group in group_service.get_groups()}
 
     context = {
         "request": request,
+        "groups": groups,
         "boards": result['rows'],
         "total_count": result['total_count'],
         "paging": get_paging(request, search_params['current_page'], result['total_count']),
@@ -155,7 +158,10 @@ async def board_list_delete(
 
 
 @router.get("/board_form")
-async def board_form(request: Request, db: db_session):
+async def board_form(
+    request: Request,
+    group_service: Annotated[GroupService, Depends()],
+):
     """
     게시판 등록 폼
     """
@@ -189,9 +195,12 @@ async def board_form(request: Request, db: db_session):
         "bo_mobile_skin": "basic",
         "bo_use_secret": 0,
     }
+    # 게시판 그룹 목록 (dict)
+    groups = {group.gr_id: group.gr_subject for group in group_service.get_groups()}
 
     context = {
         "request": request,
+        "groups": groups,
         "board": board,
         "config": config,
     }
@@ -199,15 +208,19 @@ async def board_form(request: Request, db: db_session):
 
 
 @router.get("/board_form/{bo_table}")
-async def board_form(
+async def board_edit_form(
     request: Request,
+    group_service: Annotated[GroupService, Depends()],
     board: Annotated[Board, Depends(get_board)],
 ):
     """
     게시판 수정 폼
     """
+    # 게시판 그룹 목록 (dict)
+    groups = {group.gr_id: group.gr_subject for group in group_service.get_groups()}
     context = {
         "request": request,
+        "groups": groups,
         "board": board,
         "config": request.state.config,
     }

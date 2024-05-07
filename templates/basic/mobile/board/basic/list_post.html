@@ -89,7 +89,7 @@
                     </ul>
                 </li>
                 <li>
-                    <a href="{{ url_for('board_form', bo_table=board.bo_table) }}" class="btn_admin btn" title="관리자">
+                    <a href="{{ url_for('board_edit_form', bo_table=board.bo_table) }}" class="btn_admin btn" title="관리자">
                         <i class="fa fa-cog fa-spin fa-fw"></i>
                         <span class="blind">관리자</span>
                     </a>
@@ -291,7 +291,7 @@
             <ul>
                 {% if is_admin %}
                 <li>
-                    <a href="{{ url_for('board_form', bo_table=board.bo_table) }}" class="btn_admin btn" title="관리자">
+                    <a href="{{ url_for('board_edit_form', bo_table=board.bo_table) }}" class="btn_admin btn" title="관리자">
                         <i class="fa fa-cog fa-spin fa-fw"></i><span class="blind">관리자</span>
                     </a>
                 </li>

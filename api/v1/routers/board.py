@@ -5,7 +5,9 @@ from fastapi import (
 from fastapi.responses import FileResponse
 from fastapi.encoders import jsonable_encoder
 
+from api.v1.dependencies.member import get_current_member_optional
 from core.database import db_session
+from core.models import Member
 from lib.board_lib import insert_board_new, set_write_delay
 from api.v1.models.response import (
     response_401, response_403, response_404, response_422
@@ -16,7 +18,7 @@ from api.v1.models.board import (
     ResponseBoardListModel, ResponseGroupBoardsModel, ResponseNormalModel
 )
 from api.v1.lib.board import (
-    GroupBoardListServiceAPI, ListPostServiceAPI, ReadPostServiceAPI,
+    GroupServiceAPI, ListPostServiceAPI, ReadPostServiceAPI,
     CreatePostServiceAPI, UpdatePostServiceAPI, DownloadFileServiceAPI,
     DeletePostServiceAPI, CommentServiceAPI, DeleteCommentServiceAPI,
     MoveUpdateServiceAPI, ListDeleteServiceAPI
@@ -36,14 +38,15 @@ credentials_exception = HTTPException(
             responses={**response_401, **response_422}
             )
 async def api_group_board_list(
-    service: Annotated[GroupBoardListServiceAPI, Depends()],
+    service: Annotated[GroupServiceAPI, Depends()],
+    member: Annotated[Member, Depends(get_current_member_optional)],
+    gr_id: Annotated[str, Path(...)],
 ) -> ResponseGroupBoardsModel:
     """
     게시판그룹의 모든 게시판 목록을 보여줍니다.
     """
-    group = service.group
-    service.check_mobile_only()
-    boards = service.get_boards_in_group()
+    group = service.get_group(gr_id)
+    boards = service.get_boards_in_group(group, member)
     return {"group": group, "boards": boards}
 
 

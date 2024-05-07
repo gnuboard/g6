@@ -9,8 +9,9 @@ from fastapi.responses import FileResponse, RedirectResponse
 from core.database import db_session
 from core.exception import AlertException
 from core.formclass import WriteForm, WriteCommentForm
-from core.models import WriteBaseModel
+from core.models import Member, WriteBaseModel
 from core.template import UserTemplates
+from lib.dependency.auth import get_login_member_optional
 from lib.member import get_admin_type
 from lib.board_lib import (
     set_image_width, url_auto_link, BoardConfig, get_list_thumbnail,
@@ -26,7 +27,7 @@ from lib.dependency.dependencies import (
 from lib.template_functions import get_paging
 from service.board import (
     ListPostService, CreatePostService, ReadPostService,
-    UpdatePostService, DeletePostService, GroupBoardListService,
+    UpdatePostService, DeletePostService, GroupService,
     CommentService, DeleteCommentService, ListDeleteService,
     MoveUpdateService, DownloadFileService
 )
@@ -47,15 +48,16 @@ templates.env.globals["captcha_widget"] = captcha_widget
 @router.get("/group/{gr_id}")
 async def group_board_list(
     request: Request,
-    service: Annotated[GroupBoardListService, Depends()],
+    service: Annotated[GroupService, Depends()],
+    member: Annotated[Member, Depends(get_login_member_optional)],
+    gr_id: Annotated[str, Path(...)],
 ):
     """
     게시판그룹의 모든 게시판 목록을 보여준다.
     """
-    # 게시판 그룹 정보 조회
-    group = service.group
-    service.check_mobile_only()
-    boards = service.get_boards_in_group()
+    group = service.get_group(gr_id)
+    service.check_device_only(group, member)
+    boards = service.get_boards_in_group(group, member)
 
     context = {
         "request": request,

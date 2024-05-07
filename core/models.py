@@ -460,9 +460,8 @@ class Group(Base):
     gr_8 = Column(String(255), nullable=False, default="")
     gr_9 = Column(String(255), nullable=False, default="")
     gr_10 = Column(String(255), nullable=False, default="")
-    # 종속관계
 
-    boards: Mapped[List["Board"]] = relationship(back_populates="group")
+    boards: DynamicMapped[List["Board"]] = relationship(back_populates="group", lazy="dynamic")
     members: Mapped[List["GroupMember"]] = relationship(back_populates="group")
 
 

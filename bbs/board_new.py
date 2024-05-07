@@ -5,17 +5,18 @@ from fastapi.responses import RedirectResponse
 from core.template import UserTemplates
 from lib.common import set_url_query_params
 from lib.dependency.dependencies import validate_token
-from lib.template_functions import get_group_select, get_paging
+from lib.template_functions import get_paging
+from service.board.group_board_list import GroupService
 from service.board_new import BoardNewService
 
 router = APIRouter()
 templates = UserTemplates()
-templates.env.globals["get_group_select"] = get_group_select
 
 
 @router.get("/new")
 async def board_new_list(
     service: Annotated[BoardNewService, Depends()],
+    group_service: Annotated[GroupService, Depends()],
     gr_id: str = Query(None),
     view: str = Query(None),
     mb_id: str = Query(None),
@@ -29,9 +30,11 @@ async def board_new_list(
     board_news = service.get_board_news(query, offset)
     total_count = service.get_total_count(query)
     service.arrange_borad_news_data(board_news, total_count, offset)
+    groups = {group.gr_id: group.gr_subject for group in group_service.get_groups()}
 
     context = {
         "request": service.request,
+        "groups": groups,
         "total_count": total_count,
         "board_news": board_news,
         "current_page": current_page,

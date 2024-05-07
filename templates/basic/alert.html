@@ -1,14 +1,20 @@
-{% extends "base_sub.html" %}
-
-{% block title %}경고창{% endblock title %}
-
-{% block content %}
-    <script>
-        alert("{% for error in errors %}{{ error|safe }}{% endfor %}");
-        {% if url %}
-            document.location.href = "{{ url }}";
-        {% else %}
-            history.back();
-        {% endif %}
-    </script>
-{% endblock content %}
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>경고창</title>
+<link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+</head>
+    <body>
+        <script>
+            alert("{% for error in errors %}{{ error|safe }}{% endfor %}");
+            {% if url %}
+                document.location.href = "{{ url }}";
+            {% else %}
+                history.back();
+            {% endif %}
+        </script>
+    </body>
+</html>

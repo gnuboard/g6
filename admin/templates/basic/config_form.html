@@ -43,7 +43,7 @@
                 </tr>
                 <tr>
                     <th scope="row"><label for="cf_admin">최고관리자<strong class="blind">필수</strong></label></th>
-                    <td colspan="3">{{ get_select(admin_list, 'cf_admin', config.cf_admin, 'required')|safe }}</td>
+                    <td colspan="3">{{ get_selectbox(admin_list, 'cf_admin', config.cf_admin, 'required')|safe }}</td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="cf_admin_email">관리자 메일 주소<strong class="blind">필수</strong></label></th>

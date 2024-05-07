@@ -45,7 +45,7 @@ async def boardgroup_list(
     )
 
     for group in result['rows']:
-        group.board_count = len(group.boards)
+        group.board_count = group.boards.count()
         group.access_member_count = len(group.members)
 
     context = {

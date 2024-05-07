@@ -26,7 +26,7 @@ from lib.popular import get_populars
 from lib.visit import get_total_visit
 from lib.template_filters import datetime_format, number_format, set_query_params
 from lib.template_functions import (
-    editor_macro, get_member_icon, get_member_image, get_selected,
+    editor_macro, get_member_icon, get_member_image, get_selectbox, get_selected,
     option_selected, option_array_checked, subject_sort_link
 )
 
@@ -149,6 +149,7 @@ class UserTemplates(Jinja2Templates):
             # 템플릿 전역 설정
             self.env.globals["editor_macro"] = editor_macro
             self.env.globals["getattr"] = getattr
+            self.env.globals["get_selectbox"] = get_selectbox
             self.env.globals["get_selected"] = get_selected
             self.env.globals["get_member_icon"] = get_member_icon
             self.env.globals["get_member_image"] = get_member_image
@@ -248,6 +249,7 @@ class AdminTemplates(Jinja2Templates):
             # 템플릿 전역 설정
             self.env.globals["editor_macro"] = editor_macro
             self.env.globals["getattr"] = getattr
+            self.env.globals["get_selectbox"] = get_selectbox
             self.env.globals["get_selected"] = get_selected
             self.env.globals["get_member_icon"] = get_member_icon
             self.env.globals["get_member_image"] = get_member_image

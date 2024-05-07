@@ -1,61 +1,60 @@
-from typing_extensions import Annotated,List
+from typing import List
 
-from fastapi import Request, HTTPException, Path
+from fastapi import Request
 from sqlalchemy import select
 
 from core.database import db_session
-from core.models import Board, Group
+from core.models import Board, Group, Member
 from lib.member import MemberDetails
 from . import BoardService
 
 
-class GroupBoardListService(BoardService):
+class GroupService(BoardService):
     """
-    그룹의 게시판 목록을 얻기 위한 클래스
+    그룹 게시판 서비스 클래스
     """
 
-    def __init__(
-        self,
-        request: Request,
-        db: db_session,
-        gr_id: Annotated[str, Path(...)],
-    ):
+    def __init__(self, request: Request, db: db_session):
         self.request = request
         self.db = db
-        self.gr_id = gr_id
-        self.group = self.get_group()
-        self.member = MemberDetails(request, request.state.login_member, group=self.group)
+        self.device = request.state.device
 
-    def get_group(self) -> Group:
+    def get_groups(self) -> List[Group]:
+        """게시판 그룹 목록 조회"""
+        query = select(Group).order_by(Group.gr_order)
+        groups = self.db.scalars(query).all()
+        return groups
+
+    def get_group(self, gr_id: str) -> Group:
         """게시판 그룹 정보 조회"""
-        group = self.db.get(Group, self.gr_id)
+        group = self.db.get(Group, gr_id)
         if not group:
-            self.raise_exception(detail=f"{self.gr_id} : 존재하지 않는 게시판그룹입니다.", status_code=404)
+            self.raise_exception(detail=f"{gr_id} : 존재하지 않는 게시판그룹입니다.", status_code=404)
         return group
 
-    def check_mobile_only(self):
-        """모바일 전용 게시판인지 확인"""
-        # FIXME: 모바일/PC 분기처리
-        if self.member.admin_type:
+    def check_device_only(self, group: Group, login_member: Member) -> None:
+        """그룹의 접속기기 확인"""
+        member = MemberDetails(self.request, login_member, group=group)
+        if member.admin_type:
             return
-        if self.request.state.device == "mobile":
-            self.raise_exception(detail=f"{self.group.gr_subject} 그룹은 모바일에서만 접근할 수 있습니다.", status_code=403)
-
-    def get_boards_in_group(self) -> List[Board]:
-        """게시판 그룹에 속한 게시판 목록 조회"""
-        # 그룹별 게시판 목록 조회
-        query = (
-            select(Board)
-            .where(
-                Board.gr_id == self.gr_id,
-                Board.bo_list_level <= self.member.level,
-                Board.bo_device != 'mobile'
+        if group.gr_device not in [self.device, "both"]:
+            self.raise_exception(
+                status_code=403,
+                detail=f"{group.gr_subject} 그룹은 {group.gr_device}에서만 접근할 수 있습니다."
             )
-            .order_by(Board.bo_order)
-        )
+
+    def get_boards_in_group(self, group: Group, login_member: Member) -> List[Board]:
+        """게시판 그룹에 속한 게시판 목록 조회"""
+        member = MemberDetails(self.request, login_member, group=group)
+        # 그룹별 게시판 목록 조회
+        query = group.boards.where(
+            Board.bo_list_level <= member.level,
+            Board.bo_device.in_([self.device, "both"]),
+        ).order_by(Board.bo_order)
+
         # 인증게시판 제외
-        if not self.member.admin_type:
-            query = query.filter_by(bo_use_cert="")
+        if not member.admin_type:
+            query = query.where(Board.bo_use_cert=="")
 
         boards = self.db.scalars(query).all()
         return boards

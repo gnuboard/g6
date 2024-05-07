@@ -10,7 +10,7 @@
     <legend>상세검색</legend>
     <form name="fnew" method="get">
         <label for="gr_id" class="blind">그룹</label>
-        {{ get_group_select('gr_id', query_params.gr_id)|safe }}
+        {{ get_selectbox(groups, 'gr_id', query_params.gr_id)|safe }}
 
         <label for="view" class="blind">검색대상</label>
         <select name="view" id="view">

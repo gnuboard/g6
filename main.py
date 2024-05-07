@@ -1,7 +1,6 @@
 import os
 
 from contextlib import asynccontextmanager
-from wsgiref import validate
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Path, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse

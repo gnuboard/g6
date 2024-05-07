@@ -51,7 +51,7 @@
         <tr class="no_grpset">
             <th scope="row"><label for="gr_id">그룹<strong class="blind">필수</strong></label></th>
             <td colspan="2">
-                {{ get_group_select('gr_id', board.gr_id, 'required')|safe }}
+                {{ get_selectbox(groups, 'gr_id', board.gr_id, 'required')|safe }}
                 {% if board %}
                     <a href="javascript:document.location.href='/admin/board_list?sfl=gr_id&stx='+document.fboardform.gr_id.value;" class="btn_frmline">동일그룹 게시판목록</a>
                 {% endif %}

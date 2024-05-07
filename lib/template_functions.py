@@ -62,72 +62,7 @@ def get_editor_select(id: str, selected: str) -> str:
     return ''.join(html_code)
 
 
-def get_group_select(db: Session, select_id: str,
-                     selected: str = "", attribute: str = "") -> str:
-    """게시판 그룹 목록을 SELECT 형식으로 얻음
-
-    Args:
-        id (str): select 태그의 id 속성값
-        selected (str, optional): 기본적으로 선택되어야 할 그룹명. Defaults to "".
-        attribute (str, optional): select 태그의 추가 속성값. Defaults to "".
-
-    Returns:
-        str: select 태그의 HTML 코드
-    """
-    groups = db.scalars(
-        select(Group).order_by(Group.gr_order, Group.gr_id)
-    ).all()
-
-    id_attr = escape(select_id)
-    attr_html = f'id="{id_attr}" name="{id_attr}" {escape(attribute)}'.strip()
-    options = ['<option value="">선택</option>'] + [
-        option_selected(group.gr_id, selected, group.gr_subject)
-        for group in groups
-    ]
-
-    # html_code = []
-    # html_code.append(f'<select id="{id}" name="{id}" {attribute}>\n')
-    # html_code.append('<option value="">선택</option>')
-
-    # for group in groups:
-    #     html_code.append(option_selected(
-    #         group.gr_id, selected, group.gr_subject))
-
-    # html_code.append('</select>')
-
-    # return ''.join(html_code)
-    return f'<select {attr_html}>{"".join(options)}</select>'
-
-
-def get_select_member_id(db: Session, select_id: str, level: int,
-                         selected: str, attribute="") -> str:
-    """일정 레벨 이상의 회원아이디를 selectbox 형식으로 얻음
-
-    Args:
-        db (Session): SQLAlchemy Session 객체
-        select_id (str): select 태그의 id 속성값
-        level (int): 선택할 회원 레벨
-        selected (str): 기본적으로 선택되어야 할 회원아이디
-        attribute (str, optional): select 태그의 추가 속성값. Defaults to "".
-
-    Returns:
-        str: select 태그의 HTML 코드
-    """
-    members = db.scalars(
-        select(Member.mb_id)
-        .where(Member.mb_level >= level)
-    ).all()
-
-    id_attr = escape(select_id)
-    attr_html = f'id="{id_attr}" name="{id_attr}" {escape(attribute)}'.strip()
-    options = ['<option value="">선택</option>'] + [
-        option_selected(escape(mb_id), selected) for mb_id in members
-    ]
-
-    return f'<select {attr_html}>{"".join(options)}</select>'
-
-
-def get_select(data: dict, id_attr: str, selected: str = "", attribute: str = "") -> str:
+def get_selectbox(data: dict, id_attr: str, selected: str = "", attribute: str = "") -> str:
     """data를 SELECT 형식으로 얻음
 
     Args:

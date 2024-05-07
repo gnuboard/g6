@@ -12,7 +12,7 @@ from lib.template_filters import number_format
 from lib.member import MemberDetails
 from lib.pbkdf2 import validate_password
 from service.board import (
-    GroupBoardListService, ListPostService, ReadPostService,
+    GroupService, ListPostService, ReadPostService,
     CreatePostService, UpdatePostService, DownloadFileService,
     DeletePostService, CommentService, DeleteCommentService,
     MoveUpdateService, ListDeleteService
@@ -20,7 +20,7 @@ from service.board import (
 from api.v1.dependencies.member import get_current_member_optional, get_current_member
 
 
-class GroupBoardListServiceAPI(GroupBoardListService):
+class GroupServiceAPI(GroupService):
     """
     그룹의 게시판 목록을 얻기 위한 API 클래스
       - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
@@ -30,11 +30,8 @@ class GroupBoardListServiceAPI(GroupBoardListService):
         self,
         request: Request,
         db: db_session,
-        gr_id: Annotated[str, Path(...)],
-        member: Annotated[Member, Depends(get_current_member_optional)],
     ):
-        super().__init__(request, db, gr_id)
-        self.member = MemberDetails(request, member, group=self.group)
+        super().__init__(request, db)
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)

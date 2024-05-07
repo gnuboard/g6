@@ -54,7 +54,7 @@
                 <tr>
                     <th scope="row"><label for="gr_id">게시판그룹회원</label></th>
                     <td>
-                        {{ get_group_select('gr_id')|safe }}
+                        {{ get_selectbox(groups, 'gr_id')|safe }}
                     </td>
                 </tr>
             </tbody>
