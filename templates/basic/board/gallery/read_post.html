@@ -157,7 +157,7 @@
             {{ write.wr_content|set_image_width(board_config.image_width)|url_auto_link(request)|safe }}
         </div>
 
-        {{ board_config.get_member_signature(write.mb_id) }}
+        {{ writer_signature }}
 
         {% if board.bo_use_good or board.bo_use_nogood %}
         <div id="article_react">

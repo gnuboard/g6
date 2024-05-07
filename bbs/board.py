@@ -31,6 +31,7 @@ from service.board import (
     CommentService, DeleteCommentService, ListDeleteService,
     MoveUpdateService, DownloadFileService
 )
+from service.member_service import MemberService
 from service.popular_service import PopularService
 
 
@@ -371,7 +372,9 @@ async def update_post(
 
 @router.get("/{bo_table}/{wr_id}", dependencies=[Depends(check_group_access)])
 async def read_post(
+    request: Request,
     service: Annotated[ReadPostService, Depends()],
+    member_serivce: Annotated[MemberService, Depends()],
 ):
     """게시글을 읽는다."""
     board = service.board
@@ -384,11 +387,17 @@ async def read_post(
     service.check_is_good()
     prev, next = service.get_prev_next()
     service.db.commit()
+
+    write = service.write
+    signature = member_serivce.get_member_signature(write.mb_id,
+                                                    board.bo_use_signature)
+
     context = {
         "request": service.request,
         "board": board,
-        "write": service.write,
+        "write": write,
         "write_list": service.write_list,
+        "writer_signature": signature,
         "prev": prev,
         "next": next,
         "images": service.images,

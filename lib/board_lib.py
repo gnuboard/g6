@@ -195,28 +195,6 @@ class BoardConfig():
         else:
             return ""
 
-    def get_member_signature(self, mb_id: str = None) -> str:
-        """게시판에서 서명보이기를 사용 중이면 회원의 서명을 반환한다.
-
-        Args:
-            mb_id (str): 회원 아이디. Defaults to None.
-
-        Returns:
-            str: 회원 서명
-        """
-        try:
-            db = DBConnect().sessionLocal()
-
-            if self.board.bo_use_signature and mb_id:
-                member = db.scalar(
-                    select(Member).filter(Member.mb_id == mb_id))
-
-                return getattr(member, "mb_signature", "")
-            else:
-                return ""
-        finally:
-            db.close()
-
     def get_notice_list(self) -> list:
         """게시판 공지글 번호 목록을 반환.
 

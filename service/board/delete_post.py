@@ -126,7 +126,6 @@ class DeletePostService(BoardService):
         board.bo_count_comment -= delete_comment_count
 
         db.commit()
-        db.close()
 
         # 최신글 캐시 삭제
         FileCache().delete_prefix(f'latest-{bo_table}')

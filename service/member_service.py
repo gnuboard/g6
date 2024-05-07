@@ -300,6 +300,17 @@ class MemberService(BaseService):
             .where(Member.mb_level >= mb_level)
         ).all()
 
+    def get_member_signature(self, mb_id: str = None, is_used: bool = True) -> str:
+        """회원 서명을 조회합니다."""
+        if not mb_id or not is_used:
+            return ""
+
+        member = self.fetch_member_by_id(mb_id)
+        if not member:
+            return ""
+
+        return member.mb_signature
+
 
 class MemberImageService(BaseService):
     """
