@@ -36,7 +36,12 @@ class PluginState:
 
 
 def get_all_plugin_admin_menu_id_name():
-    extracted_tuples = []
+    """
+    모든 플러그인의 관리자 메뉴아이디 가져오기
+    Returns:
+        [(id, name)]
+    """
+    extract_admin_menu_tuples = []
     plugin_list = get_admin_plugin_menus()
     for plugin_dict in plugin_list:
         # 각 플러그인 메뉴
@@ -44,13 +49,21 @@ def get_all_plugin_admin_menu_id_name():
             for item in plugin_items:
 
                 if 'id' in item and 'name' in item:
-                    extracted_tuples.append((item['id'], item['name']))
-    return extracted_tuples
+                    extract_admin_menu_tuples.append((item['id'], item['name']))
+    return extract_admin_menu_tuples
 
 
 def get_admin_menu_id_by_path(current_path: str):
+    """
+    url 을 통해 현재 관리자의 menu id를 가져온다.
+    Args:
+        current_path:
+    Returns:
+        str|None: menu id
+
+    """
     plugin_list = get_admin_plugin_menus()
- 
+
     for plugin_dict in plugin_list:
         for plugin_items in plugin_dict.values():
             for item in plugin_items:
@@ -288,11 +301,15 @@ def register_plugin_admin_menu(plugin_states, plugin_dir=PLUGIN_DIR):
     for plugin in plugin_states:
         if plugin.is_enable:
             admin_module_name = f"{plugin_dir}.{plugin.module_name}.admin"
-            module = importlib.import_module(admin_module_name)
-            if module:
-                get_menu_function = getattr(module, 'register_admin_menu', None)
-                if get_menu_function:
-                    admin_menus.append(get_menu_function())
+            try:
+                module = importlib.import_module(admin_module_name)
+            except ModuleNotFoundError as e:
+                logging.info(f'plugin {plugin.module_name} has not admin  {e.msg}')
+                continue
+
+            get_menu_function = getattr(module, 'register_admin_menu', None)
+            if get_menu_function:
+                admin_menus.append(get_menu_function())
     return admin_menus
 
 
@@ -349,4 +366,4 @@ def register_statics(app, plugin_info: List[PluginState], plugin_dir=PLUGIN_DIR)
                 name=f"{plugin.module_name}"
             )
         except Exception as e:
-            logging.warning(f"register_statics: {e}")
+            logging.info(f"register_statics: {e}")
