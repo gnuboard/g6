@@ -115,6 +115,7 @@ async def theme_update(
     user_template.env.loader = FileSystemLoader(theme_path)
 
     # 현재 테마의 경로를 변경합니다.
+    get_current_theme.cache_clear()
     TemplateService.set_templates_dir()
 
     return {"success": f"{info['theme_name']} 테마로 변경되었습니다."}

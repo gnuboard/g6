@@ -2,6 +2,7 @@ import os
 import re
 import typing
 
+from cachetools import LRUCache, cached
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment, FileSystemLoader
@@ -27,6 +28,7 @@ from lib.template_functions import (
 )
 
 
+@cached(LRUCache(maxsize=128))
 def get_current_theme() -> str:
     """현재 설정된 테마를 반환
     - 설정된 테마가 존재하지 않을 경우 기본 테마를 반환
