@@ -1,6 +1,8 @@
+"""인기 검색어 관리 Template Router"""
 import re
 from datetime import datetime
 from typing import List
+from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import RedirectResponse
@@ -12,8 +14,8 @@ from core.models import Popular
 from core.template import AdminTemplates
 from lib.common import select_query, set_url_query_params
 from lib.dependency.dependencies import common_search_query_params, validate_token
-from lib.popular import get_populars
 from lib.template_functions import get_paging
+from service.popular_service import PopularService
 
 router = APIRouter()
 templates = AdminTemplates()
@@ -57,6 +59,7 @@ async def popular_list(
 async def popular_delete(
     request: Request,
     db: db_session,
+    service: Annotated[PopularService, Depends()],
     checks: List[int] = Form(..., alias="chk[]")
 ):
     """
@@ -67,7 +70,7 @@ async def popular_delete(
     db.commit()
 
     # 기존 캐시 삭제
-    get_populars.cache_clear()
+    service.fetch_populars().cache_clear()
 
     url = "/admin/popular_list"
     query_params = request.query_params
@@ -113,12 +116,16 @@ async def popular_rank(
     )
 
     # 페이징 처리
-    total_count = db.scalar(query.add_columns(func.count(inline_view.columns.pp_word)).order_by(None))
+    total_count = db.scalar(
+        query.add_columns(func.count(inline_view.columns.pp_word)).order_by(None)
+    )
     offset = (current_page - 1) * records_per_page
     ranks = db.execute(
         query.add_columns(
             inline_view,
-            func.dense_rank().over(order_by=desc(inline_view.columns.search_count)).label('ranking')  # 순위
+            func.dense_rank().over(
+                order_by=desc(inline_view.columns.search_count)
+            ).label('ranking')  # 순위
         ).offset(offset).limit(records_per_page)
     ).all()
 

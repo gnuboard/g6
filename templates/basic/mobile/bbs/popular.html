@@ -1,3 +1,4 @@
+{% set populars = request.state.template_data.populars %}
 <aside id="popular">
     <h2>인기검색어</h2>
     {% for popular in populars %}

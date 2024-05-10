@@ -1,3 +1,4 @@
+{% set menus = request.state.template_data.menus %}
 {% if menus %}
     <ul id="gnb_1dul">
     {% for menu in menus %}

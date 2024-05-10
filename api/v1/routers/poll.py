@@ -1,12 +1,10 @@
 """설문조사 API Router."""
 from typing_extensions import Annotated
-from fastapi import APIRouter, Depends, HTTPException, Path, Request
-from sqlalchemy.exc import SQLAlchemyError
+from fastapi import APIRouter, Depends, Path, Request
 
 from core.models import Member, Poll, PollEtc
 from lib.mail import send_poll_etc_mail
 from lib.point import insert_point
-from lib.poll import get_latest_poll
 from api.v1.dependencies.member import get_current_member_optional
 from api.v1.dependencies.poll import (
     get_poll, get_poll_etc, validate_poll_etc_create, validate_poll_etc_delete,
@@ -27,15 +25,14 @@ router = APIRouter()
 @router.get("/polls/latest",
             summary="최신 설문조사 1건 조회",
             responses={**response_500})
-async def read_poll_latest() -> LatestPollResponse:
+async def read_poll_latest(
+    service: Annotated[PollServiceAPI, Depends()],
+) -> LatestPollResponse:
     """
     최신 설문조사 1건을 조회합니다.
     - LRU(Least Recently Used)캐시를 사용하여 조회합니다.
     """
-    try:
-        return get_latest_poll()
-    except SQLAlchemyError as e:
-        return HTTPException(status_code=500, detail=str(e))
+    return service.fetch_latest_poll()
 
 
 @router.get("/polls/{po_id}",

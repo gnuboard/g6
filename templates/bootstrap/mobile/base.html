@@ -33,7 +33,8 @@
 
                 <!-- 메뉴 -->
                 {% include "mobile/bbs/menu.html" ignore missing %}
-
+                
+                {% set current_login_count=request.state.template_data.current_login_count %}
                 <ul id="hd_nb">
                     <li class="hd_nb1">
                         <a href="/bbs/faq" id="snb_faq">
@@ -48,7 +49,7 @@
                     <li class="hd_nb3">
                         <a href="/bbs/current_connect" id="snb_cnt">
                             <i class="fa fa-users" aria-hidden="true"></i>접속자
-                           <span>{{ get_current_login_count(request)|number_format }}</span>
+                           <span>{{ current_login_count|number_format }}</span>
                         </a>
                     </li>
                     <li class="hd_nb4">

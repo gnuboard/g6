@@ -4,8 +4,7 @@ from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, Request
 
 from core.models import Member
-from lib.common import get_paging_info
-from lib.current_connect import hide_ip_address
+from lib.common import get_paging_info, hide_ip_address
 from lib.member import is_super_admin
 from api.v1.dependencies.member import get_current_member_optional
 from api.v1.lib.current_connect import CurrentConnectServiceAPI

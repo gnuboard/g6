@@ -1,8 +1,8 @@
 import os
 import re
+from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
-from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Path, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -11,7 +11,7 @@ from sqlalchemy.exc import ProgrammingError
 from starlette.staticfiles import StaticFiles
 
 from core import models
-from core.database import DBConnect, db_session
+from core.database import DBConnect
 from core.exception import AlertException, regist_core_exception_handler, template_response
 from core.middleware import regist_core_middleware, should_run_middleware
 from core.plugin import (
@@ -27,7 +27,6 @@ from lib.common import (
 )
 from lib.dependency.dependencies import check_use_template
 from lib.member import is_super_admin
-from lib.newwin import get_newwins_except_cookie
 from lib.point import insert_point
 from lib.scheduler import scheduler
 from lib.template_filters import default_if_none
@@ -99,159 +98,157 @@ async def main_middleware(request: Request, call_next):
         return await call_next(request)
 
     # 데이터베이스 설치여부 체크
-    db_connect = DBConnect()
-    db = db_connect.sessionLocal()
-    url_path = request.url.path
-    config = None
+    with DBConnect().sessionLocal() as db:
+        url_path = request.url.path
+        config = None
 
-    try:
-        if not url_path.startswith("/install"):
-            if not os.path.exists(ENV_PATH):
-                raise AlertException(".env 파일이 없습니다. 설치를 진행해 주세요.", 400, "/install")
-            # 기본환경설정 테이블 조회
-            config = db.scalar(select(models.Config))
-        else:
-            return await call_next(request)
+        try:
+            if not url_path.startswith("/install"):
+                if not os.path.exists(ENV_PATH):
+                    raise AlertException(".env 파일이 없습니다. 설치를 진행해 주세요.", 400, "/install")
+                # 기본환경설정 테이블 조회
+                config = db.scalar(select(models.Config))
+            else:
+                return await call_next(request)
 
-    except AlertException as e:
-        context = {"request": request, "errors": e.detail, "url": e.url}
-        return template_response("alert.html", context, e.status_code)
+        except AlertException as e:
+            context = {"request": request, "errors": e.detail, "url": e.url}
+            return template_response("alert.html", context, e.status_code)
 
-    except ProgrammingError as e:
-        context = {
-            "request": request,
-            "errors": "DB 테이블 또는 설정정보가 존재하지 않습니다. 설치를 다시 진행해 주세요.",
-            "url": "/install"
-        }
-        return template_response("alert.html", context, 400)
+        except ProgrammingError as e:
+            context = {
+                "request": request,
+                "errors": "DB 테이블 또는 설정정보가 존재하지 않습니다. 설치를 다시 진행해 주세요.",
+                "url": "/install"
+            }
+            return template_response("alert.html", context, 400)
 
-    # 기본환경설정 조회 및 설정
-    request.state.config = config
-    request.state.title = config.cf_title
+        # 기본환경설정 조회 및 설정
+        request.state.config = config
+        request.state.title = config.cf_title
 
-    # 에디터 전역변수
-    request.state.editor = config.cf_editor
-    request.state.use_editor = True if config.cf_editor else False
+        # 에디터 전역변수
+        request.state.editor = config.cf_editor
+        request.state.use_editor = True if config.cf_editor else False
 
-    # 쿠키도메인 전역변수
-    request.state.cookie_domain = cookie_domain = settings.COOKIE_DOMAIN
+        # 쿠키도메인 전역변수
+        request.state.cookie_domain = cookie_domain = settings.COOKIE_DOMAIN
 
-    member = None
-    is_autologin = False
-    ss_mb_key = None
-    session_mb_id = request.session.get("ss_mb_id", "")
-    cookie_mb_id = request.cookies.get("ck_mb_id", "")
-    current_ip = get_client_ip(request)
+        member = None
+        is_autologin = False
+        ss_mb_key = None
+        session_mb_id = request.session.get("ss_mb_id", "")
+        cookie_mb_id = request.cookies.get("ck_mb_id", "")
+        current_ip = get_client_ip(request)
 
-    try:
-        member_service = MemberService(request, db)
-        # 로그인 세션 유지 중이라면
-        if session_mb_id:
-            member = member_service.get_member(session_mb_id)
-            # 회원 정보가 없거나 탈퇴한 회원이라면 세션을 초기화
-            if not member_service.is_activated(member)[0]:
-                request.session.clear()
-                member = None
+        try:
+            member_service = MemberService(request, db)
+            # 로그인 세션 유지 중이라면
+            if session_mb_id:
+                member = member_service.get_member(session_mb_id)
+                # 회원 정보가 없거나 탈퇴한 회원이라면 세션을 초기화
+                if not member_service.is_activated(member)[0]:
+                    request.session.clear()
+                    member = None
 
-        # 자동 로그인 쿠키가 있다면
-        elif cookie_mb_id:
-            mb_id = re.sub("[^a-zA-Z0-9_]", "", cookie_mb_id)[:20]
-            member = member_service.get_member(session_mb_id)
+            # 자동 로그인 쿠키가 있다면
+            elif cookie_mb_id:
+                mb_id = re.sub("[^a-zA-Z0-9_]", "", cookie_mb_id)[:20]
+                member = member_service.get_member(session_mb_id)
 
-            # 최고관리자는 보안상 자동로그인 기능을 사용하지 않는다.
-            if (not is_super_admin(request, mb_id)
-                    and member_service.is_member_email_certified(member)[0]
-                    and member_service.is_activated(member)[0]):
-                # 쿠키에 저장된 키와 서버에서 생성한 키가 일치하는지 검사
-                ss_mb_key = session_member_key(request, member)
-                if request.cookies.get("ck_auto") == ss_mb_key:
-                    request.session["ss_mb_id"] = cookie_mb_id
-                    is_autologin = True
-    except AlertException as e:
-        context = {"request": request, "errors": e.detail, "url": "/"}
-        response = template_response("alert.html", context, e.status_code)
-        response.delete_cookie("ck_auto")
-        response.delete_cookie("ck_mb_id")
-        request.session.clear()
-        return response
+                # 최고관리자는 보안상 자동로그인 기능을 사용하지 않는다.
+                if (not is_super_admin(request, mb_id)
+                        and member_service.is_member_email_certified(member)[0]
+                        and member_service.is_activated(member)[0]):
+                    # 쿠키에 저장된 키와 서버에서 생성한 키가 일치하는지 검사
+                    ss_mb_key = session_member_key(request, member)
+                    if request.cookies.get("ck_auto") == ss_mb_key:
+                        request.session["ss_mb_id"] = cookie_mb_id
+                        is_autologin = True
+        except AlertException as e:
+            context = {"request": request, "errors": e.detail, "url": "/"}
+            response = template_response("alert.html", context, e.status_code)
+            response.delete_cookie("ck_auto")
+            response.delete_cookie("ck_mb_id")
+            request.session.clear()
+            return response
 
-    if member:
-        # 오늘 처음 로그인 이라면 포인트 지급 및 로그인 정보 업데이트
-        ymd_str = datetime.now().strftime("%Y-%m-%d")
-        if member.mb_today_login.strftime("%Y-%m-%d") != ymd_str:
-            insert_point(request, member.mb_id, config.cf_login_point,
-                         ymd_str + " 첫로그인", "@login", member.mb_id, ymd_str)
+        if member:
+            # 오늘 처음 로그인 이라면 포인트 지급 및 로그인 정보 업데이트
+            ymd_str = datetime.now().strftime("%Y-%m-%d")
+            if member.mb_today_login.strftime("%Y-%m-%d") != ymd_str:
+                insert_point(request, member.mb_id, config.cf_login_point,
+                            ymd_str + " 첫로그인", "@login", member.mb_id, ymd_str)
 
-            member.mb_today_login = datetime.now()
-            member.mb_login_ip = request.client.host
-            db.commit()
+                member.mb_today_login = datetime.now()
+                member.mb_login_ip = request.client.host
+                db.commit()
 
-    # 로그인한 회원 정보
-    request.state.login_member = member
-    # 최고관리자 여부
-    request.state.is_super_admin = is_super_admin(request, getattr(member, "mb_id", None))
+        # 로그인한 회원 정보
+        request.state.login_member = member
+        # 최고관리자 여부
+        request.state.is_super_admin = is_super_admin(request, getattr(member, "mb_id", None))
 
-    # 접근가능/차단 IP 체크
-    # - IP 체크 기능을 사용할 때 is_super_admin 여부를 확인하기 때문에 로그인 코드 이후에 실행
-    if not is_possible_ip(request, current_ip):
-        return HTMLResponse("<meta charset=utf-8>접근이 허용되지 않은 IP 입니다.")
-    if is_intercept_ip(request, current_ip):
-        return HTMLResponse("<meta charset=utf-8>접근이 차단된 IP 입니다.")
+        # 접근가능/차단 IP 체크
+        # - IP 체크 기능을 사용할 때 is_super_admin 여부를 확인하기 때문에 로그인 코드 이후에 실행
+        if not is_possible_ip(request, current_ip):
+            return HTMLResponse("<meta charset=utf-8>접근이 허용되지 않은 IP 입니다.")
+        if is_intercept_ip(request, current_ip):
+            return HTMLResponse("<meta charset=utf-8>접근이 차단된 IP 입니다.")
 
     # 응답 객체 설정
     response: Response = await call_next(request)
 
-    age_1day = 60 * 60 * 24
+    with DBConnect().sessionLocal() as db:
+        age_1day = 60 * 60 * 24
 
-    # 자동로그인 쿠키 재설정
-    # is_autologin과 세션을 확인해서 로그아웃 처리 이후 쿠키가 재설정되는 것을 방지
-    if is_autologin and request.session.get("ss_mb_id"):
-        response.set_cookie(key="ck_mb_id", value=cookie_mb_id,
-                            max_age=age_1day * 30, domain=cookie_domain)
-        response.set_cookie(key="ck_auto", value=ss_mb_key,
-                            max_age=age_1day * 30, domain=cookie_domain)
-    # 방문자 이력 기록
-    ck_visit_ip = request.cookies.get('ck_visit_ip', None)
-    if ck_visit_ip != current_ip:
-        response.set_cookie(key="ck_visit_ip", value=current_ip,
-                            max_age=age_1day, domain=cookie_domain)
-        visit_service = VisitService(request, db)
-        visit_service.create_visit_record()
+        # 자동로그인 쿠키 재설정
+        # is_autologin과 세션을 확인해서 로그아웃 처리 이후 쿠키가 재설정되는 것을 방지
+        if is_autologin and request.session.get("ss_mb_id"):
+            response.set_cookie(key="ck_mb_id", value=cookie_mb_id,
+                                max_age=age_1day * 30, domain=cookie_domain)
+            response.set_cookie(key="ck_auto", value=ss_mb_key,
+                                max_age=age_1day * 30, domain=cookie_domain)
+        # 방문자 이력 기록
+        ck_visit_ip = request.cookies.get('ck_visit_ip', None)
+        if ck_visit_ip != current_ip:
+            response.set_cookie(key="ck_visit_ip", value=current_ip,
+                                max_age=age_1day, domain=cookie_domain)
+            visit_service = VisitService(request, db)
+            visit_service.create_visit_record()
 
-    try:
-        # 현재 방문자 데이터 갱신
-        if (not request.state.is_super_admin
-                and not url_path.startswith("/admin")):
-            current_login = db.scalar(
-                select(models.Login)
-                .where(models.Login.lo_ip == current_ip)
-            )
-            if current_login:
-                current_login.mb_id = getattr(member, "mb_id", "")
-                current_login.lo_datetime = datetime.now()
-                current_login.lo_location = url_path
-                current_login.lo_url = url_path
-            else:
-                db.execute(
-                    insert(models.Login).values(
-                        lo_ip=current_ip,
-                        mb_id=getattr(member, "mb_id", ""),
-                        lo_datetime=datetime.now(),
-                        lo_location=url_path,
-                        lo_url=url_path)
+        try:
+            # 현재 방문자 데이터 갱신
+            if (not request.state.is_super_admin
+                    and not url_path.startswith("/admin")):
+                current_login = db.scalar(
+                    select(models.Login)
+                    .where(models.Login.lo_ip == current_ip)
                 )
+                if current_login:
+                    current_login.mb_id = getattr(member, "mb_id", "")
+                    current_login.lo_datetime = datetime.now()
+                    current_login.lo_location = url_path
+                    current_login.lo_url = url_path
+                else:
+                    db.execute(
+                        insert(models.Login).values(
+                            lo_ip=current_ip,
+                            mb_id=getattr(member, "mb_id", ""),
+                            lo_datetime=datetime.now(),
+                            lo_location=url_path,
+                            lo_url=url_path)
+                    )
+                db.commit()
+
+            # 현재 로그인한 이력 삭제
+            config_time = timedelta(minutes=int(config.cf_login_minutes))
+            db.execute(delete(models.Login)
+                    .where(models.Login.lo_datetime < datetime.now() - config_time))
             db.commit()
 
-        # 현재 로그인한 이력 삭제
-        config_time = timedelta(minutes=int(config.cf_login_minutes))
-        db.execute(delete(models.Login)
-                .where(models.Login.lo_datetime < datetime.now() - config_time))
-        db.commit()
-
-    except Exception as e:
-        print(e)
-
-    db.close()
+        except Exception as e:
+            print(e)
 
     return response
 
@@ -267,40 +264,6 @@ regist_core_exception_handler(app)
 
 # 스케줄러 등록 및 실행
 scheduler.run_scheduler()
-
-
-@app.get("/",
-         dependencies=[Depends(check_use_template)],
-         response_class=HTMLResponse,
-         include_in_schema=False)
-async def index(request: Request, db: db_session):
-    """
-    메인 페이지
-    """
-    # 게시판 목록 조회
-    query_boards = (
-        select(models.Board)
-        .join(models.Board.group)
-        .where(models.Board.bo_device != 'mobile')
-        .order_by(
-            models.Group.gr_order,
-            models.Board.bo_order
-        )
-    )
-    # 최고관리자가 아니라면 인증게시판 및 갤러리/공지사항 게시판은 제외
-    if not request.state.is_super_admin:
-        query_boards = query_boards.where(
-            models.Board.bo_use_cert == '',
-            models.Board.bo_table.notin_(['notice', 'gallery'])
-        )
-    boards = db.scalars(query_boards).all()
-
-    context = {
-        "request": request,
-        "newwins": get_newwins_except_cookie(request),
-        "boards": boards,
-    }
-    return templates.TemplateResponse("/index.html", context)
 
 
 @app.post("/generate_token",

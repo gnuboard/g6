@@ -15,6 +15,10 @@ from lib.captcha import get_current_captcha_cls
 from lib.common import get_current_admin_menu_id
 from lib.member import get_admin_type
 from lib.token import check_token
+from service.current_connect_service import CurrentConnectService
+from service.menu_service import MenuService
+from service.poll_service import PollService
+from service.popular_service import PopularService
 
 
 async def get_variety_bo_table(
@@ -190,13 +194,13 @@ def common_search_query_params(
     return {"sst": sst, "sod": sod, "sfl": sfl, "stx": stx, "sca": sca, "current_page": current_page}
 
 
-def check_use_template():
+async def check_use_template():
     """템플릿 사용 여부 검사"""
     if not settings.USE_TEMPLATE:
         raise TemplateDisabledException(detail="템플릿 사용이 불가능합니다.")
 
 
-def check_use_api():
+async def check_use_api():
     """API 사용 여부 검사"""
     if not settings.USE_API:
         raise HTTPException(status_code=404, detail="API 사용이 불가능합니다.")
@@ -207,3 +211,21 @@ async def no_cache_response(response: Response):
     response.headers["Cache-Control"] = "no-store"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
+
+
+async def set_template_basic_data(
+    request: Request,
+    current_connect_service: Annotated[CurrentConnectService, Depends()],
+    menu_service: Annotated[MenuService, Depends()],
+    poll_service: Annotated[PollService, Depends()],
+    popular_service: Annotated[PopularService, Depends()]
+):
+    """템플릿 기본 조회 데이터 설정"""
+    template_data = {
+        "current_login_count": current_connect_service.fetch_total_records(),
+        "menus": menu_service.fetch_menus(),
+        "poll": poll_service.fetch_latest_poll(),
+        "populars": popular_service.fetch_populars(),
+    }
+    request.state.template_data = template_data
+    

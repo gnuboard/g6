@@ -2,6 +2,7 @@ import os
 import re
 import typing
 
+from cachetools import LRUCache, cached
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment, FileSystemLoader
@@ -19,10 +20,6 @@ from core.settings import settings
 from lib.common import (
     CAPTCHA_PATH, EDITOR_PATH, get_admin_menus, read_version
 )
-from lib.current_connect import get_current_login_count
-from lib.menu import get_menus
-from lib.poll import get_latest_poll
-from lib.popular import get_populars
 from lib.visit import get_total_visit
 from lib.template_filters import datetime_format, number_format, set_query_params
 from lib.template_functions import (
@@ -30,7 +27,7 @@ from lib.template_functions import (
     option_selected, option_array_checked, subject_sort_link
 )
 
-
+@cached(LRUCache(maxsize=128))
 def get_current_theme() -> str:
     """현재 설정된 테마를 반환
     - 설정된 테마가 존재하지 않을 경우 기본 테마를 반환
@@ -153,11 +150,7 @@ class UserTemplates(Jinja2Templates):
             self.env.globals["get_member_icon"] = get_member_icon
             self.env.globals["get_member_image"] = get_member_image
             self.env.globals["theme_asset"] = theme_asset
-            self.env.globals["get_populars"] = get_populars
-            self.env.globals["get_latest_poll"] = get_latest_poll
-            self.env.globals["get_menus"] = get_menus
             self.env.globals["get_total_visit"] = get_total_visit
-            self.env.globals["get_current_login_count"] = get_current_login_count
 
             # 템플릿 컨텍스트 프로세서 설정
             self.context_processors.append(self._default_context)

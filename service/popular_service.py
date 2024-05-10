@@ -2,6 +2,8 @@
 from datetime import date, datetime, timedelta
 from typing import List
 
+from cachetools import LRUCache, cached
+from cachetools.keys import hashkey
 from fastapi import Request
 from sqlalchemy import delete, desc, exists, func, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -20,9 +22,20 @@ class PopularService(BaseService):
     def raise_exception(self, status_code: int, detail: str = None):
         pass
 
-    def fetch_populars(self, limit: int, day: int) -> List[Popular]:
+    @cached(LRUCache(maxsize=128),
+            key=lambda self, limit=10, day=3: hashkey("populars", limit, day))
+    def fetch_populars(self, limit: int = 10, day: int = 3) -> List[Popular]:
         """
         현재 날짜와 day일 전 날짜 사이의 인기검색어를 조회한다.
+        - LFU(Least Frequently Used)캐시를 사용하여 조회한다.
+
+        Args:
+            limit (int, optional): 조회 갯수. Defaults to 7.
+            day (int, optional): 오늘부터 {day}일 전. Defaults to 3.
+
+        Returns:
+            List[Popular]: 인기검색어 리스트
+
         """
         today = datetime.now()
         before_day = today - timedelta(days=day)

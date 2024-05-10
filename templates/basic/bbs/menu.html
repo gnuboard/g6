@@ -1,52 +1,52 @@
-<div id="gnb">
+{% set menus = request.state.template_data.menus %}
+{% if menus %}
+    <div id="gnb">
+        <h2 class="blind">메인메뉴</h2>
+        <ul id="gnb_list">
+        {% for menu in menus %}
+            {% set is_submenu = True if menu.sub|count > 0 else False %}
+            <li class="list_item{% if is_submenu %} list_item_parents{% endif %}">
+                <a href="{{ menu.me_link }}" target="_{{ menu.me_target }}" class="item_link">
+                    {{ menu.me_name }}
+                </a>
+                {% if is_submenu %}
+                <button type="button" class="opener_gnb_sub">
+                    <i class="fa fa-caret-down" aria-hidden="true"></i>
+                    <span class="blind">{{ menu.me_name }} 서브메뉴 열기</span>
+                </button>
+                {% endif %}
+                {% if is_submenu %}
+                <ul class="gnb_sub_list">
+                    {% for sub in menu.sub %}
+                    <li class="sub_list_item">
+                        <a href="{{ sub.me_link }}" target="_{{ sub.me_target }}" class="sub_item_link">
+                            <i class="fa fa-minus" aria-hidden="true"></i>
+                            {{ sub.me_name }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </li>
+        {% else %}
+            <li class="gnb_empty">
+                메뉴 준비 중입니다.
+                <a href="{{ url_for('menu_list') }}">관리자모드 &gt; 환경설정 &gt; 메뉴설정</a>에서 설정하실 수 있습니다.
+            </li>
+        {% endfor %}
+        </ul>
 
-    <h2 class="blind">메인메뉴</h2>
+    </div>
 
-    <ul id="gnb_list">
-    {% set menus = get_menus() %}
-    {% for menu in menus %}
-        {% set is_submenu = True if menu.sub|count > 0 else False %}
-        <li class="list_item{% if is_submenu %} list_item_parents{% endif %}">
-            <a href="{{ menu.me_link }}" target="_{{ menu.me_target }}" class="item_link">
-                {{ menu.me_name }}
-            </a>
-            {% if is_submenu %}
-            <button type="button" class="opener_gnb_sub">
-                <i class="fa fa-caret-down" aria-hidden="true"></i>
-                <span class="blind">{{ menu.me_name }} 서브메뉴 열기</span>
-            </button>
-            {% endif %}
-            {% if is_submenu %}
-            <ul class="gnb_sub_list">
-                {% for sub in menu.sub %}
-                <li class="sub_list_item">
-                    <a href="{{ sub.me_link }}" target="_{{ sub.me_target }}" class="sub_item_link">
-                        <i class="fa fa-minus" aria-hidden="true"></i>
-                        {{ sub.me_name }}
-                    </a>
-                </li>
-                {% endfor %}
-            </ul>
-            {% endif %}
-        </li>
-    {% else %}
-        <li class="gnb_empty">
-            메뉴 준비 중입니다.
-            <a href="{{ url_for('menu_list') }}">관리자모드 &gt; 환경설정 &gt; 메뉴설정</a>에서 설정하실 수 있습니다.
-        </li>
-    {% endfor %}
-    </ul>
+    <div id="gnb_mask"></div>
 
-</div>
+    <script>
+        $(function(){
 
-<div id="gnb_mask"></div>
+            $(".opener_gnb_sub").on("click", function() {
+                $(this).next(".gnb_sub_list").toggle();
+            });
 
-<script>
-    $(function(){
-
-        $(".opener_gnb_sub").on("click", function() {
-            $(this).next(".gnb_sub_list").toggle();
         });
-
-    });
-</script>
+    </script>
+{% endif %}

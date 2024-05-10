@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field
 
 class Device(Enum):
     """접속기기"""
-    BOTH = 'both'
     PC = 'pc'
     MOBILE = 'mobile'
 

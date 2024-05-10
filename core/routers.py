@@ -1,6 +1,7 @@
 """Template 라우터 모듈"""
 from fastapi import APIRouter, Depends
 
+from bbs.index import router as index_router
 from bbs.board import router as board_router
 from bbs.register import router as register_router
 from bbs.content import router as content_router
@@ -21,11 +22,15 @@ from bbs.social import router as social_router
 from bbs.password import router as password_router
 from bbs.search import router as search_router
 from bbs.current_connect import router as current_connect_router
-from lib.dependency.dependencies import check_use_template
+from lib.dependency.dependencies import (
+    check_use_template, set_template_basic_data
+)
 from lib.editor.ckeditor4 import router as editor_router
 
-router = APIRouter(dependencies=[Depends(check_use_template)],
+router = APIRouter(dependencies=[Depends(check_use_template),
+                                 Depends(set_template_basic_data)],
                    include_in_schema=False)
+router.include_router(index_router, tags=["index"])
 router.include_router(board_router, prefix="/board", tags=["board"])
 router.include_router(register_router, prefix="/bbs", tags=["register"])
 router.include_router(user_profile_router, prefix="/bbs", tags=["profile"])

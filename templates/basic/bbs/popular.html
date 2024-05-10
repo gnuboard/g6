@@ -1,4 +1,4 @@
-{% set populars = get_populars() %}
+{% set populars = request.state.template_data.populars %}
 {% if populars %}
     <section id="popular">
         <h2>인기검색어</h2>
