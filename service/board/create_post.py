@@ -32,6 +32,16 @@ class CreatePostService(BoardService):
     ):
         super().__init__(request, db, bo_table)
 
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(...)],
+    ):
+        instance = cls(request, db, bo_table)
+        return instance
+
     def add_point(self, write, parent_write: WriteBaseModel = None):
         """포인트 추가"""
         if self.member.mb_id:
@@ -77,6 +87,17 @@ class MoveUpdateService(BoardService):
         super().__init__(request, db, bo_table)
         self.sw = sw
         self.act = "이동" if sw == "move" else "복사"
+
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Depends(get_variety_bo_table)],
+        sw: Annotated[str, Form(...)]
+    ):
+        instance = cls(request, db, bo_table, sw)
+        return instance
 
     def get_origin_writes(self, wr_ids: str) -> List[WriteBaseModel]:
         """선택된 원본 글들을 가져옵니다."""

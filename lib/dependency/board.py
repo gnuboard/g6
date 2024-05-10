@@ -39,7 +39,7 @@ def get_variery_wr_id(
     return wr_id_path or wr_id_form
 
 
-def get_write(db: db_session, 
+async def get_write(db: db_session, 
               bo_table: Annotated[str, Path(...)],
               wr_id: Annotated[int, Depends(get_variery_wr_id)]):
     """게시글 존재 여부 검사 & 반환"""

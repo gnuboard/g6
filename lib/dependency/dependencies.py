@@ -174,7 +174,7 @@ async def check_admin_access(request: Request):
                         "최고관리자 또는 관리권한이 있는 회원만 접근 가능합니다.", 302, url="/")
 
 
-def common_search_query_params(
+async def common_search_query_params(
         sst: str = Query(default=""),
         sod: str = Query(default=""),
         sfl: str = Query(default=""),

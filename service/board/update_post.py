@@ -28,6 +28,17 @@ class UpdatePostService(BoardService):
         super().__init__(request, db, bo_table)
         self.wr_id = wr_id
 
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(...)],
+        wr_id: Annotated[int, Path(...)],
+    ):
+        instance = cls(request, db, bo_table, wr_id)
+        return instance
+
     def validate_author(self, write: WriteBaseModel, wr_password: str = None):
         """작성자 확인"""
         if not is_owner(write, self.member.mb_id) and not validate_password(wr_password, write.wr_password):
@@ -67,6 +78,17 @@ class CommentService(UpdatePostService):
     ):
         super().__init__(request, db, bo_table, wr_id)
         self.g5_instance = G5Compatibility(db)
+
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(...)],
+        wr_id: Annotated[int, Form(...)],
+    ):
+        instance = cls(request, db, bo_table, wr_id)
+        return instance
 
     def validate_comment_level(self):
         """댓글 작성 권한 검증"""
