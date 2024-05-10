@@ -168,8 +168,8 @@ async def main_middleware(request: Request, call_next):
         except AlertException as e:
             context = {"request": request, "errors": e.detail, "url": "/"}
             response = template_response("alert.html", context, e.status_code)
-            response.delete_cookie("ck_auto")
-            response.delete_cookie("ck_mb_id")
+            await response.delete_cookie("ck_auto")
+            await response.delete_cookie("ck_mb_id")
             request.session.clear()
             return response
 
@@ -207,14 +207,14 @@ async def main_middleware(request: Request, call_next):
         # 자동로그인 쿠키 재설정
         # is_autologin과 세션을 확인해서 로그아웃 처리 이후 쿠키가 재설정되는 것을 방지
         if is_autologin and request.session.get("ss_mb_id"):
-            response.set_cookie(key="ck_mb_id", value=cookie_mb_id,
+            await response.set_cookie(key="ck_mb_id", value=cookie_mb_id,
                                 max_age=age_1day * 30, domain=cookie_domain)
-            response.set_cookie(key="ck_auto", value=ss_mb_key,
+            await response.set_cookie(key="ck_auto", value=ss_mb_key,
                                 max_age=age_1day * 30, domain=cookie_domain)
         # 방문자 이력 기록
         ck_visit_ip = request.cookies.get('ck_visit_ip', None)
         if ck_visit_ip != current_ip:
-            response.set_cookie(key="ck_visit_ip", value=current_ip,
+            await response.set_cookie(key="ck_visit_ip", value=current_ip,
                                 max_age=age_1day, domain=cookie_domain)
             visit_service = VisitService(request, db)
             visit_service.create_visit_record()
