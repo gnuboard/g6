@@ -10,7 +10,7 @@ router = APIRouter()
 @router.post("/good/{bo_table}/{wr_id}/{type}")
 async def ajax_good(
     request: Request,
-    service: Annotated[AJAXService, Depends()],
+    service: Annotated[AJAXService, Depends(AJAXService.async_init)],
     token: str = Form(...),
     bo_table: str = Path(...),
     wr_id: int = Path(...),

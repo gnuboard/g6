@@ -26,6 +26,15 @@ class AJAXService:
         self.request = request
         self.db = db
 
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+    ):
+        instance = cls(request, db)
+        return instance
+
     def validate_member(self, member: Member):
         """회원 여부 검증"""
         if not member:
