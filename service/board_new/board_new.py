@@ -26,6 +26,15 @@ class BoardNewService(BaseService):
         self.config = request.state.config
         self.page_rows = self.config.cf_mobile_page_rows if request.state.is_mobile and self.config.cf_mobile_page_rows else self.config.cf_new_rows
 
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+    ):
+        instance = cls(request, db)
+        return instance
+
     def raise_exception(self):
         raise AlertException(status_code=400, detail="검색 결과가 없습니다.")
 
