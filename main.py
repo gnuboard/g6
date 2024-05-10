@@ -4,10 +4,13 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Path, Request, Response
 from fastapi.responses import JSONResponse, RedirectResponse
+from sqlalchemy import select
 from starlette.staticfiles import StaticFiles
 
+from core.database import db_session
 from core.exception import regist_core_exception_handler
 from core.middleware import regist_core_middleware, should_run_middleware
+from core.models import Config
 from core.plugin import (
     cache_plugin_menu, cache_plugin_state, get_plugin_state_change_time,
     import_plugin_by_states, read_plugin_state, register_plugin,
@@ -16,8 +19,9 @@ from core.plugin import (
 from core.routers import router as template_router
 from core.settings import settings
 from core.template import register_theme_statics
+from lib.dependency.auth import manage_member_authentication
 from lib.dependency.dependencies import (
-    check_ip, check_use_template, get_config
+    check_ip, check_use_template, get_config, validate_installed
 )
 from lib.scheduler import scheduler
 from lib.token import create_session_token
@@ -48,8 +52,8 @@ app = FastAPI(
     lifespan=lifespan,
     title="그누보드6",
     description="",
-    dependencies=[Depends(get_config),
-                  Depends(check_ip)],
+    # dependencies=[Depends(get_config),
+    #               Depends(check_ip)],
 )
 
 # git clone으로 소스를 받은 경우에는 data디렉토리가 없으므로 생성해야 함
@@ -101,6 +105,20 @@ regist_core_exception_handler(app)
 
 # 스케줄러 등록 및 실행
 scheduler.run_scheduler()
+
+@app.get("/asdfg",
+            dependencies=[
+                          Depends(check_use_template),
+                          Depends(validate_installed),
+                          Depends(manage_member_authentication),
+                        #   Depends(check_visit_record),
+                        #   Depends(set_current_connect),
+                        #   Depends(set_template_basic_data)
+                        ]
+)
+async def asdfg(db: db_session):
+    config = db.scalars(select(Config)).first()
+    return config.cf_title
 
 
 @app.post("/generate_token",

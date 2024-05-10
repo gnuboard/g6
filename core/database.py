@@ -172,8 +172,8 @@ db_connect.url = db_connect.url or "sqlite://"
 db_connect.create_engine()
 
 
-# 데이터베이스 세션을 가져오는 의존성 함수
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
+async def get_db():
+    """데이터베이스 세션을 가져오는 의존성 함수"""
     db = DBConnect().sessionLocal()
     try:
         yield db

@@ -7,8 +7,9 @@ from fastapi import (
 from fastapi.responses import HTMLResponse
 from sqlalchemy import exists, inspect, select
 from sqlalchemy.exc import ProgrammingError
+from sqlalchemy.orm import Session
 
-from core.database import DBConnect, db_session
+from core.database import DBConnect, db_session, get_db
 from core.exception import AlertException, TemplateDisabledException
 from core.models import Auth, Board, Config, GroupMember, Member
 from core.settings import ENV_PATH, settings
@@ -101,11 +102,10 @@ async def validate_install():
             and inspect(engine).has_table(prefix + "config")):
         raise AlertException(
             "이미 설치가 완료되었습니다.\\n재설치하시려면 .env파일을 삭제 후 다시 시도해주세요.", 400, "/")
-    
+
 
 async def validate_installed(request: Request, db: db_session):
     url_path = request.url.path
-
     try:
         if not url_path.startswith("/install"):
             if not os.path.exists(ENV_PATH):
@@ -217,7 +217,7 @@ def common_search_query_params(
     return {"sst": sst, "sod": sod, "sfl": sfl, "stx": stx, "sca": sca, "current_page": current_page}
 
 
-def check_use_template():
+async def check_use_template():
     """템플릿 사용 여부 검사"""
     if not settings.USE_TEMPLATE:
         raise TemplateDisabledException(detail="템플릿 사용이 불가능합니다.")
