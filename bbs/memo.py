@@ -115,7 +115,9 @@ async def memo_form(
     return templates.TemplateResponse("/memo/memo_form.html", context)
 
 
-@router.post("/memo_form_update", dependencies=[Depends(validate_token), Depends(validate_captcha)])
+@router.post("/memo_form_update",
+             dependencies=[Depends(validate_token),
+                           Depends(validate_captcha)])
 async def memo_form_update(
     request: Request,
     memo_service: Annotated[MemoService, Depends()],

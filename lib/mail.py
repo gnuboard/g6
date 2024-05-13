@@ -155,7 +155,7 @@ def send_register_mail(request: Request, member: Member) -> None:
         print(e)
 
 
-def send_poll_etc_mail(request: Request, poll_etc: PollEtc) -> None:
+async def send_poll_etc_mail(request: Request, poll_etc: PollEtc) -> None:
     """
     최고관리자에게 기타의견 메일 발송 처리
     - 기본환경설정 > 기타의견 메일발송 설정이 되어있을 경우에만 발송

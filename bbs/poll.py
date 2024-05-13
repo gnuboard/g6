@@ -1,7 +1,7 @@
 """설문조사 Template Router."""
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 
 from core.models import Member, Poll, PollEtc
@@ -76,6 +76,7 @@ async def poll_result(
                            Depends(validate_poll_etc_create)])
 async def poll_etc_update(
     request: Request,
+    background_tasks: BackgroundTasks,
     service: Annotated[PollService, Depends()],
     member: Annotated[Member, Depends(get_login_member_optional)],
     poll: Annotated[Poll, Depends(get_poll)],
@@ -87,8 +88,8 @@ async def poll_etc_update(
     """
     poll_etc = service.create_poll_etc(poll, member,
                                        pc_name=pc_name, pc_idea=pc_idea)
-    # 관리자에게 메일 발송
-    send_poll_etc_mail(request, poll_etc)
+    # 관리자에게 메일 발송(백그라운드)
+    background_tasks.add_task(send_poll_etc_mail, request, poll_etc)
 
     return RedirectResponse(url=f"/bbs/poll_result/{poll.po_id}", status_code=302)
 

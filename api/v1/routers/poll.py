@@ -1,6 +1,6 @@
 """설문조사 API Router."""
 from typing_extensions import Annotated
-from fastapi import APIRouter, Depends, Path, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Path, Request
 
 from core.models import Member, Poll, PollEtc
 from lib.mail import send_poll_etc_mail
@@ -91,6 +91,7 @@ async def update_poll(
              responses={**response_403, **response_404, **response_422})
 async def create_poll_etc(
     request: Request,
+    background_tasks: BackgroundTasks,
     service: Annotated[PollServiceAPI, Depends()],
     member: Annotated[Member, Depends(get_current_member_optional)],
     poll: Annotated[Poll, Depends(get_poll)],
@@ -109,7 +110,7 @@ async def create_poll_etc(
     poll_etc = service.create_poll_etc(poll, member, **data.__dict__)
 
     # 기타의견 메일 발송
-    send_poll_etc_mail(request, poll_etc)
+    background_tasks.add_task(send_poll_etc_mail, request, poll_etc)
 
     return {"message": "기타의견이 등록되었습니다."}
 
