@@ -15,7 +15,7 @@ from lib.member import get_admin_type
 from lib.board_lib import (
     set_image_width, url_auto_link, BoardConfig, get_list_thumbnail,
     render_latest_posts, generate_reply_character, is_secret_write,
-    BoardFileManager, is_owner, insert_board_new, set_write_delay
+    is_owner, insert_board_new, set_write_delay
 )
 from lib.captcha import captcha_widget
 from lib.common import set_url_query_params, get_unique_id, remove_query_params
@@ -30,6 +30,7 @@ from service.board import (
     CommentService, DeleteCommentService, ListDeleteService,
     MoveUpdateService, DownloadFileService
 )
+from service.board_file_service import BoardFileService
 from service.popular_service import PopularService
 
 
@@ -168,6 +169,7 @@ async def move_update(
 @router.get("/write/{bo_table}", dependencies=[Depends(check_group_access)])
 async def write_form_add(
     service: Annotated[CreatePostService, Depends()],
+    file_service: Annotated[BoardFileService, Depends()],
     parent_id: int = Query(None)
 ):
     """
@@ -207,7 +209,7 @@ async def write_form_add(
         "is_link": service.is_link_level(),
         "is_file": service.is_upload_level(),
         "is_file_content": bool(board.bo_use_file_content),
-        "files": BoardFileManager(board).get_board_files_by_form(),
+        "files": file_service.get_board_files_by_form(board),
         "is_use_captcha": service.use_captcha,
         "write_min": service.write_min,
         "write_max": service.write_max,
@@ -219,6 +221,7 @@ async def write_form_add(
 @router.get("/write/{bo_table}/{wr_id}", dependencies=[Depends(check_group_access)])
 async def write_form_edit(
     service: Annotated[UpdatePostService, Depends()],
+    file_service: Annotated[BoardFileService, Depends()],
 ):
     """
     게시글을 작성하는 form을 보여준다.(수정)
@@ -280,7 +283,7 @@ async def write_form_edit(
         "is_link": service.is_link_level(),
         "is_file": service.is_upload_level(),
         "is_file_content": bool(board.bo_use_file_content),
-        "files": BoardFileManager(board, wr_id).get_board_files_by_form(),
+        "files": file_service.get_board_files_by_form(board, wr_id),
         "is_use_captcha": False,
         "write_min": service.write_min,
         "write_max": service.write_max,

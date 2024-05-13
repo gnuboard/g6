@@ -94,7 +94,7 @@ class SearchService(BaseService):
                 board.writes = self.db.scalars(query.add_columns(write_model).limit(5)).all()
                 total_search_count += board.search_count
                 for write in board.writes:
-                    write = get_list(self.request, write, board_config)
+                    write = get_list(self.request, self.db, write, board_config)
                     if write.wr_is_comment:
                         word = "댓글"
                         parent_write = self.db.get(write_model, write.wr_parent)

@@ -6,6 +6,7 @@ from core.database import db_session
 from core.models import WriteBaseModel
 from lib.dependency.dependencies import common_search_query_params
 from lib.board_lib import write_search_filter, get_list, cut_name, is_owner
+from service.board_file_service import BoardFileService
 from . import BoardService
 
 
@@ -18,10 +19,11 @@ class ListPostService(BoardService):
         self,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         search_params: Annotated[dict, Depends(common_search_query_params)],
     ):
-        super().__init__(request, db, bo_table)
+        super().__init__(request, db, bo_table, file_service)
         if not self.is_list_level():
             self.raise_exception(detail="목록을 볼 권한이 없습니다.", status_code=403)
 
@@ -95,7 +97,7 @@ class ListPostService(BoardService):
         # 게시글 정보 수정
         for write in writes:
             write.num = total_count - offset - writes.index(write)
-            write = get_list(self.request, write, self)
+            write = get_list(self.request, self.db, write, self)
 
             # 댓글 정보를 불러와서 write에 추가합니다.
             comments: List[WriteBaseModel] = self.db.scalars(
@@ -129,7 +131,7 @@ class ListPostService(BoardService):
             write.comments = comments
 
         return writes
-    
+
     def get_notice_writes(self) -> List[WriteBaseModel]:
         """게시글 중 공지사항 목록을 가져옵니다."""
         current_page = self.search_params.get('current_page')
@@ -140,7 +142,7 @@ class ListPostService(BoardService):
             notice_query = select(self.write_model).where(self.write_model.wr_id.in_(notice_ids))
             if sca:
                 notice_query = notice_query.where(self.write_model.ca_name == sca)
-            notice_writes = [get_list(self.request, write, self) for write in self.db.scalars(notice_query).all()]
+            notice_writes = [get_list(self.request, self.db, write, self) for write in self.db.scalars(notice_query).all()]
         return notice_writes
 
     def get_total_count(self) -> int:

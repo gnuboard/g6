@@ -14,15 +14,15 @@ from lib.common import (
     dynamic_create_write_table, FileCache, get_from_list,
     safe_int_convert, select_query, set_url_query_params
 )
-from lib.board_lib import BoardFileManager
 from lib.dependency.board import get_board
 from lib.dependency.dependencies import (
     common_search_query_params, validate_token
 )
 from lib.template_functions import (
-    get_editor_select, get_group_select, 
-    get_member_level_select, get_paging, get_skin_select, 
+    get_editor_select, get_group_select,
+    get_member_level_select, get_paging, get_skin_select,
 )
+from service.board_file_service import BoardFileService
 
 
 router = APIRouter()
@@ -298,8 +298,8 @@ async def board_copy(
 
 @router.post("/board_copy_update", dependencies=[Depends(validate_token)])
 async def board_copy_update(
-    request: Request,
     db: db_session,
+    service: Annotated[BoardFileService, Depends()],
     origin_board: Annotated[Board, Depends(get_board)],
     bo_table: str = Form(...),
     target_table: str = Form(...),
@@ -315,7 +315,7 @@ async def board_copy_update(
 
     # 복사될 레코드의 모든 필드를 딕셔너리로 변환
     target_dict = {key: value for key, value in origin_board.__dict__.items() if not key.startswith('_')}
-    
+
     target_dict['bo_table'] = target_table
     target_dict['bo_subject'] = target_subject
 
@@ -335,9 +335,10 @@ async def board_copy_update(
             # write 객체로 target_write 테이블에 레코드 추가
             db.execute(target_write_model.__table__.insert(), copy_data)
             db.commit()
-            file_manager = BoardFileManager(origin_board, write.wr_id)
-            if file_manager.is_exist(bo_table, write.wr_id):
-                file_manager.copy_board_files(FILE_DIRECTORY, target_table, write.wr_id)
+            if service.is_exist(bo_table, write.wr_id):
+                service.copy_board_files(FILE_DIRECTORY,
+                                         bo_table, write.wr_id,
+                                         target_table, write.wr_id)
 
     content = """
     <script>

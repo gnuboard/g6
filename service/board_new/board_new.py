@@ -1,6 +1,6 @@
 from datetime import datetime
-from typing_extensions import List
-from fastapi import Request, HTTPException
+from typing_extensions import Annotated, List
+from fastapi import Depends, Request, HTTPException
 from sqlalchemy import select, func
 
 from core.models import Board, BoardNew
@@ -8,8 +8,8 @@ from core.database import db_session
 from core.exception import AlertException
 from lib.common import dynamic_create_write_table, cut_name, FileCache
 from lib.point import delete_point, insert_point
-from lib.board_lib import BoardFileManager
 from service import BaseService
+from service.board_file_service import BoardFileService
 
 
 class BoardNewService(BaseService):
@@ -20,11 +20,13 @@ class BoardNewService(BaseService):
         self,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
     ):
         self.request = request
         self.db = db
         self.config = request.state.config
         self.page_rows = self.config.cf_mobile_page_rows if request.state.is_mobile and self.config.cf_mobile_page_rows else self.config.cf_new_rows
+        self.file_service = file_service
 
     def raise_exception(self):
         raise AlertException(status_code=400, detail="검색 결과가 없습니다.")
@@ -118,7 +120,7 @@ class BoardNewService(BaseService):
                     if not delete_point(self.request, write.mb_id, board.bo_table, write.wr_id, "댓글"):
                         insert_point(self.request, write.mb_id, board.bo_comment_point * (-1), f"{board.bo_subject} {write.wr_parent}-{write.wr_id} 댓글 삭제")
                 # 파일 삭제
-                BoardFileManager(board, write.wr_id).delete_board_files()
+                self.file_service.delete_board_files(board.bo_table, write.wr_id)
 
             # 최신글 삭제
             self.db.delete(new)
@@ -127,6 +129,7 @@ class BoardNewService(BaseService):
             FileCache().delete_prefix(f'latest-{new.bo_table}')
 
         self.db.commit()
+
 
 class BoardNewServiceAPI(BoardNewService):
     """

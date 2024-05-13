@@ -7,8 +7,7 @@ from core.database import db_session
 from core.models import WriteBaseModel, BoardNew, BoardGood, Scrap
 from core.formclass import WriteForm
 from lib.board_lib import (
-    insert_point, BoardFileManager, FileCache,
-    get_next_num, generate_reply_character
+    insert_point, FileCache, get_next_num, generate_reply_character
 )
 from lib.common import cut_name, dynamic_create_write_table
 from lib.dependency.dependencies import (
@@ -17,7 +16,7 @@ from lib.dependency.dependencies import (
 from lib.template_filters import datetime_format
 from api.v1.models.board import WriteModel
 from . import BoardService
-
+from service.board_file_service import BoardFileService
 
 class CreatePostService(BoardService):
     """
@@ -29,8 +28,9 @@ class CreatePostService(BoardService):
         request: Request,
         db: db_session,
         bo_table: Annotated[str, Path(...)],
+        file_service: Annotated[BoardFileService, Depends()],
     ):
-        super().__init__(request, db, bo_table)
+        super().__init__(request, db, bo_table, file_service)
 
     def add_point(self, write, parent_write: WriteBaseModel = None):
         """포인트 추가"""
@@ -71,10 +71,11 @@ class MoveUpdateService(BoardService):
         self,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Depends(get_variety_bo_table)],
         sw: Annotated[str, Form(...)]
     ):
-        super().__init__(request, db, bo_table)
+        super().__init__(request, db, bo_table, file_service)
         self.sw = sw
         self.act = "이동" if sw == "move" else "복사"
 
@@ -159,13 +160,15 @@ class MoveUpdateService(BoardService):
                     self.db.commit()
 
                 # 파일이 존재할 경우
-                file_manager = BoardFileManager(origin_board, origin_write.wr_id)
-                if file_manager.is_exist():
+                if self.file_service.is_exist(origin_board.bo_table, origin_write.wr_id):
                     if self.sw == "move":
-                        file_manager.move_board_files(CreatePostService.FILE_DIRECTORY, target_bo_table, target_write.wr_id)
+                        self.file_service.move_board_files(CreatePostService.FILE_DIRECTORY,
+                                                           origin_board, origin_write.wr_id,
+                                                           target_bo_table, target_write.wr_id)
                     else:
-                        file_manager.copy_board_files(CreatePostService.FILE_DIRECTORY, target_bo_table, target_write.wr_id)
-
+                        self.file_service.copy_board_files(CreatePostService.FILE_DIRECTORY,
+                                                           origin_board, origin_write.wr_id,
+                                                           target_bo_table, target_write.wr_id)
             # 최신글 캐시 삭제
             file_cache.delete_prefix(f'latest-{target_bo_table}')
 

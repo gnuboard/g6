@@ -1,16 +1,16 @@
 from typing_extensions import List, Annotated
 
-from fastapi import Request, HTTPException, Path
+from fastapi import Depends, Request, HTTPException, Path
 from sqlalchemy import select, exists, delete, update
 
 from core.database import db_session
 from core.models import Member, BoardNew, Scrap, WriteBaseModel
 from lib.board_lib import (
-    is_owner, insert_point, delete_point,
-    BoardFileManager, FileCache
+    is_owner, insert_point, delete_point, FileCache
 )
 from lib.common import remove_query_params, set_url_query_params
 from .board import BoardService
+from service.board_file_service import BoardFileService
 
 
 class DeletePostService(BoardService):
@@ -22,6 +22,7 @@ class DeletePostService(BoardService):
         self,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Path(...)],
         wr_id: Annotated[int, Path(...)],
     ):
@@ -31,6 +32,7 @@ class DeletePostService(BoardService):
         self.write_member_mb_no = self.db.scalar(select(Member.mb_no).where(Member.mb_id == self.write.mb_id))
         self.write_member = self.db.get(Member, self.write_member_mb_no)
         self.write_member_level = getattr(self.write_member, "mb_level", 1)
+        self.file_service = file_service
 
     def validate_level(self, with_session: bool = True):
         """권한 검증"""
@@ -92,7 +94,7 @@ class DeletePostService(BoardService):
                 if not delete_point(self.request, write.mb_id, bo_table, self.wr_id, "쓰기"):
                     insert_point(self.request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {self.wr_id} 글 삭제")
                 # 파일+섬네일 삭제
-                BoardFileManager(board, self.wr_id).delete_board_files()
+                self.file_service.delete_board_files(board.bo_table, self.wr_id)
 
                 delete_write_count += 1
                 # TODO: 에디터 섬네일 삭제
@@ -139,10 +141,11 @@ class DeleteCommentService(DeletePostService):
         self,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Path(...)],
         comment_id: Annotated[str, Path(...)],
     ):
-        super().__init__(request, db, bo_table, comment_id)
+        super().__init__(request, db, file_service, bo_table, comment_id)
         self.wr_id = comment_id
         self.comment = self.get_comment()
 
@@ -150,7 +153,7 @@ class DeleteCommentService(DeletePostService):
         comment: WriteBaseModel = self.db.get(self.write_model, self.wr_id)
         if not comment:
             raise HTTPException(status_code=404, detail=f"{self.wr_id} : 존재하지 않는 댓글입니다.")
-        
+
         if not comment.wr_is_comment:
             raise HTTPException(status_code=400, detail=f"{self.wr_id} : 댓글이 아닌 게시글입니다.")
 
@@ -210,9 +213,10 @@ class ListDeleteService(BoardService):
         self,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Path(...)],
     ):
-        super().__init__(request, db, bo_table)
+        super().__init__(request, db, bo_table, file_service)
 
     def delete_writes(self, wr_ids: list):
         """게시글 목록 삭제"""
@@ -228,7 +232,7 @@ class ListDeleteService(BoardService):
                 insert_point(self.request, write.mb_id, self.board.bo_write_point * (-1), f"{self.board.bo_subject} {write.wr_id} 글 삭제")
             
             # 파일 삭제
-            BoardFileManager(self.board, write.wr_id).delete_board_files()
+            self.file_service.delete_board_files(self.board.bo_table, write.wr_id)
 
             # TODO: 댓글 삭제
         self.db.commit()

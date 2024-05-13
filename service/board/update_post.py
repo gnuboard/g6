@@ -1,9 +1,9 @@
 from typing_extensions import Union, Annotated
-from fastapi import Request, HTTPException, Path, Depends, Form
+from fastapi import Request, Path, Depends, Form
 from sqlalchemy import update, select, func
 
 from core.database import db_session
-from core.models import Member, WriteBaseModel
+from core.models import WriteBaseModel
 from core.formclass import WriteForm, WriteCommentForm
 from lib.board_lib import generate_reply_character, insert_point, is_owner
 from lib.g5_compatibility import G5Compatibility
@@ -12,7 +12,7 @@ from lib.html_sanitizer import content_sanitizer
 from lib.pbkdf2 import create_hash, validate_password
 from api.v1.models.board import WriteModel, CommentModel
 from . import BoardService
-
+from service.board_file_service import BoardFileService
 
 class UpdatePostService(BoardService):
     """
@@ -22,10 +22,11 @@ class UpdatePostService(BoardService):
         self,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Path(...)],
         wr_id: Annotated[int, Path(...)],
     ):
-        super().__init__(request, db, bo_table)
+        super().__init__(request, db, bo_table, file_service)
         self.wr_id = wr_id
 
     def validate_author(self, write: WriteBaseModel, wr_password: str = None):
@@ -62,10 +63,11 @@ class CommentService(UpdatePostService):
         self,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Path(...)],
         wr_id: Annotated[int, Form(...)],
     ):
-        super().__init__(request, db, bo_table, wr_id)
+        super().__init__(request, db, bo_table, wr_id, file_service)
         self.g5_instance = G5Compatibility(db)
 
     def validate_comment_level(self):

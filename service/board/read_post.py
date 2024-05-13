@@ -1,12 +1,13 @@
 from typing_extensions import Annotated, List, Tuple
 
-from fastapi import Request, Path
+from fastapi import Depends, Request, Path
 from sqlalchemy import asc, desc, select, exists
 
 from core.database import db_session
 from core.models import BoardGood, Scrap, WriteBaseModel, BoardFile
-from lib.board_lib import BoardFileManager, insert_point, is_owner, cut_name
+from lib.board_lib import insert_point, is_owner, cut_name
 from lib.template_filters import number_format
+from service.board_file_service import BoardFileService
 from . import BoardService
 
 
@@ -19,10 +20,11 @@ class ReadPostService(BoardService):
         self,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
         bo_table: str = Path(...),
         wr_id: int = Path(...),
     ):
-        super().__init__(request, db, bo_table)
+        super().__init__(request, db, bo_table, file_service)
         self.wr_id = wr_id
         self.board.subject = self.subject
 
@@ -33,7 +35,7 @@ class ReadPostService(BoardService):
         self.write = write
 
         # 파일정보 조회
-        self.images, self.normal_files = BoardFileManager(self.board, wr_id).get_board_files_by_type(request)
+        self.images, self.normal_files = file_service.get_board_files_by_type(self.board.bo_table, wr_id)
 
         # TODO: 전체목록보이기 사용 => 게시글 목록 부분을 분리해야함
         self.write_list = None
@@ -243,15 +245,16 @@ class DownloadFileService(BoardService):
         self,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Path(...)],
         wr_id: Annotated[int, Path(...)],
         bf_no: Annotated[int, Path(...)],
     ):
-        super().__init__(request, db, bo_table)
+        super().__init__(request, db, bo_table, file_service)
         self.write = self.get_write(wr_id)
         self.wr_id = wr_id
         self.bf_no = bf_no
-        self.file_manager = BoardFileManager(self.board, wr_id)
+        self.file_service = file_service
 
     def validate_download_level(self):
         """다운로드 권한 검증"""
@@ -260,7 +263,7 @@ class DownloadFileService(BoardService):
 
     def get_board_file(self) -> BoardFile:
         """파일 정보 조회"""
-        board_file = self.file_manager.get_board_file(self.bf_no)
+        board_file = self.file_service.get_board_file(self.bo_table, self.wr_id, self.bf_no)
         if not board_file:
             self.raise_exception(detail="파일이 존재하지 않습니다.", status_code=404)
         return board_file
@@ -286,6 +289,6 @@ class DownloadFileService(BoardService):
         download_session_name = f"ss_down_{self.bo_table}_{self.wr_id}_{board_file.bf_no}"
         if not self.request.session.get(download_session_name):
             # 다운로드 횟수 증가
-            self.file_manager.update_download_count(board_file)
+            self.file_service.update_download_count(board_file)
             # 파일 다운로드 세션 설정
             self.request.session[download_session_name] = True

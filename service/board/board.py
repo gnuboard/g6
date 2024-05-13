@@ -9,8 +9,7 @@ from core.models import Board, WriteBaseModel, Group, AutoSave
 from core.exception import AlertException
 from core.formclass import WriteForm
 from lib.board_lib import (
-    BoardConfig, FileCache, BoardFileManager, is_write_delay,
-    send_write_mail
+    BoardConfig, FileCache, is_write_delay, send_write_mail
 )
 from lib.member import MemberDetails
 from lib.common import (
@@ -20,6 +19,7 @@ from lib.common import (
 from lib.html_sanitizer import content_sanitizer
 from lib.pbkdf2 import create_hash
 from service import BaseService
+from service.board_file_service import BoardFileService
 from api.v1.models.board import WriteModel
 
 
@@ -33,6 +33,7 @@ class BoardService(BaseService, BoardConfig):
         request: Request,
         db: db_session,
         bo_table: str,
+        file_service: BoardFileService,
     ):
         self.db = db
         board = self.get_board(bo_table)
@@ -41,6 +42,7 @@ class BoardService(BaseService, BoardConfig):
         self.write_model = dynamic_create_write_table(bo_table)
         self.categories = self.get_category_list()
         self.member = MemberDetails(request, request.state.login_member, board=self.board)
+        self.file_service = file_service
 
     def raise_exception(self, status_code: int, detail: str = None, url: str = None):
         raise AlertException(status_code=status_code, detail=detail, url=url)
@@ -232,10 +234,11 @@ class BoardService(BaseService, BoardConfig):
         file_dels: list = None
     ):
         """파일 업로드"""
-        files = []
-        for file in file_list:
-            if getattr(file, "size", None):
-                files.append(file)
+        # files = []
+        # print("file_list", file_list)
+        # for file in file_list:
+        #     if getattr(file, "size", None):
+        #         files.append(file)
 
         if self.member.mb_id and self.member.mb_id != write.mb_id:
             self.raise_exception(status_code=403, detail="자신의 글에만 파일을 업로드할 수 있습니다.")
@@ -243,7 +246,6 @@ class BoardService(BaseService, BoardConfig):
         if not self.is_upload_level():
             self.raise_exception(status_code=403, detail="파일 업로드 권한이 없습니다.")
 
-        file_manager = BoardFileManager(self.board, write.wr_id)
         directory = os.path.join(self.FILE_DIRECTORY, self.bo_table)
         wr_file = write.wr_file
 
@@ -253,36 +255,38 @@ class BoardService(BaseService, BoardConfig):
         # 파일 삭제
         if file_dels:
             for bf_no in file_dels:
-                file_manager.delete_board_file(bf_no)
+                self.file_service.delete_board_file(self.board.bo_table, write.wr_id, bf_no)
                 wr_file -= 1
 
         # 파일 업로드 처리 및 파일정보 저장
         exclude_file = {"size": [], "ext": []}
-        for file in files:
-            index = files.index(file)
+        for file in file_list:
+            index = file_list.index(file)
+
             if file.filename:
                 # 관리자가 아니면서 설정한 업로드 사이즈보다 크거나 업로드 가능 확장자가 아니면 업로드하지 않음
                 if not self.member.admin_type:
-                    if not file_manager.is_upload_size(file):
+                    if not self.file_service.is_upload_size(self.board, file):
                         exclude_file["size"].append(file.filename)
                         continue
-                    if not file_manager.is_upload_extension(self.request, file):
+                    if not self.file_service.is_upload_extension(file):
                         exclude_file["ext"].append(file.filename)
                         continue
 
-                board_file = file_manager.get_board_file(index)
+                board_file = self.file_service.get_board_file(self.board.bo_table, write.wr_id, index)
                 bf_content = file_content[index] if file_content and file_content[index] else ""
-                filename = file_manager.get_filename(file.filename)
+                filename = self.file_service.get_filename(file.filename)
                 if board_file:
                     # 기존파일 삭제
-                    file_manager.remove_file(board_file.bf_file)
+                    self.file_service.remove_file(board_file.bf_file)
                     # 파일 업로드 및 정보 업데이트
-                    file_manager.upload_file(directory, filename, file)
-                    file_manager.update_board_file(board_file, directory, filename, file, bf_content)
+                    self.file_service.upload_file(directory, filename, file)
+                    self.file_service.update_board_file(board_file, directory, filename, file, bf_content)
                 else:
                     # 파일 업로드 및 정보 추가
-                    file_manager.upload_file(directory, filename, file)
-                    file_manager.insert_board_file(index, directory, filename, file, bf_content)
+                    self.file_service.upload_file(directory, filename, file)
+                    self.file_service.insert_board_file(self.board.bo_table, write.wr_id, index,
+                                                        directory, filename, file, bf_content)
                     wr_file += 1
 
         # exclude_file이 존재하면 파일 업로드 실패 메시지 출력
