@@ -1,5 +1,7 @@
+"""회원 포인트 관리 Template Router"""
 import uuid
 from typing import List
+from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends, Request, Form
 from fastapi.responses import RedirectResponse
@@ -12,10 +14,10 @@ from core.template import AdminTemplates
 from lib.common import select_query, set_url_query_params
 from lib.dependency.dependencies import common_search_query_params, validate_token
 from lib.point import (
-    delete_expire_point, delete_use_point, get_point_sum,
-    insert_point, insert_use_point
+    delete_expire_point, delete_use_point, get_point_sum
 )
 from lib.template_functions import get_paging
+from service.point_service import PointService
 
 router = APIRouter()
 templates = AdminTemplates()
@@ -70,6 +72,7 @@ async def point_list(
 async def point_update(
     request: Request,
     db: db_session,
+    service: Annotated[PointService, Depends()],
     mb_id: str = Form(default=""),
     po_content: str = Form(default=""),
     po_point: str = Form(default="0"),
@@ -92,7 +95,9 @@ async def point_update(
 
     # 포인트 내역 저장
     rel_action = exist_member.mb_id + '-' + str(uuid.uuid4())
-    insert_point(request, mb_id, po_point, po_content, "@passive", mb_id, rel_action, po_expire_term)
+    service.save_point(mb_id, po_point,
+                       po_content, "@passive",
+                       mb_id, rel_action, po_expire_term)
 
     url = "/admin/point_list"
     query_params = request.query_params
@@ -103,6 +108,7 @@ async def point_update(
 async def point_list_delete(
     request: Request,
     db: db_session,
+    service: Annotated[PointService, Depends()],
     checks: List[int] = Form(None, alias="chk[]"),
     po_id: List[int] = Form(None, alias="po_id[]"),
 ):
@@ -122,8 +128,8 @@ async def point_list_delete(
             else:
                 delete_use_point(request, point.mb_id, abs_po_point)
         elif point.po_use_point > 0:
-            insert_use_point(request, point.mb_id, point.po_use_point, point.po_id)
-            
+            service.insert_use_point(point.mb_id, point.po_use_point, point.po_id)
+
         # 포인트 내역 삭제
         db.delete(point)
         db.commit()

@@ -120,7 +120,9 @@ class ReadPostService(BoardService):
                     message += f" 로그인 후 다시 시도해주세요."
                 raise self.raise_exception(detail=message, status_code=403)
             else:
-                insert_point(self.request, self.member.mb_id, read_point, f"{self.board.bo_subject} {self.write.wr_id} 글읽기", self.board.bo_table, self.write.wr_id, "읽기")
+                insert_point(self.request, self.member.mb_id,
+                                   read_point, f"{self.board.bo_subject} {self.write.wr_id} 글읽기",
+                                   self.board.bo_table, self.write.wr_id, "읽기")
 
         # 조회수 증가
         self.write.wr_hit += 1
