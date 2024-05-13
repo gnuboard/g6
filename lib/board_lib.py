@@ -599,7 +599,9 @@ class BoardFileManager():
         Returns:
             BoardFile: 업로드된 파일
         """
-        return self.db.get(self.model, {"bo_table": self.bo_table, "wr_id": self.wr_id, "bf_no": bf_no})
+        result = self.db.get(self.model, {"bo_table": self.bo_table, "wr_id": self.wr_id, "bf_no": bf_no})
+        self.db.close()
+        return result
 
     def get_filename(self, filename: str):
         """파일이름을 생성한다.
