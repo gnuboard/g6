@@ -30,6 +30,11 @@ class QaConfigService(BaseService):
         self.is_mobile = request.state.is_mobile
         self.qa_config = self.get_qa_config()
 
+    @classmethod
+    async def async_init(cls,  request: Request, db: db_session):
+        instance = cls(request, db)
+        return instance
+
     def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None):
         """예외 발생 메소드. 주어진 상태 코드와 상세 내용으로 예외를 발생시킨다."""
         raise AlertException(detail, status_code, url)
@@ -81,6 +86,11 @@ class QaFileService(BaseService):
         self.request = request
         self.db = db
         self.directory = FILE_DIRECTORY
+
+    @classmethod
+    async def async_init(cls, request: Request, db: db_session):
+        instance = cls(request, db)
+        return instance
 
     def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None):
         raise AlertException(detail, status_code, url)
@@ -164,6 +174,17 @@ class QaService(BaseService):
         self.db = db
         self.config_service = config_service
         self.file_service = file_service
+
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        config_service: Annotated[QaConfigService, Depends(QaConfigService.async_init)],
+        file_service: Annotated[QaFileService, Depends(QaFileService.async_init)]
+    ):
+        instance = cls(request, db, config_service, file_service)
+        return instance
 
     def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None):
         raise AlertException(detail, status_code, url)

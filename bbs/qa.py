@@ -33,8 +33,8 @@ templates.env.filters["search_font"] = search_font
 async def qa_list(
     request: Request,
     member: Annotated[Member, Depends(get_login_member)],
-    config_service: Annotated[QaConfigService, Depends()],
-    qa_service: Annotated[QaService, Depends()],
+    config_service: Annotated[QaConfigService, Depends(QaConfigService.async_init)],
+    qa_service: Annotated[QaService, Depends(QaService.async_init)],
     search_params: dict = Depends(common_search_query_params),
 ):
     """
