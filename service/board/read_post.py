@@ -21,8 +21,8 @@ class ReadPostService(BoardService):
         request: Request,
         db: db_session,
         file_service: Annotated[BoardFileService, Depends()],
-        bo_table: str = Path(...),
-        wr_id: int = Path(...),
+        bo_table: Annotated[str, Path(...)],
+        wr_id: Annotated[int, Path(...)],
     ):
         super().__init__(request, db, bo_table, file_service)
         self.wr_id = wr_id
@@ -48,6 +48,18 @@ class ReadPostService(BoardService):
         #         "sst": request.query_params.get("sst"),
         #         "sod": request.query_params.get("sod"),
         #     }).body.decode("utf-8")
+
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
+        bo_table: Annotated[str, Path(...)],
+        wr_id: Annotated[int, Path(...)],
+    ):
+        instance = cls(request, db, file_service, bo_table, wr_id)
+        return instance
 
     def block_read_comment(self):
         """댓글은 개별조회 할 수 없도록 예외처리"""
@@ -255,6 +267,31 @@ class DownloadFileService(BoardService):
         self.wr_id = wr_id
         self.bf_no = bf_no
         self.file_service = file_service
+
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
+        bo_table: Annotated[str, Path(...)],
+        wr_id: Annotated[int, Path(...)],
+        bf_no: Annotated[int, Path(...)],
+    ):
+        instance = cls(request, db, file_service, bo_table, wr_id, bf_no)
+        return instance
+
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(...)],
+        wr_id: Annotated[int, Path(...)],
+        bf_no: Annotated[int, Path(...)],
+    ):
+        instance = cls(request, db, bo_table, wr_id, bf_no)
+        return instance
 
     def validate_download_level(self):
         """다운로드 권한 검증"""

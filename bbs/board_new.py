@@ -15,7 +15,7 @@ templates.env.globals["get_group_select"] = get_group_select
 
 @router.get("/new")
 async def board_new_list(
-    service: Annotated[BoardNewService, Depends()],
+    service: Annotated[BoardNewService, Depends(BoardNewService.async_init)],
     gr_id: str = Query(None),
     view: str = Query(None),
     mb_id: str = Query(None),
@@ -42,7 +42,7 @@ async def board_new_list(
 
 @router.post("/new_delete", dependencies=[Depends(validate_token)])
 async def new_delete(
-    service: Annotated[BoardNewService, Depends()],
+    service: Annotated[BoardNewService, Depends(BoardNewService.async_init)],
     bn_ids: list = Form(..., alias="chk_bn_id[]"),
 ):
     """

@@ -26,6 +26,16 @@ class GroupBoardListService(BoardService):
         self.group = self.get_group()
         self.member = MemberDetails(request, request.state.login_member, group=self.group)
 
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        gr_id: Annotated[str, Path(...)],
+    ):
+        instance = cls(request, db, gr_id)
+        return instance
+
     def get_group(self) -> Group:
         """게시판 그룹 정보 조회"""
         group = self.db.get(Group, self.gr_id)

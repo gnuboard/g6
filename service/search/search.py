@@ -98,8 +98,9 @@ class SearchService(BaseService):
                     if write.wr_is_comment:
                         word = "댓글"
                         parent_write = self.db.get(write_model, write.wr_parent)
-                        write.subject = parent_write.wr_subject
-                        write.href = f"/board/{board.bo_table}/{parent_write.wr_id}?{self.request.query_params}#c_{write.wr_id}"
+                        if parent_write:
+                            write.subject = parent_write.wr_subject
+                            write.href = f"/board/{board.bo_table}/{parent_write.wr_id}?{self.request.query_params}#c_{write.wr_id}"
                     else:
                         word = "글"
                         write.href = f"/board/{board.bo_table}/{write.wr_id}?{self.request.query_params}"

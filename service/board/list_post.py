@@ -32,6 +32,17 @@ class ListPostService(BoardService):
         self.prev_spt = None
         self.next_spt = None
 
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
+        search_params: Annotated[dict, Depends(common_search_query_params)],
+    ):
+        instance = cls(request, db, bo_table, search_params)
+        return instance
+
     def get_query(self, search_params: dict) -> select:
         """쿼리를 생성합니다."""
         sca = self.request.query_params.get("sca")

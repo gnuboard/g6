@@ -34,6 +34,17 @@ class DeletePostService(BoardService):
         self.write_member_level = getattr(self.write_member, "mb_level", 1)
         self.file_service = file_service
 
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(...)],
+        wr_id: Annotated[int, Path(...)],
+    ):
+        instance = cls(request, db, bo_table, wr_id)
+        return instance
+
     def validate_level(self, with_session: bool = True):
         """권한 검증"""
         if self.member.admin_type == "super":
@@ -149,6 +160,17 @@ class DeleteCommentService(DeletePostService):
         self.wr_id = comment_id
         self.comment = self.get_comment()
 
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(...)],
+        comment_id: Annotated[str, Path(...)],
+    ):
+        instance = cls(request, db, bo_table, comment_id)
+        return instance
+
     def get_comment(self) -> WriteBaseModel:
         comment: WriteBaseModel = self.db.get(self.write_model, self.wr_id)
         if not comment:
@@ -217,6 +239,16 @@ class ListDeleteService(BoardService):
         bo_table: Annotated[str, Path(...)],
     ):
         super().__init__(request, db, bo_table, file_service)
+
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(...)],
+    ):
+        instance = cls(request, db, bo_table)
+        return instance
 
     def delete_writes(self, wr_ids: list):
         """게시글 목록 삭제"""

@@ -48,7 +48,7 @@ templates.env.globals["captcha_widget"] = captcha_widget
 @router.get("/group/{gr_id}")
 async def group_board_list(
     request: Request,
-    service: Annotated[GroupBoardListService, Depends()],
+    service: Annotated[GroupBoardListService, Depends(GroupBoardListService.async_init)],
 ):
     """
     게시판그룹의 모든 게시판 목록을 보여준다.
@@ -67,11 +67,11 @@ async def group_board_list(
     return templates.TemplateResponse("/board/group.html", context)
 
 
-@router.get("/{bo_table}")
+@router.get("/{bo_table}/")
 async def list_post(
     request: Request,
-    list_post_service: Annotated[ListPostService, Depends()],
-    popular_service: Annotated[PopularService, Depends()],
+    list_post_service: Annotated[ListPostService, Depends(ListPostService.async_init)],
+    popular_service: Annotated[PopularService, Depends(PopularService.async_init)],
     search_params: Annotated[dict, Depends(common_search_query_params)],
 ):
     """해당 게시판의 게시글 목록을 보여준다."""
@@ -111,7 +111,7 @@ async def list_post(
 
 @router.post("/list_delete/{bo_table}", dependencies=[Depends(validate_token)])
 async def list_delete(
-    service: Annotated[ListDeleteService, Depends()],
+    service: Annotated[ListDeleteService, Depends(ListDeleteService.async_init)],
     wr_ids: list = Form(..., alias="chk_wr_id[]"),
 ):
     """
@@ -128,7 +128,7 @@ async def list_delete(
 
 @router.post("/move/{bo_table}")
 async def move_post(
-    service: Annotated[MoveUpdateService, Depends()],
+    service: Annotated[MoveUpdateService, Depends(MoveUpdateService.async_init)],
     wr_ids: list = Form(..., alias="chk_wr_id[]"),
 ):
     """
@@ -149,7 +149,7 @@ async def move_post(
 
 @router.post("/move_update/", dependencies=[Depends(validate_token)])
 async def move_update(
-    service: Annotated[MoveUpdateService, Depends()],
+    service: Annotated[MoveUpdateService, Depends(MoveUpdateService.async_init)],
     wr_ids: str = Form(..., alias="wr_id_list"),
     target_bo_tables: list = Form(..., alias="chk_bo_table[]"),
 ):
@@ -168,7 +168,7 @@ async def move_update(
 
 @router.get("/write/{bo_table}", dependencies=[Depends(check_group_access)])
 async def write_form_add(
-    service: Annotated[CreatePostService, Depends()],
+    service: Annotated[CreatePostService, Depends(CreatePostService.async_init)],
     file_service: Annotated[BoardFileService, Depends()],
     parent_id: int = Query(None)
 ):
@@ -220,7 +220,7 @@ async def write_form_add(
 
 @router.get("/write/{bo_table}/{wr_id}", dependencies=[Depends(check_group_access)])
 async def write_form_edit(
-    service: Annotated[UpdatePostService, Depends()],
+    service: Annotated[UpdatePostService, Depends(UpdatePostService.async_init)],
     file_service: Annotated[BoardFileService, Depends()],
 ):
     """
@@ -296,7 +296,7 @@ async def write_form_edit(
 async def create_post(
     db: db_session,
     form_data: Annotated[WriteForm, Depends()],
-    service: Annotated[CreatePostService, Depends()],
+    service: Annotated[CreatePostService, Depends(CreatePostService.async_init)],
     parent_id: int = Form(None),
     notice: bool = Form(False),
     secret: str = Form(""),
@@ -334,7 +334,7 @@ async def create_post(
 
 @router.post("/write_update/{bo_table}/{wr_id}", dependencies=[Depends(validate_token), Depends(check_group_access)])
 async def update_post(
-    service: Annotated[UpdatePostService, Depends()],
+    service: Annotated[UpdatePostService, Depends(UpdatePostService.async_init)],
     notice: bool = Form(False),
     secret: str = Form(""),
     html: str = Form(""),
@@ -369,7 +369,7 @@ async def update_post(
 
 @router.get("/{bo_table}/{wr_id}", dependencies=[Depends(check_group_access)])
 async def read_post(
-    service: Annotated[ReadPostService, Depends()],
+    service: Annotated[ReadPostService, Depends(ReadPostService.async_init)],
 ):
     """게시글을 읽는다."""
     board = service.board
@@ -402,7 +402,7 @@ async def read_post(
 
 @router.get("/delete/{bo_table}/{wr_id}", dependencies=[Depends(validate_token)])
 async def delete_post(
-    service: Annotated[DeletePostService, Depends()],
+    service: Annotated[DeletePostService, Depends(DeletePostService.async_init)],
 ):
     """
     게시글을 삭제한다.
@@ -419,7 +419,7 @@ async def delete_post(
 
 @router.get("/{bo_table}/{wr_id}/download/{bf_no}", dependencies=[Depends(check_group_access)])
 async def download_file(
-    service: Annotated[DownloadFileService, Depends()],
+    service: Annotated[DownloadFileService, Depends(DownloadFileService.async_init)],
 ):
     """첨부파일 다운로드
 
@@ -445,7 +445,7 @@ async def download_file(
         "/write_comment_update/{bo_table}",
         dependencies=[Depends(validate_token), Depends(check_group_access)])
 async def write_comment_update(
-    service: Annotated[CommentService, Depends()],
+    service: Annotated[CommentService, Depends(CommentService.async_init)],
     form: WriteCommentForm = Depends(),
     recaptcha_response: str = Form("", alias="g-recaptcha-response"),
 ):
@@ -488,7 +488,7 @@ async def write_comment_update(
 @router.get("/delete_comment/{bo_table}/{comment_id}", dependencies=[Depends(validate_token)])
 async def delete_comment(
     request: Request,
-    service: Annotated[DeleteCommentService, Depends()],
+    service: Annotated[DeleteCommentService, Depends(DeleteCommentService.async_init)],
 ):
     """
     댓글 삭제

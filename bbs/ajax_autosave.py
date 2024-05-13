@@ -12,7 +12,7 @@ router = APIRouter()
 @router.get("/autosave_list")
 async def autosave_list(
     request: Request,
-    service: Annotated[AJAXService, Depends()],
+    service: Annotated[AJAXService, Depends(AJAXService.async_init)],
 ):
     """자동저장 목록을 반환한다.
     Args:
@@ -30,7 +30,7 @@ async def autosave_list(
 @router.get("/autosave_count")
 async def autosave_count(
     request: Request,
-    service: Annotated[AJAXService, Depends()]
+    service: Annotated[AJAXService, Depends(AJAXService.async_init)]
 ):
     """자동저장글 개수를 반환한다.
     Args:
@@ -46,7 +46,7 @@ async def autosave_count(
 @router.get("/autosave_load/{as_id}")
 async def autosave_load(
         request: Request,
-        service: Annotated[AJAXService, Depends()],
+        service: Annotated[AJAXService, Depends(AJAXService.async_init)],
         as_id: int = Path(..., title="자동저장 ID")
 ):
     """자동저장 내용을 불러온다.
@@ -70,7 +70,7 @@ async def autosave_load(
 @router.post("/autosave")
 async def autosave(
         request: Request,
-        service: Annotated[AJAXService, Depends()],
+        service: Annotated[AJAXService, Depends(AJAXService.async_init)],
         form_data: AutoSaveForm = Depends()
 ):
     """글 임시저장
@@ -93,7 +93,7 @@ async def autosave(
 @router.delete("/autosave/{as_id}")
 async def autosave(
         request: Request,
-        service: Annotated[AJAXService, Depends()],
+        service: Annotated[AJAXService, Depends(AJAXService.async_init)],
         as_id: int = Path(..., title="자동저장 ID")
 ):
     """임시저장글 삭제

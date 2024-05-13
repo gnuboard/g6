@@ -19,6 +19,11 @@ class PopularService(BaseService):
     def __init__(self, db: db_session):
         self.db = db
 
+    @classmethod
+    async def async_init(cls, db: db_session):
+        instance = cls(db)
+        return instance
+
     def raise_exception(self, status_code: int, detail: str = None):
         pass
 

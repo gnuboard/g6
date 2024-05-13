@@ -51,9 +51,9 @@ async def login(
     if auto_login and not is_super_admin(request):
         age_1day = 60 * 60 * 24
         cookie_domain = request.state.cookie_domain
-        response.set_cookie(key="ck_mb_id", value=member.mb_id,
+        await response.set_cookie(key="ck_mb_id", value=member.mb_id,
                             max_age=age_1day * 30, domain=cookie_domain)
-        response.set_cookie(key="ck_auto", value=ss_mb_key,
+        await response.set_cookie(key="ck_auto", value=ss_mb_key,
                             max_age=age_1day * 30, domain=cookie_domain)
 
     return response
@@ -89,7 +89,7 @@ async def logout(request: Request):
     request.session.clear()
 
     response = RedirectResponse(url="/", status_code=302)
-    response.delete_cookie(key="ck_auto")
-    response.delete_cookie(key="ck_mb_id")
+    await response.delete_cookie(key="ck_auto")
+    await response.delete_cookie(key="ck_mb_id")
 
     return response

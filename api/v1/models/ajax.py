@@ -39,6 +39,14 @@ class ResponseAutoSaveDeleteModel(BaseModel):
     result: str
 
 
+class ResponseGoodModel(BaseModel):
+    """좋아요/싫어요 응답 모델"""
+    status: str
+    message: str
+    good: int
+    nogood: int
+
+
 class Message(BaseModel):
     """메시지 응답 모델 (API Docs)"""
     message: str

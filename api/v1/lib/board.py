@@ -36,6 +36,17 @@ class GroupBoardListServiceAPI(GroupBoardListService):
         super().__init__(request, db, gr_id)
         self.member = MemberDetails(request, member, group=self.group)
 
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        gr_id: Annotated[str, Path(...)],
+        member: Annotated[Member, Depends(get_current_member_optional)],
+    ):
+        instance = cls(request, db, gr_id, member)
+        return instance
+
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)
 
@@ -57,6 +68,18 @@ class ListPostServiceAPI(ListPostService):
         super().__init__(request, db, bo_table, search_params)
         self.member = MemberDetails(request, member, board=self.board)
 
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(...)],
+        search_params: Annotated[Dict, Depends(common_search_query_params)],
+        member: Annotated[Member, Depends(get_current_member_optional)],
+    ):
+        instance = cls(request, db, bo_table, search_params, member)
+        return instance
+
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)
 
@@ -76,6 +99,18 @@ class ReadPostServiceAPI(ReadPostService):
     ):
         super().__init__(request, db, bo_table, wr_id)
         self.member = MemberDetails(request, member, board=self.board)
+
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
+        wr_id: Annotated[int, Path(..., title="글 아이디", description="글 아이디")],
+        member: Annotated[Member, Depends(get_current_member_optional)],
+    ):
+        instance = cls(request, db, bo_table, wr_id, member)
+        return instance
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)
@@ -99,6 +134,17 @@ class CreatePostServiceAPI(CreatePostService):
     ):
         super().__init__(request, db, bo_table)
         self.member = MemberDetails(request, member, board=self.board)
+
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
+        member: Annotated[Member, Depends(get_current_member_optional)],
+    ):
+        instance = cls(request, db, bo_table, member)
+        return instance
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)
@@ -138,6 +184,18 @@ class UpdatePostServiceAPI(UpdatePostService):
         super().__init__(request, db, bo_table, wr_id)
         self.member = MemberDetails(request, member, board=self.board)
 
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
+        wr_id: Annotated[int, Path(..., title="글 아이디", description="글 아이디")],
+        member: Annotated[Member, Depends(get_current_member_optional)],
+    ):
+        instance = cls(request, db, bo_table, wr_id, member)
+        return instance
+
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)
 
@@ -158,6 +216,19 @@ class DownloadFileServiceAPI(DownloadFileService):
     ):
         super().__init__(request, db, bo_table, wr_id, bf_no)
         self.member = MemberDetails(request, member, board=self.board)
+
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
+        wr_id: Annotated[int, Path(..., title="글 아이디", description="글 아이디")],
+        bf_no: Annotated[int, Path(..., title="파일 순번", description="파일 순번")],
+        member: Annotated[Member, Depends(get_current_member_optional)],
+    ):
+        instance = cls(request, db, bo_table, wr_id, bf_no, member)
+        return instance
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)
@@ -195,6 +266,18 @@ class DeletePostServiceAPI(DeletePostService):
         super().__init__(request, db, bo_table, wr_id)
         self.member = MemberDetails(request, member, board=self.board)
 
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
+        wr_id: Annotated[int, Path(..., title="글 아이디", description="글 아이디")],
+        member: Annotated[Member, Depends(get_current_member)],
+    ):
+        instance = cls(request, db, bo_table, wr_id, member)
+        return instance
+
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)
 
@@ -214,6 +297,18 @@ class CommentServiceAPI(CommentService):
     ):
         super().__init__(request, db, bo_table, wr_id)
         self.member = MemberDetails(request, member, board=self.board)
+
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
+        wr_id: Annotated[int, Path(..., title="부모글 아이디", description="부모글 아이디")],
+        member: Annotated[Member, Depends(get_current_member_optional)],
+    ):
+        instance = cls(request, db, bo_table, wr_id, member)
+        return instance
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)
@@ -235,6 +330,18 @@ class DeleteCommentServiceAPI(DeleteCommentService):
         super().__init__(request, db, bo_table, comment_id)
         self.member = MemberDetails(request, member, board=self.board)
 
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
+        comment_id: Annotated[int, Path(..., title="댓글 아이디", description="댓글 아이디")],
+        member: Annotated[Member, Depends(get_current_member)],
+    ):
+        instance = cls(request, db, bo_table, comment_id, member)
+        return instance
+
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code, detail)
 
@@ -254,6 +361,18 @@ class MoveUpdateServiceAPI(MoveUpdateService):
     ):
         super().__init__(request, db, bo_table, sw)
         self.member = MemberDetails(request, member, board=self.board)
+
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
+        sw: Annotated[str, Path(..., title="게시글 복사/이동", description="게시글 복사/이동", pattern="copy|move")],
+        member: Annotated[Member, Depends(get_current_member)],
+    ):
+        instance = cls(request, db, bo_table, sw, member)
+        return instance
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)

@@ -20,7 +20,7 @@ router = APIRouter()
             )
 async def autosave_list(
     member: Annotated[Member, Depends(get_current_member)],
-    service: Annotated[AJAXService, Depends()],
+    service: Annotated[AJAXService, Depends(AJAXService.async_init)],
 ) -> List[ResponseAutoSaveModel]:
     """자동저장 목록을 반환한다."""
     service.validate_login(member)
@@ -34,7 +34,7 @@ async def autosave_list(
             )
 async def autosave_count(
     member: Annotated[Member, Depends(get_current_member)],
-    service: Annotated[AJAXService, Depends()]
+    service: Annotated[AJAXService, Depends(AJAXService.async_init)]
 ) -> ResponseAutoSaveCountModel:
     """자동저장글 개수를 반환한다."""
     service.validate_login(member)
@@ -47,7 +47,7 @@ async def autosave_count(
             )
 async def autosave_load(
     member: Annotated[Member, Depends(get_current_member)],
-    service: Annotated[AJAXService, Depends()],
+    service: Annotated[AJAXService, Depends(AJAXService.async_init)],
     as_id: int = Path(..., title="자동저장 ID", description="자동저장 ID")
 ) -> ResponseAutoSaveModel:
     """자동저장 내용을 불러온다."""
@@ -62,7 +62,7 @@ async def autosave_load(
              )
 async def autosave(
     member: Annotated[Member, Depends(get_current_member)],
-    service: Annotated[AJAXService, Depends()],
+    service: Annotated[AJAXService, Depends(AJAXService.async_init)],
     data: AutoSaveModel
 ) -> ResponseAutoSaveCountModel:
     """
@@ -86,7 +86,7 @@ async def autosave(
                )
 async def autosave_delete(
     member: Annotated[Member, Depends(get_current_member)],
-    service: Annotated[AJAXService, Depends()],
+    service: Annotated[AJAXService, Depends(AJAXService.async_init)],
     as_id: int = Path(..., title="자동저장 ID", description="자동저장 ID")
 ) -> ResponseAutoSaveDeleteModel:
     """임시저장글을 삭제한다."""

@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 
 from core.models import Member
 from api.v1.dependencies.member import get_current_member
+from api.v1.models.ajax import ResponseGoodModel
 from service.ajax import AJAXService
 
 
@@ -20,7 +21,7 @@ async def ajax_good(
     bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
     wr_id: int = Path(..., title="글 아이디", description="글 아이디"),
     type: str = Path(..., title="좋아요/싫어요", description="좋아요/싫어요", pattern="good|nogood")
-):
+) -> ResponseGoodModel:
     """
     게시글 좋아요/싫어요 처리
     """
