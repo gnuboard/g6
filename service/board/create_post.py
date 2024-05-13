@@ -27,10 +27,10 @@ class CreatePostService(BoardService):
         self,
         request: Request,
         db: db_session,
-        bo_table: Annotated[str, Path(...)],
         file_service: Annotated[BoardFileService, Depends()],
+        bo_table: Annotated[str, Path(...)],
     ):
-        super().__init__(request, db, bo_table, file_service)
+        super().__init__(request, db, file_service, bo_table)
 
     @classmethod
     async def async_init(
@@ -38,8 +38,9 @@ class CreatePostService(BoardService):
         request: Request,
         db: db_session,
         bo_table: Annotated[str, Path(...)],
+        file_service: Annotated[BoardFileService, Depends()],
     ):
-        instance = cls(request, db, bo_table)
+        instance = cls(request, db, file_service, bo_table)
         return instance
 
     def add_point(self, write, parent_write: WriteBaseModel = None):
@@ -85,7 +86,7 @@ class MoveUpdateService(BoardService):
         bo_table: Annotated[str, Depends(get_variety_bo_table)],
         sw: Annotated[str, Form(...)]
     ):
-        super().__init__(request, db, bo_table, file_service)
+        super().__init__(request, db, file_service, bo_table)
         self.sw = sw
         self.act = "이동" if sw == "move" else "복사"
 
@@ -94,10 +95,11 @@ class MoveUpdateService(BoardService):
         cls,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Depends(get_variety_bo_table)],
         sw: Annotated[str, Form(...)]
     ):
-        instance = cls(request, db, bo_table, sw)
+        instance = cls(request, db, file_service, bo_table, sw)
         return instance
 
     def get_origin_writes(self, wr_ids: str) -> List[WriteBaseModel]:

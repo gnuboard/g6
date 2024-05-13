@@ -26,7 +26,7 @@ class DeletePostService(BoardService):
         bo_table: Annotated[str, Path(...)],
         wr_id: Annotated[int, Path(...)],
     ):
-        super().__init__(request, db, bo_table)
+        super().__init__(request, db, file_service, bo_table)
         self.wr_id = wr_id
         self.write = self.get_write(wr_id)
         self.write_member_mb_no = self.db.scalar(select(Member.mb_no).where(Member.mb_id == self.write.mb_id))
@@ -39,10 +39,11 @@ class DeletePostService(BoardService):
         cls,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Path(...)],
         wr_id: Annotated[int, Path(...)],
     ):
-        instance = cls(request, db, bo_table, wr_id)
+        instance = cls(request, db, file_service, bo_table, wr_id)
         return instance
 
     def validate_level(self, with_session: bool = True):
@@ -165,10 +166,11 @@ class DeleteCommentService(DeletePostService):
         cls,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Path(...)],
         comment_id: Annotated[str, Path(...)],
     ):
-        instance = cls(request, db, bo_table, comment_id)
+        instance = cls(request, db, file_service, bo_table, comment_id)
         return instance
 
     def get_comment(self) -> WriteBaseModel:
@@ -238,16 +240,17 @@ class ListDeleteService(BoardService):
         file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Path(...)],
     ):
-        super().__init__(request, db, bo_table, file_service)
+        super().__init__(request, db, file_service, bo_table)
 
     @classmethod
     async def async_init(
         cls,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Path(...)],
     ):
-        instance = cls(request, db, bo_table)
+        instance = cls(request, db, file_service, bo_table)
         return instance
 
     def delete_writes(self, wr_ids: list):

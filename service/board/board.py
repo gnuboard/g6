@@ -32,8 +32,8 @@ class BoardService(BaseService, BoardConfig):
         self,
         request: Request,
         db: db_session,
-        bo_table: str,
         file_service: BoardFileService,
+        bo_table: str,
     ):
         self.db = db
         board = self.get_board(bo_table)

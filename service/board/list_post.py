@@ -23,7 +23,7 @@ class ListPostService(BoardService):
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         search_params: Annotated[dict, Depends(common_search_query_params)],
     ):
-        super().__init__(request, db, bo_table, file_service)
+        super().__init__(request, db, file_service, bo_table)
         if not self.is_list_level():
             self.raise_exception(detail="목록을 볼 권한이 없습니다.", status_code=403)
 
@@ -37,10 +37,11 @@ class ListPostService(BoardService):
         cls,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         search_params: Annotated[dict, Depends(common_search_query_params)],
     ):
-        instance = cls(request, db, bo_table, search_params)
+        instance = cls(request, db, file_service, bo_table, search_params)
         return instance
 
     def get_query(self, search_params: dict) -> select:

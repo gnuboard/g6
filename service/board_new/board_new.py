@@ -33,8 +33,9 @@ class BoardNewService(BaseService):
         cls,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
     ):
-        instance = cls(request, db)
+        instance = cls(request, db, file_service)
         return instance
 
     def raise_exception(self):

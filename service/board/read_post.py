@@ -24,7 +24,7 @@ class ReadPostService(BoardService):
         bo_table: Annotated[str, Path(...)],
         wr_id: Annotated[int, Path(...)],
     ):
-        super().__init__(request, db, bo_table, file_service)
+        super().__init__(request, db, file_service, bo_table)
         self.wr_id = wr_id
         self.board.subject = self.subject
 
@@ -262,7 +262,7 @@ class DownloadFileService(BoardService):
         wr_id: Annotated[int, Path(...)],
         bf_no: Annotated[int, Path(...)],
     ):
-        super().__init__(request, db, bo_table, file_service)
+        super().__init__(request, db, file_service, bo_table)
         self.write = self.get_write(wr_id)
         self.wr_id = wr_id
         self.bf_no = bf_no
