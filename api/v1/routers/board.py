@@ -36,7 +36,7 @@ credentials_exception = HTTPException(
             responses={**response_401, **response_422}
             )
 async def api_group_board_list(
-    service: Annotated[GroupBoardListServiceAPI, Depends()],
+    service: Annotated[GroupBoardListServiceAPI, Depends(GroupBoardListServiceAPI.async_init)],
 ) -> ResponseGroupBoardsModel:
     """
     게시판그룹의 모든 게시판 목록을 보여줍니다.
@@ -52,7 +52,7 @@ async def api_group_board_list(
             responses={**response_401, **response_422}
             )
 async def api_list_post(
-    service: Annotated[ListPostServiceAPI, Depends()],
+    service: Annotated[ListPostServiceAPI, Depends(ListPostServiceAPI.async_init)],
 ) -> ResponseBoardListModel:
     """
     게시판 정보, 글 목록을 반환합니다.
@@ -76,7 +76,7 @@ async def api_list_post(
             )
 async def api_read_post(
     db: db_session,
-    service: Annotated[ReadPostServiceAPI, Depends()],
+    service: Annotated[ReadPostServiceAPI, Depends(ReadPostServiceAPI.async_init)],
 ) -> ResponseWriteModel:
     """
     지정된 게시판의 글을 개별 조회합니다.
@@ -106,7 +106,7 @@ async def api_read_post(
             )
 async def api_read_post(
     db: db_session,
-    service: Annotated[ReadPostServiceAPI, Depends()],
+    service: Annotated[ReadPostServiceAPI, Depends(ReadPostServiceAPI.async_init)],
     wr_password: str = Body(..., title="비밀번호", description="비밀글 비밀번호")
 ) -> ResponseWriteModel:
     """
@@ -139,7 +139,7 @@ async def api_read_post(
              )
 async def api_create_post(
     db: db_session,
-    service: Annotated[CreatePostServiceAPI, Depends()],
+    service: Annotated[CreatePostServiceAPI, Depends(CreatePostServiceAPI.async_init)],
     wr_data: WriteModel,
 ) -> ResponseNormalModel:
     """
@@ -186,7 +186,7 @@ async def api_create_post(
             )
 async def api_update_post(
     db: db_session,
-    service: Annotated[UpdatePostServiceAPI, Depends()],
+    service: Annotated[UpdatePostServiceAPI, Depends(UpdatePostServiceAPI.async_init)],
     wr_data: WriteModel,
 ) -> ResponseNormalModel:
     """
@@ -230,7 +230,7 @@ async def api_update_post(
                            **response_404, **response_422}
                )
 async def api_delete_post(
-    service: Annotated[DeletePostServiceAPI, Depends()],
+    service: Annotated[DeletePostServiceAPI, Depends(DeletePostServiceAPI.async_init)],
 ) -> ResponseNormalModel:
     """
     지정된 게시판의 글을 삭제합니다.
@@ -267,7 +267,7 @@ async def api_list_delete(
                        **response_404, **response_422}
             )
 async def api_move_post(
-    service: Annotated[MoveUpdateServiceAPI, Depends()],
+    service: Annotated[MoveUpdateServiceAPI, Depends(MoveUpdateServiceAPI.async_init)],
 ) -> List[ResponseBoardModel]:
     """
     게시글을 복사/이동 가능한 게시판 목록을 반환합니다.
@@ -284,7 +284,7 @@ async def api_move_post(
                        **response_404, **response_422}
             )
 async def api_move_update(
-    service: Annotated[MoveUpdateServiceAPI, Depends()],
+    service: Annotated[MoveUpdateServiceAPI, Depends(MoveUpdateServiceAPI.async_init)],
     wr_ids: str = Body(..., title="글 아이디 목록"),
     target_bo_tables: list = Body(..., title="복사/이동할 게시판 테이블 목록"),
 ) -> ResponseNormalModel:
@@ -309,7 +309,7 @@ async def api_move_update(
                        **response_404, **response_422}
             )
 async def api_upload_file(
-    service: Annotated[CreatePostServiceAPI, Depends()],
+    service: Annotated[CreatePostServiceAPI, Depends(CreatePostServiceAPI.async_init)],
     data: Annotated[dict, Depends(arange_file_data)],
     wr_id: int = Path(..., title="글 아이디", description="글 아이디"),
 ) -> ResponseNormalModel:
@@ -330,7 +330,7 @@ async def api_upload_file(
                        **response_404, **response_422}
             )
 async def api_download_file(
-    service: Annotated[DownloadFileServiceAPI, Depends()],
+    service: Annotated[DownloadFileServiceAPI, Depends(DownloadFileServiceAPI.async_init)],
 ):
     """
     게시글의 파일을 다운로드합니다.
@@ -352,7 +352,7 @@ async def api_download_file(
             )
 async def api_create_comment(
     db: db_session,
-    service: Annotated[CommentServiceAPI, Depends()],
+    service: Annotated[CommentServiceAPI, Depends(CommentServiceAPI.async_init)],
     comment_data: CommentModel,
     bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
     wr_id: int = Path(..., title="부모글 아이디", description="부모글 아이디"),
@@ -389,7 +389,7 @@ async def api_create_comment(
             )
 async def api_update_comment(
     db: db_session,
-    service: Annotated[CommentServiceAPI, Depends()],
+    service: Annotated[CommentServiceAPI, Depends(CommentServiceAPI.async_init)],
     comment_data: CommentModel,
 ) -> ResponseNormalModel:
     """
@@ -423,7 +423,7 @@ async def api_update_comment(
                            **response_404, **response_422}
                )
 async def api_delete_comment(
-    service: Annotated[DeleteCommentServiceAPI, Depends()],
+    service: Annotated[DeleteCommentServiceAPI, Depends(DeleteCommentServiceAPI.async_init)],
 ) -> ResponseNormalModel:
     """
     댓글을 삭제합니다.
