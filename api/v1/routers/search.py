@@ -15,7 +15,7 @@ router = APIRouter()
             responses={**response_401, **response_403, **response_422}
             )
 async def api_search(
-    service: Annotated[SearchServiceAPI, Depends()],
+    service: Annotated[SearchServiceAPI, Depends(SearchServiceAPI.async_init)],
     sfl: str = Query("wr_subject||wr_content", title="검색필드", description="검색필드"),
     stx: str = Query(..., title="검색어", description="검색어"),
     sop: str = Query("and", title="검색연산자", description="검색연산자", pattern="and|or"),

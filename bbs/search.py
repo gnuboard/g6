@@ -15,7 +15,7 @@ templates.env.filters["search_font"] = search_font
 @router.get("/search")
 async def search(
     request: Request,
-    search_service: Annotated[SearchService, Depends()],
+    search_service: Annotated[SearchService, Depends(SearchService.async_init)],
     popular_service: Annotated[PopularService, Depends()],
     sfl: str = Query("wr_subject||wr_content"),
     stx: str = Query(...),
