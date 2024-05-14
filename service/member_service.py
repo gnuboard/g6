@@ -9,7 +9,7 @@ from typing_extensions import Annotated
 
 from fastapi import Depends, Request, UploadFile
 from PIL import Image, UnidentifiedImageError
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from core.database import db_session
 from core.exception import AlertException
@@ -173,6 +173,14 @@ class MemberService(BaseService):
         self.db.commit()
 
         return member
+
+    def update_member_point(self, mb_id: str, point: int) -> None:
+        """회원 포인트를 수정합니다."""
+        self.db.execute(
+            update(Member).values(mb_point=point)
+            .where(Member.mb_id == mb_id)
+        )
+        self.db.commit()
 
     def leave_member(self, member: Member):
         """

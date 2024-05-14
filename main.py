@@ -27,11 +27,11 @@ from lib.common import (
 )
 from lib.dependency.dependencies import check_use_template
 from lib.member import is_super_admin
-from lib.point import insert_point
 from lib.scheduler import scheduler
 from lib.template_filters import default_if_none
 from lib.token import create_session_token
 from service.member_service import MemberService
+from service.point_service import PointService
 from service.visit_service import VisitService
 
 from admin.admin import router as admin_router
@@ -177,8 +177,10 @@ async def main_middleware(request: Request, call_next):
             # 오늘 처음 로그인 이라면 포인트 지급 및 로그인 정보 업데이트
             ymd_str = datetime.now().strftime("%Y-%m-%d")
             if member.mb_today_login.strftime("%Y-%m-%d") != ymd_str:
-                insert_point(request, member.mb_id, config.cf_login_point,
-                            ymd_str + " 첫로그인", "@login", member.mb_id, ymd_str)
+                point_service = PointService(request, db, member_service)
+                point_service.save_point(
+                    member.mb_id, config.cf_login_point, ymd_str + " 첫로그인",
+                    "@login", member.mb_id, ymd_str)
 
                 member.mb_today_login = datetime.now()
                 member.mb_login_ip = request.client.host

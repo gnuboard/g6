@@ -5,7 +5,7 @@ from typing import List
 from typing_extensions import Annotated
 
 from fastapi import Depends, Request
-from sqlalchemy import func, select, update
+from sqlalchemy import delete, func, select, update
 
 from core.database import db_session
 from core.exception import AlertException
@@ -114,11 +114,8 @@ class PointService(BaseService):
         )
         self.db.add(new_point)
 
-        self.db.execute(
-            update(Member).values(mb_point=po_mb_point)
-            .where(Member.mb_id == mb_id)
-        )
-        self.db.commit()
+        # 회원 포인트 갱신
+        self.member_service.update_member_point(mb_id, po_mb_point)
 
     def get_total_point(self, mb_id: str) -> int:
         """
@@ -184,13 +181,149 @@ class PointService(BaseService):
                 self.db.commit()
                 using_point -= deduction_point
 
+    def delete_point(self, mb_id: str, rel_table: str, rel_id: str, rel_action: str) -> None:
+        """
+        포인트 내역 삭제
+        """
+        result = False
+
+        # 포인트 내역정보
+        row = self._fetch_point_by_relation(mb_id, rel_table, rel_id, rel_action)
+        if row:
+            if row.po_point and row.po_point > 0:
+                abs_po_point = abs(row.po_point)
+                self.delete_use_point(row.mb_id, abs_po_point)
+            else:
+                if row.po_use_point and row.po_use_point > 0:
+                    self.insert_use_point(row.mb_id, row.po_use_point, row.po_id)
+
+            delete_result = self.db.execute(
+                delete(Point).where(
+                    Point.mb_id == mb_id,
+                    Point.po_rel_table == rel_table,
+                    Point.po_rel_id == str(rel_id),
+                    Point.po_rel_action == rel_action
+                )
+            )
+            self.db.commit()
+
+            if delete_result.rowcount > 0:
+                result = True
+
+                # po_mb_point에 반영
+                if row.po_point:
+                    self.db.execute(
+                        update(Point).values(
+                            po_mb_point=Point.po_mb_point - row.po_point
+                        )
+                        .where(Point.mb_id == mb_id, Point.po_id > row.po_id)
+                    )
+                    self.db.commit()
+
+                # 회원 포인트 총합 갱신
+                sum_point = self.get_total_point(mb_id)
+                self.member_service.update_member_point(mb_id, sum_point)
+
+        return result
+
+    def delete_use_point(self, mb_id: str, point: int) -> None:
+        """
+        사용포인트 삭제
+        """
+        point1 = abs(point)
+        query = select(Point).where(
+            Point.mb_id == mb_id,
+            Point.po_expired != 1,
+            Point.po_use_point > 0
+        )
+        order_list = [Point.po_id.desc()]
+        if self.point_term:
+            order_list.insert(0, Point.po_expire_date.desc())
+
+        points = self.db.scalars(query.order_by(*order_list)).all()
+
+        for row in points:
+            point2 = row.po_use_point
+            if (row.po_expired == 100
+                and (row.po_expire_date == self.MAX_DATE
+                     or row.po_expire_date >= datetime.now())):
+                po_expired = 0
+            else:
+                po_expired = row.po_expired
+
+            if point2 > point1:
+                self.db.execute(
+                    update(Point).values(
+                        po_use_point=Point.po_use_point - point1,
+                        po_expired=po_expired
+                    )
+                    .where(Point.po_id == row.po_id)
+                )
+                self.db.commit()
+                break
+
+            self.db.execute(
+                update(Point).values(
+                    po_use_point=0,
+                    po_expired=po_expired
+                )
+                .where(Point.po_id == row.po_id)
+            )
+            self.db.commit()
+            point1 = point1 - point2
+
+    def delete_expire_point(self, mb_id: str, point: int):
+        """
+        소멸 포인트 삭제
+        """
+        point1 = abs(point)
+        points = self.db.scalars(
+            select(Point).where(
+                Point.mb_id == mb_id,
+                Point.po_expired == 1,
+                Point.po_point >= 0,
+                Point.po_use_point > 0
+            ).order_by(Point.po_expire_date.desc(), Point.po_id.desc())
+        ).all()
+
+        for row in points:
+            point2 = row.po_use_point
+            po_expired = 0
+            po_expire_date = self.MAX_DATE
+            if self.point_term > 0:
+                expired = timedelta(days=self.point_term - 1)
+                po_expire_date = (datetime.now() + expired).strftime('%Y-%m-%d')
+        
+            if point2 > point1:
+                self.db.execute(
+                    update(Point).values(
+                        po_use_point=Point.po_use_point - point1,
+                        po_expired=po_expired,
+                        po_expire_date=po_expire_date
+                    )
+                    .where(Point.po_id == row.po_id)
+                )
+                self.db.commit()
+                break
+
+            self.db.execute(
+                update(Point).values(
+                    po_use_point=0,
+                    po_expired=po_expired,
+                    po_expire_date=po_expire_date
+                )
+                .where(Point.po_id == row.po_id)
+            )
+            self.db.commit()
+            point1 = point1 - point2
+
     def _fetch_point_by_relation(self, mb_id: str,
                                  rel_table: str, rel_id: str, rel_action: str):
         """
         포인트 적립 내용으로 내역을 조회합니다.
         """
         return self.db.scalar(
-            select(Point.po_id)
+            select(Point)
             .where(Point.mb_id == mb_id,
                     Point.po_rel_table == rel_table,
                     Point.po_rel_id == rel_id,
@@ -217,14 +350,15 @@ class PointService(BaseService):
         """
         만료된 포인트만큼 포인트를 소멸시킵니다.
         """
-        member = self.member_service.read_member(mb_id)
+        member = self.member_service.fetch_member_by_id(mb_id)
+        mb_point = member.mb_point if member else 0
         expired_point = point * (-1)
         new_point = Point(
             mb_id=mb_id,
             po_content='포인트 소멸',
             po_point=expired_point,
             po_use_point=0,
-            po_mb_point=member.mb_point + expired_point,
+            po_mb_point=mb_point + expired_point,
             po_expired=1,
             po_rel_table='@expire',
             po_rel_id=str(mb_id),

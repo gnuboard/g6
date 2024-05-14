@@ -20,7 +20,6 @@ from lib.common import (
 )
 from lib.mail import mailer
 from lib.member import MemberDetails, get_admin_type, get_member_level
-from lib.point import delete_point, insert_point
 from service.board_file_service import BoardFileService as FileService
 
 

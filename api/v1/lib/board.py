@@ -2,11 +2,13 @@ from typing_extensions import Dict, Annotated
 from fastapi import Request, HTTPException, Path, Depends
 from sqlalchemy import inspect
 
+from api.v1.lib.point import PointServiceAPI
+from api.v1.dependencies.member import get_current_member_optional, get_current_member
 from core.models import Board, Member
 from core.database import db_session
 from lib.dependency.dependencies import common_search_query_params
 from lib.board_lib import (
-    get_admin_type, generate_reply_character, get_next_num, insert_point
+    get_admin_type, generate_reply_character, get_next_num
 )
 from lib.template_filters import number_format
 from lib.member import MemberDetails
@@ -17,7 +19,7 @@ from service.board import (
     DeletePostService, CommentService, DeleteCommentService,
     MoveUpdateService, ListDeleteService
 )
-from api.v1.dependencies.member import get_current_member_optional, get_current_member
+from service.board_file_service import BoardFileService
 
 
 class GroupBoardListServiceAPI(GroupBoardListService):
@@ -93,11 +95,13 @@ class ReadPostServiceAPI(ReadPostService):
         self,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointServiceAPI, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         wr_id: Annotated[int, Path(..., title="글 아이디", description="글 아이디")],
         member: Annotated[Member, Depends(get_current_member_optional)],
     ):
-        super().__init__(request, db, bo_table, wr_id)
+        super().__init__(request, db, file_service, point_service, bo_table, wr_id)
         self.member = MemberDetails(request, member, board=self.board)
 
     @classmethod
@@ -105,11 +109,13 @@ class ReadPostServiceAPI(ReadPostService):
         cls,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointServiceAPI, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         wr_id: Annotated[int, Path(..., title="글 아이디", description="글 아이디")],
         member: Annotated[Member, Depends(get_current_member_optional)],
     ):
-        instance = cls(request, db, bo_table, wr_id, member)
+        instance = cls(request, db, file_service, point_service, bo_table, wr_id, member)
         return instance
 
     def raise_exception(self, status_code: int, detail: str = None):
@@ -129,10 +135,11 @@ class CreatePostServiceAPI(CreatePostService):
         self,
         request: Request,
         db: db_session,
+        point_service: Annotated[PointServiceAPI, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         member: Annotated[Member, Depends(get_current_member_optional)],
     ):
-        super().__init__(request, db, bo_table)
+        super().__init__(request, db, point_service, bo_table)
         self.member = MemberDetails(request, member, board=self.board)
 
     @classmethod
@@ -140,15 +147,16 @@ class CreatePostServiceAPI(CreatePostService):
         cls,
         request: Request,
         db: db_session,
+        point_service: Annotated[PointServiceAPI, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         member: Annotated[Member, Depends(get_current_member_optional)],
     ):
-        instance = cls(request, db, bo_table, member)
+        instance = cls(request, db, point_service, bo_table, member)
         return instance
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)
-    
+
     def save_write(self, parent_id, wr_data):
         """게시글을 저장"""
         parent_write = self.get_parent_post(parent_id)
@@ -209,12 +217,14 @@ class DownloadFileServiceAPI(DownloadFileService):
         self,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointServiceAPI, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         wr_id: Annotated[int, Path(..., title="글 아이디", description="글 아이디")],
         bf_no: Annotated[int, Path(..., title="파일 순번", description="파일 순번")],
         member: Annotated[Member, Depends(get_current_member_optional)],
     ):
-        super().__init__(request, db, bo_table, wr_id, bf_no)
+        super().__init__(request, db, file_service, point_service, bo_table, wr_id, bf_no)
         self.member = MemberDetails(request, member, board=self.board)
 
     @classmethod
@@ -222,12 +232,14 @@ class DownloadFileServiceAPI(DownloadFileService):
         cls,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointServiceAPI, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         wr_id: Annotated[int, Path(..., title="글 아이디", description="글 아이디")],
         bf_no: Annotated[int, Path(..., title="파일 순번", description="파일 순번")],
         member: Annotated[Member, Depends(get_current_member_optional)],
     ):
-        instance = cls(request, db, bo_table, wr_id, bf_no, member)
+        instance = cls(request, db, file_service, point_service, bo_table, wr_id, bf_no, member)
         return instance
 
     def raise_exception(self, status_code: int, detail: str = None):
@@ -240,9 +252,12 @@ class DownloadFileServiceAPI(DownloadFileService):
 
         download_point = self.board.bo_download_point
         if self.is_download_point(self.write):
-            insert_point(self.request, self.member.mb_id, download_point, f"{self.board.bo_subject} {self.wr_id} 파일 다운로드", self.bo_table, self.wr_id, "다운로드")
+            self.point_service.save_point(
+                self.member.mb_id, download_point,
+                f"{self.board.bo_subject} {self.wr_id} 파일 다운로드", self.bo_table,
+                self.wr_id, "다운로드")
             # 다운로드 횟수 증가
-            self.file_manager.update_download_count(board_file)
+            self.file_service.update_download_count(board_file)
             return
         
         point = number_format(abs(download_point))
@@ -259,11 +274,13 @@ class DeletePostServiceAPI(DeletePostService):
         self,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointServiceAPI, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         wr_id: Annotated[int, Path(..., title="글 아이디", description="글 아이디")],
         member: Annotated[Member, Depends(get_current_member)],
     ):
-        super().__init__(request, db, bo_table, wr_id)
+        super().__init__(request, db, file_service, point_service, bo_table, wr_id)
         self.member = MemberDetails(request, member, board=self.board)
 
     @classmethod
@@ -271,11 +288,13 @@ class DeletePostServiceAPI(DeletePostService):
         cls,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointServiceAPI, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         wr_id: Annotated[int, Path(..., title="글 아이디", description="글 아이디")],
         member: Annotated[Member, Depends(get_current_member)],
     ):
-        instance = cls(request, db, bo_table, wr_id, member)
+        instance = cls(request, db, file_service, point_service, bo_table, wr_id, member)
         return instance
 
     def raise_exception(self, status_code: int, detail: str = None):
@@ -291,11 +310,13 @@ class CommentServiceAPI(CommentService):
         self,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointServiceAPI, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         wr_id: Annotated[int, Path(..., title="부모글 아이디", description="부모글 아이디")],
         member: Annotated[Member, Depends(get_current_member_optional)],
     ):
-        super().__init__(request, db, bo_table, wr_id)
+        super().__init__(request, db, file_service, point_service, bo_table, wr_id)
         self.member = MemberDetails(request, member, board=self.board)
 
     @classmethod
@@ -303,11 +324,13 @@ class CommentServiceAPI(CommentService):
         cls,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointServiceAPI, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         wr_id: Annotated[int, Path(..., title="부모글 아이디", description="부모글 아이디")],
         member: Annotated[Member, Depends(get_current_member_optional)],
     ):
-        instance = cls(request, db, bo_table, wr_id, member)
+        instance = cls(request, db, file_service, point_service, bo_table, wr_id, member)
         return instance
 
     def raise_exception(self, status_code: int, detail: str = None):
@@ -323,11 +346,13 @@ class DeleteCommentServiceAPI(DeleteCommentService):
         self,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointServiceAPI, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         comment_id: Annotated[int, Path(..., title="댓글 아이디", description="댓글 아이디")],
         member: Annotated[Member, Depends(get_current_member)],
     ):
-        super().__init__(request, db, bo_table, comment_id)
+        super().__init__(request, db, file_service, point_service, bo_table, comment_id)
         self.member = MemberDetails(request, member, board=self.board)
 
     @classmethod
@@ -355,11 +380,12 @@ class MoveUpdateServiceAPI(MoveUpdateService):
         self,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         sw: Annotated[str, Path(..., title="게시글 복사/이동", description="게시글 복사/이동", pattern="copy|move")],
         member: Annotated[Member, Depends(get_current_member)],
     ):
-        super().__init__(request, db, bo_table, sw)
+        super().__init__(request, db, file_service, bo_table, sw)
         self.member = MemberDetails(request, member, board=self.board)
 
     @classmethod
@@ -367,11 +393,12 @@ class MoveUpdateServiceAPI(MoveUpdateService):
         cls,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         sw: Annotated[str, Path(..., title="게시글 복사/이동", description="게시글 복사/이동", pattern="copy|move")],
         member: Annotated[Member, Depends(get_current_member)],
     ):
-        instance = cls(request, db, bo_table, sw, member)
+        instance = cls(request, db, file_service, bo_table, sw, member)
         return instance
 
     def raise_exception(self, status_code: int, detail: str = None):
@@ -387,10 +414,12 @@ class ListDeleteServiceAPI(ListDeleteService):
         self,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointServiceAPI, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         member: Annotated[Member, Depends(get_current_member)],
     ):
-        super().__init__(request, db, bo_table)
+        super().__init__(request, db, file_service, point_service, bo_table)
         self.member = MemberDetails(request, member, board=self.board)
 
     def raise_exception(self, status_code: int, detail: str = None):
@@ -421,8 +450,8 @@ def is_possible_point(
     member = member_info["member"]
     if not action_point:
         return True
-    
+
     if not member:
         return False
 
-    return member.mb_point + action_point >= 0    
+    return member.mb_point + action_point >= 0

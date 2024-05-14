@@ -8,11 +8,11 @@ from fastapi import (
 )
 from sqlalchemy import delete
 
+from api.v1.lib.point import PointServiceAPI
 from bbs.social import SocialAuthService
 from core.database import db_session
 from core.models import Member
 from lib.mail import send_password_reset_mail, send_register_mail
-from lib.point import insert_point
 
 from api.v1.dependencies.member import (
     get_current_member, validate_create_data, validate_update_data
@@ -42,6 +42,7 @@ async def create_member(
     request: Request,
     background_tasks: BackgroundTasks,
     service: Annotated[MemberServiceAPI, Depends()],
+    point_service: Annotated[PointServiceAPI, Depends()],
     data: Annotated[CreateMember, Depends(validate_create_data)]
 ) -> RegisterResponse:
     """
@@ -57,15 +58,15 @@ async def create_member(
 
     # 회원가입 포인트 지급
     register_point = getattr(config, "cf_register_point", 0)
-    insert_point(request, member.mb_id, register_point,
-                 "회원가입 축하", "@member", member.mb_id, "회원가입")
+    point_service.save_point(member.mb_id, register_point, "회원가입 축하",
+                             "@member", member.mb_id, "회원가입")
 
     # 추천인 포인트 지급
     mb_recommend = data.mb_recommend
     if getattr(config, "cf_use_recommend", False) and mb_recommend:
         recommend_point = getattr(config, "cf_recommend_point", 0)
-        insert_point(request, mb_recommend, recommend_point,
-                     f"{member.mb_id}의 추천인", "@member", mb_recommend, f"{member.mb_id} 추천")
+        point_service.save_point(mb_recommend, recommend_point, f"{member.mb_id}의 추천인",
+                                 "@member", mb_recommend, f"{member.mb_id} 추천")
 
     # 회원가입메일 발송 처리(백그라운드)
     background_tasks.add_task(send_register_mail, request, member)

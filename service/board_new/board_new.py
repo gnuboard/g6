@@ -1,15 +1,15 @@
 from datetime import datetime
 from typing_extensions import Annotated, List
 from fastapi import Depends, Request, HTTPException
-from sqlalchemy import select, func
+from sqlalchemy import func, select, Select
 
 from core.models import Board, BoardNew
 from core.database import db_session
 from core.exception import AlertException
 from lib.common import dynamic_create_write_table, cut_name, FileCache
-from lib.point import delete_point, insert_point
 from service import BaseService
 from service.board_file_service import BoardFileService
+from service.point_service import PointService
 
 
 class BoardNewService(BaseService):
@@ -21,12 +21,14 @@ class BoardNewService(BaseService):
         request: Request,
         db: db_session,
         file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointService, Depends()],
     ):
         self.request = request
         self.db = db
         self.config = request.state.config
         self.page_rows = self.config.cf_mobile_page_rows if request.state.is_mobile and self.config.cf_mobile_page_rows else self.config.cf_new_rows
         self.file_service = file_service
+        self.point_service = point_service
 
     @classmethod
     async def async_init(
@@ -34,8 +36,9 @@ class BoardNewService(BaseService):
         request: Request,
         db: db_session,
         file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointService, Depends()],
     ):
-        instance = cls(request, db, file_service)
+        instance = cls(request, db, file_service, point_service)
         return instance
 
     def raise_exception(self):
@@ -54,10 +57,10 @@ class BoardNewService(BaseService):
 
     def get_query(
             self, gr_id: str = None, mb_id: str = None, view: str = None
-    ) -> select:
+    ) -> Select:
         """검색 조건에 따라 query를 반환"""
         query = select().join(BoardNew.board).order_by(BoardNew.bn_id.desc())
-        
+
         if gr_id:
             query = query.where(Board.gr_id == gr_id)
         if mb_id:
@@ -73,12 +76,12 @@ class BoardNewService(BaseService):
         offset = (current_page - 1) * self.page_rows
         return offset
 
-    def get_board_news(self, query: select, offset: int) -> List[BoardNew]:
+    def get_board_news(self, query: Select, offset: int) -> List[BoardNew]:
         """최신글 목록 조회"""
         board_news = self.db.scalars(query.add_columns(BoardNew).offset(offset).limit(self.page_rows)).all()
         return board_news
 
-    def get_total_count(self, query: select) -> int:
+    def get_total_count(self, query: Select) -> int:
         """최신글 총 갯수 조회"""
         total_count = self.db.scalar(query.add_columns(func.count(BoardNew.bn_id)).order_by(None))
         return total_count
@@ -119,16 +122,18 @@ class BoardNewService(BaseService):
                     self.db.delete(write)
 
                     # 원글 포인트 삭제
-                    if not delete_point(self.request, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
-                        insert_point(self.request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
+                    if not self.point_service.delete_point(write.mb_id, board.bo_table, write.wr_id, "쓰기"):
+                        self.point_service.save_point(write.mb_id, board.bo_write_point * (-1),
+                                                      f"{board.bo_subject} {write.wr_id} 글 삭제")
                 else:
                     # 댓글 삭제
                     # TODO: 댓글 삭제 공용함수 추가
                     self.db.delete(write)
 
                     # 댓글 포인트 삭제
-                    if not delete_point(self.request, write.mb_id, board.bo_table, write.wr_id, "댓글"):
-                        insert_point(self.request, write.mb_id, board.bo_comment_point * (-1), f"{board.bo_subject} {write.wr_parent}-{write.wr_id} 댓글 삭제")
+                    if not self.point_service.delete_point(write.mb_id, board.bo_table, write.wr_id, "댓글"):
+                        self.point_service.save_point(write.mb_id, board.bo_comment_point * (-1),
+                                                      f"{board.bo_subject} {write.wr_parent}-{write.wr_id} 댓글 삭제")
                 # 파일 삭제
                 self.file_service.delete_board_files(board.bo_table, write.wr_id)
 

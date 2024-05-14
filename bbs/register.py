@@ -21,8 +21,8 @@ from lib.dependency.dependencies import (
 from lib.dependency.member import validate_policy_agree, validate_register_data
 from lib.mail import send_register_mail
 from service.member_service import MemberImageService, MemberService
-from lib.point import insert_point
 from lib.template_filters import default_if_none
+from service.point_service import PointService
 
 router = APIRouter()
 templates = UserTemplates()
@@ -86,6 +86,7 @@ async def post_register_form(
     request: Request,
     member_service: Annotated[MemberService, Depends()],
     file_service: Annotated[MemberImageService, Depends()],
+    point_service: Annotated[PointService, Depends()],
     form_data: Annotated[RegisterMemberForm, Depends(validate_register_data)],
     background_tasks: BackgroundTasks,
     mb_id: str = Form(None),
@@ -99,14 +100,16 @@ async def post_register_form(
     member = member_service.create_member(form_data)
 
     # 회원가입 포인트 지급
-    insert_point(request, member.mb_id, config.cf_register_point,
-                 "회원가입 축하", "@member", member.mb_id, "회원가입")
+    register_point = getattr(config, "cf_register_point", 0)
+    point_service.save_point(member.mb_id, register_point, "회원가입 축하",
+                            "@member", member.mb_id, "회원가입")
 
     # 추천인 포인트 지급
     mb_recommend = form_data.mb_recommend
     if config.cf_use_recommend and mb_recommend:
-        insert_point(request, mb_recommend, config.cf_recommend_point,
-                     f"{member.mb_id}의 추천인", "@member", mb_recommend, f"{member.mb_id} 추천")
+        recommend_point = getattr(config, "cf_recommend_point", 0)
+        point_service.save_point(mb_recommend, recommend_point, f"{member.mb_id}의 추천인",
+                                 "@member", mb_recommend, f"{member.mb_id} 추천")
 
     # 회원가입메일 발송 처리(백그라운드)
     background_tasks.add_task(send_register_mail, request, member)

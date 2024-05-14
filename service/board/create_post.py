@@ -6,15 +6,14 @@ from sqlalchemy import select, update
 from core.database import db_session
 from core.models import WriteBaseModel, BoardNew, BoardGood, Scrap
 from core.formclass import WriteForm
-from lib.board_lib import (
-    insert_point, FileCache, get_next_num, generate_reply_character
-)
+from lib.board_lib import FileCache, get_next_num, generate_reply_character
 from lib.common import cut_name, dynamic_create_write_table
 from lib.dependency.dependencies import (
     validate_captcha as lib_validate_captcha, get_variety_bo_table
 )
 from lib.template_filters import datetime_format
 from api.v1.models.board import WriteModel
+from service.point_service import PointService
 from . import BoardService
 from service.board_file_service import BoardFileService
 
@@ -27,20 +26,21 @@ class CreatePostService(BoardService):
         self,
         request: Request,
         db: db_session,
-        file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointService, Depends()],
         bo_table: Annotated[str, Path(...)],
     ):
-        super().__init__(request, db, file_service, bo_table)
+        super().__init__(request, db, bo_table)
+        self.point_service = point_service
 
     @classmethod
     async def async_init(
         cls,
         request: Request,
         db: db_session,
+        point_service: Annotated[PointService, Depends()],
         bo_table: Annotated[str, Path(...)],
-        file_service: Annotated[BoardFileService, Depends()],
     ):
-        instance = cls(request, db, file_service, bo_table)
+        instance = cls(request, db, point_service, bo_table)
         return instance
 
     def add_point(self, write, parent_write: WriteBaseModel = None):
@@ -48,7 +48,8 @@ class CreatePostService(BoardService):
         if self.member.mb_id:
             point = self.board.bo_comment_point if parent_write else self.board.bo_write_point
             content = f"{self.board.bo_subject} {write.wr_id} 글" + ("답변" if parent_write else "쓰기")
-            insert_point(self.request, self.member.mb_id, point, content, self.bo_table, write.wr_id, "쓰기")
+            self.point_service.save_point(self.member.mb_id, point, content,
+                                          self.bo_table, write.wr_id, "쓰기")
 
     def save_write(self, parent_id, data: Union[WriteForm, WriteModel]):
         """게시글을 저장"""
@@ -86,9 +87,10 @@ class MoveUpdateService(BoardService):
         bo_table: Annotated[str, Depends(get_variety_bo_table)],
         sw: Annotated[str, Form(...)]
     ):
-        super().__init__(request, db, file_service, bo_table)
+        super().__init__(request, db, bo_table)
         self.sw = sw
         self.act = "이동" if sw == "move" else "복사"
+        self.file_service = file_service
 
     @classmethod
     async def async_init(

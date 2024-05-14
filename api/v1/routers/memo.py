@@ -1,11 +1,11 @@
 """쪽지 API Router"""
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 
+from api.v1.lib.point import PointServiceAPI
 from core.models import Member, Memo
 from lib.common import get_paging_info
-from lib.point import insert_point
 
 from api.v1.dependencies.member import get_current_member
 from api.v1.dependencies.memo import get_memo, validate_send_memo
@@ -81,8 +81,8 @@ async def update_read_member_memo(
              summary="쪽지 전송",
              responses={**response_403, **response_404, **response_422})
 async def send_memo(
-    request: Request,
     service: Annotated[MemoServiceAPI, Depends()],
+    point_service: Annotated[PointServiceAPI, Depends()],
     member: Annotated[Member, Depends(get_current_member)],
     data: Annotated[SendMemo, Depends(validate_send_memo)]
 ) -> MessageResponse:
@@ -99,8 +99,10 @@ async def send_memo(
         service.send_memo(member, target, data.me_memo)
         service.update_memo_call(member, target)
         # 포인트 소진
-        insert_point(request, member.mb_id, data.point * (-1),
-                     f"{target.mb_nick}({target.mb_id})님에게 쪽지 발송", "@memo", target.mb_id, "쪽지전송")
+        point_service.save_point(
+            member.mb_id, data.point * (-1),
+            f"{target.mb_nick}({target.mb_id})님에게 쪽지 발송", "@memo",
+            target.mb_id, "쪽지전송")
 
     return {"message": "쪽지를 발송하였습니다."}
 

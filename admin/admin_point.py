@@ -13,10 +13,8 @@ from core.models import Point, Member
 from core.template import AdminTemplates
 from lib.common import select_query, set_url_query_params
 from lib.dependency.dependencies import common_search_query_params, validate_token
-from lib.point import (
-    delete_expire_point, delete_use_point, get_point_sum
-)
 from lib.template_functions import get_paging
+from service.member_service import MemberService
 from service.point_service import PointService
 
 router = APIRouter()
@@ -108,6 +106,7 @@ async def point_update(
 async def point_list_delete(
     request: Request,
     db: db_session,
+    member_service: Annotated[MemberService, Depends()],
     service: Annotated[PointService, Depends()],
     checks: List[int] = Form(None, alias="chk[]"),
     po_id: List[int] = Form(None, alias="po_id[]"),
@@ -124,9 +123,9 @@ async def point_list_delete(
             abs_po_point = abs(point.po_point)
 
             if point.po_rel_table == "@expire":
-                delete_expire_point(request, point.mb_id, abs_po_point)
+                service.delete_expire_point(point.mb_id, abs_po_point)
             else:
-                delete_use_point(request, point.mb_id, abs_po_point)
+                service.delete_use_point(point.mb_id, abs_po_point)
         elif point.po_use_point > 0:
             service.insert_use_point(point.mb_id, point.po_use_point, point.po_id)
 
@@ -142,14 +141,9 @@ async def point_list_delete(
         )
         db.commit()
 
-        # 포인트 UPDATE
-        sum_point = get_point_sum(request, point.mb_id)
-        db.execute(
-            update(Member)
-            .values(mb_point=sum_point)
-            .where(Member.mb_id == point.mb_id)
-        )
-        db.commit()
+        # 회원 포인트 갱신
+        sum_point = service.get_total_point(point.mb_id)
+        member_service.update_member_point(point.mb_id, sum_point)
 
     url = "/admin/point_list"
     query_params = request.query_params

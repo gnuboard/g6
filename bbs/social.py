@@ -21,13 +21,13 @@ from core.template import UserTemplates
 from lib.common import get_admin_email, get_admin_email_name, session_member_key
 from lib.mail import mailer
 from lib.pbkdf2 import create_hash
-from lib.point import insert_point
 from lib.social import providers
 from lib.social.social import (
     get_social_login_token, get_social_profile, oauth, SocialProvider
 )
 from lib.template_filters import default_if_none
 from service.member_service import MemberService, ValidateMember
+from service.point_service import PointService
 
 
 router = APIRouter()
@@ -209,6 +209,7 @@ async def get_social_register_form(
 async def post_social_register(
         request: Request,
         db: db_session,
+        point_service: Annotated[PointService, Depends()],
         validate: Annotated[ValidateMember, Depends()],
         member_form: MemberForm = Depends(),
 ):
@@ -292,7 +293,9 @@ async def post_social_register(
     db.commit()
 
     # 회원가입 포인트 부여
-    insert_point(request, member.mb_id, config.cf_register_point, "회원가입 축하", "@member", member.mb_id, "회원가입")
+    register_point = getattr(config, "cf_register_point", 0)
+    point_service.save_point(member.mb_id, register_point, "회원가입 축하",
+                             "@member", member.mb_id, "회원가입")
 
     from_email = get_admin_email(request)
     from_name = get_admin_email_name(request)

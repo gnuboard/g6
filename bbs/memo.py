@@ -4,7 +4,6 @@ from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import RedirectResponse
 
-
 from core.models import Member, Memo
 from core.template import UserTemplates
 from lib.captcha import captcha_widget
@@ -13,11 +12,11 @@ from lib.dependency.auth import get_login_member
 from lib.dependency.dependencies import validate_captcha, validate_token
 from lib.dependency.memo import get_memo
 from lib.html_sanitizer import content_sanitizer as sanitizer
-from lib.point import insert_point
 from lib.template_filters import default_if_none
 from lib.template_functions import get_paging
 from service.member_service import MemberService
 from service.memo_service import MemoService
+from service.point_service import PointService
 
 router = APIRouter()
 templates = UserTemplates()
@@ -121,6 +120,7 @@ async def memo_form(
 async def memo_form_update(
     request: Request,
     memo_service: Annotated[MemoService, Depends()],
+    point_service: Annotated[PointService, Depends()],
     member: Annotated[Member, Depends(get_login_member)],
     me_recv_mb_id: str = Form(...),
     me_memo: str = Form(...)
@@ -141,8 +141,10 @@ async def memo_form_update(
         memo_service.update_memo_call(member, target)
 
         # 포인트 소진
-        insert_point(request, member.mb_id, send_point * (-1),
-                     f"{target.mb_nick}({target.mb_id})님에게 쪽지 발송", "@memo", target.mb_id, "쪽지전송")
+        point_service.save_point(
+            member.mb_id, send_point * (-1),
+            f"{target.mb_nick}({target.mb_id})님에게 쪽지 발송", "@memo",
+            target.mb_id, "쪽지전송")
 
     return RedirectResponse(url="/bbs/memo?kind=send", status_code=302)
 

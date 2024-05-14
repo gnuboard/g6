@@ -2,9 +2,9 @@
 from typing_extensions import Annotated
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, Request
 
+from api.v1.lib.point import PointServiceAPI
 from core.models import Member, Poll, PollEtc
 from lib.mail import send_poll_etc_mail
-from lib.point import insert_point
 from api.v1.dependencies.member import get_current_member_optional
 from api.v1.dependencies.poll import (
     get_poll, get_poll_etc, validate_poll_etc_create, validate_poll_etc_delete,
@@ -63,8 +63,8 @@ async def read_poll(
               summary="설문조사 참여",
               responses={**response_403, **response_404, **response_409})
 async def update_poll(
-    request: Request,
     service: Annotated[PollServiceAPI, Depends()],
+    point_service: Annotated[PointServiceAPI, Depends()],
     member: Annotated[Member, Depends(get_current_member_optional)],
     poll: Annotated[Poll, Depends(get_poll)],
     item: Annotated[int, Path(title="설문항목 번호", description="설문항목 번호", ge=1, le=9)],
@@ -79,8 +79,8 @@ async def update_poll(
     # 포인트 지급
     if member:
         content = f'{poll.po_id}. {poll.po_subject[:20]} 설문조사 참여'
-        insert_point(request, member.mb_id, poll.po_point,
-                     content, '@poll', poll.po_id, '투표')
+        point_service.save_point(member.mb_id, poll.po_point, content,
+                                 '@poll', poll.po_id, '투표')
 
     return {"message": "설문조사 참여가 완료되었습니다."}
 

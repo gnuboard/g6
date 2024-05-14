@@ -21,6 +21,7 @@ from api.v1.lib.board import (
     DeletePostServiceAPI, CommentServiceAPI, DeleteCommentServiceAPI,
     MoveUpdateServiceAPI, ListDeleteServiceAPI
 )
+from service.board_file_service import BoardFileService
 
 
 router = APIRouter()
@@ -310,6 +311,7 @@ async def api_move_update(
             )
 async def api_upload_file(
     service: Annotated[CreatePostServiceAPI, Depends(CreatePostServiceAPI.async_init)],
+    file_service: Annotated[BoardFileService, Depends()],
     data: Annotated[dict, Depends(arange_file_data)],
     wr_id: int = Path(..., title="글 아이디", description="글 아이디"),
 ) -> ResponseNormalModel:
@@ -319,7 +321,7 @@ async def api_upload_file(
     """
     write = service.get_write(wr_id)
     service.upload_files(
-        write, data["files"], data["file_contents"], data["file_dels"]
+        file_service, write, data["files"], data["file_contents"], data["file_dels"]
     )
     return {"result": "uploaded"}
 

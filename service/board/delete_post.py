@@ -5,12 +5,11 @@ from sqlalchemy import select, exists, delete, update
 
 from core.database import db_session
 from core.models import Member, BoardNew, Scrap, WriteBaseModel
-from lib.board_lib import (
-    is_owner, insert_point, delete_point, FileCache
-)
+from lib.board_lib import is_owner, FileCache
 from lib.common import remove_query_params, set_url_query_params
-from .board import BoardService
 from service.board_file_service import BoardFileService
+from service.point_service import PointService
+from .board import BoardService
 
 
 class DeletePostService(BoardService):
@@ -23,16 +22,18 @@ class DeletePostService(BoardService):
         request: Request,
         db: db_session,
         file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointService, Depends()],
         bo_table: Annotated[str, Path(...)],
         wr_id: Annotated[int, Path(...)],
     ):
-        super().__init__(request, db, file_service, bo_table)
+        super().__init__(request, db, bo_table)
         self.wr_id = wr_id
         self.write = self.get_write(wr_id)
         self.write_member_mb_no = self.db.scalar(select(Member.mb_no).where(Member.mb_id == self.write.mb_id))
         self.write_member = self.db.get(Member, self.write_member_mb_no)
         self.write_member_level = getattr(self.write_member, "mb_level", 1)
         self.file_service = file_service
+        self.point_service = point_service
 
     @classmethod
     async def async_init(
@@ -40,10 +41,11 @@ class DeletePostService(BoardService):
         request: Request,
         db: db_session,
         file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointService, Depends()],
         bo_table: Annotated[str, Path(...)],
         wr_id: Annotated[int, Path(...)],
     ):
-        instance = cls(request, db, file_service, bo_table, wr_id)
+        instance = cls(request, db, file_service, point_service, bo_table, wr_id)
         return instance
 
     def validate_level(self, with_session: bool = True):
@@ -103,8 +105,9 @@ class DeletePostService(BoardService):
             # 원글 삭제
             if not write.wr_is_comment:
                 # 원글 포인트 삭제
-                if not delete_point(self.request, write.mb_id, bo_table, self.wr_id, "쓰기"):
-                    insert_point(self.request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {self.wr_id} 글 삭제")
+                if not self.point_service.delete_point(write.mb_id, bo_table, self.wr_id, "쓰기"):
+                    self.point_service.save_point(write.mb_id, board.bo_write_point * (-1),
+                                                    f"{board.bo_subject} {self.wr_id} 글 삭제")
                 # 파일+섬네일 삭제
                 self.file_service.delete_board_files(board.bo_table, self.wr_id)
 
@@ -112,8 +115,9 @@ class DeletePostService(BoardService):
                 # TODO: 에디터 섬네일 삭제
             else:
                 # 댓글 포인트 삭제
-                if not delete_point(self.request, write.mb_id, bo_table, self.wr_id, "댓글"):
-                    insert_point(self.request, write.mb_id, board.bo_comment_point * (-1), f"{board.bo_subject} {self.wr_id} 댓글 삭제")
+                if not self.point_service.delete_point(write.mb_id, bo_table, self.wr_id, "댓글"):
+                    self.point_service.save_point(self.request, write.mb_id, board.bo_comment_point * (-1),
+                                                  f"{board.bo_subject} {self.wr_id} 댓글 삭제")
 
                 delete_comment_count += 1
 
@@ -154,10 +158,11 @@ class DeleteCommentService(DeletePostService):
         request: Request,
         db: db_session,
         file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointService, Depends()],
         bo_table: Annotated[str, Path(...)],
         comment_id: Annotated[str, Path(...)],
     ):
-        super().__init__(request, db, file_service, bo_table, comment_id)
+        super().__init__(request, db, file_service, point_service, bo_table, comment_id)
         self.wr_id = comment_id
         self.comment = self.get_comment()
 
@@ -167,10 +172,11 @@ class DeleteCommentService(DeletePostService):
         request: Request,
         db: db_session,
         file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointService, Depends()],
         bo_table: Annotated[str, Path(...)],
         comment_id: Annotated[str, Path(...)],
     ):
-        instance = cls(request, db, file_service, bo_table, comment_id)
+        instance = cls(request, db, file_service, point_service, bo_table, comment_id)
         return instance
 
     def get_comment(self) -> WriteBaseModel:
@@ -238,9 +244,12 @@ class ListDeleteService(BoardService):
         request: Request,
         db: db_session,
         file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointService, Depends()],
         bo_table: Annotated[str, Path(...)],
     ):
-        super().__init__(request, db, file_service, bo_table)
+        super().__init__(request, db, bo_table)
+        self.file_service = file_service
+        self.point_service = point_service
 
     @classmethod
     async def async_init(
@@ -248,9 +257,10 @@ class ListDeleteService(BoardService):
         request: Request,
         db: db_session,
         file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointService, Depends()],
         bo_table: Annotated[str, Path(...)],
     ):
-        instance = cls(request, db, file_service, bo_table)
+        instance = cls(request, db, file_service, point_service, bo_table)
         return instance
 
     def delete_writes(self, wr_ids: list):
@@ -263,9 +273,10 @@ class ListDeleteService(BoardService):
         for write in writes:
             self.db.delete(write)
             # 원글 포인트 삭제
-            if not delete_point(self.request, write.mb_id, self.bo_table, write.wr_id, "쓰기"):
-                insert_point(self.request, write.mb_id, self.board.bo_write_point * (-1), f"{self.board.bo_subject} {write.wr_id} 글 삭제")
-            
+            if not self.point_service.delete_point(write.mb_id, self.bo_table, write.wr_id, "쓰기"):
+                self.point_service.save_point(write.mb_id, self.board.bo_write_point * (-1),
+                                              f"{self.board.bo_subject} {write.wr_id} 글 삭제")
+
             # 파일 삭제
             self.file_service.delete_board_files(self.board.bo_table, write.wr_id)
 

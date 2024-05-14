@@ -15,7 +15,7 @@ from lib.dependency.poll import (
 )
 from lib.mail import send_poll_etc_mail
 from lib.member import get_member_level
-from lib.point import insert_point
+from service.point_service import PointService
 from service.poll_service import PollService
 
 router = APIRouter()
@@ -28,8 +28,8 @@ templates.env.globals["captcha_widget"] = captcha_widget
              dependencies=[Depends(validate_token),
                            Depends(validate_poll_update)])
 async def poll_update(
-    request: Request,
     service: Annotated[PollService, Depends()],
+    point_service: Annotated[PointService, Depends()],
     member: Annotated[Member, Depends(get_login_member_optional)],
     poll: Annotated[Poll, Depends(get_poll)],
     gb_poll: int = Form(...)
@@ -42,8 +42,8 @@ async def poll_update(
     # 포인트 지급
     if member:
         content = f'{poll.po_id}. {poll.po_subject[:20]} 설문조사 참여'
-        insert_point(request, member.mb_id, poll.po_point,
-                     content, '@poll', poll.po_id, '투표')
+        point_service.save_point(member.mb_id, poll.po_point, content,
+                                 '@poll', poll.po_id, '투표')
 
     return RedirectResponse(url=f"/bbs/poll_result/{poll.po_id}", status_code=302)
 

@@ -297,6 +297,7 @@ async def create_post(
     db: db_session,
     form_data: Annotated[WriteForm, Depends()],
     service: Annotated[CreatePostService, Depends(CreatePostService.async_init)],
+    file_service: Annotated[BoardFileService, Depends()],
     parent_id: int = Form(None),
     notice: bool = Form(False),
     secret: str = Form(""),
@@ -325,7 +326,7 @@ async def create_post(
     set_write_delay(service.request)
     service.delete_auto_save(uid)
     service.save_secret_session(write.wr_id, secret)
-    service.upload_files(write, files, file_content, file_dels)
+    service.upload_files(file_service, write, files, file_content, file_dels)
     service.delete_cache()
     redirect_url = service.get_redirect_url(write)
     db.commit()
@@ -335,6 +336,7 @@ async def create_post(
 @router.post("/write_update/{bo_table}/{wr_id}", dependencies=[Depends(validate_token), Depends(check_group_access)])
 async def update_post(
     service: Annotated[UpdatePostService, Depends(UpdatePostService.async_init)],
+    file_service: Annotated[BoardFileService, Depends()],
     notice: bool = Form(False),
     secret: str = Form(""),
     html: str = Form(""),
@@ -358,7 +360,7 @@ async def update_post(
     service.save_write(write, form_data)
     service.set_notice(wr_id, notice)
     service.delete_auto_save(uid)
-    service.upload_files(write, files, file_content, file_dels)
+    service.upload_files(file_service, write, files, file_content, file_dels)
     service.update_children_category(form_data)
     service.delete_cache()
     redirect_url = service.get_redirect_url(write)

@@ -5,9 +5,10 @@ from sqlalchemy import asc, desc, select, exists
 
 from core.database import db_session
 from core.models import BoardGood, Scrap, WriteBaseModel, BoardFile
-from lib.board_lib import insert_point, is_owner, cut_name
+from lib.board_lib import is_owner, cut_name
 from lib.template_filters import number_format
 from service.board_file_service import BoardFileService
+from service.point_service import PointService
 from . import BoardService
 
 
@@ -21,12 +22,14 @@ class ReadPostService(BoardService):
         request: Request,
         db: db_session,
         file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointService, Depends()],
         bo_table: Annotated[str, Path(...)],
         wr_id: Annotated[int, Path(...)],
     ):
-        super().__init__(request, db, file_service, bo_table)
+        super().__init__(request, db, bo_table)
         self.wr_id = wr_id
         self.board.subject = self.subject
+        self.point_service = point_service
 
         # 게시글 정보 설정
         write = self.get_write(wr_id)
@@ -55,10 +58,11 @@ class ReadPostService(BoardService):
         request: Request,
         db: db_session,
         file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointService, Depends()],
         bo_table: Annotated[str, Path(...)],
         wr_id: Annotated[int, Path(...)],
     ):
-        instance = cls(request, db, file_service, bo_table, wr_id)
+        instance = cls(request, db, file_service, point_service, bo_table, wr_id)
         return instance
 
     def block_read_comment(self):
@@ -120,10 +124,9 @@ class ReadPostService(BoardService):
                     message += f" 로그인 후 다시 시도해주세요."
                 raise self.raise_exception(detail=message, status_code=403)
             else:
-                insert_point(self.request, self.member.mb_id,
-                                   read_point, f"{self.board.bo_subject} {self.write.wr_id} 글읽기",
-                                   self.board.bo_table, self.write.wr_id, "읽기")
-
+                self.point_service.save_point(
+                    self.member.mb_id, read_point, f"{self.board.bo_subject} {self.write.wr_id} 글읽기",
+                    self.board.bo_table, self.write.wr_id, "읽기")
         # 조회수 증가
         self.write.wr_hit += 1
         self.db.commit()
@@ -260,15 +263,17 @@ class DownloadFileService(BoardService):
         request: Request,
         db: db_session,
         file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointService, Depends()],
         bo_table: Annotated[str, Path(...)],
         wr_id: Annotated[int, Path(...)],
         bf_no: Annotated[int, Path(...)],
     ):
-        super().__init__(request, db, file_service, bo_table)
+        super().__init__(request, db, bo_table)
         self.write = self.get_write(wr_id)
         self.wr_id = wr_id
         self.bf_no = bf_no
         self.file_service = file_service
+        self.point_service = point_service
 
     @classmethod
     async def async_init(
@@ -276,23 +281,12 @@ class DownloadFileService(BoardService):
         request: Request,
         db: db_session,
         file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointService, Depends()],
         bo_table: Annotated[str, Path(...)],
         wr_id: Annotated[int, Path(...)],
         bf_no: Annotated[int, Path(...)],
     ):
-        instance = cls(request, db, file_service, bo_table, wr_id, bf_no)
-        return instance
-
-    @classmethod
-    async def async_init(
-        cls,
-        request: Request,
-        db: db_session,
-        bo_table: Annotated[str, Path(...)],
-        wr_id: Annotated[int, Path(...)],
-        bf_no: Annotated[int, Path(...)],
-    ):
-        instance = cls(request, db, bo_table, wr_id, bf_no)
+        instance = cls(request, db, file_service, point_service, bo_table, wr_id, bf_no)
         return instance
 
     def validate_download_level(self):
@@ -318,10 +312,13 @@ class DownloadFileService(BoardService):
                     point = number_format(abs(download_point))
                     message = f"파일 다운로드에 필요한 포인트({point})가 부족합니다."
                     if not self.member:
-                        message += f"\\n로그인 후 다시 시도해주세요."
+                        message += "\\n로그인 후 다시 시도해주세요."
                     self.raise_exception(detail=message, status_code=403)
                 else:
-                    insert_point(self.request, self.member.mb_id, download_point, f"{self.board.bo_subject} {self.wr_id} 파일 다운로드", self.bo_table, self.wr_id, "다운로드")
+                    self.point_service.save_point(
+                        self.member.mb_id, download_point,
+                        f"{self.board.bo_subject} {self.wr_id} 파일 다운로드", self.bo_table,
+                        self.wr_id, "다운로드")
 
             self.request.session[session_name] = True
 

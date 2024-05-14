@@ -5,12 +5,13 @@ from sqlalchemy import update, select, func
 from core.database import db_session
 from core.models import WriteBaseModel
 from core.formclass import WriteForm, WriteCommentForm
-from lib.board_lib import generate_reply_character, insert_point, is_owner
+from lib.board_lib import generate_reply_character, is_owner
 from lib.g5_compatibility import G5Compatibility
 from lib.template_filters import number_format
 from lib.html_sanitizer import content_sanitizer
 from lib.pbkdf2 import create_hash, validate_password
 from api.v1.models.board import WriteModel, CommentModel
+from service.point_service import PointService
 from . import BoardService
 from service.board_file_service import BoardFileService
 
@@ -22,11 +23,10 @@ class UpdatePostService(BoardService):
         self,
         request: Request,
         db: db_session,
-        file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Path(...)],
         wr_id: Annotated[int, Path(...)],
     ):
-        super().__init__(request, db, file_service, bo_table)
+        super().__init__(request, db, bo_table)
         self.wr_id = wr_id
 
     @classmethod
@@ -34,11 +34,10 @@ class UpdatePostService(BoardService):
         cls,
         request: Request,
         db: db_session,
-        file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Path(...)],
         wr_id: Annotated[int, Path(...)],
     ):
-        instance = cls(request, db, file_service, bo_table, wr_id)
+        instance = cls(request, db, bo_table, wr_id)
         return instance
 
     def validate_author(self, write: WriteBaseModel, wr_password: str = None):
@@ -76,11 +75,13 @@ class CommentService(UpdatePostService):
         request: Request,
         db: db_session,
         file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointService, Depends()],
         bo_table: Annotated[str, Path(...)],
         wr_id: Annotated[int, Form(...)],
     ):
         super().__init__(request, db, file_service, bo_table, wr_id)
         self.g5_instance = G5Compatibility(db)
+        self.point_service = point_service
 
     @classmethod
     async def async_init(
@@ -88,10 +89,11 @@ class CommentService(UpdatePostService):
         request: Request,
         db: db_session,
         file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointService, Depends()],
         bo_table: Annotated[str, Path(...)],
         wr_id: Annotated[int, Form(...)],
     ):
-        instance = cls(request, db, file_service, bo_table, wr_id)
+        instance = cls(request, db, file_service, point_service, bo_table, wr_id)
         return instance
 
     def validate_comment_level(self):
@@ -177,4 +179,5 @@ class CommentService(UpdatePostService):
         if self.member.mb_id:
             point = self.board.bo_comment_point
             content = f"{self.board.bo_subject} {comment.wr_parent}-{comment.wr_id} 댓글쓰기"
-            insert_point(self.request, self.member.mb_id, point, content, self.bo_table, comment.wr_id, "댓글")
+            self.point_service.save_point(self.member.mb_id, point, content,
+                                          self.bo_table, comment.wr_id, "댓글")

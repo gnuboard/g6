@@ -32,7 +32,6 @@ class BoardService(BaseService, BoardConfig):
         self,
         request: Request,
         db: db_session,
-        file_service: BoardFileService,
         bo_table: str,
     ):
         self.db = db
@@ -42,7 +41,6 @@ class BoardService(BaseService, BoardConfig):
         self.write_model = dynamic_create_write_table(bo_table)
         self.categories = self.get_category_list()
         self.member = MemberDetails(request, request.state.login_member, board=self.board)
-        self.file_service = file_service
 
     def raise_exception(self, status_code: int, detail: str = None, url: str = None):
         raise AlertException(status_code=status_code, detail=detail, url=url)
@@ -228,7 +226,9 @@ class BoardService(BaseService, BoardConfig):
             self.db.execute(delete(AutoSave).where(AutoSave.as_uid == uid))
 
     def upload_files(
-        self, write: WriteBaseModel,
+        self,
+        file_service: BoardFileService,
+        write: WriteBaseModel,
         file_list: List[UploadFile],
         file_content: List[str] = None,
         file_dels: list = None
@@ -255,7 +255,7 @@ class BoardService(BaseService, BoardConfig):
         # 파일 삭제
         if file_dels:
             for bf_no in file_dels:
-                self.file_service.delete_board_file(self.board.bo_table, write.wr_id, bf_no)
+                file_service.delete_board_file(self.board.bo_table, write.wr_id, bf_no)
                 wr_file -= 1
 
         # 파일 업로드 처리 및 파일정보 저장
@@ -266,26 +266,26 @@ class BoardService(BaseService, BoardConfig):
             if file.filename:
                 # 관리자가 아니면서 설정한 업로드 사이즈보다 크거나 업로드 가능 확장자가 아니면 업로드하지 않음
                 if not self.member.admin_type:
-                    if not self.file_service.is_upload_size(self.board, file):
+                    if not file_service.is_upload_size(self.board, file):
                         exclude_file["size"].append(file.filename)
                         continue
-                    if not self.file_service.is_upload_extension(file):
+                    if not file_service.is_upload_extension(file):
                         exclude_file["ext"].append(file.filename)
                         continue
 
-                board_file = self.file_service.get_board_file(self.board.bo_table, write.wr_id, index)
+                board_file = file_service.get_board_file(self.board.bo_table, write.wr_id, index)
                 bf_content = file_content[index] if file_content and file_content[index] else ""
-                filename = self.file_service.get_filename(file.filename)
+                filename = file_service.get_filename(file.filename)
                 if board_file:
                     # 기존파일 삭제
-                    self.file_service.remove_file(board_file.bf_file)
+                    file_service.remove_file(board_file.bf_file)
                     # 파일 업로드 및 정보 업데이트
-                    self.file_service.upload_file(directory, filename, file)
-                    self.file_service.update_board_file(board_file, directory, filename, file, bf_content)
+                    file_service.upload_file(directory, filename, file)
+                    file_service.update_board_file(board_file, directory, filename, file, bf_content)
                 else:
                     # 파일 업로드 및 정보 추가
-                    self.file_service.upload_file(directory, filename, file)
-                    self.file_service.insert_board_file(self.board.bo_table, write.wr_id, index,
+                    file_service.upload_file(directory, filename, file)
+                    file_service.insert_board_file(self.board.bo_table, write.wr_id, index,
                                                         directory, filename, file, bf_content)
                     wr_file += 1
 
