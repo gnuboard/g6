@@ -36,6 +36,17 @@ class SearchService(BaseService):
         self.member = MemberDetails(request, request.state.login_member)
         self.member.admin_type = self.member.get_admin_type(group=self.group)
 
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        gr_id: Annotated[str, Query()] = None,
+        onetable: Annotated[str, Query()] = None,
+    ):
+        instance = cls(request, db, gr_id, onetable)
+        return instance
+
     def raise_exception(self):
         raise AlertException(status_code=400, detail="검색 결과가 없습니다.")
 
@@ -135,6 +146,18 @@ class SearchServiceAPI(SearchService):
         super().__init__(request, db, gr_id, onetable)
         self.member = MemberDetails(request, member)
         self.member.admin_type = self.member.get_admin_type(group=self.group)
+
+    @classmethod
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        member: Annotated[Member, Depends(get_current_member_optional)],
+        gr_id: str = None,
+        onetable: str = None,
+    ):
+        instance = cls(request, db, member, gr_id, onetable)
+        return instance
 
     def raise_exception(self):
         raise HTTPException(status_code=400, detail="검색 결과가 없습니다.")
