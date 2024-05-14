@@ -310,7 +310,7 @@ async def create_post(
     recaptcha_response: str = Form("", alias="g-recaptcha-response"),
 ):
     """게시글을 작성한다."""
-    service.validate_captcha(recaptcha_response)
+    await service.validate_captcha(recaptcha_response)
     service.validate_write_delay()
     service.validate_write_level()
     service.validate_secret_board(secret, html, mail)
