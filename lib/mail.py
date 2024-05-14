@@ -78,7 +78,7 @@ def mailer(from_email: str, to_email: str, subject: str, body: str,
 
 
 
-def send_password_reset_mail(request: Request, member: Member) -> None:
+async def send_password_reset_mail(request: Request, member: Member) -> None:
     """background task > 비밀번호 재설정 링크 메일 발송
 
     Args:
@@ -107,7 +107,7 @@ def send_password_reset_mail(request: Request, member: Member) -> None:
         print(e)
 
 
-def send_register_mail(request: Request, member: Member) -> None:
+async def send_register_mail(request: Request, member: Member) -> None:
     """background task > 회원가입 메일 발송 처리
 
     Args:
@@ -189,7 +189,7 @@ async def send_poll_etc_mail(request: Request, poll_etc: PollEtc) -> None:
         print(e)
 
 
-def send_qa_mail(request: Request, qa: QaContent) -> None:
+async def send_qa_mail(request: Request, qa: QaContent) -> None:
     """
     Q&A 등록 시 메일 발송 처리
     - Q&A 등록 시, 설정에 등록된 관리자 이메일 주소로 메일 발송
