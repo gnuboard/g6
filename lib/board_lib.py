@@ -5,21 +5,21 @@ from datetime import datetime, timedelta
 
 import bleach
 from fastapi import Request
-from sqlalchemy import and_, asc, delete, desc, exists, func, insert, or_, select
+from fastapi.templating import Jinja2Templates
+from sqlalchemy import and_, asc, desc, func, insert, or_, select
 from sqlalchemy.sql.expression import Select
 from sqlalchemy.orm import Session
 
 from core.database import DBConnect
 from core.exception import AlertException
-from core.models import Board, BoardNew, Member, Scrap, WriteBaseModel
-from core.template import UserTemplates
+from core.models import Board, BoardNew, Member, WriteBaseModel
+from core.template import TemplateService, UserTemplates
 from lib.common import (
     FileCache, StringEncrypt, cut_name, dynamic_create_write_table, get_admin_email,
-    get_admin_email_name, get_editor_image,
-    remove_query_params, set_url_query_params, thumbnail
+    get_admin_email_name, get_editor_image, thumbnail
 )
 from lib.mail import mailer
-from lib.member import MemberDetails, get_admin_type, get_member_level
+from lib.member import MemberDetails
 from service.board_file_service import BoardFileService as FileService
 
 
@@ -671,60 +671,59 @@ def send_write_mail(request: Request, board: Board, write: WriteBaseModel, origi
         write (WriteBaseModel): 작성된 게시글/답글/댓글 object
         origin_write (WriteBaseModel, optional): 원본 게시글/답글 object. Defaults to None.
     """
-    db = DBConnect().sessionLocal()
-    config = request.state.config
-    templates = UserTemplates()
+    with DBConnect().sessionLocal() as db:
+        config = request.state.config
+        templates = Jinja2Templates(
+                directory=TemplateService.get_templates_dir())
 
-    def _add_admin_email(admin_id: str):
-        admin = db.scalar(select(Member).filter_by(mb_id=admin_id))
-        if admin:
-            send_email_list.append(admin.mb_email)
+        def _add_admin_email(admin_id: str):
+            admin = db.scalar(select(Member).filter_by(mb_id=admin_id))
+            if admin:
+                send_email_list.append(admin.mb_email)
 
-    send_email_list = []
-    if config.cf_email_wr_board_admin and board.bo_admin:
-        _add_admin_email(board.bo_admin)
-    if config.cf_email_wr_group_admin and board.group.gr_admin:
-        _add_admin_email(board.group.gr_admin)
-    if config.cf_email_wr_super_admin:
-        _add_admin_email(config.cf_admin)
-    if config.cf_email_wr_write and origin_write:
-        send_email_list.append(origin_write.wr_email)
+        send_email_list = []
+        if config.cf_email_wr_board_admin and board.bo_admin:
+            _add_admin_email(board.bo_admin)
+        if config.cf_email_wr_group_admin and board.group.gr_admin:
+            _add_admin_email(board.group.gr_admin)
+        if config.cf_email_wr_super_admin:
+            _add_admin_email(config.cf_admin)
+        if config.cf_email_wr_write and origin_write:
+            send_email_list.append(origin_write.wr_email)
 
-    if write.wr_is_comment:
-        act = "댓글"
-        link_url = str(request.url_for("read_post", bo_table=board.bo_table, wr_id=origin_write.wr_id)) + f"#c_{write.wr_id}"
+        if write.wr_is_comment:
+            act = "댓글"
+            link_url = str(request.url_for("read_post", bo_table=board.bo_table, wr_id=origin_write.wr_id)) + f"#c_{write.wr_id}"
 
-        if config.cf_email_wr_comment_all:
-            # 댓글 쓴 모든 이에게 메일 발송
-            write_model = dynamic_create_write_table(board.bo_table)
-            query = select(write_model.wr_email).distinct().where(
-                write_model.wr_email.notin_(["", write.wr_email]),
-                write_model.wr_parent == origin_write.wr_id
-            )
-            comments = db.scalars(query).all()
-            send_email_list.extend(comment.email for comment in comments)
-    else:
-        act = "답변글" if origin_write else "새글"
-        link_url = request.url_for("read_post", bo_table=board.bo_table, wr_id=write.wr_id)
+            if config.cf_email_wr_comment_all:
+                # 댓글 쓴 모든 이에게 메일 발송
+                write_model = dynamic_create_write_table(board.bo_table)
+                query = select(write_model.wr_email).distinct().where(
+                    write_model.wr_email.notin_(["", write.wr_email]),
+                    write_model.wr_parent == origin_write.wr_id
+                )
+                comments = db.scalars(query).all()
+                send_email_list.extend(email for email in comments)
+        else:
+            act = "답변글" if origin_write else "새글"
+            link_url = request.url_for("read_post", bo_table=board.bo_table, wr_id=write.wr_id)
 
-    # 중복 이메일 제거
-    send_email_list = list(set(send_email_list))
-    for email in send_email_list:
-        subject = f"[{config.cf_title}] {board.bo_subject} 게시판에 {act}이 등록되었습니다."
-        body = templates.TemplateResponse(
-            "bbs/mail_form/write_update_mail.html", {
-                "request": request,
-                "act": act,
-                "board": board,
-                "wr_subject": write.wr_subject,
-                "wr_name": write.wr_name,
-                "wr_content": write.wr_content,
-                "link_url": link_url,
-            }
-        ).body.decode("utf-8")
-        mailer(get_admin_email(request), email, subject, body, get_admin_email_name(request))
-
-    db.close()
+        # 중복 이메일 제거
+        send_email_list = list(set(send_email_list))
+        for email in send_email_list:
+            subject = f"[{config.cf_title}] {board.bo_subject} 게시판에 {act}이 등록되었습니다."
+            body = templates.TemplateResponse(
+                "bbs/mail_form/write_update_mail.html", {
+                    "request": request,
+                    "act": act,
+                    "board": board,
+                    "wr_subject": write.wr_subject,
+                    "wr_name": write.wr_name,
+                    "wr_content": write.wr_content,
+                    "link_url": link_url,
+                }
+            ).body.decode("utf-8")
+            mailer(get_admin_email(request), email, subject, body, get_admin_email_name(request))
 
 
 def get_list_thumbnail(request: Request, board: Board, write: WriteBaseModel, thumb_width: int, thumb_height: int, **kwargs):
@@ -800,117 +799,6 @@ def set_image_width(content: str, width: str = None) -> str:
     if width:
         content = re.sub(r"<img([^>]+)>", f"<img\\1 width={width}>", content)
     return content
-
-
-def delete_write(request: Request, bo_table: str, origin_write: WriteBaseModel) -> bool:
-    """게시글을 삭제한다.
-
-    Args:
-        request (Request): request 객체
-        bo_table (str): 게시판 코드
-        write (WriteBaseModel): 게시글 object
-
-    Returns:
-        bool: 결과
-    """
-    with DBConnect().sessionLocal() as db:
-        board = db.get(Board, bo_table)
-        board_config = BoardConfig(request, board)
-        group = board.group
-
-        member = request.state.login_member
-        member_id = getattr(member, "mb_id", None)
-        member_level = get_member_level(request)
-        member_admin_type = get_admin_type(request, member_id, board=board)
-        write_member_mb_no = db.scalar(select(Member.mb_no).where(Member.mb_id == origin_write.mb_id))
-        write_member = db.get(Member, write_member_mb_no)
-        write_member_level = getattr(write_member, "mb_level", 1)
-
-        # 권한 체크
-        if member_admin_type != "super":
-            if member_admin_type and write_member_level > member_level:
-                raise AlertException("자신보다 높은 권한의 게시글은 삭제할 수 없습니다.", 403)
-            elif origin_write.mb_id and not is_owner(origin_write, member_id):
-                raise AlertException("자신의 게시글만 삭제할 수 있습니다.", 403)
-            elif not origin_write.mb_id and not request.session.get(f"ss_delete_{bo_table}_{origin_write.wr_id}"):
-                url = f"/bbs/password/delete/{bo_table}/{origin_write.wr_id}"
-                query_params = remove_query_params(request, "token")
-                raise AlertException("비회원 글을 삭제할 권한이 없습니다.", 403, set_url_query_params(url, query_params))
-
-        # 답변글이 있을 때 삭제 불가
-        write_model = dynamic_create_write_table(bo_table)
-        exists_reply = db.scalar(
-            exists(write_model)
-            .where(
-                write_model.wr_reply.like(f"{origin_write.wr_reply}%"),
-                write_model.wr_num == origin_write.wr_num,
-                write_model.wr_is_comment == 0,
-                write_model.wr_id != origin_write.wr_id
-            )
-            .select()
-        )
-        if exists_reply:
-            raise AlertException("답변이 있는 글은 삭제할 수 없습니다. \\n\\n우선 답변글부터 삭제하여 주십시오.", 403)
-
-        if not board_config.is_delete_by_comment(origin_write.wr_id):
-            raise AlertException(f"이 글과 관련된 댓글이 {board.bo_count_delete}건 이상 존재하므로 삭제 할 수 없습니다.", 403)
-
-        # 원글 + 댓글
-        delete_write_count = 0
-        delete_comment_count = 0
-        writes = db.scalars(
-            select(write_model)
-            .filter_by(wr_parent=origin_write.wr_id)
-            .order_by(write_model.wr_id)
-        ).all()
-
-        file_service = FileService(request, db)
-        for write in writes:
-            # 원글 삭제
-            if not write.wr_is_comment:
-                # 원글 포인트 삭제
-                if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "쓰기"):
-                    insert_point(request, write.mb_id, board.bo_write_point * (-1), f"{board.bo_subject} {write.wr_id} 글 삭제")
-                # 파일+섬네일 삭제
-                file_service.delete_board_files(board.bo_table, write.wr_id)
-
-                delete_write_count += 1
-                # TODO: 에디터 섬네일 삭제
-            else:
-                # 댓글 포인트 삭제
-                if not delete_point(request, write.mb_id, board.bo_table, write.wr_id, "댓글"):
-                    insert_point(request, write.mb_id, board.bo_comment_point * (-1), f"{board.bo_subject} {write.wr_id} 댓글 삭제")
-
-                delete_comment_count += 1
-
-        # 원글+댓글 삭제
-        db.execute(delete(write_model).filter_by(wr_parent=origin_write.wr_id))
-
-        # 최근 게시물 삭제
-        db.execute(delete(BoardNew).where(
-            BoardNew.bo_table == bo_table,
-            BoardNew.wr_parent == origin_write.wr_id
-        ))
-
-        # 스크랩 삭제
-        db.execute(delete(Scrap).filter_by(
-            bo_table=bo_table,
-            wr_id=origin_write.wr_id
-        ))
-
-        # 공지사항 삭제
-        board.bo_notice = board_config.set_board_notice(origin_write.wr_id, False)
-
-        # 게시글 갯수 업데이트
-        board.bo_count_write -= delete_write_count
-        board.bo_count_comment -= delete_comment_count
-
-        db.commit()
-
-    # 최신글 캐시 삭제
-    FileCache().delete_prefix(f'latest-{bo_table}')
-
-    return True
 
 
 def is_secret_write(write: WriteBaseModel = None) -> bool:

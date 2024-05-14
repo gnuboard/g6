@@ -7,11 +7,9 @@ from api.v1.dependencies.member import get_current_member_optional, get_current_
 from core.models import Board, Member
 from core.database import db_session
 from lib.dependency.dependencies import common_search_query_params
-from lib.board_lib import (
-    get_admin_type, generate_reply_character, get_next_num
-)
+from lib.board_lib import generate_reply_character, get_next_num
 from lib.template_filters import number_format
-from lib.member import MemberDetails
+from lib.member import get_admin_type, MemberDetails
 from lib.pbkdf2 import validate_password
 from service.board import (
     GroupBoardListService, ListPostService, ReadPostService,
@@ -310,13 +308,12 @@ class CommentServiceAPI(CommentService):
         self,
         request: Request,
         db: db_session,
-        file_service: Annotated[BoardFileService, Depends()],
         point_service: Annotated[PointServiceAPI, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         wr_id: Annotated[int, Path(..., title="부모글 아이디", description="부모글 아이디")],
         member: Annotated[Member, Depends(get_current_member_optional)],
     ):
-        super().__init__(request, db, file_service, point_service, bo_table, wr_id)
+        super().__init__(request, db, point_service, bo_table, wr_id)
         self.member = MemberDetails(request, member, board=self.board)
 
     @classmethod
@@ -324,13 +321,12 @@ class CommentServiceAPI(CommentService):
         cls,
         request: Request,
         db: db_session,
-        file_service: Annotated[BoardFileService, Depends()],
         point_service: Annotated[PointServiceAPI, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         wr_id: Annotated[int, Path(..., title="부모글 아이디", description="부모글 아이디")],
         member: Annotated[Member, Depends(get_current_member_optional)],
     ):
-        instance = cls(request, db, file_service, point_service, bo_table, wr_id, member)
+        instance = cls(request, db, point_service, bo_table, wr_id, member)
         return instance
 
     def raise_exception(self, status_code: int, detail: str = None):
@@ -360,11 +356,13 @@ class DeleteCommentServiceAPI(DeleteCommentService):
         cls,
         request: Request,
         db: db_session,
+        file_service: Annotated[BoardFileService, Depends()],
+        point_service: Annotated[PointServiceAPI, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         comment_id: Annotated[int, Path(..., title="댓글 아이디", description="댓글 아이디")],
         member: Annotated[Member, Depends(get_current_member)],
     ):
-        instance = cls(request, db, bo_table, comment_id, member)
+        instance = cls(request, db, file_service, point_service, bo_table, comment_id, member)
         return instance
 
     def raise_exception(self, status_code: int, detail: str = None):

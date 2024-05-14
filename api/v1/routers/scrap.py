@@ -9,6 +9,7 @@ from core.models import Board, Member, Scrap, WriteBaseModel
 from lib.board_lib import insert_board_new, set_write_delay
 from lib.common import get_paging_info
 
+from api.v1.lib.point import PointServiceAPI
 from api.v1.dependencies.board import get_board, get_write
 from api.v1.dependencies.member import get_current_member
 from api.v1.dependencies.scrap import (
@@ -77,6 +78,7 @@ async def create_member_scrap(
     request: Request,
     db: db_session,
     service: Annotated[ScrapServiceAPI, Depends()],
+    point_service: Annotated[PointServiceAPI, Depends()],
     member: Annotated[Member, Depends(get_current_member)],
     board: Annotated[Board, Depends(get_board)],
     write: Annotated[WriteBaseModel, Depends(get_write)],
@@ -98,7 +100,8 @@ async def create_member_scrap(
 
     #댓글 생성
     if data.wr_content:
-        comment_service = CommentServiceAPI(request, db, bo_table, member, wr_id)
+        db.refresh(member)
+        comment_service = CommentServiceAPI(request, db, point_service, bo_table, wr_id, member)
         form = WriteCommentForm(w="w", wr_id=wr_id, wr_content=data.wr_content,
                                 wr_name=None, wr_password=None, wr_secret=None,
                                 comment_id=0)

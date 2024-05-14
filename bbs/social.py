@@ -207,11 +207,11 @@ async def get_social_register_form(
 
 @router.post('/social/register')
 async def post_social_register(
-        request: Request,
-        db: db_session,
-        point_service: Annotated[PointService, Depends()],
-        validate: Annotated[ValidateMember, Depends()],
-        member_form: MemberForm = Depends(),
+    request: Request,
+    db: db_session,
+    point_service: Annotated[PointService, Depends()],
+    validate: Annotated[ValidateMember, Depends()],
+    member_form: MemberForm = Depends(),
 ):
     """
     신규 소셜 회원등록

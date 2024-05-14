@@ -77,7 +77,6 @@ def mailer(from_email: str, to_email: str, subject: str, body: str,
             pass
 
 
-
 async def send_password_reset_mail(request: Request, member: Member) -> None:
     """background task > 비밀번호 재설정 링크 메일 발송
 

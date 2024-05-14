@@ -18,6 +18,7 @@ from lib.dependency.scrap import (
 )
 from lib.template_filters import datetime_format
 from lib.template_functions import get_paging
+from service.point_service import PointService
 from service.scrap_service import ScrapService
 from service.board.update_post import CommentService
 
@@ -50,10 +51,11 @@ async def scrap_form(
 async def scrap_form_update(
     request: Request,
     db: db_session,
+    point_service: Annotated[PointService, Depends()],
+    scrap_service: Annotated[ScrapService, Depends()],
     member: Annotated[Member, Depends(get_login_member)],
     board: Annotated[Board, Depends(get_board)],
     write: Annotated[WriteBaseModel, Depends(get_write)],
-    scrap_service: Annotated[ScrapService, Depends()],
     wr_content: str = Form(None),
 ):
     """
@@ -67,7 +69,7 @@ async def scrap_form_update(
 
     #댓글 생성
     if wr_content:
-        comment_service = CommentService(request, db, bo_table, member, wr_id)
+        comment_service = CommentService(request, db, point_service, bo_table, wr_id)
         form = WriteCommentForm(w="w", wr_id=wr_id, wr_content=wr_content,
                                 wr_name=None, wr_password=None, wr_secret=None,
                                 comment_id=0)

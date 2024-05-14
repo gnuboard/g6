@@ -13,7 +13,7 @@ from lib.pbkdf2 import create_hash, validate_password
 from api.v1.models.board import WriteModel, CommentModel
 from service.point_service import PointService
 from . import BoardService
-from service.board_file_service import BoardFileService
+
 
 class UpdatePostService(BoardService):
     """
@@ -74,12 +74,11 @@ class CommentService(UpdatePostService):
         self,
         request: Request,
         db: db_session,
-        file_service: Annotated[BoardFileService, Depends()],
         point_service: Annotated[PointService, Depends()],
         bo_table: Annotated[str, Path(...)],
         wr_id: Annotated[int, Form(...)],
     ):
-        super().__init__(request, db, file_service, bo_table, wr_id)
+        super().__init__(request, db, bo_table, wr_id)
         self.g5_instance = G5Compatibility(db)
         self.point_service = point_service
 
@@ -88,12 +87,11 @@ class CommentService(UpdatePostService):
         cls,
         request: Request,
         db: db_session,
-        file_service: Annotated[BoardFileService, Depends()],
         point_service: Annotated[PointService, Depends()],
         bo_table: Annotated[str, Path(...)],
         wr_id: Annotated[int, Form(...)],
     ):
-        instance = cls(request, db, file_service, point_service, bo_table, wr_id)
+        instance = cls(request, db, point_service, bo_table, wr_id)
         return instance
 
     def validate_comment_level(self):

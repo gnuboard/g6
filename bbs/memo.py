@@ -118,7 +118,6 @@ async def memo_form(
              dependencies=[Depends(validate_token),
                            Depends(validate_captcha)])
 async def memo_form_update(
-    request: Request,
     memo_service: Annotated[MemoService, Depends()],
     point_service: Annotated[PointService, Depends()],
     member: Annotated[Member, Depends(get_login_member)],

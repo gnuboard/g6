@@ -28,9 +28,6 @@ def get_write(
     """
     게시글 정보를 조회합니다.
     """
-    if not wr_id.isdigit():
-        raise HTTPException(status_code=404, detail=f"{wr_id} : 올바르지 않은 게시글 번호입니다.")
-
     write_model = dynamic_create_write_table(bo_table)
     write = db.get(write_model, wr_id)
     if not write:

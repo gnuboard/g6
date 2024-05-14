@@ -17,9 +17,7 @@ class PointServiceAPI(PointService):
             db: db_session,
             member_service: Annotated[MemberServiceAPI, Depends()]
         ):
-        self.request = request
-        self.db = db
-        self.member_service = member_service
+        super().__init__(request, db, member_service)
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise HTTPException(status_code=status_code, detail=detail)
