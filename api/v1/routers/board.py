@@ -249,7 +249,7 @@ async def api_delete_post(
             )
 async def api_list_delete(
     service: Annotated[ListDeleteServiceAPI, Depends()],
-    wr_ids: Annotated[list, Body(..., alias="chk_wr_id[]")],
+    wr_ids: Annotated[List[int], Body(...)],
 ) -> ResponseNormalModel:
     """
     게시글을 일괄 삭제합니다.

@@ -1,5 +1,4 @@
-"""최신 게시글 API Router"""
-from typing_extensions import Annotated
+from typing_extensions import Annotated, List
 from fastapi import APIRouter, Depends, Query, Body
 
 from api.v1.models.response import response_401, response_422
@@ -46,7 +45,7 @@ async def api_board_new_list(
             )
 async def api_new_delete(
     service: Annotated[BoardNewServiceAPI, Depends()],
-    bn_ids: list = Body(..., title="삭제할 최신글 id 리스트"),
+    bn_ids: Annotated[List[int], Body(..., title="삭제할 최신글 id 리스트")],
 ) -> ResponseNormalModel:
     """
     최신 게시글을 삭제한다.
