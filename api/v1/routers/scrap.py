@@ -53,7 +53,7 @@ async def read_member_scraps(
                           Depends(validate_create_scrap)],
             summary="회원 스크랩 등록 페이지 설정 조회",
             responses={**response_403, **response_404, **response_409})
-async def scrap_form(
+async def scrap_form_api(
     board: Annotated[Board, Depends(get_board)],
     write: Annotated[WriteBaseModel, Depends(get_write)],
 ) -> ScrapFormResponse:
