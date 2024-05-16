@@ -1,5 +1,7 @@
-from typing_extensions import Annotated
+"""자동저장,좋아요/싫어요 모델 정의 파일"""
+from enum import Enum
 from datetime import datetime
+from typing_extensions import Annotated
 
 from fastapi import Body
 from pydantic import BaseModel, ConfigDict
@@ -37,6 +39,12 @@ class ResponseAutoSaveCountModel(BaseModel):
 class ResponseAutoSaveDeleteModel(BaseModel):
     """자동저장글 삭제 응답 모델"""
     result: str
+
+
+class GoodType(Enum):
+    """좋아요/싫어요 타입 정의"""
+    GOOD = 'good'
+    NOGOOD = 'nogood'
 
 
 class ResponseGoodModel(BaseModel):

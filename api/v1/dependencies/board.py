@@ -9,7 +9,7 @@ from lib.common import dynamic_create_write_table
 
 def get_board(
     db: db_session,
-    bo_table: str = Path(...),
+    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
 ) -> Board:
     """
     게시판 정보를 조회합니다.
@@ -22,8 +22,8 @@ def get_board(
 
 def get_write(
     db: db_session,
-    bo_table: str = Path(...),
-    wr_id: int = Path(...),
+    bo_table: str = Path(..., title="게시판 테이블명", description="게시판 테이블명"),
+    wr_id: int = Path(..., title="글 아이디", description="글 아이디"),
 ):
     """
     게시글 정보를 조회합니다.

@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends
 from lib.dependency.dependencies import check_use_api
 from api.v1.models import Tags
 from api.v1.routers import (
-    ajax_good, auth, autosave, board, board_new, config, content, current_connect,
-    faq, member, memo, menu, newwin, point, poll, popular,
+    auth, autosave, board, board_good, board_new, config, content,
+    current_connect, faq, member, memo, menu, newwin, point, poll, popular,
     qa, scrap, search, visit
 )
 
@@ -30,6 +30,6 @@ router.include_router(qa.router, tags=[Tags.QA])
 router.include_router(scrap.router, prefix="/member", tags=[Tags.SCRAP])
 router.include_router(search.router, tags=[Tags.SEARCH])
 router.include_router(board_new.router, prefix="/board_new", tags=[Tags.BOARD_NEW])
-router.include_router(ajax_good.router, prefix="/ajax", tags=[Tags.AJAX_GOOD])
+router.include_router(board_good.router, tags=[Tags.AJAX_GOOD])
 router.include_router(autosave.router, tags=[Tags.AJAX_AUTOSAVE])
 router.include_router(visit.router, tags=[Tags.VISIT])
