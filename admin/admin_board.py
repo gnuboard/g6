@@ -1,26 +1,28 @@
+from typing import List
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, Depends, Request, Form, Path
+from fastapi import APIRouter, Depends, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
-from typing import List
+from sqlalchemy import delete, select
 
 from core.database import DBConnect, db_session
 from core.exception import AlertException
 from core.models import Board, BoardNew, Scrap, BoardFile, BoardGood
 from core.formclass import BoardForm
 from core.template import AdminTemplates
-from lib.common import *
-from lib.board_lib import BoardFileManager
-from lib.dependencies import (
-    check_demo_alert,
-    common_search_query_params,
-    get_board,
-    validate_token
+from lib.common import (
+    dynamic_create_write_table, FileCache, get_from_list,
+    safe_int_convert, select_query, set_url_query_params
+)
+from lib.dependency.board import get_board
+from lib.dependency.dependencies import (
+    check_demo_alert, common_search_query_params, validate_token
 )
 from lib.template_functions import (
-    get_editor_select, get_group_select, 
-    get_member_level_select, get_paging, get_skin_select, 
+    get_editor_select, get_group_select,
+    get_member_level_select, get_paging, get_skin_select,
 )
+from service.board_file_service import BoardFileService
 
 
 router = APIRouter()
@@ -92,14 +94,10 @@ async def board_list_update(
             board.bo_skin = bo_skin[i]
             board.bo_mobile_skin = bo_mobile_skin[i]
             board.bo_subject = bo_subject[i]
-            board.bo_read_point = int(
-                bo_read_point[i]) if bo_read_point[i] is not None and is_integer_format(bo_read_point[i]) else 0
-            board.bo_write_point = int(
-                bo_write_point[i]) if bo_write_point[i] is not None and is_integer_format(bo_write_point[i]) else 0
-            board.bo_comment_point = int(
-                bo_comment_point[i]) if bo_comment_point[i] is not None and is_integer_format(bo_comment_point[i]) else 0
-            board.bo_download_point = int(
-                bo_download_point[i]) if bo_download_point[i] is not None and is_integer_format(bo_download_point[i]) else 0
+            board.bo_read_point = safe_int_convert(bo_read_point[i])
+            board.bo_write_point = safe_int_convert(bo_write_point[i])
+            board.bo_comment_point = safe_int_convert(bo_comment_point[i])
+            board.bo_download_point = safe_int_convert(bo_download_point[i])
             board.bo_use_sns = get_from_list(bo_use_sns, i, 0)
             board.bo_use_search = get_from_list(bo_use_search, i, 0)
             board.bo_order = int(
@@ -304,8 +302,8 @@ async def board_copy(
 @router.post("/board_copy_update",
              dependencies=[Depends(check_demo_alert), Depends(validate_token)])
 async def board_copy_update(
-    request: Request,
     db: db_session,
+    service: Annotated[BoardFileService, Depends()],
     origin_board: Annotated[Board, Depends(get_board)],
     bo_table: str = Form(...),
     target_table: str = Form(...),
@@ -321,7 +319,7 @@ async def board_copy_update(
 
     # 복사될 레코드의 모든 필드를 딕셔너리로 변환
     target_dict = {key: value for key, value in origin_board.__dict__.items() if not key.startswith('_')}
-    
+
     target_dict['bo_table'] = target_table
     target_dict['bo_subject'] = target_subject
 
@@ -341,9 +339,10 @@ async def board_copy_update(
             # write 객체로 target_write 테이블에 레코드 추가
             db.execute(target_write_model.__table__.insert(), copy_data)
             db.commit()
-            file_manager = BoardFileManager(origin_board, write.wr_id)
-            if file_manager.is_exist(bo_table, write.wr_id):
-                file_manager.copy_board_files(FILE_DIRECTORY, target_table, write.wr_id)
+            if service.is_exist(bo_table, write.wr_id):
+                service.copy_board_files(FILE_DIRECTORY,
+                                         bo_table, write.wr_id,
+                                         target_table, write.wr_id)
 
     content = """
     <script>

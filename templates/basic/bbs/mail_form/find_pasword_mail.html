@@ -2,7 +2,7 @@
 <html lang="ko">
     <head>
         <meta charset="utf-8">
-        <title>설문조사 기타의견 메일</title>
+        <title>비밀번호 변경 메일</title>
     </head>
     <body>
         <div style="margin:30px auto;width:600px;border:10px solid #f7f7f7">
@@ -14,6 +14,9 @@
                 <p style="margin:20px 0 0;padding:30px 30px 30px;border-bottom:1px solid #eee;line-height:1.7em">
                     {{ member.mb_name }}({{ member.mb_nick }}) 회원님은 {{ datetime }}에 비밀번호 찾기 요청을 하셨습니다.<br>
                     비밀번호를 변경하기 위해서 <span style="color:#ff3061"><strong>비밀번호 변경</strong> 링크를 클릭 하십시오.</span><br>
+                    또는 아래 API의 PATCH 요청을 통해 비밀번호 변경할 수 있습니다.<br>
+                    {{ url_for('reset_password_api', mb_id=member.mb_id, token=member.mb_lost_certify) }}
+                    <br>
                     비밀번호를 변경하신 후, 홈페이지에서 회원아이디와 변경된 비밀번호를 입력하시고 로그인 하십시오.<br>
                     비밀번호 변경 링크는 한번 사용하면 자동으로 만료되며, 다시 사용할 수 없습니다.<br>
                 </p>

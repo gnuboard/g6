@@ -33,7 +33,7 @@
         <section id="bo_v_info" class="d-flex justify-content-between align-items-center main-bb mt-5 pb-5 sub-font">
             <h2 class="blind">페이지 정보</h2>
             <div class="profile_info d-inline-flex">
-                <div class="pf_img me-3 rounded-circle overflow-hidden" style="width: 50px;height: 50px;"><img src="{{ get_member_image(request, write.mb_id) }}" alt="profile_image" style="width: 100%;"></div>
+                <div class="pf_img me-3 rounded-circle overflow-hidden" style="width: 50px;height: 50px;"><img src="{{ get_member_image(write.mb_id) }}" alt="profile_image" style="width: 100%;"></div>
                 <div class="profile_info_ct py-2 fs-5" style="line-height: 18px;">
                     <span class="blind">작성자</span>
                     <strong class="d-inline-block me-3 fw-normal" style="color: #888;">
@@ -264,7 +264,7 @@
         {% set reply_depth=comment.wr_comment_reply|length %}
         <article id="c_{{ comment.wr_id }}" class="position-relative d-flex justify-content-between my-4 main-bb" {% if reply_depth %}style="margin-left:{{ reply_depth * 50 }}px;border-top-color:#e0e0e0"{% endif %}>
             <div class="d-flex w-100 main-font">
-              <div class="rounded-circle overflow-hidden me-4" style="width: 50px; height: 50px;" ><img src="{{ get_member_image(request, comment.mb_id) }}" alt="profile_image" style="width: 100%;"></div>
+              <div class="rounded-circle overflow-hidden me-4" style="width: 50px; height: 50px;" ><img src="{{ get_member_image(comment.mb_id) }}" alt="profile_image" style="width: 100%;"></div>
               <div class="fs-5" style="width: calc(100% - 50px);">
                   <header class="position-relative main-font">
                       <h2 class="blind">{{ comment.name }}님의 댓글</h2>

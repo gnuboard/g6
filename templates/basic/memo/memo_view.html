@@ -28,7 +28,7 @@
                     <div class="memo_view_li memo_view_name">
                         <ul class="memo_from">
                             <li class="memo_profile">
-                                <img src="{{ get_member_image(request, target.mb_id) }}" alt="profile_image">
+                                <img src="{{ get_member_image(target.mb_id) }}" alt="profile_image">
                             </li>
                             <li class="memo_view_nick">
                                 {{ sideview.get(request, target.mb_id, getattr(target, "mb_nick", "[회원정보 없음]"))|safe }}
@@ -69,7 +69,7 @@
             </article>
             <div class="win_btn">
                 {% if kind == 'recv' %}
-                    <a href="{{ url_for('memo_form') }}?me_recv_mb_id={{ target.mb_id }}&amp;me_id={{ memo.me_id }}" class="reply_btn">답장</a>
+                    <a href="{{ url_for('memo_form') }}?me_id={{ memo.me_id }}" class="reply_btn">답장</a>
                 {% endif %}
                 <button type="button" onclick="window.close();" class="btn_close">창닫기</button>
             </div>

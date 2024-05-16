@@ -7,14 +7,14 @@
 
   {% include "/bbs/newwin.inc.html" %}
 
+  {% set current_login_count=request.state.template_data.current_login_count %}
   <div id="tnb" class="d-md-block d-none card-bg fs-5 mb-3 py-3">
       <ul id="hd_qnb" class="container-xxl d-md-flex justify-content-end">
           <li><a href="{{ url_for('faq_view') }}" class="sub-font px-2">FAQ</a></li>
           <li><a href="{{ url_for('qa_list') }}" class="sub-font px-2">Q&A</a></li>
           <li><a href="/bbs/new" class="sub-font px-2">새글</a></li>
           <li><a href="/bbs/current_connect" class="visit sub-font px-2">
-              접속자<strong class="visit-num">{{ current_login_count[0] }}</strong></a>
-              <!-- current_login_count[1]은 회원 수 -->
+              접속자<strong class="visit-num">{{ current_login_count|number_format }}</strong></a>
           </li>
       </ul>
   </div>
@@ -46,7 +46,7 @@
       {% include "mobile/bbs/outlogin_before.html" ignore missing %}
       {% endif %}
 
-      <!-- 메뉴 -->
+      <!-- 사용자페이지 메뉴 -->
       {% include "/bbs/menu.html" ignore missing %}
 
       <ul id="hd_nb">
@@ -136,16 +136,14 @@
       <!-- 프로필 -->
       <div id="profile" class="dropdown d-none d-md-block bg-transparent">
         <span id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false" class="d-inline-block rounded-circle overflow-hidden cursor-pointer" style="width: 48px; height: 48px;" tabindex="0">
-          <img src="{{ get_member_image(request, request.state.login_member.mb_id)|safe }}" style="width: 100%;" alt="profile_image">
+          <img src="{{ get_member_image(request.state.login_member.mb_id)|safe }}" style="width: 100%;" alt="profile_image">
         </span>
         <div class="dropdown-menu cont-bg rounded-4 main-border overflow-hidden" aria-labelledby="profileDropdown">
           {% if request.state.login_member %}
-          {% include "bbs/outlogin_after.html" %}
+            {% include "bbs/outlogin_after.html" %}
           {% else %}
-          {% include "bbs/outlogin_before.html" %}
+            {% include "bbs/outlogin_before.html" %}
           {% endif %}
-          {% if menus -%}
-          {%- endif %}
         </div>
       </div>
     </div> 

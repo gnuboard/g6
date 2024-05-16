@@ -1,4 +1,4 @@
-{% set poll = get_recent_poll() %}
+{% set poll = request.state.template_data.poll %}
 {% if poll %}
     <form name="fpoll" action="{{ url_for('poll_update', po_id=poll.po_id) }}" onsubmit="return fpoll_submit(this);" method="post" target="win_poll">
         <input type="hidden" name="po_id" value="{{ poll.po_id }}">

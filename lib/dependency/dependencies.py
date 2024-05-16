@@ -1,21 +1,37 @@
 import os
 from typing_extensions import Annotated
 
-from fastapi import Depends, Form, HTTPException, Path, Query, Request
+from fastapi import (
+    Depends, Form, HTTPException, Path, Query, Request, Response
+)
 from pydantic import TypeAdapter
 from sqlalchemy import exists, inspect, select
 from starlette.status import HTTP_403_FORBIDDEN
 
-from core.database import DBConnect, db_session
-from core.exception import AlertException
-from core.models import Auth, Board, GroupMember, Member
+from core.database import DBConnect
+from core.exception import AlertException, TemplateDisabledException
+from core.models import Auth, Board, GroupMember
+from core.settings import ENV_PATH, settings
 from core.template import get_theme_list
-from lib.common import (
-    dynamic_create_write_table, ENV_PATH, get_current_admin_menu_id,
-    get_current_captcha_cls,
-)
-from lib.member_lib import get_admin_type
+from lib.captcha import get_current_captcha_cls
+from lib.common import get_current_admin_menu_id
+from lib.member import get_admin_type
 from lib.token import check_token
+from service.current_connect_service import CurrentConnectService
+from service.menu_service import MenuService
+from service.poll_service import PollService
+from service.popular_service import PopularService
+
+
+async def get_variety_bo_table(
+    bo_table_path: Annotated[str, Path(alias="bo_table", title="게시판 테이블명", description="게시판 테이블명")] = None,
+    bo_table_form: Annotated[str, Form(alias="bo_table")] = None
+):
+    """
+    요청 매개변수의 유형별 게시판 테이블명을 수신, 하나의 테이블명만 반환
+    - 함수의 매개변수 순서대로 우선순위를 가짐
+    """
+    return bo_table_path or bo_table_form
 
 
 async def get_variety_tokens(
@@ -164,7 +180,7 @@ async def check_admin_access(request: Request):
                         "최고관리자 또는 관리권한이 있는 회원만 접근 가능합니다.", 302, url="/")
 
 
-def common_search_query_params(
+async def common_search_query_params(
         sst: str = Query(default=""),
         sod: str = Query(default=""),
         sfl: str = Query(default=""),
@@ -180,70 +196,40 @@ def common_search_query_params(
     return {"sst": sst, "sod": sod, "sfl": sfl, "stx": stx, "sca": sca, "current_page": current_page}
 
 
-def get_variery_board(
-        board_path: Annotated[str, Path(alias="bo_table")] = None,
-        board_form: Annotated[str, Form(alias="bo_table")] = None,
+async def check_use_template():
+    """템플릿 사용 여부 검사"""
+    if not settings.USE_TEMPLATE:
+        raise TemplateDisabledException(detail="템플릿 사용이 불가능합니다.")
+
+
+async def check_use_api():
+    """API 사용 여부 검사"""
+    if not settings.USE_API:
+        raise HTTPException(status_code=404, detail="API 사용이 불가능합니다.")
+
+
+async def no_cache_response(response: Response):
+    """캐시 제어 헤더를 설정하는 의존성 함수"""
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+
+
+async def set_template_basic_data(
+    request: Request,
+    current_connect_service: Annotated[CurrentConnectService, Depends()],
+    menu_service: Annotated[MenuService, Depends()],
+    poll_service: Annotated[PollService, Depends()],
+    popular_service: Annotated[PopularService, Depends()]
 ):
-    """
-    요청 매개변수의 유형별 bo_table을 수신, 하나의 bo_table 값만 반환
-    - 함수의 매개변수 순서대로 우선순위를 가짐
-    """
-    return board_path or board_form
-
-
-def get_board(db: db_session, bo_table: Annotated[str, Depends(get_variery_board)]):
-    """게시판 존재 여부 검사 & 반환"""
-    board = db.get(Board, bo_table)
-    if not board:
-        raise AlertException(f"{bo_table} : 존재하지 않는 게시판입니다.", 404)
-
-    return board
-
-
-def get_variery_wr_id(
-        wr_id_path: Annotated[str, Path(alias="wr_id")] = None,
-        wr_id_form: Annotated[str, Form(alias="wr_id")] = None,
-):
-    """
-    요청 매개변수의 유형별 wr_id를 수신, 하나의 wr_id 값만 반환
-    - 함수의 매개변수 순서대로 우선순위를 가짐
-    """
-    return wr_id_path or wr_id_form
-
-
-def get_write(db: db_session, 
-              bo_table: Annotated[str, Path(...)],
-              wr_id: Annotated[str, Depends(get_variery_wr_id)]):
-    """게시글 존재 여부 검사 & 반환"""
-    if not wr_id.isdigit():
-        raise AlertException(f"{wr_id} : 올바르지 않은 게시글 번호입니다.", 404)
-
-    write_model = dynamic_create_write_table(bo_table)
-    write = db.get(write_model, wr_id)
-    if not write:
-        raise AlertException(f"{wr_id} : 존재하지 않는 게시글입니다.", 404)
-
-    return write
-
-
-def get_member(db: db_session, mb_id: str = Path(...)):
-    """회원 존재 여부 검사 & 반환"""
-    member = db.scalar(select(Member).where(Member.mb_id == mb_id))
-    if not member:
-        raise AlertException(f"{mb_id} : 존재하지 않는 회원입니다.", 404)
-
-    return member
-
-
-def get_login_member(request: Request):
-    """로그인 여부 검사 & 반환"""
-    member: Member = request.state.login_member
-    if not member:
-        path = request.url.path
-        url = request.url_for("login_form").replace_query_params(url=path)
-        raise AlertException(f"로그인 후 이용 가능합니다.", 403, url=url)
-
-    return member
+    """템플릿 기본 조회 데이터 설정"""
+    template_data = {
+        "current_login_count": current_connect_service.fetch_total_records(),
+        "menus": menu_service.fetch_menus(),
+        "poll": poll_service.fetch_latest_poll(),
+        "populars": popular_service.fetch_populars(),
+    }
+    request.state.template_data = template_data
 
 
 def check_demo_mode_active(request: Request) -> bool:
@@ -255,13 +241,14 @@ def check_demo_mode_active(request: Request) -> bool:
 
     return False
 
+
 def check_demo_http(active: Annotated[bool, Depends(check_demo_mode_active)]):
     """데모모드 여부 검사 - HTTPException"""
     if active:
         raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="데모 화면에서는 하실(보실) 수 없는 작업입니다.")
 
+
 def check_demo_alert(active: Annotated[bool, Depends(check_demo_mode_active)]):
     """데모모드 여부 검사 - AlertException"""
     if active:
         raise AlertException("데모 화면에서는 하실(보실) 수 없는 작업입니다.", 403)
-

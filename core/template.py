@@ -1,27 +1,33 @@
+import os
+import re
 import typing
 
+from cachetools import LRUCache, cached
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment, FileSystemLoader
-from pydantic import TypeAdapter
+from sqlalchemy import select
 from starlette.background import BackgroundTask
 from starlette.staticfiles import StaticFiles
 from starlette.templating import _TemplateResponse
 
+from core.database import DBConnect
+from core.models import Config
 from core.plugin import (
     get_admin_plugin_menus, get_all_plugin_module_names, PLUGIN_DIR, get_plugin_state_cache
 )
-from lib.common import *
-from lib.member_lib import get_member_icon, get_member_image
-from lib.template_filters import (
-    datetime_format, number_format, set_query_params
+from core.settings import settings
+from lib.common import (
+    CAPTCHA_PATH, EDITOR_PATH, get_admin_menus, read_version
 )
+from lib.visit import get_total_visit
+from lib.template_filters import datetime_format, number_format, set_query_params
 from lib.template_functions import (
-    editor_macro, get_selected, option_selected,
-    option_array_checked, subject_sort_link
+    editor_macro, get_member_icon, get_member_image, get_selected,
+    option_selected, option_array_checked, subject_sort_link
 )
 
-
+@cached(LRUCache(maxsize=128))
 def get_current_theme() -> str:
     """현재 설정된 테마를 반환
     - 설정된 테마가 존재하지 않을 경우 기본 테마를 반환
@@ -50,12 +56,12 @@ def get_theme_path() -> str:
     theme = get_current_theme()
     theme_path = f"{TEMPLATES}/{theme}"
 
-    # 실제 테마가 존재하는지 확인            
+    # 실제 테마가 존재하는지 확인
     if not os.path.exists(theme_path):
         return default_theme_path
 
     return theme_path
-    
+
 
 def get_admin_theme_path() -> str:
     """관리자 > 테마의 설정 경로를 반환
@@ -68,10 +74,10 @@ def get_admin_theme_path() -> str:
     default_theme = "basic"
     default_theme_path = f"{ADMIN_TEMPLATES}/{default_theme}"
     try:
-        theme = os.getenv("ADMIN_THEME", "basic")
+        theme = settings.ADMIN_THEME
         theme_path = f"{ADMIN_TEMPLATES}/{theme}"
 
-        # 실제 테마가 존재하는지 확인            
+        # 실제 테마가 존재하는지 확인
         if not os.path.exists(theme_path):
             return default_theme_path
 
@@ -87,25 +93,9 @@ ADMIN_TEMPLATES_DIR = get_admin_theme_path()  # 관리자 템플릿 경로
 
 class TemplateService():
     """템플릿 서비스 클래스
-    - TODO: 반응형/적응형 변수 외의 다른 부분도 클래스화 해야한다.
+    - TODO: 이외의 다른 부분도 클래스화 해야한다.
     """
-    _is_responsive: bool = None  # 반응형 템플릿 여부
     _templates_dir: str = None  # 사용자 템플릿 경로
-
-    @classmethod
-    def get_responsive(cls) -> bool:
-        if cls._is_responsive is None:
-            cls.set_responsive()
-
-        return cls._is_responsive
-    
-    @classmethod
-    def set_responsive(cls) -> None:
-        load_dotenv()
-        cls._is_responsive = (
-            TypeAdapter(bool)
-            .validate_python(os.getenv("IS_RESPONSIVE", True))
-        )
 
     @classmethod
     def get_templates_dir(cls) -> str:
@@ -127,7 +117,12 @@ class UserTemplates(Jinja2Templates):
     """
     _instance = None
     _is_mobile: bool = False
-    default_directories = [TemplateService.get_templates_dir(), EDITOR_PATH, CAPTCHA_PATH, PLUGIN_DIR]
+    default_directories = [
+        TemplateService.get_templates_dir(),
+        EDITOR_PATH,
+        CAPTCHA_PATH,
+        PLUGIN_DIR
+    ]
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
@@ -141,7 +136,8 @@ class UserTemplates(Jinja2Templates):
                  env: Environment = None):
         if not getattr(self, '_initialized', False):
             self._initialized = True
-            super().__init__(directory=self.default_directories, context_processors=context_processors)
+            super().__init__(directory=self.default_directories,
+                             context_processors=context_processors)
 
             # 템플릿 필터 설정
             self.env.filters["datetime_format"] = datetime_format
@@ -154,9 +150,7 @@ class UserTemplates(Jinja2Templates):
             self.env.globals["get_member_icon"] = get_member_icon
             self.env.globals["get_member_image"] = get_member_image
             self.env.globals["theme_asset"] = theme_asset
-            self.env.globals["get_populars"] = get_populars
-            self.env.globals["get_recent_poll"] = get_recent_poll
-            self.env.globals["get_menus"] = get_menus
+            self.env.globals["get_total_visit"] = get_total_visit
 
             # 템플릿 컨텍스트 프로세서 설정
             self.context_processors.append(self._default_context)
@@ -169,9 +163,7 @@ class UserTemplates(Jinja2Templates):
         from lib.board_lib import render_latest_posts
 
         context = {
-            "current_login_count": get_current_login_count(request),
             "render_latest_posts": render_latest_posts,
-            "render_visit_statistics": render_visit_statistics,
         }
         return context
 
@@ -193,7 +185,7 @@ class UserTemplates(Jinja2Templates):
         """
         request = context.get("request")
         is_mobile: bool = getattr(request.state, "is_mobile", False)
-        if (not TemplateService.get_responsive()
+        if (not settings.IS_RESPONSIVE
                 and self._is_mobile != is_mobile):
             # 경로 우선순위 변경
             mobile_dir = f"{TemplateService.get_templates_dir()}/mobile"
@@ -239,7 +231,8 @@ class AdminTemplates(Jinja2Templates):
                  ):
         if not getattr(self, '_initialized', False):
             self._initialized = True
-            super().__init__(directory=self.default_directories, context_processors=context_processors)
+            super().__init__(directory=self.default_directories,
+                             context_processors=context_processors)
 
             # 템플릿 필터 설정
             self.env.filters["datetime_format"] = datetime_format
@@ -333,7 +326,7 @@ def get_theme_list():
         require_file_list = ['readme.txt', 'index.html']
         if (os.path.isdir(theme_path)
                 and all(os.path.isfile(os.path.join(theme_path, fname)) for fname in require_file_list)):
-                result_array.append(file)
+            result_array.append(file)
 
     result_array.sort()  # Using Python's default sort which is similar to natsort for strings
 

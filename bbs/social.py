@@ -1,26 +1,34 @@
+"""소셜 로그인 Template Router"""
+import hashlib
+import logging
 import secrets
 import zlib
+from datetime import datetime
+from typing import List, Optional
 from urllib.parse import parse_qs
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
+from sqlalchemy import delete, exists, select
 from starlette.responses import RedirectResponse
+from typing_extensions import Annotated
 
-from bbs.member_profile import validate_nickname, validate_userid
-from core.database import db_session
+from core.database import DBConnect, db_session
 from core.exception import AlertException
 from core.formclass import MemberForm
-from core.models import MemberSocialProfiles
+from core.models import Config, Member, MemberSocialProfiles
 from core.template import UserTemplates
-from lib.common import *
-from lib.member_lib import check_exist_member_email
+from lib.common import get_admin_email, get_admin_email_name, session_member_key
+from lib.mail import mailer
 from lib.pbkdf2 import create_hash
-from lib.point import insert_point
 from lib.social import providers
 from lib.social.social import (
-    get_social_profile, get_social_login_token, oauth, SocialProvider,
+    get_social_login_token, get_social_profile, oauth, SocialProvider
 )
 from lib.template_filters import default_if_none
+from service.member_service import MemberService, ValidateMember
+from service.point_service import PointService
+
 
 router = APIRouter()
 templates = UserTemplates()
@@ -92,7 +100,8 @@ async def social_login(request: Request):
 @router.get('/social/login/callback')
 async def authorize_social_login(
         request: Request,
-        db: db_session
+        db: db_session,
+        member_service: Annotated[MemberService, Depends()]
 ):
     """소셜 로그인 인증 콜백
     Args:
@@ -129,19 +138,7 @@ async def authorize_social_login(
     # 가입된 소셜 서비스 아이디가 존재하는지 확인
     social_profile = SocialAuthService.get_profile_by_identifier(identifier, provider_name)
     if social_profile:
-        config = request.state.config
-        # 이미 가입된 회원이라면 로그인
-        member = db.scalar(
-            select(Member).where(Member.mb_id == social_profile.mb_id)
-        )
-        if not member:
-            raise AlertException(
-                status_code=400, detail="유효하지 않은 요청입니다.",
-                url=request.url_for('login').__str__())
-        elif member.mb_leave_date or member.mb_intercept_date:
-            raise AlertException("탈퇴 또는 차단된 회원입니다.", 404)
-        elif config.cf_use_email_certify and member.mb_email_certify == datetime(1, 1, 1, 0, 0, 0):
-            raise AlertException(f"{member.mb_email} 메일로 메일인증을 받으셔야 로그인 가능합니다.", 404)
+        member = member_service.get_member(social_profile.mb_id)
 
         # 로그인
         request.session["ss_mb_id"] = member.mb_id
@@ -166,7 +163,10 @@ async def authorize_social_login(
 
 
 @router.get('/social/register')
-async def get_social_register_form(request: Request):
+async def get_social_register_form(
+    request: Request,
+    validate: Annotated[ValidateMember, Depends()]
+):
     """
     소셜 회원가입 폼
     """
@@ -180,7 +180,7 @@ async def get_social_register_form(request: Request):
                              url=request.url_for('login').__str__())
     social_email = request.session.get('ss_social_email', None)
     if social_email:
-        is_exists_email = check_exist_member_email(social_email, None)
+        is_exists_email = validate.is_exists_email(social_email)
     else:
         is_exists_email = False
 
@@ -207,9 +207,11 @@ async def get_social_register_form(request: Request):
 
 @router.post('/social/register')
 async def post_social_register(
-        request: Request,
-        db: db_session,
-        member_form: MemberForm = Depends(),
+    request: Request,
+    db: db_session,
+    point_service: Annotated[PointService, Depends()],
+    validate: Annotated[ValidateMember, Depends()],
+    member_form: MemberForm = Depends(),
 ):
     """
     신규 소셜 회원등록
@@ -240,30 +242,15 @@ async def post_social_register(
         raise AlertException(status_code=400, detail="유효하지 않은 요청입니다. 관리자에게 문의하십시오.",
                              url=request.url_for('login').__str__())
 
+    # 소셜 아이디 검사
     gnu_social_id = SocialAuthService.g6_convert_social_id(identifier, provider_name)
-    exists_social_member = db.scalar(select(Member).where(Member.mb_id == gnu_social_id))
-    # 유효성 검증
-    if exists_social_member:
-        raise AlertException(status_code=400, detail="이미 소셜로그인으로 가입된 회원아이디 입니다.",
-                             url=request.url_for('login').__str__())
+    validate.valid_id(gnu_social_id)
 
-    result = validate_userid(gnu_social_id, config.cf_prohibit_id)
-    if result["msg"]:
-        raise AlertException(status_code=400, detail=result["msg"])
+    # 이메일 유효성 검사
+    validate.valid_email(member_form.mb_email)
 
-    if not valid_email(member_form.mb_email):
-        raise AlertException(status_code=400, detail="이메일 양식이 올바르지 않습니다.")
-
-    exists_email = db.scalar(
-        exists(Member.mb_email)
-        .where(Member.mb_email == member_form.mb_email).select()
-    )
-    if exists_email:
-        raise AlertException(status_code=400, detail="이미 존재하는 이메일 입니다.")
-
-    result = validate_nickname(member_form.mb_nick, config.cf_prohibit_id)
-    if result["msg"]:
-        raise AlertException(status_code=400, detail=result["msg"])
+    # 닉네임 유효성 검사
+    validate.valid_nickname(member_form.mb_nick)
 
     # nick
     mb_nick = member_form.mb_nick
@@ -306,7 +293,9 @@ async def post_social_register(
     db.commit()
 
     # 회원가입 포인트 부여
-    insert_point(request, member.mb_id, config.cf_register_point, "회원가입 축하", "@member", member.mb_id, "회원가입")
+    register_point = getattr(config, "cf_register_point", 0)
+    point_service.save_point(member.mb_id, register_point, "회원가입 축하",
+                             "@member", member.mb_id, "회원가입")
 
     from_email = get_admin_email(request)
     from_name = get_admin_email_name(request)

@@ -2,19 +2,18 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 
 from core.database import db_session
 from core.exception import AlertException
 from core.models import Auth, Member
 from core.plugin import get_all_plugin_admin_menu_id_name
 from core.template import AdminTemplates
-from lib.dependencies import (
-    check_demo_alert,
-    common_search_query_params,
-    validate_captcha, validate_token,
+from lib.captcha import captcha_widget
+from lib.common import get_admin_menus, select_query, set_url_query_params
+from lib.dependency.dependencies import (
+    check_demo_alert, common_search_query_params, validate_token, validate_captcha
 )
-from lib.common import *
 from lib.template_functions import get_paging
 
 router = APIRouter(dependencies=[Depends(check_demo_alert)])

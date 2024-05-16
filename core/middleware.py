@@ -1,7 +1,8 @@
-import os
+"""애플리케이션에 사용되는 미들웨어를 정의합니다."""
 from user_agents import parse
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -10,7 +11,7 @@ from core.plugin import (
     read_plugin_state, cache_plugin_state, cache_plugin_menu, register_plugin,
     unregister_plugin, delete_router_by_tagname
 )
-from core.template import TemplateService
+from core.settings import settings
 
 
 def regist_core_middleware(app: FastAPI) -> None:
@@ -44,7 +45,7 @@ def regist_core_middleware(app: FastAPI) -> None:
 
         # 접속환경 설정
         request.state.is_mobile = False
-        request.state.is_responsive = TemplateService.get_responsive()
+        request.state.is_responsive = settings.IS_RESPONSIVE
 
         # 반응형이라면 PC/모바일 버전 설정 세션을 초기화합니다.
         if request.state.is_responsive:
@@ -70,12 +71,20 @@ def regist_core_middleware(app: FastAPI) -> None:
     # 세션 미들웨어를 추가합니다.
     # .env 파일의 설정을 통해 secret_key, session_cookie를 설정할 수 있습니다.
     app.add_middleware(SessionMiddleware,
-                       secret_key=os.getenv("SESSION_SECRET_KEY", ''),
-                       session_cookie=os.getenv("SESSION_COOKIE_NAME", "session"),
+                       secret_key=settings.SESSION_SECRET_KEY,
+                       session_cookie=settings.SESSION_COOKIE_NAME,
                        max_age=60 * 60 * 3)
 
     # 클라이언트가 사용할 프로토콜을 결정하는 미들웨어를 추가합니다.
     app.add_middleware(BaseSchemeMiddleware)
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 
 async def should_run_middleware(request: Request) -> bool:
@@ -104,7 +113,7 @@ async def should_run_middleware(request: Request) -> bool:
 
 
 class BaseSchemeMiddleware(BaseHTTPMiddleware):
+    """X-Forwarded-Proto 헤더를 통해 클라이언트가 사용하는 실제 프로토콜을 결정합니다."""
     async def dispatch(self, request: Request, call_next):
-        # X-Forwarded-Proto 헤더를 통해 클라이언트가 사용하는 실제 프로토콜을 결정합니다.
         request.scope["scheme"] = request.headers.get("X-Forwarded-Proto", "http")
         return await call_next(request)

@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from .scheduled_jobs import cron_jobs, interval_jobs, date_jobs
 
+from core.settings import settings
+
 class Scheduler:
     """
     예약 작업을 관리할 스케줄러 생성
@@ -15,7 +17,6 @@ class Scheduler:
     - interval_schedules.py: 일정 간격으로 반복할 작업을 등록합니다.
     - date_schedules.py: 특정 날짜와 시간에 한 번만 실행할 작업을 등록합니다.
     """
-    TIME_ZONE = os.getenv("TIME_ZONE", "Asia/Seoul")
     FLAG_DELETE_TIME = 10   # 단위: 초
     flag_file_path = "data/flag.txt"
     job_ids = set()
@@ -30,7 +31,7 @@ class Scheduler:
         스케줄러를 생성하고 시작합니다.
         기본적으로 BackgroundScheduler를 사용합니다.
         """
-        self.background_scheduler = BackgroundScheduler(timezone=self.TIME_ZONE)
+        self.background_scheduler = BackgroundScheduler(timezone=settings.TIME_ZONE)
         self.background_scheduler.start()
 
     def add_jobs(self, trigger_type: str) -> None:

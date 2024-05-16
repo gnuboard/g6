@@ -7,7 +7,7 @@ from starlette.responses import RedirectResponse
 
 from core.database import db_session
 from core.template import AdminTemplates
-from lib.dependencies import validate_token
+from lib.dependency.dependencies import validate_token
 from .. import plugin_config
 from ..models import Todo
 from ..plugin_config import module_name, admin_router_prefix
