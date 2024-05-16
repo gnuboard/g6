@@ -1,4 +1,5 @@
 """게시글 모델"""
+from enum import Enum
 from typing_extensions import Annotated, List, Union
 from datetime import datetime
 
@@ -262,6 +263,11 @@ class ResponseGroupBoardsModel(BaseModel):
     """게시판 그룹, 게시판 목록 모델"""
     group: ResponseGroupModel
     boards: List[ResponseBoardModel]
+
+
+class BoardNewViewType(Enum):
+    WRITE = "write"
+    COMMENT = "comment"
 
 
 class ResponseBoardNewModel(BaseModel):
