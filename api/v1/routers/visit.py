@@ -11,7 +11,7 @@ from lib.visit import get_total_visit
 router = APIRouter()
 
 
-@router.get("/visit/",
+@router.get("/visit",
             summary="방문자 집계 조회",
             responses={**response_404, **response_500})
 async def read_total_visit(
@@ -26,7 +26,7 @@ async def read_total_visit(
     return get_total_visit(config_visit)
 
 
-@router.post("/visit/",
+@router.post("/visit",
              summary="방문자 접속 이력 생성",
              responses={**response_404, **response_500})
 async def create_visit_record(
