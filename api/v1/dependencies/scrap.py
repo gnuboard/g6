@@ -7,7 +7,7 @@ from core.models import Board, Member, Scrap, WriteBaseModel
 
 from api.v1.dependencies.board import get_board, get_write
 from api.v1.dependencies.member import get_current_member
-from api.v1.lib.scrap import ScrapServiceAPI, ValidateScrapServiceAPI
+from api.v1.service.scrap import ScrapServiceAPI, ValidateScrapServiceAPI
 
 
 async def get_scrap(

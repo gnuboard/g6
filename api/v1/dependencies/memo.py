@@ -7,7 +7,7 @@ from core.models import Member, Memo
 
 from api.v1.dependencies.member import get_current_member
 from api.v1.models.memo import SendMemo
-from api.v1.lib.memo import MemoServiceAPI
+from api.v1.service.memo import MemoServiceAPI
 
 
 def get_memo(

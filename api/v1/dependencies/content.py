@@ -5,7 +5,7 @@ from typing_extensions import Annotated
 from fastapi import Depends, Path
 
 from core.models import Content
-from api.v1.lib.content import ContentServiceAPI
+from api.v1.service.content import ContentServiceAPI
 
 
 def get_content(

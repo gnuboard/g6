@@ -2,7 +2,7 @@
 from typing_extensions import Annotated
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, Request
 
-from api.v1.lib.point import PointServiceAPI
+from api.v1.service.point import PointServiceAPI
 from core.models import Member, Poll, PollEtc
 from lib.mail import send_poll_etc_mail
 from api.v1.dependencies.member import get_current_member_optional
@@ -10,7 +10,7 @@ from api.v1.dependencies.poll import (
     get_poll, get_poll_etc, validate_poll_etc_create, validate_poll_etc_delete,
     validate_poll_read, validate_poll_update
 )
-from api.v1.lib.poll import PollServiceAPI
+from api.v1.service.poll import PollServiceAPI
 from api.v1.models.response import (
     MessageResponse, response_403, response_404, response_409, response_422,
     response_500

@@ -4,7 +4,7 @@ from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends
 
-from api.v1.lib.newwin import NewwinServiceAPI
+from api.v1.service.newwin import NewwinServiceAPI
 from api.v1.models.newwin import DeviceRequest, NewwinResponse
 from api.v1.models.response import response_422, response_500
 

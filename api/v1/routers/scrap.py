@@ -9,14 +9,14 @@ from core.models import Board, Member, Scrap, WriteBaseModel
 from lib.board_lib import insert_board_new, set_write_delay
 from lib.common import get_paging_info
 
-from api.v1.lib.point import PointServiceAPI
+from api.v1.service.point import PointServiceAPI
 from api.v1.dependencies.board import get_board, get_write
 from api.v1.dependencies.member import get_current_member
 from api.v1.dependencies.scrap import (
     get_scrap, validate_create_scrap, validate_delete_scrap
 )
-from api.v1.lib.scrap import ScrapServiceAPI
-from api.v1.lib.board import CommentServiceAPI
+from api.v1.service.scrap import ScrapServiceAPI
+from api.v1.service.board import CommentServiceAPI
 from api.v1.models.pagination import PagenationRequest
 from api.v1.models.response import (
     MessageResponse, response_401, response_403, response_404, response_409,

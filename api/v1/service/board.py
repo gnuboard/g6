@@ -2,7 +2,7 @@ from typing_extensions import Dict, Annotated
 from fastapi import Request, HTTPException, Path, Depends
 from sqlalchemy import inspect
 
-from api.v1.lib.point import PointServiceAPI
+from api.v1.service.point import PointServiceAPI
 from api.v1.dependencies.member import get_current_member_optional, get_current_member
 from api.v1.models.board import WriteTransportationRequest
 from core.models import Board, Member
@@ -440,17 +440,3 @@ def is_possible_level(
     if admin_type:
         return True
     return member_level >= board_level
-
-
-def is_possible_point(
-    member_info: Dict,
-    action_point: int,
-):
-    member = member_info["member"]
-    if not action_point:
-        return True
-
-    if not member:
-        return False
-
-    return member.mb_point + action_point >= 0

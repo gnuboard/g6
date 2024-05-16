@@ -4,7 +4,7 @@ from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends, Request
 
-from api.v1.lib.popular import PopularServiceAPI
+from api.v1.service.popular import PopularServiceAPI
 from api.v1.models.popular import (
     CreatePopularRequest, PopularRequest, PopularResponse
 )

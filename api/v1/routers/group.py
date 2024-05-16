@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 
 from api.v1.models.response import response_401, response_422
 from api.v1.models.board import ResponseGroupBoardsModel
-from api.v1.lib.board import GroupBoardListServiceAPI
+from api.v1.service.board import GroupBoardListServiceAPI
 
 
 router = APIRouter()

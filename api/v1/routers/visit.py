@@ -3,7 +3,7 @@ from typing_extensions import Annotated
 from fastapi import Depends, Request
 from fastapi.routing import APIRouter
 
-from api.v1.lib.visit import VisitServiceAPI
+from api.v1.service.visit import VisitServiceAPI
 from api.v1.models.response import MessageResponse, response_404, response_500
 from api.v1.models.visit import VisitTotalResponse
 from lib.visit import get_total_visit

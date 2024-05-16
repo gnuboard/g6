@@ -10,7 +10,7 @@ from api.v1.dependencies.member import get_current_member
 from api.v1.models.response import response_500
 from api.v1.models.pagination import PagenationRequest
 from api.v1.models.point import PointListResponse
-from api.v1.lib.point import PointServiceAPI
+from api.v1.service.point import PointServiceAPI
 
 router = APIRouter()
 

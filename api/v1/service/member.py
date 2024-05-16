@@ -22,6 +22,7 @@ class MemberImageServiceAPI(MemberImageService):
     def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None):
         raise HTTPException(status_code=status_code, detail=detail)
 
+
 class ValidateMemberAPI(ValidateMember):
     """
     API 요청에 사용되는 MemberService 구현 클래스.  

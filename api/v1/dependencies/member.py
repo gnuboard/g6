@@ -9,7 +9,7 @@ from core.models import Member
 from api.settings import api_settings
 from api.v1.auth import oauth2_optional, oauth2_scheme
 from api.v1.auth.jwt import JWT
-from api.v1.lib.member import MemberServiceAPI, ValidateMemberAPI
+from api.v1.service.member import MemberServiceAPI, ValidateMemberAPI
 from api.v1.models.auth import TokenPayload
 from api.v1.models.member import CreateMember, UpdateMember
 

@@ -3,13 +3,13 @@ from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends
 
-from api.v1.lib.point import PointServiceAPI
+from api.v1.service.point import PointServiceAPI
 from core.models import Member, Memo
 from lib.common import get_paging_info
 
 from api.v1.dependencies.member import get_current_member
 from api.v1.dependencies.memo import get_memo, validate_send_memo
-from api.v1.lib.memo import MemoServiceAPI
+from api.v1.service.memo import MemoServiceAPI
 from api.v1.models.response import (
     MessageResponse, response_401, response_403, response_422, response_404
 )

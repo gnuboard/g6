@@ -7,7 +7,7 @@ from core.models import Member
 from lib.common import get_paging_info, hide_ip_address
 from lib.member import is_super_admin
 from api.v1.dependencies.member import get_current_member_optional
-from api.v1.lib.current_connect import CurrentConnectServiceAPI
+from api.v1.service.current_connect import CurrentConnectServiceAPI
 from api.v1.models.current_connect import (
     CurrentConnectListRequest, CurrentConnectListResponse, CurrentConnectResponse
 )

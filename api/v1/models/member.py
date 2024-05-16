@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, field_validator, model_val
 from lib.member import set_zip_code
 from lib.pbkdf2 import create_hash
 
-from api.v1.lib.member import MemberImageServiceAPI as ImageService
+from api.v1.service.member import MemberImageServiceAPI as ImageService
 from api.v1.models.response import MessageResponse
 
 class CreateMember(BaseModel):

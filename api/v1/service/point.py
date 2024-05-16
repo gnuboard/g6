@@ -1,7 +1,7 @@
 from typing_extensions import Annotated
 from fastapi import Depends, HTTPException, Request
 
-from api.v1.lib.member import MemberServiceAPI
+from api.v1.service.member import MemberServiceAPI
 from core.database import db_session
 from service.point_service import PointService
 

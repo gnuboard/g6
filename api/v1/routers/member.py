@@ -8,7 +8,7 @@ from fastapi import (
 )
 from sqlalchemy import delete
 
-from api.v1.lib.point import PointServiceAPI
+from api.v1.service.point import PointServiceAPI
 from bbs.social import SocialAuthService
 from core.database import db_session
 from core.models import Member
@@ -17,7 +17,7 @@ from lib.mail import send_password_reset_mail, send_register_mail
 from api.v1.dependencies.member import (
     get_current_member, validate_create_data, validate_update_data
 )
-from api.v1.lib.member import (
+from api.v1.service.member import (
     MemberServiceAPI,
     MemberImageServiceAPI as ImageService
 )

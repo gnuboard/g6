@@ -12,7 +12,7 @@ from core.models import Member
 from api.settings import api_settings
 from api.v1.models import MemberRefreshToken
 from api.v1.auth.jwt import JWT
-from api.v1.lib.member import MemberServiceAPI
+from api.v1.service.member import MemberServiceAPI
 
 
 def authenticate_member(

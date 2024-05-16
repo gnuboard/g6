@@ -15,7 +15,7 @@ from api.v1.models.board import (
     WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel,
     ResponseBoardListModel, ResponseNormalModel
 )
-from api.v1.lib.board import (
+from api.v1.service.board import (
     ListPostServiceAPI, ReadPostServiceAPI,
     CreatePostServiceAPI, UpdatePostServiceAPI, DownloadFileServiceAPI,
     DeletePostServiceAPI, CommentServiceAPI, DeleteCommentServiceAPI,

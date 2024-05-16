@@ -6,7 +6,7 @@ from fastapi import Depends, Path
 from api.v1.dependencies.member import (
     get_current_member, get_current_member_optional
 )
-from api.v1.lib.poll import PollServiceAPI, ValidatePollServiceAPI
+from api.v1.service.poll import PollServiceAPI, ValidatePollServiceAPI
 from core.models import Member, Poll, PollEtc
 
 

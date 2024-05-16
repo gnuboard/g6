@@ -4,7 +4,7 @@ from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends, Path, Query
 
-from api.v1.lib.faq import FaqServiceAPI
+from api.v1.service.faq import FaqServiceAPI
 from api.v1.models.faq import FaqMasterResponse, FaqResponse
 from api.v1.models.response import response_404, response_422
 

@@ -8,7 +8,7 @@ from lib.common import get_paging_info
 from lib.mail import send_qa_mail
 from api.v1.dependencies.member import get_current_member
 from api.v1.dependencies.qa import get_qa_content, validate_data, validate_upload_file
-from api.v1.lib.qa import QaConfigServiceAPI, QaFileServiceAPI, QaServiceAPI
+from api.v1.service.qa import QaConfigServiceAPI, QaFileServiceAPI, QaServiceAPI
 from api.v1.models.response import (
     MessageResponse, response_401, response_403, response_404, response_422, response_500
 )

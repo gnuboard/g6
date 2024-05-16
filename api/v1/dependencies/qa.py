@@ -7,7 +7,7 @@ from core.models import Member
 from lib.common import filter_words
 from lib.template_filters import number_format
 from api.v1.dependencies.member import get_current_member_optional
-from api.v1.lib.qa import QaConfigServiceAPI, QaServiceAPI
+from api.v1.service.qa import QaConfigServiceAPI, QaServiceAPI
 from api.v1.models.qa import QaContentData
 
 

@@ -7,7 +7,7 @@ from core.models import Content
 from lib.common import get_paging_info
 
 from api.v1.dependencies.content import get_content
-from api.v1.lib.content import ContentServiceAPI
+from api.v1.service.content import ContentServiceAPI
 from api.v1.models.content import ContentListResponse, ContentResponse
 from api.v1.models.pagination import PagenationRequest
 from api.v1.models.response import response_404, response_422
