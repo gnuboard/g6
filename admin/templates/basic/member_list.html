@@ -146,7 +146,7 @@
                     <tr class="{{ background_color }}">
                         <td headers="mb_list_name" class="td_mbname">{{ member.mb_name }}</td>
                         <td headers="mb_list_nick" class="td_name sv_use"><!-- 닉네임 -->
-                            {{ sideview.get(request, member.mb_id, member.mb_name, member.mb_email, member.wr_homepage)|safe }}
+                            {{ sideview.get(request, member.mb_id, member.mb_name, member.mb_email, member.mb_homepage)|safe }}
                         </td>
                         <td headers="mb_list_auth" class="td_mbstat"><!-- 권한(level) -->
                             {{ get_member_level_select('mb_level[]', 1, admin.mb_level if admin else 1, member.mb_level if member else 1)|safe }}

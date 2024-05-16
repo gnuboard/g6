@@ -34,7 +34,7 @@
                     <td class="td_mbid">{{ member.mb_id }}</td>
                     <td class="td_mbname">{{ member.mb_name }}</td>
                     <td class="td_mbname sv_use">
-                        <div>{{ sideview.get(request, member.mb_id, member.mb_nick, member.mb_email, member.wr_homepage)|safe }}</div>
+                        <div>{{ sideview.get(request, member.mb_id, member.mb_nick, member.mb_email, member.mb_homepage)|safe }}</div>
                     </td>
                     <td class="td_num">{{ member.mb_level }}</td>
                     <td><a href="/admin/point_list?sfl=mb_id&stx={{ member.mb_id }}">{{ member.mb_point|number_format }}</a></td>
@@ -138,7 +138,7 @@
                     <td class="td_mbid"><a href="/admin/point_list?sfl=mb_id&stx={{ row.mb_id }}">{{ row.mb_id }}</a></td>
                     <td class="td_mbname">{{ row.member.mb_name }}</td>
                     <td class="td_name sv_use">
-                        <div>{{ sideview.get(request, row.member.mb_id, row.member.mb_nick, row.member.mb_email, row.member.wr_homepage)|safe }}</div>
+                        <div>{{ sideview.get(request, row.member.mb_id, row.member.mb_nick, row.member.mb_email, row.member.mb_homepage)|safe }}</div>
                     </td>
                     <td class="td_datetime">{{ row.po_datetime.strftime('%Y-%m-%d') }}</td>
                     <td><a href="{{ row.link }}">{{ row.po_content }}</a></td>
