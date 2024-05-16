@@ -10,7 +10,7 @@ from service.search import SearchServiceAPI
 router = APIRouter()
 
 
-@router.get("/",
+@router.get("/search",
             summary="게시판 검색",
             responses={**response_401, **response_403, **response_422}
             )
