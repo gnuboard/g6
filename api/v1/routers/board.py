@@ -13,10 +13,10 @@ from api.v1.models.response import (
 from api.v1.dependencies.board import arange_file_data
 from api.v1.models.board import (
     WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel,
-    ResponseBoardListModel, ResponseGroupBoardsModel, ResponseNormalModel
+    ResponseBoardListModel, ResponseNormalModel
 )
 from api.v1.lib.board import (
-    GroupBoardListServiceAPI, ListPostServiceAPI, ReadPostServiceAPI,
+    ListPostServiceAPI, ReadPostServiceAPI,
     CreatePostServiceAPI, UpdatePostServiceAPI, DownloadFileServiceAPI,
     DeletePostServiceAPI, CommentServiceAPI, DeleteCommentServiceAPI,
     MoveUpdateServiceAPI, ListDeleteServiceAPI
@@ -31,21 +31,6 @@ credentials_exception = HTTPException(
     detail="Could not validate credentials",
     headers={"WWW-Authenticate": "Bearer"},
 )
-
-@router.get("/group/{gr_id}",
-            summary="게시판그룹 목록 조회",
-            responses={**response_401, **response_422}
-            )
-async def api_group_board_list(
-    service: Annotated[GroupBoardListServiceAPI, Depends(GroupBoardListServiceAPI.async_init)],
-) -> ResponseGroupBoardsModel:
-    """
-    게시판그룹의 모든 게시판 목록을 보여줍니다.
-    """
-    group = service.group
-    service.check_mobile_only()
-    boards = service.get_boards_in_group()
-    return {"group": group, "boards": boards}
 
 
 @router.get("/{bo_table}",

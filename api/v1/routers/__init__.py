@@ -6,7 +6,7 @@ from api.v1.models import Tags
 from api.v1.routers import (
     auth, autosave, board, board_good, board_new, config, content,
     current_connect, faq, member, memo, menu, newwin, point, poll, popular,
-    qa, scrap, search, visit
+    qa, scrap, search, visit, group
 )
 
 
@@ -15,6 +15,7 @@ router = APIRouter(prefix="/api/v1",
                    dependencies=[Depends(check_use_api)])
 router.include_router(auth.router, tags=[Tags.AUTH])
 router.include_router(board.router, prefix="/board", tags=[Tags.BOARD])
+router.include_router(group.router, prefix="/groups", tags=[Tags.GROUP])
 router.include_router(config.router, tags=[Tags.CONFIG])
 router.include_router(content.router, tags=[Tags.CONTENT])
 router.include_router(current_connect.router, tags=[Tags.CURRENT_CONNECT])

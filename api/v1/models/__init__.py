@@ -35,6 +35,7 @@ class Tags(Enum):
     """API 태그를 정의합니다."""
     AUTH = "인증"
     BOARD = "게시판"
+    GROUP = "게시판그룹"
     CONFIG = "환경설정"
     CONTENT = "컨텐츠"
     FAQ = "FAQ"
