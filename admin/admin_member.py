@@ -14,7 +14,7 @@ from core.formclass import AdminMemberForm
 from core.models import Auth, Board, Group, GroupMember, Member, Memo, Point, Scrap
 from core.template import AdminTemplates
 from lib.common import (
-    get_from_list, is_none_datetime, select_query, set_url_query_params
+    conv_field_info, get_from_list, is_none_datetime, select_query, set_url_query_params
 )
 from lib.dependency.dependencies import check_demo_alert, common_search_query_params, validate_token
 from lib.pbkdf2 import create_hash

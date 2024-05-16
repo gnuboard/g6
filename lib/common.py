@@ -913,7 +913,7 @@ def conv_field_info(request: Request, data: object, field: list, exclude: list =
     Returns:
         dict: 변환된 데이터
     """
-    from lib.dependencies import check_demo_mode_active
+    from lib.dependency.dependencies import check_demo_mode_active
 
     if not check_demo_mode_active(request):
         return data

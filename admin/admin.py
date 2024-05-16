@@ -4,7 +4,7 @@ from sqlalchemy import select, func
 from core.database import db_session
 from core.models import BoardNew, Member, Point
 from core.template import AdminTemplates
-from lib.common import dynamic_create_write_table
+from lib.common import conv_field_info, dynamic_create_write_table
 from lib.dependency.dependencies import check_admin_access
 from lib.member import get_member_level
 

@@ -9,7 +9,7 @@ from core.database import db_session
 from core.exception import AlertException
 from core.models import Group, GroupMember, Member
 from core.template import AdminTemplates
-from lib.common import set_url_query_params
+from lib.common import conv_field_info, set_url_query_params
 from lib.dependency.dependencies import (
     check_demo_alert, common_search_query_params, validate_token
 )

@@ -11,7 +11,7 @@ from core.exception import AlertException
 from core.formclass import ConfigForm
 from core.models import Config
 from core.template import AdminTemplates
-from lib.common import get_client_ip, get_host_public_ip
+from lib.common import conv_field_info, get_client_ip, get_host_public_ip
 from lib.dependency.dependencies import check_demo_alert, validate_super_admin, validate_token
 from lib.template_functions import (
     get_editor_select, get_member_level_select, get_skin_select,
