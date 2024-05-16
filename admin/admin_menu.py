@@ -1,17 +1,19 @@
-
+"""메뉴 관리 Template Router"""
+import re
 from typing import List
+from typing_extensions import Annotated
 
 import bleach
 from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy import func
+from sqlalchemy import delete, func, select
 
 from core.database import db_session
 from core.exception import AlertException
 from core.models import Board, Content, Group, Menu
 from core.template import AdminTemplates
-from lib.common import *
-from lib.dependencies import validate_token
+from lib.dependency.dependencies import validate_token
+from service.menu_service import MenuService
 
 router = APIRouter()
 templates = AdminTemplates()
@@ -65,43 +67,43 @@ async def menu_form(
 async def menu_form_search(
     request: Request,
     db: db_session,
-    type: str = Form(None)
+    search_type: str = Form(None)
 ):
     """
     메뉴 추가 팝업 레이아웃
     """
     # type별 model 선언
     datas = []
-    if type == "group":
+    if search_type == "group":
         datas = db.execute(
             select(Group.gr_id.label('id'), Group.gr_subject.label('subject'))
             .order_by(Group.gr_order, Group.gr_id)
         ).all()
-    elif type == "board":
+    elif search_type == "board":
         datas = db.execute(
             select(Board.bo_table.label('id'), Board.bo_subject.label('subject'), Board.gr_id)
             .order_by(Board.bo_order, Board.bo_table)
         ).all()
-    elif type == "content":
+    elif search_type == "content":
         datas = db.execute(
             select(Content.co_id.label('id'), Content.co_subject.label('subject'))
             .order_by(Content.co_id)
         ).all()
     else:
-        type = "input"
+        search_type = "input"
 
     context = {
         "request": request,
-        "type": type,
+        "type": search_type,
         "datas": datas
     }
-    return templates.TemplateResponse(f"menu_search_{type}.html", context)
+    return templates.TemplateResponse(f"menu_search_{search_type}.html", context)
 
 
 @router.post("/menu_list_update", dependencies=[Depends(validate_token)])
 async def menu_list_update(
-    request: Request,
     db: db_session,
+    menu_service: Annotated[MenuService, Depends()],
     parent_code: List[str] = Form(None, alias="code[]"),
     me_name: List[str] = Form(None, alias="me_name[]"),
     me_link: List[str] = Form(None, alias="me_link[]"),
@@ -159,13 +161,13 @@ async def menu_list_update(
             db.commit()
 
         # 기존캐시 삭제
-        get_menus.cache_clear()
+        menu_service.fetch_menus.cache_clear()
 
     except Exception as e:
         db.rollback()
-        raise AlertException(f"Error: {e}", 400)
+        raise AlertException(f"Error: {e}", 400) from e
 
-    return RedirectResponse(f"/admin/menu_list", status_code=303)
+    return RedirectResponse("/admin/menu_list", status_code=303)
 
 
 def base36_to_base10(number: str = None):

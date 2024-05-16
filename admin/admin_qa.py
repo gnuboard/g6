@@ -6,8 +6,8 @@ from core.database import db_session
 from core.formclass import QaConfigForm
 from core.models import QaConfig
 from core.template import AdminTemplates
-from lib.common import *
-from lib.dependencies import validate_token
+from lib.common import select_query
+from lib.dependency.dependencies import validate_token
 from lib.template_functions import get_skin_select
 
 

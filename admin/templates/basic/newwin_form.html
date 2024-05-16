@@ -6,6 +6,7 @@
     {% include "datepicker.html" %}
     {{ editor.head() }}
 {% endblock head %}
+
 {% block title %}팝업레이어 {{ action_text }}{% endblock title %}
 {% block subtitle %}팝업레이어 {{ action_text }}{% endblock subtitle %}
 
@@ -31,9 +32,9 @@
                         <td>
                             <span class="frm_info">커뮤니티에 표시될 것인지 쇼핑몰에 표시될 것인지를 설정합니다.</span>
                             <select name="nw_division" id="nw_division">
-                                <option value="comm" {{ get_selected('newwin.nw_division', 'comm') }}>커뮤니티</option>
-                                <option value="both" {{ get_selected('newwin.nw_division', 'both') }}>커뮤니티와 쇼핑몰</option>
-                                <option value="shop" {{ get_selected('newwin.nw_division', 'shop') }}>쇼핑몰</option>
+                                <option value="comm" {{ get_selected(newwin.nw_division, 'comm') }}>커뮤니티</option>
+                                <option value="both" {{ get_selected(newwin.nw_division, 'both') }}>커뮤니티와 쇼핑몰</option>
+                                <option value="shop" {{ get_selected(newwin.nw_division, 'shop') }}>쇼핑몰</option>
                             </select>
                         </td>
                     </tr>
@@ -42,9 +43,9 @@
                         <td>
                             <span class="frm_info">팝업레이어가 표시될 접속기기를 설정합니다.</span>
                             <select name="nw_device" id="nw_device">
-                                <option value="both" {{ get_selected('newwin.nw_device', 'both') }} >PC와 모바일</option>
-                                <option value="pc" {{ get_selected('newwin.nw_device', 'pc') }} >PC</option>
-                                <option value="mobile" {{ get_selected('newwin.nw_device', 'mobile') }} >모바일</option>
+                                <option value="both" {{ get_selected(newwin.nw_device, 'both') }} >PC와 모바일</option>
+                                <option value="pc" {{ get_selected(newwin.nw_device, 'pc') }} >PC</option>
+                                <option value="mobile" {{ get_selected(newwin.nw_device, 'mobile') }} >모바일</option>
                             </select>
                         </td>
                     </tr>

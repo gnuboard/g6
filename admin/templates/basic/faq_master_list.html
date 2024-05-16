@@ -44,7 +44,7 @@
                             <td class="td_left">
                                 <a href="{{ url_for('faq_list', fm_id=faq_master.fm_id) }}">{{ faq_master.fm_subject }}</a>
                             </td>
-                            <td class="td_num">{{ faq_master.faqs|count }}</td>
+                            <td class="td_num">{{ faq_master.related_faqs.count()|number_format }}</td>
                             <td class="td_num">{{ faq_master.fm_order }}</td>
                             <td class="td_mng td_mng_l">
                                 <a href="{{ url_for('faq_master_update_form', fm_id=faq_master.fm_id) }}" class="btn btn_03">

@@ -12,7 +12,7 @@
     <h1 id="win_title">{{ member.mb_nick }}님의 프로필</h1>
     <div class="profile_name">
         <span class="my_profile_img">
-            <img src="{{ get_member_image(request, member.mb_id) }}">
+            <img src="{{ get_member_image(member.mb_id) }}">
         </span>
         {{ sideview.get(request, member.mb_id, member.mb_name, member.mb_email, member.mb_homepage)|safe }}
     </div>
@@ -29,8 +29,8 @@
                 <th scope="row"><i class="fa fa-regular fa-clock" aria-hidden="true"></i> 회원가입일</th>
                 <td>
                     {% if request.state.login_member and request.state.login_member.mb_level >= member.mb_level %}
-                        {{ member.mb_datetime |datetime_format("%Y-%m-%d") }}
-                        ({{ reg_after_date }} 일)
+                        {{ member.mb_datetime|datetime_format("%Y-%m-%d") }}
+                        ({{ days_since_regist }} 일)
                     {% else %}
                         알 수 없음
                     {% endif %}
@@ -39,7 +39,7 @@
                 <th scope="row"><i class="fa fa-regular fa-clock" aria-hidden="true"></i> 최종접속일</th>
                 <td>
                     {% if request.state.login_member and request.state.login_member.mb_level >= member.mb_level %}
-                        {{ member.mb_today_login |datetime_format("%Y-%m-%d") }}
+                        {{ member.mb_today_login|datetime_format("%Y-%m-%d") }}
                     {% else %}
                         알 수 없음
                     {% endif %}
@@ -56,7 +56,7 @@
 
         <section>
             <h2>인사말</h2>
-            <p>{{ member.mb_profile }}</p>
+            <p>{{ member.mb_profile or "소개 내용이 없습니다." }}</p>
         </section>
     </div>
     <div class="win_btn">

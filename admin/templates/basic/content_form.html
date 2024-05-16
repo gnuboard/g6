@@ -73,12 +73,11 @@
                     <th scope="row"><label for="co_himg">상단이미지</label></th>
                     <td>
                         <input type="file" name="co_himg" id="co_himg">
-                        {% set img_data = get_head_tail_img('content', content.co_id ~ '_h') %}
-                        {% if img_data.img_exists %}
+                        {% if head_image and head_image.exists %}
                             <input type="checkbox" name="co_himg_del" value="1" id="co_himg_del"> 
                             <label for="co_himg_del">삭제</label>
                             <div class="head_tail_img">
-                                <img src="{{ img_data.img_url }}?{{ today }}" width="{{ img_data.width }}" alt="">
+                                <img src="{{ head_image.url }}?{{ today }}" width="{{ head_image.width }}" alt="">
                             </div>
                         {% endif %}
                     </td>
@@ -87,12 +86,11 @@
                     <th scope="row"><label for="co_timg">하단이미지</label></th>
                     <td>
                         <input type="file" name="co_timg" id="co_timg">
-                        {% set img_data = get_head_tail_img('content', content.co_id ~ '_t') %}
-                        {% if img_data.img_exists %}
+                        {% if tail_image and tail_image.exists %}
                             <input type="checkbox" name="co_timg_del" value="1" id="co_timg_del"> 
                             <label for="co_timg_del">삭제</label>
                             <div class="head_tail_img">
-                                <img src="{{ img_data.img_url }}?{{ today }}" width="{{ img_data.width }}" alt="">
+                                <img src="{{ tail_image.url }}?{{ today }}" width="{{ tail_image.width }}" alt="">
                             </div>
                         {% endif %}
                     </td>

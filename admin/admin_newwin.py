@@ -1,18 +1,24 @@
+"""레이어 팝업 관리 Template Router"""
+from datetime import datetime, timedelta
+from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
+
+from sqlalchemy import select
 
 from core.database import db_session
 from core.exception import AlertException
 from core.formclass import NewwinForm
 from core.models import NewWin
 from core.template import AdminTemplates
-from lib.common import *
-from lib.dependencies import validate_token
+from lib.dependency.dependencies import validate_token
+from service.newwin_service import NewWinService
 
 router = APIRouter()
 templates = AdminTemplates()
 templates.env.globals["start_day"] = datetime.now().strftime("%Y-%m-%d 00:00:00")
-templates.env.globals["after_7days"] = (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d 23:59:59")
+templates.env.globals["after_7days"] = (
+    datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d 23:59:59")
 
 NEWWIN_MENU_KEY = "100310"
 
@@ -69,8 +75,8 @@ async def newwin_form_edit(
 
 @router.post("/newwin_form_update", dependencies=[Depends(validate_token)])
 async def newwin_form_update(
-    request: Request,
     db: db_session,
+    service: Annotated[NewWinService, Depends(NewWinService.async_init)],
     nw_id: int = Form(None),
     form_data: NewwinForm = Depends()
 ):
@@ -90,15 +96,15 @@ async def newwin_form_update(
         db.commit()
 
     # 기존 캐시 삭제
-    get_newwins.cache_clear()
+    service.fetch_newwins.cache_clear()
 
     return RedirectResponse(url=f"/admin/newwin_form/{newwin.nw_id}", status_code=302)
 
 
 @router.get("/newwin_delete/{nw_id}", dependencies=[Depends(validate_token)])
 async def newwin_delete(
-    request: Request,
     db: db_session,
+    service : Annotated[NewWinService, Depends(NewWinService.async_init)],
     newwin: NewWin = Depends(get_newwin)
 ):
     """
@@ -109,6 +115,6 @@ async def newwin_delete(
     db.commit()
 
     # 기존 캐시 삭제
-    get_newwins.cache_clear()
+    service.fetch_newwins.cache_clear()
 
-    return RedirectResponse(url=f"/admin/newwin_list", status_code=302)
+    return RedirectResponse(url="/admin/newwin_list", status_code=302)

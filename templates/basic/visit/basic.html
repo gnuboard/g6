@@ -1,31 +1,30 @@
-<div id="visit">
-
-    <h2>접속자집계</h2>
-
-    <ul>
-        <li>
-            <span>오늘</span>
-            <strong>{{ today|number_format }}</strong>
-        </li>
-        <li>
-            <span>어제</span>
-            <strong>{{ yesterday|number_format }}</strong>
-        </li>
-        <li>
-            <span>최대</span>
-            <strong>{{ max|number_format }}</strong>
-        </li>
-        <li>
-            <span>전체</span>
-            <strong>{{ total|number_format }}</strong>
-        </li>
-    </ul>
-
-    {% if request.state.is_super_admin %}
-    <a href="/admin/visit_list" class="btn_admin">
-        <i class="fa fa-cog fa-spin fa-fw"></i>
-        <span class="blind">관리자</span>
-    </a>
-    {% endif %}
-
-</div>
+{% set visit = get_total_visit(request.state.config.cf_visit) %}
+{% if visit %}
+    <div id="visit">
+        <h2>방문자 집계</h2>
+        <ul>
+            <li>
+                <span>오늘</span>
+                <strong>{{ visit.today|number_format }}</strong>
+            </li>
+            <li>
+                <span>어제</span>
+                <strong>{{ visit.yesterday|number_format }}</strong>
+            </li>
+            <li>
+                <span>최대</span>
+                <strong>{{ visit.max|number_format }}</strong>
+            </li>
+            <li>
+                <span>전체</span>
+                <strong>{{ visit.total|number_format }}</strong>
+            </li>
+        </ul>
+        {% if request.state.is_super_admin %}
+            <a href="/admin/visit_list" class="btn_admin">
+                <i class="fa fa-cog fa-spin fa-fw"></i>
+                <span class="blind">관리자</span>
+            </a>
+        {% endif %}
+    </div>
+{% endif %}

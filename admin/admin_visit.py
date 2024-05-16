@@ -1,11 +1,15 @@
-from fastapi import APIRouter, Depends, Form, Query
-from sqlalchemy import extract, select, cast, String
+import re
+from datetime import datetime
+from typing import List
+
+from fastapi import APIRouter, Depends, Form, Query, Request
+from sqlalchemy import asc, cast, delete, desc, extract, func, select, String
 
 from core.database import db_session
 from core.exception import AlertException
+from core.models import Visit
 from core.template import AdminTemplates
-from lib.common import *
-from lib.dependencies import validate_super_admin, validate_token
+from lib.dependency.dependencies import validate_super_admin, validate_token
 from lib.pbkdf2 import validate_password
 from lib.template_functions import get_paging
 
@@ -657,7 +661,7 @@ def count_by_field(list: list, field_name: str) -> list:
     return [{field_name: key, "count": value} for key, value in temp.items()]
 
 
-def add_percent_field(list: [dict]) -> list:
+def add_percent_field(list: List[dict]) -> list:
     """기존 리스트에 백분율을 계산하여 percent 필드를 추가합니다.
     Args:
         list (list): 접속자 리스트 (count 필드가 있어야 함)

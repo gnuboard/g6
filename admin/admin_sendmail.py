@@ -1,8 +1,13 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, Request, Form
 
 from core.template import AdminTemplates
-from lib.common import *
-from lib.dependencies import validate_token
+from lib.common import (
+    domain_mail_host, get_admin_email, get_admin_email_name
+)
+from lib.dependency.dependencies import validate_token
+from lib.mail import mailer
 
 router = APIRouter()
 templates = AdminTemplates()

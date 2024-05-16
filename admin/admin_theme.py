@@ -1,19 +1,19 @@
+import logging
 import os.path
-
 from typing_extensions import Annotated
 
 from jinja2 import FileSystemLoader
-from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi import APIRouter, Depends, HTTPException, Path, Request
 from fastapi.responses import FileResponse
 from sqlalchemy import select, update
 
 from core.database import db_session
+from core.models import Config
 from core.template import (
     AdminTemplates, TEMPLATES, TemplateService, UserTemplates,
     get_current_theme, get_theme_list, get_theme_info, register_theme_statics,
 )
-from lib.common import *
-from lib.dependencies import validate_super_admin, validate_theme
+from lib.dependency.dependencies import validate_super_admin, validate_theme
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -115,6 +115,7 @@ async def theme_update(
     user_template.env.loader = FileSystemLoader(theme_path)
 
     # 현재 테마의 경로를 변경합니다.
+    get_current_theme.cache_clear()
     TemplateService.set_templates_dir()
 
     return {"success": f"{info['theme_name']} 테마로 변경되었습니다."}
@@ -136,3 +137,4 @@ async def screenshot(theme: str = Path(...)):
     except Exception as e:
         logger.error(f"An error occurred while serving the file: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    

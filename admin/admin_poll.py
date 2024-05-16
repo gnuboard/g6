@@ -1,14 +1,21 @@
+"""설문조사 관리 Template Router"""
+from typing import List
+from typing_extensions import Annotated
+
 from fastapi import APIRouter, Depends, Form, Path, Request
 from fastapi.responses import RedirectResponse
+
+from sqlalchemy import delete
 
 from core.database import db_session
 from core.exception import AlertException
 from core.formclass import PollForm
 from core.models import Poll, PollEtc
 from core.template import AdminTemplates
-from lib.common import *
-from lib.dependencies import common_search_query_params, validate_token
+from lib.common import select_query, set_url_query_params
+from lib.dependency.dependencies import common_search_query_params, validate_token
 from lib.template_functions import get_member_level_select, get_paging
+from service.poll_service import PollService
 
 router = APIRouter()
 templates = AdminTemplates()
@@ -56,6 +63,7 @@ async def poll_list(
 async def poll_list_delete(
     request: Request,
     db: db_session,
+    service: Annotated[PollService, Depends()],
     checks: List[int] = Form(..., alias="chk[]")
 ):
     """
@@ -67,7 +75,7 @@ async def poll_list_delete(
     db.commit()
 
     # 기존캐시 삭제
-    get_recent_poll.cache_clear()
+    service.fetch_latest_poll.cache_clear()
 
     url = "/admin/poll_list"
     query_params = request.query_params
@@ -101,6 +109,7 @@ async def poll_form_edit(
 async def poll_form_update(
     request: Request,
     db: db_session,
+    service: Annotated[PollService, Depends()],
     po_id: int = Form(None),
     form_data: PollForm = Depends()
 ):
@@ -128,7 +137,7 @@ async def poll_form_update(
         db.commit()
 
     # 기존캐시 삭제
-    get_recent_poll.cache_clear()
+    service.fetch_latest_poll.cache_clear()
 
     url = f"/admin/poll_form/{poll.po_id}"
     query_params = request.query_params

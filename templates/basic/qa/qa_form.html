@@ -8,7 +8,6 @@
 {% endblock head %}
 
 {% block title %}{{ qa_config.qa_title }}{% endblock title %}
-
 {% block subtitle %}{{ qa_config.qa_title }}{% endblock subtitle %}
 
 {% block content %}
@@ -81,7 +80,7 @@
                 </label>
                 <input type="file" name="file1" id="qa_file_1" title="파일첨부 1 :  용량 {{ qa_config.qa_upload_size }} 바이트 이하만 업로드 가능" class="frm_file">
                 {% if qa.qa_file1 %}
-                    <input type="checkbox" id="qa_file_del1" name="qa_file_del1" value="1">
+                    <input type="checkbox" id="qa_file_del1" name="file_del1" value="1">
                     <label for="qa_file_del1"><span class="elip" title="{{ qa.qa_source1 }}">{{ qa.qa_source1 }}</span> 파일 삭제</label>
                 {% endif %}
             </div>
@@ -93,7 +92,7 @@
                 </label>
                 <input type="file" name="file2" id="qa_file_2" title="파일첨부 2 :  용량 {{ qa_config.qa_upload_size }} 바이트 이하만 업로드 가능" class="frm_file">
                 {% if qa.qa_file2 %}
-                    <input type="checkbox" id="qa_file_del2" name="qa_file_del2" value="1">
+                    <input type="checkbox" id="qa_file_del2" name="file_del2" value="1">
                     <label for="qa_file_del2"><span class="elip" title="{{ qa.qa_source2 }}">{{ qa.qa_source2 }}</span> 파일 삭제</label>
                 {% endif %}
             </div>

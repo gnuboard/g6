@@ -4,7 +4,7 @@
     <header id="ol_after_hd" class="row p-4">
         <h2 class="blind">나의 회원정보</h2>
         <span class="col-3">
-            <img src="{{ get_member_image(request, request.state.login_member.mb_id)|safe }}" alt="profile_image" class="rounded-circle" width="60" height="60">
+            <img src="{{ get_member_image(request.state.login_member.mb_id)|safe }}" alt="profile_image" class="rounded-circle" width="60" height="60">
         </span>
         <div class="col-9">
           <strong class="d-block fs-4 mt-1 mb-2 main-font">{{ member.mb_nick if member is defined else '' }}님</strong>
