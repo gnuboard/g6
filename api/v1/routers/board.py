@@ -247,7 +247,7 @@ async def api_list_delete(
     return {"result": "deleted"}
 
 
-@router.post("/{bo_table}/{sw}/list",
+@router.get("/{bo_table}/{sw}",
             summary="게시글 복사/이동 가능 목록 조회",
             responses={**response_401, **response_403,
                        **response_404, **response_422}
@@ -264,7 +264,7 @@ async def api_move_post(
     return boards
 
 
-@router.post("/{bo_table}/{sw}/update",
+@router.post("/{bo_table}/{sw}",
             summary="게시글 복사/이동",
             responses={**response_401, **response_403,
                        **response_404, **response_422}
