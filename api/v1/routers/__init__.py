@@ -14,7 +14,7 @@ from api.v1.routers import (
 router = APIRouter(prefix="/api/v1",
                    dependencies=[Depends(check_use_api)])
 router.include_router(auth.router, tags=[Tags.AUTH])
-router.include_router(board.router, prefix="/board", tags=[Tags.BOARD])
+router.include_router(board.router, prefix="/boards", tags=[Tags.BOARD])
 router.include_router(group.router, prefix="/groups", tags=[Tags.GROUP])
 router.include_router(config.router, tags=[Tags.CONFIG])
 router.include_router(content.router, tags=[Tags.CONTENT])
