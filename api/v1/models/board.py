@@ -2,10 +2,10 @@
 from enum import Enum
 from typing_extensions import Annotated, List, Union
 from datetime import datetime
+from enum import Enum
 
-from fastapi import Body
-from pydantic import BaseModel, ConfigDict, model_validator
-
+from fastapi import Body, Path
+from pydantic import BaseModel, ConfigDict, model_validator, Field
 
 
 class WriteModel(BaseModel):
@@ -297,3 +297,14 @@ class ResponseSearchModel(BaseModel):
     total_search_count: int
     onetable: Union[str, None]
     boards: List[ResponseSearchBoardModel]
+
+
+class WriteTransportation(Enum):
+    """게시글 이동/복사"""
+    MOVE = 'move'
+    COPY = 'copy'
+
+
+class WriteTransportationRequest(BaseModel):
+    """게시글 이동/복사 API 요청 모델"""
+    sw: WriteTransportation = Field(Path(title="이동/복사", description="게시글 이동 또는 복사"))

@@ -12,7 +12,7 @@ from lib.dependency.dependencies import (
     validate_captcha as lib_validate_captcha, get_variety_bo_table
 )
 from lib.template_filters import datetime_format
-from api.v1.models.board import WriteModel
+from api.v1.models.board import WriteModel, WriteTransportation
 from service.point_service import PointService
 from . import BoardService
 from service.board_file_service import BoardFileService
@@ -146,7 +146,7 @@ class MoveUpdateService(BoardService):
                     else:
                         setattr(target_write, field, getattr(origin_write, field))
 
-                if self.sw == "copy":
+                if self.sw == WriteTransportation.MOVE.value:
                     target_write.wr_good = 0
                     target_write.wr_nogood = 0
                     target_write.wr_hit = 0
@@ -159,7 +159,7 @@ class MoveUpdateService(BoardService):
                 target_write.wr_parent = target_write.wr_id
                 self.db.commit()
 
-                if self.sw == "move":
+                if self.sw == WriteTransportation.MOVE.value:
                     # 최신글 이동
                     self.db.execute(
                         update(BoardNew)
@@ -186,7 +186,7 @@ class MoveUpdateService(BoardService):
 
                 # 파일이 존재할 경우
                 if self.file_service.is_exist(origin_board.bo_table, origin_write.wr_id):
-                    if self.sw == "move":
+                    if self.sw == WriteTransportation.MOVE.value:
                         self.file_service.move_board_files(CreatePostService.FILE_DIRECTORY,
                                                            origin_board, origin_write.wr_id,
                                                            target_bo_table, target_write.wr_id)

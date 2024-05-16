@@ -4,6 +4,7 @@ from sqlalchemy import inspect
 
 from api.v1.lib.point import PointServiceAPI
 from api.v1.dependencies.member import get_current_member_optional, get_current_member
+from api.v1.models.board import WriteTransportationRequest
 from core.models import Board, Member
 from core.database import db_session
 from lib.dependency.dependencies import common_search_query_params
@@ -380,10 +381,10 @@ class MoveUpdateServiceAPI(MoveUpdateService):
         db: db_session,
         file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
-        sw: Annotated[str, Path(..., title="게시글 복사/이동", description="게시글 복사/이동", pattern="copy|move")],
+        sw: Annotated[WriteTransportationRequest, Depends()],
         member: Annotated[Member, Depends(get_current_member)],
     ):
-        super().__init__(request, db, file_service, bo_table, sw)
+        super().__init__(request, db, file_service, bo_table, sw.sw.value)
         self.member = MemberDetails(request, member, board=self.board)
 
     @classmethod
@@ -393,7 +394,7 @@ class MoveUpdateServiceAPI(MoveUpdateService):
         db: db_session,
         file_service: Annotated[BoardFileService, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
-        sw: Annotated[str, Path(..., title="게시글 복사/이동", description="게시글 복사/이동", pattern="copy|move")],
+        sw: Annotated[WriteTransportationRequest, Depends()],
         member: Annotated[Member, Depends(get_current_member)],
     ):
         instance = cls(request, db, file_service, bo_table, sw, member)
