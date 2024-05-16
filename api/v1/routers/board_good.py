@@ -12,7 +12,7 @@ from service.ajax import AJAXService
 router = APIRouter()
 
 
-@router.get("/boards/{bo_table}/writes/{wr_id}/{good_type}",
+@router.post("/boards/{bo_table}/writes/{wr_id}/{good_type}",
             summary="좋아요/싫어요",
             responses={**AJAXService.responses}
             )
