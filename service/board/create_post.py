@@ -188,11 +188,11 @@ class MoveUpdateService(BoardService):
                 if self.file_service.is_exist(origin_board.bo_table, origin_write.wr_id):
                     if self.sw == WriteTransportation.MOVE.value:
                         self.file_service.move_board_files(CreatePostService.FILE_DIRECTORY,
-                                                           origin_board, origin_write.wr_id,
+                                                           origin_bo_table, origin_write.wr_id,
                                                            target_bo_table, target_write.wr_id)
                     else:
                         self.file_service.copy_board_files(CreatePostService.FILE_DIRECTORY,
-                                                           origin_board, origin_write.wr_id,
+                                                           origin_bo_table, origin_write.wr_id,
                                                            target_bo_table, target_write.wr_id)
             # 최신글 캐시 삭제
             file_cache.delete_prefix(f'latest-{target_bo_table}')
