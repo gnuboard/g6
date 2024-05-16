@@ -33,7 +33,7 @@ credentials_exception = HTTPException(
 )
 
 
-@router.get("/{bo_table}",
+@router.get("/{bo_table}/writes",
             summary="게시판 조회",
             responses={**response_401, **response_422}
             )
@@ -55,7 +55,7 @@ async def api_list_post(
     return jsonable_encoder(content)
 
 
-@router.get("/{bo_table}/{wr_id}",
+@router.get("/{bo_table}/writes/{wr_id}",
             summary="게시판 개별 글 조회",
             responses={**response_401, **response_403,
                        **response_404, **response_422}
@@ -85,7 +85,7 @@ async def api_read_post(
     return content
 
 
-@router.post("/{bo_table}/{wr_id}",
+@router.post("/{bo_table}/writes/{wr_id}",
             summary="게시판 개별 글 조회(비밀글)",
             responses={**response_401, **response_403,
                        **response_404, **response_422}
@@ -118,7 +118,7 @@ async def api_read_post(
     return content
 
 
-@router.post("/{bo_table}",
+@router.post("/{bo_table}/writes",
              summary="게시판 글 작성",
              responses={**response_401, **response_403,
                         **response_404, **response_422}
@@ -165,7 +165,7 @@ async def api_create_post(
     return {"result": "created"}
     
 
-@router.put("/{bo_table}/{wr_id}",
+@router.put("/{bo_table}/writes/{wr_id}",
             summary="게시판 글 수정",
             responses={**response_401, **response_403,
                         **response_404, **response_422}
@@ -210,7 +210,7 @@ async def api_update_post(
     return {"result": "updated"}
 
 
-@router.delete("/{bo_table}/{wr_id}",
+@router.delete("/{bo_table}/writes/{wr_id}",
                 summary="게시판 글 삭제",
                 responses={**response_401, **response_403,
                            **response_404, **response_422}
@@ -228,7 +228,7 @@ async def api_delete_post(
     return {"result": "deleted"}
 
 
-@router.post("/list_delete/{bo_table}",
+@router.post("/{bo_table}/writes/delete",
             summary="게시글 일괄 삭제",
             responses={**response_401, **response_403, **response_422}
             )
@@ -247,7 +247,7 @@ async def api_list_delete(
     return {"result": "deleted"}
 
 
-@router.post("/move/{bo_table}/{sw}",
+@router.post("/{bo_table}/{sw}/list",
             summary="게시글 복사/이동 가능 목록 조회",
             responses={**response_401, **response_403,
                        **response_404, **response_422}
@@ -264,7 +264,7 @@ async def api_move_post(
     return boards
 
 
-@router.post("/move_update/{bo_table}/{sw}",
+@router.post("/{bo_table}/{sw}/update",
             summary="게시글 복사/이동",
             responses={**response_401, **response_403,
                        **response_404, **response_422}
@@ -289,7 +289,7 @@ async def api_move_update(
     return {"result": f"해당 게시물을 선택한 게시판으로 {service.act} 하였습니다."}
  
 
-@router.post("/uploadfile/{bo_table}/{wr_id}",
+@router.post("/{bo_table}/writes/{wr_id}/files",
             summary="파일 업로드",
             responses={**response_401, **response_403,
                        **response_404, **response_422}
@@ -311,7 +311,7 @@ async def api_upload_file(
     return {"result": "uploaded"}
 
 
-@router.post("/{bo_table}/{wr_id}/download/{bf_no}",
+@router.get("/{bo_table}/writes/{wr_id}/files/{bf_no}",
             summary="파일 다운로드",
             responses={**response_401, **response_403,
                        **response_404, **response_422}
@@ -332,7 +332,7 @@ async def api_download_file(
     return FileResponse(board_file.bf_file, filename=board_file.bf_source)
 
 
-@router.post("/{bo_table}/{wr_id}/comment",
+@router.post("/{bo_table}/writes/{wr_id}/comments",
             summary="댓글 작성",
             responses={**response_401, **response_403,
                        **response_404, **response_422}
@@ -369,7 +369,7 @@ async def api_create_comment(
     return {"result": "created"}
 
 
-@router.put("/{bo_table}/{wr_id}/comment",
+@router.put("/{bo_table}/writes/{wr_id}/comments",
             summary="댓글 수정",
             responses={**response_401, **response_403,
                        **response_404, **response_422}
@@ -404,7 +404,7 @@ async def api_update_comment(
     return {"result": "updated"}
 
 
-@router.delete("/{bo_table}/{wr_id}/comment/{comment_id}",
+@router.delete("/{bo_table}/writes/{wr_id}/comments/{comment_id}",
                 summary="댓글 삭제",
                 responses={**response_401, **response_403,
                            **response_404, **response_422}
