@@ -71,7 +71,7 @@
                         <td class="td_left"><a href="?sfl=mb_id&stx={{ point.mb_id }}">{{ point.mb_id }}</a></td>
                         <td class="td_left">{{ member.mb_name }}</td>
                         <td class="td_left sv_use">
-                            {{ sideview.get(request, member.mb_id, member.mb_name, member.wr_email, member.wr_homepage)|safe }}
+                            {{ sideview.get(request, member.mb_id, member.mb_name, member.mb_email, member.wr_homepage)|safe }}
                         </td>
                         <td class="td_left">{{ point.po_content }}</td>
                         <td class="td_num td_pt">{{ point.po_point|number_format }}</td>
