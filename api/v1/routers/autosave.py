@@ -1,3 +1,4 @@
+"""게시글 자동저장 API Router."""
 from typing_extensions import Annotated, List
 
 from fastapi import  APIRouter, Path, Depends
@@ -5,16 +6,15 @@ from fastapi import  APIRouter, Path, Depends
 from core.models import Member
 from api.v1.dependencies.member import get_current_member
 from api.v1.models.ajax import (
-     AutoSaveModel, ResponseAutoSaveModel, 
-     ResponseAutoSaveCountModel, ResponseAutoSaveDeleteModel,
+    AutoSaveModel, ResponseAutoSaveModel,
+    ResponseAutoSaveCountModel, ResponseAutoSaveDeleteModel,
 )
 from service.ajax import AJAXService
-
 
 router = APIRouter()
 
 
-@router.get("/autosave_list",
+@router.get("/autosaves",
             summary="자동저장 목록",
             responses={**AJAXService.responses}
             )
@@ -23,12 +23,11 @@ async def autosave_list(
     service: Annotated[AJAXService, Depends(AJAXService.async_init)],
 ) -> List[ResponseAutoSaveModel]:
     """자동저장 목록을 반환한다."""
-    service.validate_login(member)
-    save_list = service.get_autosave_list(member)
-    return save_list
+
+    return service.get_autosave_list(member)
 
 
-@router.get("/autosave_count",
+@router.get("/autosaves/count",
             summary="자동저장글 개수",
             responses={**AJAXService.responses}
             )
@@ -37,11 +36,11 @@ async def autosave_count(
     service: Annotated[AJAXService, Depends(AJAXService.async_init)]
 ) -> ResponseAutoSaveCountModel:
     """자동저장글 개수를 반환한다."""
-    service.validate_login(member)
+
     return {"count": service.get_autosave_count(member.mb_id)}
 
 
-@router.get("/autosave_load/{as_id}",
+@router.get("/autosaves/{as_id}",
             summary="자동저장글 불러오기",
             responses={**AJAXService.responses}
             )
@@ -51,12 +50,11 @@ async def autosave_load(
     as_id: int = Path(..., title="자동저장 ID", description="자동저장 ID")
 ) -> ResponseAutoSaveModel:
     """자동저장 내용을 불러온다."""
-    service.validate_login(member)
-    save_data = service.get_autosave_content(as_id, member)
-    return save_data
+
+    return service.get_autosave_content(as_id, member)
 
 
-@router.post("/autosave",
+@router.post("/autosaves",
              summary="자동저장",
              responses={**AJAXService.responses}
              )
@@ -74,13 +72,12 @@ async def autosave(
     - **as_subject**: 자동저장 글 제목
     - **as_content**: 자동저장 글 내용
     """
-    service.validate_login(member)
     service.autosave_save(member, data)
-    count = service.get_autosave_count(member.mb_id)
-    return {"count": count}
+
+    return {"count": service.get_autosave_count(member.mb_id)}
 
 
-@router.delete("/autosave/{as_id}",
+@router.delete("/autosaves/{as_id}",
                 summary="자동저장글 삭제",
                 responses={**AJAXService.responses}
                )
@@ -90,6 +87,6 @@ async def autosave_delete(
     as_id: int = Path(..., title="자동저장 ID", description="자동저장 ID")
 ) -> ResponseAutoSaveDeleteModel:
     """임시저장글을 삭제한다."""
-    service.validate_login(member)
     service.autosave_delete(as_id, member)
+
     return {"result": "deleted"}
