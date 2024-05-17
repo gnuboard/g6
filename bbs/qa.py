@@ -13,7 +13,9 @@ from core.exception import AlertException
 from core.formclass import QaContentForm
 from core.models import Member
 from core.template import UserTemplates
-from lib.common import filter_words, get_paging_info, set_url_query_params
+from lib.common import (
+    filter_words, get_paging_info, remove_query_params, set_url_query_params
+)
 from lib.dependency.dependencies import (
     common_search_query_params, validate_super_admin, validate_token
 )
@@ -180,9 +182,11 @@ async def qa_delete(
     """
     qa_service.delete_qa_content(qa)
 
+    # request.query_params에서 token 제거
+    query_params = remove_query_params(request, "token")
     return RedirectResponse(
         status_code=302,
-        url=set_url_query_params("/bbs/qalist", request.query_params)
+        url=set_url_query_params("/bbs/qalist", query_params)
     )
 
 
