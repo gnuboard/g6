@@ -18,7 +18,7 @@ from core.plugin import (
 )
 from core.settings import settings
 from lib.common import (
-    CAPTCHA_PATH, EDITOR_PATH, get_admin_menus, read_version
+    CAPTCHA_PATH, EDITOR_PATH, get_admin_menus, read_version, StringEncrypt
 )
 from lib.visit import get_total_visit
 from lib.template_filters import datetime_format, number_format, set_query_params
@@ -151,6 +151,7 @@ class UserTemplates(Jinja2Templates):
             self.env.globals["get_member_image"] = get_member_image
             self.env.globals["theme_asset"] = theme_asset
             self.env.globals["get_total_visit"] = get_total_visit
+            self.env.globals["encrypt"] = StringEncrypt().encrypt
 
             # 템플릿 컨텍스트 프로세서 설정
             self.context_processors.append(self._default_context)
@@ -251,6 +252,7 @@ class AdminTemplates(Jinja2Templates):
             self.env.globals["option_selected"] = option_selected
             self.env.globals["option_array_checked"] = option_array_checked
             self.env.globals["subject_sort_link"] = subject_sort_link
+            self.env.globals["encrypt"] = StringEncrypt().encrypt
             # 템플릿 컨텍스트 프로세서 설정
             self.context_processors.append(self._default_admin_context)
 
