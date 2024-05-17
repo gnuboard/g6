@@ -6,18 +6,27 @@ from fastapi import Depends, File, Form, HTTPException, Path, Request, UploadFil
 from core.models import Member
 from lib.common import filter_words
 from lib.template_filters import number_format
-from api.v1.dependencies.member import get_current_member_optional
-from api.v1.service.qa import QaConfigServiceAPI, QaServiceAPI
-from api.v1.models.qa import QaContentData
+from api.v1.dependencies.member import get_current_member
+from api.v1.service.qa import QaConfigServiceAPI, QaFileServiceAPI, QaServiceAPI
+from api.v1.models.qa import QaContent, QaContentData
 
 
 def get_qa_content(
     service: Annotated[QaServiceAPI, Depends()],
-    member: Annotated[Member, Depends(get_current_member_optional)],
+    member: Annotated[Member, Depends(get_current_member)],
     qa_id: Annotated[int, Path(..., title="Q&A 아이디", description="조회할 Q&A 아이디")],
 ):
     """Q&A 정보를 조회합니다."""
     return service.read_qa_content(member, qa_id)
+
+
+def get_qa_file(
+    file_service: Annotated[QaFileServiceAPI, Depends()],
+    qa: Annotated[QaContent, Depends(get_qa_content)],
+    file_index: Annotated[int, Path(..., title="Q&A 파일 번호", description="조회할 Q&A 파일 번호")]
+) -> dict:
+    """Q&A 파일을 조회합니다."""
+    return file_service.get_file(qa, file_index)
 
 
 def validate_data(

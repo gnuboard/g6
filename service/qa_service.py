@@ -103,26 +103,18 @@ class QaFileService(BaseService):
         self._process_file(qa, data, "2")
         self.db.commit()
 
-    def _process_file(self, qa: QaContent, data: dict, key: str):
-        """단일 파일 처리 로직"""
-        file: UploadFile = data.get(f"file{key}")
-        file_del = data.get(f"file_del{key}", False)
+    def get_file(self, qa: QaContent, file_index: int) -> dict:
+        """Q&A에서 파일 정보를 반환합니다."""
+        filepath: str = getattr(qa, f"qa_file{file_index}", None)
+        if not filepath or not os.path.exists(filepath):
+            self.raise_exception(404, "파일이 존재하지 않습니다.")
 
-        # 파일 경로 생성
-        os.makedirs(self.directory, exist_ok=True)
+        filename: str = getattr(qa, f"qa_source{file_index}", filepath.split("/")[-1])
 
-        # 파일 삭제
-        if file_del:
-            self._delete_file(getattr(qa, f"qa_file{key}"))
-            setattr(qa, f"qa_file{key}", None)
-            setattr(qa, f"qa_source{key}", None)
-
-        if file and file.filename:
-            self._validate_file(file)
-            filename = self._generate_filename(file.filename)
-            save_image(self.directory, filename, file)
-            setattr(qa, f"qa_file{key}", str(self.directory + filename))
-            setattr(qa, f"qa_source{key}", file.filename)
+        return {
+            "path": filepath,
+            "name": filename
+        }
 
     def set_file_list(self, qa: QaContent = None) -> Tuple[List[str], List[dict]]:
         """이미지 파일과 첨부파일 목록을 설정
@@ -145,9 +137,30 @@ class QaFileService(BaseService):
                 if extension in image_extensions:
                     images.append(file_path)
                 else:
-                    files.append({"name": file_source, "path": file_path})
+                    files.append({"index": i, "name": file_source})
 
         return images, files
+
+    def _process_file(self, qa: QaContent, data: dict, key: str):
+        """단일 파일 처리 로직"""
+        file: UploadFile = data.get(f"file{key}")
+        file_del = data.get(f"file_del{key}", False)
+
+        # 파일 경로 생성
+        os.makedirs(self.directory, exist_ok=True)
+
+        # 파일 삭제
+        if file_del:
+            self._delete_file(getattr(qa, f"qa_file{key}"))
+            setattr(qa, f"qa_file{key}", None)
+            setattr(qa, f"qa_source{key}", None)
+
+        if file and file.filename:
+            self._validate_file(file)
+            filename = self._generate_filename(file.filename)
+            save_image(self.directory, filename, file)
+            setattr(qa, f"qa_file{key}", str(self.directory + filename))
+            setattr(qa, f"qa_source{key}", file.filename)
 
     def _validate_file(self, file: UploadFile):
         """파일 유효성 검증"""

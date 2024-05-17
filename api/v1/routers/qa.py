@@ -1,13 +1,16 @@
 """Q&A API Router"""
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Request
+from fastapi import (
+    APIRouter, BackgroundTasks, Depends, HTTPException, Request
+)
+from fastapi.responses import FileResponse
 
 from core.models import Member, QaContent
 from lib.common import get_paging_info
 from lib.mail import send_qa_mail
 from api.v1.dependencies.member import get_current_member
-from api.v1.dependencies.qa import get_qa_content, validate_data, validate_upload_file
+from api.v1.dependencies.qa import get_qa_content, get_qa_file, validate_data, validate_upload_file
 from api.v1.service.qa import QaConfigServiceAPI, QaFileServiceAPI, QaServiceAPI
 from api.v1.models.response import (
     MessageResponse, response_401, response_403, response_404, response_422, response_500
@@ -176,6 +179,19 @@ async def upload_qa_file(
     return {
         "message": "Q&A 파일 업로드가 완료되었습니다.",
     }
+
+
+@router.get("/qas/{qa_id}/files/{file_index}",
+            summary="Q&A 파일 다운로드",
+            responses={**response_401, **response_403, **response_404})
+async def download_qa_file_from_api(
+    qa_file: Annotated[dict, Depends(get_qa_file)]
+) -> FileResponse:
+    """Q&A에 파일을 다운로드합니다."""
+    try:
+        return FileResponse(qa_file["path"], filename=qa_file["name"])
+    except Exception as e:
+        raise HTTPException(400, f"파일 다운로드에 실패하였습니다. {e}") from e
 
 
 @router.delete("/qas/{qa_id}",
