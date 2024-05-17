@@ -22,6 +22,7 @@ from bbs.social import router as social_router
 from bbs.password import router as password_router
 from bbs.search import router as search_router
 from bbs.current_connect import router as current_connect_router
+from bbs.formmail import router as formmail_router
 from lib.dependency.dependencies import (
     check_use_template, set_template_basic_data
 )
@@ -51,4 +52,5 @@ router.include_router(social_router, prefix="/bbs", tags=["social"])
 router.include_router(password_router, prefix="/bbs", tags=["password"])
 router.include_router(search_router, prefix="/bbs", tags=["search"])
 router.include_router(current_connect_router, prefix="/bbs", tags=["current_connect"])
+router.include_router(formmail_router, prefix="/bbs", tags=["formmail"])
 router.include_router(editor_router, prefix="/editor", tags=["editor"])
