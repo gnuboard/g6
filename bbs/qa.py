@@ -4,8 +4,7 @@ from typing import List
 from typing_extensions import Annotated
 
 from fastapi import (
-    APIRouter, BackgroundTasks, Depends, File, Form, Query, Request,
-    UploadFile
+    APIRouter, BackgroundTasks, Depends, Form, Query, Request
 )
 from fastapi.responses import FileResponse, RedirectResponse
 
@@ -19,7 +18,7 @@ from lib.dependency.dependencies import (
     common_search_query_params, validate_super_admin, validate_token
 )
 from lib.dependency.auth import get_login_member
-from lib.dependency.qa import get_qa_content, get_qa_file
+from lib.dependency.qa import get_qa_content, get_qa_file, get_upload_file_data
 from lib.html_sanitizer import content_sanitizer, subject_sanitizer
 from lib.mail import send_qa_mail
 from lib.template_filters import search_font
@@ -126,14 +125,11 @@ async def qa_write_update(
     member: Annotated[Member, Depends(get_login_member)],
     qa_service: Annotated[QaService, Depends()],
     file_service: Annotated[QaFileService, Depends()],
+    file_data: Annotated[dict, Depends(get_upload_file_data)],
     form: QaContentForm = Depends(),
     qa_id: int = Form(None),
     qa_parent: str = Form(None),
     qa_related: int = Form(None),
-    file1: UploadFile = File(None),
-    file2: UploadFile = File(None),
-    file_del1: int = Form(None),
-    file_del2: int = Form(None),
 ):
     """
     1:1문의 설정 등록/수정 처리
@@ -162,12 +158,7 @@ async def qa_write_update(
         # Q&A 등록에 대한 안내메일 발송 처리(백그라운드)
         background_tasks.add_task(send_qa_mail, request, qa)
 
-    file_data = {
-        "file1": file1,
-        "file2": file2,
-        "file_del1": file_del1,
-        "file_del2": file_del2,
-    }
+    # 첨부파일 업로드
     file_service.upload_qa_file(qa, file_data)
 
     # TODO: SMS 알림 옵션이 활성화 되어있을 경우, SMS 발송 기능 추가 필요

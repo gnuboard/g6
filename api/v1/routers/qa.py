@@ -10,7 +10,7 @@ from core.models import Member, QaContent
 from lib.common import get_paging_info
 from lib.mail import send_qa_mail
 from api.v1.dependencies.member import get_current_member
-from api.v1.dependencies.qa import get_qa_content, get_qa_file, validate_data, validate_upload_file
+from api.v1.dependencies.qa import get_qa_content, get_qa_file, get_upload_file_data, validate_data
 from api.v1.service.qa import QaConfigServiceAPI, QaFileServiceAPI, QaServiceAPI
 from api.v1.models.response import (
     MessageResponse, response_401, response_403, response_404, response_422, response_500
@@ -163,7 +163,7 @@ async def update_qa_content(
 async def upload_qa_file(
     service: Annotated[QaFileServiceAPI, Depends()],
     qa_content: Annotated[QaContent, Depends(get_qa_content)],
-    data: Annotated[dict, Depends(validate_upload_file)],
+    data: Annotated[dict, Depends(get_upload_file_data)],
 ) -> MessageResponse:
     """
     Q&A에 파일을 업로드합니다.
