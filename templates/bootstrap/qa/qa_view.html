@@ -103,7 +103,7 @@
                 {% for file in qa.file %}
                     <li class="position-relative d-flex align-items-center file-border rounded-3 transition-effect p-4 mt-3" style="color: #b2b2b2;">
                         <i class="fa fa-folder-open fs-1 me-4" aria-hidden="true"></i>
-                        <a href="{{ url_for('qa_file_download', qa_id=qa.qa_id, file_index=file.index) }}" class="d-block text-decoration-none break-word main-font fs-5">
+                        <a href="{{ url_for('qa_download_file', qa_id=qa.qa_id, file_index=file.index) }}" class="d-block text-decoration-none break-word main-font fs-5">
                             <strong>{{ file.name }}</strong>
                         </a>
                     </li>
