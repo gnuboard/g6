@@ -8,12 +8,10 @@ from sqlalchemy import select
 from core.database import db_session
 from core.models import Board, Group
 from core.template import UserTemplates
-from lib.template_filters import default_if_none
 from service.newwin_service import NewWinService
 
 router = APIRouter()
 templates = UserTemplates()
-templates.env.filters["default_if_none"] = default_if_none
 
 
 @router.get("/",

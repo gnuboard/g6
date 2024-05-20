@@ -11,12 +11,10 @@ from core.template import UserTemplates
 from lib.dependency.board import get_write
 from lib.dependency.dependencies import validate_token
 from lib.pbkdf2 import validate_password
-from lib.template_filters import default_if_none
 from lib.token import create_session_token
 
 router = APIRouter()
 templates = UserTemplates()
-templates.env.filters["default_if_none"] = default_if_none
 
 
 @router.get("/password/{action}/{bo_table}/{wr_id}", name="password_page")

@@ -21,14 +21,13 @@ from core.plugin import (
 )
 from core.routers import router as template_router
 from core.settings import ENV_PATH, settings
-from core.template import UserTemplates, register_theme_statics
+from core.template import register_theme_statics
 from lib.common import (
     get_client_ip, is_intercept_ip, is_possible_ip, session_member_key
 )
 from lib.dependency.dependencies import check_use_template
 from lib.member import is_super_admin
 from lib.scheduler import scheduler
-from lib.template_filters import default_if_none
 from lib.token import create_session_token
 from service.member_service import MemberService
 from service.point_service import PointService
@@ -60,9 +59,6 @@ app = FastAPI(
     title="그누보드6",
     description=""
 )
-
-templates = UserTemplates()
-templates.env.filters["default_if_none"] = default_if_none
 
 # git clone으로 소스를 받은 경우에는 data디렉토리가 없으므로 생성해야 함
 if not os.path.exists("data"):

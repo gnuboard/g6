@@ -12,7 +12,6 @@ from lib.dependency.auth import get_login_member
 from lib.dependency.dependencies import validate_captcha, validate_token
 from lib.dependency.memo import get_memo
 from lib.html_sanitizer import content_sanitizer as sanitizer
-from lib.template_filters import default_if_none
 from lib.template_functions import get_paging
 from service.member_service import MemberService
 from service.memo_service import MemoService
@@ -21,7 +20,6 @@ from service.point_service import PointService
 router = APIRouter()
 templates = UserTemplates()
 templates.env.globals["captcha_widget"] = captcha_widget
-templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals["is_none_datetime"] = is_none_datetime
 
 
