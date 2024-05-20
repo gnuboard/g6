@@ -129,7 +129,7 @@
                 {% for file in qa.file %}
                 <li>
                     <i class="fa fa-download" aria-hidden="true"></i>
-                    <a href="/{{ file.path }}" class="view_file_download" download="{{ file.name }}">
+                    <a href="{{ url_for('qa_download_file', qa_id=qa.qa_id, file_index=file.index) }}" class="view_file_download">
                         <strong>{{ file.name }}</strong>
                     </a>
                 </li>
