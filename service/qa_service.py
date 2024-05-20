@@ -10,6 +10,7 @@ from core.database import db_session
 from core.exception import AlertException
 from core.models import Member, QaConfig, QaContent
 from lib.common import get_client_ip, save_image
+from lib.template_filters import number_format
 from service import BaseService
 
 from api.v1.models.qa import QaContentData
@@ -82,14 +83,33 @@ class QaConfigService(BaseService):
 class QaFileService(BaseService):
     """Q&A 파일 서비스 클래스"""
 
-    def __init__(self, request: Request, db: db_session):
+    # TODO: 모든 파일 업로드에 확장자를 제한할 수 있도록 변경이 필요함.
+    restricted_extensions =[
+        'bat', 'bin', 'cmd', 'com', 'cpl', 'dll', 'exe', 'gadget', 'html',
+        'inf1', 'ins', 'inx', 'isu', 'job', 'jse', 'lnk', 'msc', 'msi', 'msp',
+        'mst', 'paf', 'pif', 'ps1', 'reg', 'rgs', 'scr', 'sct', 'sh', 'shb',
+        'shs', 'u3p', 'vb', 'vbe', 'vbs', 'vbscript', 'ws', 'wsf', 'wsh'
+    ]
+
+    def __init__(
+            self,
+            request: Request,
+            db: db_session,
+            config_service: Annotated[QaConfigService, Depends()]
+        ):
         self.request = request
         self.db = db
         self.directory = FILE_DIRECTORY
+        self.config_service = config_service
 
     @classmethod
-    async def async_init(cls, request: Request, db: db_session):
-        instance = cls(request, db)
+    async def async_init(
+        cls,
+        request: Request,
+        db: db_session,
+        config_service: Annotated[QaConfigService, Depends()]
+    ):
+        instance = cls(request, db, config_service)
         return instance
 
     def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None):
@@ -103,26 +123,18 @@ class QaFileService(BaseService):
         self._process_file(qa, data, "2")
         self.db.commit()
 
-    def _process_file(self, qa: QaContent, data: dict, key: str):
-        """단일 파일 처리 로직"""
-        file: UploadFile = data.get(f"file{key}")
-        file_del = data.get(f"file_del{key}", False)
+    def get_file(self, qa: QaContent, file_index: int) -> dict:
+        """Q&A에서 파일 정보를 반환합니다."""
+        filepath: str = getattr(qa, f"qa_file{file_index}", None)
+        if not filepath or not os.path.exists(filepath):
+            self.raise_exception(404, "파일이 존재하지 않습니다.")
 
-        # 파일 경로 생성
-        os.makedirs(self.directory, exist_ok=True)
+        filename: str = getattr(qa, f"qa_source{file_index}", filepath.split("/")[-1])
 
-        # 파일 삭제
-        if file_del:
-            self._delete_file(getattr(qa, f"qa_file{key}"))
-            setattr(qa, f"qa_file{key}", None)
-            setattr(qa, f"qa_source{key}", None)
-
-        if file and file.filename:
-            self._validate_file(file)
-            filename = self._generate_filename(file.filename)
-            save_image(self.directory, filename, file)
-            setattr(qa, f"qa_file{key}", str(self.directory + filename))
-            setattr(qa, f"qa_source{key}", file.filename)
+        return {
+            "path": filepath,
+            "name": filename
+        }
 
     def set_file_list(self, qa: QaContent = None) -> Tuple[List[str], List[dict]]:
         """이미지 파일과 첨부파일 목록을 설정
@@ -145,13 +157,44 @@ class QaFileService(BaseService):
                 if extension in image_extensions:
                     images.append(file_path)
                 else:
-                    files.append({"name": file_source, "path": file_path})
+                    files.append({"index": i, "name": file_source})
 
         return images, files
 
-    def _validate_file(self, file: UploadFile):
-        """파일 유효성 검증"""
-        # 여기에 파일 크기, 타입 검증 로직 추가
+    def _process_file(self, qa: QaContent, data: dict, key: str):
+        """단일 파일 처리 로직"""
+        file: UploadFile = data.get(f"file{key}")
+        file_del = data.get(f"file_del{key}", False)
+
+        # 파일 경로 생성
+        os.makedirs(self.directory, exist_ok=True)
+
+        # 파일 삭제
+        if file_del:
+            self._delete_file(getattr(qa, f"qa_file{key}"))
+            setattr(qa, f"qa_file{key}", None)
+            setattr(qa, f"qa_source{key}", None)
+
+        if file and file.filename:
+            filename = self._generate_filename(file.filename)
+            save_image(self.directory, filename, file)
+            setattr(qa, f"qa_file{key}", str(self.directory + filename))
+            setattr(qa, f"qa_source{key}", file.filename)
+
+    def validate_upload_file(self, file: UploadFile):
+        """Q&A 업로드 파일 유효성 검증"""
+        limit_size = self.config_service.qa_config.qa_upload_size
+
+        # 파일 크기 검증
+        if not self.request.state.is_super_admin:
+            if file and file.size > 0 and file.size > limit_size:
+                self.raise_exception(400, f"파일 업로드는 {number_format(limit_size)}byte 까지 가능합니다.")
+
+        # 파일 확장자 검증
+        if file and file.filename:
+            extension = file.filename.split('.')[-1]
+            if extension in self.restricted_extensions:
+                self.raise_exception(400, "업로드 할 수 없는 파일 형식입니다.")
 
     def _generate_filename(self, original_filename: str) -> str:
         """안전한 파일명 생성"""

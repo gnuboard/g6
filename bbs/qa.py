@@ -4,20 +4,23 @@ from typing import List
 from typing_extensions import Annotated
 
 from fastapi import (
-    APIRouter, BackgroundTasks, Depends, File, Form, Path, Query, Request,
-    UploadFile
+    APIRouter, BackgroundTasks, Depends, Form, Query, Request
 )
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
 
+from api.v1.models.qa import QaContent
 from core.exception import AlertException
 from core.formclass import QaContentForm
 from core.models import Member
 from core.template import UserTemplates
-from lib.common import filter_words, get_paging_info, set_url_query_params
+from lib.common import (
+    filter_words, get_paging_info, remove_query_params, set_url_query_params
+)
 from lib.dependency.dependencies import (
     common_search_query_params, validate_super_admin, validate_token
 )
 from lib.dependency.auth import get_login_member
+from lib.dependency.qa import get_qa_content, get_qa_file, get_upload_file_data
 from lib.html_sanitizer import content_sanitizer, subject_sanitizer
 from lib.mail import send_qa_mail
 from lib.template_filters import search_font
@@ -100,21 +103,16 @@ async def qa_form_write(
 @router.get("/qawrite/{qa_id}")
 async def qa_form_edit(
     request: Request,
-    member: Annotated[Member, Depends(get_login_member)],
     config_service: Annotated[QaConfigService, Depends()],
-    qa_service: Annotated[QaService, Depends()],
-    qa_id: Annotated[int, Path(...)],
+    qa: Annotated[QaContent, Depends(get_qa_content)],
 ):
     """
     Q&A 수정 폼 페이지
     """
-    categories = config_service.get_category_list()
-    qa = qa_service.read_qa_content(member, qa_id)
-
     context = {
         "request": request,
         "qa_config": config_service.qa_config,
-        "categories": categories,
+        "categories": config_service.get_category_list(),
         "qa": qa,
         "content": qa.qa_content
     }
@@ -129,14 +127,11 @@ async def qa_write_update(
     member: Annotated[Member, Depends(get_login_member)],
     qa_service: Annotated[QaService, Depends()],
     file_service: Annotated[QaFileService, Depends()],
+    file_data: Annotated[dict, Depends(get_upload_file_data)],
     form: QaContentForm = Depends(),
     qa_id: int = Form(None),
     qa_parent: str = Form(None),
     qa_related: int = Form(None),
-    file1: UploadFile = File(None),
-    file2: UploadFile = File(None),
-    file_del1: int = Form(None),
-    file_del2: int = Form(None),
 ):
     """
     1:1문의 설정 등록/수정 처리
@@ -165,12 +160,7 @@ async def qa_write_update(
         # Q&A 등록에 대한 안내메일 발송 처리(백그라운드)
         background_tasks.add_task(send_qa_mail, request, qa)
 
-    file_data = {
-        "file1": file1,
-        "file2": file2,
-        "file_del1": file_del1,
-        "file_del2": file_del2,
-    }
+    # 첨부파일 업로드
     file_service.upload_qa_file(qa, file_data)
 
     # TODO: SMS 알림 옵션이 활성화 되어있을 경우, SMS 발송 기능 추가 필요
@@ -184,19 +174,19 @@ async def qa_write_update(
             dependencies=[Depends(validate_token)])
 async def qa_delete(
     request: Request,
-    member: Annotated[Member, Depends(get_login_member)],
     qa_service: Annotated[QaService, Depends()],
-    qa_id: Annotated[int, Path()],
+    qa: Annotated[QaContent, Depends(get_qa_content)],
 ):
     """
     Q&A 삭제하기
     """
-    qa = qa_service.read_qa_content(member, qa_id)
     qa_service.delete_qa_content(qa)
 
+    # request.query_params에서 token 제거
+    query_params = remove_query_params(request, "token")
     return RedirectResponse(
         status_code=302,
-        url=set_url_query_params("/bbs/qalist", request.query_params)
+        url=set_url_query_params("/bbs/qalist", query_params)
     )
 
 
@@ -223,7 +213,7 @@ async def qa_view(
     member: Annotated[Member, Depends(get_login_member)],
     config_service: Annotated[QaConfigService, Depends()],
     qa_service: Annotated[QaService, Depends()],
-    qa_id: Annotated[int, Path(...)],
+    qa: Annotated[QaContent, Depends(get_qa_content)],
     search_params: dict = Depends(common_search_query_params),
 ):
     """
@@ -232,18 +222,30 @@ async def qa_view(
     # Q&A 에디터 설정 조회
     request.state.editor = config_service.select_editor
 
-    qa_content = qa_service.read_qa_content(member, qa_id)
-    answer = qa_service.fetch_qa_answer(qa_id)
-    prev_qa, next_qa = qa_service.fetch_prev_next_qa(member, qa_id, **search_params)
-    related_qa_contents = qa_service.fetch_related_qa_contents(member, qa_id)
+    answer = qa_service.fetch_qa_answer(qa.qa_id)
+    prev_qa, next_qa = qa_service.fetch_prev_next_qa(member, qa.qa_id, **search_params)
+    related_qa_contents = qa_service.fetch_related_qa_contents(member, qa.qa_id)
 
     context = {
         "request": request,
         "qa_config": config_service.get_qa_config(),
-        "qa": qa_content,
+        "qa": qa,
         "answer": answer,
         "related_list": related_qa_contents,
         "prev": prev_qa,
         "next": next_qa
     }
     return templates.TemplateResponse("/qa/qa_view.html", context)
+
+
+@router.get("/qaview/{qa_id}/files/{file_index}")
+async def qa_download_file(
+    qa_file: Annotated[dict, Depends(get_qa_file)]
+):
+    """
+    Q&A 첨부파일 다운로드
+    """
+    try:
+        return FileResponse(qa_file["path"], filename=qa_file["name"])
+    except Exception as e:
+        raise AlertException(f"파일 다운로드에 실패하였습니다. {e}", 400) from e
