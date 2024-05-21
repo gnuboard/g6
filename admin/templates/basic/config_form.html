@@ -567,7 +567,8 @@
                 <tr>
                     <th scope="row" class="cf_cert_service"><label for="cf_cert_req">본인확인 필수</label></th>
                     <td class="cf_cert_service">
-                        <span class="frm_info">회원가입 때 본인확인을 필수로 할지 설정합니다. 필수로 설정하시면 본인확인을 하지 않은 경우 회원가입이 안됩니다.</span>                            <input type="checkbox" name="cf_cert_req" value="1" id="cf_cert_req" > 예
+                        <span class="frm_info">회원가입 때 본인확인을 필수로 할지 설정합니다. 필수로 설정하시면 본인확인을 하지 않은 경우 회원가입이 안됩니다.</span>
+                        <input type="checkbox" name="cf_cert_req" value="1" id="cf_cert_req" {{ 'checked' if config.cf_cert_req else '' }}> 예
                     </td>
                 </tr>
             </tbody>
@@ -739,7 +740,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row"><label for="cf_social_servicelist">소셜로그인설정</label></th>
+                    <th scope="row">소셜로그인설정</th>
                     <td colspan="3" class="social_config_explain">
                         <div class="explain_box">
                             <input type="checkbox" name="cf_social_servicelist[]" id="check_social_naver" value="naver" {{ option_array_checked('naver', config.cf_social_servicelist) }}>

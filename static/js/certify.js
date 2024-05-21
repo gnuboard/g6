@@ -137,5 +137,6 @@ function popup_center() {
 	let _height = 620;
 	var xPos = (document.body.offsetWidth/2) - (_width/2); // 가운데 정렬
 	xPos += window.screenLeft; // 듀얼 모니터일 때 
-	    return window.open("", "sa_popup", "width="+_width+", height="+_height+", left="+xPos+", menubar=yes, status=yes, titlebar=yes, resizable=yes");
+
+    return window.open("", "sa_popup", "width="+_width+", height="+_height+", left="+xPos+", menubar=yes, status=yes, titlebar=yes, resizable=yes");
 }

@@ -27,6 +27,7 @@ from lib.dependency.dependencies import (
     check_use_template, set_template_basic_data
 )
 from lib.editor.ckeditor4 import router as editor_router
+from lib.certificate.inicis.routers import router as certificate_router
 
 router = APIRouter(dependencies=[Depends(check_use_template),
                                  Depends(set_template_basic_data)],
@@ -54,3 +55,4 @@ router.include_router(search_router, prefix="/bbs", tags=["search"])
 router.include_router(current_connect_router, prefix="/bbs", tags=["current_connect"])
 router.include_router(formmail_router, prefix="/bbs", tags=["formmail"])
 router.include_router(editor_router, prefix="/editor", tags=["editor"])
+router.include_router(certificate_router, tags=["certificate"])

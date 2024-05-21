@@ -1,0 +1,23 @@
+<form name="saForm">
+    <input type="hidden" name="mid" value="{{ mid }}">
+    <input type="hidden" name="reqSvcCd" value="{{ req_svc_cd }}">
+    <input type="hidden" name="identifier" value="{{ identifier }}">
+    <input type="hidden" name="mTxId" value="{{ m_tx_id }}">
+    <input type="hidden" name="authHash" value="{{ auth_hash }}">
+    <input type="hidden" name="flgFixedUser" value="N">
+    <input type="hidden" name="userName" value="{{ user_name }}">
+    <input type="hidden" name="userPhone" value="user_phone">
+    <input type="hidden" name="userBirth" value="user_birth">
+    <input type="hidden" name="userHash" value="{{ user_hash }}">
+    <input type="hidden" name="reservedMsg" value="isUseToken=Y">
+    <input type="hidden" name="directAgency" value="">
+    <input type="hidden" name="successUrl" value="https://[가맹점 도메인]/success">
+    <input type="hidden" name="failUrl" value="https://[가맹점 도메인]/fail">
+    <!-- successUrl/failUrl 은 분리하여도 됩니다. !-->
+</form>
+<script>
+    document.saForm.setAttribute("target", "_self");
+    document.saForm.setAttribute("post", "post");
+    document.saForm.setAttribute("action", "https://sa.inicis.com/auth");
+    document.saForm.submit();
+</script>

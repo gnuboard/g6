@@ -20,6 +20,7 @@ from lib.dependency.dependencies import (
 )
 from lib.dependency.member import validate_policy_agree, validate_register_data
 from lib.mail import send_register_mail
+from service.certificate_service import CertificateService
 from service.member_service import MemberImageService, MemberService
 from lib.template_filters import default_if_none
 from service.point_service import PointService
@@ -58,20 +59,37 @@ async def post_register(
 @router.get("/register_form",
             dependencies=[Depends(validate_policy_agree)],
             name='register_form')
-async def get_register_form(request: Request):
+async def get_register_form(
+    request: Request,
+    service: Annotated[CertificateService, Depends()]
+):
     """
     회원가입 폼 페이지
     """
     config = request.state.config
     member = Member(mb_level=config.cf_register_level)
 
+    cert_context = {
+        "cert_hp" : service.cert_hp,
+        "cert_simple" : service.cert_simple,
+        "cert_ipin" : service.cert_ipin,
+        "is_use_cert": service.cert_use,
+        "is_use_hp": service.should_use_hp(),
+        "is_requried_register": (service.cert_use and service.cert_req),
+    }
+    form_context = {
+        "action_url": request.url_for("register_form_save").path,
+        "hp_is_required": (service.should_required_hp() and config.cf_use_hp),
+        "hp_readonly": "readonly" if service.should_required_hp() else "",
+        "name_readonly": "readonly" if service.cert_use and service.cert_req else "",
+        "is_profile_open": True,
+    }
     context = {
         "request": request,
         "config": config,
         "member": member,
-        "form": {
-            "is_profile_open": True,
-        },
+        "certificate": cert_context,
+        "form": form_context,
         "is_register": True,
     }
     return templates.TemplateResponse("/member/register_form.html", context)
@@ -154,7 +172,9 @@ async def email_certify(
     mb_id: Annotated[str, Path(...)],
     certify: Annotated[str, Query(...)]
 ):
-    """회원가입 메일인증 처리"""
+    """
+    회원가입 메일인증 처리
+    """
     member = member_service.read_email_non_certify_member(mb_id, certify)
     member.mb_email_certify = datetime.now()
     member.mb_email_certify2 = ""

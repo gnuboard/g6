@@ -17,6 +17,7 @@ from lib.dependency.member import validate_update_data
 from lib.member import get_next_open_date
 from lib.pbkdf2 import validate_password
 from lib.template_filters import default_if_none
+from service.certificate_service import CertificateService
 from service.member_service import (
     MemberService, MemberImageService, ValidateMember
 )
@@ -36,14 +37,6 @@ def _check_password_confirm(request: Request) -> None:
             status_code=403,
             url=request.url_for("member_password").path
         )
-
-
-def _get_is_phone_certify(member: Member, config: Config) -> bool:
-    """휴대폰 본인인증 사용여부 확인"""
-    return (config.cf_cert_use
-            and config.cf_cert_req
-            and (config.cf_cert_hp or config.cf_cert_simple)
-            and member.mb_certify != "ipin")
 
 
 @router.get("/member_confirm")
@@ -99,6 +92,7 @@ async def check_member(
 async def member_profile(
     request: Request,
     member_service: Annotated[MemberService, Depends()],
+    cert_service: Annotated[CertificateService, Depends()],
     validate: Annotated[ValidateMember, Depends()],
     member: Annotated[Member, Depends(get_login_member)],
 ):
@@ -108,11 +102,22 @@ async def member_profile(
     config = request.state.config
 
     member = member_service.read_member(member.mb_id)
+    member.mb_certify_name = cert_service.get_certificate_type(member)
 
+    # 본인인증 관련 폼 설정
+    cert_context = {
+        "cert_hp" :cert_service.cert_hp,
+        "cert_simple" :cert_service.cert_simple,
+        "cert_ipin" :cert_service.cert_ipin,
+        "is_use_cert": cert_service.cert_use,
+        "is_use_hp": cert_service.should_use_hp(),
+        "is_requried_register": False,
+    }
     form_context = {
         "action_url": request.url_for("member_profile_save").path,
+        "hp_is_required": (cert_service.should_required_hp() and config.cf_use_hp),
+        "hp_readonly": "readonly" if cert_service.should_required_hp() else "",
         "name_readonly": "readonly",
-        "hp_readonly": "readonly" if _get_is_phone_certify(member, config) else "",
         "mb_icon_url": MemberImageService.get_icon_path(member.mb_id),
         "mb_img_url": MemberImageService.get_image_path(member.mb_id),
         "is_profile_open": validate.is_open_change_date(member.mb_open_date),
@@ -122,6 +127,7 @@ async def member_profile(
         "config": config,
         "request": request,
         "member": member,
+        "certificate": cert_context,
         "form": form_context,
     }
     return templates.TemplateResponse("/member/register_form.html", context)
