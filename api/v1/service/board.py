@@ -63,10 +63,11 @@ class ListPostServiceAPI(ListPostService):
         request: Request,
         db: db_session,
         bo_table: Annotated[str, Path(...)],
+        file_service: Annotated[BoardFileService, Depends()],
         search_params: Annotated[Dict, Depends(common_search_query_params)],
         member: Annotated[Member, Depends(get_current_member_optional)],
     ):
-        super().__init__(request, db, bo_table, search_params)
+        super().__init__(request, db, bo_table, file_service, search_params)
         self.member = MemberDetails(request, member, board=self.board)
 
     @classmethod
@@ -75,10 +76,11 @@ class ListPostServiceAPI(ListPostService):
         request: Request,
         db: db_session,
         bo_table: Annotated[str, Path(...)],
+        file_service: Annotated[BoardFileService, Depends()],
         search_params: Annotated[Dict, Depends(common_search_query_params)],
         member: Annotated[Member, Depends(get_current_member_optional)],
     ):
-        instance = cls(request, db, bo_table, search_params, member)
+        instance = cls(request, db, bo_table, file_service, search_params, member)
         return instance
 
     def raise_exception(self, status_code: int, detail: str = None):

@@ -46,7 +46,7 @@ async def api_list_post(
     content = {
         "categories": service.categories,
         "board": service.board,
-        "writes": service.get_writes(),
+        "writes": service.get_writes(with_files=True),
         "total_count": service.get_total_count(),
         "current_page": service.search_params['current_page'],
         "prev_spt": service.prev_spt,
