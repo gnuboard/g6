@@ -152,6 +152,15 @@ class MemberService(BaseService):
 
         return member
 
+    def fetch_member_by_dupinfo(self, except_mb_id: str, dupinfo: str) -> Member:
+        """중복가입 방지 정보가 이미 사용중인지 확인합니다."""
+        return self.db.scalar(
+            select(Member).where(
+                Member.mb_id != except_mb_id,
+                Member.mb_dupinfo == dupinfo
+            )
+        )
+
     def is_activated(self, member: Member) -> Tuple[bool, str]:
         """활성화된 회원인지 확인합니다."""
         if member.mb_leave_date or member.mb_intercept_date:

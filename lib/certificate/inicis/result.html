@@ -1,0 +1,19 @@
+<script src="{{ url_for('static', path='/js/jquery.min.js?ver=3.7.1') }}"></script>
+<script>
+    $(function() {
+        var $opener = window.opener;
+
+        // 인증정보
+        $opener.$("input[name=cert_type]").val("{{ cert_type }}");
+        $opener.$("input[name=mb_name]").val("{{ user_name }}").attr("readonly", true);
+        $opener.$("input[name=mb_hp]").val("{{ user_phone }}").attr("readonly", true);
+        $opener.$("input[name=cert_no]").val("{{ md5_cert_no }}");
+
+        alert("본인인증이 완료되었습니다.");
+
+        if($opener.$("form[name=fcertrefreshform]") != undefined){
+            $opener.$("form[name=fcertrefreshform]").submit();
+        }   
+        window.close();
+    });
+</script>

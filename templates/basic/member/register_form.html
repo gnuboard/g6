@@ -18,7 +18,7 @@
         <input type="hidden" name="is_register" value="{{ is_register }}"/>
         <input type="hidden" name="token" value="">
         <input type="hidden" name="cert_type" value="{{ member.mb_certify|default('', true) }}">
-        <input type="hidden" name="is_certificated" value="">
+        <input type="hidden" name="cert_no" value="">
         <input type="hidden" name="mb_sex" value="">
 
         <div id="register_form" class="form_01">
@@ -60,13 +60,11 @@
             <div class="tbl_frm01 tbl_wrap register_form_inner">
                 <h2>개인정보 입력</h2>
                 <ul>
-                    {% set desc_name='' %}
-                    {% set desc_hp='' %}
+                    {% set desc_cert='' %}
                     {% if certificate.is_use_cert %}
                     <li>
                         {% if certificate.cert_simple or certificate.cert_hp or certificate.cert_ipin %}
-                            {% set desc_name|safe %}<span class="cert_desc"> 본인확인 시 자동입력</span>{% endset %}
-                            {% set desc_hp %}(본인확인 시 자동입력){% endset %}
+                            {% set desc_cert|safe %}<span class="cert_desc"> (본인확인 시 자동입력)</span>{% endset %}
                         {% endif %}
                         {% if certificate.cert_simple %}
                             <button type="button" id="win_sa_kakao_cert" class="btn_frmline win_sa_cert" data-type="">간편인증</button>
@@ -92,7 +90,7 @@
                                required 
                                {{ form.name_readonly }}
                                class="frm_input full_input required " size="10" placeholder="">
-                        <label for="reg_mb_name" class="text_input">이름 (필수){{ desc_name }}</label>
+                        <label for="reg_mb_name" class="text_input">이름 (필수){{ desc_cert }}</label>
                     </li>
                     <li>
                         <input type="text" name="mb_nick" value="{{ member.mb_nick|default_if_none('') }}"
@@ -138,7 +136,7 @@
                     {% if config.cf_use_tel %}
                     <li>
                         <label for="reg_mb_tel" class="blind">전화번호
-                            {% if config.cf_req_tel %} (필수) {% endif %}
+                            {% if config.cf_req_tel %} (필수){% endif %}
                         </label>
                         <input type="text" name="mb_tel" value="{{ member.mb_tel|default_if_none('') }}"
                                id="reg_mb_tel"
@@ -151,16 +149,16 @@
 
                     {% if config.cf_use_hp or certificate.is_use_hp %}
                         <li>
-                            <label for="reg_mb_hp" class="blind">
-                                휴대폰번호{% if hp_is_required %} (필수){% endif %}
-                            </label>
                             <input type="text" name="mb_hp"
                                 id="reg_mb_hp" 
                                 value="{{ member.mb_hp|default_if_none('') }}"
                                 class="frm_input full_input {{ form.hp_readonly }} {% if hp_is_required %}required{% endif %}"
                                 maxlength="20"
-                                placeholder="휴대폰번호{% if hp_is_required %} (필수){% endif %} {{ desc_hp }}"
+                                placeholder=""
                                 {{ form.hp_readonly }}>
+                            <label for="reg_mb_hp" class="text_input">휴대폰번호
+                                {% if hp_is_required %} (필수){% endif %} {{ desc_cert }}
+                            </label>
                             {% if certificate.is_use_hp %}
                                 <input type="hidden" name="old_mb_hp" value="{{ member.mb_hp|default('', true) }}">
                             {% endif %}
@@ -511,7 +509,7 @@
 
             {% if is_requried_register %}
             // 본인확인 체크
-            if (f.is_certificated.value == "") {
+            if (f.cert_no.value == "") {
                 alert("회원가입을 위해서는 본인확인을 해주셔야 합니다.");
                 return false;
             }

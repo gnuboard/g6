@@ -932,3 +932,16 @@ class Login(Base):
     lo_datetime = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
     lo_location = Column(Text, nullable=False)
     lo_url = Column(Text, nullable=False)
+
+
+class MemberCertHistory(Base):
+    """회원 인증 이력 테이블"""
+    __tablename__ = DB_TABLE_PREFIX + "member_cert_history"
+
+    ch_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    mb_id = Column(String(20), nullable=False, default='')
+    ch_name = Column(String(255), nullable=False, default='')
+    ch_hp = Column(String(255), nullable=False, default='')
+    ch_birth = Column(String(255), nullable=False, default='')
+    ch_type = Column(String(20), nullable=False, default='')
+    ch_datetime = Column(DateTime, nullable=False, default=datetime.now())
