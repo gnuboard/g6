@@ -1,5 +1,5 @@
 from typing_extensions import Annotated, List
-from fastapi import Request, HTTPException, Path, Depends
+from fastapi import Request, Path, Depends
 from sqlalchemy import asc, desc, func, select
 
 from core.database import db_session
