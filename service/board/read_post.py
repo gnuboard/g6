@@ -216,6 +216,10 @@ class ReadPostService(BoardService):
             comment.is_del = bool(self.member.admin_type or (self.member and comment.mb_id == self.member.mb_id) or not comment.mb_id)
             comment.is_secret = "secret" in comment.wr_option
 
+            # 회원 이미지, 아이콘 경로 설정
+            comment.mb_image_path = self.get_member_image_path(comment.mb_id)
+            comment.mb_icon_path = self.get_member_icon_path(comment.mb_id)
+
             # 비밀댓글 처리
             session_secret_comment_name = f"ss_secret_comment_{self.bo_table}_{comment.wr_id}"
             parent_write = self.db.get(self.write_model, comment.wr_parent)

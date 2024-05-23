@@ -80,6 +80,8 @@ class ResponseCommentModel(BaseModel):
     wr_parent: int
     wr_name: str
     mb_id: str
+    mb_image_path: str
+    mb_icon_path: str
     save_content: str
     wr_datetime: datetime
     wr_last: str
