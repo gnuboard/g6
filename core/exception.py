@@ -2,7 +2,7 @@
 from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.templating import _TemplateResponse
 
@@ -52,6 +52,13 @@ class TemplateDisabledException(HTTPException):
         self.detail = detail
 
 
+class RedirectException(HTTPException):
+    """특정 url로 redirect를 위한 예외 클래스"""
+    def __init__(self, status_code: int, url: str):
+        self.status_code = status_code
+        self.url = url
+
+
 def regist_core_exception_handler(app: FastAPI) -> None:
     """애플리케이션 인스턴스에 예외처리 핸들러를 등록합니다."""
 
@@ -93,6 +100,11 @@ def regist_core_exception_handler(app: FastAPI) -> None:
             status_code=exc.status_code,
             content={"message": exc.message}
         )
+
+    @app.exception_handler(RedirectException)
+    async def redirect_exception_handler(request: Request, exc: RedirectException):
+        """RedirectException 예외처리 handler 등록"""
+        return RedirectResponse(url=exc.url, status_code=exc.status_code)
 
 
 def template_response(

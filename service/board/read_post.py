@@ -5,6 +5,8 @@ from sqlalchemy import asc, desc, select, exists
 
 from core.database import db_session
 from core.models import BoardGood, Scrap, WriteBaseModel, BoardFile
+from core.exception import RedirectException
+from lib.common import set_url_query_params
 from lib.board_lib import is_owner, cut_name
 from lib.template_filters import number_format
 from service.board_file_service import BoardFileService
@@ -75,7 +77,7 @@ class ReadPostService(BoardService):
         if not self.is_read_level():
             self.raise_exception(detail="글을 읽을 권한이 없습니다.", status_code=403)
 
-    def validate_secret(self):
+    def validate_secret(self, redirect_password_view=False):
         """비밀글 검증"""
         block_conditions = [
             "secret" in self.write.wr_option,
@@ -98,7 +100,14 @@ class ReadPostService(BoardService):
             if parent_write.mb_id == self.member.mb_id:
                 owner = True
 
-        if not owner:
+        if owner:
+            return
+
+        if redirect_password_view:
+            query_params = self.request.query_params
+            url = f"/bbs/password/view/{self.bo_table}/{self.wr_id}"
+            raise RedirectException(url=set_url_query_params(url, query_params), status_code=303)
+        else:
             raise self.raise_exception(detail="비밀글 입니다.", status_code=403)
 
     def validate_secret_with_session(self):
@@ -106,7 +115,7 @@ class ReadPostService(BoardService):
         session_name = f"ss_secret_{self.bo_table}_{self.wr_id}"
         if self.request.session.get(session_name):
             return
-        self.validate_secret()
+        self.validate_secret(redirect_password_view=True)
         self.request.session[session_name] = True
 
     def validate_repeat(self):
