@@ -147,6 +147,10 @@ class ListPostService(BoardService):
             if with_files:
                 write.images, write.normal_files = self.file_service.get_board_files_by_type(self.bo_table, write.wr_id)
 
+            # 회원 이미지, 아이콘 경로 설정
+            write.mb_image_path = self.get_member_image_path(write.mb_id)
+            write.mb_icon_path = self.get_member_icon_path(write.mb_id)
+
         return writes
 
     def get_notice_writes(self) -> List[WriteBaseModel]:

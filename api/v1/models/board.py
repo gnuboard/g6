@@ -118,6 +118,8 @@ class ResponseWriteModel(BaseModel):
     wr_subject: str
     wr_name: str
     mb_id: str
+    mb_image_path: str
+    mb_icon_path: str
     wr_datetime: datetime
     wr_email: str
     wr_content: str
