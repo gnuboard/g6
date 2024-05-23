@@ -1,0 +1,48 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>*** NHN KCP Online Payment System ***</title>
+        <script type="text/javascript">
+            window.onload=function()
+            {
+                var tempParams = document.getElementById('sbParam').innerHTML;
+                tempParams = JSON.parse(tempParams);
+
+                for (var key in tempParams) {
+                    var hiddenField = document.createElement("input");
+                    hiddenField.setAttribute("type", "hidden");
+                    hiddenField.setAttribute("name", key);
+                    hiddenField.setAttribute("value", tempParams[key]);
+                    document.form_auth.appendChild(hiddenField); 
+                }    
+
+                cert_page();
+            }
+
+			// 인증 요청 시 호출 함수
+            function cert_page()
+            {
+                var frm = document.form_auth;
+
+				if (frm.req_tx.value == "auth" || frm.req_tx.value == "otp_auth")
+                {
+                    frm.action="/sample/kcp_cert_res";
+                    frm.submit();
+                }
+				else if ( frm.req_tx.value == "cert" )
+                {	
+                    frm.action="https://testcert.kcp.co.kr/kcp_cert/cert_view.jsp"; // 개발계
+                    //frm.action="https://cert.kcp.co.kr/kcp_cert/cert_view.jsp"; // 운영계
+
+                    frm.submit();
+                }
+			}
+        </script>
+    </head>
+    <body oncontextmenu="return false;" ondragstart="return false;" onselectstart="return false;">
+        <form name="form_auth" method="post">
+            <div id="sbParam" style="display: none;">{{ sb_param }}</div>         
+       </form>
+    </body>
+</html>

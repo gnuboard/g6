@@ -4,7 +4,7 @@
         var $opener = window.opener;
 
         // 인증정보
-        $opener.$("input[name=cert_type]").val("{{ cert_type }}");
+        $opener.$("input[name=cert_type]").val("simple");
         $opener.$("input[name=mb_name]").val("{{ user_name }}").attr("readonly", true);
         $opener.$("input[name=mb_hp]").val("{{ user_phone }}").attr("readonly", true);
         $opener.$("input[name=cert_no]").val("{{ md5_cert_no }}");

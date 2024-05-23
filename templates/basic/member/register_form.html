@@ -361,7 +361,7 @@
                     return false;
                 }
                 let params = "?directAgency=" + $(this).data("type") + "&" + common_param;
-                let request_url = "{{ url_for('get_certificate', cert_type='inicis') }}" + params;
+                let request_url = "{{ url_for('get_certificate', service='inicis', cert_type='simple') }}" + params;
                 call_sa(request_url);
             });
         }
@@ -373,7 +373,7 @@
                     return false;
                 }
                 let params = "?" + common_param;
-                var request_url = "G5_OKNAME_URL/ipin1.php" + params;
+                let request_url = "G5_OKNAME_URL/ipin1.php" + params;
                 certify_win_open('kcb-ipin', request_url);
                 return;
             });
@@ -389,9 +389,9 @@
                 let request_url = ""
                 // KCP 본인인증
                 if (cert_hp == "kcp") {
-                    request_url = "G5_KCPCERT_URL/kcpcert_form.php"
+                    request_url = "{{ url_for('get_certificate', service='kcp', cert_type='hp') }}" + params
                 }
-                certify_win_open(cert_hp + "-hp", request_url + "?" + params);
+                certify_win_open(cert_hp + "-hp", request_url);
                 return;
             });
         }

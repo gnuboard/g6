@@ -1,0 +1,54 @@
+<!--
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>*** NHN KCP Online Payment System [Python Version] ***</title>
+        <script type="text/javascript">
+            window.onload=function()
+            {
+                var tempParams = document.getElementById('sb_param').innerHTML;
+                tempParams = JSON.parse(tempParams);
+                
+                var res_data = document.getElementById('data').innerHTML;
+                res_data = JSON.parse(res_data);
+                var keys = Object.keys(res_data);
+
+                for (var i=0; i<keys.length; i++) {
+
+                    var key = keys[i];
+                    var divField = document.createElement("div");
+                    var newText = document.createTextNode( key + " : " + res_data[key]);
+                    divField.appendChild(newText);
+                    document.body.appendChild(divField);
+                }
+            }
+        </script>
+    </head>
+    <body oncontextmenu="return false;" ondragstart="return false;" onselectstart="return false;">
+        <form name="form_auth" method="post">
+          <div id="sb_param">{{ sb_param }}</div>
+          <div id="data">{{ res_data }}</div>
+        </form>
+    </body>
+</html>
+-->
+<script src="{{ url_for('static', path='/js/jquery.min.js?ver=3.7.1') }}"></script>
+<script>
+    $(function() {
+        var $opener = window.opener;
+
+        // 인증정보
+        $opener.$("input[name=cert_type]").val("hp");
+        $opener.$("input[name=mb_name]").val("{{ res_data.user_name }}").attr("readonly", true);
+        $opener.$("input[name=mb_hp]").val("{{ res_data.phone_no }}").attr("readonly", true);
+        $opener.$("input[name=cert_no]").val("{{ md5_cert_no }}");
+
+        alert("본인인증이 완료되었습니다.");
+
+        if($opener.$("form[name=fcertrefreshform]") != undefined){
+            $opener.$("form[name=fcertrefreshform]").submit();
+        }   
+        window.close();
+    });
+</script>

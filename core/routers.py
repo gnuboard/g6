@@ -27,7 +27,7 @@ from lib.dependency.dependencies import (
     check_use_template, set_template_basic_data
 )
 from lib.editor.ckeditor4 import router as editor_router
-from lib.certificate.inicis.routers import router as certificate_router
+from lib.certificate.routers import router as certificate_router
 
 router = APIRouter(dependencies=[Depends(check_use_template),
                                  Depends(set_template_basic_data)],
