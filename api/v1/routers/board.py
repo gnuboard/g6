@@ -101,7 +101,8 @@ async def api_read_post(
     ### Request Body
     - **wr_password**: 게시글 비밀번호
     """
-    service.validate_read_wr_password(wr_password, service.write.wr_password)
+    write_password = service.get_write_password()
+    service.validate_read_wr_password(wr_password, write_password)
     content = jsonable_encoder(service.write)
     additional_content = jsonable_encoder({
         "images": service.images,

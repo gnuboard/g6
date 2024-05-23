@@ -4,7 +4,7 @@ from fastapi import Depends, Request, Path
 from sqlalchemy import asc, desc, select, exists
 
 from core.database import db_session
-from core.models import BoardGood, Scrap, WriteBaseModel, BoardFile
+from core.models import BoardGood, Scrap, WriteBaseModel, BoardFile, Member
 from core.exception import RedirectException
 from lib.common import set_url_query_params
 from lib.board_lib import is_owner, cut_name
@@ -76,6 +76,14 @@ class ReadPostService(BoardService):
         """읽기 권한 검증"""
         if not self.is_read_level():
             self.raise_exception(detail="글을 읽을 권한이 없습니다.", status_code=403)
+
+    def get_write_password(self):
+        """게시글 비밀번호 조회"""
+        if self.write.wr_password:
+            return self.write.wr_password
+        else:
+            member = self.db.scalar(select(Member).filter_by(mb_id=self.write.mb_id))
+            return member.mb_password
 
     def validate_secret(self, redirect_password_view=False):
         """비밀글 검증"""
