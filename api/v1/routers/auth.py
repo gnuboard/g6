@@ -4,7 +4,7 @@ from typing import Tuple
 from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import insert
+from sqlalchemy import delete, insert
 
 from core.database import db_session
 from core.models import Member
@@ -35,6 +35,13 @@ async def login_for_access_token(
         TokenType.ACCESS, member.mb_id)
     refresh_token, refresh_token_expire_at = _create_token_and_expiration(
         TokenType.REFRESH)
+
+    # 기존 Refresh Token 삭제
+    db.execute(
+        delete(MemberRefreshToken).where(
+            MemberRefreshToken.mb_id == member.mb_id
+        )
+    )
 
     # 데이터베이스에 refresh_token 저장
     db.execute(

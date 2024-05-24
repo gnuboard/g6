@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 
 from fastapi import HTTPException, status
-from jose import ExpiredSignatureError, JWTError, jwt
+from jwt import encode, decode, ExpiredSignatureError, InvalidTokenError
 
 from api.settings import api_settings
 from api.v1.models.auth import TokenPayload
@@ -54,7 +54,7 @@ class JWT:
         exp = datetime.now() + timedelta(minutes=expires_minute)
         to_encode.update({"iss": api_settings.AUTH_ISSUER, "iat": iat, "exp": exp})
 
-        return jwt.encode(to_encode, secret_key, algorithm=api_settings.AUTH_ALGORITHM)
+        return encode(to_encode, secret_key, algorithm=api_settings.AUTH_ALGORITHM)
 
     @staticmethod
     def decode_token(token: str, secret_key: str) -> dict:
@@ -85,7 +85,7 @@ class JWT:
             diff = utc_now - now
             leeway = diff.total_seconds()
 
-            payload = jwt.decode(
+            payload = decode(
                 token,
                 secret_key,
                 algorithms=[api_settings.AUTH_ALGORITHM],
@@ -95,7 +95,7 @@ class JWT:
         except ExpiredSignatureError as e:
             http_exception.detail = "Token has expired"
             raise http_exception from e
-        except JWTError as e:
+        except InvalidTokenError as e:
             http_exception.detail = "Could not validate credentials"
             raise http_exception from e
         except Exception as e:
