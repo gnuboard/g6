@@ -215,39 +215,6 @@ async def main_middleware(request: Request, call_next):
             visit_service = VisitService(request, db)
             visit_service.create_visit_record()
 
-        try:
-            # 현재 방문자 데이터 갱신
-            if (not request.state.is_super_admin
-                    and not url_path.startswith("/admin")):
-                current_login = db.scalar(
-                    select(models.Login)
-                    .where(models.Login.lo_ip == current_ip)
-                )
-                if current_login:
-                    current_login.mb_id = getattr(member, "mb_id", "")
-                    current_login.lo_datetime = datetime.now()
-                    current_login.lo_location = url_path
-                    current_login.lo_url = url_path
-                else:
-                    db.execute(
-                        insert(models.Login).values(
-                            lo_ip=current_ip,
-                            mb_id=getattr(member, "mb_id", ""),
-                            lo_datetime=datetime.now(),
-                            lo_location=url_path,
-                            lo_url=url_path)
-                    )
-                db.commit()
-
-            # 현재 로그인한 이력 삭제
-            config_time = timedelta(minutes=int(config.cf_login_minutes))
-            db.execute(delete(models.Login)
-                    .where(models.Login.lo_datetime < datetime.now() - config_time))
-            db.commit()
-
-        except Exception as e:
-            print(e)
-
     return response
 
 # 기본 실행할 미들웨어를 추가하는 함수
