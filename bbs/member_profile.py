@@ -17,14 +17,12 @@ from lib.dependency.auth import get_login_member
 from lib.dependency.member import validate_update_data
 from lib.member import get_next_open_date
 from lib.pbkdf2 import validate_password
-from lib.template_filters import default_if_none
 from service.member_service import (
     MemberService, MemberImageService, ValidateMember
 )
 
 router = APIRouter()
 templates = UserTemplates()
-templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals["captcha_widget"] = captcha_widget
 
 SESSION_NAME = "ss_profile_change"

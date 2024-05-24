@@ -1,3 +1,4 @@
+"""기본환경설정 관리 Template Router"""
 import re
 import socket
 from typing import List
@@ -15,7 +16,7 @@ from lib.common import conv_field_info, get_client_ip, get_host_public_ip
 from lib.dependency.dependencies import check_demo_alert, validate_super_admin, validate_token
 from lib.template_functions import (
     get_editor_select, get_member_level_select, get_skin_select,
-    get_member_id_select, 
+    get_member_id_select
 )
 
 router = APIRouter()
@@ -78,18 +79,17 @@ async def config_form_update(
     # 차단 IP 리스트에 현재 접속 IP 가 있으면 접속이 불가하게 되므로 저장하지 않는다.
     if form_data.cf_intercept_ip:
         client_ip = get_client_ip(request)
-        pattern = form_data.cf_intercept_ip.split("\n")
-        for i in range(len(pattern)):
-            pattern[i] = pattern[i].strip()
-            if not pattern[i]:
+        ip_patterns = form_data.cf_intercept_ip.split("\n")
+        for pattern in ip_patterns:
+            if not pattern.strip():
                 continue
-            pattern[i] = pattern[i].replace(".", r"\.")
-            pattern[i] = pattern[i].replace("+", r"[0-9\.]+")
-            if re.match(fr"^{pattern[i]}$", client_ip):
+            pattern = pattern.replace(".", r"\.")
+            pattern = pattern.replace("+", r"[0-9\.]+")
+            if re.match(fr"^{pattern}$", client_ip):
                 raise AlertException("현재 접속 IP : " + client_ip + " 가 차단될수 있으므로 다른 IP를 입력해 주세요.")
 
     # 본인인증 설정 체크
-    if (form_data.cf_cert_use 
+    if (form_data.cf_cert_use
         and not any([form_data.cf_cert_ipin, form_data.cf_cert_hp, form_data.cf_cert_simple])):
         raise AlertException("본인확인을 위해 아이핀, 휴대폰 본인확인, KG이니시스 간편인증 서비스 중 하나 이상 선택해 주십시오.")
 

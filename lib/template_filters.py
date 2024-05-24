@@ -16,13 +16,6 @@ def datetime_format(date: datetime, format="%Y-%m-%d %H:%M:%S"):
     return date.strftime(format)
 
 
-def default_if_none(value, arg):
-    """If value is None"""
-    if value is None:
-        return arg
-    return value
-
-
 def number_format(number: int) -> str:
     """숫자를 천단위로 구분하여 반환
 

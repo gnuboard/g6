@@ -21,6 +21,7 @@ from lib.pbkdf2 import create_hash
 from service import BaseService
 from service.board_file_service import BoardFileService
 from api.v1.models.board import WriteModel
+from api.v1.service.member import MemberImageServiceAPI as ImageService
 
 
 class BoardService(BaseService, BoardConfig):
@@ -111,6 +112,14 @@ class BoardService(BaseService, BoardConfig):
         if not self.member and not data.wr_password:
             self.raise_exception(detail="비회원 글쓰기시 비밀번호를 기재해야 합니다.", status_code=400)
 
+    def get_member_image_path(self, mb_id: str):
+        """회원 이미지 조회"""
+        return ImageService.get_image_path(mb_id)
+
+    def get_member_icon_path(self, mb_id: str):
+        """회원 아이콘 조회"""
+        return ImageService.get_icon_path(mb_id)
+
     def get_board(self, bo_table: str) -> Board:
         """게시판 정보를 가져온다."""
         board = self.db.get(Board, bo_table)
@@ -135,6 +144,10 @@ class BoardService(BaseService, BoardConfig):
         write = self.db.get(self.write_model, wr_id)
         if not write:
             self.raise_exception(detail="존재하지 않는 게시글(댓글)입니다.", status_code=404)
+
+        # 회원 이미지, 아이콘 경로 설정
+        write.mb_image_path = self.get_member_image_path(write.mb_id)
+        write.mb_icon_path = self.get_member_icon_path(write.mb_id)
 
         return write
 
