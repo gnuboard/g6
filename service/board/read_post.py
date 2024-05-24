@@ -4,7 +4,9 @@ from fastapi import Depends, Request, Path
 from sqlalchemy import asc, desc, select, exists
 
 from core.database import db_session
-from core.models import BoardGood, Scrap, WriteBaseModel, BoardFile
+from core.models import BoardGood, Scrap, WriteBaseModel, BoardFile, Member
+from core.exception import RedirectException
+from lib.common import set_url_query_params
 from lib.board_lib import is_owner, cut_name
 from lib.template_filters import number_format
 from service.board_file_service import BoardFileService
@@ -75,7 +77,15 @@ class ReadPostService(BoardService):
         if not self.is_read_level():
             self.raise_exception(detail="글을 읽을 권한이 없습니다.", status_code=403)
 
-    def validate_secret(self):
+    def get_write_password(self):
+        """게시글 비밀번호 조회"""
+        if self.write.wr_password:
+            return self.write.wr_password
+        else:
+            member = self.db.scalar(select(Member).filter_by(mb_id=self.write.mb_id))
+            return member.mb_password
+
+    def validate_secret(self, redirect_password_view=False):
         """비밀글 검증"""
         block_conditions = [
             "secret" in self.write.wr_option,
@@ -98,7 +108,14 @@ class ReadPostService(BoardService):
             if parent_write.mb_id == self.member.mb_id:
                 owner = True
 
-        if not owner:
+        if owner:
+            return
+
+        if redirect_password_view:
+            query_params = self.request.query_params
+            url = f"/bbs/password/view/{self.bo_table}/{self.wr_id}"
+            raise RedirectException(url=set_url_query_params(url, query_params), status_code=303)
+        else:
             raise self.raise_exception(detail="비밀글 입니다.", status_code=403)
 
     def validate_secret_with_session(self):
@@ -106,7 +123,7 @@ class ReadPostService(BoardService):
         session_name = f"ss_secret_{self.bo_table}_{self.wr_id}"
         if self.request.session.get(session_name):
             return
-        self.validate_secret()
+        self.validate_secret(redirect_password_view=True)
         self.request.session[session_name] = True
 
     def validate_repeat(self):
@@ -198,6 +215,10 @@ class ReadPostService(BoardService):
             comment.is_edit = bool(self.member.admin_type or (self.member and comment.mb_id == self.member.mb_id))
             comment.is_del = bool(self.member.admin_type or (self.member and comment.mb_id == self.member.mb_id) or not comment.mb_id)
             comment.is_secret = "secret" in comment.wr_option
+
+            # 회원 이미지, 아이콘 경로 설정
+            comment.mb_image_path = self.get_member_image_path(comment.mb_id)
+            comment.mb_icon_path = self.get_member_icon_path(comment.mb_id)
 
             # 비밀댓글 처리
             session_secret_comment_name = f"ss_secret_comment_{self.bo_table}_{comment.wr_id}"
