@@ -1,9 +1,9 @@
 """API 인증 관련 의존성 함수를 정의합니다."""
 from typing_extensions import Annotated
 
-from jose import ExpiredSignatureError, JWTError
 from fastapi import Depends, Form, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from jwt import ExpiredSignatureError, InvalidTokenError
 from sqlalchemy.sql import select
 
 from core.database import db_session
@@ -74,6 +74,6 @@ def authenticate_refresh_token(
     except ExpiredSignatureError as e:
         credentials_exception.detail = "Refresh Token has expired"
         raise credentials_exception from e
-    except JWTError as e:
+    except InvalidTokenError as e:
         credentials_exception.detail = "Could not validate credentials"
         raise credentials_exception from e
