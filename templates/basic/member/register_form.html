@@ -361,7 +361,7 @@
                     return false;
                 }
                 let params = "?directAgency=" + $(this).data("type") + "&" + common_param;
-                let request_url = "{{ url_for('get_certificate', service='inicis', cert_type='simple') }}" + params;
+                let request_url = "{{ url_for('get_certificate', provider='inicis', cert_type='simple') }}" + params;
                 call_sa(request_url);
             });
         }
@@ -389,7 +389,7 @@
                 let request_url = ""
                 // KCP 본인인증
                 if (cert_hp == "kcp") {
-                    request_url = "{{ url_for('get_certificate', service='kcp', cert_type='hp') }}" + params
+                    request_url = "{{ url_for('get_certificate', provider='kcp', cert_type='hp') }}" + params
                 }
                 certify_win_open(cert_hp + "-hp", request_url);
                 return;

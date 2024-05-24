@@ -12,6 +12,8 @@ from core.models import Auth, Board, GroupMember
 from core.settings import ENV_PATH, settings
 from core.template import get_theme_list
 from lib.captcha import get_current_captcha_cls
+from lib.certificate.inicis.simple.inicis_simple_service import InicisSimpleService
+from lib.certificate.kcp.hp.kcp_hp_service import KcpHpService
 from lib.common import get_current_admin_menu_id
 from lib.member import get_admin_type
 from lib.token import check_token
@@ -228,4 +230,17 @@ async def set_template_basic_data(
         "populars": popular_service.fetch_populars(),
     }
     request.state.template_data = template_data
-    
+
+
+def get_certificate_class(
+    provider: Annotated[str, Path()],
+    inicis_simple_service: Annotated[InicisSimpleService, Depends()],
+    kcp_hp_service: Annotated[KcpHpService, Depends()],
+):
+    """본인인증 서비스를 제공하는 클래스를 반환합니다."""
+    if provider == "inicis":
+        return inicis_simple_service
+    if provider == "kcp":
+        return kcp_hp_service
+
+    raise ValueError("Unsupported service type")

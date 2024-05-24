@@ -39,12 +39,12 @@
         var $opener = window.opener;
 
         // 인증정보
-        $opener.$("input[name=cert_type]").val("hp");
-        $opener.$("input[name=mb_name]").val("{{ res_data.user_name }}").attr("readonly", true);
-        $opener.$("input[name=mb_hp]").val("{{ res_data.phone_no }}").attr("readonly", true);
+        $opener.$("input[name=cert_type]").val("{{ cert_type }}");
+        $opener.$("input[name=mb_name]").val("{{ user_name }}").attr("readonly", true);
+        $opener.$("input[name=mb_hp]").val("{{ user_phone }}").attr("readonly", true);
         $opener.$("input[name=cert_no]").val("{{ md5_cert_no }}");
 
-        alert("본인인증이 완료되었습니다.");
+        alert("휴대폰 본인인증이 완료되었습니다.");
 
         if($opener.$("form[name=fcertrefreshform]") != undefined){
             $opener.$("form[name=fcertrefreshform]").submit();

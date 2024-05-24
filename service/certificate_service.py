@@ -1,17 +1,34 @@
 """본인인증 관련 기능을 제공하는 모듈입니다."""
-from fastapi import Request
+from datetime import date, datetime, timedelta
+import hashlib
+from fastapi import Depends, Request
+from typing_extensions import Annotated
 
 from core.database import db_session
-from core.exception import AlertException
+from core.exception import AlertCloseException
 from core.models import Member
 from service import BaseService
+from service.member_service import MemberService
 
 
 class CertificateService(BaseService):
-    def __init__(self, request: Request, db: db_session):
+    """본인인증 관련 기능을 제공하는 클래스입니다."""
+    INICIS_MID_PREFIX = "SRA"
+    INICIS_TEST_MID = 'INIiasTest'
+    INICIS_TEST_API_KEY = 'TGdxb2l3enJDWFRTbTgvREU3MGYwUT09'
+    KCP_SITE_CD_PREFIX = 'SM'
+    KCP_TEST_SITE_CD = 'AO0QE'
+
+    def __init__(
+            self,
+            request: Request,
+            db: db_session,
+            member_service: Annotated[MemberService, Depends()]
+        ):
         self.request = request
         self.config  = request.state.config
         self.db = db
+        self.member_service = member_service
 
         self.use_hp = getattr(request.state.config, "cf_use_hp", False)
         self.cert_use = getattr(request.state.config, "cf_cert_use", 0)
@@ -20,8 +37,8 @@ class CertificateService(BaseService):
         self.cert_ipin = getattr(request.state.config, "cf_cert_ipin", None)
         self.cert_req = getattr(request.state.config, "cf_cert_req", 0)
 
-    def raise_exception(self, status_code: int, detail: str = None, url: str = None):
-        return AlertException(status_code=status_code, detail=detail, url=url)
+    def raise_exception(self, status_code: int, detail: str = None):
+        return AlertCloseException(status_code=status_code, detail=detail)
 
     def should_use_hp(self):
         """
@@ -58,3 +75,66 @@ class CertificateService(BaseService):
         if member.mb_certify == "ipin":
             return "아이핀"
         return ""
+
+    def get_kg_mid(self) -> str:
+        """
+        KG이니시스 본인인증을 위한 mid를 반환합니다.
+        """
+        if self.cert_use == 2:
+            return f"{self.INICIS_MID_PREFIX}{self.config.cf_cert_kg_mid}"
+        return self.INICIS_TEST_MID
+
+    def get_kg_api_key(self) -> str:
+        """
+        KG이니시스 본인인증을 위한 api_key를 반환합니다.
+        """
+        if self.cert_use == 2:
+            return self.config.cf_cert_kg_cd
+        return self.INICIS_TEST_API_KEY
+
+    def get_kcp_site_code(self) -> str:
+        """
+        KCP 본인인증을 위한 site_cd를 반환합니다.
+        """
+        if self.cert_use == 2:
+            return f"{self.KCP_SITE_CD_PREFIX}{self.config.cf_cert_kcp_cd}"
+        return self.KCP_TEST_SITE_CD
+
+    def get_is_adult(self, birth_day: str) -> int:
+        """만 19세 이상인지 여부를 반환합니다."""
+        try:
+            ago_19years = date.today() - timedelta(days=19*365)  # 19년전 오늘날짜 계산
+            birthday = datetime.strptime(birth_day, "%Y%m%d").date()
+
+            return 1 if birthday <= ago_19years else 0
+        except Exception:
+            return 0
+
+    def create_dupinfo(self, ci: str):
+        """
+        본인인증 정보를 생성합니다.
+        """
+        return self.hashing_md5(f"{ci}{ci}")
+
+    def validate_member_dupinfo(self, dupinfo: str, member: Member):
+        """이미 인증된 회원인지 검증합니다."""
+        mb_certify = getattr(member, "mb_certify", "")
+        mb_dupinfo = getattr(member, "mb_dupinfo", "")
+        if (mb_certify and mb_dupinfo and len(mb_dupinfo) != 64):
+            if mb_dupinfo != dupinfo:
+                self.raise_exception(400, "해당 계정은 이미 다른명의로 본인인증 되어있는 계정입니다.")
+
+    def validate_exists_dupinfo(self, dupinfo: str, mb_id: str):
+        """이미 인증정보가 존재하는지 검증합니다."""
+        exists_member = self.member_service.fetch_member_by_dupinfo(mb_id, dupinfo)
+        if exists_member:
+            self.raise_exception(400, f"입력하신 본인확인 정보로 이미 가입된 내역이 존재합니다.\
+                                    \\n아이디 : {exists_member.mb_id}")
+
+    def hashing_md5(self, string: str) -> str:
+        """문자열을 MD5로 해싱하여 반환합니다."""
+        return hashlib.md5(string.encode()).hexdigest()
+
+    def hashing_sha256(self, string: str) -> str:
+        """문자열을 SHA256으로 해싱하여 반환합니다."""
+        return hashlib.sha256(string.encode()).hexdigest()
