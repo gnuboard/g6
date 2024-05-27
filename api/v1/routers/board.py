@@ -10,7 +10,8 @@ from lib.common import get_paging_info
 from lib.board_lib import insert_board_new, get_list_thumbnail
 from lib.slowapi.limiter import validate_slowapi_create_post
 from api.v1.models.response import (
-    response_401, response_403, response_404, response_422
+    response_401, response_403, response_404, response_422,
+    response_429
 )
 from api.v1.dependencies.board import arange_file_data
 from api.v1.models.board import (
@@ -163,7 +164,8 @@ async def api_read_post(
 @router.post("/{bo_table}/writes",
              summary="게시판 글 작성",
              responses={**response_401, **response_403,
-                        **response_404, **response_422}
+                        **response_404, **response_422,
+                        **response_429}
              )
 async def api_create_post(
     db: db_session,
