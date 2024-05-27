@@ -6,6 +6,8 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.templating import _TemplateResponse
 
+from slowapi.errors import RateLimitExceeded
+
 
 class AlertException(HTTPException):
     """스크립트 경고창 출력을 위한 예외 클래스
@@ -109,6 +111,14 @@ def regist_core_exception_handler(app: FastAPI) -> None:
     async def redirect_exception_handler(request: Request, exc: RedirectException):
         """RedirectException 예외처리 handler 등록"""
         return RedirectResponse(url=exc.url, status_code=exc.status_code)
+
+    @app.exception_handler(RateLimitExceeded)
+    async def rate_limit_exception_handler(request: Request, exc: RateLimitExceeded):
+        """RateLimitExceeded 예외처리 handler 등록"""
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"message": exc.detail}
+        )
 
 
 def template_response(
