@@ -8,7 +8,7 @@ from fastapi.encoders import jsonable_encoder
 from core.database import db_session
 from lib.common import get_paging_info
 from lib.board_lib import insert_board_new, get_list_thumbnail
-from lib.slowapi.limiter import validate_slowapi_create_post
+from lib.slowapi.create_post_limit.limiter import validate_slowapi_create_post
 from api.v1.models.response import (
     response_401, response_403, response_404, response_422,
     response_429
