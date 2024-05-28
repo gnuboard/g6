@@ -9,7 +9,7 @@
             {% for scrap in scraps %}
             <li class="position-relative p-4 main-bb main-font">
                 <a href="{{ url_for('read_post', bo_table=scrap.bo_table, wr_id=scrap.wr_id) }}" class="scrap_tit fw-bold d-block fs-5 mb-3 main-font" target="_blank" onclick="open_parent_href(this.href); return false;">
-                    {{ scrap.subject|truncate(100, False, '...', 0) }}
+                    {{ scrap.wr_subject|truncate(100, False, '...', 0) }}
                 </a>
                 <div class="d-flex">
                   <a href="{{ url_for('list_post', bo_table=scrap.bo_table) }}" class="scrap_cate bov-bg em-font p-1 rounded-2 fs-5 me-3" target="_blank" onclick="open_parent_href(this.href); return false;">

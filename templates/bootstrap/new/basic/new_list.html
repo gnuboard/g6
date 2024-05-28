@@ -31,6 +31,8 @@
 <!-- 전체게시물 목록 시작 { -->
 <form name="fnewlist" id="fnewlist" method="post" action="#" onsubmit="return fnew_submit(this);">
     <input type="hidden" name="view" value="{{ query_params.view }}">
+
+    {% if request.state.is_super_admin %}
     <input type="hidden" name="token" value="">
 
     <div class="admin_new_btn text-end">
@@ -39,10 +41,12 @@
             <span class="blind">선택삭제</span>
         </button>
     </div>
+    {% endif %}
     <div class="tbl_head01 tbl_wrap">
         <table>
             <thead>
                 <tr>
+                    {% if request.state.is_super_admin %}
                     <th scope="col" class="chk_box">
                         <input type="checkbox" id="all_chk" class="selec_chk">
                         <label for="all_chk">
@@ -50,6 +54,7 @@
                             <b class="blind">목록 전체</b>
                         </label>
                     </th>
+                    {% endif %}
                     <th scope="col">그룹</th>
                     <th scope="col">게시판</th>
                     <th scope="col">제목</th>
@@ -60,6 +65,7 @@
             <tbody>
                 {% for board_new in board_news %}
                 <tr>
+                    {% if request.state.is_super_admin %}
                     <td class="td_chk chk_box">
                         <input type="checkbox" name="chk_bn_id[]" value="{{ board_new.bn_id }}" id="chk_bn_id_{{ loop.index }}" class="selec_chk">
                         <label for="chk_bn_id_{{ loop.index }}">
@@ -67,6 +73,7 @@
                             <b class="blind">{{ board_new.num }}번</b>
                         </label>
                     </td>
+                    {% endif %}
                     <td class="td_group">
                         <a href="/bbs/new?gr_id={{ board_new.board.gr_id }}">{{ board_new.board.group.gr_subject }}</a>
                     </td>
@@ -87,6 +94,7 @@
     {{ paging|safe }}
 </form>
 
+{% if request.state.is_super_admin %}
 <script>
     $(function(){
         $('#all_chk').click(function(){
@@ -117,4 +125,5 @@
         return true;
     }
 </script>
+{% endif %}
 {% endblock content %}

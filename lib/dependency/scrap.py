@@ -25,6 +25,7 @@ def validate_create_scrap(
 ) -> None:
     """스크랩 생성 유효성 검사 의존성 함수"""
     validate.is_exists_scrap(member, board.bo_table, write.wr_id)
+    validate.is_secret_write(board.bo_table, write.wr_id)
 
 
 def validate_delete_scrap(

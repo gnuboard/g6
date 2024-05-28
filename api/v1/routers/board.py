@@ -153,7 +153,7 @@ async def api_create_post(
     service.validate_secret_board(wr_data.secret, wr_data.html, wr_data.mail)
     service.validate_post_content(wr_data.wr_subject)
     service.validate_post_content(wr_data.wr_content)
-    service.is_write_level()
+    service.validate_write_level()
     service.arrange_data(wr_data, wr_data.secret, wr_data.html, wr_data.mail)
     write = service.save_write(wr_data.parent_id, wr_data)
     insert_board_new(service.bo_table, write)

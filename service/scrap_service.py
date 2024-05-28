@@ -144,6 +144,17 @@ class ValidateScrapService(BaseService):
                 detail="이미 스크랩하신 글 입니다.",
                 url=self.request.url_for('scrap_list'))
 
+    def is_secret_write(self, bo_table: str, wr_id: int) -> None:
+        """
+        스크랩할 게시글이 비밀글인지 확인합니다.
+        """
+        session_name = f"ss_secret_{bo_table}_{wr_id}"
+        if not self.request.session.get(session_name):
+            self.raise_exception(
+                status_code=403,
+                detail="비밀글 읽기 권한이 없어 스크랩할 수 없습니다.",
+                url=self.request.url_for('scrap_list'))
+
     def is_owner_scrap(self, scrap: Scrap, member: Member) -> None:
         """
         스크랩의 소유자인지 확인합니다.
