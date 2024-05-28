@@ -17,6 +17,7 @@ from lib.common import (
     remove_query_params, set_url_query_params
 )
 from lib.html_sanitizer import content_sanitizer
+from lib.slowapi.create_post_limit.limiter import validate_slowapi_create_post
 from lib.pbkdf2 import create_hash, validate_password
 from service import BaseService
 from service.board_file_service import BoardFileService
@@ -111,6 +112,10 @@ class BoardService(BaseService, BoardConfig):
         """글쓰기 간격 검증"""
         if not is_write_delay(self.request):
             self.raise_exception(status_code=400, detail="너무 빠른 시간내에 게시글을 연속해서 올릴 수 없습니다.")
+
+    def validate_write_delay_with_slowapi(self):
+        """글쓰기 간격 검증(slowapi)"""
+        validate_slowapi_create_post(self.request)
 
     def validate_anonymous_password(self, data):
         """비회원 글쓰기시 비밀번호 검증"""
