@@ -43,3 +43,24 @@ class RegisterResponse(BaseModel):
 class MemoResponse(BaseModel):
     """쪽지 발송 시, 설정 포인트 응답 모델"""
     cf_memo_send_point: int
+
+
+class BoardResponse(BaseModel):
+    """게시판 설정 응답 모델"""
+    cf_use_point: int
+    cf_point_term: int
+    cf_use_copy_log: int
+    cf_cut_name: int
+    cf_new_rows: int
+    cf_read_point: int
+    cf_write_point: int
+    cf_comment_point: int
+    cf_download_point: int
+    cf_write_pages: int
+    cf_mobile_pages: int
+    cf_link_target: str
+    cf_bbs_rewrite: int
+    cf_delay_sec: int
+    cf_filter: str
+    cf_possible_ip: str
+    cf_intercept_ip: str
