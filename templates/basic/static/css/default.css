@@ -580,6 +580,11 @@ a.btn_admin,.btn_admin { display:inline-block; color:#d13f4a; text-decoration:no
 .txt_done { color:#e8180c }
 .txt_expired { color:#ccc }
 .txt_rdy { color:#8abc2a }
+.td_board {width:120px;text-align:center}
+.td_chk { width:30px; text-align:center }
+.td_date { width:60px; text-align:center }
+.td_group { width:80px; text-align:center }
+.td_name { width:100px; text-align:center }
 
 /* 새창 기본 스타일 */
 .new_win { position:relative }

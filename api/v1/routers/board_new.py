@@ -1,6 +1,8 @@
+"""새글(최신 게시글) API Router"""
 from typing_extensions import Annotated, List
-from fastapi import APIRouter, Depends, Query, Body
+from fastapi import APIRouter, Depends, HTTPException, Query, Body, Request
 
+from api.v1.dependencies.member import get_current_member
 from api.v1.models.response import response_401, response_422
 from api.v1.models.board import (
     BoardNewViewType, ResponseNormalModel, ResponseBoardNewListModel
@@ -12,8 +14,7 @@ router = APIRouter()
 
 @router.get("",
             summary="최신 게시글 목록",
-            responses={**response_401, **response_422}
-            )
+            responses={**response_401, **response_422})
 async def api_board_new_list(
     service: Annotated[BoardNewServiceAPI, Depends()],
     gr_id: str = Query(None, title="게시판 그룹 id", description="게시판 그룹 id"),
@@ -40,11 +41,12 @@ async def api_board_new_list(
 
 
 @router.post("/delete",
-            summary="최신 게시글을 삭제",
-            responses={**response_401, **response_422}
-            )
+             summary="최신 게시글을 삭제",
+             responses={**response_401, **response_422})
 async def api_new_delete(
+    request: Request,
     service: Annotated[BoardNewServiceAPI, Depends()],
+    member: Annotated[str, Depends(get_current_member)],
     bn_ids: Annotated[List[int], Body(..., title="삭제할 최신글 id 리스트")],
 ) -> ResponseNormalModel:
     """
@@ -53,6 +55,10 @@ async def api_new_delete(
     ### Request Body
     - **bn_ids**: 삭제할 최신글 id 리스트 (예시: [1, 2, 3])
     """
+    admin_id = getattr(request.state.config, "cf_admin")
+    if member.mb_id != admin_id:
+        raise HTTPException(403, "최고관리자만 접근 가능합니다.")
+
     service.delete_board_news(bn_ids)
 
     return {"result": "deleted"}
