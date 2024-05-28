@@ -424,6 +424,7 @@ async def api_create_comment(
     service.validate_comment_level()
     service.validate_point()
     service.validate_post_content(comment_data.wr_content)
+    validate_slowapi_create_post(service.request)
     comment = service.save_comment(comment_data, parent_write)
     service.add_point(comment)
     service.send_write_mail_(comment, parent_write)
