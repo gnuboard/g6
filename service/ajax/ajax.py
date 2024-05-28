@@ -74,6 +74,19 @@ class AJAXService:
         if write.mb_id == member.mb_id:
             raise JSONException(status_code=403, message=f"자신의 글에는 {type_str}을 할 수 없습니다.")
 
+    def get_ajax_good_data(self, bo_table: str, write: WriteBaseModel) -> dict:
+        """게시글의 추천/비추천 데이터 확인"""
+        result = {"good": 0, "nogood": 0}
+        write_good_results = self.db.scalars(select(BoardGood).where(
+            BoardGood.bo_table == bo_table, BoardGood.wr_id == write.wr_id
+        ))
+        for good_data in write_good_results:
+            if good_data.bg_flag == "good":
+                result["good"] += 1
+            else:
+                result["nogood"] += 1
+        return result
+
     def get_ajax_good_result(self, bo_table: str, member: Member, write: WriteBaseModel, type: str) -> dict:
         """게시글의 추천/비추천 데이터 확인"""
         result = {"status": "success", "message": "", "good": 0, "nogood": 0}
