@@ -62,7 +62,7 @@ async def result_certificate(
     # 결과 데이터 md5 해싱
     md5_cert_no = cert_service.hashing_md5(cert_no)
     hash_data   = cert_service.hasing_cert_hash(user_name, cert_type,
-                                                user_birthday, cert_no, user_phone)
+                                                user_birthday, md5_cert_no, user_phone)
     # 세션 저장
     request.session["ss_cert_type"] = cert_type
     request.session["ss_cert_no"] = md5_cert_no

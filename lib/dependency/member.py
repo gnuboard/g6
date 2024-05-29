@@ -56,7 +56,7 @@ def validate_register_data(
         # 본인인증 데이터 확인
         if ss_cert_type and ss_cert_no:
             cert_hash = cert_service.hasing_cert_hash(data.mb_name, ss_cert_type,
-                                                    data.mb_birth, ss_cert_no, data.mb_hp)
+                                                    ss_cert_birth, ss_cert_no, data.mb_hp)
             if not ss_cert_hash == cert_hash:
                 raise AlertException("본인확인 데이터가 일치하지 않습니다.", 400)
         # 데이터 처리
