@@ -565,6 +565,20 @@ class ValidateMember(BaseService):
         if self.is_prohibit_email(email):
             self.raise_exception(403, "사용이 금지된 메일 도메인입니다.")
 
+    def valid_hp(self, reg_mb_hp: str) -> None:
+        """ 휴대폰 번호 유효성 검사
+
+        Args:
+            reg_mb_hp (str): 휴대폰 번호
+        """
+        reg_mb_hp = re.sub(r"[^0-9]", "", reg_mb_hp)
+        if not reg_mb_hp:
+            self.raise_exception(400, "휴대폰 번호를 입력해주세요.")
+
+        # 휴대폰 번호가 올바른 형식인지 확인
+        if not re.match(r"^01[0-9]{8,9}$", reg_mb_hp):
+            self.raise_exception(400, "휴대폰번호를 올바르게 입력해 주십시오.")
+
     def is_exists_email(self, email: str, mb_id: str = None) -> bool:
         """이메일이 이미 등록되어 있는지 확인
 

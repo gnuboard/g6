@@ -102,6 +102,7 @@ async def get_register_form(
              name='register_form_save')
 async def post_register_form(
     request: Request,
+    cert_service: Annotated[CertificateService, Depends()],
     member_service: Annotated[MemberService, Depends()],
     file_service: Annotated[MemberImageService, Depends()],
     point_service: Annotated[PointService, Depends()],
@@ -135,6 +136,14 @@ async def post_register_form(
     # 이미지 검사 & 업로드
     file_service.update_image_file(mb_id, 'icon', mb_icon)
     file_service.update_image_file(mb_id, 'image', mb_img)
+
+    # 본인인증 이력 생성 및 세션 제거
+    if cert_service.cert_use:
+        cert_service.create_certificate_history(
+            member.mb_id, member.mb_name, member.mb_hp,
+            member.mb_birth, member.mb_certify
+        )
+        cert_service.remove_certificate_session()
 
     # 회원가입 이후 세션 처리
     if not config.cf_use_email_certify:

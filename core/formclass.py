@@ -167,11 +167,13 @@ class MemberForm:
     mb_email: Optional[str] = Form(default="")
     mb_homepage: Optional[str] = Form(default="")
     mb_sex: Optional[str] = Form(default="")
+    mb_birth: Optional[str] = Form(default="")
     mb_recommend: Optional[str] = Form(default="")
     mb_hp: Optional[str] = Form(default="")
     mb_tel: Optional[str] = Form(default="")
     mb_certify: Optional[str] = Form(default="")
     mb_adult: Optional[int] = Form(default=0)
+    mb_dupinfo: Optional[str] = Form(default="")
     mb_addr_jibeon: Optional[str] = Form(default="")
     mb_zip: Optional[str] = Form(default="")
     mb_zip1: Optional[str] = Form(default="")
@@ -239,6 +241,7 @@ class RegisterMemberForm(MemberForm):
     mb_id: str = Form(None)
     mb_name: str = Form(None)
     mb_password_re: str = Form(None)
+    cert_no: str = Form(None)
 
     def __post_init__(self) -> None:
         # 회원 아이디 검사

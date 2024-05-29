@@ -2,11 +2,12 @@
 from datetime import date, datetime, timedelta
 import hashlib
 from fastapi import Depends, Request
+from sqlalchemy import insert
 from typing_extensions import Annotated
 
 from core.database import db_session
 from core.exception import AlertCloseException
-from core.models import Member
+from core.models import Member, MemberCertHistory
 from service import BaseService
 from service.member_service import MemberService
 
@@ -116,6 +117,33 @@ class CertificateService(BaseService):
         """
         return self.hashing_md5(f"{ci}{ci}")
 
+    def create_certificate_history(self, mb_id: str, mb_name: str,
+                                   mb_hp: str, mb_birth: str, cert_type: str) -> None:
+        """
+        본인인증 이력을 생성합니다.
+        """
+        self.db.execute(
+            insert(MemberCertHistory).values(
+                mb_id=mb_id,
+                ch_name=mb_name,
+                ch_hp=mb_hp,
+                ch_birth=mb_birth,
+                ch_type=cert_type
+            )
+        )
+        self.db.commit()
+
+    def remove_certificate_session(self):
+        """
+        본인인증 세션을 삭제합니다.
+        """
+        self.request.session.pop("ss_cert_no", None)
+        self.request.session.pop("ss_cert_type", None)
+        self.request.session.pop("ss_cert_hash", None)
+        self.request.session.pop("ss_cert_adult", None)
+        self.request.session.pop("ss_cert_birth", None)
+        self.request.session.pop("ss_cert_dupinfo", None)
+
     def validate_member_dupinfo(self, dupinfo: str, member: Member):
         """이미 인증된 회원인지 검증합니다."""
         mb_certify = getattr(member, "mb_certify", "")
@@ -130,6 +158,13 @@ class CertificateService(BaseService):
         if exists_member:
             self.raise_exception(400, f"입력하신 본인확인 정보로 이미 가입된 내역이 존재합니다.\
                                     \\n아이디 : {exists_member.mb_id}")
+
+    def hasing_cert_hash(self, name: str, cert_type: str,
+                         birth: str, cert_no: str, phone: str = None) -> str:
+        """본인인증 데이터를 해싱하여 반환합니다."""
+        if cert_type == "ipin":
+            return self.hashing_md5(f"{name}{cert_type}{birth}{cert_no}")
+        return self.hashing_md5(f"{name}{cert_type}{birth}{phone}{cert_no}")
 
     def hashing_md5(self, string: str) -> str:
         """문자열을 MD5로 해싱하여 반환합니다."""
