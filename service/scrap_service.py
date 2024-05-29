@@ -8,6 +8,7 @@ from sqlalchemy import select
 from core.database import db_session
 from core.exception import AlertException
 from core.models import Member, Scrap, WriteBaseModel
+from lib.board_lib import is_secret_write
 from lib.common import dynamic_create_write_table
 from service import BaseService
 from service.member_service import MemberService
@@ -132,7 +133,7 @@ class ValidateScrapService(BaseService):
     def raise_exception(self, status_code: int, detail: str = None, url: str = None):
         raise AlertException(detail, status_code, url)
 
-    def is_exists_scrap(self, member: Member, bo_table: str, wr_id: int) -> None:
+    def valid_exists_scrap(self, member: Member, bo_table: str, wr_id: int) -> None:
         """
         스크랩이 이미 존재하는지 확인합니다.
         """
@@ -144,18 +145,19 @@ class ValidateScrapService(BaseService):
                 detail="이미 스크랩하신 글 입니다.",
                 url=self.request.url_for('scrap_list'))
 
-    def is_secret_write(self, bo_table: str, wr_id: int) -> None:
+    def valid_secret_write(self, bo_table: str, write: WriteBaseModel) -> None:
         """
         스크랩할 게시글이 비밀글인지 확인합니다.
         """
-        session_name = f"ss_secret_{bo_table}_{wr_id}"
-        if not self.request.session.get(session_name):
-            self.raise_exception(
-                status_code=403,
-                detail="비밀글 읽기 권한이 없어 스크랩할 수 없습니다.",
-                url=self.request.url_for('scrap_list'))
+        if is_secret_write(write):
+            session_name = f"ss_secret_{bo_table}_{write.wr_id}"
+            if not self.request.session.get(session_name):
+                self.raise_exception(
+                    status_code=403,
+                    detail="비밀글 읽기 권한이 없어 스크랩할 수 없습니다.",
+                    url=self.request.url_for('scrap_list'))
 
-    def is_write(self, write: WriteBaseModel) -> None:
+    def valid_write(self, write: WriteBaseModel) -> None:
         """
         스크랩할 대상이 게시글인지 확인합니다.
         """
@@ -165,7 +167,7 @@ class ValidateScrapService(BaseService):
                 detail="댓글은 스크랩할 수 없습니다.",
                 url=self.request.url_for('scrap_list'))
 
-    def is_owner_scrap(self, scrap: Scrap, member: Member) -> None:
+    def valid_owner_scrap(self, scrap: Scrap, member: Member) -> None:
         """
         스크랩의 소유자인지 확인합니다.
         """
