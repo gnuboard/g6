@@ -16,7 +16,7 @@
                 </a>
                 <span class="scrap_datetime">
                     <i class="fa fa-regular fa-clock" aria-hidden="true"></i>
-                     {{ scrap.ms_datetime|datetime_format }}
+                    {{ scrap.ms_datetime|datetime_format }}
                 </span>
                 <a href="{{ url_for('scrap_delete', ms_id=scrap.ms_id) }}?page={{ page }}" onclick="del(this.href); return false;" class="scrap_del"><i class="fa fa-regular fa-trash-can" aria-hidden="true"></i><span class="blind">삭제</span></a>
             </li>
