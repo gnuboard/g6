@@ -97,8 +97,7 @@ async def get_register_form(
 
 @router.post("/register_form",
              dependencies=[Depends(validate_token),
-                           Depends(validate_captcha),
-                           Depends(validate_policy_agree)],
+                           Depends(validate_captcha)],
              name='register_form_save')
 async def post_register_form(
     request: Request,

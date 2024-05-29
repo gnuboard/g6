@@ -13,8 +13,6 @@ from service import BaseService
 from service.certificate_service import CertificateService
 
 
-
-
 class InicisSimpleService(CertificateBase, BaseService):
     """KG이니시스 간편인증 서비스를 위한 클래스입니다."""
     VALID_URLS = ["https://kssa.inicis.com", "https://fcsa.inicis.com"]

@@ -68,13 +68,6 @@ def regist_core_middleware(app: FastAPI) -> None:
 
         return await call_next(request)
 
-    # 세션 미들웨어를 추가합니다.
-    # .env 파일의 설정을 통해 secret_key, session_cookie를 설정할 수 있습니다.
-    app.add_middleware(SessionMiddleware,
-                       secret_key=settings.SESSION_SECRET_KEY,
-                       session_cookie=settings.SESSION_COOKIE_NAME,
-                       max_age=60 * 60 * 3)
-
     # 클라이언트가 사용할 프로토콜을 결정하는 미들웨어를 추가합니다.
     app.add_middleware(BaseSchemeMiddleware)
 
@@ -85,6 +78,13 @@ def regist_core_middleware(app: FastAPI) -> None:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # 세션 미들웨어를 추가합니다.
+    # .env 파일의 설정을 통해 secret_key, session_cookie를 설정할 수 있습니다.
+    app.add_middleware(SessionMiddleware,
+                       secret_key=settings.SESSION_SECRET_KEY,
+                       session_cookie=settings.SESSION_COOKIE_NAME,
+                       max_age=60 * 60 * 3)
 
 
 async def should_run_middleware(request: Request) -> bool:
