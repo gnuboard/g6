@@ -1,10 +1,14 @@
-from sqlalchemy import Column, Integer, String, Text, Enum, ForeignKey, Index, text, DateTime, Date, Time, Boolean, BIGINT, UniqueConstraint
+from datetime import datetime, date
 from typing import List
 
 # TINYINT 대신 Integer 사용하기 바랍니다.
 # from sqlalchemy.dialects.mysql import TINYINT
+from sqlalchemy import (
+    BIGINT, Column, Date, DateTime, Enum, ForeignKey, func, Index, Integer,
+    String, Text, Time, text, UniqueConstraint
+)
 from sqlalchemy.orm import DynamicMapped, Mapped, relationship, declarative_base
-from datetime import datetime, date
+
 from core.database import DBConnect, MySQLCharsetMixin
 
 Base = declarative_base(cls=MySQLCharsetMixin)
@@ -208,9 +212,9 @@ class Member(Base):
     mb_signature = Column(Text, nullable=False, default="")
     mb_recommend = Column(String(255), nullable=False, default="")
     mb_point = Column(Integer, nullable=False, default=0, server_default=text("0"))
-    mb_today_login = Column(DateTime, nullable=False, default=datetime.now())
+    mb_today_login = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
     mb_login_ip = Column(String(255), nullable=False, default="")
-    mb_datetime = Column(DateTime, nullable=False, default=datetime.now())
+    mb_datetime = Column(DateTime, nullable=False, default=func.now())
     mb_ip = Column(String(255), nullable=False, default="")
     mb_leave_date = Column(String(8), nullable=False, default="")
     mb_intercept_date = Column(String(8), nullable=False, default="")
@@ -640,7 +644,7 @@ class QaContent(Base):
     qa_file2 = Column(String(255), nullable=False, default="")
     qa_source2 = Column(String(255), nullable=False, default="")
     qa_ip = Column(String(255), nullable=False, default="")
-    qa_datetime = Column(DateTime, nullable=False, default=datetime.now())
+    qa_datetime = Column(DateTime, nullable=False, default=func.now())
     qa_1 = Column(String(255), nullable=False, default="")
     qa_2 = Column(String(255), nullable=False, default="")
     qa_3 = Column(String(255), nullable=False, default="")
@@ -673,12 +677,12 @@ class Point(Base):
 
     po_id = Column(Integer, primary_key=True, autoincrement=True)
     mb_id = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "member.mb_id"), nullable=False, default="")
-    po_datetime = Column(DateTime, nullable=False, default=datetime.now())
+    po_datetime = Column(DateTime, nullable=False, default=func.now())
     po_content = Column(String(255), nullable=False, default="")
     po_point = Column(Integer, nullable=False, default=0)
     po_use_point = Column(Integer, nullable=False, default=0)
     po_expired = Column(Integer, nullable=False, default=0)
-    po_expire_date = Column(Date, nullable=False, default=datetime.now())
+    po_expire_date = Column(Date, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
     po_mb_point = Column(Integer, nullable=False, default=0)
     po_rel_table = Column(String(20), nullable=False, default="")
     po_rel_id = Column(String(20), nullable=False, default="")
@@ -697,7 +701,7 @@ class Memo(Base):
     me_id = Column(Integer, primary_key=True, autoincrement=True)
     me_recv_mb_id = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "member.mb_id"), nullable=False, default="")
     me_send_mb_id = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "member.mb_id"), nullable=False, default="")
-    me_send_datetime = Column(DateTime, nullable=False, default=datetime.now())
+    me_send_datetime = Column(DateTime, nullable=False, default=func.now())
     me_read_datetime = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
     me_memo = Column(Text, nullable=False)
     me_send_id = Column(Integer, nullable=False, default=0)
@@ -766,7 +770,7 @@ class Poll(Base):
     po_etc = Column(String(255), nullable=False, default='')
     po_level = Column(Integer, nullable=False, default=0)
     po_point = Column(Integer, nullable=False, default=0)
-    po_date = Column(Date, nullable=False, default=datetime.now())
+    po_date = Column(Date, nullable=False, default=func.now())
     po_ips = Column(Text, nullable=False, default='')
     mb_ids = Column(Text, nullable=False, default='')
     po_use = Column(Integer, nullable=False, default=1)
@@ -782,7 +786,7 @@ class PollEtc(Base):
     mb_id = Column(String(20), nullable=False, default='')
     pc_name = Column(String(255), nullable=False, default='')
     pc_idea = Column(String(255), nullable=False, default='')
-    pc_datetime = Column(DateTime, nullable=False, default=datetime.now())
+    pc_datetime = Column(DateTime, nullable=False, default=func.now())
 
     poll: Mapped["Poll"] = relationship("Poll", back_populates="etcs")
 
@@ -794,7 +798,7 @@ class AutoSave(Base):
     as_uid = Column(BIGINT, nullable=False, unique=True, default=0)
     as_subject = Column(String(255), nullable=False, default="")
     as_content = Column(Text, nullable=False, default="")
-    as_datetime = Column(DateTime, nullable=False, default=datetime.now())
+    as_datetime = Column(DateTime, nullable=False, default=func.now())
 
 
 class UniqId(Base):
@@ -810,8 +814,8 @@ class NewWin(Base):
     nw_id = Column(Integer, primary_key=True, autoincrement=True)
     nw_division = Column(String(10), nullable=False, default='both')
     nw_device = Column(String(10), nullable=False, default='both')
-    nw_begin_time = Column(DateTime, nullable=False, default=datetime.now())
-    nw_end_time = Column(DateTime, nullable=False, default=datetime.now())
+    nw_begin_time = Column(DateTime, nullable=False, default=func.now())
+    nw_end_time = Column(DateTime, nullable=False, default=func.now())
     nw_disable_hours = Column(Integer, nullable=False, default=0)
     nw_left = Column(Integer, nullable=False, default=0)
     nw_top = Column(Integer, nullable=False, default=0)
@@ -829,7 +833,7 @@ class Mail(Base):
     ma_id = Column(Integer, primary_key=True, autoincrement=True)
     ma_subject = Column(String(255), nullable=False, default='')
     ma_content = Column(Text, nullable=False, default='')
-    ma_time = Column(DateTime, nullable=False, default=datetime.now())
+    ma_time = Column(DateTime, nullable=False, default=func.now())
     ma_ip = Column(String(255), nullable=False, default='')
     ma_last_option = Column(Text, nullable=False, default='')
     
@@ -844,7 +848,7 @@ class BoardNew(Base):
     bo_table = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "board.bo_table"), nullable=False, default='')
     wr_id = Column(Integer, nullable=False, default=0)
     wr_parent = Column(Integer, nullable=False, default=0)
-    bn_datetime = Column(DateTime, nullable=False, default=datetime.now())
+    bn_datetime = Column(DateTime, nullable=False, default=func.now())
     mb_id = Column(String(20), nullable=False, default='')
 
     board: Mapped["Board"] = relationship("Board", back_populates="board_news")
@@ -860,7 +864,7 @@ class Scrap(Base):
     mb_id = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "member.mb_id"), nullable=False, default='')
     bo_table = Column(String(20), ForeignKey(DB_TABLE_PREFIX + "board.bo_table"), nullable=False, default='')
     wr_id = Column(Integer, nullable=False, default=0)
-    ms_datetime = Column(DateTime, nullable=False, default=datetime.now())
+    ms_datetime = Column(DateTime, nullable=False, default=func.now())
 
     board: Mapped["Board"] = relationship("Board", back_populates="scraps")
     member: Mapped["Member"] = relationship("Member", back_populates="scraps")
@@ -878,7 +882,7 @@ class BoardGood(Base):
     wr_id = Column(Integer, nullable=False, default=0)
     mb_id = Column(String(20), nullable=False, default='')
     bg_flag = Column(String(255), nullable=False, default='')
-    bg_datetime = Column(DateTime, nullable=False, default=datetime.now())
+    bg_datetime = Column(DateTime, nullable=False, default=func.now())
 
 
 class BoardFile(Base):
@@ -901,8 +905,8 @@ class BoardFile(Base):
     bf_width = Column(Integer, nullable=False, default=0)
     bf_height = Column(Integer, nullable=False, default=0)
     bf_type = Column(Integer, nullable=False, default=0)
-    bf_datetime = Column(DateTime, nullable=False, default=datetime.now())    
-    
+    bf_datetime = Column(DateTime, nullable=False, default=func.now())
+
 
 class MemberSocialProfiles(Base):
     __tablename__ = DB_TABLE_PREFIX + "member_social_profiles"
@@ -929,6 +933,6 @@ class Login(Base):
     lo_id = Column(Integer, primary_key=True, autoincrement=True)  # 새로 추가된 기본키
     lo_ip = Column(String(100), nullable=False, default='')
     mb_id = Column(String(20), nullable=False, default='')
-    lo_datetime = Column(DateTime, nullable=False, default=datetime.now())
+    lo_datetime = Column(DateTime, nullable=False, default=func.now())
     lo_location = Column(Text, nullable=False)
     lo_url = Column(Text, nullable=False)
