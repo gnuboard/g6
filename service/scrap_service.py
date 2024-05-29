@@ -7,7 +7,7 @@ from sqlalchemy import select
 
 from core.database import db_session
 from core.exception import AlertException
-from core.models import Member, Scrap
+from core.models import Member, Scrap, WriteBaseModel
 from lib.common import dynamic_create_write_table
 from service import BaseService
 from service.member_service import MemberService
@@ -153,6 +153,16 @@ class ValidateScrapService(BaseService):
             self.raise_exception(
                 status_code=403,
                 detail="비밀글 읽기 권한이 없어 스크랩할 수 없습니다.",
+                url=self.request.url_for('scrap_list'))
+
+    def is_write(self, write: WriteBaseModel) -> None:
+        """
+        스크랩할 대상이 게시글인지 확인합니다.
+        """
+        if write.wr_is_comment:
+            self.raise_exception(
+                status_code=404,
+                detail="댓글은 스크랩할 수 없습니다.",
                 url=self.request.url_for('scrap_list'))
 
     def is_owner_scrap(self, scrap: Scrap, member: Member) -> None:
