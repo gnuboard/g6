@@ -466,6 +466,7 @@ async def write_comment_update(
         service.validate_comment_level()
         service.validate_point()
         service.validate_post_content(form.wr_content)
+        service.validate_comment_password(form.wr_password)
         comment = service.save_comment(form, write)
         service.add_point(comment)
         service.send_write_mail_(comment, write)

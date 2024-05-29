@@ -423,6 +423,7 @@ async def api_create_comment(
     service.validate_comment_level()
     service.validate_point()
     service.validate_post_content(comment_data.wr_content)
+    service.validate_comment_password(comment_data.wr_password)
     service.validate_write_delay_with_slowapi()
     comment = service.save_comment(comment_data, parent_write)
     service.add_point(comment)

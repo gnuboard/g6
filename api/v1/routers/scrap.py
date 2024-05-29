@@ -105,6 +105,7 @@ async def create_member_scrap(
         comment_service.validate_comment_level()
         comment_service.validate_point()
         comment_service.validate_post_content(data.wr_content)
+        comment_service.validate_comment_password(form.wr_password)
         comment = comment_service.save_comment(form, write)
         comment_service.add_point(comment)
         comment_service.send_write_mail_(comment, write)
