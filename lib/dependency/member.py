@@ -51,7 +51,7 @@ def validate_register_data(
 
         # 기존회원 가입여부 체크
         if ss_cert_type and ss_cert_dupinfo:
-            cert_service.validate_member_dupinfo(ss_cert_dupinfo, '')
+            cert_service.validate_exists_dupinfo(ss_cert_dupinfo, '')
 
         # 본인인증 데이터 확인
         if ss_cert_type and ss_cert_no:

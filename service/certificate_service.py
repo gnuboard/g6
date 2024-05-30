@@ -39,7 +39,7 @@ class CertificateService(BaseService):
         self.cert_req = getattr(request.state.config, "cf_cert_req", 0)
 
     def raise_exception(self, status_code: int, detail: str = None):
-        return AlertCloseException(status_code=status_code, detail=detail)
+        raise AlertCloseException(status_code=status_code, detail=detail)
 
     def should_use_hp(self):
         """
@@ -154,7 +154,7 @@ class CertificateService(BaseService):
 
     def validate_exists_dupinfo(self, dupinfo: str, mb_id: str):
         """이미 인증정보가 존재하는지 검증합니다."""
-        exists_member = self.member_service.fetch_member_by_dupinfo(mb_id, dupinfo)
+        exists_member = self.member_service.fetch_member_by_dupinfo(dupinfo, mb_id)
         if exists_member:
             self.raise_exception(400, f"입력하신 본인확인 정보로 이미 가입된 내역이 존재합니다.\
                                     \\n아이디 : {exists_member.mb_id}")

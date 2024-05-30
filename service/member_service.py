@@ -152,7 +152,7 @@ class MemberService(BaseService):
 
         return member
 
-    def fetch_member_by_dupinfo(self, except_mb_id: str, dupinfo: str) -> Member:
+    def fetch_member_by_dupinfo(self, dupinfo: str, except_mb_id: str = '') -> Member:
         """중복가입 방지 정보가 이미 사용중인지 확인합니다."""
         return self.db.scalar(
             select(Member).where(

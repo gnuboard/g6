@@ -2,6 +2,8 @@
 from datetime import datetime
 import random
 import urllib.parse
+
+from cryptography.hazmat.primitives.ciphers import modes
 from fastapi import Depends, Request
 from fastapi.datastructures import FormData
 from typing_extensions import Annotated
@@ -9,6 +11,7 @@ from typing_extensions import Annotated
 from core.exception import AlertCloseException
 from lib.certificate.base import CertificateBase
 from lib.certificate.base import post_request
+from lib.certificate.inicis.simple.lib.seed import SEED128
 from service import BaseService
 from service.certificate_service import CertificateService
 
@@ -85,8 +88,10 @@ class InicisSimpleService(CertificateBase, BaseService):
         user_phone = result_data.get('userPhone', '')
         user_birthday = result_data.get('userBirthDay', '')
 
-        # FIXME: SEED 복호화가 필요하다..
-        # - KISA에서 제공하는 SEED 암호화(CBC)에는 파이썬 버전이 없으므로 해결이 필요
+        seed = SEED128(self.INICIS_SEEDIV, token)
+        user_name = seed.decode(modes.CBC, user_name)
+        user_phone = seed.decode(modes.CBC, user_phone)
+        user_birthday = seed.decode(modes.CBC, user_birthday)
 
         self._validate_phone(user_phone)
 

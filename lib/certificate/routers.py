@@ -53,7 +53,6 @@ async def result_certificate(
 
     # 인증정보 생성 및 검증
     dupinfo = cert_service.create_dupinfo(f"{ci}{ci}")
-    cert_service.validate_member_dupinfo(dupinfo, member)
     cert_service.validate_exists_dupinfo(dupinfo, mb_id)
 
     # 성인인증 결과
