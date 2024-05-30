@@ -7,6 +7,7 @@ from core.models import WriteBaseModel
 from lib.dependency.dependencies import common_search_query_params
 from lib.board_lib import write_search_filter, get_list, cut_name, is_owner
 from service.board_file_service import BoardFileService
+from service.ajax import AJAXService
 from . import BoardService
 
 
@@ -94,6 +95,7 @@ class ListPostService(BoardService):
 
     def get_writes(self, with_files=False) -> List[WriteBaseModel]:
         """게시글 목록을 가져옵니다."""
+        ajax_service = AJAXService(self.request, self.db)
         current_page = self.search_params.get('current_page')
         page_rows = self.page_rows
 
@@ -154,6 +156,11 @@ class ListPostService(BoardService):
             # 회원 이미지, 아이콘 경로 설정
             write.mb_image_path = self.get_member_image_path(write.mb_id)
             write.mb_icon_path = self.get_member_icon_path(write.mb_id)
+
+            # 게시글 좋아요/싫어요 정보 설정
+            ajax_good_data = ajax_service.get_ajax_good_data(self.bo_table, write)
+            write.good = ajax_good_data["good"]
+            write.nogood = ajax_good_data["nogood"]
 
         return writes
 
