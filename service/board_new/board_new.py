@@ -42,8 +42,8 @@ class BoardNewService(BaseService):
         instance = cls(request, db, file_service, point_service)
         return instance
 
-    def raise_exception(self):
-        raise AlertException(status_code=400, detail="검색 결과가 없습니다.")
+    def raise_exception(self, status_code: int, detail: str = None):
+        raise AlertException(status_code=status_code, detail=detail)
 
     def format_datetime(self, wr_datetime: datetime) -> str:
         """
@@ -183,5 +183,5 @@ class BoardNewServiceAPI(BoardNewService):
     - 이 클래스는 API와 관련된 특정 예외 처리를 오버라이드하여 구현합니다.
     """
 
-    def raise_exception(self):
-        raise HTTPException(status_code=400, detail="검색 결과가 없습니다.")
+    def raise_exception(self, status_code: int, detail: str = None):
+        raise HTTPException(status_code=status_code, detail=detail)
