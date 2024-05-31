@@ -618,7 +618,7 @@
         <tr>
             <th scope="row"><label for="bo_use_search">전체 검색 사용</label></th>
             <td>
-                <input type="checkbox" name="bo_use_search" value="1" id="bo_use_search" checked>
+                <input type="checkbox" name="bo_use_search" value="1" id="bo_use_search" {{ 'checked' if board.bo_use_search }}>
                 사용
             </td>
             <td class="td_grpset">
