@@ -119,6 +119,10 @@ class BoardNewService(BaseService):
         boards_info = dict()
         for bo_table in bo_table_list:
             board = db.get(Board, bo_table)
+            if not board:
+                self.raise_exception(
+                    status_code=400, detail=f"{bo_table} 게시판 정보가 없습니다."
+                )
             board_config = BoardConfig(request, board)
             board.subject = board_config.subject
 
