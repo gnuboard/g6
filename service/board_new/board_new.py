@@ -7,6 +7,7 @@ from core.models import Board, BoardNew
 from core.database import db_session
 from core.exception import AlertException
 from lib.common import dynamic_create_write_table, cut_name, FileCache
+from lib.board_lib import BoardConfig, get_list
 from service import BaseService
 from service.board_file_service import BoardFileService
 from service.point_service import PointService
@@ -106,6 +107,36 @@ class BoardNewService(BaseService):
                 new.name = cut_name(self.request, write.wr_name)
                 # 시간설정
                 new.datetime = self.format_datetime(write.wr_datetime)
+
+    def get_latest_posts(
+        self,
+        bo_table_list: List[str],
+        rows: int = 10, subject_len: int = 40
+    ):
+        """최신글 목록 출력"""
+        request = self.request
+        db = self.db
+        boards_info = dict()
+        for bo_table in bo_table_list:
+            board = db.get(Board, bo_table)
+            board_config = BoardConfig(request, board)
+            board.subject = board_config.subject
+
+            #게시글 목록 조회
+            write_model = dynamic_create_write_table(bo_table)
+            writes = db.scalars(
+                select(write_model)
+                .where(write_model.wr_is_comment == 0)
+                .order_by(write_model.wr_num)
+                .limit(rows)
+            ).all()
+
+            for write in writes:
+                write = get_list(request, db, write, board_config, subject_len)
+
+            boards_info[bo_table] = writes
+
+        return boards_info
 
     def delete_board_news(self, bn_ids: list):
         """최신글 삭제"""

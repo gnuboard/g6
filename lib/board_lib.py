@@ -4,6 +4,7 @@ import re
 from datetime import datetime, timedelta
 
 import bleach
+from typing import List
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import and_, asc, desc, func, insert, or_, select
@@ -887,6 +888,15 @@ def insert_board_new(bo_table: str, write: WriteBaseModel) -> None:
     )
     db.commit()
     db.close()
+
+
+def get_bo_table_list(added_bo_table_list: List[str] = None) -> list:
+    from install.default_values import default_boards
+
+    bo_table_list = [board_value_dict["bo_table"] for board_value_dict in default_boards]
+    if added_bo_table_list:
+        bo_table_list.extend(added_bo_table_list)
+    return bo_table_list
 
 
 def render_latest_posts(request: Request, skin_name: str = 'basic', bo_table: str='',
