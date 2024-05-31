@@ -3,7 +3,6 @@ from typing import AsyncGenerator
 from fastapi import Depends
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine, URL
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
