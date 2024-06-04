@@ -3,8 +3,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class ApiSettings(BaseSettings):
-    """API 설정 모델"""
-    # .env 파일을 읽어서 환경변수를 설정합니다.
+    """
+    API 서버의 설정을 관리하는 모델입니다.
+
+    - 실제 환경변수의 값은 .env 파일에서 설정할 수 있습니다.
+    - .env 파일이 없거나 값이 없는 경우, ApiSettings클래스의 기본값을 사용합니다.
+    """
+    # 읽어올 .env 파일의 설정을 선언합니다.
     model_config = SettingsConfigDict(
         env_file='.env',
         env_file_encoding='utf-8',
