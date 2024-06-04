@@ -256,7 +256,7 @@ async def set_current_connect(
         print(e)
 
 
-def validate_login_url(url: str = Form(default="/")):
+def validate_login_url(request: Request, url: str = Form(default="/")):
     """
     로그인할 때 url을 검사하는 함수
     """
@@ -264,6 +264,7 @@ def validate_login_url(url: str = Form(default="/")):
 
     if (url
             and not url.startswith("/")
+            and not url.startswith(str(request.base_url))
             and url not in allow_urls):
         raise AlertException("올바르지 않은 URL입니다.", 400)
     return url
