@@ -279,7 +279,7 @@ def check_demo_alert(active: Annotated[bool, Depends(check_demo_mode_active)]):
         raise AlertException("데모 화면에서는 하실(보실) 수 없는 작업입니다.", 403)
 
 
-def validate_login_url(url: str = Form(default="/")):
+def validate_login_url(request: Request, url: str = Form(default="/")):
     """
     로그인할 때 url을 검사하는 함수
     """
@@ -287,6 +287,7 @@ def validate_login_url(url: str = Form(default="/")):
 
     if (url
             and not url.startswith("/")
+            and not url.startswith(str(request.base_url))
             and url not in allow_urls):
         raise AlertException("올바르지 않은 URL입니다.", 400)
     return url
