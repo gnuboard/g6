@@ -250,7 +250,7 @@ def admin_member_setup(db: Session, admin_id: str, admin_name : str,
                        admin_password: str, admin_email: str):
     """최고관리자 등록"""
     admin_member = db.scalar(
-        select(Member).where(Member().mb_id == admin_id)
+        select(Member).where(Member.mb_id == admin_id)
     )
     if admin_member:
         admin_member.mb_password = create_hash(admin_password)
