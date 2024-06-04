@@ -196,7 +196,6 @@ async def install_process():
             for table in tables:
                 new_table_name = table.name.replace("g6_", form_data.db_table_prefix)
                 table.name = new_table_name
-                table.fullname = new_table_name
 
             Base.metadata.create_all(bind=engine)
             yield "데이터베이스 테이블 생성 완료"
