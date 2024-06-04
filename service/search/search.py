@@ -75,6 +75,9 @@ class SearchService(BaseService):
 
     def search(self, boards: List[Board], sfl: str, stx: str, sop: str) -> dict:
         """게시판 검색 데이터"""
+        if len(stx) < 2:
+            self.raise_exception(status_code=400, detail="검색어는 2글자 이상 입력해 주세요.")
+
         remove_boards = []
         total_search_count = 0
         for board in boards:
