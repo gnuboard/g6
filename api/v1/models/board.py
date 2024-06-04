@@ -130,6 +130,8 @@ class ResponseWriteModel(BaseModel):
     wr_comment: int
     wr_hit: int
     wr_ip: str
+    good: int
+    nogood: int
     wr_option: str = "",
     images: List[ResponseFileModel] = []
     normal_files: List[ResponseFileModel] = []

@@ -102,12 +102,13 @@
                             </span>
                         </div>
                     </li>
-                {% else %}
-                    <div class="empty_list">검색된 결과가 없습니다.</div>
                 {% endfor %}
                 </ul>
             {% endfor %}
             </div>
+            {% if onetable and not exists_onetable %}
+                <div class="empty_list">검색된 결과가 없습니다.</div>
+            {% endif %}
         </section>
     {% else %}
         <div class="empty_list">검색된 자료가 하나도 없습니다.</div>
