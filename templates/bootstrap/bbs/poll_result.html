@@ -11,20 +11,18 @@
             <section id="poll_result_list" class="m-4 main-border cont-bg rounded-2 overflow-hidden">
                 <h2 class="fs-5 p-4 mb-4 text-center point-bg main-font">{{ poll.po_subject }} 결과</h2>
                 <ol class="m-0 px-4">
-                    {% for item in items %}
-                        {% set rate = ((item.count / total_count * 100)|round(1)) if total_count > 0 else 0 %}
-                        {% if not item %}{% continue %}{% endif %}
-                        <li class="{{ 'poll_1st' if max_count == item.count }} my-4 position-relative list-unstyled main-font fs-5">
-                            <span>{{ item.subject }}</span>
-                            <div class="poll_result_graph position-relative my-2 rounded-3 input-border input-bg" style="width: 90%;height: 15px;">
-                                <span class="position-absolute main-bg top-0 start-0 rounded-3" style="width:{{ rate }}%;height:15px;background:#8395b3;"></span>
-                            </div>
-                            <div class="poll_numerical d-inline-block position-absolute top-0 end-0 text-center">
-                                <strong class="poll_cnt fs-5 text-end" style="color: #8d8d8d;">{{ item.count|number_format }} 표</strong>
-                                <span class="poll_percent d-block fs-5 em-font fw-bold">{{ rate }} %</span>
-                            </div>
-                        </li>
-                    {% endfor %}
+                {% for item in items %}
+                    <li class="{{ 'poll_1st' if item.rank == 1 }} my-4 position-relative list-unstyled main-font fs-5">
+                        <span>{{ item.subject }}</span>
+                        <div class="poll_result_graph position-relative my-2 rounded-3 input-border input-bg" style="width: 90%;height: 15px;">
+                            <span class="position-absolute main-bg top-0 start-0 rounded-3" style="width:{{ item.rate }}%;height:15px;background:#8395b3;"></span>
+                        </div>
+                        <div class="poll_numerical d-inline-block position-absolute top-0 end-0 text-center">
+                            <strong class="poll_cnt fs-5 text-end" style="color: #8d8d8d;">{{ item.count|number_format }} 표</strong>
+                            <span class="poll_percent d-block fs-5 em-font fw-bold">{{ item.rate }} %</span>
+                        </div>
+                    </li>
+                {% endfor %}
                 </ol>
             </section>
             <!-- } 설문조사 결과 그래프 끝 -->
@@ -33,7 +31,7 @@
             {% if poll.po_etc %}
                 <section id="poll_result_cmt" class="m-4">
                     <h2 class="blind">이 설문에 대한 기타의견</h2>
-                    {% for etc in etcs %}
+                    {% for etc in poll.etcs %}
                         <article class="position-relative main-bb my-4 fs-5">
                             <header class="mb-2 main-font">
                                 <h2 class="blind">{{ etc.pc_name }}<span>님의 의견</span></h2>
@@ -41,7 +39,7 @@
                                 <span class="poll_datetime d-inline-block fs-5" style="color: #777;">{{ etc.pc_datetime|safe }}</span>
                                 {% if etc.mb_id == request.state.login_member.mb_id or request.state.login_member.mb_level == 10 %}
                                     <span class="poll_cmt_del d-inline-block">
-                                        <a href="{{ url_for('poll_etc_delete', pc_id=etc.pc_id) }}" class="poll_delete d-inline-block mb-2 ms-3 fs-5" style="color: #c7c9cb;" onclick="del(this.href); return false;">
+                                        <a href="{{ url_for('poll_etc_delete', po_id=etc.po_id, pc_id=etc.pc_id) }}" class="poll_delete d-inline-block mb-2 ms-3 fs-5" style="color: #c7c9cb;" onclick="del(this.href); return false;">
                                             <i class="fa fa-circle-xmark" aria-hidden="true"></i>
                                             <span class="blind">삭제</span>
                                         </a>
@@ -84,7 +82,7 @@
     
             <!-- 설문조사 다른 결과 보기 시작 { -->
             <aside id="poll_result_oth" class="m-4">
-                <h2 class="main-font pb-4 fs-5 fw-bold">다른 투표 결과 보기</h2>
+                <h2 class="main-font pb-4 fs-5 fw-bold">다른 설문조사 결과 보기</h2>
                 <ul class="list-unstyled main-border cont-bg">
                     {% for other in other_list %}
                         <li class="position-relative main-bt py-2">
@@ -99,7 +97,7 @@
             </aside>
             <!-- } 설문조사 다른 결과 보기 끝 -->
             <div class="text-center">
-                <button type="button" onclick="window.close();" class="btn_close fs-5">창닫기</button>
+                <button type="button" onclick="window.close();" class="btn_close fs-5">창 닫기</button>
             </div>
         </div>
     </div>

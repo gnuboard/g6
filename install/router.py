@@ -15,7 +15,10 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
 
-from core import models
+from core.models import (
+    Base, Board, Config, DB_TABLE_PREFIX, Content, FaqMaster, Group, Member,
+    QaConfig
+)
 from core.database import DBConnect
 from core.exception import AlertException
 from core.formclass import InstallFrom
@@ -155,40 +158,49 @@ async def install(
     except OperationalError as e:
         os.remove(ENV_PATH)
         message = e._message().replace('"', r'\"').strip()
-        raise AlertException(f"설치가 실패했습니다. 데이터베이스 연결에 실패했습니다.\\n{message}")
+        raise AlertException(f"설치가 실패했습니다. 데이터베이스 연결에 실패했습니다.\\n{message}") from e
 
     except Exception as e:
         os.remove(ENV_PATH)
-        raise AlertException(f"설치가 실패했습니다.\\n{e}")
+        raise AlertException(f"설치가 실패했습니다.\\n{e}") from e
 
 
-@router.get("/process", dependencies=[Depends(validate_token)])
-async def install_process(request: Request):
+@router.get("/process",
+            dependencies=[Depends(validate_token)])
+async def install_process():
+    """
+    설치 진행 이벤트 스트림
+    """
     async def install_event():
         db_connect = DBConnect()
         engine = db_connect.engine
-        SessionLocal = db_connect.sessionLocal
         yield "데이터베이스 연결 완료"
 
         try:
             form_data: InstallFrom = form_cache.get("form")
 
             if form_data.reinstall:
-                models.Base.metadata.drop_all(bind=engine)
+                Base.metadata.drop_all(bind=engine)
                 # 접두사 + 'write_' 게시판 테이블 전부 삭제
                 metadata = MetaData()
                 metadata.reflect(bind=engine)
                 table_names = metadata.tables.keys()
                 for name in table_names:
-                    if name.startswith(f"{form_data.db_table_prefix}write_"):
+                    if name.startswith(f"{DB_TABLE_PREFIX}write_"):
                         Table(name, metadata, autoload=True).drop(bind=engine)
 
                 yield "기존 데이터베이스 테이블 삭제 완료"
 
-            models.Base.metadata.create_all(bind=engine)
+            # 테이블 이름을 변경 & 메타데이터 갱신
+            tables = Base.metadata.tables.values()
+            for table in tables:
+                new_table_name = table.name.replace("g6_", form_data.db_table_prefix)
+                table.name = new_table_name
+
+            Base.metadata.create_all(bind=engine)
             yield "데이터베이스 테이블 생성 완료"
 
-            with SessionLocal() as db:
+            with db_connect.sessionLocal() as db:
                 config_setup(db, form_data.admin_id, form_data.admin_email)
                 admin_member_setup(db, form_data.admin_id, form_data.admin_name,
                                    form_data.admin_password, form_data.admin_email)
@@ -221,12 +233,12 @@ async def install_process(request: Request):
 def config_setup(db: Session, admin_id, admin_email):
     """환경설정 기본값 등록"""
     exists_config = db.scalar(
-        exists(models.Config)
-        .where(models.Config.cf_id == 1).select()
+        exists(Config)
+        .where(Config.cf_id == 1).select()
     )
     if not exists_config:
         db.execute(
-            insert(models.Config).values(
+            insert(Config).values(
                 cf_admin=admin_id,
                 cf_admin_email=admin_email,
                 **default_config
@@ -238,7 +250,7 @@ def admin_member_setup(db: Session, admin_id: str, admin_name : str,
                        admin_password: str, admin_email: str):
     """최고관리자 등록"""
     admin_member = db.scalar(
-        select(models.Member).where(models.Member.mb_id == admin_id)
+        select(Member).where(Member().mb_id == admin_id)
     )
     if admin_member:
         admin_member.mb_password = create_hash(admin_password)
@@ -246,7 +258,7 @@ def admin_member_setup(db: Session, admin_id: str, admin_name : str,
         admin_member.mb_email = admin_email
     else:
         db.execute(
-            insert(models.Member).values(
+            insert(Member).values(
                 mb_id=admin_id,
                 mb_password=create_hash(admin_password),
                 mb_name=admin_name,
@@ -261,52 +273,52 @@ def content_setup(db: Session):
     """컨텐츠 기본값 등록"""
     for content in default_contents:
         exists_content = db.scalar(
-            exists(models.Content)
-            .where(models.Content.co_id == content['co_id']).select()
+            exists(Content)
+            .where(Content.co_id == content['co_id']).select()
         )
         if not exists_content:
-            db.execute(insert(models.Content).values(**content))
+            db.execute(insert(Content).values(**content))
 
 
 def qa_setup(db: Session):
     """Q&A 기본값 등록"""
 
     exists_qa = db.scalar(
-        exists(models.QaConfig).select()
+        exists(QaConfig).select()
     )
     if not exists_qa:
-        db.execute(insert(models.QaConfig).values(**default_qa_config))
+        db.execute(insert(QaConfig).values(**default_qa_config))
 
 
 def faq_master_setup(db: Session):
     """FAQ Master 기본값 등록"""
     exists_faq_master = db.scalar(
-        exists(models.FaqMaster)
-        .where(models.FaqMaster.fm_id == 1).select()
+        exists(FaqMaster)
+        .where(FaqMaster.fm_id == 1).select()
     )
     if not exists_faq_master:
-        db.execute(insert(models.FaqMaster).values(**default_faq_master))
+        db.execute(insert(FaqMaster).values(**default_faq_master))
 
 
 def board_group_setup(db: Session):
     """게시판 그룹 기본값 생성"""
     exists_board_group = db.scalar(
-        exists(models.Group)
-        .where(models.Group.gr_id == default_gr_id).select()
+        exists(Group)
+        .where(Group.gr_id == default_gr_id).select()
     )
     if not exists_board_group:
-        db.execute(insert(models.Group).values(**default_group))
+        db.execute(insert(Group).values(**default_group))
 
 
 def board_setup(db: Session):
     """게시판 기본값 및 테이블 생성"""
     for board in default_boards:
         exists_board = db.scalar(
-            exists(models.Board)
-            .where(models.Board.bo_table == board['bo_table']).select()
+            exists(Board)
+            .where(Board.bo_table == board['bo_table']).select()
         )
         if not exists_board:
-            query = insert(models.Board).values(**board, **default_board_data)
+            query = insert(Board).values(**board, **default_board_data)
             db.execute(query)
 
 

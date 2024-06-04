@@ -257,7 +257,6 @@ async def set_current_connect(
     except ProgrammingError as e:
         print(e)
 
-
 def check_demo_mode_active(request: Request) -> bool:
     """데모모드 여부 검사"""
     demo_mode = TypeAdapter(bool).validate_python(os.getenv("DEMO_MODE", False))
@@ -278,3 +277,16 @@ def check_demo_alert(active: Annotated[bool, Depends(check_demo_mode_active)]):
     """데모모드 여부 검사 - AlertException"""
     if active:
         raise AlertException("데모 화면에서는 하실(보실) 수 없는 작업입니다.", 403)
+
+
+def validate_login_url(url: str = Form(default="/")):
+    """
+    로그인할 때 url을 검사하는 함수
+    """
+    allow_urls = []
+
+    if (url
+            and not url.startswith("/")
+            and url not in allow_urls):
+        raise AlertException("올바르지 않은 URL입니다.", 400)
+    return url

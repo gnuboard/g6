@@ -128,7 +128,7 @@ class MemoService(BaseService):
         target.mb_memo_cnt = self.fetch_non_read_memo(target.mb_id)
         self.db.commit()
 
-    def send_memo(self, member: Member, target: Member, memo: str) -> None:
+    def send_memo(self, member: Member, target: Member, memo: str) -> Memo:
         """쪽지를 전송합니다."""
         try:
             memo_dict = {
@@ -143,6 +143,7 @@ class MemoService(BaseService):
             memo_recv = Memo(me_type='recv', me_send_id=memo_send.me_id, **memo_dict)
             self.db.add(memo_recv)
             self.db.commit()
+            return memo_send
         except SQLAlchemyError as e:
             self.db.rollback()
             self.raise_exception(500, str(e))

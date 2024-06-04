@@ -53,6 +53,7 @@ async def lifespan(app: FastAPI):
     """
     yield
     scheduler.remove_flag()
+
 app = FastAPI(
     debug=settings.APP_IS_DEBUG,  # 디버그 모드가 활성화 설정
     lifespan=lifespan,

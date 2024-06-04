@@ -64,7 +64,7 @@ async def read_qa(
 ) -> QaContentResponse:
     """인증된 회원의 Q&A 1건을 조회합니다."""
     qa_id = qa_content.qa_id
-    answer = service.fetch_qa_answer(qa_id)
+    answer = service.read_qa_answer(qa_id)
     prev_qa, next_qa = service.fetch_prev_next_qa(member, qa_id, **search.__dict__)
     related_qa_contents = service.fetch_related_qa_contents(member, qa_id)
 

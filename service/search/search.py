@@ -47,8 +47,8 @@ class SearchService(BaseService):
         instance = cls(request, db, gr_id, onetable)
         return instance
 
-    def raise_exception(self):
-        raise AlertException(status_code=400, detail="검색 결과가 없습니다.")
+    def raise_exception(self, status_code: int, detail: str = None):
+        raise AlertException(status_code=status_code, detail=detail)
 
     def get_groups(self) -> List[Group]:
         """게시판 그룹 목록 조회"""
@@ -75,6 +75,9 @@ class SearchService(BaseService):
 
     def search(self, boards: List[Board], sfl: str, stx: str, sop: str) -> dict:
         """게시판 검색 데이터"""
+        if len(stx) < 2:
+            self.raise_exception(status_code=400, detail="검색어는 2글자 이상 입력해 주세요.")
+
         remove_boards = []
         total_search_count = 0
         for board in boards:
@@ -159,5 +162,5 @@ class SearchServiceAPI(SearchService):
         instance = cls(request, db, member, gr_id, onetable)
         return instance
 
-    def raise_exception(self):
-        raise HTTPException(status_code=400, detail="검색 결과가 없습니다.")
+    def raise_exception(self, status_code: int, detail: str = None):
+        raise HTTPException(status_code=status_code, detail=detail)

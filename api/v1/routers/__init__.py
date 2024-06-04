@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Depends
 
 from lib.dependency.dependencies import check_use_api
+from api.v1.dependencies.current_connect import set_current_connect
 from api.v1.models import Tags
 from api.v1.routers import (
     auth, autosave, board, board_good, board_new, config, content,
@@ -12,7 +13,8 @@ from api.v1.routers import (
 
 # API 버전 1 라우터를 정의합니다.
 router = APIRouter(prefix="/api/v1",
-                   dependencies=[Depends(check_use_api)])
+                   dependencies=[Depends(check_use_api),
+                                 Depends(set_current_connect)])
 router.include_router(auth.router, tags=[Tags.AUTH])
 router.include_router(board.router, prefix="/boards", tags=[Tags.BOARD])
 router.include_router(group.router, prefix="/groups", tags=[Tags.GROUP])

@@ -1,7 +1,11 @@
 """새글(최신 게시글) API Router"""
 from typing_extensions import Annotated, List
-from fastapi import APIRouter, Depends, HTTPException, Query, Body, Request
+from fastapi import (
+    APIRouter, Depends, HTTPException, Query,
+    Body, Request, Path
+)
 
+from lib.board_lib import get_bo_table_list
 from api.v1.dependencies.member import get_current_member
 from api.v1.models.response import response_401, response_422
 from api.v1.models.board import (
@@ -38,6 +42,28 @@ async def api_board_new_list(
         "current_page": current_page,
     }
     return content
+
+
+@router.get("/writes",
+            summary="최신글 조회",
+            responses={**response_401, **response_422}
+            )
+async def api_latest_posts(service: Annotated[BoardNewServiceAPI, Depends()]):
+    bo_table_list = get_bo_table_list()
+    latest_posts = service.get_latest_posts(bo_table_list)
+    return latest_posts
+
+
+@router.get("/writes/{bo_table}",
+            summary="최신글 게시판별 조회",
+            responses={**response_401, **response_422}
+            )
+async def api_latest_posts(
+    service: Annotated[BoardNewServiceAPI, Depends()],
+    bo_table: Annotated[str, Path(...)],
+):
+    latest_posts = service.get_latest_posts([bo_table])
+    return latest_posts
 
 
 @router.post("/delete",
