@@ -27,6 +27,7 @@ class CurrentConnectResponse(BaseModel):
     mb_nick: Union[str, None]
     mb_email: Union[str, None]
     mb_homepage: Union[str, None]
+    mb_image: Union[str, None]
     lo_datetime: datetime
     lo_location: str
     lo_url: str

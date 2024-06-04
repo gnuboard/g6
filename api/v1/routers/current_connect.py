@@ -12,6 +12,7 @@ from api.v1.models.current_connect import (
     CurrentConnectListRequest, CurrentConnectListResponse, CurrentConnectResponse
 )
 from api.v1.models.response import response_500
+from lib.template_functions import get_member_image
 
 
 router = APIRouter()
@@ -46,6 +47,7 @@ async def read_member_points(
             mb_nick=getattr(member, "mb_nick", None),
             mb_email=getattr(member, "mb_email", None),
             mb_homepage=getattr(member, "mb_homepage", None),
+            mb_image=get_member_image(getattr(login, "mb_id", None)),
             lo_datetime=login.lo_datetime,
             lo_location=login.lo_location,
             lo_url=login.lo_url,
