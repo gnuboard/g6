@@ -64,9 +64,6 @@ async def scrap_form_update(
     bo_table = board.bo_table
     wr_id = write.wr_id
 
-    scrap_service.create_scrap(member, bo_table, wr_id)
-    scrap_service.update_scrap_count(member)
-
     #댓글 생성
     if wr_content:
         comment_service = CommentService(request, db, point_service, bo_table, wr_id)
@@ -82,6 +79,9 @@ async def scrap_form_update(
         comment_service.send_write_mail_(comment, write)
         insert_board_new(bo_table, comment)
         set_write_delay(request)
+
+    scrap_service.create_scrap(member, bo_table, wr_id)
+    scrap_service.update_scrap_count(member)
 
     return RedirectResponse(request.url_for('scrap_list'), 302)
 

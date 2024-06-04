@@ -222,7 +222,7 @@ async def qa_view(
     # Q&A 에디터 설정 조회
     request.state.editor = config_service.select_editor
 
-    answer = qa_service.fetch_qa_answer(qa.qa_id)
+    answer = qa_service.read_qa_answer(qa.qa_id)
     prev_qa, next_qa = qa_service.fetch_prev_next_qa(member, qa.qa_id, **search_params)
     related_qa_contents = qa_service.fetch_related_qa_contents(member, qa.qa_id)
 

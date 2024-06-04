@@ -78,7 +78,7 @@ async def create_member_scrap(
     request: Request,
     db: db_session,
     service: Annotated[ScrapServiceAPI, Depends()],
-    point_service: Annotated[PointServiceAPI, Depends()],
+    comment_service: Annotated[CommentServiceAPI, Depends(CommentServiceAPI.async_init)],
     member: Annotated[Member, Depends(get_current_member)],
     board: Annotated[Board, Depends(get_board)],
     write: Annotated[WriteBaseModel, Depends(get_write)],
@@ -95,13 +95,9 @@ async def create_member_scrap(
     bo_table = board.bo_table
     wr_id = write.wr_id
 
-    service.create_scrap(member, bo_table, wr_id)
-    service.update_scrap_count(member)
-
     #댓글 생성
     if data.wr_content:
         db.refresh(member)
-        comment_service = CommentServiceAPI(request, db, point_service, bo_table, wr_id, member)
         form = WriteCommentForm(w="w", wr_id=wr_id, wr_content=data.wr_content,
                                 wr_name=None, wr_password=None, wr_secret=None,
                                 comment_id=0)
@@ -114,6 +110,9 @@ async def create_member_scrap(
         comment_service.send_write_mail_(comment, write)
         insert_board_new(bo_table, comment)
         set_write_delay(request)
+
+    service.create_scrap(member, bo_table, wr_id)
+    service.update_scrap_count(member)
 
     return {"message": "스크랩을 추가하였습니다."}
 
