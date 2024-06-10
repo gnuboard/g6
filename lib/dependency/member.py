@@ -46,7 +46,7 @@ def validate_register_data(
         ss_cert_birth = request.session.get("ss_cert_birth")
 
         # 본인인증 여부 체크
-        if  cert_service.cert_req and data.cert_no != ss_cert_no:
+        if cert_service.cert_req and (not data.cert_no or data.cert_no != ss_cert_no):
             raise AlertException("회원가입을 위해서는 본인확인을 해주셔야 합니다.", 400)
 
         # 기존회원 가입여부 체크
@@ -64,6 +64,8 @@ def validate_register_data(
         data.mb_adult = ss_cert_adult
         data.mb_birth = ss_cert_birth
         data.mb_dupinfo = ss_cert_dupinfo
+
+    del data.cert_no
 
     return data
 

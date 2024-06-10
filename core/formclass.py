@@ -241,6 +241,7 @@ class RegisterMemberForm(MemberForm):
     mb_id: str = Form(None)
     mb_name: str = Form(None)
     mb_password_re: str = Form(None)
+    cert_no: str = Form(None)
 
     def __post_init__(self) -> None:
         # 회원 아이디 검사
