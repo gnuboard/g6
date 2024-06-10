@@ -19,7 +19,8 @@ h1 {margin:0 0 30px;text-align:center}
 .ins_inner ol {margin:20px 0;padding:0 0 0 18px}
 .ins_inner ol li {margin:0 0 5px}
 .ins_inner ul li {margin:0 0 15px}
-.ins_inner p strong {color:red}
+.ins_inner div.warning {margin-bottom:10px;display:none;}
+.ins_inner div.warning strong {color:red}
 .ins_inner .inner_btn {margin:30px 0 0;text-align:right}
 .ins_inner .inner_btn a, .ins_inner .inner_btn input {display:inline-block;padding:10px 20px;background:#ff347d;color:#fff;text-decoration:none}
 .ins_inner .inner_btn input {border:0;cursor:pointer}

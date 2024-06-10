@@ -202,8 +202,9 @@ async def install_process():
 
             with db_connect.sessionLocal() as db:
                 config_setup(db, form_data.admin_id, form_data.admin_email)
-                admin_member_setup(db, form_data.admin_id, form_data.admin_name,
-                                   form_data.admin_password, form_data.admin_email)
+                if not form_data.is_skip_admin:
+                    admin_member_setup(db, form_data.admin_id, form_data.admin_name,
+                                    form_data.admin_password, form_data.admin_email)
                 content_setup(db)
                 qa_setup(db)
                 faq_master_setup(db)
