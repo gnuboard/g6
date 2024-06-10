@@ -24,13 +24,14 @@ from bbs.search import router as search_router
 from bbs.current_connect import router as current_connect_router
 from bbs.formmail import router as formmail_router
 from lib.dependency.dependencies import (
-    check_use_template, set_template_basic_data
+    check_use_template, set_current_connect, set_template_basic_data
 )
 from lib.editor.ckeditor4 import router as editor_router
 from lib.certificate.routers import router as certificate_router
 
 router = APIRouter(dependencies=[Depends(check_use_template),
-                                 Depends(set_template_basic_data)],
+                                 Depends(set_template_basic_data),
+                                 Depends(set_current_connect)],
                    include_in_schema=False)
 router.include_router(index_router, tags=["index"])
 router.include_router(board_router, prefix="/board", tags=["board"])

@@ -220,12 +220,13 @@
 </div>
 
 <script>
-    const cf_cert_use = "{{config['cf_cert_use']}}"
-    const cf_cert_simple = "{{config['cf_cert_simple']}}"
-    const cf_cert_hp = "{{config['cf_cert_hp']}}"
-    const cf_cert_ipin = "{{config['cf_cert_ipin']|default_if_none('0')}}"
+    const cf_cert_use = "{{ config.cf_cert_use|default('0', true) }}"
+    const cf_cert_simple = "{{config.cf_cert_simple|default('', true) }}"
+    const cf_cert_hp = "{{ config.cf_cert_hp|default('', true) }}"
+    const cf_cert_ipin = "{{ config.cf_cert_ipin|default('', true) }}"
     const cert_url = ""
     const cert_type = ""
+    const is_register = "{{ is_register }}"
     
     $(function() {
         // 모두선택

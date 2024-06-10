@@ -2,7 +2,8 @@
 from fastapi import APIRouter, Request
 
 from api.v1.models.config import (
-    HtmlBaseResponse, MemoResponse, PolicyResponse, RegisterResponse
+    HtmlBaseResponse, MemoResponse, PolicyResponse, RegisterResponse,
+    BoardResponse
 )
 from api.v1.models.response import response_500
 from api.v1.models import Tags
@@ -45,4 +46,12 @@ async def read_config_member(request: Request) -> RegisterResponse:
             tags=[Tags.MEMO])
 async def read_config_memo(request: Request) -> MemoResponse:
     """쪽지 발송 시, 1건당 소모되는 포인트 설정 정보를 조회합니다."""
+    return request.state.config
+
+
+@router.get("/board",
+            summary="게시판 설정 조회",
+            tags=[Tags.BOARD])
+async def read_config_memo(request: Request) -> BoardResponse:
+    """게시판에 사용되는 설정 정보를 조회합니다."""
     return request.state.config

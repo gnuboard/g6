@@ -1,10 +1,11 @@
+"""새글(최신 게시글) Template Router"""
 from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, Form, Query
 from fastapi.responses import RedirectResponse
 
 from core.template import UserTemplates
 from lib.common import set_url_query_params
-from lib.dependency.dependencies import validate_token
+from lib.dependency.dependencies import validate_super_admin, validate_token
 from lib.template_functions import get_group_select, get_paging
 from service.board_new import BoardNewService
 
@@ -40,7 +41,9 @@ async def board_new_list(
     return templates.TemplateResponse("/new/basic/new_list.html", context)
 
 
-@router.post("/new_delete", dependencies=[Depends(validate_token)])
+@router.post("/new_delete",
+             dependencies=[Depends(validate_token),
+                           Depends(validate_super_admin)])
 async def new_delete(
     service: Annotated[BoardNewService, Depends(BoardNewService.async_init)],
     bn_ids: list = Form(..., alias="chk_bn_id[]"),

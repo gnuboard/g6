@@ -22,12 +22,10 @@ from lib.dependency.member import validate_policy_agree, validate_register_data
 from lib.mail import send_register_mail
 from service.certificate_service import CertificateService
 from service.member_service import MemberImageService, MemberService
-from lib.template_filters import default_if_none
 from service.point_service import PointService
 
 router = APIRouter()
 templates = UserTemplates()
-templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals["captcha_widget"] = captcha_widget
 
 

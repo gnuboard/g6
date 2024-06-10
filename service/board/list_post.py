@@ -1,11 +1,13 @@
 from typing_extensions import Annotated, List
-from fastapi import Request, HTTPException, Path, Depends
+from fastapi import Request, Path, Depends
 from sqlalchemy import asc, desc, func, select
 
 from core.database import db_session
 from core.models import WriteBaseModel
 from lib.dependency.dependencies import common_search_query_params
 from lib.board_lib import write_search_filter, get_list, cut_name, is_owner
+from service.board_file_service import BoardFileService
+from service.ajax import AJAXService
 from . import BoardService
 
 
@@ -19,6 +21,7 @@ class ListPostService(BoardService):
         request: Request,
         db: db_session,
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
+        file_service: Annotated[BoardFileService, Depends()],
         search_params: Annotated[dict, Depends(common_search_query_params)],
     ):
         super().__init__(request, db, bo_table)
@@ -26,6 +29,7 @@ class ListPostService(BoardService):
             self.raise_exception(detail="목록을 볼 권한이 없습니다.", status_code=403)
 
         self.query = self.get_query(search_params)
+        self.file_service = file_service
         self.search_params = search_params
         self.prev_spt = None
         self.next_spt = None
@@ -36,9 +40,10 @@ class ListPostService(BoardService):
         request: Request,
         db: db_session,
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
+        file_service: Annotated[BoardFileService, Depends()],
         search_params: Annotated[dict, Depends(common_search_query_params)],
     ):
-        instance = cls(request, db, bo_table, search_params)
+        instance = cls(request, db, bo_table, file_service, search_params)
         return instance
 
     def get_query(self, search_params: dict) -> select:
@@ -88,8 +93,9 @@ class ListPostService(BoardService):
 
         return self.query
 
-    def get_writes(self) -> List[WriteBaseModel]:
+    def get_writes(self, with_files=False) -> List[WriteBaseModel]:
         """게시글 목록을 가져옵니다."""
+        ajax_service = AJAXService(self.request, self.db)
         current_page = self.search_params.get('current_page')
         page_rows = self.page_rows
 
@@ -124,6 +130,10 @@ class ListPostService(BoardService):
                 comment.is_del = bool(self.member.admin_type or (self.member and comment.mb_id == self.member.mb_id) or not comment.mb_id)
                 comment.is_secret = "secret" in comment.wr_option
 
+                # 회원 이미지, 아이콘 경로 설정
+                comment.mb_image_path = self.get_member_image_path(comment.mb_id)
+                comment.mb_icon_path = self.get_member_icon_path(comment.mb_id)
+
                 # 비밀댓글 처리
                 session_secret_comment_name = f"ss_secret_comment_{self.bo_table}_{comment.wr_id}"
                 parent_write = self.db.get(self.write_model, comment.wr_parent)
@@ -138,6 +148,19 @@ class ListPostService(BoardService):
                     comment.is_secret_content = False
                     comment.save_content = comment.wr_content
             write.comments = comments
+
+            # 게시글 목록 조회시 첨부된 파일을 함께 가져올 경우, default는 False
+            if with_files:
+                write.images, write.normal_files = self.file_service.get_board_files_by_type(self.bo_table, write.wr_id)
+
+            # 회원 이미지, 아이콘 경로 설정
+            write.mb_image_path = self.get_member_image_path(write.mb_id)
+            write.mb_icon_path = self.get_member_icon_path(write.mb_id)
+
+            # 게시글 좋아요/싫어요 정보 설정
+            ajax_good_data = ajax_service.get_ajax_good_data(self.bo_table, write)
+            write.good = ajax_good_data["good"]
+            write.nogood = ajax_good_data["nogood"]
 
         return writes
 

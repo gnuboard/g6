@@ -22,6 +22,7 @@ from api.v1.service.board import (
     MoveUpdateServiceAPI, ListDeleteServiceAPI
 )
 from service.board_file_service import BoardFileService
+from service.ajax import AJAXService
 
 
 router = APIRouter()
@@ -46,7 +47,7 @@ async def api_list_post(
     content = {
         "categories": service.categories,
         "board": service.board,
-        "writes": service.get_writes(),
+        "writes": service.get_writes(with_files=True),
         "total_count": service.get_total_count(),
         "current_page": service.search_params['current_page'],
         "prev_spt": service.prev_spt,
@@ -63,16 +64,20 @@ async def api_list_post(
 async def api_read_post(
     db: db_session,
     service: Annotated[ReadPostServiceAPI, Depends(ReadPostServiceAPI.async_init)],
+    ajax_service: Annotated[AJAXService, Depends(AJAXService.async_init)],
 ) -> ResponseWriteModel:
     """
     지정된 게시판의 글을 개별 조회합니다.
     """
+    ajax_good_data = ajax_service.get_ajax_good_data(service.bo_table, service.write)
     content = jsonable_encoder(service.write)
     additional_content = jsonable_encoder({
         "images": service.images,
         "normal_files": service.normal_files,
         "links": service.get_links(),
         "comments": service.get_comments(),
+        "good": ajax_good_data["good"],
+        "nogood": ajax_good_data["nogood"],
     })
     content.update(additional_content)
     service.validate_secret()
@@ -93,6 +98,7 @@ async def api_read_post(
 async def api_read_post(
     db: db_session,
     service: Annotated[ReadPostServiceAPI, Depends(ReadPostServiceAPI.async_init)],
+    ajax_service: Annotated[AJAXService, Depends(AJAXService.async_init)],
     wr_password: str = Body(..., title="비밀번호", description="비밀글 비밀번호")
 ) -> ResponseWriteModel:
     """
@@ -101,13 +107,17 @@ async def api_read_post(
     ### Request Body
     - **wr_password**: 게시글 비밀번호
     """
-    service.validate_read_wr_password(wr_password, service.write.wr_password)
+    write_password = service.get_write_password()
+    service.validate_read_wr_password(wr_password, write_password)
+    ajax_good_data = ajax_service.get_ajax_good_data(service.bo_table, service.write)
     content = jsonable_encoder(service.write)
     additional_content = jsonable_encoder({
         "images": service.images,
         "normal_files": service.normal_files,
         "links": service.get_links(),
         "comments": service.get_comments(),
+        "good": ajax_good_data["good"],
+        "nogood": ajax_good_data["nogood"],
     })
     content.update(additional_content)
     service.validate_repeat()
@@ -152,7 +162,7 @@ async def api_create_post(
     service.validate_secret_board(wr_data.secret, wr_data.html, wr_data.mail)
     service.validate_post_content(wr_data.wr_subject)
     service.validate_post_content(wr_data.wr_content)
-    service.is_write_level()
+    service.validate_write_level()
     service.arrange_data(wr_data, wr_data.secret, wr_data.html, wr_data.mail)
     write = service.save_write(wr_data.parent_id, wr_data)
     insert_board_new(service.bo_table, write)

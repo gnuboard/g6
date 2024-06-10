@@ -12,7 +12,6 @@ from lib.dependency.auth import get_login_member
 from lib.dependency.dependencies import validate_captcha, validate_token
 from lib.dependency.memo import get_memo
 from lib.html_sanitizer import content_sanitizer as sanitizer
-from lib.template_filters import default_if_none
 from lib.template_functions import get_paging
 from service.member_service import MemberService
 from service.memo_service import MemoService
@@ -21,7 +20,6 @@ from service.point_service import PointService
 router = APIRouter()
 templates = UserTemplates()
 templates.env.globals["captcha_widget"] = captcha_widget
-templates.env.filters["default_if_none"] = default_if_none
 templates.env.globals["is_none_datetime"] = is_none_datetime
 
 
@@ -134,7 +132,7 @@ async def memo_form_update(
 
     # 쪽지 전송 처리
     for target in send_members:
-        memo_service.send_memo(member, target, sanitizer.get_cleaned_data(me_memo))
+        memo = memo_service.send_memo(member, target, sanitizer.get_cleaned_data(me_memo))
 
         # 실시간 쪽지 알림
         memo_service.update_memo_call(member, target)
@@ -143,7 +141,7 @@ async def memo_form_update(
         point_service.save_point(
             member.mb_id, send_point * (-1),
             f"{target.mb_nick}({target.mb_id})님에게 쪽지 발송", "@memo",
-            target.mb_id, "쪽지전송")
+            target.mb_id, memo.me_id)
 
     return RedirectResponse(url="/bbs/memo?kind=send", status_code=302)
 

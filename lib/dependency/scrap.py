@@ -24,7 +24,9 @@ def validate_create_scrap(
     write: Annotated[WriteBaseModel, Depends(get_write)],
 ) -> None:
     """스크랩 생성 유효성 검사 의존성 함수"""
-    validate.is_exists_scrap(member, board.bo_table, write.wr_id)
+    validate.valid_write(write)
+    validate.valid_exists_scrap(member, board.bo_table, write.wr_id)
+    validate.valid_secret_write(board.bo_table, write)
 
 
 def validate_delete_scrap(
@@ -33,4 +35,4 @@ def validate_delete_scrap(
     scrap: Annotated[Scrap, Depends(get_scrap)],
 ) -> None:
     """스크랩 삭제 유효성 검사 의존성 함수"""
-    validate.is_owner_scrap(scrap, member)
+    validate.valid_owner_scrap(scrap, member)

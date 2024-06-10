@@ -9,8 +9,8 @@
         <h1 id="win_title">
             <i class="fa fa-regular fa-envelope" aria-hidden="true"></i> 내 쪽지함
             <div class="win_total">
-                    전체 {{ action }}쪽지 
-                    {{ total_records|number_format }}통
+                전체 {{ action }}쪽지 
+                {{ total_records|number_format }}통
                 <br>
             </div>
         </h1>
@@ -25,7 +25,6 @@
                 {% for memo in memos %}
                     {% set is_read=(False if is_none_datetime(memo.me_read_datetime) else True) %}
                     {% set target_member=memo.target_member %}
-                    
                     <li class="{% if is_read %}read{% endif %}">
                         <div class="memo_li profile_big_img">
                             <img src="{{ get_member_image(target_member.mb_id) }}" alt="profile_image">
@@ -34,7 +33,7 @@
                             {% endif %}
                         </div>
                         <div class="memo_li memo_name">
-                            {{ sideview.get(request, target_member.mb_id, target_member.mb_nick|default_if_none("[회원정보 없음]"))|safe }}
+                            {{ sideview.get(request, target_member.mb_id, target_member.mb_nick|default("[회원정보 없음]"))|safe }}
                             <span class="memo_datetime">
                                 <i class="fa fa-regular fa-clock" aria-hidden="true"></i>
                                 {{ memo.me_send_datetime }}

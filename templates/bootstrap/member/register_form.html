@@ -26,7 +26,7 @@
                 <h2 class="m-0 pt-0 pb-5 px-0 main-font fw-bold">사이트 이용정보 입력</h2>
                 <ul>
                     <li class="position-relative pt-4 main-font">
-                        <input type="text" name="mb_id" value="{{ member.mb_id|default_if_none('') }}"
+                        <input type="text" name="mb_id" value="{{ member.mb_id|default('', true) }}"
                                id="reg_mb_id" required class="frm_input full_input required alnum_" minlength="3"
                                maxlength="20"
                                {% if member.mb_id %}readonly="readonly"{% endif %}
@@ -88,14 +88,14 @@
                     {% endif %}
                     <li class="position-relative pt-4 main-font">
                         <input type="text" id="reg_mb_name" name="mb_name"
-                               value="{{ member.mb_name|default_if_none('') }}" 
+                               value="{{ member.mb_name|default('', true) }}" 
                                required 
                                {{ form.name_readonly }}
                                class="frm_input full_input required " size="10" placeholder="">
                         <label for="reg_mb_name" class="text_input">이름 (필수){{ desc_name }}</label>
                     </li>
                     <li class="position-relative pt-4 main-font">
-                        <input type="text" name="mb_nick" value="{{ member.mb_nick|default_if_none('') }}"
+                        <input type="text" name="mb_nick" value="{{ member.mb_nick|default('', true) }}"
                                id="reg_mb_nick" required class="frm_input required nospace full_input" size="10"
                                maxlength="20" placeholder="">
                         <label for="reg_mb_nick" class="text_input">
@@ -110,7 +110,7 @@
                     </li>
                     <li class="position-relative pt-4 main-font">
                         <input type="hidden" name="old_email" value="">
-                        <input type="text" name="mb_email" value="{{ member.mb_email|default_if_none('') }}"
+                        <input type="text" name="mb_email" value="{{ member.mb_email|default('', true) }}"
                               id="reg_mb_email" required class="frm_input email full_input required" size="70"
                               maxlength="100" placeholder="">
                         <label for="reg_mb_email" class="text_input">E-mail (필수)</label>
@@ -127,7 +127,7 @@
                     <li>
                         <label for="reg_mb_homepage" class="blind">홈페이지{% if config.cf_req_homepage %} (필수){% endif
                             %}</label>
-                        <input type="text" name="mb_homepage" value="{{ member.mb_homepage|default_if_none('') }}"
+                        <input type="text" name="mb_homepage" value="{{ member.mb_homepage|default('', true) }}"
                                id="reg_mb_homepage"
                                class="frm_input full_input {% if config.cf_req_homepage %} required{% endif %}"
                                maxlength="255"
@@ -140,7 +140,7 @@
                         <label for="reg_mb_tel" class="blind">전화번호
                             {% if config.cf_req_tel %} (필수) {% endif %}
                         </label>
-                        <input type="text" name="mb_tel" value="{{ member.mb_tel|default_if_none('') }}"
+                        <input type="text" name="mb_tel" value="{{ member.mb_tel|default('', true) }}"
                                id="reg_mb_tel"
                                class="frm_input full_input {% if config.cf_req_tel %} required{% endif %}"
                                maxlength="20"
@@ -156,7 +156,7 @@
                             </label>
                             <input type="text" name="mb_hp"
                                 id="reg_mb_hp" 
-                                value="{{ member.mb_hp|default_if_none('') }}"
+                                value="{{ member.mb_hp|default('', true) }}"
                                 class="frm_input full_input {{ form.hp_readonly }} {% if hp_is_required %}required{% endif %}"
                                 maxlength="20"
                                 placeholder="휴대폰번호{% if hp_is_required %} (필수){% endif %} {{ desc_hp }}"
@@ -174,7 +174,7 @@
                             우편번호 {% if config.cf_req_addr %} (필수) {% endif %}
                         </label>
                         <input type="text" name="mb_zip" 
-                               value="{{ member.mb_zip1|default_if_none('') + member.mb_zip2|default_if_none('') }}"
+                               value="{{ member.mb_zip1|default('', true) + member.mb_zip2|default('', true) }}"
                                id="reg_mb_zip"
                                {% if config.cf_req_addr %} required {% endif %}
                                class="frm_input twopart_input {% if config.cf_req_addr %} required {% endif %}"
@@ -184,7 +184,7 @@
                             주소 검색
                         </button>
                         <br>
-                        <input type="text" name="mb_addr1" value="{{ member.mb_addr1|default_if_none('') }}"
+                        <input type="text" name="mb_addr1" value="{{ member.mb_addr1|default('', true) }}"
                                id="reg_mb_addr1" 
                                {% if config.cf_req_addr %} required {% endif %} 
                                class="frm_input frm_address full_input 
@@ -193,16 +193,16 @@
                         placeholder="기본주소">
                         <label for="reg_mb_addr1"
                                class="blind">기본주소  {% if config.cf_req_addr %} (필수) {% endif %}  </label><br>
-                        <input type="text" name="mb_addr2" value="{{ member.mb_addr2|default_if_none('') }}"
+                        <input type="text" name="mb_addr2" value="{{ member.mb_addr2|default('', true) }}"
                                id="reg_mb_addr2" class="frm_input frm_address full_input" size="50" placeholder="상세주소">
                         <label for="reg_mb_addr2" class="blind">상세주소</label>
                         <br>
-                        <input type="text" name="mb_addr3" value="{{ member.mb_addr3|default_if_none('') }}"
+                        <input type="text" name="mb_addr3" value="{{ member.mb_addr3|default('', true) }}"
                                id="reg_mb_addr3" class="frm_input frm_address full_input" size="50" readonly="readonly"
                                placeholder="참고항목">
                         <label for="reg_mb_addr3" class="blind">참고항목</label>
                         <input type="hidden" name="mb_addr_jibeon"
-                               value="{{ member.mb_addr_jibeon|default_if_none('ewwwww') }}">
+                               value="{{ member.mb_addr_jibeon|default('', true) }}">
                     </li>
                     {% endif %}
                 </ul>
@@ -220,7 +220,7 @@
                         <textarea name="mb_signature" id="reg_mb_signature"
                                   class=" {% if config.cf_req_signature %} required {% endif %}"
                                   {% if config.cf_req_signature %} required {% endif %}
-                                  placeholder="서명 {% if config.cf_req_signature %} (필수){% endif %}">{{ member.mb_signature|default_if_none('') }}</textarea>
+                                  placeholder="서명 {% if config.cf_req_signature %} (필수){% endif %}">{{ member.mb_signature|default('', true) }}</textarea>
                     </li>
                     {% endif %}
                     {% if config.cf_use_profile %}
@@ -229,7 +229,7 @@
                         <textarea name="mb_profile" id="reg_mb_profile"
                                   class="{% if config.cf_req_profile %} required{% endif %}" 
                                   {% if config.cf_req_profile %} required {% endif %}
-                                  placeholder="자기소개{% if config.cf_req_profile %} (필수){% endif %}">{{ member.mb_profile|default_if_none('') }}</textarea>
+                                  placeholder="자기소개{% if config.cf_req_profile %} (필수){% endif %}">{{ member.mb_profile|default('', true) }}</textarea>
                     </li>
                     {% endif %}
                     

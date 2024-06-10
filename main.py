@@ -21,14 +21,13 @@ from core.plugin import (
 )
 from core.routers import router as template_router
 from core.settings import ENV_PATH, settings
-from core.template import UserTemplates, register_theme_statics
+from core.template import register_theme_statics
 from lib.common import (
     get_client_ip, is_intercept_ip, is_possible_ip, session_member_key
 )
 from lib.dependency.dependencies import check_use_template
 from lib.member import is_super_admin
 from lib.scheduler import scheduler
-from lib.template_filters import default_if_none
 from lib.token import create_session_token
 from service.member_service import MemberService
 from service.point_service import PointService
@@ -54,15 +53,13 @@ async def lifespan(app: FastAPI):
     """
     yield
     scheduler.remove_flag()
+
 app = FastAPI(
     debug=settings.APP_IS_DEBUG,  # 디버그 모드가 활성화 설정
     lifespan=lifespan,
     title="그누보드6",
     description=""
 )
-
-templates = UserTemplates()
-templates.env.filters["default_if_none"] = default_if_none
 
 # git clone으로 소스를 받은 경우에는 data디렉토리가 없으므로 생성해야 함
 if not os.path.exists("data"):
@@ -218,39 +215,6 @@ async def main_middleware(request: Request, call_next):
                                 max_age=age_1day, domain=cookie_domain)
             visit_service = VisitService(request, db)
             visit_service.create_visit_record()
-
-        try:
-            # 현재 방문자 데이터 갱신
-            if (not request.state.is_super_admin
-                    and not url_path.startswith("/admin")):
-                current_login = db.scalar(
-                    select(models.Login)
-                    .where(models.Login.lo_ip == current_ip)
-                )
-                if current_login:
-                    current_login.mb_id = getattr(member, "mb_id", "")
-                    current_login.lo_datetime = datetime.now()
-                    current_login.lo_location = url_path
-                    current_login.lo_url = url_path
-                else:
-                    db.execute(
-                        insert(models.Login).values(
-                            lo_ip=current_ip,
-                            mb_id=getattr(member, "mb_id", ""),
-                            lo_datetime=datetime.now(),
-                            lo_location=url_path,
-                            lo_url=url_path)
-                    )
-                db.commit()
-
-            # 현재 로그인한 이력 삭제
-            config_time = timedelta(minutes=int(config.cf_login_minutes))
-            db.execute(delete(models.Login)
-                    .where(models.Login.lo_datetime < datetime.now() - config_time))
-            db.commit()
-
-        except Exception as e:
-            print(e)
 
     return response
 

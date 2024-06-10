@@ -34,11 +34,14 @@ async def search(
     # 검색 단어를 인기검색어에 등록
     popular_service.create_popular(request, sfl, stx)
 
+    bo_table_list = [board.bo_table for board in boards]
+
     context = {
         "request": request,
         "onetable": onetable,
         "total_search_count": total_search_count,
         "groups": groups,
         "boards": boards,
+        "exists_onetable": onetable in bo_table_list,
     }
     return templates.TemplateResponse("/bbs/search.html", context)

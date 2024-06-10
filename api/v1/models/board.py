@@ -71,6 +71,7 @@ class ResponseFileModel(BaseModel):
     bf_filesize: int
     bf_download: int
     bf_datetime: datetime
+    bf_file: str
 
 
 class ResponseCommentModel(BaseModel):
@@ -79,6 +80,8 @@ class ResponseCommentModel(BaseModel):
     wr_parent: int
     wr_name: str
     mb_id: str
+    mb_image_path: str
+    mb_icon_path: str
     save_content: str
     wr_datetime: datetime
     wr_last: str
@@ -117,6 +120,8 @@ class ResponseWriteModel(BaseModel):
     wr_subject: str
     wr_name: str
     mb_id: str
+    mb_image_path: str
+    mb_icon_path: str
     wr_datetime: datetime
     wr_email: str
     wr_content: str
@@ -125,6 +130,8 @@ class ResponseWriteModel(BaseModel):
     wr_comment: int
     wr_hit: int
     wr_ip: str
+    good: int
+    nogood: int
     wr_option: str = "",
     images: List[ResponseFileModel] = []
     normal_files: List[ResponseFileModel] = []

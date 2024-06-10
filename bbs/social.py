@@ -25,14 +25,12 @@ from lib.social import providers
 from lib.social.social import (
     get_social_login_token, get_social_profile, oauth, SocialProvider
 )
-from lib.template_filters import default_if_none
 from service.member_service import MemberService, ValidateMember
 from service.point_service import PointService
 
 
 router = APIRouter()
 templates = UserTemplates()
-templates.env.filters["default_if_none"] = default_if_none
 
 log = logging.getLogger("authlib")
 logging.basicConfig()
