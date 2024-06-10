@@ -2,12 +2,13 @@
 from datetime import date, datetime, timedelta
 import hashlib
 from fastapi import Depends, Request
-from sqlalchemy import insert
+from sqlalchemy import func, insert, select
 from typing_extensions import Annotated
 
 from core.database import db_session
 from core.exception import AlertCloseException
-from core.models import Member, MemberCertHistory
+from core.models import CertHistory, Member, MemberCertHistory
+from lib.common import get_client_ip
 from service import BaseService
 from service.member_service import MemberService
 
@@ -37,6 +38,7 @@ class CertificateService(BaseService):
         self.cert_simple = getattr(request.state.config, "cf_cert_simple", None)
         self.cert_ipin = getattr(request.state.config, "cf_cert_ipin", None)
         self.cert_req = getattr(request.state.config, "cf_cert_req", 0)
+        self.cert_limit = getattr(request.state.config, "cf_cert_limit", 0)
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise AlertCloseException(status_code=status_code, detail=detail)
@@ -65,15 +67,15 @@ class CertificateService(BaseService):
             and getattr(member, "mb_certify", "") != "ipin"
         )
 
-    def get_certificate_type(self, member: Member) -> str:
+    def get_certificate_type(self, cert_type: str) -> str:
         """
         회원의 본인인증 방식을 반환합니다.
         """
-        if member.mb_certify == "hp":
+        if cert_type == "hp":
             return "휴대폰"
-        if member.mb_certify == "simple":
+        if cert_type == "simple":
             return "간편인증"
-        if member.mb_certify == "ipin":
+        if cert_type == "ipin":
             return "아이핀"
         return ""
 
@@ -111,16 +113,43 @@ class CertificateService(BaseService):
         except Exception:
             return 0
 
+    def get_cert_count(self, mb_id: str, cert_type: str) -> int:
+        """회원의 본인인증 횟수를 반환합니다."""
+        query = (select(func.count(CertHistory.cr_id))
+                .where(CertHistory.cr_method == cert_type,
+                        CertHistory.cr_date == date.today()))
+        if mb_id:
+            query = query.where(CertHistory.mb_id == mb_id)
+        else:
+            client_ip = get_client_ip(self.request)
+            query = query.where(CertHistory.cr_ip == client_ip)
+
+        return self.db.scalar(query)
+
     def create_dupinfo(self, ci: str):
         """
         본인인증 정보를 생성합니다.
         """
         return self.hashing_md5(f"{ci}{ci}")
 
-    def create_certificate_history(self, mb_id: str, mb_name: str,
-                                   mb_hp: str, mb_birth: str, cert_type: str) -> None:
+    def create_cert_history(self, company: str, method: str, mb_id: str = '') -> None:
         """
         본인인증 이력을 생성합니다.
+        """
+        self.db.execute(
+            insert(CertHistory).values(
+                mb_id=mb_id,
+                cr_company=company,
+                cr_method=method,
+                cr_ip=get_client_ip(self.request)
+            )
+        )
+        self.db.commit()
+
+    def create_member_cert_history(self, mb_id: str, mb_name: str,
+                                   mb_hp: str, mb_birth: str, cert_type: str) -> None:
+        """
+        회원의 본인인증 변경 이력을 생성합니다.
         """
         self.db.execute(
             insert(MemberCertHistory).values(
@@ -143,6 +172,24 @@ class CertificateService(BaseService):
         self.request.session.pop("ss_cert_adult", None)
         self.request.session.pop("ss_cert_birth", None)
         self.request.session.pop("ss_cert_dupinfo", None)
+
+    def validate_certificate_limit(self, mb_id: str, cert_type: str) -> None:
+        """
+        본인인증 횟수 제한 검사
+        """
+        if self.cert_use == 2:
+            return None
+        if self.cert_limit == 0:
+            return None
+        if self.request.state.is_super_admin:
+            return None
+
+        cert_count = self.get_cert_count(mb_id, cert_type)
+        if cert_count >= self.cert_limit:
+            display_type = self.get_certificate_type(cert_type)
+            self.raise_exception(400, f"오늘의 {display_type} 본인인증은 {self.cert_limit}회까지만 가능합니다.")
+
+        return None
 
     def validate_member_dupinfo(self, dupinfo: str, member: Member):
         """이미 인증된 회원인지 검증합니다."""

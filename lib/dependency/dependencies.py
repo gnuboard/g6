@@ -19,6 +19,7 @@ from lib.common import get_client_ip, get_current_admin_menu_id
 from lib.dependency.auth import get_login_member_optional
 from lib.member import get_admin_type
 from lib.token import check_token
+from service.certificate_service import CertificateService
 from service.current_connect_service import CurrentConnectService
 from service.menu_service import MenuService
 from service.poll_service import PollService
@@ -283,3 +284,15 @@ def get_certificate_class(
         return kcp_hp_service
 
     raise ValueError("Unsupported service type")
+
+
+def validate_certificate_limit(
+    member: Annotated[Member, Depends(get_login_member_optional)],
+    cert_service: Annotated[CertificateService, Depends()],
+    cert_type: Annotated[str, Path()],
+) -> None:
+    """
+    본인인증 횟수 제한 검사
+    """
+    mb_id = getattr(member, "mb_id", "")
+    cert_service.validate_certificate_limit(mb_id, cert_type)

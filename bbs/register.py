@@ -136,7 +136,7 @@ async def post_register_form(
 
     # 본인인증 이력 생성 및 세션 제거
     if cert_service.cert_use:
-        cert_service.create_certificate_history(
+        cert_service.create_member_cert_history(
             member.mb_id, member.mb_name, member.mb_hp,
             member.mb_birth, member.mb_certify
         )

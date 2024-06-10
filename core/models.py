@@ -961,7 +961,9 @@ class Login(Base):
 
 
 class MemberCertHistory(Base):
-    """회원 인증 이력 테이블"""
+    """
+    회원 인증 이력 테이블
+    """
     __tablename__ = DB_TABLE_PREFIX + "member_cert_history"
 
     ch_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -971,3 +973,18 @@ class MemberCertHistory(Base):
     ch_birth = Column(String(255), nullable=False, default='')
     ch_type = Column(String(20), nullable=False, default='')
     ch_datetime = Column(DateTime, nullable=False, default=func.now())
+
+
+class CertHistory(Base):
+    """
+    인증 이력 테이블
+    """
+    __tablename__ = DB_TABLE_PREFIX + "cert_history"
+
+    cr_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    mb_id = Column(String(20), nullable=False, default="")
+    cr_company = Column(String(255), nullable=False, default="")
+    cr_method = Column(String(255), nullable=False, default="")
+    cr_ip = Column(String(255), nullable=False, default="")
+    cr_date = Column(Date, nullable=False, default=func.now())
+    cr_time = Column(Time, nullable=False, default=func.now())

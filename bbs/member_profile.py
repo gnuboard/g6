@@ -100,7 +100,7 @@ async def member_profile(
     config = request.state.config
 
     member = member_service.read_member(member.mb_id)
-    member.mb_certify_name = cert_service.get_certificate_type(member)
+    member.mb_certify_name = cert_service.get_certificate_type(member.mb_certify)
 
     # 본인인증 관련 폼 설정
     cert_context = {

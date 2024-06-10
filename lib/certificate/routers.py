@@ -5,7 +5,7 @@ from typing_extensions import Annotated
 
 from core.models import Member
 from lib.certificate.base import CertificateBase
-from lib.dependency.dependencies import get_certificate_class
+from lib.dependency.dependencies import get_certificate_class, validate_certificate_limit
 from lib.dependency.auth import get_login_member_optional
 from service.certificate_service import CertificateService
 
@@ -13,7 +13,8 @@ router = APIRouter()
 templates = Jinja2Templates(directory="lib/certificate")
 
 
-@router.get("/certificate/{provider}/{cert_type}")
+@router.get("/certificate/{provider}/{cert_type}",
+            dependencies=[Depends(validate_certificate_limit)])
 async def get_certificate(
     request: Request,
     provider_class: Annotated[CertificateBase, Depends(get_certificate_class)],
@@ -30,7 +31,8 @@ async def get_certificate(
     return templates.TemplateResponse(f"/{provider}/{cert_type}/request.html", context)
 
 
-@router.post("/certificate/{provider}/{cert_type}/result")
+@router.post("/certificate/{provider}/{cert_type}/result",
+             dependencies=[Depends(validate_certificate_limit)])
 async def result_certificate(
     request: Request,
     cert_service: Annotated[CertificateService, Depends()],
@@ -69,6 +71,9 @@ async def result_certificate(
     request.session["ss_cert_adult"] = is_adult
     request.session["ss_cert_birth"] = user_birthday
     request.session['ss_cert_dupinfo'] = dupinfo
+
+    # 인증 결과 이력 생성
+    cert_service.create_cert_history(provider, cert_type, mb_id)
 
     context = {
         "request": request,
