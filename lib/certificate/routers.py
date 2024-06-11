@@ -82,18 +82,14 @@ async def result_certificate(
     # 인증 결과 이력 생성
     cert_service.create_cert_history(provider, cert_type, mb_id)
 
-    # ID 찾기
-    if page_type == "find_id":
+    # ID/PW 찾기
+    if page_type == "find":
         context = {
             "request": request,
             "user_name": user_name,
             "dupinfo": dupinfo,
         }
-        return templates.TemplateResponse(f"/{provider}/{cert_type}/id_find_result.html", context)
-
-    # PW 찾기
-    elif page_type == "find_pw":
-        pass
+        return templates.TemplateResponse(f"/{provider}/{cert_type}/find_result.html", context)
 
     # 회원가입
     context = {

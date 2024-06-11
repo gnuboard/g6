@@ -152,14 +152,17 @@ class MemberService(BaseService):
 
         return member
 
-    def fetch_member_by_dupinfo(self, dupinfo: str, except_mb_id: str = '') -> Member:
+    def fetch_member_by_dupinfo(self, dupinfo: str,
+                                mb_id: str = None, except_mb_id: str = '') -> Member:
         """중복가입 방지 정보가 이미 사용중인지 확인합니다."""
-        return self.db.scalar(
-            select(Member).where(
+        query = select(Member).where(
                 Member.mb_id != except_mb_id,
                 Member.mb_dupinfo == dupinfo
             )
-        )
+        if mb_id:
+            query = query.where(Member.mb_id == mb_id)
+
+        return self.db.scalar(query)
 
     def is_activated(self, member: Member) -> Tuple[bool, str]:
         """활성화된 회원인지 확인합니다."""
@@ -228,16 +231,11 @@ class MemberService(BaseService):
 
     def find_id_by_certify(self, dubinfo: str) -> Member:
         """
-        본인인증 정보로 회원 아이디를 찾습니다.
+        본인인증 정보로 회원 정보를 찾습니다.
         - 최고관리자는 제외합니다.
         """
         admin_id = getattr(self.config, "cf_admin", "admin")
-        member = self.db.scalar(
-            select(Member).where(
-                Member.mb_dupinfo == dubinfo,
-                Member.mb_id != admin_id  # 최고관리자는 제외
-            )
-        )
+        member = self.fetch_member_by_dupinfo(dubinfo, except_mb_id=admin_id)
         if not member:
             raise AlertCloseException("입력하신 정보와 일치하는 회원이 없습니다.", 404)
 

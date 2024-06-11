@@ -202,7 +202,7 @@ class CertificateService(BaseService):
 
     def validate_exists_dupinfo(self, dupinfo: str, mb_id: str):
         """이미 인증정보가 존재하는지 검증합니다."""
-        exists_member = self.member_service.fetch_member_by_dupinfo(dupinfo, mb_id)
+        exists_member = self.member_service.fetch_member_by_dupinfo(dupinfo, except_mb_id=mb_id)
         if exists_member:
             self.raise_exception(400, f"입력하신 본인확인 정보로 이미 가입된 내역이 존재합니다.\
                                     \\n아이디 : {exists_member.mb_id}")

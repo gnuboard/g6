@@ -3,6 +3,7 @@ from typing_extensions import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, Path, Request
 
+from core.database import db_session
 from core.exception import AlertException
 from core.template import UserTemplates
 from lib.captcha import captcha_widget
@@ -35,7 +36,6 @@ async def find_member_id_form(
         "request": request,
         "certificate": cert_context,
         "is_view_cert": cert_service.cert_use and cert_service.cert_find
-
     }
     return templates.TemplateResponse("/member/id_find_form.html", context)
 
@@ -83,12 +83,23 @@ async def find_member_id_certificate(
 
 
 @router.get("/password_lost")
-async def find_member_password_form(request: Request):
+async def find_member_password_form(
+    request: Request,
+    cert_service: Annotated[CertificateService, Depends()]
+):
     """
     회원 비밀번호 찾기 페이지
     """
+    cert_context = {
+        "cert_hp" : cert_service.cert_hp,
+        "cert_simple" : cert_service.cert_simple,
+        "cert_ipin" : cert_service.cert_ipin,
+        "is_use_cert": cert_service.cert_use,
+    }
     context = {
         "request": request,
+        "certificate": cert_context,
+        "is_view_cert": cert_service.cert_use and cert_service.cert_find
     }
     return templates.TemplateResponse("/member/password_find_form.html", context)
 
@@ -117,6 +128,34 @@ async def find_member_password(
     return templates.TemplateResponse("/member/password_find_result.html", context)
 
 
+@router.post("/password_lost/certificate",
+             dependencies=[Depends(validate_token)])
+async def find_member_password_certificate(
+    request: Request,
+    db: db_session,
+    member_service: Annotated[MemberService, Depends()],
+    mb_id: str = Form(...),
+    dupinfo: str = Form(...)
+):
+    """
+    비밀번호 재설정 페이지 (본인인증)
+    """
+    member = member_service.fetch_member_by_dupinfo(dupinfo, mb_id=mb_id)
+    if not member:
+        raise AlertException("입력하신 아이디와 일치하는 회원정보가 없습니다.", 404)
+
+    # 비밀번호 재설정 정보에 인증정보 저장
+    member.mb_lost_certify = dupinfo
+    db.commit()
+    db.refresh(member)
+
+    context = {
+        "request": request,
+        "member": member,
+    }
+    return templates.TemplateResponse("/member/password_reset_form.html", context)
+
+
 @router.get("/password_reset/{mb_id}/{token}")
 async def reset_password_form(
     request: Request,
@@ -125,7 +164,7 @@ async def reset_password_form(
     token: Annotated[str, Path()],
 ):
     """
-    비밀번호 재설정 링크를 클릭한 후 비밀번호 재설정 폼을 보여준다.
+    비밀번호 재설정 페이지 (메일 링크 클릭시)
     """
     member = member_service.read_member_by_lost_certify(mb_id, token)
     context = {
