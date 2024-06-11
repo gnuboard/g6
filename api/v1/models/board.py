@@ -1,10 +1,9 @@
 """게시글 모델"""
-from enum import Enum
-from typing_extensions import Annotated, List, Union
 from datetime import datetime
 from enum import Enum
+from typing_extensions import Annotated, List, Union
 
-from fastapi import Body, Path
+from fastapi import Body, Path, Query
 from pydantic import BaseModel, ConfigDict, model_validator, Field
 
 
@@ -272,9 +271,24 @@ class ResponseGroupBoardsModel(BaseModel):
     boards: List[ResponseBoardModel]
 
 
-class BoardNewViewType(Enum):
+class BoardNewViewType(str, Enum):
     WRITE = "write"
     COMMENT = "comment"
+
+
+class RequestBoardNewWrites(BaseModel):
+    """최신글 조회 API 요청 모델"""
+
+    view_type: BoardNewViewType = Field(Query(
+        default=BoardNewViewType.WRITE,
+        title="조회 유형",
+        description="게시글/댓글"
+    ))
+    rows: int = Field(Query(
+        default=10,
+        title="출력할 최신글 수",
+        description="출력할 최신글 수"
+    ))
 
 
 class ResponseBoardNewModel(BaseModel):
