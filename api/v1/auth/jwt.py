@@ -1,5 +1,5 @@
 """JWT 관련 작업을 처리하는 클래스입니다."""
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from enum import Enum
 
 from fastapi import HTTPException, status
@@ -50,9 +50,12 @@ class JWT:
         expires_minute = token_type.expires_minute
 
         to_encode = data.copy()
-        iat = int(datetime.now().timestamp())
+        iat = datetime.now()
         exp = datetime.now() + timedelta(minutes=expires_minute)
-        to_encode.update({"iss": api_settings.AUTH_ISSUER, "iat": iat, "exp": exp})
+        to_encode.update({
+            "iss": api_settings.AUTH_ISSUER,
+            "iat": iat.timestamp(),
+            "exp": exp.timestamp()})
 
         return encode(to_encode, secret_key, algorithm=api_settings.AUTH_ALGORITHM)
 
@@ -78,18 +81,10 @@ class JWT:
         )
 
         try:
-            # JWT decode함수는 UTC 시간을 기준으로 만료시간을 계산합니다.
-            # 따라서, 서버의 시간과 UTC 시간의 차이를 초 단위로 계산하여 leeway로 설정합니다.
-            now = datetime.now()
-            utc_now = datetime.now(timezone.utc).replace(tzinfo=None)
-            diff = utc_now - now
-            leeway = diff.total_seconds()
-
             payload = decode(
                 token,
                 secret_key,
                 algorithms=[api_settings.AUTH_ALGORITHM],
-                options={"leeway": leeway}
             )
             return TokenPayload(**payload)
         except ExpiredSignatureError as e:
