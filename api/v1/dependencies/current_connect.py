@@ -3,6 +3,7 @@ from typing_extensions import Annotated
 from fastapi import Depends, Request
 from sqlalchemy.exc import ProgrammingError
 
+from core.database import db_session
 from api.v1.dependencies.member import get_current_member_optional
 from api.v1.service.current_connect import CurrentConnectServiceAPI
 from core.models import Member
@@ -12,6 +13,7 @@ from lib.member import is_super_admin
 
 async def set_current_connect(
         request: Request,
+        db: db_session,
         service: Annotated[CurrentConnectServiceAPI, Depends()],
         member: Annotated[Member, Depends(get_current_member_optional)]):
     """현재 접속자 정보 설정"""
@@ -29,6 +31,10 @@ async def set_current_connect(
 
         # 현재 로그인한 이력 삭제
         service.delete_current_connect()
+
+        # 세션의 member 데이터를 데이터베이스와 동기화
+        if member:
+            db.refresh(member)
 
     except ProgrammingError as e:
         print(e)
