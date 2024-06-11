@@ -10,7 +10,7 @@ from ..plugin_config import module_name
 def register_admin_router():
     """관리자 등록
     """
-    app.include_router(admin_router, prefix="/admin", tags=[module_name])
+    app.include_router(admin_router, prefix="/admin", tags=[module_name], include_in_schema=False)
 
 
 def register_admin_menu():
