@@ -213,7 +213,7 @@ async def find_member_id(
 @router.post("/members/search/password",
              summary="비밀번호 재설정 메일 발송",
              responses={**response_404, **response_422})
-async def find_member_password(
+async def find_member_password_api(
     request: Request,
     background_tasks: BackgroundTasks,
     member_service: Annotated[MemberServiceAPI, Depends()],
