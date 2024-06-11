@@ -248,6 +248,11 @@ class QaService(BaseService):
         self.db.commit()
         self.db.refresh(qa)
 
+        if data.qa_parent:
+            parent_qa = self.fetch_qa_content(data.qa_parent)
+            parent_qa.qa_status = 1
+            self.db.commit()
+
         return qa
 
     def fetch_total_records(self, member: Member, **kwargs) -> int:
@@ -332,10 +337,8 @@ class QaService(BaseService):
         Q&A 답변글을 조회합니다.
         """
         answer = self.fetch_qa_answer(qa_id)
-        if not answer:
-            self.raise_exception(404, f"{qa_id} : 답변글이 존재하지 않습니다.")
-
-        answer.image, answer.file = self.file_service.set_file_list(answer)
+        if answer:
+            answer.image, answer.file = self.file_service.set_file_list(answer)
 
         return answer
 
@@ -361,8 +364,6 @@ class QaService(BaseService):
         """
         Q&A 목록을 삭제합니다.
         """
-        self._validate_delete_permission()
-
         query = delete(QaContent).where(QaContent.qa_id.in_(qa_ids))
         self.db.execute(query)
         self.db.commit()
@@ -421,8 +422,3 @@ class QaService(BaseService):
         config = self.request.state.config
         if member.mb_level != 10 or config.cf_admin != member.mb_id:
             self.raise_exception(400, "답변글은 관리자만 작성할 수 있습니다.")
-
-    def _validate_delete_permission(self):
-        """Q&A 삭제 권한을 검증합니다."""
-        if not self.request.state.is_super_admin:
-            self.raise_exception(403, "최고관리자만 접근할 수 있습니다.")
