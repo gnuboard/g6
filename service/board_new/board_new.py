@@ -110,7 +110,7 @@ class BoardNewService(BaseService):
 
     def get_latest_posts(
         self,
-        bo_table_list: List[str],
+        bo_table_list: List[str], view_type: str = "write",
         rows: int = 10, subject_len: int = 40
     ):
         """최신글 목록 출력"""
@@ -128,12 +128,12 @@ class BoardNewService(BaseService):
 
             #게시글 목록 조회
             write_model = dynamic_create_write_table(bo_table)
-            writes = db.scalars(
-                select(write_model)
-                .where(write_model.wr_is_comment == 0)
-                .order_by(write_model.wr_num)
-                .limit(rows)
-            ).all()
+            query = select(write_model).order_by(write_model.wr_num).limit(rows)
+            if view_type == "comment":
+                query = query.where(write_model.wr_is_comment == 1)
+            else:
+                query = query.where(write_model.wr_is_comment == 0)
+            writes = db.scalars(query).all()
 
             for write in writes:
                 write = get_list(request, db, write, board_config, subject_len)

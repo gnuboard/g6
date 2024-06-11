@@ -9,7 +9,7 @@ from lib.board_lib import get_bo_table_list
 from api.v1.dependencies.member import get_current_member
 from api.v1.models.response import response_401, response_422
 from api.v1.models.board import (
-    BoardNewViewType, ResponseNormalModel, ResponseBoardNewListModel
+    BoardNewViewType, RequestBoardNewWrites, ResponseNormalModel, ResponseBoardNewListModel
 )
 from service.board_new import BoardNewServiceAPI
 
@@ -48,9 +48,15 @@ async def api_board_new_list(
             summary="최신글 조회",
             responses={**response_401, **response_422}
             )
-async def api_latest_posts(service: Annotated[BoardNewServiceAPI, Depends()]):
+async def api_latest_posts(
+    service: Annotated[BoardNewServiceAPI, Depends()],
+    data: RequestBoardNewWrites = Depends(),
+):
+    """
+    모든 게시판의 최신글을 조회합니다.
+    """
     bo_table_list = get_bo_table_list()
-    latest_posts = service.get_latest_posts(bo_table_list)
+    latest_posts = service.get_latest_posts(bo_table_list, data.view_type.value, data.rows)
     return latest_posts
 
 
@@ -58,11 +64,15 @@ async def api_latest_posts(service: Annotated[BoardNewServiceAPI, Depends()]):
             summary="최신글 게시판별 조회",
             responses={**response_401, **response_422}
             )
-async def api_latest_posts(
+async def api_latest_posts_by_board(
     service: Annotated[BoardNewServiceAPI, Depends()],
-    bo_table: Annotated[str, Path(...)],
+    bo_table: Annotated[str, Path(..., title="게시판 코드", description="게시판 코드")],
+    data: RequestBoardNewWrites = Depends(),
 ):
-    latest_posts = service.get_latest_posts([bo_table])
+    """
+    최신글을 게시판별로 조회합니다.
+    """
+    latest_posts = service.get_latest_posts([bo_table], data.view_type.value, data.rows)
     return latest_posts
 
 
