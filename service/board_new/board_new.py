@@ -137,6 +137,8 @@ class BoardNewService(BaseService):
 
             for write in writes:
                 write = get_list(request, db, write, board_config, subject_len)
+                # 첨부파일 정보 조회
+                write.images, write.normal_files = self.file_service.get_board_files_by_type(bo_table, write.wr_id)
 
             boards_info[bo_table] = writes
 
