@@ -39,6 +39,17 @@ class CreateMember(BaseModel):
     mb_sms: int = Body(0, title="SMS 수신 여부")
     mb_open: int = Body(0, title="	회원정보 공개 여부")
 
+    mb_1: str = Body("", title="여분 필드1")
+    mb_2: str = Body("", title="여분 필드2")
+    mb_3: str = Body("", title="여분 필드3")
+    mb_4: str = Body("", title="여분 필드4")
+    mb_5: str = Body("", title="여분 필드5")
+    mb_6: str = Body("", title="여분 필드6")
+    mb_7: str = Body("", title="여분 필드7")
+    mb_8: str = Body("", title="여분 필드8")
+    mb_9: str = Body("", title="여분 필드9")
+    mb_10: str = Body("", title="여분 필드10")
+
     @field_validator('mb_zip', mode='after')
     @classmethod
     def divide_zip(cls, v: str) -> str:

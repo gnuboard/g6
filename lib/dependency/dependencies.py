@@ -286,6 +286,7 @@ def validate_login_url(request: Request, url: str = Form(default="/")):
     allow_urls = []
 
     if (url
+            or url.startswith("//")
             and not url.startswith("/")
             and not url.startswith(str(request.base_url))
             and url not in allow_urls):

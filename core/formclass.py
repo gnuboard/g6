@@ -626,3 +626,4 @@ class InstallFrom:
     admin_email: str = Form(...)
 
     reinstall: int = Form(None)
+    is_skip_admin: int = Form(None)
