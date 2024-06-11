@@ -4,6 +4,7 @@ from fastapi import Depends, Request
 from sqlalchemy.exc import ProgrammingError
 
 from api.v1.auth import oauth2_optional
+from core.database import db_session
 from api.v1.dependencies.member import get_current_member_optional
 from api.v1.service.current_connect import CurrentConnectServiceAPI
 from api.v1.service.member import MemberServiceAPI
@@ -12,6 +13,7 @@ from lib.common import get_client_ip
 
 async def set_current_connect(
         request: Request,
+        db: db_session,
         service: Annotated[CurrentConnectServiceAPI, Depends()],
         member_service: Annotated[MemberServiceAPI, Depends()],
         ):
@@ -34,6 +36,10 @@ async def set_current_connect(
 
         # 현재 로그인한 이력 삭제
         service.delete_current_connect()
+
+        # 세션의 member 데이터를 데이터베이스와 동기화
+        if member:
+            db.refresh(member)
 
     except ProgrammingError as e:
         print(e)
