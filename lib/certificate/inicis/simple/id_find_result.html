@@ -1,0 +1,21 @@
+<script src="{{ url_for('static', path='/js/jquery.min.js?ver=3.7.1') }}"></script>
+<script src="{{ url_for('static', path='/js/common.js') }}"></script>
+<script>
+    $(function() {
+        let $opener = window.opener;
+        let $form = window.opener.document.form_certification;
+
+        if ($form != undefined) {
+            // 인증정보
+            $form.user_name.value = "{{ user_name }}";
+            $form.dupinfo.value = "{{ dupinfo }}";
+            $form.token.value = generate_token();
+
+            alert("간편 본인인증이 완료되었습니다.");
+
+            $form.submit();
+        }
+
+        window.close();
+    });
+</script>

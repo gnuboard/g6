@@ -1,10 +1,16 @@
 {% extends "base.html" %}
 
+{% block head %}
+    {% if certificate.is_use_cert %}
+        <script src="{{ url_for('static', path='/js/certify.js') }}" async></script>
+    {% endif %}
+{% endblock head %}
+
 {% block title %}회원정보 찾기{% endblock title %}
 {% block subtitle %}회원정보 > 아이디 찾기{% endblock subtitle %}
 
 {% block content %}
-<div id="find_info" class="new_win p-5 main-border rounded-3">
+<div id="find_info" class="new_win p-5 main-border rounded-3 {% if is_view_cert %}cert{% endif %}">
     <div class="w-100" style="max-width: 500px;">
         <form name="fidlost" action="/bbs/id_lost" onsubmit="return fidlost_submit(this);" method="post" autocomplete="off">
             <input type="hidden" name="token" value="">
@@ -31,8 +37,31 @@
             </div>
         </form>
     </div>
+    {% if is_view_cert %}
+    <div class="new_win_con find_btn">
+        <h3>본인인증으로 ID 찾기</h3>
+        <div class="cert_btn">
+        {% if certificate.cert_simple %}
+            <button type="button" id="win_sa_kakao_cert" class="btn_submit win_sa_cert" data-type="">간편인증</button>
+        {% endif %}
+        {% if certificate.cert_hp %}
+            <button type="button" id="win_hp_cert" class="btn_submit">휴대폰 본인확인</button>
+        {% endif %}
+        {% if certificate.cert_ipin %}
+            <button type="button" id="win_ipin_cert" class="btn_frmline">아이핀 본인확인</button>
+        {% endif %}
+        </div>
+    </div>
+    <form name="form_certification" action="{{ url_for('find_member_id_certificate') }}" method="post" autocomplete="off">
+        <input type="hidden" name="token" value="">
+        <input type="hidden" name="user_name" value="">
+        <input type="hidden" name="dupinfo" value="">
+    </form>
+    {% endif %}
 </div>
-<script>    
+<script>
+"use strict";
+
 function fidlost_submit(f) {
     // captcha 사용시
     if (typeof check_captcha === "function") {
@@ -45,5 +74,51 @@ function fidlost_submit(f) {
 
     return true;
 }
+
+$(function() {
+    /**
+     * 본인인증 관련 스크립트
+     */
+{% if certificate.is_use_cert %}
+    const cert_simple = "{{ certificate.cert_simple }}";
+    const cert_ipin = "{{ certificate.cert_ipin }}";
+    const cert_hp = "{{ certificate.cert_hp }}";
+
+    const common_param = "pageType=find_id";
+
+    // 이니시스 간편인증
+    if (cert_simple) {
+        $(".win_sa_cert").click(function() {
+            let params = "?directAgency=" + $(this).data("type") + "&" + common_param;
+            let request_url = "{{ url_for('get_certificate', provider='inicis', cert_type='simple') }}" + params;
+            call_sa(request_url);
+        });
+    }
+
+    // 아이핀 인증
+    if (cert_ipin) {
+        $("#win_ipin_cert").click(function() {
+            let params = "?" + common_param;
+            let request_url = "G5_OKNAME_URL/ipin1.php" + params;
+            certify_win_open('kcb-ipin', request_url);
+            return;
+        });
+    }
+
+    // 휴대폰인증
+    if (cert_hp) {
+        $("#win_hp_cert").click(function() {
+            let params = "?" + common_param;
+            let request_url = ""
+            // KCP 본인인증
+            if (cert_hp == "kcp") {
+                request_url = "{{ url_for('get_certificate', provider='kcp', cert_type='hp') }}" + params
+            }
+            certify_win_open(cert_hp + "-hp", request_url);
+            return;
+        });
+    }
+{% endif %}
+});
 </script>
 {% endblock content %}

@@ -9,6 +9,7 @@ from lib.captcha import captcha_widget
 from lib.dependency.dependencies import validate_captcha, validate_token
 from lib.dependency.member import redirect_if_logged_in, validate_password_reset
 from lib.mail import send_password_reset_mail
+from service.certificate_service import CertificateService
 from service.member_service import MemberService
 
 router = APIRouter(dependencies=[Depends(redirect_if_logged_in)])
@@ -17,12 +18,24 @@ templates.env.globals["captcha_widget"] = captcha_widget
 
 
 @router.get("/id_lost")
-async def find_member_id_form(request: Request):
+async def find_member_id_form(
+    request: Request,
+    cert_service: Annotated[CertificateService, Depends()]
+):
     """
     회원 ID 찾기 페이지
     """
+    cert_context = {
+        "cert_hp" : cert_service.cert_hp,
+        "cert_simple" : cert_service.cert_simple,
+        "cert_ipin" : cert_service.cert_ipin,
+        "is_use_cert": cert_service.cert_use,
+    }
     context = {
-        "request": request
+        "request": request,
+        "certificate": cert_context,
+        "is_view_cert": cert_service.cert_use and cert_service.cert_find
+
     }
     return templates.TemplateResponse("/member/id_find_form.html", context)
 
@@ -40,6 +53,26 @@ async def find_member_id(
     회원 ID 찾기 처리 및 결과 페이지
     """
     member_id, register_date = member_service.find_id(mb_name, mb_email)
+
+    context = {
+        "request": request,
+        "member_id": member_id,
+        "register_date": register_date
+    }
+    return templates.TemplateResponse("/member/id_find_result.html", context)
+
+
+@router.post("/id_lost/certificate",
+             dependencies=[Depends(validate_token)])
+async def find_member_id_certificate(
+    request: Request,
+    member_service: Annotated[MemberService, Depends()],
+    dupinfo: str = Form(...)
+):
+    """
+    회원 ID 찾기 처리 및 결과 페이지 (본인인증)
+    """
+    member_id, register_date = member_service.find_id_by_certify(dupinfo)
 
     context = {
         "request": request,

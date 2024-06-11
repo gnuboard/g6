@@ -95,7 +95,6 @@ class KcpHpService(CertificateBase, BaseService):
             # 페이지 전환 방식 사용여부
             "kcp_page_submit_yn": "",
         }
-
         return {
             "sb_param": json.dumps(sb_param_data, ensure_ascii=False),
         }

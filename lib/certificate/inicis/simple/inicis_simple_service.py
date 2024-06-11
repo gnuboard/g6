@@ -50,7 +50,7 @@ class InicisSimpleService(CertificateBase, BaseService):
             "api_key": api_key,
             "m_tx_id": m_tx_id,
             "req_svc_cd": req_svc_cd,
-            "identifier": '테스트 서명',
+            "identifier": '서명',
             "user_name": user_name,
             "user_phone": user_phone,
             "user_birth": user_birth,

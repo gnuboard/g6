@@ -12,7 +12,7 @@ from PIL import Image, UnidentifiedImageError
 from sqlalchemy import select, update
 
 from core.database import db_session
-from core.exception import AlertException
+from core.exception import AlertCloseException, AlertException
 from core.models import Member
 from lib.common import get_client_ip, is_none_datetime
 from lib.member import get_next_open_date, hide_member_id
@@ -223,6 +223,23 @@ class MemberService(BaseService):
         if SocialAuthService.check_exists_by_member_id(member.mb_id):
             self.raise_exception(
                 status_code=400, detail="소셜로그인으로 가입하신 회원은 아이디를 찾을 수 없습니다.")
+
+        return hide_member_id(member.mb_id), member.mb_datetime.strftime("%Y-%m-%d %H:%M:%S")
+
+    def find_id_by_certify(self, dubinfo: str) -> Member:
+        """
+        본인인증 정보로 회원 아이디를 찾습니다.
+        - 최고관리자는 제외합니다.
+        """
+        admin_id = getattr(self.config, "cf_admin", "admin")
+        member = self.db.scalar(
+            select(Member).where(
+                Member.mb_dupinfo == dubinfo,
+                Member.mb_id != admin_id  # 최고관리자는 제외
+            )
+        )
+        if not member:
+            raise AlertCloseException("입력하신 정보와 일치하는 회원이 없습니다.", 404)
 
         return hide_member_id(member.mb_id), member.mb_datetime.strftime("%Y-%m-%d %H:%M:%S")
 

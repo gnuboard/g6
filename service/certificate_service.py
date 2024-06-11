@@ -39,6 +39,7 @@ class CertificateService(BaseService):
         self.cert_ipin = getattr(request.state.config, "cf_cert_ipin", None)
         self.cert_req = getattr(request.state.config, "cf_cert_req", 0)
         self.cert_limit = getattr(request.state.config, "cf_cert_limit", 0)
+        self.cert_find = getattr(request.state.config, "cf_cert_find", 0)
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise AlertCloseException(status_code=status_code, detail=detail)
