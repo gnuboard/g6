@@ -82,13 +82,27 @@
                         <th scope="row"><label for="admin_email">E-mail</label></th>
                         <td><input type="text" id="admin_email" name="admin_email" value="admin@your-domain.com"title="최고관리자 이메일"></td>
                     </tr>
+                    <tr>
+                        <th scope="row"><label for="re_install">최고관리자 미설정</label></th>
+                        <td>
+                            <label><input type="checkbox" id="is_skip_admin" name="is_skip_admin" value="1"> 미설정</label>
+                            <span>이미 최고관리자 계정이 있을 경우에만 사용하시길 권장합니다.</span>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
-            <p>
-                <strong class="st_strong">주의! 이미 {{ app_name }} 버전이 존재한다면 기존의 DB 자료가 삭제되므로 주의하십시오.</strong>
-                <br>주의사항을 이해하셨다면 "다음" 버튼을 클릭하여 설치를 계속 진행하십시오.
-            </p>
-        
+            <div class="warning" id="warning_reinstall">
+                <strong class="st_strong">
+                    주의! 이미 동일한 이름의 테이블이 존재한다면, 기존의 자료가 삭제되므로 주의하십시오.
+                </strong>
+            </div>
+            <div class="warning" id="warning_skip_admin">
+                <strong class="st_strong">
+                    주의! 최고관리자 설정을 하지 않을 경우 관리자 페이지에 바로 접근할 수 없습니다. <br>
+                    직접 데이터베이스에 접속하여 최고관리자 계정을 생성/설정해야 합니다.
+                </strong>
+            </div>
+            주의사항을 이해하셨다면 "다음" 버튼을 클릭하여 설치를 계속 진행하십시오.
             <div class="inner_btn">
                 <input type="submit" value="다음">
             </div>
@@ -122,7 +136,23 @@
         if (e.target.checked) {
             if (!confirm('재설치를 하시면 기존의 데이터베이스 자료가 전부 삭제됩니다.\n계속하시겠습니까?')) {
                 e.target.checked = false;
+            } else {
+                document.getElementById('warning_reinstall').style.display = 'block';
             }
+        } else {
+            document.getElementById('warning_reinstall').style.display = 'none';
+        }
+    });
+
+    document.getElementById('is_skip_admin').addEventListener('change', (e) => {
+        if (e.target.checked) {
+            if (!confirm('최고관리자 설정을 하지 않으면 관리자페이지 접근이 어렵습니다.\n계속하시겠습니까?')) {
+                e.target.checked = false;
+            } else {
+                document.getElementById('warning_skip_admin').style.display = 'block';
+            }
+        } else {
+            document.getElementById('warning_skip_admin').style.display = 'none';
         }
     });
 

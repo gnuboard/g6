@@ -179,6 +179,12 @@ async def install_process():
         try:
             form_data: InstallFrom = form_cache.get("form")
 
+            # 테이블 이름을 변경 & 메타데이터 갱신
+            tables = Base.metadata.tables.values()
+            for table in tables:
+                new_table_name = table.name.replace("g6_", form_data.db_table_prefix)
+                table.name = new_table_name
+
             if form_data.reinstall:
                 Base.metadata.drop_all(bind=engine)
                 # 접두사 + 'write_' 게시판 테이블 전부 삭제
@@ -191,19 +197,14 @@ async def install_process():
 
                 yield "기존 데이터베이스 테이블 삭제 완료"
 
-            # 테이블 이름을 변경 & 메타데이터 갱신
-            tables = Base.metadata.tables.values()
-            for table in tables:
-                new_table_name = table.name.replace("g6_", form_data.db_table_prefix)
-                table.name = new_table_name
-
             Base.metadata.create_all(bind=engine)
             yield "데이터베이스 테이블 생성 완료"
 
             with db_connect.sessionLocal() as db:
                 config_setup(db, form_data.admin_id, form_data.admin_email)
-                admin_member_setup(db, form_data.admin_id, form_data.admin_name,
-                                   form_data.admin_password, form_data.admin_email)
+                if not form_data.is_skip_admin:
+                    admin_member_setup(db, form_data.admin_id, form_data.admin_name,
+                                    form_data.admin_password, form_data.admin_email)
                 content_setup(db)
                 qa_setup(db)
                 faq_master_setup(db)
@@ -250,7 +251,7 @@ def admin_member_setup(db: Session, admin_id: str, admin_name : str,
                        admin_password: str, admin_email: str):
     """최고관리자 등록"""
     admin_member = db.scalar(
-        select(Member).where(Member().mb_id == admin_id)
+        select(Member).where(Member.mb_id == admin_id)
     )
     if admin_member:
         admin_member.mb_password = create_hash(admin_password)
