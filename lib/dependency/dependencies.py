@@ -283,12 +283,12 @@ def validate_login_url(request: Request, url: str = Form(default="/")):
     """
     로그인할 때 url을 검사하는 함수
     """
-    allow_urls = []
+    domain = request.url.hostname
 
-    if (url
-            or url.startswith("//")
-            and not url.startswith("/")
-            and not url.startswith(str(request.base_url))
-            and url not in allow_urls):
+    if domain is None:
+        raise AlertException("올바르지 않은 요청입니다.", 400)
+
+    if (url.startswith("//")
+            or (not url.startswith("/") and domain not in url)):
         raise AlertException("올바르지 않은 URL입니다.", 400)
     return url
