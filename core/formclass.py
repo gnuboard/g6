@@ -269,6 +269,16 @@ class RegisterMemberForm(MemberForm):
 
         super().__post_init__()
 
+@dataclass
+class RegisterSocialMemberForm:
+    """소셜 회원가입 폼 데이터"""
+    mb_id: str
+    mb_password: str
+    mb_name: str
+    mb_nick: str
+    mb_email: str
+    mb_level: int
+
 
 @dataclass
 class UpdateMemberForm(MemberForm):

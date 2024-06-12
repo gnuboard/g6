@@ -1,10 +1,11 @@
 """예외처리 Core 모듈"""
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.templating import _TemplateResponse
+from starlette.datastructures import URL
 
 
 class AlertException(HTTPException):
@@ -12,7 +13,10 @@ class AlertException(HTTPException):
     - HTTPExceptiond에서 페이지 이동을 위한 url 매개변수를 추가적으로 받는다.
     """
 
-    def __init__(self, detail: str = None, status_code: int = 200, url: str = None):
+    def __init__(self,
+                 detail: str = None,
+                 status_code: int = 200,
+                 url: Union[str, URL] = None):
         self.status_code = status_code
         self.detail = detail
         self.url = url

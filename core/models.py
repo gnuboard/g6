@@ -940,7 +940,7 @@ class MemberSocialProfiles(Base):
     photourl = Column(String(255), nullable=False, default="")
     displayname = Column(String(255), nullable=False, default="")
     description = Column(String(255), nullable=False, default="")
-    mp_register_day = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
+    mp_register_day = Column(DateTime, nullable=False, default=func.now())
     mp_latest_day = Column(DateTime, nullable=False, default=datetime(1, 1, 1, 0, 0, 0))
 
     member: Mapped["Member"] = relationship("Member", back_populates="socials")

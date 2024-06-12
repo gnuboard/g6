@@ -1,4 +1,3 @@
-
 """메인 페이지 Template Router"""
 from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, Request
