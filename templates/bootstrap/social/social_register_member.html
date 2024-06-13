@@ -192,17 +192,13 @@
         <span class="txt">닫기</span>
     </button>
     <div class="connect-fg">
-        <form method="post" action="{{ url_for('login') }}" onsubmit="return flogin_submit(this);">
+        <form method="post" action="{{ url_for('social_register_link') }}" onsubmit="return flogin_submit(this);">
             <input type="hidden" id="provider" name="provider" value="{{ provider }}">
-            <!--            <input type="hidden" id="action" name="action" value="social_account_linking">-->
-
             <div class="connect-title">기존 계정에 연결하기</div>
-
             <div class="connect-desc">
                 기존 아이디에 SNS 아이디를 연결합니다.<br>
                 이 후 SNS 아이디로 로그인 하시면 기존 아이디로 로그인 할 수 있습니다.
             </div>
-
             <div id="login_fs">
                 <label for="login_id" class="login_id">아이디 (필수)</label>
                 <span class="lg_id">
@@ -215,7 +211,6 @@
                 <br>
                 <input type="submit" value="연결하기" class="login_submit btn_submit">
             </div>
-
         </form>
     </div>
 </div>

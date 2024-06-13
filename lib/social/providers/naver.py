@@ -1,5 +1,7 @@
 from typing import Optional, Tuple
 
+from authlib.integrations.starlette_client import OAuth
+
 from core.formclass import SocialProfile
 from lib.social.social import SocialProvider
 
@@ -12,7 +14,7 @@ class Naver(SocialProvider):
     provider_name = "naver"
 
     @classmethod
-    def register(cls, oauth_instance, client_id, client_secret):
+    def register(cls, oauth_instance: OAuth, client_id, client_secret):
         oauth_instance.register(
             name="naver",
             access_token_url="https://nid.naver.com/oauth2.0/token",

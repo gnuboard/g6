@@ -7,7 +7,7 @@ from typing import Optional
 from uuid import uuid4
 
 from authlib.integrations.starlette_client.apps import StarletteOAuth2App
-from fastapi import APIRouter, BackgroundTasks, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, Request
 from sqlalchemy import delete, exists, select
 from starlette.responses import RedirectResponse
 from typing_extensions import Annotated
@@ -156,7 +156,6 @@ async def get_social_register_form(
 
     provider_class = load_provider_class(provider)
     response = await get_social_profile(request, provider_class, auth_token)
-
     social_email, profile = provider_class.convert_gnu_profile_data(response)
 
     form_context = {
@@ -218,9 +217,8 @@ async def post_social_register(
     member_social_profiles.provider = provider
     member_social_profiles.identifier = profile.identifier
     member_social_profiles.displayname = profile.displayname
-    member_social_profiles.profile_url = profile.profile_url
+    member_social_profiles.profileurl = profile.profile_url
     member_social_profiles.photourl = profile.photourl
-    member_social_profiles.object_sha = ""  # 사용하지 않는 데이터.
 
     member_data = RegisterSocialMemberForm(
         mb_id=gnu_social_id,
@@ -244,6 +242,52 @@ async def post_social_register(
     background_tasks.add_task(send_register_mail, request, member)
 
     return RedirectResponse(url="/", status_code=302)
+
+
+@router.post('/social/register/link')
+async def social_register_link(
+    request: Request,
+    db: db_session,
+    member_service: Annotated[MemberService, Depends()],
+    provider: Annotated[str, Depends(get_provider_by_session)],
+    auth_token: Annotated[dict, Depends(get_auth_token_by_session)],
+    mb_id: str = Form(...),
+    mb_password: str = Form(...),
+):
+    """
+    기존 회원에 소셜계정 연결
+    """
+    # 로그인 검증
+    member = member_service.authenticate_member(mb_id, mb_password)
+
+    # 이미 소셜계정이 연결되어 있는지 확인
+    is_exists = SocialAuthService.check_exists_by_mb_id(provider, member.mb_id)
+    if is_exists:
+        raise AlertException(detail=f"이미 {provider} ID가 연결된 계정입니다.", status_code=400)
+
+    # 소셜계정 연결
+    provider_class = load_provider_class(provider)
+    response = await get_social_profile(request, provider_class, auth_token)
+    social_email, profile = provider_class.convert_gnu_profile_data(response)
+
+    member_social_profiles = MemberSocialProfiles()
+    member_social_profiles.mb_id = member.mb_id
+    member_social_profiles.provider = provider
+    member_social_profiles.identifier = profile.identifier
+    member_social_profiles.displayname = profile.displayname
+    member_social_profiles.profileurl = profile.profile_url
+    member_social_profiles.photourl = profile.photourl
+    db.add(member_social_profiles)
+    db.commit()
+
+    # 로그인 세션 생성
+    request.session["ss_mb_id"] = member.mb_id
+    ss_mb_key = session_member_key(request, member)  # XSS 공격 대응
+    request.session["ss_mb_key"] = ss_mb_key
+
+    raise AlertException(detail="소셜계정이 연결되었습니다.",
+                         status_code=200,
+                         url=request.url_for('index'))
 
 
 class SocialAuthService:
@@ -273,26 +317,24 @@ class SocialAuthService:
         return None
 
     @classmethod
-    def check_exists_by_social_id(cls, identifier, provider) -> bool:
+    def check_exists_by_mb_id(cls, provider: str, mb_id: str) -> bool:
         """소셜 서비스 아이디가 존재하는지 확인
         Args:
-            identifier (str) : 소셜서비스 사용자 식별 id
             provider (str) : 소셜 제공자
+            mb_id (str) : 회원 아이디
         Returns:
-            True or False
+            bool
         """
         with SessionLocal() as db:
             result = db.scalar(
                 exists(MemberSocialProfiles.mp_no)
                 .where(
                     MemberSocialProfiles.provider == provider,
-                    MemberSocialProfiles.identifier == identifier
+                    MemberSocialProfiles.mb_id == mb_id
                 ).select()
             )
-        if result:
-            return True
 
-        return False
+        return result
 
     @classmethod
     def check_exists_by_member_id(cls, member_id) -> bool:
