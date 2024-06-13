@@ -14,7 +14,7 @@ from sqlalchemy import select, update
 from core.database import db_session
 from core.exception import AlertException
 from core.models import Member
-from lib.common import get_client_ip, is_none_datetime
+from lib.common import filter_words, get_client_ip, is_none_datetime, check_prohibit_words
 from lib.member import get_next_open_date, hide_member_id
 from lib.pbkdf2 import validate_password
 from service import BaseService
@@ -511,9 +511,17 @@ class ValidateMember(BaseService):
         if member:
             self.raise_exception(409, "이미 가입된 아이디입니다.")
 
-        prohibit_ids = [id.strip() for id in getattr(self.config, "cf_prohibit_id", "").split(",")]
-        if mb_id in prohibit_ids:
-            self.raise_exception(403, "아이디로 사용할 수 없는 단어입니다.")
+        if word := check_prohibit_words(self.request, mb_id):
+            self.raise_exception(403, f"아이디로 사용할 수 없는 단어입니다. ({word})")
+
+    def valid_name(self, mb_name: str) -> None:
+        """회원가입이 가능한 이름인지 검사
+
+        Args:
+            mb_name (str): 가입할 이름
+        """
+        if word := filter_words(self.request, mb_name):
+            self.raise_exception(403, f"이름에 필터링 단어({word})가 포함되어 있습니다.")
 
     def valid_nickname(self, mb_nick: str) -> None:
         """ 등록 가능한 닉네임인지 검사
@@ -525,8 +533,11 @@ class ValidateMember(BaseService):
         if member:
             self.raise_exception(409, "이미 존재하는 닉네임입니다.")
 
-        if mb_nick in getattr(self.config, "cf_prohibit_id", "").strip():
-            self.raise_exception(403, "닉네임으로 사용할 수 없는 단어입니다.")
+        if prohibit_word := check_prohibit_words(self.request, mb_nick):
+            self.raise_exception(403, f"닉네임으로 사용할 수 없는 단어입니다. ({prohibit_word})")
+
+        if filter_word := filter_words(self.request, mb_nick):
+            self.raise_exception(403, f"닉네임에 필터링 단어({filter_word})가 포함되어 있습니다.")
 
     def valid_nickname_change_date(self, change_date: date = None) -> None:
         """ 닉네임 변경이 가능한지 검사

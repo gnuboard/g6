@@ -25,6 +25,7 @@ def validate_register_data(
 ):
     """회원 가입시 회원 정보의 유효성을 검사합니다."""
     validate.valid_id(data.mb_id)
+    validate.valid_name(data.mb_name)
     validate.valid_nickname(data.mb_nick)
     validate.valid_email(data.mb_email)
 
