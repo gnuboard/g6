@@ -54,6 +54,8 @@ class JWT:
         exp = datetime.now() + timedelta(minutes=expires_minute)
         to_encode.update({
             "iss": api_settings.AUTH_ISSUER,
+            "aud": api_settings.AUTH_AUDIENCE,
+            "nbf": iat.timestamp(),
             "iat": iat.timestamp(),
             "exp": exp.timestamp()})
 
