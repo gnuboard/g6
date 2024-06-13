@@ -1,113 +1,66 @@
 """소셜 로그인 함수 모음"""
-import abc
 import logging
-from typing import Optional, Tuple
+from typing import Optional
 
 from authlib.integrations.starlette_client import OAuth
 from authlib.integrations.starlette_client.apps import StarletteOAuth2App
 from starlette.requests import Request
 
 from core.exception import AlertException
-from core.formclass import SocialProfile
+from core.models import Config
+from lib.social import providers
+from lib.social.base import SocialProvider
 
 oauth = OAuth()
 
 
-class SocialProvider(metaclass=abc.ABCMeta):
+def get_provider_client_key(provider: str, config: Config) -> tuple:
     """
-    소셜 서비스제공자의 oauth 인증에 필요한 메서드를 정의한 인터페이스
-    클래스 메서드만 사용하며 인스턴스를 생성하지 않는다.
+    소셜 로그인 제공자의 client_id, secret_key 가져오기
+
+    Args:
+        provider (str): 소셜 서비스 제공자
+        config (Config): 기본환경설정 객체
+
+    Returns:
+        tuple: client_id, secret_key
+
+    Examples:
+        client_id, secret_key = get_provider_client_key('naver', config)
     """
+    if provider == "naver":
+        client_id = getattr(config, "cf_naver_clientid", '')
+        secret_key = getattr(config, "cf_naver_secret", '')
+    elif provider == 'kakao':
+        client_id = getattr(config, "cf_kakao_rest_key", '')
+        secret_key = getattr(config, "cf_kakao_client_secret", '')
+    elif provider == 'google':
+        client_id = getattr(config, "cf_google_clientid", '')
+        secret_key = getattr(config, "cf_google_secret", '')
+    elif provider == 'twitter':
+        client_id = getattr(config, "cf_twitter_key", '')
+        secret_key = getattr(config, "cf_twitter_secret", '')
+    elif provider == 'facebook':
+        client_id = getattr(config, "cf_facebook_appid", '')
+        secret_key = getattr(config, "cf_facebook_secret", '')
 
-    provider_name = ""
-
-    @classmethod
-    @abc.abstractmethod
-    def register(cls, oauth_instance, client_id, client_secret):
-        """
-        소셜 서비스 인증 객체를 등록
-        Args:
-            oauth_instance (OAuth): OAuth 인증 객체
-            client_id (str): 소셜 서비스 클라이언트 아이디
-            client_secret (str): 소셜 서비스 클라이언트 시크릿
-        """
-        raise NotImplementedError()
-
-    @classmethod
-    @abc.abstractmethod
-    async def fetch_profile_data(cls, oauth_instance, auth_token) -> Optional[object]:
-        """
-        소셜 서비스 프로필 데이터 가져오기
-        Args:
-            oauth_instance (OAuth): OAuth 인증 객체
-            auth_token (Dict): 소셜 서비스 토큰
-        Returns:
-            SocialProfile
-        """
-        raise NotImplementedError()
-
-    @classmethod
-    @abc.abstractmethod
-    def convert_gnu_profile_data(cls, response) -> Tuple[str, SocialProfile]:
-        """
-        그누보드 소셜 서비스 프로필 데이터를 가져옴
-        Args:
-            response (dict): 소셜 서비스 응답 데이터
-        Returns:
-            Tuple(email, SocialProfile)
-        """
-        raise NotImplementedError()
-
-    @classmethod
-    @abc.abstractmethod
-    async def logout(cls, oauth_instance, auth_token):
-        """
-        소셜 서비스 토큰 revoke
-        Args:
-            oauth_instance (OAuth): OAuth 인증 객체
-            auth_token (Dict): 소셜 서비스 토큰
-        """
-        raise NotImplementedError()
+    return client_id.strip(), secret_key.strip()
 
 
-# def register_social_provider(config: Config):
-#     """
-#     소셜 서비스 인증 객체를 등록
-#     Args:
-#         config (Config): 기본환경설정 객체
-#     Examples:
-#         서버 재시작 후 인증 객체가 등록되지 않아서 사용.
-#     """
-#     if not config.cf_social_login_use:
-#         return
+def register_social_provider(provider: str, client_id: str, secret_key: str):
+    """
+    소셜 서비스 인증 객체를 등록
 
-#     available_providers = config.cf_social_servicelist.split(',')
-#     for provider_name in available_providers:
+    Args:
+        provider (str): 소셜 서비스 제공자
+        client_id (str): 클라이언트 ID
+        secret_key (str): 시크릿 키
 
-#         # 소셜프로바이더 등록 - 등록된 클래스 찾아 호출
-#         provider_module_name = getattr(providers, f"{provider_name}")
-#         provider_class: SocialProvider = getattr(provider_module_name, f"{provider_name.capitalize()}")
-
-#         if provider_name == "naver":
-#             if config.cf_naver_clientid.strip() and config.cf_naver_secret.strip():
-#                 provider_class.register(oauth, config.cf_naver_clientid.strip(), config.cf_naver_secret.strip())
-
-#         elif provider_name == 'kakao':
-#             if config.cf_kakao_rest_key:
-#                 # 카카오 client_secret 은 선택사항
-#                 provider_class.register(oauth, config.cf_kakao_rest_key.strip(), config.cf_kakao_client_secret.strip())
-
-#         elif provider_name == 'google':
-#             if not (config.cf_google_clientid.strip() and config.cf_google_secret.strip()):
-#                 provider_class.register(oauth, config.cf_google_clientid.strip(), config.cf_google_secret.strip())
-
-#         elif provider_name == 'twitter':
-#             if not (config.cf_twitter_key.strip() and config.cf_twitter_secret.strip()):
-#                 provider_class.register(oauth, config.cf_twitter_key.strip(), config.cf_twitter_secret.strip())
-
-#         elif provider_name == 'facebook':
-#             if not (config.cf_facebook_appid.strip() and config.cf_facebook_secret.strip()):
-#                 provider_class.register(oauth, config.cf_facebook_appid.strip(), config.cf_facebook_secret.strip())
+    Examples:
+        register_social_provider('naver', 'client_id', 'secret_key')
+    """
+    provider_class = load_provider_class(provider)
+    provider_class.register(oauth, client_id, secret_key)
 
 
 async def get_social_login_token(
@@ -177,11 +130,10 @@ def load_provider_class(provider: str):
     """
     소셜 로그인 제공자 클래스 가져오기
     """
-    from lib.social import providers
-
     try:
         provider_module = getattr(providers, f"{provider}")
-        provider_class: SocialProvider = getattr(provider_module, f"{provider.capitalize()}")
+        class_name = provider.capitalize()
+        provider_class: SocialProvider = getattr(provider_module, class_name)
     except ImportError as e:
         raise AlertException(status_code=500,
                              detail="프로바이더 모듈을 찾을 수 없습니다.") from e

@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 from authlib.integrations.starlette_client import OAuth
 
 from core.formclass import SocialProfile
-from lib.social.social import SocialProvider
+from lib.social.base import SocialProvider
 
 
 class Naver(SocialProvider):

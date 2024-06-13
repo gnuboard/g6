@@ -1,12 +1,12 @@
 import os
 import re
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Path, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
-from sqlalchemy import delete, insert, select
+from sqlalchemy import inspect, select
 from sqlalchemy.exc import ProgrammingError
 from starlette.staticfiles import StaticFiles
 
@@ -28,6 +28,7 @@ from lib.common import (
 from lib.dependency.dependencies import check_use_template
 from lib.member import is_super_admin
 from lib.scheduler import scheduler
+from lib.social.social import get_provider_client_key, register_social_provider
 from lib.token import create_session_token
 from service.member_service import MemberService
 from service.point_service import PointService
@@ -51,6 +52,18 @@ async def lifespan(app: FastAPI):
     - yield 이전의 코드: 서버가 시작될 때 실행
     - yield 이후의 코드: 서버가 종료될 때 실행
     """
+    with DBConnect().sessionLocal() as db:
+        # 설치 전에는 config 테이블이 없으므로 확인.
+        if inspect(DBConnect().engine).has_table(DBConnect().table_prefix + "config"):
+            try:
+                config = db.scalar(select(models.Config))
+                available_providers = getattr(config, "cf_social_servicelist", '').split(',')
+                for provider in available_providers:
+                    client_id, secret_key = get_provider_client_key(provider, config)
+                    register_social_provider(provider, client_id, secret_key)
+            except Exception as e:
+                print("소셜로그인 설정을 불러올 수 없습니다. " + str(e.args[0]))
+
     yield
     scheduler.remove_flag()
 

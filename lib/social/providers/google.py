@@ -1,9 +1,8 @@
+import httpx
 from typing import Optional, Tuple
 
-import httpx
-
 from core.formclass import SocialProfile
-from lib.social.social import SocialProvider
+from lib.social.base import SocialProvider
 
 
 class Google(SocialProvider):

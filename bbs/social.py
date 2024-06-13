@@ -25,7 +25,7 @@ from lib.dependency.social import (
 from lib.mail import send_register_mail
 from lib.pbkdf2 import create_hash
 from lib.social.social import (
-    get_social_login_token, get_social_profile, oauth, load_provider_class
+    get_provider_client_key, get_social_login_token, get_social_profile, oauth, load_provider_class, register_social_provider
 )
 from service.member_service import MemberService, ValidateMember
 from service.point_service import PointService
@@ -52,34 +52,14 @@ async def request_social_login(
     config: Config = request.state.config
 
     # 소셜 로그인 별 client_id, secret_key 가져오기
-    client_id = ''
-    secret_key = ''
-    if provider == "naver":
-        client_id = getattr(config, "cf_naver_clientid", '')
-        secret_key = getattr(config, "cf_naver_secret", '')
-    elif provider == 'kakao':
-        client_id = getattr(config, "cf_kakao_rest_key", '')
-        secret_key = getattr(config, "cf_kakao_client_secret", '')
-    elif provider == 'google':
-        client_id = getattr(config, "cf_google_clientid", '')
-        secret_key = getattr(config, "cf_google_secret", '')
-    elif provider == 'twitter':
-        client_id = getattr(config, "cf_twitter_key", '')
-        secret_key = getattr(config, "cf_twitter_secret", '')
-    elif provider == 'facebook':
-        client_id = getattr(config, "cf_facebook_appid", '')
-        secret_key = getattr(config, "cf_facebook_secret", '')
-
-    client_id = client_id.strip()
-    secret_key = secret_key.strip()
+    client_id, secret_key = get_provider_client_key(provider, config)
 
     # 카카오 client_secret 은 선택사항
     if not (client_id and (secret_key or provider == 'kakao')):
         raise AlertException("소셜 로그인 설정이 등록되지 않았습니다. 관리자에게 문의하십시오.", 400)
 
     # 소셜 로그인 정보 등록
-    provider_class = load_provider_class(provider)
-    provider_class.register(oauth, client_id, secret_key)
+    register_social_provider(provider, client_id, secret_key)
 
     # 소셜 로그인 인증 페이지 요청
     oauth2_app: StarletteOAuth2App = getattr(oauth, provider)

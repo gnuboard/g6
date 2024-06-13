@@ -1,7 +1,7 @@
 from typing import Optional, Tuple
 
 from core.formclass import SocialProfile
-from lib.social.social import SocialProvider
+from lib.social.base import SocialProvider
 
 
 class Facebook(SocialProvider):
