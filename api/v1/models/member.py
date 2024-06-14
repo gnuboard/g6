@@ -106,6 +106,17 @@ class UpdateMember(BaseModel):
     mb_sms: int = Body(None, title="SMS 수신 여부")
     mb_open: int = Body(None, title="회원정보 공개 여부")
 
+    mb_1: str
+    mb_2: str
+    mb_3: str
+    mb_4: str
+    mb_5: str
+    mb_6: str
+    mb_7: str
+    mb_8: str
+    mb_9: str
+    mb_10: str
+
     @field_validator('mb_zip', mode='after')
     @classmethod
     def divide_zip(cls, v: str) -> str:
@@ -159,6 +170,17 @@ class MemberResponse(BaseModel):
 
     mb_icon_path: str
     mb_image_path: str
+
+    mb_1: str
+    mb_2: str
+    mb_3: str
+    mb_4: str
+    mb_5: str
+    mb_6: str
+    mb_7: str
+    mb_8: str
+    mb_9: str
+    mb_10: str
 
     @model_validator(mode='before')
     def init_fields(self) -> 'MemberResponse':
