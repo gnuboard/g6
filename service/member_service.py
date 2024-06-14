@@ -1,4 +1,5 @@
 """회원 관련 기능을 제공하는 서비스 모듈입니다."""
+import hashlib
 import os
 import re
 import secrets
@@ -88,7 +89,9 @@ class MemberService(BaseService):
 
         is_certified, message = self.is_member_email_certified(member)
         if not is_certified:
-            self.raise_exception(status_code=403, detail=message)
+            key = hashlib.md5(f"{member.mb_ip}{member.mb_datetime}".encode()).hexdigest()
+            url = self.request.url_for("certify_email_update_form", mb_id=mb_id, key=key)
+            self.raise_exception(status_code=403, detail=message, url=url)
 
         return member
 
@@ -555,13 +558,13 @@ class ValidateMember(BaseService):
                 available_str = available_date.strftime("%Y-%m-%d")
                 self.raise_exception(403, f"{available_str} 이후 닉네임을 변경할 수 있습니다.")
 
-    def valid_email(self, email: str) -> None:
+    def valid_email(self, email: str, except_mb_id: str = None) -> None:
         """ 등록 가능한 이메일인지 검사
 
         Args:
             email (str): 이메일 주소
         """
-        if self.is_exists_email(email):
+        if self.is_exists_email(email, except_mb_id):
             self.raise_exception(409, "이미 가입된 이메일입니다.")
 
         if self.is_prohibit_email(email):

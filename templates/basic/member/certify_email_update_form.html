@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}메일인증 메일주소 변경{% endblock title %}
+{% block subtitle %}메일인증 > 메일주소 변경{% endblock subtitle %}
+
+{% block content %}
+    <p class="rg_em_p">메일인증을 받지 못한 경우 회원정보의 메일주소를 변경 할 수 있습니다.</p>
+    <form method="post" name="fregister_email" action="{{ url_for('certify_email_update', mb_id=member.mb_id, key=key) }}" onsubmit="return fregister_email_submit(this);">
+        <input type="hidden" name="token" value="">
+        <div class="tbl_frm01 tbl_frm rg_em">
+            <table>
+                <tr>
+                    <th scope="row"><label for="reg_mb_email">E-mail<strong class="sound_only">필수</strong></label></th>
+                    <td>
+                        <input type="text" name="email" id="reg_mb_email" class="frm_input email required"
+                            size="30" maxlength="100" value="{{ member.mb_email }}" required>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">자동등록방지</th>
+                    <td>
+                        <!-- Captcha Start -->
+                        <fieldset id="captcha" class="captcha">
+                            {% include captcha_widget(request) ignore missing %}
+                        </fieldset>
+                        <!-- Captcha End -->
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="btn_confirm">
+            <input type="submit" id="btn_submit" class="btn_submit" value="인증메일변경">
+            <a href="{{ url_for('index') }}" class="btn_cancel">취소</a>
+        </div>
+    </form>
+    <script>
+        function fregister_email_submit(f) {
+            if (typeof check_captcha === "function") {
+                if (!check_captcha(f)) {
+                    return false;
+                }
+            }
+
+            f.token.value = generate_token();
+
+            return true;
+        }
+    </script>
+{% endblock content %}

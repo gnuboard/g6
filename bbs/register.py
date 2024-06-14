@@ -1,4 +1,5 @@
 """회원가입 Template Router"""
+import secrets
 from datetime import datetime
 from typing_extensions import Annotated
 
@@ -18,9 +19,9 @@ from lib.common import session_member_key
 from lib.dependency.dependencies import (
     validate_captcha, validate_token, no_cache_response
 )
-from lib.dependency.member import validate_policy_agree, validate_register_data
-from lib.mail import send_register_mail
-from service.member_service import MemberImageService, MemberService, ValidateMemberAjax
+from lib.dependency.member import validate_certify_email_member, validate_policy_agree, validate_register_data
+from lib.mail import send_register_admin_mail, send_register_mail
+from service.member_service import MemberImageService, MemberService, ValidateMember, ValidateMemberAjax
 from service.point_service import PointService
 
 router = APIRouter()
@@ -111,6 +112,7 @@ async def post_register_form(
 
     # 회원가입메일 발송 처리(백그라운드)
     background_tasks.add_task(send_register_mail, request, member)
+    background_tasks.add_task(send_register_admin_mail, request, member)
 
     # 이미지 검사 & 업로드
     file_service.update_image_file(mb_id, 'icon', mb_icon)
@@ -143,6 +145,52 @@ async def register_result(
         "member": member,
     }
     return templates.TemplateResponse("/bbs/register_result.html", context)
+
+
+@router.get("/email_certify/update/{mb_id}/{key}")
+async def certify_email_update_form(
+    request: Request,
+    member: Annotated[Member, Depends(validate_certify_email_member)],
+    key: str = Path(...)
+):
+    """
+    인증 이메일 변경 페이지
+    """
+    context = {
+        "request": request,
+        "member": member,
+        "key": key,
+    }
+    return templates.TemplateResponse("/member/certify_email_update_form.html", context)
+
+
+@router.post("/email_certify/update/{mb_id}/{key}",
+             dependencies=[Depends(validate_token),
+                           Depends(validate_captcha)])
+async def certify_email_update(
+    request: Request,
+    db: db_session,
+    member_vaildate: Annotated[ValidateMember, Depends()],
+    member: Annotated[Member, Depends(validate_certify_email_member)],
+    email: Annotated[str, Form(...)],
+):
+    """
+    인증 이메일 변경
+    """
+    member_vaildate.valid_email(email, member.mb_id)
+
+    # 이메일 및 인증코드 변경
+    member.mb_email = email
+    member.mb_email_certify2 = secrets.token_hex(16)
+    db.commit()
+    db.refresh(member)
+
+    # 인증메일 재전송
+    await send_register_mail(request, member)
+
+    raise AlertException(detail=f"{email} 주소로 인증 메일을 재전송 했습니다.",
+                         status_code=200,
+                         url=request.url_for('login'))
 
 
 @router.get("/email_certify/{mb_id}")

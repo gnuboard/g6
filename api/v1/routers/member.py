@@ -1,9 +1,10 @@
 """회원 관련 API Router"""
 from datetime import datetime
+import secrets
 from typing_extensions import Annotated
 
 from fastapi import (
-    APIRouter, BackgroundTasks, Depends, File, Form, Path, Query,
+    APIRouter, BackgroundTasks, Body, Depends, File, Form, Path, Query,
     Request, status, UploadFile
 )
 from sqlalchemy import delete
@@ -11,10 +12,10 @@ from sqlalchemy import delete
 from bbs.social import SocialAuthService
 from core.database import db_session
 from core.models import Member
-from lib.mail import send_password_reset_mail, send_register_mail
+from lib.mail import send_password_reset_mail, send_register_admin_mail, send_register_mail
 
 from api.v1.dependencies.member import (
-    get_current_member, validate_create_data, validate_update_data
+    get_current_member, validate_certify_email_member, validate_create_data, validate_update_data
 )
 from api.v1.models import MemberRefreshToken
 from api.v1.models.member import (
@@ -27,7 +28,8 @@ from api.v1.models.response import (
 )
 from api.v1.service.member import (
     MemberServiceAPI,
-    MemberImageServiceAPI as ImageService
+    MemberImageServiceAPI as ImageService,
+    ValidateMemberAPI
 )
 from api.v1.service.point import PointServiceAPI
 
@@ -70,6 +72,7 @@ async def create_member(
 
     # 회원가입메일 발송 처리(백그라운드)
     background_tasks.add_task(send_register_mail, request, member)
+    background_tasks.add_task(send_register_admin_mail, request, member)
 
     message = "회원가입이 완료되었습니다."
     if member.mb_email_certify2:
@@ -81,6 +84,37 @@ async def create_member(
         "mb_name": member.mb_name,
         "mb_nick": member.mb_nick,
     }
+
+
+@router.put("/members/{mb_id}/email-certification/change",
+            summary="인증 이메일 변경",
+            responses={**response_403, **response_409, **response_422})
+async def certificate_email_change(
+    request: Request,
+    db: db_session,
+    member_vaildate: Annotated[ValidateMemberAPI, Depends()],
+    member: Annotated[Member, Depends(validate_certify_email_member)],
+    email: Annotated[str, Body(..., title="이메일", description="변경할 이메일")],
+) -> MessageResponse:
+    """
+    메일인증을 처리하지 않은 회원의 메일을 변경하고 인증메일을 재전송합니다.
+    
+    #### Request Body
+    - email: 변경할 이메일 주소
+    - password: 회원 비밀번호
+    """
+    member_vaildate.valid_email(email, member.mb_id)
+
+    # 이메일 및 인증코드 변경
+    member.mb_email = email
+    member.mb_email_certify2 = secrets.token_hex(16)
+    db.commit()
+    db.refresh(member)
+
+    # 인증메일 재전송
+    await send_register_mail(request, member)
+
+    return {"message": f"{email} 주소로 인증 메일을 재전송 했습니다."}
 
 
 @router.put("/members/{mb_id}/email-certification",
