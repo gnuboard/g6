@@ -17,8 +17,8 @@ class CreateMember(BaseModel):
 
     mb_id: str = Body(..., min_length=3, max_length=20, pattern=r"^[a-zA-Z0-9_]+$",
                       title="아이디", description="3~20자의 영문, 숫자, _만 사용 가능합니다.")
-    mb_password: str = Body(..., title="비밀번호")
-    mb_password_re: str = Body(..., title="비밀번호 확인")
+    mb_password: str = Body(..., title="비밀번호", min_length=4, max_length=20)
+    mb_password_re: str = Body(..., title="비밀번호 확인", min_length=4, max_length=20)
     mb_nick: str = Body(..., title="닉네임")
     mb_name: str = Body(..., title="이름")
     mb_sex: str = Body("", pattern=r"^[mf]?$", title="성별")
@@ -86,8 +86,8 @@ class UpdateMember(BaseModel):
     # 추가 필드 허용
     model_config = ConfigDict(extra='allow')
 
-    mb_password: str = Body(None, title="비밀번호")
-    mb_password_re: str = Body(None, title="비밀번호 확인")
+    mb_password: str = Body(None, title="비밀번호", min_length=4, max_length=20)
+    mb_password_re: str = Body(None, title="비밀번호 확인", min_length=4, max_length=20)
     mb_nick: str = Body(None, title="닉네임")
     mb_sex: str = Body(None, pattern=r"^[mf]?$", title="성별")
     mb_email: EmailStr = Body(..., title="이메일", description="이메일 형식에 맞게 입력해주세요.")

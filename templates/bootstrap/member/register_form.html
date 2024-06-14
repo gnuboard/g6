@@ -43,14 +43,14 @@
                     <li class="left_input margin_input position-relative pt-4 main-font">
                       <input type="password" name="mb_password" id="reg_mb_password"
                       {{ "required" if is_register else None }}
-                       class="frm_input full_input {% if is_register %} required {% endif %}" minlength="3" maxlength="20" placeholder="">
+                       class="frm_input full_input {% if is_register %} required {% endif %}" minlength="4" maxlength="20" placeholder="">
                         <label for="reg_mb_password" class="text_input">비밀번호 (필수)</label>
                     </li>
                     <li class="left_input position-relative pt-4 main-font">
                       <input type="password" name="mb_password_re" id="reg_mb_password_re"
                         {% if is_register %} 'required' {% endif %}
                         class="frm_input full_input
-                        {% if is_register %} required {% endif %}" minlength="3" maxlength="20" placeholder="">
+                        {% if is_register %} required {% endif %}" minlength="4" maxlength="20" placeholder="">
                         <label for="reg_mb_password_re" class="text_input">비밀번호 확인 (필수)</label>
                     </li>
                 </ul>
