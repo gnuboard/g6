@@ -5,7 +5,7 @@ from sqlalchemy import asc, desc, func, select
 from core.database import db_session
 from core.models import WriteBaseModel
 from lib.dependency.dependencies import common_search_query_params
-from lib.board_lib import write_search_filter, get_list, cut_name, is_owner
+from lib.board_lib import get_list_thumbnail, write_search_filter, get_list, cut_name, is_owner
 from service.board_file_service import BoardFileService
 from service.ajax import AJAXService
 from . import BoardService
@@ -161,6 +161,9 @@ class ListPostService(BoardService):
             ajax_good_data = ajax_service.get_ajax_good_data(self.bo_table, write)
             write.good = ajax_good_data["good"]
             write.nogood = ajax_good_data["nogood"]
+
+            # 게시글 썸네일 설정
+            write.thumbnail = get_list_thumbnail(self.request, self.board, write, self.gallery_width, self.gallery_height)
 
         return writes
 
