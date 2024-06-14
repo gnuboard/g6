@@ -12,7 +12,7 @@ from PIL import Image, UnidentifiedImageError
 from sqlalchemy import select, update
 
 from core.database import db_session
-from core.exception import AlertException
+from core.exception import AlertException, JSONException
 from core.models import Member
 from lib.common import filter_words, get_client_ip, is_none_datetime, check_prohibit_words
 from lib.member import get_next_open_date, hide_member_id
@@ -567,6 +567,26 @@ class ValidateMember(BaseService):
         if self.is_prohibit_email(email):
             self.raise_exception(403, "사용이 금지된 메일 도메인입니다.")
 
+    def valid_recommend(self, mb_recommend: str, mb_id: str = None) -> None:
+        """추천인 아이디가 존재하는지 검사
+
+        Args:
+            mb_recommend (str): 추천인 아이디
+        """
+        if not mb_recommend:
+            return None
+
+        if mb_id and mb_recommend == mb_id:
+            self.raise_exception(403, "본인을 추천인으로 등록할 수 없습니다.")
+
+        member = self.member_service.fetch_member_by_id(mb_recommend)
+        if not member:
+            self.raise_exception(404, "추천인 아이디가 존재하지 않습니다.")
+
+        is_email_certified, message = self.member_service.is_member_email_certified(member)
+        if not is_email_certified:
+            self.raise_exception(404, "이메일 인증이 완료되지 않은 추천인입니다.")
+
     def is_exists_email(self, email: str, mb_id: str = None) -> bool:
         """이메일이 이미 등록되어 있는지 확인
 
@@ -624,3 +644,11 @@ class ValidateMember(BaseService):
                 and available_days != 0):
             return change_date < (date.today() - timedelta(days=available_days))
         return True
+
+
+class ValidateMemberAjax(ValidateMember):
+    """
+    회원가입 ajax 요청에 사용되는 MemberService 구현 클래스.  
+    """
+    def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None):
+        raise JSONException(200, message=detail, success=False)

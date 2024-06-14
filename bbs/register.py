@@ -20,7 +20,7 @@ from lib.dependency.dependencies import (
 )
 from lib.dependency.member import validate_policy_agree, validate_register_data
 from lib.mail import send_register_mail
-from service.member_service import MemberImageService, MemberService
+from service.member_service import MemberImageService, MemberService, ValidateMemberAjax
 from service.point_service import PointService
 
 router = APIRouter()
@@ -160,3 +160,24 @@ async def email_certify(
 
     raise AlertException(f"메일인증 처리를 완료 하였습니다.\
                          \\n\\n지금부터 {member.mb_id} 아이디로 로그인 가능합니다", 200, "/")
+
+
+@router.get("/register/validate/{field}")
+async def validate_register_field(
+    validate: Annotated[ValidateMemberAjax, Depends()],
+    field: str = Path(...),
+    value: str = Query(...),
+):
+    """회원가입시 필드 유효성 검사"""
+    if field == "id":
+        validate.valid_id(value)
+    elif field == "name":
+        validate.valid_name(value)
+    elif field == "nickname":
+        validate.valid_nickname(value)
+    elif field == "email":
+        validate.valid_email(value)
+    elif field == "recommend":
+        validate.valid_recommend(value)
+
+    return {"success": True, "message": ""}

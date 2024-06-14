@@ -28,6 +28,7 @@ def validate_register_data(
     validate.valid_name(data.mb_name)
     validate.valid_nickname(data.mb_nick)
     validate.valid_email(data.mb_email)
+    validate.valid_recommend(data.mb_recommend, data.mb_id)
 
     return data
 

@@ -3,6 +3,7 @@
 
 {% block head %}
     <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" async></script>
+    <script src="{{ url_for('static', path='js/jquery.register_form.js') }}"></script>
 {% endblock head %}
 
 {% block title %}{{ title }}{% endblock title %}
@@ -215,7 +216,7 @@
                                 gif, jpg, png파일만 가능하며 용량 {{ config.cf_member_img_size }}바이트 이하만 등록됩니다.</span>
                             </button>
                         </label>
-                        <input type="file" name="mb_img" accept="image/*" id="id_mb_img">
+                        <input type="file" name="mb_img" accept="image/*" id="reg_mb_img">
                         
                         {% if not is_register and form.mb_img_url %}
                             <img src="{{ form.mb_img_url }}" alt="">
@@ -224,7 +225,7 @@
                         {% endif %}
                     </li>
                     <li class="reg_mb_icon_file">
-                        <label for="reg_mb_icon_file" class="frm_label">
+                        <label for="reg_mb_icon" class="frm_label">
                             회원아이콘
                             <button type="button" class="tooltip_icon">
                               <i class="fa fa-regular fa-question-circle" aria-hidden="true"></i>
@@ -233,7 +234,7 @@
                                 gif, jpg, png파일만 가능하며 용량 {{ config.cf_member_icon_size }}바이트 이하만 등록됩니다.</span>
                             </button>
                         </label>
-                        <input type="file" name="mb_icon" accept="image/*" id="id_mb_icon">
+                        <input type="file" name="mb_icon" accept="image/*" id="reg_mb_icon">
                         {% if not is_register and form.mb_icon_url %}
                             <img src="{{ form.mb_icon_url }}" alt="" width="{{ config.cf_member_icon_width }}" height="{{ config.cf_member_icon_height }}">
                             <input type="checkbox" name="del_mb_icon" value="1" id="del_mb_icon">
@@ -276,12 +277,12 @@
                         </span>
                     </li>
                     {% else %}
-                     <li>
+                    <li>
                         <span class="frm_label">정보공개</span>
                         <input type="hidden" name="mb_open" value="{{ member.mb_open }}">
 
                         <span class="frm_info">
-                            정보공개는 수정후 앞으로 {{ config.cf_open_modify|default("0") }} 일 이내, 
+                            정보공개는 수정 후 앞으로 {{ config.cf_open_modify|default("0") }} 일 이내, 
                             {{ form.profile_open_date }} 까지는 변경이 안됩니다.<br>
                             이렇게 하는 이유는 잦은 정보공개 수정으로 인하여 쪽지를 보낸 후 받지 않는 경우를 막기 위해서 입니다.
                         </span>
@@ -324,66 +325,64 @@
     function fregisterform_submit(f)
     {
         try {
-            /*
+        {% if is_register %}
             // 회원아이디 검사
-            if (reg_mb_id_check()) {
-                alert(msg);
-                f.mb_id.select();
+            let valid_id = valid_register_field("id", f.mb_id.value)
+            if (valid_id.success === false) {
+                alert(valid_id.message);
+                f.mb_id.focus();
                 return false;
             }
-        
-            if (f.mb_password.value.length < 3) {
-                alert("비밀번호를 3글자 이상 입력하십시오.");
-                f.mb_password.focus();
+
+            // 이름 검사
+            if (f.mb_name.value.length < 1) {
+                alert("이름을 입력하십시오.");
+                f.mb_name.focus();
                 return false;
             }
-        
-            if (f.mb_password.value != f.mb_password_re.value) {
-                alert("비밀번호가 같지 않습니다.");
-                f.mb_password_re.focus();
+            let valid_name = valid_register_field("name", f.mb_name.value)
+            if (valid_name.success === false) {
+                alert(valid_name.message);
+                f.mb_name.focus();
                 return false;
             }
-        
-            if (f.mb_password.value.length > 0) {
-                if (f.mb_password_re.value.length < 3) {
-                    alert("비밀번호를 3글자 이상 입력하십시오.");
+        {% endif %}
+
+            // 비밀번호 검사
+            if (typeof(f.mb_password) != "undefined" && f.mb_password.value) {
+                if (f.mb_password.value.length < 4 || f.mb_password.value.length > 20) {
+                    alert("비밀번호는 4~20자 이내로 입력해주세요.");
+                    f.mb_password.focus();
+                    return false;
+                }
+                if (f.mb_password.value != f.mb_password_re.value) {
+                    alert("비밀번호 확인이 일치하지 않습니다.");
                     f.mb_password_re.focus();
                     return false;
                 }
             }
-        
-            // 이름 검사
-            if (f.is_register == '' && f.getAttribute('mb_name')) {
-                if (f.mb_name.value.length < 1) {
-                    alert("이름을 입력하십시오.");
-                    f.mb_name.focus();
-                    return false;
-                }
-            }
-        
-            
+
             // 닉네임 검사
             if (f.mb_nick.defaultValue != f.mb_nick.value) {
-                const msg = reg_mb_nick_check();
-                if (msg) {
-                    alert(msg);
-                    f.reg_mb_nick.select();
+                let valid_nickname = valid_register_field("nickname", f.mb_nick.value)
+                if (valid_nickname.success === false) {
+                    alert(valid_nickname.message);
+                    f.reg_mb_nick.focus();
                     return false;
                 }
             }
-        
+
             // E-mail 검사
-            if (f.getAttribute('mb_email') && f.mb_email.defaultValue != f.mb_email.value) {
-                const msg = reg_mb_email_check();
-                if (msg) {
-                    alert(msg);
-                    f.reg_mb_email.select();
+            if (f.mb_email.defaultValue != f.mb_email.value) {
+                let valid_email = valid_register_field("email", f.mb_email.value)
+                if (valid_email.success === false) {
+                    alert(valid_email.message);
+                    f.reg_mb_email.focus();
                     return false;
                 }
             }
-            
-            
-            
+
+            // 회원 아이콘,이미지 확장자 검사
             if (typeof f.mb_icon != "undefined") {
                 if (f.mb_icon.value) {
                     if (!f.mb_icon.value.toLowerCase().match(/.(gif|jpe?g|png)$/i)) {
@@ -393,7 +392,6 @@
                     }
                 }
             }
-        
             if (typeof f.mb_img != "undefined") {
                 if (f.mb_img.value) {
                     if (!f.mb_img.value.toLowerCase().match(/.(gif|jpe?g|png)$/i)) {
@@ -403,23 +401,27 @@
                     }
                 }
             }
-        
+
+            // 추천인 검사
             if (typeof(f.mb_recommend) != "undefined" && f.mb_recommend.value) {
                 if (f.mb_id.value == f.mb_recommend.value) {
                     alert("본인을 추천할 수 없습니다.");
                     f.mb_recommend.focus();
                     return false;
                 }
-        
-                const msg = reg_mb_recommend_check();
-                if (msg) {
-                    alert(msg);
-                    f.mb_recommend.select();
+                const regex_recommend = /[^0-9a-z_]+/i;
+                if (regex_recommend.test(f.mb_recommend.value)) {
+                    alert("추천인 아이디는 영문자, 숫자, _ 만 입력하세요.");
+                    f.mb_recommend.focus();
+                    return false;
+                }
+                let valid_recommend = valid_register_field("recommend", f.mb_recommend.value)
+                if (valid_recommend.success === false) {
+                    alert(valid_recommend.message);
+                    f.mb_recommend.focus();
                     return false;
                 }
             }
-            */
-            
 
             // captcha 사용시
             if (typeof check_captcha === "function") {
@@ -448,9 +450,5 @@
             $(this).next(".tooltip").fadeOut();
         });
     });
-    
-
 </script>
-
-
 {% endblock content %}
