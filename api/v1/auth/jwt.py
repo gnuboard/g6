@@ -55,9 +55,9 @@ class JWT:
         to_encode.update({
             "iss": api_settings.AUTH_ISSUER,
             "aud": api_settings.AUTH_AUDIENCE,
-            "nbf": iat.timestamp(),
-            "iat": iat.timestamp(),
-            "exp": exp.timestamp()})
+            "nbf": int(iat.timestamp()),
+            "iat": int(iat.timestamp()),
+            "exp": int(exp.timestamp())})
 
         return encode(to_encode, secret_key, algorithm=api_settings.AUTH_ALGORITHM)
 
@@ -87,13 +87,14 @@ class JWT:
                 token,
                 secret_key,
                 algorithms=[api_settings.AUTH_ALGORITHM],
+                audience=api_settings.AUTH_AUDIENCE,
             )
             return TokenPayload(**payload)
         except ExpiredSignatureError as e:
-            http_exception.detail = "Token has expired"
+            http_exception.detail = f"Token has expired. {e}"
             raise http_exception from e
         except InvalidTokenError as e:
-            http_exception.detail = "Could not validate credentials"
+            http_exception.detail = f"Could not validate credentials. {e}"
             raise http_exception from e
         except Exception as e:
             http_exception.detail = str(e)
