@@ -7,6 +7,12 @@ class MessageResponse(BaseModel):
     """메시지 응답 모델 (API Docs)"""
     message: str
 
+response_400 = {
+    status.HTTP_400_BAD_REQUEST: {
+        "model": MessageResponse,
+        "description": "잘못된 요청"
+    }
+}
 
 response_401 = {
     status.HTTP_401_UNAUTHORIZED: {

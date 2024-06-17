@@ -21,6 +21,7 @@ class ApiSettings(BaseSettings):
 
     AUTH_ALGORITHM: str = "HS256"  # JWT 알고리즘
     AUTH_ISSUER: str = "g6_rest_api"  # JWT 발급자
+    AUTH_AUDIENCE: str = "g6_rest_api"  # JWT 대상자
 
     ACCESS_TOKEN_EXPIRE_MINUTES: float = 30
     REFRESH_TOKEN_EXPIRE_MINUTES: float = 60 * 24 * 14  # 14 days

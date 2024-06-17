@@ -32,9 +32,10 @@ class AlertCloseException(HTTPException):
 
 class JSONException(Exception):
     """HTTPException의 'detail' 키 대신 'message'를 키로 사용하기 위한 예외 클래스"""
-    def __init__(self, status_code: int, message: str):
+    def __init__(self, status_code: int, message: str, **kwargs):
         self.status_code = status_code
         self.message = message
+        self.kwargs = kwargs
 
 
 # 템플릿 미사용 시 예외처리 핸들러 등록
@@ -96,9 +97,12 @@ def regist_core_exception_handler(app: FastAPI) -> None:
     @app.exception_handler(JSONException)
     async def json_exception_handler(request: Request, exc: JSONException):
         """JSONException 예외처리 handler 등록"""
+        content = {"message": exc.message}
+        content.update(exc.kwargs)
+
         return JSONResponse(
             status_code=exc.status_code,
-            content={"message": exc.message}
+            content=content
         )
 
     @app.exception_handler(RedirectException)

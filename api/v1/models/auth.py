@@ -18,7 +18,7 @@ class TokenPayload(BaseModel):
     iss: str = None
     sub: str = None
     aud: str = None
-    exp: float = None
+    exp: int = None
     nbf: int = None
-    iat: float = None
+    iat: int = None
     jti: str = None

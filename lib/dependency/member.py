@@ -1,15 +1,17 @@
 """회원 관련 유효성 검사를 위한 의존성 함수를 정의합니다."""
+import hashlib
 from typing_extensions import Annotated
 
-from fastapi import Depends, Form, Request, status
+from fastapi import Depends, Form, Path, Request, status
 from fastapi.responses import RedirectResponse
 
 from core.exception import AlertException
 from core.formclass import RegisterMemberForm, UpdateMemberForm
 from core.models import Member
+from lib.common import is_none_datetime
 from lib.dependency.auth import get_login_member
 from lib.pbkdf2 import create_hash, validate_password
-from service.member_service import ValidateMember
+from service.member_service import MemberService, ValidateMember
 
 
 def validate_policy_agree(request: Request):
@@ -25,8 +27,10 @@ def validate_register_data(
 ):
     """회원 가입시 회원 정보의 유효성을 검사합니다."""
     validate.valid_id(data.mb_id)
+    validate.valid_name(data.mb_name)
     validate.valid_nickname(data.mb_nick)
     validate.valid_email(data.mb_email)
+    validate.valid_recommend(data.mb_recommend, data.mb_id)
 
     return data
 
@@ -86,3 +90,23 @@ def validate_password_reset(
         raise AlertException("비밀번호가 일치하지 않습니다.", 400)
 
     return create_hash(mb_password)
+
+
+def validate_certify_email_member(
+    member_service: Annotated[MemberService, Depends()],
+    mb_id: str = Path(...),
+    key: str = Path(...)
+):
+    """
+    인증 이메일 변경시 회원 정보의 유효성을 검사합니다.
+    """
+    member = member_service.fetch_member_by_id(mb_id)
+
+    if not is_none_datetime(member.mb_email_certify):
+        raise AlertException("이미 메일인증을 진행한 회원입니다.", 409)
+
+    check_key = hashlib.md5(f"{member.mb_ip}{member.mb_datetime}".encode()).hexdigest()
+    if not key or key != check_key:
+        raise AlertException("올바른 방법으로 이용해 주십시오.", 400)
+
+    return member

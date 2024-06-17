@@ -243,13 +243,15 @@ class RegisterMemberForm(MemberForm):
     def __post_init__(self) -> None:
         # 회원 아이디 검사
         if len(self.mb_id) < 3 or len(self.mb_id) > 20:
-            raise AlertException("회원아이디는 3~20자 이어야 합니다.", 400)
+            raise AlertException("회원아이디는 3~20자로 입력해주세요.", 400)
         if not re.match(r"^[a-zA-Z0-9_]+$", self.mb_id):
             raise AlertException("회원아이디는 영문자, 숫자, _ 만 사용할 수 있습니다.", 400)
 
         # 비밀번호 검사
         if not (self.mb_password and self.mb_password_re):
             raise AlertException("비밀번호를 입력해 주세요.", 400)
+        if len(self.mb_password) < 4 or len(self.mb_password) > 20:
+            raise AlertException("비밀번호는 4~20자로 입력해 주세요.", 400)
         if self.mb_password != self.mb_password_re:
             raise AlertException("비밀번호와 비밀번호 확인이 일치하지 않습니다.", 400)
 
@@ -280,6 +282,9 @@ class UpdateMemberForm(MemberForm):
     def __post_init__(self) -> None:
         # 비밀번호 변경
         if self.mb_password and self.mb_password_re:
+            if len(self.mb_password) < 4 or len(self.mb_password) > 20:
+                raise AlertException("비밀번호는 4~20자로 입력해주세요.", 400)
+
             if self.mb_password != self.mb_password_re:
                 raise AlertException("비밀번호와 비밀번호 확인이 일치하지 않습니다.", 400)
             self.mb_password = create_hash(self.mb_password)

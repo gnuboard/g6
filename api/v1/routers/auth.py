@@ -34,7 +34,7 @@ async def login_for_access_token(
     access_token, access_token_expire_at = _create_token_and_expiration(
         TokenType.ACCESS, member.mb_id)
     refresh_token, refresh_token_expire_at = _create_token_and_expiration(
-        TokenType.REFRESH)
+        TokenType.REFRESH, member.mb_id)
 
     # 기존 Refresh Token 삭제
     db.execute(
@@ -78,7 +78,7 @@ async def refresh_access_token(
     access_token, access_token_expire_at = _create_token_and_expiration(
         TokenType.ACCESS, member_refresh_token.mb_id)
     refresh_token, refresh_token_expire_at = _create_token_and_expiration(
-        TokenType.REFRESH)
+        TokenType.REFRESH, member_refresh_token.mb_id)
 
     # 데이터베이스의 refresh_token 갱신
     member_refresh_token.updated_at = datetime.now()

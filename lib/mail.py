@@ -117,32 +117,49 @@ async def send_register_mail(request: Request, member: Member) -> None:
         request.state.config = config = db.query(Config).first()
 
     try:
-        templates = Jinja2Templates(
-            directory=TemplateService.get_templates_dir())
+        templates = Jinja2Templates(directory=TemplateService.get_templates_dir())
         from_email = get_admin_email(request)
         from_name = get_admin_email_name(request)
         context = {"request": request, "member": member}
-
-        # 회원에게 인증메일 발송
+        # 인증메일 발송
         if config.cf_use_email_certify:
             subject = f"[{config.cf_title}] 회원가입 인증메일 발송"
-            cntx = context + \
-                {"certify_href": f"{request.base_url.__str__()}bbs/email_certify/{member.mb_id}?certify={member.mb_email_certify2}"}
+            context.update(
+                {"certify_href": f"{str(request.base_url)}bbs/email_certify/{member.mb_id}?certify={member.mb_email_certify2}"}
+            )
             body = templates.TemplateResponse(
                 "bbs/mail_form/register_certify_mail.html",
-                cntx
+                context
             ).body.decode("utf-8")
-            mailer(from_email, member.mb_email, subject, body, from_name)
-        # 회원에게 회원가입 메일 발송
+        # 회원가입 메일 발송
         elif config.cf_email_mb_member:
             subject = f"[{config.cf_title}] 회원가입을 축하드립니다."
             body = templates.TemplateResponse(
                 "bbs/mail_form/register_send_member_mail.html",
                 context
             ).body.decode("utf-8")
-            mailer(from_email, member.mb_email, subject, body, from_name)
+        mailer(from_email, member.mb_email, subject, body, from_name)
+    except Exception as e:
+        print(e)
 
-        # 최고관리자에게 회원가입 메일 발송
+
+async def send_register_admin_mail(request: Request, member: Member) -> None:
+    """background task > 최고관리자에게 회원가입 메일 발송 처리
+
+    Args:
+        request (Request): Request 객체
+        member (Member): 신규가입한 회원 객체
+    """
+    with DBConnect().sessionLocal() as db:
+        request.state.config = config = db.query(Config).first()
+
+    try:
+        templates = Jinja2Templates(
+            directory=TemplateService.get_templates_dir())
+        from_email = get_admin_email(request)
+        from_name = get_admin_email_name(request)
+        context = {"request": request, "member": member}
+
         if config.cf_email_mb_super_admin:
             subject = f"[{config.cf_title}] {member.mb_nick} 님께서 회원으로 가입하셨습니다."
             body = templates.TemplateResponse(

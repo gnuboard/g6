@@ -1,10 +1,6 @@
 {% extends "base_sub.html" %}
 {% import "/sideview/macros.html" as sideview %}
 
-{% block head %}
-    <link rel="stylesheet" href="/static/css/basic/style.css">
-{% endblock head %}
-
 {% block title %}{{ member.mb_nick }}의 자기소개{% endblock title %}
 
 {% block content %}
@@ -12,7 +8,7 @@
     <h1 id="win_title">{{ member.mb_nick }}님의 프로필</h1>
     <div class="profile_name">
         <span class="my_profile_img">
-            <img src="{{ get_member_image(member.mb_id) }}">
+            <img src="{{ get_member_image(member.mb_id) }}" alt="{{ member.mb_nick }}">
         </span>
         {{ sideview.get(request, member.mb_id, member.mb_name, member.mb_email, member.mb_homepage)|safe }}
     </div>
