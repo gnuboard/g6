@@ -260,16 +260,18 @@ async def set_current_connect(
 
 def validate_login_url(request: Request, url: str = Form(default="/")):
     """
-    로그인할 때 url을 검사하는 함수
+    로그인 후 이동할 URL 유효성 검사
+    - URL이 절대경로가 아니거나, 도메인이 다른 경우 "/"로 리다이렉트
     """
     domain = request.url.hostname
 
     if domain is None:
-        raise AlertException("올바르지 않은 요청입니다.", 400)
+        return "/"
 
     if (url.startswith("//")
             or (not url.startswith("/") and domain not in url)):
-        raise AlertException("올바르지 않은 URL입니다.", 400)
+        return "/"
+
     return url
 
 

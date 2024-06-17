@@ -2,7 +2,7 @@
 from typing import Optional
 from typing_extensions import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Body, Depends, HTTPException, Path, status
 
 from core.models import Member
 
@@ -12,6 +12,8 @@ from api.v1.auth.jwt import JWT
 from api.v1.service.member import MemberServiceAPI, ValidateMemberAPI
 from api.v1.models.auth import TokenPayload
 from api.v1.models.member import CreateMember, UpdateMember
+from lib.common import is_none_datetime
+from lib.pbkdf2 import validate_password
 
 
 async def get_current_member(
@@ -73,8 +75,10 @@ def validate_create_data(
 ):
     """회원 가입시 회원 정보의 유효성을 검사합니다."""
     validate.valid_id(data.mb_id)
+    validate.valid_name(data.mb_name)
     validate.valid_nickname(data.mb_nick)
     validate.valid_email(data.mb_email)
+    validate.valid_recommend(data.mb_recommend, data.mb_id)
 
     return data
 
@@ -104,3 +108,28 @@ def validate_update_data(
         del data.mb_open_date
 
     return data
+
+
+
+def validate_certify_email_member(
+    member_service: Annotated[MemberServiceAPI, Depends()],
+    mb_id: Annotated[str, Path(..., title="회원 아이디", description="회원 아이디")],
+    password: Annotated[str, Body(..., title="비밀번호", description="회원 비밀번호")],
+):
+    """
+    인증 이메일 변경시 회원 정보의 유효성을 검사합니다.
+    """
+    member = member_service.fetch_member_by_id(mb_id)
+    if not validate_password(password, member.mb_password):
+        raise HTTPException(
+            status_code=400,
+            detail="비밀번호가 올바르지 않습니다.",
+        )
+
+    if not is_none_datetime(member.mb_email_certify):
+        raise HTTPException(
+            status_code=409,
+            detail="이미 메일인증을 진행한 회원입니다.",
+        )
+
+    return member

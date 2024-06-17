@@ -766,6 +766,26 @@ def filter_words(request: Request, contents: str) -> str:
     return ''
 
 
+def check_prohibit_words(request: Request, contents: str) -> str:
+    """
+    글 내용에 금지된 단어가 있는지 확인하는 함수
+
+    Args:
+        request (Request): FastAPI Request 객체
+        contents (str): 글 내용
+
+    Returns:
+        str: 금지된 단어가 있으면 해당 단어, 없으면 빈 문자열
+    """
+    prohibit_list = getattr(request.state.config, "cf_prohibit_id", "").split(",")
+    prohibit_list = [id.strip().lower() for id in prohibit_list]
+
+    if contents.lower() in prohibit_list:
+        return contents
+
+    return ''
+
+
 def read_version():
     """루트 디렉토리의 version.txt 파일을 읽어서 버전을 반환하는 함수
     Returns:
