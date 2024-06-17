@@ -1,23 +1,29 @@
-<form name="saForm">
-    <input type="hidden" name="mid" value="{{ mid }}">
-    <input type="hidden" name="reqSvcCd" value="{{ req_svc_cd }}">
-    <input type="hidden" name="identifier" value="{{ identifier }}">
-    <input type="hidden" name="mTxId" value="{{ m_tx_id }}">
-    <input type="hidden" name="authHash" value="{{ auth_hash }}">
-    <input type="hidden" name="flgFixedUser" value="N">
-    <input type="hidden" name="userName" value="{{ user_name }}">
-    <input type="hidden" name="userPhone" value="user_phone">
-    <input type="hidden" name="userBirth" value="user_birth">
-    <input type="hidden" name="userHash" value="{{ user_hash }}">
-    <input type="hidden" name="reservedMsg" value="isUseToken=Y">
-    <input type="hidden" name="directAgency" value="">
-    <input type="hidden" name="successUrl" value="{{ url_for('result_certificate', provider='inicis', cert_type='simple') }}?pageType={{page_type}}">
-    <input type="hidden" name="failUrl" value="{{ url_for('result_certificate', provider='inicis', cert_type='simple') }}?pageType={{page_type}}">
-    <!-- successUrl/failUrl 은 분리하여도 됩니다. !-->
+<form name="saForm" id="saForm">
+{% for key, value in request_form.items() %}
+    <input type="hidden" name="{{ key }}" value="{{ value }}">
+{% endfor %}
+
+{#
+    KG이니시스 통합인증 페이지 요청 데이터 예시
+    <input type="text" name="mid" value="{{ request_form.mid }}">
+    <input type="text" name="reqSvcCd" value="{{ request_form.reqSvcCd }}">
+    <input type="text" name="identifier" value="{{ request_form.identifier }}">
+    <input type="text" name="mTxId" value="{{ request_form.mTxId }}">
+    <input type="text" name="authHash" value="{{ request_form.authHash }}">
+    <input type="text" name="flgFixedUser" value="{{ request_form.flgFixedUser }}">
+    <input type="text" name="userName" value="{{ request_form.userName }}">
+    <input type="text" name="userPhone" value="{{ request_form.userPhone }}">
+    <input type="text" name="userBirth" value="{{ request_form.userHash }}">
+    <input type="text" name="userHash" value="{{ request_form.userHash }}">
+    <input type="text" name="reservedMsg" value="{{ request_form.reservedMsg }}">
+    <input type="text" name="directAgency" value="{{ request_form.directAgency }}">
+    <input type="text" name="successUrl" value="{{ request_form.successUrl }}">
+    <input type="text" name="failUrl" value="{{ request_form.failUrl }}">
+#}
 </form>
 <script>
     document.saForm.setAttribute("target", "_self");
     document.saForm.setAttribute("post", "post");
-    document.saForm.setAttribute("action", "https://sa.inicis.com/auth");
+    document.saForm.setAttribute("action", "{{ request_url }}");
     document.saForm.submit();
 </script>

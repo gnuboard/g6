@@ -13,30 +13,31 @@ router = APIRouter()
 templates = Jinja2Templates(directory="lib/certificate")
 
 
-@router.get("/certificate/{provider}/{cert_type}",
+@router.get("/certificate/{provider}/{cert_type}/{page_type}",
             dependencies=[Depends(validate_certificate_limit)])
 async def get_certificate(
     request: Request,
-    cert_service: Annotated[CertificateService, Depends()],
     provider_class: Annotated[CertificateBase, Depends(get_certificate_class)],
     provider: Annotated[str, Path()],
     cert_type: Annotated[str, Path()],
-    page_type: Annotated[str, Query(alias="pageType")] = None
+    page_type: Annotated[str, Path()],
+    direct_agency: Annotated[str, Query()] = "",
+    web_siteid: Annotated[str, Query()] = ""
 ):
     """
     본인인증 페이지 요청
     """
-    request_data = await provider_class.get_request_data()
-    context = {"request": request}
-    context.update(request_data)
-    context.update({
-        "cert_use": cert_service.cert_use,
-        "page_type": page_type
-    })
+    context = {
+        "request": request,
+        "request_url": provider_class.get_request_cert_page_url(),
+        "request_form": await provider_class.get_request_data(
+            page_type=page_type, direct_agency=direct_agency, web_siteid=web_siteid
+        )
+    }
     return templates.TemplateResponse(f"/{provider}/{cert_type}/request.html", context)
 
 
-@router.post("/certificate/{provider}/{cert_type}/result",
+@router.post("/certificate/{provider}/{cert_type}/{page_type}/result",
              dependencies=[Depends(validate_certificate_limit)])
 async def result_certificate(
     request: Request,
@@ -45,7 +46,7 @@ async def result_certificate(
     member: Annotated[Member, Depends(get_login_member_optional)],
     provider: Annotated[str, Path()],
     cert_type: Annotated[str, Path()],
-    page_type: Annotated[str, Query(alias="pageType")] = None
+    page_type: Annotated[str, Path()]
 ):
     """
     본인인증 요청 결과 처리

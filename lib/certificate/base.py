@@ -1,5 +1,7 @@
 """본인인증 서비스를 위한 추상 클래스와 유틸리티 함수를 제공합니다."""
 import abc
+from datetime import datetime
+import random
 
 import httpx
 from fastapi.datastructures import FormData
@@ -8,7 +10,11 @@ from fastapi.datastructures import FormData
 class CertificateBase(metaclass=abc.ABCMeta):
     """본인인증 서비스를 위한 추상 클래스입니다."""
     @abc.abstractmethod
-    async def get_request_data(self) -> dict:
+    def get_request_cert_page_url(self) -> str:
+        """인증 페이지를 요청할 URL을 반환합니다."""
+
+    @abc.abstractmethod
+    async def get_request_data(self, **kwargs) -> dict:
         """인증 창을 띄우기 위한 데이터를 반환합니다."""
 
     @abc.abstractmethod
@@ -28,3 +34,11 @@ async def post_request(url: str, data: dict, headers: dict = None, timeout: floa
     async with httpx.AsyncClient() as client:
         response = await client.post(url, json=data, headers=headers, timeout=timeout)
     return response.json()
+
+
+def create_cert_unique_id() -> str:
+    """본인인증 고유값을 생성합니다."""
+    timestamp = int(datetime.now().timestamp())
+    random_num = random.randint(1000, 9999)
+
+    return f"G6_{timestamp}{random_num}"

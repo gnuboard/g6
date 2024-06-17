@@ -5,9 +5,9 @@ from lib.dependency.dependencies import check_use_api
 from api.v1.dependencies.current_connect import set_current_connect
 from api.v1.models import Tags
 from api.v1.routers import (
-    auth, autosave, board, board_good, board_new, captcha, config, content,
-    current_connect, faq, member, memo, menu, newwin, point, poll, popular,
-    qa, scrap, search, visit, group
+    auth, autosave, board, board_good, board_new, captcha, certificate,
+    config, content, current_connect, faq, member, memo, menu, newwin, point,
+    poll, popular, qa, scrap, search, visit, group
 )
 
 
@@ -18,6 +18,7 @@ router = APIRouter(prefix="/api/v1",
 router.include_router(auth.router, tags=[Tags.AUTH])
 router.include_router(board.router, prefix="/boards", tags=[Tags.BOARD])
 router.include_router(captcha.router, tags=[Tags.CAPTCHA])
+router.include_router(certificate.router, tags=[Tags.CERTIFICATE])
 router.include_router(config.router, tags=[Tags.CONFIG])
 router.include_router(content.router, tags=[Tags.CONTENT])
 router.include_router(current_connect.router, tags=[Tags.CURRENT_CONNECT])

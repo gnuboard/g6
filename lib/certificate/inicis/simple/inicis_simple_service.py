@@ -1,6 +1,4 @@
 """KG이니시스 간편인증 서비스를 위한 클래스를 정의합니다."""
-from datetime import datetime
-import random
 import urllib.parse
 
 from cryptography.hazmat.primitives.ciphers import modes
@@ -9,7 +7,7 @@ from fastapi.datastructures import FormData
 from typing_extensions import Annotated
 
 from core.exception import AlertCloseException
-from lib.certificate.base import CertificateBase
+from lib.certificate.base import CertificateBase, create_cert_unique_id
 from lib.certificate.base import post_request
 from lib.certificate.inicis.simple.lib.seed import SEED128
 from service import BaseService
@@ -20,6 +18,8 @@ class InicisSimpleService(CertificateBase, BaseService):
     """KG이니시스 간편인증 서비스를 위한 클래스입니다."""
     VALID_URLS = ["https://kssa.inicis.com", "https://fcsa.inicis.com"]
     INICIS_SEEDIV = 'SASKGINICIS00000'  # SEED 복호화에 사용되는 IV
+
+    REQUEST_PAGE_URL = "https://sa.inicis.com/auth"
 
     def __init__(
             self,
@@ -32,31 +32,41 @@ class InicisSimpleService(CertificateBase, BaseService):
     def raise_exception(self, status_code: int, detail: str = None):
         raise AlertCloseException(status_code=status_code, detail=detail)
 
-    async def get_request_data(self) -> dict:
+    def get_request_cert_page_url(self) -> str:
+        """KG이니시스 인증 페이지를 요청할 URL을 반환합니다."""
+        return self.REQUEST_PAGE_URL
+
+    async def get_request_data(self, **kwargs) -> dict:
         """KG이니시스 본인인증 창을 띄우기 위한 데이터를 반환합니다."""
         mid = self.cert_service.get_kg_mid()
         api_key = self.cert_service.get_kg_api_key()
 
-        timestamp = int(datetime.now().timestamp())
-        random_num = random.randint(1000, 9999)
-        m_tx_id = f"SIR_{timestamp}{random_num}"
+        m_tx_id = create_cert_unique_id()
         req_svc_cd = '01'
         user_name = ''
         user_phone = ''
         user_birth = ''
-
+        success_url = str(self.request.url_for('result_certificate', provider='inicis',
+                                               cert_type='simple',
+                                               page_type=kwargs.get('page_type')))
         return {
             "mid": mid,
-            "api_key": api_key,
-            "m_tx_id": m_tx_id,
-            "req_svc_cd": req_svc_cd,
-            "identifier": '서명',
-            "user_name": user_name,
-            "user_phone": user_phone,
-            "user_birth": user_birth,
-            "auth_hash": self.cert_service.hashing_sha256(f"{mid}{m_tx_id}{api_key}"),
-            "user_hash": self.cert_service.hashing_sha256(
+            "reqSvcCd": req_svc_cd,
+            "identifier": "",
+            "DI_CODE": "",
+            "mTxId": m_tx_id,
+            "successUrl": success_url,
+            "failUrl": success_url,  # successUrl/failUrl 은 분리하여도 됩니다.
+            "authHash": self.cert_service.hashing_sha256(f"{mid}{m_tx_id}{api_key}"),
+            "directAgency": kwargs.get('direct_agency', ''),
+            "flgFixedUser": "N",
+            "userName": user_name,
+            "userPhone": user_phone,
+            "userBirth": user_birth,
+            "userHash": self.cert_service.hashing_sha256(
                 f"{user_name}{mid}{user_phone}{m_tx_id}{user_birth}{req_svc_cd}"),
+            "reservedMsg": "isUseToken=Y",
+            "logoUrl": "",
         }
 
     async def get_result_data(self, response: FormData) -> dict:

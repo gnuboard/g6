@@ -277,13 +277,14 @@ def validate_login_url(request: Request, url: str = Form(default="/")):
 
 def get_certificate_class(
     provider: Annotated[str, Path()],
+    cert_type: Annotated[str, Path()],
     inicis_simple_service: Annotated[InicisSimpleService, Depends()],
     kcp_hp_service: Annotated[KcpHpService, Depends()],
 ):
     """본인인증 서비스를 제공하는 클래스를 반환합니다."""
-    if provider == "inicis":
+    if provider == "inicis" and cert_type == "simple":
         return inicis_simple_service
-    if provider == "kcp":
+    if provider == "kcp" and cert_type == "hp":
         return kcp_hp_service
 
     raise ValueError("Unsupported service type")

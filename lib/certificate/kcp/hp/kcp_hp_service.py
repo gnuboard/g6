@@ -1,6 +1,5 @@
 """KCP 휴대폰인증 서비스를 위한 클래스를 정의합니다."""
 import base64
-import json
 import os
 from datetime import datetime
 from typing_extensions import Annotated
@@ -11,7 +10,7 @@ from OpenSSL import crypto
 
 from core.exception import AlertCloseException
 from core.settings import settings
-from lib.certificate.base import CertificateBase, post_request
+from lib.certificate.base import CertificateBase, create_cert_unique_id, post_request
 from service import BaseService
 from service.certificate_service import CertificateService
 
@@ -23,6 +22,9 @@ class KcpHpService(CertificateBase, BaseService):
     """KCP 휴대폰인증 서비스를 위한 클래스입니다."""
     CERT_URL_TEST = "https://stg-spl.kcp.co.kr/std/certpass"
     CERT_URL_PRODUCT = "https://spl.kcp.co.kr/std/certpass"
+
+    REQUEST_PAGE_URL_TEST = "https://testcert.kcp.co.kr/kcp_cert/cert_view.jsp"
+    REQUEST_PAGE_URL_PRODUCT = "https://cert.kcp.co.kr/kcp_cert/cert_view.jsp"
 
     def __init__(
         self,
@@ -42,63 +44,60 @@ class KcpHpService(CertificateBase, BaseService):
             return self.CERT_URL_PRODUCT
         return self.CERT_URL_TEST
 
-    async def get_request_data(self) -> dict:
+    def get_request_cert_page_url(self) -> str:
+        """KCP 휴대폰 인증 페이지를 요청할 URL을 반환합니다."""
+        if self.cert_service.cert_use == 2:
+            return self.REQUEST_PAGE_URL_PRODUCT
+        return self.REQUEST_PAGE_URL_TEST
+
+    async def get_request_data(self, **kwargs) -> dict:
         """KCP 휴대폰인증 창을 띄우기 위한 데이터를 반환합니다."""
         site_cd = self.cert_service.get_kcp_site_code()
-        ct_type = 'HAS'
+        ct_type = "HAS"
         make_req_dt = datetime.now().strftime("%y%m%d%H%M%S")
-
-        hash_data = f"{site_cd}^{ct_type}^{make_req_dt}"
-        kcp_sign_data = self.make_sign_data(hash_data)
+        ordr_idxx = create_cert_unique_id()
+        web_siteid = kwargs.get('web_siteid', '')
 
         # 본인인증 up_hash 생성 요청
-        cert_url = self.get_cert_url()
-        cert_info = await self.fetch_kcp_cert_info()
         req_data = {
+            # 상점정보
             'site_cd' : site_cd,
-            'ct_type' : ct_type,
-            'make_req_dt' : make_req_dt,
-            'kcp_cert_info' : cert_info,
-            'ordr_idxx' : 'test_orderid',
-            'web_siteid' : '',
-            'kcp_sign_data' : kcp_sign_data
+            'kcp_cert_info' : await self.fetch_kcp_cert_info(),
+            'ordr_idxx' : ordr_idxx,
+            # 등록 요청정보
+            'ct_type' : 'HAS',
+            # 해쉬 생성 요청정보
+            'web_siteid': web_siteid,
+            'make_req_dt': make_req_dt,
+            'kcp_sign_data': self.make_sign_data(f"{site_cd}^{ct_type}^{make_req_dt}")
         }
-        result_data = await post_request(cert_url, req_data)
+        result_data = await post_request(self.get_cert_url(), req_data)
         if result_data.get('res_cd') != '0000':
             self.raise_exception(500, result_data.get('res_msg'))
 
-        result_data.update(req_data)
-
-        sb_param_data = {
-            "ordr_idxx": result_data.get('ordr_idxx'),
-            "up_hash": result_data.get('up_hash'),
-            # 요청종류
+        return {
+            "site_cd": site_cd,
+            "ordr_idxx": ordr_idxx,
             "req_tx": "cert",
-            # 요청구분
             "cert_method": "01",
-            "web_siteid": result_data.get('web_siteid'),
-            "site_cd": result_data.get('site_cd'),
-            "Ret_URL": str(self.request.url_for('result_certificate',
-                                                provider='kcp',
-                                                cert_type='hp')),
+            "up_hash": result_data.get('up_hash'),
             "cert_otp_use": "Y",  # Y : 실명 확인 + OTP 점유 확인 , N : 실명 확인 only
+            "web_siteid_hashYN": "Y" if web_siteid else "",
+            "web_siteid": web_siteid,
+            # 가맹점 사용 필드 (인증완료시 리턴)
+            "param_opt_1": "",
+            "param_opt_2": "",
+            "param_opt_3": "",
+            # 리턴 URL
+            "Ret_URL": str(self.request.url_for('result_certificate', provider='kcp',
+                                                cert_type='hp',
+                                                page_type=kwargs.get('page_type'))),
             # 리턴 암호화 고도화
             "cert_enc_use_ext": "Y",
-            "res_cd": "",
-            "res_msg": "",
-            # web_siteid 검증 을 위한 필드
-            "web_siteid_hashYN": result_data.get('web_siteid_hashYN'),
             "kcp_merchant_time": result_data.get('kcp_merchant_time'),
             "kcp_cert_lib_ver": result_data.get('kcp_cert_lib_ver'),
-            # 가맹점 사용 필드 (인증완료시 리턴)
-            "param_opt_1": "opt1",
-            "param_opt_2": "opt2",
-            "param_opt_3": "opt3",
             # 페이지 전환 방식 사용여부
             "kcp_page_submit_yn": "",
-        }
-        return {
-            "sb_param": json.dumps(sb_param_data, ensure_ascii=False),
         }
 
     async def get_result_data(self, response: FormData) -> dict:

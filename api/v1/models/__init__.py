@@ -36,6 +36,7 @@ class Tags(Enum):
     AUTH = "인증"
     BOARD = "게시판"
     CAPTCHA = "캡차"
+    CERTIFICATE = "본인인증"
     GROUP = "게시판그룹"
     CONFIG = "환경설정"
     CONTENT = "컨텐츠"
