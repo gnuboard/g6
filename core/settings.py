@@ -51,5 +51,9 @@ class Settings(BaseSettings):
     USE_API: bool = True  # API 사용
     USE_TEMPLATE: bool = True  # 템플릿 사용
 
+    # 본인인증 설정
+    KCP_KEY_PATH: str = ""  # KCP 개인키 파일
+    KCP_CERT_PATH: str = ""  # KCP 인증서 파일
+
 
 settings = Settings()

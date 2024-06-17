@@ -1,20 +1,22 @@
 """KCP 휴대폰인증 서비스를 위한 클래스를 정의합니다."""
 import base64
 import json
+import os
 from datetime import datetime
 from typing_extensions import Annotated
 
-from OpenSSL import crypto
 from fastapi import Depends, Request
 from fastapi.datastructures import FormData
+from OpenSSL import crypto
 
 from core.exception import AlertCloseException
+from core.settings import settings
 from lib.certificate.base import CertificateBase, post_request
 from service import BaseService
 from service.certificate_service import CertificateService
 
-KCP_KEY_PATH = 'lib/certificate/kcp/hp/key/splPrikeyPKCS8.pem'
-KCP_CERT_PATH = 'lib/certificate/kcp/hp/key/splCert.pem'
+KCP_TEST_KEY_PATH = 'lib/certificate/kcp/hp/key/test/splPrikeyPKCS8.pem'
+KCP_TEST_CERT_PATH = 'lib/certificate/kcp/hp/key/test/splCert.pem'
 
 
 class KcpHpService(CertificateBase, BaseService):
@@ -36,7 +38,7 @@ class KcpHpService(CertificateBase, BaseService):
 
     def get_cert_url(self) -> str:
         """KCP 인증요청 처리 URL을 반환합니다."""
-        if self.config.cf_cert_use == 2:
+        if self.cert_service.cert_use == 2:
             return self.CERT_URL_PRODUCT
         return self.CERT_URL_TEST
 
@@ -47,11 +49,11 @@ class KcpHpService(CertificateBase, BaseService):
         make_req_dt = datetime.now().strftime("%y%m%d%H%M%S")
 
         hash_data = f"{site_cd}^{ct_type}^{make_req_dt}"
-        kcp_sign_data = make_sign_data(hash_data)
+        kcp_sign_data = self.make_sign_data(hash_data)
 
         # 본인인증 up_hash 생성 요청
         cert_url = self.get_cert_url()
-        cert_info = await fetch_kcp_cert_info()
+        cert_info = await self.fetch_kcp_cert_info()
         req_data = {
             'site_cd' : site_cd,
             'ct_type' : ct_type,
@@ -109,12 +111,12 @@ class KcpHpService(CertificateBase, BaseService):
         enc_cert_data2 = response.get('enc_cert_data2')
 
         g_conf_cert_url = self.get_cert_url()
-        g_conf_cert_info = await fetch_kcp_cert_info()
+        g_conf_cert_info = await self.fetch_kcp_cert_info()
 
         # dn_hash 검증
         ct_type = "CHK"
         dnhash_data = f"{site_cd}^{ct_type}^{cert_no}^{dn_hash}"  #dn_hash 검증 서명 데이터
-        kcp_sign_data = make_sign_data(dnhash_data)  #서명 데이터(무결성 검증)
+        kcp_sign_data = self.make_sign_data(dnhash_data)
         req_data = {
             'kcp_cert_info' : g_conf_cert_info,
             'site_cd': site_cd,
@@ -131,7 +133,7 @@ class KcpHpService(CertificateBase, BaseService):
         # 본인인증 결과 조회
         ct_type = "DEC"
         decrypt_data = site_cd + "^" + ct_type + "^" + cert_no  # 데이터 복호화 검증 서명 데이터
-        kcp_sign_data = make_sign_data(decrypt_data)  #서명 데이터(무결성 검증)
+        kcp_sign_data = self.make_sign_data(decrypt_data)
         req_data = {
             'kcp_cert_info' : g_conf_cert_info,
             'site_cd': site_cd,
@@ -151,26 +153,34 @@ class KcpHpService(CertificateBase, BaseService):
             "user_birthday": result_data.get('birth_day', ''),
         }
 
+    def make_sign_data(self, org_data: str) -> str:
+        """
+        서명데이터 생성 (kcp 휴대폰 인증)
+        - 무결성 검증
+        """
+        cert_use = self.cert_service.cert_use
+        key_path = settings.KCP_KEY_PATH if cert_use == 2 else KCP_TEST_KEY_PATH
+        if not os.path.exists(key_path):
+            self.raise_exception(400, "KCP 개인키 경로가 설정되지 않았습니다.")
 
-def make_sign_data(org_data: str) -> str:
-    """
-    서명데이터 생성 (kcp 휴대폰 인증)
-    """
-    # 개인키 READ``
-    # "splPrikeyPKCS8.pem" 은 테스트용 개인키
-    with open(KCP_KEY_PATH, 'r', encoding="UTF-8") as key_file:
-        key = key_file.read()
+        # 개인키 READ
+        with open(key_path, 'r', encoding="UTF-8") as key_file:
+            key = key_file.read()
 
-    # "changeit" 은 테스트용 개인키비밀번호
-    password = 'changeit'.encode('utf-8')
-    pkey = crypto.load_privatekey(crypto.FILETYPE_PEM, key, password)
+        # "changeit" 은 테스트용 개인키비밀번호
+        password = 'changeit'.encode('utf-8')
+        pkey = crypto.load_privatekey(crypto.FILETYPE_PEM, key, password)
 
-    # 서명데이터생성
-    sign = crypto.sign(pkey, org_data, 'sha256')
-    return base64.b64encode(sign).decode()
+        # 서명데이터생성
+        sign = crypto.sign(pkey, org_data, 'sha256')
+        return base64.b64encode(sign).decode()
 
+    async def fetch_kcp_cert_info(self):
+        """KCP 서비스인증서 파일 조회"""
+        cert_use = self.cert_service.cert_use
+        cert_path = settings.KCP_CERT_PATH if cert_use == 2 else KCP_TEST_CERT_PATH
+        if not os.path.exists(cert_path):
+            self.raise_exception(400, "KCP 서비스인증서 경로가 설정되지 않았습니다.")
 
-async def fetch_kcp_cert_info():
-    """KCP 개인 인증 키 정보 조회"""
-    with open(KCP_CERT_PATH, 'r', encoding="UTF-8") as cert_file:
-        return cert_file.read().replace('\n', '')
+        with open(cert_path, 'r', encoding="UTF-8") as cert_file:
+            return cert_file.read().replace('\n', '')
