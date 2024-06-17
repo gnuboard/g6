@@ -1,4 +1,5 @@
 """회원 관련 기능을 제공하는 서비스 모듈입니다."""
+import hashlib
 import os
 import re
 import secrets
@@ -12,9 +13,9 @@ from PIL import Image, UnidentifiedImageError
 from sqlalchemy import select, update
 
 from core.database import db_session
-from core.exception import AlertException
+from core.exception import AlertException, JSONException
 from core.models import Member
-from lib.common import get_client_ip, is_none_datetime
+from lib.common import filter_words, get_client_ip, is_none_datetime, check_prohibit_words
 from lib.member import get_next_open_date, hide_member_id
 from lib.pbkdf2 import validate_password
 from service import BaseService
@@ -88,7 +89,9 @@ class MemberService(BaseService):
 
         is_certified, message = self.is_member_email_certified(member)
         if not is_certified:
-            self.raise_exception(status_code=403, detail=message)
+            key = hashlib.md5(f"{member.mb_ip}{member.mb_datetime}".encode()).hexdigest()
+            url = self.request.url_for("certify_email_update_form", mb_id=mb_id, key=key)
+            self.raise_exception(status_code=403, detail=message, url=url)
 
         return member
 
@@ -511,9 +514,17 @@ class ValidateMember(BaseService):
         if member:
             self.raise_exception(409, "이미 가입된 아이디입니다.")
 
-        prohibit_ids = [id.strip() for id in getattr(self.config, "cf_prohibit_id", "").split(",")]
-        if mb_id in prohibit_ids:
-            self.raise_exception(403, "아이디로 사용할 수 없는 단어입니다.")
+        if word := check_prohibit_words(self.request, mb_id):
+            self.raise_exception(403, f"아이디로 사용할 수 없는 단어입니다. ({word})")
+
+    def valid_name(self, mb_name: str) -> None:
+        """회원가입이 가능한 이름인지 검사
+
+        Args:
+            mb_name (str): 가입할 이름
+        """
+        if word := filter_words(self.request, mb_name):
+            self.raise_exception(403, f"이름에 필터링 단어({word})가 포함되어 있습니다.")
 
     def valid_nickname(self, mb_nick: str) -> None:
         """ 등록 가능한 닉네임인지 검사
@@ -525,8 +536,11 @@ class ValidateMember(BaseService):
         if member:
             self.raise_exception(409, "이미 존재하는 닉네임입니다.")
 
-        if mb_nick in getattr(self.config, "cf_prohibit_id", "").strip():
-            self.raise_exception(403, "닉네임으로 사용할 수 없는 단어입니다.")
+        if prohibit_word := check_prohibit_words(self.request, mb_nick):
+            self.raise_exception(403, f"닉네임으로 사용할 수 없는 단어입니다. ({prohibit_word})")
+
+        if filter_word := filter_words(self.request, mb_nick):
+            self.raise_exception(403, f"닉네임에 필터링 단어({filter_word})가 포함되어 있습니다.")
 
     def valid_nickname_change_date(self, change_date: date = None) -> None:
         """ 닉네임 변경이 가능한지 검사
@@ -544,17 +558,37 @@ class ValidateMember(BaseService):
                 available_str = available_date.strftime("%Y-%m-%d")
                 self.raise_exception(403, f"{available_str} 이후 닉네임을 변경할 수 있습니다.")
 
-    def valid_email(self, email: str) -> None:
+    def valid_email(self, email: str, except_mb_id: str = None) -> None:
         """ 등록 가능한 이메일인지 검사
 
         Args:
             email (str): 이메일 주소
         """
-        if self.is_exists_email(email):
+        if self.is_exists_email(email, except_mb_id):
             self.raise_exception(409, "이미 가입된 이메일입니다.")
 
         if self.is_prohibit_email(email):
             self.raise_exception(403, "사용이 금지된 메일 도메인입니다.")
+
+    def valid_recommend(self, mb_recommend: str, mb_id: str = None) -> None:
+        """추천인 아이디가 존재하는지 검사
+
+        Args:
+            mb_recommend (str): 추천인 아이디
+        """
+        if not mb_recommend:
+            return None
+
+        if mb_id and mb_recommend == mb_id:
+            self.raise_exception(403, "본인을 추천인으로 등록할 수 없습니다.")
+
+        member = self.member_service.fetch_member_by_id(mb_recommend)
+        if not member:
+            self.raise_exception(404, "추천인 아이디가 존재하지 않습니다.")
+
+        is_email_certified, message = self.member_service.is_member_email_certified(member)
+        if not is_email_certified:
+            self.raise_exception(404, "이메일 인증이 완료되지 않은 추천인입니다.")
 
     def is_exists_email(self, email: str, mb_id: str = None) -> bool:
         """이메일이 이미 등록되어 있는지 확인
@@ -613,3 +647,11 @@ class ValidateMember(BaseService):
                 and available_days != 0):
             return change_date < (date.today() - timedelta(days=available_days))
         return True
+
+
+class ValidateMemberAjax(ValidateMember):
+    """
+    회원가입 ajax 요청에 사용되는 MemberService 구현 클래스.  
+    """
+    def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None):
+        raise JSONException(200, message=detail, success=False)

@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 from fastapi.encoders import jsonable_encoder
 
 from core.database import db_session
-from lib.board_lib import insert_board_new, set_write_delay
+from lib.board_lib import insert_board_new, set_write_delay, get_list_thumbnail
 from api.v1.models.response import (
     response_401, response_403, response_404, response_422
 )
@@ -70,8 +70,16 @@ async def api_read_post(
     지정된 게시판의 글을 개별 조회합니다.
     """
     ajax_good_data = ajax_service.get_ajax_good_data(service.bo_table, service.write)
+    thumbnail = get_list_thumbnail(
+        service.request,
+        service.board,
+        service.write,
+        service.gallery_width,
+        service.gallery_height
+    )
     content = jsonable_encoder(service.write)
     additional_content = jsonable_encoder({
+        "thumbnail": thumbnail,
         "images": service.images,
         "normal_files": service.normal_files,
         "links": service.get_links(),
@@ -110,8 +118,16 @@ async def api_read_post(
     write_password = service.get_write_password()
     service.validate_read_wr_password(wr_password, write_password)
     ajax_good_data = ajax_service.get_ajax_good_data(service.bo_table, service.write)
+    thumbnail = get_list_thumbnail(
+        service.request,
+        service.board,
+        service.write,
+        service.gallery_width,
+        service.gallery_height
+    )
     content = jsonable_encoder(service.write)
     additional_content = jsonable_encoder({
+        "thumbnail": thumbnail,
         "images": service.images,
         "normal_files": service.normal_files,
         "links": service.get_links(),
