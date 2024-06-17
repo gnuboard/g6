@@ -7,7 +7,7 @@ from core.models import Board, BoardNew
 from core.database import db_session
 from core.exception import AlertException
 from lib.common import dynamic_create_write_table, cut_name, FileCache
-from lib.board_lib import BoardConfig, get_list
+from lib.board_lib import BoardConfig, get_list, get_list_thumbnail
 from service import BaseService
 from service.board_file_service import BoardFileService
 from service.point_service import PointService
@@ -119,6 +119,7 @@ class BoardNewService(BaseService):
         boards_info = dict()
         for bo_table in bo_table_list:
             board = db.get(Board, bo_table)
+            board_config = BoardConfig(request, board)
             if not board:
                 self.raise_exception(
                     status_code=400, detail=f"{bo_table} 게시판 정보가 없습니다."
@@ -139,7 +140,8 @@ class BoardNewService(BaseService):
                 write = get_list(request, db, write, board_config, subject_len)
                 # 첨부파일 정보 조회
                 write.images, write.normal_files = self.file_service.get_board_files_by_type(bo_table, write.wr_id)
-
+                # 썸네일 이미지 설정
+                write.thumbnail = get_list_thumbnail(request, board, write, board_config.gallery_width, board_config.gallery_height)
             boards_info[bo_table] = writes
 
         return boards_info

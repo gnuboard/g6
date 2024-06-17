@@ -111,6 +111,13 @@ class ResponseWriteSearchModel(BaseModel):
         from_attributes = True
 
 
+class ThumbnailModel(BaseModel):
+    """게시글 모델에 사용될 썸네일 모델"""
+    src: str
+    alt: str
+    noimg: str
+
+
 class ResponseWriteModel(BaseModel):
     """게시글 모델중 response에 필요한 속성 정의"""
     wr_id: int
@@ -131,6 +138,7 @@ class ResponseWriteModel(BaseModel):
     wr_ip: str
     good: int
     nogood: int
+    thumbnail: ThumbnailModel
     wr_option: str = "",
     images: List[ResponseFileModel] = []
     normal_files: List[ResponseFileModel] = []
