@@ -13,7 +13,7 @@ from api.v1.models.response import (
 from api.v1.dependencies.board import arange_file_data
 from api.v1.models.board import (
     WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel,
-    ResponseBoardListModel, ResponseNormalModel
+    ResponseBoardListModel, ResponseNormalModel, ResponseCreateWriteModel
 )
 from api.v1.service.board import (
     ListPostServiceAPI, ReadPostServiceAPI,
@@ -153,7 +153,7 @@ async def api_create_post(
     db: db_session,
     service: Annotated[CreatePostServiceAPI, Depends(CreatePostServiceAPI.async_init)],
     wr_data: WriteModel,
-) -> ResponseNormalModel:
+) -> ResponseCreateWriteModel:
     """
     지정된 게시판에 새 글을 작성합니다.
 
@@ -189,7 +189,7 @@ async def api_create_post(
     set_write_delay(service.request)
     service.delete_cache()
     db.commit()
-    return {"result": "created"}
+    return {"result": "created", "wr_id": write.wr_id}
     
 
 @router.put("/{bo_table}/writes/{wr_id}",

@@ -64,6 +64,10 @@ class ResponseNormalModel(BaseModel):
     result: str
 
 
+class ResponseCreateWriteModel(ResponseNormalModel):
+    wr_id: int
+
+
 class ResponseFileModel(BaseModel):
     """게시글 파일 모델중 response에 필요한 속성 정의"""
     bf_source: str
