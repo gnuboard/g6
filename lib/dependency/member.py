@@ -51,7 +51,7 @@ def validate_register_data(
 
         # 본인인증 여부 체크
         if cert_service.cert_req and (not data.cert_no or data.cert_no != ss_cert_no):
-            raise AlertException("회원가입을 위해서는 본인확인을 해주셔야 합니다.", 400)
+            raise AlertException("회원가입을 위해 본인인증을 먼저 진행해주시기 바랍니다.", 400)
 
         # 기존회원 가입여부 체크
         if ss_cert_type and ss_cert_dupinfo:
@@ -59,8 +59,8 @@ def validate_register_data(
 
         # 본인인증 데이터 확인
         if ss_cert_type and ss_cert_no:
-            cert_hash = cert_service.hasing_cert_hash(data.mb_name, ss_cert_type,
-                                                    ss_cert_birth, ss_cert_no, data.mb_hp)
+            cert_hash = cert_service.hasing_cert_hash(
+                data.mb_name, ss_cert_type, ss_cert_no, ss_cert_birth, data.mb_hp)
             if not ss_cert_hash == cert_hash:
                 raise AlertException("본인확인 데이터가 일치하지 않습니다.", 400)
         # 데이터 처리

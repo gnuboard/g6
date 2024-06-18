@@ -50,6 +50,16 @@ class CreateMember(BaseModel):
     mb_9: str = Body("", title="여분 필드9")
     mb_10: str = Body("", title="여분 필드10")
 
+    # 본인인증 정보
+    cert_type: str = Body("", title="본인인증 타입")
+    cert_no: str = Body("", title="본인인증 번호")
+    cert_hash: str = Body("", title="결과 데이터 해시")
+    cert_adult: int = Body(0, title="성인인증 여부")
+    cert_dupinfo: str = Body("", title="본인인증 정보")
+    cert_user_name: str = Body("", title="이름")
+    cert_user_phone: str = Body("", title="휴대전화번호")
+    cert_user_birthday: str = Body("", title="생년월일")
+
     @field_validator('mb_zip', mode='after')
     @classmethod
     def divide_zip(cls, v: str) -> str:
@@ -72,8 +82,6 @@ class CreateMember(BaseModel):
     @model_validator(mode='after')
     def init_fields(self) -> 'CreateMember':
         """CreateMemberModel에서 선언되지 않은 필드를 초기화"""
-        self.mb_level: int = 1
-        self.mb_login_ip: str = ""
         # 회원가입에 필요 없는 필드 삭제
         del self.mb_password_re
         del self.mb_zip

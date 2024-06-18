@@ -2,16 +2,16 @@
 from typing import Optional
 from typing_extensions import Annotated
 
-from fastapi import Body, Depends, HTTPException, Path, status
-
-from core.models import Member
+from fastapi import Body, Depends, HTTPException, Path, Request, status
 
 from api.settings import api_settings
 from api.v1.auth import oauth2_optional, oauth2_scheme
 from api.v1.auth.jwt import JWT
-from api.v1.service.member import MemberServiceAPI, ValidateMemberAPI
 from api.v1.models.auth import TokenPayload
 from api.v1.models.member import CreateMember, UpdateMember
+from api.v1.service.certificate import CertificateServiceAPI
+from api.v1.service.member import MemberServiceAPI, ValidateMemberAPI
+from core.models import Member
 from lib.common import is_none_datetime
 from lib.pbkdf2 import validate_password
 
@@ -70,6 +70,8 @@ async def get_current_member_optional(
 
 
 def validate_create_data(
+    request: Request,
+    cert_service: Annotated[CertificateServiceAPI, Depends()],
     validate: Annotated[ValidateMemberAPI, Depends()],
     data: CreateMember
 ):
@@ -79,6 +81,45 @@ def validate_create_data(
     validate.valid_nickname(data.mb_nick)
     validate.valid_email(data.mb_email)
     validate.valid_recommend(data.mb_recommend, data.mb_id)
+
+    # 휴대폰 번호가 필수인 경우 유효성 검사
+    config = request.state.config
+    if cert_service.should_required_hp() and config.cf_use_hp:
+        validate.valid_hp(data.mb_hp)
+
+    # 본인인증 유효성 검사
+    if cert_service.cert_use:
+        # 본인인증 여부 체크
+        if cert_service.cert_req and not data.cert_no:
+            raise HTTPException(400, "회원가입을 위해 본인인증을 먼저 진행해주시기 바랍니다.")
+
+        # 기존회원 가입여부 체크
+        if data.cert_type and data.cert_dupinfo:
+            cert_service.validate_exists_dupinfo(data.cert_dupinfo, '')
+
+        # 본인인증 데이터 확인
+        if data.cert_type and data.cert_no:
+            cert_hash = cert_service.hasing_cert_hash(
+                data.mb_name, data.cert_type, data.cert_no,
+                data.cert_user_birthday, data.mb_hp)
+
+            if not data.cert_hash == cert_hash:
+                raise HTTPException(400, "본인확인 데이터가 일치하지 않습니다.")
+
+        # 데이터 처리
+        data.mb_certify = data.cert_type
+        data.mb_adult = data.cert_adult
+        data.mb_birth = data.cert_user_birthday
+        data.mb_dupinfo = data.cert_dupinfo
+
+    del data.cert_type
+    del data.cert_no
+    del data.cert_hash
+    del data.cert_adult
+    del data.cert_dupinfo
+    del data.cert_user_name
+    del data.cert_user_phone
+    del data.cert_user_birthday
 
     return data
 

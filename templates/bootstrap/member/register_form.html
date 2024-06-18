@@ -522,7 +522,7 @@
                 }
             }
 
-            {% if is_requried_register %}
+            {% if certificate.is_requried_register %}
             // 본인확인 체크
             if (f.cert_no.value == "") {
                 alert("회원가입을 위해서는 본인확인을 해주셔야 합니다.");

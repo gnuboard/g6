@@ -31,11 +31,6 @@ async def get_certificate(
     request: Request,
     provider_class: Annotated[CertificateBase, Depends(get_certificate_class)],
     data: Annotated[CertificatePageRequest, Depends()]
-    # provider: Annotated[str, Path()],
-    # cert_type: Annotated[str, Path()],
-    # page_type: Annotated[str, Path()],
-    # direct_agency: Annotated[str, Query()] = "",
-    # web_siteid: Annotated[str, Query()] = ""
 ):
     """
     본인인증 페이지 요청
@@ -43,7 +38,7 @@ async def get_certificate(
     data_dict = data.__dict__
 
     # 결과 URL
-    result_url = create_result_url(request, 'result_certificate', **data_dict)
+    result_url = create_result_url(request, 'result_certificate_api', **data_dict)
     data_dict.update({"result_url": result_url})
 
     context = {
@@ -73,9 +68,9 @@ async def result_certificate(
 
     cert_no = result_data.get('cert_no')
     ci = result_data.get('ci')
-    user_name = result_data.get('user_name')
-    user_phone = result_data.get('user_phone')
-    user_birthday = result_data.get('user_birth')
+    user_name = result_data.get('user_name', '')
+    user_phone = result_data.get('user_phone', '')
+    user_birthday = result_data.get('user_birth', '')
 
     # 인증정보 생성 및 검증
     dupinfo = hashing_md5(f"{ci}{ci}")
@@ -87,8 +82,8 @@ async def result_certificate(
 
     # 결과 데이터 md5 해싱
     md5_cert_no = hashing_md5(cert_no)
-    hash_data   = cert_service.hasing_cert_hash(user_name, cert_type,
-                                                user_birthday, md5_cert_no, user_phone)
+    hash_data   = cert_service.hasing_cert_hash(
+        user_name, cert_type, md5_cert_no, user_birthday, user_phone)
     # 세션 저장
     request.session["ss_cert_type"] = cert_type
     request.session["ss_cert_no"] = md5_cert_no

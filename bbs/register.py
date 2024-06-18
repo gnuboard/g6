@@ -114,7 +114,7 @@ async def post_register_form(
     회원가입 처리
     """
     config = request.state.config
-    member = member_service.create_member(form_data)
+    member = member_service.create_member(form_data.__dict__)
 
     # 회원가입 포인트 지급
     register_point = getattr(config, "cf_register_point", 0)

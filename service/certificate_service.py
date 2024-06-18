@@ -163,7 +163,7 @@ class CertificateService(BaseService):
                                     \\n아이디 : {exists_member.mb_id}")
 
     def hasing_cert_hash(self, name: str, cert_type: str,
-                         birth: str, cert_no: str, phone: str = None) -> str:
+                         cert_no: str, birth: str = "", phone: str = "") -> str:
         """본인인증 데이터를 해싱하여 반환합니다."""
         if cert_type == "ipin":
             return hashing_md5(f"{name}{cert_type}{birth}{cert_no}")

@@ -6,9 +6,15 @@ from fastapi import APIRouter, Depends, Request
 
 from api.v1.dependencies.certificate import get_certificate_class
 from api.v1.dependencies.certificate import validate_certificate_limit
-from api.v1.models.certificate import CertificatePageRequest, CertificatePageResponse
+from api.v1.dependencies.member import get_current_member_optional
+from api.v1.models.certificate import (
+    CertificatePageRequest, CertificatePageResponse, CertificateRequest
+)
 from api.v1.models.response import response_404, response_422
+from api.v1.service.certificate import CertificateServiceAPI
+from core.models import Member
 from lib.certificate.base import CertificateBase, create_result_url
+from lib.common import hashing_md5
 
 router = APIRouter()
 
@@ -44,8 +50,52 @@ async def get_certificate_api(
 
 @router.post("/certificate/{provider}/{cert_type}/{page_type}/result",
              dependencies=[Depends(validate_certificate_limit)])
-async def result_certificate_api():
+async def result_certificate_api(
+    request: Request,
+    cert_service: Annotated[CertificateServiceAPI, Depends()],
+    provider_class: Annotated[CertificateBase, Depends(get_certificate_class)],
+    member: Annotated[Member, Depends(get_current_member_optional)],
+    data: Annotated[CertificateRequest, Depends()],
+):
     """
     본인인증 요청 결과 처리
     """
-    pass
+    provider = data.provider.value
+    cert_type = data.cert_type.value
+    page_type = data.page_type.value
+
+    mb_id = getattr(member, "mb_id", "")
+    result_data = await provider_class.get_result_data(await request.form())
+
+    cert_no = result_data.get('cert_no')
+    ci = result_data.get('ci')
+    user_name = result_data.get('user_name', '')
+    user_phone = result_data.get('user_phone', '')
+    user_birthday = result_data.get('user_birth', '')
+
+    # 인증정보 생성 및 검증
+    dupinfo = hashing_md5(f"{ci}{ci}")
+    if page_type == "register":
+        cert_service.validate_exists_dupinfo(dupinfo, mb_id)
+
+    # 성인인증 결과
+    is_adult = cert_service.get_is_adult(user_birthday)
+
+    # 결과 데이터 md5 해싱
+    md5_cert_no = hashing_md5(cert_no)
+    hash_data   = cert_service.hasing_cert_hash(
+        user_name, cert_type, md5_cert_no, user_birthday, user_phone)
+
+    # 인증 결과 이력 생성
+    cert_service.create_cert_history(provider, cert_type, mb_id)
+
+    return {
+        "cert_type": cert_type,
+        "cert_no": md5_cert_no,
+        "cert_hash": hash_data,
+        "cert_adult": is_adult,
+        "cert_dupinfo": dupinfo,
+        "cert_user_name": user_name,
+        "cert_user_phone": user_phone,
+        "cert_user_birthday": user_birthday,
+    }

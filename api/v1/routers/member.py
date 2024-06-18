@@ -54,9 +54,18 @@ async def create_member(
     - 회원가입 & 추천인 포인트 지급
     - 회원가입 메일 발송 (메일발송 설정 시)
     - 관리자에게 회원가입 메일 발송 (메일발송 설정 시)
+
+    #### 본인확인을 사용 중일 경우
+    - 본인확인 정보를 전달해야 합니다. `cert_{변수명}`
+    - 회원가입 시 본인확인 필수 설정이 되어있는 경우, 본인확인 정보도 필수로 전달해야합니다.
     """
     config = request.state.config
-    member = service.create_member(data)
+
+    # 데이터 처리
+    # CreateMember 클래스의 extra='allow' 설정으로 인해
+    # additionalProp1 필드가 추가되어 있어서 제외 처리
+    data_dict = data.model_dump(exclude={"additionalProp1"})
+    member = service.create_member(data_dict)
 
     # 회원가입 포인트 지급
     register_point = getattr(config, "cf_register_point", 0)

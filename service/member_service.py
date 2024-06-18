@@ -46,9 +46,9 @@ class MemberService(BaseService):
     def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None):
         raise AlertException(detail, status_code, url)
 
-    def create_member(self, data) -> Member:
+    def create_member(self, data: dict) -> Member:
         """회원 정보를 생성합니다."""
-        member = Member(**data.__dict__)
+        member = Member(**data)
         member.mb_level = getattr(self.config, "cf_register_level", 1)
         member.mb_login_ip = get_client_ip(self.request)
         # 메일인증
