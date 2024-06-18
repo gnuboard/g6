@@ -1,9 +1,10 @@
 """본인인증 서비스를 위한 추상 클래스와 유틸리티 함수를 제공합니다."""
 import abc
-from datetime import datetime
 import random
+from datetime import datetime
 
 import httpx
+from fastapi import Request
 from fastapi.datastructures import FormData
 
 
@@ -42,3 +43,13 @@ def create_cert_unique_id() -> str:
     random_num = random.randint(1000, 9999)
 
     return f"G6_{timestamp}{random_num}"
+
+
+def create_result_url(request: Request, name: str, **kwargs) -> str:
+    """본인인증 결과 URL을 생성합니다."""
+    return str(request.url_for(
+        name,
+        provider=kwargs.get('provider'),
+        cert_type=kwargs.get('cert_type'),
+        page_type=kwargs.get('page_type')
+    ))

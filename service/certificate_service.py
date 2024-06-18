@@ -1,6 +1,6 @@
 """본인인증 관련 기능을 제공하는 모듈입니다."""
 from datetime import date, datetime, timedelta
-import hashlib
+
 from fastapi import Depends, Request
 from sqlalchemy import func, insert, select
 from typing_extensions import Annotated
@@ -8,27 +8,22 @@ from typing_extensions import Annotated
 from core.database import db_session
 from core.exception import AlertCloseException
 from core.models import CertHistory, Member, MemberCertHistory
-from lib.common import get_client_ip
+from lib.common import get_client_ip, hashing_md5
 from service import BaseService
 from service.member_service import MemberService
 
 
 class CertificateService(BaseService):
     """본인인증 관련 기능을 제공하는 클래스입니다."""
-    INICIS_MID_PREFIX = "SRA"
-    INICIS_TEST_MID = 'INIiasTest'
-    INICIS_TEST_API_KEY = 'TGdxb2l3enJDWFRTbTgvREU3MGYwUT09'
-    KCP_SITE_CD_PREFIX = 'SM'
-    KCP_TEST_SITE_CD = 'AO0QE'
 
     def __init__(
-            self,
-            request: Request,
-            db: db_session,
-            member_service: Annotated[MemberService, Depends()]
-        ):
+        self,
+        request: Request,
+        db: db_session,
+        member_service: Annotated[MemberService, Depends()]
+    ):
         self.request = request
-        self.config  = request.state.config
+        self.config = request.state.config
         self.db = db
         self.member_service = member_service
 
@@ -69,9 +64,7 @@ class CertificateService(BaseService):
         )
 
     def get_certificate_type(self, cert_type: str) -> str:
-        """
-        회원의 본인인증 방식을 반환합니다.
-        """
+        """회원의 본인인증 방식을 반환합니다."""
         if cert_type == "hp":
             return "휴대폰"
         if cert_type == "simple":
@@ -79,30 +72,6 @@ class CertificateService(BaseService):
         if cert_type == "ipin":
             return "아이핀"
         return ""
-
-    def get_kg_mid(self) -> str:
-        """
-        KG이니시스 본인인증을 위한 mid를 반환합니다.
-        """
-        if self.cert_use == 2:
-            return f"{self.INICIS_MID_PREFIX}{self.config.cf_cert_kg_mid}"
-        return self.INICIS_TEST_MID
-
-    def get_kg_api_key(self) -> str:
-        """
-        KG이니시스 본인인증을 위한 api_key를 반환합니다.
-        """
-        if self.cert_use == 2:
-            return self.config.cf_cert_kg_cd
-        return self.INICIS_TEST_API_KEY
-
-    def get_kcp_site_code(self) -> str:
-        """
-        KCP 본인인증을 위한 site_cd를 반환합니다.
-        """
-        if self.cert_use == 2:
-            return f"{self.KCP_SITE_CD_PREFIX}{self.config.cf_cert_kcp_cd}"
-        return self.KCP_TEST_SITE_CD
 
     def get_is_adult(self, birth_day: str) -> int:
         """만 19세 이상인지 여부를 반환합니다."""
@@ -117,7 +86,7 @@ class CertificateService(BaseService):
     def get_cert_count(self, mb_id: str, cert_type: str) -> int:
         """회원의 본인인증 횟수를 반환합니다."""
         query = (select(func.count(CertHistory.cr_id))
-                .where(CertHistory.cr_method == cert_type,
+                 .where(CertHistory.cr_method == cert_type,
                         CertHistory.cr_date == date.today()))
         if mb_id:
             query = query.where(CertHistory.mb_id == mb_id)
@@ -127,16 +96,8 @@ class CertificateService(BaseService):
 
         return self.db.scalar(query)
 
-    def create_dupinfo(self, ci: str):
-        """
-        본인인증 정보를 생성합니다.
-        """
-        return self.hashing_md5(f"{ci}{ci}")
-
     def create_cert_history(self, company: str, method: str, mb_id: str = '') -> None:
-        """
-        본인인증 이력을 생성합니다.
-        """
+        """본인인증 이력을 생성합니다."""
         self.db.execute(
             insert(CertHistory).values(
                 mb_id=mb_id,
@@ -149,9 +110,7 @@ class CertificateService(BaseService):
 
     def create_member_cert_history(self, mb_id: str, mb_name: str,
                                    mb_hp: str, mb_birth: str, cert_type: str) -> None:
-        """
-        회원의 본인인증 변경 이력을 생성합니다.
-        """
+        """회원의 본인인증 변경 이력을 생성합니다."""
         self.db.execute(
             insert(MemberCertHistory).values(
                 mb_id=mb_id,
@@ -164,9 +123,7 @@ class CertificateService(BaseService):
         self.db.commit()
 
     def remove_certificate_session(self):
-        """
-        본인인증 세션을 삭제합니다.
-        """
+        """본인인증 세션을 삭제합니다."""
         self.request.session.pop("ss_cert_no", None)
         self.request.session.pop("ss_cert_type", None)
         self.request.session.pop("ss_cert_hash", None)
@@ -175,9 +132,7 @@ class CertificateService(BaseService):
         self.request.session.pop("ss_cert_dupinfo", None)
 
     def validate_certificate_limit(self, mb_id: str, cert_type: str) -> None:
-        """
-        본인인증 횟수 제한 검사
-        """
+        """본인인증 횟수 제한 검사"""
         if self.cert_use == 2:
             return None
         if self.cert_limit == 0:
@@ -211,13 +166,5 @@ class CertificateService(BaseService):
                          birth: str, cert_no: str, phone: str = None) -> str:
         """본인인증 데이터를 해싱하여 반환합니다."""
         if cert_type == "ipin":
-            return self.hashing_md5(f"{name}{cert_type}{birth}{cert_no}")
-        return self.hashing_md5(f"{name}{cert_type}{birth}{phone}{cert_no}")
-
-    def hashing_md5(self, string: str) -> str:
-        """문자열을 MD5로 해싱하여 반환합니다."""
-        return hashlib.md5(string.encode()).hexdigest()
-
-    def hashing_sha256(self, string: str) -> str:
-        """문자열을 SHA256으로 해싱하여 반환합니다."""
-        return hashlib.sha256(string.encode()).hexdigest()
+            return hashing_md5(f"{name}{cert_type}{birth}{cert_no}")
+        return hashing_md5(f"{name}{cert_type}{birth}{phone}{cert_no}")

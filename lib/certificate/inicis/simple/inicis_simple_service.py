@@ -7,6 +7,7 @@ from fastapi.datastructures import FormData
 from typing_extensions import Annotated
 
 from core.exception import AlertCloseException
+from lib.common import hashing_sha256
 from lib.certificate.base import CertificateBase, create_cert_unique_id
 from lib.certificate.base import post_request
 from lib.certificate.inicis.simple.lib.seed import SEED128
@@ -16,6 +17,11 @@ from service.certificate_service import CertificateService
 
 class InicisSimpleService(CertificateBase, BaseService):
     """KG이니시스 간편인증 서비스를 위한 클래스입니다."""
+
+    INICIS_MID_PREFIX = "SRA"
+    INICIS_TEST_MID = 'INIiasTest'
+    INICIS_TEST_API_KEY = 'TGdxb2l3enJDWFRTbTgvREU3MGYwUT09'
+
     VALID_URLS = ["https://kssa.inicis.com", "https://fcsa.inicis.com"]
     INICIS_SEEDIV = 'SASKGINICIS00000'  # SEED 복호화에 사용되는 IV
 
@@ -27,10 +33,28 @@ class InicisSimpleService(CertificateBase, BaseService):
             cert_service: Annotated[CertificateService, Depends()],
         ) -> None:
         self.request = request
+        self.config = request.state.config
         self.cert_service = cert_service
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise AlertCloseException(status_code=status_code, detail=detail)
+
+    def get_mid(self) -> str:
+        """
+        KG이니시스 본인인증을 위한 mid를 반환합니다.
+        """
+        if self.cert_service.cert_use == 2:
+            mid = getattr(self.config, 'cf_cert_kg_mid', '')
+            return f"{self.INICIS_MID_PREFIX}{mid}"
+        return self.INICIS_TEST_MID
+
+    def get_api_key(self) -> str:
+        """
+        KG이니시스 본인인증을 위한 api_key를 반환합니다.
+        """
+        if self.cert_service.cert_use == 2:
+            return getattr(self.config, 'cf_cert_kg_cd', '')
+        return self.INICIS_TEST_API_KEY
 
     def get_request_cert_page_url(self) -> str:
         """KG이니시스 인증 페이지를 요청할 URL을 반환합니다."""
@@ -38,32 +62,31 @@ class InicisSimpleService(CertificateBase, BaseService):
 
     async def get_request_data(self, **kwargs) -> dict:
         """KG이니시스 본인인증 창을 띄우기 위한 데이터를 반환합니다."""
-        mid = self.cert_service.get_kg_mid()
-        api_key = self.cert_service.get_kg_api_key()
+        mid = self.get_mid()
+        api_key = self.get_api_key()
 
         m_tx_id = create_cert_unique_id()
         req_svc_cd = '01'
+
         user_name = ''
         user_phone = ''
         user_birth = ''
-        success_url = str(self.request.url_for('result_certificate', provider='inicis',
-                                               cert_type='simple',
-                                               page_type=kwargs.get('page_type')))
+
         return {
             "mid": mid,
             "reqSvcCd": req_svc_cd,
             "identifier": "",
             "DI_CODE": "",
             "mTxId": m_tx_id,
-            "successUrl": success_url,
-            "failUrl": success_url,  # successUrl/failUrl 은 분리하여도 됩니다.
-            "authHash": self.cert_service.hashing_sha256(f"{mid}{m_tx_id}{api_key}"),
+            "successUrl": kwargs.get('result_url'),
+            "failUrl": kwargs.get('result_url'),
+            "authHash": hashing_sha256(f"{mid}{m_tx_id}{api_key}"),
             "directAgency": kwargs.get('direct_agency', ''),
             "flgFixedUser": "N",
             "userName": user_name,
             "userPhone": user_phone,
             "userBirth": user_birth,
-            "userHash": self.cert_service.hashing_sha256(
+            "userHash": hashing_sha256(
                 f"{user_name}{mid}{user_phone}{m_tx_id}{user_birth}{req_svc_cd}"),
             "reservedMsg": "isUseToken=Y",
             "logoUrl": "",
@@ -84,7 +107,7 @@ class InicisSimpleService(CertificateBase, BaseService):
 
         # 결과 조회 요청
         data = {
-            'mid': self.cert_service.get_kg_mid(),
+            'mid': self.get_mid(),
             'txId': tx_id
         }
         result_data = await post_request(auth_request_url, data, {'Accept': 'application/json'})

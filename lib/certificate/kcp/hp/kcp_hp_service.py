@@ -26,6 +26,9 @@ class KcpHpService(CertificateBase, BaseService):
     REQUEST_PAGE_URL_TEST = "https://testcert.kcp.co.kr/kcp_cert/cert_view.jsp"
     REQUEST_PAGE_URL_PRODUCT = "https://cert.kcp.co.kr/kcp_cert/cert_view.jsp"
 
+    KCP_SITE_CD_PREFIX = 'SM'
+    KCP_TEST_SITE_CD = 'AO0QE'
+
     def __init__(
         self,
         request: Request,
@@ -37,6 +40,13 @@ class KcpHpService(CertificateBase, BaseService):
 
     def raise_exception(self, status_code: int, detail: str = None):
         raise AlertCloseException(status_code=status_code, detail=detail)
+
+    def get_site_code(self) -> str:
+        """KCP 본인인증을 위한 site_cd를 반환합니다."""
+        if self.cert_service.cert_use == 2:
+            code = getattr(self.config, 'cf_cert_kcp_cd', '')
+            return f"{self.KCP_SITE_CD_PREFIX}{code}"
+        return self.KCP_TEST_SITE_CD
 
     def get_cert_url(self) -> str:
         """KCP 인증요청 처리 URL을 반환합니다."""
@@ -52,7 +62,7 @@ class KcpHpService(CertificateBase, BaseService):
 
     async def get_request_data(self, **kwargs) -> dict:
         """KCP 휴대폰인증 창을 띄우기 위한 데이터를 반환합니다."""
-        site_cd = self.cert_service.get_kcp_site_code()
+        site_cd = self.get_site_code()
         ct_type = "HAS"
         make_req_dt = datetime.now().strftime("%y%m%d%H%M%S")
         ordr_idxx = create_cert_unique_id()
@@ -88,10 +98,7 @@ class KcpHpService(CertificateBase, BaseService):
             "param_opt_1": "",
             "param_opt_2": "",
             "param_opt_3": "",
-            # 리턴 URL
-            "Ret_URL": str(self.request.url_for('result_certificate', provider='kcp',
-                                                cert_type='hp',
-                                                page_type=kwargs.get('page_type'))),
+            "Ret_URL": kwargs.get('result_url'),
             # 리턴 암호화 고도화
             "cert_enc_use_ext": "Y",
             "kcp_merchant_time": result_data.get('kcp_merchant_time'),

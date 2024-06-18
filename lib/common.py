@@ -918,3 +918,13 @@ def hide_ip_address(ip: str) -> str:
     """IP 주소를 가려주는 함수"""
     return re.sub(r"([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)",
                   "\\1.#.#.\\4", ip)
+
+
+def hashing_md5(string: str) -> str:
+    """문자열을 MD5로 해싱하여 반환합니다."""
+    return hashlib.md5(string.encode()).hexdigest()
+
+
+def hashing_sha256(string: str) -> str:
+    """문자열을 SHA256으로 해싱하여 반환합니다."""
+    return hashlib.sha256(string.encode()).hexdigest()
