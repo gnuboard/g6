@@ -87,6 +87,7 @@ class ResponseCommentModel(BaseModel):
     wr_option: str
     wr_email: str
     wr_comment: int
+    wr_comment_reply: str
     is_reply: bool
     is_edit: bool
     is_del: bool
