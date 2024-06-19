@@ -49,7 +49,10 @@ async def get_certificate_api(
 
 
 @router.post("/certificate/{provider}/{cert_type}/{page_type}/result",
-             dependencies=[Depends(validate_certificate_limit)])
+             summary="본인인증 결과 데이터 처리",
+             dependencies=[Depends(validate_certificate_limit)],
+             include_in_schema=False
+             )
 async def result_certificate_api(
     request: Request,
     cert_service: Annotated[CertificateServiceAPI, Depends()],
@@ -58,7 +61,12 @@ async def result_certificate_api(
     data: Annotated[CertificateRequest, Depends()],
 ):
     """
-    본인인증 요청 결과 처리
+    본인인증 결과 데이터를 처리하여 인증정보를 반환합니다.
+    - PG사의 본인인증 처리를 통해 데이터를 통해 인증정보를 반환합니다.
+    - 인증정보를 회원가입시 Request Body 로 그대로 전달합니다.
+
+    * 이 API는 PG사에서 요청하는 Callback URL 로 사용되기 때문에
+    * API 문서에는 노출되지 않습니다.
     """
     provider = data.provider.value
     cert_type = data.cert_type.value

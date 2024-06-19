@@ -3,7 +3,7 @@ from fastapi import Depends, HTTPException, Path
 from typing_extensions import Annotated
 
 from api.v1.dependencies.member import get_current_member_optional
-from api.v1.models.certificate import CertificatePageRequest
+from api.v1.models.certificate import CertificateRequest
 from api.v1.service.certificate import (
     CertificateServiceAPI, InicisSimpleServiceAPI, KcpHpServiceAPI
 )
@@ -13,7 +13,7 @@ from core.models import Member
 def get_certificate_class(
     inicis_simple_service: Annotated[InicisSimpleServiceAPI, Depends()],
     kcp_hp_service: Annotated[KcpHpServiceAPI, Depends()],
-    data: Annotated[CertificatePageRequest, Depends()],
+    data: Annotated[CertificateRequest, Depends()],
 ):
     """
     본인인증 서비스를 제공하는 클래스를 반환합니다.
