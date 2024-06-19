@@ -379,7 +379,6 @@ async def api_create_comment(
     - **wr_name**: 작성자 이름 (비회원일 경우)
     - **wr_password**: 비밀번호
     - **wr_option**: 글 옵션
-    - **wr_id**: 부모글 ID
     - **comment_id**" 댓글 ID (대댓글 작성시 댓글 id)
     wr_id만 입력 - 댓글작성
     wr_id, comment_id 입력 - 대댓글 작성
