@@ -161,11 +161,9 @@ class RegisterResponse(MessageResponse):
 class MemberResponse(BaseModel):
     """회원 정보 응답 모델"""
     mb_id: str
-    mb_name: str
     mb_nick: str
+    mb_email: str
     mb_point: int
-    mb_memo_cnt: int
-    mb_scrap_cnt: int
     mb_profile: str
 
     mb_icon_path: str
@@ -191,6 +189,13 @@ class MemberResponse(BaseModel):
         self.mb_icon_path = ImageService.get_icon_path(self.mb_id)
         self.mb_image_path = ImageService.get_image_path(self.mb_id)
         return self
+
+
+class MemberMeResponse(MemberResponse):
+    """본인 회원 정보 응답 모델"""
+    mb_name: str
+    mb_memo_cnt: int
+    mb_scrap_cnt: int
 
 
 class SearchMemberId(BaseModel):
