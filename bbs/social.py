@@ -7,20 +7,23 @@ from typing import Optional
 from uuid import uuid4
 
 from authlib.integrations.starlette_client.apps import StarletteOAuth2App
-from fastapi import APIRouter, BackgroundTasks, Depends, Form, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, Query, Request
+from fastapi.responses import JSONResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy import delete, exists, select
 from starlette.responses import RedirectResponse
 from typing_extensions import Annotated
 
 from core.database import DBConnect, db_session
-from core.exception import AlertException
+from core.exception import AlertCloseException, AlertException, JSONException
 from core.formclass import MemberForm, RegisterSocialMemberForm
-from core.models import Config, MemberSocialProfiles
+from core.models import Config, Member, MemberSocialProfiles
 from core.template import UserTemplates
-from lib.common import session_member_key
+from lib.common import SOCIAL_PATH, session_member_key
+from lib.dependency.auth import get_login_member
 from lib.dependency.social import (
     get_auth_token_by_session, get_provider_by_query,
-    get_provider_by_session, validate_use_social_login
+    get_provider_by_session, validate_link_social, validate_use_social_login
 )
 from lib.mail import send_register_mail
 from lib.pbkdf2 import create_hash
@@ -70,10 +73,10 @@ async def request_social_login(
 
 @router.get('/social/login/callback')
 async def authorize_social_login(
-        request: Request,
-        db: db_session,
-        member_service: Annotated[MemberService, Depends()],
-        provider: Annotated[str, Depends(get_provider_by_query)],
+    request: Request,
+    db: db_session,
+    member_service: Annotated[MemberService, Depends()],
+    provider: Annotated[str, Depends(get_provider_by_query)],
 ):
     """
     소셜 로그인 인증 콜백
@@ -90,32 +93,67 @@ async def authorize_social_login(
         raise AlertException(status_code=400, detail="유효하지 않은 요청입니다. 관리자에게 문의하십시오.",
                              url=str(request.url_for('login')))
 
-    # 가입된 소셜 서비스 아이디가 존재하는지 확인
-    social_profile = SocialAuthService.get_profile_by_identifier(profile.identifier, provider)
+    # 회원정보수정 > 소셜계정 연결
+    if request.state.login_member:
+        # 가입된 소셜 서비스 아이디가 존재하는지 확인
+        social_profile = SocialAuthService.get_profile_by_identifier(profile.identifier, provider)
+        if social_profile:
+            raise AlertCloseException(detail=f"{provider} 소셜계정은 이미 연결된 계정이 존재합니다.", status_code=409)
 
-    # 가입정보가 있을 경우 로그인 처리
-    if social_profile:
-        member = member_service.get_member(social_profile.mb_id)
+        member = member_service.get_member(request.state.login_member.mb_id)
+        if SocialAuthService.check_exists_by_mb_id(provider, member.mb_id):
+            raise AlertCloseException(detail=f"본 계정은 이미 연결된 {provider} 소셜계정이 존재합니다.", status_code=409)
 
-        request.session["ss_mb_id"] = member.mb_id
-        request.session["ss_mb_key"] = session_member_key(request, member)  # XSS 공격 대응
-        request.session["ss_social_provider"] = provider
-        return RedirectResponse(url=request.url_for('index'), status_code=302)
+        # 소셜계정 연결
+        provider_class = load_provider_class(provider)
+        response = await get_social_profile(request, provider_class, auth_token)
+        social_email, profile = provider_class.convert_gnu_profile_data(response)
 
-    # 기존 회원정보에 소셜 가입 연결
-    # FIXME: ss_social_link세션을 설정하는 부분이 없음
-    if 'ss_social_link' in request.session and request.state.login_member.mb_id:
-        member = request.state.login_member
-        profile.mb_id = member.mb_id
-        db.add(profile)
+        member_social_profiles = MemberSocialProfiles()
+        member_social_profiles.mb_id = member.mb_id
+        member_social_profiles.provider = provider
+        member_social_profiles.identifier = profile.identifier
+        member_social_profiles.displayname = profile.displayname
+        member_social_profiles.profileurl = profile.profile_url
+        member_social_profiles.photourl = profile.photourl
+        db.add(member_social_profiles)
         db.commit()
 
-        return RedirectResponse(url=request.url_for('index'), status_code=302)
+        context = {
+            "request": request,
+            "provider": provider,
+        }
 
-    # 소셜 회원가입 페이지로 이동
-    request.session['ss_social_provider'] = provider
-    request.session['ss_social_email'] = social_email
-    return RedirectResponse(url=request.url_for('get_social_register_form'), status_code=302)
+        template = Jinja2Templates(directory=SOCIAL_PATH)
+        return template.TemplateResponse("link_result.html", context)
+    # 회원가입
+    else:
+        # 가입된 소셜 서비스 아이디가 존재하는지 확인
+        social_profile = SocialAuthService.get_profile_by_identifier(profile.identifier, provider)
+
+        # 가입정보가 있을 경우 로그인 처리
+        if social_profile:
+            member = member_service.get_member(social_profile.mb_id)
+
+            request.session["ss_mb_id"] = member.mb_id
+            request.session["ss_mb_key"] = session_member_key(request, member)  # XSS 공격 대응
+            request.session["ss_social_provider"] = provider
+            return RedirectResponse(url=request.url_for('index'), status_code=302)
+
+        # 기존 회원정보에 소셜 가입 연결
+        # FIXME: ss_social_link세션을 설정하는 부분이 없음
+        if 'ss_social_link' in request.session and request.state.login_member.mb_id:
+            member = request.state.login_member
+            profile.mb_id = member.mb_id
+            db.add(profile)
+            db.commit()
+
+            return RedirectResponse(url=request.url_for('index'), status_code=302)
+
+        # 소셜 회원가입 페이지로 이동
+        request.session['ss_social_provider'] = provider
+        request.session['ss_social_email'] = social_email
+        return RedirectResponse(url=request.url_for('get_social_register_form'), status_code=302)
 
 
 @router.get('/social/register')
@@ -270,6 +308,25 @@ async def social_register_link(
                          url=request.url_for('index'))
 
 
+@router.post('/social/unlink',
+             dependencies=[Depends(validate_link_social)])
+async def unlink_social_profile(
+    member: Annotated[Member, Depends(get_login_member)],
+    provider: Annotated[str, Query()] = "",
+):
+    """
+    소셜계정 연결해제
+    """
+    if not SocialAuthService.check_exists_by_mb_id(provider, member.mb_id):
+        raise JSONException(message="연결된 소셜계정이 없습니다.", status_code=404)
+
+    SocialAuthService.unlink_social_login(member.mb_id, provider)
+    return JSONResponse(
+        {"success": True, "message": f"{provider} 계정이 연결해제 되었습니다."},
+        status_code=200
+    )
+
+
 class SocialAuthService:
 
     @classmethod
@@ -355,12 +412,25 @@ class SocialAuthService:
         return f"{provider}_{hex(adler32_hash)[2:]}"
 
     @classmethod
-    def unlink_social_login(cls, member_id):
+    def link_social_login(cls, mb_id: str, provider: str = None):
+        """
+        소셜계정 연결
+        """
+        pass
+        # with SessionLocal() as db:
+        #     query = delete(MemberSocialProfiles).where(MemberSocialProfiles.mb_id == mb_id)
+        #     if provider:
+        #         query = query.where(MemberSocialProfiles.provider == provider)
+        #     db.execute(query)
+        #     db.commit()
+
+    @classmethod
+    def unlink_social_login(cls, mb_id: str, provider: str = None):
         """소셜계정 연결해제
         """
         with SessionLocal() as db:
-            db.execute(
-                delete(MemberSocialProfiles)
-                .where(MemberSocialProfiles.mb_id == member_id)
-            )
+            query = delete(MemberSocialProfiles).where(MemberSocialProfiles.mb_id == mb_id)
+            if provider:
+                query = query.where(MemberSocialProfiles.provider == provider)
+            db.execute(query)
             db.commit()

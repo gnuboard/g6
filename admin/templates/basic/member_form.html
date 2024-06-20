@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "social_macro.html" as social %}
 
 {% block head %}
     <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" async></script>
@@ -207,6 +208,18 @@
                     <label for="mb_intercept_date_set_today">접근차단일을 오늘로 지정</label>
                 </td>
             </tr>
+            <tr>
+                <th>소셜계정목록</th>
+                <td colspan="3">
+                    <ul class="social_link_box">
+                        <li class="social_login_container">
+                            <h4>연결된 소셜 계정 목록</h4>
+                            {{ social.get_socials_by_member_form(request, member) }}
+                        </li>
+                    </ul>
+                </td>
+            </tr>
+
             {% for i in range(1, 11) %}
             <tr>
                 <th scope="row"><label for="mb_{{ i }}">여분 필드 {{ i }}</label></th>

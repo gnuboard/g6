@@ -18,7 +18,8 @@ from core.plugin import (
 )
 from core.settings import settings
 from lib.common import (
-    CAPTCHA_PATH, EDITOR_PATH, get_admin_menus, read_version, StringEncrypt
+    CAPTCHA_PATH, EDITOR_PATH, get_admin_menus, read_version,
+    SOCIAL_PATH, StringEncrypt
 )
 from lib.visit import get_total_visit
 from lib.template_filters import datetime_format, number_format, set_query_params
@@ -121,7 +122,8 @@ class UserTemplates(Jinja2Templates):
         TemplateService.get_templates_dir(),
         EDITOR_PATH,
         CAPTCHA_PATH,
-        PLUGIN_DIR
+        PLUGIN_DIR,
+        SOCIAL_PATH
     ]
 
     def __new__(cls, *args, **kwargs):
@@ -217,7 +219,7 @@ class AdminTemplates(Jinja2Templates):
     - 싱글톤 패턴으로 구현
     """
     _instance = None
-    default_directories = [ADMIN_TEMPLATES_DIR, CAPTCHA_PATH, EDITOR_PATH, PLUGIN_DIR]
+    default_directories = [ADMIN_TEMPLATES_DIR, CAPTCHA_PATH, EDITOR_PATH, PLUGIN_DIR, SOCIAL_PATH]
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:

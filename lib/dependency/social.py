@@ -2,7 +2,7 @@
 from fastapi import Query, Request
 from typing_extensions import Annotated
 
-from core.exception import AlertException
+from core.exception import AlertException, JSONException
 from core.models import Config
 
 
@@ -58,3 +58,17 @@ def get_auth_token_by_session(
                              url=request.url_for('login'))
 
     return auth_token
+
+
+def validate_link_social(
+    request: Request,
+    provider: Annotated[str, Query()] = "",
+):
+    """
+    소셜 로그인 연동 전 검증
+    """
+    config = request.state.config
+    social_service_list = getattr(config, 'cf_social_servicelist', "").split(",")
+
+    if not provider or provider not in social_service_list:
+        raise JSONException(message="소셜 서비스를 찾을 수 없습니다.", status_code=404)

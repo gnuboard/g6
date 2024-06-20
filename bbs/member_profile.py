@@ -107,6 +107,15 @@ async def member_profile(
 
     member = member_service.read_member(member.mb_id)
 
+    # 소셜 로그인 사용중이면 소셜로그인 정보 가져오기
+    socials_dict = []
+    if config.cf_social_login_use:
+        mb_social = [social.provider for social in member.socials]
+        social_service_list = getattr(config, "cf_social_servicelist", "").split(",")
+
+        for social in social_service_list:
+            socials_dict.append({'name': social, 'is_active': social in mb_social})
+
     form_context = {
         "action_url": request.url_for("member_profile_save").path,
         "name_readonly": "readonly",
@@ -121,6 +130,7 @@ async def member_profile(
         "request": request,
         "member": member,
         "form": form_context,
+        "social_service": socials_dict,
     }
     return templates.TemplateResponse("/member/register_form.html", context)
 

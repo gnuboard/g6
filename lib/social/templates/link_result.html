@@ -1,0 +1,17 @@
+<script src="{{ url_for('static', path='/js/jquery.min.js?ver=3.7.1') }}"></script>
+<script>
+    $(function() {
+        const $opener = window.opener;
+        const provider = "{{ provider }}";
+        const unlink_href = "{{ request.url_for('unlink_social_profile') }}?provider=" + provider;
+
+        $opener.$("#sns-" + provider).attr({
+            "href": unlink_href,
+            "title": provider + " 계정을 연결해제 합니다."
+        }).removeClass("sns-icon-not");
+
+        alert(provider + " 계정이 연결되었습니다.");
+
+        window.close();
+    });
+</script>

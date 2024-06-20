@@ -3,13 +3,13 @@ from datetime import datetime
 from typing import List, Optional
 from typing_extensions import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, Path, Request, UploadFile
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, Depends, File, Form, Path, Query, Request, UploadFile
+from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy import delete, func, select, update
 
 from bbs.social import SocialAuthService
 from core.database import db_session
-from core.exception import AlertException
+from core.exception import AlertException, JSONException
 from core.formclass import AdminMemberForm
 from core.models import Auth, Board, Group, GroupMember, Member, Memo, Point, Scrap
 from core.template import AdminTemplates
@@ -19,7 +19,7 @@ from lib.common import (
 from lib.dependency.dependencies import common_search_query_params, validate_token
 from lib.pbkdf2 import create_hash
 from lib.template_functions import get_member_level_select, get_paging
-from service.member_service import MemberImageService
+from service.member_service import MemberImageService, MemberService
 
 
 router = APIRouter()
@@ -279,6 +279,27 @@ async def member_form_update(
     url = f"/admin/member_form/{mb_id}"
     query_params = request.query_params
     return RedirectResponse(set_url_query_params(url, query_params), 302)
+
+
+@router.post('/social/unlink')
+async def unlink_social_by_admin(
+    member_service: Annotated[MemberService, Depends()],
+    provider: Annotated[str, Query()] = "",
+    mb_id: Annotated[str, Form()] = "",
+):
+    """
+    소셜계정 연결해제
+    """
+    member = member_service.read_member(mb_id)
+
+    if not SocialAuthService.check_exists_by_mb_id(provider, member.mb_id):
+        raise JSONException(message="연결된 소셜계정이 없습니다.", status_code=404)
+
+    SocialAuthService.unlink_social_login(member.mb_id, provider)
+    return JSONResponse(
+        {"success": True, "message": f"{provider} 계정이 연결해제 되었습니다."},
+        status_code=200
+    )
 
 
 @router.get("/check_member_id/{mb_id}")

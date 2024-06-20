@@ -1,0 +1,145 @@
+<!-- 회원정보수정 > 소셜 로그인 목록 -->
+{% macro get_socials_by_profile(request, social_service) -%}
+    <script src="{{ request.url_for('static', path='js/social.js') }}"></script>
+    {% if social_service %}
+        <li>
+            <label class="frm_label">SNS 로그인 관리</label>
+            <div class="reg-form sns-wrap-reg">
+                <div class="sns-wrap">
+                    {% for social in social_service %}
+                        {% set class_unlink = '' if social.is_active else 'sns-icon-not' %}
+                        <a href=""
+                           id="sns-{{ social.name }}"
+                           class="sns-icon social_link sns-{{ social.name }} {{ class_unlink }}"
+                           title="title"
+                           data-provider="{{ social.name }}">
+                            <span class="ico"></span>
+                            <span class="txt">{{ social.name|capitalize }} 로그인</span>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </li>
+        <script>
+            jQuery(function($){
+                $(".sns-wrap").on("click", ".social_link", function(e){
+                    e.preventDefault();
+
+                    let $this = $(this);
+                    let provider = $this.attr("data-provider");
+                    const link_href = "{{ request.url_for('request_social_login') }}?provider=" + provider;
+                    const unlink_href = "{{ request.url_for('unlink_social_profile') }}?provider=" + provider;
+
+                    //소셜계정 해제하기
+                    if (!$this.hasClass('sns-icon-not')) {
+                        if (!confirm('정말 이 계정 연결을 해제하시겠습니까?')) {
+                            return false;
+                        }
+
+                        $.ajax({
+                            url: unlink_href,
+                            type: 'POST',
+                            dataType: 'json',
+                            cache : false,
+                            async: false,
+                            success: function(data, textStatus) {
+                                $this.attr({
+                                    "href": link_href,
+                                    "title": provider + " 계정을 연결 합니다."
+                                }).addClass("sns-icon-not");
+
+                                alert(data.message);
+                            },
+                            error: function(data, textStatus, errorThrown) {
+                                alert(data.status + ' ' + errorThrown + '\n' + data.responseJSON.message);
+                                return false;
+                            }
+                        });
+
+                    //소셜계정 연결하기
+                    } else {
+                        let newWin = window.open(
+                            link_href, 
+                            "social_sing_on", 
+                            "location=0,status=0,scrollbars=1,width=600,height=500"
+                        );
+        
+                        if (!newWin || newWin.closed || typeof newWin.closed=='undefined') {
+                            alert('브라우저에서 팝업이 차단되어 있습니다. 팝업 활성화 후 다시 시도해 주세요.');
+                        }
+                    }
+                    return false;
+                });
+            });
+        </script>
+    {% endif %}
+{%- endmacro %}
+
+<!-- 관리자페이지 > 회원목록 > 연동된 소셜로그인 목록 -->
+{% macro get_socials_by_member_list(member) %}
+    <div class="member_social_provider sns-wrap-over sns-wrap-32">
+    {% for social in member.socials %}
+        <span class="sns-icon sns-{{ social.provider }}" title="{{ social.provider }}">
+            <span class="ico"></span>
+            <span class="txt">{{ social.provider }}</span>
+        </span>
+    {% endfor %}
+    </div>
+{% endmacro %}
+
+<!-- 관리자페이지 > 회원상세 > 연동된 소셜로그인 목록 -->
+{% macro get_socials_by_member_form(request, member) %}
+    {% for social in member.socials %}
+    <div class="account_provider">
+        <div class="sns-wrap-32 sns-wrap-over">
+            <span class="sns-icon sns-{{ social.provider }}" title="{{ social.provider }}">
+                <span class="ico"></span>
+                <span class="txt">{{ social.provider }}</span>
+            </span>
+
+            <span class="provider_name">
+                {{ social.provider }}
+                {% if social.displyname %}({{ social.displyname }}){% endif %}
+            </span>
+        </div>
+        <div class="btn_info">
+            <a href="" class="social_unlink" data-provider={{ social.provider }} data-mb_id="{{ social.mb_id }}">연동해제</a>
+            <span class="sound_only">{{ social.mp_register_day }}</span></div>
+    </div>
+    {% endfor %}
+
+    <script>
+        jQuery(function($) {
+            $(".account_provider").on("click", ".social_unlink", function(e) {
+                e.preventDefault();
+                let provider = $(this).attr("data-provider");
+                let mb_id = $(this).attr("data-mb_id");
+                const unlink_href = "{{ request.url_for('unlink_social_by_admin') }}?provider=" + provider;
+                const $this = $(this).parents(".account_provider");
+
+                if (!confirm(provider + ' 소셜로그인 연결을 삭제하시겠습니까?')) {
+                    return false;
+                }
+
+                $.ajax({
+                    url: unlink_href,
+                    type: 'POST',
+                    data: {'mb_id': mb_id},
+                    dataType: 'json',
+                    async: false,
+                    success: function(data, textStatus) {
+                        $this.fadeOut("normal", function() {
+                            $(this).remove();
+                        });
+
+                        alert(data.message);
+                    },
+                    error: function(data, textStatus, errorThrown) {
+                        alert(data.status + ' ' + errorThrown + '\n' + data.responseJSON.message);
+                        return false;
+                    }
+                });
+            });
+        });
+    </script>
+{% endmacro %}

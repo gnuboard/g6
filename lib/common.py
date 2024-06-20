@@ -33,6 +33,7 @@ load_dotenv()
 # 전역변수 선언(global variables)
 CAPTCHA_PATH = "lib/captcha/templates"
 EDITOR_PATH = "lib/editor/templates"
+SOCIAL_PATH = "lib/social/templates"
 
 
 # 동적 모델 캐싱: 모델이 이미 생성되었는지 확인하고, 생성되지 않았을 경우에만 새로 생성하는 방법입니다.

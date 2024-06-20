@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "social_macro.html" as social %}
 {% import "/sideview/macros.html" as sideview %}
 
 {% block title %}회원관리{% endblock title %}
@@ -98,7 +99,10 @@
                             <label for="chk_{{ loop.index0 }}" class="blind">{{ member.mb_name }}님</label>
                             <input type="checkbox" name="chk[]" value="{{ loop.index0 }}" id="chk_{{ loop.index0 }}">
                         </td>
-                        <td headers="mb_list_id" colspan="2" class="td_name sv_use">{{ member.mb_id }}</td>
+                        <td headers="mb_list_id" colspan="2" class="td_name sv_use">
+                            {{ member.mb_id }}
+                            {{ social.get_socials_by_member_list(member) }}
+                        </td>
                         <td headers="mb_list_auth" class="td_mbstat"><!-- 상태 -->
                             {% if member.mb_leave_date %}
                                 <span class="mb_leave_msg" title="{{ member.mb_leave_date }}">탈퇴함</span>
