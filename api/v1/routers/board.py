@@ -13,7 +13,8 @@ from api.v1.models.response import (
 from api.v1.dependencies.board import arange_file_data
 from api.v1.models.board import (
     WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel,
-    ResponseBoardListModel, ResponseNormalModel, ResponseCreateWriteModel
+    ResponseBoardListModel, ResponseNormalModel, ResponseCreateWriteModel,
+    CommentUpdateModel
 )
 from api.v1.service.board import (
     ListPostServiceAPI, ReadPostServiceAPI,
@@ -423,7 +424,7 @@ async def api_create_comment(
 async def api_update_comment(
     db: db_session,
     service: Annotated[CommentServiceAPI, Depends(CommentServiceAPI.async_init)],
-    comment_data: CommentModel,
+    comment_data: CommentUpdateModel,
 ) -> ResponseNormalModel:
     """
     댓글을 수정합니다.

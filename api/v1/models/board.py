@@ -60,6 +60,20 @@ class CommentModel(BaseModel):
         return self
 
 
+class CommentUpdateModel(BaseModel):
+    """게시판 댓글 수정 모델"""
+
+    # 추가 필드 허용
+    model_config = ConfigDict(extra='allow')
+
+    wr_content: Annotated[str, Body(..., title="내용")]
+    wr_password: Annotated[str, Body("", title="비밀번호",
+                                     description="비회원일 경우 비밀번호")]
+    wr_option: Annotated[str, Body("html1", title="비밀글 여부",
+                                   description="secret: 비밀글, html1: HTML 사용")]
+    comment_id: Annotated[int, Body(None, title="댓글 ID")]
+
+
 class ResponseNormalModel(BaseModel):
     result: str
 
