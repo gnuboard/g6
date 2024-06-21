@@ -1,86 +1,114 @@
+"""Twitter 소셜 로그인 관련 모듈"""
 import base64
+
 import httpx
-from typing import Optional, Tuple
+from authlib.integrations.starlette_client import OAuth
+from authlib.integrations.starlette_client.apps import StarletteOAuth2App
 
 from core.formclass import SocialProfile
 from lib.social.base import SocialProvider
 
 
 class Twitter(SocialProvider):
-    """소셜 로그인
-    doc: https://developer.twitter.com/en/docs/authentication/oauth-2-0/application-only
-    클래스 메서드만 사용하며 인스턴스를 생성하지 않는다.
+    """Twitter 소셜 로그인 클래스
+
+    Docs:
+        https://developer.twitter.com/en/docs/authentication/oauth-2-0/application-only
     """
     provider_name = "twitter"
 
-    @classmethod
-    def register(cls, oauth_instance, client_id, client_secret):
-        oauth_instance.register(
-            name="twitter",
-            access_token_url="https://api.twitter.com/2/oauth2/token",
-            access_token_params=None,
-            authorize_url="https://twitter.com/i/oauth2/authorize",
-            authorize_params=None,
-            api_base_url="https://api.twitter.com/2/",
-            client_kwargs={"scope": ""},
-        )
-        oauth_instance.__getattr__(cls.provider_name).client_id = client_id
-        oauth_instance.__getattr__(cls.provider_name).client_secret = client_secret
+    API_URL = "https://api.twitter.com"
+    AUTH_URL = "https://twitter.com/i/oauth2/authorize"
 
     @classmethod
-    async def fetch_profile_data(cls, oauth_instance, auth_token) -> Optional[object]:
-        """
-        소셜 로그인 후 프로필 정보를 가져온다.
+    def register(cls, oauth_instance: OAuth, client_id: str, client_secret: str):
+        """OAuth 인스턴스에 Twitter을 등록합니다.
+
         Args:
             oauth_instance (OAuth): OAuth 인증 객체
-            auth_token (Dict): 소셜 서비스 토큰
-        Returns:
-            SocialProfile
-        Raises:
-            HTTPException: HTTP status code 200 아닐 때 발생
-            ValueError: 소셜 로그인 실패 시 발생
+            client_id (str): Twitter 클라이언트 ID
+            client_secret (str): Twitter 클라이언트 시크릿
         """
-        response = await oauth_instance.__getattr__(cls.provider_name).get(
-            'https://api.twitter.com/2/users/me',
-            token=auth_token
+        oauth_instance.register(
+            name="twitter",
+            access_token_url=f"{cls.API_URL}/2/oauth2/token",
+            access_token_params=None,
+            authorize_url=cls.AUTH_URL,
+            authorize_params=None,
+            api_base_url=f"{cls.API_URL}/2/",
+            client_kwargs={"scope": ""},
         )
-        # raise http status code 200 아닐 때 발생
-        response.raise_for_status()
-        result = response.json()
-        return result
+        twitter: StarletteOAuth2App = getattr(oauth_instance, cls.provider_name)
+        twitter.client_id = client_id
+        twitter.client_secret = client_secret
 
     @classmethod
-    def convert_gnu_profile_data(cls, response) -> Tuple[str, SocialProfile]:
-        """
-        그누보드 MemberSocialProfiles 에서 사용하는 SocialProfile 형식으로 변환
-        Args:
-            response: 소셜 제공자에서 받은 프로필 정보
-        """
+    async def fetch_profile_data(cls, oauth_instance: OAuth, auth_token: dict) -> dict:
+        """Twitter 로그인 후 프로필 정보를 가져옵니다.
 
-        email = response.get("email", "")
-        socialprofile = SocialProfile(
+        Args:
+            oauth_instance (OAuth): OAuth 인증 객체
+            auth_token (dict): 소셜 서비스 토큰
+
+        Returns:
+            dict: Twitter 프로필 정보
+
+        Raises:
+            HTTPStatusError: HTTP status code가 200이 아닐 때 발생
+        """
+        twitter: StarletteOAuth2App = getattr(oauth_instance, cls.provider_name)
+        response: httpx.Response = await twitter.get(
+            url=f'{cls.API_URL}/2/users/me',
+            token=auth_token
+        )
+        response.raise_for_status()  # 응답 상태 코드 확인 & 예외 발생
+
+        return response.json()
+
+    @classmethod
+    def extract_email(cls, response: dict) -> str:
+        """Twitter 응답에서 이메일을 추출합니다.
+
+        Args:
+            response (dict): Twitter 프로필 응답 데이터
+
+        Returns:
+            str: 이메일 주소
+        """
+        return response.get("email", "")
+
+    @classmethod
+    def extract_social_profile(cls, response: dict) -> SocialProfile:
+        """Twitter 응답에서 프로필 정보를 추출합니다.
+
+        Args:
+            response (dict): Twitter 프로필 응답 데이터
+
+        Returns:
+            SocialProfile: 소셜 프로필 객체
+        """
+        return SocialProfile(
             mb_id=response.get("id", ""),
             provider=cls.provider_name,
             identifier=response.get("id", ""),
             profile_url=response.get("profile_image_url_https", ""),
             photourl=response.get("profile_image_url_https", ""),
             displayname=response.get("screen_name", ""),
-            disciption=response.get("description", "")
+            description=response.get("description", "")
         )
 
-        return email, socialprofile
-
     @classmethod
-    async def logout(cls, oauth_instance, auth_token):
-        """
-        소셜 서비스 토큰 revoke
+    async def logout(cls, oauth_instance: OAuth, auth_token: dict) -> None:
+        """Twitter 로그인 인증 토큰을 취소합니다.
+
         Args:
             oauth_instance (OAuth): OAuth 인증 객체
-            auth_token (Dict): 소셜 서비스 토큰
+            auth_token (dict): 소셜 서비스 토큰
         """
+        twitter: StarletteOAuth2App = getattr(oauth_instance, cls.provider_name)
         access_token = auth_token.get('access_token', None)
-        client_id = oauth_instance.__getattr__(cls.provider_name).client_id
-        client_secret = oauth_instance.__getattr__(cls.provider_name).client_secret
+        client_id = twitter.client_id
+        client_secret = twitter.client_secret
 
         async with httpx.AsyncClient() as client:
             bearer_token = base64.b64encode(f"{client_id}:{client_secret}".encode())
@@ -89,7 +117,7 @@ class Twitter(SocialProvider):
                 "Content-Type": "application/x-www-form-urlencoded",
             }
             await client.post(
-                'https://api.twitter.com/oauth2/invalidate_token',
+                f"{cls.API_URL}/oauth2/invalidate_token",
                 params={'access_token': access_token},
                 headers=headers
             )

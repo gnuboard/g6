@@ -1,5 +1,7 @@
 import abc
-from typing import Optional, Tuple
+from typing import Optional
+
+from authlib.integrations.starlette_client import OAuth
 
 from core.formclass import SocialProfile
 
@@ -14,9 +16,10 @@ class SocialProvider(metaclass=abc.ABCMeta):
 
     @classmethod
     @abc.abstractmethod
-    def register(cls, oauth_instance, client_id, client_secret):
+    def register(cls, oauth_instance: OAuth, client_id: str, client_secret: str):
         """
         소셜 서비스 인증 객체를 등록
+
         Args:
             oauth_instance (OAuth): OAuth 인증 객체
             client_id (str): 소셜 서비스 클라이언트 아이디
@@ -26,12 +29,14 @@ class SocialProvider(metaclass=abc.ABCMeta):
 
     @classmethod
     @abc.abstractmethod
-    async def fetch_profile_data(cls, oauth_instance, auth_token) -> Optional[object]:
+    async def fetch_profile_data(cls, oauth_instance: OAuth, auth_token: dict) -> Optional[object]:
         """
         소셜 서비스 프로필 데이터 가져오기
+
         Args:
             oauth_instance (OAuth): OAuth 인증 객체
             auth_token (Dict): 소셜 서비스 토큰
+
         Returns:
             SocialProfile
         """
@@ -39,21 +44,38 @@ class SocialProvider(metaclass=abc.ABCMeta):
 
     @classmethod
     @abc.abstractmethod
-    def convert_gnu_profile_data(cls, response) -> Tuple[str, SocialProfile]:
+    def extract_email(cls, response: dict) -> str:
         """
-        그누보드 소셜 서비스 프로필 데이터를 가져옴
+        소셜 서비스 프로필 데이터에서 이메일 추출
+
         Args:
             response (dict): 소셜 서비스 응답 데이터
+
         Returns:
-            Tuple(email, SocialProfile)
+            str: 이메일
         """
         raise NotImplementedError()
 
     @classmethod
     @abc.abstractmethod
-    async def logout(cls, oauth_instance, auth_token):
+    def extract_social_profile(cls, response: dict) -> SocialProfile:
+        """
+        소셜 서비스 프로필 데이터에서 SocialProfile 데이터 추출
+
+        Args:
+            response (dict): 소셜 서비스 응답 데이터
+
+        Returns:
+            SocialProfile
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    @abc.abstractmethod
+    async def logout(cls, oauth_instance: OAuth, auth_token: dict) -> None:
         """
         소셜 서비스 토큰 revoke
+
         Args:
             oauth_instance (OAuth): OAuth 인증 객체
             auth_token (Dict): 소셜 서비스 토큰

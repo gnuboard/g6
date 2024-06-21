@@ -9,17 +9,11 @@ from fastapi import (
 from sqlalchemy import delete
 
 from api.v1.service.point import PointServiceAPI
-from bbs.social import SocialAuthService
-from core.database import db_session
-from core.models import Member
-from lib.mail import send_password_reset_mail, send_register_mail
-
 from api.v1.dependencies.member import (
     get_current_member, validate_create_data, validate_update_data
 )
 from api.v1.service.member import (
-    MemberServiceAPI,
-    MemberImageServiceAPI as ImageService
+    MemberServiceAPI, MemberImageServiceAPI as ImageService
 )
 from api.v1.models import MemberRefreshToken
 from api.v1.models.member import (
@@ -30,6 +24,10 @@ from api.v1.models.member import (
 from api.v1.models.response import (
     MessageResponse, response_401, response_403, response_404, response_409, response_422
 )
+from core.database import db_session
+from core.models import Member
+from lib.mail import send_password_reset_mail, send_register_mail
+from lib.social.service import SocialAuthService
 
 router = APIRouter()
 
@@ -171,6 +169,7 @@ async def update_member_image(
 async def leave_member(
     db: db_session,
     service: Annotated[MemberServiceAPI, Depends()],
+    social_service: Annotated[SocialAuthService, Depends()],
     member: Annotated[Member, Depends(get_current_member)]
 ) -> MessageResponse:
     """
@@ -180,7 +179,7 @@ async def leave_member(
     service.leave_member(member)
 
     # 소셜로그인 연동 해제
-    SocialAuthService.unlink_social_login(member.mb_id)
+    social_service.unlink_social_login(member.mb_id)
 
     # 토큰 삭제
     db.execute(delete(MemberRefreshToken)

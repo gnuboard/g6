@@ -7,7 +7,6 @@ from fastapi import APIRouter, Depends, File, Form, Path, Query, Request, Upload
 from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy import delete, func, select, update
 
-from bbs.social import SocialAuthService
 from core.database import db_session
 from core.exception import AlertException, JSONException
 from core.formclass import AdminMemberForm
@@ -18,6 +17,7 @@ from lib.common import (
 )
 from lib.dependency.dependencies import common_search_query_params, validate_token
 from lib.pbkdf2 import create_hash
+from lib.social.service import SocialAuthService
 from lib.template_functions import get_member_level_select, get_paging
 from service.member_service import MemberImageService, MemberService
 
@@ -132,6 +132,7 @@ async def member_list_update(
 async def member_list_delete(
     request: Request,
     db: db_session,
+    social_service: Annotated[SocialAuthService, Depends()],
     file_service: Annotated[MemberImageService, Depends()],
     checks: List[int] = Form(None, alias="chk[]"),
     mb_id: List[str] = Form(None, alias="mb_id[]"),
@@ -193,8 +194,8 @@ async def member_list_delete(
             db.execute(update(Board).where(Board.bo_admin == member.mb_id).values(bo_admin=""))
 
             # 소셜로그인에서 삭제 또는 해제
-            if SocialAuthService.check_exists_by_member_id(member.mb_id):
-                SocialAuthService.unlink_social_login(member.mb_id)
+            if social_service.check_exists_by_member_id(member.mb_id):
+                social_service.unlink_social_login(member.mb_id)
 
             # 아이콘/이미지 삭제
             file_service.update_image_file(member.mb_id, 'icon', None, 1)
@@ -284,6 +285,7 @@ async def member_form_update(
 @router.post('/social/unlink')
 async def unlink_social_by_admin(
     member_service: Annotated[MemberService, Depends()],
+    social_service: Annotated[SocialAuthService, Depends()],
     provider: Annotated[str, Query()] = "",
     mb_id: Annotated[str, Form()] = "",
 ):
@@ -292,10 +294,10 @@ async def unlink_social_by_admin(
     """
     member = member_service.read_member(mb_id)
 
-    if not SocialAuthService.check_exists_by_mb_id(provider, member.mb_id):
+    if not social_service.check_exists_by_mb_id(provider, member.mb_id):
         raise JSONException(message="연결된 소셜계정이 없습니다.", status_code=404)
 
-    SocialAuthService.unlink_social_login(member.mb_id, provider)
+    social_service.unlink_social_login(member.mb_id, provider)
     return JSONResponse(
         {"success": True, "message": f"{provider} 계정이 연결해제 되었습니다."},
         status_code=200

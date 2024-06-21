@@ -1,82 +1,115 @@
-from typing import Optional, Tuple
-
+"""Naver 소셜 로그인 관련 모듈"""
+import httpx
 from authlib.integrations.starlette_client import OAuth
+from authlib.integrations.starlette_client.apps import StarletteOAuth2App
 
 from core.formclass import SocialProfile
 from lib.social.base import SocialProvider
 
 
 class Naver(SocialProvider):
-    """네이버 소셜 로그인
-    doc: https://developers.naver.com/docs/login/api/
-    클래스 메서드만 사용하며 인스턴스를 생성하지 않는다.
+    """네이버 소셜 로그인 클래스
+
+    Docs:
+        https://developers.naver.com/docs/login/api/
     """
     provider_name = "naver"
 
-    @classmethod
-    def register(cls, oauth_instance: OAuth, client_id, client_secret):
-        oauth_instance.register(
-            name="naver",
-            access_token_url="https://nid.naver.com/oauth2.0/token",
-            access_token_params=None,
-            authorize_url="https://nid.naver.com/oauth2.0/authorize",
-            authorize_params=None,
-            api_base_url="https://openapi.naver.com/v1/nid/me",
-            client_kwargs={"scope": "user:email"},
-        )
-        oauth_instance.__getattr__(cls.provider_name).client_id = client_id
-        oauth_instance.__getattr__(cls.provider_name).client_secret = client_secret
+    API_URL = "https://openapi.naver.com"
+    AUTH_URL = "https://nid.naver.com/oauth2.0"
 
     @classmethod
-    async def fetch_profile_data(cls, oauth_instance, auth_token) -> Optional[object]:
-        """
-        소셜 로그인 후 프로필 정보를 가져온다.
+    def register(cls, oauth_instance: OAuth, client_id: str, client_secret: str):
+        """OAuth 인스턴스에 Naver를 등록합니다.
+
         Args:
             oauth_instance (OAuth): OAuth 인증 객체
-            auth_token (Dict): 소셜 서비스 토큰
-        Returns:
-            SocialProfile
-        Raises:
-            HTTPException: HTTP status code 200 아닐 때 발생
-            ValueError: 소셜 로그인 실패 시 발생
+            client_id (str): Naver 클라이언트 ID
+            client_secret (str): Naver 클라이언트 시크릿
         """
-        response = await oauth_instance.__getattr__(cls.provider_name).get('me', token=auth_token)
-        # raise http status code 200 아닐 때 발생
-        response.raise_for_status()
-        result = response.json()
-        if result.get("message", "") != "success":
-            raise ValueError(result)
+        oauth_instance.register(
+            name=cls.provider_name,
+            access_token_url=f"{cls.AUTH_URL}/token",
+            access_token_params=None,
+            authorize_url=f"{cls.AUTH_URL}/authorize",
+            authorize_params=None,
+            api_base_url=f"{cls.API_URL}/v1/nid/me",
+            client_kwargs={"scope": "user:email"},
+        )
+        naver: StarletteOAuth2App = getattr(oauth_instance, cls.provider_name)
+        naver.client_id = client_id
+        naver.client_secret = client_secret
 
+    @classmethod
+    async def fetch_profile_data(cls, oauth_instance: OAuth, auth_token: dict) -> dict:
+        """Naver 로그인 후 프로필 정보를 가져옵니다.
+
+        Args:
+            oauth_instance (OAuth): OAuth 인증 객체
+            auth_token (dict): 소셜 서비스 토큰
+
+        Returns:
+            dict: Naver 프로필 정보
+
+        Raises:
+            HTTPStatusError: HTTP status code가 200이 아닐 때 발생
+            ValueError: 응답 데이터가 없을 때 발생
+        """
+        naver: StarletteOAuth2App = getattr(oauth_instance, cls.provider_name)
+        response: httpx.Response = await naver.get('me', token=auth_token)
+        response.raise_for_status()  # 응답 상태 코드 확인 & 예외 발생
+
+        result: dict = response.json()
+        if result.get("resultcode", "") != "00":
+            raise ValueError(result)
         return result
 
     @classmethod
-    def convert_gnu_profile_data(cls, response) -> Tuple[str, SocialProfile]:
-        """그누보드 MemberSocialProfiles 에서 사용하는 SocialProfile 형식으로 변환
+    def extract_email(cls, response: dict) -> str:
+        """Naver 응답에서 이메일을 추출합니다.
+
         Args:
-            response: 소셜 제공자에서 받은 프로필 정보
+            response (dict): Naver 프로필 응답 데이터
+
+        Returns:
+            str: 이메일 주소
         """
         response = response.get("response", {})
-        email = response.get("email", "")
-        socialprofile = SocialProfile(
+        return response.get("email", "")
+
+    @classmethod
+    def extract_social_profile(cls, response: dict) -> SocialProfile:
+        """Naver 응답에서 프로필 정보를 추출합니다.
+
+        Args:
+            response (dict): Naver 프로필 응답 데이터
+
+        Returns:
+            SocialProfile: 소셜 프로필 객체
+        """
+        response = response.get("response", {})
+        return SocialProfile(
             mb_id=response.get("id", ""),
             provider=cls.provider_name,
             identifier=response.get("id", ""),
             profile_url="",
             photourl=response.get("profile_image", ""),
             displayname=response.get("nickname", ""),
-            disciption=""
+            description=""
         )
 
-        return email, socialprofile
-
     @classmethod
-    async def logout(cls, oauth_instance, auth_token):
-        """소셜 서비스 토큰 revoke
+    async def logout(cls, oauth_instance: OAuth, auth_token: dict) -> None:
+        """Naver 로그인 인증 토큰을 취소합니다.
+
         Args:
             oauth_instance (OAuth): OAuth 인증 객체
             auth_token (Dict): 소셜 서비스 토큰
+        
+        Notes:
+            네이버 정책상 로그아웃이 별도로 없음.
+
+        Docs:
+            https://developers.naver.com/docs/login/api/api.md
         """
-        # https://developers.naver.com/docs/login/api/api.md  
-        # 네이버 정책상 로그아웃이 별도로 없다.
-        # 문서 3.2 항목에 있는 delete는 로그인 연동해제.
-        pass
+        return None

@@ -17,6 +17,7 @@ from core.models import Member
 from lib.common import get_client_ip, is_none_datetime
 from lib.member import get_next_open_date, hide_member_id
 from lib.pbkdf2 import validate_password
+from lib.social.service import SocialAuthService
 from service import BaseService
 
 
@@ -37,10 +38,14 @@ class MemberService(BaseService):
     ```
     """
 
-    def __init__(self, request: Request, db: db_session):
+    def __init__(self,
+                 request: Request,
+                 db: db_session,
+                 social_service: Annotated[SocialAuthService, Depends()] = None):
         self.request = request
         self.db = db
         self.config = request.state.config
+        self.social_service = social_service
 
     def raise_exception(self, status_code: int = 400, detail: str = None, url: str = None):
         raise AlertException(detail, status_code, url)
@@ -198,8 +203,6 @@ class MemberService(BaseService):
         - 최고관리자는 제외합니다.
         - 소셜로그인으로 가입한 회원은 아이디를 찾을 수 없습니다.
         """
-        from bbs.social import SocialAuthService
-
         admin_id = getattr(self.config, "cf_admin", "admin")
         member = self.db.scalar(
             select(Member).where(
@@ -211,7 +214,7 @@ class MemberService(BaseService):
         if not member:
             self.raise_exception(
                 status_code=404, detail="입력하신 정보와 일치하는 회원이 없습니다.")
-        if SocialAuthService.check_exists_by_member_id(member.mb_id):
+        if self.social_service.check_exists_by_member_id(member.mb_id):
             self.raise_exception(
                 status_code=400, detail="소셜로그인으로 가입하신 회원은 아이디를 찾을 수 없습니다.")
 
@@ -223,8 +226,6 @@ class MemberService(BaseService):
         - 최고관리자는 제외합니다.
         - 소셜로그인으로 가입한 회원은 비밀번호를 찾을 수 없습니다.
         """
-        from bbs.social import SocialAuthService
-
         admin_id = getattr(self.config, "cf_admin", "admin")
         member = self.db.scalar(
             select(Member).where(
@@ -237,7 +238,7 @@ class MemberService(BaseService):
             self.raise_exception(
                 status_code=404, detail="입력하신 정보와 일치하는 회원이 없습니다.")
 
-        if SocialAuthService.check_exists_by_member_id(member.mb_id):
+        if self.social_service.check_exists_by_member_id(member.mb_id):
             self.raise_exception(
                 status_code=400, detail="소셜로그인으로 가입하신 회원은 비밀번호를 찾을 수 없습니다.")
 
@@ -257,8 +258,6 @@ class MemberService(BaseService):
 
     def read_member_by_lost_certify(self, mb_id: str, token: str) -> Member:
         """비밀번호 재설정을 위한 회원 정보를 조회합니다."""
-        from bbs.social import SocialAuthService
-
         admin_id = getattr(self.config, "cf_admin", "admin")
         member = self.db.scalar(
             select(Member).where(
@@ -270,7 +269,7 @@ class MemberService(BaseService):
         if not member:
             self.raise_exception(status_code=404, detail="유효하지 않은 요청입니다.")
 
-        if SocialAuthService.check_exists_by_member_id(member.mb_id):
+        if self.social_service.check_exists_by_member_id(member.mb_id):
             self.raise_exception(
                 status_code=400, detail="소셜로그인으로 가입하신 회원은 비밀번호를 재설정할 수 없습니다.")
 

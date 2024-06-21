@@ -618,7 +618,7 @@ class SocialProfile:
     profile_url: str
     photourl: str
     displayname: str
-    disciption: str
+    description: str
 
 @dataclass
 class InstallFrom:

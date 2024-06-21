@@ -3,13 +3,13 @@ from typing_extensions import Annotated
 
 from fastapi import APIRouter, Depends, Request
 
-from bbs.social import SocialAuthService
 from core.exception import AlertException
 from core.models import Member
 from core.template import UserTemplates
 from lib.dependency.member import validate_leave_member
 from lib.dependency.dependencies import validate_token
 from lib.dependency.auth import get_login_member
+from lib.social.service import SocialAuthService
 from service.member_service import MemberService
 
 router = APIRouter()
@@ -37,6 +37,7 @@ async def member_leave_form(
 async def member_leave(
     request: Request,
     member_service: Annotated[MemberService, Depends()],
+    social_service: Annotated[SocialAuthService, Depends()],
     login_member: Annotated[Member, Depends(get_login_member)],
 ):
     """
@@ -46,7 +47,7 @@ async def member_leave(
     member_service.leave_member(member)
 
     # 소셜로그인 연동 해제
-    SocialAuthService.unlink_social_login(login_member.mb_id)
+    social_service.unlink_social_login(login_member.mb_id)
 
     # 로그아웃
     request.session.clear()

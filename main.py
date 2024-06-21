@@ -152,7 +152,7 @@ async def main_middleware(request: Request, call_next):
         current_ip = get_client_ip(request)
 
         try:
-            member_service = MemberService(request, db)
+            member_service = MemberService(request, db, None)
             # 로그인 세션 유지 중이라면
             if session_mb_id:
                 member = member_service.get_member(session_mb_id)
