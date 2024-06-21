@@ -5,12 +5,14 @@ from fastapi import (
     Body, Request, Path
 )
 
+from api.v1.models.pagination import PagenationRequest
 from lib.board_lib import get_bo_table_list
 from api.v1.dependencies.member import get_current_member
 from api.v1.models.response import response_401, response_422
 from api.v1.models.board import (
     BoardNewViewType, RequestBoardNewWrites, ResponseNormalModel, ResponseBoardNewListModel
 )
+from lib.common import get_paging_info
 from service.board_new import BoardNewServiceAPI
 
 router = APIRouter()
@@ -21,23 +23,27 @@ router = APIRouter()
             responses={**response_401, **response_422})
 async def api_board_new_list(
     service: Annotated[BoardNewServiceAPI, Depends()],
+    pagination: Annotated[PagenationRequest, Depends()],
     gr_id: str = Query(None, title="게시판 그룹 id", description="게시판 그룹 id"),
     view: BoardNewViewType = Query(None, title="게시판 view", description="게시판 view"),
     mb_id: str = Query(None, title="회원 id", description="회원 id"),
-    current_page: int = Query(1, alias="page", title="현재 페이지", description="현재 페이지")
 ) -> ResponseBoardNewListModel:
     """
     최신 게시글 목록
     """
     view_type = view.value if view else None
     query = service.get_query(gr_id, mb_id, view_type)
+    current_page = pagination.page
+    per_page = pagination.per_page
     offset = service.get_offset(current_page)
-    board_news = service.get_board_news(query, offset)
-    total_count = service.get_total_count(query)
-    service.arrange_borad_news_data(board_news, total_count, offset)
+    board_news = service.get_board_news(query, offset, per_page)
+    total_records = service.get_total_count(query)
+    service.arrange_borad_news_data(board_news, total_records, offset)
+    paging_info = get_paging_info(current_page, per_page, total_records)
 
     content = {
-        "total_count": total_count,
+        "total_records": total_records,
+        "total_pages": paging_info["total_pages"],
         "board_news": board_news,
         "current_page": current_page,
     }

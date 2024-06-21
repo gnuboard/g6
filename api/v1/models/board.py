@@ -329,9 +329,8 @@ class ResponseBoardNewModel(BaseModel):
     num: int
 
 
-class ResponseBoardNewListModel(BaseModel):
+class ResponseBoardNewListModel(PaginationResponse):
     """최신글 목록 모델"""
-    total_count: int
     board_news: List[ResponseBoardNewModel]
     current_page: int
 

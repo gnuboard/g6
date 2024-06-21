@@ -77,9 +77,10 @@ class BoardNewService(BaseService):
         offset = (current_page - 1) * self.page_rows
         return offset
 
-    def get_board_news(self, query: Select, offset: int) -> List[BoardNew]:
+    def get_board_news(self, query: Select, offset: int, per_page: int = None) -> List[BoardNew]:
         """최신글 목록 조회"""
-        board_news = self.db.scalars(query.add_columns(BoardNew).offset(offset).limit(self.page_rows)).all()
+        per_page = per_page or self.page_rows
+        board_news = self.db.scalars(query.add_columns(BoardNew).offset(offset).limit(per_page)).all()
         return board_news
 
     def get_total_count(self, query: Select) -> int:
