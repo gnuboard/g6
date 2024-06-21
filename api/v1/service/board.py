@@ -349,7 +349,7 @@ class DeleteCommentServiceAPI(DeleteCommentService):
         point_service: Annotated[PointServiceAPI, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         comment_id: Annotated[int, Path(..., title="댓글 아이디", description="댓글 아이디")],
-        member: Annotated[Member, Depends(get_current_member)],
+        member: Annotated[Member, Depends(get_current_member_optional)],
     ):
         super().__init__(request, db, file_service, point_service, bo_table, comment_id)
         self.member = MemberDetails(request, member, board=self.board)
@@ -363,7 +363,7 @@ class DeleteCommentServiceAPI(DeleteCommentService):
         point_service: Annotated[PointServiceAPI, Depends()],
         bo_table: Annotated[str, Path(..., title="게시판 테이블명", description="게시판 테이블명")],
         comment_id: Annotated[int, Path(..., title="댓글 아이디", description="댓글 아이디")],
-        member: Annotated[Member, Depends(get_current_member)],
+        member: Annotated[Member, Depends(get_current_member_optional)],
     ):
         instance = cls(request, db, file_service, point_service, bo_table, comment_id, member)
         return instance

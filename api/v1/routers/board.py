@@ -464,3 +464,20 @@ async def api_delete_comment(
     service.check_authority(with_session=False)
     service.delete_comment()
     return {"result": "deleted"}
+
+
+@router.post("/{bo_table}/writes/{wr_id}/comments/{comment_id}/delete",
+                summary="게시판 비회원 댓글 삭제",
+                responses={**response_401, **response_403,
+                           **response_404, **response_422}
+               )
+async def api_delete_post(
+    service: Annotated[DeleteCommentServiceAPI, Depends(DeleteCommentServiceAPI.async_init)],
+    wr_password: str = Body(..., title="비밀번호", description="비회원 댓글 비밀번호")
+) -> ResponseNormalModel:
+    """
+    지정된 게시판의 비회원 댓글을 삭제합니다.
+    """
+    service.validate_author(service.write, wr_password)
+    service.delete_comment()
+    return {"result": "deleted"}
