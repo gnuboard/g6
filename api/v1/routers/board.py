@@ -16,6 +16,7 @@ from api.v1.models.board import (
     ResponseBoardListModel, ResponseNormalModel, ResponseCreateWriteModel,
     CommentUpdateModel
 )
+from api.v1.models.pagination import PagenationRequest
 from api.v1.service.board import (
     ListPostServiceAPI, ReadPostServiceAPI,
     CreatePostServiceAPI, UpdatePostServiceAPI, DownloadFileServiceAPI,
@@ -41,14 +42,20 @@ credentials_exception = HTTPException(
             )
 async def api_list_post(
     service: Annotated[ListPostServiceAPI, Depends(ListPostServiceAPI.async_init)],
+    pagination: Annotated[PagenationRequest, Depends()]
 ) -> ResponseBoardListModel:
     """
     게시판 정보, 글 목록을 반환합니다.
     """
+    writes = service.get_writes(
+        with_files=True,
+        page=pagination.page,
+        per_page=pagination.per_page
+    )
     content = {
         "categories": service.categories,
         "board": service.board,
-        "writes": service.get_writes(with_files=True),
+        "writes": writes,
         "total_count": service.get_total_count(),
         "current_page": service.search_params['current_page'],
         "prev_spt": service.prev_spt,
