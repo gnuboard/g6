@@ -341,9 +341,8 @@ class ResponseSearchBoardModel(ResponseBoardModel):
     writes: List[ResponseWriteSearchModel]
 
 
-class ResponseSearchModel(BaseModel):
+class ResponseSearchModel(PaginationResponse):
     """검색 결과 모델"""
-    total_search_count: int
     onetable: Union[str, None]
     boards: List[ResponseSearchBoardModel]
 
