@@ -274,6 +274,25 @@ async def api_list_delete(
     return {"result": "deleted"}
 
 
+@router.post("/{bo_table}/writes/{wr_id}/delete",
+                summary="게시판 비회원 글 삭제",
+                responses={**response_401, **response_403,
+                           **response_404, **response_422}
+               )
+async def api_delete_post(
+    service: Annotated[DeletePostServiceAPI, Depends(DeletePostServiceAPI.async_init)],
+    wr_password: str = Body(..., title="비밀번호", description="비회원 글 비밀번호")
+) -> ResponseNormalModel:
+    """
+    지정된 게시판의 비회원 글을 삭제합니다.
+    """
+    service.validate_author(service.write, wr_password)
+    service.validate_exists_reply()
+    service.validate_exists_comment()
+    service.delete_write()
+    return {"result": "deleted"}
+
+
 @router.get("/{bo_table}/{sw}",
             summary="게시글 복사/이동 가능 목록 조회",
             responses={**response_401, **response_403,
