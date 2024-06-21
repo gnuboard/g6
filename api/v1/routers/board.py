@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse
 from fastapi.encoders import jsonable_encoder
 
 from core.database import db_session
+from lib.common import get_paging_info
 from lib.board_lib import insert_board_new, set_write_delay, get_list_thumbnail
 from api.v1.models.response import (
     response_401, response_403, response_404, response_422
@@ -52,7 +53,13 @@ async def api_list_post(
         page=pagination.page,
         per_page=pagination.per_page
     )
+    total_records = service.get_total_count()
+    paging_info = get_paging_info(
+        pagination.page, pagination.per_page, total_records
+    )
     content = {
+        "total_records": total_records,
+        "total_pages": paging_info["total_pages"],
         "categories": service.categories,
         "board": service.board,
         "writes": writes,

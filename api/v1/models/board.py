@@ -6,6 +6,8 @@ from typing_extensions import Annotated, List, Union
 from fastapi import Body, Path, Query
 from pydantic import BaseModel, ConfigDict, model_validator, Field
 
+from api.v1.models.pagination import PaginationResponse
+
 
 class WriteModel(BaseModel):
     """게시판 개별 글 모델"""
@@ -270,7 +272,7 @@ class ResponseBoardModel(BaseModel):
     # bo_10: str
 
 
-class ResponseBoardListModel(BaseModel):
+class ResponseBoardListModel(PaginationResponse):
     """게시판 목록 모델"""
     categories: list
     board: ResponseBoardModel
