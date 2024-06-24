@@ -93,7 +93,8 @@ async def memo_form(
     request: Request,
     member_service: Annotated[MemberService, Depends()],
     memo_service: Annotated[MemoService, Depends()],
-    me_id: int = Query(default=None)
+    me_id: int = Query(default=None),
+    me_recv_mb_id: str = Query(default=None),
 ):
     """
     쪽지 작성 페이지
@@ -101,8 +102,10 @@ async def memo_form(
     # 답장할 쪽지 & 회원 정보 조회
     target = None
     memo = memo_service.fetch_memo(me_id)
-    if memo:
+    if me_id and memo:
         target = member_service.read_member(memo.me_send_mb_id)
+    elif me_recv_mb_id:
+        target = member_service.fetch_member_by_id(me_recv_mb_id)
 
     context = {
         "request": request,
