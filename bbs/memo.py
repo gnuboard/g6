@@ -128,7 +128,7 @@ async def memo_form_update(
     # me_recv_mb_id 공백 제거
     mb_id_list = me_recv_mb_id.replace(" ", "").split(',')
     send_members = memo_service.get_receive_members(mb_id_list)
-    send_point = memo_service.calculate_send_point(member, len(send_members))
+    send_point = point_service.get_config_point("cf_memo_send_point")
 
     # 쪽지 전송 처리
     for target in send_members:
