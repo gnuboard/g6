@@ -214,8 +214,6 @@ async def send_qa_mail(request: Request, qa: QaContent) -> None:
     Args:
         request (Request): Request 객체
         poll_etc (PollEtc): 기타의견 객체
-
-    TODO : 메일 발송 템플릿 적용이 필요하다.
     """
     with DBConnect().sessionLocal() as db:
         request.state.config = config = db.query(Config).first()
@@ -225,11 +223,22 @@ async def send_qa_mail(request: Request, qa: QaContent) -> None:
     from_name = get_admin_email_name(request)
     subject = f"[{config.cf_title}] {qa_config.qa_title} 질문 알림 메일"
     content = qa.qa_subject + "<br><br>" + qa.qa_content
+    templates = Jinja2Templates(
+                directory=TemplateService.get_templates_dir())
 
     if qa.qa_parent:
         question = db.get(QaContent, qa.qa_parent)
         if question.qa_email_recv and question.qa_email:
             subject = f"{subject} 에 대한 답변이 등록되었습니다."
+            content = templates.TemplateResponse(
+                "bbs/mail_form/qa_answered_mail.html", {
+                    "request": request,
+                    "qa_subject": qa.qa_subject,
+                    "qa_name": qa.qa_name,
+                    "qa_content": qa.qa_content,
+                    "link_url": request.url_for("qa_view", qa_id=qa.qa_parent),
+                }
+            ).body.decode("utf-8")
             mailer(from_email, question.qa_email, subject, content, from_name)
     else:
         if qa_config.qa_admin_email:
