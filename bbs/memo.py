@@ -133,6 +133,9 @@ async def memo_form_update(
     send_members = memo_service.get_receive_members(mb_id_list)
     send_point = point_service.get_config_point("cf_memo_send_point")
 
+    # 쪽지 전송 포인트 체크 및 계산
+    memo_service.calculate_send_point(member, len(send_members))
+
     # 쪽지 전송 처리
     for target in send_members:
         memo = memo_service.send_memo(member, target, sanitizer.get_cleaned_data(me_memo))
