@@ -175,9 +175,10 @@ class MemoService(BaseService):
         mb_point = int(member.mb_point)
         if total_use_point > 0:
             if mb_point < total_use_point:
+                need_point = total_use_point - (mb_point if mb_point > 0 else 0)
                 self.raise_exception(
                     status_code=403,
-                    detail=f"{total_use_point-mb_point} 포인트가 부족합니다. (보유 포인트: {member.mb_point}, 필요 포인트: {total_use_point})"
+                    detail=f"{need_point} 포인트가 부족합니다. (보유 포인트: {member.mb_point}, 필요 포인트: {total_use_point})"
                 )
 
         return total_use_point
