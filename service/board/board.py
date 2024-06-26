@@ -9,7 +9,7 @@ from core.models import Board, WriteBaseModel, Group, AutoSave
 from core.exception import AlertException
 from core.formclass import WriteForm
 from lib.board_lib import (
-    BoardConfig, FileCache, is_write_delay, send_write_mail
+    BoardConfig, FileCache, is_owner, is_write_delay, send_write_mail
 )
 from lib.member import MemberDetails
 from lib.common import (
@@ -17,7 +17,7 @@ from lib.common import (
     remove_query_params, set_url_query_params
 )
 from lib.html_sanitizer import content_sanitizer
-from lib.pbkdf2 import create_hash
+from lib.pbkdf2 import create_hash, validate_password
 from service import BaseService
 from service.board_file_service import BoardFileService
 from api.v1.models.board import WriteModel
@@ -82,6 +82,11 @@ class BoardService(BaseService, BoardConfig):
         """글쓰기 레벨 비교 검증"""
         if not self.is_write_level():
             self.raise_exception(detail="글을 작성할 권한이 없습니다.", status_code=403)
+
+    def validate_author(self, write: WriteBaseModel, wr_password: str = None):
+        """작성자 확인"""
+        if not is_owner(write, self.member.mb_id) and not validate_password(wr_password, write.wr_password):
+            self.raise_exception(detail="작성자만 수정/삭제 할 수 있습니다.", status_code=403)
 
     def validate_secret_board(self, secret: str, html: str, mail: str):
         """게시판의 비밀글 사용여부 검증"""

@@ -6,6 +6,8 @@ from typing_extensions import Annotated, List, Union
 from fastapi import Body, Path, Query
 from pydantic import BaseModel, ConfigDict, model_validator, Field
 
+from api.v1.models.pagination import PaginationResponse
+
 
 class WriteModel(BaseModel):
     """게시판 개별 글 모델"""
@@ -60,8 +62,26 @@ class CommentModel(BaseModel):
         return self
 
 
+class CommentUpdateModel(BaseModel):
+    """게시판 댓글 수정 모델"""
+
+    # 추가 필드 허용
+    model_config = ConfigDict(extra='allow')
+
+    wr_content: Annotated[str, Body(..., title="내용")]
+    wr_password: Annotated[str, Body("", title="비밀번호",
+                                     description="비회원일 경우 비밀번호")]
+    wr_option: Annotated[str, Body("html1", title="비밀글 여부",
+                                   description="secret: 비밀글, html1: HTML 사용")]
+    comment_id: Annotated[int, Body(None, title="댓글 ID")]
+
+
 class ResponseNormalModel(BaseModel):
     result: str
+
+
+class ResponseCreateWriteModel(ResponseNormalModel):
+    wr_id: int
 
 
 class ResponseFileModel(BaseModel):
@@ -252,7 +272,7 @@ class ResponseBoardModel(BaseModel):
     # bo_10: str
 
 
-class ResponseBoardListModel(BaseModel):
+class ResponseBoardListModel(PaginationResponse):
     """게시판 목록 모델"""
     categories: list
     board: ResponseBoardModel
@@ -309,9 +329,8 @@ class ResponseBoardNewModel(BaseModel):
     num: int
 
 
-class ResponseBoardNewListModel(BaseModel):
+class ResponseBoardNewListModel(PaginationResponse):
     """최신글 목록 모델"""
-    total_count: int
     board_news: List[ResponseBoardNewModel]
     current_page: int
 
@@ -321,9 +340,8 @@ class ResponseSearchBoardModel(ResponseBoardModel):
     writes: List[ResponseWriteSearchModel]
 
 
-class ResponseSearchModel(BaseModel):
+class ResponseSearchModel(PaginationResponse):
     """검색 결과 모델"""
-    total_search_count: int
     onetable: Union[str, None]
     boards: List[ResponseSearchBoardModel]
 

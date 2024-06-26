@@ -73,13 +73,22 @@ class SearchService(BaseService):
         boards = self.db.scalars(boards_query).all()
         return boards
 
-    def search(self, boards: List[Board], sfl: str, stx: str, sop: str) -> dict:
+    def search(
+        self,
+        boards: List[Board],
+        sfl: str,
+        stx: str,
+        sop: str,
+        page: int = 1,
+        per_page: int = 5
+    ) -> dict:
         """게시판 검색 데이터"""
         if len(stx) < 2:
             self.raise_exception(status_code=400, detail="검색어는 2글자 이상 입력해 주세요.")
 
         remove_boards = []
         total_search_count = 0
+        offset = (page - 1) * per_page
         for board in boards:
             board_config = BoardConfig(self.request, board)
             board.subject = board_config.subject
@@ -105,7 +114,8 @@ class SearchService(BaseService):
             board.search_count = self.db.scalar(query.add_columns(func.count()).order_by(None))
 
             if board.search_count > 0:
-                board.writes = self.db.scalars(query.add_columns(write_model).limit(5)).all()
+                board.writes = self.db.scalars(query.add_columns(write_model).\
+                                offset(offset).limit(per_page)).all()
                 total_search_count += board.search_count
                 for write in board.writes:
                     write = get_list(self.request, self.db, write, board_config)
