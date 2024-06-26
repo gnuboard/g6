@@ -281,7 +281,7 @@ class BoardService(BaseService, BoardConfig):
         for file in file_list:
             index = file_list.index(file)
 
-            if file.filename:
+            if file and file.filename:
                 # 관리자가 아니면서 설정한 업로드 사이즈보다 크거나 업로드 가능 확장자가 아니면 업로드하지 않음
                 if not self.member.admin_type:
                     if not file_service.is_upload_size(self.board, file):
