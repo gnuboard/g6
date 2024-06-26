@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse
 from fastapi.encoders import jsonable_encoder
 
 from core.database import db_session
+from lib.common import get_paging_info
 from lib.board_lib import insert_board_new, set_write_delay, get_list_thumbnail
 from api.v1.models.response import (
     response_401, response_403, response_404, response_422
@@ -13,8 +14,10 @@ from api.v1.models.response import (
 from api.v1.dependencies.board import arange_file_data
 from api.v1.models.board import (
     WriteModel, CommentModel, ResponseWriteModel, ResponseBoardModel,
-    ResponseBoardListModel, ResponseNormalModel
+    ResponseBoardListModel, ResponseNormalModel, ResponseCreateWriteModel,
+    CommentUpdateModel
 )
+from api.v1.models.pagination import PagenationRequest
 from api.v1.service.board import (
     ListPostServiceAPI, ReadPostServiceAPI,
     CreatePostServiceAPI, UpdatePostServiceAPI, DownloadFileServiceAPI,
@@ -40,14 +43,26 @@ credentials_exception = HTTPException(
             )
 async def api_list_post(
     service: Annotated[ListPostServiceAPI, Depends(ListPostServiceAPI.async_init)],
+    pagination: Annotated[PagenationRequest, Depends()]
 ) -> ResponseBoardListModel:
     """
     게시판 정보, 글 목록을 반환합니다.
     """
+    writes = service.get_writes(
+        with_files=True,
+        page=pagination.page,
+        per_page=pagination.per_page
+    )
+    total_records = service.get_total_count()
+    paging_info = get_paging_info(
+        pagination.page, pagination.per_page, total_records
+    )
     content = {
+        "total_records": total_records,
+        "total_pages": paging_info["total_pages"],
         "categories": service.categories,
         "board": service.board,
-        "writes": service.get_writes(with_files=True),
+        "writes": writes,
         "total_count": service.get_total_count(),
         "current_page": service.search_params['current_page'],
         "prev_spt": service.prev_spt,
@@ -153,7 +168,7 @@ async def api_create_post(
     db: db_session,
     service: Annotated[CreatePostServiceAPI, Depends(CreatePostServiceAPI.async_init)],
     wr_data: WriteModel,
-) -> ResponseNormalModel:
+) -> ResponseCreateWriteModel:
     """
     지정된 게시판에 새 글을 작성합니다.
 
@@ -189,7 +204,7 @@ async def api_create_post(
     set_write_delay(service.request)
     service.delete_cache()
     db.commit()
-    return {"result": "created"}
+    return {"result": "created", "wr_id": write.wr_id}
     
 
 @router.put("/{bo_table}/writes/{wr_id}",
@@ -271,6 +286,25 @@ async def api_list_delete(
     """
     service.validate_admin_authority()
     service.delete_writes(wr_ids)
+    return {"result": "deleted"}
+
+
+@router.post("/{bo_table}/writes/{wr_id}/delete",
+                summary="게시판 비회원 글 삭제",
+                responses={**response_401, **response_403,
+                           **response_404, **response_422}
+               )
+async def api_delete_post(
+    service: Annotated[DeletePostServiceAPI, Depends(DeletePostServiceAPI.async_init)],
+    wr_password: str = Body(..., title="비밀번호", description="비회원 글 비밀번호")
+) -> ResponseNormalModel:
+    """
+    지정된 게시판의 비회원 글을 삭제합니다.
+    """
+    service.validate_author(service.write, wr_password)
+    service.validate_exists_reply()
+    service.validate_exists_comment()
+    service.delete_write()
     return {"result": "deleted"}
 
 
@@ -379,7 +413,6 @@ async def api_create_comment(
     - **wr_name**: 작성자 이름 (비회원일 경우)
     - **wr_password**: 비밀번호
     - **wr_option**: 글 옵션
-    - **wr_id**: 부모글 ID
     - **comment_id**" 댓글 ID (대댓글 작성시 댓글 id)
     wr_id만 입력 - 댓글작성
     wr_id, comment_id 입력 - 대댓글 작성
@@ -404,7 +437,7 @@ async def api_create_comment(
 async def api_update_comment(
     db: db_session,
     service: Annotated[CommentServiceAPI, Depends(CommentServiceAPI.async_init)],
-    comment_data: CommentModel,
+    comment_data: CommentUpdateModel,
 ) -> ResponseNormalModel:
     """
     댓글을 수정합니다.
@@ -443,5 +476,22 @@ async def api_delete_comment(
     댓글을 삭제합니다.
     """
     service.check_authority(with_session=False)
+    service.delete_comment()
+    return {"result": "deleted"}
+
+
+@router.post("/{bo_table}/writes/{wr_id}/comments/{comment_id}/delete",
+                summary="게시판 비회원 댓글 삭제",
+                responses={**response_401, **response_403,
+                           **response_404, **response_422}
+               )
+async def api_delete_post(
+    service: Annotated[DeleteCommentServiceAPI, Depends(DeleteCommentServiceAPI.async_init)],
+    wr_password: str = Body(..., title="비밀번호", description="비회원 댓글 비밀번호")
+) -> ResponseNormalModel:
+    """
+    지정된 게시판의 비회원 댓글을 삭제합니다.
+    """
+    service.validate_author(service.write, wr_password)
     service.delete_comment()
     return {"result": "deleted"}

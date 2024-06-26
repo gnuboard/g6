@@ -19,7 +19,7 @@ from api.v1.dependencies.member import (
 )
 from api.v1.models import MemberRefreshToken
 from api.v1.models.member import (
-    CreateMember, SearchMemberId, SearchMemberPassword,
+    CreateMember, MemberMeResponse, SearchMemberId, SearchMemberPassword,
     ResetMemberPassword, MemberResponse, RegisterResponse,
     SearchMemberIdResponse, UpdateMember
 )
@@ -142,7 +142,7 @@ async def certificate_email(
             responses={**response_401, **response_403, **response_404})
 async def read_member_me(
     member: Annotated[Member, Depends(get_current_member)]
-) -> MemberResponse:
+) -> MemberMeResponse:
     """
     JWT 토큰을 통해 인증된 회원 정보를 조회합니다.
     - 탈퇴 또는 차단된 회원은 조회할 수 없습니다.

@@ -94,7 +94,7 @@ async def list_post(
         "board": board,
         "board_config": list_post_service,
         "notice_writes": list_post_service.get_notice_writes(),
-        "writes": list_post_service.get_writes(),
+        "writes": list_post_service.get_writes(page=search_params.get('current_page')),
         "total_count": list_post_service.get_total_count(),
         "current_page": list_post_service.search_params['current_page'],
         "paging": paging,

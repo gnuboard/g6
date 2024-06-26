@@ -117,6 +117,12 @@ class PointService(BaseService):
         # 회원 포인트 갱신
         self.member_service.update_member_point(mb_id, po_mb_point)
 
+    def get_config_point(self, cf_name: str) -> int:
+        """
+        설정된 포인트 값을 가져옵니다.
+        """
+        return getattr(self.config, cf_name, 0)
+
     def get_total_point(self, mb_id: str) -> int:
         """
         회원의 포인트 총합

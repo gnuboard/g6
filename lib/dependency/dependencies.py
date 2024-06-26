@@ -183,11 +183,11 @@ async def check_admin_access(request: Request):
 
 
 async def common_search_query_params(
-        sst: str = Query(default=""),
-        sod: str = Query(default=""),
-        sfl: str = Query(default=""),
-        stx: str = Query(default=""),
-        sca: str = Query(default=""),
+        sst: str = Query(default="", title="정렬 필드", description="정렬 필드"),
+        sod: str = Query(default="and", title="검색연산자", description="검색연산자", pattern="and|or"),
+        sfl: str = Query(default="wr_subject||wr_content", title="검색필드", description="검색필드"),
+        stx: str = Query(default="", title="검색어", description="검색어"),
+        sca: str = Query(default="", title="분류", description="검색 분류"),
         current_page: str = Query(default="1", alias="page")):
     """공통으로 사용하는 Query String 파라미터를 받는 함수"""
     try:
