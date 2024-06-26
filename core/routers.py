@@ -29,8 +29,8 @@ from lib.dependency.dependencies import (
 from lib.editor.ckeditor4 import router as editor_router
 
 router = APIRouter(dependencies=[Depends(check_use_template),
-                                 Depends(set_template_basic_data),
-                                 Depends(set_current_connect)],
+                                 Depends(set_current_connect),
+                                 Depends(set_template_basic_data)],
                    include_in_schema=False)
 router.include_router(index_router, tags=["index"])
 router.include_router(board_router, prefix="/board", tags=["board"])
