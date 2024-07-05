@@ -6,7 +6,7 @@ from typing_extensions import Annotated, List, Union
 from fastapi import Body, Path, Query
 from pydantic import BaseModel, ConfigDict, model_validator, Field
 
-from api.v1.models.pagination import PaginationResponse
+from api.v1.models.pagination import PaginationResponse, PagenationRequest
 
 
 class WriteModel(BaseModel):
@@ -271,6 +271,21 @@ class ResponseBoardModel(BaseModel):
     # bo_8: str
     # bo_9: str
     # bo_10: str
+
+
+class BoardPaginationRequest(PagenationRequest):
+    per_page: int = Field(
+        Query(default=0,
+              ge=0,
+              le=100,
+              title="출력 수",
+              description="""페이지 당 결과 수 <br>\
+                최대 100 <br>\
+                0인 경우 개별 게시판 설정을 따르고 <br>\
+                개별 게시판 설정도 0인 경우 기본 설정의 값을 따름
+              """
+              )
+    )
 
 
 class ResponseBoardListModel(PaginationResponse):

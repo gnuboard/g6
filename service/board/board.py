@@ -156,6 +156,15 @@ class BoardService(BaseService, BoardConfig):
 
         return write
 
+    def get_board_per_page(self, per_page = 0):
+        """게시판별 페이지당 게시글 수를 가져온다."""
+        if per_page != 0:
+            return per_page
+        if self.board.bo_page_rows != 0:
+            return self.board.bo_page_rows  # 게시판 설정에서 페이지당 게시글 수를 사용
+        else:
+            return self.config.cf_page_rows # 상위 클래스(BoardConfig)에서 설정한 페이지당 게시글 수를 사용
+
     def get_parent_post(self, parent_id: int, is_reply: bool = True):
         """부모글 호출"""
         if not parent_id:
