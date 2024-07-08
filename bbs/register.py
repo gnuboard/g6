@@ -19,7 +19,10 @@ from lib.common import session_member_key
 from lib.dependency.dependencies import (
     validate_captcha, validate_token, no_cache_response
 )
-from lib.dependency.member import validate_certify_email_member, validate_policy_agree, validate_register_data
+from lib.dependency.member import (
+    validate_certify_email_member, validate_policy_agree,
+    validate_register_data, logout_only_view
+)
 from lib.mail import send_register_admin_mail, send_register_mail
 from service.member_service import MemberImageService, MemberService, ValidateMember, ValidateMemberAjax
 from service.point_service import PointService
@@ -30,7 +33,10 @@ templates.env.globals["captcha_widget"] = captcha_widget
 
 
 @router.get("/register",
-            dependencies=[Depends(no_cache_response)])
+            dependencies=[
+                Depends(no_cache_response),
+                Depends(logout_only_view)
+            ])
 async def get_register(request: Request):
     """
     회원가입 약관 동의 페이지
