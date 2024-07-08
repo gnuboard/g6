@@ -9,8 +9,10 @@ from core.exception import AlertException
 from lib.common import dynamic_create_write_table, cut_name, FileCache
 from lib.board_lib import BoardConfig, get_list, get_list_thumbnail
 from service import BaseService
+from service.ajax.ajax import AJAXService
 from service.board_file_service import BoardFileService
 from service.point_service import PointService
+from api.v1.service.member import MemberImageServiceAPI
 
 
 class BoardNewService(BaseService):
@@ -143,6 +145,16 @@ class BoardNewService(BaseService):
                 write.images, write.normal_files = self.file_service.get_board_files_by_type(bo_table, write.wr_id)
                 # 썸네일 이미지 설정
                 write.thumbnail = get_list_thumbnail(request, board, write, board_config.gallery_width, board_config.gallery_height)
+
+                # 회원 이미지, 아이콘 경로 설정
+                write.mb_image_path = MemberImageServiceAPI.get_image_path(write.mb_id)
+                write.mb_icon_path = MemberImageServiceAPI.get_icon_path(write.mb_id)
+
+                # 게시글 좋아요/싫어요 정보 설정
+                ajax_good_data = AJAXService(self.request, self.db).get_ajax_good_data(bo_table, write)
+                write.good = ajax_good_data["good"]
+                write.nogood = ajax_good_data["nogood"]
+
             boards_info[bo_table] = writes
 
         return boards_info

@@ -284,6 +284,14 @@ class ResponseBoardListModel(PaginationResponse):
     next_spt: Union[int, None]
 
 
+class ResponseTotalBoardNewListModel(BaseModel):
+    """최신글 목록 모델"""
+    free: List[ResponseWriteModel]
+    gallery: List[ResponseWriteModel]
+    qa: List[ResponseWriteModel]
+    notice: List[ResponseWriteModel]
+
+
 class ResponseGroupModel(BaseModel):
     """게시판 그룹 모델"""
     gr_id: str

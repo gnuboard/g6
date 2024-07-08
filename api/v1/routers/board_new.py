@@ -10,7 +10,9 @@ from lib.board_lib import get_bo_table_list
 from api.v1.dependencies.member import get_current_member
 from api.v1.models.response import response_401, response_422
 from api.v1.models.board import (
-    BoardNewViewType, RequestBoardNewWrites, ResponseNormalModel, ResponseBoardNewListModel
+    BoardNewViewType, RequestBoardNewWrites, ResponseNormalModel,
+    ResponseBoardNewListModel, ResponseTotalBoardNewListModel,
+    ResponseWriteModel
 )
 from lib.common import get_paging_info
 from service.board_new import BoardNewServiceAPI
@@ -57,7 +59,7 @@ async def api_board_new_list(
 async def api_latest_posts(
     service: Annotated[BoardNewServiceAPI, Depends()],
     data: RequestBoardNewWrites = Depends(),
-):
+) -> ResponseTotalBoardNewListModel:
     """
     모든 게시판의 최신글을 조회합니다.
     """
@@ -74,12 +76,12 @@ async def api_latest_posts_by_board(
     service: Annotated[BoardNewServiceAPI, Depends()],
     bo_table: Annotated[str, Path(..., title="게시판 코드", description="게시판 코드")],
     data: RequestBoardNewWrites = Depends(),
-):
+) -> List[ResponseWriteModel]:
     """
     최신글을 게시판별로 조회합니다.
     """
     latest_posts = service.get_latest_posts([bo_table], data.view_type.value, data.rows)
-    return latest_posts
+    return latest_posts[bo_table]
 
 
 @router.post("/delete",
