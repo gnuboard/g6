@@ -174,10 +174,11 @@ class AJAXService:
             data.as_uid = get_unique_id(self.request)
 
         save_data = self.db.scalar(
-            select(AutoSave)
-            .where(AutoSave.mb_id == member.mb_id, AutoSave.as_uid == data.as_uid)
+            select(AutoSave).where(AutoSave.as_uid == data.as_uid)
         )
         if save_data:
+            if save_data.mb_id != member.mb_id:
+                raise JSONException(status_code=403, message="접근 권한이 없습니다.")
             save_data.as_subject = data.as_subject
             save_data.as_content = data.as_content
             save_data.as_datetime = datetime.now()
