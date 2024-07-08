@@ -157,7 +157,7 @@ class AJAXService:
         if not save_data:
             raise JSONException(status_code=404, message="저장된 글이 없습니다.")
         if save_data.mb_id != member.mb_id:
-            raise JSONException(status_code=403, detail="접근 권한이 없습니다.")
+            raise JSONException(status_code=403, message="접근 권한이 없습니다.")
         return save_data
 
     def get_autosave_count(self, mb_id: str) -> int:
