@@ -93,7 +93,7 @@ class ListPostService(BoardService):
 
         return self.query
 
-    def get_writes(self, with_files=False, page=1, per_page=None) -> List[WriteBaseModel]:
+    def get_writes(self, with_files=False, page=1, per_page=None, with_notice=False) -> List[WriteBaseModel]:
         """게시글 목록을 가져옵니다."""
         ajax_service = AJAXService(self.request, self.db)
         current_page = page
@@ -101,6 +101,11 @@ class ListPostService(BoardService):
             page_rows = per_page        # 페이지당 게시글 수를 별도 설정
         else:
             page_rows = self.page_rows  # 상위 클래스(BoardConfig)에서 설정한 페이지당 게시글 수를 사용
+
+        # with_notice == False -> 공지사항 제외
+        if not with_notice:
+            notice_ids = self.get_notice_list()
+            self.query = self.query.where(self.write_model.wr_id.notin_(notice_ids))
 
         # 페이지 번호에 따른 offset 계산
         offset = (current_page - 1) * page_rows
