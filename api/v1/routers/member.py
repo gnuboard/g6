@@ -12,6 +12,7 @@ from sqlalchemy import delete
 from bbs.social import SocialAuthService
 from core.database import db_session
 from core.models import Member
+from lib.pbkdf2 import validate_password
 from lib.mail import send_password_reset_mail, send_register_admin_mail, send_register_mail
 
 from api.v1.dependencies.member import (
@@ -149,6 +150,24 @@ async def read_member_me(
     - 이메일 인증이 완료되지 않은 회원은 조회할 수 없습니다.
     """
     return member
+
+
+@router.post("/members/password_certification",
+            summary="비밀번호 확인",
+            responses={**response_401, **response_403, **response_422}
+            )
+async def password_certification(
+    service: Annotated[MemberServiceAPI, Depends()],
+    member: Annotated[Member, Depends(get_current_member)],
+    password: Annotated[str, Body(..., title="비밀번호", description="비밀번호")],
+) -> MessageResponse:
+    """
+    JWT토큰으로 decoding하여 얻은 member와 입력받은 비밀번호의 일치 여부를 확인합니다.
+    """
+    if not validate_password(password, member.mb_password):
+        service.raise_exception(status_code=403, detail="비밀번호가 일치하지 않습니다.")
+
+    return {"message": "비밀번호가 확인되었습니다."}
 
 
 @router.get("/members/{mb_id}",
