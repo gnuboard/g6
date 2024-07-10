@@ -62,6 +62,7 @@ async def api_list_post(
         "total_pages": paging_info["total_pages"],
         "categories": service.categories,
         "board": service.board,
+        "notice_writes": service.get_notice_writes(),
         "writes": writes,
         "total_count": service.get_total_count(),
         "current_page": service.search_params['current_page'],

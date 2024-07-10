@@ -175,8 +175,9 @@ class ListPostService(BoardService):
 
         return writes
 
-    def get_notice_writes(self) -> List[WriteBaseModel]:
+    def get_notice_writes(self, with_files=False) -> List[WriteBaseModel]:
         """게시글 중 공지사항 목록을 가져옵니다."""
+        ajax_service = AJAXService(self.request, self.db)
         current_page = self.search_params.get('current_page')
         sca = self.request.query_params.get("sca")
         notice_writes = []
@@ -186,6 +187,23 @@ class ListPostService(BoardService):
             if sca:
                 notice_query = notice_query.where(self.write_model.ca_name == sca)
             notice_writes = [get_list(self.request, self.db, write, self) for write in self.db.scalars(notice_query).all()]
+        for write in notice_writes:
+            # 게시글 목록 조회시 첨부된 파일을 함께 가져올 경우, default는 False
+            if with_files:
+                write.images, write.normal_files = self.file_service.get_board_files_by_type(self.bo_table, write.wr_id)
+    
+            # 회원 이미지, 아이콘 경로 설정
+            write.mb_image_path = self.get_member_image_path(write.mb_id)
+            write.mb_icon_path = self.get_member_icon_path(write.mb_id)
+
+            # 게시글 좋아요/싫어요 정보 설정
+            ajax_good_data = ajax_service.get_ajax_good_data(self.bo_table, write)
+            write.good = ajax_good_data["good"]
+            write.nogood = ajax_good_data["nogood"]
+
+            # 게시글 썸네일 설정
+            write.thumbnail = get_list_thumbnail(self.request, self.board, write, self.gallery_width, self.gallery_height)
+
         return notice_writes
 
     def get_total_count(self) -> int:

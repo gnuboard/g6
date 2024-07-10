@@ -277,6 +277,7 @@ class ResponseBoardListModel(PaginationResponse):
     """게시판 목록 모델"""
     categories: list
     board: ResponseBoardModel
+    notice_writes: List[ResponseWriteModel]
     writes: List[ResponseWriteModel]
     total_count: int
     current_page: int
