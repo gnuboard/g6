@@ -327,7 +327,14 @@ async def create_post(
     set_write_delay(service.request)
     service.delete_auto_save(uid)
     service.save_secret_session(write.wr_id, secret)
-    service.upload_files(file_service, write, files, file_content, file_dels)
+    service.upload_files(
+        file_service,
+        write,
+        files,
+        file_content,
+        file_dels,
+        password_verified=True
+    )
     service.delete_cache()
     redirect_url = service.get_redirect_url(write)
     db.commit()
@@ -356,12 +363,19 @@ async def update_post(
     service.validate_secret_board(secret, html, mail)
     service.validate_post_content(form_data.wr_subject)
     service.validate_post_content(form_data.wr_content)
-    service.arrange_data(form_data, secret, html, mail)
+    service.arrange_data(form_data, secret, html, mail, is_update=True)
     service.save_secret_session(wr_id, secret)
     service.save_write(write, form_data)
     service.set_notice(wr_id, notice)
     service.delete_auto_save(uid)
-    service.upload_files(file_service, write, files, file_content, file_dels)
+    service.upload_files(
+        file_service,
+        write,
+        files,
+        file_content,
+        file_dels,
+        password_verified=True
+    )
     service.update_children_category(form_data)
     service.delete_cache()
     redirect_url = service.get_redirect_url(write)
