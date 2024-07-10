@@ -2,7 +2,6 @@ from typing import Annotated, Optional
 from fastapi import Request, Depends
 from fastapi.security.utils import get_authorization_scheme_param
 from sqlalchemy import select
-from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 from core.database import DBConnect
@@ -12,6 +11,7 @@ from api.v1.auth import oauth2_scheme
 from api.v1.auth.jwt import JWT
 from api.v1.service.member import MemberServiceAPI
 from api.v1.models.auth import TokenPayload
+from lib.slowapi import LimiterNoWarning
 
 
 def get_request_member(
@@ -85,7 +85,7 @@ def get_cf_delay_sec_from_db():
 
 
 # 요청 제한 limiter 인스턴스 생성
-limiter = Limiter(key_func=limiter_key_func)
+limiter = LimiterNoWarning(key_func=limiter_key_func)
 
 
 @limiter.limit(
