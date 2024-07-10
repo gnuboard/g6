@@ -85,6 +85,9 @@ class BoardService(BaseService, BoardConfig):
 
     def validate_author(self, write: WriteBaseModel, wr_password: str = None):
         """작성자 확인"""
+        if self.member.admin_type:
+            return
+
         if not is_owner(write, self.member.mb_id) and not validate_password(wr_password, write.wr_password):
             self.raise_exception(detail="작성자만 수정/삭제 할 수 있습니다.", status_code=403)
 
@@ -188,7 +191,14 @@ class BoardService(BaseService, BoardConfig):
         """Stored XSS 방지용 데이터 정제"""
         return content_sanitizer.get_cleaned_data(content)
 
-    def arrange_data(self, data: Union[WriteForm, WriteModel], secret: str, html: str, mail: str):
+    def arrange_data(
+        self,
+        data: Union[WriteForm, WriteModel],
+        secret: str,
+        html: str,
+        mail: str,
+        is_update: bool =False
+    ):
         """
         form 또는 body 형태로 들어오는 데이터를 양식에 맞게 정리
           - 항목: ca_name, wr_password, wr_name, wr_email, wr_homepage, wr_option, wr_link1, wr_link2, wr_content
@@ -204,7 +214,8 @@ class BoardService(BaseService, BoardConfig):
             data.ca_name = ""
         self.validate_wr_password(data.wr_password)
         data.wr_password = create_hash(data.wr_password) if data.wr_password else ""
-        data.wr_name = self.set_wr_name(self.member, data.wr_name)
+        if not is_update:
+            data.wr_name = self.set_wr_name(self.member, data.wr_name)
         data.wr_email = getattr(self.member, "mb_email", data.wr_email)
         data.wr_homepage = getattr(self.member, "mb_homepage", data.wr_homepage)
 
@@ -249,7 +260,8 @@ class BoardService(BaseService, BoardConfig):
         write: WriteBaseModel,
         file_list: List[UploadFile],
         file_content: List[str] = None,
-        file_dels: list = None
+        file_dels: list = None,
+        password_verified: bool = False
     ):
         """파일 업로드"""
         # files = []
@@ -258,7 +270,9 @@ class BoardService(BaseService, BoardConfig):
         #     if getattr(file, "size", None):
         #         files.append(file)
 
-        if self.member.mb_id and self.member.mb_id != write.mb_id:
+        is_not_same_mb_id = self.member.mb_id and self.member.mb_id != write.mb_id
+
+        if not self.member.admin_type and is_not_same_mb_id and not password_verified:
             self.raise_exception(status_code=403, detail="자신의 글에만 파일을 업로드할 수 있습니다.")
 
         if not self.is_upload_level():

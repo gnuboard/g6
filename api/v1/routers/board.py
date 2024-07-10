@@ -243,7 +243,9 @@ async def api_update_post(
     service.validate_secret_board(wr_data.secret, wr_data.html, wr_data.mail)
     service.validate_post_content(wr_data.wr_subject)
     service.validate_post_content(wr_data.wr_content)
-    service.arrange_data(wr_data, wr_data.secret, wr_data.html, wr_data.mail)
+    service.arrange_data(
+        wr_data, wr_data.secret, wr_data.html, wr_data.mail, is_update=True
+    )
     service.save_write(write, wr_data)
     service.set_notice(write.wr_id, wr_data.notice)
     service.update_children_category(wr_data)
