@@ -93,31 +93,18 @@ class ListPostService(BoardService):
 
         return self.query
 
-    def get_writes(self, with_files=False, page=1, per_page=None, with_notice=False) -> List[WriteBaseModel]:
-        """게시글 목록을 가져옵니다."""
+    def add_additional_info_to_writes(
+        self,
+        writes: List[WriteBaseModel],
+        total_count: int,
+        offset: int,
+        with_files: bool = False,
+    ) -> List[WriteBaseModel]:
+        """
+        게시글 목록에 부가 정보를 추가합니다.
+        (댓글, 좋아요, 회원 이미지, 회원 아이콘, 썸네일, 첨부파일)
+        """
         ajax_service = AJAXService(self.request, self.db)
-        current_page = page
-        if per_page:
-            page_rows = per_page        # 페이지당 게시글 수를 별도 설정
-        else:
-            page_rows = self.page_rows  # 상위 클래스(BoardConfig)에서 설정한 페이지당 게시글 수를 사용
-
-        # with_notice == False -> 공지사항 제외
-        if not with_notice:
-            notice_ids = self.get_notice_list()
-            self.query = self.query.where(self.write_model.wr_id.notin_(notice_ids))
-
-        # 페이지 번호에 따른 offset 계산
-        offset = (current_page - 1) * page_rows
-        # 최종 쿼리 결과를 가져옵니다.
-        writes = self.db.scalars(
-            self.query.add_columns(self.write_model)
-            .offset(offset).limit(page_rows)
-        ).all()
-
-        total_count = self.get_total_count()
-
-        # 게시글 정보 수정
         for write in writes:
             write.num = total_count - offset - writes.index(write)
             write = get_list(self.request, self.db, write, self)
@@ -173,11 +160,36 @@ class ListPostService(BoardService):
             # 게시글 썸네일 설정
             write.thumbnail = get_list_thumbnail(self.request, self.board, write, self.gallery_width, self.gallery_height)
 
+    def get_writes(self, with_files=False, page=1, per_page=None, with_notice=False) -> List[WriteBaseModel]:
+        """게시글 목록을 가져옵니다."""
+        current_page = page
+        if per_page:
+            page_rows = per_page        # 페이지당 게시글 수를 별도 설정
+        else:
+            page_rows = self.page_rows  # 상위 클래스(BoardConfig)에서 설정한 페이지당 게시글 수를 사용
+
+        # with_notice == False -> 공지사항 제외
+        if not with_notice:
+            notice_ids = self.get_notice_list()
+            self.query = self.query.where(self.write_model.wr_id.notin_(notice_ids))
+
+        # 페이지 번호에 따른 offset 계산
+        offset = (current_page - 1) * page_rows
+        # 최종 쿼리 결과를 가져옵니다.
+        writes = self.db.scalars(
+            self.query.add_columns(self.write_model)
+            .offset(offset).limit(page_rows)
+        ).all()
+
+        total_count = self.get_total_count()
+
+        # 게시글 부가 정보 추가 (댓글, 좋아요, 썸네일 등)
+        self.add_additional_info_to_writes(writes, total_count, offset, with_files)
+
         return writes
 
     def get_notice_writes(self, with_files=False) -> List[WriteBaseModel]:
         """게시글 중 공지사항 목록을 가져옵니다."""
-        ajax_service = AJAXService(self.request, self.db)
         current_page = self.search_params.get('current_page')
         sca = self.request.query_params.get("sca")
         notice_writes = []
@@ -187,22 +199,9 @@ class ListPostService(BoardService):
             if sca:
                 notice_query = notice_query.where(self.write_model.ca_name == sca)
             notice_writes = [get_list(self.request, self.db, write, self) for write in self.db.scalars(notice_query).all()]
-        for write in notice_writes:
-            # 게시글 목록 조회시 첨부된 파일을 함께 가져올 경우, default는 False
-            if with_files:
-                write.images, write.normal_files = self.file_service.get_board_files_by_type(self.bo_table, write.wr_id)
-    
-            # 회원 이미지, 아이콘 경로 설정
-            write.mb_image_path = self.get_member_image_path(write.mb_id)
-            write.mb_icon_path = self.get_member_icon_path(write.mb_id)
 
-            # 게시글 좋아요/싫어요 정보 설정
-            ajax_good_data = ajax_service.get_ajax_good_data(self.bo_table, write)
-            write.good = ajax_good_data["good"]
-            write.nogood = ajax_good_data["nogood"]
-
-            # 게시글 썸네일 설정
-            write.thumbnail = get_list_thumbnail(self.request, self.board, write, self.gallery_width, self.gallery_height)
+        # 게시글 부가 정보 추가 (댓글, 좋아요, 썸네일 등)
+        self.add_additional_info_to_writes(notice_writes, len(notice_writes), 0, with_files)
 
         return notice_writes
 
