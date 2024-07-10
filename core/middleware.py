@@ -11,7 +11,7 @@ from core.plugin import (
     read_plugin_state, cache_plugin_state, cache_plugin_menu, register_plugin,
     unregister_plugin, delete_router_by_tagname
 )
-from core.settings import settings
+from core.settings import settings, cors_config
 
 
 def regist_core_middleware(app: FastAPI) -> None:
@@ -80,10 +80,10 @@ def regist_core_middleware(app: FastAPI) -> None:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_origins = cors_config.allow_origins,
+        allow_credentials = cors_config.allow_credentials,
+        allow_methods = cors_config.allow_methods,
+        allow_headers = cors_config.allow_headers,
     )
 
 
