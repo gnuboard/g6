@@ -110,3 +110,10 @@ def validate_certify_email_member(
         raise AlertException("올바른 방법으로 이용해 주십시오.", 400)
 
     return member
+
+
+def logout_only_view(request: Request):
+    """로그아웃된 상태에서만 접근 가능한 페이지인지 확인하는 함수"""
+    session_mb_id = request.session.get("ss_mb_id", "")
+    if session_mb_id:
+        raise AlertException("로그아웃된 상태에서만 가능합니다.", 403, url="/")
