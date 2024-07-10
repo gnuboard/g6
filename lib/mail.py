@@ -242,4 +242,13 @@ async def send_qa_mail(request: Request, qa: QaContent) -> None:
             mailer(from_email, question.qa_email, subject, content, from_name)
     else:
         if qa_config.qa_admin_email:
+            content = templates.TemplateResponse(
+                "bbs/mail_form/qa_answered_mail.html", {
+                    "request": request,
+                    "qa_subject": qa.qa_subject,
+                    "qa_name": qa.qa_name,
+                    "qa_content": qa.qa_content,
+                    "link_url": request.url_for("qa_view", qa_id=qa.qa_id),
+                }
+            ).body.decode("utf-8")
             mailer(from_email, qa_config.qa_admin_email, subject, content, from_name)
