@@ -7,9 +7,10 @@ from fastapi.encoders import jsonable_encoder
 
 from core.database import db_session
 from lib.common import get_paging_info
-from lib.board_lib import insert_board_new, set_write_delay, get_list_thumbnail
+from lib.board_lib import insert_board_new, get_list_thumbnail
 from api.v1.models.response import (
-    response_401, response_403, response_404, response_422
+    response_401, response_403, response_404, response_422,
+    response_429
 )
 from api.v1.dependencies.board import arange_file_data
 from api.v1.models.board import (
@@ -106,7 +107,7 @@ async def api_read_post(
     })
     content.update(additional_content)
     service.validate_secret()
-    service.validate_repeat()
+    service.validate_repeat_with_slowapi()
     service.block_read_comment()
     service.validate_read_level()
     service.check_scrap()
@@ -153,7 +154,7 @@ async def api_read_post(
         "nogood": ajax_good_data["nogood"],
     })
     content.update(additional_content)
-    service.validate_repeat()
+    service.validate_repeat_with_slowapi()
     service.block_read_comment()
     service.check_scrap()
     service.check_is_good()
@@ -164,7 +165,8 @@ async def api_read_post(
 @router.post("/{bo_table}/writes",
              summary="게시판 글 작성",
              responses={**response_401, **response_403,
-                        **response_404, **response_422}
+                        **response_404, **response_422,
+                        **response_429}
              )
 async def api_create_post(
     db: db_session,
@@ -197,13 +199,13 @@ async def api_create_post(
     service.validate_post_content(wr_data.wr_content)
     service.validate_write_level()
     service.arrange_data(wr_data, wr_data.secret, wr_data.html, wr_data.mail)
+    service.validate_write_delay_with_slowapi()
     write = service.save_write(wr_data.parent_id, wr_data)
     insert_board_new(service.bo_table, write)
     service.add_point(write)
     parent_write = service.get_parent_post(wr_data.parent_id)
     service.send_write_mail_(write, parent_write)
     service.set_notice(write.wr_id, wr_data.notice)
-    set_write_delay(service.request)
     service.delete_cache()
     db.commit()
     return {"result": "created", "wr_id": write.wr_id}
@@ -425,6 +427,8 @@ async def api_create_comment(
     service.validate_comment_level()
     service.validate_point()
     service.validate_post_content(comment_data.wr_content)
+    service.validate_comment_password(comment_data.wr_password)
+    service.validate_write_delay_with_slowapi()
     comment = service.save_comment(comment_data, parent_write)
     service.add_point(comment)
     service.send_write_mail_(comment, parent_write)

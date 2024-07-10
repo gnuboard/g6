@@ -9,6 +9,7 @@ from core.exception import RedirectException
 from lib.common import set_url_query_params
 from lib.board_lib import is_owner, cut_name
 from lib.template_filters import number_format
+from lib.slowapi.read_count_limit.limiter import limit_read_count
 from service.board_file_service import BoardFileService
 from service.point_service import PointService
 from . import BoardService
@@ -126,8 +127,12 @@ class ReadPostService(BoardService):
         self.validate_secret(redirect_password_view=True)
         self.request.session[session_name] = True
 
-    def validate_repeat(self):
-        """게시글 작성자는 조회수, 포인트 처리를 하지 않는다."""
+    def _validate_repeat(self):
+        """
+        게시글 작성자는 조회수, 포인트 처리를 하지 않는다.
+        session을 통한 검증(validate_repeat_with_session)과
+        slowapi를 통한 검증(validate_repeat_with_slowapi)시 사용
+        """
         if self.member.mb_id == self.write.mb_id:
             return
 
@@ -150,15 +155,27 @@ class ReadPostService(BoardService):
 
     def validate_repeat_with_session(self):
         """
-        게시글 작성자 확인(validate_repeat())과 세션여부를 확인하여
+        게시글 작성자 확인(_validate_repeat())과 세션여부를 확인하여
         한번 읽은 게시글은 조회수, 포인트 처리를 하지 않는다.
         """
         session_name = f"ss_view_{self.bo_table}_{self.wr_id}"
         if self.request.session.get(session_name):
             return
 
-        self.validate_repeat()
+        self._validate_repeat()
         self.request.session[session_name] = True
+
+    def validate_repeat_with_slowapi(self):
+        """
+        게시글 작성자 확인(_validate_repeat())과
+        slowapi를 통한 ip 확인을 통해
+        한번 읽은 게시글은 조회수, 포인트 처리를 하지 않는다.
+        """
+        try:
+            limit_read_count(self.request)
+            self._validate_repeat()
+        except:
+            pass
 
     def check_scrap(self):
         """스크랩 여부 확인"""

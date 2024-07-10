@@ -56,6 +56,13 @@ response_422 = {
     }
 }
 
+response_429 = {
+    status.HTTP_429_TOO_MANY_REQUESTS: {
+        "model": MessageResponse,
+        "description": "요청 제한 초과"
+    }
+}
+
 response_500 = {
     status.HTTP_500_INTERNAL_SERVER_ERROR: {
         "description": "서버 오류"
