@@ -1,8 +1,9 @@
-from typing import Annotated, Optional
+from typing import Optional
 from fastapi import Request, Depends
 from fastapi.security.utils import get_authorization_scheme_param
 from sqlalchemy import select
 from slowapi.util import get_remote_address
+from typing_extensions import Annotated
 
 from core.database import DBConnect
 from core.models import Config, Member
