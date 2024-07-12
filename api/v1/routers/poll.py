@@ -74,7 +74,7 @@ async def update_poll(
     - 권한이 없거나 이미 참여한 경우는 투표할 수 없습니다.
     - 포인트 설정이 되어있는 경우, 투표 시 포인트가 지급됩니다.
     """
-    poll = service.update_poll(poll.po_id, item, member)
+    poll = service.update_poll(poll, item, member)
 
     # 포인트 지급
     if member:
