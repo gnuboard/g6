@@ -918,7 +918,8 @@ def render_latest_posts(request: Request, skin_name: str = 'basic', bo_table: st
 
     device = request.state.device
     file_cache = FileCache()
-    cache_filename = f"latest-{bo_table}-{device}-{skin_name}-{rows}-{subject_len}-{file_cache.get_cache_secret_key()}.html"
+    skin_name_for_cache = skin_name.replace('/', '_').replace('\\', '_')
+    cache_filename = f"latest-{bo_table}-{device}-{skin_name_for_cache}-{rows}-{subject_len}-{file_cache.get_cache_secret_key()}.html"
     cache_file = os.path.join(file_cache.cache_dir, cache_filename)
 
     # 캐시된 파일이 있으면 파일을 읽어서 반환
