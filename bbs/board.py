@@ -298,7 +298,7 @@ async def create_post(
     form_data: Annotated[WriteForm, Depends()],
     service: Annotated[CreatePostService, Depends(CreatePostService.async_init)],
     file_service: Annotated[BoardFileService, Depends()],
-    parent_id: int = Form(None),
+    parent_id: int = Form(0),
     notice: bool = Form(False),
     secret: str = Form(""),
     html: str = Form(""),

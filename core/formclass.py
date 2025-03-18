@@ -456,7 +456,7 @@ class WriteCommentForm:
     wr_name: str = Form(None)
     wr_password: str = Form(None)
     wr_secret: str = Form(None)
-    comment_id: int = Form(None)
+    comment_id: int = Form(0)
 
 
 @dataclass
