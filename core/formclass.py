@@ -2,7 +2,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
-
+from typing import Union
 from fastapi import Form
 
 from core.exception import AlertException
@@ -456,7 +456,9 @@ class WriteCommentForm:
     wr_name: str = Form(None)
     wr_password: str = Form(None)
     wr_secret: str = Form(None)
-    comment_id: int = Form(None)
+    # comment_id: int = Form(None)
+    comment_id: Union[int, str, None] = Form(None)
+
 
 
 @dataclass

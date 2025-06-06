@@ -4,6 +4,7 @@
 from typing_extensions import Annotated, List
 
 from fastapi import APIRouter, Depends, Request, Form, Path, Query, File, UploadFile
+from typing import Union
 from fastapi.responses import FileResponse, RedirectResponse
 
 from core.database import db_session
@@ -183,7 +184,15 @@ async def write_form_add(
     else:
         service.validate_write_level()
 
-    # TODO: 포인트 검증
+    # 포인트 검증
+    required_point = (
+        board.bo_comment_point if parent_write else board.bo_write_point
+    )
+    service.point_service.validate_enough_point(
+        service.member.mb_id,
+        required_point,
+        "답변 작성" if parent_write else "게시글 작성",
+    )
 
     # 게시판 제목 설정
     board.subject = service.subject
@@ -298,7 +307,7 @@ async def create_post(
     form_data: Annotated[WriteForm, Depends()],
     service: Annotated[CreatePostService, Depends(CreatePostService.async_init)],
     file_service: Annotated[BoardFileService, Depends()],
-    parent_id: int = Form(None),
+    parent_id: Union[int, None, str] = Form(None),
     notice: bool = Form(False),
     secret: str = Form(""),
     html: str = Form(""),
@@ -310,6 +319,10 @@ async def create_post(
     recaptcha_response: str = Form("", alias="g-recaptcha-response"),
 ):
     """게시글을 작성한다."""
+    if parent_id in ("", None):
+        parent_id = None
+    else:
+        parent_id = int(parent_id)
     await service.validate_captcha(recaptcha_response)
     service.validate_write_delay()
     service.validate_write_level()
@@ -466,6 +479,12 @@ async def write_comment_update(
     form: WriteCommentForm = Depends(),
     recaptcha_response: str = Form("", alias="g-recaptcha-response"),
 ):
+        # 여기서 if 문을 사용해야 함!
+    if form.comment_id in ("", None):
+        comment_id = None
+    else:
+        comment_id = int(form.comment_id)
+        
     """
     댓글 등록/수정
     """
@@ -489,7 +508,8 @@ async def write_comment_update(
     elif form.w == "cu":
         # 댓글 수정
         write_model = service.write_model
-        comment = service.db.get(write_model, form.comment_id)
+        # comment = service.db.get(write_model, form.comment_id)
+        comment = service.db.get(write_model, comment_id)
         if not comment:
             raise AlertException(f"{form.comment_id} : 존재하지 않는 댓글입니다.", 404)
 

@@ -671,12 +671,29 @@ def delete_old_records():
 
         # 탈퇴회원 자동 삭제
         if config.cf_leave_day > 0:
-            # TODO: 회원삭제 처리 추가
-            # query = update(Member).where(Member.mb_leave_date < datetime.now() - timedelta(days=config.cf_leave_day))
-            # data = {}
-            # result = db.execute(query, data)
-            # print("회원 삭제 기준일 : ", datetime.now() - timedelta(days=config.cf_leave_day), f"{result}건 삭제")
-            pass
+            base_datetime = today - timedelta(days=config.cf_leave_day)
+            engine_name = db.bind.dialect.name
+            if engine_name == "sqlite":
+                cutoff = base_datetime.strftime("%Y%m%d")
+                member_ids = db.scalars(
+                    select(Member.mb_id)
+                    .where(Member.mb_leave_date != "")
+                    .where(Member.mb_leave_date <= cutoff)
+                ).all()
+            else:
+                member_ids = db.scalars(
+                    select(Member.mb_id)
+                    .where(Member.mb_leave_date != "")
+                    .where(func.cast(Member.mb_leave_date, DateTime) <= base_datetime)
+                ).all()
+
+            if member_ids:
+                db.execute(delete(Member).where(Member.mb_id.in_(member_ids)))
+                logging.info(
+                    "Deleted leave members older than %s: %s",
+                    base_datetime.strftime("%Y-%m-%d"),
+                    ", ".join(member_ids),
+                )
         db.commit()
     except Exception as e:
         print(e)

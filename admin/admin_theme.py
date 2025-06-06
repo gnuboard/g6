@@ -12,7 +12,7 @@ from core.database import db_session
 from core.models import Config
 from core.template import (
     AdminTemplates, TEMPLATES, TemplateService, UserTemplates,
-    get_current_theme, get_theme_list, get_theme_info, register_theme_statics,
+    get_current_theme, get_theme_list, get_theme_info,
 )
 from lib.dependency.dependencies import validate_super_admin, validate_theme
 
@@ -110,7 +110,7 @@ async def theme_update(
             os.unlink(file_path)
 
     # 테마 관련 정적 파일을 등록합니다.
-    register_theme_statics(app)
+    TemplateService.register_statics(app)
 
     # 이전 테마 경로를 제거 후 새로운 테마 경로를 추가합니다.
     user_template = UserTemplates()

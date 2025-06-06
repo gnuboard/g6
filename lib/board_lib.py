@@ -6,10 +6,10 @@ from datetime import datetime, timedelta
 import bleach
 from typing import List
 from fastapi import Request
-from fastapi.templating import Jinja2Templates
 from sqlalchemy import and_, asc, desc, func, insert, or_, select
 from sqlalchemy.sql.expression import Select
 from sqlalchemy.orm import Session
+from cachetools import TTLCache
 
 from core.database import DBConnect
 from core.exception import AlertException
@@ -22,6 +22,53 @@ from lib.common import (
 from lib.mail import mailer
 from lib.member import MemberDetails
 from service.board_file_service import BoardFileService as FileService
+
+
+# Caches for reducing DB and disk I/O
+FILE_META_CACHE = TTLCache(maxsize=1024, ttl=300)
+WRITE_CACHE = TTLCache(maxsize=1024, ttl=300)
+FILE_EXIST_CACHE = TTLCache(maxsize=1024, ttl=300)
+
+
+def _cache_key(bo_table: str, wr_id: int) -> str:
+    """Create a unified cache key."""
+    return f"{bo_table}:{wr_id}"
+
+
+def get_write_cached(bo_table: str, wr_id: int) -> WriteBaseModel | None:
+    """Return write object from cache or database."""
+    key = _cache_key(bo_table, wr_id)
+    write = WRITE_CACHE.get(key)
+    if write is None:
+        with DBConnect().sessionLocal() as db:
+            write_model = dynamic_create_write_table(bo_table)
+            write = db.get(write_model, wr_id)
+            if write:
+                WRITE_CACHE[key] = write
+    return write
+
+
+def get_board_files_cached(request: Request, bo_table: str, wr_id: int):
+    """Return board files grouped by type using cache."""
+    key = _cache_key(bo_table, wr_id)
+    result = FILE_META_CACHE.get(key)
+    if result is None:
+        with DBConnect().sessionLocal() as db:
+            service = FileService(request, db)
+            result = service.get_board_files_by_type(bo_table, wr_id)
+            FILE_META_CACHE[key] = result
+    return result
+
+
+def is_file_exist_cached(request: Request, db: Session, bo_table: str, wr_id: int) -> bool:
+    """Check file existence using cache."""
+    key = _cache_key(bo_table, wr_id)
+    exist = FILE_EXIST_CACHE.get(key)
+    if exist is None:
+        service = FileService(request, db)
+        exist = service.is_exist(bo_table, wr_id)
+        FILE_EXIST_CACHE[key] = exist
+    return exist
 
 
 class BoardConfig():
@@ -560,7 +607,6 @@ def get_list(request: Request, db: Session, write: WriteBaseModel, board_config:
     Returns:
         WriteBaseModel: 게시글 목록.
     """
-    file_service = FileService(request, db)
     write.subject = board_config.cut_write_subject(write.wr_subject, subject_len)
     write.name = cut_name(request, write.wr_name)
     write.email = StringEncrypt().encrypt(write.wr_email)
@@ -570,7 +616,7 @@ def get_list(request: Request, db: Session, write: WriteBaseModel, board_config:
     write.icon_secret = "secret" in write.wr_option
     write.icon_hot = board_config.is_icon_hot(write.wr_hit)
     write.icon_new = board_config.is_icon_new(write.wr_datetime)
-    write.icon_file = file_service.is_exist(board_config.board.bo_table, write.wr_id)
+    write.icon_file = is_file_exist_cached(request, db, board_config.board.bo_table, write.wr_id)
     write.icon_link = write.wr_link1 or write.wr_link2
     write.icon_reply = write.wr_reply
 
@@ -674,8 +720,7 @@ def send_write_mail(request: Request, board: Board, write: WriteBaseModel, origi
     """
     with DBConnect().sessionLocal() as db:
         config = request.state.config
-        templates = Jinja2Templates(
-                directory=TemplateService.get_templates_dir())
+        templates = TemplateService.get_templates()
 
         def _add_admin_email(admin_id: str):
             admin = db.scalar(select(Member).filter_by(mb_id=admin_id))
@@ -738,9 +783,7 @@ def get_list_thumbnail(request: Request, board: Board, write: WriteBaseModel, th
         thumb_height (int, optional): _description_. Defaults to 0.
     """
     config = request.state.config
-    with DBConnect().sessionLocal() as db:
-        service = FileService(request, db)
-        images, files = service.get_board_files_by_type(board.bo_table, write.wr_id)
+    images, files = get_board_files_cached(request, board.bo_table, write.wr_id)
     source_file = None
     result = {"src": "", "alt": "", "noimg":""}
 

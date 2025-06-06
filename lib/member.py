@@ -1,5 +1,6 @@
 """회원 관련 기능을 제공하는 모듈입니다."""
 import math
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Tuple, Union
 
@@ -8,51 +9,48 @@ from fastapi import Request
 from core.models import Board, Config, Group, Member
 
 
+@dataclass(slots=True)
 class MemberDetails:
-    mb_no: int = 0
-    mb_id: str = None
-    mb_name: str = None
-    mb_nick: str = None
-    mb_email: str = None
-    mb_homepage: str = None
-    mb_level: int = 1
-    mb_tel: str = None
-    mb_hp: str = None
-    mb_certify: str = None
-    mb_adult: int = 0
-    mb_signature: str = None
-    mb_point: int = 0
-    mb_today_login: datetime = None
-    mb_login_ip: str = None
-    mb_datetime: datetime = None
-    mb_ip: str = None
-    mb_leave_date: str = None
-    mb_intercept_date: str = None
-    mb_mailling: int = 0
-    mb_sms: int = 0
-    mb_profile: int = 0
+    """서비스 전반에서 사용되는 경량 회원 정보"""
 
-    _admin_type: str = None
+    request: Request
+    member: Member | None
+    config: Config
+    level: int
+    admin_type: Union[str, None]
 
-    def __init__(
-        self,
-        request: Request,
-        member: Member,
-        board: Board = None,
-        group: Group = None
-    ):
-        # TODO: 반복적으로 호출되는 문제 해결해야함.
-        # print("__init__", member)
-        super().__init__()
+    def __init__(self, request: Request, member: Member, board: Board = None,
+                 group: Group = None):
+        # 캐시를 이용해 중복 초기화를 방지한다.
+        cache_key = (
+            getattr(member, "mb_no", 0),
+            getattr(board, "bo_table", None),
+            getattr(group, "gr_id", None),
+        )
+        cache = getattr(request.state, "_member_details_cache", None)
+        if cache is None:
+            cache = {}
+            setattr(request.state, "_member_details_cache", cache)
+        if cache_key in cache:
+            cached = cache[cache_key]
+            self.request = request
+            self.member = cached.member
+            self.config = request.state.config
+            self.level = cached.level
+            self.admin_type = cached.admin_type
+            return
 
         self.request = request
+        self.member = member
         self.config = request.state.config
-        # member의 속성을 class 속성에 복사
-        if member:
-            for key, value in member.__dict__.items():
-                setattr(self, key, value)
-        self.level: int = self.mb_level
-        self.admin_type: Union[str, None] = self.get_admin_type(group, board)
+        self.level = int(member.mb_level) if member else 1
+        self.admin_type = self.get_admin_type(group, board)
+        cache[cache_key] = self
+
+    def __getattr__(self, item):
+        if self.member:
+            return getattr(self.member, item, None)
+        return None
 
     def get_admin_type(self, group: Group = None, board: Board = None) -> Union[str, None]:
         """게시판 관리자 여부 확인 후 관리자 타입 반환

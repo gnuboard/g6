@@ -21,7 +21,7 @@ from core.plugin import (
 )
 from core.routers import router as template_router
 from core.settings import ENV_PATH, settings
-from core.template import register_theme_statics
+from core.template import TemplateService
 from lib.common import (
     get_client_ip, is_intercept_ip, is_possible_ip, session_member_key
 )
@@ -66,7 +66,7 @@ if not os.path.exists("data"):
     os.mkdir("data")
 
 # 각 경로에 있는 파일들을 정적 파일로 등록합니다.
-register_theme_statics(app)
+TemplateService.register_statics(app)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/data", StaticFiles(directory="data"), name="data")
 

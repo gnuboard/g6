@@ -424,11 +424,10 @@ async def visit_hour(
     # 합계
     total_count = db.scalar(query.add_columns(func.count(Visit.vi_id)))
     # 시간별 접속자집계
-    # TODO: postgresql는 테스트가 안되어 있음
     if dialect == 'mysql':
         query = query.add_columns(func.hour(Visit.vi_time).label('hour'))
     elif dialect == 'postgresql':
-        query = query.add_columns(func.to_char(Visit.vi_time, 'HH24').label('hour'))
+        query = query.add_columns(extract('hour', Visit.vi_time).label('hour'))
     elif dialect == 'sqlite':
         query = query.add_columns(func.strftime('%H', Visit.vi_time).label('hour'))
     query_result = db.execute(
@@ -472,11 +471,10 @@ async def visit_weekday(
     # 합계
     total_count = db.scalar(query.add_columns(func.count(Visit.vi_id)))
     # 요일별 접속자집계
-    # TODO: postgresql는 테스트가 안되어 있음
     if dialect == 'mysql':
         query = query.add_columns(func.dayofweek(Visit.vi_date).label('dow'))
     elif dialect == 'postgresql':
-        query = query.add_columns(func.to_char(Visit.vi_date, 'D').label('dow'))
+        query = query.add_columns(extract('dow', Visit.vi_date).label('dow'))
     elif dialect == 'sqlite':
         query = query.add_columns(func.strftime('%w', Visit.vi_date).label('dow'))
     query_result = db.execute(

@@ -10,7 +10,6 @@ from email.mime.text import MIMEText
 from email.utils import formataddr
 
 from fastapi import Request
-from fastapi.templating import Jinja2Templates
 
 from core.database import DBConnect
 from core.models import Config, Member, PollEtc, QaConfig, QaContent
@@ -88,8 +87,7 @@ async def send_password_reset_mail(request: Request, member: Member) -> None:
         request.state.config = config = db.query(Config).first()
 
     try:
-        templates = Jinja2Templates(
-            directory=TemplateService.get_templates_dir())
+        templates = TemplateService.get_templates()
 
         subject = f"[{config.cf_title}] 요청하신 비밀번호 찾기 메일입니다."
         body = templates.TemplateResponse(
@@ -117,7 +115,7 @@ async def send_register_mail(request: Request, member: Member) -> None:
         request.state.config = config = db.query(Config).first()
 
     try:
-        templates = Jinja2Templates(directory=TemplateService.get_templates_dir())
+        templates = TemplateService.get_templates()
         from_email = get_admin_email(request)
         from_name = get_admin_email_name(request)
         context = {"request": request, "member": member}
@@ -154,8 +152,7 @@ async def send_register_admin_mail(request: Request, member: Member) -> None:
         request.state.config = config = db.query(Config).first()
 
     try:
-        templates = Jinja2Templates(
-            directory=TemplateService.get_templates_dir())
+        templates = TemplateService.get_templates()
         from_email = get_admin_email(request)
         from_name = get_admin_email_name(request)
         context = {"request": request, "member": member}
@@ -185,8 +182,7 @@ async def send_poll_etc_mail(request: Request, poll_etc: PollEtc) -> None:
 
     try:
         if config.cf_email_po_super_admin and config.cf_admin_email:
-            templates = Jinja2Templates(
-                directory=TemplateService.get_templates_dir())
+            templates = TemplateService.get_templates()
             email = get_admin_email(request)
             from_name = get_admin_email_name(request)
             subject = f"[{config.cf_title}] 설문조사 - 기타의견 메일"
@@ -223,8 +219,7 @@ async def send_qa_mail(request: Request, qa: QaContent) -> None:
     from_name = get_admin_email_name(request)
     subject = f"[{config.cf_title}] {qa_config.qa_title} 질문 알림 메일"
     content = qa.qa_subject + "<br><br>" + qa.qa_content
-    templates = Jinja2Templates(
-                directory=TemplateService.get_templates_dir())
+    templates = TemplateService.get_templates()
 
     if qa.qa_parent:
         question = db.get(QaContent, qa.qa_parent)

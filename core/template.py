@@ -92,21 +92,75 @@ ADMIN_TEMPLATES = "admin/templates"
 ADMIN_TEMPLATES_DIR = get_admin_theme_path()  # 관리자 템플릿 경로
 
 class TemplateService():
-    """템플릿 서비스 클래스
-    - TODO: 이외의 다른 부분도 클래스화 해야한다.
+    """템플릿 서비스 클래스.
+
+    템플릿 경로와 정적 파일, 렌더링 옵션을 관리한다.
     """
-    _templates_dir: str = None  # 사용자 템플릿 경로
+
+    _templates_dir: typing.Optional[str] = None       # 사용자 템플릿 경로
+    _templates: typing.Optional[Jinja2Templates] = None
+    _env_options: dict = {}
 
     @classmethod
     def get_templates_dir(cls) -> str:
+        """현재 테마의 템플릿 디렉터리 경로를 반환한다."""
         if cls._templates_dir is None:
             cls.set_templates_dir()
 
         return cls._templates_dir
 
     @classmethod
-    def set_templates_dir(cls) -> None:
-        cls._templates_dir = get_theme_path()
+    def set_templates_dir(cls, template_dir: typing.Optional[str] = None) -> None:
+        """템플릿 디렉터리를 설정한다."""
+        cls._templates_dir = template_dir or get_theme_path()
+        cls._templates = None
+
+    @classmethod
+    def set_env_options(cls, **env_options) -> None:
+        """Jinja2 환경 설정을 갱신한다."""
+        cls._env_options.update(env_options)
+        cls._templates = None
+
+    @classmethod
+    def get_templates(cls, **env_options) -> Jinja2Templates:
+        """Jinja2Templates 객체를 반환한다.
+
+        Args:
+            **env_options: Environment 옵션
+        """
+        if env_options:
+            options = {**cls._env_options, **env_options}
+            templates = Jinja2Templates(
+                directory=cls.get_templates_dir(),
+                **options
+            )
+            templates.env.globals["theme_asset"] = theme_asset
+            return templates
+
+        if cls._templates is None:
+            cls._templates = Jinja2Templates(
+                directory=cls.get_templates_dir(),
+                **cls._env_options
+            )
+            cls._templates.env.globals["theme_asset"] = theme_asset
+
+        return cls._templates
+
+    @classmethod
+    def register_statics(cls, app: FastAPI) -> None:
+        """현재 테마의 static 디렉터리를 FastAPI에 등록한다."""
+        theme = get_current_theme()
+        directories = ["/mobile", ""]
+        for directory in directories:
+            static_directory = f"{TEMPLATES}/{theme}{directory}/static"
+
+            if not os.path.isdir(static_directory):
+                continue
+
+            url = f"/theme_static/{theme}{directory}"
+            path = StaticFiles(directory=static_directory)
+            static_device = directory.replace("/", "_")
+            app.mount(url, path, name=f"static_{theme}{static_device}")
 
 
 class UserTemplates(Jinja2Templates):
@@ -285,29 +339,8 @@ def theme_asset(request: Request, asset_path: str) -> str:
 
 
 def register_theme_statics(app: FastAPI) -> None:
-    """
-    현재 테마의 static 경로를 가상의 경로로 등록하는 함수
-    - ex) PC: /{theme}/basic/static/css -> /theme_static/basic/css
-    - ex) Mobile: /{theme}/basic/mobile/static/css -> /theme_static/basic/mobile/css
-
-    Args:
-        app (FastAPI): FastAPI 객체
-    """
-    theme = get_current_theme()
-    directories = ["/mobile", ""]
-    for directory in directories:
-        static_directory = f"{TEMPLATES}/{theme}{directory}/static"
-
-        if not os.path.isdir(static_directory):
-            # logger = logging.getLogger("uvicorn.error")
-            # logger.warning("theme has not static directory : ",
-            #                static_directory)
-            continue
-
-        url = f"/theme_static/{theme}{directory}"
-        path = StaticFiles(directory=static_directory)
-        static_device = directory.replace("/", "_")
-        app.mount(url, path, name=f"static_{theme}{static_device}")  # tag
+    """Backward compatible wrapper for :meth:`TemplateService.register_statics`."""
+    TemplateService.register_statics(app)
 
 
 def get_theme_list():

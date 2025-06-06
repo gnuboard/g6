@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import List
 from typing_extensions import Annotated
+from lib.template_filters import number_format
 
 from fastapi import Depends, Request
 from sqlalchemy import delete, func, select, update
@@ -142,6 +143,21 @@ class PointService(BaseService):
         )
 
         return int(point_sum) if point_sum else 0
+
+    def validate_enough_point(self, mb_id: str, required_point: int, action: str) -> None:
+        """필요한 포인트가 있는지 검증한다."""
+        if not self.use_point or required_point >= 0:
+            return
+
+        current_point = self.get_total_point(mb_id) if mb_id else 0
+        if (current_point + required_point) >= 0:
+            return
+
+        point_str = number_format(abs(required_point))
+        message = f"{action}에 필요한 포인트({point_str})가 부족합니다."
+        if not mb_id:
+            message += " 로그인 후 다시 시도해주세요."
+        self.raise_exception(status_code=403, detail=message)
 
     def insert_use_point(self, mb_id: str, point: int, po_id: int = None) -> None:
         """

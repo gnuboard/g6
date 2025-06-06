@@ -3,7 +3,6 @@ from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from starlette.templating import _TemplateResponse
 
 from slowapi.errors import RateLimitExceeded
@@ -135,13 +134,10 @@ def template_response(
     Returns:
         _TemplateResponse: 템플릿 응답 객체
     """
-    from core.template import TemplateService, theme_asset
+    from core.template import TemplateService
 
-    # 새로운 템플릿 응답 객체를 생성합니다.
-    # - UserTemplates, AdminTemplates 클래스는 기본 컨텍스트 설정 시 DB를 조회하는데,
-    #   처음 설치 시에는 DB가 없으므로 새로운 템플릿 응답 객체를 생성합니다.
-    template = Jinja2Templates(directory=TemplateService.get_templates_dir())
-    template.env.globals["theme_asset"] = theme_asset
+    # UserTemplates/AdminTemplates는 DB 조회가 필요하므로 사용하지 않는다.
+    template = TemplateService.get_templates()
     return template.TemplateResponse(
         name=template_html,
         context=context,
