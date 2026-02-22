@@ -332,6 +332,13 @@ class DownloadFileService(BoardService):
         if not self.is_download_level():
             self.raise_exception(detail="다운로드 권한이 없습니다.", status_code=403)
 
+    def validate_download_access(self):
+        """첨부파일 다운로드 전 게시글 접근 권한(읽기/비밀글/댓글) 검증"""
+        self.block_read_comment()
+        self.validate_read_level()
+        # 다운로드 경로에서도 비밀글 접근 제어를 강제한다.
+        self.validate_secret()
+
     def get_board_file(self) -> BoardFile:
         """파일 정보 조회"""
         board_file = self.file_service.get_board_file(self.bo_table, self.wr_id, self.bf_no)

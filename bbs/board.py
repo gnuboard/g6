@@ -452,6 +452,7 @@ async def download_file(
     Returns:
         FileResponse: 파일 다운로드
     """
+    service.validate_download_access()
     service.validate_download_level()
     board_file = service.get_board_file()
     service.validate_point_session(board_file)

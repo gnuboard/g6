@@ -394,6 +394,7 @@ async def api_download_file(
     - **wr_id**: 게시글 아이디
     - **bf_no**: 첨부된 파일의 순번
     """
+    service.validate_download_access()
     service.validate_download_level()
     board_file = service.get_board_file()
     service.validate_point(board_file)
