@@ -299,6 +299,17 @@
                 })
                 .then(function (data) {
                     setResultPanel("ebook_result_wrap", "ebook_result_status", "ebook_result_json", "success", data);
+
+                    // result[0] 에서 proinm + prostd 로 제목 자동 생성
+                    const item = (data.result && data.result[0]) ? data.result[0] : null;
+                    if (item) {
+                        const proinm  = (item.proinm  || "").trim();
+                        const prostd  = (item.prostd  || "").trim();
+                        const subject = prostd ? `${proinm} ${prostd}` : proinm;
+                        if (subject) {
+                            document.getElementById("wr_subject").value = subject;
+                        }
+                    }
                 })
                 .catch(function (err) {
                     setResultPanel("ebook_result_wrap", "ebook_result_status", "ebook_result_json", "error", err.message);
