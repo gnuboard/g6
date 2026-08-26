@@ -1,48 +1,16 @@
 """
 CTX 상품 상세 스크래퍼
-- Selenium headless Chrome 으로 ctx.cretec.kr 상품 상세 페이지를 수집
+- Playwright headless Chromium 으로 ctx.cretec.kr 상품 상세 페이지를 수집
 - 사양(spec), 배송정보(delivery), 상세설명(detail) 을 JSON 으로 반환
 """
 
 import re
 
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
+from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 
-WAIT_SECONDS = 10
+WAIT_MS = 10_000
 CTX_ITEM_DTL_URL = "https://ctx.cretec.kr/CtxApp/ctx/selectItemDtlIfrm.do"
-
-
-# ────────────────────────────────────────────────
-# Chrome Driver
-# ────────────────────────────────────────────────
-
-def _create_driver() -> webdriver.Chrome:
-    options = Options()
-    options.add_argument("--headless=new")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--blink-settings=imagesEnabled=false")
-    options.add_argument("--window-size=1920,1080")
-    # Linux 서버 환경(cloudtype 등)에서 Chrome 바이너리 경로 명시
-    for chrome_path in [
-        "/usr/bin/google-chrome",
-        "/usr/bin/chromium-browser",
-        "/usr/bin/chromium",
-    ]:
-        import os
-        if os.path.exists(chrome_path):
-            options.binary_location = chrome_path
-            break
-    service = Service(ChromeDriverManager().install())
-    return webdriver.Chrome(service=service, options=options)
 
 
 # ────────────────────────────────────────────────
@@ -126,34 +94,42 @@ def get_product_detail(item_cd: str) -> dict:
             "error": "..."
         }
     """
-    driver = None
+    url = f"{CTX_ITEM_DTL_URL}?itemCd={item_cd}&compCd="
     try:
-        driver = _create_driver()
-        url = f"{CTX_ITEM_DTL_URL}?itemCd={item_cd}&compCd="
-        driver.get(url)
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                headless=True,
+                args=[
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu",
+                    "--blink-settings=imagesEnabled=false",
+                ],
+            )
+            page = browser.new_page()
+            page.goto(url, wait_until="domcontentloaded")
 
-        WebDriverWait(driver, WAIT_SECONDS).until(
-            EC.presence_of_element_located((By.ID, "metaInfoTbl"))
-        )
+            # 사양 테이블 대기
+            page.wait_for_selector("#metaInfoTbl", timeout=WAIT_MS)
 
-        # 사양
-        meta_html = driver.find_element(By.ID, "metaInfoTbl").get_attribute("outerHTML")
+            # 사양
+            meta_html = page.inner_html("#metaInfoTbl")
 
-        # 배송정보
-        try:
-            deli_html = driver.find_element(
-                By.XPATH, '//*[@id="itemDtlTbl"]/tbody/tr[10]/td/table'
-            ).get_attribute("outerHTML")
-        except Exception:
-            deli_html = ""
+            # 배송정보
+            try:
+                deli_html = page.inner_html(
+                    '#itemDtlTbl tbody tr:nth-child(10) td table'
+                )
+            except Exception:
+                deli_html = ""
 
-        # 상세 설명
-        try:
-            detail_html = driver.find_element(
-                By.ID, "itemDetailDiv"
-            ).get_attribute("outerHTML")
-        except Exception:
-            detail_html = ""
+            # 상세 설명
+            try:
+                detail_html = page.inner_html("#itemDetailDiv")
+            except Exception:
+                detail_html = ""
+
+            browser.close()
 
         return {
             "success": True,
@@ -163,9 +139,7 @@ def get_product_detail(item_cd: str) -> dict:
             "detail": _clean_detail_html(detail_html) if detail_html else "",
         }
 
+    except PlaywrightTimeoutError:
+        return {"success": False, "item_cd": item_cd, "error": "페이지 로딩 시간 초과"}
     except Exception as e:
         return {"success": False, "item_cd": item_cd, "error": str(e)}
-
-    finally:
-        if driver:
-            driver.quit()
