@@ -135,6 +135,24 @@
                  class="p-3 rounded-2 fs-6"
                  style="background:#f8f9fa; border:1px solid #dee2e6; max-height:300px; overflow-y:auto; white-space:pre-wrap; word-break:break-all;"></pre>
         </div>
+
+        <!-- 상품 상세 스크래핑 결과 라벨 -->
+        <div id="detail_result_wrap" class="my-3" style="display:none;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong class="fs-5">상품 상세 정보</strong>
+                <span id="detail_result_status" class="badge fs-6 px-3 py-2"></span>
+            </div>
+            <!-- 스피너 -->
+            <div id="detail_result_spinner" class="d-flex align-items-center gap-2 p-3 text-secondary" style="display:none !important;">
+                <div class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <span>상품 상세 페이지 수집 중입니다. 잠시 기다려 주세요…</span>
+            </div>
+            <pre id="detail_result_json"
+                 class="p-3 rounded-2 fs-6"
+                 style="background:#f8f9fa; border:1px solid #dee2e6; max-height:400px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; display:none;"></pre>
+        </div>
         <!-- } 상품코드 조회 영역 -->
 
         <div class="position-relative my-3">
@@ -309,10 +327,52 @@
                         if (subject) {
                             document.getElementById("wr_subject").value = subject;
                         }
+
+                        // proino → 상품 상세 스크래핑 연계 호출
+                        const proino = (item.proino || "").trim();
+                        if (proino) {
+                            fetchItemDetail(proino);
+                        }
                     }
                 })
                 .catch(function (err) {
                     setResultPanel("ebook_result_wrap", "ebook_result_status", "ebook_result_json", "error", err.message);
+                });
+        }
+
+        function fetchItemDetail(itemCd) {
+            const wrap    = document.getElementById("detail_result_wrap");
+            const status  = document.getElementById("detail_result_status");
+            const spinner = document.getElementById("detail_result_spinner");
+            const pre     = document.getElementById("detail_result_json");
+
+            // 패널 초기화
+            wrap.style.display    = "block";
+            spinner.style.display = "flex";
+            pre.style.display     = "none";
+            pre.textContent       = "";
+            status.textContent    = "수집 중…";
+            status.className      = "badge fs-6 px-3 py-2 bg-secondary text-white";
+
+            const url = `/ctx_product_collect/api/item-detail?item_cd=${encodeURIComponent(itemCd)}`;
+            fetch(url)
+                .then(function (res) {
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+                    return res.json();
+                })
+                .then(function (data) {
+                    spinner.style.display = "none";
+                    pre.style.display     = "block";
+                    pre.textContent       = JSON.stringify(data, null, 2);
+                    status.textContent    = "수집 완료";
+                    status.className      = "badge fs-6 px-3 py-2 bg-success text-white";
+                })
+                .catch(function (err) {
+                    spinner.style.display = "none";
+                    pre.style.display     = "block";
+                    pre.textContent       = "오류: " + err.message;
+                    status.textContent    = "수집 실패";
+                    status.className      = "badge fs-6 px-3 py-2 bg-danger text-white";
                 });
         }
         // ─────────────────────────────────────────────────────────────────
