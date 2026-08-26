@@ -1,0 +1,7 @@
+[
+    {
+        "plugin_name": "CTX 상품수집",
+        "module_name": "ctx_product_collect",
+        "is_enable": true
+    }
+]
