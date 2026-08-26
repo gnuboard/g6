@@ -31,6 +31,16 @@ def _create_driver() -> webdriver.Chrome:
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--blink-settings=imagesEnabled=false")
     options.add_argument("--window-size=1920,1080")
+    # Linux 서버 환경(cloudtype 등)에서 Chrome 바이너리 경로 명시
+    for chrome_path in [
+        "/usr/bin/google-chrome",
+        "/usr/bin/chromium-browser",
+        "/usr/bin/chromium",
+    ]:
+        import os
+        if os.path.exists(chrome_path):
+            options.binary_location = chrome_path
+            break
     service = Service(ChromeDriverManager().install())
     return webdriver.Chrome(service=service, options=options)
 
