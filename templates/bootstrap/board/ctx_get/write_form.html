@@ -25,7 +25,7 @@
         <input type="hidden" name="wr_id" value="{{ write.wr_id }}">
         <input type="hidden" name="parent_id" value="{{ request.query_params.parent_id }}">
         <input type="hidden" name="token" value="">
-
+        
         {% if categories %}
             <div class="bo_w_select position-relative my-3">
                 <label for="ca_name" class="blind">분류<strong>필수</strong></label>
@@ -37,7 +37,7 @@
                 </select>
             </div>
         {% endif %}
-
+                
         {% if not login_member or (is_admin and write and write.mb_id != login_member.mb_id) %}
         <div class="bo_w_info position-relative row g-3 my-3">
           <div class="col-6">
@@ -55,7 +55,7 @@
           <div class="col-6">
             <label for="wr_homepage" class="blind">홈페이지</label>
             <input type="text" name="wr_homepage" value="{{ write.wr_homepage if write else login_member.mb_homepage }}" id="wr_homepage" class="frm_input w-100" placeholder="홈페이지">
-          </div>
+          </div>         
         </div>
         {% endif %}
 
@@ -81,7 +81,7 @@
             {% if is_secret %}
                 {% if is_admin or is_secret == 1 %}
                     <li class="chk_box d-inline-block text-start me-2">
-                        <input type="checkbox" id="secret" name="secret" class="selec_chk" value="secret" {{ secret_checked }}>
+                        <input type="checkbox" id="secret" name="secret"  class="selec_chk" value="secret" {{ secret_checked }}>
                         <label for="secret"><span>&nbsp;</span>비밀글</label>
                     </li>
                 {% else %}
@@ -90,49 +90,20 @@
             {% endif %}
             {% if is_mail %}
                 <li class="chk_box d-inline-block text-start me-2">
-                    <input type="checkbox" id="mail" name="mail" class="selec_chk" value="mail" {{ recv_email_checked }}>
+                    <input type="checkbox" id="mail" name="mail"  class="selec_chk" value="mail" {{ recv_email_checked }}>
                     <label for="mail"><span>&nbsp;</span>답변메일받기</label>
                 </li>
             {% endif %}
             </ul>
         </div>
-
-        <!-- 상품코드 조회 영역 { -->
-        <div class="bo_w_prod_cd position-relative my-3">
-            <label for="prod_cd" class="blind">상품코드</label>
-            <div class="d-flex gap-2 align-items-center">
-                <input type="text" id="prod_cd" name="prod_cd"
-                       value="{{ write.wr_1 if write.wr_1 else '' }}"
-                       class="frm_input flex-grow-1"
-                       placeholder="상품코드 7자리 숫자를 입력하세요"
-                       maxlength="7"
-                       pattern="\d{7}"
-                       inputmode="numeric">
-                <button type="button" id="btn_prod_search" class="btn px-4 fs-4 rounded-2 bg-secondary text-white" style="white-space:nowrap;">
-                    조회
-                </button>
-            </div>
-        </div>
-
-        <!-- 상품 조회 결과 라벨 -->
-        <div id="prod_result_wrap" class="my-3" style="display:none;">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <strong class="fs-5">상품 정보</strong>
-                <span id="prod_result_status" class="badge fs-6 px-3 py-2"></span>
-            </div>
-            <pre id="prod_result_json"
-                 class="p-3 rounded-2 fs-6"
-                 style="background:#f8f9fa; border:1px solid #dee2e6; max-height:300px; overflow-y:auto; white-space:pre-wrap; word-break:break-all;"></pre>
-        </div>
-        <!-- } 상품코드 조회 영역 -->
-
+    
         <div class="position-relative my-3">
             <label for="wr_subject" class="blind">제목<strong>필수</strong></label>
             <div id="autosave_wrapper" class="d-flex justify-content-between my-3">
                 <input type="text" name="wr_subject" value="{{ write.wr_subject }}" id="wr_subject" required class="frm_input full_input me-2 required" size="50" maxlength="255" placeholder="제목">
                 {% if login_member %}
                 <script src="/static/js/autosave.js"></script>
-                <button type="button" id="btn_autosave_list" class="btn_frmline">임시 저장된 글
+                <button type="button" id="btn_autosave_list" class="btn_frmline">임시 저장된 글 
                     (<span id="autosave_count">0</span>)
                 </button>
                 <div id="autosave_pop">
@@ -158,7 +129,6 @@
         </div>
 
         {{ editor.body("wr_content", write.wr_content) }}
-
         {% if is_link %}
             {% for i in range(1, 3) %}
                 <div class="bo_w_link position-relative my-3">
@@ -167,7 +137,7 @@
                 </div>
             {% endfor %}
         {% endif %}
-
+        
         {% if is_file %}
             {% for file in files %}
             {% set i = loop.index %}
@@ -201,8 +171,9 @@
             <a href="{{ url_for('list_post', bo_table=board.bo_table)|set_query_params(request, remove=['parent_id']) }}" class="btn px-4 fs-4 rounded-2 bg-secondary text-white">취소</a>
             <button type="submit" id="btn_submit" accesskey="s" class="btn px-4 fs-4 rounded-2 main-bg text-white">작성완료</button>
         </div>
-    </form>
+        </form>
 
+<<<<<<< HEAD
     <script>
         // ── 상품코드 CTX API 조회 (로컬 프록시 → 외부 API) ────────────────────────
         const PROD_SEARCH_URL = "/ctx_product_collect/api/prod-search";
@@ -281,59 +252,66 @@
                 .finally(function () {
                     btn.disabled    = false;
                     btn.textContent = "조회";
+=======
+        <script>
+            {% if write_min and write_max %}
+                // 글자수 제한
+                var char_min = parseInt({{ write_min }}); // 최소
+                var char_max = parseInt({{ write_max }}); // 최대
+                check_byte("wr_content", "char_count");
+            
+                $(function() {
+                    $("#wr_content").on("keyup", function() {
+                        check_byte("wr_content", "char_count");
+                    });
+>>>>>>> c05bc6e9 (업데이트)
                 });
-        }
-        // ─────────────────────────────────────────────────────────────────
-
-        {% if write_min and write_max %}
-            var char_min = parseInt({{ write_min }});
-            var char_max = parseInt({{ write_max }});
-            check_byte("wr_content", "char_count");
-
-            $(function() {
-                $("#wr_content").on("keyup", function() {
-                    check_byte("wr_content", "char_count");
-                });
-            });
-        {% endif %}
-
-        function html_auto_br(obj) {
-            if (obj.checked) {
-                result = confirm("자동 줄바꿈을 하시겠습니까?\n\n자동 줄바꿈은 게시물 내용중 줄바뀐 곳을<br>태그로 변환하는 기능입니다.");
-                if (result) {
-                    obj.value = "html2";
+            {% endif %}
+            function html_auto_br(obj)
+            {
+                if (obj.checked) {
+                    result = confirm("자동 줄바꿈을 하시겠습니까?\n\n자동 줄바꿈은 게시물 내용중 줄바뀐 곳을<br>태그로 변환하는 기능입니다.");
+                    if (result) {
+                        obj.value = "html2";
+                    } else{
+                        obj.value = "html1";
+                    }
                 } else {
-                    obj.value = "html1";
+                    obj.value = "";
                 }
-            } else {
-                obj.value = "";
             }
-        }
 
-        function fwrite_submit(f) {
+        function fwrite_submit(f)
+        {
             if (document.getElementById("char_count")) {
                 if (char_min > 0 || char_max > 0) {
                     var cnt = parseInt(check_byte("wr_content", "char_count"));
                     if (char_min > 0 && char_min > cnt) {
-                        alert("내용은 " + char_min + "글자 이상 쓰셔야 합니다.");
+                        alert("내용은 "+char_min+"글자 이상 쓰셔야 합니다.");
                         return false;
-                    } else if (char_max > 0 && char_max < cnt) {
-                        alert("내용은 " + char_max + "글자 이하로 쓰셔야 합니다.");
+                    }
+                    else if (char_max > 0 && char_max < cnt) {
+                        alert("내용은 "+char_max+"글자 이하로 쓰셔야 합니다.");
                         return false;
                     }
                 }
             }
 
+            // captcha 사용시
             if (typeof check_captcha === "function") {
-                if (!check_captcha(f)) return false;
+                if (!check_captcha(f)) {
+                    return false;
+                }
             }
 
             f.token.value = generate_token();
-            f.action += "?{{ request.query_params|safe }}";
+            f.action += "?{{ request.query_params|safe }}"
+
             document.getElementById("btn_submit").disabled = true;
+
             return true;
         }
-    </script>
+        </script>
     <!-- } 게시물 작성/수정 끝 -->
 </section>
 {% endblock content %}
