@@ -173,7 +173,6 @@
         </div>
         </form>
 
-<<<<<<< HEAD
     <script>
         // ── 상품코드 CTX API 조회 (로컬 프록시 → 외부 API) ────────────────────────
         const PROD_SEARCH_URL = "/ctx_product_collect/api/prod-search";
@@ -252,19 +251,6 @@
                 .finally(function () {
                     btn.disabled    = false;
                     btn.textContent = "조회";
-=======
-        <script>
-            {% if write_min and write_max %}
-                // 글자수 제한
-                var char_min = parseInt({{ write_min }}); // 최소
-                var char_max = parseInt({{ write_max }}); // 최대
-                check_byte("wr_content", "char_count");
-            
-                $(function() {
-                    $("#wr_content").on("keyup", function() {
-                        check_byte("wr_content", "char_count");
-                    });
->>>>>>> c05bc6e9 (업데이트)
                 });
             {% endif %}
             function html_auto_br(obj)
