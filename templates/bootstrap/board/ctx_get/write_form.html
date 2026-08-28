@@ -124,17 +124,6 @@
                  class="p-3 rounded-2 fs-6"
                  style="background:#f8f9fa; border:1px solid #dee2e6; max-height:300px; overflow-y:auto; white-space:pre-wrap; word-break:break-all;"></pre>
         </div>
-
-        <!-- eBook 조회 결과 라벨 -->
-        <div id="ebook_result_wrap" class="my-3" style="display:none;">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <strong class="fs-5">eBook 정보</strong>
-                <span id="ebook_result_status" class="badge fs-6 px-3 py-2"></span>
-            </div>
-            <pre id="ebook_result_json"
-                 class="p-3 rounded-2 fs-6"
-                 style="background:#f8f9fa; border:1px solid #dee2e6; max-height:300px; overflow-y:auto; white-space:pre-wrap; word-break:break-all;"></pre>
-        </div>
         <!-- } 상품코드 조회 영역 -->
 
         <div class="position-relative my-3">
@@ -215,10 +204,9 @@
     </form>
 
     <script>
-        // ── 상품코드 CTX API 조회 (서버 프록시 경유) ─────────────────────────
-        const PROD_SEARCH_URL  = "/ctx_product_collect/api/prod-search";
-        const EBOOK_SEARCH_URL = "/ctx_product_collect/api/ebook-search";
-        const PROD_CD_PATTERN  = /^\d{7}$/;
+        // ── 상품코드 CTX API 조회 (로컬 프록시 → 외부 API) ────────────────────────
+        const PROD_SEARCH_URL = "/ctx_product_collect/api/prod-search";
+        const PROD_CD_PATTERN = /^\d{7}$/;
 
         document.getElementById("btn_prod_search").addEventListener("click", function () {
             const prodCd = document.getElementById("prod_cd").value.trim();
@@ -233,7 +221,6 @@
                 return;
             }
             fetchProdInfo(prodCd);
-            fetchEbookInfo(prodCd);
         });
 
         // 엔터키로도 조회 가능
@@ -249,18 +236,24 @@
             const status = document.getElementById(statusId);
             const pre    = document.getElementById(preId);
             wrap.style.display = "block";
+
             if (state === "loading") {
                 status.textContent = "요청 중";
                 status.className   = "badge fs-6 px-3 py-2 bg-secondary text-white";
                 pre.textContent    = "";
-            } else if (state === "success") {
+                return;
+            }
+
+            const outputText = (typeof text === "string") ? text : JSON.stringify(text, null, 2);
+
+            if (state === "success") {
                 status.textContent = "조회 성공";
                 status.className   = "badge fs-6 px-3 py-2 bg-success text-white";
-                pre.textContent    = JSON.stringify(text, null, 2);
+                pre.textContent    = outputText;
             } else {
                 status.textContent = "조회 실패";
                 status.className   = "badge fs-6 px-3 py-2 bg-danger text-white";
-                pre.textContent    = "오류: " + text;
+                pre.textContent    = "오류: " + outputText;
             }
         }
 
@@ -270,11 +263,14 @@
             btn.textContent = "조회 중...";
             setResultPanel("prod_result_wrap", "prod_result_status", "prod_result_json", "loading");
 
-            const url = `${PROD_SEARCH_URL}?prod_cd=${encodeURIComponent(prodCd)}&keyword=`;
+            const url = `${PROD_SEARCH_URL}?prod_cd=${encodeURIComponent(prodCd)}`;
             fetch(url)
-                .then(function (res) {
-                    if (!res.ok) throw new Error("HTTP " + res.status);
-                    return res.json();
+                .then(async function (res) {
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                        throw new Error(data.detail || "HTTP " + res.status);
+                    }
+                    return data;
                 })
                 .then(function (data) {
                     setResultPanel("prod_result_wrap", "prod_result_status", "prod_result_json", "success", data);
@@ -285,23 +281,6 @@
                 .finally(function () {
                     btn.disabled    = false;
                     btn.textContent = "조회";
-                });
-        }
-
-        function fetchEbookInfo(prodCd) {
-            setResultPanel("ebook_result_wrap", "ebook_result_status", "ebook_result_json", "loading");
-
-            const url = `${EBOOK_SEARCH_URL}?prod_cd=${encodeURIComponent(prodCd)}&item_cd=`;
-            fetch(url)
-                .then(function (res) {
-                    if (!res.ok) throw new Error("HTTP " + res.status);
-                    return res.json();
-                })
-                .then(function (data) {
-                    setResultPanel("ebook_result_wrap", "ebook_result_status", "ebook_result_json", "success", data);
-                })
-                .catch(function (err) {
-                    setResultPanel("ebook_result_wrap", "ebook_result_status", "ebook_result_json", "error", err.message);
                 });
         }
         // ─────────────────────────────────────────────────────────────────
