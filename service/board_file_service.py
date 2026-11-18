@@ -39,8 +39,18 @@ class BoardFileService():
         Returns:
             bool: 파일 확장자가 업로드 가능하면 True, 아니면 False
         """
-        ext = file.filename.split(".")[-1]
-        content = file.content_type
+        ext = file.filename.split(".")[-1].lower()
+        content = file.content_type or ""
+
+        # 브라우저에서 스크립트로 실행되거나 인라인으로 렌더링되는 확장자는
+        # content_type과 무관하게 차단한다. (Content-Type은 업로드 측에서 조작 가능)
+        dangerous_extensions = (
+            "html", "htm", "xhtml", "shtml", "phtml", "svg", "svgz",
+            "xml", "xsl", "js", "mjs", "htc", "swf",
+            "php", "php3", "php4", "php5", "php7", "pht", "phar",
+        )
+        if ext in dangerous_extensions:
+            return False
 
         if (("image" in content and not ext in self.config.cf_image_extension)
                 or ("x-shockwave-flash" in content and not ext in self.config.cf_flash_extension)
